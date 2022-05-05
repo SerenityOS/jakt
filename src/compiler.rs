@@ -3,7 +3,7 @@ use std::io::Write;
 use crate::{
     error::JaktError,
     lexer::lex,
-    parser::{parse_file, Block, Expression, Function, ParsedFile},
+    parser::{parse_file, Block, Expression, Function, ParsedFile, Statement},
 };
 
 pub type FileId = usize;
@@ -47,6 +47,7 @@ impl Compiler {
     fn translate(&self, file: &ParsedFile) -> String {
         let mut output = String::new();
 
+        output.push_str("#include \"runtime/lib.h\"\n");
         output.push_str("#include<stdio.h>\n");
 
         for fun in &file.funs {
@@ -77,14 +78,35 @@ impl Compiler {
 
         output.push_str("{\n");
 
-        for expr in &block.stmts {
-            let expr = self.translate_expr(expr);
+        for stmt in &block.stmts {
+            let stmt = self.translate_stmt(stmt);
 
-            output.push_str(&expr);
-            output.push_str(";\n");
+            output.push_str(&stmt);
         }
 
         output.push_str("}\n");
+
+        output
+    }
+
+    fn translate_stmt(&self, stmt: &Statement) -> String {
+        let mut output = String::new();
+        match stmt {
+            Statement::Expression(expr) => {
+                let expr = self.translate_expr(&expr);
+                output.push_str(&expr)
+            }
+            Statement::Defer(block) => {
+                // NOTE: We let the preprocessor generate a unique name for the RAII helper.
+                output.push_str("#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n");
+                output.push_str("ScopeGuard __SCOPE_GUARD_NAME  ([&] \n");
+                output.push_str("#undef __SCOPE_GUARD_NAME\n");
+                output.push_str(&self.translate_block(block));
+                output.push_str(")");
+            }
+        }
+
+        output.push_str(";\n");
 
         output
     }

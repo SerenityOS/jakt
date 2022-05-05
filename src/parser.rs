@@ -76,8 +76,14 @@ pub struct Parameter {
 }
 
 #[derive(Debug)]
+pub enum Statement {
+    Expression(Expression),
+    Defer(Block),
+}
+
+#[derive(Debug)]
 pub struct Block {
-    pub stmts: Vec<Expression>,
+    pub stmts: Vec<Statement>,
 }
 
 impl Block {
@@ -210,8 +216,8 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> Result<Block, JaktErr
                 *index += 1;
             }
             _ => {
-                let expr = parse_expression(tokens, index)?;
-                block.stmts.push(expr);
+                let stmt = parse_statement(tokens, index)?;
+                block.stmts.push(stmt);
                 *index += 1;
             }
         }
@@ -221,6 +227,23 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> Result<Block, JaktErr
         "expected complete block".to_string(),
         tokens[(*index - 1)].span,
     ))
+}
+
+pub fn parse_statement(tokens: &[Token], index: &mut usize) -> Result<Statement, JaktError> {
+    match &tokens[*index] {
+        Token {
+            contents: TokenContents::Name(name),
+            ..
+        } if name.as_str() == "defer" => {
+            *index += 1;
+            let block = parse_block(tokens, index)?;
+            Ok(Statement::Defer(block))
+        }
+        _ => {
+            let expr = parse_expression(&tokens, index)?;
+            Ok(Statement::Expression(expr))
+        }
+    }
 }
 
 pub fn parse_expression(tokens: &[Token], index: &mut usize) -> Result<Expression, JaktError> {
