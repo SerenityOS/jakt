@@ -76,9 +76,12 @@ pub enum TokenContents {
     RParen,
     LCurly,
     RCurly,
+    Plus,
     Minus,
     Equals,
     GreaterThan,
+    Asterisk,
+    ForwardSlash,
     Comma,
     Eol,
     Eof,
@@ -149,13 +152,40 @@ impl Block {
     }
 }
 
+// TODO: add spans to individual expressions
+// so we can give better errors during typecheck
 #[derive(Debug)]
 pub enum Expression {
+    // Standalone
     Call(Call),
     Int64(i64),
     QuotedString(String),
+    BinaryOp(Box<Expression>, Box<Expression>, Box<Expression>),
     Var(String),
+
+    // Not standalone
+    Operator(Operator),
+
+    // Parsing error
     Garbage,
+}
+
+#[derive(Debug)]
+pub enum Operator {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+}
+
+impl Expression {
+    pub fn precedence(&self) -> u64 {
+        match self {
+            Expression::Operator(Operator::Multiply) | Expression::Operator(Operator::Divide) => 95,
+            Expression::Operator(Operator::Add) | Expression::Operator(Operator::Subtract) => 90,
+            _ => 0,
+        }
+    }
 }
 
 impl ParsedFile {
@@ -390,7 +420,6 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (Block, Option<JaktEr
                 error = error.or(err);
 
                 block.stmts.push(stmt);
-                *index += 1;
             }
         }
     }
@@ -490,6 +519,104 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
 }
 
 pub fn parse_expression(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
+    // As the expr_stack grows, we increase the required precedence to grow larger
+    // If, at any time, the operator we're looking at is the same or lower precedence
+    // of what is in the expression stack, we collapse the expression stack.
+
+    let mut error = None;
+
+    let mut expr_stack: Vec<Expression> = vec![];
+    let mut last_prec = 1000000;
+
+    let (lhs, err) = parse_operand(tokens, index);
+    error = error.or(err);
+
+    expr_stack.push(lhs);
+
+    while *index < tokens.len() {
+        // Test to see if the next token is an operator
+
+        let (op, err) = parse_operator(tokens, index);
+        if err.is_some() {
+            break;
+        }
+
+        let precedence = op.precedence();
+
+        if *index == tokens.len() {
+            error = error.or(Some(JaktError::ParserError(
+                "incomplete math expression".to_string(),
+                tokens[*index - 1].span,
+            )));
+
+            expr_stack.push(Expression::Garbage);
+            expr_stack.push(Expression::Garbage);
+            break;
+        }
+
+        let (rhs, err) = parse_operand(tokens, index);
+        error = error.or(err);
+
+        while precedence <= last_prec && expr_stack.len() > 1 {
+            let rhs = expr_stack
+                .pop()
+                .expect("internal error: expression stack empty");
+
+            let op = expr_stack
+                .pop()
+                .expect("internal error: expression stack empty");
+
+            last_prec = op.precedence();
+
+            if last_prec < precedence {
+                expr_stack.push(op);
+                expr_stack.push(rhs);
+                break;
+            }
+
+            let lhs = expr_stack
+                .pop()
+                .expect("internal error: expression stack empty");
+
+            expr_stack.push(Expression::BinaryOp(
+                Box::new(lhs),
+                Box::new(op),
+                Box::new(rhs),
+            ));
+        }
+
+        expr_stack.push(op);
+        expr_stack.push(rhs);
+
+        last_prec = precedence;
+    }
+
+    while expr_stack.len() != 1 {
+        let rhs = expr_stack
+            .pop()
+            .expect("internal error: expression stack empty");
+        let op = expr_stack
+            .pop()
+            .expect("internal error: expression stack empty");
+        let lhs = expr_stack
+            .pop()
+            .expect("internal error: expression stack empty");
+
+        expr_stack.push(Expression::BinaryOp(
+            Box::new(lhs),
+            Box::new(op),
+            Box::new(rhs),
+        ));
+    }
+
+    let output = expr_stack
+        .pop()
+        .expect("internal error: expression stack empty");
+
+    (output, error)
+}
+
+pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
     let mut error = None;
 
     match &tokens[*index].contents {
@@ -523,6 +650,34 @@ pub fn parse_expression(tokens: &[Token], index: &mut usize) -> (Expression, Opt
             Some(JaktError::ParserError(
                 "unsupported expression".to_string(),
                 tokens[*index].span,
+            )),
+        ),
+    }
+}
+
+pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
+    match &tokens[*index].contents {
+        TokenContents::Plus => {
+            *index += 1;
+            (Expression::Operator(Operator::Add), None)
+        }
+        TokenContents::Minus => {
+            *index += 1;
+            (Expression::Operator(Operator::Subtract), None)
+        }
+        TokenContents::Asterisk => {
+            *index += 1;
+            (Expression::Operator(Operator::Multiply), None)
+        }
+        TokenContents::ForwardSlash => {
+            *index += 1;
+            (Expression::Operator(Operator::Divide), None)
+        }
+        _ => (
+            Expression::Garbage,
+            Some(JaktError::ParserError(
+                "unknown operator".to_string(),
+                tokens[*index - 1].span,
             )),
         ),
     }

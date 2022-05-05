@@ -1,0 +1,7 @@
+fun subtract(x: i64, y: i64) {
+    print(x - y)
+}
+
+fun main() {
+    subtract(10, 3)
+}

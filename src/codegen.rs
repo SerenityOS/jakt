@@ -1,4 +1,4 @@
-use crate::parser::{Block, Expression, Function, ParsedFile, Statement, Type};
+use crate::parser::{Block, Expression, Function, Operator, ParsedFile, Statement, Type};
 
 const INDENT_SIZE: usize = 4;
 
@@ -122,7 +122,7 @@ fn translate_stmt(indent: usize, stmt: &Statement) -> String {
         Statement::Expression(expr) => {
             let expr = translate_expr(indent, &expr);
             output.push_str(&expr);
-            output.push_str(");\n");
+            output.push_str(";\n");
         }
         Statement::Defer(block) => {
             // NOTE: We let the preprocessor generate a unique name for the RAII helper.
@@ -184,13 +184,36 @@ fn translate_expr(indent: usize, expr: &Expression) -> String {
             } else {
                 output.push_str(&call.name);
                 output.push('(');
+
+                let mut first = true;
                 for param in &call.args {
+                    if !first {
+                        output.push_str(", ");
+                    } else {
+                        first = false;
+                    }
+
                     output.push_str(&translate_expr(indent, &param.1));
                 }
                 output.push(')');
             }
         }
-        Expression::Garbage => {
+        Expression::BinaryOp(lhs, op, rhs) => {
+            output.push('(');
+            output.push_str(&translate_expr(indent, lhs));
+            match **op {
+                Expression::Operator(Operator::Add) => output.push_str(" + "),
+                Expression::Operator(Operator::Subtract) => output.push_str(" - "),
+                Expression::Operator(Operator::Multiply) => output.push_str(" * "),
+                Expression::Operator(Operator::Divide) => output.push_str(" / "),
+                _ => {
+                    panic!("Cannot codegen garbage operator")
+                }
+            }
+            output.push_str(&translate_expr(indent, rhs));
+            output.push(')');
+        }
+        Expression::Garbage | Expression::Operator(_) => {
             // Incorrect parse/typecheck
             // Probably shouldn't be able to get to this point?
         }
