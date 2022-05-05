@@ -4,9 +4,10 @@ use crate::{
     parser::{Span, Token, TokenContents},
 };
 
-pub fn lex(file_id: FileId, bytes: &[u8]) -> Result<Vec<Token>, JaktError> {
+pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
     let mut output = Vec::new();
     let mut index = 0;
+    let mut error = None;
 
     while index < bytes.len() {
         let c = bytes[index];
@@ -95,7 +96,8 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> Result<Vec<Token>, JaktError> {
         } else {
             // Otherwise, try to consume a token.
 
-            let token = lex_item(file_id, bytes, &mut index)?;
+            let (token, err) = lex_item(file_id, bytes, &mut index);
+            error = error.or(err);
 
             output.push(token);
         }
@@ -110,10 +112,12 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> Result<Vec<Token>, JaktError> {
         },
     });
 
-    Ok(output)
+    (output, error)
 }
 
-fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> Result<Token, JaktError> {
+fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<JaktError>) {
+    let mut error = None;
+
     if bytes[*index].is_ascii_digit() {
         // Number
         let start = *index;
@@ -125,14 +129,20 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> Result<Token, J
         let number: Result<i64, _> = str.parse();
 
         match number {
-            Ok(number) => Ok(Token::new(
-                TokenContents::Number(number),
-                Span::new(file_id, start, *index),
-            )),
-            Err(_) => Err(JaktError::ParserError(
-                "could not parse int".to_string(),
-                Span::new(file_id, start, *index),
-            )),
+            Ok(number) => (
+                Token::new(
+                    TokenContents::Number(number),
+                    Span::new(file_id, start, *index),
+                ),
+                None,
+            ),
+            Err(_) => (
+                Token::unknown(Span::new(file_id, start, *index)),
+                Some(JaktError::ParserError(
+                    "could not parse int".to_string(),
+                    Span::new(file_id, start, *index),
+                )),
+            ),
         }
     } else if bytes[*index] == b'"' {
         // Quoted string
@@ -153,10 +163,10 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> Result<Token, J
         }
 
         if *index == bytes.len() || bytes[*index] != b'"' {
-            return Err(JaktError::ParserError(
+            error = error.or(Some(JaktError::ParserError(
                 "Expected quote".to_string(),
                 Span::new(file_id, *index, *index),
-            ));
+            )));
         }
 
         // Everything but the quotes
@@ -165,11 +175,14 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> Result<Token, J
         let end = *index;
         *index += 1;
 
-        Ok(Token::new(
-            TokenContents::QuotedString(str.to_string()),
-            Span::new(file_id, start, end),
-        ))
-    } else {
+        (
+            Token::new(
+                TokenContents::QuotedString(str.to_string()),
+                Span::new(file_id, start, end),
+            ),
+            error,
+        )
+    } else if bytes[*index].is_ascii_alphabetic() || bytes[*index] == b'_' {
         // Symbol name
         let start = *index;
         *index += 1;
@@ -191,9 +204,23 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> Result<Token, J
         // Everything but the quotes
         let str = String::from_utf8_lossy(&bytes[start..*index]);
 
-        Ok(Token::new(
-            TokenContents::Name(str.to_string()),
-            Span::new(file_id, start, *index),
-        ))
+        (
+            Token::new(
+                TokenContents::Name(str.to_string()),
+                Span::new(file_id, start, *index),
+            ),
+            error,
+        )
+    } else {
+        let span = Span::new(file_id, *index, *index + 1);
+
+        error = error.or(Some(JaktError::ParserError(
+            "unknown character".to_string(),
+            span,
+        )));
+
+        *index += 1;
+
+        (Token::unknown(span), error)
     }
 }
