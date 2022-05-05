@@ -123,6 +123,17 @@ fn translate_stmt(stmt: &Statement) -> String {
             output.push_str(&expr);
             output.push_str(");\n")
         }
+        Statement::VarDecl(var_decl, expr) => {
+            if !var_decl.mutable {
+                output.push_str("const ");
+            }
+            output.push_str(&translate_type(&var_decl.ty));
+            output.push(' ');
+            output.push_str(&var_decl.name);
+            output.push_str(" = ");
+            output.push_str(&translate_expr(expr));
+            output.push_str(";\n");
+        }
     }
 
     output.push_str(";\n");

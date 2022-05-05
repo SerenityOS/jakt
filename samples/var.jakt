@@ -1,0 +1,4 @@
+fun main() {
+    let msg: String = "Well, hello friends."
+    print(msg)
+}
