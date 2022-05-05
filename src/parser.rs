@@ -22,6 +22,13 @@ pub enum Type {
     Void,
 }
 
+#[derive(Debug)]
+pub struct VarDecl {
+    pub name: String,
+    pub ty: Type,
+    pub mutable: bool,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Span {
     pub file_id: FileId,
@@ -51,6 +58,7 @@ pub enum TokenContents {
     LCurly,
     RCurly,
     Minus,
+    Equals,
     GreaterThan,
     Comma,
     Eol,
@@ -86,6 +94,7 @@ pub struct Function {
 pub enum Statement {
     Expression(Expression),
     Defer(Block),
+    VarDecl(VarDecl, Expression),
     Return(Expression),
 }
 
@@ -210,38 +219,12 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> Result<Function, J
                             *index += 1;
                         }
 
-                        TokenContents::Name(name) => {
+                        TokenContents::Name(..) => {
                             // Now lets parse a parameter
 
-                            let param_name = name.to_string();
+                            let var_decl = parse_variable_declaration(tokens, index)?;
 
-                            *index += 1;
-
-                            if *index < tokens.len() {
-                                match &tokens[*index].contents {
-                                    TokenContents::Colon => {
-                                        *index += 1;
-                                    }
-                                    _ => {
-                                        return Err(JaktError::ParserError(
-                                            "expected ':'".to_string(),
-                                            tokens[*index].span,
-                                        ));
-                                    }
-                                }
-                            }
-
-                            if *index < tokens.len() {
-                                let param_type = parse_typename(tokens, index)?;
-                                params.push((param_name, param_type));
-
-                                *index += 1;
-                            } else {
-                                return Err(JaktError::ParserError(
-                                    "expected type".to_string(),
-                                    tokens[*index].span,
-                                ));
-                            }
+                            params.push((var_decl.name, var_decl.ty));
                         }
                         _ => {
                             return Err(JaktError::ParserError(
@@ -372,6 +355,46 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> Result<Statement,
             let expr = parse_expression(tokens, index)?;
             Ok(Statement::Return(expr))
         }
+        Token {
+            contents: TokenContents::Name(name),
+            ..
+        } if name.as_str() == "let" || name.as_str() == "var" => {
+            let mutable = name == "var";
+
+            *index += 1;
+
+            let mut var_decl = parse_variable_declaration(tokens, index)?;
+            var_decl.mutable = mutable;
+
+            // Hardwire an initialiser for now, but we may not want this long-term
+            if *index < tokens.len() {
+                match &tokens[*index].contents {
+                    TokenContents::Equals => {
+                        *index += 1;
+
+                        if *index < tokens.len() {
+                            let expr = parse_expression(tokens, index)?;
+
+                            Ok(Statement::VarDecl(var_decl, expr))
+                        } else {
+                            Err(JaktError::ParserError(
+                                "expected initializer".to_string(),
+                                tokens[*index - 1].span,
+                            ))
+                        }
+                    }
+                    _ => Err(JaktError::ParserError(
+                        "expected initializer".to_string(),
+                        tokens[*index].span,
+                    )),
+                }
+            } else {
+                Err(JaktError::ParserError(
+                    "expected initializer".to_string(),
+                    tokens[*index].span,
+                ))
+            }
+        }
         _ => {
             let expr = parse_expression(&tokens, index)?;
             Ok(Statement::Expression(expr))
@@ -412,6 +435,55 @@ pub fn parse_expression(tokens: &[Token], index: &mut usize) -> Result<Expressio
     }
 }
 
+pub fn parse_variable_declaration(
+    tokens: &[Token],
+    index: &mut usize,
+) -> Result<VarDecl, JaktError> {
+    match &tokens[*index].contents {
+        TokenContents::Name(name) => {
+            let var_name = name.to_string();
+
+            *index += 1;
+
+            if *index < tokens.len() {
+                match &tokens[*index].contents {
+                    TokenContents::Colon => {
+                        *index += 1;
+                    }
+                    _ => {
+                        return Err(JaktError::ParserError(
+                            "expected ':'".to_string(),
+                            tokens[*index].span,
+                        ));
+                    }
+                }
+            }
+
+            if *index < tokens.len() {
+                let var_type = parse_typename(tokens, index)?;
+                let result = VarDecl {
+                    name: var_name,
+                    ty: var_type,
+                    mutable: false,
+                };
+
+                *index += 1;
+
+                Ok(result)
+            } else {
+                Err(JaktError::ParserError(
+                    "expected type".to_string(),
+                    tokens[*index].span,
+                ))
+            }
+        }
+        _ => Err(JaktError::ParserError(
+            "expected type".to_string(),
+            tokens[*index].span,
+        )),
+    }
+}
+
 pub fn parse_typename(tokens: &[Token], index: &mut usize) -> Result<Type, JaktError> {
     match &tokens[*index] {
         Token {
@@ -435,7 +507,7 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> Result<Call, JaktError
     match &tokens[*index] {
         Token {
             contents: TokenContents::Name(name),
-            span,
+            ..
         } => {
             call.name = name.to_string();
 
