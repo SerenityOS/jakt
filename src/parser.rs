@@ -78,6 +78,7 @@ pub struct Parameter {
 #[derive(Debug)]
 pub enum Statement {
     Expression(Expression),
+    Defer(Block),
 }
 
 #[derive(Debug)]
@@ -229,8 +230,20 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> Result<Block, JaktErr
 }
 
 pub fn parse_statement(tokens: &[Token], index: &mut usize) -> Result<Statement, JaktError> {
-    let expr = parse_expression(&tokens, index)?;
-    Ok(Statement::Expression(expr))
+    match &tokens[*index] {
+        Token {
+            contents: TokenContents::Name(name),
+            ..
+        } if name.as_str() == "defer" => {
+            *index += 1;
+            let block = parse_block(tokens, index)?;
+            Ok(Statement::Defer(block))
+        }
+        _ => {
+            let expr = parse_expression(&tokens, index)?;
+            Ok(Statement::Expression(expr))
+        }
+    }
 }
 
 pub fn parse_expression(tokens: &[Token], index: &mut usize) -> Result<Expression, JaktError> {
