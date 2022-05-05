@@ -1,0 +1,7 @@
+fun greet() -> String {
+    return "Well, hello friends."
+}
+
+fun main() {
+    print(greet())
+}

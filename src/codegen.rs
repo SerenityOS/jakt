@@ -26,7 +26,8 @@ pub fn translate(file: &ParsedFile) -> String {
 fn translate_function(fun: &Function) -> String {
     let mut output = String::new();
 
-    output.push_str("void ");
+    output.push_str(&translate_type(&fun.return_type));
+    output.push(' ');
     output.push_str(&fun.name);
     output.push('(');
 
@@ -54,7 +55,8 @@ fn translate_function(fun: &Function) -> String {
 fn translate_function_predecl(fun: &Function) -> String {
     let mut output = String::new();
 
-    output.push_str("void ");
+    output.push_str(&translate_type(&fun.return_type));
+    output.push(' ');
     output.push_str(&fun.name);
     output.push('(');
 
@@ -80,6 +82,7 @@ fn translate_type(ty: &Type) -> String {
     match ty {
         Type::String => String::from("char*"),
         Type::I64 => String::from("int"), // <-- FIXME to i64
+        Type::Void => String::from("void"),
     }
 }
 
@@ -113,6 +116,12 @@ fn translate_stmt(stmt: &Statement) -> String {
             output.push_str("#undef __SCOPE_GUARD_NAME\n");
             output.push_str(&translate_block(block));
             output.push_str(")");
+        }
+        Statement::Return(expr) => {
+            let expr = translate_expr(&expr);
+            output.push_str("return (");
+            output.push_str(&expr);
+            output.push_str(");\n")
         }
     }
 
