@@ -19,6 +19,7 @@ impl Call {
 pub enum Type {
     String,
     I64,
+    Void,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -49,6 +50,8 @@ pub enum TokenContents {
     RParen,
     LCurly,
     RCurly,
+    Minus,
+    GreaterThan,
     Comma,
     Eol,
     Eof,
@@ -76,12 +79,14 @@ pub struct Function {
     pub name: String,
     pub params: Vec<(String, Type)>,
     pub block: Block,
+    pub return_type: Type,
 }
 
 #[derive(Debug)]
 pub enum Statement {
     Expression(Expression),
     Defer(Block),
+    Return(Expression),
 }
 
 #[derive(Debug)]
@@ -254,12 +259,46 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> Result<Function, J
                     ));
                 }
 
+                let mut return_type = Type::Void;
+
+                if *index + 2 < tokens.len() {
+                    match &tokens[*index].contents {
+                        TokenContents::Minus => {
+                            *index += 1;
+
+                            match &tokens[*index].contents {
+                                TokenContents::GreaterThan => {
+                                    *index += 1;
+
+                                    return_type = parse_typename(tokens, index)?;
+                                    *index += 1;
+                                }
+                                _ => {
+                                    return Err(JaktError::ParserError(
+                                        "expected ->".to_string(),
+                                        tokens[*index - 1].span,
+                                    ))
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+
+                if *index >= tokens.len() {
+                    return Err(JaktError::ParserError(
+                        "incomplete function".to_string(),
+                        tokens[*index - 1].span,
+                    ));
+                }
+
                 let block = parse_block(tokens, index)?;
 
                 return Ok(Function {
                     name: fun_name.clone(),
                     params,
                     block,
+                    return_type,
                 });
             }
             _ => Err(JaktError::ParserError(
@@ -324,6 +363,14 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> Result<Statement,
             *index += 1;
             let block = parse_block(tokens, index)?;
             Ok(Statement::Defer(block))
+        }
+        Token {
+            contents: TokenContents::Name(name),
+            ..
+        } if name.as_str() == "return" => {
+            *index += 1;
+            let expr = parse_expression(tokens, index)?;
+            Ok(Statement::Return(expr))
         }
         _ => {
             let expr = parse_expression(&tokens, index)?;
