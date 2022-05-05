@@ -56,5 +56,5 @@ fn display_error(parser: &Compiler, msg: &str, span: Span) {
         index += 1;
     }
     println!("");
-    println!("-----");
+    println!("\u{001b}[0m-----");
 }

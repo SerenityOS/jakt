@@ -26,11 +26,32 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                 TokenContents::Colon,
                 Span::new(file_id, start, start + 1),
             ));
+        } else if c == b'+' {
+            let start = index;
+            index += 1;
+            output.push(Token::new(
+                TokenContents::Plus,
+                Span::new(file_id, start, start + 1),
+            ));
         } else if c == b'-' {
             let start = index;
             index += 1;
             output.push(Token::new(
                 TokenContents::Minus,
+                Span::new(file_id, start, start + 1),
+            ));
+        } else if c == b'*' {
+            let start = index;
+            index += 1;
+            output.push(Token::new(
+                TokenContents::Asterisk,
+                Span::new(file_id, start, start + 1),
+            ));
+        } else if c == b'/' {
+            let start = index;
+            index += 1;
+            output.push(Token::new(
+                TokenContents::ForwardSlash,
                 Span::new(file_id, start, start + 1),
             ));
         } else if c == b'=' {
