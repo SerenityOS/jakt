@@ -1,10 +1,12 @@
 use crate::parser::{Block, Expression, Function, ParsedFile, Statement, Type};
 
+const INDENT_SIZE: usize = 4;
+
 pub fn translate(file: &ParsedFile) -> String {
     let mut output = String::new();
 
     output.push_str("#include \"runtime/lib.h\"\n");
-    output.push_str("#include<stdio.h>\n");
+    output.push_str("#include<iostream>\n");
 
     for fun in &file.funs {
         let fun_output = translate_function_predecl(fun);
@@ -46,7 +48,7 @@ fn translate_function(fun: &Function) -> String {
     }
     output.push(')');
 
-    let block = translate_block(&fun.block);
+    let block = translate_block(0, &fun.block);
     output.push_str(&block);
 
     output
@@ -95,13 +97,13 @@ fn translate_type(ty: &Type) -> String {
     }
 }
 
-fn translate_block(block: &Block) -> String {
+fn translate_block(indent: usize, block: &Block) -> String {
     let mut output = String::new();
 
     output.push_str("{\n");
 
     for stmt in &block.stmts {
-        let stmt = translate_stmt(stmt);
+        let stmt = translate_stmt(indent + INDENT_SIZE, stmt);
 
         output.push_str(&stmt);
     }
@@ -111,23 +113,27 @@ fn translate_block(block: &Block) -> String {
     output
 }
 
-fn translate_stmt(stmt: &Statement) -> String {
+fn translate_stmt(indent: usize, stmt: &Statement) -> String {
     let mut output = String::new();
+
+    output.push_str(&std::iter::repeat(' ').take(indent).collect::<String>());
+
     match stmt {
         Statement::Expression(expr) => {
-            let expr = translate_expr(&expr);
-            output.push_str(&expr)
+            let expr = translate_expr(indent, &expr);
+            output.push_str(&expr);
+            output.push_str(");\n");
         }
         Statement::Defer(block) => {
             // NOTE: We let the preprocessor generate a unique name for the RAII helper.
             output.push_str("#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n");
             output.push_str("ScopeGuard __SCOPE_GUARD_NAME  ([&] \n");
             output.push_str("#undef __SCOPE_GUARD_NAME\n");
-            output.push_str(&translate_block(block));
-            output.push_str(")");
+            output.push_str(&translate_block(indent, block));
+            output.push_str(");\n");
         }
         Statement::Return(expr) => {
-            let expr = translate_expr(&expr);
+            let expr = translate_expr(indent, &expr);
             output.push_str("return (");
             output.push_str(&expr);
             output.push_str(");\n")
@@ -140,7 +146,7 @@ fn translate_stmt(stmt: &Statement) -> String {
             output.push(' ');
             output.push_str(&var_decl.name);
             output.push_str(" = ");
-            output.push_str(&translate_expr(expr));
+            output.push_str(&translate_expr(indent, expr));
             output.push_str(";\n");
         }
         Statement::Garbage => {
@@ -149,12 +155,10 @@ fn translate_stmt(stmt: &Statement) -> String {
         }
     }
 
-    output.push_str(";\n");
-
     output
 }
 
-fn translate_expr(expr: &Expression) -> String {
+fn translate_expr(indent: usize, expr: &Expression) -> String {
     let mut output = String::new();
 
     match expr {
@@ -171,15 +175,20 @@ fn translate_expr(expr: &Expression) -> String {
         }
         Expression::Call(call) => {
             if call.name == "print" {
-                output.push_str("printf");
+                output.push_str("std::cout << ");
+                output.push('(');
+                for param in &call.args {
+                    output.push_str(&translate_expr(indent, &param.1));
+                }
+                output.push_str(") << std::endl");
             } else {
                 output.push_str(&call.name);
+                output.push('(');
+                for param in &call.args {
+                    output.push_str(&translate_expr(indent, &param.1));
+                }
+                output.push(')');
             }
-            output.push('(');
-            for param in &call.args {
-                output.push_str(&translate_expr(&param.1));
-            }
-            output.push(')');
         }
         Expression::Garbage => {
             // Incorrect parse/typecheck
