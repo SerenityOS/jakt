@@ -18,7 +18,16 @@ impl Call {
 #[derive(Debug)]
 pub enum Type {
     String,
+    I8,
+    I16,
+    I32,
     I64,
+    U8,
+    U16,
+    U32,
+    U64,
+    F32,
+    F64,
     Void,
 }
 
@@ -490,7 +499,16 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> Result<Type, JaktE
             contents: TokenContents::Name(name),
             span,
         } => match name.as_str() {
+            "i8" => Ok(Type::I8),
+            "i16" => Ok(Type::I16),
+            "i32" => Ok(Type::I32),
             "i64" => Ok(Type::I64),
+            "u8" => Ok(Type::U8),
+            "u16" => Ok(Type::U16),
+            "u32" => Ok(Type::U32),
+            "u64" => Ok(Type::U64),
+            "f32" => Ok(Type::F32),
+            "f64" => Ok(Type::F64),
             "String" => Ok(Type::String),
             _ => Err(JaktError::ParserError("unknown type".to_string(), *span)),
         },
