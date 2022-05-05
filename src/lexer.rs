@@ -25,6 +25,20 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> Result<Vec<Token>, JaktError> {
                 TokenContents::Colon,
                 Span::new(file_id, start, start + 1),
             ));
+        } else if c == b'-' {
+            let start = index;
+            index += 1;
+            output.push(Token::new(
+                TokenContents::Minus,
+                Span::new(file_id, start, start + 1),
+            ));
+        } else if c == b'>' {
+            let start = index;
+            index += 1;
+            output.push(Token::new(
+                TokenContents::GreaterThan,
+                Span::new(file_id, start, start + 1),
+            ));
         } else if c == b',' {
             let start = index;
             index += 1;
