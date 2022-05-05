@@ -39,18 +39,15 @@ fn display_error(parser: &Compiler, msg: &str, span: Span) {
         if index < file_contents.len() {
             c = file_contents[index];
         } else {
-            c = b' ';
+            c = b'_';
         }
 
         if (index >= span.start && index < span.end)
             || (span.start == span.end && index == span.start)
         {
             // In the error span
-            if c == b' ' {
-                print!("\u{001b}[31m█")
-            } else {
-                print!("\u{001b}[31m{}", c as char)
-            }
+
+            print!("\u{001b}[31m{}", c as char)
         } else {
             print!("\u{001b}[0m{}", c as char)
         }

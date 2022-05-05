@@ -1,0 +1,7 @@
+fun greet() {
+    print("Well, hello friends.")
+}
+
+fun main() {
+    greet()
+}
