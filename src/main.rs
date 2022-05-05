@@ -38,8 +38,10 @@ fn display_error(parser: &Compiler, msg: &str, span: Span) {
         let c;
         if index < file_contents.len() {
             c = file_contents[index];
-        } else {
+        } else if span.start == span.end && index == span.start {
             c = b'_';
+        } else {
+            c = b' ';
         }
 
         if (index >= span.start && index < span.end)

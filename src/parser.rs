@@ -38,6 +38,16 @@ pub struct VarDecl {
     pub mutable: bool,
 }
 
+impl VarDecl {
+    pub fn new() -> Self {
+        Self {
+            name: String::new(),
+            ty: Type::Void,
+            mutable: false,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Span {
     pub file_id: FileId,
@@ -72,6 +82,8 @@ pub enum TokenContents {
     Comma,
     Eol,
     Eof,
+
+    Garbage,
 }
 
 #[derive(Debug)]
@@ -83,6 +95,13 @@ pub struct Token {
 impl Token {
     pub fn new(contents: TokenContents, span: Span) -> Self {
         Self { contents, span }
+    }
+
+    pub fn unknown(span: Span) -> Self {
+        Self {
+            contents: TokenContents::Garbage,
+            span,
+        }
     }
 }
 
@@ -99,12 +118,24 @@ pub struct Function {
     pub return_type: Type,
 }
 
+impl Function {
+    pub fn new() -> Self {
+        Function {
+            name: String::new(),
+            params: Vec::new(),
+            block: Block::new(),
+            return_type: Type::Void,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum Statement {
     Expression(Expression),
     Defer(Block),
     VarDecl(VarDecl, Expression),
     Return(Expression),
+    Garbage,
 }
 
 #[derive(Debug)]
@@ -124,6 +155,7 @@ pub enum Expression {
     Int64(i64),
     QuotedString(String),
     Var(String),
+    Garbage,
 }
 
 impl ParsedFile {
@@ -132,7 +164,9 @@ impl ParsedFile {
     }
 }
 
-pub fn parse_file(tokens: &[Token]) -> Result<ParsedFile, JaktError> {
+pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
+    let mut error = None;
+
     let mut parsed_file = ParsedFile::new();
 
     let mut index = 0;
@@ -146,14 +180,16 @@ pub fn parse_file(tokens: &[Token]) -> Result<ParsedFile, JaktError> {
                 span,
             } => match name.as_str() {
                 "fun" => {
-                    let fun = parse_function(tokens, &mut index)?;
+                    let (fun, err) = parse_function(tokens, &mut index);
+                    error = error.or(err);
+
                     parsed_file.funs.push(fun);
                 }
                 _ => {
-                    return Err(JaktError::ParserError(
+                    error = error.or(Some(JaktError::ParserError(
                         "unexpected keyword".to_string(),
                         *span,
-                    ))
+                    )));
                 }
             },
             Token {
@@ -170,18 +206,20 @@ pub fn parse_file(tokens: &[Token]) -> Result<ParsedFile, JaktError> {
                 break;
             }
             Token { span, .. } => {
-                return Err(JaktError::ParserError(
+                error = error.or(Some(JaktError::ParserError(
                     "unexpected token (expected keyword)".to_string(),
                     *span,
-                ));
+                )));
             }
         }
     }
 
-    Ok(parsed_file)
+    (parsed_file, error)
 }
 
-pub fn parse_function(tokens: &[Token], index: &mut usize) -> Result<Function, JaktError> {
+pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<JaktError>) {
+    let mut error = None;
+
     *index += 1;
 
     if *index < tokens.len() {
@@ -202,17 +240,17 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> Result<Function, J
                             *index += 1;
                         }
                         _ => {
-                            return Err(JaktError::ParserError(
+                            error = error.or(Some(JaktError::ParserError(
                                 "expected '('".to_string(),
                                 tokens[*index].span,
-                            ));
+                            )));
                         }
                     }
                 } else {
-                    return Err(JaktError::ParserError(
+                    error = error.or(Some(JaktError::ParserError(
                         "incomplete function".to_string(),
                         tokens[*index - 1].span,
-                    ));
+                    )));
                 }
 
                 let mut params = Vec::new();
@@ -231,24 +269,25 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> Result<Function, J
                         TokenContents::Name(..) => {
                             // Now lets parse a parameter
 
-                            let var_decl = parse_variable_declaration(tokens, index)?;
+                            let (var_decl, err) = parse_variable_declaration(tokens, index);
+                            error = error.or(err);
 
                             params.push((var_decl.name, var_decl.ty));
                         }
                         _ => {
-                            return Err(JaktError::ParserError(
+                            error = error.or(Some(JaktError::ParserError(
                                 "expected parameter".to_string(),
                                 tokens[*index].span,
-                            ));
+                            )));
                         }
                     }
                 }
 
                 if *index >= tokens.len() {
-                    return Err(JaktError::ParserError(
+                    error = error.or(Some(JaktError::ParserError(
                         "incomplete function".to_string(),
                         tokens[*index - 1].span,
-                    ));
+                    )));
                 }
 
                 let mut return_type = Type::Void;
@@ -262,14 +301,17 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> Result<Function, J
                                 TokenContents::GreaterThan => {
                                     *index += 1;
 
-                                    return_type = parse_typename(tokens, index)?;
+                                    let (ret_type, err) = parse_typename(tokens, index);
+                                    return_type = ret_type;
+                                    error = error.or(err);
+
                                     *index += 1;
                                 }
                                 _ => {
-                                    return Err(JaktError::ParserError(
+                                    error = error.or(Some(JaktError::ParserError(
                                         "expected ->".to_string(),
                                         tokens[*index - 1].span,
-                                    ))
+                                    )));
                                 }
                             }
                         }
@@ -278,36 +320,47 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> Result<Function, J
                 }
 
                 if *index >= tokens.len() {
-                    return Err(JaktError::ParserError(
+                    error = error.or(Some(JaktError::ParserError(
                         "incomplete function".to_string(),
                         tokens[*index - 1].span,
-                    ));
+                    )));
                 }
 
-                let block = parse_block(tokens, index)?;
+                let (block, err) = parse_block(tokens, index);
+                error = error.or(err);
 
-                return Ok(Function {
-                    name: fun_name.clone(),
-                    params,
-                    block,
-                    return_type,
-                });
+                return (
+                    Function {
+                        name: fun_name.clone(),
+                        params,
+                        block,
+                        return_type,
+                    },
+                    error,
+                );
             }
-            _ => Err(JaktError::ParserError(
-                "expected function name".to_string(),
-                tokens[*index].span,
-            )),
+            _ => (
+                Function::new(),
+                Some(JaktError::ParserError(
+                    "expected function name".to_string(),
+                    tokens[*index].span,
+                )),
+            ),
         }
     } else {
-        Err(JaktError::ParserError(
-            "incomplete function definition".to_string(),
-            tokens[*index].span,
-        ))
+        (
+            Function::new(),
+            Some(JaktError::ParserError(
+                "incomplete function definition".to_string(),
+                tokens[*index].span,
+            )),
+        )
     }
 }
 
-pub fn parse_block(tokens: &[Token], index: &mut usize) -> Result<Block, JaktError> {
+pub fn parse_block(tokens: &[Token], index: &mut usize) -> (Block, Option<JaktError>) {
     let mut block = Block::new();
+    let mut error = None;
 
     *index += 1;
 
@@ -318,7 +371,7 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> Result<Block, JaktErr
                 ..
             } => {
                 *index += 1;
-                return Ok(block);
+                return (block, error);
             }
             Token {
                 contents: TokenContents::Semicolon,
@@ -333,36 +386,47 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> Result<Block, JaktErr
                 *index += 1;
             }
             _ => {
-                let stmt = parse_statement(tokens, index)?;
+                let (stmt, err) = parse_statement(tokens, index);
+                error = error.or(err);
+
                 block.stmts.push(stmt);
                 *index += 1;
             }
         }
     }
 
-    Err(JaktError::ParserError(
-        "expected complete block".to_string(),
-        tokens[(*index - 1)].span,
-    ))
+    (
+        Block::new(),
+        Some(JaktError::ParserError(
+            "expected complete block".to_string(),
+            tokens[(*index - 1)].span,
+        )),
+    )
 }
 
-pub fn parse_statement(tokens: &[Token], index: &mut usize) -> Result<Statement, JaktError> {
+pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option<JaktError>) {
+    let mut error = None;
+
     match &tokens[*index] {
         Token {
             contents: TokenContents::Name(name),
             ..
         } if name.as_str() == "defer" => {
             *index += 1;
-            let block = parse_block(tokens, index)?;
-            Ok(Statement::Defer(block))
+            let (block, err) = parse_block(tokens, index);
+            error = error.or(err);
+
+            (Statement::Defer(block), error)
         }
         Token {
             contents: TokenContents::Name(name),
             ..
         } if name.as_str() == "return" => {
             *index += 1;
-            let expr = parse_expression(tokens, index)?;
-            Ok(Statement::Return(expr))
+            let (expr, err) = parse_expression(tokens, index);
+            error = error.or(err);
+
+            (Statement::Return(expr), error)
         }
         Token {
             contents: TokenContents::Name(name),
@@ -372,7 +436,9 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> Result<Statement,
 
             *index += 1;
 
-            let mut var_decl = parse_variable_declaration(tokens, index)?;
+            let (mut var_decl, err) = parse_variable_declaration(tokens, index);
+            error = error.or(err);
+
             var_decl.mutable = mutable;
 
             // Hardwire an initialiser for now, but we may not want this long-term
@@ -382,44 +448,59 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> Result<Statement,
                         *index += 1;
 
                         if *index < tokens.len() {
-                            let expr = parse_expression(tokens, index)?;
+                            let (expr, err) = parse_expression(tokens, index);
+                            error = error.or(err);
 
-                            Ok(Statement::VarDecl(var_decl, expr))
+                            (Statement::VarDecl(var_decl, expr), error)
                         } else {
-                            Err(JaktError::ParserError(
-                                "expected initializer".to_string(),
-                                tokens[*index - 1].span,
-                            ))
+                            (
+                                Statement::Garbage,
+                                Some(JaktError::ParserError(
+                                    "expected initializer".to_string(),
+                                    tokens[*index - 1].span,
+                                )),
+                            )
                         }
                     }
-                    _ => Err(JaktError::ParserError(
+                    _ => (
+                        Statement::Garbage,
+                        Some(JaktError::ParserError(
+                            "expected initializer".to_string(),
+                            tokens[*index].span,
+                        )),
+                    ),
+                }
+            } else {
+                (
+                    Statement::Garbage,
+                    Some(JaktError::ParserError(
                         "expected initializer".to_string(),
                         tokens[*index].span,
                     )),
-                }
-            } else {
-                Err(JaktError::ParserError(
-                    "expected initializer".to_string(),
-                    tokens[*index].span,
-                ))
+                )
             }
         }
         _ => {
-            let expr = parse_expression(&tokens, index)?;
-            Ok(Statement::Expression(expr))
+            let (expr, err) = parse_expression(&tokens, index);
+            error = error.or(err);
+
+            (Statement::Expression(expr), error)
         }
     }
 }
 
-pub fn parse_expression(tokens: &[Token], index: &mut usize) -> Result<Expression, JaktError> {
+pub fn parse_expression(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
+    let mut error = None;
+
     match &tokens[*index].contents {
         TokenContents::Name(name) => {
             if *index + 1 < tokens.len() {
                 match &tokens[*index + 1].contents {
                     TokenContents::LParen => {
-                        let call: Call = parse_call(tokens, index)?;
+                        let (call, err) = parse_call(tokens, index);
+                        error = error.or(err);
 
-                        return Ok(Expression::Call(call));
+                        return (Expression::Call(call), error);
                     }
                     _ => {}
                 }
@@ -427,27 +508,32 @@ pub fn parse_expression(tokens: &[Token], index: &mut usize) -> Result<Expressio
 
             *index += 1;
 
-            Ok(Expression::Var(name.to_string()))
+            (Expression::Var(name.to_string()), error)
         }
         TokenContents::Number(number) => {
             *index += 1;
-            Ok(Expression::Int64(*number))
+            (Expression::Int64(*number), error)
         }
         TokenContents::QuotedString(str) => {
             *index += 1;
-            Ok(Expression::QuotedString(str.to_string()))
+            (Expression::QuotedString(str.to_string()), error)
         }
-        _ => Err(JaktError::ParserError(
-            "unsupported expression".to_string(),
-            tokens[*index].span,
-        )),
+        _ => (
+            Expression::Garbage,
+            Some(JaktError::ParserError(
+                "unsupported expression".to_string(),
+                tokens[*index].span,
+            )),
+        ),
     }
 }
 
 pub fn parse_variable_declaration(
     tokens: &[Token],
     index: &mut usize,
-) -> Result<VarDecl, JaktError> {
+) -> (VarDecl, Option<JaktError>) {
+    let mut error = None;
+
     match &tokens[*index].contents {
         TokenContents::Name(name) => {
             let var_name = name.to_string();
@@ -460,16 +546,21 @@ pub fn parse_variable_declaration(
                         *index += 1;
                     }
                     _ => {
-                        return Err(JaktError::ParserError(
-                            "expected ':'".to_string(),
-                            tokens[*index].span,
-                        ));
+                        (
+                            VarDecl::new(),
+                            (JaktError::ParserError(
+                                "expected ':'".to_string(),
+                                tokens[*index].span,
+                            )),
+                        );
                     }
                 }
             }
 
             if *index < tokens.len() {
-                let var_type = parse_typename(tokens, index)?;
+                let (var_type, err) = parse_typename(tokens, index);
+                error = error.or(err);
+
                 let result = VarDecl {
                     name: var_name,
                     ty: var_type,
@@ -478,49 +569,66 @@ pub fn parse_variable_declaration(
 
                 *index += 1;
 
-                Ok(result)
+                (result, error)
             } else {
-                Err(JaktError::ParserError(
-                    "expected type".to_string(),
-                    tokens[*index].span,
-                ))
+                (
+                    VarDecl {
+                        name: name.to_string(),
+                        ty: Type::Void,
+                        mutable: false,
+                    },
+                    Some(JaktError::ParserError(
+                        "expected type".to_string(),
+                        tokens[*index].span,
+                    )),
+                )
             }
         }
-        _ => Err(JaktError::ParserError(
-            "expected type".to_string(),
-            tokens[*index].span,
-        )),
+        _ => (
+            VarDecl::new(),
+            Some(JaktError::ParserError(
+                "expected name".to_string(),
+                tokens[*index].span,
+            )),
+        ),
     }
 }
 
-pub fn parse_typename(tokens: &[Token], index: &mut usize) -> Result<Type, JaktError> {
+pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (Type, Option<JaktError>) {
     match &tokens[*index] {
         Token {
             contents: TokenContents::Name(name),
             span,
         } => match name.as_str() {
-            "i8" => Ok(Type::I8),
-            "i16" => Ok(Type::I16),
-            "i32" => Ok(Type::I32),
-            "i64" => Ok(Type::I64),
-            "u8" => Ok(Type::U8),
-            "u16" => Ok(Type::U16),
-            "u32" => Ok(Type::U32),
-            "u64" => Ok(Type::U64),
-            "f32" => Ok(Type::F32),
-            "f64" => Ok(Type::F64),
-            "String" => Ok(Type::String),
-            _ => Err(JaktError::ParserError("unknown type".to_string(), *span)),
+            "i8" => (Type::I8, None),
+            "i16" => (Type::I16, None),
+            "i32" => (Type::I32, None),
+            "i64" => (Type::I64, None),
+            "u8" => (Type::U8, None),
+            "u16" => (Type::U16, None),
+            "u32" => (Type::U32, None),
+            "u64" => (Type::U64, None),
+            "f32" => (Type::F32, None),
+            "f64" => (Type::F64, None),
+            "String" => (Type::String, None),
+            _ => (
+                Type::Void,
+                Some(JaktError::ParserError("unknown type".to_string(), *span)),
+            ),
         },
-        _ => Err(JaktError::ParserError(
-            "expected function call".to_string(),
-            tokens[*index].span,
-        )),
+        _ => (
+            Type::Void,
+            Some(JaktError::ParserError(
+                "expected function call".to_string(),
+                tokens[*index].span,
+            )),
+        ),
     }
 }
 
-pub fn parse_call(tokens: &[Token], index: &mut usize) -> Result<Call, JaktError> {
+pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktError>) {
     let mut call = Call::new();
+    let mut error = None;
 
     match &tokens[*index] {
         Token {
@@ -540,14 +648,20 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> Result<Call, JaktError
                         *index += 1;
                     }
                     Token { span, .. } => {
-                        return Err(JaktError::ParserError("expected '('".to_string(), *span));
+                        return (
+                            call,
+                            Some(JaktError::ParserError("expected '('".to_string(), *span)),
+                        );
                     }
                 }
             } else {
-                return Err(JaktError::ParserError(
-                    "incomplete function".to_string(),
-                    tokens[*index - 1].span,
-                ));
+                return (
+                    call,
+                    Some(JaktError::ParserError(
+                        "incomplete function".to_string(),
+                        tokens[*index - 1].span,
+                    )),
+                );
             }
 
             while *index < tokens.len() {
@@ -561,24 +675,27 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> Result<Call, JaktError
                         *index += 1;
                     }
                     _ => {
-                        let expr = parse_expression(tokens, index)?;
+                        let (expr, err) = parse_expression(tokens, index);
+                        error = error.or(err);
+
                         call.args.push((String::new(), expr));
                     }
                 }
             }
 
             if *index >= tokens.len() {
-                return Err(JaktError::ParserError(
-                    "incomplete function".to_string(),
+                error = error.or(Some(JaktError::ParserError(
+                    "incomplete call".to_string(),
                     tokens[*index - 1].span,
-                ));
+                )));
             }
-
-            Ok(call)
         }
-        _ => Err(JaktError::ParserError(
-            "expected function call".to_string(),
-            tokens[*index].span,
-        )),
+        _ => {
+            error = error.or(Some(JaktError::ParserError(
+                "expected function call".to_string(),
+                tokens[*index].span,
+            )));
+        }
     }
+    (call, error)
 }
