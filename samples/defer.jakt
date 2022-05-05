@@ -1,0 +1,6 @@
+fun main() {
+    defer {
+        print(" friends!\n")
+    }
+    print("Hello")
+}
