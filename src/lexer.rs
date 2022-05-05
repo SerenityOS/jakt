@@ -18,6 +18,13 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> Result<Vec<Token>, JaktError> {
                 TokenContents::Semicolon,
                 Span::new(file_id, start, start + 1),
             ));
+        } else if c == b':' {
+            let start = index;
+            index += 1;
+            output.push(Token::new(
+                TokenContents::Colon,
+                Span::new(file_id, start, start + 1),
+            ));
         } else if c == b',' {
             let start = index;
             index += 1;
@@ -148,7 +155,9 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> Result<Token, J
 
         let mut escaped = false;
 
-        while *index < bytes.len() && bytes[*index].is_ascii_alphanumeric() {
+        while *index < bytes.len()
+            && (bytes[*index].is_ascii_alphanumeric() || (bytes[*index] == b'_'))
+        {
             if !escaped && bytes[*index] == b'\\' {
                 escaped = true;
             } else {
