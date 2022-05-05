@@ -27,12 +27,26 @@ impl Compiler {
 
         self.raw_files.push((fname.to_string(), contents));
 
-        let lexed = lex(
+        let (lexed, err) = lex(
             self.raw_files.len() - 1,
             &self.raw_files[self.raw_files.len() - 1].1,
-        )?;
+        );
 
-        let file = parse_file(&lexed)?;
+        match err {
+            Some(err) => {
+                return Err(err);
+            }
+            _ => {}
+        }
+
+        let (file, err) = parse_file(&lexed);
+
+        match err {
+            Some(err) => {
+                return Err(err);
+            }
+            _ => {}
+        }
 
         let cpp_file = translate(&file);
 

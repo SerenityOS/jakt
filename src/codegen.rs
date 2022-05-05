@@ -143,6 +143,10 @@ fn translate_stmt(stmt: &Statement) -> String {
             output.push_str(&translate_expr(expr));
             output.push_str(";\n");
         }
+        Statement::Garbage => {
+            // Incorrect parse/typecheck
+            // Probably shouldn't be able to get to this point?
+        }
     }
 
     output.push_str(";\n");
@@ -176,6 +180,10 @@ fn translate_expr(expr: &Expression) -> String {
                 output.push_str(&translate_expr(&param.1));
             }
             output.push(')');
+        }
+        Expression::Garbage => {
+            // Incorrect parse/typecheck
+            // Probably shouldn't be able to get to this point?
         }
     }
 
