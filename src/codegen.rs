@@ -81,7 +81,16 @@ fn translate_function_predecl(fun: &Function) -> String {
 fn translate_type(ty: &Type) -> String {
     match ty {
         Type::String => String::from("char*"),
-        Type::I64 => String::from("int"), // <-- FIXME to i64
+        Type::I8 => String::from("i8"),
+        Type::I16 => String::from("i16"),
+        Type::I32 => String::from("i32"),
+        Type::I64 => String::from("i64"),
+        Type::U8 => String::from("u8"),
+        Type::U16 => String::from("u16"),
+        Type::U32 => String::from("u32"),
+        Type::U64 => String::from("u64"),
+        Type::F32 => String::from("f32"),
+        Type::F64 => String::from("f64"),
         Type::Void => String::from("void"),
     }
 }

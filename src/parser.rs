@@ -18,7 +18,16 @@ impl Call {
 #[derive(Debug)]
 pub enum Type {
     String,
+    I8,
+    I16,
+    I32,
     I64,
+    U8,
+    U16,
+    U32,
+    U64,
+    F32,
+    F64,
     Void,
 }
 
@@ -591,7 +600,16 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (Type, Option<Jakt
             contents: TokenContents::Name(name),
             span,
         } => match name.as_str() {
+            "i8" => (Type::I8, None),
+            "i16" => (Type::I16, None),
+            "i32" => (Type::I32, None),
             "i64" => (Type::I64, None),
+            "u8" => (Type::U8, None),
+            "u16" => (Type::U16, None),
+            "u32" => (Type::U32, None),
+            "u64" => (Type::U64, None),
+            "f32" => (Type::F32, None),
+            "f64" => (Type::F64, None),
             "String" => (Type::String, None),
             _ => (
                 Type::Void,
