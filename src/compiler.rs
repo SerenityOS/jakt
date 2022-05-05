@@ -3,7 +3,7 @@ use std::io::Write;
 use crate::{
     error::JaktError,
     lexer::lex,
-    parser::{parse_file, Block, Expression, Function, ParsedFile},
+    parser::{parse_file, Block, Expression, Function, ParsedFile, Statement},
 };
 
 pub type FileId = usize;
@@ -77,14 +77,27 @@ impl Compiler {
 
         output.push_str("{\n");
 
-        for expr in &block.stmts {
-            let expr = self.translate_expr(expr);
+        for stmt in &block.stmts {
+            let stmt = self.translate_stmt(stmt);
 
-            output.push_str(&expr);
-            output.push_str(";\n");
+            output.push_str(&stmt);
         }
 
         output.push_str("}\n");
+
+        output
+    }
+
+    fn translate_stmt(&self, stmt: &Statement) -> String {
+        let mut output = String::new();
+        match stmt {
+            Statement::Expression(expr) => {
+                let expr = self.translate_expr(&expr);
+                output.push_str(&expr)
+            }
+        }
+
+        output.push_str(";\n");
 
         output
     }
