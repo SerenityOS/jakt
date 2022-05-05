@@ -1,0 +1,12 @@
+fun main() {
+    let a: i8 = 0;
+    let b: i16 = 0;
+    let c: i32 = 0;
+    let d: i64 = 0;
+    let e: u8 = 0;
+    let f: u16 = 0;
+    let g: u32 = 0;
+    let h: u64 = 0;
+    let i: f32 = 0;
+    let j: f64 = 0;
+}
