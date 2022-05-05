@@ -15,6 +15,12 @@ impl Call {
     }
 }
 
+#[derive(Debug)]
+pub enum Type {
+    String,
+    I64,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Span {
     pub file_id: FileId,
@@ -38,6 +44,7 @@ pub enum TokenContents {
     Number(i64),
     Name(String),
     Semicolon,
+    Colon,
     LParen,
     RParen,
     LCurly,
@@ -67,13 +74,8 @@ pub struct ParsedFile {
 #[derive(Debug)]
 pub struct Function {
     pub name: String,
-    pub params: Vec<Parameter>,
+    pub params: Vec<(String, Type)>,
     pub block: Block,
-}
-
-#[derive(Debug)]
-pub struct Parameter {
-    pub name: String,
 }
 
 #[derive(Debug)]
@@ -98,6 +100,7 @@ pub enum Expression {
     Call(Call),
     Int64(i64),
     QuotedString(String),
+    Var(String),
 }
 
 impl ParsedFile {
@@ -165,16 +168,97 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> Result<Function, J
                 contents: TokenContents::Name(fun_name),
                 ..
             } => {
-                // Good, we have the function name
-                // for now skip skip
-                // TODO: actually parse params
-                *index += 3;
+                *index += 1;
+
+                if *index < tokens.len() {
+                    match tokens[*index] {
+                        Token {
+                            contents: TokenContents::LParen,
+                            ..
+                        } => {
+                            *index += 1;
+                        }
+                        _ => {
+                            return Err(JaktError::ParserError(
+                                "expected '('".to_string(),
+                                tokens[*index].span,
+                            ));
+                        }
+                    }
+                } else {
+                    return Err(JaktError::ParserError(
+                        "incomplete function".to_string(),
+                        tokens[*index - 1].span,
+                    ));
+                }
+
+                let mut params = Vec::new();
+
+                while *index < tokens.len() {
+                    match &tokens[*index].contents {
+                        TokenContents::RParen => {
+                            *index += 1;
+                            break;
+                        }
+                        TokenContents::Comma => {
+                            // Treat comma as whitespace? Might require them in the future
+                            *index += 1;
+                        }
+
+                        TokenContents::Name(name) => {
+                            // Now lets parse a parameter
+
+                            let param_name = name.to_string();
+
+                            *index += 1;
+
+                            if *index < tokens.len() {
+                                match &tokens[*index].contents {
+                                    TokenContents::Colon => {
+                                        *index += 1;
+                                    }
+                                    _ => {
+                                        return Err(JaktError::ParserError(
+                                            "expected ':'".to_string(),
+                                            tokens[*index].span,
+                                        ));
+                                    }
+                                }
+                            }
+
+                            if *index < tokens.len() {
+                                let param_type = parse_typename(tokens, index)?;
+                                params.push((param_name, param_type));
+
+                                *index += 1;
+                            } else {
+                                return Err(JaktError::ParserError(
+                                    "expected type".to_string(),
+                                    tokens[*index].span,
+                                ));
+                            }
+                        }
+                        _ => {
+                            return Err(JaktError::ParserError(
+                                "expected parameter".to_string(),
+                                tokens[*index].span,
+                            ));
+                        }
+                    }
+                }
+
+                if *index >= tokens.len() {
+                    return Err(JaktError::ParserError(
+                        "incomplete function".to_string(),
+                        tokens[*index - 1].span,
+                    ));
+                }
 
                 let block = parse_block(tokens, index)?;
 
                 return Ok(Function {
                     name: fun_name.clone(),
-                    params: Vec::new(),
+                    params,
                     block,
                 });
             }
@@ -250,10 +334,21 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> Result<Statement,
 
 pub fn parse_expression(tokens: &[Token], index: &mut usize) -> Result<Expression, JaktError> {
     match &tokens[*index].contents {
-        TokenContents::Name(_) => {
-            let call: Call = parse_call(tokens, index)?;
+        TokenContents::Name(name) => {
+            if *index + 1 < tokens.len() {
+                match &tokens[*index + 1].contents {
+                    TokenContents::LParen => {
+                        let call: Call = parse_call(tokens, index)?;
 
-            Ok(Expression::Call(call))
+                        return Ok(Expression::Call(call));
+                    }
+                    _ => {}
+                }
+            }
+
+            *index += 1;
+
+            Ok(Expression::Var(name.to_string()))
         }
         TokenContents::Number(number) => {
             *index += 1;
@@ -265,6 +360,23 @@ pub fn parse_expression(tokens: &[Token], index: &mut usize) -> Result<Expressio
         }
         _ => Err(JaktError::ParserError(
             "unsupported expression".to_string(),
+            tokens[*index].span,
+        )),
+    }
+}
+
+pub fn parse_typename(tokens: &[Token], index: &mut usize) -> Result<Type, JaktError> {
+    match &tokens[*index] {
+        Token {
+            contents: TokenContents::Name(name),
+            span,
+        } => match name.as_str() {
+            "i64" => Ok(Type::I64),
+            "String" => Ok(Type::String),
+            _ => Err(JaktError::ParserError("unknown type".to_string(), *span)),
+        },
+        _ => Err(JaktError::ParserError(
+            "expected function call".to_string(),
             tokens[*index].span,
         )),
     }
@@ -283,14 +395,14 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> Result<Call, JaktError
             *index += 1;
 
             if *index < tokens.len() {
-                match tokens[*index] {
+                match &tokens[*index] {
                     Token {
                         contents: TokenContents::LParen,
                         ..
                     } => {
                         *index += 1;
                     }
-                    _ => {
+                    Token { span, .. } => {
                         return Err(JaktError::ParserError("expected '('".to_string(), *span));
                     }
                 }

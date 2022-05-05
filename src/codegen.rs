@@ -1,10 +1,17 @@
-use crate::parser::{Block, Expression, Function, ParsedFile, Statement};
+use crate::parser::{Block, Expression, Function, ParsedFile, Statement, Type};
 
 pub fn translate(file: &ParsedFile) -> String {
     let mut output = String::new();
 
     output.push_str("#include \"runtime/lib.h\"\n");
     output.push_str("#include<stdio.h>\n");
+
+    for fun in &file.funs {
+        let fun_output = translate_function_predecl(fun);
+
+        output.push_str(&fun_output);
+        output.push('\n');
+    }
 
     for fun in &file.funs {
         let fun_output = translate_function(fun);
@@ -21,12 +28,59 @@ fn translate_function(fun: &Function) -> String {
 
     output.push_str("void ");
     output.push_str(&fun.name);
-    output.push_str("()");
+    output.push('(');
+
+    let mut first = true;
+    for param in &fun.params {
+        if !first {
+            output.push_str(", ");
+        } else {
+            first = false;
+        }
+
+        let ty = translate_type(&param.1);
+        output.push_str(&ty);
+        output.push(' ');
+        output.push_str(&param.0);
+    }
+    output.push(')');
 
     let block = translate_block(&fun.block);
     output.push_str(&block);
 
     output
+}
+
+fn translate_function_predecl(fun: &Function) -> String {
+    let mut output = String::new();
+
+    output.push_str("void ");
+    output.push_str(&fun.name);
+    output.push('(');
+
+    let mut first = true;
+    for param in &fun.params {
+        if !first {
+            output.push_str(", ");
+        } else {
+            first = false;
+        }
+
+        let ty = translate_type(&param.1);
+        output.push_str(&ty);
+        output.push(' ');
+        output.push_str(&param.0);
+    }
+    output.push_str(");");
+
+    output
+}
+
+fn translate_type(ty: &Type) -> String {
+    match ty {
+        Type::String => String::from("char*"),
+        Type::I64 => String::from("int"), // <-- FIXME to i64
+    }
 }
 
 fn translate_block(block: &Block) -> String {
@@ -76,8 +130,11 @@ fn translate_expr(expr: &Expression) -> String {
             output.push_str(qs);
             output.push('"');
         }
-        Expression::Int64(qs) => {
-            output.push_str(&qs.to_string());
+        Expression::Int64(int64) => {
+            output.push_str(&int64.to_string());
+        }
+        Expression::Var(var) => {
+            output.push_str(&var.to_string());
         }
         Expression::Call(call) => {
             if call.name == "print" {
