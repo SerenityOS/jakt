@@ -3,14 +3,14 @@ use crate::{compiler::FileId, error::JaktError};
 #[derive(Debug)]
 pub struct Call {
     pub name: String,
-    pub params: Vec<(String, Expression)>,
+    pub args: Vec<(String, Expression)>,
 }
 
 impl Call {
     pub fn new() -> Self {
         Self {
             name: String::new(),
-            params: Vec::new(),
+            args: Vec::new(),
         }
     }
 }
@@ -42,6 +42,7 @@ pub enum TokenContents {
     RParen,
     LCurly,
     RCurly,
+    Comma,
     Eol,
     Eof,
 }
@@ -95,6 +96,7 @@ impl Block {
 #[derive(Debug)]
 pub enum Expression {
     Call(Call),
+    Int64(i64),
     QuotedString(String),
 }
 
@@ -247,22 +249,24 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> Result<Statement,
 }
 
 pub fn parse_expression(tokens: &[Token], index: &mut usize) -> Result<Expression, JaktError> {
-    match tokens[*index] {
-        Token {
-            contents: TokenContents::Name(_),
-            ..
-        } => {
+    match &tokens[*index].contents {
+        TokenContents::Name(_) => {
             let call: Call = parse_call(tokens, index)?;
 
             Ok(Expression::Call(call))
         }
-        Token { span, .. } => {
-            println!("{:?}", tokens[*index]);
-            Err(JaktError::ParserError(
-                "unsupported expression".to_string(),
-                span,
-            ))
+        TokenContents::Number(number) => {
+            *index += 1;
+            Ok(Expression::Int64(*number))
         }
+        TokenContents::QuotedString(str) => {
+            *index += 1;
+            Ok(Expression::QuotedString(str.to_string()))
+        }
+        _ => Err(JaktError::ParserError(
+            "unsupported expression".to_string(),
+            tokens[*index].span,
+        )),
     }
 }
 
@@ -274,15 +278,7 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> Result<Call, JaktError
             contents: TokenContents::Name(name),
             span,
         } => {
-            if name == "print" {
-                // Good, we know this one
-                call.name = "print".to_string();
-            } else {
-                return Err(JaktError::ParserError(
-                    "unknown function".to_string(),
-                    *span,
-                ));
-            }
+            call.name = name.to_string();
 
             *index += 1;
 
@@ -305,42 +301,24 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> Result<Call, JaktError
                 ));
             }
 
-            if *index < tokens.len() {
-                match &tokens[*index] {
-                    Token {
-                        contents: TokenContents::QuotedString(contents),
-                        ..
-                    } => {
-                        call.params.push((
-                            "msg".to_string(),
-                            Expression::QuotedString(contents.to_string()),
-                        ));
+            while *index < tokens.len() {
+                match &tokens[*index].contents {
+                    TokenContents::RParen => {
+                        *index += 1;
+                        break;
+                    }
+                    TokenContents::Comma => {
+                        // Treat comma as whitespace? Might require them in the future
                         *index += 1;
                     }
                     _ => {
-                        return Err(JaktError::ParserError("expected '('".to_string(), *span));
+                        let expr = parse_expression(tokens, index)?;
+                        call.args.push((String::new(), expr));
                     }
                 }
-            } else {
-                return Err(JaktError::ParserError(
-                    "incomplete function".to_string(),
-                    tokens[*index - 1].span,
-                ));
             }
 
-            if *index < tokens.len() {
-                match tokens[*index] {
-                    Token {
-                        contents: TokenContents::RParen,
-                        ..
-                    } => {
-                        *index += 1;
-                    }
-                    _ => {
-                        return Err(JaktError::ParserError("expected ')'".to_string(), *span));
-                    }
-                }
-            } else {
+            if *index >= tokens.len() {
                 return Err(JaktError::ParserError(
                     "incomplete function".to_string(),
                     tokens[*index - 1].span,
