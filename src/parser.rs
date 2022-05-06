@@ -80,6 +80,10 @@ pub enum TokenContents {
     Plus,
     Minus,
     Equal,
+    PlusEqual,
+    MinusEqual,
+    AsteriskEqual,
+    ForwardSlashEqual,
     NotEqual,
     DoubleEqual,
     GreaterThan,
@@ -193,6 +197,10 @@ pub enum Operator {
     LessThanOrEqual,
     GreaterThanOrEqual,
     Assign,
+    AddAssign,
+    SubtractAssign,
+    MultiplyAssign,
+    DivideAssign,
 }
 
 impl Expression {
@@ -211,7 +219,11 @@ impl Expression {
             | Expression::Operator(Operator::GreaterThanOrEqual)
             | Expression::Operator(Operator::Equal)
             | Expression::Operator(Operator::NotEqual) => 80,
-            Expression::Operator(Operator::Assign) => 50,
+            Expression::Operator(Operator::Assign)
+            | Expression::Operator(Operator::AddAssign)
+            | Expression::Operator(Operator::SubtractAssign)
+            | Expression::Operator(Operator::MultiplyAssign)
+            | Expression::Operator(Operator::DivideAssign) => 50,
             _ => 0,
         }
     }
@@ -745,6 +757,22 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
         TokenContents::Equal => {
             *index += 1;
             (Expression::Operator(Operator::Assign), None)
+        }
+        TokenContents::PlusEqual => {
+            *index += 1;
+            (Expression::Operator(Operator::AddAssign), None)
+        }
+        TokenContents::MinusEqual => {
+            *index += 1;
+            (Expression::Operator(Operator::SubtractAssign), None)
+        }
+        TokenContents::AsteriskEqual => {
+            *index += 1;
+            (Expression::Operator(Operator::MultiplyAssign), None)
+        }
+        TokenContents::ForwardSlashEqual => {
+            *index += 1;
+            (Expression::Operator(Operator::DivideAssign), None)
         }
         TokenContents::DoubleEqual => {
             *index += 1;

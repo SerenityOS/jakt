@@ -1,0 +1,8 @@
+fun main() {
+    var x: i64 = 10
+
+    while (x > 0) {
+        print(x)
+        x -= 1
+    }
+}
