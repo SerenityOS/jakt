@@ -78,10 +78,16 @@ pub enum TokenContents {
     RCurly,
     Plus,
     Minus,
-    Equals,
+    Equal,
+    NotEqual,
+    DoubleEqual,
     GreaterThan,
+    GreaterThanOrEqual,
+    LessThan,
+    LessThanOrEqual,
     Asterisk,
     ForwardSlash,
+    ExclamationPoint,
     Comma,
     Eol,
     Eof,
@@ -137,6 +143,8 @@ pub enum Statement {
     Expression(Expression),
     Defer(Block),
     VarDecl(VarDecl, Expression),
+    If(Expression, Block),
+    While(Expression, Block),
     Return(Expression),
     Garbage,
 }
@@ -157,6 +165,7 @@ impl Block {
 #[derive(Debug)]
 pub enum Expression {
     // Standalone
+    Boolean(bool),
     Call(Call),
     Int64(i64),
     QuotedString(String),
@@ -176,13 +185,32 @@ pub enum Operator {
     Subtract,
     Multiply,
     Divide,
+    Equal,
+    NotEqual,
+    LessThan,
+    GreaterThan,
+    LessThanOrEqual,
+    GreaterThanOrEqual,
+    Assign,
 }
 
 impl Expression {
+    // Relative weighting of precedence. Numbers are made up
+    // with the only importance being how they relate to each
+    // other
     pub fn precedence(&self) -> u64 {
         match self {
-            Expression::Operator(Operator::Multiply) | Expression::Operator(Operator::Divide) => 95,
+            Expression::Operator(Operator::Multiply) | Expression::Operator(Operator::Divide) => {
+                100
+            }
             Expression::Operator(Operator::Add) | Expression::Operator(Operator::Subtract) => 90,
+            Expression::Operator(Operator::LessThan)
+            | Expression::Operator(Operator::LessThanOrEqual)
+            | Expression::Operator(Operator::GreaterThan)
+            | Expression::Operator(Operator::GreaterThanOrEqual)
+            | Expression::Operator(Operator::Equal)
+            | Expression::Operator(Operator::NotEqual) => 80,
+            Expression::Operator(Operator::Assign) => 50,
             _ => 0,
         }
     }
@@ -436,31 +464,44 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (Block, Option<JaktEr
 pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option<JaktError>) {
     let mut error = None;
 
-    match &tokens[*index] {
-        Token {
-            contents: TokenContents::Name(name),
-            ..
-        } if name.as_str() == "defer" => {
+    match &tokens[*index].contents {
+        TokenContents::Name(name) if name == "defer" => {
             *index += 1;
             let (block, err) = parse_block(tokens, index);
             error = error.or(err);
 
             (Statement::Defer(block), error)
         }
-        Token {
-            contents: TokenContents::Name(name),
-            ..
-        } if name.as_str() == "return" => {
+        TokenContents::Name(name) if name == "if" => {
+            *index += 1;
+
+            let (cond, err) = parse_expression(tokens, index);
+            error = error.or(err);
+
+            let (block, err) = parse_block(tokens, index);
+            error = error.or(err);
+
+            (Statement::If(cond, block), error)
+        }
+        TokenContents::Name(name) if name == "while" => {
+            *index += 1;
+
+            let (cond, err) = parse_expression(tokens, index);
+            error = error.or(err);
+
+            let (block, err) = parse_block(tokens, index);
+            error = error.or(err);
+
+            (Statement::While(cond, block), error)
+        }
+        TokenContents::Name(name) if name == "return" => {
             *index += 1;
             let (expr, err) = parse_expression(tokens, index);
             error = error.or(err);
 
             (Statement::Return(expr), error)
         }
-        Token {
-            contents: TokenContents::Name(name),
-            ..
-        } if name.as_str() == "let" || name.as_str() == "var" => {
+        TokenContents::Name(name) if name == "let" || name.as_str() == "var" => {
             let mutable = name == "var";
 
             *index += 1;
@@ -473,7 +514,7 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             // Hardwire an initialiser for now, but we may not want this long-term
             if *index < tokens.len() {
                 match &tokens[*index].contents {
-                    TokenContents::Equals => {
+                    TokenContents::Equal => {
                         *index += 1;
 
                         if *index < tokens.len() {
@@ -620,6 +661,14 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
     let mut error = None;
 
     match &tokens[*index].contents {
+        TokenContents::Name(name) if name == "true" => {
+            *index += 1;
+            (Expression::Boolean(true), None)
+        }
+        TokenContents::Name(name) if name == "false" => {
+            *index += 1;
+            (Expression::Boolean(false), None)
+        }
         TokenContents::Name(name) => {
             if *index + 1 < tokens.len() {
                 match &tokens[*index + 1].contents {
@@ -636,6 +685,25 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
             *index += 1;
 
             (Expression::Var(name.to_string()), error)
+        }
+        TokenContents::LParen => {
+            *index += 1;
+            let (expr, err) = parse_expression(tokens, index);
+            error = error.or(err);
+
+            match &tokens[*index].contents {
+                TokenContents::RParen => {
+                    *index += 1;
+                }
+                _ => {
+                    error = error.or(Some(JaktError::ParserError(
+                        "expected ')'".to_string(),
+                        tokens[*index].span,
+                    )))
+                }
+            }
+
+            (expr, error)
         }
         TokenContents::Number(number) => {
             *index += 1;
@@ -673,11 +741,39 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
             *index += 1;
             (Expression::Operator(Operator::Divide), None)
         }
+        TokenContents::Equal => {
+            *index += 1;
+            (Expression::Operator(Operator::Assign), None)
+        }
+        TokenContents::DoubleEqual => {
+            *index += 1;
+            (Expression::Operator(Operator::Equal), None)
+        }
+        TokenContents::NotEqual => {
+            *index += 1;
+            (Expression::Operator(Operator::NotEqual), None)
+        }
+        TokenContents::LessThan => {
+            *index += 1;
+            (Expression::Operator(Operator::LessThan), None)
+        }
+        TokenContents::LessThanOrEqual => {
+            *index += 1;
+            (Expression::Operator(Operator::LessThanOrEqual), None)
+        }
+        TokenContents::GreaterThan => {
+            *index += 1;
+            (Expression::Operator(Operator::GreaterThan), None)
+        }
+        TokenContents::GreaterThanOrEqual => {
+            *index += 1;
+            (Expression::Operator(Operator::GreaterThanOrEqual), None)
+        }
         _ => (
             Expression::Garbage,
             Some(JaktError::ParserError(
-                "unknown operator".to_string(),
-                tokens[*index - 1].span,
+                "unsupported operator".to_string(),
+                tokens[*index].span,
             )),
         ),
     }

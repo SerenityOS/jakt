@@ -138,6 +138,24 @@ fn translate_stmt(indent: usize, stmt: &Statement) -> String {
             output.push_str(&expr);
             output.push_str(");\n")
         }
+        Statement::If(cond, block) => {
+            let expr = translate_expr(indent, &cond);
+            output.push_str("if (");
+            output.push_str(&expr);
+            output.push_str(") ");
+
+            let block = translate_block(indent, block);
+            output.push_str(&block);
+        }
+        Statement::While(cond, block) => {
+            let expr = translate_expr(indent, &cond);
+            output.push_str("while (");
+            output.push_str(&expr);
+            output.push_str(") ");
+
+            let block = translate_block(indent, block);
+            output.push_str(&block);
+        }
         Statement::VarDecl(var_decl, expr) => {
             if !var_decl.mutable {
                 output.push_str("const ");
@@ -173,6 +191,13 @@ fn translate_expr(indent: usize, expr: &Expression) -> String {
         Expression::Var(var) => {
             output.push_str(&var.to_string());
         }
+        Expression::Boolean(bool) => {
+            if *bool {
+                output.push_str("true");
+            } else {
+                output.push_str("false");
+            }
+        }
         Expression::Call(call) => {
             if call.name == "print" {
                 output.push_str("std::cout << ");
@@ -206,6 +231,14 @@ fn translate_expr(indent: usize, expr: &Expression) -> String {
                 Expression::Operator(Operator::Subtract) => output.push_str(" - "),
                 Expression::Operator(Operator::Multiply) => output.push_str(" * "),
                 Expression::Operator(Operator::Divide) => output.push_str(" / "),
+                Expression::Operator(Operator::Assign) => output.push_str(" = "),
+                Expression::Operator(Operator::Equal) => output.push_str(" == "),
+                Expression::Operator(Operator::NotEqual) => output.push_str(" != "),
+                Expression::Operator(Operator::LessThan) => output.push_str(" < "),
+                Expression::Operator(Operator::LessThanOrEqual) => output.push_str(" <= "),
+                Expression::Operator(Operator::GreaterThan) => output.push_str(" > "),
+                Expression::Operator(Operator::GreaterThanOrEqual) => output.push_str(" >= "),
+
                 _ => {
                     panic!("Cannot codegen garbage operator")
                 }
