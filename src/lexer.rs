@@ -57,15 +57,69 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
         } else if c == b'=' {
             let start = index;
             index += 1;
+            if index < bytes.len() {
+                if bytes[index] == b'=' {
+                    index += 1;
+                    output.push(Token::new(
+                        TokenContents::DoubleEqual,
+                        Span::new(file_id, start, start + 1),
+                    ));
+                    continue;
+                }
+            }
             output.push(Token::new(
-                TokenContents::Equals,
+                TokenContents::Equal,
                 Span::new(file_id, start, start + 1),
             ));
         } else if c == b'>' {
             let start = index;
             index += 1;
+            if index < bytes.len() {
+                if bytes[index] == b'=' {
+                    index += 1;
+                    output.push(Token::new(
+                        TokenContents::GreaterThanOrEqual,
+                        Span::new(file_id, start, start + 1),
+                    ));
+                    continue;
+                }
+            }
             output.push(Token::new(
                 TokenContents::GreaterThan,
+                Span::new(file_id, start, start + 1),
+            ));
+        } else if c == b'<' {
+            let start = index;
+            index += 1;
+            if index < bytes.len() {
+                if bytes[index] == b'=' {
+                    index += 1;
+                    output.push(Token::new(
+                        TokenContents::LessThanOrEqual,
+                        Span::new(file_id, start, start + 1),
+                    ));
+                    continue;
+                }
+            }
+            output.push(Token::new(
+                TokenContents::LessThan,
+                Span::new(file_id, start, start + 1),
+            ));
+        } else if c == b'!' {
+            let start = index;
+            index += 1;
+            if index < bytes.len() {
+                if bytes[index] == b'=' {
+                    index += 1;
+                    output.push(Token::new(
+                        TokenContents::NotEqual,
+                        Span::new(file_id, start, start + 1),
+                    ));
+                    continue;
+                }
+            }
+            output.push(Token::new(
+                TokenContents::ExclamationPoint,
                 Span::new(file_id, start, start + 1),
             ));
         } else if c == b',' {
