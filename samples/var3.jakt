@@ -1,0 +1,5 @@
+fun main() {
+    var x: u64 = 100
+    x += 1
+    print(x)
+}

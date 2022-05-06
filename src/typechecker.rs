@@ -3,6 +3,7 @@ use crate::{
     parser::{Block, Call, Expression, Function, Operator, ParsedFile, Statement, Type, VarDecl},
 };
 
+#[derive(Clone)]
 pub struct CheckedFile {
     pub checked_functions: Vec<CheckedFunction>,
 }
@@ -15,6 +16,7 @@ impl CheckedFile {
     }
 }
 
+#[derive(Clone)]
 pub struct CheckedFunction {
     pub name: String,
     pub return_type: Type,
@@ -22,6 +24,7 @@ pub struct CheckedFunction {
     pub block: CheckedBlock,
 }
 
+#[derive(Clone)]
 pub struct CheckedBlock {
     pub stmts: Vec<CheckedStatement>,
 }
@@ -31,6 +34,8 @@ impl CheckedBlock {
         Self { stmts: Vec::new() }
     }
 }
+
+#[derive(Clone)]
 pub enum CheckedStatement {
     Expression(CheckedExpression),
     Defer(CheckedBlock),
@@ -41,6 +46,7 @@ pub enum CheckedStatement {
     Garbage,
 }
 
+#[derive(Clone)]
 pub enum CheckedExpression {
     // Standalone
     Boolean(bool),
@@ -73,12 +79,14 @@ impl CheckedExpression {
     }
 }
 
+#[derive(Clone)]
 pub struct CheckedCall {
     pub name: String,
     pub args: Vec<(String, CheckedExpression)>,
     pub ty: Type,
 }
 
+#[derive(Clone)]
 pub struct Stack {
     pub frames: Vec<StackFrame>,
 }
@@ -114,6 +122,7 @@ impl Stack {
     }
 }
 
+#[derive(Clone)]
 pub struct StackFrame {
     vars: Vec<(String, Type)>,
 }
@@ -212,12 +221,15 @@ pub fn typecheck_statement(
             if var_decl.ty == Type::Unknown {
                 // Use the initializer to get our type
                 var_decl.ty = checked_expression.ty();
-            } else if var_decl.ty != checked_expression.ty() {
-                error = error.or(Some(JaktError::TypecheckError(
-                    "mismatch between declaration and initializer".to_string(),
-                    init.span(),
-                )));
             }
+
+            // Taking this out for now until we have better number type support
+            // } else if var_decl.ty != checked_expression.ty() {
+            //     error = error.or(Some(JaktError::TypecheckError(
+            //         "mismatch between declaration and initializer".to_string(),
+            //         init.span(),
+            //     )));
+            // }
 
             stack.add_var((var_decl.name.clone(), var_decl.ty.clone()));
 
