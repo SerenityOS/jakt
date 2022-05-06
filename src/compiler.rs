@@ -4,21 +4,22 @@ use crate::{
     codegen::translate,
     error::JaktError,
     lexer::lex,
-    parser::{parse_file, ParsedFile},
+    parser::parse_file,
+    typechecker::{typecheck_file, CheckedFile},
 };
 
 pub type FileId = usize;
 
 pub struct Compiler {
     raw_files: Vec<(String, Vec<u8>)>,
-    parsed_files: Vec<(String, ParsedFile)>,
+    checked_files: Vec<(String, CheckedFile)>,
 }
 
 impl Compiler {
     pub fn new() -> Self {
         Self {
             raw_files: Vec::new(),
-            parsed_files: Vec::new(),
+            checked_files: Vec::new(),
         }
     }
 
@@ -48,13 +49,22 @@ impl Compiler {
             _ => {}
         }
 
+        let (file, err) = typecheck_file(&file);
+
+        match err {
+            Some(err) => {
+                return Err(err);
+            }
+            _ => {}
+        }
+
         let cpp_file = translate(&file);
 
         let mut out_file = std::fs::File::create("output.cpp")?;
         out_file.write_all(cpp_file.as_bytes())?;
 
         // TODO: do something with this
-        self.parsed_files.push((fname.to_string(), file));
+        self.checked_files.push((fname.to_string(), file));
 
         Ok(())
     }
