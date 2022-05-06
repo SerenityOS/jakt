@@ -207,7 +207,12 @@ pub fn typecheck_statement(
             let (checked_expression, err) = typecheck_expression(init, stack);
             error = error.or(err);
 
-            if var_decl.ty != checked_expression.ty() {
+            let mut var_decl = var_decl.clone();
+
+            if var_decl.ty == Type::Unknown {
+                // Use the initializer to get our type
+                var_decl.ty = checked_expression.ty();
+            } else if var_decl.ty != checked_expression.ty() {
                 error = error.or(Some(JaktError::TypecheckError(
                     "mismatch between declaration and initializer".to_string(),
                     init.span(),
