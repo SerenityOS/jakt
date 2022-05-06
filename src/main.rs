@@ -3,6 +3,7 @@ mod compiler;
 mod error;
 mod lexer;
 mod parser;
+mod typechecker;
 
 use compiler::Compiler;
 use error::JaktError;
@@ -19,6 +20,7 @@ fn main() -> Result<(), JaktError> {
             Err(err) => match err {
                 JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
                 JaktError::ParserError(msg, span) => display_error(&parser, &msg, span),
+                JaktError::TypecheckError(msg, span) => display_error(&parser, &msg, span),
             },
         }
     }

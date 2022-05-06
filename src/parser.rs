@@ -15,7 +15,7 @@ impl Call {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Bool,
     String,
@@ -30,9 +30,10 @@ pub enum Type {
     F32,
     F64,
     Void,
+    Unknown,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VarDecl {
     pub name: String,
     pub ty: Type,
@@ -170,21 +171,36 @@ impl Block {
 #[derive(Debug)]
 pub enum Expression {
     // Standalone
-    Boolean(bool),
-    Call(Call),
-    Int64(i64),
-    QuotedString(String),
+    Boolean(bool, Span),
+    Call(Call, Span),
+    Int64(i64, Span),
+    QuotedString(String, Span),
     BinaryOp(Box<Expression>, Box<Expression>, Box<Expression>),
-    Var(String),
+    Var(String, Span),
 
     // Not standalone
-    Operator(Operator),
+    Operator(Operator, Span),
 
     // Parsing error
-    Garbage,
+    Garbage(Span),
 }
 
-#[derive(Debug)]
+impl Expression {
+    pub fn span(&self) -> Span {
+        match self {
+            Expression::Boolean(_, span) => *span,
+            Expression::Call(_, span) => *span,
+            Expression::Int64(_, span) => *span,
+            Expression::QuotedString(_, span) => *span,
+            Expression::BinaryOp(_, op, _) => op.span(),
+            Expression::Var(_, span) => *span,
+            Expression::Operator(_, span) => *span,
+            Expression::Garbage(span) => *span,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum Operator {
     Add,
     Subtract,
@@ -209,21 +225,21 @@ impl Expression {
     // other
     pub fn precedence(&self) -> u64 {
         match self {
-            Expression::Operator(Operator::Multiply) | Expression::Operator(Operator::Divide) => {
-                100
-            }
-            Expression::Operator(Operator::Add) | Expression::Operator(Operator::Subtract) => 90,
-            Expression::Operator(Operator::LessThan)
-            | Expression::Operator(Operator::LessThanOrEqual)
-            | Expression::Operator(Operator::GreaterThan)
-            | Expression::Operator(Operator::GreaterThanOrEqual)
-            | Expression::Operator(Operator::Equal)
-            | Expression::Operator(Operator::NotEqual) => 80,
-            Expression::Operator(Operator::Assign)
-            | Expression::Operator(Operator::AddAssign)
-            | Expression::Operator(Operator::SubtractAssign)
-            | Expression::Operator(Operator::MultiplyAssign)
-            | Expression::Operator(Operator::DivideAssign) => 50,
+            Expression::Operator(Operator::Multiply, _)
+            | Expression::Operator(Operator::Divide, _) => 100,
+            Expression::Operator(Operator::Add, _)
+            | Expression::Operator(Operator::Subtract, _) => 90,
+            Expression::Operator(Operator::LessThan, _)
+            | Expression::Operator(Operator::LessThanOrEqual, _)
+            | Expression::Operator(Operator::GreaterThan, _)
+            | Expression::Operator(Operator::GreaterThanOrEqual, _)
+            | Expression::Operator(Operator::Equal, _)
+            | Expression::Operator(Operator::NotEqual, _) => 80,
+            Expression::Operator(Operator::Assign, _)
+            | Expression::Operator(Operator::AddAssign, _)
+            | Expression::Operator(Operator::SubtractAssign, _)
+            | Expression::Operator(Operator::MultiplyAssign, _)
+            | Expression::Operator(Operator::DivideAssign, _) => 50,
             _ => 0,
         }
     }
@@ -603,8 +619,8 @@ pub fn parse_expression(tokens: &[Token], index: &mut usize) -> (Expression, Opt
                 tokens[*index - 1].span,
             )));
 
-            expr_stack.push(Expression::Garbage);
-            expr_stack.push(Expression::Garbage);
+            expr_stack.push(Expression::Garbage(tokens[*index - 1].span));
+            expr_stack.push(Expression::Garbage(tokens[*index - 1].span));
             break;
         }
 
@@ -673,14 +689,16 @@ pub fn parse_expression(tokens: &[Token], index: &mut usize) -> (Expression, Opt
 pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
     let mut error = None;
 
+    let span = tokens[*index].span;
+
     match &tokens[*index].contents {
         TokenContents::Name(name) if name == "true" => {
             *index += 1;
-            (Expression::Boolean(true), None)
+            (Expression::Boolean(true, span), None)
         }
         TokenContents::Name(name) if name == "false" => {
             *index += 1;
-            (Expression::Boolean(false), None)
+            (Expression::Boolean(false, span), None)
         }
         TokenContents::Name(name) => {
             if *index + 1 < tokens.len() {
@@ -689,7 +707,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                         let (call, err) = parse_call(tokens, index);
                         error = error.or(err);
 
-                        return (Expression::Call(call), error);
+                        return (Expression::Call(call, span), error);
                     }
                     _ => {}
                 }
@@ -697,7 +715,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 
             *index += 1;
 
-            (Expression::Var(name.to_string()), error)
+            (Expression::Var(name.to_string(), span), error)
         }
         TokenContents::LParen => {
             *index += 1;
@@ -720,14 +738,14 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
         }
         TokenContents::Number(number) => {
             *index += 1;
-            (Expression::Int64(*number), error)
+            (Expression::Int64(*number, span), error)
         }
         TokenContents::QuotedString(str) => {
             *index += 1;
-            (Expression::QuotedString(str.to_string()), error)
+            (Expression::QuotedString(str.to_string(), span), error)
         }
         _ => (
-            Expression::Garbage,
+            Expression::Garbage(span),
             Some(JaktError::ParserError(
                 "unsupported expression".to_string(),
                 tokens[*index].span,
@@ -737,69 +755,74 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 }
 
 pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
+    let span = tokens[*index].span;
+
     match &tokens[*index].contents {
         TokenContents::Plus => {
             *index += 1;
-            (Expression::Operator(Operator::Add), None)
+            (Expression::Operator(Operator::Add, span), None)
         }
         TokenContents::Minus => {
             *index += 1;
-            (Expression::Operator(Operator::Subtract), None)
+            (Expression::Operator(Operator::Subtract, span), None)
         }
         TokenContents::Asterisk => {
             *index += 1;
-            (Expression::Operator(Operator::Multiply), None)
+            (Expression::Operator(Operator::Multiply, span), None)
         }
         TokenContents::ForwardSlash => {
             *index += 1;
-            (Expression::Operator(Operator::Divide), None)
+            (Expression::Operator(Operator::Divide, span), None)
         }
         TokenContents::Equal => {
             *index += 1;
-            (Expression::Operator(Operator::Assign), None)
+            (Expression::Operator(Operator::Assign, span), None)
         }
         TokenContents::PlusEqual => {
             *index += 1;
-            (Expression::Operator(Operator::AddAssign), None)
+            (Expression::Operator(Operator::AddAssign, span), None)
         }
         TokenContents::MinusEqual => {
             *index += 1;
-            (Expression::Operator(Operator::SubtractAssign), None)
+            (Expression::Operator(Operator::SubtractAssign, span), None)
         }
         TokenContents::AsteriskEqual => {
             *index += 1;
-            (Expression::Operator(Operator::MultiplyAssign), None)
+            (Expression::Operator(Operator::MultiplyAssign, span), None)
         }
         TokenContents::ForwardSlashEqual => {
             *index += 1;
-            (Expression::Operator(Operator::DivideAssign), None)
+            (Expression::Operator(Operator::DivideAssign, span), None)
         }
         TokenContents::DoubleEqual => {
             *index += 1;
-            (Expression::Operator(Operator::Equal), None)
+            (Expression::Operator(Operator::Equal, span), None)
         }
         TokenContents::NotEqual => {
             *index += 1;
-            (Expression::Operator(Operator::NotEqual), None)
+            (Expression::Operator(Operator::NotEqual, span), None)
         }
         TokenContents::LessThan => {
             *index += 1;
-            (Expression::Operator(Operator::LessThan), None)
+            (Expression::Operator(Operator::LessThan, span), None)
         }
         TokenContents::LessThanOrEqual => {
             *index += 1;
-            (Expression::Operator(Operator::LessThanOrEqual), None)
+            (Expression::Operator(Operator::LessThanOrEqual, span), None)
         }
         TokenContents::GreaterThan => {
             *index += 1;
-            (Expression::Operator(Operator::GreaterThan), None)
+            (Expression::Operator(Operator::GreaterThan, span), None)
         }
         TokenContents::GreaterThanOrEqual => {
             *index += 1;
-            (Expression::Operator(Operator::GreaterThanOrEqual), None)
+            (
+                Expression::Operator(Operator::GreaterThanOrEqual, span),
+                None,
+            )
         }
         _ => (
-            Expression::Garbage,
+            Expression::Garbage(span),
             Some(JaktError::ParserError(
                 "unsupported operator".to_string(),
                 tokens[*index].span,
