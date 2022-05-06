@@ -385,8 +385,18 @@ pub fn typecheck_call(
             // FIXME: This is a hack since print() is hard-coded into codegen at the moment.
         }
         _ => {
-            let (_callee, err) = resolve_call(call, span, file);
+            let (callee, err) = resolve_call(call, span, file);
             error = error.or(err);
+
+            if let Some(callee) = callee {
+                // Check that we have the right number of arguments.
+                if callee.params.len() != call.args.len() {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "wrong number of arguments".to_string(),
+                        *span,
+                    )));
+                }
+            }
         }
     }
 
