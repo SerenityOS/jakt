@@ -1,0 +1,44 @@
+on:
+  pull_request:
+  push: # Run CI on the main branch after every merge. This is important to fill the GitHub Actions cache in a way that pull requests can see it
+    branches:
+      - main
+
+name: continuous-integration
+
+jobs:
+  test:
+    strategy:
+      fail-fast: true
+      matrix:
+        platform: [windows-latest, macos-latest, ubuntu-latest]
+        style: [default]
+        rust:
+          - stable
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+          components: rustfmt, clippy
+
+      - name: Rustfmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Test Jakt
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --workspace ${{ matrix.flags }}
