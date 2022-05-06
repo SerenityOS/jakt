@@ -82,6 +82,7 @@ fn translate_function_predecl(fun: &Function) -> String {
 
 fn translate_type(ty: &Type) -> String {
     match ty {
+        Type::Bool => String::from("bool"),
         Type::String => String::from("char*"),
         Type::I8 => String::from("i8"),
         Type::I16 => String::from("i16"),
