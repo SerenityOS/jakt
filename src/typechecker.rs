@@ -1,6 +1,8 @@
 use crate::{
     error::JaktError,
-    parser::{Block, Call, Expression, Function, Operator, ParsedFile, Statement, Type, VarDecl},
+    parser::{
+        Block, Call, Expression, Function, Operator, ParsedFile, Span, Statement, Type, VarDecl,
+    },
 };
 
 #[derive(Clone)]
@@ -144,7 +146,7 @@ fn typecheck_file_helper(file: &ParsedFile, stack: &mut Stack) -> (CheckedFile, 
     let mut error = None;
 
     for fun in &file.funs {
-        let (checked_fun, err) = typecheck_fun(fun, stack);
+        let (checked_fun, err) = typecheck_fun(fun, stack, &file);
         error = error.or(err);
 
         output.checked_functions.push(checked_fun);
@@ -153,7 +155,11 @@ fn typecheck_file_helper(file: &ParsedFile, stack: &mut Stack) -> (CheckedFile, 
     (output, error)
 }
 
-fn typecheck_fun(fun: &Function, stack: &mut Stack) -> (CheckedFunction, Option<JaktError>) {
+fn typecheck_fun(
+    fun: &Function,
+    stack: &mut Stack,
+    file: &ParsedFile,
+) -> (CheckedFunction, Option<JaktError>) {
     let mut error = None;
 
     stack.push_frame();
@@ -162,7 +168,7 @@ fn typecheck_fun(fun: &Function, stack: &mut Stack) -> (CheckedFunction, Option<
         stack.add_var(param.clone());
     }
 
-    let (block, err) = typecheck_block(&fun.block, stack);
+    let (block, err) = typecheck_block(&fun.block, stack, file);
     error = error.or(err);
 
     stack.pop_frame();
@@ -177,14 +183,18 @@ fn typecheck_fun(fun: &Function, stack: &mut Stack) -> (CheckedFunction, Option<
     (output, error)
 }
 
-pub fn typecheck_block(block: &Block, stack: &mut Stack) -> (CheckedBlock, Option<JaktError>) {
+pub fn typecheck_block(
+    block: &Block,
+    stack: &mut Stack,
+    file: &ParsedFile,
+) -> (CheckedBlock, Option<JaktError>) {
     let mut error = None;
     let mut checked_block = CheckedBlock::new();
 
     stack.push_frame();
 
     for stmt in &block.stmts {
-        let (checked_stmt, err) = typecheck_statement(stmt, stack);
+        let (checked_stmt, err) = typecheck_statement(stmt, stack, file);
         error = error.or(err);
 
         checked_block.stmts.push(checked_stmt);
@@ -198,22 +208,23 @@ pub fn typecheck_block(block: &Block, stack: &mut Stack) -> (CheckedBlock, Optio
 pub fn typecheck_statement(
     stmt: &Statement,
     stack: &mut Stack,
+    file: &ParsedFile,
 ) -> (CheckedStatement, Option<JaktError>) {
     let mut error = None;
 
     match stmt {
         Statement::Expression(expr) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack);
+            let (checked_expr, err) = typecheck_expression(expr, stack, file);
 
             (CheckedStatement::Expression(checked_expr), err)
         }
         Statement::Defer(block) => {
-            let (checked_block, err) = typecheck_block(block, stack);
+            let (checked_block, err) = typecheck_block(block, stack, file);
 
             (CheckedStatement::Defer(checked_block), err)
         }
         Statement::VarDecl(var_decl, init) => {
-            let (checked_expression, err) = typecheck_expression(init, stack);
+            let (checked_expression, err) = typecheck_expression(init, stack, file);
             error = error.or(err);
 
             let mut var_decl = var_decl.clone();
@@ -239,25 +250,25 @@ pub fn typecheck_statement(
             )
         }
         Statement::If(cond, block) => {
-            let (checked_cond, err) = typecheck_expression(cond, stack);
+            let (checked_cond, err) = typecheck_expression(cond, stack, file);
             error = error.or(err);
 
-            let (checked_block, err) = typecheck_block(block, stack);
+            let (checked_block, err) = typecheck_block(block, stack, file);
             error = error.or(err);
 
             (CheckedStatement::If(checked_cond, checked_block), error)
         }
         Statement::While(cond, block) => {
-            let (checked_cond, err) = typecheck_expression(cond, stack);
+            let (checked_cond, err) = typecheck_expression(cond, stack, file);
             error = error.or(err);
 
-            let (checked_block, err) = typecheck_block(block, stack);
+            let (checked_block, err) = typecheck_block(block, stack, file);
             error = error.or(err);
 
             (CheckedStatement::While(checked_cond, checked_block), error)
         }
         Statement::Return(expr) => {
-            let (output, err) = typecheck_expression(expr, stack);
+            let (output, err) = typecheck_expression(expr, stack, file);
 
             (CheckedStatement::Return(output), err)
         }
@@ -268,12 +279,13 @@ pub fn typecheck_statement(
 pub fn typecheck_expression(
     expr: &Expression,
     stack: &mut Stack,
+    file: &ParsedFile,
 ) -> (CheckedExpression, Option<JaktError>) {
     let mut error = None;
 
     match expr {
         Expression::BinaryOp(lhs, op, rhs) => {
-            let (checked_lhs, err) = typecheck_expression(lhs, stack);
+            let (checked_lhs, err) = typecheck_expression(lhs, stack, file);
             error = error.or(err);
 
             let op = match &**op {
@@ -281,7 +293,7 @@ pub fn typecheck_expression(
                 _ => panic!("Need more robust operator error handling"),
             };
 
-            let (checked_rhs, err) = typecheck_expression(rhs, stack);
+            let (checked_rhs, err) = typecheck_expression(rhs, stack, file);
             error = error.or(err);
 
             // TODO: actually do the binary operator typecheck against safe operations
@@ -296,8 +308,8 @@ pub fn typecheck_expression(
             )
         }
         Expression::Boolean(b, _) => (CheckedExpression::Boolean(*b), None),
-        Expression::Call(call, ..) => {
-            let (checked_call, err) = typecheck_call(call, stack);
+        Expression::Call(call, span) => {
+            let (checked_call, err) = typecheck_call(call, stack, span, file);
 
             (CheckedExpression::Call(checked_call, Type::Unknown), err)
         }
@@ -333,12 +345,63 @@ pub fn typecheck_expression(
     }
 }
 
-pub fn typecheck_call(call: &Call, stack: &mut Stack) -> (CheckedCall, Option<JaktError>) {
+pub fn resolve_call<'a>(
+    call: &Call,
+    span: &Span,
+    file: &'a ParsedFile,
+) -> (Option<&'a Function>, Option<JaktError>) {
+    let mut callee = None;
+    let mut error = None;
+
+    // FIXME: Support function overloading.
+    for fun in &file.funs {
+        if fun.name == call.name {
+            callee = Some(fun);
+            break;
+        }
+    }
+
+    if callee.is_none() {
+        error = Some(JaktError::TypecheckError(
+            "call to unknown function".to_string(),
+            *span,
+        ));
+    }
+
+    (callee, error)
+}
+
+pub fn typecheck_call(
+    call: &Call,
+    stack: &mut Stack,
+    span: &Span,
+    file: &ParsedFile,
+) -> (CheckedCall, Option<JaktError>) {
     let mut checked_args = Vec::new();
     let mut error = None;
 
+    match call.name.as_str() {
+        "print" => {
+            // FIXME: This is a hack since print() is hard-coded into codegen at the moment.
+        }
+        _ => {
+            let (callee, err) = resolve_call(call, span, file);
+            error = error.or(err);
+
+            if let Some(callee) = callee {
+                // Check that we have the right number of arguments.
+                if callee.params.len() != call.args.len() {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "wrong number of arguments".to_string(),
+                        *span,
+                    )));
+                }
+            }
+        }
+    }
+
     for arg in &call.args {
-        let (checked_arg, err) = typecheck_expression(&arg.1, stack);
+        let (checked_arg, err) = typecheck_expression(&arg.1, stack, file);
         error = error.or(err);
 
         checked_args.push((arg.0.clone(), checked_arg));
