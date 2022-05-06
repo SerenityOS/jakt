@@ -1,19 +1,12 @@
-mod codegen;
-mod compiler;
-mod error;
-mod lexer;
-mod parser;
-mod typechecker;
+use std::path::PathBuf;
 
-use compiler::Compiler;
-use error::JaktError;
-use parser::Span;
+use jakt::{Compiler, JaktError, Span};
 
 fn main() -> Result<(), JaktError> {
-    let mut parser = compiler::Compiler::new();
+    let mut parser = Compiler::new();
 
-    for arg in std::env::args().skip(1) {
-        match parser.compile(&arg) {
+    for arg in std::env::args_os().skip(1) {
+        match parser.compile(&PathBuf::from(&arg)) {
             Ok(_) => {
                 println!("success");
             }
