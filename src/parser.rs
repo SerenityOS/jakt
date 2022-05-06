@@ -17,6 +17,7 @@ impl Call {
 
 #[derive(Debug)]
 pub enum Type {
+    Bool,
     String,
     I8,
     I16,
@@ -862,6 +863,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (Type, Option<Jakt
             "f32" => (Type::F32, None),
             "f64" => (Type::F64, None),
             "String" => (Type::String, None),
+            "bool" => (Type::Bool, None),
             _ => (
                 Type::Void,
                 Some(JaktError::ParserError("unknown type".to_string(), *span)),
