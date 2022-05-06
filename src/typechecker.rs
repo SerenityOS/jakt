@@ -1,6 +1,8 @@
 use crate::{
     error::JaktError,
-    parser::{Block, Call, Expression, Function, Operator, ParsedFile, Statement, Type, VarDecl},
+    parser::{
+        Block, Call, Expression, Function, Operator, ParsedFile, Span, Statement, Type, VarDecl,
+    },
 };
 
 #[derive(Clone)]
@@ -306,8 +308,8 @@ pub fn typecheck_expression(
             )
         }
         Expression::Boolean(b, _) => (CheckedExpression::Boolean(*b), None),
-        Expression::Call(call, ..) => {
-            let (checked_call, err) = typecheck_call(call, stack, file);
+        Expression::Call(call, span) => {
+            let (checked_call, err) = typecheck_call(call, stack, span, file);
 
             (CheckedExpression::Call(checked_call, Type::Unknown), err)
         }
@@ -343,13 +345,50 @@ pub fn typecheck_expression(
     }
 }
 
+pub fn resolve_call<'a>(
+    call: &Call,
+    span: &Span,
+    file: &'a ParsedFile,
+) -> (Option<&'a Function>, Option<JaktError>) {
+    let mut callee = None;
+    let mut error = None;
+
+    // FIXME: Support function overloading.
+    for fun in &file.funs {
+        if fun.name == call.name {
+            callee = Some(fun);
+            break;
+        }
+    }
+
+    if callee.is_none() {
+        error = Some(JaktError::TypecheckError(
+            "call to unknown function".to_string(),
+            *span,
+        ));
+    }
+
+    (callee, error)
+}
+
 pub fn typecheck_call(
     call: &Call,
     stack: &mut Stack,
+    span: &Span,
     file: &ParsedFile,
 ) -> (CheckedCall, Option<JaktError>) {
     let mut checked_args = Vec::new();
     let mut error = None;
+
+    match call.name.as_str() {
+        "print" => {
+            // FIXME: This is a hack since print() is hard-coded into codegen at the moment.
+        }
+        _ => {
+            let (_callee, err) = resolve_call(call, span, file);
+            error = error.or(err);
+        }
+    }
 
     for arg in &call.args {
         let (checked_arg, err) = typecheck_expression(&arg.1, stack, file);
