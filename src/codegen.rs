@@ -33,7 +33,11 @@ pub fn translate(file: &CheckedFile) -> String {
 fn translate_function(fun: &CheckedFunction) -> String {
     let mut output = String::new();
 
-    output.push_str(&translate_type(&fun.return_type));
+    if fun.name == "main" {
+        output.push_str("int");
+    } else {
+        output.push_str(&translate_type(&fun.return_type));
+    }
     output.push(' ');
     output.push_str(&fun.name);
     output.push('(');
@@ -62,7 +66,11 @@ fn translate_function(fun: &CheckedFunction) -> String {
 fn translate_function_predecl(fun: &CheckedFunction) -> String {
     let mut output = String::new();
 
-    output.push_str(&translate_type(&fun.return_type));
+    if fun.name == "main" {
+        output.push_str("int");
+    } else {
+        output.push_str(&translate_type(&fun.return_type));
+    }
     output.push(' ');
     output.push_str(&fun.name);
     output.push('(');
@@ -123,11 +131,11 @@ fn translate_block(indent: usize, checked_block: &CheckedBlock) -> String {
 fn translate_stmt(indent: usize, stmt: &CheckedStatement) -> String {
     let mut output = String::new();
 
-    output.push_str(&std::iter::repeat(' ').take(indent).collect::<String>());
+    output.push_str(&" ".repeat(indent));
 
     match stmt {
         CheckedStatement::Expression(expr) => {
-            let expr = translate_expr(indent, &expr);
+            let expr = translate_expr(indent, expr);
             output.push_str(&expr);
             output.push_str(";\n");
         }
@@ -140,13 +148,13 @@ fn translate_stmt(indent: usize, stmt: &CheckedStatement) -> String {
             output.push_str(");\n");
         }
         CheckedStatement::Return(expr) => {
-            let expr = translate_expr(indent, &expr);
+            let expr = translate_expr(indent, expr);
             output.push_str("return (");
             output.push_str(&expr);
             output.push_str(");\n")
         }
         CheckedStatement::If(cond, block) => {
-            let expr = translate_expr(indent, &cond);
+            let expr = translate_expr(indent, cond);
             output.push_str("if (");
             output.push_str(&expr);
             output.push_str(") ");
@@ -155,7 +163,7 @@ fn translate_stmt(indent: usize, stmt: &CheckedStatement) -> String {
             output.push_str(&block);
         }
         CheckedStatement::While(cond, block) => {
-            let expr = translate_expr(indent, &cond);
+            let expr = translate_expr(indent, cond);
             output.push_str("while (");
             output.push_str(&expr);
             output.push_str(") ");
@@ -196,7 +204,7 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
             output.push_str(&int64.to_string());
         }
         CheckedExpression::Var(var, ..) => {
-            output.push_str(&var.to_string());
+            output.push_str(var);
         }
         CheckedExpression::Boolean(bool) => {
             if *bool {
