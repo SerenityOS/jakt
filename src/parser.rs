@@ -38,14 +38,16 @@ pub struct VarDecl {
     pub name: String,
     pub ty: Type,
     pub mutable: bool,
+    pub span: Span,
 }
 
 impl VarDecl {
-    pub fn new() -> Self {
+    pub fn new(span: Span) -> Self {
         Self {
             name: String::new(),
             ty: Type::Void,
             mutable: false,
+            span,
         }
     }
 }
@@ -358,6 +360,13 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
 
                             let (var_decl, err) = parse_variable_declaration(tokens, index);
                             error = error.or(err);
+
+                            if var_decl.ty == Type::Unknown {
+                                error = error.or(Some(JaktError::ParserError(
+                                    "parameter missing type".to_string(),
+                                    var_decl.span,
+                                )))
+                            }
 
                             params.push((var_decl.name, var_decl.ty));
                         }
@@ -849,15 +858,27 @@ pub fn parse_variable_declaration(
                         *index += 1;
                     }
                     _ => {
-                        (
-                            VarDecl::new(),
-                            (JaktError::ParserError(
-                                "expected ':'".to_string(),
-                                tokens[*index].span,
-                            )),
+                        return (
+                            VarDecl {
+                                name: name.to_string(),
+                                ty: Type::Unknown,
+                                mutable: false,
+                                span: tokens[*index - 1].span,
+                            },
+                            None,
                         );
                     }
                 }
+            } else {
+                return (
+                    VarDecl {
+                        name: name.to_string(),
+                        ty: Type::Unknown,
+                        mutable: false,
+                        span: tokens[*index - 1].span,
+                    },
+                    None,
+                );
             }
 
             if *index < tokens.len() {
@@ -868,6 +889,7 @@ pub fn parse_variable_declaration(
                     name: var_name,
                     ty: var_type,
                     mutable: false,
+                    span: tokens[*index - 3].span,
                 };
 
                 *index += 1;
@@ -877,8 +899,9 @@ pub fn parse_variable_declaration(
                 (
                     VarDecl {
                         name: name.to_string(),
-                        ty: Type::Void,
+                        ty: Type::Unknown,
                         mutable: false,
+                        span: tokens[*index - 2].span,
                     },
                     Some(JaktError::ParserError(
                         "expected type".to_string(),
@@ -888,7 +911,7 @@ pub fn parse_variable_declaration(
             }
         }
         _ => (
-            VarDecl::new(),
+            VarDecl::new(tokens[*index].span),
             Some(JaktError::ParserError(
                 "expected name".to_string(),
                 tokens[*index].span,
