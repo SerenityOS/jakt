@@ -95,6 +95,16 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                         Span::new(file_id, start, start + 1),
                     ));
                     continue;
+                } else if bytes[index] == b'/' {
+                    // We are in a comment, skip it
+                    while index < bytes.len() {
+                        if bytes[index] == b'\n' {
+                            index += 1;
+                            break;
+                        }
+                        index += 1;
+                    }
+                    continue;
                 }
             }
 
