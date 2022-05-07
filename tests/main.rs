@@ -2,11 +2,8 @@ use std::{env::temp_dir, io::Write, process::Command};
 
 use jakt::{Compiler, JaktError};
 
-#[test]
-fn test_samples() -> Result<(), JaktError> {
-    for sample in
-        std::fs::read_dir("./samples").expect("if this fails, the repo or harness is broken")
-    {
+fn test_samples(path: &str) -> Result<(), JaktError> {
+    for sample in std::fs::read_dir(path).expect("if this fails, the repo or harness is broken") {
         let sample = sample.expect("if this fails, the filesytem is having issues");
 
         let path = sample.path();
@@ -147,4 +144,29 @@ fn test_samples() -> Result<(), JaktError> {
     }
 
     Ok(())
+}
+
+#[test]
+fn test_basics() -> Result<(), JaktError> {
+    test_samples("samples/basics")
+}
+
+#[test]
+fn test_control_flow() -> Result<(), JaktError> {
+    test_samples("samples/control_flow")
+}
+
+#[test]
+fn test_functions() -> Result<(), JaktError> {
+    test_samples("samples/functions")
+}
+
+#[test]
+fn test_math() -> Result<(), JaktError> {
+    test_samples("samples/math")
+}
+
+#[test]
+fn test_variables() -> Result<(), JaktError> {
+    test_samples("samples/variables")
 }
