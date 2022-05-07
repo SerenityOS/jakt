@@ -90,8 +90,8 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
                             .arg("/Fe:")
                             .arg(&exe_name)
                             .arg("/std:c++20")
-                            .status()?;
-                        assert!(status.success());
+                            .output()?;
+                        assert!(status.status.success());
 
                         let binary_run = Command::new(&exe_name).output()?;
 
@@ -120,8 +120,8 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
                             .arg("-o")
                             .arg(&exe_name)
                             .arg("-std=c++20")
-                            .status()?;
-                        assert!(status.success());
+                            .output()?;
+                        assert!(status.status.success());
 
                         let binary_run = Command::new(&exe_name).output()?;
 
