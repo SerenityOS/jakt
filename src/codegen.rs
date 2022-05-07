@@ -11,7 +11,6 @@ pub fn translate(file: &CheckedFile) -> String {
     let mut output = String::new();
 
     output.push_str("#include \"runtime/lib.h\"\n");
-    output.push_str("#include<iostream>\n");
 
     for fun in &file.checked_functions {
         let fun_output = translate_function_predecl(fun);
@@ -226,12 +225,11 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
         }
         CheckedExpression::Call(call, ..) => {
             if call.name == "print" {
-                output.push_str("std::cout << ");
-                output.push('(');
+                output.push_str("outln(\"{}\", ");
                 for param in &call.args {
                     output.push_str(&translate_expr(indent, &param.1));
                 }
-                output.push_str(") << std::endl");
+                output.push_str(")");
             } else {
                 output.push_str(&call.name);
                 output.push('(');
