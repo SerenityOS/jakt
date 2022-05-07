@@ -1,0 +1,9 @@
+fun main() {
+    let x: i64 = 80;
+
+    if (x == 100) {
+        print("true")
+    } else {
+        print("not 100")
+    }
+}
