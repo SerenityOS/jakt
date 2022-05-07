@@ -107,6 +107,7 @@ fn translate_type(ty: &Type) -> String {
         Type::F32 => String::from("f32"),
         Type::F64 => String::from("f64"),
         Type::Void => String::from("void"),
+        Type::Vector(v) => format!("Vector<{}>", translate_type(v)),
         Type::Unknown => String::from("auto"),
     }
 }
@@ -211,7 +212,9 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
             output.push('"');
         }
         CheckedExpression::Int64(int64) => {
+            output.push_str("static_cast<i64>(");
             output.push_str(&int64.to_string());
+            output.push_str("LL)");
         }
         CheckedExpression::Var(var, ..) => {
             output.push_str(&var.name);
@@ -269,6 +272,28 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
             }
             output.push_str(&translate_expr(indent, rhs));
             output.push(')');
+        }
+        CheckedExpression::Vector(vals, _) => {
+            // (Vector({1, 2, 3}))
+            output.push_str("(Vector({");
+            let mut first = true;
+            for val in vals {
+                if !first {
+                    output.push_str(", ");
+                } else {
+                    first = false;
+                }
+
+                output.push_str(&translate_expr(indent, val))
+            }
+            output.push_str("}))");
+        }
+        CheckedExpression::IndexedExpression(expr, idx, _) => {
+            output.push_str("((");
+            output.push_str(&translate_expr(indent, expr));
+            output.push_str(")[");
+            output.push_str(&translate_expr(indent, idx));
+            output.push_str("])");
         }
         CheckedExpression::Garbage => {
             // Incorrect parse/typecheck

@@ -54,7 +54,7 @@ pub enum CheckedStatement {
     Garbage,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum CheckedExpression {
     // Standalone
     Boolean(bool),
@@ -67,6 +67,8 @@ pub enum CheckedExpression {
         Box<CheckedExpression>,
         Type,
     ),
+    Vector(Vec<CheckedExpression>, Type),
+    IndexedExpression(Box<CheckedExpression>, Box<CheckedExpression>, Type),
     Var(Variable),
 
     // Parsing error
@@ -81,13 +83,15 @@ impl CheckedExpression {
             CheckedExpression::Int64(_) => Type::I64,
             CheckedExpression::QuotedString(_) => Type::String,
             CheckedExpression::BinaryOp(_, _, _, ty) => ty.clone(),
+            CheckedExpression::Vector(_, ty) => ty.clone(),
+            CheckedExpression::IndexedExpression(_, _, ty) => ty.clone(),
             CheckedExpression::Var(Variable { ty, .. }) => ty.clone(),
             CheckedExpression::Garbage => Type::Unknown,
         }
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct CheckedCall {
     pub name: String,
     pub args: Vec<(String, CheckedExpression)>,
@@ -385,6 +389,71 @@ pub fn typecheck_expression(
                     )),
                 )
             }
+        }
+        Expression::Vector(vec, _) => {
+            let mut inner_ty = Type::Unknown;
+            let mut output = Vec::new();
+
+            for v in vec {
+                let (checked_expr, err) = typecheck_expression(v, stack, file);
+                error = error.or(err);
+
+                if inner_ty == Type::Unknown {
+                    inner_ty = checked_expr.ty();
+                } else {
+                    if inner_ty != checked_expr.ty() {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "does not match type of previous values in vector".to_string(),
+                            v.span(),
+                        )))
+                    }
+                }
+
+                output.push(checked_expr);
+            }
+
+            (
+                CheckedExpression::Vector(output, Type::Vector(Box::new(inner_ty))),
+                error,
+            )
+        }
+        Expression::IndexedExpression(expr, idx, _) => {
+            let (checked_expr, err) = typecheck_expression(expr, stack, file);
+            error = error.or(err);
+
+            let (checked_idx, err) = typecheck_expression(idx, stack, file);
+            error = error.or(err);
+
+            let mut ty = Type::Unknown;
+
+            match checked_expr.ty() {
+                Type::Vector(inner_ty) => match checked_idx.ty() {
+                    Type::I64 => {
+                        ty = *inner_ty.clone();
+                    }
+                    _ => {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "index is not an integer".to_string(),
+                            idx.span(),
+                        )))
+                    }
+                },
+                _ => {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "index used on value that can't be indexed".to_string(),
+                        expr.span(),
+                    )))
+                }
+            }
+
+            (
+                CheckedExpression::IndexedExpression(
+                    Box::new(checked_expr),
+                    Box::new(checked_idx),
+                    ty,
+                ),
+                error,
+            )
         }
         Expression::Operator(_, span) => (
             CheckedExpression::Garbage,
