@@ -45,6 +45,7 @@ pub enum Type {
     F32,
     F64,
     Void,
+    Vector(Box<Type>),
     Unknown,
 }
 
@@ -101,6 +102,8 @@ pub enum TokenContents {
     RParen,
     LCurly,
     RCurly,
+    LSquare,
+    RSquare,
     Plus,
     Minus,
     Equal,
@@ -212,6 +215,8 @@ pub enum Expression {
     Call(Call, Span),
     Int64(i64, Span),
     QuotedString(String, Span),
+    Vector(Vec<Expression>, Span),
+    IndexedExpression(Box<Expression>, Box<Expression>, Span),
     BinaryOp(Box<Expression>, Box<Expression>, Box<Expression>),
     Var(String, Span),
 
@@ -229,6 +234,8 @@ impl Expression {
             Expression::Call(_, span) => *span,
             Expression::Int64(_, span) => *span,
             Expression::QuotedString(_, span) => *span,
+            Expression::Vector(_, span) => *span,
+            Expression::IndexedExpression(_, _, span) => *span,
             Expression::BinaryOp(_, op, _) => op.span(),
             Expression::Var(_, span) => *span,
             Expression::Operator(_, span) => *span,
@@ -932,14 +939,14 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 
     let span = tokens[*index].span;
 
-    match &tokens[*index].contents {
+    let expr = match &tokens[*index].contents {
         TokenContents::Name(name) if name == "true" => {
             *index += 1;
-            (Expression::Boolean(true, span), None)
+            Expression::Boolean(true, span)
         }
         TokenContents::Name(name) if name == "false" => {
             *index += 1;
-            (Expression::Boolean(false, span), None)
+            Expression::Boolean(false, span)
         }
         TokenContents::Name(name) => {
             if *index + 1 < tokens.len() {
@@ -948,15 +955,19 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                         let (call, err) = parse_call(tokens, index);
                         error = error.or(err);
 
-                        return (Expression::Call(call, span), error);
+                        Expression::Call(call, span)
                     }
-                    _ => {}
+                    _ => {
+                        *index += 1;
+
+                        Expression::Var(name.to_string(), span)
+                    }
                 }
+            } else {
+                *index += 1;
+
+                Expression::Var(name.to_string(), span)
             }
-
-            *index += 1;
-
-            (Expression::Var(name.to_string(), span), error)
         }
         TokenContents::LParen => {
             *index += 1;
@@ -978,27 +989,88 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 }
             }
 
-            (expr, error)
+            expr
+        }
+        TokenContents::LSquare => {
+            let (expr, err) = parse_vector(tokens, index);
+            error = error.or(err);
+            expr
         }
         TokenContents::Number(number) => {
             *index += 1;
-            (Expression::Int64(*number, span), error)
+            Expression::Int64(*number, span)
         }
         TokenContents::QuotedString(str) => {
             *index += 1;
-            (Expression::QuotedString(str.to_string(), span), error)
+            Expression::QuotedString(str.to_string(), span)
         }
         _ => {
             trace!("ERROR: unsupported expression");
-            (
-                Expression::Garbage(span),
-                Some(JaktError::ParserError(
-                    "unsupported expression".to_string(),
-                    tokens[*index].span,
-                )),
-            )
+            error = error.or(Some(JaktError::ParserError(
+                "unsupported expression".to_string(),
+                tokens[*index].span,
+            )));
+
+            Expression::Garbage(span)
+        }
+    };
+
+    // Check for postfix operators, while we're at it
+    if *index < tokens.len() {
+        match &tokens[*index].contents {
+            TokenContents::LSquare => {
+                // Indexing operation
+                *index += 1;
+
+                if *index < tokens.len() {
+                    let (idx, err) = parse_expression(
+                        tokens,
+                        index,
+                        ExpressionKind::ExpressionWithoutAssignment,
+                    );
+                    error = error.or(err);
+
+                    let end;
+                    if *index < tokens.len() {
+                        end = *index;
+                        match &tokens[*index].contents {
+                            TokenContents::RSquare => {
+                                *index += 1;
+                            }
+                            _ => {
+                                error = error.or(Some(JaktError::ParserError(
+                                    "expected ']'".to_string(),
+                                    tokens[*index].span,
+                                )))
+                            }
+                        }
+                    } else {
+                        end = *index - 1;
+                        error = error.or(Some(JaktError::ParserError(
+                            "expected ']'".to_string(),
+                            tokens[*index - 1].span,
+                        )));
+                    }
+
+                    return (
+                        Expression::IndexedExpression(
+                            Box::new(expr),
+                            Box::new(idx),
+                            Span {
+                                file_id: span.file_id,
+                                start: span.start,
+                                end,
+                            },
+                        ),
+                        error,
+                    );
+                }
+            }
+            _ => {}
         }
     }
+
+    (expr, error)
 }
 
 pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
@@ -1111,7 +1183,7 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
             )
         }
         _ => {
-            trace!("ERROR: unsupported operator");
+            trace!("ERROR: unsupported operator (possibly just the end of an expression)");
 
             (
                 Expression::Garbage(span),
@@ -1200,7 +1272,7 @@ pub fn parse_operator_with_assignment(
             )
         }
         _ => {
-            trace!("ERROR: unsupported operator");
+            trace!("ERROR: unsupported operator (possibly just the end of an expression)");
 
             (
                 Expression::Garbage(span),
@@ -1211,6 +1283,88 @@ pub fn parse_operator_with_assignment(
             )
         }
     }
+}
+
+pub fn parse_vector(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
+    let mut error = None;
+
+    let mut output = Vec::new();
+
+    let start;
+    if *index < tokens.len() {
+        start = *index;
+        match tokens[*index] {
+            Token {
+                contents: TokenContents::LSquare,
+                ..
+            } => {
+                *index += 1;
+            }
+            _ => {
+                trace!("ERROR: expected '['");
+
+                error = error.or(Some(JaktError::ParserError(
+                    "expected '('".to_string(),
+                    tokens[*index].span,
+                )));
+            }
+        }
+    } else {
+        start = *index - 1;
+        trace!("ERROR: incomplete function");
+
+        error = error.or(Some(JaktError::ParserError(
+            "incomplete function".to_string(),
+            tokens[*index - 1].span,
+        )));
+    }
+
+    while *index < tokens.len() {
+        match &tokens[*index].contents {
+            TokenContents::RSquare => {
+                *index += 1;
+                break;
+            }
+            TokenContents::Comma => {
+                // Treat comma as whitespace? Might require them in the future
+                *index += 1;
+            }
+
+            _ => {
+                let (expr, err) =
+                    parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+                error = error.or(err);
+
+                output.push(expr);
+            }
+        }
+    }
+
+    let end;
+    if *index >= tokens.len() {
+        trace!("ERROR: incomplete function");
+
+        error = error.or(Some(JaktError::ParserError(
+            "incomplete function".to_string(),
+            tokens[*index - 1].span,
+        )));
+
+        end = *index - 1;
+    } else {
+        end = *index;
+    }
+
+    (
+        Expression::Vector(
+            output,
+            Span {
+                file_id: tokens[start].span.file_id,
+                start: tokens[start].span.start,
+                end: tokens[end].span.end,
+            },
+        ),
+        error,
+    )
 }
 
 pub fn parse_variable_declaration(
