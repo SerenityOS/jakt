@@ -212,8 +212,9 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
             output.push('"');
         }
         CheckedExpression::Int64(int64) => {
+            output.push_str("static_cast<i64>(");
             output.push_str(&int64.to_string());
-            output.push_str("LL");
+            output.push_str("LL)");
         }
         CheckedExpression::Var(var, ..) => {
             output.push_str(&var.name);
