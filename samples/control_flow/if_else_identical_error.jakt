@@ -1,0 +1,7 @@
+fun main() {
+    if true {
+        print("hello")
+    } else {
+        print("hello")
+    }
+}
