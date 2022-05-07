@@ -312,6 +312,8 @@ public:
         }());
     }
 
+    String& operator+=(String const&);
+
 private:
     RefPtr<StringImpl> m_impl;
 };
@@ -330,6 +332,8 @@ bool operator<(char const*, String const&);
 bool operator>=(char const*, String const&);
 bool operator>(char const*, String const&);
 bool operator<=(char const*, String const&);
+
+String operator+(String const&, String const&);
 
 String escape_html_entities(StringView html);
 
