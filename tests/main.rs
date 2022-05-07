@@ -73,71 +73,33 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
 
                     let pwd = std::env::current_dir()?;
 
-                    #[cfg(windows)]
-                    {
-                        let mut exe_name = temp_dir();
-                        exe_name.push(format!("output{}.exe", uuid));
+                    let mut exe_name = temp_dir();
+                    exe_name.push(format!("output{}", uuid));
 
-                        let mut obj_name = temp_dir();
-                        obj_name.push(format!("output{}.obj", uuid));
+                    let status = Command::new("clang++")
+                        .arg(&cpp_filename)
+                        .arg("-I")
+                        .arg(pwd)
+                        .arg("-o")
+                        .arg(&exe_name)
+                        .arg("-std=c++20")
+                        .output()?;
+                    assert!(status.status.success());
 
-                        let status = Command::new("cl.exe")
-                            .arg(&cpp_filename)
-                            .arg("/I")
-                            .arg(pwd)
-                            .arg("/Fo:")
-                            .arg(&obj_name)
-                            .arg("/Fe:")
-                            .arg(&exe_name)
-                            .arg("/std:c++20")
-                            .output()?;
-                        assert!(status.status.success());
+                    let binary_run = Command::new(&exe_name).output()?;
 
-                        let binary_run = Command::new(&exe_name).output()?;
+                    let binary_output = String::from_utf8_lossy(&binary_run.stdout).to_string();
+                    let binary_output = binary_output.replace("\r\n", "\n");
 
-                        let binary_output = String::from_utf8_lossy(&binary_run.stdout).to_string();
-                        let binary_output = binary_output.replace("\r\n", "\n");
+                    let baseline_text = std::fs::read_to_string(&output_path)?;
+                    let baseline_text = baseline_text.replace("\r\n", "\n");
 
-                        let baseline_text = std::fs::read_to_string(&output_path)?;
-                        let baseline_text = baseline_text.replace("\r\n", "\n");
-
-                        assert_eq!(
-                            binary_output,
-                            baseline_text,
-                            "\r\nTest: {}",
-                            path.to_string_lossy()
-                        );
-                    }
-                    #[cfg(not(windows))]
-                    {
-                        let mut exe_name = temp_dir();
-                        exe_name.push(format!("output{}", uuid));
-
-                        let status = Command::new("clang++")
-                            .arg(&cpp_filename)
-                            .arg("-I")
-                            .arg(pwd)
-                            .arg("-o")
-                            .arg(&exe_name)
-                            .arg("-std=c++20")
-                            .output()?;
-                        assert!(status.status.success());
-
-                        let binary_run = Command::new(&exe_name).output()?;
-
-                        let binary_output = String::from_utf8_lossy(&binary_run.stdout).to_string();
-                        let binary_output = binary_output.replace("\r\n", "\n");
-
-                        let baseline_text = std::fs::read_to_string(&output_path)?;
-                        let baseline_text = baseline_text.replace("\r\n", "\n");
-
-                        assert_eq!(
-                            binary_output,
-                            baseline_text,
-                            "\r\nTest: {}",
-                            path.to_string_lossy()
-                        );
-                    }
+                    assert_eq!(
+                        binary_output,
+                        baseline_text,
+                        "\r\nTest: {}",
+                        path.to_string_lossy()
+                    );
                 }
             }
         }
