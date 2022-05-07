@@ -14,6 +14,7 @@ fn main() -> Result<(), JaktError> {
                 JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
                 JaktError::ParserError(msg, span) => display_error(&parser, &msg, span),
                 JaktError::TypecheckError(msg, span) => display_error(&parser, &msg, span),
+                JaktError::ValidationError(msg, span) => display_error(&parser, &msg, span),
             },
         }
     }
