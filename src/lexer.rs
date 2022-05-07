@@ -215,6 +215,20 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                 TokenContents::RCurly,
                 Span::new(file_id, start, start + 1),
             ));
+        } else if c == b'[' {
+            let start = index;
+            index += 1;
+            output.push(Token::new(
+                TokenContents::LSquare,
+                Span::new(file_id, start, start + 1),
+            ));
+        } else if c == b']' {
+            let start = index;
+            index += 1;
+            output.push(Token::new(
+                TokenContents::RSquare,
+                Span::new(file_id, start, start + 1),
+            ));
         } else if c == b'\r' || c == b' ' || c == b'\t' {
             // Ignore a stand-alone carriage return
             index += 1;
