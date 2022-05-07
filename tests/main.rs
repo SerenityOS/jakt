@@ -152,7 +152,7 @@ fn test_basics() -> Result<(), JaktError> {
 }
 
 #[test]
-fn test_control() -> Result<(), JaktError> {
+fn test_control_flow() -> Result<(), JaktError> {
     test_samples("samples/control_flow")
 }
 
