@@ -35,7 +35,7 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                     index += 1;
                     output.push(Token::new(
                         TokenContents::PlusEqual,
-                        Span::new(file_id, start, start + 1),
+                        Span::new(file_id, start, start + 2),
                     ));
                     continue;
                 }
@@ -54,7 +54,7 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                     index += 1;
                     output.push(Token::new(
                         TokenContents::MinusEqual,
-                        Span::new(file_id, start, start + 1),
+                        Span::new(file_id, start, start + 2),
                     ));
                     continue;
                 }
@@ -73,7 +73,7 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                     index += 1;
                     output.push(Token::new(
                         TokenContents::AsteriskEqual,
-                        Span::new(file_id, start, start + 1),
+                        Span::new(file_id, start, start + 2),
                     ));
                     continue;
                 }
@@ -92,7 +92,7 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                     index += 1;
                     output.push(Token::new(
                         TokenContents::ForwardSlashEqual,
-                        Span::new(file_id, start, start + 1),
+                        Span::new(file_id, start, start + 2),
                     ));
                     continue;
                 } else if bytes[index] == b'/' {
@@ -120,7 +120,7 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                     index += 1;
                     output.push(Token::new(
                         TokenContents::DoubleEqual,
-                        Span::new(file_id, start, start + 1),
+                        Span::new(file_id, start, start + 2),
                     ));
                     continue;
                 }
@@ -137,7 +137,7 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                     index += 1;
                     output.push(Token::new(
                         TokenContents::GreaterThanOrEqual,
-                        Span::new(file_id, start, start + 1),
+                        Span::new(file_id, start, start + 2),
                     ));
                     continue;
                 }
@@ -154,7 +154,7 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                     index += 1;
                     output.push(Token::new(
                         TokenContents::LessThanOrEqual,
-                        Span::new(file_id, start, start + 1),
+                        Span::new(file_id, start, start + 2),
                     ));
                     continue;
                 }
@@ -171,7 +171,7 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                     index += 1;
                     output.push(Token::new(
                         TokenContents::NotEqual,
-                        Span::new(file_id, start, start + 1),
+                        Span::new(file_id, start, start + 2),
                     ));
                     continue;
                 }

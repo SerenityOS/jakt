@@ -50,10 +50,10 @@ fn translate_function(fun: &CheckedFunction) -> String {
             first = false;
         }
 
-        let ty = translate_type(&param.1);
+        let ty = translate_type(&param.ty);
         output.push_str(&ty);
         output.push(' ');
-        output.push_str(&param.0);
+        output.push_str(&param.name);
     }
     output.push(')');
 
@@ -83,10 +83,10 @@ fn translate_function_predecl(fun: &CheckedFunction) -> String {
             first = false;
         }
 
-        let ty = translate_type(&param.1);
+        let ty = translate_type(&param.ty);
         output.push_str(&ty);
         output.push(' ');
-        output.push_str(&param.0);
+        output.push_str(&param.name);
     }
     output.push_str(");");
 
@@ -214,7 +214,7 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
             output.push_str(&int64.to_string());
         }
         CheckedExpression::Var(var, ..) => {
-            output.push_str(var);
+            output.push_str(&var.name);
         }
         CheckedExpression::Boolean(bool) => {
             if *bool {
