@@ -153,7 +153,7 @@ fn translate_stmt(indent: usize, stmt: &CheckedStatement) -> String {
             output.push_str(&expr);
             output.push_str(");\n")
         }
-        CheckedStatement::If(cond, block) => {
+        CheckedStatement::If(cond, block, else_stmt) => {
             let expr = translate_expr(indent, cond);
             output.push_str("if (");
             output.push_str(&expr);
@@ -161,6 +161,12 @@ fn translate_stmt(indent: usize, stmt: &CheckedStatement) -> String {
 
             let block = translate_block(indent, block);
             output.push_str(&block);
+
+            if let Some(else_stmt) = else_stmt {
+                output.push_str(" else ");
+                let else_string = translate_stmt(indent, else_stmt);
+                output.push_str(&else_string);
+            }
         }
         CheckedStatement::While(cond, block) => {
             let expr = translate_expr(indent, cond);
@@ -181,6 +187,10 @@ fn translate_stmt(indent: usize, stmt: &CheckedStatement) -> String {
             output.push_str(" = ");
             output.push_str(&translate_expr(indent, expr));
             output.push_str(";\n");
+        }
+        CheckedStatement::Block(checked_block) => {
+            let block = translate_block(indent, checked_block);
+            output.push_str(&block);
         }
         CheckedStatement::Garbage => {
             // Incorrect parse/typecheck
