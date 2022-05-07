@@ -405,6 +405,12 @@ pub fn typecheck_call(
     match call.name.as_str() {
         "print" => {
             // FIXME: This is a hack since print() is hard-coded into codegen at the moment.
+            for arg in &call.args {
+                let (checked_arg, err) = typecheck_expression(&arg.1, stack, file);
+                error = error.or(err);
+
+                checked_args.push((arg.0.clone(), checked_arg));
+            }
         }
         _ => {
             let (callee, err) = resolve_call(call, span, file);
@@ -417,16 +423,28 @@ pub fn typecheck_call(
                         "wrong number of arguments".to_string(),
                         *span,
                     )));
+                } else {
+                    let mut idx = 0;
+
+                    while idx < call.args.len() {
+                        let (checked_arg, err) =
+                            typecheck_expression(&call.args[idx].1, stack, file);
+                        error = error.or(err);
+
+                        if checked_arg.ty() != callee.params[idx].1 {
+                            error = error.or(Some(JaktError::TypecheckError(
+                                "Parameter type mismatch".to_string(),
+                                call.args[idx].1.span(),
+                            )))
+                        }
+
+                        checked_args.push((call.args[idx].0.clone(), checked_arg));
+
+                        idx += 1;
+                    }
                 }
             }
         }
-    }
-
-    for arg in &call.args {
-        let (checked_arg, err) = typecheck_expression(&arg.1, stack, file);
-        error = error.or(err);
-
-        checked_args.push((arg.0.clone(), checked_arg));
     }
 
     (

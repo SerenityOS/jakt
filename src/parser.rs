@@ -188,20 +188,20 @@ pub enum Expression {
     Garbage(Span),
 }
 
-// impl Expression {
-//     pub fn span(&self) -> Span {
-//         match self {
-//             Expression::Boolean(_, span) => *span,
-//             Expression::Call(_, span) => *span,
-//             Expression::Int64(_, span) => *span,
-//             Expression::QuotedString(_, span) => *span,
-//             Expression::BinaryOp(_, op, _) => op.span(),
-//             Expression::Var(_, span) => *span,
-//             Expression::Operator(_, span) => *span,
-//             Expression::Garbage(span) => *span,
-//         }
-//     }
-// }
+impl Expression {
+    pub fn span(&self) -> Span {
+        match self {
+            Expression::Boolean(_, span) => *span,
+            Expression::Call(_, span) => *span,
+            Expression::Int64(_, span) => *span,
+            Expression::QuotedString(_, span) => *span,
+            Expression::BinaryOp(_, op, _) => op.span(),
+            Expression::Var(_, span) => *span,
+            Expression::Operator(_, span) => *span,
+            Expression::Garbage(span) => *span,
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum Operator {
