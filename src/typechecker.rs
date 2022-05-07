@@ -2,6 +2,7 @@ use crate::{
     error::JaktError,
     parser::{
         Block, Call, Expression, Function, Operator, ParsedFile, Span, Statement, Type, VarDecl,
+        Variable,
     },
 };
 
@@ -22,7 +23,7 @@ impl CheckedFile {
 pub struct CheckedFunction {
     pub name: String,
     pub return_type: Type,
-    pub params: Vec<(String, Type)>,
+    pub params: Vec<Variable>,
     pub block: CheckedBlock,
 }
 
@@ -66,7 +67,7 @@ pub enum CheckedExpression {
         Box<CheckedExpression>,
         Type,
     ),
-    Var(String, Type),
+    Var(Variable),
 
     // Parsing error
     Garbage,
@@ -80,7 +81,7 @@ impl CheckedExpression {
             CheckedExpression::Int64(_) => Type::I64,
             CheckedExpression::QuotedString(_) => Type::String,
             CheckedExpression::BinaryOp(_, _, _, ty) => ty.clone(),
-            CheckedExpression::Var(_, ty) => ty.clone(),
+            CheckedExpression::Var(Variable { ty, .. }) => ty.clone(),
             CheckedExpression::Garbage => Type::Unknown,
         }
     }
@@ -110,17 +111,17 @@ impl Stack {
         self.frames.pop();
     }
 
-    pub fn add_var(&mut self, var: (String, Type)) {
+    pub fn add_var(&mut self, var: Variable) {
         if let Some(frame) = self.frames.last_mut() {
             frame.vars.push(var);
         }
     }
 
-    pub fn find_var(&self, var: &str) -> Option<Type> {
+    pub fn find_var(&self, var: &str) -> Option<Variable> {
         for frame in self.frames.iter().rev() {
             for v in &frame.vars {
-                if v.0 == var {
-                    return Some(v.1.clone());
+                if v.name == var {
+                    return Some(v.clone());
                 }
             }
         }
@@ -131,7 +132,7 @@ impl Stack {
 
 #[derive(Clone)]
 pub struct StackFrame {
-    vars: Vec<(String, Type)>,
+    vars: Vec<Variable>,
 }
 
 impl StackFrame {
@@ -247,7 +248,11 @@ pub fn typecheck_statement(
             //     )));
             // }
 
-            stack.add_var((var_decl.name.clone(), var_decl.ty.clone()));
+            stack.add_var(Variable {
+                name: var_decl.name.clone(),
+                ty: var_decl.ty.clone(),
+                mutable: var_decl.mutable,
+            });
 
             (
                 CheckedStatement::VarDecl(var_decl.clone(), checked_expression),
@@ -310,6 +315,8 @@ pub fn typecheck_expression(
             let (checked_lhs, err) = typecheck_expression(lhs, stack, file);
             error = error.or(err);
 
+            let op_span = op.span();
+
             let op = match &**op {
                 Expression::Operator(operator, _) => operator.clone(),
                 _ => panic!("Need more robust operator error handling"),
@@ -318,13 +325,22 @@ pub fn typecheck_expression(
             let (checked_rhs, err) = typecheck_expression(rhs, stack, file);
             error = error.or(err);
 
+            error = error.or(typecheck_operation(
+                &checked_lhs,
+                &op,
+                &checked_rhs,
+                op_span,
+            ));
+
             // TODO: actually do the binary operator typecheck against safe operations
+            // For now, use a type we know
+            let ty = checked_lhs.ty();
             (
                 CheckedExpression::BinaryOp(
                     Box::new(checked_lhs),
                     Box::new(op),
                     Box::new(checked_rhs),
-                    Type::Unknown,
+                    ty,
                 ),
                 error,
             )
@@ -338,11 +354,15 @@ pub fn typecheck_expression(
         Expression::Int64(i, _) => (CheckedExpression::Int64(*i), None),
         Expression::QuotedString(qs, _) => (CheckedExpression::QuotedString(qs.clone()), None),
         Expression::Var(v, span) => {
-            if let Some(ty) = stack.find_var(v) {
-                (CheckedExpression::Var(v.clone(), ty.clone()), None)
+            if let Some(var) = stack.find_var(v) {
+                (CheckedExpression::Var(var.clone()), None)
             } else {
                 (
-                    CheckedExpression::Var(v.clone(), Type::Unknown),
+                    CheckedExpression::Var(Variable {
+                        name: v.clone(),
+                        ty: Type::Unknown,
+                        mutable: false,
+                    }),
                     Some(JaktError::TypecheckError(
                         "variable not found".to_string(),
                         *span,
@@ -365,6 +385,49 @@ pub fn typecheck_expression(
             )),
         ),
     }
+}
+
+pub fn typecheck_operation(
+    lhs: &CheckedExpression,
+    op: &Operator,
+    rhs: &CheckedExpression,
+    span: Span,
+) -> Option<JaktError> {
+    match op {
+        Operator::Assign
+        | Operator::AddAssign
+        | Operator::SubtractAssign
+        | Operator::MultiplyAssign
+        | Operator::DivideAssign => {
+            let lhs_ty = lhs.ty();
+            let rhs_ty = rhs.ty();
+
+            if lhs_ty != rhs_ty {
+                return Some(JaktError::TypecheckError(
+                    format!(
+                        "assignment between incompatible types ({:?} and {:?})",
+                        lhs_ty, rhs_ty
+                    ),
+                    span,
+                ));
+            }
+
+            match lhs {
+                CheckedExpression::Var(var) => {
+                    if !var.mutable {
+                        return Some(JaktError::TypecheckError(
+                            "assignment to immutable variable".to_string(),
+                            span,
+                        ));
+                    }
+                }
+                _ => {}
+            }
+        }
+        _ => {}
+    }
+
+    None
 }
 
 pub fn resolve_call<'a>(
@@ -431,7 +494,7 @@ pub fn typecheck_call(
                             typecheck_expression(&call.args[idx].1, stack, file);
                         error = error.or(err);
 
-                        if checked_arg.ty() != callee.params[idx].1 {
+                        if checked_arg.ty() != callee.params[idx].ty {
                             error = error.or(Some(JaktError::TypecheckError(
                                 "Parameter type mismatch".to_string(),
                                 call.args[idx].1.span(),
