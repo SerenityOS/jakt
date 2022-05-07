@@ -319,8 +319,9 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
         // Everything but the quotes
         let str = String::from_utf8_lossy(&bytes[(start + 1)..(*index)]);
 
-        let end = *index;
         *index += 1;
+
+        let end = *index;
 
         (
             Token::new(
