@@ -15,6 +15,12 @@ impl Call {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ExpressionKind {
+    ExpressionWithAssignments,
+    ExpressionWithoutAssignment,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Bool,
@@ -515,7 +521,8 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
         TokenContents::Name(name) if name == "while" => {
             *index += 1;
 
-            let (cond, err) = parse_expression(tokens, index);
+            let (cond, err) =
+                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
             error = error.or(err);
 
             let (block, err) = parse_block(tokens, index);
@@ -525,7 +532,8 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
         }
         TokenContents::Name(name) if name == "return" => {
             *index += 1;
-            let (expr, err) = parse_expression(tokens, index);
+            let (expr, err) =
+                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
             error = error.or(err);
 
             (Statement::Return(expr), error)
@@ -547,7 +555,11 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
                         *index += 1;
 
                         if *index < tokens.len() {
-                            let (expr, err) = parse_expression(tokens, index);
+                            let (expr, err) = parse_expression(
+                                tokens,
+                                index,
+                                ExpressionKind::ExpressionWithoutAssignment,
+                            );
                             error = error.or(err);
 
                             (Statement::VarDecl(var_decl, expr), error)
@@ -580,8 +592,18 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             }
         }
         _ => {
-            let (expr, err) = parse_expression(&tokens, index);
+            let (expr, err) =
+                parse_expression(&tokens, index, ExpressionKind::ExpressionWithAssignments);
             error = error.or(err);
+
+            // Make sure, if there is an error and we can make progress, that we make progress.
+            // This allows the parser to be more forgiving when there are errors
+            // and to ensure parsing continues to make progress.
+            if error.is_some() {
+                if *index < tokens.len() {
+                    *index += 1;
+                }
+            }
 
             (Statement::Expression(expr), error)
         }
@@ -608,7 +630,7 @@ fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option
 
     *index += 1;
 
-    let (cond, err) = parse_expression(tokens, index);
+    let (cond, err) = parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
     error = error.or(err);
 
     let (block, err) = parse_block(tokens, index);
@@ -658,8 +680,12 @@ fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option
     (Statement::If(cond, block, else_stmt), error)
 }
 
-pub fn parse_expression(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
-    // As the expr_stack grows, we increase the required precedence to grow larger
+pub fn parse_expression(
+    tokens: &[Token],
+    index: &mut usize,
+    expression_kind: ExpressionKind,
+) -> (Expression, Option<JaktError>) {
+    // As the expr_stack grows, we increase the required precedence.
     // If, at any time, the operator we're looking at is the same or lower precedence
     // of what is in the expression stack, we collapse the expression stack.
 
@@ -676,8 +702,22 @@ pub fn parse_expression(tokens: &[Token], index: &mut usize) -> (Expression, Opt
     while *index < tokens.len() {
         // Test to see if the next token is an operator
 
-        let (op, err) = parse_operator(tokens, index);
-        if err.is_some() {
+        let (op, err) = match expression_kind {
+            ExpressionKind::ExpressionWithAssignments => {
+                parse_operator_with_assignment(tokens, index)
+            }
+            ExpressionKind::ExpressionWithoutAssignment => parse_operator(tokens, index),
+        };
+
+        if let Some(jakt_error) = &err {
+            match jakt_error {
+                JaktError::ValidationError(..) => {
+                    // Because we just saw a validation error, we need to remember it
+                    // for later
+                    error = error.or(err);
+                }
+                _ => {}
+            }
             break;
         }
 
@@ -789,7 +829,8 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
         }
         TokenContents::LParen => {
             *index += 1;
-            let (expr, err) = parse_expression(tokens, index);
+            let (expr, err) =
+                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
             error = error.or(err);
 
             match &tokens[*index].contents {
@@ -825,6 +866,116 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 }
 
 pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
+    let span = tokens[*index].span;
+
+    match &tokens[*index].contents {
+        TokenContents::Plus => {
+            *index += 1;
+            (Expression::Operator(Operator::Add, span), None)
+        }
+        TokenContents::Minus => {
+            *index += 1;
+            (Expression::Operator(Operator::Subtract, span), None)
+        }
+        TokenContents::Asterisk => {
+            *index += 1;
+            (Expression::Operator(Operator::Multiply, span), None)
+        }
+        TokenContents::ForwardSlash => {
+            *index += 1;
+            (Expression::Operator(Operator::Divide, span), None)
+        }
+        TokenContents::Equal => {
+            *index += 1;
+            (
+                Expression::Operator(Operator::Assign, span),
+                Some(JaktError::ValidationError(
+                    "assignment is not allowed in this position".to_string(),
+                    span,
+                )),
+            )
+        }
+        TokenContents::PlusEqual => {
+            *index += 1;
+            (
+                Expression::Operator(Operator::AddAssign, span),
+                Some(JaktError::ValidationError(
+                    "assignment is not allowed in this position".to_string(),
+                    span,
+                )),
+            )
+        }
+        TokenContents::MinusEqual => {
+            *index += 1;
+            (
+                Expression::Operator(Operator::SubtractAssign, span),
+                Some(JaktError::ValidationError(
+                    "assignment is not allowed in this position".to_string(),
+                    span,
+                )),
+            )
+        }
+        TokenContents::AsteriskEqual => {
+            *index += 1;
+            (
+                Expression::Operator(Operator::MultiplyAssign, span),
+                Some(JaktError::ValidationError(
+                    "assignment is not allowed in this position".to_string(),
+                    span,
+                )),
+            )
+        }
+        TokenContents::ForwardSlashEqual => {
+            *index += 1;
+            (
+                Expression::Operator(Operator::DivideAssign, span),
+                Some(JaktError::ValidationError(
+                    "assignment is not allowed in this position".to_string(),
+                    span,
+                )),
+            )
+        }
+        TokenContents::DoubleEqual => {
+            *index += 1;
+            (Expression::Operator(Operator::Equal, span), None)
+        }
+        TokenContents::NotEqual => {
+            *index += 1;
+            (Expression::Operator(Operator::NotEqual, span), None)
+        }
+        TokenContents::LessThan => {
+            *index += 1;
+            (Expression::Operator(Operator::LessThan, span), None)
+        }
+        TokenContents::LessThanOrEqual => {
+            *index += 1;
+            (Expression::Operator(Operator::LessThanOrEqual, span), None)
+        }
+        TokenContents::GreaterThan => {
+            *index += 1;
+            (Expression::Operator(Operator::GreaterThan, span), None)
+        }
+        TokenContents::GreaterThanOrEqual => {
+            *index += 1;
+            (
+                Expression::Operator(Operator::GreaterThanOrEqual, span),
+                None,
+            )
+        }
+        _ => (
+            Expression::Garbage(span),
+            Some(JaktError::ParserError(
+                "unsupported operator".to_string(),
+                tokens[*index].span,
+            )),
+        ),
+    }
+}
+
+pub fn parse_operator_with_assignment(
+    tokens: &[Token],
+    index: &mut usize,
+) -> (Expression, Option<JaktError>) {
     let span = tokens[*index].span;
 
     match &tokens[*index].contents {
@@ -1063,7 +1214,11 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktErro
                         *index += 1;
                     }
                     _ => {
-                        let (expr, err) = parse_expression(tokens, index);
+                        let (expr, err) = parse_expression(
+                            tokens,
+                            index,
+                            ExpressionKind::ExpressionWithoutAssignment,
+                        );
                         error = error.or(err);
 
                         call.args.push((String::new(), expr));
