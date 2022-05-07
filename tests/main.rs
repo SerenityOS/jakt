@@ -91,6 +91,10 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
                         .arg("-Wno-user-defined-literals")
                         .output()?;
 
+                    if !status.status.success() {
+                        println!("{}", String::from_utf8_lossy(&status.stdout));
+                        println!("{}", String::from_utf8_lossy(&status.stderr));
+                    }
                     assert!(status.status.success());
 
                     let binary_run = Command::new(&exe_name).output()?;
