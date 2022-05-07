@@ -26,7 +26,20 @@ fn test_samples() -> Result<(), JaktError> {
                     let cpp_string = compiler.convert_to_cpp(&path);
 
                     let cpp_string = match cpp_string {
-                        Ok(cpp_string) => cpp_string,
+                        Ok(cpp_string) => {
+                            if error_output_path.exists() {
+                                let expected_error_msg =
+                                    std::fs::read_to_string(&error_output_path)?;
+                                let expected_error_msg = expected_error_msg.replace("\r", "");
+                                let expected_error_msg = expected_error_msg.replace("\n", "");
+
+                                panic!(
+                                    "\r\nTest: {:?}\r\nExpected error not created: {}",
+                                    path, expected_error_msg,
+                                );
+                            }
+                            cpp_string
+                        }
                         Err(err) => {
                             if error_output_path.exists() {
                                 let expected_error_msg =
