@@ -1,0 +1,8 @@
+fun greet(msg: String, msg2: String) {
+    print(msg)
+    print(msg2)
+}
+
+fun main() {
+    greet(1, 2)
+}
