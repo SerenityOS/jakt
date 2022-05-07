@@ -448,4 +448,24 @@ Vector<size_t> String::find_all(StringView needle) const
     return StringUtils::find_all(*this, needle);
 }
 
+String& String::operator+=(String const& other)
+{
+    if (other.is_empty())
+        return *this;
+
+    StringBuilder builder;
+    builder.append(*this);
+    builder.append(other);
+    *this = builder.to_string();
+    return *this;
+}
+
+String operator+(String const& a, String const& b)
+{
+    StringBuilder builder;
+    builder.append(a);
+    builder.append(b);
+    return builder.to_string();
+}
+
 }
