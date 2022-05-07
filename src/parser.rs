@@ -151,7 +151,8 @@ pub enum Statement {
     Expression(Expression),
     Defer(Block),
     VarDecl(VarDecl, Expression),
-    If(Expression, Block),
+    If(Expression, Block, Option<Box<Statement>>),
+    Block(Block),
     While(Expression, Block),
     Return(Expression),
     Garbage,
@@ -187,20 +188,20 @@ pub enum Expression {
     Garbage(Span),
 }
 
-impl Expression {
-    pub fn span(&self) -> Span {
-        match self {
-            Expression::Boolean(_, span) => *span,
-            Expression::Call(_, span) => *span,
-            Expression::Int64(_, span) => *span,
-            Expression::QuotedString(_, span) => *span,
-            Expression::BinaryOp(_, op, _) => op.span(),
-            Expression::Var(_, span) => *span,
-            Expression::Operator(_, span) => *span,
-            Expression::Garbage(span) => *span,
-        }
-    }
-}
+// impl Expression {
+//     pub fn span(&self) -> Span {
+//         match self {
+//             Expression::Boolean(_, span) => *span,
+//             Expression::Call(_, span) => *span,
+//             Expression::Int64(_, span) => *span,
+//             Expression::QuotedString(_, span) => *span,
+//             Expression::BinaryOp(_, op, _) => op.span(),
+//             Expression::Var(_, span) => *span,
+//             Expression::Operator(_, span) => *span,
+//             Expression::Garbage(span) => *span,
+//         }
+//     }
+// }
 
 #[derive(Debug, Clone)]
 pub enum Operator {
@@ -510,17 +511,7 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
 
             (Statement::Defer(block), error)
         }
-        TokenContents::Name(name) if name == "if" => {
-            *index += 1;
-
-            let (cond, err) = parse_expression(tokens, index);
-            error = error.or(err);
-
-            let (block, err) = parse_block(tokens, index);
-            error = error.or(err);
-
-            (Statement::If(cond, block), error)
-        }
+        TokenContents::Name(name) if name == "if" => parse_if_statement(tokens, index),
         TokenContents::Name(name) if name == "while" => {
             *index += 1;
 
@@ -595,6 +586,76 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             (Statement::Expression(expr), error)
         }
     }
+}
+
+fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option<JaktError>) {
+    let mut error = None;
+
+    match &tokens[*index].contents {
+        TokenContents::Name(name) if name == "if" => {
+            // Good, we have our keyword
+        }
+        _ => {
+            return (
+                Statement::Garbage,
+                Some(JaktError::ParserError(
+                    "expected if statement".to_string(),
+                    tokens[*index].span,
+                )),
+            )
+        }
+    }
+
+    *index += 1;
+
+    let (cond, err) = parse_expression(tokens, index);
+    error = error.or(err);
+
+    let (block, err) = parse_block(tokens, index);
+    error = error.or(err);
+
+    let mut else_stmt = None;
+
+    if *index < tokens.len() {
+        // Check for an 'else'
+
+        match &tokens[*index].contents {
+            TokenContents::Name(name) if name == "else" => {
+                // Good, we have our else keyword
+                *index += 1;
+
+                if *index < tokens.len() {
+                    match &tokens[*index].contents {
+                        TokenContents::Name(name) if name == "if" => {
+                            let (else_if_stmt, err) = parse_if_statement(tokens, index);
+                            else_stmt = Some(Box::new(else_if_stmt));
+                            error = error.or(err);
+                        }
+                        TokenContents::LCurly => {
+                            let (else_block, err) = parse_block(tokens, index);
+                            else_stmt = Some(Box::new(Statement::Block(else_block)));
+                            error = error.or(err);
+                        }
+                        _ => {
+                            error = error.or(Some(JaktError::ParserError(
+                                "else missing if or block".to_string(),
+                                tokens[*index - 1].span,
+                            )));
+                        }
+                    }
+                } else {
+                    error = error.or(Some(JaktError::ParserError(
+                        "else missing if or block".to_string(),
+                        tokens[*index - 1].span,
+                    )));
+                }
+            }
+            _ => {}
+        }
+        // try to parse an if statement again if we see an else
+    }
+
+    (Statement::If(cond, block, else_stmt), error)
 }
 
 pub fn parse_expression(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
