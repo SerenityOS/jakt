@@ -1,5 +1,14 @@
 use crate::{compiler::FileId, error::JaktError};
 
+macro_rules! trace {
+    ($x: expr) => {
+        #[cfg(feature = "trace")]
+        {
+            println!("{}", $x)
+        }
+    };
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Call {
     pub name: String,
@@ -142,6 +151,7 @@ pub struct ParsedFile {
 #[derive(Debug)]
 pub struct Function {
     pub name: String,
+    pub name_span: Span,
     pub params: Vec<Variable>,
     pub block: Block,
     pub return_type: Type,
@@ -158,6 +168,11 @@ impl Function {
     pub fn new() -> Self {
         Function {
             name: String::new(),
+            name_span: Span {
+                file_id: 0,
+                start: 0,
+                end: 0,
+            },
             params: Vec::new(),
             block: Block::new(),
             return_type: Type::Void,
@@ -292,6 +307,8 @@ impl ParsedFile {
 }
 
 pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
+    trace!("parse_file");
+
     let mut error = None;
 
     let mut parsed_file = ParsedFile::new();
@@ -313,6 +330,8 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
                     parsed_file.funs.push(fun);
                 }
                 _ => {
+                    trace!("ERROR: unexpected keyword");
+
                     error = error.or(Some(JaktError::ParserError(
                         "unexpected keyword".to_string(),
                         *span,
@@ -333,6 +352,8 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
                 break;
             }
             Token { span, .. } => {
+                trace!("ERROR: unexpected token (expected keyword)");
+
                 error = error.or(Some(JaktError::ParserError(
                     "unexpected token (expected keyword)".to_string(),
                     *span,
@@ -345,6 +366,8 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
 }
 
 pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<JaktError>) {
+    trace!(format!("parse_function: {:?}", tokens[*index]));
+
     let mut error = None;
 
     *index += 1;
@@ -356,6 +379,8 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                 contents: TokenContents::Name(fun_name),
                 ..
             } => {
+                let name_span = tokens[*index].span;
+
                 *index += 1;
 
                 if *index < tokens.len() {
@@ -367,6 +392,8 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                             *index += 1;
                         }
                         _ => {
+                            trace!("ERROR: expected '('");
+
                             error = error.or(Some(JaktError::ParserError(
                                 "expected '('".to_string(),
                                 tokens[*index].span,
@@ -374,6 +401,8 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                         }
                     }
                 } else {
+                    trace!("ERROR: incomplete function");
+
                     error = error.or(Some(JaktError::ParserError(
                         "incomplete function".to_string(),
                         tokens[*index - 1].span,
@@ -400,6 +429,8 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                             error = error.or(err);
 
                             if var_decl.ty == Type::Unknown {
+                                trace!("ERROR: parameter missing type");
+
                                 error = error.or(Some(JaktError::ParserError(
                                     "parameter missing type".to_string(),
                                     var_decl.span,
@@ -413,6 +444,8 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                             });
                         }
                         _ => {
+                            trace!("ERROR: expected parameter");
+
                             error = error.or(Some(JaktError::ParserError(
                                 "expected parameter".to_string(),
                                 tokens[*index].span,
@@ -422,6 +455,8 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                 }
 
                 if *index >= tokens.len() {
+                    trace!("ERROR: incomplete function");
+
                     error = error.or(Some(JaktError::ParserError(
                         "incomplete function".to_string(),
                         tokens[*index - 1].span,
@@ -446,6 +481,8 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                                     *index += 1;
                                 }
                                 _ => {
+                                    trace!("ERROR: expected ->");
+
                                     error = error.or(Some(JaktError::ParserError(
                                         "expected ->".to_string(),
                                         tokens[*index - 1].span,
@@ -458,6 +495,7 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                 }
 
                 if *index >= tokens.len() {
+                    trace!("ERROR: incomplete function");
                     error = error.or(Some(JaktError::ParserError(
                         "incomplete function".to_string(),
                         tokens[*index - 1].span,
@@ -470,6 +508,7 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                 return (
                     Function {
                         name: fun_name.clone(),
+                        name_span,
                         params,
                         block,
                         return_type,
@@ -477,15 +516,20 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                     error,
                 );
             }
-            _ => (
-                Function::new(),
-                Some(JaktError::ParserError(
-                    "expected function name".to_string(),
-                    tokens[*index].span,
-                )),
-            ),
+            _ => {
+                trace!("ERROR: expected function name");
+
+                (
+                    Function::new(),
+                    Some(JaktError::ParserError(
+                        "expected function name".to_string(),
+                        tokens[*index].span,
+                    )),
+                )
+            }
         }
     } else {
+        trace!("ERROR: incomplete function definition");
         (
             Function::new(),
             Some(JaktError::ParserError(
@@ -497,8 +541,12 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
 }
 
 pub fn parse_block(tokens: &[Token], index: &mut usize) -> (Block, Option<JaktError>) {
+    trace!(format!("parse_block: {:?}", tokens[*index]));
+
     let mut block = Block::new();
     let mut error = None;
+
+    let start = tokens[*index].span;
 
     *index += 1;
 
@@ -532,21 +580,31 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (Block, Option<JaktEr
         }
     }
 
+    trace!("ERROR: expected complete block");
     (
         Block::new(),
         Some(JaktError::ParserError(
             "expected complete block".to_string(),
-            tokens[(*index - 1)].span,
+            Span {
+                file_id: start.file_id,
+                start: start.start,
+                end: tokens[(*index - 1)].span.end,
+            },
         )),
     )
 }
 
 pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option<JaktError>) {
+    trace!(format!("parse_statement: {:?}", tokens[*index]));
+
     let mut error = None;
 
     match &tokens[*index].contents {
         TokenContents::Name(name) if name == "defer" => {
+            trace!("parsing defer");
+
             *index += 1;
+
             let (block, err) = parse_block(tokens, index);
             error = error.or(err);
 
@@ -554,6 +612,8 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
         }
         TokenContents::Name(name) if name == "if" => parse_if_statement(tokens, index),
         TokenContents::Name(name) if name == "while" => {
+            trace!("parsing while");
+
             *index += 1;
 
             let (cond, err) =
@@ -566,7 +626,10 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             (Statement::While(cond, block), error)
         }
         TokenContents::Name(name) if name == "return" => {
+            trace!("parsing return");
+
             *index += 1;
+
             let (expr, err) =
                 parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
             error = error.or(err);
@@ -574,6 +637,8 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             (Statement::Return(expr), error)
         }
         TokenContents::Name(name) if name == "let" || name.as_str() == "var" => {
+            trace!("parsing let/var");
+
             let mutable = name == "var";
 
             *index += 1;
@@ -626,7 +691,17 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
                 )
             }
         }
+        TokenContents::LCurly => {
+            trace!("parsing block from statement parser");
+
+            let (block, err) = parse_block(tokens, index);
+            error = error.or(err);
+
+            (Statement::Block(block), error)
+        }
         _ => {
+            trace!("parsing expression from statement parser");
+
             let (expr, err) =
                 parse_expression(&tokens, index, ExpressionKind::ExpressionWithAssignments);
             error = error.or(err);
@@ -646,6 +721,8 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
 }
 
 fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option<JaktError>) {
+    trace!(format!("parse_if_statement: {:?}", tokens[*index]));
+
     let mut error = None;
 
     match &tokens[*index].contents {
@@ -732,6 +809,8 @@ pub fn parse_expression(
     index: &mut usize,
     expression_kind: ExpressionKind,
 ) -> (Expression, Option<JaktError>) {
+    trace!(format!("parse_expression: {:?}", tokens[*index]));
+
     // As the expr_stack grows, we increase the required precedence.
     // If, at any time, the operator we're looking at is the same or lower precedence
     // of what is in the expression stack, we collapse the expression stack.
@@ -763,14 +842,17 @@ pub fn parse_expression(
                     // for later
                     error = error.or(err);
                 }
-                _ => {}
+                _ => {
+                    break;
+                }
             }
-            break;
         }
 
         let precedence = op.precedence();
 
         if *index == tokens.len() {
+            trace!("ERROR: incomplete math expression");
+
             error = error.or(Some(JaktError::ParserError(
                 "incomplete math expression".to_string(),
                 tokens[*index - 1].span,
@@ -844,6 +926,8 @@ pub fn parse_expression(
 }
 
 pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
+    trace!(format!("parse_operand: {:?}", tokens[*index]));
+
     let mut error = None;
 
     let span = tokens[*index].span;
@@ -885,6 +969,8 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                     *index += 1;
                 }
                 _ => {
+                    trace!("ERROR: expected ')'");
+
                     error = error.or(Some(JaktError::ParserError(
                         "expected ')'".to_string(),
                         tokens[*index].span,
@@ -902,17 +988,22 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
             *index += 1;
             (Expression::QuotedString(str.to_string(), span), error)
         }
-        _ => (
-            Expression::Garbage(span),
-            Some(JaktError::ParserError(
-                "unsupported expression".to_string(),
-                tokens[*index].span,
-            )),
-        ),
+        _ => {
+            trace!("ERROR: unsupported expression");
+            (
+                Expression::Garbage(span),
+                Some(JaktError::ParserError(
+                    "unsupported expression".to_string(),
+                    tokens[*index].span,
+                )),
+            )
+        }
     }
 }
 
 pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
+    trace!(format!("parse_operator: {:?}", tokens[*index]));
+
     let span = tokens[*index].span;
 
     match &tokens[*index].contents {
@@ -933,6 +1024,8 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
             (Expression::Operator(Operator::Divide, span), None)
         }
         TokenContents::Equal => {
+            trace!("ERROR: assignment not allowed in this position");
+
             *index += 1;
             (
                 Expression::Operator(Operator::Assign, span),
@@ -943,6 +1036,8 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
             )
         }
         TokenContents::PlusEqual => {
+            trace!("ERROR: assignment not allowed in this position");
+
             *index += 1;
             (
                 Expression::Operator(Operator::AddAssign, span),
@@ -953,6 +1048,8 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
             )
         }
         TokenContents::MinusEqual => {
+            trace!("ERROR: assignment not allowed in this position");
+
             *index += 1;
             (
                 Expression::Operator(Operator::SubtractAssign, span),
@@ -963,6 +1060,8 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
             )
         }
         TokenContents::AsteriskEqual => {
+            trace!("ERROR: assignment not allowed in this position");
+
             *index += 1;
             (
                 Expression::Operator(Operator::MultiplyAssign, span),
@@ -973,6 +1072,8 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
             )
         }
         TokenContents::ForwardSlashEqual => {
+            trace!("ERROR: assignment not allowed in this position");
+
             *index += 1;
             (
                 Expression::Operator(Operator::DivideAssign, span),
@@ -1009,13 +1110,17 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
                 None,
             )
         }
-        _ => (
-            Expression::Garbage(span),
-            Some(JaktError::ParserError(
-                "unsupported operator".to_string(),
-                tokens[*index].span,
-            )),
-        ),
+        _ => {
+            trace!("ERROR: unsupported operator");
+
+            (
+                Expression::Garbage(span),
+                Some(JaktError::ParserError(
+                    "unsupported operator".to_string(),
+                    tokens[*index].span,
+                )),
+            )
+        }
     }
 }
 
@@ -1023,6 +1128,11 @@ pub fn parse_operator_with_assignment(
     tokens: &[Token],
     index: &mut usize,
 ) -> (Expression, Option<JaktError>) {
+    trace!(format!(
+        "parse_operator_with_assignment: {:?}",
+        tokens[*index]
+    ));
+
     let span = tokens[*index].span;
 
     match &tokens[*index].contents {
@@ -1089,13 +1199,17 @@ pub fn parse_operator_with_assignment(
                 None,
             )
         }
-        _ => (
-            Expression::Garbage(span),
-            Some(JaktError::ParserError(
-                "unsupported operator".to_string(),
-                tokens[*index].span,
-            )),
-        ),
+        _ => {
+            trace!("ERROR: unsupported operator");
+
+            (
+                Expression::Garbage(span),
+                Some(JaktError::ParserError(
+                    "unsupported operator".to_string(),
+                    tokens[*index].span,
+                )),
+            )
+        }
     }
 }
 
@@ -1103,6 +1217,8 @@ pub fn parse_variable_declaration(
     tokens: &[Token],
     index: &mut usize,
 ) -> (VarDecl, Option<JaktError>) {
+    trace!(format!("parse_variable_declaration: {:?}", tokens[*index]));
+
     let mut error = None;
 
     match &tokens[*index].contents {
@@ -1155,6 +1271,8 @@ pub fn parse_variable_declaration(
 
                 (result, error)
             } else {
+                trace!("ERROR: expected type");
+
                 (
                     VarDecl {
                         name: name.to_string(),
@@ -1169,17 +1287,22 @@ pub fn parse_variable_declaration(
                 )
             }
         }
-        _ => (
-            VarDecl::new(tokens[*index].span),
-            Some(JaktError::ParserError(
-                "expected name".to_string(),
-                tokens[*index].span,
-            )),
-        ),
+        _ => {
+            trace!("ERROR: expected name");
+
+            (
+                VarDecl::new(tokens[*index].span),
+                Some(JaktError::ParserError(
+                    "expected name".to_string(),
+                    tokens[*index].span,
+                )),
+            )
+        }
     }
 }
 
 pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (Type, Option<JaktError>) {
+    trace!(format!("parse_typename: {:?}", tokens[*index]));
     match &tokens[*index] {
         Token {
             contents: TokenContents::Name(name),
@@ -1197,22 +1320,31 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (Type, Option<Jakt
             "f64" => (Type::F64, None),
             "String" => (Type::String, None),
             "bool" => (Type::Bool, None),
-            _ => (
-                Type::Void,
-                Some(JaktError::ParserError("unknown type".to_string(), *span)),
-            ),
+            _ => {
+                trace!("ERROR: unknown type");
+
+                (
+                    Type::Void,
+                    Some(JaktError::ParserError("unknown type".to_string(), *span)),
+                )
+            }
         },
-        _ => (
-            Type::Void,
-            Some(JaktError::ParserError(
-                "expected function call".to_string(),
-                tokens[*index].span,
-            )),
-        ),
+        _ => {
+            trace!("ERROR: expected type name");
+
+            (
+                Type::Void,
+                Some(JaktError::ParserError(
+                    "expected type name".to_string(),
+                    tokens[*index].span,
+                )),
+            )
+        }
     }
 }
 
 pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktError>) {
+    trace!(format!("parse_call: {:?}", tokens[*index]));
     let mut call = Call::new();
     let mut error = None;
 
@@ -1234,6 +1366,8 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktErro
                         *index += 1;
                     }
                     Token { span, .. } => {
+                        trace!("ERROR: expected '('");
+
                         return (
                             call,
                             Some(JaktError::ParserError("expected '('".to_string(), *span)),
@@ -1241,6 +1375,8 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktErro
                     }
                 }
             } else {
+                trace!("ERROR: incomplete function");
+
                 return (
                     call,
                     Some(JaktError::ParserError(
@@ -1274,6 +1410,8 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktErro
             }
 
             if *index >= tokens.len() {
+                trace!("ERROR: incomplete call");
+
                 error = error.or(Some(JaktError::ParserError(
                     "incomplete call".to_string(),
                     tokens[*index - 1].span,
@@ -1281,6 +1419,8 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktErro
             }
         }
         _ => {
+            trace!("ERROR: expected function call");
+
             error = error.or(Some(JaktError::ParserError(
                 "expected function call".to_string(),
                 tokens[*index].span,
