@@ -403,7 +403,7 @@ pub fn typecheck_expression(
                 } else {
                     if inner_ty != checked_expr.ty() {
                         error = error.or(Some(JaktError::TypecheckError(
-                            "value does not match type of previous values".to_string(),
+                            "does not match type of previous values in vector".to_string(),
                             v.span(),
                         )))
                     }
