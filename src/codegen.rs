@@ -123,6 +123,7 @@ fn translate_block(indent: usize, checked_block: &CheckedBlock) -> String {
         output.push_str(&stmt);
     }
 
+    output.push_str(&" ".repeat(indent));
     output.push_str("}\n");
 
     output
