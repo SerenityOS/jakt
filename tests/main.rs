@@ -73,6 +73,9 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
 
                     let pwd = std::env::current_dir()?;
 
+                    let mut runtime_dir = std::env::current_dir()?;
+                    runtime_dir.push("runtime".to_string());
+
                     #[cfg(windows)]
                     {
                         let mut exe_name = temp_dir();
@@ -85,6 +88,8 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
                             .arg(&cpp_filename)
                             .arg("/I")
                             .arg(pwd)
+                            .arg("/I")
+                            .arg(runtime_dir)
                             .arg("/Fo:")
                             .arg(&obj_name)
                             .arg("/Fe:")
@@ -113,14 +118,18 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
                         let mut exe_name = temp_dir();
                         exe_name.push(format!("output{}", uuid));
 
-                        let status = Command::new("clang++")
+                        let status = Command::new("clang++-14")
                             .arg(&cpp_filename)
                             .arg("-I")
                             .arg(pwd)
+                            .arg("-I")
+                            .arg(runtime_dir)
                             .arg("-o")
                             .arg(&exe_name)
                             .arg("-std=c++20")
+                            .arg("-Wno-user-defined-literals")
                             .output()?;
+
                         assert!(status.status.success());
 
                         let binary_run = Command::new(&exe_name).output()?;
