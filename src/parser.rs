@@ -1,6 +1,6 @@
 use crate::{compiler::FileId, error::JaktError};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Call {
     pub name: String,
     pub args: Vec<(String, Expression)>,
@@ -58,7 +58,13 @@ impl VarDecl {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+impl PartialEq for VarDecl {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name && self.ty == other.ty && self.mutable == other.mutable
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Span {
     pub file_id: FileId,
     pub start: usize,
@@ -159,7 +165,7 @@ impl Function {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Statement {
     Expression(Expression),
     Defer(Block),
@@ -171,7 +177,7 @@ pub enum Statement {
     Garbage,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Block {
     pub stmts: Vec<Statement>,
 }
@@ -216,7 +222,25 @@ impl Expression {
     }
 }
 
-#[derive(Debug, Clone)]
+impl PartialEq for Expression {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Boolean(l0, _), Self::Boolean(r0, _)) => l0 == r0,
+            (Self::Call(l0, _), Self::Call(r0, _)) => l0 == r0,
+            (Self::Int64(l0, _), Self::Int64(r0, _)) => l0 == r0,
+            (Self::QuotedString(l0, _), Self::QuotedString(r0, _)) => l0 == r0,
+            (Self::BinaryOp(l0, l1, l2), Self::BinaryOp(r0, r1, r2)) => {
+                l0 == r0 && l1 == r1 && l2 == r2
+            }
+            (Self::Var(l0, _), Self::Var(r0, _)) => l0 == r0,
+            (Self::Operator(l0, _), Self::Operator(r0, _)) => l0 == r0,
+            (Self::Garbage(_), Self::Garbage(_)) => true,
+            _ => false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Operator {
     Add,
     Subtract,
@@ -639,6 +663,8 @@ fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option
         }
     }
 
+    let starting_span = tokens[*index].span;
+
     *index += 1;
 
     let (cond, err) = parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
@@ -666,6 +692,16 @@ fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option
                         }
                         TokenContents::LCurly => {
                             let (else_block, err) = parse_block(tokens, index);
+
+                            // Before we continue, quickly lint that the else block and the if block are not
+                            // the same. This helps prevent a copy/paste error
+                            if block == else_block {
+                                error = error.or(Some(JaktError::ValidationError(
+                                    "if and else have identical blocks".to_string(),
+                                    starting_span,
+                                )));
+                            }
+
                             else_stmt = Some(Box::new(Statement::Block(else_block)));
                             error = error.or(err);
                         }
