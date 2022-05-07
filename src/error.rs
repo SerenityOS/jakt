@@ -4,6 +4,7 @@ use crate::parser::Span;
 pub enum JaktError {
     IOError(std::io::Error),
     ParserError(String, Span),
+    ValidationError(String, Span),
     TypecheckError(String, Span),
 }
 
