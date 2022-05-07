@@ -58,6 +58,7 @@ fn test_samples() -> Result<(), JaktError> {
                                 );
                                 continue;
                             } else {
+                                println!("Test failed: {:?}", path);
                                 return Err(err);
                             }
                         }

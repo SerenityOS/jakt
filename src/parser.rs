@@ -136,9 +136,16 @@ pub struct ParsedFile {
 #[derive(Debug)]
 pub struct Function {
     pub name: String,
-    pub params: Vec<(String, Type)>,
+    pub params: Vec<Variable>,
     pub block: Block,
     pub return_type: Type,
+}
+
+#[derive(Clone, Debug)]
+pub struct Variable {
+    pub name: String,
+    pub ty: Type,
+    pub mutable: bool,
 }
 
 impl Function {
@@ -375,7 +382,11 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                                 )))
                             }
 
-                            params.push((var_decl.name, var_decl.ty));
+                            params.push(Variable {
+                                name: var_decl.name,
+                                ty: var_decl.ty,
+                                mutable: var_decl.mutable,
+                            });
                         }
                         _ => {
                             error = error.or(Some(JaktError::ParserError(
