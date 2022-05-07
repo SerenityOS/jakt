@@ -95,7 +95,7 @@ fn translate_function_predecl(fun: &CheckedFunction) -> String {
 fn translate_type(ty: &Type) -> String {
     match ty {
         Type::Bool => String::from("bool"),
-        Type::String => String::from("char const*"),
+        Type::String => String::from("String"),
         Type::I8 => String::from("i8"),
         Type::I16 => String::from("i16"),
         Type::I32 => String::from("i32"),
