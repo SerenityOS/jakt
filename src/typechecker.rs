@@ -111,10 +111,19 @@ impl Stack {
         self.frames.pop();
     }
 
-    pub fn add_var(&mut self, var: Variable) {
+    pub fn add_var(&mut self, var: Variable, span: Span) -> Result<(), JaktError> {
         if let Some(frame) = self.frames.last_mut() {
+            for existing_var in &frame.vars {
+                if var.name == existing_var.name {
+                    return Err(JaktError::TypecheckError(
+                        format!("redefinition of {}", var.name),
+                        span,
+                    ));
+                }
+            }
             frame.vars.push(var);
         }
+        Ok(())
     }
 
     pub fn find_var(&self, var: &str) -> Option<Variable> {
@@ -171,7 +180,9 @@ fn typecheck_fun(
     stack.push_frame();
 
     for param in &fun.params {
-        stack.add_var(param.clone());
+        if let Err(err) = stack.add_var(param.clone(), fun.name_span) {
+            error = error.or(Some(err));
+        }
     }
 
     let (block, err) = typecheck_block(&fun.block, stack, file);
@@ -248,11 +259,16 @@ pub fn typecheck_statement(
             //     )));
             // }
 
-            stack.add_var(Variable {
-                name: var_decl.name.clone(),
-                ty: var_decl.ty.clone(),
-                mutable: var_decl.mutable,
-            });
+            if let Err(err) = stack.add_var(
+                Variable {
+                    name: var_decl.name.clone(),
+                    ty: var_decl.ty.clone(),
+                    mutable: var_decl.mutable,
+                },
+                var_decl.span,
+            ) {
+                error = error.or(Some(err));
+            }
 
             (
                 CheckedStatement::VarDecl(var_decl.clone(), checked_expression),
