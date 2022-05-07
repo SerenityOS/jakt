@@ -21,8 +21,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: ilammy/msvc-dev-cmd@v1
-
       - name: Setup Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
