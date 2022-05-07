@@ -42,7 +42,12 @@ pub enum CheckedStatement {
     Expression(CheckedExpression),
     Defer(CheckedBlock),
     VarDecl(VarDecl, CheckedExpression),
-    If(CheckedExpression, CheckedBlock),
+    If(
+        CheckedExpression,
+        CheckedBlock,
+        Option<Box<CheckedStatement>>, // optional else case
+    ),
+    Block(CheckedBlock),
     While(CheckedExpression, CheckedBlock),
     Return(CheckedExpression),
     Garbage,
@@ -249,14 +254,27 @@ pub fn typecheck_statement(
                 error,
             )
         }
-        Statement::If(cond, block) => {
+        Statement::If(cond, block, else_stmt) => {
             let (checked_cond, err) = typecheck_expression(cond, stack, file);
             error = error.or(err);
 
             let (checked_block, err) = typecheck_block(block, stack, file);
             error = error.or(err);
 
-            (CheckedStatement::If(checked_cond, checked_block), error)
+            let else_output;
+            if let Some(else_stmt) = else_stmt {
+                let (checked_stmt, err) = typecheck_statement(else_stmt, stack, file);
+                error = error.or(err);
+
+                else_output = Some(Box::new(checked_stmt));
+            } else {
+                else_output = None;
+            }
+
+            (
+                CheckedStatement::If(checked_cond, checked_block, else_output),
+                error,
+            )
         }
         Statement::While(cond, block) => {
             let (checked_cond, err) = typecheck_expression(cond, stack, file);
@@ -271,6 +289,10 @@ pub fn typecheck_statement(
             let (output, err) = typecheck_expression(expr, stack, file);
 
             (CheckedStatement::Return(output), err)
+        }
+        Statement::Block(block) => {
+            let (checked_block, err) = typecheck_block(block, stack, file);
+            (CheckedStatement::Block(checked_block), err)
         }
         Statement::Garbage => (CheckedStatement::Garbage, None),
     }
