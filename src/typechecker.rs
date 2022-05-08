@@ -387,10 +387,18 @@ pub fn typecheck_expression(
             let (ty, err) = if let Type::Optional(inner_type) = checked_expr.ty() {
                 (*inner_type, err)
             } else {
-                (Type::Unknown, err.or(Some(JaktError::TypecheckError(
-                    "Forced unwrap only works on Optional".to_string(), expr.span()))))
+                (
+                    Type::Unknown,
+                    err.or(Some(JaktError::TypecheckError(
+                        "Forced unwrap only works on Optional".to_string(),
+                        expr.span(),
+                    ))),
+                )
             };
-            (CheckedExpression::ForcedUnwrap(Box::new(checked_expr), ty), err)
+            (
+                CheckedExpression::ForcedUnwrap(Box::new(checked_expr), ty),
+                err,
+            )
         }
         Expression::Boolean(b, _) => (CheckedExpression::Boolean(*b), None),
         Expression::Call(call, span) => {
