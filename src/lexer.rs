@@ -180,6 +180,13 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                 TokenContents::ExclamationPoint,
                 Span::new(file_id, start, start + 1),
             ));
+        } else if c == b'?' {
+            let start = index;
+            index += 1;
+            output.push(Token::new(
+                TokenContents::QuestionMark,
+                Span::new(file_id, start, start + 1),
+            ));
         } else if c == b',' {
             let start = index;
             index += 1;

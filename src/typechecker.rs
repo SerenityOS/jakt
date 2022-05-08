@@ -71,6 +71,10 @@ pub enum CheckedExpression {
     IndexedExpression(Box<CheckedExpression>, Box<CheckedExpression>, Type),
     Var(Variable),
 
+    OptionalNone(Type),
+    OptionalSome(Box<CheckedExpression>, Type),
+    ForcedUnwrap(Box<CheckedExpression>, Type),
+
     // Parsing error
     Garbage,
 }
@@ -86,6 +90,9 @@ impl CheckedExpression {
             CheckedExpression::Vector(_, ty) => ty.clone(),
             CheckedExpression::IndexedExpression(_, _, ty) => ty.clone(),
             CheckedExpression::Var(Variable { ty, .. }) => ty.clone(),
+            CheckedExpression::OptionalNone(ty) => ty.clone(),
+            CheckedExpression::OptionalSome(_, ty) => ty.clone(),
+            CheckedExpression::ForcedUnwrap(_, ty) => ty.clone(),
             CheckedExpression::Garbage => Type::Unknown,
         }
     }
@@ -364,6 +371,26 @@ pub fn typecheck_expression(
                 ),
                 error,
             )
+        }
+        Expression::OptionalNone(_) => (CheckedExpression::OptionalNone(Type::Unknown), None),
+        Expression::OptionalSome(expr, _) => {
+            let (checked_expr, err) = typecheck_expression(expr, stack, file);
+            let ty = checked_expr.ty();
+            (
+                CheckedExpression::OptionalSome(Box::new(checked_expr), ty),
+                err,
+            )
+        }
+        Expression::ForcedUnwrap(expr, _) => {
+            let (checked_expr, err) = typecheck_expression(expr, stack, file);
+
+            let (ty, err) = if let Type::Optional(inner_type) = checked_expr.ty() {
+                (*inner_type, err)
+            } else {
+                (Type::Unknown, err.or(Some(JaktError::TypecheckError(
+                    "Forced unwrap only works on Optional".to_string(), expr.span()))))
+            };
+            (CheckedExpression::ForcedUnwrap(Box::new(checked_expr), ty), err)
         }
         Expression::Boolean(b, _) => (CheckedExpression::Boolean(*b), None),
         Expression::Call(call, span) => {

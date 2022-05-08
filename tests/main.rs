@@ -153,3 +153,8 @@ fn test_vectors() -> Result<(), JaktError> {
 fn test_strings() -> Result<(), JaktError> {
     test_samples("samples/strings")
 }
+
+#[test]
+fn test_optional() -> Result<(), JaktError> {
+    test_samples("samples/optional")
+}

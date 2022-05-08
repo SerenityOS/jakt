@@ -46,6 +46,7 @@ pub enum Type {
     F64,
     Void,
     Vector(Box<Type>),
+    Optional(Box<Type>),
     Unknown,
 }
 
@@ -120,6 +121,7 @@ pub enum TokenContents {
     Asterisk,
     ForwardSlash,
     ExclamationPoint,
+    QuestionMark,
     Comma,
     Eol,
     Eof,
@@ -225,6 +227,11 @@ pub enum Expression {
     IndexedExpression(Box<Expression>, Box<Expression>, Span),
     BinaryOp(Box<Expression>, Box<Expression>, Box<Expression>),
     Var(String, Span),
+    ForcedUnwrap(Box<Expression>, Span),
+
+    // FIXME: These should be implemented as `enum` variant values once available.
+    OptionalNone(Span),
+    OptionalSome(Box<Expression>, Span),
 
     // Not standalone
     Operator(Operator, Span),
@@ -245,6 +252,9 @@ impl Expression {
             Expression::BinaryOp(_, op, _) => op.span(),
             Expression::Var(_, span) => *span,
             Expression::Operator(_, span) => *span,
+            Expression::OptionalNone(span) => *span,
+            Expression::OptionalSome(_, span) => *span,
+            Expression::ForcedUnwrap(_, span) => *span,
             Expression::Garbage(span) => *span,
         }
     }
@@ -956,7 +966,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 
     let span = tokens[*index].span;
 
-    let expr = match &tokens[*index].contents {
+    let mut expr = match &tokens[*index].contents {
         TokenContents::Name(name) if name == "true" => {
             *index += 1;
             Expression::Boolean(true, span)
@@ -968,16 +978,31 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
         TokenContents::Name(name) => {
             if *index + 1 < tokens.len() {
                 match &tokens[*index + 1].contents {
-                    TokenContents::LParen => {
-                        let (call, err) = parse_call(tokens, index);
-                        error = error.or(err);
+                    TokenContents::LParen => match name.as_str() {
+                        "Some" => {
+                            *index += 1;
+                            let (expr, err) = parse_expression(
+                                tokens,
+                                index,
+                                ExpressionKind::ExpressionWithoutAssignment,
+                            );
+                            error = error.or(err);
+                            Expression::OptionalSome(Box::new(expr), span)
+                        }
+                        _ => {
+                            let (call, err) = parse_call(tokens, index);
+                            error = error.or(err);
 
-                        Expression::Call(call, span)
-                    }
+                            Expression::Call(call, span)
+                        }
+                    },
                     _ => {
                         *index += 1;
 
-                        Expression::Var(name.to_string(), span)
+                        match name.as_str() {
+                            "None" => Expression::OptionalNone(span),
+                            _ => Expression::Var(name.to_string(), span),
+                        }
                     }
                 }
             } else {
@@ -1035,6 +1060,11 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
     // Check for postfix operators, while we're at it
     if *index < tokens.len() {
         match &tokens[*index].contents {
+            TokenContents::ExclamationPoint => {
+                *index += 1;
+                // Forced Optional unwrap
+                expr = Expression::ForcedUnwrap(Box::new(expr), span);
+            }
             TokenContents::LSquare => {
                 // Indexing operation
                 *index += 1;
@@ -1474,7 +1504,7 @@ pub fn parse_variable_declaration(
 
 pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (Type, Option<JaktError>) {
     trace!(format!("parse_typename: {:?}", tokens[*index]));
-    match &tokens[*index] {
+    let (base_type, err) = match &tokens[*index] {
         Token {
             contents: TokenContents::Name(name),
             span,
@@ -1511,7 +1541,17 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (Type, Option<Jakt
                 )),
             )
         }
-    }
+    };
+
+    if *index + 1 < tokens.len() {
+        if let TokenContents::QuestionMark = tokens[*index + 1].contents {
+            // T? is shorthand for Optional<T>
+            *index += 1;
+            return (Type::Optional(Box::new(base_type)), err);
+        }
+    };
+
+    (base_type, err)
 }
 
 pub fn parse_call_parameter_name(
