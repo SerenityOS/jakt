@@ -2,8 +2,8 @@ use crate::{
     error::JaktError,
     lexer::Span,
     parser::{
-        Block, Call, Expression, Function, Operator, Parameter, ParsedFile, Statement, VarDecl,
-        Variable,
+        BinaryOperator, Block, Call, Expression, Function, Parameter, ParsedFile, Statement,
+        UnaryOperator, VarDecl, Variable,
     },
 };
 
@@ -82,9 +82,10 @@ pub enum CheckedExpression {
     Call(CheckedCall, Type),
     Int64(i64),
     QuotedString(String),
+    UnaryOp(Box<CheckedExpression>, UnaryOperator, Type),
     BinaryOp(
         Box<CheckedExpression>,
-        Box<Operator>,
+        BinaryOperator,
         Box<CheckedExpression>,
         Type,
     ),
@@ -107,6 +108,7 @@ impl CheckedExpression {
             CheckedExpression::Call(_, ty) => ty.clone(),
             CheckedExpression::Int64(_) => Type::I64,
             CheckedExpression::QuotedString(_) => Type::String,
+            CheckedExpression::UnaryOp(_, _, ty) => ty.clone(),
             CheckedExpression::BinaryOp(_, _, _, ty) => ty.clone(),
             CheckedExpression::Vector(_, ty) => ty.clone(),
             CheckedExpression::IndexedExpression(_, _, ty) => ty.clone(),
@@ -359,25 +361,18 @@ pub fn typecheck_expression(
     let mut error = None;
 
     match expr {
-        Expression::BinaryOp(lhs, op, rhs) => {
+        Expression::BinaryOp(lhs, op, rhs, span) => {
             let (checked_lhs, err) = typecheck_expression(lhs, stack, file);
             error = error.or(err);
-
-            let op_span = op.span();
-
-            let op = match &**op {
-                Expression::Operator(operator, _) => operator.clone(),
-                _ => panic!("Need more robust operator error handling"),
-            };
 
             let (checked_rhs, err) = typecheck_expression(rhs, stack, file);
             error = error.or(err);
 
-            error = error.or(typecheck_operation(
+            error = error.or(typecheck_binary_operation(
                 &checked_lhs,
                 &op,
                 &checked_rhs,
-                op_span,
+                *span,
             ));
 
             // TODO: actually do the binary operator typecheck against safe operations
@@ -386,10 +381,24 @@ pub fn typecheck_expression(
             (
                 CheckedExpression::BinaryOp(
                     Box::new(checked_lhs),
-                    Box::new(op),
+                    op.clone(),
                     Box::new(checked_rhs),
                     ty,
                 ),
+                error,
+            )
+        }
+        Expression::UnaryOp(expr, op, span) => {
+            let (checked_expr, err) = typecheck_expression(expr, stack, file);
+            error = error.or(err);
+
+            error = error.or(typecheck_unary_operation(&checked_expr, &op, *span));
+
+            // TODO: actually do the binary operator typecheck against safe operations
+            // For now, use a type we know
+            let ty = checked_expr.ty();
+            (
+                CheckedExpression::UnaryOp(Box::new(checked_expr), op.clone(), ty),
                 error,
             )
         }
@@ -528,18 +537,68 @@ pub fn typecheck_expression(
     }
 }
 
-pub fn typecheck_operation(
+pub fn typecheck_unary_operation(
+    expr: &CheckedExpression,
+    op: &UnaryOperator,
+    span: Span,
+) -> Option<JaktError> {
+    match expr.ty() {
+        Type::I8
+        | Type::I16
+        | Type::I32
+        | Type::I64
+        | Type::U8
+        | Type::U16
+        | Type::U32
+        | Type::U64
+        | Type::F32
+        | Type::F64 => {
+            match expr {
+                CheckedExpression::Var(v) => {
+                    if !v.mutable {
+                        match op {
+                            UnaryOperator::PreIncrement | UnaryOperator::PostIncrement => {
+                                Some(JaktError::TypecheckError(
+                                    "increment on immutable variable".to_string(),
+                                    span,
+                                ))
+                            }
+                            UnaryOperator::PreDecrement | UnaryOperator::PostDecrement => {
+                                Some(JaktError::TypecheckError(
+                                    "decrement on immutable variable".to_string(),
+                                    span,
+                                ))
+                            }
+                        }
+                    } else {
+                        None
+                    }
+                }
+                _ => {
+                    // TODO: we probably want to check if what we're working on can be updated
+                    None
+                }
+            }
+        }
+        _ => Some(JaktError::TypecheckError(
+            "unary operation on non-numeric value".to_string(),
+            span,
+        )),
+    }
+}
+
+pub fn typecheck_binary_operation(
     lhs: &CheckedExpression,
-    op: &Operator,
+    op: &BinaryOperator,
     rhs: &CheckedExpression,
     span: Span,
 ) -> Option<JaktError> {
     match op {
-        Operator::Assign
-        | Operator::AddAssign
-        | Operator::SubtractAssign
-        | Operator::MultiplyAssign
-        | Operator::DivideAssign => {
+        BinaryOperator::Assign
+        | BinaryOperator::AddAssign
+        | BinaryOperator::SubtractAssign
+        | BinaryOperator::MultiplyAssign
+        | BinaryOperator::DivideAssign => {
             let lhs_ty = lhs.ty();
             let rhs_ty = rhs.ty();
 

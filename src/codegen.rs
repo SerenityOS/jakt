@@ -1,5 +1,5 @@
 use crate::{
-    parser::Operator,
+    parser::{BinaryOperator, UnaryOperator},
     typechecker::{
         CheckedBlock, CheckedExpression, CheckedFile, CheckedFunction, CheckedStatement, Type,
     },
@@ -264,25 +264,48 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
                 output.push(')');
             }
         }
+        CheckedExpression::UnaryOp(expr, op, ..) => {
+            output.push('(');
+            match op {
+                UnaryOperator::PreIncrement => {
+                    output.push_str("++");
+                }
+                UnaryOperator::PreDecrement => {
+                    output.push_str("--");
+                }
+                _ => {}
+            }
+            output.push_str(&translate_expr(indent, expr));
+            match op {
+                UnaryOperator::PostIncrement => {
+                    output.push_str("++");
+                }
+                UnaryOperator::PostDecrement => {
+                    output.push_str("--");
+                }
+                _ => {}
+            }
+            output.push(')');
+        }
         CheckedExpression::BinaryOp(lhs, op, rhs, ..) => {
             output.push('(');
             output.push_str(&translate_expr(indent, lhs));
-            match **op {
-                Operator::Add => output.push_str(" + "),
-                Operator::Subtract => output.push_str(" - "),
-                Operator::Multiply => output.push_str(" * "),
-                Operator::Divide => output.push_str(" / "),
-                Operator::Assign => output.push_str(" = "),
-                Operator::AddAssign => output.push_str(" += "),
-                Operator::SubtractAssign => output.push_str(" -= "),
-                Operator::MultiplyAssign => output.push_str(" *= "),
-                Operator::DivideAssign => output.push_str(" /= "),
-                Operator::Equal => output.push_str(" == "),
-                Operator::NotEqual => output.push_str(" != "),
-                Operator::LessThan => output.push_str(" < "),
-                Operator::LessThanOrEqual => output.push_str(" <= "),
-                Operator::GreaterThan => output.push_str(" > "),
-                Operator::GreaterThanOrEqual => output.push_str(" >= "),
+            match op {
+                BinaryOperator::Add => output.push_str(" + "),
+                BinaryOperator::Subtract => output.push_str(" - "),
+                BinaryOperator::Multiply => output.push_str(" * "),
+                BinaryOperator::Divide => output.push_str(" / "),
+                BinaryOperator::Assign => output.push_str(" = "),
+                BinaryOperator::AddAssign => output.push_str(" += "),
+                BinaryOperator::SubtractAssign => output.push_str(" -= "),
+                BinaryOperator::MultiplyAssign => output.push_str(" *= "),
+                BinaryOperator::DivideAssign => output.push_str(" /= "),
+                BinaryOperator::Equal => output.push_str(" == "),
+                BinaryOperator::NotEqual => output.push_str(" != "),
+                BinaryOperator::LessThan => output.push_str(" < "),
+                BinaryOperator::LessThanOrEqual => output.push_str(" <= "),
+                BinaryOperator::GreaterThan => output.push_str(" > "),
+                BinaryOperator::GreaterThanOrEqual => output.push_str(" >= "),
             }
             output.push_str(&translate_expr(indent, rhs));
             output.push(')');
