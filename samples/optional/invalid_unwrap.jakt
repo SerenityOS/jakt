@@ -1,0 +1,4 @@
+fun main() {
+    let foo = 123
+    let bar = foo!
+}
