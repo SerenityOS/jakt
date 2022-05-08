@@ -1,10 +1,10 @@
 fun main() {
-    recurse(10)
+    recurse(count: 10)
 }
 
 fun recurse(count: i64) {
     print(count)
     if count > 0 {
-        recurse(count - 1)
+        recurse(count: count - 1)
     }
 }

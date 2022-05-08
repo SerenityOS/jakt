@@ -155,9 +155,15 @@ pub struct ParsedFile {
 pub struct Function {
     pub name: String,
     pub name_span: Span,
-    pub params: Vec<Variable>,
+    pub params: Vec<Parameter>,
     pub block: Block,
     pub return_type: Type,
+}
+
+#[derive(Clone, Debug)]
+pub struct Parameter {
+    pub requires_label: bool,
+    pub variable: Variable,
 }
 
 #[derive(Clone, Debug)]
@@ -418,6 +424,8 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
 
                 let mut params = Vec::new();
 
+                let mut current_param_requires_label = true;
+
                 while *index < tokens.len() {
                     match &tokens[*index].contents {
                         TokenContents::RParen => {
@@ -426,6 +434,12 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                         }
                         TokenContents::Comma => {
                             // Treat comma as whitespace? Might require them in the future
+                            *index += 1;
+                            current_param_requires_label = true;
+                        }
+
+                        TokenContents::Name(name) if name == "_" => {
+                            current_param_requires_label = false;
                             *index += 1;
                         }
 
@@ -444,10 +458,13 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                                 )))
                             }
 
-                            params.push(Variable {
-                                name: var_decl.name,
-                                ty: var_decl.ty,
-                                mutable: var_decl.mutable,
+                            params.push(Parameter {
+                                requires_label: current_param_requires_label,
+                                variable: Variable {
+                                    name: var_decl.name,
+                                    ty: var_decl.ty,
+                                    mutable: var_decl.mutable,
+                                },
                             });
                         }
                         _ => {
@@ -1497,6 +1514,21 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (Type, Option<Jakt
     }
 }
 
+pub fn parse_call_parameter_name(
+    tokens: &[Token],
+    index: &mut usize,
+) -> (String, Option<JaktError>) {
+    if let TokenContents::Name(name) = &tokens[*index].contents {
+        if *index + 1 < tokens.len() {
+            if let TokenContents::Colon = &tokens[*index + 1].contents {
+                *index += 2;
+                return (name.clone(), None);
+            }
+        }
+    }
+    (String::new(), None)
+}
+
 pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktError>) {
     trace!(format!("parse_call: {:?}", tokens[*index]));
     let mut call = Call::new();
@@ -1551,6 +1583,9 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktErro
                         *index += 1;
                     }
                     _ => {
+                        let (param_name, err) = parse_call_parameter_name(tokens, index);
+                        error = error.or(err);
+
                         let (expr, err) = parse_expression(
                             tokens,
                             index,
@@ -1558,7 +1593,7 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktErro
                         );
                         error = error.or(err);
 
-                        call.args.push((String::new(), expr));
+                        call.args.push((param_name, expr));
                     }
                 }
             }
