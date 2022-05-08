@@ -47,13 +47,11 @@ public:
     StringView(ByteBuffer const&);
 #ifndef KERNEL
     StringView(String const&);
-    StringView(FlyString const&);
 #endif
 
     explicit StringView(ByteBuffer&&) = delete;
 #ifndef KERNEL
     explicit StringView(String&&) = delete;
-    explicit StringView(FlyString&&) = delete;
 #endif
 
     [[nodiscard]] constexpr bool is_null() const
