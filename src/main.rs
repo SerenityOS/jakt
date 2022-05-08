@@ -4,22 +4,30 @@ use jakt::{Compiler, JaktError, Span};
 
 fn main() -> Result<(), JaktError> {
     let mut parser = Compiler::new();
+    let mut first_error = None;
 
     for arg in std::env::args_os().skip(1) {
         match parser.compile(&PathBuf::from(&arg)) {
             Ok(_) => {
                 println!("success");
             }
-            Err(err) => match err {
-                JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
-                JaktError::ParserError(msg, span) => display_error(&parser, &msg, span),
-                JaktError::TypecheckError(msg, span) => display_error(&parser, &msg, span),
-                JaktError::ValidationError(msg, span) => display_error(&parser, &msg, span),
-            },
+            Err(err) => {
+                match &err {
+                    JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
+                    JaktError::ParserError(msg, span) => display_error(&parser, &msg, *span),
+                    JaktError::TypecheckError(msg, span) => display_error(&parser, &msg, *span),
+                    JaktError::ValidationError(msg, span) => display_error(&parser, &msg, *span),
+                }
+                first_error = first_error.or(Some(err));
+            }
         }
     }
 
-    Ok(())
+    if let Some(error) = first_error {
+        Err(error)
+    } else {
+        Ok(())
+    }
 }
 
 fn display_error(parser: &Compiler, msg: &str, span: Span) {
