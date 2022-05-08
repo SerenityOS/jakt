@@ -4,5 +4,5 @@ fun greet(msg: String, msg2: String) {
 }
 
 fun main() {
-    greet(1, 2)
+    greet(msg: 1, msg2: 2)
 }
