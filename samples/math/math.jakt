@@ -3,5 +3,5 @@ fun subtract(x: i64, y: i64) {
 }
 
 fun main() {
-    subtract(10, 3)
+    subtract(x: 10, y: 3)
 }

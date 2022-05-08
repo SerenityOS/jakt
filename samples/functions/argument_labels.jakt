@@ -1,0 +1,14 @@
+fun foo(a: bool, b: bool) {
+}
+
+fun bar(_ a: bool, b: bool) {
+}
+
+fun baz(_ a: bool, _ b: bool) {
+}
+
+fun main() {
+    foo(a: true, b: true)
+    bar(true, b: true)
+    baz(true, true)
+}
