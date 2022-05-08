@@ -1,10 +1,31 @@
 use crate::{
     error::JaktError,
+    lexer::Span,
     parser::{
-        Block, Call, Expression, Function, Operator, Parameter, ParsedFile, Span, Statement, Type,
-        VarDecl, Variable,
+        Block, Call, Expression, Function, Operator, Parameter, ParsedFile, Statement, VarDecl,
+        Variable,
     },
 };
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Type {
+    Bool,
+    String,
+    I8,
+    I16,
+    I32,
+    I64,
+    U8,
+    U16,
+    U32,
+    U64,
+    F32,
+    F64,
+    Void,
+    Vector(Box<Type>),
+    Optional(Box<Type>),
+    Unknown,
+}
 
 #[derive(Clone)]
 pub struct CheckedFile {

@@ -1,4 +1,4 @@
-use crate::parser::Span;
+use crate::lexer::Span;
 
 #[derive(Debug)]
 pub enum JaktError {

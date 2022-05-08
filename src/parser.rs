@@ -1,4 +1,7 @@
-use crate::{compiler::FileId, error::JaktError};
+use crate::error::JaktError;
+
+use crate::lexer::{Span, Token, TokenContents};
+use crate::typechecker::Type;
 
 macro_rules! trace {
     ($x: expr) => {
@@ -30,26 +33,6 @@ pub enum ExpressionKind {
     ExpressionWithoutAssignment,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Type {
-    Bool,
-    String,
-    I8,
-    I16,
-    I32,
-    I64,
-    U8,
-    U16,
-    U32,
-    U64,
-    F32,
-    F64,
-    Void,
-    Vector(Box<Type>),
-    Optional(Box<Type>),
-    Unknown,
-}
-
 #[derive(Debug, Clone)]
 pub struct VarDecl {
     pub name: String,
@@ -72,79 +55,6 @@ impl VarDecl {
 impl PartialEq for VarDecl {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name && self.ty == other.ty && self.mutable == other.mutable
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Span {
-    pub file_id: FileId,
-    pub start: usize,
-    pub end: usize,
-}
-
-impl Span {
-    pub fn new(file_id: FileId, start: usize, end: usize) -> Self {
-        Self {
-            file_id,
-            start,
-            end,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub enum TokenContents {
-    QuotedString(String),
-    Number(i64),
-    Name(String),
-    Semicolon,
-    Colon,
-    LParen,
-    RParen,
-    LCurly,
-    RCurly,
-    LSquare,
-    RSquare,
-    Plus,
-    Minus,
-    Equal,
-    PlusEqual,
-    MinusEqual,
-    AsteriskEqual,
-    ForwardSlashEqual,
-    NotEqual,
-    DoubleEqual,
-    GreaterThan,
-    GreaterThanOrEqual,
-    LessThan,
-    LessThanOrEqual,
-    Asterisk,
-    ForwardSlash,
-    ExclamationPoint,
-    QuestionMark,
-    Comma,
-    Eol,
-    Eof,
-
-    Garbage,
-}
-
-#[derive(Debug)]
-pub struct Token {
-    pub contents: TokenContents,
-    pub span: Span,
-}
-
-impl Token {
-    pub fn new(contents: TokenContents, span: Span) -> Self {
-        Self { contents, span }
-    }
-
-    pub fn unknown(span: Span) -> Self {
-        Self {
-            contents: TokenContents::Garbage,
-            span,
-        }
     }
 }
 
