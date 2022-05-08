@@ -5,7 +5,6 @@
  */
 
 #include <AK/ByteBuffer.h>
-#include <AK/FlyString.h>
 #include <AK/Format.h>
 #include <AK/Function.h>
 #include <AK/Memory.h>
@@ -15,11 +14,6 @@
 #include <AK/Vector.h>
 
 namespace AK {
-
-bool String::operator==(FlyString const& fly_string) const
-{
-    return m_impl == fly_string.impl() || view() == fly_string.view();
-}
 
 bool String::operator==(String const& other) const
 {
@@ -359,11 +353,6 @@ String escape_html_entities(StringView html)
     return builder.to_string();
 }
 
-String::String(FlyString const& string)
-    : m_impl(string.impl())
-{
-}
-
 String String::to_lowercase() const
 {
     if (!m_impl)
@@ -411,29 +400,6 @@ bool operator<=(char const* characters, String const& string)
 bool String::operator==(char const* cstring) const
 {
     return view() == cstring;
-}
-
-InputStream& operator>>(InputStream& stream, String& string)
-{
-    StringBuilder builder;
-
-    for (;;) {
-        char next_char;
-        stream >> next_char;
-
-        if (stream.has_any_error()) {
-            stream.set_fatal_error();
-            string = nullptr;
-            return stream;
-        }
-
-        if (next_char) {
-            builder.append(next_char);
-        } else {
-            string = builder.to_string();
-            return stream;
-        }
-    }
 }
 
 String String::vformatted(StringView fmtstr, TypeErasedFormatParams& params)

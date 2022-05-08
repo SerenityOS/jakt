@@ -117,18 +117,6 @@ public:
     StringView consume_until(char const*);
     StringView consume_until(StringView);
     StringView consume_quoted_string(char escape_char = 0);
-#ifndef KERNEL
-    String consume_and_unescape_string(char escape_char = '\\');
-#endif
-
-    enum class UnicodeEscapeError {
-        MalformedUnicodeEscape,
-        UnicodeEscapeOverflow,
-    };
-
-#ifndef KERNEL
-    Result<u32, UnicodeEscapeError> consume_escaped_code_point(bool combine_surrogate_pairs = true);
-#endif
 
     constexpr void ignore(size_t count = 1)
     {
@@ -216,12 +204,6 @@ public:
 protected:
     StringView m_input;
     size_t m_index { 0 };
-
-private:
-#ifndef KERNEL
-    Result<u32, UnicodeEscapeError> decode_code_point();
-    Result<u32, UnicodeEscapeError> decode_single_or_paired_surrogate(bool combine_surrogate_pairs);
-#endif
 };
 
 constexpr auto is_any_of(StringView values)

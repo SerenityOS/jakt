@@ -9,7 +9,6 @@
 #include <AK/Format.h>
 #include <AK/Forward.h>
 #include <AK/RefPtr.h>
-#include <AK/Stream.h>
 #include <AK/StringBuilder.h>
 #include <AK/StringImpl.h>
 #include <AK/StringUtils.h>
@@ -92,8 +91,6 @@ public:
         : m_impl(move(impl))
     {
     }
-
-    String(FlyString const&);
 
     [[nodiscard]] static String repeated(char, size_t count);
     [[nodiscard]] static String repeated(StringView, size_t count);
@@ -200,9 +197,6 @@ public:
 
     bool operator==(StringView) const;
     bool operator!=(StringView other) const { return !(*this == other); }
-
-    bool operator==(FlyString const&) const;
-    bool operator!=(FlyString const& other) const { return !(*this == other); }
 
     bool operator<(String const&) const;
     bool operator<(char const*) const;
@@ -336,8 +330,6 @@ bool operator<=(char const*, String const&);
 String operator+(String const&, String const&);
 
 String escape_html_entities(StringView html);
-
-InputStream& operator>>(InputStream& stream, String& string);
 
 }
 

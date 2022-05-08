@@ -22,10 +22,6 @@ public:
     ~StringBuilder() = default;
 
     ErrorOr<void> try_append(StringView);
-#ifndef KERNEL
-    ErrorOr<void> try_append(Utf16View const&);
-#endif
-    ErrorOr<void> try_append(Utf32View const&);
     ErrorOr<void> try_append_code_point(u32);
     ErrorOr<void> try_append(char);
     template<typename... Parameters>
@@ -38,14 +34,9 @@ public:
     ErrorOr<void> try_append_escaped_for_json(StringView);
 
     void append(StringView);
-#ifndef KERNEL
-    void append(Utf16View const&);
-#endif
-    void append(Utf32View const&);
     void append(char);
     void append_code_point(u32);
     void append(char const*, size_t);
-    void appendvf(char const*, va_list);
 
     void append_as_lowercase(char);
     void append_escaped_for_json(StringView);
