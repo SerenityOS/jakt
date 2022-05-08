@@ -3,5 +3,5 @@ fun greet(msg: String) {
 }
 
 fun main() {
-    greet("Well, hello friends.")
+    greet(msg: "Well, hello friends.")
 }

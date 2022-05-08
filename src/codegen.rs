@@ -49,10 +49,10 @@ fn translate_function(fun: &CheckedFunction) -> String {
             first = false;
         }
 
-        let ty = translate_type(&param.ty);
+        let ty = translate_type(&param.variable.ty);
         output.push_str(&ty);
         output.push(' ');
-        output.push_str(&param.name);
+        output.push_str(&param.variable.name);
     }
     output.push(')');
 
@@ -82,10 +82,10 @@ fn translate_function_predecl(fun: &CheckedFunction) -> String {
             first = false;
         }
 
-        let ty = translate_type(&param.ty);
+        let ty = translate_type(&param.variable.ty);
         output.push_str(&ty);
         output.push(' ');
-        output.push_str(&param.name);
+        output.push_str(&param.variable.name);
     }
     output.push_str(");");
 

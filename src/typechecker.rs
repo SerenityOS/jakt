@@ -1,8 +1,8 @@
 use crate::{
     error::JaktError,
     parser::{
-        Block, Call, Expression, Function, Operator, ParsedFile, Span, Statement, Type, VarDecl,
-        Variable,
+        Block, Call, Expression, Function, Operator, Parameter, ParsedFile, Span, Statement, Type,
+        VarDecl, Variable,
     },
 };
 
@@ -23,7 +23,7 @@ impl CheckedFile {
 pub struct CheckedFunction {
     pub name: String,
     pub return_type: Type,
-    pub params: Vec<Variable>,
+    pub params: Vec<Parameter>,
     pub block: CheckedBlock,
 }
 
@@ -184,7 +184,7 @@ fn typecheck_fun(
     stack.push_frame();
 
     for param in &fun.params {
-        if let Err(err) = stack.add_var(param.clone(), fun.name_span) {
+        if let Err(err) = stack.add_var(param.variable.clone(), fun.name_span) {
             error = error.or(Some(err));
         }
     }
@@ -579,7 +579,16 @@ pub fn typecheck_call(
                             typecheck_expression(&call.args[idx].1, stack, file);
                         error = error.or(err);
 
-                        if checked_arg.ty() != callee.params[idx].ty {
+                        if callee.params[idx].requires_label
+                            && call.args[idx].0 != callee.params[idx].variable.name
+                        {
+                            error = error.or(Some(JaktError::TypecheckError(
+                                "Wrong parameter name in argument label".to_string(),
+                                call.args[idx].1.span(),
+                            )));
+                        }
+
+                        if checked_arg.ty() != callee.params[idx].variable.ty {
                             error = error.or(Some(JaktError::TypecheckError(
                                 "Parameter type mismatch".to_string(),
                                 call.args[idx].1.span(),
