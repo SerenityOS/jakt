@@ -7,4 +7,4 @@ mod typechecker;
 
 pub use compiler::Compiler;
 pub use error::JaktError;
-pub use parser::Span;
+pub use lexer::Span;

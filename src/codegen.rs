@@ -1,7 +1,7 @@
 use crate::{
-    parser::{Operator, Type},
+    parser::Operator,
     typechecker::{
-        CheckedBlock, CheckedExpression, CheckedFile, CheckedFunction, CheckedStatement,
+        CheckedBlock, CheckedExpression, CheckedFile, CheckedFunction, CheckedStatement, Type,
     },
 };
 
@@ -246,7 +246,7 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
                 for param in &call.args {
                     output.push_str(&translate_expr(indent, &param.1));
                 }
-                output.push_str(")");
+                output.push(')');
             } else {
                 output.push_str(&call.name);
                 output.push('(');
