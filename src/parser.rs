@@ -204,6 +204,7 @@ pub enum BinaryOperator {
     Subtract,
     Multiply,
     Divide,
+    Modulo,
     Equal,
     NotEqual,
     LessThan,
@@ -215,6 +216,7 @@ pub enum BinaryOperator {
     SubtractAssign,
     MultiplyAssign,
     DivideAssign,
+    ModuloAssign,
 }
 
 impl Expression {
@@ -224,6 +226,7 @@ impl Expression {
     pub fn precedence(&self) -> u64 {
         match self {
             Expression::Operator(BinaryOperator::Multiply, _)
+            | Expression::Operator(BinaryOperator::Modulo, _)
             | Expression::Operator(BinaryOperator::Divide, _) => 100,
             Expression::Operator(BinaryOperator::Add, _)
             | Expression::Operator(BinaryOperator::Subtract, _) => 90,
@@ -237,6 +240,7 @@ impl Expression {
             | Expression::Operator(BinaryOperator::AddAssign, _)
             | Expression::Operator(BinaryOperator::SubtractAssign, _)
             | Expression::Operator(BinaryOperator::MultiplyAssign, _)
+            | Expression::Operator(BinaryOperator::ModuloAssign, _)
             | Expression::Operator(BinaryOperator::DivideAssign, _) => 50,
             _ => 0,
         }
@@ -1132,6 +1136,10 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
             *index += 1;
             (Expression::Operator(BinaryOperator::Divide, span), None)
         }
+        TokenContents::PercentSign => {
+            *index += 1;
+            (Expression::Operator(BinaryOperator::Modulo, span), None)
+        }
         TokenContents::Equal => {
             trace!("ERROR: assignment not allowed in this position");
 
@@ -1186,6 +1194,18 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
             *index += 1;
             (
                 Expression::Operator(BinaryOperator::DivideAssign, span),
+                Some(JaktError::ValidationError(
+                    "assignment is not allowed in this position".to_string(),
+                    span,
+                )),
+            )
+        }
+        TokenContents::PercentSignEqual => {
+            trace!("ERROR: assignment not allowed in this position");
+
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::ModuloAssign, span),
                 Some(JaktError::ValidationError(
                     "assignment is not allowed in this position".to_string(),
                     span,
@@ -1266,6 +1286,10 @@ pub fn parse_operator_with_assignment(
         TokenContents::ForwardSlash => {
             *index += 1;
             (Expression::Operator(BinaryOperator::Divide, span), None)
+        }
+        TokenContents::PercentSign => {
+            *index += 1;
+            (Expression::Operator(BinaryOperator::Modulo, span), None)
         }
         TokenContents::Equal => {
             *index += 1;

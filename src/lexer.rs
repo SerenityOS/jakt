@@ -30,6 +30,7 @@ pub enum TokenContents {
     RCurly,
     LSquare,
     RSquare,
+    PercentSign,
     Plus,
     Minus,
     Equal,
@@ -39,6 +40,7 @@ pub enum TokenContents {
     MinusMinus,
     AsteriskEqual,
     ForwardSlashEqual,
+    PercentSignEqual,
     NotEqual,
     DoubleEqual,
     GreaterThan,
@@ -263,6 +265,25 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
             }
             output.push(Token::new(
                 TokenContents::ExclamationPoint,
+                Span::new(file_id, start, start + 1),
+            ));
+        } else if c == b'%' {
+            let start = index;
+            index += 1;
+
+            if index < bytes.len() {
+                if bytes[index] == b'=' {
+                    index += 1;
+                    output.push(Token::new(
+                        TokenContents::PercentSignEqual,
+                        Span::new(file_id, start, start + 2),
+                    ));
+                    continue;
+                }
+            }
+
+            output.push(Token::new(
+                TokenContents::PercentSign,
                 Span::new(file_id, start, start + 1),
             ));
         } else if c == b'?' {
