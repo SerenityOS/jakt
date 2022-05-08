@@ -13,7 +13,6 @@
 #include <AK/Vector.h>
 
 #ifndef KERNEL
-#    include <AK/FlyString.h>
 #    include <AK/String.h>
 #endif
 
@@ -21,12 +20,6 @@ namespace AK {
 
 #ifndef KERNEL
 StringView::StringView(String const& string)
-    : m_characters(string.characters())
-    , m_length(string.length())
-{
-}
-
-StringView::StringView(FlyString const& string)
     : m_characters(string.characters())
     , m_length(string.length())
 {
