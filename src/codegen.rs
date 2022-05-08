@@ -108,6 +108,7 @@ fn translate_type(ty: &Type) -> String {
         Type::F64 => String::from("f64"),
         Type::Void => String::from("void"),
         Type::Vector(v) => format!("Vector<{}>", translate_type(v)),
+        Type::Optional(v) => format!("Optional<{}>", translate_type(v)),
         Type::Unknown => String::from("auto"),
     }
 }
@@ -206,6 +207,19 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
     let mut output = String::new();
 
     match expr {
+        CheckedExpression::OptionalNone(_) => {
+            output.push_str("{}");
+        }
+        CheckedExpression::OptionalSome(expr, _) => {
+            output.push('(');
+            output.push_str(&translate_expr(indent, expr));
+            output.push(')');
+        }
+        CheckedExpression::ForcedUnwrap(expr, _) => {
+            output.push('(');
+            output.push_str(&translate_expr(indent, expr));
+            output.push_str(".value())");
+        }
         CheckedExpression::QuotedString(qs) => {
             output.push('"');
             output.push_str(qs);
