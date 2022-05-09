@@ -2,8 +2,8 @@ use crate::{
     error::JaktError,
     lexer::Span,
     parser::{
-        BinaryOperator, Block, Call, Expression, Function, Parameter, ParsedFile, Statement,
-        UnaryOperator, VarDecl, Variable,
+        BinaryOperator, Block, Call, Expression, Function, FunctionLinkage, Parameter, ParsedFile,
+        Statement, UnaryOperator, VarDecl, Variable,
     },
 };
 
@@ -47,6 +47,7 @@ pub struct CheckedFunction {
     pub return_type: Type,
     pub params: Vec<Parameter>,
     pub block: CheckedBlock,
+    pub linkage: FunctionLinkage,
 }
 
 #[derive(Clone)]
@@ -246,6 +247,7 @@ fn typecheck_fun(
         params: fun.params.clone(),
         return_type: return_type,
         block,
+        linkage: fun.linkage.clone(),
     };
 
     (output, error)
