@@ -61,6 +61,13 @@ impl PartialEq for VarDecl {
 #[derive(Debug)]
 pub struct ParsedFile {
     pub funs: Vec<Function>,
+    pub structs: Vec<Struct>,
+}
+
+#[derive(Debug)]
+pub struct Struct {
+    pub name: String,
+    pub members: Vec<VarDecl>,
 }
 
 #[derive(Debug)]
@@ -140,6 +147,8 @@ pub enum Expression {
     Var(String, Span),
     Tuple(Vec<Expression>, Span),
     IndexedTuple(Box<Expression>, usize, Span),
+    IndexedStruct(Box<Expression>, String, Span),
+
     ForcedUnwrap(Box<Expression>, Span),
 
     // FIXME: These should be implemented as `enum` variant values once available.
@@ -164,6 +173,7 @@ impl Expression {
             Expression::Tuple(_, span) => *span,
             Expression::IndexedExpression(_, _, span) => *span,
             Expression::IndexedTuple(_, _, span) => *span,
+            Expression::IndexedStruct(_, _, span) => *span,
             Expression::UnaryOp(_, _, span) => *span,
             Expression::BinaryOp(_, _, _, span) => *span,
             Expression::Var(_, span) => *span,
@@ -253,7 +263,10 @@ impl Expression {
 
 impl ParsedFile {
     pub fn new() -> Self {
-        Self { funs: Vec::new() }
+        Self {
+            funs: Vec::new(),
+            structs: Vec::new(),
+        }
     }
 }
 
@@ -280,8 +293,15 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
 
                     parsed_file.funs.push(fun);
                 }
+                "struct" => {
+                    let (structure, err) = parse_struct(tokens, &mut index);
+                    error = error.or(err);
+
+                    parsed_file.structs.push(structure);
+                }
                 _ => {
                     trace!("ERROR: unexpected keyword");
+                    index += 1;
 
                     error = error.or(Some(JaktError::ParserError(
                         "unexpected keyword".to_string(),
@@ -304,6 +324,7 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
             }
             Token { span, .. } => {
                 trace!("ERROR: unexpected token (expected keyword)");
+                index += 1;
 
                 error = error.or(Some(JaktError::ParserError(
                     "unexpected token (expected keyword)".to_string(),
@@ -314,6 +335,145 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
     }
 
     (parsed_file, error)
+}
+
+pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<JaktError>) {
+    trace!(format!("parse_struct: {:?}", tokens[*index]));
+
+    let mut error = None;
+
+    *index += 1;
+
+    if *index < tokens.len() {
+        // we're expecting the name of the function
+        match &tokens[*index] {
+            Token {
+                contents: TokenContents::Name(struct_name),
+                ..
+            } => {
+                *index += 1;
+
+                if *index < tokens.len() {
+                    match tokens[*index] {
+                        Token {
+                            contents: TokenContents::LCurly,
+                            ..
+                        } => {
+                            *index += 1;
+                        }
+                        _ => {
+                            trace!("ERROR: expected '{'");
+
+                            error = error.or(Some(JaktError::ParserError(
+                                "expected '{'".to_string(),
+                                tokens[*index].span,
+                            )));
+                        }
+                    }
+                } else {
+                    trace!("ERROR: incomplete struct");
+
+                    error = error.or(Some(JaktError::ParserError(
+                        "incomplete struct".to_string(),
+                        tokens[*index - 1].span,
+                    )));
+                }
+
+                let mut fields = Vec::new();
+                while *index < tokens.len() {
+                    match &tokens[*index].contents {
+                        TokenContents::RCurly => {
+                            *index += 1;
+                            break;
+                        }
+                        TokenContents::Comma | TokenContents::Eol => {
+                            // Treat comma as whitespace? Might require them in the future
+                            *index += 1;
+                        }
+
+                        TokenContents::Name(..) => {
+                            // Now lets parse a parameter
+
+                            let (mut var_decl, err) = parse_variable_declaration(tokens, index);
+                            error = error.or(err);
+
+                            // Ignore immutable flag for now
+                            var_decl.mutable = false;
+
+                            if var_decl.ty == Type::Unknown {
+                                trace!("ERROR: parameter missing type");
+
+                                error = error.or(Some(JaktError::ParserError(
+                                    "parameter missing type".to_string(),
+                                    var_decl.span,
+                                )))
+                            }
+
+                            fields.push(var_decl);
+                        }
+                        _ => {
+                            trace!(format!(
+                                "ERROR: expected field, found: {:?}",
+                                tokens[*index].contents
+                            ));
+
+                            error = error.or(Some(JaktError::ParserError(
+                                "expected field".to_string(),
+                                tokens[*index].span,
+                            )));
+                        }
+                    }
+                }
+                if *index >= tokens.len() {
+                    trace!("ERROR: incomplete struct");
+
+                    error = error.or(Some(JaktError::ParserError(
+                        "incomplete struct".to_string(),
+                        tokens[*index - 1].span,
+                    )));
+                }
+
+                (
+                    Struct {
+                        name: struct_name.clone(),
+                        members: fields,
+                    },
+                    error,
+                )
+            }
+            _ => {
+                trace!("ERROR: expected struct name");
+
+                error = error.or(Some(JaktError::ParserError(
+                    "expected struct name".to_string(),
+                    tokens[*index].span,
+                )));
+
+                (
+                    Struct {
+                        name: String::new(),
+                        members: Vec::new(),
+                    },
+                    error,
+                )
+            }
+        }
+    } else {
+        trace!("ERROR: expected struct name");
+
+        error = error.or(Some(JaktError::ParserError(
+            "expected struct name".to_string(),
+            tokens[*index].span,
+        )));
+
+        (
+            Struct {
+                name: String::new(),
+                members: Vec::new(),
+            },
+            error,
+        )
+    }
 }
 
 pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<JaktError>) {
@@ -1123,31 +1283,39 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 *index += 1;
 
                 if *index < tokens.len() {
-                    let (idx, err) = parse_expression(
-                        tokens,
-                        index,
-                        ExpressionKind::ExpressionWithoutAssignment,
-                    );
-                    error = error.or(err);
+                    match &tokens[*index].contents {
+                        TokenContents::Number(int) => {
+                            *index += 1;
 
-                    let mut index = 0;
+                            let span = Span {
+                                file_id: expr.span().file_id,
+                                start: expr.span().start,
+                                end: tokens[*index].span.end,
+                            };
 
-                    match idx {
-                        Expression::Int64(int, _) => index = int as usize,
+                            expr = Expression::IndexedTuple(Box::new(expr), *int as usize, span);
+                        }
+
+                        TokenContents::Name(name) => {
+                            *index += 1;
+                            let span = Span {
+                                file_id: expr.span().file_id,
+                                start: expr.span().start,
+                                end: tokens[*index].span.end,
+                            };
+
+                            expr =
+                                Expression::IndexedStruct(Box::new(expr), name.to_string(), span);
+                        }
+
                         _ => {
+                            *index += 1;
                             error = error.or(Some(JaktError::ParserError(
                                 "Unsupported index".to_string(),
-                                span,
+                                tokens[*index].span,
                             )))
                         }
                     }
-                    let span = Span {
-                        file_id: expr.span().file_id,
-                        start: expr.span().start,
-                        end: idx.span().end,
-                    };
-
-                    expr = Expression::IndexedTuple(Box::new(expr), index, span);
                 }
             }
             TokenContents::LSquare => {

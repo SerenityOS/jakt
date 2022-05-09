@@ -94,6 +94,8 @@ pub enum CheckedExpression {
     Vector(Vec<CheckedExpression>, Type),
     IndexedExpression(Box<CheckedExpression>, Box<CheckedExpression>, Type),
     IndexedTuple(Box<CheckedExpression>, usize, Type),
+    IndexedStruct(Box<CheckedExpression>, String, Type),
+
     Var(Variable),
 
     OptionalNone(Type),
@@ -117,6 +119,7 @@ impl CheckedExpression {
             CheckedExpression::Tuple(_, ty) => ty.clone(),
             CheckedExpression::IndexedExpression(_, _, ty) => ty.clone(),
             CheckedExpression::IndexedTuple(_, _, ty) => ty.clone(),
+            CheckedExpression::IndexedStruct(_, _, ty) => ty.clone(),
             CheckedExpression::Var(Variable { ty, .. }) => ty.clone(),
             CheckedExpression::OptionalNone(ty) => ty.clone(),
             CheckedExpression::OptionalSome(_, ty) => ty.clone(),
@@ -571,6 +574,21 @@ pub fn typecheck_expression(
                 error,
             )
         }
+
+        Expression::IndexedStruct(expr, name, _) => {
+            let (checked_expr, err) = typecheck_expression(expr, stack, file);
+            error = error.or(err);
+
+            let ty = Type::Unknown;
+
+            //FIXME: add real name binding to structs so that we can find the proper field
+
+            (
+                CheckedExpression::IndexedStruct(Box::new(checked_expr), name.to_string(), ty),
+                error,
+            )
+        }
+
         Expression::Operator(_, span) => (
             CheckedExpression::Garbage,
             Some(JaktError::TypecheckError(
