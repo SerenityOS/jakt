@@ -1,7 +1,8 @@
 use crate::{
     parser::{BinaryOperator, FunctionLinkage, UnaryOperator},
     typechecker::{
-        CheckedBlock, CheckedExpression, CheckedFile, CheckedFunction, CheckedStatement, Type,
+        CheckedBlock, CheckedExpression, CheckedFile, CheckedFunction, CheckedStatement,
+        CheckedStruct, Type,
     },
 };
 
@@ -12,70 +13,103 @@ pub fn translate(file: &CheckedFile) -> String {
 
     output.push_str("#include \"runtime/lib.h\"\n");
 
-    for fun in &file.checked_functions {
-        let fun_output = translate_function_predecl(fun);
+    for structure in &file.structs {
+        let struct_output = translate_struct_predecl(structure);
 
-        output.push_str(&fun_output);
+        output.push_str(&struct_output);
         output.push('\n');
     }
 
-    for fun in &file.checked_functions {
-        if let FunctionLinkage::External = fun.linkage {
-            continue;
-        }
-        let fun_output = translate_function(fun);
+    output.push('\n');
 
-        output.push_str(&fun_output);
+    for structure in &file.structs {
+        let struct_output = translate_struct(structure, file);
+
+        output.push_str(&struct_output);
         output.push('\n');
+    }
+
+    output.push('\n');
+
+    for fun in &file.funs {
+        let fun_output = translate_function_predecl(fun, file);
+
+        if fun.linkage != FunctionLinkage::ImplicitConstructor {
+            output.push_str(&fun_output);
+            output.push('\n');
+        }
+    }
+
+    output.push('\n');
+
+    for fun in &file.funs {
+        if fun.linkage == FunctionLinkage::External {
+            continue;
+        } else if fun.linkage == FunctionLinkage::ImplicitConstructor {
+            let fun_output = translate_constructor(fun, file);
+
+            output.push_str(&fun_output);
+            output.push('\n');
+        } else {
+            let fun_output = translate_function(fun, file);
+
+            output.push_str(&fun_output);
+            output.push('\n');
+        }
     }
 
     output
 }
 
-fn translate_function(fun: &CheckedFunction) -> String {
-    let mut output = String::new();
+fn translate_struct_predecl(structure: &CheckedStruct) -> String {
+    format!("struct {};", structure.name)
+}
 
-    if fun.name == "main" {
-        output.push_str("int");
-    } else {
-        output.push_str(&translate_type(&fun.return_type));
+fn translate_struct(structure: &CheckedStruct, file: &CheckedFile) -> String {
+    let mut output = format!("struct {} {{\n", structure.name);
+
+    for member in &structure.members {
+        output.push_str(&" ".repeat(INDENT_SIZE));
+
+        output.push_str(&translate_type(&member.ty, file));
+        output.push(' ');
+        output.push_str(&member.name);
+        output.push_str(";\n");
     }
-    output.push(' ');
-    output.push_str(&fun.name);
-    output.push('(');
 
+    // Put together our own constructor
+    // eg) Person(String name, i64 age);
+    output.push_str(&" ".repeat(INDENT_SIZE));
+    output.push_str(&structure.name);
+    output.push('(');
     let mut first = true;
-    for param in &fun.params {
+    for member in &structure.members {
         if !first {
             output.push_str(", ");
         } else {
             first = false;
         }
-
-        let ty = translate_type(&param.variable.ty);
-        output.push_str(&ty);
+        output.push_str(&translate_type(&member.ty, file));
         output.push(' ');
-        output.push_str(&param.variable.name);
+        output.push_str(&member.name);
     }
-    output.push(')');
+    output.push_str(");\n");
 
-    let block = translate_block(0, &fun.block);
-    output.push_str(&block);
-
+    output.push_str("};");
     output
 }
 
-fn translate_function_predecl(fun: &CheckedFunction) -> String {
+fn translate_function_predecl(fun: &CheckedFunction, file: &CheckedFile) -> String {
     let mut output = String::new();
 
-    if let FunctionLinkage::External = fun.linkage {
+    if fun.linkage == FunctionLinkage::External {
         output.push_str("extern ");
     }
 
     if fun.name == "main" {
         output.push_str("int");
     } else {
-        output.push_str(&translate_type(&fun.return_type));
+        output.push_str(&translate_type(&fun.return_type, file));
     }
     output.push(' ');
     output.push_str(&fun.name);
@@ -89,7 +123,7 @@ fn translate_function_predecl(fun: &CheckedFunction) -> String {
             first = false;
         }
 
-        let ty = translate_type(&param.variable.ty);
+        let ty = translate_type(&param.variable.ty, file);
         output.push_str(&ty);
         output.push(' ');
         output.push_str(&param.variable.name);
@@ -99,7 +133,83 @@ fn translate_function_predecl(fun: &CheckedFunction) -> String {
     output
 }
 
-fn translate_type(ty: &Type) -> String {
+fn translate_function(fun: &CheckedFunction, file: &CheckedFile) -> String {
+    let mut output = String::new();
+
+    if fun.name == "main" {
+        output.push_str("int");
+    } else {
+        output.push_str(&translate_type(&fun.return_type, file));
+    }
+    output.push(' ');
+    output.push_str(&fun.name);
+    output.push('(');
+
+    let mut first = true;
+    for param in &fun.params {
+        if !first {
+            output.push_str(", ");
+        } else {
+            first = false;
+        }
+
+        let ty = translate_type(&param.variable.ty, file);
+        output.push_str(&ty);
+        output.push(' ');
+        output.push_str(&param.variable.name);
+    }
+    output.push(')');
+
+    let block = translate_block(0, &fun.block, file);
+    output.push_str(&block);
+
+    output
+}
+
+fn translate_constructor(fun: &CheckedFunction, file: &CheckedFile) -> String {
+    let mut output = String::new();
+
+    output.push_str(&translate_type(&fun.return_type, file));
+    output.push_str("::");
+
+    output.push_str(&fun.name);
+    output.push('(');
+
+    let mut first = true;
+    for param in &fun.params {
+        if !first {
+            output.push_str(", ");
+        } else {
+            first = false;
+        }
+
+        let ty = translate_type(&param.variable.ty, file);
+        output.push_str(&ty);
+        output.push_str(" a_");
+        output.push_str(&param.variable.name);
+    }
+    output.push_str("): ");
+
+    let mut first = true;
+    for param in &fun.params {
+        if !first {
+            output.push_str(", ");
+        } else {
+            first = false;
+        }
+
+        output.push_str(&param.variable.name);
+        output.push_str("(a_");
+        output.push_str(&param.variable.name);
+        output.push(')');
+    }
+
+    output.push_str("{}\n");
+
+    output
+}
+
+fn translate_type(ty: &Type, file: &CheckedFile) -> String {
     match ty {
         Type::Bool => String::from("bool"),
         Type::String => String::from("String"),
@@ -114,7 +224,7 @@ fn translate_type(ty: &Type) -> String {
         Type::F32 => String::from("f32"),
         Type::F64 => String::from("f64"),
         Type::Void => String::from("void"),
-        Type::Vector(v) => format!("Vector<{}>", translate_type(v)),
+        Type::Vector(v) => format!("Vector<{}>", translate_type(v, file)),
         Type::Tuple(types) => {
             let mut output = "Tuple<".to_string();
             let mut first = true;
@@ -126,24 +236,25 @@ fn translate_type(ty: &Type) -> String {
                     first = false;
                 }
 
-                output.push_str(&translate_type(ty));
+                output.push_str(&translate_type(ty, file));
             }
 
             output.push('>');
             output
         }
-        Type::Optional(v) => format!("Optional<{}>", translate_type(v)),
+        Type::Optional(v) => format!("Optional<{}>", translate_type(v, file)),
+        Type::Struct(struct_id) => file.structs[*struct_id].name.clone(),
         Type::Unknown => String::from("auto"),
     }
 }
 
-fn translate_block(indent: usize, checked_block: &CheckedBlock) -> String {
+fn translate_block(indent: usize, checked_block: &CheckedBlock, file: &CheckedFile) -> String {
     let mut output = String::new();
 
     output.push_str("{\n");
 
     for stmt in &checked_block.stmts {
-        let stmt = translate_stmt(indent + INDENT_SIZE, stmt);
+        let stmt = translate_stmt(indent + INDENT_SIZE, stmt, file);
 
         output.push_str(&stmt);
     }
@@ -154,14 +265,14 @@ fn translate_block(indent: usize, checked_block: &CheckedBlock) -> String {
     output
 }
 
-fn translate_stmt(indent: usize, stmt: &CheckedStatement) -> String {
+fn translate_stmt(indent: usize, stmt: &CheckedStatement, file: &CheckedFile) -> String {
     let mut output = String::new();
 
     output.push_str(&" ".repeat(indent));
 
     match stmt {
         CheckedStatement::Expression(expr) => {
-            let expr = translate_expr(indent, expr);
+            let expr = translate_expr(indent, expr, file);
             output.push_str(&expr);
             output.push_str(";\n");
         }
@@ -170,52 +281,52 @@ fn translate_stmt(indent: usize, stmt: &CheckedStatement) -> String {
             output.push_str("#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n");
             output.push_str("ScopeGuard __SCOPE_GUARD_NAME  ([&] \n");
             output.push_str("#undef __SCOPE_GUARD_NAME\n");
-            output.push_str(&translate_block(indent, block));
+            output.push_str(&translate_block(indent, block, file));
             output.push_str(");\n");
         }
         CheckedStatement::Return(expr) => {
-            let expr = translate_expr(indent, expr);
+            let expr = translate_expr(indent, expr, file);
             output.push_str("return (");
             output.push_str(&expr);
             output.push_str(");\n")
         }
         CheckedStatement::If(cond, block, else_stmt) => {
-            let expr = translate_expr(indent, cond);
+            let expr = translate_expr(indent, cond, file);
             output.push_str("if (");
             output.push_str(&expr);
             output.push_str(") ");
 
-            let block = translate_block(indent, block);
+            let block = translate_block(indent, block, file);
             output.push_str(&block);
 
             if let Some(else_stmt) = else_stmt {
                 output.push_str(" else ");
-                let else_string = translate_stmt(indent, else_stmt);
+                let else_string = translate_stmt(indent, else_stmt, file);
                 output.push_str(&else_string);
             }
         }
         CheckedStatement::While(cond, block) => {
-            let expr = translate_expr(indent, cond);
+            let expr = translate_expr(indent, cond, file);
             output.push_str("while (");
             output.push_str(&expr);
             output.push_str(") ");
 
-            let block = translate_block(indent, block);
+            let block = translate_block(indent, block, file);
             output.push_str(&block);
         }
         CheckedStatement::VarDecl(var_decl, expr) => {
             if !var_decl.mutable {
                 output.push_str("const ");
             }
-            output.push_str(&translate_type(&var_decl.ty));
+            output.push_str(&translate_type(&var_decl.ty, file));
             output.push(' ');
             output.push_str(&var_decl.name);
             output.push_str(" = ");
-            output.push_str(&translate_expr(indent, expr));
+            output.push_str(&translate_expr(indent, expr, file));
             output.push_str(";\n");
         }
         CheckedStatement::Block(checked_block) => {
-            let block = translate_block(indent, checked_block);
+            let block = translate_block(indent, checked_block, file);
             output.push_str(&block);
         }
         CheckedStatement::Garbage => {
@@ -227,7 +338,7 @@ fn translate_stmt(indent: usize, stmt: &CheckedStatement) -> String {
     output
 }
 
-fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
+fn translate_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> String {
     let mut output = String::new();
 
     match expr {
@@ -236,12 +347,12 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
         }
         CheckedExpression::OptionalSome(expr, _) => {
             output.push('(');
-            output.push_str(&translate_expr(indent, expr));
+            output.push_str(&translate_expr(indent, expr, file));
             output.push(')');
         }
         CheckedExpression::ForcedUnwrap(expr, _) => {
             output.push('(');
-            output.push_str(&translate_expr(indent, expr));
+            output.push_str(&translate_expr(indent, expr, file));
             output.push_str(".value())");
         }
         CheckedExpression::QuotedString(qs) => {
@@ -268,7 +379,7 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
             if call.name == "print" {
                 output.push_str("outln(\"{}\", ");
                 for param in &call.args {
-                    output.push_str(&translate_expr(indent, &param.1));
+                    output.push_str(&translate_expr(indent, &param.1, file));
                 }
                 output.push(')');
             } else {
@@ -283,7 +394,7 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
                         first = false;
                     }
 
-                    output.push_str(&translate_expr(indent, &param.1));
+                    output.push_str(&translate_expr(indent, &param.1, file));
                 }
                 output.push(')');
             }
@@ -299,7 +410,7 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
                 }
                 _ => {}
             }
-            output.push_str(&translate_expr(indent, expr));
+            output.push_str(&translate_expr(indent, expr, file));
             match op {
                 UnaryOperator::PostIncrement => {
                     output.push_str("++");
@@ -313,7 +424,7 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
         }
         CheckedExpression::BinaryOp(lhs, op, rhs, ..) => {
             output.push('(');
-            output.push_str(&translate_expr(indent, lhs));
+            output.push_str(&translate_expr(indent, lhs, file));
             match op {
                 BinaryOperator::Add => output.push_str(" + "),
                 BinaryOperator::Subtract => output.push_str(" - "),
@@ -333,7 +444,7 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
                 BinaryOperator::GreaterThan => output.push_str(" > "),
                 BinaryOperator::GreaterThanOrEqual => output.push_str(" >= "),
             }
-            output.push_str(&translate_expr(indent, rhs));
+            output.push_str(&translate_expr(indent, rhs, file));
             output.push(')');
         }
         CheckedExpression::Vector(vals, _) => {
@@ -347,7 +458,7 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
                     first = false;
                 }
 
-                output.push_str(&translate_expr(indent, val))
+                output.push_str(&translate_expr(indent, val, file))
             }
             output.push_str("}))");
         }
@@ -362,22 +473,28 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
                     first = false;
                 }
 
-                output.push_str(&translate_expr(indent, val))
+                output.push_str(&translate_expr(indent, val, file))
             }
             output.push_str("})");
         }
         CheckedExpression::IndexedExpression(expr, idx, _) => {
             output.push_str("((");
-            output.push_str(&translate_expr(indent, expr));
+            output.push_str(&translate_expr(indent, expr, file));
             output.push_str(")[");
-            output.push_str(&translate_expr(indent, idx));
+            output.push_str(&translate_expr(indent, idx, file));
             output.push_str("])");
         }
         CheckedExpression::IndexedTuple(expr, idx, _) => {
             // x.get<1>()
             output.push_str("((");
-            output.push_str(&translate_expr(indent, expr));
+            output.push_str(&translate_expr(indent, expr, file));
             output.push_str(&format!(").get<{}>())", idx));
+        }
+        CheckedExpression::IndexedStruct(expr, name, _) => {
+            // x.get<1>()
+            output.push_str("((");
+            output.push_str(&translate_expr(indent, expr, file));
+            output.push_str(&format!(").{})", name));
         }
         CheckedExpression::Garbage => {
             // Incorrect parse/typecheck
