@@ -372,6 +372,12 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
             output.push_str(&translate_expr(indent, expr));
             output.push_str(&format!(").get<{}>())", idx));
         }
+        CheckedExpression::IndexedStruct(expr, name, _) => {
+            // x.get<1>()
+            output.push_str("((");
+            output.push_str(&translate_expr(indent, expr));
+            output.push_str(&format!(").{})", name));
+        }
         CheckedExpression::Garbage => {
             // Incorrect parse/typecheck
             // Probably shouldn't be able to get to this point?
