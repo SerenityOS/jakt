@@ -1,11 +1,11 @@
 struct Person {
-    name: String,
-    age: i64,
+    name: String
+    age: i64
 }
 
 fun main() {
-    // let p = Person(name: "Jane", age: 100)
+    let p = Person(name: "Jane", age: 100)
 
-    // print(p.name)
-    // print(p.age)
+    print(p.name)
+    print(p.age)
 }
