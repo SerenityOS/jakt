@@ -70,6 +70,12 @@ pub struct Struct {
     pub members: Vec<VarDecl>,
 }
 
+#[derive(Clone, Debug)]
+pub enum FunctionLinkage {
+    Internal,
+    External,
+}
+
 #[derive(Debug)]
 pub struct Function {
     pub name: String,
@@ -77,6 +83,7 @@ pub struct Function {
     pub params: Vec<Parameter>,
     pub block: Block,
     pub return_type: Type,
+    pub linkage: FunctionLinkage,
 }
 
 #[derive(Clone, Debug)]
@@ -93,7 +100,7 @@ pub struct Variable {
 }
 
 impl Function {
-    pub fn new() -> Self {
+    pub fn new(linkage: FunctionLinkage) -> Self {
         Function {
             name: String::new(),
             name_span: Span {
@@ -104,6 +111,7 @@ impl Function {
             params: Vec::new(),
             block: Block::new(),
             return_type: Type::Void,
+            linkage,
         }
     }
 }
@@ -288,7 +296,7 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
                 span,
             } => match name.as_str() {
                 "fun" => {
-                    let (fun, err) = parse_function(tokens, &mut index);
+                    let (fun, err) = parse_function(tokens, &mut index, FunctionLinkage::Internal);
                     error = error.or(err);
 
                     parsed_file.funs.push(fun);
@@ -298,6 +306,44 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
                     error = error.or(err);
 
                     parsed_file.structs.push(structure);
+                }
+                "extern" => {
+                    if index + 1 < tokens.len() {
+                        match &tokens[index + 1] {
+                            Token {
+                                contents: TokenContents::Name(name),
+                                span,
+                            } => match name.as_str() {
+                                "fun" => {
+                                    index += 1;
+                                    let (fun, err) = parse_function(
+                                        tokens,
+                                        &mut index,
+                                        FunctionLinkage::External,
+                                    );
+                                    error = error.or(err);
+
+                                    parsed_file.funs.push(fun);
+                                }
+                                _ => {
+                                    trace!("ERROR: unexpected keyword");
+
+                                    error = error.or(Some(JaktError::ParserError(
+                                        "unexpected keyword".to_string(),
+                                        *span,
+                                    )));
+                                }
+                            },
+                            _ => {
+                                trace!("ERROR: unexpected keyword");
+
+                                error = error.or(Some(JaktError::ParserError(
+                                    "unexpected keyword".to_string(),
+                                    *span,
+                                )));
+                            }
+                        }
+                    }
                 }
                 _ => {
                     trace!("ERROR: unexpected keyword");
@@ -476,7 +522,11 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
     }
 }
 
-pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<JaktError>) {
+pub fn parse_function(
+    tokens: &[Token],
+    index: &mut usize,
+    linkage: FunctionLinkage,
+) -> (Function, Option<JaktError>) {
     trace!(format!("parse_function: {:?}", tokens[*index]));
 
     let mut error = None;
@@ -587,8 +637,37 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
 
                 let mut return_type = Type::Void;
 
+                let mut fat_arrow_expr = None;
+
                 if *index + 2 < tokens.len() {
                     match &tokens[*index].contents {
+                        TokenContents::Equal => {
+                            *index += 1;
+                            match &tokens[*index].contents {
+                                TokenContents::GreaterThan => {
+                                    *index += 1;
+
+                                    let (expr, err) = parse_expression(
+                                        tokens,
+                                        index,
+                                        ExpressionKind::ExpressionWithoutAssignment,
+                                    );
+                                    return_type = Type::Unknown;
+                                    fat_arrow_expr = Some(expr);
+                                    error = error.or(err);
+
+                                    *index += 1;
+                                }
+                                _ => {
+                                    trace!("ERROR: expected =>");
+
+                                    error = error.or(Some(JaktError::ParserError(
+                                        "expected =>".to_string(),
+                                        tokens[*index - 1].span,
+                                    )));
+                                }
+                            }
+                        }
                         TokenContents::Minus => {
                             *index += 1;
 
@@ -624,7 +703,28 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                     )));
                 }
 
-                let (block, err) = parse_block(tokens, index);
+                if let FunctionLinkage::External = linkage {
+                    return (
+                        Function {
+                            name: fun_name.clone(),
+                            name_span,
+                            params,
+                            block: Block::new(),
+                            return_type,
+                            linkage,
+                        },
+                        error,
+                    );
+                }
+
+                let (block, err) = match fat_arrow_expr {
+                    Some(expr) => {
+                        let mut block = Block::new();
+                        block.stmts.push(Statement::Return(expr));
+                        (block, None)
+                    }
+                    None => parse_block(tokens, index),
+                };
                 error = error.or(err);
 
                 return (
@@ -634,6 +734,7 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                         params,
                         block,
                         return_type,
+                        linkage,
                     },
                     error,
                 );
@@ -642,7 +743,7 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                 trace!("ERROR: expected function name");
 
                 (
-                    Function::new(),
+                    Function::new(FunctionLinkage::Internal),
                     Some(JaktError::ParserError(
                         "expected function name".to_string(),
                         tokens[*index].span,
@@ -653,7 +754,7 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
     } else {
         trace!("ERROR: incomplete function definition");
         (
-            Function::new(),
+            Function::new(FunctionLinkage::Internal),
             Some(JaktError::ParserError(
                 "incomplete function definition".to_string(),
                 tokens[*index].span,

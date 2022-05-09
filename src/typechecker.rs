@@ -2,8 +2,8 @@ use crate::{
     error::JaktError,
     lexer::Span,
     parser::{
-        BinaryOperator, Block, Call, Expression, Function, Parameter, ParsedFile, Statement,
-        UnaryOperator, VarDecl, Variable,
+        BinaryOperator, Block, Call, Expression, Function, FunctionLinkage, Parameter, ParsedFile,
+        Statement, UnaryOperator, VarDecl, Variable,
     },
 };
 
@@ -47,6 +47,7 @@ pub struct CheckedFunction {
     pub return_type: Type,
     pub params: Vec<Parameter>,
     pub block: CheckedBlock,
+    pub linkage: FunctionLinkage,
 }
 
 #[derive(Clone)]
@@ -232,11 +233,24 @@ fn typecheck_fun(
 
     stack.pop_frame();
 
+    // If the return type is unknown, and the function starts with a return statement,
+    // we infer the return type from its expression.
+    let return_type = if fun.return_type == Type::Unknown {
+        if let Some(CheckedStatement::Return(ret)) = block.stmts.first() {
+            ret.ty()
+        } else {
+            Type::Unknown
+        }
+    } else {
+        fun.return_type.clone()
+    };
+
     let output = CheckedFunction {
         name: fun.name.clone(),
         params: fun.params.clone(),
-        return_type: fun.return_type.clone(),
+        return_type: return_type,
         block,
+        linkage: fun.linkage.clone(),
     };
 
     (output, error)
