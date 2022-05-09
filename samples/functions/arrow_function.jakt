@@ -1,0 +1,10 @@
+fun area(width: i64, height: i64) => width * height
+fun greeting(name: String) => "Hello, " + name + "!"
+fun greet(name: String) => print(greeting(name: name))
+
+fun main() {
+    let a = area(width: 5, height: 10)
+    print(a)
+
+    greet(name: "friends")
+}

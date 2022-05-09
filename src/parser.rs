@@ -427,8 +427,37 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
 
                 let mut return_type = Type::Void;
 
+                let mut fat_arrow_expr = None;
+
                 if *index + 2 < tokens.len() {
                     match &tokens[*index].contents {
+                        TokenContents::Equal => {
+                            *index += 1;
+                            match &tokens[*index].contents {
+                                TokenContents::GreaterThan => {
+                                    *index += 1;
+
+                                    let (expr, err) = parse_expression(
+                                        tokens,
+                                        index,
+                                        ExpressionKind::ExpressionWithoutAssignment,
+                                    );
+                                    return_type = Type::Unknown;
+                                    fat_arrow_expr = Some(expr);
+                                    error = error.or(err);
+
+                                    *index += 1;
+                                }
+                                _ => {
+                                    trace!("ERROR: expected =>");
+
+                                    error = error.or(Some(JaktError::ParserError(
+                                        "expected =>".to_string(),
+                                        tokens[*index - 1].span,
+                                    )));
+                                }
+                            }
+                        }
                         TokenContents::Minus => {
                             *index += 1;
 
@@ -464,7 +493,14 @@ pub fn parse_function(tokens: &[Token], index: &mut usize) -> (Function, Option<
                     )));
                 }
 
-                let (block, err) = parse_block(tokens, index);
+                let (block, err) = match fat_arrow_expr {
+                    Some(expr) => {
+                        let mut block = Block::new();
+                        block.stmts.push(Statement::Return(expr));
+                        (block, None)
+                    }
+                    None => parse_block(tokens, index),
+                };
                 error = error.or(err);
 
                 return (
