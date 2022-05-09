@@ -108,6 +108,23 @@ fn translate_type(ty: &Type) -> String {
         Type::F64 => String::from("f64"),
         Type::Void => String::from("void"),
         Type::Vector(v) => format!("Vector<{}>", translate_type(v)),
+        Type::Tuple(types) => {
+            let mut output = "Tuple<".to_string();
+            let mut first = true;
+
+            for ty in types {
+                if !first {
+                    output.push_str(", ");
+                } else {
+                    first = false;
+                }
+
+                output.push_str(&translate_type(ty));
+            }
+
+            output.push('>');
+            output
+        }
         Type::Optional(v) => format!("Optional<{}>", translate_type(v)),
         Type::Unknown => String::from("auto"),
     }
@@ -221,9 +238,9 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
             output.push_str(".value())");
         }
         CheckedExpression::QuotedString(qs) => {
-            output.push('"');
+            output.push_str("String(\"");
             output.push_str(qs);
-            output.push('"');
+            output.push_str("\")");
         }
         CheckedExpression::Int64(int64) => {
             output.push_str("static_cast<i64>(");
@@ -327,12 +344,33 @@ fn translate_expr(indent: usize, expr: &CheckedExpression) -> String {
             }
             output.push_str("}))");
         }
+        CheckedExpression::Tuple(vals, _) => {
+            // (Tuple{1, 2, 3})
+            output.push_str("(Tuple{");
+            let mut first = true;
+            for val in vals {
+                if !first {
+                    output.push_str(", ");
+                } else {
+                    first = false;
+                }
+
+                output.push_str(&translate_expr(indent, val))
+            }
+            output.push_str("})");
+        }
         CheckedExpression::IndexedExpression(expr, idx, _) => {
             output.push_str("((");
             output.push_str(&translate_expr(indent, expr));
             output.push_str(")[");
             output.push_str(&translate_expr(indent, idx));
             output.push_str("])");
+        }
+        CheckedExpression::IndexedTuple(expr, idx, _) => {
+            // x.get<1>()
+            output.push_str("((");
+            output.push_str(&translate_expr(indent, expr));
+            output.push_str(&format!(").get<{}>())", idx));
         }
         CheckedExpression::Garbage => {
             // Incorrect parse/typecheck

@@ -23,6 +23,7 @@ pub enum Type {
     F64,
     Void,
     Vector(Box<Type>),
+    Tuple(Vec<Type>),
     Optional(Box<Type>),
     Unknown,
 }
@@ -89,8 +90,10 @@ pub enum CheckedExpression {
         Box<CheckedExpression>,
         Type,
     ),
+    Tuple(Vec<CheckedExpression>, Type),
     Vector(Vec<CheckedExpression>, Type),
     IndexedExpression(Box<CheckedExpression>, Box<CheckedExpression>, Type),
+    IndexedTuple(Box<CheckedExpression>, usize, Type),
     Var(Variable),
 
     OptionalNone(Type),
@@ -111,7 +114,9 @@ impl CheckedExpression {
             CheckedExpression::UnaryOp(_, _, ty) => ty.clone(),
             CheckedExpression::BinaryOp(_, _, _, ty) => ty.clone(),
             CheckedExpression::Vector(_, ty) => ty.clone(),
+            CheckedExpression::Tuple(_, ty) => ty.clone(),
             CheckedExpression::IndexedExpression(_, _, ty) => ty.clone(),
+            CheckedExpression::IndexedTuple(_, _, ty) => ty.clone(),
             CheckedExpression::Var(Variable { ty, .. }) => ty.clone(),
             CheckedExpression::OptionalNone(ty) => ty.clone(),
             CheckedExpression::OptionalSome(_, ty) => ty.clone(),
@@ -482,6 +487,23 @@ pub fn typecheck_expression(
                 error,
             )
         }
+        Expression::Tuple(items, _) => {
+            let mut checked_items = Vec::new();
+            let mut checked_types = Vec::new();
+
+            for item in items {
+                let (checked_item, err) = typecheck_expression(item, stack, file);
+                error = error.or(err);
+
+                checked_types.push(checked_item.ty());
+                checked_items.push(checked_item);
+            }
+
+            (
+                CheckedExpression::Tuple(checked_items, Type::Tuple(checked_types)),
+                error,
+            )
+        }
         Expression::IndexedExpression(expr, idx, _) => {
             let (checked_expr, err) = typecheck_expression(expr, stack, file);
             error = error.or(err);
@@ -517,6 +539,35 @@ pub fn typecheck_expression(
                     Box::new(checked_idx),
                     ty,
                 ),
+                error,
+            )
+        }
+        Expression::IndexedTuple(expr, idx, span) => {
+            let (checked_expr, err) = typecheck_expression(expr, stack, file);
+            error = error.or(err);
+
+            let mut ty = Type::Unknown;
+
+            match checked_expr.ty() {
+                Type::Tuple(inner_ty) => match inner_ty.get(*idx) {
+                    Some(t) => ty = t.clone(),
+                    None => {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "tuple index past the end of the tuple".to_string(),
+                            *span,
+                        )))
+                    }
+                },
+                _ => {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "tuple index used non-tuple value".to_string(),
+                        expr.span(),
+                    )))
+                }
+            }
+
+            (
+                CheckedExpression::IndexedTuple(Box::new(checked_expr), *idx, ty),
                 error,
             )
         }
