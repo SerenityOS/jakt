@@ -1,7 +1,6 @@
 use crate::error::JaktError;
 
 use crate::lexer::{Span, Token, TokenContents};
-use crate::typechecker::Type;
 
 macro_rules! trace {
     ($x: expr) => {
@@ -33,10 +32,27 @@ pub enum ExpressionKind {
     ExpressionWithoutAssignment,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct UncheckedType {
+    pub name: String,
+    pub optional: bool,
+    pub span: Span,
+}
+
+impl UncheckedType {
+    pub fn new(span: Span) -> Self {
+        Self {
+            name: String::new(),
+            optional: false,
+            span,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct VarDecl {
     pub name: String,
-    pub ty: Type,
+    pub ty: UncheckedType,
     pub mutable: bool,
     pub span: Span,
 }
@@ -45,7 +61,7 @@ impl VarDecl {
     pub fn new(span: Span) -> Self {
         Self {
             name: String::new(),
-            ty: Type::Void,
+            ty: UncheckedType::new(span),
             mutable: false,
             span,
         }
@@ -68,12 +84,14 @@ pub struct ParsedFile {
 pub struct Struct {
     pub name: String,
     pub members: Vec<VarDecl>,
+    pub span: Span,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum FunctionLinkage {
     Internal,
     External,
+    ImplicitConstructor,
 }
 
 #[derive(Debug)]
@@ -82,7 +100,7 @@ pub struct Function {
     pub name_span: Span,
     pub params: Vec<Parameter>,
     pub block: Block,
-    pub return_type: Type,
+    pub return_type: UncheckedType,
     pub linkage: FunctionLinkage,
 }
 
@@ -95,7 +113,7 @@ pub struct Parameter {
 #[derive(Clone, Debug)]
 pub struct Variable {
     pub name: String,
-    pub ty: Type,
+    pub ty: UncheckedType,
     pub mutable: bool,
 }
 
@@ -110,7 +128,11 @@ impl Function {
             },
             params: Vec::new(),
             block: Block::new(),
-            return_type: Type::Void,
+            return_type: UncheckedType::new(Span {
+                file_id: 0,
+                start: 0,
+                end: 0,
+            }),
             linkage,
         }
     }
@@ -446,7 +468,7 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
                             // Ignore immutable flag for now
                             var_decl.mutable = false;
 
-                            if var_decl.ty == Type::Unknown {
+                            if var_decl.ty.name == "" {
                                 trace!("ERROR: parameter missing type");
 
                                 error = error.or(Some(JaktError::ParserError(
@@ -483,6 +505,7 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
                     Struct {
                         name: struct_name.clone(),
                         members: fields,
+                        span: tokens[*index - 1].span,
                     },
                     error,
                 )
@@ -499,6 +522,7 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
                     Struct {
                         name: String::new(),
                         members: Vec::new(),
+                        span: tokens[*index].span,
                     },
                     error,
                 )
@@ -516,6 +540,7 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
             Struct {
                 name: String::new(),
                 members: Vec::new(),
+                span: tokens[*index].span,
             },
             error,
         )
@@ -597,7 +622,7 @@ pub fn parse_function(
                             let (var_decl, err) = parse_variable_declaration(tokens, index);
                             error = error.or(err);
 
-                            if var_decl.ty == Type::Unknown {
+                            if var_decl.ty.name == "" {
                                 trace!("ERROR: parameter missing type");
 
                                 error = error.or(Some(JaktError::ParserError(
@@ -635,7 +660,7 @@ pub fn parse_function(
                     )));
                 }
 
-                let mut return_type = Type::Void;
+                let mut return_type = UncheckedType::new(tokens[*index - 1].span);
 
                 let mut fat_arrow_expr = None;
 
@@ -652,7 +677,7 @@ pub fn parse_function(
                                         index,
                                         ExpressionKind::ExpressionWithoutAssignment,
                                     );
-                                    return_type = Type::Unknown;
+                                    return_type = UncheckedType::new(tokens[*index].span);
                                     fat_arrow_expr = Some(expr);
                                     error = error.or(err);
 
@@ -1829,7 +1854,7 @@ pub fn parse_variable_declaration(
                         return (
                             VarDecl {
                                 name: name.to_string(),
-                                ty: Type::Unknown,
+                                ty: UncheckedType::new(tokens[*index - 1].span),
                                 mutable: false,
                                 span: tokens[*index - 1].span,
                             },
@@ -1841,7 +1866,7 @@ pub fn parse_variable_declaration(
                 return (
                     VarDecl {
                         name: name.to_string(),
-                        ty: Type::Unknown,
+                        ty: UncheckedType::new(tokens[*index - 1].span),
                         mutable: false,
                         span: tokens[*index - 1].span,
                     },
@@ -1869,7 +1894,7 @@ pub fn parse_variable_declaration(
                 (
                     VarDecl {
                         name: name.to_string(),
-                        ty: Type::Unknown,
+                        ty: UncheckedType::new(tokens[*index - 2].span),
                         mutable: false,
                         span: tokens[*index - 2].span,
                     },
@@ -1894,44 +1919,23 @@ pub fn parse_variable_declaration(
     }
 }
 
-pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (Type, Option<JaktError>) {
+pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Option<JaktError>) {
+    let mut unchecked_type = UncheckedType::new(tokens[*index].span);
+    let mut error = None;
+
     trace!(format!("parse_typename: {:?}", tokens[*index]));
-    let (base_type, err) = match &tokens[*index] {
+    match &tokens[*index] {
         Token {
             contents: TokenContents::Name(name),
-            span,
-        } => match name.as_str() {
-            "i8" => (Type::I8, None),
-            "i16" => (Type::I16, None),
-            "i32" => (Type::I32, None),
-            "i64" => (Type::I64, None),
-            "u8" => (Type::U8, None),
-            "u16" => (Type::U16, None),
-            "u32" => (Type::U32, None),
-            "u64" => (Type::U64, None),
-            "f32" => (Type::F32, None),
-            "f64" => (Type::F64, None),
-            "String" => (Type::String, None),
-            "bool" => (Type::Bool, None),
-            _ => {
-                trace!("ERROR: unknown type");
-
-                (
-                    Type::Void,
-                    Some(JaktError::ParserError("unknown type".to_string(), *span)),
-                )
-            }
-        },
+            ..
+        } => unchecked_type.name = name.clone(),
         _ => {
             trace!("ERROR: expected type name");
 
-            (
-                Type::Void,
-                Some(JaktError::ParserError(
-                    "expected type name".to_string(),
-                    tokens[*index].span,
-                )),
-            )
+            error = error.or(Some(JaktError::ParserError(
+                "expected type name".to_string(),
+                tokens[*index].span,
+            )));
         }
     };
 
@@ -1939,11 +1943,11 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (Type, Option<Jakt
         if let TokenContents::QuestionMark = tokens[*index + 1].contents {
             // T? is shorthand for Optional<T>
             *index += 1;
-            return (Type::Optional(Box::new(base_type)), err);
+            unchecked_type.optional = true;
         }
     };
 
-    (base_type, err)
+    (unchecked_type, error)
 }
 
 pub fn parse_call_parameter_name(
