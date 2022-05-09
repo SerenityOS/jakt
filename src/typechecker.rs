@@ -229,10 +229,22 @@ fn typecheck_fun(
 
     stack.pop_frame();
 
+    // If the return type is unknown, and the function starts with a return statement,
+    // we infer the return type from its expression.
+    let return_type = if fun.return_type == Type::Unknown {
+        if let Some(CheckedStatement::Return(ret)) = block.stmts.first() {
+            ret.ty()
+        } else {
+            Type::Unknown
+        }
+    } else {
+        fun.return_type.clone()
+    };
+
     let output = CheckedFunction {
         name: fun.name.clone(),
         params: fun.params.clone(),
-        return_type: fun.return_type.clone(),
+        return_type: return_type,
         block,
     };
 
