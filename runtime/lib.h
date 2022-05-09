@@ -78,3 +78,8 @@
 using f32 = float;
 using f64 = double;
 
+// FIXME: Remove this once we can call qualified functions like "String::number" directly from jakt
+inline String runtime_helper_number_to_string(i64 number)
+{
+    return String::number(number);
+}
