@@ -163,3 +163,8 @@ fn test_optional() -> Result<(), JaktError> {
 fn test_tuples() -> Result<(), JaktError> {
     test_samples("samples/tuples")
 }
+
+#[test]
+fn test_structs() -> Result<(), JaktError> {
+    test_samples("samples/structs")
+}

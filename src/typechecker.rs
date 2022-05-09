@@ -2,10 +2,12 @@ use crate::{
     error::JaktError,
     lexer::Span,
     parser::{
-        BinaryOperator, Block, Call, Expression, Function, FunctionLinkage, Parameter, ParsedFile,
-        Statement, UnaryOperator, VarDecl, Variable,
+        BinaryOperator, Block, Call, Expression, Function, FunctionLinkage, ParsedFile, Statement,
+        Struct, UnaryOperator, UncheckedType,
     },
 };
+
+pub type StructId = usize;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
@@ -25,32 +27,65 @@ pub enum Type {
     Vector(Box<Type>),
     Tuple(Vec<Type>),
     Optional(Box<Type>),
+    Struct(StructId),
     Unknown,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct CheckedFile {
-    pub checked_functions: Vec<CheckedFunction>,
+    pub funs: Vec<CheckedFunction>,
+    pub structs: Vec<CheckedStruct>,
 }
 
 impl CheckedFile {
     pub fn new() -> Self {
         Self {
-            checked_functions: Vec::new(),
+            funs: Vec::new(),
+            structs: Vec::new(),
         }
+    }
+
+    pub fn get_struct_mut(&mut self, name: &str) -> Option<(&mut CheckedStruct, usize)> {
+        for (idx, structure) in self.structs.iter_mut().enumerate() {
+            if structure.name == name {
+                return Some((structure, idx));
+            }
+        }
+        None
+    }
+
+    pub fn get_fun_mut(&mut self, name: &str) -> Option<&mut CheckedFunction> {
+        for fun in self.funs.iter_mut() {
+            if fun.name == name {
+                return Some(fun);
+            }
+        }
+        None
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
+pub struct CheckedStruct {
+    pub name: String,
+    pub members: Vec<CheckedVarDecl>,
+}
+
+#[derive(Clone, Debug)]
+pub struct CheckedParameter {
+    pub requires_label: bool,
+    pub variable: CheckedVariable,
+}
+
+#[derive(Debug, Clone)]
 pub struct CheckedFunction {
     pub name: String,
     pub return_type: Type,
-    pub params: Vec<Parameter>,
+    pub params: Vec<CheckedParameter>,
     pub block: CheckedBlock,
     pub linkage: FunctionLinkage,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct CheckedBlock {
     pub stmts: Vec<CheckedStatement>,
 }
@@ -61,11 +96,26 @@ impl CheckedBlock {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
+pub struct CheckedVarDecl {
+    pub name: String,
+    pub ty: Type,
+    pub mutable: bool,
+    pub span: Span,
+}
+
+#[derive(Clone, Debug)]
+pub struct CheckedVariable {
+    pub name: String,
+    pub ty: Type,
+    pub mutable: bool,
+}
+
+#[derive(Debug, Clone)]
 pub enum CheckedStatement {
     Expression(CheckedExpression),
     Defer(CheckedBlock),
-    VarDecl(VarDecl, CheckedExpression),
+    VarDecl(CheckedVarDecl, CheckedExpression),
     If(
         CheckedExpression,
         CheckedBlock,
@@ -95,7 +145,9 @@ pub enum CheckedExpression {
     Vector(Vec<CheckedExpression>, Type),
     IndexedExpression(Box<CheckedExpression>, Box<CheckedExpression>, Type),
     IndexedTuple(Box<CheckedExpression>, usize, Type),
-    Var(Variable),
+    IndexedStruct(Box<CheckedExpression>, String, Type),
+
+    Var(CheckedVariable),
 
     OptionalNone(Type),
     OptionalSome(Box<CheckedExpression>, Type),
@@ -118,7 +170,8 @@ impl CheckedExpression {
             CheckedExpression::Tuple(_, ty) => ty.clone(),
             CheckedExpression::IndexedExpression(_, _, ty) => ty.clone(),
             CheckedExpression::IndexedTuple(_, _, ty) => ty.clone(),
-            CheckedExpression::Var(Variable { ty, .. }) => ty.clone(),
+            CheckedExpression::IndexedStruct(_, _, ty) => ty.clone(),
+            CheckedExpression::Var(CheckedVariable { ty, .. }) => ty.clone(),
             CheckedExpression::OptionalNone(ty) => ty.clone(),
             CheckedExpression::OptionalSome(_, ty) => ty.clone(),
             CheckedExpression::ForcedUnwrap(_, ty) => ty.clone(),
@@ -134,14 +187,16 @@ pub struct CheckedCall {
     pub ty: Type,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Stack {
     pub frames: Vec<StackFrame>,
 }
 
 impl Stack {
     pub fn new() -> Self {
-        Self { frames: Vec::new() }
+        Self {
+            frames: vec![StackFrame::new()],
+        }
     }
     pub fn push_frame(&mut self) {
         self.frames.push(StackFrame::new())
@@ -151,7 +206,7 @@ impl Stack {
         self.frames.pop();
     }
 
-    pub fn add_var(&mut self, var: Variable, span: Span) -> Result<(), JaktError> {
+    pub fn add_var(&mut self, var: CheckedVariable, span: Span) -> Result<(), JaktError> {
         if let Some(frame) = self.frames.last_mut() {
             for existing_var in &frame.vars {
                 if var.name == existing_var.name {
@@ -166,7 +221,7 @@ impl Stack {
         Ok(())
     }
 
-    pub fn find_var(&self, var: &str) -> Option<Variable> {
+    pub fn find_var(&self, var: &str) -> Option<CheckedVariable> {
         for frame in self.frames.iter().rev() {
             for v in &frame.vars {
                 if v.name == var {
@@ -177,16 +232,53 @@ impl Stack {
 
         None
     }
+
+    pub fn add_struct(
+        &mut self,
+        name: String,
+        struct_id: StructId,
+        span: Span,
+    ) -> Result<(), JaktError> {
+        if let Some(frame) = self.frames.last_mut() {
+            for (existing_struct, _) in &frame.structs {
+                if &name == existing_struct {
+                    return Err(JaktError::TypecheckError(
+                        format!("redefinition of {}", name),
+                        span,
+                    ));
+                }
+            }
+            frame.structs.push((name, struct_id));
+        }
+        Ok(())
+    }
+
+    pub fn find_struct(&self, structure: &str) -> Option<StructId> {
+        for frame in self.frames.iter().rev() {
+            for s in &frame.structs {
+                if s.0 == structure {
+                    return Some(s.1);
+                }
+            }
+        }
+
+        None
+    }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct StackFrame {
-    vars: Vec<Variable>,
+    vars: Vec<CheckedVariable>,
+
+    structs: Vec<(String, StructId)>,
 }
 
 impl StackFrame {
     pub fn new() -> Self {
-        Self { vars: Vec::new() }
+        Self {
+            vars: Vec::new(),
+            structs: Vec::new(),
+        }
     }
 }
 
@@ -196,30 +288,148 @@ pub fn typecheck_file(file: &ParsedFile) -> (CheckedFile, Option<JaktError>) {
     typecheck_file_helper(file, &mut stack)
 }
 
-fn typecheck_file_helper(file: &ParsedFile, stack: &mut Stack) -> (CheckedFile, Option<JaktError>) {
-    let mut output = CheckedFile::new();
+fn typecheck_file_helper(
+    parsed_file: &ParsedFile,
+    stack: &mut Stack,
+) -> (CheckedFile, Option<JaktError>) {
+    let mut file = CheckedFile::new();
     let mut error = None;
 
-    for fun in &file.funs {
-        let (checked_fun, err) = typecheck_fun(fun, stack, &file);
-        error = error.or(err);
-
-        output.checked_functions.push(checked_fun);
+    for structure in &parsed_file.structs {
+        //Ensure we know the types ahead of time, so they can be recursive
+        typecheck_struct_predecl(structure, stack, &mut file);
     }
 
-    (output, error)
+    for structure in &parsed_file.structs {
+        error = error.or(typecheck_struct(structure, stack, &mut file));
+    }
+
+    for fun in &parsed_file.funs {
+        //Ensure we know the function ahead of time, so they can be recursive
+        error = error.or(typecheck_fun_predecl(fun, stack, &mut file));
+    }
+
+    for fun in &parsed_file.funs {
+        error = error.or(typecheck_fun(fun, stack, &mut file));
+    }
+
+    (file, error)
 }
 
-fn typecheck_fun(
+fn typecheck_struct_predecl(structure: &Struct, _stack: &mut Stack, file: &mut CheckedFile) {
+    file.structs.push(CheckedStruct {
+        name: structure.name.clone(),
+        members: Vec::new(),
+    });
+}
+
+fn typecheck_struct(
+    structure: &Struct,
+    stack: &mut Stack,
+    file: &mut CheckedFile,
+) -> Option<JaktError> {
+    let mut error = None;
+
+    let mut members = Vec::new();
+
+    for unchecked_member in &structure.members {
+        let (checked_member_type, err) = typecheck_typename(&unchecked_member.ty, stack);
+        error = error.or(err);
+
+        members.push(CheckedVarDecl {
+            name: unchecked_member.name.clone(),
+            ty: checked_member_type,
+            mutable: unchecked_member.mutable,
+            span: unchecked_member.span,
+        });
+    }
+
+    let mut constructor_params = Vec::new();
+    for member in &members {
+        constructor_params.push(CheckedParameter {
+            requires_label: true,
+            variable: CheckedVariable {
+                name: member.name.clone(),
+                ty: member.ty.clone(),
+                mutable: member.mutable,
+            },
+        });
+    }
+
+    let (_, struct_id) = file
+        .get_struct_mut(&structure.name)
+        .expect("Internal error: we previously defined the struct but it's now missing");
+
+    let checked_constructor = CheckedFunction {
+        name: structure.name.clone(),
+        block: CheckedBlock::new(),
+        linkage: FunctionLinkage::ImplicitConstructor,
+        params: constructor_params,
+        return_type: Type::Struct(struct_id),
+    };
+
+    file.funs.push(checked_constructor);
+
+    let (checked_struct, struct_id) = file
+        .get_struct_mut(&structure.name)
+        .expect("Internal error: we previously defined the struct but it's now missing");
+
+    checked_struct.members = members;
+
+    match stack.add_struct(structure.name.clone(), struct_id, structure.span) {
+        Ok(_) => {}
+        Err(err) => error = error.or(Some(err)),
+    }
+
+    error
+}
+
+fn typecheck_fun_predecl(
     fun: &Function,
     stack: &mut Stack,
-    file: &ParsedFile,
-) -> (CheckedFunction, Option<JaktError>) {
+    file: &mut CheckedFile,
+) -> Option<JaktError> {
+    let mut error = None;
+
+    let mut checked_function = CheckedFunction {
+        name: fun.name.clone(),
+        params: vec![],
+        return_type: Type::Unknown,
+        block: CheckedBlock::new(),
+        linkage: fun.linkage.clone(),
+    };
+
+    for param in &fun.params {
+        let (param_type, err) = typecheck_typename(&param.variable.ty, stack);
+        error = error.or(err);
+
+        let checked_variable = CheckedVariable {
+            name: param.variable.name.clone(),
+            ty: param_type,
+            mutable: param.variable.mutable,
+        };
+
+        checked_function.params.push(CheckedParameter {
+            requires_label: param.requires_label,
+            variable: checked_variable.clone(),
+        });
+    }
+
+    file.funs.push(checked_function);
+
+    error
+}
+
+fn typecheck_fun(fun: &Function, stack: &mut Stack, file: &mut CheckedFile) -> Option<JaktError> {
     let mut error = None;
 
     stack.push_frame();
 
-    for param in &fun.params {
+    let checked_function = file
+        .get_fun_mut(&fun.name)
+        .expect("Internal error: we just pushed the checked function, but it's not present");
+
+    for param in &checked_function.params {
         if let Err(err) = stack.add_var(param.variable.clone(), fun.name_span) {
             error = error.or(Some(err));
         }
@@ -230,33 +440,35 @@ fn typecheck_fun(
 
     stack.pop_frame();
 
+    let (fun_return_type, err) = typecheck_typename(&fun.return_type, stack);
+    error = error.or(err);
+
     // If the return type is unknown, and the function starts with a return statement,
     // we infer the return type from its expression.
-    let return_type = if fun.return_type == Type::Unknown {
+    let return_type = if fun_return_type == Type::Unknown {
         if let Some(CheckedStatement::Return(ret)) = block.stmts.first() {
             ret.ty()
         } else {
-            Type::Unknown
+            Type::Void
         }
     } else {
-        fun.return_type.clone()
+        fun_return_type.clone()
     };
 
-    let output = CheckedFunction {
-        name: fun.name.clone(),
-        params: fun.params.clone(),
-        return_type: return_type,
-        block,
-        linkage: fun.linkage.clone(),
-    };
+    let checked_function = file
+        .get_fun_mut(&fun.name)
+        .expect("Internal error: we just pushed the checked function, but it's not present");
 
-    (output, error)
+    checked_function.block = block;
+    checked_function.return_type = return_type;
+
+    error
 }
 
 pub fn typecheck_block(
     block: &Block,
     stack: &mut Stack,
-    file: &ParsedFile,
+    file: &CheckedFile,
 ) -> (CheckedBlock, Option<JaktError>) {
     let mut error = None;
     let mut checked_block = CheckedBlock::new();
@@ -278,7 +490,7 @@ pub fn typecheck_block(
 pub fn typecheck_statement(
     stmt: &Statement,
     stack: &mut Stack,
-    file: &ParsedFile,
+    file: &CheckedFile,
 ) -> (CheckedStatement, Option<JaktError>) {
     let mut error = None;
 
@@ -297,12 +509,20 @@ pub fn typecheck_statement(
             let (checked_expression, err) = typecheck_expression(init, stack, file);
             error = error.or(err);
 
-            let mut var_decl = var_decl.clone();
+            let (mut checked_type, err) = typecheck_typename(&var_decl.ty, stack);
 
-            if var_decl.ty == Type::Unknown {
-                // Use the initializer to get our type
-                var_decl.ty = checked_expression.ty();
+            if checked_type == Type::Unknown && checked_expression.ty() != Type::Unknown {
+                checked_type = checked_expression.ty()
+            } else {
+                error = error.or(err);
             }
+
+            let checked_var_decl = CheckedVarDecl {
+                name: var_decl.name.clone(),
+                ty: checked_type.clone(),
+                span: var_decl.span,
+                mutable: var_decl.mutable,
+            };
 
             // Taking this out for now until we have better number type support
             // } else if var_decl.ty != checked_expression.ty() {
@@ -313,18 +533,18 @@ pub fn typecheck_statement(
             // }
 
             if let Err(err) = stack.add_var(
-                Variable {
-                    name: var_decl.name.clone(),
-                    ty: var_decl.ty.clone(),
-                    mutable: var_decl.mutable,
+                CheckedVariable {
+                    name: checked_var_decl.name.clone(),
+                    ty: checked_var_decl.ty.clone(),
+                    mutable: checked_var_decl.mutable,
                 },
-                var_decl.span,
+                checked_var_decl.span,
             ) {
                 error = error.or(Some(err));
             }
 
             (
-                CheckedStatement::VarDecl(var_decl.clone(), checked_expression),
+                CheckedStatement::VarDecl(checked_var_decl, checked_expression),
                 error,
             )
         }
@@ -375,7 +595,7 @@ pub fn typecheck_statement(
 pub fn typecheck_expression(
     expr: &Expression,
     stack: &mut Stack,
-    file: &ParsedFile,
+    file: &CheckedFile,
 ) -> (CheckedExpression, Option<JaktError>) {
     let mut error = None;
 
@@ -452,8 +672,8 @@ pub fn typecheck_expression(
         Expression::Boolean(b, _) => (CheckedExpression::Boolean(*b), None),
         Expression::Call(call, span) => {
             let (checked_call, err) = typecheck_call(call, stack, span, file);
-
-            (CheckedExpression::Call(checked_call, Type::Unknown), err)
+            let ty = checked_call.ty.clone();
+            (CheckedExpression::Call(checked_call, ty), err)
         }
         Expression::Int64(i, _) => (CheckedExpression::Int64(*i), None),
         Expression::QuotedString(qs, _) => (CheckedExpression::QuotedString(qs.clone()), None),
@@ -462,7 +682,7 @@ pub fn typecheck_expression(
                 (CheckedExpression::Var(var.clone()), None)
             } else {
                 (
-                    CheckedExpression::Var(Variable {
+                    CheckedExpression::Var(CheckedVariable {
                         name: v.clone(),
                         ty: Type::Unknown,
                         mutable: false,
@@ -585,6 +805,21 @@ pub fn typecheck_expression(
                 error,
             )
         }
+
+        Expression::IndexedStruct(expr, name, _) => {
+            let (checked_expr, err) = typecheck_expression(expr, stack, file);
+            error = error.or(err);
+
+            let ty = Type::Unknown;
+
+            //FIXME: add real name binding to structs so that we can find the proper field
+
+            (
+                CheckedExpression::IndexedStruct(Box::new(checked_expr), name.to_string(), ty),
+                error,
+            )
+        }
+
         Expression::Operator(_, span) => (
             CheckedExpression::Garbage,
             Some(JaktError::TypecheckError(
@@ -698,8 +933,8 @@ pub fn typecheck_binary_operation(
 pub fn resolve_call<'a>(
     call: &Call,
     span: &Span,
-    file: &'a ParsedFile,
-) -> (Option<&'a Function>, Option<JaktError>) {
+    file: &'a CheckedFile,
+) -> (Option<&'a CheckedFunction>, Option<JaktError>) {
     let mut callee = None;
     let mut error = None;
 
@@ -725,10 +960,11 @@ pub fn typecheck_call(
     call: &Call,
     stack: &mut Stack,
     span: &Span,
-    file: &ParsedFile,
+    file: &CheckedFile,
 ) -> (CheckedCall, Option<JaktError>) {
     let mut checked_args = Vec::new();
     let mut error = None;
+    let mut return_ty = Type::Unknown;
 
     match call.name.as_str() {
         "print" => {
@@ -736,6 +972,8 @@ pub fn typecheck_call(
             for arg in &call.args {
                 let (checked_arg, err) = typecheck_expression(&arg.1, stack, file);
                 error = error.or(err);
+
+                return_ty = Type::Void;
 
                 checked_args.push((arg.0.clone(), checked_arg));
             }
@@ -745,6 +983,8 @@ pub fn typecheck_call(
             error = error.or(err);
 
             if let Some(callee) = callee {
+                return_ty = callee.return_type.clone();
+
                 // Check that we have the right number of arguments.
                 if callee.params.len() != call.args.len() {
                     error = error.or(Some(JaktError::TypecheckError(
@@ -788,8 +1028,52 @@ pub fn typecheck_call(
         CheckedCall {
             name: call.name.clone(),
             args: checked_args,
-            ty: Type::Unknown,
+            ty: return_ty,
         },
         error,
     )
+}
+
+pub fn typecheck_typename(
+    unchecked_type: &UncheckedType,
+    stack: &Stack,
+) -> (Type, Option<JaktError>) {
+    let (ty, err) = match unchecked_type.name.as_str() {
+        "i8" => (Type::I8, None),
+        "i16" => (Type::I16, None),
+        "i32" => (Type::I32, None),
+        "i64" => (Type::I64, None),
+        "u8" => (Type::U8, None),
+        "u16" => (Type::U16, None),
+        "u32" => (Type::U32, None),
+        "u64" => (Type::U64, None),
+        "f32" => (Type::F32, None),
+        "f64" => (Type::F64, None),
+        "String" => (Type::String, None),
+        "bool" => (Type::Bool, None),
+        "void" => (Type::Void, None),
+        "" => (Type::Unknown, None),
+        x => {
+            let structure = stack.find_struct(x);
+            match structure {
+                Some(struct_id) => (Type::Struct(struct_id), None),
+                None => {
+                    //trace!("ERROR: unknown type");
+                    (
+                        Type::Unknown,
+                        Some(JaktError::TypecheckError(
+                            "unknown type".to_string(),
+                            unchecked_type.span,
+                        )),
+                    )
+                }
+            }
+        }
+    };
+
+    if unchecked_type.optional {
+        (Type::Optional(Box::new(ty)), err)
+    } else {
+        (ty, err)
+    }
 }
