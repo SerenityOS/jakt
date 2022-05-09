@@ -1,5 +1,5 @@
 use crate::{
-    parser::{BinaryOperator, UnaryOperator},
+    parser::{BinaryOperator, FunctionLinkage, UnaryOperator},
     typechecker::{
         CheckedBlock, CheckedExpression, CheckedFile, CheckedFunction, CheckedStatement, Type,
     },
@@ -20,6 +20,9 @@ pub fn translate(file: &CheckedFile) -> String {
     }
 
     for fun in &file.checked_functions {
+        if let FunctionLinkage::External = fun.linkage {
+            continue;
+        }
         let fun_output = translate_function(fun);
 
         output.push_str(&fun_output);
@@ -64,6 +67,10 @@ fn translate_function(fun: &CheckedFunction) -> String {
 
 fn translate_function_predecl(fun: &CheckedFunction) -> String {
     let mut output = String::new();
+
+    if let FunctionLinkage::External = fun.linkage {
+        output.push_str("extern ");
+    }
 
     if fun.name == "main" {
         output.push_str("int");
