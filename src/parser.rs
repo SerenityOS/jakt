@@ -138,6 +138,8 @@ pub enum Expression {
     UnaryOp(Box<Expression>, UnaryOperator, Span),
     BinaryOp(Box<Expression>, BinaryOperator, Box<Expression>, Span),
     Var(String, Span),
+    Tuple(Vec<Expression>, Span),
+    IndexedTuple(Box<Expression>, usize, Span),
     ForcedUnwrap(Box<Expression>, Span),
 
     // FIXME: These should be implemented as `enum` variant values once available.
@@ -159,7 +161,9 @@ impl Expression {
             Expression::Int64(_, span) => *span,
             Expression::QuotedString(_, span) => *span,
             Expression::Vector(_, span) => *span,
+            Expression::Tuple(_, span) => *span,
             Expression::IndexedExpression(_, _, span) => *span,
+            Expression::IndexedTuple(_, _, span) => *span,
             Expression::UnaryOp(_, _, span) => *span,
             Expression::BinaryOp(_, _, _, span) => *span,
             Expression::Var(_, span) => *span,
@@ -948,14 +952,68 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
             }
         }
         TokenContents::LParen => {
+            let start = tokens[*index].span;
+
             *index += 1;
-            let (expr, err) =
+            let (mut expr, err) =
                 parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
             error = error.or(err);
 
             match &tokens[*index].contents {
                 TokenContents::RParen => {
                     *index += 1;
+                }
+                TokenContents::Comma => {
+                    // We have a tuple
+                    let mut exprs = Vec::new();
+                    exprs.push(expr);
+
+                    *index += 1;
+
+                    let mut end = start;
+
+                    while *index < tokens.len() {
+                        match &tokens[*index].contents {
+                            TokenContents::RParen => {
+                                *index += 1;
+                                break;
+                            }
+                            TokenContents::Comma => {
+                                *index += 1;
+                            }
+                            _ => {
+                                let (expr, err) = parse_expression(
+                                    tokens,
+                                    index,
+                                    ExpressionKind::ExpressionWithoutAssignment,
+                                );
+
+                                end = expr.span();
+
+                                error = error.or(err);
+
+                                exprs.push(expr);
+                            }
+                        }
+                    }
+
+                    if *index >= tokens.len() {
+                        trace!("ERROR: expected ')'");
+
+                        error = error.or(Some(JaktError::ParserError(
+                            "expected ')'".to_string(),
+                            tokens[*index].span,
+                        )))
+                    }
+
+                    expr = Expression::Tuple(
+                        exprs,
+                        Span {
+                            file_id: start.file_id,
+                            start: start.start,
+                            end: end.end,
+                        },
+                    )
                 }
                 _ => {
                     trace!("ERROR: expected ')'");
@@ -1061,7 +1119,37 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 
                 expr = Expression::UnaryOp(Box::new(expr), UnaryOperator::PostDecrement, span)
             }
+            TokenContents::Dot => {
+                *index += 1;
 
+                if *index < tokens.len() {
+                    let (idx, err) = parse_expression(
+                        tokens,
+                        index,
+                        ExpressionKind::ExpressionWithoutAssignment,
+                    );
+                    error = error.or(err);
+
+                    let mut index = 0;
+
+                    match idx {
+                        Expression::Int64(int, _) => index = int as usize,
+                        _ => {
+                            error = error.or(Some(JaktError::ParserError(
+                                "Unsupported index".to_string(),
+                                span,
+                            )))
+                        }
+                    }
+                    let span = Span {
+                        file_id: expr.span().file_id,
+                        start: expr.span().start,
+                        end: idx.span().end,
+                    };
+
+                    expr = Expression::IndexedTuple(Box::new(expr), index, span);
+                }
+            }
             TokenContents::LSquare => {
                 // Indexing operation
                 *index += 1;

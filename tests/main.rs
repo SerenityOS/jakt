@@ -158,3 +158,8 @@ fn test_strings() -> Result<(), JaktError> {
 fn test_optional() -> Result<(), JaktError> {
     test_samples("samples/optional")
 }
+
+#[test]
+fn test_tuples() -> Result<(), JaktError> {
+    test_samples("samples/tuples")
+}
