@@ -2,7 +2,7 @@ use crate::{
     parser::{BinaryOperator, FunctionLinkage, UnaryOperator},
     typechecker::{
         CheckedBlock, CheckedExpression, CheckedFile, CheckedFunction, CheckedStatement,
-        CheckedStruct, Type,
+        CheckedStruct, NumericConstant, Type,
     },
 };
 
@@ -360,11 +360,48 @@ fn translate_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -
             output.push_str(qs);
             output.push_str("\")");
         }
-        CheckedExpression::Int64(int64) => {
-            output.push_str("static_cast<i64>(");
-            output.push_str(&int64.to_string());
-            output.push_str("LL)");
-        }
+        CheckedExpression::NumericConstant(constant, _) => match constant {
+            NumericConstant::I8(value) => {
+                output.push_str("static_cast<i8>(");
+                output.push_str(&value.to_string());
+                output.push_str(")");
+            }
+            NumericConstant::I16(value) => {
+                output.push_str("static_cast<i16>(");
+                output.push_str(&value.to_string());
+                output.push_str(")");
+            }
+            NumericConstant::I32(value) => {
+                output.push_str("static_cast<i32>(");
+                output.push_str(&value.to_string());
+                output.push_str(")");
+            }
+            NumericConstant::I64(value) => {
+                output.push_str("static_cast<i64>(");
+                output.push_str(&value.to_string());
+                output.push_str("LL)");
+            }
+            NumericConstant::U8(value) => {
+                output.push_str("static_cast<u8>(");
+                output.push_str(&value.to_string());
+                output.push_str(")");
+            }
+            NumericConstant::U16(value) => {
+                output.push_str("static_cast<u16>(");
+                output.push_str(&value.to_string());
+                output.push_str(")");
+            }
+            NumericConstant::U32(value) => {
+                output.push_str("static_cast<u32>(");
+                output.push_str(&value.to_string());
+                output.push_str(")");
+            }
+            NumericConstant::U64(value) => {
+                output.push_str("static_cast<u64>(");
+                output.push_str(&value.to_string());
+                output.push_str("ULL)");
+            }
+        },
         CheckedExpression::Var(var, ..) => {
             output.push_str(&var.name);
         }
