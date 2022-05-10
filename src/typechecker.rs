@@ -31,6 +31,49 @@ pub enum Type {
     Unknown,
 }
 
+impl Type {
+    pub fn is_integer(&self) -> bool {
+        match self {
+            Type::I8
+            | Type::I16
+            | Type::I32
+            | Type::I64
+            | Type::U8
+            | Type::U16
+            | Type::U32
+            | Type::U64 => true,
+            _ => false,
+        }
+    }
+
+    pub fn can_fit_integer(&self, value: &IntegerConstant) -> bool {
+        match *value {
+            IntegerConstant::Signed(value) => match self {
+                Type::I8 => value >= i8::MIN as i64 && value <= i8::MAX as i64,
+                Type::I16 => value >= i16::MIN as i64 && value <= i16::MAX as i64,
+                Type::I32 => value >= i32::MIN as i64 && value <= i32::MAX as i64,
+                Type::I64 => true,
+                Type::U8 => value >= 0 && value <= u8::MAX as i64,
+                Type::U16 => value >= 0 && value <= u16::MAX as i64,
+                Type::U32 => value >= 0 && value <= u32::MAX as i64,
+                Type::U64 => value >= 0,
+                _ => false,
+            },
+            IntegerConstant::Unsigned(value) => match self {
+                Type::I8 => value <= i8::MAX as u64,
+                Type::I16 => value <= i16::MAX as u64,
+                Type::I32 => value <= i32::MAX as u64,
+                Type::I64 => value <= i64::MAX as u64,
+                Type::U8 => value <= u8::MAX as u64,
+                Type::U16 => value <= u16::MAX as u64,
+                Type::U32 => value <= u32::MAX as u64,
+                Type::U64 => true,
+                _ => false,
+            },
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CheckedFile {
     pub funs: Vec<CheckedFunction>,
@@ -128,11 +171,106 @@ pub enum CheckedStatement {
 }
 
 #[derive(Clone, Debug)]
+pub enum IntegerConstant {
+    Signed(i64),
+    Unsigned(u64),
+}
+
+impl IntegerConstant {
+    pub fn promote(&self, ty: &Type) -> (Option<NumericConstant>, Type) {
+        if !ty.can_fit_integer(self) {
+            return (None, Type::Unknown);
+        }
+        let new_constant = match self {
+            IntegerConstant::Signed(value) => match ty {
+                Type::I8 => NumericConstant::I8(*value as i8),
+                Type::I16 => NumericConstant::I16(*value as i16),
+                Type::I32 => NumericConstant::I32(*value as i32),
+                Type::I64 => NumericConstant::I64(*value as i64),
+                Type::U8 => NumericConstant::U8(*value as u8),
+                Type::U16 => NumericConstant::U16(*value as u16),
+                Type::U32 => NumericConstant::U32(*value as u32),
+                Type::U64 => NumericConstant::U64(*value as u64),
+                _ => panic!("Bogus state in IntegerConstant::promote"),
+            },
+            IntegerConstant::Unsigned(value) => match ty {
+                Type::I8 => NumericConstant::I8(*value as i8),
+                Type::I16 => NumericConstant::I16(*value as i16),
+                Type::I32 => NumericConstant::I32(*value as i32),
+                Type::I64 => NumericConstant::I64(*value as i64),
+                Type::U8 => NumericConstant::U8(*value as u8),
+                Type::U16 => NumericConstant::U16(*value as u16),
+                Type::U32 => NumericConstant::U32(*value as u32),
+                Type::U64 => NumericConstant::U64(*value as u64),
+                _ => panic!("Bogus state in IntegerConstant::promote"),
+            },
+        };
+        (Some(new_constant), ty.clone())
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum NumericConstant {
+    I8(i8),
+    I16(i16),
+    I32(i32),
+    I64(i64),
+    U8(u8),
+    U16(u16),
+    U32(u32),
+    U64(u64),
+}
+
+impl PartialEq for NumericConstant {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (NumericConstant::I8(l), NumericConstant::I8(r)) => l == r,
+            (NumericConstant::I16(l), NumericConstant::I16(r)) => l == r,
+            (NumericConstant::I32(l), NumericConstant::I32(r)) => l == r,
+            (NumericConstant::I64(l), NumericConstant::I64(r)) => l == r,
+            (NumericConstant::U8(l), NumericConstant::U8(r)) => l == r,
+            (NumericConstant::U16(l), NumericConstant::U16(r)) => l == r,
+            (NumericConstant::U32(l), NumericConstant::U32(r)) => l == r,
+            (NumericConstant::U64(l), NumericConstant::U64(r)) => l == r,
+            _ => false,
+        }
+    }
+}
+
+impl NumericConstant {
+    pub fn integer_constant(&self) -> Option<IntegerConstant> {
+        match self {
+            NumericConstant::I8(value) => Some(IntegerConstant::Signed(*value as i64)),
+            NumericConstant::I16(value) => Some(IntegerConstant::Signed(*value as i64)),
+            NumericConstant::I32(value) => Some(IntegerConstant::Signed(*value as i64)),
+            NumericConstant::I64(value) => Some(IntegerConstant::Signed(*value as i64)),
+            NumericConstant::U8(value) => Some(IntegerConstant::Unsigned(*value as u64)),
+            NumericConstant::U16(value) => Some(IntegerConstant::Unsigned(*value as u64)),
+            NumericConstant::U32(value) => Some(IntegerConstant::Unsigned(*value as u64)),
+            NumericConstant::U64(value) => Some(IntegerConstant::Unsigned(*value as u64)),
+        }
+    }
+
+    pub fn ty(&self) -> Type {
+        match self {
+            NumericConstant::I8(_) => Type::I8,
+            NumericConstant::I16(_) => Type::I16,
+            NumericConstant::I32(_) => Type::I32,
+            NumericConstant::I64(_) => Type::I64,
+            NumericConstant::U8(_) => Type::U8,
+            NumericConstant::U16(_) => Type::U16,
+            NumericConstant::U32(_) => Type::U32,
+            NumericConstant::U64(_) => Type::U64,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub enum CheckedExpression {
     // Standalone
     Boolean(bool),
     Call(CheckedCall, Type),
-    Int64(i64),
+    NumericConstant(NumericConstant, Type),
     QuotedString(String),
     UnaryOp(Box<CheckedExpression>, UnaryOperator, Type),
     BinaryOp(
@@ -162,7 +300,7 @@ impl CheckedExpression {
         match self {
             CheckedExpression::Boolean(_) => Type::Bool,
             CheckedExpression::Call(_, ty) => ty.clone(),
-            CheckedExpression::Int64(_) => Type::I64,
+            CheckedExpression::NumericConstant(_, ty) => ty.clone(),
             CheckedExpression::QuotedString(_) => Type::String,
             CheckedExpression::UnaryOp(_, _, ty) => ty.clone(),
             CheckedExpression::BinaryOp(_, _, _, ty) => ty.clone(),
@@ -176,6 +314,13 @@ impl CheckedExpression {
             CheckedExpression::OptionalSome(_, ty) => ty.clone(),
             CheckedExpression::ForcedUnwrap(_, ty) => ty.clone(),
             CheckedExpression::Garbage => Type::Unknown,
+        }
+    }
+
+    pub fn to_integer_constant(&self) -> Option<IntegerConstant> {
+        match self {
+            CheckedExpression::NumericConstant(constant, _) => constant.integer_constant(),
+            _ => None,
         }
     }
 }
@@ -506,7 +651,7 @@ pub fn typecheck_statement(
             (CheckedStatement::Defer(checked_block), err)
         }
         Statement::VarDecl(var_decl, init) => {
-            let (checked_expression, err) = typecheck_expression(init, stack, file);
+            let (mut checked_expression, err) = typecheck_expression(init, stack, file);
             error = error.or(err);
 
             let (mut checked_type, err) = typecheck_typename(&var_decl.ty, stack);
@@ -516,6 +661,13 @@ pub fn typecheck_statement(
             } else {
                 error = error.or(err);
             }
+
+            let err = try_promote_constant_expr_to_type(
+                &checked_type,
+                &mut checked_expression,
+                &init.span(),
+            );
+            error = error.or(err);
 
             let checked_var_decl = CheckedVarDecl {
                 name: var_decl.name.clone(),
@@ -592,6 +744,28 @@ pub fn typecheck_statement(
     }
 }
 
+pub fn try_promote_constant_expr_to_type(
+    lhs_type: &Type,
+    checked_rhs: &mut CheckedExpression,
+    span: &Span,
+) -> Option<JaktError> {
+    if !lhs_type.is_integer() {
+        return None;
+    }
+    if let Some(rhs_constant) = checked_rhs.to_integer_constant() {
+        if let (Some(new_constant), new_ty) = rhs_constant.promote(lhs_type) {
+            *checked_rhs = CheckedExpression::NumericConstant(new_constant, new_ty);
+        } else {
+            return Some(JaktError::TypecheckError(
+                "Integer promotion failed".to_string(),
+                *span,
+            ));
+        }
+    }
+
+    return None;
+}
+
 pub fn typecheck_expression(
     expr: &Expression,
     stack: &mut Stack,
@@ -604,7 +778,10 @@ pub fn typecheck_expression(
             let (checked_lhs, err) = typecheck_expression(lhs, stack, file);
             error = error.or(err);
 
-            let (checked_rhs, err) = typecheck_expression(rhs, stack, file);
+            let (mut checked_rhs, err) = typecheck_expression(rhs, stack, file);
+            error = error.or(err);
+
+            let err = try_promote_constant_expr_to_type(&checked_lhs.ty(), &mut checked_rhs, span);
             error = error.or(err);
 
             error = error.or(typecheck_binary_operation(
@@ -675,7 +852,10 @@ pub fn typecheck_expression(
             let ty = checked_call.ty.clone();
             (CheckedExpression::Call(checked_call, ty), err)
         }
-        Expression::Int64(i, _) => (CheckedExpression::Int64(*i), None),
+        Expression::NumericConstant(constant, _) => (
+            CheckedExpression::NumericConstant(constant.clone(), constant.ty()),
+            None,
+        ),
         Expression::QuotedString(qs, _) => (CheckedExpression::QuotedString(qs.clone()), None),
         Expression::Var(v, span) => {
             if let Some(var) = stack.find_var(v) {
@@ -1025,7 +1205,7 @@ pub fn typecheck_call(
                     let mut idx = 0;
 
                     while idx < call.args.len() {
-                        let (checked_arg, err) =
+                        let (mut checked_arg, err) =
                             typecheck_expression(&call.args[idx].1, stack, file);
                         error = error.or(err);
 
@@ -1037,6 +1217,13 @@ pub fn typecheck_call(
                                 call.args[idx].1.span(),
                             )));
                         }
+
+                        let err = try_promote_constant_expr_to_type(
+                            &callee.params[idx].variable.ty,
+                            &mut checked_arg,
+                            &call.args[idx].1.span(),
+                        );
+                        error = error.or(err);
 
                         if checked_arg.ty() != callee.params[idx].variable.ty {
                             error = error.or(Some(JaktError::TypecheckError(
