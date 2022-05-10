@@ -1,0 +1,5 @@
+fun get_first(_ v: [String]) => v[0]
+
+fun main() {
+    print(get_first(["one", "two"]))
+}

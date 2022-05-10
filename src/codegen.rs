@@ -34,7 +34,7 @@ pub fn translate(file: &CheckedFile) -> String {
     for fun in &file.funs {
         let fun_output = translate_function_predecl(fun, file);
 
-        if fun.linkage != FunctionLinkage::ImplicitConstructor {
+        if fun.linkage != FunctionLinkage::ImplicitConstructor && fun.name != "main" {
             output.push_str(&fun_output);
             output.push('\n');
         }
@@ -142,8 +142,16 @@ fn translate_function(fun: &CheckedFunction, file: &CheckedFile) -> String {
         output.push_str(&translate_type(&fun.return_type, file));
     }
     output.push(' ');
-    output.push_str(&fun.name);
+    if fun.name == "main" {
+        output.push_str("__jakt_main");
+    } else {
+        output.push_str(&fun.name);
+    }
     output.push('(');
+
+    if fun.name == "main" && fun.params.is_empty() {
+        output.push_str("Vector<String>");
+    }
 
     let mut first = true;
     for param in &fun.params {
@@ -160,8 +168,16 @@ fn translate_function(fun: &CheckedFunction, file: &CheckedFile) -> String {
     }
     output.push(')');
 
+    if fun.name == "main" {
+        output.push_str("\n{");
+    }
+
     let block = translate_block(0, &fun.block, file);
     output.push_str(&block);
+
+    if fun.name == "main" {
+        output.push_str("return 0; }");
+    }
 
     output
 }

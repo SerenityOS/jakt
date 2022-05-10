@@ -83,3 +83,14 @@ inline String runtime_helper_number_to_string(i64 number)
 {
     return String::number(number);
 }
+
+int __jakt_main(Vector<String>);
+
+int main(int argc, char** argv)
+{
+    Vector<String> args;
+    for (int i = 0; i < argc; ++i) {
+        args.append(argv[i]);
+    }
+    return __jakt_main(move(args));
+}
