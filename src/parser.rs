@@ -1793,6 +1793,10 @@ pub fn parse_vector(tokens: &[Token], index: &mut usize) -> (Expression, Option<
                 // Treat comma as whitespace? Might require them in the future
                 *index += 1;
             }
+            TokenContents::Eol => {
+                // Treat comma as whitespace? Might require them in the future
+                *index += 1;
+            }
 
             _ => {
                 let (expr, err) =
