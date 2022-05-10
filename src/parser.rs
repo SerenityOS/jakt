@@ -34,20 +34,11 @@ pub enum ExpressionKind {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct UncheckedType {
-    pub name: String,
-    pub optional: bool,
-    pub span: Span,
-}
-
-impl UncheckedType {
-    pub fn new(span: Span) -> Self {
-        Self {
-            name: String::new(),
-            optional: false,
-            span,
-        }
-    }
+pub enum UncheckedType {
+    Name(String, Span),
+    Optional(Box<UncheckedType>, Span),
+    RawPtr(Box<UncheckedType>, Span),
+    Empty,
 }
 
 #[derive(Debug, Clone)]
@@ -62,7 +53,7 @@ impl VarDecl {
     pub fn new(span: Span) -> Self {
         Self {
             name: String::new(),
-            ty: UncheckedType::new(span),
+            ty: UncheckedType::Empty,
             mutable: false,
             span,
         }
@@ -129,11 +120,7 @@ impl Function {
             },
             params: Vec::new(),
             block: Block::new(),
-            return_type: UncheckedType::new(Span {
-                file_id: 0,
-                start: 0,
-                end: 0,
-            }),
+            return_type: UncheckedType::Empty,
             linkage,
         }
     }
@@ -242,6 +229,8 @@ pub enum UnaryOperator {
     PreDecrement,
     PostDecrement,
     Negate,
+    Dereference,
+    RawAddress,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -470,7 +459,7 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
                             // Ignore immutable flag for now
                             var_decl.mutable = false;
 
-                            if var_decl.ty.name == "" {
+                            if var_decl.ty == UncheckedType::Empty {
                                 trace!("ERROR: parameter missing type");
 
                                 error = error.or(Some(JaktError::ParserError(
@@ -624,7 +613,7 @@ pub fn parse_function(
                             let (var_decl, err) = parse_variable_declaration(tokens, index);
                             error = error.or(err);
 
-                            if var_decl.ty.name == "" {
+                            if var_decl.ty == UncheckedType::Empty {
                                 trace!("ERROR: parameter missing type");
 
                                 error = error.or(Some(JaktError::ParserError(
@@ -662,7 +651,7 @@ pub fn parse_function(
                     )));
                 }
 
-                let mut return_type = UncheckedType::new(tokens[*index - 1].span);
+                let mut return_type = UncheckedType::Empty;
 
                 let mut fat_arrow_expr = None;
 
@@ -679,7 +668,7 @@ pub fn parse_function(
                                         index,
                                         ExpressionKind::ExpressionWithoutAssignment,
                                     );
-                                    return_type = UncheckedType::new(tokens[*index].span);
+                                    return_type = UncheckedType::Empty;
                                     fat_arrow_expr = Some(expr);
                                     error = error.or(err);
 
@@ -1368,6 +1357,64 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 
             Expression::UnaryOp(Box::new(expr), UnaryOperator::Negate, span)
         }
+        TokenContents::Asterisk => {
+            let start_span = tokens[*index].span;
+
+            *index += 1;
+
+            let (expr, err) = parse_operand(tokens, index);
+            error = error.or(err);
+
+            let span = Span {
+                file_id: start_span.file_id,
+                start: start_span.start,
+                end: expr.span().end,
+            };
+
+            Expression::UnaryOp(Box::new(expr), UnaryOperator::Dereference, span)
+        }
+        TokenContents::Ampersand => {
+            *index += 1;
+
+            if *index < tokens.len() {
+                match &tokens[*index].contents {
+                    TokenContents::Name(name)
+                        if name == "raw"
+                            && tokens[*index].span.start == tokens[*index - 1].span.end =>
+                    {
+                        // we found `&raw`
+
+                        let start_span = tokens[*index].span;
+
+                        *index += 1;
+
+                        let (expr, err) = parse_operand(tokens, index);
+                        error = error.or(err);
+
+                        let span = Span {
+                            file_id: start_span.file_id,
+                            start: start_span.start,
+                            end: expr.span().end,
+                        };
+
+                        Expression::UnaryOp(Box::new(expr), UnaryOperator::RawAddress, span)
+                    }
+                    _ => {
+                        error = error.or(Some(JaktError::ParserError(
+                            "ampersand not currently supported".to_string(),
+                            tokens[*index - 1].span,
+                        )));
+                        Expression::Garbage(tokens[*index - 1].span)
+                    }
+                }
+            } else {
+                error = error.or(Some(JaktError::ParserError(
+                    "ampersand not currently supported".to_string(),
+                    tokens[*index - 1].span,
+                )));
+                Expression::Garbage(tokens[*index - 1].span)
+            }
+        }
         TokenContents::Number(number) => {
             *index += 1;
             Expression::NumericConstant(NumericConstant::I64(*number), span)
@@ -1874,7 +1921,7 @@ pub fn parse_variable_declaration(
                         return (
                             VarDecl {
                                 name: name.to_string(),
-                                ty: UncheckedType::new(tokens[*index - 1].span),
+                                ty: UncheckedType::Empty,
                                 mutable: false,
                                 span: tokens[*index - 1].span,
                             },
@@ -1886,7 +1933,7 @@ pub fn parse_variable_declaration(
                 return (
                     VarDecl {
                         name: name.to_string(),
-                        ty: UncheckedType::new(tokens[*index - 1].span),
+                        ty: UncheckedType::Empty,
                         mutable: false,
                         span: tokens[*index - 1].span,
                     },
@@ -1914,7 +1961,7 @@ pub fn parse_variable_declaration(
                 (
                     VarDecl {
                         name: name.to_string(),
-                        ty: UncheckedType::new(tokens[*index - 2].span),
+                        ty: UncheckedType::Empty,
                         mutable: false,
                         span: tokens[*index - 2].span,
                     },
@@ -1940,15 +1987,36 @@ pub fn parse_variable_declaration(
 }
 
 pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Option<JaktError>) {
-    let mut unchecked_type = UncheckedType::new(tokens[*index].span);
+    let mut unchecked_type = UncheckedType::Empty;
     let mut error = None;
+
+    let start = tokens[*index].span;
 
     trace!(format!("parse_typename: {:?}", tokens[*index]));
     match &tokens[*index] {
         Token {
             contents: TokenContents::Name(name),
             ..
-        } => unchecked_type.name = name.clone(),
+        } => {
+            if name == "raw" {
+                *index += 1;
+                if *index < tokens.len() {
+                    let (child_ty, err) = parse_typename(tokens, index);
+                    error = error.or(err);
+
+                    unchecked_type = UncheckedType::RawPtr(
+                        Box::new(child_ty),
+                        Span {
+                            file_id: start.file_id,
+                            start: start.start,
+                            end: tokens[*index - 1].span.end,
+                        },
+                    );
+                }
+            } else {
+                unchecked_type = UncheckedType::Name(name.clone(), tokens[*index].span);
+            }
+        }
         _ => {
             trace!("ERROR: expected type name");
 
@@ -1963,7 +2031,14 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
         if let TokenContents::QuestionMark = tokens[*index + 1].contents {
             // T? is shorthand for Optional<T>
             *index += 1;
-            unchecked_type.optional = true;
+            unchecked_type = UncheckedType::Optional(
+                Box::new(unchecked_type),
+                Span {
+                    file_id: start.file_id,
+                    start: start.start,
+                    end: tokens[*index].span.end,
+                },
+            );
         }
     };
 
