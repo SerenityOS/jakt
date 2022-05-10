@@ -1362,6 +1362,12 @@ pub fn typecheck_typename(
             }
         }
         UncheckedType::Empty => (Type::Unknown, None),
+        UncheckedType::Vector(inner, _) => {
+            let (inner_ty, err) = typecheck_typename(inner, stack);
+            error = error.or(err);
+
+            (Type::Vector(Box::new(inner_ty)), error)
+        }
         UncheckedType::Optional(inner, _) => {
             let (inner_ty, err) = typecheck_typename(inner, stack);
             error = error.or(err);
