@@ -1,10 +1,10 @@
 fun foo(a: bool, b: bool) {
 }
 
-fun bar(_ a: bool, b: bool) {
+fun bar(anon a: bool, b: bool) {
 }
 
-fun baz(_ a: bool, _ b: bool) {
+fun baz(anon a: bool, anon b: bool) {
 }
 
 fun main() {
