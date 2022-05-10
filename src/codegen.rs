@@ -273,7 +273,7 @@ fn translate_block(indent: usize, checked_block: &CheckedBlock, file: &CheckedFi
     output.push_str("{\n");
 
     for stmt in &checked_block.stmts {
-        let stmt = translate_stmt(indent + INDENT_SIZE, stmt, file);
+        let stmt = translate_statement(indent + INDENT_SIZE, stmt, file);
 
         output.push_str(&stmt);
     }
@@ -284,7 +284,7 @@ fn translate_block(indent: usize, checked_block: &CheckedBlock, file: &CheckedFi
     output
 }
 
-fn translate_stmt(indent: usize, stmt: &CheckedStatement, file: &CheckedFile) -> String {
+fn translate_statement(indent: usize, stmt: &CheckedStatement, file: &CheckedFile) -> String {
     let mut output = String::new();
 
     output.push_str(&" ".repeat(indent));
@@ -295,13 +295,13 @@ fn translate_stmt(indent: usize, stmt: &CheckedStatement, file: &CheckedFile) ->
             output.push_str(&expr);
             output.push_str(";\n");
         }
-        CheckedStatement::Defer(block) => {
+        CheckedStatement::Defer(statement) => {
             // NOTE: We let the preprocessor generate a unique name for the RAII helper.
             output.push_str("#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n");
             output.push_str("ScopeGuard __SCOPE_GUARD_NAME  ([&] \n");
-            output.push_str("#undef __SCOPE_GUARD_NAME\n");
-            output.push_str(&translate_block(indent, block, file));
-            output.push_str(");\n");
+            output.push_str("#undef __SCOPE_GUARD_NAME\n{");
+            output.push_str(&translate_statement(indent, statement, file));
+            output.push_str("});\n");
         }
         CheckedStatement::Return(expr) => {
             let expr = translate_expr(indent, expr, file);
@@ -320,7 +320,7 @@ fn translate_stmt(indent: usize, stmt: &CheckedStatement, file: &CheckedFile) ->
 
             if let Some(else_stmt) = else_stmt {
                 output.push_str(" else ");
-                let else_string = translate_stmt(indent, else_stmt, file);
+                let else_string = translate_statement(indent, else_stmt, file);
                 output.push_str(&else_string);
             }
         }

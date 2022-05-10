@@ -164,7 +164,7 @@ pub struct CheckedVariable {
 #[derive(Debug, Clone)]
 pub enum CheckedStatement {
     Expression(CheckedExpression),
-    Defer(CheckedBlock),
+    Defer(Box<CheckedStatement>),
     VarDecl(CheckedVarDecl, CheckedExpression),
     If(
         CheckedExpression,
@@ -654,15 +654,15 @@ pub fn typecheck_statement(
 
             (CheckedStatement::Expression(checked_expr), err)
         }
-        Statement::Defer(block) => {
-            let (checked_block, err) = typecheck_block(block, stack, file, safety_mode);
+        Statement::Defer(statement) => {
+            let (checked_statement, err) = typecheck_statement(statement, stack, file, safety_mode);
 
-            (CheckedStatement::Defer(checked_block), err)
+            (CheckedStatement::Defer(Box::new(checked_statement)), err)
         }
         Statement::UnsafeBlock(block) => {
             let (checked_block, err) = typecheck_block(block, stack, file, SafetyMode::Unsafe);
 
-            (CheckedStatement::Defer(checked_block), err)
+            (CheckedStatement::Block(checked_block), err)
         }
         Statement::VarDecl(var_decl, init) => {
             let (mut checked_expression, err) =
