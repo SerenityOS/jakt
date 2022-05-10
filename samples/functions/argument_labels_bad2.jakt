@@ -1,0 +1,6 @@
+fun foo(a: bool, b: bool) {
+}
+
+fun main() {
+    foo(true, true)
+}
