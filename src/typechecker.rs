@@ -9,6 +9,12 @@ use crate::{
 
 pub type StructId = usize;
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum SafetyMode {
+    Safe,
+    Unsafe,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Bool,
@@ -581,7 +587,7 @@ fn typecheck_fun(fun: &Function, stack: &mut Stack, file: &mut CheckedFile) -> O
         }
     }
 
-    let (block, err) = typecheck_block(&fun.block, stack, file);
+    let (block, err) = typecheck_block(&fun.block, stack, file, SafetyMode::Safe);
     error = error.or(err);
 
     stack.pop_frame();
@@ -615,6 +621,7 @@ pub fn typecheck_block(
     block: &Block,
     stack: &mut Stack,
     file: &CheckedFile,
+    safety_mode: SafetyMode,
 ) -> (CheckedBlock, Option<JaktError>) {
     let mut error = None;
     let mut checked_block = CheckedBlock::new();
@@ -622,7 +629,7 @@ pub fn typecheck_block(
     stack.push_frame();
 
     for stmt in &block.stmts {
-        let (checked_stmt, err) = typecheck_statement(stmt, stack, file);
+        let (checked_stmt, err) = typecheck_statement(stmt, stack, file, safety_mode);
         error = error.or(err);
 
         checked_block.stmts.push(checked_stmt);
@@ -637,22 +644,29 @@ pub fn typecheck_statement(
     stmt: &Statement,
     stack: &mut Stack,
     file: &CheckedFile,
+    safety_mode: SafetyMode,
 ) -> (CheckedStatement, Option<JaktError>) {
     let mut error = None;
 
     match stmt {
         Statement::Expression(expr) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file);
+            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
 
             (CheckedStatement::Expression(checked_expr), err)
         }
         Statement::Defer(block) => {
-            let (checked_block, err) = typecheck_block(block, stack, file);
+            let (checked_block, err) = typecheck_block(block, stack, file, safety_mode);
+
+            (CheckedStatement::Defer(checked_block), err)
+        }
+        Statement::UnsafeBlock(block) => {
+            let (checked_block, err) = typecheck_block(block, stack, file, SafetyMode::Unsafe);
 
             (CheckedStatement::Defer(checked_block), err)
         }
         Statement::VarDecl(var_decl, init) => {
-            let (mut checked_expression, err) = typecheck_expression(init, stack, file);
+            let (mut checked_expression, err) =
+                typecheck_expression(init, stack, file, safety_mode);
             error = error.or(err);
 
             let (mut checked_type, err) = typecheck_typename(&var_decl.ty, stack);
@@ -702,15 +716,15 @@ pub fn typecheck_statement(
             )
         }
         Statement::If(cond, block, else_stmt) => {
-            let (checked_cond, err) = typecheck_expression(cond, stack, file);
+            let (checked_cond, err) = typecheck_expression(cond, stack, file, safety_mode);
             error = error.or(err);
 
-            let (checked_block, err) = typecheck_block(block, stack, file);
+            let (checked_block, err) = typecheck_block(block, stack, file, safety_mode);
             error = error.or(err);
 
             let else_output;
             if let Some(else_stmt) = else_stmt {
-                let (checked_stmt, err) = typecheck_statement(else_stmt, stack, file);
+                let (checked_stmt, err) = typecheck_statement(else_stmt, stack, file, safety_mode);
                 error = error.or(err);
 
                 else_output = Some(Box::new(checked_stmt));
@@ -724,21 +738,21 @@ pub fn typecheck_statement(
             )
         }
         Statement::While(cond, block) => {
-            let (checked_cond, err) = typecheck_expression(cond, stack, file);
+            let (checked_cond, err) = typecheck_expression(cond, stack, file, safety_mode);
             error = error.or(err);
 
-            let (checked_block, err) = typecheck_block(block, stack, file);
+            let (checked_block, err) = typecheck_block(block, stack, file, safety_mode);
             error = error.or(err);
 
             (CheckedStatement::While(checked_cond, checked_block), error)
         }
         Statement::Return(expr) => {
-            let (output, err) = typecheck_expression(expr, stack, file);
+            let (output, err) = typecheck_expression(expr, stack, file, safety_mode);
 
             (CheckedStatement::Return(output), err)
         }
         Statement::Block(block) => {
-            let (checked_block, err) = typecheck_block(block, stack, file);
+            let (checked_block, err) = typecheck_block(block, stack, file, safety_mode);
             (CheckedStatement::Block(checked_block), err)
         }
         Statement::Garbage => (CheckedStatement::Garbage, None),
@@ -771,15 +785,16 @@ pub fn typecheck_expression(
     expr: &Expression,
     stack: &mut Stack,
     file: &CheckedFile,
+    safety_mode: SafetyMode,
 ) -> (CheckedExpression, Option<JaktError>) {
     let mut error = None;
 
     match expr {
         Expression::BinaryOp(lhs, op, rhs, span) => {
-            let (checked_lhs, err) = typecheck_expression(lhs, stack, file);
+            let (checked_lhs, err) = typecheck_expression(lhs, stack, file, safety_mode);
             error = error.or(err);
 
-            let (mut checked_rhs, err) = typecheck_expression(rhs, stack, file);
+            let (mut checked_rhs, err) = typecheck_expression(rhs, stack, file, safety_mode);
             error = error.or(err);
 
             let err = try_promote_constant_expr_to_type(&checked_lhs.ty(), &mut checked_rhs, span);
@@ -806,17 +821,18 @@ pub fn typecheck_expression(
             )
         }
         Expression::UnaryOp(expr, op, span) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file);
+            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
             error = error.or(err);
 
-            let (checked_expr, err) = typecheck_unary_operation(checked_expr, op.clone(), *span);
+            let (checked_expr, err) =
+                typecheck_unary_operation(checked_expr, op.clone(), *span, safety_mode);
             error = error.or(err);
 
             (checked_expr, error)
         }
         Expression::OptionalNone(_) => (CheckedExpression::OptionalNone(Type::Unknown), None),
         Expression::OptionalSome(expr, _) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file);
+            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
             let ty = checked_expr.ty();
             (
                 CheckedExpression::OptionalSome(Box::new(checked_expr), ty),
@@ -824,7 +840,7 @@ pub fn typecheck_expression(
             )
         }
         Expression::ForcedUnwrap(expr, _) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file);
+            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
 
             let (ty, err) = if let Type::Optional(inner_type) = checked_expr.ty() {
                 (*inner_type, err)
@@ -844,7 +860,7 @@ pub fn typecheck_expression(
         }
         Expression::Boolean(b, _) => (CheckedExpression::Boolean(*b), None),
         Expression::Call(call, span) => {
-            let (checked_call, err) = typecheck_call(call, stack, span, file);
+            let (checked_call, err) = typecheck_call(call, stack, span, file, safety_mode);
             let ty = checked_call.ty.clone();
             (CheckedExpression::Call(checked_call, ty), err)
         }
@@ -875,7 +891,7 @@ pub fn typecheck_expression(
             let mut output = Vec::new();
 
             for v in vec {
-                let (checked_expr, err) = typecheck_expression(v, stack, file);
+                let (checked_expr, err) = typecheck_expression(v, stack, file, safety_mode);
                 error = error.or(err);
 
                 if inner_ty == Type::Unknown {
@@ -902,7 +918,7 @@ pub fn typecheck_expression(
             let mut checked_types = Vec::new();
 
             for item in items {
-                let (checked_item, err) = typecheck_expression(item, stack, file);
+                let (checked_item, err) = typecheck_expression(item, stack, file, safety_mode);
                 error = error.or(err);
 
                 checked_types.push(checked_item.ty());
@@ -915,10 +931,10 @@ pub fn typecheck_expression(
             )
         }
         Expression::IndexedExpression(expr, idx, _) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file);
+            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
             error = error.or(err);
 
-            let (checked_idx, err) = typecheck_expression(idx, stack, file);
+            let (checked_idx, err) = typecheck_expression(idx, stack, file, safety_mode);
             error = error.or(err);
 
             let mut ty = Type::Unknown;
@@ -953,7 +969,7 @@ pub fn typecheck_expression(
             )
         }
         Expression::IndexedTuple(expr, idx, span) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file);
+            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
             error = error.or(err);
 
             let mut ty = Type::Unknown;
@@ -983,7 +999,7 @@ pub fn typecheck_expression(
         }
 
         Expression::IndexedStruct(expr, name, span) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file);
+            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
             error = error.or(err);
 
             let ty = Type::Unknown;
@@ -1046,12 +1062,25 @@ pub fn typecheck_unary_operation(
     expr: CheckedExpression,
     op: UnaryOperator,
     span: Span,
+    safety_mode: SafetyMode,
 ) -> (CheckedExpression, Option<JaktError>) {
     let expr_ty = expr.ty();
 
     match op {
         UnaryOperator::Dereference => match expr.ty() {
-            Type::RawPtr(x) => (CheckedExpression::UnaryOp(Box::new(expr), op, *x), None),
+            Type::RawPtr(x) => {
+                if safety_mode == SafetyMode::Unsafe {
+                    (CheckedExpression::UnaryOp(Box::new(expr), op, *x), None)
+                } else {
+                    (
+                        CheckedExpression::UnaryOp(Box::new(expr), op, *x),
+                        Some(JaktError::TypecheckError(
+                            "dereference of raw pointer outside of unsafe block".to_string(),
+                            span,
+                        )),
+                    )
+                }
+            }
             _ => (
                 CheckedExpression::UnaryOp(Box::new(expr), op, Type::Unknown),
                 Some(JaktError::TypecheckError(
@@ -1214,6 +1243,7 @@ pub fn typecheck_call(
     stack: &mut Stack,
     span: &Span,
     file: &CheckedFile,
+    safety_mode: SafetyMode,
 ) -> (CheckedCall, Option<JaktError>) {
     let mut checked_args = Vec::new();
     let mut error = None;
@@ -1223,7 +1253,7 @@ pub fn typecheck_call(
         "print" => {
             // FIXME: This is a hack since print() is hard-coded into codegen at the moment.
             for arg in &call.args {
-                let (checked_arg, err) = typecheck_expression(&arg.1, stack, file);
+                let (checked_arg, err) = typecheck_expression(&arg.1, stack, file, safety_mode);
                 error = error.or(err);
 
                 return_ty = Type::Void;
@@ -1249,7 +1279,7 @@ pub fn typecheck_call(
 
                     while idx < call.args.len() {
                         let (mut checked_arg, err) =
-                            typecheck_expression(&call.args[idx].1, stack, file);
+                            typecheck_expression(&call.args[idx].1, stack, file, safety_mode);
                         error = error.or(err);
 
                         if callee.params[idx].requires_label

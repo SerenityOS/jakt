@@ -130,6 +130,7 @@ impl Function {
 pub enum Statement {
     Expression(Expression),
     Defer(Block),
+    UnsafeBlock(Block),
     VarDecl(VarDecl, Expression),
     If(Expression, Block, Option<Box<Statement>>),
     Block(Block),
@@ -848,6 +849,16 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             error = error.or(err);
 
             (Statement::Defer(block), error)
+        }
+        TokenContents::Name(name) if name == "unsafe" => {
+            trace!("parsing unsafe");
+
+            *index += 1;
+
+            let (block, err) = parse_block(tokens, index);
+            error = error.or(err);
+
+            (Statement::UnsafeBlock(block), error)
         }
         TokenContents::Name(name) if name == "if" => parse_if_statement(tokens, index),
         TokenContents::Name(name) if name == "while" => {
