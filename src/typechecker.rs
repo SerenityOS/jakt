@@ -28,6 +28,7 @@ pub enum Type {
     Tuple(Vec<Type>),
     Optional(Box<Type>),
     Struct(StructId),
+    RawPtr(Box<Type>),
     Unknown,
 }
 
@@ -808,15 +809,10 @@ pub fn typecheck_expression(
             let (checked_expr, err) = typecheck_expression(expr, stack, file);
             error = error.or(err);
 
-            error = error.or(typecheck_unary_operation(&checked_expr, &op, *span));
+            let (checked_expr, err) = typecheck_unary_operation(checked_expr, op.clone(), *span);
+            error = error.or(err);
 
-            // TODO: actually do the binary operator typecheck against safe operations
-            // For now, use a type we know
-            let ty = checked_expr.ty();
-            (
-                CheckedExpression::UnaryOp(Box::new(checked_expr), op.clone(), ty),
-                error,
-            )
+            (checked_expr, error)
         }
         Expression::OptionalNone(_) => (CheckedExpression::OptionalNone(Type::Unknown), None),
         Expression::OptionalSome(expr, _) => {
@@ -1047,53 +1043,100 @@ pub fn typecheck_expression(
 }
 
 pub fn typecheck_unary_operation(
-    expr: &CheckedExpression,
-    op: &UnaryOperator,
+    expr: CheckedExpression,
+    op: UnaryOperator,
     span: Span,
-) -> Option<JaktError> {
-    match expr.ty() {
-        Type::I8
-        | Type::I16
-        | Type::I32
-        | Type::I64
-        | Type::U8
-        | Type::U16
-        | Type::U32
-        | Type::U64
-        | Type::F32
-        | Type::F64 => {
-            match expr {
-                CheckedExpression::Var(v) => {
-                    if !v.mutable {
-                        match op {
-                            UnaryOperator::PreIncrement | UnaryOperator::PostIncrement => {
-                                Some(JaktError::TypecheckError(
-                                    "increment on immutable variable".to_string(),
-                                    span,
-                                ))
-                            }
-                            UnaryOperator::PreDecrement | UnaryOperator::PostDecrement => {
-                                Some(JaktError::TypecheckError(
-                                    "decrement on immutable variable".to_string(),
-                                    span,
-                                ))
-                            }
-                            UnaryOperator::Negate => None,
-                        }
-                    } else {
-                        None
-                    }
-                }
-                _ => {
-                    // TODO: we probably want to check if what we're working on can be updated
-                    None
-                }
+) -> (CheckedExpression, Option<JaktError>) {
+    let expr_ty = expr.ty();
+
+    match op {
+        UnaryOperator::Dereference => match expr.ty() {
+            Type::RawPtr(x) => (CheckedExpression::UnaryOp(Box::new(expr), op, *x), None),
+            _ => (
+                CheckedExpression::UnaryOp(Box::new(expr), op, Type::Unknown),
+                Some(JaktError::TypecheckError(
+                    "dereference of a non-pointer value".to_string(),
+                    span,
+                )),
+            ),
+        },
+        UnaryOperator::RawAddress => {
+            let ty = expr.ty();
+
+            (
+                CheckedExpression::UnaryOp(Box::new(expr), op, Type::RawPtr(Box::new(ty))),
+                None,
+            )
+        }
+        UnaryOperator::Negate => {
+            let ty = expr.ty();
+
+            match &ty {
+                Type::I8
+                | Type::I16
+                | Type::I32
+                | Type::I64
+                | Type::U8
+                | Type::U16
+                | Type::U32
+                | Type::U64
+                | Type::F32
+                | Type::F64 => (
+                    CheckedExpression::UnaryOp(Box::new(expr), UnaryOperator::Negate, ty),
+                    None,
+                ),
+                _ => (
+                    CheckedExpression::UnaryOp(Box::new(expr), UnaryOperator::Negate, ty),
+                    Some(JaktError::TypecheckError(
+                        "negate on non-numeric value".to_string(),
+                        span,
+                    )),
+                ),
             }
         }
-        _ => Some(JaktError::TypecheckError(
-            "unary operation on non-numeric value".to_string(),
-            span,
-        )),
+        UnaryOperator::PostDecrement
+        | UnaryOperator::PostIncrement
+        | UnaryOperator::PreDecrement
+        | UnaryOperator::PreIncrement => match expr.ty() {
+            Type::I8
+            | Type::I16
+            | Type::I32
+            | Type::I64
+            | Type::U8
+            | Type::U16
+            | Type::U32
+            | Type::U64
+            | Type::F32
+            | Type::F64 => match &expr {
+                CheckedExpression::Var(v) => {
+                    if !v.mutable {
+                        (
+                            CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
+                            Some(JaktError::TypecheckError(
+                                "increment on immutable variable".to_string(),
+                                span,
+                            )),
+                        )
+                    } else {
+                        (
+                            CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
+                            None,
+                        )
+                    }
+                }
+                _ => (
+                    CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
+                    None,
+                ),
+            },
+            _ => (
+                CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
+                Some(JaktError::TypecheckError(
+                    "unary operation on non-numeric value".to_string(),
+                    span,
+                )),
+            ),
+        },
     }
 }
 
@@ -1255,42 +1298,51 @@ pub fn typecheck_typename(
     unchecked_type: &UncheckedType,
     stack: &Stack,
 ) -> (Type, Option<JaktError>) {
-    let (ty, err) = match unchecked_type.name.as_str() {
-        "i8" => (Type::I8, None),
-        "i16" => (Type::I16, None),
-        "i32" => (Type::I32, None),
-        "i64" => (Type::I64, None),
-        "u8" => (Type::U8, None),
-        "u16" => (Type::U16, None),
-        "u32" => (Type::U32, None),
-        "u64" => (Type::U64, None),
-        "f32" => (Type::F32, None),
-        "f64" => (Type::F64, None),
-        "String" => (Type::String, None),
-        "bool" => (Type::Bool, None),
-        "void" => (Type::Void, None),
-        "" => (Type::Unknown, None),
-        x => {
-            let structure = stack.find_struct(x);
-            match structure {
-                Some(struct_id) => (Type::Struct(struct_id), None),
-                None => {
-                    //trace!("ERROR: unknown type");
-                    (
-                        Type::Unknown,
-                        Some(JaktError::TypecheckError(
-                            "unknown type".to_string(),
-                            unchecked_type.span,
-                        )),
-                    )
+    let mut error = None;
+
+    match unchecked_type {
+        UncheckedType::Name(name, span) => {
+            match name.as_str() {
+                "i8" => (Type::I8, None),
+                "i16" => (Type::I16, None),
+                "i32" => (Type::I32, None),
+                "i64" => (Type::I64, None),
+                "u8" => (Type::U8, None),
+                "u16" => (Type::U16, None),
+                "u32" => (Type::U32, None),
+                "u64" => (Type::U64, None),
+                "f32" => (Type::F32, None),
+                "f64" => (Type::F64, None),
+                "String" => (Type::String, None),
+                "bool" => (Type::Bool, None),
+                "void" => (Type::Void, None),
+                x => {
+                    let structure = stack.find_struct(x);
+                    match structure {
+                        Some(struct_id) => (Type::Struct(struct_id), None),
+                        None => {
+                            //trace!("ERROR: unknown type");
+                            (
+                                Type::Unknown,
+                                Some(JaktError::TypecheckError("unknown type".to_string(), *span)),
+                            )
+                        }
+                    }
                 }
             }
         }
-    };
+        UncheckedType::Empty => (Type::Unknown, None),
+        UncheckedType::Optional(inner, _) => {
+            let (inner_ty, err) = typecheck_typename(inner, stack);
+            error = error.or(err);
 
-    if unchecked_type.optional {
-        (Type::Optional(Box::new(ty)), err)
-    } else {
-        (ty, err)
+            (Type::Optional(Box::new(inner_ty)), error)
+        }
+        UncheckedType::RawPtr(inner, _) => {
+            let (inner_ty, err) = typecheck_typename(inner, stack);
+            error = error.or(err);
+
+            (Type::RawPtr(Box::new(inner_ty)), error)
+        }
     }
 }

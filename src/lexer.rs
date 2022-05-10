@@ -48,6 +48,7 @@ pub enum TokenContents {
     LessThan,
     LessThanOrEqual,
     Asterisk,
+    Ampersand,
     ForwardSlash,
     ExclamationPoint,
     QuestionMark,
@@ -266,6 +267,13 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
             }
             output.push(Token::new(
                 TokenContents::ExclamationPoint,
+                Span::new(file_id, start, start + 1),
+            ));
+        } else if c == b'&' {
+            let start = index;
+            index += 1;
+            output.push(Token::new(
+                TokenContents::Ampersand,
                 Span::new(file_id, start, start + 1),
             ));
         } else if c == b'%' {

@@ -224,6 +224,9 @@ fn translate_type(ty: &Type, file: &CheckedFile) -> String {
         Type::F32 => String::from("f32"),
         Type::F64 => String::from("f64"),
         Type::Void => String::from("void"),
+        Type::RawPtr(ty) => {
+            format!("{}*", translate_type(ty, file))
+        }
         Type::Vector(v) => format!("Vector<{}>", translate_type(v, file)),
         Type::Tuple(types) => {
             let mut output = "Tuple<".to_string();
@@ -447,6 +450,12 @@ fn translate_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -
                 }
                 UnaryOperator::Negate => {
                     output.push_str("-");
+                }
+                UnaryOperator::Dereference => {
+                    output.push_str("*");
+                }
+                UnaryOperator::RawAddress => {
+                    output.push_str("&");
                 }
                 _ => {}
             }
