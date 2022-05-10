@@ -898,6 +898,7 @@ pub fn typecheck_unary_operation(
                                     span,
                                 ))
                             }
+                            UnaryOperator::Negate => None,
                         }
                     } else {
                         None
