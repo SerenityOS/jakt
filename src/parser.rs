@@ -1,6 +1,7 @@
 use crate::error::JaktError;
 
 use crate::lexer::{Span, Token, TokenContents};
+use crate::typechecker::NumericConstant;
 
 macro_rules! trace {
     ($x: expr) => {
@@ -168,7 +169,7 @@ pub enum Expression {
     // Standalone
     Boolean(bool, Span),
     Call(Call, Span),
-    Int64(i64, Span),
+    NumericConstant(NumericConstant, Span),
     QuotedString(String, Span),
     Vector(Vec<Expression>, Span),
     IndexedExpression(Box<Expression>, Box<Expression>, Span),
@@ -197,7 +198,7 @@ impl Expression {
         match self {
             Expression::Boolean(_, span) => *span,
             Expression::Call(_, span) => *span,
-            Expression::Int64(_, span) => *span,
+            Expression::NumericConstant(_, span) => *span,
             Expression::QuotedString(_, span) => *span,
             Expression::Vector(_, span) => *span,
             Expression::Tuple(_, span) => *span,
@@ -221,7 +222,7 @@ impl PartialEq for Expression {
         match (self, other) {
             (Self::Boolean(l0, _), Self::Boolean(r0, _)) => l0 == r0,
             (Self::Call(l0, _), Self::Call(r0, _)) => l0 == r0,
-            (Self::Int64(l0, _), Self::Int64(r0, _)) => l0 == r0,
+            (Self::NumericConstant(l0, _), Self::NumericConstant(r0, _)) => l0 == r0,
             (Self::QuotedString(l0, _), Self::QuotedString(r0, _)) => l0 == r0,
             (Self::BinaryOp(l0, l1, l2, _), Self::BinaryOp(r0, r1, r2, _)) => {
                 l0 == r0 && l1 == r1 && l2 == r2
@@ -1354,7 +1355,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
         }
         TokenContents::Number(number) => {
             *index += 1;
-            Expression::Int64(*number, span)
+            Expression::NumericConstant(NumericConstant::I64(*number), span)
         }
         TokenContents::QuotedString(str) => {
             *index += 1;
