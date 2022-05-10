@@ -168,3 +168,8 @@ fn test_tuples() -> Result<(), JaktError> {
 fn test_structs() -> Result<(), JaktError> {
     test_samples("samples/structs")
 }
+
+#[test]
+fn test_pointers() -> Result<(), JaktError> {
+    test_samples("samples/pointers")
+}
