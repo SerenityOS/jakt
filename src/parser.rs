@@ -241,6 +241,7 @@ pub enum UnaryOperator {
     PostIncrement,
     PreDecrement,
     PostDecrement,
+    Negate,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -1324,8 +1325,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 
             *index += 1;
 
-            let (expr, err) =
-                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+            let (expr, err) = parse_operand(tokens, index);
             error = error.or(err);
 
             let span = Span {
@@ -1341,8 +1341,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 
             *index += 1;
 
-            let (expr, err) =
-                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+            let (expr, err) = parse_operand(tokens, index);
             error = error.or(err);
 
             let span = Span {
@@ -1352,6 +1351,22 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
             };
 
             Expression::UnaryOp(Box::new(expr), UnaryOperator::PreDecrement, span)
+        }
+        TokenContents::Minus => {
+            let start_span = tokens[*index].span;
+
+            *index += 1;
+
+            let (expr, err) = parse_operand(tokens, index);
+            error = error.or(err);
+
+            let span = Span {
+                file_id: start_span.file_id,
+                start: start_span.start,
+                end: expr.span().end,
+            };
+
+            Expression::UnaryOp(Box::new(expr), UnaryOperator::Negate, span)
         }
         TokenContents::Number(number) => {
             *index += 1;

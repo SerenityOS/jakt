@@ -445,6 +445,9 @@ fn translate_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -
                 UnaryOperator::PreDecrement => {
                     output.push_str("--");
                 }
+                UnaryOperator::Negate => {
+                    output.push_str("-");
+                }
                 _ => {}
             }
             output.push_str(&translate_expr(indent, expr, file));
