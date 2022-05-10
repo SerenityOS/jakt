@@ -36,6 +36,7 @@ pub enum ExpressionKind {
 #[derive(Debug, Clone, PartialEq)]
 pub enum UncheckedType {
     Name(String, Span),
+    Vector(Box<UncheckedType>, Span),
     Optional(Box<UncheckedType>, Span),
     RawPtr(Box<UncheckedType>, Span),
     Empty,
@@ -1997,6 +1998,34 @@ pub fn parse_variable_declaration(
     }
 }
 
+pub fn parse_vector_type(
+    tokens: &[Token],
+    index: &mut usize,
+) -> (UncheckedType, Option<JaktError>) {
+    // [T] is shorthand for Vector<T>
+    if *index + 2 >= tokens.len() {
+        return (UncheckedType::Empty, None);
+    }
+    let start = tokens[*index].span;
+    if let TokenContents::LSquare = &tokens[*index].contents {
+        if let TokenContents::RSquare = &tokens[*index + 2].contents {
+            if let TokenContents::Name(name) = &tokens[*index + 1].contents {
+                let unchecked_type = UncheckedType::Vector(
+                    Box::new(UncheckedType::Name(name.clone(), tokens[*index + 1].span)),
+                    Span {
+                        file_id: start.file_id,
+                        start: start.start,
+                        end: tokens[*index + 2].span.end,
+                    },
+                );
+                *index += 2;
+                return (unchecked_type, None);
+            }
+        }
+    }
+    (UncheckedType::Empty, None)
+}
+
 pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Option<JaktError>) {
     let mut unchecked_type = UncheckedType::Empty;
     let mut error = None;
@@ -2004,6 +2033,14 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
     let start = tokens[*index].span;
 
     trace!(format!("parse_typename: {:?}", tokens[*index]));
+
+    let (vector_type, err) = parse_vector_type(tokens, index);
+    error = error.or(err);
+
+    if let UncheckedType::Vector(..) = &vector_type {
+        return (vector_type, error);
+    }
+
     match &tokens[*index] {
         Token {
             contents: TokenContents::Name(name),
