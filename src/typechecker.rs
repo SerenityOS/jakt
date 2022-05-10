@@ -806,13 +806,42 @@ pub fn typecheck_expression(
             )
         }
 
-        Expression::IndexedStruct(expr, name, _) => {
+        Expression::IndexedStruct(expr, name, span) => {
             let (checked_expr, err) = typecheck_expression(expr, stack, file);
             error = error.or(err);
 
             let ty = Type::Unknown;
 
-            //FIXME: add real name binding to structs so that we can find the proper field
+            match checked_expr.ty() {
+                Type::Struct(struct_id) => {
+                    let structure = &file.structs[struct_id];
+
+                    for member in &structure.members {
+                        if &member.name == name {
+                            return (
+                                CheckedExpression::IndexedStruct(
+                                    Box::new(checked_expr),
+                                    name.to_string(),
+                                    member.ty.clone(),
+                                ),
+                                None,
+                            );
+                        }
+                    }
+
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "unknown member of struct".to_string(),
+                        *span,
+                    )));
+                }
+
+                _ => {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "member access of non-struct value".to_string(),
+                        *span,
+                    )));
+                }
+            }
 
             (
                 CheckedExpression::IndexedStruct(Box::new(checked_expr), name.to_string(), ty),
