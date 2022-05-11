@@ -170,6 +170,11 @@ fn test_structs() -> Result<(), JaktError> {
 }
 
 #[test]
+fn test_classes() -> Result<(), JaktError> {
+    test_samples("samples/classes")
+}
+
+#[test]
 fn test_pointers() -> Result<(), JaktError> {
     test_samples("samples/pointers")
 }

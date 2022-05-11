@@ -1,0 +1,19 @@
+struct Rectangle {
+    width: i64,
+    height: i64,
+
+    fun grow(var this) {
+        this.width *= 2;
+        this.height *= 2;
+    }
+
+    fun area(this) => this.width * this.height
+}
+
+fun main() {
+    var rect = Rectangle(width: 4, height: 8)
+
+    rect.grow()
+
+    print(rect.area())
+}

@@ -2,8 +2,8 @@ use crate::{
     error::JaktError,
     lexer::Span,
     parser::{
-        BinaryOperator, Block, Call, Expression, Function, FunctionLinkage, ParsedFile, Statement,
-        Struct, UnaryOperator, UncheckedType,
+        BinaryOperator, Block, Call, DefinitionLinkage, DefinitionType, Expression, Function,
+        FunctionLinkage, ParsedFile, Statement, Struct, UnaryOperator, UncheckedType,
     },
 };
 
@@ -95,6 +95,15 @@ impl CheckedFile {
         }
     }
 
+    pub fn find_struct(&self, name: &str) -> Option<usize> {
+        for (idx, structure) in self.structs.iter().enumerate() {
+            if structure.name == name {
+                return Some(idx);
+            }
+        }
+        None
+    }
+
     pub fn get_struct_mut(&mut self, name: &str) -> Option<(&mut CheckedStruct, usize)> {
         for (idx, structure) in self.structs.iter_mut().enumerate() {
             if structure.name == name {
@@ -119,6 +128,8 @@ pub struct CheckedStruct {
     pub name: String,
     pub fields: Vec<CheckedVarDecl>,
     pub methods: Vec<CheckedFunction>,
+    pub definition_linkage: DefinitionLinkage,
+    pub definition_type: DefinitionType,
 }
 
 impl CheckedStruct {
@@ -345,6 +356,15 @@ impl CheckedExpression {
             _ => None,
         }
     }
+
+    pub fn is_mutable(&self) -> bool {
+        match self {
+            CheckedExpression::Var(var) => var.mutable,
+            CheckedExpression::IndexedStruct(expr, _, _) => expr.is_mutable(),
+            CheckedExpression::IndexedExpression(expr, _, _) => expr.is_mutable(),
+            _ => false,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -538,6 +558,8 @@ fn typecheck_struct_predecl(
         name: structure.name.clone(),
         fields: Vec::new(),
         methods,
+        definition_linkage: structure.definition_linkage,
+        definition_type: structure.definition_type,
     });
 
     error
@@ -588,15 +610,17 @@ fn typecheck_struct(
         .get_struct_mut(&structure.name)
         .expect("Internal error: we previously defined the struct but it's now missing");
 
-    let checked_constructor = CheckedFunction {
-        name: structure.name.clone(),
-        block: CheckedBlock::new(),
-        linkage: FunctionLinkage::ImplicitConstructor,
-        params: constructor_params,
-        return_type: Type::Struct(struct_id),
-    };
+    if structure.definition_linkage != DefinitionLinkage::External {
+        let checked_constructor = CheckedFunction {
+            name: structure.name.clone(),
+            block: CheckedBlock::new(),
+            linkage: FunctionLinkage::ImplicitConstructor,
+            params: constructor_params,
+            return_type: Type::Struct(struct_id),
+        };
 
-    file.funs.push(checked_constructor);
+        file.funs.push(checked_constructor);
+    }
 
     match stack.add_struct(structure.name.clone(), struct_id, structure.span) {
         Ok(_) => {}
@@ -1178,6 +1202,41 @@ pub fn typecheck_expression(
                         error,
                     )
                 }
+                Type::String => {
+                    let string_struct = file.find_struct("String");
+
+                    match string_struct {
+                        Some(struct_id) => {
+                            let (checked_call, err) = typecheck_method_call(
+                                call,
+                                stack,
+                                span,
+                                file,
+                                struct_id,
+                                safety_mode,
+                            );
+                            error = error.or(err);
+
+                            let ty = checked_call.ty.clone();
+                            (
+                                CheckedExpression::MethodCall(
+                                    Box::new(checked_expr),
+                                    checked_call,
+                                    ty,
+                                ),
+                                error,
+                            )
+                        }
+                        _ => {
+                            error = error.or(Some(JaktError::TypecheckError(
+                                "no methods available on value".to_string(),
+                                expr.span(),
+                            )));
+
+                            (CheckedExpression::Garbage, error)
+                        }
+                    }
+                }
                 _ => {
                     error = error.or(Some(JaktError::TypecheckError(
                         "no methods available on value".to_string(),
@@ -1342,16 +1401,11 @@ pub fn typecheck_binary_operation(
                 ));
             }
 
-            match lhs {
-                CheckedExpression::Var(var) => {
-                    if !var.mutable {
-                        return Some(JaktError::TypecheckError(
-                            "assignment to immutable variable".to_string(),
-                            span,
-                        ));
-                    }
-                }
-                _ => {}
+            if !lhs.is_mutable() {
+                return Some(JaktError::TypecheckError(
+                    "assignment to immutable variable".to_string(),
+                    span,
+                ));
             }
         }
         _ => {}
