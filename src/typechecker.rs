@@ -117,7 +117,19 @@ impl CheckedFile {
 #[derive(Clone, Debug)]
 pub struct CheckedStruct {
     pub name: String,
-    pub members: Vec<CheckedVarDecl>,
+    pub fields: Vec<CheckedVarDecl>,
+    pub methods: Vec<CheckedFunction>,
+}
+
+impl CheckedStruct {
+    pub fn get_method_mut(&mut self, name: &str) -> Option<&mut CheckedFunction> {
+        for fun in self.methods.iter_mut() {
+            if fun.name == name {
+                return Some(fun);
+            }
+        }
+        None
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -276,7 +288,6 @@ impl NumericConstant {
 pub enum CheckedExpression {
     // Standalone
     Boolean(bool),
-    Call(CheckedCall, Type),
     NumericConstant(NumericConstant, Type),
     QuotedString(String),
     UnaryOp(Box<CheckedExpression>, UnaryOperator, Type),
@@ -291,6 +302,9 @@ pub enum CheckedExpression {
     IndexedExpression(Box<CheckedExpression>, Box<CheckedExpression>, Type),
     IndexedTuple(Box<CheckedExpression>, usize, Type),
     IndexedStruct(Box<CheckedExpression>, String, Type),
+
+    Call(CheckedCall, Type),
+    MethodCall(Box<CheckedExpression>, CheckedCall, Type),
 
     Var(CheckedVariable),
 
@@ -316,6 +330,7 @@ impl CheckedExpression {
             CheckedExpression::IndexedExpression(_, _, ty) => ty.clone(),
             CheckedExpression::IndexedTuple(_, _, ty) => ty.clone(),
             CheckedExpression::IndexedStruct(_, _, ty) => ty.clone(),
+            CheckedExpression::MethodCall(_, _, ty) => ty.clone(),
             CheckedExpression::Var(CheckedVariable { ty, .. }) => ty.clone(),
             CheckedExpression::OptionalNone(ty) => ty.clone(),
             CheckedExpression::OptionalSome(_, ty) => ty.clone(),
@@ -447,18 +462,18 @@ fn typecheck_file_helper(
     let mut file = CheckedFile::new();
     let mut error = None;
 
-    for structure in &parsed_file.structs {
+    for (struct_id, structure) in parsed_file.structs.iter().enumerate() {
         //Ensure we know the types ahead of time, so they can be recursive
-        typecheck_struct_predecl(structure, stack, &mut file);
-    }
-
-    for structure in &parsed_file.structs {
-        error = error.or(typecheck_struct(structure, stack, &mut file));
+        typecheck_struct_predecl(structure, struct_id, stack, &mut file);
     }
 
     for fun in &parsed_file.funs {
         //Ensure we know the function ahead of time, so they can be recursive
         error = error.or(typecheck_fun_predecl(fun, stack, &mut file));
+    }
+
+    for (struct_id, structure) in parsed_file.structs.iter().enumerate() {
+        error = error.or(typecheck_struct(structure, struct_id, stack, &mut file));
     }
 
     for fun in &parsed_file.funs {
@@ -468,27 +483,81 @@ fn typecheck_file_helper(
     (file, error)
 }
 
-fn typecheck_struct_predecl(structure: &Struct, _stack: &mut Stack, file: &mut CheckedFile) {
-    file.structs.push(CheckedStruct {
-        name: structure.name.clone(),
-        members: Vec::new(),
-    });
-}
-
-fn typecheck_struct(
+fn typecheck_struct_predecl(
     structure: &Struct,
+    struct_id: StructId,
     stack: &mut Stack,
     file: &mut CheckedFile,
 ) -> Option<JaktError> {
     let mut error = None;
 
-    let mut members = Vec::new();
+    let mut methods = Vec::new();
 
-    for unchecked_member in &structure.members {
+    for fun in &structure.methods {
+        let mut checked_function = CheckedFunction {
+            name: fun.name.clone(),
+            params: vec![],
+            return_type: Type::Unknown,
+            block: CheckedBlock::new(),
+            linkage: fun.linkage.clone(),
+        };
+
+        for param in &fun.params {
+            if param.variable.name == "this" {
+                let checked_variable = CheckedVariable {
+                    name: param.variable.name.clone(),
+                    ty: Type::Struct(struct_id),
+                    mutable: param.variable.mutable,
+                };
+
+                checked_function.params.push(CheckedParameter {
+                    requires_label: param.requires_label,
+                    variable: checked_variable.clone(),
+                });
+            } else {
+                let (param_type, err) = typecheck_typename(&param.variable.ty, stack);
+                error = error.or(err);
+
+                let checked_variable = CheckedVariable {
+                    name: param.variable.name.clone(),
+                    ty: param_type,
+                    mutable: param.variable.mutable,
+                };
+
+                checked_function.params.push(CheckedParameter {
+                    requires_label: param.requires_label,
+                    variable: checked_variable.clone(),
+                });
+            }
+        }
+
+        methods.push(checked_function);
+    }
+
+    file.structs.push(CheckedStruct {
+        name: structure.name.clone(),
+        fields: Vec::new(),
+        methods,
+    });
+
+    error
+}
+
+fn typecheck_struct(
+    structure: &Struct,
+    struct_id: StructId,
+    stack: &mut Stack,
+    file: &mut CheckedFile,
+) -> Option<JaktError> {
+    let mut error = None;
+
+    let mut fields = Vec::new();
+
+    for unchecked_member in &structure.fields {
         let (checked_member_type, err) = typecheck_typename(&unchecked_member.ty, stack);
         error = error.or(err);
 
-        members.push(CheckedVarDecl {
+        fields.push(CheckedVarDecl {
             name: unchecked_member.name.clone(),
             ty: checked_member_type,
             mutable: unchecked_member.mutable,
@@ -497,15 +566,22 @@ fn typecheck_struct(
     }
 
     let mut constructor_params = Vec::new();
-    for member in &members {
+    for field in &fields {
         constructor_params.push(CheckedParameter {
             requires_label: true,
             variable: CheckedVariable {
-                name: member.name.clone(),
-                ty: member.ty.clone(),
-                mutable: member.mutable,
+                name: field.name.clone(),
+                ty: field.ty.clone(),
+                mutable: field.mutable,
             },
         });
+    }
+
+    let checked_struct = &mut file.structs[struct_id];
+    checked_struct.fields = fields;
+
+    for fun in &structure.methods {
+        error = error.or(typecheck_method(fun, stack, file, struct_id));
     }
 
     let (_, struct_id) = file
@@ -521,12 +597,6 @@ fn typecheck_struct(
     };
 
     file.funs.push(checked_constructor);
-
-    let (checked_struct, struct_id) = file
-        .get_struct_mut(&structure.name)
-        .expect("Internal error: we previously defined the struct but it's now missing");
-
-    checked_struct.members = members;
 
     match stack.add_struct(structure.name.clone(), struct_id, structure.span) {
         Ok(_) => {}
@@ -609,6 +679,58 @@ fn typecheck_fun(fun: &Function, stack: &mut Stack, file: &mut CheckedFile) -> O
 
     let checked_function = file
         .get_fun_mut(&fun.name)
+        .expect("Internal error: we just pushed the checked function, but it's not present");
+
+    checked_function.block = block;
+    checked_function.return_type = return_type;
+
+    error
+}
+
+fn typecheck_method(
+    fun: &Function,
+    stack: &mut Stack,
+    file: &mut CheckedFile,
+    struct_id: StructId,
+) -> Option<JaktError> {
+    let mut error = None;
+
+    stack.push_frame();
+
+    let structure = &mut file.structs[struct_id];
+    let checked_function = structure
+        .get_method_mut(&fun.name)
+        .expect("Internal error: we just pushed the checked function, but it's not present");
+
+    for param in &checked_function.params {
+        if let Err(err) = stack.add_var(param.variable.clone(), fun.name_span) {
+            error = error.or(Some(err));
+        }
+    }
+
+    let (block, err) = typecheck_block(&fun.block, stack, file, SafetyMode::Safe);
+    error = error.or(err);
+
+    stack.pop_frame();
+
+    let (fun_return_type, err) = typecheck_typename(&fun.return_type, stack);
+    error = error.or(err);
+
+    // If the return type is unknown, and the function starts with a return statement,
+    // we infer the return type from its expression.
+    let return_type = if fun_return_type == Type::Unknown {
+        if let Some(CheckedStatement::Return(ret)) = block.stmts.first() {
+            ret.ty()
+        } else {
+            Type::Void
+        }
+    } else {
+        fun_return_type.clone()
+    };
+
+    let structure = &mut file.structs[struct_id];
+    let checked_function = structure
+        .get_method_mut(&fun.name)
         .expect("Internal error: we just pushed the checked function, but it's not present");
 
     checked_function.block = block;
@@ -1008,7 +1130,7 @@ pub fn typecheck_expression(
                 Type::Struct(struct_id) => {
                     let structure = &file.structs[struct_id];
 
-                    for member in &structure.members {
+                    for member in &structure.fields {
                         if &member.name == name {
                             return (
                                 CheckedExpression::IndexedStruct(
@@ -1022,7 +1144,7 @@ pub fn typecheck_expression(
                     }
 
                     error = error.or(Some(JaktError::TypecheckError(
-                        "unknown member of struct".to_string(),
+                        format!("unknown member of struct: {}.{}", structure.name, name),
                         *span,
                     )));
                 }
@@ -1039,6 +1161,32 @@ pub fn typecheck_expression(
                 CheckedExpression::IndexedStruct(Box::new(checked_expr), name.to_string(), ty),
                 error,
             )
+        }
+        Expression::MethodCall(expr, call, span) => {
+            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
+            error = error.or(err);
+
+            match checked_expr.ty() {
+                Type::Struct(struct_id) => {
+                    let (checked_call, err) =
+                        typecheck_method_call(call, stack, span, file, struct_id, safety_mode);
+                    error = error.or(err);
+
+                    let ty = checked_call.ty.clone();
+                    (
+                        CheckedExpression::MethodCall(Box::new(checked_expr), checked_call, ty),
+                        error,
+                    )
+                }
+                _ => {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "no methods available on value".to_string(),
+                        expr.span(),
+                    )));
+
+                    (CheckedExpression::Garbage, error)
+                }
+            }
         }
 
         Expression::Operator(_, span) => (
@@ -1215,13 +1363,13 @@ pub fn typecheck_binary_operation(
 pub fn resolve_call<'a>(
     call: &Call,
     span: &Span,
-    file: &'a CheckedFile,
+    functions: &'a [CheckedFunction],
 ) -> (Option<&'a CheckedFunction>, Option<JaktError>) {
     let mut callee = None;
     let mut error = None;
 
     // FIXME: Support function overloading.
-    for fun in &file.funs {
+    for fun in functions {
         if fun.name == call.name {
             callee = Some(fun);
             break;
@@ -1230,7 +1378,7 @@ pub fn resolve_call<'a>(
 
     if callee.is_none() {
         error = Some(JaktError::TypecheckError(
-            "call to unknown function".to_string(),
+            format!("call to unknown function: {}", call.name),
             *span,
         ));
     }
@@ -1262,7 +1410,7 @@ pub fn typecheck_call(
             }
         }
         _ => {
-            let (callee, err) = resolve_call(call, span, file);
+            let (callee, err) = resolve_call(call, span, &file.funs);
             error = error.or(err);
 
             if let Some(callee) = callee {
@@ -1310,6 +1458,80 @@ pub fn typecheck_call(
                         idx += 1;
                     }
                 }
+            }
+        }
+    }
+
+    (
+        CheckedCall {
+            name: call.name.clone(),
+            args: checked_args,
+            ty: return_ty,
+        },
+        error,
+    )
+}
+
+pub fn typecheck_method_call(
+    call: &Call,
+    stack: &mut Stack,
+    span: &Span,
+    file: &CheckedFile,
+    struct_id: StructId,
+    safety_mode: SafetyMode,
+) -> (CheckedCall, Option<JaktError>) {
+    let mut checked_args = Vec::new();
+    let mut error = None;
+    let mut return_ty = Type::Unknown;
+
+    let (callee, err) = resolve_call(call, span, &file.structs[struct_id].methods);
+    error = error.or(err);
+
+    if let Some(callee) = callee {
+        return_ty = callee.return_type.clone();
+
+        // Check that we have the right number of arguments.
+        if callee.params.len() != (call.args.len() + 1) {
+            error = error.or(Some(JaktError::TypecheckError(
+                "wrong number of arguments".to_string(),
+                *span,
+            )));
+        } else {
+            let mut idx = 0;
+
+            // The first index should be the 'this'
+
+            while idx < call.args.len() {
+                let (mut checked_arg, err) =
+                    typecheck_expression(&call.args[idx].1, stack, file, safety_mode);
+                error = error.or(err);
+
+                if callee.params[idx + 1].requires_label
+                    && call.args[idx].0 != callee.params[idx + 1].variable.name
+                {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "Wrong parameter name in argument label".to_string(),
+                        call.args[idx].1.span(),
+                    )));
+                }
+
+                let err = try_promote_constant_expr_to_type(
+                    &callee.params[idx + 1].variable.ty,
+                    &mut checked_arg,
+                    &call.args[idx].1.span(),
+                );
+                error = error.or(err);
+
+                if checked_arg.ty() != callee.params[idx + 1].variable.ty {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "Parameter type mismatch".to_string(),
+                        call.args[idx].1.span(),
+                    )))
+                }
+
+                checked_args.push((call.args[idx].0.clone(), checked_arg));
+
+                idx += 1;
             }
         }
     }

@@ -76,7 +76,8 @@ pub struct ParsedFile {
 #[derive(Debug)]
 pub struct Struct {
     pub name: String,
-    pub members: Vec<VarDecl>,
+    pub fields: Vec<VarDecl>,
+    pub methods: Vec<Function>,
     pub span: Span,
 }
 
@@ -157,7 +158,6 @@ impl Block {
 pub enum Expression {
     // Standalone
     Boolean(bool, Span),
-    Call(Call, Span),
     NumericConstant(NumericConstant, Span),
     QuotedString(String, Span),
     Vector(Vec<Expression>, Span),
@@ -166,8 +166,12 @@ pub enum Expression {
     BinaryOp(Box<Expression>, BinaryOperator, Box<Expression>, Span),
     Var(String, Span),
     Tuple(Vec<Expression>, Span),
+
     IndexedTuple(Box<Expression>, usize, Span),
     IndexedStruct(Box<Expression>, String, Span),
+
+    Call(Call, Span),
+    MethodCall(Box<Expression>, Call, Span),
 
     ForcedUnwrap(Box<Expression>, Span),
 
@@ -186,7 +190,6 @@ impl Expression {
     pub fn span(&self) -> Span {
         match self {
             Expression::Boolean(_, span) => *span,
-            Expression::Call(_, span) => *span,
             Expression::NumericConstant(_, span) => *span,
             Expression::QuotedString(_, span) => *span,
             Expression::Vector(_, span) => *span,
@@ -194,6 +197,8 @@ impl Expression {
             Expression::IndexedExpression(_, _, span) => *span,
             Expression::IndexedTuple(_, _, span) => *span,
             Expression::IndexedStruct(_, _, span) => *span,
+            Expression::Call(_, span) => *span,
+            Expression::MethodCall(_, _, span) => *span,
             Expression::UnaryOp(_, _, span) => *span,
             Expression::BinaryOp(_, _, _, span) => *span,
             Expression::Var(_, span) => *span,
@@ -406,7 +411,7 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
     *index += 1;
 
     if *index < tokens.len() {
-        // we're expecting the name of the function
+        // we're expecting the name of the struct
         match &tokens[*index] {
             Token {
                 contents: TokenContents::Name(struct_name),
@@ -441,6 +446,9 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
                 }
 
                 let mut fields = Vec::new();
+
+                let mut methods = Vec::new();
+
                 while *index < tokens.len() {
                     match &tokens[*index].contents {
                         TokenContents::RCurly => {
@@ -452,8 +460,18 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
                             *index += 1;
                         }
 
+                        TokenContents::Name(name) if name == "fun" => {
+                            // Lets parse a method
+
+                            let (fun_decl, err) =
+                                parse_function(tokens, index, FunctionLinkage::Internal);
+                            error = error.or(err);
+
+                            methods.push(fun_decl);
+                        }
+
                         TokenContents::Name(..) => {
-                            // Now lets parse a parameter
+                            // Lets parse a parameter
 
                             let (mut var_decl, err) = parse_variable_declaration(tokens, index);
                             error = error.or(err);
@@ -471,6 +489,20 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
                             }
 
                             fields.push(var_decl);
+                        }
+
+                        TokenContents::Eof => {
+                            trace!(format!(
+                                "ERROR: expected field, found: {:?}",
+                                tokens[*index].contents
+                            ));
+
+                            error = error.or(Some(JaktError::ParserError(
+                                "expected field".to_string(),
+                                tokens[*index].span,
+                            )));
+
+                            break;
                         }
                         _ => {
                             trace!(format!(
@@ -497,7 +529,8 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
                 (
                     Struct {
                         name: struct_name.clone(),
-                        members: fields,
+                        fields,
+                        methods,
                         span: tokens[*index - 1].span,
                     },
                     error,
@@ -514,7 +547,8 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
                 (
                     Struct {
                         name: String::new(),
-                        members: Vec::new(),
+                        fields: Vec::new(),
+                        methods: Vec::new(),
                         span: tokens[*index].span,
                     },
                     error,
@@ -532,7 +566,8 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
         (
             Struct {
                 name: String::new(),
-                members: Vec::new(),
+                fields: Vec::new(),
+                methods: Vec::new(),
                 span: tokens[*index].span,
             },
             error,
@@ -607,6 +642,19 @@ pub fn parse_function(
                         TokenContents::Name(name) if name == "anon" => {
                             current_param_requires_label = false;
                             *index += 1;
+                        }
+
+                        TokenContents::Name(name) if name == "this" => {
+                            *index += 1;
+
+                            params.push(Parameter {
+                                requires_label: false,
+                                variable: Variable {
+                                    name: "this".to_string(),
+                                    ty: UncheckedType::Empty,
+                                    mutable: false,
+                                },
+                            });
                         }
 
                         TokenContents::Name(..) => {
@@ -1499,14 +1547,45 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 
                         TokenContents::Name(name) => {
                             *index += 1;
-                            let span = Span {
-                                file_id: expr.span().file_id,
-                                start: expr.span().start,
-                                end: tokens[*index].span.end,
-                            };
+                            if *index < tokens.len() {
+                                if tokens[*index].contents == TokenContents::LParen {
+                                    *index -= 1;
+                                    let (method, err) = parse_call(tokens, index);
+                                    error = error.or(err);
 
-                            expr =
-                                Expression::IndexedStruct(Box::new(expr), name.to_string(), span);
+                                    let span = Span {
+                                        file_id: expr.span().file_id,
+                                        start: expr.span().start,
+                                        end: tokens[*index].span.end,
+                                    };
+
+                                    expr = Expression::MethodCall(Box::new(expr), method, span)
+                                } else {
+                                    let span = Span {
+                                        file_id: expr.span().file_id,
+                                        start: expr.span().start,
+                                        end: tokens[*index].span.end,
+                                    };
+
+                                    expr = Expression::IndexedStruct(
+                                        Box::new(expr),
+                                        name.to_string(),
+                                        span,
+                                    );
+                                }
+                            } else {
+                                let span = Span {
+                                    file_id: expr.span().file_id,
+                                    start: expr.span().start,
+                                    end: tokens[*index].span.end,
+                                };
+
+                                expr = Expression::IndexedStruct(
+                                    Box::new(expr),
+                                    name.to_string(),
+                                    span,
+                                );
+                            }
                         }
 
                         _ => {
