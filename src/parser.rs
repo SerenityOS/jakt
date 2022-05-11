@@ -268,6 +268,7 @@ pub enum BinaryOperator {
     LessThanOrEqual,
     GreaterThanOrEqual,
     LogicalAnd,
+    LogicalOr,
     Assign,
     AddAssign,
     SubtractAssign,
@@ -294,6 +295,7 @@ impl Expression {
             | Expression::Operator(BinaryOperator::Equal, _)
             | Expression::Operator(BinaryOperator::NotEqual, _) => 80,
             Expression::Operator(BinaryOperator::LogicalAnd, _) => 70,
+            Expression::Operator(BinaryOperator::LogicalOr, _) => 69,
             Expression::Operator(BinaryOperator::Assign, _)
             | Expression::Operator(BinaryOperator::AddAssign, _)
             | Expression::Operator(BinaryOperator::SubtractAssign, _)
@@ -1317,6 +1319,10 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
             *index += 1;
             Expression::Operator(BinaryOperator::LogicalAnd, span)
         }
+        TokenContents::Name(name) if name == "or" => {
+            *index += 1;
+            Expression::Operator(BinaryOperator::LogicalOr, span)
+        }
         TokenContents::Name(name) => {
             if *index + 1 < tokens.len() {
                 match &tokens[*index + 1].contents {
@@ -1725,6 +1731,10 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
             *index += 1;
             (Expression::Operator(BinaryOperator::LogicalAnd, span), None)
         }
+        TokenContents::Name(name) if name == "or" => {
+            *index += 1;
+            (Expression::Operator(BinaryOperator::LogicalOr, span), None)
+        }
         TokenContents::Plus => {
             *index += 1;
             (Expression::Operator(BinaryOperator::Add, span), None)
@@ -1899,6 +1909,10 @@ pub fn parse_operator_with_assignment(
         TokenContents::Name(name) if name == "and" => {
             *index += 1;
             (Expression::Operator(BinaryOperator::LogicalAnd, span), None)
+        }
+        TokenContents::Name(name) if name == "or" => {
+            *index += 1;
+            (Expression::Operator(BinaryOperator::LogicalOr, span), None)
         }
         TokenContents::Equal => {
             *index += 1;
