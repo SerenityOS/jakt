@@ -545,6 +545,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> 
                 UnaryOperator::RawAddress => {
                     output.push_str("&");
                 }
+                UnaryOperator::LogicalNot => {
+                    output.push_str("!");
+                }
                 _ => {}
             }
             output.push_str(&codegen_expr(indent, expr, file));

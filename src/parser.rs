@@ -252,6 +252,7 @@ pub enum UnaryOperator {
     Negate,
     Dereference,
     RawAddress,
+    LogicalNot,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -1322,6 +1323,22 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
         TokenContents::Name(name) if name == "or" => {
             *index += 1;
             Expression::Operator(BinaryOperator::LogicalOr, span)
+        }
+        TokenContents::Name(name) if name == "not" => {
+            let start_span = tokens[*index].span;
+
+            *index += 1;
+
+            let (expr, err) = parse_operand(tokens, index);
+            error = error.or(err);
+
+            let span = Span {
+                file_id: start_span.file_id,
+                start: start_span.start,
+                end: expr.span().end,
+            };
+
+            Expression::UnaryOp(Box::new(expr), UnaryOperator::LogicalNot, span)
         }
         TokenContents::Name(name) => {
             if *index + 1 < tokens.len() {
