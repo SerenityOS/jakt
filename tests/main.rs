@@ -178,3 +178,8 @@ fn test_classes() -> Result<(), JaktError> {
 fn test_pointers() -> Result<(), JaktError> {
     test_samples("samples/pointers")
 }
+
+#[test]
+fn test_boolean() -> Result<(), JaktError> {
+    test_samples("samples/boolean")
+}

@@ -267,6 +267,7 @@ pub enum BinaryOperator {
     GreaterThan,
     LessThanOrEqual,
     GreaterThanOrEqual,
+    LogicalAnd,
     Assign,
     AddAssign,
     SubtractAssign,
@@ -292,6 +293,7 @@ impl Expression {
             | Expression::Operator(BinaryOperator::GreaterThanOrEqual, _)
             | Expression::Operator(BinaryOperator::Equal, _)
             | Expression::Operator(BinaryOperator::NotEqual, _) => 80,
+            Expression::Operator(BinaryOperator::LogicalAnd, _) => 70,
             Expression::Operator(BinaryOperator::Assign, _)
             | Expression::Operator(BinaryOperator::AddAssign, _)
             | Expression::Operator(BinaryOperator::SubtractAssign, _)
@@ -1311,6 +1313,10 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
             *index += 1;
             Expression::Boolean(false, span)
         }
+        TokenContents::Name(name) if name == "and" => {
+            *index += 1;
+            Expression::Operator(BinaryOperator::LogicalAnd, span)
+        }
         TokenContents::Name(name) => {
             if *index + 1 < tokens.len() {
                 match &tokens[*index + 1].contents {
@@ -1715,6 +1721,10 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
     let span = tokens[*index].span;
 
     match &tokens[*index].contents {
+        TokenContents::Name(name) if name == "and" => {
+            *index += 1;
+            (Expression::Operator(BinaryOperator::LogicalAnd, span), None)
+        }
         TokenContents::Plus => {
             *index += 1;
             (Expression::Operator(BinaryOperator::Add, span), None)
@@ -1885,6 +1895,10 @@ pub fn parse_operator_with_assignment(
         TokenContents::PercentSign => {
             *index += 1;
             (Expression::Operator(BinaryOperator::Modulo, span), None)
+        }
+        TokenContents::Name(name) if name == "and" => {
+            *index += 1;
+            (Expression::Operator(BinaryOperator::LogicalAnd, span), None)
         }
         TokenContents::Equal => {
             *index += 1;
