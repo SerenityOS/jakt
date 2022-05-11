@@ -419,6 +419,31 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
                 )),
             ),
         }
+    } else if bytes[*index] == b'0' && *index + 2 < bytes.len() && bytes[*index + 1] == b'b' {
+        // Binary number
+        let start = *index;
+        *index += 2;
+        while *index < bytes.len() && (bytes[*index] == b'0' || bytes[*index] == b'1') {
+            *index += 1;
+        }
+        let str = String::from_utf8_lossy(&bytes[start + 2..*index]);
+        let number = i64::from_str_radix(&str, 2);
+        match number {
+            Ok(number) => (
+                Token::new(
+                    TokenContents::Number(number),
+                    Span::new(file_id, start, *index),
+                ),
+                None,
+            ),
+            Err(_) => (
+                Token::unknown(Span::new(file_id, start, *index)),
+                Some(JaktError::ParserError(
+                    "could not parse binary number".to_string(),
+                    Span::new(file_id, start, *index),
+                )),
+            ),
+        }
     } else if bytes[*index].is_ascii_digit() {
         // Number
         let start = *index;
