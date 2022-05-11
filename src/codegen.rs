@@ -545,6 +545,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> 
                 UnaryOperator::RawAddress => {
                     output.push_str("&");
                 }
+                UnaryOperator::LogicalNot => {
+                    output.push_str("!");
+                }
                 _ => {}
             }
             output.push_str(&codegen_expr(indent, expr, file));
@@ -580,6 +583,8 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> 
                 BinaryOperator::LessThanOrEqual => output.push_str(" <= "),
                 BinaryOperator::GreaterThan => output.push_str(" > "),
                 BinaryOperator::GreaterThanOrEqual => output.push_str(" >= "),
+                BinaryOperator::LogicalAnd => output.push_str(" && "),
+                BinaryOperator::LogicalOr => output.push_str(" || "),
             }
             output.push_str(&codegen_expr(indent, rhs, file));
             output.push(')');

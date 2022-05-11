@@ -946,16 +946,11 @@ pub fn typecheck_expression(
             let err = try_promote_constant_expr_to_type(&checked_lhs.ty(), &mut checked_rhs, span);
             error = error.or(err);
 
-            error = error.or(typecheck_binary_operation(
-                &checked_lhs,
-                &op,
-                &checked_rhs,
-                *span,
-            ));
-
             // TODO: actually do the binary operator typecheck against safe operations
             // For now, use a type we know
-            let ty = checked_lhs.ty();
+            let (ty, err) = typecheck_binary_operation(&checked_lhs, &op, &checked_rhs, *span);
+            error = error.or(err);
+
             (
                 CheckedExpression::BinaryOp(
                     Box::new(checked_lhs),
@@ -1304,6 +1299,13 @@ pub fn typecheck_unary_operation(
                 None,
             )
         }
+        UnaryOperator::LogicalNot => {
+            let ty = expr.ty();
+            (
+                CheckedExpression::UnaryOp(Box::new(expr), UnaryOperator::LogicalNot, ty),
+                None,
+            )
+        }
         UnaryOperator::Negate => {
             let ty = expr.ty();
 
@@ -1381,8 +1383,12 @@ pub fn typecheck_binary_operation(
     op: &BinaryOperator,
     rhs: &CheckedExpression,
     span: Span,
-) -> Option<JaktError> {
+) -> (Type, Option<JaktError>) {
+    let mut ty = lhs.ty();
     match op {
+        BinaryOperator::LogicalAnd | BinaryOperator::LogicalOr => {
+            ty = Type::Bool;
+        }
         BinaryOperator::Assign
         | BinaryOperator::AddAssign
         | BinaryOperator::SubtractAssign
@@ -1392,26 +1398,32 @@ pub fn typecheck_binary_operation(
             let rhs_ty = rhs.ty();
 
             if lhs_ty != rhs_ty {
-                return Some(JaktError::TypecheckError(
-                    format!(
-                        "assignment between incompatible types ({:?} and {:?})",
-                        lhs_ty, rhs_ty
-                    ),
-                    span,
-                ));
+                return (
+                    lhs.ty(),
+                    Some(JaktError::TypecheckError(
+                        format!(
+                            "assignment between incompatible types ({:?} and {:?})",
+                            lhs_ty, rhs_ty
+                        ),
+                        span,
+                    )),
+                );
             }
 
             if !lhs.is_mutable() {
-                return Some(JaktError::TypecheckError(
-                    "assignment to immutable variable".to_string(),
-                    span,
-                ));
+                return (
+                    lhs_ty,
+                    Some(JaktError::TypecheckError(
+                        "assignment to immutable variable".to_string(),
+                        span,
+                    )),
+                );
             }
         }
         _ => {}
     }
 
-    None
+    (ty, None)
 }
 
 pub fn resolve_call<'a>(
