@@ -1,0 +1,9 @@
+extern class String {
+    fun to_lowercase(this) -> String {}
+}
+
+fun main() {
+    let name = "Andreas";
+
+    print(name.to_lowercase())
+}

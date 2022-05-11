@@ -1,5 +1,5 @@
 use crate::{
-    parser::{BinaryOperator, FunctionLinkage, UnaryOperator},
+    parser::{BinaryOperator, DefinitionLinkage, DefinitionType, FunctionLinkage, UnaryOperator},
     typechecker::{
         CheckedBlock, CheckedExpression, CheckedFile, CheckedFunction, CheckedStatement,
         CheckedStruct, CheckedVariable, NumericConstant, Type,
@@ -62,11 +62,39 @@ pub fn codegen(file: &CheckedFile) -> String {
 }
 
 fn codegen_struct_predecl(structure: &CheckedStruct) -> String {
-    format!("struct {};", structure.name)
+    if structure.definition_linkage == DefinitionLinkage::External {
+        String::new()
+    } else {
+        match structure.definition_type {
+            DefinitionType::Class => {
+                format!("class {};", structure.name)
+            }
+            DefinitionType::Struct => {
+                format!("struct {};", structure.name)
+            }
+        }
+    }
 }
 
 fn codegen_struct(structure: &CheckedStruct, file: &CheckedFile) -> String {
-    let mut output = format!("struct {} {{\n", structure.name);
+    let mut output = String::new();
+
+    if structure.definition_linkage == DefinitionLinkage::External {
+        return output;
+    }
+
+    match structure.definition_type {
+        DefinitionType::Class => {
+            output.push_str(&format!("class {} {{\n", structure.name));
+            // As we should test the visibility before codegen, we take a simple
+            // approach to codegen
+            output.push_str("  public:\n");
+        }
+        DefinitionType::Struct => {
+            output.push_str(&format!("struct {} {{\n", structure.name));
+            output.push_str("  public:\n");
+        }
+    }
 
     for member in &structure.fields {
         output.push_str(&" ".repeat(INDENT_SIZE));
@@ -159,8 +187,11 @@ fn codegen_function(fun: &CheckedFunction, file: &CheckedFile) -> String {
     }
 
     let mut first = true;
+    let mut const_fun = false;
+
     for param in &fun.params {
         if param.variable.name == "this" {
+            const_fun = !param.variable.mutable;
             continue;
         }
 
@@ -176,6 +207,10 @@ fn codegen_function(fun: &CheckedFunction, file: &CheckedFile) -> String {
         output.push_str(&param.variable.name);
     }
     output.push(')');
+
+    if const_fun {
+        output.push_str(" const");
+    }
 
     if fun.name == "main" {
         output.push_str("\n{");

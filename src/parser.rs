@@ -79,13 +79,27 @@ pub struct Struct {
     pub fields: Vec<VarDecl>,
     pub methods: Vec<Function>,
     pub span: Span,
+    pub definition_linkage: DefinitionLinkage,
+    pub definition_type: DefinitionType,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum FunctionLinkage {
     Internal,
     External,
     ImplicitConstructor,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum DefinitionLinkage {
+    Internal,
+    External,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum DefinitionType {
+    Class,
+    Struct,
 }
 
 #[derive(Debug)]
@@ -322,7 +336,23 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
                     parsed_file.funs.push(fun);
                 }
                 "struct" => {
-                    let (structure, err) = parse_struct(tokens, &mut index);
+                    let (structure, err) = parse_struct(
+                        tokens,
+                        &mut index,
+                        DefinitionLinkage::Internal,
+                        DefinitionType::Struct,
+                    );
+                    error = error.or(err);
+
+                    parsed_file.structs.push(structure);
+                }
+                "class" => {
+                    let (structure, err) = parse_struct(
+                        tokens,
+                        &mut index,
+                        DefinitionLinkage::Internal,
+                        DefinitionType::Class,
+                    );
                     error = error.or(err);
 
                     parsed_file.structs.push(structure);
@@ -344,6 +374,30 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
                                     error = error.or(err);
 
                                     parsed_file.funs.push(fun);
+                                }
+                                "struct" => {
+                                    index += 1;
+                                    let (structure, err) = parse_struct(
+                                        tokens,
+                                        &mut index,
+                                        DefinitionLinkage::External,
+                                        DefinitionType::Struct,
+                                    );
+                                    error = error.or(err);
+
+                                    parsed_file.structs.push(structure);
+                                }
+                                "class" => {
+                                    index += 1;
+                                    let (structure, err) = parse_struct(
+                                        tokens,
+                                        &mut index,
+                                        DefinitionLinkage::External,
+                                        DefinitionType::Class,
+                                    );
+                                    error = error.or(err);
+
+                                    parsed_file.structs.push(structure);
                                 }
                                 _ => {
                                     trace!("ERROR: unexpected keyword");
@@ -403,7 +457,12 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
     (parsed_file, error)
 }
 
-pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<JaktError>) {
+pub fn parse_struct(
+    tokens: &[Token],
+    index: &mut usize,
+    definition_linkage: DefinitionLinkage,
+    definition_type: DefinitionType,
+) -> (Struct, Option<JaktError>) {
     trace!(format!("parse_struct: {:?}", tokens[*index]));
 
     let mut error = None;
@@ -491,19 +550,6 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
                             fields.push(var_decl);
                         }
 
-                        TokenContents::Eof => {
-                            trace!(format!(
-                                "ERROR: expected field, found: {:?}",
-                                tokens[*index].contents
-                            ));
-
-                            error = error.or(Some(JaktError::ParserError(
-                                "expected field".to_string(),
-                                tokens[*index].span,
-                            )));
-
-                            break;
-                        }
                         _ => {
                             trace!(format!(
                                 "ERROR: expected field, found: {:?}",
@@ -514,6 +560,7 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
                                 "expected field".to_string(),
                                 tokens[*index].span,
                             )));
+                            break;
                         }
                     }
                 }
@@ -532,6 +579,8 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
                         fields,
                         methods,
                         span: tokens[*index - 1].span,
+                        definition_linkage,
+                        definition_type,
                     },
                     error,
                 )
@@ -550,6 +599,8 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
                         fields: Vec::new(),
                         methods: Vec::new(),
                         span: tokens[*index].span,
+                        definition_linkage,
+                        definition_type,
                     },
                     error,
                 )
@@ -569,6 +620,8 @@ pub fn parse_struct(tokens: &[Token], index: &mut usize) -> (Struct, Option<Jakt
                 fields: Vec::new(),
                 methods: Vec::new(),
                 span: tokens[*index].span,
+                definition_linkage,
+                definition_type,
             },
             error,
         )
@@ -626,6 +679,7 @@ pub fn parse_function(
                 let mut params = Vec::new();
 
                 let mut current_param_requires_label = true;
+                let mut current_param_is_mutable = false;
 
                 while *index < tokens.len() {
                     match &tokens[*index].contents {
@@ -644,6 +698,11 @@ pub fn parse_function(
                             *index += 1;
                         }
 
+                        TokenContents::Name(name) if name == "var" => {
+                            current_param_is_mutable = true;
+                            *index += 1;
+                        }
+
                         TokenContents::Name(name) if name == "this" => {
                             *index += 1;
 
@@ -652,7 +711,7 @@ pub fn parse_function(
                                 variable: Variable {
                                     name: "this".to_string(),
                                     ty: UncheckedType::Empty,
-                                    mutable: false,
+                                    mutable: current_param_is_mutable,
                                 },
                             });
                         }
