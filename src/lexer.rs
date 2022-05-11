@@ -17,7 +17,7 @@ impl Span {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TokenContents {
     QuotedString(String),
     Number(i64),

@@ -1,7 +1,7 @@
 use std::{io::Write, path::Path};
 
 use crate::{
-    codegen::translate,
+    codegen::codegen,
     error::JaktError,
     lexer::lex,
     parser::parse_file,
@@ -63,7 +63,7 @@ impl Compiler {
         self.checked_files
             .push((fname.to_string_lossy().to_string(), file.clone()));
 
-        Ok(translate(&file))
+        Ok(codegen(&file))
     }
 
     pub fn compile(&mut self, fname: &Path) -> Result<(), JaktError> {
