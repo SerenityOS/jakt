@@ -1,0 +1,5 @@
+fun main() {
+    print(0x123456789abcde)
+    print(0x0)
+    print(0xfffffffff)
+}
