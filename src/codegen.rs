@@ -16,8 +16,10 @@ pub fn codegen(file: &CheckedFile) -> String {
     for structure in &file.structs {
         let struct_output = codegen_struct_predecl(structure);
 
-        output.push_str(&struct_output);
-        output.push('\n');
+        if !struct_output.is_empty() {
+            output.push_str(&struct_output);
+            output.push('\n');
+        }
     }
 
     output.push('\n');
@@ -25,8 +27,10 @@ pub fn codegen(file: &CheckedFile) -> String {
     for structure in &file.structs {
         let struct_output = codegen_struct(structure, file);
 
-        output.push_str(&struct_output);
-        output.push('\n');
+        if !struct_output.is_empty() {
+            output.push_str(&struct_output);
+            output.push('\n');
+        }
     }
 
     output.push('\n');
@@ -147,6 +151,9 @@ fn codegen_function_predecl(fun: &CheckedFunction, file: &CheckedFile) -> String
             first = false;
         }
 
+        if !param.variable.mutable {
+            output.push_str("const ");
+        }
         let ty = codegen_type(&param.variable.ty, file);
         output.push_str(&ty);
         output.push(' ');
@@ -190,6 +197,10 @@ fn codegen_function(fun: &CheckedFunction, file: &CheckedFile) -> String {
             output.push_str(", ");
         } else {
             first = false;
+        }
+
+        if !param.variable.mutable {
+            output.push_str("const ");
         }
 
         let ty = codegen_type(&param.variable.ty, file);
@@ -264,8 +275,8 @@ fn codegen_type(ty: &Type, file: &CheckedFile) -> String {
     match ty {
         Type::Bool => String::from("bool"),
         Type::String => String::from("String"),
-        Type::Char => String::from("char"),
-        Type::Int => String::from("int"),
+        Type::CChar => String::from("char"),
+        Type::CInt => String::from("int"),
         Type::I8 => String::from("i8"),
         Type::I16 => String::from("i16"),
         Type::I32 => String::from("i32"),

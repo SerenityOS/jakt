@@ -1,10 +1,10 @@
 extern struct FILE {}
 
-extern fun fopen(anon str: raw char, anon mode: raw char) -> raw FILE
-extern fun fgetc(anon file: mut raw FILE) -> int
-extern fun fclose(anon file: mut raw FILE) -> int
-extern fun feof(anon file: mut raw FILE) -> int
-extern fun putchar(anon ch: int) -> int
+extern fun fopen(anon str: raw c_char, anon mode: raw c_char) -> raw FILE
+extern fun fgetc(anon file: mut raw FILE) -> c_int
+extern fun fclose(anon file: mut raw FILE) -> c_int
+extern fun feof(anon file: mut raw FILE) -> c_int
+extern fun putchar(anon ch: c_int) -> c_int
 
 fun main(args: [String]) {
     if args.size() <= 1 {
