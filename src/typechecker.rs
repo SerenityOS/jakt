@@ -1388,6 +1388,13 @@ pub fn typecheck_unary_operation(
                 None,
             )
         }
+        UnaryOperator::BitwiseNot => {
+            let ty = expr.ty();
+            (
+                CheckedExpression::UnaryOp(Box::new(expr), UnaryOperator::BitwiseNot, ty),
+                None,
+            )
+        }
         UnaryOperator::Negate => {
             let ty = expr.ty();
 

@@ -257,6 +257,7 @@ pub enum UnaryOperator {
     Dereference,
     RawAddress,
     LogicalNot,
+    BitwiseNot,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -274,6 +275,11 @@ pub enum BinaryOperator {
     GreaterThanOrEqual,
     LogicalAnd,
     LogicalOr,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
+    BitwiseLeftShift,
+    BitwiseRightShift,
     Assign,
     AddAssign,
     SubtractAssign,
@@ -293,12 +299,17 @@ impl Expression {
             | Expression::Operator(BinaryOperator::Divide, _) => 100,
             Expression::Operator(BinaryOperator::Add, _)
             | Expression::Operator(BinaryOperator::Subtract, _) => 90,
+            Expression::Operator(BinaryOperator::BitwiseLeftShift, _)
+            | Expression::Operator(BinaryOperator::BitwiseRightShift, _) => 85,
             Expression::Operator(BinaryOperator::LessThan, _)
             | Expression::Operator(BinaryOperator::LessThanOrEqual, _)
             | Expression::Operator(BinaryOperator::GreaterThan, _)
             | Expression::Operator(BinaryOperator::GreaterThanOrEqual, _)
             | Expression::Operator(BinaryOperator::Equal, _)
             | Expression::Operator(BinaryOperator::NotEqual, _) => 80,
+            Expression::Operator(BinaryOperator::BitwiseAnd, _) => 73,
+            Expression::Operator(BinaryOperator::BitwiseXor, _) => 72,
+            Expression::Operator(BinaryOperator::BitwiseOr, _) => 71,
             Expression::Operator(BinaryOperator::LogicalAnd, _) => 70,
             Expression::Operator(BinaryOperator::LogicalOr, _) => 69,
             Expression::Operator(BinaryOperator::Assign, _)
@@ -1519,6 +1530,22 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 
             Expression::UnaryOp(Box::new(expr), UnaryOperator::Negate, span)
         }
+        TokenContents::Tilde => {
+            let start_span = tokens[*index].span;
+
+            *index += 1;
+
+            let (expr, err) = parse_operand(tokens, index);
+            error = error.or(err);
+
+            let span = Span {
+                file_id: start_span.file_id,
+                start: start_span.start,
+                end: expr.span().end,
+            };
+
+            Expression::UnaryOp(Box::new(expr), UnaryOperator::BitwiseNot, span)
+        }
         TokenContents::Asterisk => {
             let start_span = tokens[*index].span;
 
@@ -1986,6 +2013,32 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
                 None,
             )
         }
+        TokenContents::Ampersand => {
+            *index += 1;
+            (Expression::Operator(BinaryOperator::BitwiseAnd, span), None)
+        }
+        TokenContents::Pipe => {
+            *index += 1;
+            (Expression::Operator(BinaryOperator::BitwiseOr, span), None)
+        }
+        TokenContents::Caret => {
+            *index += 1;
+            (Expression::Operator(BinaryOperator::BitwiseXor, span), None)
+        }
+        TokenContents::LeftShift => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::BitwiseLeftShift, span),
+                None,
+            )
+        }
+        TokenContents::RightShift => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::BitwiseRightShift, span),
+                None,
+            )
+        }
         _ => {
             trace!("ERROR: unsupported operator (possibly just the end of an expression)");
 
@@ -2039,6 +2092,32 @@ pub fn parse_operator_with_assignment(
         TokenContents::Name(name) if name == "or" => {
             *index += 1;
             (Expression::Operator(BinaryOperator::LogicalOr, span), None)
+        }
+        TokenContents::Ampersand => {
+            *index += 1;
+            (Expression::Operator(BinaryOperator::BitwiseAnd, span), None)
+        }
+        TokenContents::Pipe => {
+            *index += 1;
+            (Expression::Operator(BinaryOperator::BitwiseOr, span), None)
+        }
+        TokenContents::Caret => {
+            *index += 1;
+            (Expression::Operator(BinaryOperator::BitwiseXor, span), None)
+        }
+        TokenContents::LeftShift => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::BitwiseLeftShift, span),
+                None,
+            )
+        }
+        TokenContents::RightShift => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::BitwiseRightShift, span),
+                None,
+            )
         }
         TokenContents::Equal => {
             *index += 1;

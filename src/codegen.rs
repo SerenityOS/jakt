@@ -557,6 +557,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> 
                 UnaryOperator::LogicalNot => {
                     output.push_str("!");
                 }
+                UnaryOperator::BitwiseNot => {
+                    output.push_str("~");
+                }
                 _ => {}
             }
             output.push_str(&codegen_expr(indent, expr, file));
@@ -594,6 +597,11 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> 
                 BinaryOperator::GreaterThanOrEqual => output.push_str(" >= "),
                 BinaryOperator::LogicalAnd => output.push_str(" && "),
                 BinaryOperator::LogicalOr => output.push_str(" || "),
+                BinaryOperator::BitwiseAnd => output.push_str(" & "),
+                BinaryOperator::BitwiseOr => output.push_str(" | "),
+                BinaryOperator::BitwiseXor => output.push_str(" ^ "),
+                BinaryOperator::BitwiseLeftShift => output.push_str(" << "),
+                BinaryOperator::BitwiseRightShift => output.push_str(" >> "),
             }
             output.push_str(&codegen_expr(indent, rhs, file));
             output.push(')');
