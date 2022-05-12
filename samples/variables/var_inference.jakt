@@ -1,4 +1,4 @@
 fun main() {
-    var x = 100
+    let mut x = 100
     print(x)
 }

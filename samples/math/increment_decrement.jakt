@@ -1,5 +1,5 @@
 fun main() {
-    var x = 10
+    let mut x = 10
 
     print(++x)
     print(x++)

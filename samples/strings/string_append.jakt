@@ -3,7 +3,7 @@ fun main() {
     let b = "kt"
     print(a + b)
 
-    var str = "programming "
+    let mut str = "programming "
     str += "language"
     print(str)
 }

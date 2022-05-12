@@ -1,5 +1,5 @@
 fun main() {
-    var x = [1, 2, 3]
+    let mut x = [1, 2, 3]
     x[1] = 55
 
     print(x[1])

@@ -707,7 +707,7 @@ pub fn parse_function(
                             *index += 1;
                         }
 
-                        TokenContents::Name(name) if name == "var" => {
+                        TokenContents::Name(name) if name == "mut" => {
                             current_param_is_mutable = true;
                             *index += 1;
                         }
@@ -1003,10 +1003,20 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
 
             (Statement::Return(expr), error)
         }
-        TokenContents::Name(name) if name == "let" || name.as_str() == "var" => {
-            trace!("parsing let/var");
+        TokenContents::Name(name) if name == "let" => {
+            trace!("parsing let");
 
-            let mutable = name == "var";
+            let mutable = if *index + 1 < tokens.len() {
+                match &tokens[*index + 1].contents {
+                    TokenContents::Name(name) if name == "mut" => {
+                        *index += 1;
+                        true
+                    }
+                    _ => false,
+                }
+            } else {
+                false
+            };
 
             *index += 1;
 
@@ -2236,13 +2246,22 @@ pub fn parse_variable_declaration(
             }
 
             if *index < tokens.len() {
+                let mutable = *index + 1 < tokens.len()
+                    && match &tokens[*index].contents {
+                        TokenContents::Name(name) if name == "mut" => {
+                            *index += 1;
+                            true
+                        }
+                        _ => false,
+                    };
+
                 let (var_type, err) = parse_typename(tokens, index);
                 error = error.or(err);
 
                 let result = VarDecl {
                     name: var_name,
                     ty: var_type,
-                    mutable: false,
+                    mutable,
                     span: tokens[*index - 3].span,
                 };
 

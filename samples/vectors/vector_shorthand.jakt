@@ -4,7 +4,7 @@ fun make_v() -> [String] {
 
 fun main() {
     let v: [String] = make_v()
-    var i = 0
+    let mut i = 0
     while i < 2 {
         print(v[i])
         ++i
