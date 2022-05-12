@@ -15,8 +15,8 @@ fun main() {
     let mut f = Foo(x: 123)
     f.x += 2
 
-    print(a)
-    print(b)
-    print(c)
-    print(f.x)
+    println(a)
+    println(b)
+    println(c)
+    println(f.x)
 }

@@ -1,10 +1,10 @@
 fun main() {
     if not (1 < 2) {
-        print("whoops")
+        println("whoops")
     }
 
     let sadness = false
     if not sadness {
-        print("happiness")
+        println("happiness")
     }
 }

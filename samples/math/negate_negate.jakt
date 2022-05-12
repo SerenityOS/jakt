@@ -1,3 +1,3 @@
 fun main() {
-    print(-(-3))
+    println(-(-3))
 }

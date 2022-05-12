@@ -2,8 +2,8 @@ fun main() {
     let x: i64 = 80;
 
     if x == 100 {
-        print("true")
+        println("true")
     } else if x == 80 {
-        print("it is 80")
+        println("it is 80")
     }
 }

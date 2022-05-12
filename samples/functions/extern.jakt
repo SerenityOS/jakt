@@ -2,5 +2,5 @@ extern fun runtime_helper_number_to_string(number: i64) -> String
 
 fun main() {
     let s = runtime_helper_number_to_string(number: 5 + 10)
-    print("Five plus ten = " + s)
+    println("Five plus ten = " + s)
 }

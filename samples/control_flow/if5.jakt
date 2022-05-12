@@ -2,10 +2,10 @@ fun main() {
     let x: i64 = 70;
 
     if x == 100 {
-        print("true")
+        println("true")
     } else if x == 80 {
-        print("it is 80")
+        println("it is 80")
     } else {
-        print("none of the above")
+        println("none of the above")
     }
 }

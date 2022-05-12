@@ -2,7 +2,7 @@ fun main() {
     let x = 10
     {
         let x = 20
-        print(x)
+        println(x)
     }
-    print(x)
+    println(x)
 }

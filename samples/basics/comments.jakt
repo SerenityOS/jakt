@@ -1,4 +1,4 @@
 fun main() {
     // This is a comment
-    print("hello")
+    println("hello")
 }

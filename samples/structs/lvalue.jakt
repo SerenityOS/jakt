@@ -8,5 +8,5 @@ fun main() {
 
     p.age = 99;
 
-    print(p.age)
+    println(p.age)
 }

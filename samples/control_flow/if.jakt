@@ -1,5 +1,5 @@
 fun main() {
     if (true) {
-        print("true")
+        println("true")
     }
 }

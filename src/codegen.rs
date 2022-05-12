@@ -474,7 +474,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> 
             }
         }
         CheckedExpression::Call(call, ..) => {
-            if call.name == "print" {
+            if call.name == "println" {
                 output.push_str("outln(\"{}\", ");
                 for param in &call.args {
                     output.push_str(&codegen_expr(indent, &param.1, file));

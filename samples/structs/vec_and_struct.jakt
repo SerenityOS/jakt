@@ -9,6 +9,6 @@ fun main() {
         Person(name: "Björn", age: 200)
     ]
 
-    print(arr[0].name)
-    print(arr[1].name)
+    println(arr[0].name)
+    println(arr[1].name)
 }

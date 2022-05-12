@@ -1,5 +1,5 @@
 fun main() {
     let mut x: i64 = 100
     x += 1
-    print(x)
+    println(x)
 }
