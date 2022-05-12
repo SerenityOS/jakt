@@ -2,9 +2,9 @@ extern struct FILE {}
 
 extern fun puts(anon str: raw char) -> int
 extern fun fopen(anon str: raw char, anon mode: raw char) -> raw FILE
-extern fun fgetc(anon var file: raw FILE) -> i32
-extern fun fclose(anon var file: raw FILE) -> int
-extern fun putchar(anon var ch: i32) -> int
+extern fun fgetc(anon mut file: raw FILE) -> i32
+extern fun fclose(anon mut file: raw FILE) -> int
+extern fun putchar(anon mut ch: i32) -> int
 
 extern class String {
     fun to_lowercase(this) -> String {}
@@ -15,13 +15,13 @@ extern class String {
 fun main(args: [String]) {
     let filename = args[1]
 
-    var file = fopen(filename.characters(), "r".characters())
+    let mut file = fopen(filename.characters(), "r".characters())
 
     defer {
         fclose(file)
     }
 
-    var c = fgetc(file)
+    let mut c = fgetc(file)
     while c != -1 {
         putchar(c)
         c = fgetc(file)

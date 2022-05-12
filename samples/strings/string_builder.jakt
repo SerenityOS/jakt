@@ -1,10 +1,10 @@
 extern struct StringBuilder {
-    fun append(var this, anon s: raw char) {}
-    fun to_string(var this) -> String {}
+    fun append(mut this, anon s: raw char) {}
+    fun to_string(mut this) -> String {}
 }
 
 fun main() {
-    var s = StringBuilder()
+    let mut s = StringBuilder()
 
     s.append("abc".characters());
     s.append("123".characters());

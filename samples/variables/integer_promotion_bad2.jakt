@@ -1,4 +1,4 @@
 fun main() {
-    var i: u8 = 0;
+    let mut i: u8 = 0;
     i += 1000;
 }

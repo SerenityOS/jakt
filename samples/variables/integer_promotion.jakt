@@ -3,16 +3,16 @@ struct Foo {
 }
 
 fun main() {
-    var a: u8 = 100
+    let mut a: u8 = 100
     a += 100
 
-    var b: u16 = 1000
+    let mut b: u16 = 1000
     b += 1000
 
-    var c: u32 = 100000
+    let mut c: u32 = 100000
     c += 100000
 
-    var f = Foo(x: 123)
+    let mut f = Foo(x: 123)
     f.x += 2
 
     print(a)
