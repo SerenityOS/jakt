@@ -1,9 +1,9 @@
 fun main() {
     let a = "ja"
     let b = "kt"
-    print(a + b)
+    println(a + b)
 
     let mut str = "programming "
     str += "language"
-    print(str)
+    println(str)
 }

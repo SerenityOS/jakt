@@ -1,5 +1,5 @@
 fun main() {
     let foo : i64? = 123
     let bar = foo! + 2
-    print(bar)
+    println(bar)
 }

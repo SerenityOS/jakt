@@ -1,11 +1,11 @@
 fun main() {
     let i = 5
     if i == 5 and 7 > 6 {
-        print("OK")
+        println("OK")
     }
     let a = true
     let b = true
     if a and b {
-        print("OK")
+        println("OK")
     }
 }

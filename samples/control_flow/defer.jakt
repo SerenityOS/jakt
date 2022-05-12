@@ -1,6 +1,6 @@
 fun main() {
     defer {
-        print(" friends!\n")
+        println(" friends!\n")
     }
-    print("Hello")
+    println("Hello")
 }

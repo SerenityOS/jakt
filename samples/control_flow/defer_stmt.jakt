@@ -1,4 +1,4 @@
 fun main() {
-    defer print(" friends!\n")
-    print("Well, hello")
+    defer println(" friends!\n")
+    println("Well, hello")
 }

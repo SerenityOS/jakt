@@ -1,5 +1,5 @@
 fun greet() {
-    print("Well, hello friends.")
+    println("Well, hello friends.")
 }
 
 fun main() {

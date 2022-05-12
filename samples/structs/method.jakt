@@ -8,5 +8,5 @@ struct Rectangle {
 fun main() {
     let rect = Rectangle(width: 4, height: 8)
 
-    print(rect.area())
+    println(rect.area())
 }

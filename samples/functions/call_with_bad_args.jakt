@@ -1,6 +1,6 @@
 fun greet(msg: String, msg2: String) {
-    print(msg)
-    print(msg2)
+    println(msg)
+    println(msg2)
 }
 
 fun main() {

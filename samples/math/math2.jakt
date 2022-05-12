@@ -1,4 +1,4 @@
 fun main() {
-    print(5 - 5 * 10 + 5)
-    print(2 * 8 - 12 / 2)
+    println(5 - 5 * 10 + 5)
+    println(2 * 8 - 12 / 2)
 }

@@ -1,28 +1,24 @@
 extern struct FILE {}
 
-extern fun puts(anon str: raw char) -> int
 extern fun fopen(anon str: raw char, anon mode: raw char) -> raw FILE
-extern fun fgetc(anon file: mut raw FILE) -> i32
+extern fun fgetc(anon file: mut raw FILE) -> int
 extern fun fclose(anon file: mut raw FILE) -> int
-extern fun putchar(anon ch: i32) -> int
-
-extern class String {
-    fun to_lowercase(this) -> String {}
-    fun to_uppercase(this) -> String {}
-    fun characters(this) -> raw char {}
-}
+extern fun feof(anon file: mut raw FILE) -> int
+extern fun putchar(anon ch: int) -> int
 
 fun main(args: [String]) {
+    if args.size() <= 1 {
+        eprintln("usage: cat <path>")
+        return 1
+    }
+
     let filename = args[1]
 
     let mut file = fopen(filename.characters(), "r".characters())
-
-    defer {
-        fclose(file)
-    }
+    defer fclose(file)
 
     let mut c = fgetc(file)
-    while c != -1 {
+    while not feof(file) {
         putchar(c)
         c = fgetc(file)
     }

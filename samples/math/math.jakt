@@ -1,5 +1,5 @@
 fun subtract(x: i64, y: i64) {
-    print(x - y)
+    println(x - y)
 }
 
 fun main() {
