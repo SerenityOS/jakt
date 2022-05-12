@@ -17,9 +17,22 @@ pub struct Compiler {
 
 impl Compiler {
     pub fn new() -> Self {
+        let prelude = Compiler::prelude();
+        let mut raw_files = Vec::new();
+        let mut checked_files = Vec::new();
+
+        // Not sure where to put prelude, but we're hoping its parsing is infallible
+        raw_files.push(("<prelude>".to_string(), prelude));
+
+        // Compile the prelude
+        let (lexed, _) = lex(raw_files.len() - 1, &raw_files[raw_files.len() - 1].1);
+        let (file, _) = parse_file(&lexed);
+        let (file, _) = typecheck_file(&file, &CheckedFile::new());
+
+        checked_files.push(("<prelude>".to_string(), file));
         Self {
-            raw_files: Vec::new(),
-            checked_files: Vec::new(),
+            raw_files,
+            checked_files,
         }
     }
 
@@ -50,7 +63,7 @@ impl Compiler {
             _ => {}
         }
 
-        let (file, err) = typecheck_file(&file);
+        let (file, err) = typecheck_file(&file, &self.checked_files[0].1);
 
         match err {
             Some(err) => {
@@ -77,5 +90,23 @@ impl Compiler {
 
     pub fn get_file_contents(&self, file_id: FileId) -> &[u8] {
         &self.raw_files[file_id].1
+    }
+
+    pub fn prelude() -> Vec<u8> {
+        r#"
+extern class String {
+    fun split(this, anon c: char) -> [String] {}
+    fun characters(this) -> raw char {}
+    fun to_lowercase(this) -> String {}
+    fun to_uppercase(this) -> String {}
+}
+
+extern class Vector {
+    fun size(this) -> i64 {}
+}
+
+"#
+        .as_bytes()
+        .to_vec()
     }
 }

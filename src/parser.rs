@@ -176,6 +176,7 @@ pub enum Expression {
     Boolean(bool, Span),
     NumericConstant(NumericConstant, Span),
     QuotedString(String, Span),
+    CharacterLiteral(char, Span),
     Vector(Vec<Expression>, Span),
     IndexedExpression(Box<Expression>, Box<Expression>, Span),
     UnaryOp(Box<Expression>, UnaryOperator, Span),
@@ -208,6 +209,7 @@ impl Expression {
             Expression::Boolean(_, span) => *span,
             Expression::NumericConstant(_, span) => *span,
             Expression::QuotedString(_, span) => *span,
+            Expression::CharacterLiteral(_, span) => *span,
             Expression::Vector(_, span) => *span,
             Expression::Tuple(_, span) => *span,
             Expression::IndexedExpression(_, _, span) => *span,
@@ -1572,6 +1574,14 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
         TokenContents::QuotedString(str) => {
             *index += 1;
             Expression::QuotedString(str.to_string(), span)
+        }
+        TokenContents::SingleQuotedString(c) => {
+            *index += 1;
+            if let Some(first) = c.chars().next() {
+                Expression::CharacterLiteral(first, span)
+            } else {
+                Expression::Garbage(span)
+            }
         }
         _ => {
             trace!("ERROR: unsupported expression");

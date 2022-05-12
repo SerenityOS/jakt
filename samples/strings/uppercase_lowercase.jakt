@@ -1,0 +1,6 @@
+fun main() {
+    let name = "Andreas";
+
+    print(name.to_lowercase())
+    print(name.to_uppercase())
+}

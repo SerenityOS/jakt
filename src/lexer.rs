@@ -19,6 +19,7 @@ impl Span {
 
 #[derive(Debug, PartialEq)]
 pub enum TokenContents {
+    SingleQuotedString(String),
     QuotedString(String),
     Number(i64),
     Name(String),
@@ -481,6 +482,45 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
                 )),
             ),
         }
+    } else if bytes[*index] == b'\'' {
+        // Character
+
+        let start = *index;
+        *index += 1;
+
+        let mut escaped = false;
+
+        while *index < bytes.len() && (escaped || bytes[*index] != b'\'') {
+            if !escaped && bytes[*index] == b'\\' {
+                escaped = true;
+            } else {
+                escaped = false;
+            }
+
+            *index += 1;
+        }
+
+        if *index == bytes.len() || bytes[*index] != b'\'' {
+            error = error.or(Some(JaktError::ParserError(
+                "expected single quote".to_string(),
+                Span::new(file_id, *index, *index),
+            )));
+        }
+
+        // Everything but the quotes
+        let str = String::from_utf8_lossy(&bytes[(start + 1)..(*index)]);
+
+        *index += 1;
+
+        let end = *index;
+
+        (
+            Token::new(
+                TokenContents::SingleQuotedString(str.to_string()),
+                Span::new(file_id, start, end),
+            ),
+            error,
+        )
     } else if bytes[*index] == b'"' {
         // Quoted string
 

@@ -416,6 +416,11 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> 
             output.push_str(qs);
             output.push_str("\")");
         }
+        CheckedExpression::CharacterConstant(c) => {
+            output.push('\'');
+            output.push(*c);
+            output.push('\'');
+        }
         CheckedExpression::NumericConstant(constant, _) => match constant {
             NumericConstant::I8(value) => {
                 output.push_str("static_cast<i8>(");
