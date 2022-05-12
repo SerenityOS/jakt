@@ -3,6 +3,7 @@ extern struct FILE {}
 extern fun fopen(anon str: raw char, anon mode: raw char) -> raw FILE
 extern fun fgetc(anon file: mut raw FILE) -> int
 extern fun fclose(anon file: mut raw FILE) -> int
+extern fun feof(anon file: mut raw FILE) -> int
 extern fun putchar(anon ch: int) -> int
 
 fun main(args: [String]) {
@@ -17,7 +18,7 @@ fun main(args: [String]) {
     defer fclose(file)
 
     let mut c = fgetc(file)
-    while c != -1 {
+    while not feof(file) {
         putchar(c)
         c = fgetc(file)
     }
