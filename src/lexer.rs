@@ -49,8 +49,13 @@ pub enum TokenContents {
     GreaterThanOrEqual,
     LessThan,
     LessThanOrEqual,
+    LeftShift,
+    RightShift,
     Asterisk,
     Ampersand,
+    Pipe,
+    Caret,
+    Tilde,
     ForwardSlash,
     ExclamationPoint,
     QuestionMark,
@@ -241,6 +246,13 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                         Span::new(file_id, start, start + 2),
                     ));
                     continue;
+                } else if bytes[index] == b'>' {
+                    index += 1;
+                    output.push(Token::new(
+                        TokenContents::RightShift,
+                        Span::new(file_id, start, start + 2),
+                    ));
+                    continue;
                 }
             }
             output.push(Token::new(
@@ -255,6 +267,13 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                     index += 1;
                     output.push(Token::new(
                         TokenContents::LessThanOrEqual,
+                        Span::new(file_id, start, start + 2),
+                    ));
+                    continue;
+                } else if bytes[index] == b'<' {
+                    index += 1;
+                    output.push(Token::new(
+                        TokenContents::LeftShift,
                         Span::new(file_id, start, start + 2),
                     ));
                     continue;
@@ -286,6 +305,27 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
             index += 1;
             output.push(Token::new(
                 TokenContents::Ampersand,
+                Span::new(file_id, start, start + 1),
+            ));
+        } else if c == b'|' {
+            let start = index;
+            index += 1;
+            output.push(Token::new(
+                TokenContents::Pipe,
+                Span::new(file_id, start, start + 1),
+            ));
+        } else if c == b'^' {
+            let start = index;
+            index += 1;
+            output.push(Token::new(
+                TokenContents::Caret,
+                Span::new(file_id, start, start + 1),
+            ));
+        } else if c == b'~' {
+            let start = index;
+            index += 1;
+            output.push(Token::new(
+                TokenContents::Tilde,
                 Span::new(file_id, start, start + 1),
             ));
         } else if c == b'%' {
