@@ -315,6 +315,7 @@ pub enum CheckedExpression {
     Boolean(bool),
     NumericConstant(NumericConstant, Type),
     QuotedString(String),
+    CharacterConstant(char),
     UnaryOp(Box<CheckedExpression>, UnaryOperator, Type),
     BinaryOp(
         Box<CheckedExpression>,
@@ -348,6 +349,7 @@ impl CheckedExpression {
             CheckedExpression::Call(_, ty) => ty.clone(),
             CheckedExpression::NumericConstant(_, ty) => ty.clone(),
             CheckedExpression::QuotedString(_) => Type::String,
+            CheckedExpression::CharacterConstant(_) => Type::Char,
             CheckedExpression::UnaryOp(_, _, ty) => ty.clone(),
             CheckedExpression::BinaryOp(_, _, _, ty) => ty.clone(),
             CheckedExpression::Vector(_, ty) => ty.clone(),
@@ -484,22 +486,44 @@ impl StackFrame {
     }
 }
 
-pub fn typecheck_file(file: &ParsedFile) -> (CheckedFile, Option<JaktError>) {
+pub fn typecheck_file(
+    file: &ParsedFile,
+    prelude: &CheckedFile,
+) -> (CheckedFile, Option<JaktError>) {
     let mut stack = Stack::new();
 
-    typecheck_file_helper(file, &mut stack)
+    typecheck_file_helper(file, &mut stack, prelude)
 }
 
 fn typecheck_file_helper(
     parsed_file: &ParsedFile,
     stack: &mut Stack,
+    prelude: &CheckedFile,
 ) -> (CheckedFile, Option<JaktError>) {
     let mut file = CheckedFile::new();
     let mut error = None;
 
+    for structure in &prelude.structs {
+        file.structs.push(structure.clone());
+        let _ = stack.add_struct(
+            structure.name.clone(),
+            file.structs.len() - 1,
+            Span::new(0, 0, 0),
+        );
+    }
+
+    for fun in &prelude.funs {
+        file.funs.push(fun.clone());
+    }
+
     for (struct_id, structure) in parsed_file.structs.iter().enumerate() {
         //Ensure we know the types ahead of time, so they can be recursive
-        typecheck_struct_predecl(structure, struct_id, stack, &mut file);
+        typecheck_struct_predecl(
+            structure,
+            struct_id + prelude.structs.len(),
+            stack,
+            &mut file,
+        );
     }
 
     for fun in &parsed_file.funs {
@@ -508,7 +532,12 @@ fn typecheck_file_helper(
     }
 
     for (struct_id, structure) in parsed_file.structs.iter().enumerate() {
-        error = error.or(typecheck_struct(structure, struct_id, stack, &mut file));
+        error = error.or(typecheck_struct(
+            structure,
+            struct_id + prelude.structs.len(),
+            stack,
+            &mut file,
+        ));
     }
 
     for fun in &parsed_file.funs {
@@ -1027,6 +1056,7 @@ pub fn typecheck_expression(
             None,
         ),
         Expression::QuotedString(qs, _) => (CheckedExpression::QuotedString(qs.clone()), None),
+        Expression::CharacterLiteral(c, _) => (CheckedExpression::CharacterConstant(*c), None),
         Expression::Var(v, span) => {
             if let Some(var) = stack.find_var(v) {
                 (CheckedExpression::Var(var.clone()), None)

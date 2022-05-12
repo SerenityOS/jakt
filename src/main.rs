@@ -3,20 +3,20 @@ use std::path::PathBuf;
 use jakt::{Compiler, JaktError, Span};
 
 fn main() -> Result<(), JaktError> {
-    let mut parser = Compiler::new();
+    let mut compiler = Compiler::new();
     let mut first_error = None;
 
     for arg in std::env::args_os().skip(1) {
-        match parser.compile(&PathBuf::from(&arg)) {
+        match compiler.compile(&PathBuf::from(&arg)) {
             Ok(_) => {
                 println!("success");
             }
             Err(err) => {
                 match &err {
                     JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
-                    JaktError::ParserError(msg, span) => display_error(&parser, &msg, *span),
-                    JaktError::TypecheckError(msg, span) => display_error(&parser, &msg, *span),
-                    JaktError::ValidationError(msg, span) => display_error(&parser, &msg, *span),
+                    JaktError::ParserError(msg, span) => display_error(&compiler, &msg, *span),
+                    JaktError::TypecheckError(msg, span) => display_error(&compiler, &msg, *span),
+                    JaktError::ValidationError(msg, span) => display_error(&compiler, &msg, *span),
                 }
                 first_error = first_error.or(Some(err));
             }
@@ -30,11 +30,11 @@ fn main() -> Result<(), JaktError> {
     }
 }
 
-fn display_error(parser: &Compiler, msg: &str, span: Span) {
+fn display_error(compiler: &Compiler, msg: &str, span: Span) {
     println!("Error: {}", msg);
     println!("-----");
 
-    let file_contents = parser.get_file_contents(span.file_id);
+    let file_contents = compiler.get_file_contents(span.file_id);
 
     let mut index = 0;
 

@@ -1,0 +1,5 @@
+fun main() {
+    let result = "foo bar".split(' ')
+
+    print(result[1])
+}
