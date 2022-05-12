@@ -19,8 +19,6 @@ pub enum SafetyMode {
 pub enum Type {
     Bool,
     String,
-    Char,
-    Int,
     I8,
     I16,
     I32,
@@ -38,6 +36,10 @@ pub enum Type {
     Struct(StructId),
     RawPtr(Box<Type>),
     Unknown,
+
+    // C interop types
+    CChar,
+    CInt,
 }
 
 impl Type {
@@ -349,7 +351,7 @@ impl CheckedExpression {
             CheckedExpression::Call(_, ty) => ty.clone(),
             CheckedExpression::NumericConstant(_, ty) => ty.clone(),
             CheckedExpression::QuotedString(_) => Type::String,
-            CheckedExpression::CharacterConstant(_) => Type::Char,
+            CheckedExpression::CharacterConstant(_) => Type::CChar, // use the C one for now
             CheckedExpression::UnaryOp(_, _, ty) => ty.clone(),
             CheckedExpression::BinaryOp(_, _, _, ty) => ty.clone(),
             CheckedExpression::Vector(_, ty) => ty.clone(),
@@ -1611,7 +1613,17 @@ pub fn typecheck_call(
                             typecheck_expression(&call.args[idx].1, stack, file, safety_mode);
                         error = error.or(err);
 
-                        if callee.params[idx].requires_label
+                        if let Expression::Var(var_name, _) = &call.args[idx].1 {
+                            if var_name != &callee.params[idx].variable.name
+                                && callee.params[idx].requires_label
+                                && call.args[idx].0 != callee.params[idx].variable.name
+                            {
+                                error = error.or(Some(JaktError::TypecheckError(
+                                    "Wrong parameter name in argument label".to_string(),
+                                    call.args[idx].1.span(),
+                                )));
+                            }
+                        } else if callee.params[idx].requires_label
                             && call.args[idx].0 != callee.params[idx].variable.name
                         {
                             error = error.or(Some(JaktError::TypecheckError(
@@ -1688,7 +1700,17 @@ pub fn typecheck_method_call(
                     typecheck_expression(&call.args[idx].1, stack, file, safety_mode);
                 error = error.or(err);
 
-                if callee.params[idx + 1].requires_label
+                if let Expression::Var(var_name, _) = &call.args[idx].1 {
+                    if var_name != &callee.params[idx + 1].variable.name
+                        && callee.params[idx + 1].requires_label
+                        && call.args[idx].0 != callee.params[idx + 1].variable.name
+                    {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "Wrong parameter name in argument label".to_string(),
+                            call.args[idx].1.span(),
+                        )));
+                    }
+                } else if callee.params[idx].requires_label
                     && call.args[idx].0 != callee.params[idx + 1].variable.name
                 {
                     error = error.or(Some(JaktError::TypecheckError(
@@ -1747,8 +1769,8 @@ pub fn typecheck_typename(
             "u64" => (Type::U64, None),
             "f32" => (Type::F32, None),
             "f64" => (Type::F64, None),
-            "char" => (Type::Char, None),
-            "int" => (Type::Int, None),
+            "c_char" => (Type::CChar, None),
+            "c_int" => (Type::CInt, None),
             "String" => (Type::String, None),
             "bool" => (Type::Bool, None),
             "void" => (Type::Void, None),

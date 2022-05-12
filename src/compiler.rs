@@ -95,8 +95,8 @@ impl Compiler {
     pub fn prelude() -> Vec<u8> {
         r#"
 extern class String {
-    fun split(this, anon c: char) -> [String] {}
-    fun characters(this) -> raw char {}
+    fun split(this, anon c: c_char) -> [String] {}
+    fun characters(this) -> raw c_char {}
     fun to_lowercase(this) -> String {}
     fun to_uppercase(this) -> String {}
     fun is_empty(this) -> bool {}

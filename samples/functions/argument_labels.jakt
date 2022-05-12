@@ -7,8 +7,15 @@ fun bar(anon a: bool, b: bool) {
 fun baz(anon a: bool, anon b: bool) {
 }
 
+fun qux(a: bool) {
+
+}
+
 fun main() {
     foo(a: true, b: true)
     bar(true, b: true)
     baz(true, true)
+
+    let a = true
+    qux(a)
 }
