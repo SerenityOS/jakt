@@ -99,6 +99,8 @@ extern class String {
     fun characters(this) -> raw char {}
     fun to_lowercase(this) -> String {}
     fun to_uppercase(this) -> String {}
+    fun is_empty(this) -> bool {}
+    fun length(this) -> i64 {}
 }
 
 extern class Vector {
