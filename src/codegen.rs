@@ -480,6 +480,12 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> 
                     output.push_str(&codegen_expr(indent, &param.1, file));
                 }
                 output.push(')');
+            } else if call.name == "eprintln" {
+                output.push_str("warnln(\"{}\", ");
+                for param in &call.args {
+                    output.push_str(&codegen_expr(indent, &param.1, file));
+                }
+                output.push(')');
             } else {
                 for namespace in &call.namespace {
                     output.push_str(namespace);

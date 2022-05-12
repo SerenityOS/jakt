@@ -1572,8 +1572,8 @@ pub fn typecheck_call(
     let mut return_ty = Type::Unknown;
 
     match call.name.as_str() {
-        "println" => {
-            // FIXME: This is a hack since println() is hard-coded into codegen at the moment.
+        "println" | "eprintln" => {
+            // FIXME: This is a hack since println() and eprintln() are hard-coded into codegen at the moment.
             for arg in &call.args {
                 let (checked_arg, err) = typecheck_expression(&arg.1, stack, file, safety_mode);
                 error = error.or(err);

@@ -7,7 +7,7 @@ extern fun putchar(anon ch: int) -> int
 
 fun main(args: [String]) {
     if args.size() <= 1 {
-        println("usage: cat <path>")
+        eprintln("usage: cat <path>")
         return 1
     }
 
