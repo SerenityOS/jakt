@@ -46,10 +46,7 @@ pub fn codegen(file: &CheckedFile) -> String {
         if fun.linkage == FunctionLinkage::External {
             continue;
         } else if fun.linkage == FunctionLinkage::ImplicitConstructor {
-            let fun_output = codegen_constructor(fun, file);
-
-            output.push_str(&fun_output);
-            output.push('\n');
+            continue;
         } else {
             let fun_output = codegen_function(fun, file);
 
@@ -96,36 +93,30 @@ fn codegen_struct(structure: &CheckedStruct, file: &CheckedFile) -> String {
         }
     }
 
-    for member in &structure.fields {
+    for field in &structure.fields {
         output.push_str(&" ".repeat(INDENT_SIZE));
 
-        output.push_str(&codegen_type(&member.ty, file));
+        output.push_str(&codegen_type(&field.ty, file));
         output.push(' ');
-        output.push_str(&member.name);
+        output.push_str(&field.name);
         output.push_str(";\n");
     }
 
-    // Put together our own constructor
-    // eg) Person(String name, i64 age);
-    output.push_str(&" ".repeat(INDENT_SIZE));
-    output.push_str(&structure.name);
-    output.push('(');
-    let mut first = true;
-    for member in &structure.fields {
-        if !first {
-            output.push_str(", ");
-        } else {
-            first = false;
-        }
-        output.push_str(&codegen_type(&member.ty, file));
-        output.push(' ');
-        output.push_str(&member.name);
-    }
-    output.push_str(");\n");
-
     for fun in &structure.methods {
-        let method_output = codegen_function(fun, file);
-        output.push_str(&method_output);
+        if fun.linkage == FunctionLinkage::ImplicitConstructor {
+            let fun_output = codegen_constructor(fun, file);
+
+            output.push_str(&" ".repeat(INDENT_SIZE));
+            output.push_str(&fun_output);
+            output.push('\n');
+        } else {
+            output.push_str(&" ".repeat(INDENT_SIZE));
+            if fun.is_static() {
+                output.push_str("static ");
+            }
+            let method_output = codegen_function(fun, file);
+            output.push_str(&method_output);
+        }
     }
 
     output.push_str("};");
@@ -213,14 +204,17 @@ fn codegen_function(fun: &CheckedFunction, file: &CheckedFile) -> String {
     }
 
     if fun.name == "main" {
-        output.push_str("\n{");
+        output.push_str("\n");
+        output.push_str("{\n");
+        output.push_str(&" ".repeat(INDENT_SIZE));
     }
 
-    let block = codegen_block(0, &fun.block, file);
+    let block = codegen_block(INDENT_SIZE, &fun.block, file);
     output.push_str(&block);
 
     if fun.name == "main" {
-        output.push_str("return 0; }");
+        output.push_str(&" ".repeat(INDENT_SIZE));
+        output.push_str("return 0;\n}");
     }
 
     output
@@ -228,9 +222,6 @@ fn codegen_function(fun: &CheckedFunction, file: &CheckedFile) -> String {
 
 fn codegen_constructor(fun: &CheckedFunction, file: &CheckedFile) -> String {
     let mut output = String::new();
-
-    output.push_str(&codegen_type(&fun.return_type, file));
-    output.push_str("::");
 
     output.push_str(&fun.name);
     output.push('(');
@@ -273,6 +264,8 @@ fn codegen_type(ty: &Type, file: &CheckedFile) -> String {
     match ty {
         Type::Bool => String::from("bool"),
         Type::String => String::from("String"),
+        Type::Char => String::from("char"),
+        Type::Int => String::from("int"),
         Type::I8 => String::from("i8"),
         Type::I16 => String::from("i16"),
         Type::I32 => String::from("i32"),
@@ -483,6 +476,11 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> 
                 }
                 output.push(')');
             } else {
+                for namespace in &call.namespace {
+                    output.push_str(namespace);
+                    output.push_str("::")
+                }
+
                 output.push_str(&call.name);
                 output.push('(');
 
