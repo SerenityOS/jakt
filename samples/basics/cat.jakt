@@ -2,9 +2,9 @@ extern struct FILE {}
 
 extern fun puts(anon str: raw char) -> int
 extern fun fopen(anon str: raw char, anon mode: raw char) -> raw FILE
-extern fun fgetc(anon mut file: raw FILE) -> i32
-extern fun fclose(anon mut file: raw FILE) -> int
-extern fun putchar(anon mut ch: i32) -> int
+extern fun fgetc(anon file: mut raw FILE) -> i32
+extern fun fclose(anon file: mut raw FILE) -> int
+extern fun putchar(anon ch: i32) -> int
 
 extern class String {
     fun to_lowercase(this) -> String {}

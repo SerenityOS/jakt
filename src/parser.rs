@@ -2246,13 +2246,22 @@ pub fn parse_variable_declaration(
             }
 
             if *index < tokens.len() {
+                let mutable = *index + 1 < tokens.len()
+                    && match &tokens[*index].contents {
+                        TokenContents::Name(name) if name == "mut" => {
+                            *index += 1;
+                            true
+                        }
+                        _ => false,
+                    };
+
                 let (var_type, err) = parse_typename(tokens, index);
                 error = error.or(err);
 
                 let result = VarDecl {
                     name: var_name,
                     ty: var_type,
-                    mutable: false,
+                    mutable,
                     span: tokens[*index - 3].span,
                 };
 
