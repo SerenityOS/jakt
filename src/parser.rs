@@ -14,6 +14,7 @@ macro_rules! trace {
 
 #[derive(Debug, PartialEq)]
 pub struct Call {
+    pub namespace: Vec<String>,
     pub name: String,
     pub args: Vec<(String, Expression)>,
 }
@@ -21,6 +22,7 @@ pub struct Call {
 impl Call {
     pub fn new() -> Self {
         Self {
+            namespace: Vec::new(),
             name: String::new(),
             args: Vec::new(),
         }
@@ -1616,6 +1618,87 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 
                 expr = Expression::UnaryOp(Box::new(expr), UnaryOperator::PostDecrement, span)
             }
+            TokenContents::ColonColon => {
+                *index += 1;
+
+                let mut namespace = Vec::new();
+
+                match &expr {
+                    Expression::Var(name, _) => namespace.push(name.clone()),
+                    x => {
+                        error = error.or(Some(JaktError::ParserError(
+                            "expected namespace".to_string(),
+                            x.span(),
+                        )));
+                    }
+                }
+
+                if *index >= tokens.len() {
+                    error = error.or(Some(JaktError::ParserError(
+                        "Incomplete static method call".to_string(),
+                        tokens[*index].span,
+                    )))
+                }
+
+                while *index < tokens.len() {
+                    match &tokens[*index].contents {
+                        TokenContents::Name(_) => {
+                            *index += 1;
+                            if *index < tokens.len() {
+                                if tokens[*index].contents == TokenContents::LParen {
+                                    *index -= 1;
+                                    let (mut method, err) = parse_call(tokens, index);
+                                    error = error.or(err);
+
+                                    method.namespace = namespace;
+
+                                    let span = Span {
+                                        file_id: expr.span().file_id,
+                                        start: expr.span().start,
+                                        end: tokens[*index].span.end,
+                                    };
+
+                                    expr = Expression::Call(method, span);
+                                    break;
+                                } else if tokens[*index].contents == TokenContents::ColonColon {
+                                    match &tokens[*index - 1].contents {
+                                        TokenContents::Name(name) => namespace.push(name.clone()),
+                                        _ => {
+                                            error = error.or(Some(JaktError::ParserError(
+                                                "expected namespace".to_string(),
+                                                tokens[*index - 1].span,
+                                            )));
+                                        }
+                                    }
+                                    *index += 1;
+                                } else {
+                                    *index += 1;
+                                    error = error.or(Some(JaktError::ParserError(
+                                        "Unsupported static method call".to_string(),
+                                        tokens[*index].span,
+                                    )));
+                                    break;
+                                }
+                            } else {
+                                error = error.or(Some(JaktError::ParserError(
+                                    "Unsupported static method call".to_string(),
+                                    tokens[*index].span,
+                                )));
+                                break;
+                            }
+                        }
+
+                        _ => {
+                            *index += 1;
+                            error = error.or(Some(JaktError::ParserError(
+                                "Unsupported static method call".to_string(),
+                                tokens[*index].span,
+                            )));
+                            break;
+                        }
+                    }
+                }
+            }
             TokenContents::Dot => {
                 *index += 1;
 
@@ -1679,11 +1762,17 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                         _ => {
                             *index += 1;
                             error = error.or(Some(JaktError::ParserError(
-                                "Unsupported index".to_string(),
+                                "Unsupported dot operation".to_string(),
                                 tokens[*index].span,
                             )))
                         }
                     }
+                } else {
+                    *index += 1;
+                    error = error.or(Some(JaktError::ParserError(
+                        "Incomplete dot operation".to_string(),
+                        tokens[*index].span,
+                    )))
                 }
             }
             TokenContents::LSquare => {

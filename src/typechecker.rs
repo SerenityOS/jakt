@@ -19,6 +19,8 @@ pub enum SafetyMode {
 pub enum Type {
     Bool,
     String,
+    Char,
+    Int,
     I8,
     I16,
     I32,
@@ -156,6 +158,18 @@ pub struct CheckedFunction {
     pub params: Vec<CheckedParameter>,
     pub block: CheckedBlock,
     pub linkage: FunctionLinkage,
+}
+
+impl CheckedFunction {
+    pub fn is_static(&self) -> bool {
+        for param in &self.params {
+            if param.variable.name == "this" {
+                return false;
+            }
+        }
+
+        true
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -369,6 +383,7 @@ impl CheckedExpression {
 
 #[derive(Clone, Debug)]
 pub struct CheckedCall {
+    pub namespace: Vec<String>,
     pub name: String,
     pub args: Vec<(String, CheckedExpression)>,
     pub ty: Type,
@@ -562,6 +577,11 @@ fn typecheck_struct_predecl(
         definition_type: structure.definition_type,
     });
 
+    match stack.add_struct(structure.name.clone(), struct_id, structure.span) {
+        Ok(_) => {}
+        Err(err) => error = error.or(Some(err)),
+    }
+
     error
 }
 
@@ -602,15 +622,11 @@ fn typecheck_struct(
     let checked_struct = &mut file.structs[struct_id];
     checked_struct.fields = fields;
 
-    for fun in &structure.methods {
-        error = error.or(typecheck_method(fun, stack, file, struct_id));
-    }
+    let checked_constructor = {
+        let (checked_struct, struct_id) = file
+            .get_struct_mut(&structure.name)
+            .expect("Internal error: we previously defined the struct but it's now missing");
 
-    let (_, struct_id) = file
-        .get_struct_mut(&structure.name)
-        .expect("Internal error: we previously defined the struct but it's now missing");
-
-    if structure.definition_linkage != DefinitionLinkage::External {
         let checked_constructor = CheckedFunction {
             name: structure.name.clone(),
             block: CheckedBlock::new(),
@@ -618,13 +634,14 @@ fn typecheck_struct(
             params: constructor_params,
             return_type: Type::Struct(struct_id),
         };
+        checked_struct.methods.push(checked_constructor.clone());
+        checked_constructor
+    };
 
-        file.funs.push(checked_constructor);
-    }
+    file.funs.push(checked_constructor);
 
-    match stack.add_struct(structure.name.clone(), struct_id, structure.span) {
-        Ok(_) => {}
-        Err(err) => error = error.or(Some(err)),
+    for fun in &structure.methods {
+        error = error.or(typecheck_method(fun, stack, file, struct_id));
     }
 
     error
@@ -1232,6 +1249,41 @@ pub fn typecheck_expression(
                         }
                     }
                 }
+                Type::Vector(_) => {
+                    let string_struct = file.find_struct("Vector");
+
+                    match string_struct {
+                        Some(struct_id) => {
+                            let (checked_call, err) = typecheck_method_call(
+                                call,
+                                stack,
+                                span,
+                                file,
+                                struct_id,
+                                safety_mode,
+                            );
+                            error = error.or(err);
+
+                            let ty = checked_call.ty.clone();
+                            (
+                                CheckedExpression::MethodCall(
+                                    Box::new(checked_expr),
+                                    checked_call,
+                                    ty,
+                                ),
+                                error,
+                            )
+                        }
+                        _ => {
+                            error = error.or(Some(JaktError::TypecheckError(
+                                "no methods available on value".to_string(),
+                                expr.span(),
+                            )));
+
+                            (CheckedExpression::Garbage, error)
+                        }
+                    }
+                }
                 _ => {
                     error = error.or(Some(JaktError::TypecheckError(
                         "no methods available on value".to_string(),
@@ -1430,26 +1482,52 @@ pub fn resolve_call<'a>(
     call: &Call,
     span: &Span,
     functions: &'a [CheckedFunction],
+    file: &'a CheckedFile,
 ) -> (Option<&'a CheckedFunction>, Option<JaktError>) {
     let mut callee = None;
     let mut error = None;
 
-    // FIXME: Support function overloading.
-    for fun in functions {
-        if fun.name == call.name {
-            callee = Some(fun);
-            break;
+    if let Some(namespace) = call.namespace.first() {
+        // For now, assume class is our namespace
+        // In the future, we'll have real namespaces
+
+        if let Some(struct_id) = file.find_struct(namespace) {
+            let structure = &file.structs[struct_id];
+
+            for fun in &structure.methods {
+                if fun.name == call.name {
+                    callee = Some(fun);
+                    break;
+                }
+            }
+
+            (callee, error)
+        } else {
+            error = Some(JaktError::TypecheckError(
+                format!("unknown namespace or class: {}", namespace),
+                *span,
+            ));
+
+            (callee, error)
         }
-    }
+    } else {
+        // FIXME: Support function overloading.
+        for fun in functions {
+            if fun.name == call.name {
+                callee = Some(fun);
+                break;
+            }
+        }
 
-    if callee.is_none() {
-        error = Some(JaktError::TypecheckError(
-            format!("call to unknown function: {}", call.name),
-            *span,
-        ));
-    }
+        if callee.is_none() {
+            error = Some(JaktError::TypecheckError(
+                format!("call to unknown function: {}", call.name),
+                *span,
+            ));
+        }
 
-    (callee, error)
+        (callee, error)
+    }
 }
 
 pub fn typecheck_call(
@@ -1476,7 +1554,7 @@ pub fn typecheck_call(
             }
         }
         _ => {
-            let (callee, err) = resolve_call(call, span, &file.funs);
+            let (callee, err) = resolve_call(call, span, &file.funs, &file);
             error = error.or(err);
 
             if let Some(callee) = callee {
@@ -1530,6 +1608,7 @@ pub fn typecheck_call(
 
     (
         CheckedCall {
+            namespace: call.namespace.clone(),
             name: call.name.clone(),
             args: checked_args,
             ty: return_ty,
@@ -1550,7 +1629,7 @@ pub fn typecheck_method_call(
     let mut error = None;
     let mut return_ty = Type::Unknown;
 
-    let (callee, err) = resolve_call(call, span, &file.structs[struct_id].methods);
+    let (callee, err) = resolve_call(call, span, &file.structs[struct_id].methods, &file);
     error = error.or(err);
 
     if let Some(callee) = callee {
@@ -1604,6 +1683,7 @@ pub fn typecheck_method_call(
 
     (
         CheckedCall {
+            namespace: Vec::new(),
             name: call.name.clone(),
             args: checked_args,
             ty: return_ty,
@@ -1619,36 +1699,33 @@ pub fn typecheck_typename(
     let mut error = None;
 
     match unchecked_type {
-        UncheckedType::Name(name, span) => {
-            match name.as_str() {
-                "i8" => (Type::I8, None),
-                "i16" => (Type::I16, None),
-                "i32" => (Type::I32, None),
-                "i64" => (Type::I64, None),
-                "u8" => (Type::U8, None),
-                "u16" => (Type::U16, None),
-                "u32" => (Type::U32, None),
-                "u64" => (Type::U64, None),
-                "f32" => (Type::F32, None),
-                "f64" => (Type::F64, None),
-                "String" => (Type::String, None),
-                "bool" => (Type::Bool, None),
-                "void" => (Type::Void, None),
-                x => {
-                    let structure = stack.find_struct(x);
-                    match structure {
-                        Some(struct_id) => (Type::Struct(struct_id), None),
-                        None => {
-                            //trace!("ERROR: unknown type");
-                            (
-                                Type::Unknown,
-                                Some(JaktError::TypecheckError("unknown type".to_string(), *span)),
-                            )
-                        }
-                    }
+        UncheckedType::Name(name, span) => match name.as_str() {
+            "i8" => (Type::I8, None),
+            "i16" => (Type::I16, None),
+            "i32" => (Type::I32, None),
+            "i64" => (Type::I64, None),
+            "u8" => (Type::U8, None),
+            "u16" => (Type::U16, None),
+            "u32" => (Type::U32, None),
+            "u64" => (Type::U64, None),
+            "f32" => (Type::F32, None),
+            "f64" => (Type::F64, None),
+            "char" => (Type::Char, None),
+            "int" => (Type::Int, None),
+            "String" => (Type::String, None),
+            "bool" => (Type::Bool, None),
+            "void" => (Type::Void, None),
+            x => {
+                let structure = stack.find_struct(x);
+                match structure {
+                    Some(struct_id) => (Type::Struct(struct_id), None),
+                    None => (
+                        Type::Unknown,
+                        Some(JaktError::TypecheckError("unknown type".to_string(), *span)),
+                    ),
                 }
             }
-        }
+        },
         UncheckedType::Empty => (Type::Unknown, None),
         UncheckedType::Vector(inner, _) => {
             let (inner_ty, err) = typecheck_typename(inner, stack);

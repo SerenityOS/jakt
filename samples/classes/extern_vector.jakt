@@ -1,0 +1,9 @@
+extern class Vector {
+    fun size(this) -> i64 {}
+}
+
+fun main() {
+    let vec = [1, 2, 3, 4]
+
+    print(vec.size())
+}

@@ -1,0 +1,15 @@
+class Person {
+    name: String
+    age: i64
+
+    fun generate(name: String, age: i64) -> Person {
+        return Person(name: name, age: age + 1000);
+    }
+}
+
+fun main() {
+    let p = Person::generate(name: "Jane", age: 100)
+
+    print(p.name)
+    print(p.age)
+}
