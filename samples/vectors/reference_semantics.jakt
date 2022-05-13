@@ -1,0 +1,14 @@
+fun change_value(vector: mut [String]) {
+    vector[1] = "bar"
+}
+
+fun main() {
+    let mut v = ["foo", "foo"]
+    change_value(vector: v)
+
+    let mut i = 0
+    while i < v.size() {
+        println(v[i])
+        ++i
+    }
+}

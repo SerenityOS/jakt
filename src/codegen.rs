@@ -181,7 +181,7 @@ fn codegen_function(fun: &CheckedFunction, file: &CheckedFile) -> String {
     output.push('(');
 
     if fun.name == "main" && fun.params.is_empty() {
-        output.push_str("Vector<String>");
+        output.push_str("RefVector<String>");
     }
 
     let mut first = true;
@@ -291,7 +291,7 @@ fn codegen_type(ty: &Type, file: &CheckedFile) -> String {
         Type::RawPtr(ty) => {
             format!("{}*", codegen_type(ty, file))
         }
-        Type::Vector(v) => format!("Vector<{}>", codegen_type(v, file)),
+        Type::Vector(v) => format!("RefVector<{}>", codegen_type(v, file)),
         Type::Tuple(types) => {
             let mut output = "Tuple<".to_string();
             let mut first = true;
@@ -618,8 +618,8 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> 
             output.push(')');
         }
         CheckedExpression::Vector(vals, _) => {
-            // (Vector({1, 2, 3}))
-            output.push_str("(Vector({");
+            // (RefVector({1, 2, 3}))
+            output.push_str("(RefVector({");
             let mut first = true;
             for val in vals {
                 if !first {
