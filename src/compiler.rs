@@ -105,6 +105,7 @@ extern class String {
 
 extern class RefVector {
     fun size(this) -> i64 {}
+    fun resize(mut this, anon size: u64) {}
 }
 
 "#

@@ -28,12 +28,28 @@ public:
         }
         free(m_elements);
         m_elements = new_elements;
+        m_capacity = capacity;
     }
 
     void add_capacity(size_t capacity)
     {
         VERIFY(!Checked<size_t>::addition_would_overflow(m_capacity, capacity));
         ensure_capacity(m_capacity + capacity);
+    }
+
+    void resize(size_t size)
+    {
+        ensure_capacity(size);
+        if (size > m_size) {
+            for (size_t i = m_size; i < size; ++i) {
+                new (&m_elements[i]) T();
+            }
+        } else {
+            for (size_t i = size; i < m_size; ++i) {
+                m_elements[i].~T();
+            }
+        }
+        m_size = size;
     }
 
     T const& at(size_t index) const
@@ -151,6 +167,13 @@ public:
         if (!m_storage)
             return {};
         return { *m_storage, offset, size };
+    }
+
+    void resize(size_t size)
+    {
+        if (size != this->size()) {
+            ensure_storage().resize(size);
+        }
     }
 
     RefVector(Vector<T> const& ak_vector)
