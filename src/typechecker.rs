@@ -394,18 +394,18 @@ pub struct CheckedCall {
 }
 
 #[derive(Clone, Debug)]
-pub struct Stack {
-    pub frames: Vec<StackFrame>,
+pub struct ScopeStack {
+    pub frames: Vec<Scope>,
 }
 
-impl Stack {
+impl ScopeStack {
     pub fn new() -> Self {
         Self {
-            frames: vec![StackFrame::new()],
+            frames: vec![Scope::new()],
         }
     }
     pub fn push_frame(&mut self) {
-        self.frames.push(StackFrame::new())
+        self.frames.push(Scope::new())
     }
 
     pub fn pop_frame(&mut self) {
@@ -445,8 +445,8 @@ impl Stack {
         struct_id: StructId,
         span: Span,
     ) -> Result<(), JaktError> {
-        if let Some(frame) = self.frames.last_mut() {
-            for (existing_struct, _) in &frame.structs {
+        if let Some(scope) = self.frames.last_mut() {
+            for (existing_struct, _) in &scope.structs {
                 if &name == existing_struct {
                     return Err(JaktError::TypecheckError(
                         format!("redefinition of {}", name),
@@ -454,7 +454,7 @@ impl Stack {
                     ));
                 }
             }
-            frame.structs.push((name, struct_id));
+            scope.structs.push((name, struct_id));
         }
         Ok(())
     }
@@ -473,13 +473,13 @@ impl Stack {
 }
 
 #[derive(Clone, Debug)]
-pub struct StackFrame {
+pub struct Scope {
     vars: Vec<CheckedVariable>,
 
     structs: Vec<(String, StructId)>,
 }
 
-impl StackFrame {
+impl Scope {
     pub fn new() -> Self {
         Self {
             vars: Vec::new(),
@@ -492,14 +492,14 @@ pub fn typecheck_file(
     file: &ParsedFile,
     prelude: &CheckedFile,
 ) -> (CheckedFile, Option<JaktError>) {
-    let mut stack = Stack::new();
+    let mut stack = ScopeStack::new();
 
     typecheck_file_helper(file, &mut stack, prelude)
 }
 
 fn typecheck_file_helper(
     parsed_file: &ParsedFile,
-    stack: &mut Stack,
+    stack: &mut ScopeStack,
     prelude: &CheckedFile,
 ) -> (CheckedFile, Option<JaktError>) {
     let mut file = CheckedFile::new();
@@ -552,7 +552,7 @@ fn typecheck_file_helper(
 fn typecheck_struct_predecl(
     structure: &Struct,
     struct_id: StructId,
-    stack: &mut Stack,
+    stack: &mut ScopeStack,
     file: &mut CheckedFile,
 ) -> Option<JaktError> {
     let mut error = None;
@@ -619,7 +619,7 @@ fn typecheck_struct_predecl(
 fn typecheck_struct(
     structure: &Struct,
     struct_id: StructId,
-    stack: &mut Stack,
+    stack: &mut ScopeStack,
     file: &mut CheckedFile,
 ) -> Option<JaktError> {
     let mut error = None;
@@ -680,7 +680,7 @@ fn typecheck_struct(
 
 fn typecheck_fun_predecl(
     fun: &Function,
-    stack: &mut Stack,
+    stack: &mut ScopeStack,
     file: &mut CheckedFile,
 ) -> Option<JaktError> {
     let mut error = None;
@@ -714,7 +714,11 @@ fn typecheck_fun_predecl(
     error
 }
 
-fn typecheck_fun(fun: &Function, stack: &mut Stack, file: &mut CheckedFile) -> Option<JaktError> {
+fn typecheck_fun(
+    fun: &Function,
+    stack: &mut ScopeStack,
+    file: &mut CheckedFile,
+) -> Option<JaktError> {
     let mut error = None;
 
     stack.push_frame();
@@ -761,7 +765,7 @@ fn typecheck_fun(fun: &Function, stack: &mut Stack, file: &mut CheckedFile) -> O
 
 fn typecheck_method(
     fun: &Function,
-    stack: &mut Stack,
+    stack: &mut ScopeStack,
     file: &mut CheckedFile,
     struct_id: StructId,
 ) -> Option<JaktError> {
@@ -813,7 +817,7 @@ fn typecheck_method(
 
 pub fn typecheck_block(
     block: &Block,
-    stack: &mut Stack,
+    stack: &mut ScopeStack,
     file: &CheckedFile,
     safety_mode: SafetyMode,
 ) -> (CheckedBlock, Option<JaktError>) {
@@ -836,7 +840,7 @@ pub fn typecheck_block(
 
 pub fn typecheck_statement(
     stmt: &Statement,
-    stack: &mut Stack,
+    stack: &mut ScopeStack,
     file: &CheckedFile,
     safety_mode: SafetyMode,
 ) -> (CheckedStatement, Option<JaktError>) {
@@ -977,7 +981,7 @@ pub fn try_promote_constant_expr_to_type(
 
 pub fn typecheck_expression(
     expr: &Expression,
-    stack: &mut Stack,
+    stack: &mut ScopeStack,
     file: &CheckedFile,
     safety_mode: SafetyMode,
 ) -> (CheckedExpression, Option<JaktError>) {
@@ -1348,7 +1352,7 @@ pub fn typecheck_unary_operation(
     expr: CheckedExpression,
     op: UnaryOperator,
     span: Span,
-    stack: &Stack,
+    stack: &ScopeStack,
     safety_mode: SafetyMode,
 ) -> (CheckedExpression, Option<JaktError>) {
     let expr_ty = expr.ty();
@@ -1442,28 +1446,22 @@ pub fn typecheck_unary_operation(
             | Type::U32
             | Type::U64
             | Type::F32
-            | Type::F64 => match &expr {
-                CheckedExpression::Var(v) => {
-                    if !v.mutable {
-                        (
-                            CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
-                            Some(JaktError::TypecheckError(
-                                "increment on immutable variable".to_string(),
-                                span,
-                            )),
-                        )
-                    } else {
-                        (
-                            CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
-                            None,
-                        )
-                    }
+            | Type::F64 => {
+                if !expr.is_mutable() {
+                    (
+                        CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
+                        Some(JaktError::TypecheckError(
+                            "increment/decrement of immutable variable".to_string(),
+                            span,
+                        )),
+                    )
+                } else {
+                    (
+                        CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
+                        None,
+                    )
                 }
-                _ => (
-                    CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
-                    None,
-                ),
-            },
+            }
             _ => (
                 CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
                 Some(JaktError::TypecheckError(
@@ -1577,7 +1575,7 @@ pub fn resolve_call<'a>(
 
 pub fn typecheck_call(
     call: &Call,
-    stack: &mut Stack,
+    stack: &mut ScopeStack,
     span: &Span,
     file: &CheckedFile,
     safety_mode: SafetyMode,
@@ -1674,7 +1672,7 @@ pub fn typecheck_call(
 
 pub fn typecheck_method_call(
     call: &Call,
-    stack: &mut Stack,
+    stack: &mut ScopeStack,
     span: &Span,
     file: &CheckedFile,
     struct_id: StructId,
@@ -1759,7 +1757,7 @@ pub fn typecheck_method_call(
 
 pub fn typecheck_typename(
     unchecked_type: &UncheckedType,
-    stack: &Stack,
+    stack: &ScopeStack,
 ) -> (Type, Option<JaktError>) {
     let mut error = None;
 
