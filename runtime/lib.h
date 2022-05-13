@@ -54,6 +54,7 @@
 #include <AK/Traits.h>
 #include <AK/Try.h>
 #include <AK/Tuple.h>
+#include <AK/TypeCasts.h>
 #include <AK/TypeList.h>
 #include <AK/TypedTransfer.h>
 #include <AK/Types.h>
