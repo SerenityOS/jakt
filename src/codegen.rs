@@ -3,14 +3,14 @@ use crate::{
         BinaryOperator, DefinitionLinkage, DefinitionType, FunctionLinkage, TypeCast, UnaryOperator,
     },
     typechecker::{
-        CheckedBlock, CheckedExpression, CheckedFile, CheckedFunction, CheckedStatement,
-        CheckedStruct, CheckedVariable, NumericConstant, Type,
+        CheckedBlock, CheckedExpression, CheckedFunction, CheckedStatement, CheckedStruct,
+        CheckedVariable, NumericConstant, Project, Type,
     },
 };
 
 const INDENT_SIZE: usize = 4;
 
-pub fn codegen(file: &CheckedFile) -> String {
+pub fn codegen(file: &Project) -> String {
     let mut output = String::new();
 
     output.push_str("#include \"runtime/lib.h\"\n");
@@ -79,7 +79,7 @@ fn codegen_struct_predecl(structure: &CheckedStruct) -> String {
     }
 }
 
-fn codegen_struct(structure: &CheckedStruct, file: &CheckedFile) -> String {
+fn codegen_struct(structure: &CheckedStruct, file: &Project) -> String {
     let mut output = String::new();
 
     if structure.definition_linkage == DefinitionLinkage::External {
@@ -129,7 +129,7 @@ fn codegen_struct(structure: &CheckedStruct, file: &CheckedFile) -> String {
     output
 }
 
-fn codegen_function_predecl(fun: &CheckedFunction, file: &CheckedFile) -> String {
+fn codegen_function_predecl(fun: &CheckedFunction, file: &Project) -> String {
     let mut output = String::new();
 
     if fun.linkage == FunctionLinkage::External {
@@ -166,7 +166,7 @@ fn codegen_function_predecl(fun: &CheckedFunction, file: &CheckedFile) -> String
     output
 }
 
-fn codegen_function(fun: &CheckedFunction, file: &CheckedFile) -> String {
+fn codegen_function(fun: &CheckedFunction, file: &Project) -> String {
     let mut output = String::new();
 
     if fun.name == "main" {
@@ -233,7 +233,7 @@ fn codegen_function(fun: &CheckedFunction, file: &CheckedFile) -> String {
     output
 }
 
-fn codegen_constructor(fun: &CheckedFunction, file: &CheckedFile) -> String {
+fn codegen_constructor(fun: &CheckedFunction, file: &Project) -> String {
     let mut output = String::new();
 
     output.push_str(&fun.name);
@@ -273,7 +273,7 @@ fn codegen_constructor(fun: &CheckedFunction, file: &CheckedFile) -> String {
     output
 }
 
-fn codegen_type(ty: &Type, file: &CheckedFile) -> String {
+fn codegen_type(ty: &Type, file: &Project) -> String {
     match ty {
         Type::Bool => String::from("bool"),
         Type::String => String::from("String"),
@@ -317,7 +317,7 @@ fn codegen_type(ty: &Type, file: &CheckedFile) -> String {
     }
 }
 
-fn codegen_block(indent: usize, checked_block: &CheckedBlock, file: &CheckedFile) -> String {
+fn codegen_block(indent: usize, checked_block: &CheckedBlock, file: &Project) -> String {
     let mut output = String::new();
 
     output.push_str("{\n");
@@ -334,7 +334,7 @@ fn codegen_block(indent: usize, checked_block: &CheckedBlock, file: &CheckedFile
     output
 }
 
-fn codegen_statement(indent: usize, stmt: &CheckedStatement, file: &CheckedFile) -> String {
+fn codegen_statement(indent: usize, stmt: &CheckedStatement, file: &Project) -> String {
     let mut output = String::new();
 
     output.push_str(&" ".repeat(indent));
@@ -407,7 +407,7 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, file: &CheckedFile)
     output
 }
 
-fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> String {
+fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &Project) -> String {
     let mut output = String::new();
 
     match expr {

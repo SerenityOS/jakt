@@ -5,14 +5,14 @@ use crate::{
     error::JaktError,
     lexer::lex,
     parser::parse_file,
-    typechecker::{typecheck_file, CheckedFile},
+    typechecker::{typecheck_file, Project},
 };
 
 pub type FileId = usize;
 
 pub struct Compiler {
     raw_files: Vec<(String, Vec<u8>)>,
-    checked_files: Vec<(String, CheckedFile)>,
+    checked_files: Vec<(String, Project)>,
 }
 
 impl Compiler {
@@ -27,7 +27,7 @@ impl Compiler {
         // Compile the prelude
         let (lexed, _) = lex(raw_files.len() - 1, &raw_files[raw_files.len() - 1].1);
         let (file, _) = parse_file(&lexed);
-        let (file, _) = typecheck_file(&file, &CheckedFile::new());
+        let (file, _) = typecheck_file(&file, &Project::new());
 
         checked_files.push(("<prelude>".to_string(), file));
         Self {
