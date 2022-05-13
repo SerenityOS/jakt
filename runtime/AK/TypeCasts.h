@@ -88,4 +88,6 @@ ALWAYS_INLINE OutputType truncating_integer_cast(InputType input)
 using AK::fallible_integer_cast;
 using AK::infallible_integer_cast;
 using AK::is;
+using AK::saturating_integer_cast;
+using AK::truncating_integer_cast;
 using AK::verify_cast;

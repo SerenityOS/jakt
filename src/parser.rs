@@ -248,6 +248,25 @@ impl PartialEq for Expression {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum TypeCast {
+    Fallible(UncheckedType),
+    Infallible(UncheckedType),
+    Saturating(UncheckedType),
+    Truncating(UncheckedType),
+}
+
+impl TypeCast {
+    pub fn unchecked_type(&self) -> UncheckedType {
+        match self {
+            TypeCast::Fallible(ty) => ty.clone(),
+            TypeCast::Infallible(ty) => ty.clone(),
+            TypeCast::Saturating(ty) => ty.clone(),
+            TypeCast::Truncating(ty) => ty.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum UnaryOperator {
     PreIncrement,
     PostIncrement,
@@ -258,6 +277,7 @@ pub enum UnaryOperator {
     RawAddress,
     LogicalNot,
     BitwiseNot,
+    TypeCast(TypeCast),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -1651,6 +1671,54 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 };
 
                 expr = Expression::UnaryOp(Box::new(expr), UnaryOperator::PostIncrement, span)
+            }
+            TokenContents::Name(name) if name == "as" => {
+                let end_span = tokens[*index + 1].span;
+
+                *index += 1;
+
+                let span = Span {
+                    file_id: expr.span().file_id,
+                    start: expr.span().start,
+                    end: end_span.end,
+                };
+
+                let cast = match &tokens[*index].contents {
+                    TokenContents::ExclamationPoint => {
+                        *index += 1;
+                        let (typename, err) = parse_typename(tokens, index);
+                        error = error.or(err);
+                        TypeCast::Infallible(typename)
+                    }
+                    TokenContents::QuestionMark => {
+                        *index += 1;
+                        let (typename, err) = parse_typename(tokens, index);
+                        error = error.or(err);
+                        TypeCast::Fallible(typename)
+                    }
+                    TokenContents::Name(name) if name == "truncated" => {
+                        *index += 1;
+                        let (typename, err) = parse_typename(tokens, index);
+                        error = error.or(err);
+                        TypeCast::Truncating(typename)
+                    }
+                    TokenContents::Name(name) if name == "saturated" => {
+                        *index += 1;
+                        let (typename, err) = parse_typename(tokens, index);
+                        error = error.or(err);
+                        TypeCast::Saturating(typename)
+                    }
+                    _ => {
+                        error = error.or(Some(JaktError::ParserError(
+                            "Invalid cast syntax".to_string(),
+                            span,
+                        )));
+                        TypeCast::Truncating(UncheckedType::Empty)
+                    }
+                };
+
+                *index += 1;
+                expr = Expression::UnaryOp(Box::new(expr), UnaryOperator::TypeCast(cast), span)
             }
             TokenContents::MinusMinus => {
                 let end_span = tokens[*index].span;

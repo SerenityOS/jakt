@@ -1014,7 +1014,7 @@ pub fn typecheck_expression(
             error = error.or(err);
 
             let (checked_expr, err) =
-                typecheck_unary_operation(checked_expr, op.clone(), *span, safety_mode);
+                typecheck_unary_operation(checked_expr, op.clone(), *span, stack, safety_mode);
             error = error.or(err);
 
             (checked_expr, error)
@@ -1131,7 +1131,7 @@ pub fn typecheck_expression(
 
             match checked_expr.ty() {
                 Type::Vector(inner_ty) => match checked_idx.ty() {
-                    Type::I64 => {
+                    _ if checked_idx.ty().is_integer() => {
                         ty = *inner_ty.clone();
                     }
                     _ => {
@@ -1348,11 +1348,17 @@ pub fn typecheck_unary_operation(
     expr: CheckedExpression,
     op: UnaryOperator,
     span: Span,
+    stack: &Stack,
     safety_mode: SafetyMode,
 ) -> (CheckedExpression, Option<JaktError>) {
     let expr_ty = expr.ty();
 
-    match op {
+    match &op {
+        UnaryOperator::TypeCast(cast) => {
+            let unchecked_type = cast.unchecked_type();
+            let (ty, err) = typecheck_typename(&unchecked_type, stack);
+            (CheckedExpression::UnaryOp(Box::new(expr), op, ty), err)
+        }
         UnaryOperator::Dereference => match expr.ty() {
             Type::RawPtr(x) => {
                 if safety_mode == SafetyMode::Unsafe {

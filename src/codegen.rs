@@ -1,5 +1,7 @@
 use crate::{
-    parser::{BinaryOperator, DefinitionLinkage, DefinitionType, FunctionLinkage, UnaryOperator},
+    parser::{
+        BinaryOperator, DefinitionLinkage, DefinitionType, FunctionLinkage, TypeCast, UnaryOperator,
+    },
     typechecker::{
         CheckedBlock, CheckedExpression, CheckedFile, CheckedFunction, CheckedStatement,
         CheckedStruct, CheckedVariable, NumericConstant, Type,
@@ -547,7 +549,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> 
             }
             output.push_str("))");
         }
-        CheckedExpression::UnaryOp(expr, op, ..) => {
+        CheckedExpression::UnaryOp(expr, op, ty) => {
             output.push('(');
             match op {
                 UnaryOperator::PreIncrement => {
@@ -571,6 +573,41 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> 
                 UnaryOperator::BitwiseNot => {
                     output.push_str("~");
                 }
+                UnaryOperator::TypeCast(cast) => {
+                    match cast {
+                        TypeCast::Fallible(_) => {
+                            if ty.is_integer() {
+                                output.push_str("fallible_integer_cast");
+                            } else {
+                                output.push_str("dynamic_cast");
+                            }
+                        }
+                        TypeCast::Infallible(_) => {
+                            if ty.is_integer() {
+                                output.push_str("infallible_integer_cast");
+                            } else {
+                                output.push_str("verify_cast");
+                            }
+                        }
+                        TypeCast::Saturating(_) => {
+                            if ty.is_integer() {
+                                output.push_str("saturating_integer_cast");
+                            } else {
+                                panic!("Saturating cast on non-integer type");
+                            }
+                        }
+                        TypeCast::Truncating(_) => {
+                            if ty.is_integer() {
+                                output.push_str("truncating_integer_cast");
+                            } else {
+                                panic!("Truncating cast on non-integer type");
+                            }
+                        }
+                    }
+                    output.push('<');
+                    output.push_str(&codegen_type(ty, file));
+                    output.push_str(">(");
+                }
                 _ => {}
             }
             output.push_str(&codegen_expr(indent, expr, file));
@@ -580,6 +617,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &CheckedFile) -> 
                 }
                 UnaryOperator::PostDecrement => {
                     output.push_str("--");
+                }
+                UnaryOperator::TypeCast(_) => {
+                    output.push(')');
                 }
                 _ => {}
             }
