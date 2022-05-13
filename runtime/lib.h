@@ -38,6 +38,7 @@
 #include <AK/Platform.h>
 #include <AK/RefCounted.h>
 #include <AK/RefPtr.h>
+#include <AK/RefVector.h>
 #include <AK/Result.h>
 #include <AK/ReverseIterator.h>
 #include <AK/ScopeGuard.h>
@@ -84,11 +85,11 @@ inline String runtime_helper_number_to_string(i64 number)
     return String::number(number);
 }
 
-int __jakt_main(Vector<String>);
+int __jakt_main(RefVector<String>);
 
 int main(int argc, char** argv)
 {
-    Vector<String> args;
+    RefVector<String> args;
     for (int i = 0; i < argc; ++i) {
         args.append(argv[i]);
     }

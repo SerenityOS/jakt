@@ -103,7 +103,7 @@ extern class String {
     fun length(this) -> i64 {}
 }
 
-extern class Vector {
+extern class RefVector {
     fun size(this) -> i64 {}
 }
 

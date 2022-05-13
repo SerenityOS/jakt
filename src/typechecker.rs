@@ -1282,7 +1282,7 @@ pub fn typecheck_expression(
                     }
                 }
                 Type::Vector(_) => {
-                    let string_struct = file.find_struct("Vector");
+                    let string_struct = file.find_struct("RefVector");
 
                     match string_struct {
                         Some(struct_id) => {
