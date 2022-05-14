@@ -112,7 +112,8 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
         output.push_str(";\n");
     }
 
-    for (_, fun_id) in &structure.scope.funs {
+    let scope = &project.scopes[structure.scope_id];
+    for (_, fun_id) in &scope.funs {
         let fun = &project.funs[*fun_id];
         if fun.linkage == FunctionLinkage::ImplicitConstructor {
             let fun_output = codegen_constructor(fun, project);

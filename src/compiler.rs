@@ -5,7 +5,7 @@ use crate::{
     error::JaktError,
     lexer::lex,
     parser::parse_file,
-    typechecker::{typecheck_file, Project, ScopeStack},
+    typechecker::{typecheck_file, Project, Scope},
 };
 
 pub type FileId = usize;
@@ -21,7 +21,7 @@ impl Compiler {
         }
     }
 
-    pub fn include_prelude(&mut self, project: &mut Project, stack: &mut ScopeStack) {
+    pub fn include_prelude(&mut self, project: &mut Project) {
         let prelude = Compiler::prelude();
 
         // Not sure where to put prelude, but we're hoping its parsing is infallible
@@ -34,14 +34,14 @@ impl Compiler {
         );
         let (file, _) = parse_file(&lexed);
 
-        typecheck_file(&file, stack, project);
+        // Scope ID 0 is the global project-level scope that all files can see
+        typecheck_file(&file, 0, project);
     }
 
     pub fn convert_to_cpp(&mut self, fname: &Path) -> Result<String, JaktError> {
         let mut project = Project::new();
-        let mut stack = ScopeStack::new();
 
-        self.include_prelude(&mut project, &mut stack);
+        self.include_prelude(&mut project);
 
         let contents = std::fs::read(fname)?;
 
@@ -69,7 +69,12 @@ impl Compiler {
             _ => {}
         }
 
-        let err = typecheck_file(&file, &mut stack, &mut project);
+        let scope = Scope::new(Some(0));
+        project.scopes.push(scope);
+
+        let file_scope_id = project.scopes.len() - 1;
+
+        let err = typecheck_file(&file, file_scope_id, &mut project);
 
         match err {
             Some(err) => {
@@ -78,13 +83,8 @@ impl Compiler {
             _ => {}
         }
 
-        Ok(codegen(
-            &project,
-            stack
-                .frames
-                .first()
-                .expect("internal error: missing global scope"),
-        ))
+        // Hardwire to first file for now
+        Ok(codegen(&project, &project.scopes[file_scope_id]))
     }
 
     pub fn compile(&mut self, fname: &Path) -> Result<(), JaktError> {
