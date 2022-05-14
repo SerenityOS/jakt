@@ -50,11 +50,16 @@ pub enum TokenContents {
     LessThan,
     LessThanOrEqual,
     LeftShift,
+    LeftShiftEqual,
     RightShift,
+    RightShiftEqual,
     Asterisk,
     Ampersand,
+    AmpersandEqual,
     Pipe,
+    PipeEqual,
     Caret,
+    CaretEqual,
     Tilde,
     ForwardSlash,
     ExclamationPoint,
@@ -248,10 +253,21 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                     continue;
                 } else if bytes[index] == b'>' {
                     index += 1;
-                    output.push(Token::new(
-                        TokenContents::RightShift,
-                        Span::new(file_id, start, start + 2),
-                    ));
+                    if index < bytes.len() {
+                        if bytes[index] == b'=' {
+                            index += 1;
+                            output.push(Token::new(
+                                TokenContents::RightShiftEqual,
+                                Span::new(file_id, start, start + 3),
+                            ));
+                        } else {
+                            output.push(Token::new(
+                                TokenContents::RightShift,
+                                Span::new(file_id, start, start + 2),
+                            ));
+                        }
+                    }
+
                     continue;
                 }
             }
@@ -272,10 +288,18 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                     continue;
                 } else if bytes[index] == b'<' {
                     index += 1;
-                    output.push(Token::new(
-                        TokenContents::LeftShift,
-                        Span::new(file_id, start, start + 2),
-                    ));
+                    if bytes[index] == b'=' {
+                        index += 1;
+                        output.push(Token::new(
+                            TokenContents::LeftShiftEqual,
+                            Span::new(file_id, start, start + 3),
+                        ));
+                    } else {
+                        output.push(Token::new(
+                            TokenContents::LeftShift,
+                            Span::new(file_id, start, start + 2),
+                        ));
+                    }
                     continue;
                 }
             }
@@ -303,6 +327,17 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
         } else if c == b'&' {
             let start = index;
             index += 1;
+
+            if index < bytes.len() {
+                if bytes[index] == b'=' {
+                    index += 1;
+                    output.push(Token::new(
+                        TokenContents::AmpersandEqual,
+                        Span::new(file_id, start, start + 2),
+                    ));
+                    continue;
+                }
+            }
             output.push(Token::new(
                 TokenContents::Ampersand,
                 Span::new(file_id, start, start + 1),
@@ -310,6 +345,18 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
         } else if c == b'|' {
             let start = index;
             index += 1;
+
+            if index < bytes.len() {
+                if bytes[index] == b'=' {
+                    index += 1;
+                    output.push(Token::new(
+                        TokenContents::PipeEqual,
+                        Span::new(file_id, start, start + 2),
+                    ));
+                    continue;
+                }
+            }
+
             output.push(Token::new(
                 TokenContents::Pipe,
                 Span::new(file_id, start, start + 1),
@@ -317,6 +364,18 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
         } else if c == b'^' {
             let start = index;
             index += 1;
+
+            if index < bytes.len() {
+                if bytes[index] == b'=' {
+                    index += 1;
+                    output.push(Token::new(
+                        TokenContents::CaretEqual,
+                        Span::new(file_id, start, start + 2),
+                    ));
+                    continue;
+                }
+            }
+
             output.push(Token::new(
                 TokenContents::Caret,
                 Span::new(file_id, start, start + 1),

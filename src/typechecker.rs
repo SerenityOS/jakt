@@ -1513,7 +1513,12 @@ pub fn typecheck_binary_operation(
         | BinaryOperator::AddAssign
         | BinaryOperator::SubtractAssign
         | BinaryOperator::MultiplyAssign
-        | BinaryOperator::DivideAssign => {
+        | BinaryOperator::DivideAssign
+        | BinaryOperator::BitwiseAndAssign
+        | BinaryOperator::BitwiseOrAssign
+        | BinaryOperator::BitwiseXorAssign
+        | BinaryOperator::BitwiseLeftShiftAssign
+        | BinaryOperator::BitwiseRightShiftAssign => {
             let lhs_ty = lhs.ty();
             let rhs_ty = rhs.ty();
 
