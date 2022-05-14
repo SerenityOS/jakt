@@ -300,7 +300,7 @@ pub enum CheckedExpression {
         Type,
     ),
     Tuple(Vec<CheckedExpression>, Type),
-    Vector(Vec<CheckedExpression>, Type),
+    Vector(Vec<CheckedExpression>, Option<Box<CheckedExpression>>, Type),
     IndexedExpression(Box<CheckedExpression>, Box<CheckedExpression>, Type),
     IndexedTuple(Box<CheckedExpression>, usize, Type),
     IndexedStruct(Box<CheckedExpression>, String, Type),
@@ -328,7 +328,7 @@ impl CheckedExpression {
             CheckedExpression::CharacterConstant(_) => Type::CChar, // use the C one for now
             CheckedExpression::UnaryOp(_, _, ty) => ty.clone(),
             CheckedExpression::BinaryOp(_, _, _, ty) => ty.clone(),
-            CheckedExpression::Vector(_, ty) => ty.clone(),
+            CheckedExpression::Vector(_, _, ty) => ty.clone(),
             CheckedExpression::Tuple(_, ty) => ty.clone(),
             CheckedExpression::IndexedExpression(_, _, ty) => ty.clone(),
             CheckedExpression::IndexedTuple(_, _, ty) => ty.clone(),
@@ -1093,9 +1093,17 @@ pub fn typecheck_expression(
                 )
             }
         }
-        Expression::Vector(vec, _) => {
+        Expression::Vector(vec, fill_size_expr, ..) => {
             let mut inner_ty = Type::Unknown;
             let mut output = Vec::new();
+
+            let mut checked_fill_size_expr = None;
+            if let Some(fill_size_expr) = fill_size_expr {
+                let (checked_expr, err) =
+                    typecheck_expression(fill_size_expr, stack, project, safety_mode);
+                checked_fill_size_expr = Some(Box::new(checked_expr));
+                error = error.or(err);
+            }
 
             for v in vec {
                 let (checked_expr, err) = typecheck_expression(v, stack, project, safety_mode);
@@ -1116,7 +1124,11 @@ pub fn typecheck_expression(
             }
 
             (
-                CheckedExpression::Vector(output, Type::Vector(Box::new(inner_ty))),
+                CheckedExpression::Vector(
+                    output,
+                    checked_fill_size_expr,
+                    Type::Vector(Box::new(inner_ty)),
+                ),
                 error,
             )
         }

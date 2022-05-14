@@ -177,7 +177,7 @@ pub enum Expression {
     NumericConstant(NumericConstant, Span),
     QuotedString(String, Span),
     CharacterLiteral(char, Span),
-    Vector(Vec<Expression>, Span),
+    Vector(Vec<Expression>, Option<Box<Expression>>, Span),
     IndexedExpression(Box<Expression>, Box<Expression>, Span),
     UnaryOp(Box<Expression>, UnaryOperator, Span),
     BinaryOp(Box<Expression>, BinaryOperator, Box<Expression>, Span),
@@ -210,7 +210,7 @@ impl Expression {
             Expression::NumericConstant(_, span) => *span,
             Expression::QuotedString(_, span) => *span,
             Expression::CharacterLiteral(_, span) => *span,
-            Expression::Vector(_, span) => *span,
+            Expression::Vector(_, _, span) => *span,
             Expression::Tuple(_, span) => *span,
             Expression::IndexedExpression(_, _, span) => *span,
             Expression::IndexedTuple(_, _, span) => *span,
@@ -2297,6 +2297,8 @@ pub fn parse_vector(tokens: &[Token], index: &mut usize) -> (Expression, Option<
         )));
     }
 
+    let mut fill_size_expr = None;
+
     while *index < tokens.len() {
         match &tokens[*index].contents {
             TokenContents::RSquare => {
@@ -2311,7 +2313,24 @@ pub fn parse_vector(tokens: &[Token], index: &mut usize) -> (Expression, Option<
                 // Treat comma as whitespace? Might require them in the future
                 *index += 1;
             }
+            TokenContents::Semicolon => {
+                if output.len() == 1 {
+                    *index += 1;
 
+                    let (expr, err) = parse_expression(
+                        tokens,
+                        index,
+                        ExpressionKind::ExpressionWithoutAssignment,
+                    );
+                    error = error.or(err);
+                    fill_size_expr = Some(Box::new(expr));
+                } else {
+                    error = error.or(Some(JaktError::ParserError(
+                        "Can't fill a Vector with more than one expression".to_string(),
+                        tokens[*index].span,
+                    )));
+                }
+            }
             _ => {
                 let (expr, err) =
                     parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
@@ -2339,6 +2358,7 @@ pub fn parse_vector(tokens: &[Token], index: &mut usize) -> (Expression, Option<
     (
         Expression::Vector(
             output,
+            fill_size_expr,
             Span {
                 file_id: tokens[start].span.file_id,
                 start: tokens[start].span.start,
