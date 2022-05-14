@@ -99,45 +99,27 @@ impl Project {
             structs: Vec::new(),
         }
     }
-
-    pub fn get_struct_mut(&mut self, name: &str) -> Option<(&mut CheckedStruct, usize)> {
-        for (idx, structure) in self.structs.iter_mut().enumerate() {
-            if structure.name == name {
-                return Some((structure, idx));
-            }
-        }
-        None
-    }
-
-    pub fn get_fun_mut(&mut self, name: &str) -> Option<&mut CheckedFunction> {
-        for fun in self.funs.iter_mut() {
-            if fun.name == name {
-                return Some(fun);
-            }
-        }
-        None
-    }
 }
 
 #[derive(Clone, Debug)]
 pub struct CheckedStruct {
     pub name: String,
     pub fields: Vec<CheckedVarDecl>,
-    pub methods: Vec<CheckedFunction>,
+    pub scope: Scope,
     pub definition_linkage: DefinitionLinkage,
     pub definition_type: DefinitionType,
 }
 
-impl CheckedStruct {
-    pub fn get_method_mut(&mut self, name: &str) -> Option<&mut CheckedFunction> {
-        for fun in self.methods.iter_mut() {
-            if fun.name == name {
-                return Some(fun);
-            }
-        }
-        None
-    }
-}
+// impl CheckedStruct {
+//     pub fn get_method_mut(&mut self, name: &str) -> Option<&mut CheckedFunction> {
+//         for fun in self.methods.iter_mut() {
+//             if fun.name == name {
+//                 return Some(fun);
+//             }
+//         }
+//         None
+//     }
+// }
 
 #[derive(Clone, Debug)]
 pub struct CheckedParameter {
@@ -498,10 +480,9 @@ impl ScopeStack {
 
 #[derive(Clone, Debug)]
 pub struct Scope {
-    vars: Vec<CheckedVariable>,
-
-    structs: Vec<(String, StructId)>,
-    funs: Vec<(String, FunctionId)>,
+    pub vars: Vec<CheckedVariable>,
+    pub structs: Vec<(String, StructId)>,
+    pub funs: Vec<(String, FunctionId)>,
 }
 
 impl Scope {
@@ -512,80 +493,66 @@ impl Scope {
             funs: Vec::new(),
         }
     }
+
+    pub fn find_function(&self, name: &str) -> Option<FunctionId> {
+        for fun in &self.funs {
+            if fun.0 == name {
+                return Some(fun.1);
+            }
+        }
+
+        None
+    }
+
+    pub fn add_function(&mut self, name: String, function_id: FunctionId) {
+        self.funs.push((name, function_id))
+    }
 }
 
-pub fn typecheck_file(file: &ParsedFile, prelude: &Project) -> (Project, Option<JaktError>) {
-    let mut stack = ScopeStack::new();
-
-    typecheck_file_helper(file, &mut stack, prelude)
-}
-
-fn typecheck_file_helper(
+pub fn typecheck_file(
     parsed_file: &ParsedFile,
     stack: &mut ScopeStack,
-    prelude: &Project,
-) -> (Project, Option<JaktError>) {
-    let mut file = Project::new();
+    project: &mut Project,
+) -> Option<JaktError> {
     let mut error = None;
 
-    for structure in &prelude.structs {
-        file.structs.push(structure.clone());
-        let _ = stack.add_struct(
-            structure.name.clone(),
-            file.structs.len() - 1,
-            Span::new(0, 0, 0),
-        );
-    }
-
-    for fun in &prelude.funs {
-        file.funs.push(fun.clone());
-        if let Err(err) =
-            stack.add_function(fun.name.clone(), file.funs.len() - 1, Span::new(0, 0, 0))
-        {
-            error = error.or(Some(err));
-        }
-    }
+    let project_struct_len = project.structs.len();
 
     for (struct_id, structure) in parsed_file.structs.iter().enumerate() {
         //Ensure we know the types ahead of time, so they can be recursive
-        typecheck_struct_predecl(
-            structure,
-            struct_id + prelude.structs.len(),
-            stack,
-            &mut file,
-        );
+        typecheck_struct_predecl(structure, struct_id + project_struct_len, stack, project);
     }
 
     for fun in &parsed_file.funs {
         //Ensure we know the function ahead of time, so they can be recursive
-        error = error.or(typecheck_fun_predecl(fun, stack, &mut file));
+        error = error.or(typecheck_fun_predecl(fun, stack, project));
     }
 
     for (struct_id, structure) in parsed_file.structs.iter().enumerate() {
         error = error.or(typecheck_struct(
             structure,
-            struct_id + prelude.structs.len(),
+            struct_id + project_struct_len,
             stack,
-            &mut file,
+            project,
         ));
     }
 
     for fun in &parsed_file.funs {
-        error = error.or(typecheck_fun(fun, stack, &mut file));
+        error = error.or(typecheck_fun(fun, stack, project));
     }
 
-    (file, error)
+    error
 }
 
 fn typecheck_struct_predecl(
     structure: &Struct,
     struct_id: StructId,
     stack: &mut ScopeStack,
-    file: &mut Project,
+    project: &mut Project,
 ) -> Option<JaktError> {
     let mut error = None;
 
-    let mut methods = Vec::new();
+    let mut scope = Scope::new();
 
     for fun in &structure.methods {
         let mut checked_function = CheckedFunction {
@@ -625,13 +592,14 @@ fn typecheck_struct_predecl(
             }
         }
 
-        methods.push(checked_function);
+        project.funs.push(checked_function);
+        scope.add_function(fun.name.clone(), project.funs.len() - 1);
     }
 
-    file.structs.push(CheckedStruct {
+    project.structs.push(CheckedStruct {
         name: structure.name.clone(),
         fields: Vec::new(),
-        methods,
+        scope,
         definition_linkage: structure.definition_linkage,
         definition_type: structure.definition_type,
     });
@@ -648,7 +616,7 @@ fn typecheck_struct(
     structure: &Struct,
     struct_id: StructId,
     stack: &mut ScopeStack,
-    file: &mut Project,
+    project: &mut Project,
 ) -> Option<JaktError> {
     let mut error = None;
 
@@ -678,29 +646,36 @@ fn typecheck_struct(
         });
     }
 
-    let checked_struct = &mut file.structs[struct_id];
+    let checked_struct = &mut project.structs[struct_id];
     checked_struct.fields = fields;
 
-    let checked_constructor = {
-        let (checked_struct, struct_id) = file
-            .get_struct_mut(&structure.name)
-            .expect("Internal error: we previously defined the struct but it's now missing");
-
-        let checked_constructor = CheckedFunction {
-            name: structure.name.clone(),
-            block: CheckedBlock::new(),
-            linkage: FunctionLinkage::ImplicitConstructor,
-            params: constructor_params,
-            return_type: Type::Struct(struct_id),
-        };
-        checked_struct.methods.push(checked_constructor.clone());
-        checked_constructor
+    let checked_constructor = CheckedFunction {
+        name: structure.name.clone(),
+        block: CheckedBlock::new(),
+        linkage: FunctionLinkage::ImplicitConstructor,
+        params: constructor_params,
+        return_type: Type::Struct(struct_id),
     };
 
-    file.funs.push(checked_constructor);
+    // Internal constructor
+    project.funs.push(checked_constructor);
+
+    if let Err(err) = stack.add_function(
+        structure.name.clone(),
+        project.funs.len() - 1,
+        structure.span,
+    ) {
+        error = error.or(Some(err));
+    }
+
+    let checked_struct = &mut project.structs[struct_id];
+    checked_struct
+        .scope
+        .funs
+        .push((structure.name.clone(), project.funs.len() - 1));
 
     for fun in &structure.methods {
-        error = error.or(typecheck_method(fun, stack, file, struct_id));
+        error = error.or(typecheck_method(fun, stack, project, struct_id));
     }
 
     error
@@ -709,7 +684,7 @@ fn typecheck_struct(
 fn typecheck_fun_predecl(
     fun: &Function,
     stack: &mut ScopeStack,
-    file: &mut Project,
+    project: &mut Project,
 ) -> Option<JaktError> {
     let mut error = None;
 
@@ -737,9 +712,9 @@ fn typecheck_fun_predecl(
         });
     }
 
-    let function_id = file.funs.len();
+    let function_id = project.funs.len();
 
-    file.funs.push(checked_function);
+    project.funs.push(checked_function);
 
     match stack.add_function(fun.name.clone(), function_id, fun.name_span) {
         Ok(_) => {}
@@ -749,14 +724,20 @@ fn typecheck_fun_predecl(
     error
 }
 
-fn typecheck_fun(fun: &Function, stack: &mut ScopeStack, file: &mut Project) -> Option<JaktError> {
+fn typecheck_fun(
+    fun: &Function,
+    stack: &mut ScopeStack,
+    project: &mut Project,
+) -> Option<JaktError> {
     let mut error = None;
 
     stack.push_frame();
 
-    let checked_function = file
-        .get_fun_mut(&fun.name)
-        .expect("Internal error: we just pushed the checked function, but it's not present");
+    let function_id = stack
+        .find_function(&fun.name)
+        .expect("Internal error: missing previously defined function");
+
+    let checked_function = &mut project.funs[function_id];
 
     for param in &checked_function.params {
         if let Err(err) = stack.add_var(param.variable.clone(), fun.name_span) {
@@ -764,7 +745,7 @@ fn typecheck_fun(fun: &Function, stack: &mut ScopeStack, file: &mut Project) -> 
         }
     }
 
-    let (block, err) = typecheck_block(&fun.block, stack, file, SafetyMode::Safe);
+    let (block, err) = typecheck_block(&fun.block, stack, project, SafetyMode::Safe);
     error = error.or(err);
 
     stack.pop_frame();
@@ -784,9 +765,7 @@ fn typecheck_fun(fun: &Function, stack: &mut ScopeStack, file: &mut Project) -> 
         fun_return_type.clone()
     };
 
-    let checked_function = file
-        .get_fun_mut(&fun.name)
-        .expect("Internal error: we just pushed the checked function, but it's not present");
+    let checked_function = &mut project.funs[function_id];
 
     checked_function.block = block;
     checked_function.return_type = return_type;
@@ -797,17 +776,21 @@ fn typecheck_fun(fun: &Function, stack: &mut ScopeStack, file: &mut Project) -> 
 fn typecheck_method(
     fun: &Function,
     stack: &mut ScopeStack,
-    file: &mut Project,
+    project: &mut Project,
     struct_id: StructId,
 ) -> Option<JaktError> {
     let mut error = None;
 
     stack.push_frame();
 
-    let structure = &mut file.structs[struct_id];
-    let checked_function = structure
-        .get_method_mut(&fun.name)
+    let structure = &mut project.structs[struct_id];
+
+    let method_id = structure.scope.find_function(&fun.name);
+
+    let method_id = method_id
         .expect("Internal error: we just pushed the checked function, but it's not present");
+
+    let checked_function = &mut project.funs[method_id];
 
     for param in &checked_function.params {
         if let Err(err) = stack.add_var(param.variable.clone(), fun.name_span) {
@@ -815,7 +798,7 @@ fn typecheck_method(
         }
     }
 
-    let (block, err) = typecheck_block(&fun.block, stack, file, SafetyMode::Safe);
+    let (block, err) = typecheck_block(&fun.block, stack, project, SafetyMode::Safe);
     error = error.or(err);
 
     stack.pop_frame();
@@ -835,10 +818,7 @@ fn typecheck_method(
         fun_return_type.clone()
     };
 
-    let structure = &mut file.structs[struct_id];
-    let checked_function = structure
-        .get_method_mut(&fun.name)
-        .expect("Internal error: we just pushed the checked function, but it's not present");
+    let checked_function = &mut project.funs[method_id];
 
     checked_function.block = block;
     checked_function.return_type = return_type;
@@ -849,7 +829,7 @@ fn typecheck_method(
 pub fn typecheck_block(
     block: &Block,
     stack: &mut ScopeStack,
-    file: &Project,
+    project: &Project,
     safety_mode: SafetyMode,
 ) -> (CheckedBlock, Option<JaktError>) {
     let mut error = None;
@@ -858,7 +838,7 @@ pub fn typecheck_block(
     stack.push_frame();
 
     for stmt in &block.stmts {
-        let (checked_stmt, err) = typecheck_statement(stmt, stack, file, safety_mode);
+        let (checked_stmt, err) = typecheck_statement(stmt, stack, project, safety_mode);
         error = error.or(err);
 
         checked_block.stmts.push(checked_stmt);
@@ -1557,9 +1537,9 @@ pub fn typecheck_binary_operation(
 pub fn resolve_call<'a>(
     call: &Call,
     span: &Span,
-    functions: &'a [CheckedFunction],
+    scope: &Scope,
     stack: &ScopeStack,
-    file: &'a Project,
+    project: &'a Project,
 ) -> (Option<&'a CheckedFunction>, Option<JaktError>) {
     let mut callee = None;
     let mut error = None;
@@ -1569,13 +1549,10 @@ pub fn resolve_call<'a>(
         // In the future, we'll have real namespaces
 
         if let Some(struct_id) = stack.find_struct(namespace) {
-            let structure = &file.structs[struct_id];
+            let structure = &project.structs[struct_id];
 
-            for fun in &structure.methods {
-                if fun.name == call.name {
-                    callee = Some(fun);
-                    break;
-                }
+            if let Some(function_id) = structure.scope.find_function(&call.name) {
+                callee = Some(&project.funs[function_id]);
             }
 
             (callee, error)
@@ -1589,11 +1566,8 @@ pub fn resolve_call<'a>(
         }
     } else {
         // FIXME: Support function overloading.
-        for fun in functions {
-            if fun.name == call.name {
-                callee = Some(fun);
-                break;
-            }
+        if let Some(function_id) = scope.find_function(&call.name) {
+            callee = Some(&project.funs[function_id]);
         }
 
         if callee.is_none() {
@@ -1631,7 +1605,16 @@ pub fn typecheck_call(
             }
         }
         _ => {
-            let (callee, err) = resolve_call(call, span, &project.funs, stack, &project);
+            let (callee, err) = resolve_call(
+                call,
+                span,
+                &stack
+                    .frames
+                    .first()
+                    .expect("internal erorr: missing global scope"),
+                stack,
+                &project,
+            );
             error = error.or(err);
 
             if let Some(callee) = callee {
@@ -1716,7 +1699,7 @@ pub fn typecheck_method_call(
     let mut error = None;
     let mut return_ty = Type::Unknown;
 
-    let (callee, err) = resolve_call(call, span, &file.structs[struct_id].methods, stack, &file);
+    let (callee, err) = resolve_call(call, span, &file.structs[struct_id].scope, stack, &file);
     error = error.or(err);
 
     if let Some(callee) = callee {

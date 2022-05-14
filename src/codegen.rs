@@ -4,18 +4,19 @@ use crate::{
     },
     typechecker::{
         CheckedBlock, CheckedExpression, CheckedFunction, CheckedStatement, CheckedStruct,
-        CheckedVariable, NumericConstant, Project, Type,
+        CheckedVariable, NumericConstant, Project, Scope, Type,
     },
 };
 
 const INDENT_SIZE: usize = 4;
 
-pub fn codegen(file: &Project) -> String {
+pub fn codegen(project: &Project, scope: &Scope) -> String {
     let mut output = String::new();
 
     output.push_str("#include \"runtime/lib.h\"\n");
 
-    for structure in &file.structs {
+    for (_, struct_id) in &scope.structs {
+        let structure = &project.structs[*struct_id];
         let struct_output = codegen_struct_predecl(structure);
 
         if !struct_output.is_empty() {
@@ -26,8 +27,9 @@ pub fn codegen(file: &Project) -> String {
 
     output.push('\n');
 
-    for structure in &file.structs {
-        let struct_output = codegen_struct(structure, file);
+    for (_, struct_id) in &scope.structs {
+        let structure = &project.structs[*struct_id];
+        let struct_output = codegen_struct(structure, project);
 
         if !struct_output.is_empty() {
             output.push_str(&struct_output);
@@ -37,8 +39,9 @@ pub fn codegen(file: &Project) -> String {
 
     output.push('\n');
 
-    for fun in &file.funs {
-        let fun_output = codegen_function_predecl(fun, file);
+    for (_, fun_id) in &scope.funs {
+        let fun = &project.funs[*fun_id];
+        let fun_output = codegen_function_predecl(fun, project);
 
         if fun.linkage != FunctionLinkage::ImplicitConstructor && fun.name != "main" {
             output.push_str(&fun_output);
@@ -48,13 +51,14 @@ pub fn codegen(file: &Project) -> String {
 
     output.push('\n');
 
-    for fun in &file.funs {
+    for (_, fun_id) in &scope.funs {
+        let fun = &project.funs[*fun_id];
         if fun.linkage == FunctionLinkage::External {
             continue;
         } else if fun.linkage == FunctionLinkage::ImplicitConstructor {
             continue;
         } else {
-            let fun_output = codegen_function(fun, file);
+            let fun_output = codegen_function(fun, project);
 
             output.push_str(&fun_output);
             output.push('\n');
@@ -79,7 +83,7 @@ fn codegen_struct_predecl(structure: &CheckedStruct) -> String {
     }
 }
 
-fn codegen_struct(structure: &CheckedStruct, file: &Project) -> String {
+fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
     let mut output = String::new();
 
     if structure.definition_linkage == DefinitionLinkage::External {
@@ -102,15 +106,16 @@ fn codegen_struct(structure: &CheckedStruct, file: &Project) -> String {
     for field in &structure.fields {
         output.push_str(&" ".repeat(INDENT_SIZE));
 
-        output.push_str(&codegen_type(&field.ty, file));
+        output.push_str(&codegen_type(&field.ty, project));
         output.push(' ');
         output.push_str(&field.name);
         output.push_str(";\n");
     }
 
-    for fun in &structure.methods {
+    for (_, fun_id) in &structure.scope.funs {
+        let fun = &project.funs[*fun_id];
         if fun.linkage == FunctionLinkage::ImplicitConstructor {
-            let fun_output = codegen_constructor(fun, file);
+            let fun_output = codegen_constructor(fun, project);
 
             output.push_str(&" ".repeat(INDENT_SIZE));
             output.push_str(&fun_output);
@@ -120,7 +125,7 @@ fn codegen_struct(structure: &CheckedStruct, file: &Project) -> String {
             if fun.is_static() {
                 output.push_str("static ");
             }
-            let method_output = codegen_function(fun, file);
+            let method_output = codegen_function(fun, project);
             output.push_str(&method_output);
         }
     }
@@ -129,7 +134,7 @@ fn codegen_struct(structure: &CheckedStruct, file: &Project) -> String {
     output
 }
 
-fn codegen_function_predecl(fun: &CheckedFunction, file: &Project) -> String {
+fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String {
     let mut output = String::new();
 
     if fun.linkage == FunctionLinkage::External {
@@ -139,7 +144,7 @@ fn codegen_function_predecl(fun: &CheckedFunction, file: &Project) -> String {
     if fun.name == "main" {
         output.push_str("int");
     } else {
-        output.push_str(&codegen_type(&fun.return_type, file));
+        output.push_str(&codegen_type(&fun.return_type, project));
     }
     output.push(' ');
     output.push_str(&fun.name);
@@ -156,7 +161,7 @@ fn codegen_function_predecl(fun: &CheckedFunction, file: &Project) -> String {
         if !param.variable.mutable {
             output.push_str("const ");
         }
-        let ty = codegen_type(&param.variable.ty, file);
+        let ty = codegen_type(&param.variable.ty, project);
         output.push_str(&ty);
         output.push(' ');
         output.push_str(&param.variable.name);
@@ -166,13 +171,13 @@ fn codegen_function_predecl(fun: &CheckedFunction, file: &Project) -> String {
     output
 }
 
-fn codegen_function(fun: &CheckedFunction, file: &Project) -> String {
+fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
     let mut output = String::new();
 
     if fun.name == "main" {
         output.push_str("int");
     } else {
-        output.push_str(&codegen_type(&fun.return_type, file));
+        output.push_str(&codegen_type(&fun.return_type, project));
     }
     output.push(' ');
     if fun.name == "main" {
@@ -205,7 +210,7 @@ fn codegen_function(fun: &CheckedFunction, file: &Project) -> String {
             output.push_str("const ");
         }
 
-        let ty = codegen_type(&param.variable.ty, file);
+        let ty = codegen_type(&param.variable.ty, project);
         output.push_str(&ty);
         output.push(' ');
         output.push_str(&param.variable.name);
@@ -222,7 +227,7 @@ fn codegen_function(fun: &CheckedFunction, file: &Project) -> String {
         output.push_str(&" ".repeat(INDENT_SIZE));
     }
 
-    let block = codegen_block(INDENT_SIZE, &fun.block, file);
+    let block = codegen_block(INDENT_SIZE, &fun.block, project);
     output.push_str(&block);
 
     if fun.name == "main" {
@@ -233,7 +238,7 @@ fn codegen_function(fun: &CheckedFunction, file: &Project) -> String {
     output
 }
 
-fn codegen_constructor(fun: &CheckedFunction, file: &Project) -> String {
+fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
     let mut output = String::new();
 
     output.push_str(&fun.name);
@@ -247,7 +252,7 @@ fn codegen_constructor(fun: &CheckedFunction, file: &Project) -> String {
             first = false;
         }
 
-        let ty = codegen_type(&param.variable.ty, file);
+        let ty = codegen_type(&param.variable.ty, project);
         output.push_str(&ty);
         output.push_str(" a_");
         output.push_str(&param.variable.name);
@@ -273,7 +278,7 @@ fn codegen_constructor(fun: &CheckedFunction, file: &Project) -> String {
     output
 }
 
-fn codegen_type(ty: &Type, file: &Project) -> String {
+fn codegen_type(ty: &Type, project: &Project) -> String {
     match ty {
         Type::Bool => String::from("bool"),
         Type::String => String::from("String"),
@@ -291,9 +296,9 @@ fn codegen_type(ty: &Type, file: &Project) -> String {
         Type::F64 => String::from("f64"),
         Type::Void => String::from("void"),
         Type::RawPtr(ty) => {
-            format!("{}*", codegen_type(ty, file))
+            format!("{}*", codegen_type(ty, project))
         }
-        Type::Vector(v) => format!("RefVector<{}>", codegen_type(v, file)),
+        Type::Vector(v) => format!("RefVector<{}>", codegen_type(v, project)),
         Type::Tuple(types) => {
             let mut output = "Tuple<".to_string();
             let mut first = true;
@@ -305,25 +310,25 @@ fn codegen_type(ty: &Type, file: &Project) -> String {
                     first = false;
                 }
 
-                output.push_str(&codegen_type(ty, file));
+                output.push_str(&codegen_type(ty, project));
             }
 
             output.push('>');
             output
         }
-        Type::Optional(v) => format!("Optional<{}>", codegen_type(v, file)),
-        Type::Struct(struct_id) => file.structs[*struct_id].name.clone(),
+        Type::Optional(v) => format!("Optional<{}>", codegen_type(v, project)),
+        Type::Struct(struct_id) => project.structs[*struct_id].name.clone(),
         Type::Unknown => String::from("auto"),
     }
 }
 
-fn codegen_block(indent: usize, checked_block: &CheckedBlock, file: &Project) -> String {
+fn codegen_block(indent: usize, checked_block: &CheckedBlock, project: &Project) -> String {
     let mut output = String::new();
 
     output.push_str("{\n");
 
     for stmt in &checked_block.stmts {
-        let stmt = codegen_statement(indent + INDENT_SIZE, stmt, file);
+        let stmt = codegen_statement(indent + INDENT_SIZE, stmt, project);
 
         output.push_str(&stmt);
     }
@@ -334,14 +339,14 @@ fn codegen_block(indent: usize, checked_block: &CheckedBlock, file: &Project) ->
     output
 }
 
-fn codegen_statement(indent: usize, stmt: &CheckedStatement, file: &Project) -> String {
+fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) -> String {
     let mut output = String::new();
 
     output.push_str(&" ".repeat(indent));
 
     match stmt {
         CheckedStatement::Expression(expr) => {
-            let expr = codegen_expr(indent, expr, file);
+            let expr = codegen_expr(indent, expr, project);
             output.push_str(&expr);
             output.push_str(";\n");
         }
@@ -350,52 +355,52 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, file: &Project) -> 
             output.push_str("#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n");
             output.push_str("ScopeGuard __SCOPE_GUARD_NAME  ([&] \n");
             output.push_str("#undef __SCOPE_GUARD_NAME\n{");
-            output.push_str(&codegen_statement(indent, statement, file));
+            output.push_str(&codegen_statement(indent, statement, project));
             output.push_str("});\n");
         }
         CheckedStatement::Return(expr) => {
-            let expr = codegen_expr(indent, expr, file);
+            let expr = codegen_expr(indent, expr, project);
             output.push_str("return (");
             output.push_str(&expr);
             output.push_str(");\n")
         }
         CheckedStatement::If(cond, block, else_stmt) => {
-            let expr = codegen_expr(indent, cond, file);
+            let expr = codegen_expr(indent, cond, project);
             output.push_str("if (");
             output.push_str(&expr);
             output.push_str(") ");
 
-            let block = codegen_block(indent, block, file);
+            let block = codegen_block(indent, block, project);
             output.push_str(&block);
 
             if let Some(else_stmt) = else_stmt {
                 output.push_str(" else ");
-                let else_string = codegen_statement(indent, else_stmt, file);
+                let else_string = codegen_statement(indent, else_stmt, project);
                 output.push_str(&else_string);
             }
         }
         CheckedStatement::While(cond, block) => {
-            let expr = codegen_expr(indent, cond, file);
+            let expr = codegen_expr(indent, cond, project);
             output.push_str("while (");
             output.push_str(&expr);
             output.push_str(") ");
 
-            let block = codegen_block(indent, block, file);
+            let block = codegen_block(indent, block, project);
             output.push_str(&block);
         }
         CheckedStatement::VarDecl(var_decl, expr) => {
             if !var_decl.mutable {
                 output.push_str("const ");
             }
-            output.push_str(&codegen_type(&var_decl.ty, file));
+            output.push_str(&codegen_type(&var_decl.ty, project));
             output.push(' ');
             output.push_str(&var_decl.name);
             output.push_str(" = ");
-            output.push_str(&codegen_expr(indent, expr, file));
+            output.push_str(&codegen_expr(indent, expr, project));
             output.push_str(";\n");
         }
         CheckedStatement::Block(checked_block) => {
-            let block = codegen_block(indent, checked_block, file);
+            let block = codegen_block(indent, checked_block, project);
             output.push_str(&block);
         }
         CheckedStatement::Garbage => {
@@ -407,7 +412,7 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, file: &Project) -> 
     output
 }
 
-fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &Project) -> String {
+fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> String {
     let mut output = String::new();
 
     match expr {
@@ -416,12 +421,12 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &Project) -> Stri
         }
         CheckedExpression::OptionalSome(expr, _) => {
             output.push('(');
-            output.push_str(&codegen_expr(indent, expr, file));
+            output.push_str(&codegen_expr(indent, expr, project));
             output.push(')');
         }
         CheckedExpression::ForcedUnwrap(expr, _) => {
             output.push('(');
-            output.push_str(&codegen_expr(indent, expr, file));
+            output.push_str(&codegen_expr(indent, expr, project));
             output.push_str(".value())");
         }
         CheckedExpression::QuotedString(qs) => {
@@ -490,13 +495,13 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &Project) -> Stri
             if call.name == "println" {
                 output.push_str("outln(\"{}\", ");
                 for param in &call.args {
-                    output.push_str(&codegen_expr(indent, &param.1, file));
+                    output.push_str(&codegen_expr(indent, &param.1, project));
                 }
                 output.push(')');
             } else if call.name == "eprintln" {
                 output.push_str("warnln(\"{}\", ");
                 for param in &call.args {
-                    output.push_str(&codegen_expr(indent, &param.1, file));
+                    output.push_str(&codegen_expr(indent, &param.1, project));
                 }
                 output.push(')');
             } else {
@@ -516,7 +521,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &Project) -> Stri
                         first = false;
                     }
 
-                    output.push_str(&codegen_expr(indent, &param.1, file));
+                    output.push_str(&codegen_expr(indent, &param.1, project));
                 }
                 output.push(')');
             }
@@ -525,7 +530,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &Project) -> Stri
             output.push('(');
 
             output.push('(');
-            output.push_str(&codegen_expr(indent, expr, file));
+            output.push_str(&codegen_expr(indent, expr, project));
             output.push_str(")");
 
             match &**expr {
@@ -545,7 +550,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &Project) -> Stri
                     first = false;
                 }
 
-                output.push_str(&codegen_expr(indent, &param.1, file));
+                output.push_str(&codegen_expr(indent, &param.1, project));
             }
             output.push_str("))");
         }
@@ -605,12 +610,12 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &Project) -> Stri
                         }
                     }
                     output.push('<');
-                    output.push_str(&codegen_type(ty, file));
+                    output.push_str(&codegen_type(ty, project));
                     output.push_str(">(");
                 }
                 _ => {}
             }
-            output.push_str(&codegen_expr(indent, expr, file));
+            output.push_str(&codegen_expr(indent, expr, project));
             match op {
                 UnaryOperator::PostIncrement => {
                     output.push_str("++");
@@ -627,7 +632,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &Project) -> Stri
         }
         CheckedExpression::BinaryOp(lhs, op, rhs, ..) => {
             output.push('(');
-            output.push_str(&codegen_expr(indent, lhs, file));
+            output.push_str(&codegen_expr(indent, lhs, project));
             match op {
                 BinaryOperator::Add => output.push_str(" + "),
                 BinaryOperator::Subtract => output.push_str(" - "),
@@ -654,7 +659,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &Project) -> Stri
                 BinaryOperator::BitwiseLeftShift => output.push_str(" << "),
                 BinaryOperator::BitwiseRightShift => output.push_str(" >> "),
             }
-            output.push_str(&codegen_expr(indent, rhs, file));
+            output.push_str(&codegen_expr(indent, rhs, project));
             output.push(')');
         }
         CheckedExpression::Vector(vals, _) => {
@@ -668,7 +673,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &Project) -> Stri
                     first = false;
                 }
 
-                output.push_str(&codegen_expr(indent, val, file))
+                output.push_str(&codegen_expr(indent, val, project))
             }
             output.push_str("}))");
         }
@@ -683,27 +688,27 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, file: &Project) -> Stri
                     first = false;
                 }
 
-                output.push_str(&codegen_expr(indent, val, file))
+                output.push_str(&codegen_expr(indent, val, project))
             }
             output.push_str("})");
         }
         CheckedExpression::IndexedExpression(expr, idx, _) => {
             output.push_str("((");
-            output.push_str(&codegen_expr(indent, expr, file));
+            output.push_str(&codegen_expr(indent, expr, project));
             output.push_str(")[");
-            output.push_str(&codegen_expr(indent, idx, file));
+            output.push_str(&codegen_expr(indent, idx, project));
             output.push_str("])");
         }
         CheckedExpression::IndexedTuple(expr, idx, _) => {
             // x.get<1>()
             output.push_str("((");
-            output.push_str(&codegen_expr(indent, expr, file));
+            output.push_str(&codegen_expr(indent, expr, project));
             output.push_str(&format!(").get<{}>())", idx));
         }
         CheckedExpression::IndexedStruct(expr, name, _) => {
             // x.get<1>()
             output.push_str("((");
-            output.push_str(&codegen_expr(indent, expr, file));
+            output.push_str(&codegen_expr(indent, expr, project));
             output.push(')');
             match &**expr {
                 CheckedExpression::Var(CheckedVariable { name, .. }) if name == "this" => {
