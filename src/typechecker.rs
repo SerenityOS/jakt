@@ -1416,7 +1416,7 @@ pub fn typecheck_expression(
                         Some(struct_id) => {
                             let (checked_call, err) = typecheck_method_call(
                                 call,
-                                0,
+                                scope_id,
                                 span,
                                 project,
                                 struct_id,
@@ -1446,13 +1446,13 @@ pub fn typecheck_expression(
                 }
                 Type::Vector(_) => {
                     // Special-case the built-in so we don't accidentally find the user's definition
-                    let string_struct = project.find_struct_in_scope(0, "RefVector");
+                    let vector_struct = project.find_struct_in_scope(0, "RefVector");
 
-                    match string_struct {
+                    match vector_struct {
                         Some(struct_id) => {
                             let (checked_call, err) = typecheck_method_call(
                                 call,
-                                0,
+                                scope_id,
                                 span,
                                 project,
                                 struct_id,
@@ -1868,8 +1868,6 @@ pub fn typecheck_method_call(
             )));
         } else {
             let mut idx = 0;
-
-            // The first index should be the 'this'
 
             while idx < call.args.len() {
                 let (mut checked_arg, err) =
