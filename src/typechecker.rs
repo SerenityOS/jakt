@@ -8,6 +8,7 @@ use crate::{
 };
 
 pub type StructId = usize;
+pub type FunctionId = usize;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SafetyMode {
@@ -86,44 +87,17 @@ impl Type {
 }
 
 #[derive(Debug, Clone)]
-pub struct CheckedFile {
+pub struct Project {
     pub funs: Vec<CheckedFunction>,
     pub structs: Vec<CheckedStruct>,
 }
 
-impl CheckedFile {
+impl Project {
     pub fn new() -> Self {
         Self {
             funs: Vec::new(),
             structs: Vec::new(),
         }
-    }
-
-    pub fn find_struct(&self, name: &str) -> Option<usize> {
-        for (idx, structure) in self.structs.iter().enumerate() {
-            if structure.name == name {
-                return Some(idx);
-            }
-        }
-        None
-    }
-
-    pub fn get_struct_mut(&mut self, name: &str) -> Option<(&mut CheckedStruct, usize)> {
-        for (idx, structure) in self.structs.iter_mut().enumerate() {
-            if structure.name == name {
-                return Some((structure, idx));
-            }
-        }
-        None
-    }
-
-    pub fn get_fun_mut(&mut self, name: &str) -> Option<&mut CheckedFunction> {
-        for fun in self.funs.iter_mut() {
-            if fun.name == name {
-                return Some(fun);
-            }
-        }
-        None
     }
 }
 
@@ -131,21 +105,21 @@ impl CheckedFile {
 pub struct CheckedStruct {
     pub name: String,
     pub fields: Vec<CheckedVarDecl>,
-    pub methods: Vec<CheckedFunction>,
+    pub scope: Scope,
     pub definition_linkage: DefinitionLinkage,
     pub definition_type: DefinitionType,
 }
 
-impl CheckedStruct {
-    pub fn get_method_mut(&mut self, name: &str) -> Option<&mut CheckedFunction> {
-        for fun in self.methods.iter_mut() {
-            if fun.name == name {
-                return Some(fun);
-            }
-        }
-        None
-    }
-}
+// impl CheckedStruct {
+//     pub fn get_method_mut(&mut self, name: &str) -> Option<&mut CheckedFunction> {
+//         for fun in self.methods.iter_mut() {
+//             if fun.name == name {
+//                 return Some(fun);
+//             }
+//         }
+//         None
+//     }
+// }
 
 #[derive(Clone, Debug)]
 pub struct CheckedParameter {
@@ -394,18 +368,18 @@ pub struct CheckedCall {
 }
 
 #[derive(Clone, Debug)]
-pub struct Stack {
-    pub frames: Vec<StackFrame>,
+pub struct ScopeStack {
+    pub frames: Vec<Scope>,
 }
 
-impl Stack {
+impl ScopeStack {
     pub fn new() -> Self {
         Self {
-            frames: vec![StackFrame::new()],
+            frames: vec![Scope::new()],
         }
     }
     pub fn push_frame(&mut self) {
-        self.frames.push(StackFrame::new())
+        self.frames.push(Scope::new())
     }
 
     pub fn pop_frame(&mut self) {
@@ -445,8 +419,8 @@ impl Stack {
         struct_id: StructId,
         span: Span,
     ) -> Result<(), JaktError> {
-        if let Some(frame) = self.frames.last_mut() {
-            for (existing_struct, _) in &frame.structs {
+        if let Some(scope) = self.frames.last_mut() {
+            for (existing_struct, _) in &scope.structs {
                 if &name == existing_struct {
                     return Err(JaktError::TypecheckError(
                         format!("redefinition of {}", name),
@@ -454,7 +428,7 @@ impl Stack {
                     ));
                 }
             }
-            frame.structs.push((name, struct_id));
+            scope.structs.push((name, struct_id));
         }
         Ok(())
     }
@@ -470,94 +444,115 @@ impl Stack {
 
         None
     }
+
+    pub fn add_function(
+        &mut self,
+        name: String,
+        function_id: FunctionId,
+        span: Span,
+    ) -> Result<(), JaktError> {
+        if let Some(scope) = self.frames.last_mut() {
+            for (existing_fun, _) in &scope.funs {
+                if &name == existing_fun {
+                    return Err(JaktError::TypecheckError(
+                        format!("redefinition of {}", name),
+                        span,
+                    ));
+                }
+            }
+            scope.funs.push((name, function_id));
+        }
+        Ok(())
+    }
+
+    pub fn find_function(&self, fun_name: &str) -> Option<FunctionId> {
+        for frame in self.frames.iter().rev() {
+            for s in &frame.funs {
+                if s.0 == fun_name {
+                    return Some(s.1);
+                }
+            }
+        }
+
+        None
+    }
 }
 
 #[derive(Clone, Debug)]
-pub struct StackFrame {
-    vars: Vec<CheckedVariable>,
-
-    structs: Vec<(String, StructId)>,
+pub struct Scope {
+    pub vars: Vec<CheckedVariable>,
+    pub structs: Vec<(String, StructId)>,
+    pub funs: Vec<(String, FunctionId)>,
 }
 
-impl StackFrame {
+impl Scope {
     pub fn new() -> Self {
         Self {
             vars: Vec::new(),
             structs: Vec::new(),
+            funs: Vec::new(),
         }
+    }
+
+    pub fn find_function(&self, name: &str) -> Option<FunctionId> {
+        for fun in &self.funs {
+            if fun.0 == name {
+                return Some(fun.1);
+            }
+        }
+
+        None
+    }
+
+    pub fn add_function(&mut self, name: String, function_id: FunctionId) {
+        self.funs.push((name, function_id))
     }
 }
 
 pub fn typecheck_file(
-    file: &ParsedFile,
-    prelude: &CheckedFile,
-) -> (CheckedFile, Option<JaktError>) {
-    let mut stack = Stack::new();
-
-    typecheck_file_helper(file, &mut stack, prelude)
-}
-
-fn typecheck_file_helper(
     parsed_file: &ParsedFile,
-    stack: &mut Stack,
-    prelude: &CheckedFile,
-) -> (CheckedFile, Option<JaktError>) {
-    let mut file = CheckedFile::new();
+    stack: &mut ScopeStack,
+    project: &mut Project,
+) -> Option<JaktError> {
     let mut error = None;
 
-    for structure in &prelude.structs {
-        file.structs.push(structure.clone());
-        let _ = stack.add_struct(
-            structure.name.clone(),
-            file.structs.len() - 1,
-            Span::new(0, 0, 0),
-        );
-    }
-
-    for fun in &prelude.funs {
-        file.funs.push(fun.clone());
-    }
+    let project_struct_len = project.structs.len();
 
     for (struct_id, structure) in parsed_file.structs.iter().enumerate() {
         //Ensure we know the types ahead of time, so they can be recursive
-        typecheck_struct_predecl(
-            structure,
-            struct_id + prelude.structs.len(),
-            stack,
-            &mut file,
-        );
+        typecheck_struct_predecl(structure, struct_id + project_struct_len, stack, project);
     }
 
     for fun in &parsed_file.funs {
         //Ensure we know the function ahead of time, so they can be recursive
-        error = error.or(typecheck_fun_predecl(fun, stack, &mut file));
+        error = error.or(typecheck_fun_predecl(fun, stack, project));
     }
 
     for (struct_id, structure) in parsed_file.structs.iter().enumerate() {
         error = error.or(typecheck_struct(
             structure,
-            struct_id + prelude.structs.len(),
+            struct_id + project_struct_len,
             stack,
-            &mut file,
+            project,
         ));
     }
 
     for fun in &parsed_file.funs {
-        error = error.or(typecheck_fun(fun, stack, &mut file));
+        error = error.or(typecheck_fun(fun, stack, project));
     }
 
-    (file, error)
+    error
 }
 
 fn typecheck_struct_predecl(
     structure: &Struct,
     struct_id: StructId,
-    stack: &mut Stack,
-    file: &mut CheckedFile,
+    stack: &mut ScopeStack,
+    project: &mut Project,
 ) -> Option<JaktError> {
     let mut error = None;
 
-    let mut methods = Vec::new();
+    let mut scope = Scope::new();
 
     for fun in &structure.methods {
         let mut checked_function = CheckedFunction {
@@ -597,13 +592,14 @@ fn typecheck_struct_predecl(
             }
         }
 
-        methods.push(checked_function);
+        project.funs.push(checked_function);
+        scope.add_function(fun.name.clone(), project.funs.len() - 1);
     }
 
-    file.structs.push(CheckedStruct {
+    project.structs.push(CheckedStruct {
         name: structure.name.clone(),
         fields: Vec::new(),
-        methods,
+        scope,
         definition_linkage: structure.definition_linkage,
         definition_type: structure.definition_type,
     });
@@ -619,8 +615,8 @@ fn typecheck_struct_predecl(
 fn typecheck_struct(
     structure: &Struct,
     struct_id: StructId,
-    stack: &mut Stack,
-    file: &mut CheckedFile,
+    stack: &mut ScopeStack,
+    project: &mut Project,
 ) -> Option<JaktError> {
     let mut error = None;
 
@@ -650,29 +646,36 @@ fn typecheck_struct(
         });
     }
 
-    let checked_struct = &mut file.structs[struct_id];
+    let checked_struct = &mut project.structs[struct_id];
     checked_struct.fields = fields;
 
-    let checked_constructor = {
-        let (checked_struct, struct_id) = file
-            .get_struct_mut(&structure.name)
-            .expect("Internal error: we previously defined the struct but it's now missing");
-
-        let checked_constructor = CheckedFunction {
-            name: structure.name.clone(),
-            block: CheckedBlock::new(),
-            linkage: FunctionLinkage::ImplicitConstructor,
-            params: constructor_params,
-            return_type: Type::Struct(struct_id),
-        };
-        checked_struct.methods.push(checked_constructor.clone());
-        checked_constructor
+    let checked_constructor = CheckedFunction {
+        name: structure.name.clone(),
+        block: CheckedBlock::new(),
+        linkage: FunctionLinkage::ImplicitConstructor,
+        params: constructor_params,
+        return_type: Type::Struct(struct_id),
     };
 
-    file.funs.push(checked_constructor);
+    // Internal constructor
+    project.funs.push(checked_constructor);
+
+    if let Err(err) = stack.add_function(
+        structure.name.clone(),
+        project.funs.len() - 1,
+        structure.span,
+    ) {
+        error = error.or(Some(err));
+    }
+
+    let checked_struct = &mut project.structs[struct_id];
+    checked_struct
+        .scope
+        .funs
+        .push((structure.name.clone(), project.funs.len() - 1));
 
     for fun in &structure.methods {
-        error = error.or(typecheck_method(fun, stack, file, struct_id));
+        error = error.or(typecheck_method(fun, stack, project, struct_id));
     }
 
     error
@@ -680,8 +683,8 @@ fn typecheck_struct(
 
 fn typecheck_fun_predecl(
     fun: &Function,
-    stack: &mut Stack,
-    file: &mut CheckedFile,
+    stack: &mut ScopeStack,
+    project: &mut Project,
 ) -> Option<JaktError> {
     let mut error = None;
 
@@ -709,19 +712,32 @@ fn typecheck_fun_predecl(
         });
     }
 
-    file.funs.push(checked_function);
+    let function_id = project.funs.len();
+
+    project.funs.push(checked_function);
+
+    match stack.add_function(fun.name.clone(), function_id, fun.name_span) {
+        Ok(_) => {}
+        Err(err) => error = error.or(Some(err)),
+    }
 
     error
 }
 
-fn typecheck_fun(fun: &Function, stack: &mut Stack, file: &mut CheckedFile) -> Option<JaktError> {
+fn typecheck_fun(
+    fun: &Function,
+    stack: &mut ScopeStack,
+    project: &mut Project,
+) -> Option<JaktError> {
     let mut error = None;
 
     stack.push_frame();
 
-    let checked_function = file
-        .get_fun_mut(&fun.name)
-        .expect("Internal error: we just pushed the checked function, but it's not present");
+    let function_id = stack
+        .find_function(&fun.name)
+        .expect("Internal error: missing previously defined function");
+
+    let checked_function = &mut project.funs[function_id];
 
     for param in &checked_function.params {
         if let Err(err) = stack.add_var(param.variable.clone(), fun.name_span) {
@@ -729,7 +745,7 @@ fn typecheck_fun(fun: &Function, stack: &mut Stack, file: &mut CheckedFile) -> O
         }
     }
 
-    let (block, err) = typecheck_block(&fun.block, stack, file, SafetyMode::Safe);
+    let (block, err) = typecheck_block(&fun.block, stack, project, SafetyMode::Safe);
     error = error.or(err);
 
     stack.pop_frame();
@@ -749,9 +765,7 @@ fn typecheck_fun(fun: &Function, stack: &mut Stack, file: &mut CheckedFile) -> O
         fun_return_type.clone()
     };
 
-    let checked_function = file
-        .get_fun_mut(&fun.name)
-        .expect("Internal error: we just pushed the checked function, but it's not present");
+    let checked_function = &mut project.funs[function_id];
 
     checked_function.block = block;
     checked_function.return_type = return_type;
@@ -761,18 +775,22 @@ fn typecheck_fun(fun: &Function, stack: &mut Stack, file: &mut CheckedFile) -> O
 
 fn typecheck_method(
     fun: &Function,
-    stack: &mut Stack,
-    file: &mut CheckedFile,
+    stack: &mut ScopeStack,
+    project: &mut Project,
     struct_id: StructId,
 ) -> Option<JaktError> {
     let mut error = None;
 
     stack.push_frame();
 
-    let structure = &mut file.structs[struct_id];
-    let checked_function = structure
-        .get_method_mut(&fun.name)
+    let structure = &mut project.structs[struct_id];
+
+    let method_id = structure.scope.find_function(&fun.name);
+
+    let method_id = method_id
         .expect("Internal error: we just pushed the checked function, but it's not present");
+
+    let checked_function = &mut project.funs[method_id];
 
     for param in &checked_function.params {
         if let Err(err) = stack.add_var(param.variable.clone(), fun.name_span) {
@@ -780,7 +798,7 @@ fn typecheck_method(
         }
     }
 
-    let (block, err) = typecheck_block(&fun.block, stack, file, SafetyMode::Safe);
+    let (block, err) = typecheck_block(&fun.block, stack, project, SafetyMode::Safe);
     error = error.or(err);
 
     stack.pop_frame();
@@ -800,10 +818,7 @@ fn typecheck_method(
         fun_return_type.clone()
     };
 
-    let structure = &mut file.structs[struct_id];
-    let checked_function = structure
-        .get_method_mut(&fun.name)
-        .expect("Internal error: we just pushed the checked function, but it's not present");
+    let checked_function = &mut project.funs[method_id];
 
     checked_function.block = block;
     checked_function.return_type = return_type;
@@ -813,8 +828,8 @@ fn typecheck_method(
 
 pub fn typecheck_block(
     block: &Block,
-    stack: &mut Stack,
-    file: &CheckedFile,
+    stack: &mut ScopeStack,
+    project: &Project,
     safety_mode: SafetyMode,
 ) -> (CheckedBlock, Option<JaktError>) {
     let mut error = None;
@@ -823,7 +838,7 @@ pub fn typecheck_block(
     stack.push_frame();
 
     for stmt in &block.stmts {
-        let (checked_stmt, err) = typecheck_statement(stmt, stack, file, safety_mode);
+        let (checked_stmt, err) = typecheck_statement(stmt, stack, project, safety_mode);
         error = error.or(err);
 
         checked_block.stmts.push(checked_stmt);
@@ -836,31 +851,32 @@ pub fn typecheck_block(
 
 pub fn typecheck_statement(
     stmt: &Statement,
-    stack: &mut Stack,
-    file: &CheckedFile,
+    stack: &mut ScopeStack,
+    project: &Project,
     safety_mode: SafetyMode,
 ) -> (CheckedStatement, Option<JaktError>) {
     let mut error = None;
 
     match stmt {
         Statement::Expression(expr) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
+            let (checked_expr, err) = typecheck_expression(expr, stack, project, safety_mode);
 
             (CheckedStatement::Expression(checked_expr), err)
         }
         Statement::Defer(statement) => {
-            let (checked_statement, err) = typecheck_statement(statement, stack, file, safety_mode);
+            let (checked_statement, err) =
+                typecheck_statement(statement, stack, project, safety_mode);
 
             (CheckedStatement::Defer(Box::new(checked_statement)), err)
         }
         Statement::UnsafeBlock(block) => {
-            let (checked_block, err) = typecheck_block(block, stack, file, SafetyMode::Unsafe);
+            let (checked_block, err) = typecheck_block(block, stack, project, SafetyMode::Unsafe);
 
             (CheckedStatement::Block(checked_block), err)
         }
         Statement::VarDecl(var_decl, init) => {
             let (mut checked_expression, err) =
-                typecheck_expression(init, stack, file, safety_mode);
+                typecheck_expression(init, stack, project, safety_mode);
             error = error.or(err);
 
             let (mut checked_type, err) = typecheck_typename(&var_decl.ty, stack);
@@ -910,15 +926,16 @@ pub fn typecheck_statement(
             )
         }
         Statement::If(cond, block, else_stmt) => {
-            let (checked_cond, err) = typecheck_expression(cond, stack, file, safety_mode);
+            let (checked_cond, err) = typecheck_expression(cond, stack, project, safety_mode);
             error = error.or(err);
 
-            let (checked_block, err) = typecheck_block(block, stack, file, safety_mode);
+            let (checked_block, err) = typecheck_block(block, stack, project, safety_mode);
             error = error.or(err);
 
             let else_output;
             if let Some(else_stmt) = else_stmt {
-                let (checked_stmt, err) = typecheck_statement(else_stmt, stack, file, safety_mode);
+                let (checked_stmt, err) =
+                    typecheck_statement(else_stmt, stack, project, safety_mode);
                 error = error.or(err);
 
                 else_output = Some(Box::new(checked_stmt));
@@ -932,21 +949,21 @@ pub fn typecheck_statement(
             )
         }
         Statement::While(cond, block) => {
-            let (checked_cond, err) = typecheck_expression(cond, stack, file, safety_mode);
+            let (checked_cond, err) = typecheck_expression(cond, stack, project, safety_mode);
             error = error.or(err);
 
-            let (checked_block, err) = typecheck_block(block, stack, file, safety_mode);
+            let (checked_block, err) = typecheck_block(block, stack, project, safety_mode);
             error = error.or(err);
 
             (CheckedStatement::While(checked_cond, checked_block), error)
         }
         Statement::Return(expr) => {
-            let (output, err) = typecheck_expression(expr, stack, file, safety_mode);
+            let (output, err) = typecheck_expression(expr, stack, project, safety_mode);
 
             (CheckedStatement::Return(output), err)
         }
         Statement::Block(block) => {
-            let (checked_block, err) = typecheck_block(block, stack, file, safety_mode);
+            let (checked_block, err) = typecheck_block(block, stack, project, safety_mode);
             (CheckedStatement::Block(checked_block), err)
         }
         Statement::Garbage => (CheckedStatement::Garbage, None),
@@ -977,18 +994,18 @@ pub fn try_promote_constant_expr_to_type(
 
 pub fn typecheck_expression(
     expr: &Expression,
-    stack: &mut Stack,
-    file: &CheckedFile,
+    stack: &mut ScopeStack,
+    project: &Project,
     safety_mode: SafetyMode,
 ) -> (CheckedExpression, Option<JaktError>) {
     let mut error = None;
 
     match expr {
         Expression::BinaryOp(lhs, op, rhs, span) => {
-            let (checked_lhs, err) = typecheck_expression(lhs, stack, file, safety_mode);
+            let (checked_lhs, err) = typecheck_expression(lhs, stack, project, safety_mode);
             error = error.or(err);
 
-            let (mut checked_rhs, err) = typecheck_expression(rhs, stack, file, safety_mode);
+            let (mut checked_rhs, err) = typecheck_expression(rhs, stack, project, safety_mode);
             error = error.or(err);
 
             let err = try_promote_constant_expr_to_type(&checked_lhs.ty(), &mut checked_rhs, span);
@@ -1010,7 +1027,7 @@ pub fn typecheck_expression(
             )
         }
         Expression::UnaryOp(expr, op, span) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
+            let (checked_expr, err) = typecheck_expression(expr, stack, project, safety_mode);
             error = error.or(err);
 
             let (checked_expr, err) =
@@ -1021,7 +1038,7 @@ pub fn typecheck_expression(
         }
         Expression::OptionalNone(_) => (CheckedExpression::OptionalNone(Type::Unknown), None),
         Expression::OptionalSome(expr, _) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
+            let (checked_expr, err) = typecheck_expression(expr, stack, project, safety_mode);
             let ty = checked_expr.ty();
             (
                 CheckedExpression::OptionalSome(Box::new(checked_expr), ty),
@@ -1029,7 +1046,7 @@ pub fn typecheck_expression(
             )
         }
         Expression::ForcedUnwrap(expr, _) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
+            let (checked_expr, err) = typecheck_expression(expr, stack, project, safety_mode);
 
             let (ty, err) = if let Type::Optional(inner_type) = checked_expr.ty() {
                 (*inner_type, err)
@@ -1049,7 +1066,7 @@ pub fn typecheck_expression(
         }
         Expression::Boolean(b, _) => (CheckedExpression::Boolean(*b), None),
         Expression::Call(call, span) => {
-            let (checked_call, err) = typecheck_call(call, stack, span, file, safety_mode);
+            let (checked_call, err) = typecheck_call(call, stack, span, project, safety_mode);
             let ty = checked_call.ty.clone();
             (CheckedExpression::Call(checked_call, ty), err)
         }
@@ -1081,7 +1098,7 @@ pub fn typecheck_expression(
             let mut output = Vec::new();
 
             for v in vec {
-                let (checked_expr, err) = typecheck_expression(v, stack, file, safety_mode);
+                let (checked_expr, err) = typecheck_expression(v, stack, project, safety_mode);
                 error = error.or(err);
 
                 if inner_ty == Type::Unknown {
@@ -1108,7 +1125,7 @@ pub fn typecheck_expression(
             let mut checked_types = Vec::new();
 
             for item in items {
-                let (checked_item, err) = typecheck_expression(item, stack, file, safety_mode);
+                let (checked_item, err) = typecheck_expression(item, stack, project, safety_mode);
                 error = error.or(err);
 
                 checked_types.push(checked_item.ty());
@@ -1121,10 +1138,10 @@ pub fn typecheck_expression(
             )
         }
         Expression::IndexedExpression(expr, idx, _) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
+            let (checked_expr, err) = typecheck_expression(expr, stack, project, safety_mode);
             error = error.or(err);
 
-            let (checked_idx, err) = typecheck_expression(idx, stack, file, safety_mode);
+            let (checked_idx, err) = typecheck_expression(idx, stack, project, safety_mode);
             error = error.or(err);
 
             let mut ty = Type::Unknown;
@@ -1159,7 +1176,7 @@ pub fn typecheck_expression(
             )
         }
         Expression::IndexedTuple(expr, idx, span) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
+            let (checked_expr, err) = typecheck_expression(expr, stack, project, safety_mode);
             error = error.or(err);
 
             let mut ty = Type::Unknown;
@@ -1189,14 +1206,14 @@ pub fn typecheck_expression(
         }
 
         Expression::IndexedStruct(expr, name, span) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
+            let (checked_expr, err) = typecheck_expression(expr, stack, project, safety_mode);
             error = error.or(err);
 
             let ty = Type::Unknown;
 
             match checked_expr.ty() {
                 Type::Struct(struct_id) => {
-                    let structure = &file.structs[struct_id];
+                    let structure = &project.structs[struct_id];
 
                     for member in &structure.fields {
                         if &member.name == name {
@@ -1231,13 +1248,13 @@ pub fn typecheck_expression(
             )
         }
         Expression::MethodCall(expr, call, span) => {
-            let (checked_expr, err) = typecheck_expression(expr, stack, file, safety_mode);
+            let (checked_expr, err) = typecheck_expression(expr, stack, project, safety_mode);
             error = error.or(err);
 
             match checked_expr.ty() {
                 Type::Struct(struct_id) => {
                     let (checked_call, err) =
-                        typecheck_method_call(call, stack, span, file, struct_id, safety_mode);
+                        typecheck_method_call(call, stack, span, project, struct_id, safety_mode);
                     error = error.or(err);
 
                     let ty = checked_call.ty.clone();
@@ -1247,7 +1264,7 @@ pub fn typecheck_expression(
                     )
                 }
                 Type::String => {
-                    let string_struct = file.find_struct("String");
+                    let string_struct = stack.find_struct("String");
 
                     match string_struct {
                         Some(struct_id) => {
@@ -1255,7 +1272,7 @@ pub fn typecheck_expression(
                                 call,
                                 stack,
                                 span,
-                                file,
+                                project,
                                 struct_id,
                                 safety_mode,
                             );
@@ -1282,7 +1299,7 @@ pub fn typecheck_expression(
                     }
                 }
                 Type::Vector(_) => {
-                    let string_struct = file.find_struct("RefVector");
+                    let string_struct = stack.find_struct("RefVector");
 
                     match string_struct {
                         Some(struct_id) => {
@@ -1290,7 +1307,7 @@ pub fn typecheck_expression(
                                 call,
                                 stack,
                                 span,
-                                file,
+                                project,
                                 struct_id,
                                 safety_mode,
                             );
@@ -1348,7 +1365,7 @@ pub fn typecheck_unary_operation(
     expr: CheckedExpression,
     op: UnaryOperator,
     span: Span,
-    stack: &Stack,
+    stack: &ScopeStack,
     safety_mode: SafetyMode,
 ) -> (CheckedExpression, Option<JaktError>) {
     let expr_ty = expr.ty();
@@ -1442,28 +1459,22 @@ pub fn typecheck_unary_operation(
             | Type::U32
             | Type::U64
             | Type::F32
-            | Type::F64 => match &expr {
-                CheckedExpression::Var(v) => {
-                    if !v.mutable {
-                        (
-                            CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
-                            Some(JaktError::TypecheckError(
-                                "increment on immutable variable".to_string(),
-                                span,
-                            )),
-                        )
-                    } else {
-                        (
-                            CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
-                            None,
-                        )
-                    }
+            | Type::F64 => {
+                if !expr.is_mutable() {
+                    (
+                        CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
+                        Some(JaktError::TypecheckError(
+                            "increment/decrement of immutable variable".to_string(),
+                            span,
+                        )),
+                    )
+                } else {
+                    (
+                        CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
+                        None,
+                    )
                 }
-                _ => (
-                    CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
-                    None,
-                ),
-            },
+            }
             _ => (
                 CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
                 Some(JaktError::TypecheckError(
@@ -1526,8 +1537,9 @@ pub fn typecheck_binary_operation(
 pub fn resolve_call<'a>(
     call: &Call,
     span: &Span,
-    functions: &'a [CheckedFunction],
-    file: &'a CheckedFile,
+    scope: &Scope,
+    stack: &ScopeStack,
+    project: &'a Project,
 ) -> (Option<&'a CheckedFunction>, Option<JaktError>) {
     let mut callee = None;
     let mut error = None;
@@ -1536,14 +1548,11 @@ pub fn resolve_call<'a>(
         // For now, assume class is our namespace
         // In the future, we'll have real namespaces
 
-        if let Some(struct_id) = file.find_struct(namespace) {
-            let structure = &file.structs[struct_id];
+        if let Some(struct_id) = stack.find_struct(namespace) {
+            let structure = &project.structs[struct_id];
 
-            for fun in &structure.methods {
-                if fun.name == call.name {
-                    callee = Some(fun);
-                    break;
-                }
+            if let Some(function_id) = structure.scope.find_function(&call.name) {
+                callee = Some(&project.funs[function_id]);
             }
 
             (callee, error)
@@ -1557,11 +1566,8 @@ pub fn resolve_call<'a>(
         }
     } else {
         // FIXME: Support function overloading.
-        for fun in functions {
-            if fun.name == call.name {
-                callee = Some(fun);
-                break;
-            }
+        if let Some(function_id) = scope.find_function(&call.name) {
+            callee = Some(&project.funs[function_id]);
         }
 
         if callee.is_none() {
@@ -1577,9 +1583,9 @@ pub fn resolve_call<'a>(
 
 pub fn typecheck_call(
     call: &Call,
-    stack: &mut Stack,
+    stack: &mut ScopeStack,
     span: &Span,
-    file: &CheckedFile,
+    project: &Project,
     safety_mode: SafetyMode,
 ) -> (CheckedCall, Option<JaktError>) {
     let mut checked_args = Vec::new();
@@ -1590,7 +1596,7 @@ pub fn typecheck_call(
         "println" | "eprintln" => {
             // FIXME: This is a hack since println() and eprintln() are hard-coded into codegen at the moment.
             for arg in &call.args {
-                let (checked_arg, err) = typecheck_expression(&arg.1, stack, file, safety_mode);
+                let (checked_arg, err) = typecheck_expression(&arg.1, stack, project, safety_mode);
                 error = error.or(err);
 
                 return_ty = Type::Void;
@@ -1599,7 +1605,16 @@ pub fn typecheck_call(
             }
         }
         _ => {
-            let (callee, err) = resolve_call(call, span, &file.funs, &file);
+            let (callee, err) = resolve_call(
+                call,
+                span,
+                &stack
+                    .frames
+                    .first()
+                    .expect("internal erorr: missing global scope"),
+                stack,
+                &project,
+            );
             error = error.or(err);
 
             if let Some(callee) = callee {
@@ -1616,7 +1631,7 @@ pub fn typecheck_call(
 
                     while idx < call.args.len() {
                         let (mut checked_arg, err) =
-                            typecheck_expression(&call.args[idx].1, stack, file, safety_mode);
+                            typecheck_expression(&call.args[idx].1, stack, project, safety_mode);
                         error = error.or(err);
 
                         if let Expression::Var(var_name, _) = &call.args[idx].1 {
@@ -1674,9 +1689,9 @@ pub fn typecheck_call(
 
 pub fn typecheck_method_call(
     call: &Call,
-    stack: &mut Stack,
+    stack: &mut ScopeStack,
     span: &Span,
-    file: &CheckedFile,
+    file: &Project,
     struct_id: StructId,
     safety_mode: SafetyMode,
 ) -> (CheckedCall, Option<JaktError>) {
@@ -1684,7 +1699,7 @@ pub fn typecheck_method_call(
     let mut error = None;
     let mut return_ty = Type::Unknown;
 
-    let (callee, err) = resolve_call(call, span, &file.structs[struct_id].methods, &file);
+    let (callee, err) = resolve_call(call, span, &file.structs[struct_id].scope, stack, &file);
     error = error.or(err);
 
     if let Some(callee) = callee {
@@ -1759,7 +1774,7 @@ pub fn typecheck_method_call(
 
 pub fn typecheck_typename(
     unchecked_type: &UncheckedType,
-    stack: &Stack,
+    stack: &ScopeStack,
 ) -> (Type, Option<JaktError>) {
     let mut error = None;
 
