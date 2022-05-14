@@ -306,6 +306,11 @@ pub enum BinaryOperator {
     MultiplyAssign,
     DivideAssign,
     ModuloAssign,
+    BitwiseAndAssign,
+    BitwiseOrAssign,
+    BitwiseXorAssign,
+    BitwiseLeftShiftAssign,
+    BitwiseRightShiftAssign,
 }
 
 impl Expression {
@@ -333,6 +338,11 @@ impl Expression {
             Expression::Operator(BinaryOperator::LogicalAnd, _) => 70,
             Expression::Operator(BinaryOperator::LogicalOr, _) => 69,
             Expression::Operator(BinaryOperator::Assign, _)
+            | Expression::Operator(BinaryOperator::BitwiseAndAssign, _)
+            | Expression::Operator(BinaryOperator::BitwiseOrAssign, _)
+            | Expression::Operator(BinaryOperator::BitwiseXorAssign, _)
+            | Expression::Operator(BinaryOperator::BitwiseLeftShiftAssign, _)
+            | Expression::Operator(BinaryOperator::BitwiseRightShiftAssign, _)
             | Expression::Operator(BinaryOperator::AddAssign, _)
             | Expression::Operator(BinaryOperator::SubtractAssign, _)
             | Expression::Operator(BinaryOperator::MultiplyAssign, _)
@@ -1988,6 +1998,66 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
                 )),
             )
         }
+        TokenContents::LeftShiftEqual => {
+            trace!("ERROR: assignment not allowed in this position");
+
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::BitwiseLeftShiftAssign, span),
+                Some(JaktError::ValidationError(
+                    "assignment is not allowed in this position".to_string(),
+                    span,
+                )),
+            )
+        }
+        TokenContents::RightShiftEqual => {
+            trace!("ERROR: assignment not allowed in this position");
+
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::BitwiseRightShiftAssign, span),
+                Some(JaktError::ValidationError(
+                    "assignment is not allowed in this position".to_string(),
+                    span,
+                )),
+            )
+        }
+        TokenContents::AmpersandEqual => {
+            trace!("ERROR: assignment not allowed in this position");
+
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::BitwiseAndAssign, span),
+                Some(JaktError::ValidationError(
+                    "assignment is not allowed in this position".to_string(),
+                    span,
+                )),
+            )
+        }
+        TokenContents::PipeEqual => {
+            trace!("ERROR: assignment not allowed in this position");
+
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::BitwiseOrAssign, span),
+                Some(JaktError::ValidationError(
+                    "assignment is not allowed in this position".to_string(),
+                    span,
+                )),
+            )
+        }
+        TokenContents::CaretEqual => {
+            trace!("ERROR: assignment not allowed in this position");
+
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::BitwiseXorAssign, span),
+                Some(JaktError::ValidationError(
+                    "assignment is not allowed in this position".to_string(),
+                    span,
+                )),
+            )
+        }
         TokenContents::PlusEqual => {
             trace!("ERROR: assignment not allowed in this position");
 
@@ -2190,6 +2260,41 @@ pub fn parse_operator_with_assignment(
         TokenContents::Equal => {
             *index += 1;
             (Expression::Operator(BinaryOperator::Assign, span), None)
+        }
+        TokenContents::LeftShiftEqual => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::BitwiseLeftShiftAssign, span),
+                None,
+            )
+        }
+        TokenContents::RightShiftEqual => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::BitwiseRightShiftAssign, span),
+                None,
+            )
+        }
+        TokenContents::AmpersandEqual => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::BitwiseAndAssign, span),
+                None,
+            )
+        }
+        TokenContents::PipeEqual => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::BitwiseOrAssign, span),
+                None,
+            )
+        }
+        TokenContents::CaretEqual => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::BitwiseXorAssign, span),
+                None,
+            )
         }
         TokenContents::PlusEqual => {
             *index += 1;
