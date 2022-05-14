@@ -176,6 +176,16 @@ public:
         }
     }
 
+    static RefVector filled(size_t size, T value)
+    {
+        RefVector vector;
+        vector.ensure_capacity(size);
+        for (size_t i = 0; i < size; ++i) {
+            vector.append(value);
+        }
+        return vector;
+    }
+
     RefVector(Vector<T> const& ak_vector)
     {
         ensure_capacity(ak_vector.size());

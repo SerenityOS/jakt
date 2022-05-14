@@ -662,20 +662,30 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             output.push_str(&codegen_expr(indent, rhs, project));
             output.push(')');
         }
-        CheckedExpression::Vector(vals, _) => {
-            // (RefVector({1, 2, 3}))
-            output.push_str("(RefVector({");
-            let mut first = true;
-            for val in vals {
-                if !first {
-                    output.push_str(", ");
-                } else {
-                    first = false;
-                }
+        CheckedExpression::Vector(vals, fill_size_expr, _) => {
+            if let Some(fill_size_expr) = fill_size_expr {
+                output.push_str("(RefVector<");
+                output.push_str(&codegen_type(&vals.first().unwrap().ty(), project));
+                output.push_str(">::filled(");
+                output.push_str(&codegen_expr(indent, fill_size_expr, project));
+                output.push_str(", ");
+                output.push_str(&codegen_expr(indent, vals.first().unwrap(), project));
+                output.push_str("))");
+            } else {
+                // (RefVector({1, 2, 3}))
+                output.push_str("(RefVector({");
+                let mut first = true;
+                for val in vals {
+                    if !first {
+                        output.push_str(", ");
+                    } else {
+                        first = false;
+                    }
 
-                output.push_str(&codegen_expr(indent, val, project))
+                    output.push_str(&codegen_expr(indent, val, project))
+                }
+                output.push_str("}))");
             }
-            output.push_str("}))");
         }
         CheckedExpression::Tuple(vals, _) => {
             // (Tuple{1, 2, 3})
