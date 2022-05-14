@@ -169,3 +169,45 @@ class Foo {
 let mut foo = Foo(x: 3)
 foo.set(9)
 ```
+
+## Arrays
+
+Dynamic arrays are provided via a built-in `RefVector<T>` type. They can grow and shrink at runtime.
+
+`RefVector` is memory safe:
+- Out-of-bounds will panic the program with a runtime error.
+- Slices of a `RefVector` keep the underlying data alive via automatic reference counting.
+
+### Declaring arrays
+
+```jakt
+// Function that takes a RefVector<i64> and returns a RefVector<String>
+fun foo(numbers: [i64]) -> [String] {
+    ...
+}
+```
+
+### Shorthand for creating arrays
+
+```jakt
+// RefVector<i64> with 256 elements, all initialized to 0.
+let values = [0; 256]
+
+// RefVector<String> with 3 elements: "foo", "bar" and "baz".
+let values = ["foo", "bar", "baz"]
+```
+
+## Type casts
+
+There are four built-in casting operators in **jakt**.
+
+### Casts for all types
+
+- `as? T`: Returns an `Optional<T>`, empty if the source value isn't convertible to `T`.
+- `as! T`: Returns a `T`, aborts the program if the source value isn't convertible to `T`.
+
+### Casts specific to numeric types
+
+- `as truncated T`: Returns a `T` with out-of-range values truncated in a manner specific to each type.
+- `as saturated T`: Returns a `T` with the out-of-range values saturated to the minimum or maximum value possible for `T`.
+
