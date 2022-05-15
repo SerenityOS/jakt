@@ -92,7 +92,10 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
 
     match structure.definition_type {
         DefinitionType::Class => {
-            output.push_str(&format!("class {} {{\n", structure.name));
+            output.push_str(&format!(
+                "class {} : public RefCounted<{}> {{\n",
+                structure.name, structure.name
+            ));
             // As we should test the visibility before codegen, we take a simple
             // approach to codegen
             output.push_str("  public:\n");
@@ -240,43 +243,88 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
 }
 
 fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
-    let mut output = String::new();
+    let type_id = fun.return_type;
+    let ty = &project.types[type_id];
 
-    output.push_str(&fun.name);
-    output.push('(');
+    match ty {
+        Type::Struct(struct_id) => {
+            let structure = &project.structs[*struct_id];
 
-    let mut first = true;
-    for param in &fun.params {
-        if !first {
-            output.push_str(", ");
-        } else {
-            first = false;
+            if structure.definition_type == DefinitionType::Class {
+                let mut output = format!("static NonnullRefPtr<{}> create", fun.name);
+
+                output.push('(');
+
+                let mut first = true;
+                for param in &fun.params {
+                    if !first {
+                        output.push_str(", ");
+                    } else {
+                        first = false;
+                    }
+
+                    let ty = codegen_type(param.variable.ty, project);
+                    output.push_str(&ty);
+                    output.push(' ');
+                    output.push_str(&param.variable.name);
+                }
+                output.push_str(&format!(") {{ auto o = adopt_ref(*new {}); ", fun.name));
+
+                for param in &fun.params {
+                    output.push_str("o->");
+                    output.push_str(&param.variable.name);
+                    output.push_str(" = ");
+                    output.push_str(&param.variable.name);
+                    output.push_str("; ");
+                }
+
+                output.push_str("return o; }");
+
+                output
+            } else {
+                let mut output = String::new();
+
+                output.push_str(&fun.name);
+                output.push('(');
+
+                let mut first = true;
+                for param in &fun.params {
+                    if !first {
+                        output.push_str(", ");
+                    } else {
+                        first = false;
+                    }
+
+                    let ty = codegen_type(param.variable.ty, project);
+                    output.push_str(&ty);
+                    output.push_str(" a_");
+                    output.push_str(&param.variable.name);
+                }
+                output.push_str("): ");
+
+                let mut first = true;
+                for param in &fun.params {
+                    if !first {
+                        output.push_str(", ");
+                    } else {
+                        first = false;
+                    }
+
+                    output.push_str(&param.variable.name);
+                    output.push_str("(a_");
+                    output.push_str(&param.variable.name);
+                    output.push(')');
+                }
+
+                output.push_str("{}\n");
+
+                output
+            }
         }
-
-        let ty = codegen_type(param.variable.ty, project);
-        output.push_str(&ty);
-        output.push_str(" a_");
-        output.push_str(&param.variable.name);
-    }
-    output.push_str("): ");
-
-    let mut first = true;
-    for param in &fun.params {
-        if !first {
-            output.push_str(", ");
-        } else {
-            first = false;
+        _ => {
+            panic!("internal error: call to a constructor, but not a struct/class type")
         }
-
-        output.push_str(&param.variable.name);
-        output.push_str("(a_");
-        output.push_str(&param.variable.name);
-        output.push(')');
     }
-
-    output.push_str("{}\n");
-
-    output
 }
 
 fn codegen_type(type_id: TypeId, project: &Project) -> String {
@@ -320,7 +368,13 @@ fn codegen_type(type_id: TypeId, project: &Project) -> String {
             output
         }
         Type::Optional(v) => format!("Optional<{}>", codegen_type(*v, project)),
-        Type::Struct(struct_id) => project.structs[*struct_id].name.clone(),
+        Type::Struct(struct_id) => {
+            if project.structs[*struct_id].definition_type == DefinitionType::Class {
+                format!("NonnullRefPtr<{}>", project.structs[*struct_id].name)
+            } else {
+                project.structs[*struct_id].name.clone()
+            }
+        }
         Type::Unknown => String::from("auto"),
     }
 }
@@ -513,7 +567,29 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     output.push_str("::")
                 }
 
-                output.push_str(&call.name);
+                if call.linkage == FunctionLinkage::ImplicitConstructor {
+                    let type_id = call.ty;
+                    let ty = &project.types[type_id];
+                    match ty {
+                        Type::Struct(struct_id) => {
+                            let structure = &project.structs[*struct_id];
+
+                            if structure.definition_type == DefinitionType::Class {
+                                output.push_str(&call.name);
+                                output.push_str("::");
+                                output.push_str("create");
+                            } else {
+                                output.push_str(&call.name);
+                            }
+                        }
+                        _ => {
+                            panic!("internal error: constructor expected class or struct type")
+                        }
+                    }
+                } else {
+                    output.push_str(&call.name);
+                }
+
                 output.push('(');
 
                 let mut first = true;
@@ -540,7 +616,23 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 CheckedExpression::Var(CheckedVariable { name, .. }) if name == "this" => {
                     output.push_str("->");
                 }
-                _ => output.push('.'),
+                x => match &project.types[x.ty()] {
+                    Type::RawPtr(_) => {
+                        output.push_str("->");
+                    }
+                    Type::Struct(struct_id) => {
+                        let structure = &project.structs[*struct_id];
+
+                        if structure.definition_type == DefinitionType::Class {
+                            output.push_str("->");
+                        } else {
+                            output.push('.');
+                        }
+                    }
+                    _ => {
+                        output.push('.');
+                    }
+                },
             }
 
             output.push_str(&call.name);
@@ -725,15 +817,32 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             output.push_str(&format!(").get<{}>())", idx));
         }
         CheckedExpression::IndexedStruct(expr, name, _) => {
-            // x.get<1>()
+            // x.foo or x->foo
             output.push_str("((");
             output.push_str(&codegen_expr(indent, expr, project));
             output.push(')');
+
             match &**expr {
                 CheckedExpression::Var(CheckedVariable { name, .. }) if name == "this" => {
                     output.push_str("->");
                 }
-                _ => output.push('.'),
+                x => match &project.types[x.ty()] {
+                    Type::RawPtr(_) => {
+                        output.push_str("->");
+                    }
+                    Type::Struct(struct_id) => {
+                        let structure = &project.structs[*struct_id];
+
+                        if structure.definition_type == DefinitionType::Class {
+                            output.push_str("->");
+                        } else {
+                            output.push('.');
+                        }
+                    }
+                    _ => {
+                        output.push('.');
+                    }
+                },
             }
 
             output.push_str(&format!("{})", name));
