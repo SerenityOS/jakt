@@ -520,6 +520,7 @@ pub struct CheckedCall {
     pub namespace: Vec<String>,
     pub name: String,
     pub args: Vec<(String, CheckedExpression)>,
+    pub linkage: FunctionLinkage,
     pub ty: TypeId,
 }
 
@@ -1725,6 +1726,7 @@ pub fn typecheck_call(
     let mut checked_args = Vec::new();
     let mut error = None;
     let mut return_ty = UNKNOWN_TYPE_ID;
+    let mut linkage = FunctionLinkage::Internal;
 
     match call.name.as_str() {
         "println" | "eprintln" => {
@@ -1745,6 +1747,7 @@ pub fn typecheck_call(
 
             if let Some(callee) = callee {
                 return_ty = callee.return_type;
+                linkage = callee.linkage;
 
                 // Check that we have the right number of arguments.
                 if callee.params.len() != call.args.len() {
@@ -1813,6 +1816,7 @@ pub fn typecheck_call(
             namespace: call.namespace.clone(),
             name: call.name.clone(),
             args: checked_args,
+            linkage,
             ty: return_ty,
         },
         error,
@@ -1830,12 +1834,14 @@ pub fn typecheck_method_call(
     let mut checked_args = Vec::new();
     let mut error = None;
     let mut return_ty = UNKNOWN_TYPE_ID;
+    let mut linkage = FunctionLinkage::Internal;
 
     let (callee, err) = resolve_call(call, span, project.structs[struct_id].scope_id, project);
     error = error.or(err);
 
     if let Some(callee) = callee {
         return_ty = callee.return_type;
+        linkage = callee.linkage;
 
         // Check that we have the right number of arguments.
         if callee.params.len() != (call.args.len() + 1) {
@@ -1903,6 +1909,7 @@ pub fn typecheck_method_call(
             namespace: Vec::new(),
             name: call.name.clone(),
             args: checked_args,
+            linkage,
             ty: return_ty,
         },
         error,
