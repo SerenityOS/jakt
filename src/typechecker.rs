@@ -43,6 +43,7 @@ pub enum Type {
     Optional(TypeId),
     Struct(StructId),
     RawPtr(TypeId),
+    Range(TypeId),
     Unknown,
 
     // C interop types
@@ -359,6 +360,7 @@ pub enum CheckedStatement {
     Block(CheckedBlock),
     While(CheckedExpression, CheckedBlock),
     Return(CheckedExpression),
+    For(String, CheckedExpression, CheckedBlock),
     Garbage,
 }
 
@@ -480,6 +482,7 @@ pub enum CheckedExpression {
         TypeId,
     ),
     Tuple(Vec<CheckedExpression>, TypeId),
+    Range(Box<CheckedExpression>, Box<CheckedExpression>, TypeId),
     Vector(
         Vec<CheckedExpression>,
         Option<Box<CheckedExpression>>,
@@ -514,6 +517,7 @@ impl CheckedExpression {
             CheckedExpression::BinaryOp(_, _, _, ty) => *ty,
             CheckedExpression::Vector(_, _, ty) => *ty,
             CheckedExpression::Tuple(_, ty) => *ty,
+            CheckedExpression::Range(_, _, ty) => *ty,
             CheckedExpression::IndexedExpression(_, _, ty) => *ty,
             CheckedExpression::IndexedTuple(_, _, ty) => *ty,
             CheckedExpression::IndexedStruct(_, _, ty) => *ty,
@@ -975,6 +979,41 @@ pub fn typecheck_statement(
     let mut error = None;
 
     match stmt {
+        Statement::For(iterator_name, range_expr, block) => {
+            let (checked_expr, err) =
+                typecheck_expression(range_expr, scope_id, project, safety_mode);
+            error = error.or(err);
+
+            let iterator_scope_id = project.create_scope(scope_id);
+
+            let index_type;
+            if let Type::Range(inner_type) = project.types[checked_expr.ty()] {
+                index_type = inner_type;
+            } else {
+                panic!("Range expression doesn't have Range type");
+            }
+
+            let iterator_decl = CheckedVariable {
+                name: iterator_name.clone(),
+                mutable: true,
+                ty: index_type,
+            };
+
+            if let Err(err) =
+                project.add_var_to_scope(iterator_scope_id, iterator_decl, range_expr.span())
+            {
+                error = error.or(Some(err));
+            }
+
+            let (checked_block, err) =
+                typecheck_block(block, iterator_scope_id, project, SafetyMode::Unsafe);
+            error = error.or(err);
+
+            (
+                CheckedStatement::For(iterator_name.clone(), checked_expr, checked_block),
+                error,
+            )
+        }
         Statement::Expression(expr) => {
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
 
@@ -1116,6 +1155,32 @@ pub fn typecheck_expression(
     let mut error = None;
 
     match expr {
+        Expression::Range(start_expr, end_expr, span) => {
+            let (checked_start, err) =
+                typecheck_expression(&start_expr, scope_id, project, safety_mode);
+            error = error.or(err);
+
+            let (checked_end, err) =
+                typecheck_expression(&end_expr, scope_id, project, safety_mode);
+            error = error.or(err);
+
+            if checked_start.ty() != checked_end.ty() {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "Range start and end must be the same type".to_string(),
+                    *span,
+                )))
+            }
+
+            let ty = Type::Range(checked_start.ty());
+            (
+                CheckedExpression::Range(
+                    Box::new(checked_start),
+                    Box::new(checked_end),
+                    project.find_or_add_type_id(ty),
+                ),
+                error,
+            )
+        }
         Expression::BinaryOp(lhs, op, rhs, span) => {
             let (checked_lhs, err) = typecheck_expression(lhs, scope_id, project, safety_mode);
             error = error.or(err);
