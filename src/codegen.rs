@@ -4,7 +4,7 @@ use crate::{
     },
     typechecker::{
         CheckedBlock, CheckedExpression, CheckedFunction, CheckedStatement, CheckedStruct,
-        CheckedVariable, NumericConstant, Project, Scope, Type,
+        CheckedVariable, NumericConstant, Project, Scope, Type, TypeId,
     },
 };
 
@@ -106,7 +106,7 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
     for field in &structure.fields {
         output.push_str(&" ".repeat(INDENT_SIZE));
 
-        output.push_str(&codegen_type(&field.ty, project));
+        output.push_str(&codegen_type(field.ty, project));
         output.push(' ');
         output.push_str(&field.name);
         output.push_str(";\n");
@@ -145,7 +145,7 @@ fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String 
     if fun.name == "main" {
         output.push_str("int");
     } else {
-        output.push_str(&codegen_type(&fun.return_type, project));
+        output.push_str(&codegen_type(fun.return_type, project));
     }
     output.push(' ');
     output.push_str(&fun.name);
@@ -162,7 +162,7 @@ fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String 
         if !param.variable.mutable {
             output.push_str("const ");
         }
-        let ty = codegen_type(&param.variable.ty, project);
+        let ty = codegen_type(param.variable.ty, project);
         output.push_str(&ty);
         output.push(' ');
         output.push_str(&param.variable.name);
@@ -178,7 +178,7 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
     if fun.name == "main" {
         output.push_str("int");
     } else {
-        output.push_str(&codegen_type(&fun.return_type, project));
+        output.push_str(&codegen_type(fun.return_type, project));
     }
     output.push(' ');
     if fun.name == "main" {
@@ -211,7 +211,7 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
             output.push_str("const ");
         }
 
-        let ty = codegen_type(&param.variable.ty, project);
+        let ty = codegen_type(param.variable.ty, project);
         output.push_str(&ty);
         output.push(' ');
         output.push_str(&param.variable.name);
@@ -253,7 +253,7 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
             first = false;
         }
 
-        let ty = codegen_type(&param.variable.ty, project);
+        let ty = codegen_type(param.variable.ty, project);
         output.push_str(&ty);
         output.push_str(" a_");
         output.push_str(&param.variable.name);
@@ -279,7 +279,9 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
     output
 }
 
-fn codegen_type(ty: &Type, project: &Project) -> String {
+fn codegen_type(type_id: TypeId, project: &Project) -> String {
+    let ty = &project.types[type_id];
+
     match ty {
         Type::Bool => String::from("bool"),
         Type::String => String::from("String"),
@@ -297,9 +299,9 @@ fn codegen_type(ty: &Type, project: &Project) -> String {
         Type::F64 => String::from("f64"),
         Type::Void => String::from("void"),
         Type::RawPtr(ty) => {
-            format!("{}*", codegen_type(ty, project))
+            format!("{}*", codegen_type(*ty, project))
         }
-        Type::Vector(v) => format!("RefVector<{}>", codegen_type(v, project)),
+        Type::Vector(v) => format!("RefVector<{}>", codegen_type(*v, project)),
         Type::Tuple(types) => {
             let mut output = "Tuple<".to_string();
             let mut first = true;
@@ -311,13 +313,13 @@ fn codegen_type(ty: &Type, project: &Project) -> String {
                     first = false;
                 }
 
-                output.push_str(&codegen_type(ty, project));
+                output.push_str(&codegen_type(*ty, project));
             }
 
             output.push('>');
             output
         }
-        Type::Optional(v) => format!("Optional<{}>", codegen_type(v, project)),
+        Type::Optional(v) => format!("Optional<{}>", codegen_type(*v, project)),
         Type::Struct(struct_id) => project.structs[*struct_id].name.clone(),
         Type::Unknown => String::from("auto"),
     }
@@ -393,7 +395,7 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             if !var_decl.mutable {
                 output.push_str("const ");
             }
-            output.push_str(&codegen_type(&var_decl.ty, project));
+            output.push_str(&codegen_type(var_decl.ty, project));
             output.push(' ');
             output.push_str(&var_decl.name);
             output.push_str(" = ");
@@ -555,7 +557,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
             output.push_str("))");
         }
-        CheckedExpression::UnaryOp(expr, op, ty) => {
+        CheckedExpression::UnaryOp(expr, op, type_id) => {
             output.push('(');
             match op {
                 UnaryOperator::PreIncrement => {
@@ -580,6 +582,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     output.push_str("~");
                 }
                 UnaryOperator::TypeCast(cast) => {
+                    let ty = &project.types[*type_id];
                     match cast {
                         TypeCast::Fallible(_) => {
                             if ty.is_integer() {
@@ -611,7 +614,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                         }
                     }
                     output.push('<');
-                    output.push_str(&codegen_type(ty, project));
+                    output.push_str(&codegen_type(*type_id, project));
                     output.push_str(">(");
                 }
                 _ => {}
@@ -671,7 +674,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         CheckedExpression::Vector(vals, fill_size_expr, _) => {
             if let Some(fill_size_expr) = fill_size_expr {
                 output.push_str("(RefVector<");
-                output.push_str(&codegen_type(&vals.first().unwrap().ty(), project));
+                output.push_str(&codegen_type(vals.first().unwrap().ty(), project));
                 output.push_str(">::filled(");
                 output.push_str(&codegen_expr(indent, fill_size_expr, project));
                 output.push_str(", ");

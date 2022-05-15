@@ -5,10 +5,27 @@ use crate::{
     error::JaktError,
     lexer::lex,
     parser::parse_file,
-    typechecker::{typecheck_file, Project, Scope},
+    typechecker::{typecheck_file, Project, Scope, Type},
 };
 
 pub type FileId = usize;
+
+pub const UNKNOWN_TYPE_ID: usize = 0;
+pub const VOID_TYPE_ID: usize = 1;
+pub const BOOL_TYPE_ID: usize = 2;
+pub const I8_TYPE_ID: usize = 3;
+pub const I16_TYPE_ID: usize = 4;
+pub const I32_TYPE_ID: usize = 5;
+pub const I64_TYPE_ID: usize = 6;
+pub const U8_TYPE_ID: usize = 7;
+pub const U16_TYPE_ID: usize = 8;
+pub const U32_TYPE_ID: usize = 9;
+pub const U64_TYPE_ID: usize = 10;
+pub const F32_TYPE_ID: usize = 11;
+pub const F64_TYPE_ID: usize = 12;
+pub const CCHAR_TYPE_ID: usize = 13;
+pub const CINT_TYPE_ID: usize = 14;
+pub const STRING_TYPE_ID: usize = 15;
 
 pub struct Compiler {
     raw_files: Vec<(String, Vec<u8>)>,
@@ -22,6 +39,26 @@ impl Compiler {
     }
 
     pub fn include_prelude(&mut self, project: &mut Project) {
+        // First, let's make types for all the builtin types
+        // This order *must* match the order of the constants the typechecker expects
+        project.types.resize(STRING_TYPE_ID + 1, Type::Unknown);
+        project.types[UNKNOWN_TYPE_ID] = Type::Unknown;
+        project.types[VOID_TYPE_ID] = Type::Void;
+        project.types[BOOL_TYPE_ID] = Type::Bool;
+        project.types[I8_TYPE_ID] = Type::I8;
+        project.types[I16_TYPE_ID] = Type::I16;
+        project.types[I32_TYPE_ID] = Type::I32;
+        project.types[I64_TYPE_ID] = Type::I64;
+        project.types[U8_TYPE_ID] = Type::U8;
+        project.types[U16_TYPE_ID] = Type::U16;
+        project.types[U32_TYPE_ID] = Type::U32;
+        project.types[U64_TYPE_ID] = Type::U64;
+        project.types[F32_TYPE_ID] = Type::F32;
+        project.types[F64_TYPE_ID] = Type::F64;
+        project.types[CCHAR_TYPE_ID] = Type::CChar;
+        project.types[CINT_TYPE_ID] = Type::CInt;
+        project.types[STRING_TYPE_ID] = Type::String;
+
         let prelude = Compiler::prelude();
 
         // Not sure where to put prelude, but we're hoping its parsing is infallible
@@ -113,7 +150,7 @@ extern class String {
 
 extern class RefVector {
     fun size(this) -> i64 {}
-    fun resize(mut this, anon size: u64) {}
+    fun resize(mut this, anon size: i64) {}
 }
 
 "#

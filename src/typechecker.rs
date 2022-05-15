@@ -1,4 +1,9 @@
 use crate::{
+    compiler::{
+        BOOL_TYPE_ID, CCHAR_TYPE_ID, CINT_TYPE_ID, F32_TYPE_ID, F64_TYPE_ID, I16_TYPE_ID,
+        I32_TYPE_ID, I64_TYPE_ID, I8_TYPE_ID, STRING_TYPE_ID, U16_TYPE_ID, U32_TYPE_ID,
+        U64_TYPE_ID, U8_TYPE_ID, UNKNOWN_TYPE_ID, VOID_TYPE_ID,
+    },
     error::JaktError,
     lexer::Span,
     parser::{
@@ -10,6 +15,7 @@ use crate::{
 pub type StructId = usize;
 pub type FunctionId = usize;
 pub type ScopeId = usize;
+pub type TypeId = usize;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SafetyMode {
@@ -32,11 +38,11 @@ pub enum Type {
     F32,
     F64,
     Void,
-    Vector(Box<Type>),
-    Tuple(Vec<Type>),
-    Optional(Box<Type>),
+    Vector(TypeId),
+    Tuple(Vec<TypeId>),
+    Optional(TypeId),
     Struct(StructId),
-    RawPtr(Box<Type>),
+    RawPtr(TypeId),
     Unknown,
 
     // C interop types
@@ -92,6 +98,7 @@ pub struct Project {
     pub funs: Vec<CheckedFunction>,
     pub structs: Vec<CheckedStruct>,
     pub scopes: Vec<Scope>,
+    pub types: Vec<Type>,
 }
 
 impl Project {
@@ -104,7 +111,21 @@ impl Project {
             funs: Vec::new(),
             structs: Vec::new(),
             scopes: vec![project_global_scope],
+            types: Vec::new(),
         }
+    }
+
+    pub fn find_or_add_type_id(&mut self, ty: Type) -> TypeId {
+        for (idx, t) in self.types.iter().enumerate() {
+            if t == &ty {
+                return idx;
+            }
+        }
+
+        // in the future, we may want to group related types (like instantiations of the same generic)
+        self.types.push(ty);
+
+        self.types.len() - 1
     }
 
     pub fn create_scope(&mut self, parent_id: ScopeId) -> ScopeId {
@@ -223,6 +244,44 @@ impl Project {
 
         None
     }
+
+    pub fn add_type_to_scope(
+        &mut self,
+        scope_id: ScopeId,
+        type_name: String,
+        type_id: TypeId,
+        span: Span,
+    ) -> Result<(), JaktError> {
+        let scope = &mut self.scopes[scope_id];
+
+        for (existing_type, _) in &scope.types {
+            if &type_name == existing_type {
+                return Err(JaktError::TypecheckError(
+                    format!("redefinition of {}", type_name),
+                    span,
+                ));
+            }
+        }
+        scope.types.push((type_name, type_id));
+
+        Ok(())
+    }
+
+    pub fn find_type_in_scope(&self, scope_id: ScopeId, type_name: &str) -> Option<TypeId> {
+        let mut scope_id = Some(scope_id);
+
+        while let Some(current_id) = scope_id {
+            let scope = &self.scopes[current_id];
+            for s in &scope.types {
+                if s.0 == type_name {
+                    return Some(s.1);
+                }
+            }
+            scope_id = scope.parent.clone();
+        }
+
+        None
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -243,7 +302,7 @@ pub struct CheckedParameter {
 #[derive(Debug, Clone)]
 pub struct CheckedFunction {
     pub name: String,
-    pub return_type: Type,
+    pub return_type: TypeId,
     pub params: Vec<CheckedParameter>,
     pub block: CheckedBlock,
     pub linkage: FunctionLinkage,
@@ -275,7 +334,7 @@ impl CheckedBlock {
 #[derive(Debug, Clone)]
 pub struct CheckedVarDecl {
     pub name: String,
-    pub ty: Type,
+    pub ty: TypeId,
     pub mutable: bool,
     pub span: Span,
 }
@@ -283,7 +342,7 @@ pub struct CheckedVarDecl {
 #[derive(Clone, Debug)]
 pub struct CheckedVariable {
     pub name: String,
-    pub ty: Type,
+    pub ty: TypeId,
     pub mutable: bool,
 }
 
@@ -310,9 +369,10 @@ pub enum IntegerConstant {
 }
 
 impl IntegerConstant {
-    pub fn promote(&self, ty: &Type) -> (Option<NumericConstant>, Type) {
+    pub fn promote(&self, type_id: TypeId, project: &Project) -> (Option<NumericConstant>, TypeId) {
+        let ty = &project.types[type_id];
         if !ty.can_fit_integer(self) {
-            return (None, Type::Unknown);
+            return (None, UNKNOWN_TYPE_ID);
         }
         let new_constant = match self {
             IntegerConstant::Signed(value) => match ty {
@@ -338,7 +398,7 @@ impl IntegerConstant {
                 _ => panic!("Bogus state in IntegerConstant::promote"),
             },
         };
-        (Some(new_constant), ty.clone())
+        (Some(new_constant), type_id)
     }
 }
 
@@ -384,16 +444,16 @@ impl NumericConstant {
         }
     }
 
-    pub fn ty(&self) -> Type {
+    pub fn ty(&self) -> TypeId {
         match self {
-            NumericConstant::I8(_) => Type::I8,
-            NumericConstant::I16(_) => Type::I16,
-            NumericConstant::I32(_) => Type::I32,
-            NumericConstant::I64(_) => Type::I64,
-            NumericConstant::U8(_) => Type::U8,
-            NumericConstant::U16(_) => Type::U16,
-            NumericConstant::U32(_) => Type::U32,
-            NumericConstant::U64(_) => Type::U64,
+            NumericConstant::I8(_) => I8_TYPE_ID,
+            NumericConstant::I16(_) => I16_TYPE_ID,
+            NumericConstant::I32(_) => I32_TYPE_ID,
+            NumericConstant::I64(_) => I64_TYPE_ID,
+            NumericConstant::U8(_) => U8_TYPE_ID,
+            NumericConstant::U16(_) => U16_TYPE_ID,
+            NumericConstant::U32(_) => U32_TYPE_ID,
+            NumericConstant::U64(_) => U64_TYPE_ID,
         }
     }
 }
@@ -402,56 +462,60 @@ impl NumericConstant {
 pub enum CheckedExpression {
     // Standalone
     Boolean(bool),
-    NumericConstant(NumericConstant, Type),
+    NumericConstant(NumericConstant, TypeId),
     QuotedString(String),
     CharacterConstant(char),
-    UnaryOp(Box<CheckedExpression>, UnaryOperator, Type),
+    UnaryOp(Box<CheckedExpression>, UnaryOperator, TypeId),
     BinaryOp(
         Box<CheckedExpression>,
         BinaryOperator,
         Box<CheckedExpression>,
-        Type,
+        TypeId,
     ),
-    Tuple(Vec<CheckedExpression>, Type),
-    Vector(Vec<CheckedExpression>, Option<Box<CheckedExpression>>, Type),
-    IndexedExpression(Box<CheckedExpression>, Box<CheckedExpression>, Type),
-    IndexedTuple(Box<CheckedExpression>, usize, Type),
-    IndexedStruct(Box<CheckedExpression>, String, Type),
+    Tuple(Vec<CheckedExpression>, TypeId),
+    Vector(
+        Vec<CheckedExpression>,
+        Option<Box<CheckedExpression>>,
+        TypeId,
+    ),
+    IndexedExpression(Box<CheckedExpression>, Box<CheckedExpression>, TypeId),
+    IndexedTuple(Box<CheckedExpression>, usize, TypeId),
+    IndexedStruct(Box<CheckedExpression>, String, TypeId),
 
-    Call(CheckedCall, Type),
-    MethodCall(Box<CheckedExpression>, CheckedCall, Type),
+    Call(CheckedCall, TypeId),
+    MethodCall(Box<CheckedExpression>, CheckedCall, TypeId),
 
     Var(CheckedVariable),
 
-    OptionalNone(Type),
-    OptionalSome(Box<CheckedExpression>, Type),
-    ForcedUnwrap(Box<CheckedExpression>, Type),
+    OptionalNone(TypeId),
+    OptionalSome(Box<CheckedExpression>, TypeId),
+    ForcedUnwrap(Box<CheckedExpression>, TypeId),
 
     // Parsing error
     Garbage,
 }
 
 impl CheckedExpression {
-    pub fn ty(&self) -> Type {
+    pub fn ty(&self) -> TypeId {
         match self {
-            CheckedExpression::Boolean(_) => Type::Bool,
-            CheckedExpression::Call(_, ty) => ty.clone(),
-            CheckedExpression::NumericConstant(_, ty) => ty.clone(),
-            CheckedExpression::QuotedString(_) => Type::String,
-            CheckedExpression::CharacterConstant(_) => Type::CChar, // use the C one for now
-            CheckedExpression::UnaryOp(_, _, ty) => ty.clone(),
-            CheckedExpression::BinaryOp(_, _, _, ty) => ty.clone(),
-            CheckedExpression::Vector(_, _, ty) => ty.clone(),
-            CheckedExpression::Tuple(_, ty) => ty.clone(),
-            CheckedExpression::IndexedExpression(_, _, ty) => ty.clone(),
-            CheckedExpression::IndexedTuple(_, _, ty) => ty.clone(),
-            CheckedExpression::IndexedStruct(_, _, ty) => ty.clone(),
-            CheckedExpression::MethodCall(_, _, ty) => ty.clone(),
-            CheckedExpression::Var(CheckedVariable { ty, .. }) => ty.clone(),
-            CheckedExpression::OptionalNone(ty) => ty.clone(),
-            CheckedExpression::OptionalSome(_, ty) => ty.clone(),
-            CheckedExpression::ForcedUnwrap(_, ty) => ty.clone(),
-            CheckedExpression::Garbage => Type::Unknown,
+            CheckedExpression::Boolean(_) => BOOL_TYPE_ID,
+            CheckedExpression::Call(_, ty) => *ty,
+            CheckedExpression::NumericConstant(_, ty) => *ty,
+            CheckedExpression::QuotedString(_) => STRING_TYPE_ID,
+            CheckedExpression::CharacterConstant(_) => CCHAR_TYPE_ID, // use the C one for now
+            CheckedExpression::UnaryOp(_, _, ty) => *ty,
+            CheckedExpression::BinaryOp(_, _, _, ty) => *ty,
+            CheckedExpression::Vector(_, _, ty) => *ty,
+            CheckedExpression::Tuple(_, ty) => *ty,
+            CheckedExpression::IndexedExpression(_, _, ty) => *ty,
+            CheckedExpression::IndexedTuple(_, _, ty) => *ty,
+            CheckedExpression::IndexedStruct(_, _, ty) => *ty,
+            CheckedExpression::MethodCall(_, _, ty) => *ty,
+            CheckedExpression::Var(CheckedVariable { ty, .. }) => *ty,
+            CheckedExpression::OptionalNone(ty) => *ty,
+            CheckedExpression::OptionalSome(_, ty) => *ty,
+            CheckedExpression::ForcedUnwrap(_, ty) => *ty,
+            CheckedExpression::Garbage => UNKNOWN_TYPE_ID,
         }
     }
 
@@ -477,7 +541,7 @@ pub struct CheckedCall {
     pub namespace: Vec<String>,
     pub name: String,
     pub args: Vec<(String, CheckedExpression)>,
-    pub ty: Type,
+    pub ty: TypeId,
 }
 
 #[derive(Clone, Debug)]
@@ -485,6 +549,7 @@ pub struct Scope {
     pub vars: Vec<CheckedVariable>,
     pub structs: Vec<(String, StructId)>,
     pub funs: Vec<(String, FunctionId)>,
+    pub types: Vec<(String, TypeId)>,
     pub parent: Option<ScopeId>,
 }
 
@@ -494,6 +559,7 @@ impl Scope {
             vars: Vec::new(),
             structs: Vec::new(),
             funs: Vec::new(),
+            types: Vec::new(),
             parent,
         }
     }
@@ -510,7 +576,20 @@ pub fn typecheck_file(
 
     for (struct_id, structure) in parsed_file.structs.iter().enumerate() {
         //Ensure we know the types ahead of time, so they can be recursive
-        typecheck_struct_predecl(structure, struct_id + project_struct_len, scope_id, project);
+        let struct_id = struct_id + project_struct_len;
+        project.types.push(Type::Struct(struct_id));
+
+        let struct_type_id = project.types.len() - 1;
+        if let Err(err) = project.add_type_to_scope(
+            scope_id,
+            structure.name.clone(),
+            struct_type_id,
+            structure.span,
+        ) {
+            error = error.or(Some(err));
+        }
+
+        typecheck_struct_predecl(structure, struct_type_id, struct_id, scope_id, project);
     }
 
     for fun in &parsed_file.funs {
@@ -536,6 +615,7 @@ pub fn typecheck_file(
 
 fn typecheck_struct_predecl(
     structure: &Struct,
+    struct_type_id: TypeId,
     struct_id: StructId,
     parent_scope_id: ScopeId,
     project: &mut Project,
@@ -548,7 +628,7 @@ fn typecheck_struct_predecl(
         let mut checked_function = CheckedFunction {
             name: fun.name.clone(),
             params: vec![],
-            return_type: Type::Unknown,
+            return_type: UNKNOWN_TYPE_ID,
             block: CheckedBlock::new(),
             linkage: fun.linkage.clone(),
         };
@@ -557,7 +637,7 @@ fn typecheck_struct_predecl(
             if param.variable.name == "this" {
                 let checked_variable = CheckedVariable {
                     name: param.variable.name.clone(),
-                    ty: Type::Struct(struct_id),
+                    ty: struct_type_id,
                     mutable: param.variable.mutable,
                 };
 
@@ -567,7 +647,7 @@ fn typecheck_struct_predecl(
                 });
             } else {
                 let (param_type, err) =
-                    typecheck_typename(&param.variable.ty, struct_scope_id, &project);
+                    typecheck_typename(&param.variable.ty, struct_scope_id, project);
                 error = error.or(err);
 
                 let checked_variable = CheckedVariable {
@@ -625,6 +705,8 @@ fn typecheck_struct(
 
     let mut fields = Vec::new();
 
+    let struct_type_id = project.find_or_add_type_id(Type::Struct(struct_id));
+
     for unchecked_member in &structure.fields {
         let (checked_member_type, err) =
             typecheck_typename(&unchecked_member.ty, parent_scope_id, project);
@@ -644,7 +726,7 @@ fn typecheck_struct(
             requires_label: true,
             variable: CheckedVariable {
                 name: field.name.clone(),
-                ty: field.ty.clone(),
+                ty: field.ty,
                 mutable: field.mutable,
             },
         });
@@ -658,7 +740,7 @@ fn typecheck_struct(
         block: CheckedBlock::new(),
         linkage: FunctionLinkage::ImplicitConstructor,
         params: constructor_params,
-        return_type: Type::Struct(struct_id),
+        return_type: struct_type_id,
     };
 
     // Internal constructor
@@ -708,7 +790,7 @@ fn typecheck_fun_predecl(
     let mut checked_function = CheckedFunction {
         name: fun.name.clone(),
         params: vec![],
-        return_type: Type::Unknown,
+        return_type: UNKNOWN_TYPE_ID,
         block: CheckedBlock::new(),
         linkage: fun.linkage.clone(),
     };
@@ -780,11 +862,11 @@ fn typecheck_fun(
 
     // If the return type is unknown, and the function starts with a return statement,
     // we infer the return type from its expression.
-    let return_type = if fun_return_type == Type::Unknown {
+    let return_type = if fun_return_type == UNKNOWN_TYPE_ID {
         if let Some(CheckedStatement::Return(ret)) = block.stmts.first() {
             ret.ty()
         } else {
-            Type::Void
+            VOID_TYPE_ID
         }
     } else {
         fun_return_type.clone()
@@ -837,11 +919,11 @@ fn typecheck_method(
 
     // If the return type is unknown, and the function starts with a return statement,
     // we infer the return type from its expression.
-    let return_type = if fun_return_type == Type::Unknown {
+    let return_type = if fun_return_type == UNKNOWN_TYPE_ID {
         if let Some(CheckedStatement::Return(ret)) = block.stmts.first() {
             ret.ty()
         } else {
-            Type::Void
+            VOID_TYPE_ID
         }
     } else {
         fun_return_type.clone()
@@ -907,24 +989,25 @@ pub fn typecheck_statement(
                 typecheck_expression(init, scope_id, project, safety_mode);
             error = error.or(err);
 
-            let (mut checked_type, err) = typecheck_typename(&var_decl.ty, scope_id, project);
+            let (mut checked_type_id, err) = typecheck_typename(&var_decl.ty, scope_id, project);
 
-            if checked_type == Type::Unknown && checked_expression.ty() != Type::Unknown {
-                checked_type = checked_expression.ty()
+            if checked_type_id == UNKNOWN_TYPE_ID && checked_expression.ty() != UNKNOWN_TYPE_ID {
+                checked_type_id = checked_expression.ty()
             } else {
                 error = error.or(err);
             }
 
             let err = try_promote_constant_expr_to_type(
-                &checked_type,
+                checked_type_id,
                 &mut checked_expression,
                 &init.span(),
+                project,
             );
             error = error.or(err);
 
             let checked_var_decl = CheckedVarDecl {
                 name: var_decl.name.clone(),
-                ty: checked_type.clone(),
+                ty: checked_type_id,
                 span: var_decl.span,
                 mutable: var_decl.mutable,
             };
@@ -992,15 +1075,18 @@ pub fn typecheck_statement(
 }
 
 pub fn try_promote_constant_expr_to_type(
-    lhs_type: &Type,
+    lhs_type_id: TypeId,
     checked_rhs: &mut CheckedExpression,
     span: &Span,
+    project: &Project,
 ) -> Option<JaktError> {
+    let lhs_type = &project.types[lhs_type_id];
+
     if !lhs_type.is_integer() {
         return None;
     }
     if let Some(rhs_constant) = checked_rhs.to_integer_constant() {
-        if let (Some(new_constant), new_ty) = rhs_constant.promote(lhs_type) {
+        if let (Some(new_constant), new_ty) = rhs_constant.promote(lhs_type_id, project) {
             *checked_rhs = CheckedExpression::NumericConstant(new_constant, new_ty);
         } else {
             return Some(JaktError::TypecheckError(
@@ -1016,7 +1102,7 @@ pub fn try_promote_constant_expr_to_type(
 pub fn typecheck_expression(
     expr: &Expression,
     scope_id: ScopeId,
-    project: &Project,
+    project: &mut Project,
     safety_mode: SafetyMode,
 ) -> (CheckedExpression, Option<JaktError>) {
     let mut error = None;
@@ -1029,7 +1115,12 @@ pub fn typecheck_expression(
             let (mut checked_rhs, err) = typecheck_expression(rhs, scope_id, project, safety_mode);
             error = error.or(err);
 
-            let err = try_promote_constant_expr_to_type(&checked_lhs.ty(), &mut checked_rhs, span);
+            let err = try_promote_constant_expr_to_type(
+                checked_lhs.ty(),
+                &mut checked_rhs,
+                span,
+                project,
+            );
             error = error.or(err);
 
             // TODO: actually do the binary operator typecheck against safe operations
@@ -1063,7 +1154,7 @@ pub fn typecheck_expression(
 
             (checked_expr, error)
         }
-        Expression::OptionalNone(_) => (CheckedExpression::OptionalNone(Type::Unknown), None),
+        Expression::OptionalNone(_) => (CheckedExpression::OptionalNone(UNKNOWN_TYPE_ID), None),
         Expression::OptionalSome(expr, _) => {
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
             let ty = checked_expr.ty();
@@ -1075,11 +1166,13 @@ pub fn typecheck_expression(
         Expression::ForcedUnwrap(expr, _) => {
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
 
-            let (ty, err) = if let Type::Optional(inner_type) = checked_expr.ty() {
+            let ty = &project.types[checked_expr.ty()];
+
+            let (ty, err) = if let Type::Optional(inner_type) = ty {
                 (*inner_type, err)
             } else {
                 (
-                    Type::Unknown,
+                    UNKNOWN_TYPE_ID,
                     err.or(Some(JaktError::TypecheckError(
                         "Forced unwrap only works on Optional".to_string(),
                         expr.span(),
@@ -1094,7 +1187,7 @@ pub fn typecheck_expression(
         Expression::Boolean(b, _) => (CheckedExpression::Boolean(*b), None),
         Expression::Call(call, span) => {
             let (checked_call, err) = typecheck_call(call, scope_id, span, project, safety_mode);
-            let ty = checked_call.ty.clone();
+            let ty = checked_call.ty;
             (CheckedExpression::Call(checked_call, ty), err)
         }
         Expression::NumericConstant(constant, _) => (
@@ -1110,7 +1203,7 @@ pub fn typecheck_expression(
                 (
                     CheckedExpression::Var(CheckedVariable {
                         name: v.clone(),
-                        ty: Type::Unknown,
+                        ty: UNKNOWN_TYPE_ID,
                         mutable: false,
                     }),
                     Some(JaktError::TypecheckError(
@@ -1121,7 +1214,7 @@ pub fn typecheck_expression(
             }
         }
         Expression::Vector(vec, fill_size_expr, ..) => {
-            let mut inner_ty = Type::Unknown;
+            let mut inner_ty = UNKNOWN_TYPE_ID;
             let mut output = Vec::new();
 
             let mut checked_fill_size_expr = None;
@@ -1136,7 +1229,7 @@ pub fn typecheck_expression(
                 let (checked_expr, err) = typecheck_expression(v, scope_id, project, safety_mode);
                 error = error.or(err);
 
-                if inner_ty == Type::Unknown {
+                if inner_ty == UNKNOWN_TYPE_ID {
                     inner_ty = checked_expr.ty();
                 } else {
                     if inner_ty != checked_expr.ty() {
@@ -1150,12 +1243,10 @@ pub fn typecheck_expression(
                 output.push(checked_expr);
             }
 
+            let type_id = project.find_or_add_type_id(Type::Vector(inner_ty));
+
             (
-                CheckedExpression::Vector(
-                    output,
-                    checked_fill_size_expr,
-                    Type::Vector(Box::new(inner_ty)),
-                ),
+                CheckedExpression::Vector(output, checked_fill_size_expr, type_id),
                 error,
             )
         }
@@ -1172,10 +1263,9 @@ pub fn typecheck_expression(
                 checked_items.push(checked_item);
             }
 
-            (
-                CheckedExpression::Tuple(checked_items, Type::Tuple(checked_types)),
-                error,
-            )
+            let type_id = project.find_or_add_type_id(Type::Tuple(checked_types));
+
+            (CheckedExpression::Tuple(checked_items, type_id), error)
         }
         Expression::IndexedExpression(expr, idx, _) => {
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
@@ -1184,20 +1274,25 @@ pub fn typecheck_expression(
             let (checked_idx, err) = typecheck_expression(idx, scope_id, project, safety_mode);
             error = error.or(err);
 
-            let mut ty = Type::Unknown;
+            let mut expr_ty = UNKNOWN_TYPE_ID;
+            let ty = &project.types[checked_expr.ty()];
+            match ty {
+                Type::Vector(inner_ty) => {
+                    let checked_idx_ty = &project.types[checked_idx.ty()];
 
-            match checked_expr.ty() {
-                Type::Vector(inner_ty) => match checked_idx.ty() {
-                    _ if checked_idx.ty().is_integer() => {
-                        ty = *inner_ty.clone();
+                    match checked_idx.ty() {
+                        _ if checked_idx_ty.is_integer() => {
+                            expr_ty = *inner_ty;
+                        }
+
+                        _ => {
+                            error = error.or(Some(JaktError::TypecheckError(
+                                "index is not an integer".to_string(),
+                                idx.span(),
+                            )))
+                        }
                     }
-                    _ => {
-                        error = error.or(Some(JaktError::TypecheckError(
-                            "index is not an integer".to_string(),
-                            idx.span(),
-                        )))
-                    }
-                },
+                }
                 _ => {
                     error = error.or(Some(JaktError::TypecheckError(
                         "index used on value that can't be indexed".to_string(),
@@ -1210,7 +1305,7 @@ pub fn typecheck_expression(
                 CheckedExpression::IndexedExpression(
                     Box::new(checked_expr),
                     Box::new(checked_idx),
-                    ty,
+                    expr_ty,
                 ),
                 error,
             )
@@ -1219,9 +1314,10 @@ pub fn typecheck_expression(
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
             error = error.or(err);
 
-            let mut ty = Type::Unknown;
+            let mut ty = UNKNOWN_TYPE_ID;
 
-            match checked_expr.ty() {
+            let checked_expr_ty = &project.types[checked_expr.ty()];
+            match checked_expr_ty {
                 Type::Tuple(inner_ty) => match inner_ty.get(*idx) {
                     Some(t) => ty = t.clone(),
                     None => {
@@ -1249,11 +1345,12 @@ pub fn typecheck_expression(
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
             error = error.or(err);
 
-            let ty = Type::Unknown;
+            let ty = UNKNOWN_TYPE_ID;
 
-            match checked_expr.ty() {
+            let checked_expr_ty = &project.types[checked_expr.ty()];
+            match checked_expr_ty {
                 Type::Struct(struct_id) => {
-                    let structure = &project.structs[struct_id];
+                    let structure = &project.structs[*struct_id];
 
                     for member in &structure.fields {
                         if &member.name == name {
@@ -1291,8 +1388,10 @@ pub fn typecheck_expression(
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
             error = error.or(err);
 
-            match checked_expr.ty() {
+            let checked_expr_ty = &project.types[checked_expr.ty()];
+            match checked_expr_ty {
                 Type::Struct(struct_id) => {
+                    let struct_id = *struct_id;
                     let (checked_call, err) = typecheck_method_call(
                         call,
                         scope_id,
@@ -1317,7 +1416,7 @@ pub fn typecheck_expression(
                         Some(struct_id) => {
                             let (checked_call, err) = typecheck_method_call(
                                 call,
-                                0,
+                                scope_id,
                                 span,
                                 project,
                                 struct_id,
@@ -1347,13 +1446,13 @@ pub fn typecheck_expression(
                 }
                 Type::Vector(_) => {
                     // Special-case the built-in so we don't accidentally find the user's definition
-                    let string_struct = project.find_struct_in_scope(0, "RefVector");
+                    let vector_struct = project.find_struct_in_scope(0, "RefVector");
 
-                    match string_struct {
+                    match vector_struct {
                         Some(struct_id) => {
                             let (checked_call, err) = typecheck_method_call(
                                 call,
-                                0,
+                                scope_id,
                                 span,
                                 project,
                                 struct_id,
@@ -1414,10 +1513,11 @@ pub fn typecheck_unary_operation(
     op: UnaryOperator,
     span: Span,
     scope_id: ScopeId,
-    project: &Project,
+    project: &mut Project,
     safety_mode: SafetyMode,
 ) -> (CheckedExpression, Option<JaktError>) {
-    let expr_ty = expr.ty();
+    let expr_type_id = expr.ty();
+    let expr_ty = &project.types[expr_type_id];
 
     match &op {
         UnaryOperator::TypeCast(cast) => {
@@ -1425,7 +1525,7 @@ pub fn typecheck_unary_operation(
             let (ty, err) = typecheck_typename(&unchecked_type, scope_id, project);
             (CheckedExpression::UnaryOp(Box::new(expr), op, ty), err)
         }
-        UnaryOperator::Dereference => match expr.ty() {
+        UnaryOperator::Dereference => match expr_ty {
             Type::RawPtr(x) => {
                 if safety_mode == SafetyMode::Unsafe {
                     (CheckedExpression::UnaryOp(Box::new(expr), op, *x), None)
@@ -1440,7 +1540,7 @@ pub fn typecheck_unary_operation(
                 }
             }
             _ => (
-                CheckedExpression::UnaryOp(Box::new(expr), op, Type::Unknown),
+                CheckedExpression::UnaryOp(Box::new(expr), op, UNKNOWN_TYPE_ID),
                 Some(JaktError::TypecheckError(
                     "dereference of a non-pointer value".to_string(),
                     span,
@@ -1450,8 +1550,9 @@ pub fn typecheck_unary_operation(
         UnaryOperator::RawAddress => {
             let ty = expr.ty();
 
+            let type_id = project.find_or_add_type_id(Type::RawPtr(ty));
             (
-                CheckedExpression::UnaryOp(Box::new(expr), op, Type::RawPtr(Box::new(ty))),
+                CheckedExpression::UnaryOp(Box::new(expr), op, type_id),
                 None,
             )
         }
@@ -1472,17 +1573,17 @@ pub fn typecheck_unary_operation(
         UnaryOperator::Negate => {
             let ty = expr.ty();
 
-            match &ty {
-                Type::I8
-                | Type::I16
-                | Type::I32
-                | Type::I64
-                | Type::U8
-                | Type::U16
-                | Type::U32
-                | Type::U64
-                | Type::F32
-                | Type::F64 => (
+            match ty {
+                crate::compiler::I8_TYPE_ID
+                | crate::compiler::I16_TYPE_ID
+                | crate::compiler::I32_TYPE_ID
+                | crate::compiler::I64_TYPE_ID
+                | crate::compiler::U8_TYPE_ID
+                | crate::compiler::U16_TYPE_ID
+                | crate::compiler::U32_TYPE_ID
+                | crate::compiler::U64_TYPE_ID
+                | crate::compiler::F32_TYPE_ID
+                | crate::compiler::F64_TYPE_ID => (
                     CheckedExpression::UnaryOp(Box::new(expr), UnaryOperator::Negate, ty),
                     None,
                 ),
@@ -1499,19 +1600,19 @@ pub fn typecheck_unary_operation(
         | UnaryOperator::PostIncrement
         | UnaryOperator::PreDecrement
         | UnaryOperator::PreIncrement => match expr.ty() {
-            Type::I8
-            | Type::I16
-            | Type::I32
-            | Type::I64
-            | Type::U8
-            | Type::U16
-            | Type::U32
-            | Type::U64
-            | Type::F32
-            | Type::F64 => {
+            crate::compiler::I8_TYPE_ID
+            | crate::compiler::I16_TYPE_ID
+            | crate::compiler::I32_TYPE_ID
+            | crate::compiler::I64_TYPE_ID
+            | crate::compiler::U8_TYPE_ID
+            | crate::compiler::U16_TYPE_ID
+            | crate::compiler::U32_TYPE_ID
+            | crate::compiler::U64_TYPE_ID
+            | crate::compiler::F32_TYPE_ID
+            | crate::compiler::F64_TYPE_ID => {
                 if !expr.is_mutable() {
                     (
-                        CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
+                        CheckedExpression::UnaryOp(Box::new(expr), op, expr_type_id),
                         Some(JaktError::TypecheckError(
                             "increment/decrement of immutable variable".to_string(),
                             span,
@@ -1519,13 +1620,13 @@ pub fn typecheck_unary_operation(
                     )
                 } else {
                     (
-                        CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
+                        CheckedExpression::UnaryOp(Box::new(expr), op, expr_type_id),
                         None,
                     )
                 }
             }
             _ => (
-                CheckedExpression::UnaryOp(Box::new(expr), op, expr_ty),
+                CheckedExpression::UnaryOp(Box::new(expr), op, expr_type_id),
                 Some(JaktError::TypecheckError(
                     "unary operation on non-numeric value".to_string(),
                     span,
@@ -1540,11 +1641,11 @@ pub fn typecheck_binary_operation(
     op: &BinaryOperator,
     rhs: &CheckedExpression,
     span: Span,
-) -> (Type, Option<JaktError>) {
+) -> (TypeId, Option<JaktError>) {
     let mut ty = lhs.ty();
     match op {
         BinaryOperator::LogicalAnd | BinaryOperator::LogicalOr => {
-            ty = Type::Bool;
+            ty = BOOL_TYPE_ID;
         }
         BinaryOperator::Assign
         | BinaryOperator::AddAssign
@@ -1640,12 +1741,12 @@ pub fn typecheck_call(
     call: &Call,
     scope_id: ScopeId,
     span: &Span,
-    project: &Project,
+    project: &mut Project,
     safety_mode: SafetyMode,
 ) -> (CheckedCall, Option<JaktError>) {
     let mut checked_args = Vec::new();
     let mut error = None;
-    let mut return_ty = Type::Unknown;
+    let mut return_ty = UNKNOWN_TYPE_ID;
 
     match call.name.as_str() {
         "println" | "eprintln" => {
@@ -1655,17 +1756,17 @@ pub fn typecheck_call(
                     typecheck_expression(&arg.1, scope_id, project, safety_mode);
                 error = error.or(err);
 
-                return_ty = Type::Void;
+                return_ty = VOID_TYPE_ID;
 
                 checked_args.push((arg.0.clone(), checked_arg));
             }
         }
         _ => {
-            let (callee, err) = resolve_call(call, span, scope_id, &project);
+            let (callee, err) = resolve_call(call, span, scope_id, project);
             error = error.or(err);
 
             if let Some(callee) = callee {
-                return_ty = callee.return_type.clone();
+                return_ty = callee.return_type;
 
                 // Check that we have the right number of arguments.
                 if callee.params.len() != call.args.len() {
@@ -1680,6 +1781,12 @@ pub fn typecheck_call(
                         let (mut checked_arg, err) =
                             typecheck_expression(&call.args[idx].1, scope_id, project, safety_mode);
                         error = error.or(err);
+
+                        // Borrowchecker workaround: since we need project to be mutable above, we
+                        // need to let go of the previous callee and then look it up again
+                        let (callee, _) = resolve_call(call, span, scope_id, project);
+                        let callee = callee
+                            .expect("internal error: previously resolved call is now unresolved");
 
                         if let Expression::Var(var_name, _) = &call.args[idx].1 {
                             if var_name != &callee.params[idx].variable.name
@@ -1701,9 +1808,10 @@ pub fn typecheck_call(
                         }
 
                         let err = try_promote_constant_expr_to_type(
-                            &callee.params[idx].variable.ty,
+                            callee.params[idx].variable.ty,
                             &mut checked_arg,
                             &call.args[idx].1.span(),
+                            project,
                         );
                         error = error.or(err);
 
@@ -1738,19 +1846,19 @@ pub fn typecheck_method_call(
     call: &Call,
     scope_id: ScopeId,
     span: &Span,
-    file: &Project,
+    project: &mut Project,
     struct_id: StructId,
     safety_mode: SafetyMode,
 ) -> (CheckedCall, Option<JaktError>) {
     let mut checked_args = Vec::new();
     let mut error = None;
-    let mut return_ty = Type::Unknown;
+    let mut return_ty = UNKNOWN_TYPE_ID;
 
-    let (callee, err) = resolve_call(call, span, file.structs[struct_id].scope_id, &file);
+    let (callee, err) = resolve_call(call, span, project.structs[struct_id].scope_id, project);
     error = error.or(err);
 
     if let Some(callee) = callee {
-        return_ty = callee.return_type.clone();
+        return_ty = callee.return_type;
 
         // Check that we have the right number of arguments.
         if callee.params.len() != (call.args.len() + 1) {
@@ -1761,12 +1869,17 @@ pub fn typecheck_method_call(
         } else {
             let mut idx = 0;
 
-            // The first index should be the 'this'
-
             while idx < call.args.len() {
                 let (mut checked_arg, err) =
-                    typecheck_expression(&call.args[idx].1, scope_id, file, safety_mode);
+                    typecheck_expression(&call.args[idx].1, scope_id, project, safety_mode);
                 error = error.or(err);
+
+                // Borrowchecker workaround: since we need project to be mutable above, we
+                // need to let go of the previous callee and then look it up again
+                let (callee, _) =
+                    resolve_call(call, span, project.structs[struct_id].scope_id, project);
+                let callee =
+                    callee.expect("internal error: previously resolved call is now unresolved");
 
                 if let Expression::Var(var_name, _) = &call.args[idx].1 {
                     if var_name != &callee.params[idx + 1].variable.name
@@ -1788,9 +1901,10 @@ pub fn typecheck_method_call(
                 }
 
                 let err = try_promote_constant_expr_to_type(
-                    &callee.params[idx + 1].variable.ty,
+                    callee.params[idx + 1].variable.ty,
                     &mut checked_arg,
                     &call.args[idx].1.span(),
+                    project,
                 );
                 error = error.or(err);
 
@@ -1822,56 +1936,62 @@ pub fn typecheck_method_call(
 pub fn typecheck_typename(
     unchecked_type: &UncheckedType,
     scope_id: ScopeId,
-    project: &Project,
-) -> (Type, Option<JaktError>) {
+    project: &mut Project,
+) -> (TypeId, Option<JaktError>) {
     let mut error = None;
 
     match unchecked_type {
         UncheckedType::Name(name, span) => match name.as_str() {
-            "i8" => (Type::I8, None),
-            "i16" => (Type::I16, None),
-            "i32" => (Type::I32, None),
-            "i64" => (Type::I64, None),
-            "u8" => (Type::U8, None),
-            "u16" => (Type::U16, None),
-            "u32" => (Type::U32, None),
-            "u64" => (Type::U64, None),
-            "f32" => (Type::F32, None),
-            "f64" => (Type::F64, None),
-            "c_char" => (Type::CChar, None),
-            "c_int" => (Type::CInt, None),
-            "String" => (Type::String, None),
-            "bool" => (Type::Bool, None),
-            "void" => (Type::Void, None),
+            "i8" => (I8_TYPE_ID, None),
+            "i16" => (I16_TYPE_ID, None),
+            "i32" => (I32_TYPE_ID, None),
+            "i64" => (I64_TYPE_ID, None),
+            "u8" => (U8_TYPE_ID, None),
+            "u16" => (U16_TYPE_ID, None),
+            "u32" => (U32_TYPE_ID, None),
+            "u64" => (U64_TYPE_ID, None),
+            "f32" => (F32_TYPE_ID, None),
+            "f64" => (F64_TYPE_ID, None),
+            "c_char" => (CCHAR_TYPE_ID, None),
+            "c_int" => (CINT_TYPE_ID, None),
+            "String" => (STRING_TYPE_ID, None),
+            "bool" => (BOOL_TYPE_ID, None),
+            "void" => (VOID_TYPE_ID, None),
             x => {
-                let structure = project.find_struct_in_scope(scope_id, x);
-                match structure {
-                    Some(struct_id) => (Type::Struct(struct_id), None),
+                let type_id = project.find_type_in_scope(scope_id, x);
+                match type_id {
+                    Some(type_id) => (type_id, None),
                     None => (
-                        Type::Unknown,
+                        UNKNOWN_TYPE_ID,
                         Some(JaktError::TypecheckError("unknown type".to_string(), *span)),
                     ),
                 }
             }
         },
-        UncheckedType::Empty => (Type::Unknown, None),
+        UncheckedType::Empty => (UNKNOWN_TYPE_ID, None),
         UncheckedType::Vector(inner, _) => {
             let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
-            (Type::Vector(Box::new(inner_ty)), error)
+            let type_id = project.find_or_add_type_id(Type::Vector(inner_ty));
+
+            (type_id, error)
         }
         UncheckedType::Optional(inner, _) => {
             let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
-            (Type::Optional(Box::new(inner_ty)), error)
+            let type_id = project.find_or_add_type_id(Type::Optional(inner_ty));
+
+            (type_id, error)
         }
         UncheckedType::RawPtr(inner, _) => {
             let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
-            (Type::RawPtr(Box::new(inner_ty)), error)
+            let type_id = project.find_or_add_type_id(Type::RawPtr(inner_ty));
+
+            (type_id, error)
         }
     }
 }
