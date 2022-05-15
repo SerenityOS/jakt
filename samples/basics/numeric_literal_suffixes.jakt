@@ -1,0 +1,34 @@
+fun main() {
+    {
+        let mut i = 0u8
+        let mut j = 0u16
+        let mut k = 0u32
+        let mut l = 0u64
+
+        i += 5 as! u8
+        j += 5 as! u16
+        k += 5 as! u32
+        l += 5 as! u64
+        
+        println(i)
+        println(j)
+        println(k)
+        println(l)
+    }
+    {
+        let mut i = 0i8
+        let mut j = 0i16
+        let mut k = 0i32
+        let mut l = 0i64
+
+        i += 5 as! i8
+        j += 5 as! i16
+        k += 5 as! i32
+        l += 5 as! i64
+
+        println(i)
+        println(j)
+        println(k)
+        println(l)
+    }
+}
