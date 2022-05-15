@@ -27,8 +27,6 @@ pub enum SafetyMode {
 pub enum Type {
     UnknownOrBuiltin,
     Generic(StructId, Vec<TypeId>),
-    Tuple(Vec<TypeId>),
-    Optional(TypeId),
     Struct(StructId),
     RawPtr(TypeId),
 }
@@ -1140,16 +1138,21 @@ pub fn typecheck_expression(
 
             let ty = &project.types[checked_expr.ty()];
 
-            let (ty, err) = if let Type::Optional(inner_type) = ty {
-                (*inner_type, err)
-            } else {
-                (
+            let optional_struct_id = project
+                .find_struct_in_scope(0, "Optional")
+                .expect("internal error: can't find builtin Optional type");
+
+            let (ty, err) = match ty {
+                Type::Generic(struct_id, inner_tys) if struct_id == &optional_struct_id => {
+                    (inner_tys[0], None)
+                }
+                _ => (
                     UNKNOWN_TYPE_ID,
                     err.or(Some(JaktError::TypecheckError(
                         "Forced unwrap only works on Optional".to_string(),
                         expr.span(),
                     ))),
-                )
+                ),
             };
             (
                 CheckedExpression::ForcedUnwrap(Box::new(checked_expr), ty),
@@ -1217,7 +1220,7 @@ pub fn typecheck_expression(
 
             let vector_struct_id = project
                 .find_struct_in_scope(0, "RefVector")
-                .expect("internal compiler error: RefVector builtin definition not found");
+                .expect("internal error: RefVector builtin definition not found");
 
             let type_id =
                 project.find_or_add_type_id(Type::Generic(vector_struct_id, vec![inner_ty]));
@@ -1240,7 +1243,12 @@ pub fn typecheck_expression(
                 checked_items.push(checked_item);
             }
 
-            let type_id = project.find_or_add_type_id(Type::Tuple(checked_types));
+            let tuple_struct_id = project
+                .find_struct_in_scope(0, "Tuple")
+                .expect("internal error: Tuple builtin definition not found");
+
+            let type_id =
+                project.find_or_add_type_id(Type::Generic(tuple_struct_id, checked_types));
 
             (CheckedExpression::Tuple(checked_items, type_id), error)
         }
@@ -1255,7 +1263,7 @@ pub fn typecheck_expression(
 
             let vector_struct_id = project
                 .find_struct_in_scope(0, "RefVector")
-                .expect("internal compiler error: RefVector builtin definition not found");
+                .expect("internal error: RefVector builtin definition not found");
 
             let ty = &project.types[checked_expr.ty()];
             match ty {
@@ -1298,17 +1306,25 @@ pub fn typecheck_expression(
 
             let mut ty = UNKNOWN_TYPE_ID;
 
+            let tuple_struct_id = project
+                .find_struct_in_scope(0, "Tuple")
+                .expect("internal error: Tuple builtin definition not found");
+
             let checked_expr_ty = &project.types[checked_expr.ty()];
             match checked_expr_ty {
-                Type::Tuple(inner_ty) => match inner_ty.get(*idx) {
-                    Some(t) => ty = t.clone(),
-                    None => {
-                        error = error.or(Some(JaktError::TypecheckError(
-                            "tuple index past the end of the tuple".to_string(),
-                            *span,
-                        )))
+                Type::Generic(parent_struct_id, inner_tys)
+                    if parent_struct_id == &tuple_struct_id =>
+                {
+                    match inner_tys.get(*idx) {
+                        Some(t) => ty = t.clone(),
+                        None => {
+                            error = error.or(Some(JaktError::TypecheckError(
+                                "tuple index past the end of the tuple".to_string(),
+                                *span,
+                            )))
+                        }
                     }
-                },
+                }
                 _ => {
                     error = error.or(Some(JaktError::TypecheckError(
                         "tuple index used non-tuple value".to_string(),
@@ -1935,7 +1951,7 @@ pub fn typecheck_typename(
 
             let vector_struct_id = project
                 .find_struct_in_scope(0, "RefVector")
-                .expect("internal compiler error: RefVector builtin definition not found");
+                .expect("internal error: RefVector builtin definition not found");
 
             let type_id =
                 project.find_or_add_type_id(Type::Generic(vector_struct_id, vec![inner_ty]));
@@ -1946,7 +1962,12 @@ pub fn typecheck_typename(
             let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
-            let type_id = project.find_or_add_type_id(Type::Optional(inner_ty));
+            let optional_struct_id = project
+                .find_struct_in_scope(0, "Optional")
+                .expect("internal error: Optional builtin definition not found");
+
+            let type_id =
+                project.find_or_add_type_id(Type::Generic(optional_struct_id, vec![inner_ty]));
 
             (type_id, error)
         }

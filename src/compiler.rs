@@ -139,6 +139,13 @@ extern class RefVector {
     fun resize(mut this, anon size: i64) {}
 }
 
+extern class Optional {
+}
+
+extern class Tuple {
+    
+}
+
 "#
         .as_bytes()
         .to_vec()

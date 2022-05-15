@@ -303,24 +303,6 @@ fn codegen_type(type_id: TypeId, project: &Project) -> String {
             output.push('>');
             output
         }
-        Type::Tuple(types) => {
-            let mut output = "Tuple<".to_string();
-            let mut first = true;
-
-            for ty in types {
-                if !first {
-                    output.push_str(", ");
-                } else {
-                    first = false;
-                }
-
-                output.push_str(&codegen_type(*ty, project));
-            }
-
-            output.push('>');
-            output
-        }
-        Type::Optional(v) => format!("Optional<{}>", codegen_type(*v, project)),
         Type::Struct(struct_id) => project.structs[*struct_id].name.clone(),
         Type::UnknownOrBuiltin => match type_id {
             compiler::BOOL_TYPE_ID => String::from("bool"),
