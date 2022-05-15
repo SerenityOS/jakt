@@ -26,7 +26,7 @@ pub enum SafetyMode {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     UnknownOrBuiltin,
-    Vector(TypeId),
+    Generic(StructId, Vec<TypeId>),
     Tuple(Vec<TypeId>),
     Optional(TypeId),
     Struct(StructId),
@@ -1215,7 +1215,12 @@ pub fn typecheck_expression(
                 output.push(checked_expr);
             }
 
-            let type_id = project.find_or_add_type_id(Type::Vector(inner_ty));
+            let vector_struct_id = project
+                .find_struct_in_scope(0, "RefVector")
+                .expect("internal compiler error: RefVector builtin definition not found");
+
+            let type_id =
+                project.find_or_add_type_id(Type::Generic(vector_struct_id, vec![inner_ty]));
 
             (
                 CheckedExpression::Vector(output, checked_fill_size_expr, type_id),
@@ -1247,20 +1252,29 @@ pub fn typecheck_expression(
             error = error.or(err);
 
             let mut expr_ty = UNKNOWN_TYPE_ID;
+
+            let vector_struct_id = project
+                .find_struct_in_scope(0, "RefVector")
+                .expect("internal compiler error: RefVector builtin definition not found");
+
             let ty = &project.types[checked_expr.ty()];
             match ty {
-                Type::Vector(inner_ty) => match checked_idx.ty() {
-                    _ if is_integer(checked_idx.ty()) => {
-                        expr_ty = *inner_ty;
-                    }
+                Type::Generic(parent_struct_id, inner_tys)
+                    if parent_struct_id == &vector_struct_id =>
+                {
+                    match checked_idx.ty() {
+                        _ if is_integer(checked_idx.ty()) => {
+                            expr_ty = inner_tys[0];
+                        }
 
-                    _ => {
-                        error = error.or(Some(JaktError::TypecheckError(
-                            "index is not an integer".to_string(),
-                            idx.span(),
-                        )))
+                        _ => {
+                            error = error.or(Some(JaktError::TypecheckError(
+                                "index is not an integer".to_string(),
+                                idx.span(),
+                            )))
+                        }
                     }
-                },
+                }
                 _ => {
                     error = error.or(Some(JaktError::TypecheckError(
                         "index used on value that can't be indexed".to_string(),
@@ -1408,41 +1422,24 @@ pub fn typecheck_expression(
                             error,
                         )
                     }
-                    Type::Vector(_) => {
-                        // Special-case the built-in so we don't accidentally find the user's definition
-                        let vector_struct = project.find_struct_in_scope(0, "RefVector");
+                    Type::Generic(struct_id, _) => {
+                        // ignore the inner types for now, but we'll need them in the future
+                        let struct_id = *struct_id;
+                        let (checked_call, err) = typecheck_method_call(
+                            call,
+                            scope_id,
+                            span,
+                            project,
+                            struct_id,
+                            safety_mode,
+                        );
+                        error = error.or(err);
 
-                        match vector_struct {
-                            Some(struct_id) => {
-                                let (checked_call, err) = typecheck_method_call(
-                                    call,
-                                    scope_id,
-                                    span,
-                                    project,
-                                    struct_id,
-                                    safety_mode,
-                                );
-                                error = error.or(err);
-
-                                let ty = checked_call.ty.clone();
-                                (
-                                    CheckedExpression::MethodCall(
-                                        Box::new(checked_expr),
-                                        checked_call,
-                                        ty,
-                                    ),
-                                    error,
-                                )
-                            }
-                            _ => {
-                                error = error.or(Some(JaktError::TypecheckError(
-                                    "no methods available on value".to_string(),
-                                    expr.span(),
-                                )));
-
-                                (CheckedExpression::Garbage, error)
-                            }
-                        }
+                        let ty = checked_call.ty.clone();
+                        (
+                            CheckedExpression::MethodCall(Box::new(checked_expr), checked_call, ty),
+                            error,
+                        )
                     }
                     _ => {
                         error = error.or(Some(JaktError::TypecheckError(
@@ -1936,7 +1933,12 @@ pub fn typecheck_typename(
             let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
-            let type_id = project.find_or_add_type_id(Type::Vector(inner_ty));
+            let vector_struct_id = project
+                .find_struct_in_scope(0, "RefVector")
+                .expect("internal compiler error: RefVector builtin definition not found");
+
+            let type_id =
+                project.find_or_add_type_id(Type::Generic(vector_struct_id, vec![inner_ty]));
 
             (type_id, error)
         }

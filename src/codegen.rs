@@ -281,52 +281,65 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
 }
 
 fn codegen_type(type_id: TypeId, project: &Project) -> String {
-    match type_id {
-        compiler::BOOL_TYPE_ID => String::from("bool"),
-        compiler::STRING_TYPE_ID => String::from("String"),
-        compiler::CCHAR_TYPE_ID => String::from("char"),
-        compiler::CINT_TYPE_ID => String::from("int"),
-        compiler::I8_TYPE_ID => String::from("i8"),
-        compiler::I16_TYPE_ID => String::from("i16"),
-        compiler::I32_TYPE_ID => String::from("i32"),
-        compiler::I64_TYPE_ID => String::from("i64"),
-        compiler::U8_TYPE_ID => String::from("u8"),
-        compiler::U16_TYPE_ID => String::from("u16"),
-        compiler::U32_TYPE_ID => String::from("u32"),
-        compiler::U64_TYPE_ID => String::from("u64"),
-        compiler::F32_TYPE_ID => String::from("f32"),
-        compiler::F64_TYPE_ID => String::from("f64"),
-        compiler::VOID_TYPE_ID => String::from("void"),
-        compiler::UNKNOWN_TYPE_ID => String::from("auto"),
-        _ => {
-            let ty = &project.types[type_id];
-            match ty {
-                Type::RawPtr(ty) => {
-                    format!("{}*", codegen_type(*ty, project))
-                }
-                Type::Vector(v) => format!("RefVector<{}>", codegen_type(*v, project)),
-                Type::Tuple(types) => {
-                    let mut output = "Tuple<".to_string();
-                    let mut first = true;
-
-                    for ty in types {
-                        if !first {
-                            output.push_str(", ");
-                        } else {
-                            first = false;
-                        }
-
-                        output.push_str(&codegen_type(*ty, project));
-                    }
-
-                    output.push('>');
-                    output
-                }
-                Type::Optional(v) => format!("Optional<{}>", codegen_type(*v, project)),
-                Type::Struct(struct_id) => project.structs[*struct_id].name.clone(),
-                Type::UnknownOrBuiltin => String::from("auto"),
-            }
+    let ty = &project.types[type_id];
+    match ty {
+        Type::RawPtr(ty) => {
+            format!("{}*", codegen_type(*ty, project))
         }
+        Type::Generic(struct_id, inner_tys) => {
+            let mut output = project.structs[*struct_id].name.clone();
+            output.push('<');
+            let mut first = true;
+            for ty in inner_tys {
+                if !first {
+                    output.push_str(", ");
+                } else {
+                    first = false;
+                }
+
+                output.push_str(&codegen_type(*ty, project));
+            }
+
+            output.push('>');
+            output
+        }
+        Type::Tuple(types) => {
+            let mut output = "Tuple<".to_string();
+            let mut first = true;
+
+            for ty in types {
+                if !first {
+                    output.push_str(", ");
+                } else {
+                    first = false;
+                }
+
+                output.push_str(&codegen_type(*ty, project));
+            }
+
+            output.push('>');
+            output
+        }
+        Type::Optional(v) => format!("Optional<{}>", codegen_type(*v, project)),
+        Type::Struct(struct_id) => project.structs[*struct_id].name.clone(),
+        Type::UnknownOrBuiltin => match type_id {
+            compiler::BOOL_TYPE_ID => String::from("bool"),
+            compiler::STRING_TYPE_ID => String::from("String"),
+            compiler::CCHAR_TYPE_ID => String::from("char"),
+            compiler::CINT_TYPE_ID => String::from("int"),
+            compiler::I8_TYPE_ID => String::from("i8"),
+            compiler::I16_TYPE_ID => String::from("i16"),
+            compiler::I32_TYPE_ID => String::from("i32"),
+            compiler::I64_TYPE_ID => String::from("i64"),
+            compiler::U8_TYPE_ID => String::from("u8"),
+            compiler::U16_TYPE_ID => String::from("u16"),
+            compiler::U32_TYPE_ID => String::from("u32"),
+            compiler::U64_TYPE_ID => String::from("u64"),
+            compiler::F32_TYPE_ID => String::from("f32"),
+            compiler::F64_TYPE_ID => String::from("f64"),
+            compiler::VOID_TYPE_ID => String::from("void"),
+            _ => String::from("auto"),
+        },
     }
 }
 
