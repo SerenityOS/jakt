@@ -1634,9 +1634,9 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 Expression::Garbage(tokens[*index - 1].span)
             }
         }
-        TokenContents::Number(number) => {
+        TokenContents::Number(constant) => {
             *index += 1;
-            Expression::NumericConstant(NumericConstant::I64(*number), span)
+            Expression::NumericConstant(constant.clone(), span)
         }
         TokenContents::QuotedString(str) => {
             *index += 1;
@@ -1829,7 +1829,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 
                 if *index < tokens.len() {
                     match &tokens[*index].contents {
-                        TokenContents::Number(int) => {
+                        TokenContents::Number(constant) => {
                             *index += 1;
 
                             let span = Span {
@@ -1838,7 +1838,11 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                                 end: tokens[*index].span.end,
                             };
 
-                            expr = Expression::IndexedTuple(Box::new(expr), *int as usize, span);
+                            expr = Expression::IndexedTuple(
+                                Box::new(expr),
+                                constant.integer_constant().unwrap().to_usize(),
+                                span,
+                            );
                         }
 
                         TokenContents::Name(name) => {

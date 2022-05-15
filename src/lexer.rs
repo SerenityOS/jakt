@@ -1,4 +1,4 @@
-use crate::{compiler::FileId, error::JaktError};
+use crate::{compiler::FileId, error::JaktError, typechecker::NumericConstant};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Span {
@@ -21,7 +21,7 @@ impl Span {
 pub enum TokenContents {
     SingleQuotedString(String),
     QuotedString(String),
-    Number(i64),
+    Number(NumericConstant),
     Name(String),
     Semicolon,
     Colon,
@@ -502,6 +502,90 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
     (output, error)
 }
 
+#[derive(Debug)]
+pub enum LiteralSuffix {
+    U8,
+    U16,
+    U32,
+    U64,
+    I8,
+    I16,
+    I32,
+    I64,
+    F32,
+    F64,
+}
+
+fn consume_numeric_literal_suffix(bytes: &[u8], index: &mut usize) -> Option<LiteralSuffix> {
+    match bytes[*index] {
+        b'u' | b'i' | b'f' => {}
+        _ => return None,
+    }
+
+    let mut local_index = *index + 1;
+    if local_index >= bytes.len() {
+        return None;
+    }
+
+    let start = local_index;
+    while local_index < bytes.len() && bytes[local_index].is_ascii_digit() {
+        local_index += 1;
+    }
+    let str = String::from_utf8_lossy(&bytes[start..local_index]);
+    let width = i64::from_str_radix(&str, 10).ok();
+
+    let suffix = match bytes[*index] {
+        b'u' => match width {
+            Some(8) => Some(LiteralSuffix::U8),
+            Some(16) => Some(LiteralSuffix::U16),
+            Some(32) => Some(LiteralSuffix::U32),
+            Some(64) => Some(LiteralSuffix::U64),
+            _ => None,
+        },
+        b'i' => match width {
+            Some(8) => Some(LiteralSuffix::I8),
+            Some(16) => Some(LiteralSuffix::I16),
+            Some(32) => Some(LiteralSuffix::I32),
+            Some(64) => Some(LiteralSuffix::I64),
+            _ => None,
+        },
+        b'f' => match width {
+            Some(32) => Some(LiteralSuffix::F32),
+            Some(64) => Some(LiteralSuffix::F64),
+            _ => None,
+        },
+        _ => None,
+    };
+
+    if suffix.is_some() {
+        *index = local_index;
+    }
+
+    suffix
+}
+
+fn make_number_token(number: i64, suffix: Option<LiteralSuffix>) -> TokenContents {
+    match suffix {
+        Some(LiteralSuffix::U8) => TokenContents::Number(NumericConstant::U8(number as u8)),
+        Some(LiteralSuffix::U16) => TokenContents::Number(NumericConstant::U16(number as u16)),
+        Some(LiteralSuffix::U32) => TokenContents::Number(NumericConstant::U32(number as u32)),
+
+        // FIXME: This loses precision:
+        Some(LiteralSuffix::U64) => TokenContents::Number(NumericConstant::U64(number as u64)),
+
+        Some(LiteralSuffix::I8) => TokenContents::Number(NumericConstant::I8(number as i8)),
+        Some(LiteralSuffix::I16) => TokenContents::Number(NumericConstant::I16(number as i16)),
+        Some(LiteralSuffix::I32) => TokenContents::Number(NumericConstant::I32(number as i32)),
+        Some(LiteralSuffix::I64) => TokenContents::Number(NumericConstant::I64(number)),
+
+        // FIXME: These 2 don't work at all:
+        Some(LiteralSuffix::F32) => TokenContents::Number(NumericConstant::I64(number as i64)),
+        Some(LiteralSuffix::F64) => TokenContents::Number(NumericConstant::I64(number as i64)),
+
+        _ => TokenContents::Number(NumericConstant::I64(number)),
+    }
+}
+
 fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<JaktError>) {
     let mut error = None;
 
@@ -514,10 +598,11 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
         }
         let str = String::from_utf8_lossy(&bytes[start + 2..*index]);
         let number = i64::from_str_radix(&str, 16);
+        let suffix = consume_numeric_literal_suffix(bytes, index);
         match number {
             Ok(number) => (
                 Token::new(
-                    TokenContents::Number(number),
+                    make_number_token(number, suffix),
                     Span::new(file_id, start, *index),
                 ),
                 None,
@@ -539,10 +624,11 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
         }
         let str = String::from_utf8_lossy(&bytes[start + 2..*index]);
         let number = i64::from_str_radix(&str, 2);
+        let suffix = consume_numeric_literal_suffix(bytes, index);
         match number {
             Ok(number) => (
                 Token::new(
-                    TokenContents::Number(number),
+                    make_number_token(number, suffix),
                     Span::new(file_id, start, *index),
                 ),
                 None,
@@ -564,11 +650,11 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
 
         let str = String::from_utf8_lossy(&bytes[start..*index]);
         let number: Result<i64, _> = str.parse();
-
+        let suffix = consume_numeric_literal_suffix(bytes, index);
         match number {
             Ok(number) => (
                 Token::new(
-                    TokenContents::Number(number),
+                    make_number_token(number, suffix),
                     Span::new(file_id, start, *index),
                 ),
                 None,

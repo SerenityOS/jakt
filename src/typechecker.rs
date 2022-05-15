@@ -369,6 +369,13 @@ pub enum IntegerConstant {
 }
 
 impl IntegerConstant {
+    pub fn to_usize(&self) -> usize {
+        match self {
+            IntegerConstant::Signed(value) => *value as usize,
+            IntegerConstant::Unsigned(value) => *value as usize,
+        }
+    }
+
     pub fn promote(&self, type_id: TypeId, project: &Project) -> (Option<NumericConstant>, TypeId) {
         let ty = &project.types[type_id];
         if !ty.can_fit_integer(self) {
