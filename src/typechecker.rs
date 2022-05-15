@@ -25,71 +25,46 @@ pub enum SafetyMode {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
-    Bool,
-    String,
-    I8,
-    I16,
-    I32,
-    I64,
-    U8,
-    U16,
-    U32,
-    U64,
-    F32,
-    F64,
-    Void,
+    UnknownOrBuiltin,
     Vector(TypeId),
     Tuple(Vec<TypeId>),
     Optional(TypeId),
     Struct(StructId),
     RawPtr(TypeId),
-    Unknown,
-
-    // C interop types
-    CChar,
-    CInt,
 }
 
-impl Type {
-    pub fn is_integer(&self) -> bool {
-        match self {
-            Type::I8
-            | Type::I16
-            | Type::I32
-            | Type::I64
-            | Type::U8
-            | Type::U16
-            | Type::U32
-            | Type::U64 => true,
-            _ => false,
-        }
+pub fn is_integer(type_id: TypeId) -> bool {
+    match type_id {
+        I8_TYPE_ID | I16_TYPE_ID | I32_TYPE_ID | I64_TYPE_ID | U8_TYPE_ID | U16_TYPE_ID
+        | U32_TYPE_ID | U64_TYPE_ID => true,
+        _ => false,
     }
+}
 
-    pub fn can_fit_integer(&self, value: &IntegerConstant) -> bool {
-        match *value {
-            IntegerConstant::Signed(value) => match self {
-                Type::I8 => value >= i8::MIN as i64 && value <= i8::MAX as i64,
-                Type::I16 => value >= i16::MIN as i64 && value <= i16::MAX as i64,
-                Type::I32 => value >= i32::MIN as i64 && value <= i32::MAX as i64,
-                Type::I64 => true,
-                Type::U8 => value >= 0 && value <= u8::MAX as i64,
-                Type::U16 => value >= 0 && value <= u16::MAX as i64,
-                Type::U32 => value >= 0 && value <= u32::MAX as i64,
-                Type::U64 => value >= 0,
-                _ => false,
-            },
-            IntegerConstant::Unsigned(value) => match self {
-                Type::I8 => value <= i8::MAX as u64,
-                Type::I16 => value <= i16::MAX as u64,
-                Type::I32 => value <= i32::MAX as u64,
-                Type::I64 => value <= i64::MAX as u64,
-                Type::U8 => value <= u8::MAX as u64,
-                Type::U16 => value <= u16::MAX as u64,
-                Type::U32 => value <= u32::MAX as u64,
-                Type::U64 => true,
-                _ => false,
-            },
-        }
+pub fn can_fit_integer(type_id: TypeId, value: &IntegerConstant) -> bool {
+    match *value {
+        IntegerConstant::Signed(value) => match type_id {
+            I8_TYPE_ID => value >= i8::MIN as i64 && value <= i8::MAX as i64,
+            I16_TYPE_ID => value >= i16::MIN as i64 && value <= i16::MAX as i64,
+            I32_TYPE_ID => value >= i32::MIN as i64 && value <= i32::MAX as i64,
+            I64_TYPE_ID => true,
+            U8_TYPE_ID => value >= 0 && value <= u8::MAX as i64,
+            U16_TYPE_ID => value >= 0 && value <= u16::MAX as i64,
+            U32_TYPE_ID => value >= 0 && value <= u32::MAX as i64,
+            U64_TYPE_ID => value >= 0,
+            _ => false,
+        },
+        IntegerConstant::Unsigned(value) => match type_id {
+            I8_TYPE_ID => value <= i8::MAX as u64,
+            I16_TYPE_ID => value <= i16::MAX as u64,
+            I32_TYPE_ID => value <= i32::MAX as u64,
+            I64_TYPE_ID => value <= i64::MAX as u64,
+            U8_TYPE_ID => value <= u8::MAX as u64,
+            U16_TYPE_ID => value <= u16::MAX as u64,
+            U32_TYPE_ID => value <= u32::MAX as u64,
+            U64_TYPE_ID => true,
+            _ => false,
+        },
     }
 }
 
@@ -376,32 +351,31 @@ impl IntegerConstant {
         }
     }
 
-    pub fn promote(&self, type_id: TypeId, project: &Project) -> (Option<NumericConstant>, TypeId) {
-        let ty = &project.types[type_id];
-        if !ty.can_fit_integer(self) {
+    pub fn promote(&self, type_id: TypeId) -> (Option<NumericConstant>, TypeId) {
+        if !can_fit_integer(type_id, self) {
             return (None, UNKNOWN_TYPE_ID);
         }
         let new_constant = match self {
-            IntegerConstant::Signed(value) => match ty {
-                Type::I8 => NumericConstant::I8(*value as i8),
-                Type::I16 => NumericConstant::I16(*value as i16),
-                Type::I32 => NumericConstant::I32(*value as i32),
-                Type::I64 => NumericConstant::I64(*value as i64),
-                Type::U8 => NumericConstant::U8(*value as u8),
-                Type::U16 => NumericConstant::U16(*value as u16),
-                Type::U32 => NumericConstant::U32(*value as u32),
-                Type::U64 => NumericConstant::U64(*value as u64),
+            IntegerConstant::Signed(value) => match type_id {
+                I8_TYPE_ID => NumericConstant::I8(*value as i8),
+                I16_TYPE_ID => NumericConstant::I16(*value as i16),
+                I32_TYPE_ID => NumericConstant::I32(*value as i32),
+                I64_TYPE_ID => NumericConstant::I64(*value as i64),
+                U8_TYPE_ID => NumericConstant::U8(*value as u8),
+                U16_TYPE_ID => NumericConstant::U16(*value as u16),
+                U32_TYPE_ID => NumericConstant::U32(*value as u32),
+                U64_TYPE_ID => NumericConstant::U64(*value as u64),
                 _ => panic!("Bogus state in IntegerConstant::promote"),
             },
-            IntegerConstant::Unsigned(value) => match ty {
-                Type::I8 => NumericConstant::I8(*value as i8),
-                Type::I16 => NumericConstant::I16(*value as i16),
-                Type::I32 => NumericConstant::I32(*value as i32),
-                Type::I64 => NumericConstant::I64(*value as i64),
-                Type::U8 => NumericConstant::U8(*value as u8),
-                Type::U16 => NumericConstant::U16(*value as u16),
-                Type::U32 => NumericConstant::U32(*value as u32),
-                Type::U64 => NumericConstant::U64(*value as u64),
+            IntegerConstant::Unsigned(value) => match type_id {
+                I8_TYPE_ID => NumericConstant::I8(*value as i8),
+                I16_TYPE_ID => NumericConstant::I16(*value as i16),
+                I32_TYPE_ID => NumericConstant::I32(*value as i32),
+                I64_TYPE_ID => NumericConstant::I64(*value as i64),
+                U8_TYPE_ID => NumericConstant::U8(*value as u8),
+                U16_TYPE_ID => NumericConstant::U16(*value as u16),
+                U32_TYPE_ID => NumericConstant::U32(*value as u32),
+                U64_TYPE_ID => NumericConstant::U64(*value as u64),
                 _ => panic!("Bogus state in IntegerConstant::promote"),
             },
         };
@@ -1008,7 +982,6 @@ pub fn typecheck_statement(
                 checked_type_id,
                 &mut checked_expression,
                 &init.span(),
-                project,
             );
             error = error.or(err);
 
@@ -1085,15 +1058,12 @@ pub fn try_promote_constant_expr_to_type(
     lhs_type_id: TypeId,
     checked_rhs: &mut CheckedExpression,
     span: &Span,
-    project: &Project,
 ) -> Option<JaktError> {
-    let lhs_type = &project.types[lhs_type_id];
-
-    if !lhs_type.is_integer() {
+    if !is_integer(lhs_type_id) {
         return None;
     }
     if let Some(rhs_constant) = checked_rhs.to_integer_constant() {
-        if let (Some(new_constant), new_ty) = rhs_constant.promote(lhs_type_id, project) {
+        if let (Some(new_constant), new_ty) = rhs_constant.promote(lhs_type_id) {
             *checked_rhs = CheckedExpression::NumericConstant(new_constant, new_ty);
         } else {
             return Some(JaktError::TypecheckError(
@@ -1122,12 +1092,7 @@ pub fn typecheck_expression(
             let (mut checked_rhs, err) = typecheck_expression(rhs, scope_id, project, safety_mode);
             error = error.or(err);
 
-            let err = try_promote_constant_expr_to_type(
-                checked_lhs.ty(),
-                &mut checked_rhs,
-                span,
-                project,
-            );
+            let err = try_promote_constant_expr_to_type(checked_lhs.ty(), &mut checked_rhs, span);
             error = error.or(err);
 
             // TODO: actually do the binary operator typecheck against safe operations
@@ -1284,22 +1249,18 @@ pub fn typecheck_expression(
             let mut expr_ty = UNKNOWN_TYPE_ID;
             let ty = &project.types[checked_expr.ty()];
             match ty {
-                Type::Vector(inner_ty) => {
-                    let checked_idx_ty = &project.types[checked_idx.ty()];
-
-                    match checked_idx.ty() {
-                        _ if checked_idx_ty.is_integer() => {
-                            expr_ty = *inner_ty;
-                        }
-
-                        _ => {
-                            error = error.or(Some(JaktError::TypecheckError(
-                                "index is not an integer".to_string(),
-                                idx.span(),
-                            )))
-                        }
+                Type::Vector(inner_ty) => match checked_idx.ty() {
+                    _ if is_integer(checked_idx.ty()) => {
+                        expr_ty = *inner_ty;
                     }
-                }
+
+                    _ => {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "index is not an integer".to_string(),
+                            idx.span(),
+                        )))
+                    }
+                },
                 _ => {
                     error = error.or(Some(JaktError::TypecheckError(
                         "index used on value that can't be indexed".to_string(),
@@ -1395,105 +1356,102 @@ pub fn typecheck_expression(
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
             error = error.or(err);
 
-            let checked_expr_ty = &project.types[checked_expr.ty()];
-            match checked_expr_ty {
-                Type::Struct(struct_id) => {
-                    let struct_id = *struct_id;
-                    let (checked_call, err) = typecheck_method_call(
-                        call,
-                        scope_id,
-                        span,
-                        project,
-                        struct_id,
-                        safety_mode,
-                    );
-                    error = error.or(err);
+            if checked_expr.ty() == STRING_TYPE_ID {
+                // Special-case the built-in so we don't accidentally find the user's definition
+                let string_struct = project.find_struct_in_scope(0, "String");
 
-                    let ty = checked_call.ty.clone();
-                    (
-                        CheckedExpression::MethodCall(Box::new(checked_expr), checked_call, ty),
-                        error,
-                    )
-                }
-                Type::String => {
-                    // Special-case the built-in so we don't accidentally find the user's definition
-                    let string_struct = project.find_struct_in_scope(0, "String");
+                match string_struct {
+                    Some(struct_id) => {
+                        let (checked_call, err) = typecheck_method_call(
+                            call,
+                            scope_id,
+                            span,
+                            project,
+                            struct_id,
+                            safety_mode,
+                        );
+                        error = error.or(err);
 
-                    match string_struct {
-                        Some(struct_id) => {
-                            let (checked_call, err) = typecheck_method_call(
-                                call,
-                                scope_id,
-                                span,
-                                project,
-                                struct_id,
-                                safety_mode,
-                            );
-                            error = error.or(err);
+                        let ty = checked_call.ty.clone();
+                        (
+                            CheckedExpression::MethodCall(Box::new(checked_expr), checked_call, ty),
+                            error,
+                        )
+                    }
+                    _ => {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "no methods available on value".to_string(),
+                            expr.span(),
+                        )));
 
-                            let ty = checked_call.ty.clone();
-                            (
-                                CheckedExpression::MethodCall(
-                                    Box::new(checked_expr),
-                                    checked_call,
-                                    ty,
-                                ),
-                                error,
-                            )
-                        }
-                        _ => {
-                            error = error.or(Some(JaktError::TypecheckError(
-                                "no methods available on value".to_string(),
-                                expr.span(),
-                            )));
-
-                            (CheckedExpression::Garbage, error)
-                        }
+                        (CheckedExpression::Garbage, error)
                     }
                 }
-                Type::Vector(_) => {
-                    // Special-case the built-in so we don't accidentally find the user's definition
-                    let vector_struct = project.find_struct_in_scope(0, "RefVector");
+            } else {
+                let checked_expr_ty = &project.types[checked_expr.ty()];
+                match checked_expr_ty {
+                    Type::Struct(struct_id) => {
+                        let struct_id = *struct_id;
+                        let (checked_call, err) = typecheck_method_call(
+                            call,
+                            scope_id,
+                            span,
+                            project,
+                            struct_id,
+                            safety_mode,
+                        );
+                        error = error.or(err);
 
-                    match vector_struct {
-                        Some(struct_id) => {
-                            let (checked_call, err) = typecheck_method_call(
-                                call,
-                                scope_id,
-                                span,
-                                project,
-                                struct_id,
-                                safety_mode,
-                            );
-                            error = error.or(err);
+                        let ty = checked_call.ty.clone();
+                        (
+                            CheckedExpression::MethodCall(Box::new(checked_expr), checked_call, ty),
+                            error,
+                        )
+                    }
+                    Type::Vector(_) => {
+                        // Special-case the built-in so we don't accidentally find the user's definition
+                        let vector_struct = project.find_struct_in_scope(0, "RefVector");
 
-                            let ty = checked_call.ty.clone();
-                            (
-                                CheckedExpression::MethodCall(
-                                    Box::new(checked_expr),
-                                    checked_call,
-                                    ty,
-                                ),
-                                error,
-                            )
-                        }
-                        _ => {
-                            error = error.or(Some(JaktError::TypecheckError(
-                                "no methods available on value".to_string(),
-                                expr.span(),
-                            )));
+                        match vector_struct {
+                            Some(struct_id) => {
+                                let (checked_call, err) = typecheck_method_call(
+                                    call,
+                                    scope_id,
+                                    span,
+                                    project,
+                                    struct_id,
+                                    safety_mode,
+                                );
+                                error = error.or(err);
 
-                            (CheckedExpression::Garbage, error)
+                                let ty = checked_call.ty.clone();
+                                (
+                                    CheckedExpression::MethodCall(
+                                        Box::new(checked_expr),
+                                        checked_call,
+                                        ty,
+                                    ),
+                                    error,
+                                )
+                            }
+                            _ => {
+                                error = error.or(Some(JaktError::TypecheckError(
+                                    "no methods available on value".to_string(),
+                                    expr.span(),
+                                )));
+
+                                (CheckedExpression::Garbage, error)
+                            }
                         }
                     }
-                }
-                _ => {
-                    error = error.or(Some(JaktError::TypecheckError(
-                        "no methods available on value".to_string(),
-                        expr.span(),
-                    )));
+                    _ => {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "no methods available on value".to_string(),
+                            expr.span(),
+                        )));
 
-                    (CheckedExpression::Garbage, error)
+                        (CheckedExpression::Garbage, error)
+                    }
                 }
             }
         }
@@ -1818,7 +1776,6 @@ pub fn typecheck_call(
                             callee.params[idx].variable.ty,
                             &mut checked_arg,
                             &call.args[idx].1.span(),
-                            project,
                         );
                         error = error.or(err);
 
@@ -1911,7 +1868,6 @@ pub fn typecheck_method_call(
                     callee.params[idx + 1].variable.ty,
                     &mut checked_arg,
                     &call.args[idx].1.span(),
-                    project,
                 );
                 error = error.or(err);
 

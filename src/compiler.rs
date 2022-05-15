@@ -41,23 +41,9 @@ impl Compiler {
     pub fn include_prelude(&mut self, project: &mut Project) {
         // First, let's make types for all the builtin types
         // This order *must* match the order of the constants the typechecker expects
-        project.types.resize(STRING_TYPE_ID + 1, Type::Unknown);
-        project.types[UNKNOWN_TYPE_ID] = Type::Unknown;
-        project.types[VOID_TYPE_ID] = Type::Void;
-        project.types[BOOL_TYPE_ID] = Type::Bool;
-        project.types[I8_TYPE_ID] = Type::I8;
-        project.types[I16_TYPE_ID] = Type::I16;
-        project.types[I32_TYPE_ID] = Type::I32;
-        project.types[I64_TYPE_ID] = Type::I64;
-        project.types[U8_TYPE_ID] = Type::U8;
-        project.types[U16_TYPE_ID] = Type::U16;
-        project.types[U32_TYPE_ID] = Type::U32;
-        project.types[U64_TYPE_ID] = Type::U64;
-        project.types[F32_TYPE_ID] = Type::F32;
-        project.types[F64_TYPE_ID] = Type::F64;
-        project.types[CCHAR_TYPE_ID] = Type::CChar;
-        project.types[CINT_TYPE_ID] = Type::CInt;
-        project.types[STRING_TYPE_ID] = Type::String;
+        project
+            .types
+            .resize(STRING_TYPE_ID + 1, Type::UnknownOrBuiltin);
 
         let prelude = Compiler::prelude();
 
