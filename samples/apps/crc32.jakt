@@ -7,14 +7,14 @@ extern fun feof(anon file: mut raw FILE) -> c_int
 extern fun putchar(anon ch: c_int) -> c_int
 
 fun make_lookup_table() -> [u32] {
-    let mut data = [0 as! u32; 256]
+    let mut data = [0u32; 256]
     let mut i = 0
     while i < data.size() {
         let mut value = i as! u32
         let mut j = 0
         while j < 8 {
             if value & 1 {
-                value = 0xedb88320 as! u32 ^ (value >> 1)
+                value = 0xedb88320u32 ^ (value >> 1)
             } else {
                 value >>= 1
             }
@@ -38,7 +38,7 @@ fun main(args: [String]) {
 
     let table = make_lookup_table()
     
-    let mut state: u32 = 0xffffffff
+    let mut state = 0xffffffffu32
     let mut c = fgetc(file)
     while not feof(file) {
         state = table[(state ^ c) & 0xff] ^ (state >> 8);
