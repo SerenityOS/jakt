@@ -25,6 +25,7 @@ pub const F32_TYPE_ID: usize = 11;
 pub const F64_TYPE_ID: usize = 12;
 pub const CCHAR_TYPE_ID: usize = 13;
 pub const CINT_TYPE_ID: usize = 14;
+// Note: keep STRING_TYPE_ID last as it is how we know how many slots to pre-fill
 pub const STRING_TYPE_ID: usize = 15;
 
 pub struct Compiler {
@@ -41,9 +42,7 @@ impl Compiler {
     pub fn include_prelude(&mut self, project: &mut Project) {
         // First, let's make types for all the builtin types
         // This order *must* match the order of the constants the typechecker expects
-        project
-            .types
-            .resize(STRING_TYPE_ID + 1, Type::UnknownOrBuiltin);
+        project.types.resize(STRING_TYPE_ID + 1, Type::Builtin);
 
         let prelude = Compiler::prelude();
 
@@ -139,12 +138,9 @@ extern class RefVector {
     fun resize(mut this, anon size: i64) {}
 }
 
-extern class Optional {
-}
+extern class Optional {}
 
-extern class Tuple {
-    
-}
+extern class Tuple {}
 
 "#
         .as_bytes()

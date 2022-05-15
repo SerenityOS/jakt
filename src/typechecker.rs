@@ -25,7 +25,7 @@ pub enum SafetyMode {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
-    UnknownOrBuiltin,
+    Builtin,
     Generic(StructId, Vec<TypeId>),
     Struct(StructId),
     RawPtr(TypeId),

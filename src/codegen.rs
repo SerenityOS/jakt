@@ -304,7 +304,7 @@ fn codegen_type(type_id: TypeId, project: &Project) -> String {
             output
         }
         Type::Struct(struct_id) => project.structs[*struct_id].name.clone(),
-        Type::UnknownOrBuiltin => match type_id {
+        Type::Builtin => match type_id {
             compiler::BOOL_TYPE_ID => String::from("bool"),
             compiler::STRING_TYPE_ID => String::from("String"),
             compiler::CCHAR_TYPE_ID => String::from("char"),
