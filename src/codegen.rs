@@ -1,10 +1,10 @@
 use crate::{
     compiler,
-    parser::{BinaryOperator, DefinitionLinkage, DefinitionType, FunctionLinkage, TypeCast},
+    parser::{BinaryOperator, DefinitionLinkage, DefinitionType, FunctionLinkage},
     typechecker::{
         is_integer, CheckedBlock, CheckedExpression, CheckedFunction, CheckedStatement,
-        CheckedStruct, CheckedUnaryOperator, CheckedVariable, NumericConstant, Project, Scope,
-        Type, TypeId,
+        CheckedStruct, CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, NumericConstant,
+        Project, Scope, Type, TypeId,
     },
 };
 
@@ -787,28 +787,28 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 }
                 CheckedUnaryOperator::TypeCast(cast) => {
                     match cast {
-                        TypeCast::Fallible(_) => {
+                        CheckedTypeCast::Fallible(_) => {
                             if is_integer(*type_id) {
                                 output.push_str("fallible_integer_cast");
                             } else {
                                 output.push_str("dynamic_cast");
                             }
                         }
-                        TypeCast::Infallible(_) => {
+                        CheckedTypeCast::Infallible(_) => {
                             if is_integer(*type_id) {
                                 output.push_str("infallible_integer_cast");
                             } else {
                                 output.push_str("verify_cast");
                             }
                         }
-                        TypeCast::Saturating(_) => {
+                        CheckedTypeCast::Saturating(_) => {
                             if is_integer(*type_id) {
                                 output.push_str("saturating_integer_cast");
                             } else {
                                 panic!("Saturating cast on non-integer type");
                             }
                         }
-                        TypeCast::Truncating(_) => {
+                        CheckedTypeCast::Truncating(_) => {
                             if is_integer(*type_id) {
                                 output.push_str("truncating_integer_cast");
                             } else {

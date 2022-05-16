@@ -445,6 +445,25 @@ impl NumericConstant {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum CheckedTypeCast {
+    Fallible(TypeId),
+    Infallible(TypeId),
+    Saturating(TypeId),
+    Truncating(TypeId),
+}
+
+impl CheckedTypeCast {
+    pub fn ty(&self) -> TypeId {
+        match self {
+            CheckedTypeCast::Fallible(ty) => *ty,
+            CheckedTypeCast::Infallible(ty) => *ty,
+            CheckedTypeCast::Saturating(ty) => *ty,
+            CheckedTypeCast::Truncating(ty) => *ty,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum CheckedUnaryOperator {
     PreIncrement,
     PostIncrement,
@@ -455,7 +474,7 @@ pub enum CheckedUnaryOperator {
     RawAddress,
     LogicalNot,
     BitwiseNot,
-    TypeCast(TypeCast),
+    TypeCast(CheckedTypeCast),
 }
 
 #[derive(Clone, Debug)]
@@ -1277,17 +1296,22 @@ pub fn typecheck_expression(
                 UnaryOperator::RawAddress => CheckedUnaryOperator::RawAddress,
                 UnaryOperator::LogicalNot => CheckedUnaryOperator::LogicalNot,
                 UnaryOperator::BitwiseNot => CheckedUnaryOperator::BitwiseNot,
-                UnaryOperator::TypeCast(cast) => CheckedUnaryOperator::TypeCast(cast.clone()),
+                UnaryOperator::TypeCast(cast) => {
+                    let (type_id, err) =
+                        typecheck_typename(&cast.unchecked_type(), scope_id, project);
+                    error = error.or(err);
+                    let checked_cast = match cast {
+                        TypeCast::Fallible(_) => CheckedTypeCast::Fallible(type_id),
+                        TypeCast::Infallible(_) => CheckedTypeCast::Infallible(type_id),
+                        TypeCast::Saturating(_) => CheckedTypeCast::Saturating(type_id),
+                        TypeCast::Truncating(_) => CheckedTypeCast::Truncating(type_id),
+                    };
+                    CheckedUnaryOperator::TypeCast(checked_cast)
+                }
             };
 
-            let (checked_expr, err) = typecheck_unary_operation(
-                checked_expr,
-                checked_op,
-                *span,
-                scope_id,
-                project,
-                safety_mode,
-            );
+            let (checked_expr, err) =
+                typecheck_unary_operation(checked_expr, checked_op, *span, project, safety_mode);
             error = error.or(err);
 
             (checked_expr, error)
@@ -1658,7 +1682,6 @@ pub fn typecheck_unary_operation(
     expr: CheckedExpression,
     op: CheckedUnaryOperator,
     span: Span,
-    scope_id: ScopeId,
     project: &mut Project,
     safety_mode: SafetyMode,
 ) -> (CheckedExpression, Option<JaktError>) {
@@ -1666,11 +1689,10 @@ pub fn typecheck_unary_operation(
     let expr_ty = &project.types[expr_type_id];
 
     match &op {
-        CheckedUnaryOperator::TypeCast(cast) => {
-            let unchecked_type = cast.unchecked_type();
-            let (ty, err) = typecheck_typename(&unchecked_type, scope_id, project);
-            (CheckedExpression::UnaryOp(Box::new(expr), op, ty), err)
-        }
+        CheckedUnaryOperator::TypeCast(cast) => (
+            CheckedExpression::UnaryOp(Box::new(expr), op.clone(), cast.ty()),
+            None,
+        ),
         CheckedUnaryOperator::Dereference => match expr_ty {
             Type::RawPtr(x) => {
                 if safety_mode == SafetyMode::Unsafe {
