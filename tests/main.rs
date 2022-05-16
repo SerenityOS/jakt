@@ -188,3 +188,8 @@ fn test_boolean() -> Result<(), JaktError> {
 fn test_ranges() -> Result<(), JaktError> {
     test_samples("samples/ranges")
 }
+
+#[test]
+fn test_generics() -> Result<(), JaktError> {
+    test_samples("samples/generics")
+}

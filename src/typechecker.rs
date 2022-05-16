@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     compiler::{
         BOOL_TYPE_ID, CCHAR_TYPE_ID, CINT_TYPE_ID, F32_TYPE_ID, F64_TYPE_ID, I16_TYPE_ID,
@@ -26,6 +28,7 @@ pub enum SafetyMode {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Builtin,
+    TypeVariable(String),
     Generic(StructId, Vec<TypeId>),
     Struct(StructId),
     RawPtr(TypeId),
@@ -260,6 +263,7 @@ impl Project {
 #[derive(Clone, Debug)]
 pub struct CheckedStruct {
     pub name: String,
+    pub generic_parameters: Vec<TypeId>,
     pub fields: Vec<CheckedVarDecl>,
     pub scope_id: ScopeId,
     pub definition_linkage: DefinitionLinkage,
@@ -277,6 +281,8 @@ pub struct CheckedFunction {
     pub name: String,
     pub return_type: TypeId,
     pub params: Vec<CheckedParameter>,
+    pub generic_parameters: Vec<TypeId>,
+    pub function_scope_id: ScopeId,
     pub block: CheckedBlock,
     pub linkage: FunctionLinkage,
 }
@@ -608,10 +614,13 @@ fn typecheck_struct_predecl(
     let struct_scope_id = project.create_scope(parent_scope_id);
 
     for fun in &structure.methods {
+        let method_scope_id = project.create_scope(struct_scope_id);
         let mut checked_function = CheckedFunction {
             name: fun.name.clone(),
             params: vec![],
             return_type: UNKNOWN_TYPE_ID,
+            function_scope_id: method_scope_id,
+            generic_parameters: vec![],
             block: CheckedBlock::new(),
             linkage: fun.linkage.clone(),
         };
@@ -659,6 +668,7 @@ fn typecheck_struct_predecl(
 
     project.structs.push(CheckedStruct {
         name: structure.name.clone(),
+        generic_parameters: vec![],
         fields: Vec::new(),
         scope_id: struct_scope_id,
         definition_linkage: structure.definition_linkage,
@@ -688,11 +698,35 @@ fn typecheck_struct(
 
     let mut fields = Vec::new();
 
+    for (generic_parameter, parameter_span) in &structure.generic_parameters {
+        project
+            .types
+            .push(Type::TypeVariable(generic_parameter.to_string()));
+        let parameter_type_id = project.types.len() - 1;
+
+        let checked_struct = &mut project.structs[struct_id];
+        let checked_struct_scope_id = checked_struct.scope_id;
+
+        checked_struct.generic_parameters.push(parameter_type_id);
+
+        if let Err(err) = project.add_type_to_scope(
+            checked_struct_scope_id,
+            generic_parameter.to_string(),
+            parameter_type_id,
+            *parameter_span,
+        ) {
+            error = error.or(Some(err));
+        }
+    }
+
+    let checked_struct = &mut project.structs[struct_id];
+    let checked_struct_scope_id = checked_struct.scope_id;
+
     let struct_type_id = project.find_or_add_type_id(Type::Struct(struct_id));
 
     for unchecked_member in &structure.fields {
         let (checked_member_type, err) =
-            typecheck_typename(&unchecked_member.ty, parent_scope_id, project);
+            typecheck_typename(&unchecked_member.ty, checked_struct_scope_id, project);
         error = error.or(err);
 
         fields.push(CheckedVarDecl {
@@ -715,15 +749,19 @@ fn typecheck_struct(
         });
     }
 
+    let function_scope_id = project.create_scope(parent_scope_id);
+
     let checked_struct = &mut project.structs[struct_id];
     checked_struct.fields = fields;
 
     let checked_constructor = CheckedFunction {
         name: structure.name.clone(),
+        return_type: struct_type_id,
+        params: constructor_params,
+        function_scope_id,
+        generic_parameters: vec![],
         block: CheckedBlock::new(),
         linkage: FunctionLinkage::ImplicitConstructor,
-        params: constructor_params,
-        return_type: struct_type_id,
     };
 
     // Internal constructor
@@ -770,16 +808,44 @@ fn typecheck_fun_predecl(
 ) -> Option<JaktError> {
     let mut error = None;
 
+    let function_scope_id = project.create_scope(parent_scope_id);
+
     let mut checked_function = CheckedFunction {
         name: fun.name.clone(),
         params: vec![],
         return_type: UNKNOWN_TYPE_ID,
+        function_scope_id,
+        generic_parameters: vec![],
         block: CheckedBlock::new(),
         linkage: fun.linkage.clone(),
     };
 
+    let checked_function_scope_id = checked_function.function_scope_id;
+
+    let mut generic_parameters = vec![];
+
+    for (generic_parameter, parameter_span) in &fun.generic_parameters {
+        project
+            .types
+            .push(Type::TypeVariable(generic_parameter.to_string()));
+        let type_var_type_id = project.types.len() - 1;
+
+        generic_parameters.push(type_var_type_id);
+
+        if let Err(err) = project.add_type_to_scope(
+            checked_function_scope_id,
+            generic_parameter.to_string(),
+            type_var_type_id,
+            *parameter_span,
+        ) {
+            error = error.or(Some(err));
+        }
+    }
+
+    checked_function.generic_parameters = generic_parameters;
+
     for param in &fun.params {
-        let (param_type, err) = typecheck_typename(&param.variable.ty, parent_scope_id, project);
+        let (param_type, err) = typecheck_typename(&param.variable.ty, function_scope_id, project);
         error = error.or(err);
 
         let checked_variable = CheckedVariable {
@@ -840,7 +906,7 @@ fn typecheck_fun(
     let (block, err) = typecheck_block(&fun.block, function_scope_id, project, SafetyMode::Safe);
     error = error.or(err);
 
-    let (fun_return_type, err) = typecheck_typename(&fun.return_type, parent_scope_id, project);
+    let (fun_return_type, err) = typecheck_typename(&fun.return_type, function_scope_id, project);
     error = error.or(err);
 
     // If the return type is unknown, and the function starts with a return statement,
@@ -1825,6 +1891,8 @@ pub fn typecheck_call(
                 return_ty = callee.return_type;
                 linkage = callee.linkage;
 
+                let mut generic_inferences = HashMap::new();
+
                 // Check that we have the right number of arguments.
                 if callee.params.len() != call.args.len() {
                     error = error.or(Some(JaktError::TypecheckError(
@@ -1864,21 +1932,54 @@ pub fn typecheck_call(
                             )));
                         }
 
-                        let err = try_promote_constant_expr_to_type(
-                            callee.params[idx].variable.ty,
-                            &mut checked_arg,
-                            &call.args[idx].1.span(),
-                        );
-                        error = error.or(err);
+                        let lhs_type_id = callee.params[idx].variable.ty;
+                        let lhs_type = &project.types[lhs_type_id];
 
-                        if checked_arg.ty() != callee.params[idx].variable.ty {
-                            error = error.or(Some(JaktError::TypecheckError(
-                                "Parameter type mismatch".to_string(),
-                                call.args[idx].1.span(),
-                            )))
+                        if let Type::TypeVariable(_) = lhs_type {
+                            // If the call expects a generic type variable, let's see if we've already seen it
+                            if let Some(seen_type) = generic_inferences.get(&lhs_type_id) {
+                                // We've seen this type variable assigned something before
+                                // we should error if it's incompatible.
+
+                                let err = try_promote_constant_expr_to_type(
+                                    *seen_type,
+                                    &mut checked_arg,
+                                    &call.args[idx].1.span(),
+                                );
+                                error = error.or(err);
+
+                                if checked_arg.ty() != callee.params[idx].variable.ty {
+                                    error = error.or(Some(JaktError::TypecheckError(
+                                        "Parameter type mismatch".to_string(),
+                                        call.args[idx].1.span(),
+                                    )))
+                                }
+
+                                checked_args.push((call.args[idx].0.clone(), checked_arg));
+                            } else {
+                                // We haven't seen this type variable before, so go ahead
+                                // and give it an actual type during this call
+                                generic_inferences.insert(lhs_type_id, checked_arg.ty());
+
+                                checked_args.push((call.args[idx].0.clone(), checked_arg));
+                            }
+                        } else {
+                            let err = try_promote_constant_expr_to_type(
+                                lhs_type_id,
+                                &mut checked_arg,
+                                &call.args[idx].1.span(),
+                            );
+                            error = error.or(err);
+
+                            if checked_arg.ty() != callee.params[idx].variable.ty {
+                                error = error.or(Some(JaktError::TypecheckError(
+                                    "Parameter type mismatch".to_string(),
+                                    call.args[idx].1.span(),
+                                )))
+                            }
+
+                            checked_args.push((call.args[idx].0.clone(), checked_arg));
                         }
-
-                        checked_args.push((call.args[idx].0.clone(), checked_arg));
 
                         idx += 1;
                     }

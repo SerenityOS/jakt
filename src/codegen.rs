@@ -18,7 +18,7 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
 
     for (_, struct_id) in &scope.structs {
         let structure = &project.structs[*struct_id];
-        let struct_output = codegen_struct_predecl(structure);
+        let struct_output = codegen_struct_predecl(structure, project);
 
         if !struct_output.is_empty() {
             output.push_str(&struct_output);
@@ -69,18 +69,38 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
     output
 }
 
-fn codegen_struct_predecl(structure: &CheckedStruct) -> String {
+fn codegen_struct_predecl(structure: &CheckedStruct, project: &Project) -> String {
     if structure.definition_linkage == DefinitionLinkage::External {
         String::new()
     } else {
+        let mut output = String::new();
+
+        if !structure.generic_parameters.is_empty() {
+            output.push_str("template <");
+        }
+        let mut first = true;
+        for generic_parameter in &structure.generic_parameters {
+            if !first {
+                output.push_str(", ");
+            } else {
+                first = false;
+            }
+            output.push_str("typename ");
+            output.push_str(&codegen_type(*generic_parameter, project))
+        }
+        if !structure.generic_parameters.is_empty() {
+            output.push_str(">\n");
+        }
         match structure.definition_type {
             DefinitionType::Class => {
-                format!("class {};", structure.name)
+                output.push_str(&format!("class {};", structure.name));
             }
             DefinitionType::Struct => {
-                format!("struct {};", structure.name)
+                output.push_str(&format!("struct {};", structure.name));
             }
         }
+
+        output
     }
 }
 
@@ -89,6 +109,22 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
 
     if structure.definition_linkage == DefinitionLinkage::External {
         return output;
+    }
+    if !structure.generic_parameters.is_empty() {
+        output.push_str("template <");
+    }
+    let mut first = true;
+    for generic_parameter in &structure.generic_parameters {
+        if !first {
+            output.push_str(", ");
+        } else {
+            first = false;
+        }
+        output.push_str("typename ");
+        output.push_str(&codegen_type(*generic_parameter, project))
+    }
+    if !structure.generic_parameters.is_empty() {
+        output.push_str(">\n");
     }
 
     match structure.definition_type {
@@ -102,7 +138,8 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
             output.push_str("  public:\n");
         }
         DefinitionType::Struct => {
-            output.push_str(&format!("struct {} {{\n", structure.name));
+            output.push_str(&format!("struct {}", structure.name));
+            output.push_str(" {\n");
             output.push_str("  public:\n");
         }
     }
@@ -146,6 +183,23 @@ fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String 
         output.push_str("extern ");
     }
 
+    if !fun.generic_parameters.is_empty() {
+        output.push_str("template <");
+    }
+    let mut first = true;
+    for generic_parameter in &fun.generic_parameters {
+        if !first {
+            output.push_str(", ");
+        } else {
+            first = false;
+        }
+        output.push_str("typename ");
+        output.push_str(&codegen_type(*generic_parameter, project))
+    }
+    if !fun.generic_parameters.is_empty() {
+        output.push_str(">\n");
+    }
+
     if fun.name == "main" {
         output.push_str("int");
     } else {
@@ -178,6 +232,23 @@ fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String 
 
 fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
     let mut output = String::new();
+
+    if !fun.generic_parameters.is_empty() {
+        output.push_str("template <");
+    }
+    let mut first = true;
+    for generic_parameter in &fun.generic_parameters {
+        if !first {
+            output.push_str(", ");
+        } else {
+            first = false;
+        }
+        output.push_str("typename ");
+        output.push_str(&codegen_type(*generic_parameter, project))
+    }
+    if !fun.generic_parameters.is_empty() {
+        output.push_str(">\n");
+    }
 
     if fun.name == "main" {
         output.push_str("int");
@@ -376,6 +447,7 @@ fn codegen_type(type_id: TypeId, project: &Project) -> String {
             compiler::VOID_TYPE_ID => String::from("void"),
             _ => String::from("auto"),
         },
+        Type::TypeVariable(name) => name.clone(),
     }
 }
 

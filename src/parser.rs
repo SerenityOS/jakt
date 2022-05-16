@@ -78,6 +78,7 @@ pub struct ParsedFile {
 #[derive(Debug)]
 pub struct Struct {
     pub name: String,
+    pub generic_parameters: Vec<(String, Span)>,
     pub fields: Vec<VarDecl>,
     pub methods: Vec<Function>,
     pub span: Span,
@@ -109,6 +110,7 @@ pub struct Function {
     pub name: String,
     pub name_span: Span,
     pub params: Vec<Parameter>,
+    pub generic_parameters: Vec<(String, Span)>,
     pub block: Block,
     pub return_type: UncheckedType,
     pub linkage: FunctionLinkage,
@@ -137,6 +139,7 @@ impl Function {
                 end: 0,
             },
             params: Vec::new(),
+            generic_parameters: Vec::new(),
             block: Block::new(),
             return_type: UncheckedType::Empty,
             linkage,
@@ -519,6 +522,7 @@ pub fn parse_struct(
     trace!(format!("parse_struct: {:?}", tokens[*index]));
 
     let mut error = None;
+    let mut generic_parameters = vec![];
 
     *index += 1;
 
@@ -531,6 +535,52 @@ pub fn parse_struct(
             } => {
                 *index += 1;
 
+                // Check for generic
+                if *index < tokens.len() {
+                    match tokens[*index] {
+                        Token {
+                            contents: TokenContents::LessThan,
+                            ..
+                        } => {
+                            *index += 1;
+
+                            while *index < tokens.len() {
+                                match &tokens[*index].contents {
+                                    TokenContents::GreaterThan => {
+                                        *index += 1;
+                                        break;
+                                    }
+                                    TokenContents::Comma | TokenContents::Eol => {
+                                        // Treat comma as whitespace? Might require them in the future
+                                        *index += 1;
+                                    }
+
+                                    TokenContents::Name(name) => {
+                                        *index += 1;
+                                        generic_parameters
+                                            .push((name.clone(), tokens[*index].span));
+                                    }
+
+                                    _ => {
+                                        trace!(format!(
+                                            "ERROR: expected generic parameter, found: {:?}",
+                                            tokens[*index].contents
+                                        ));
+
+                                        error = error.or(Some(JaktError::ParserError(
+                                            "expected generic parameter".to_string(),
+                                            tokens[*index].span,
+                                        )));
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+
+                // Read in definition
                 if *index < tokens.len() {
                     match tokens[*index] {
                         Token {
@@ -629,6 +679,7 @@ pub fn parse_struct(
                 (
                     Struct {
                         name: struct_name.clone(),
+                        generic_parameters,
                         fields,
                         methods,
                         span: tokens[*index - 1].span,
@@ -649,6 +700,7 @@ pub fn parse_struct(
                 (
                     Struct {
                         name: String::new(),
+                        generic_parameters,
                         fields: Vec::new(),
                         methods: Vec::new(),
                         span: tokens[*index].span,
@@ -670,6 +722,7 @@ pub fn parse_struct(
         (
             Struct {
                 name: String::new(),
+                generic_parameters,
                 fields: Vec::new(),
                 methods: Vec::new(),
                 span: tokens[*index].span,
@@ -689,6 +742,7 @@ pub fn parse_function(
     trace!(format!("parse_function: {:?}", tokens[*index]));
 
     let mut error = None;
+    let mut generic_parameters = vec![];
 
     *index += 1;
 
@@ -702,6 +756,51 @@ pub fn parse_function(
                 let name_span = tokens[*index].span;
 
                 *index += 1;
+
+                // Check for generic
+                if *index < tokens.len() {
+                    match tokens[*index] {
+                        Token {
+                            contents: TokenContents::LessThan,
+                            ..
+                        } => {
+                            *index += 1;
+
+                            while *index < tokens.len() {
+                                match &tokens[*index].contents {
+                                    TokenContents::GreaterThan => {
+                                        *index += 1;
+                                        break;
+                                    }
+                                    TokenContents::Comma | TokenContents::Eol => {
+                                        // Treat comma as whitespace? Might require them in the future
+                                        *index += 1;
+                                    }
+
+                                    TokenContents::Name(name) => {
+                                        *index += 1;
+                                        generic_parameters
+                                            .push((name.clone(), tokens[*index].span));
+                                    }
+
+                                    _ => {
+                                        trace!(format!(
+                                            "ERROR: expected generic parameter, found: {:?}",
+                                            tokens[*index].contents
+                                        ));
+
+                                        error = error.or(Some(JaktError::ParserError(
+                                            "expected generic parameter".to_string(),
+                                            tokens[*index].span,
+                                        )));
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
 
                 if *index < tokens.len() {
                     match tokens[*index] {
@@ -887,6 +986,7 @@ pub fn parse_function(
                             name: fun_name.clone(),
                             name_span,
                             params,
+                            generic_parameters,
                             block: Block::new(),
                             return_type,
                             linkage,
@@ -910,6 +1010,7 @@ pub fn parse_function(
                         name: fun_name.clone(),
                         name_span,
                         params,
+                        generic_parameters,
                         block,
                         return_type,
                         linkage,
