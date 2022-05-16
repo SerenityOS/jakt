@@ -884,13 +884,12 @@ fn typecheck_fun(
 ) -> Option<JaktError> {
     let mut error = None;
 
-    let function_scope_id = project.create_scope(parent_scope_id);
-
     let function_id = project
         .find_function_in_scope(parent_scope_id, &fun.name)
         .expect("Internal error: missing previously defined function");
 
     let checked_function = &mut project.funs[function_id];
+    let function_scope_id = checked_function.function_scope_id;
 
     let mut param_vars = Vec::new();
     for param in &checked_function.params {
@@ -937,8 +936,6 @@ fn typecheck_method(
 ) -> Option<JaktError> {
     let mut error = None;
 
-    let function_scope_id = project.create_scope(parent_scope_id);
-
     let structure = &mut project.structs[struct_id];
     let structure_scope_id = structure.scope_id;
 
@@ -948,6 +945,7 @@ fn typecheck_method(
         .expect("Internal error: we just pushed the checked function, but it's not present");
 
     let checked_function = &mut project.funs[method_id];
+    let function_scope_id = checked_function.function_scope_id;
 
     let mut param_vars = Vec::new();
     for param in &checked_function.params {
@@ -1984,6 +1982,18 @@ pub fn typecheck_call(
                         idx += 1;
                     }
                 }
+
+                // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
+                // type variable. For the moment, we'll just checked to see if it's a type variable.
+                let ty = &project.types[return_ty];
+                match ty {
+                    Type::TypeVariable(_) => {
+                        if let Some(replacement) = generic_inferences.get(&return_ty) {
+                            return_ty = *replacement;
+                        }
+                    }
+                    _ => {}
+                }
             }
         }
     }
@@ -2019,6 +2029,8 @@ pub fn typecheck_method_call(
     if let Some(callee) = callee {
         return_ty = callee.return_type;
         linkage = callee.linkage;
+
+        let mut generic_inferences = HashMap::new();
 
         // Check that we have the right number of arguments.
         if callee.params.len() != (call.args.len() + 1) {
@@ -2060,24 +2072,69 @@ pub fn typecheck_method_call(
                     )));
                 }
 
-                let err = try_promote_constant_expr_to_type(
-                    callee.params[idx + 1].variable.ty,
-                    &mut checked_arg,
-                    &call.args[idx].1.span(),
-                );
-                error = error.or(err);
+                let lhs_type_id = callee.params[idx + 1].variable.ty;
+                let lhs_type = &project.types[lhs_type_id];
 
-                if checked_arg.ty() != callee.params[idx + 1].variable.ty {
-                    error = error.or(Some(JaktError::TypecheckError(
-                        "Parameter type mismatch".to_string(),
-                        call.args[idx].1.span(),
-                    )))
+                if let Type::TypeVariable(_) = lhs_type {
+                    // If the call expects a generic type variable, let's see if we've already seen it
+                    if let Some(seen_type) = generic_inferences.get(&lhs_type_id) {
+                        // We've seen this type variable assigned something before
+                        // we should error if it's incompatible.
+
+                        let err = try_promote_constant_expr_to_type(
+                            *seen_type,
+                            &mut checked_arg,
+                            &call.args[idx].1.span(),
+                        );
+                        error = error.or(err);
+
+                        if checked_arg.ty() != callee.params[idx].variable.ty {
+                            error = error.or(Some(JaktError::TypecheckError(
+                                "Parameter type mismatch".to_string(),
+                                call.args[idx].1.span(),
+                            )))
+                        }
+
+                        checked_args.push((call.args[idx].0.clone(), checked_arg));
+                    } else {
+                        // We haven't seen this type variable before, so go ahead
+                        // and give it an actual type during this call
+                        generic_inferences.insert(lhs_type_id, checked_arg.ty());
+
+                        checked_args.push((call.args[idx].0.clone(), checked_arg));
+                    }
+                } else {
+                    let err = try_promote_constant_expr_to_type(
+                        lhs_type_id,
+                        &mut checked_arg,
+                        &call.args[idx].1.span(),
+                    );
+                    error = error.or(err);
+
+                    if checked_arg.ty() != callee.params[idx + 1].variable.ty {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "Parameter type mismatch".to_string(),
+                            call.args[idx].1.span(),
+                        )))
+                    }
+
+                    checked_args.push((call.args[idx].0.clone(), checked_arg));
                 }
-
-                checked_args.push((call.args[idx].0.clone(), checked_arg));
 
                 idx += 1;
             }
+        }
+
+        // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
+        // type variable. For the moment, we'll just checked to see if it's a type variable.
+        let ty = &project.types[return_ty];
+        match ty {
+            Type::TypeVariable(_) => {
+                if let Some(replacement) = generic_inferences.get(&return_ty) {
+                    return_ty = *replacement;
+                }
+            }
+            _ => {}
         }
     }
 

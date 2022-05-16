@@ -1,0 +1,9 @@
+fun id<T>(anon x: T) -> T {
+    return x;
+}
+
+fun main() {
+    let y = id(3);
+
+    println(y + 1000)
+}
