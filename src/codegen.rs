@@ -1,11 +1,10 @@
 use crate::{
     compiler,
-    parser::{
-        BinaryOperator, DefinitionLinkage, DefinitionType, FunctionLinkage, TypeCast, UnaryOperator,
-    },
+    parser::{BinaryOperator, DefinitionLinkage, DefinitionType, FunctionLinkage},
     typechecker::{
         is_integer, CheckedBlock, CheckedExpression, CheckedFunction, CheckedStatement,
-        CheckedStruct, CheckedVariable, NumericConstant, Project, Scope, Type, TypeId,
+        CheckedStruct, CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, NumericConstant,
+        Project, Scope, Type, TypeId,
     },
 };
 
@@ -136,6 +135,9 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
             // As we should test the visibility before codegen, we take a simple
             // approach to codegen
             output.push_str("  public:\n");
+
+            // Make sure emitted classes always have a vtable.
+            output.push_str(&format!("    virtual ~{}() = default;", structure.name));
         }
         DefinitionType::Struct => {
             output.push_str(&format!("struct {}", structure.name));
@@ -396,6 +398,15 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
         _ => {
             panic!("internal error: call to a constructor, but not a struct/class type")
         }
+    }
+}
+
+fn codegen_struct_type(type_id: TypeId, project: &Project) -> String {
+    let ty = &project.types[type_id];
+
+    match ty {
+        Type::Struct(struct_id) => project.structs[*struct_id].name.clone(),
+        _ => panic!("codegen_struct_type on non-struct"),
     }
 }
 
@@ -765,51 +776,56 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         CheckedExpression::UnaryOp(expr, op, type_id) => {
             output.push('(');
             match op {
-                UnaryOperator::PreIncrement => {
+                CheckedUnaryOperator::PreIncrement => {
                     output.push_str("++");
                 }
-                UnaryOperator::PreDecrement => {
+                CheckedUnaryOperator::PreDecrement => {
                     output.push_str("--");
                 }
-                UnaryOperator::Negate => {
+                CheckedUnaryOperator::Negate => {
                     output.push_str("-");
                 }
-                UnaryOperator::Dereference => {
+                CheckedUnaryOperator::Dereference => {
                     output.push_str("*");
                 }
-                UnaryOperator::RawAddress => {
+                CheckedUnaryOperator::RawAddress => {
                     output.push_str("&");
                 }
-                UnaryOperator::LogicalNot => {
+                CheckedUnaryOperator::LogicalNot => {
                     output.push_str("!");
                 }
-                UnaryOperator::BitwiseNot => {
+                CheckedUnaryOperator::BitwiseNot => {
                     output.push_str("~");
                 }
-                UnaryOperator::TypeCast(cast) => {
+                CheckedUnaryOperator::Is(type_id) => {
+                    output.push_str("is<");
+                    output.push_str(&codegen_struct_type(*type_id, project));
+                    output.push_str(">(");
+                }
+                CheckedUnaryOperator::TypeCast(cast) => {
                     match cast {
-                        TypeCast::Fallible(_) => {
+                        CheckedTypeCast::Fallible(_) => {
                             if is_integer(*type_id) {
                                 output.push_str("fallible_integer_cast");
                             } else {
                                 output.push_str("dynamic_cast");
                             }
                         }
-                        TypeCast::Infallible(_) => {
+                        CheckedTypeCast::Infallible(_) => {
                             if is_integer(*type_id) {
                                 output.push_str("infallible_integer_cast");
                             } else {
                                 output.push_str("verify_cast");
                             }
                         }
-                        TypeCast::Saturating(_) => {
+                        CheckedTypeCast::Saturating(_) => {
                             if is_integer(*type_id) {
                                 output.push_str("saturating_integer_cast");
                             } else {
                                 panic!("Saturating cast on non-integer type");
                             }
                         }
-                        TypeCast::Truncating(_) => {
+                        CheckedTypeCast::Truncating(_) => {
                             if is_integer(*type_id) {
                                 output.push_str("truncating_integer_cast");
                             } else {
@@ -825,13 +841,13 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
             output.push_str(&codegen_expr(indent, expr, project));
             match op {
-                UnaryOperator::PostIncrement => {
+                CheckedUnaryOperator::PostIncrement => {
                     output.push_str("++");
                 }
-                UnaryOperator::PostDecrement => {
+                CheckedUnaryOperator::PostDecrement => {
                     output.push_str("--");
                 }
-                UnaryOperator::TypeCast(_) => {
+                CheckedUnaryOperator::TypeCast(_) | CheckedUnaryOperator::Is(_) => {
                     output.push(')');
                 }
                 _ => {}
