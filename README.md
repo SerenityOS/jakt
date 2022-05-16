@@ -31,7 +31,7 @@ The following strategies are employed to achieve memory safety:
 
 In **jakt**, there are three pointer types:
 
-- [ ] **T** (Strong pointer to reference-counted class `T`.)
+- [x] **T** (Strong pointer to reference-counted class `T`.)
 - [ ] **weak T?** (Weak pointer to reference-counted class `T`. Becomes empty on pointee destruction.)
 - [x] **raw T** (Raw pointer to arbitrary type `T`. Only usable in `unsafe` blocks.)
 
@@ -73,7 +73,7 @@ rect.set_size(width: 640, height: 480);
 There are two exceptions to this:
 
 - [x] If the parameter in the function declaration is declared as `anon`, omitting the argument label is allowed.
-- [ ] When passing a variable with the same name as the parameter.
+- [x] When passing a variable with the same name as the parameter.
 
 ## Structures and classes
 
