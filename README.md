@@ -197,6 +197,33 @@ let values = [0; 256]
 let values = ["foo", "bar", "baz"]
 ```
 
+## Generics
+
+Jakt supports both generic structures and generic functions. 
+
+```jakt
+fun id<T>(anon x: T) -> T {
+    return x;
+}
+
+fun main() {
+    let y = id(3);
+
+    println(y + 1000)
+}
+```
+
+```jakt
+struct Foo<T> {
+    x: T
+}
+
+fun main() {
+    let f = Foo(x: 100);
+
+    println(f.x);
+}
+```
 ## Type casts
 
 There are four built-in casting operators in **jakt**.
