@@ -49,9 +49,11 @@ pub enum TokenContents {
     GreaterThanOrEqual,
     LessThan,
     LessThanOrEqual,
+    LeftArithmeticShift,
     LeftShift,
     LeftShiftEqual,
     RightShift,
+    RightArithmeticShift,
     RightShiftEqual,
     Asterisk,
     Ampersand,
@@ -261,6 +263,12 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                                 TokenContents::RightShiftEqual,
                                 Span::new(file_id, start, start + 3),
                             ));
+                        } else if bytes[index] == b'>' {
+                            index += 1;
+                            output.push(Token::new(
+                                TokenContents::RightArithmeticShift,
+                                Span::new(file_id, start, start + 3),
+                            ));
                         } else {
                             output.push(Token::new(
                                 TokenContents::RightShift,
@@ -293,6 +301,12 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                         index += 1;
                         output.push(Token::new(
                             TokenContents::LeftShiftEqual,
+                            Span::new(file_id, start, start + 3),
+                        ));
+                    } else if bytes[index] == b'<' {
+                        index += 1;
+                        output.push(Token::new(
+                            TokenContents::LeftArithmeticShift,
                             Span::new(file_id, start, start + 3),
                         ));
                     } else {

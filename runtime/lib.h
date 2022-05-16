@@ -95,6 +95,35 @@ inline String runtime_helper_number_to_string(i64 number)
 
 int __jakt_main(RefVector<String>);
 
+template<typename T>
+inline constexpr T __arithmetic_shift_right(T value, size_t steps)
+{
+    if constexpr (IsSigned<T>) {
+        if constexpr (sizeof(T) == 1) {
+            auto sign = (value & 0x80);
+            // 8-bit variant
+            return ((value >> steps) | sign);
+        }
+        else if constexpr (sizeof(T) == 2) {
+            auto sign = (value & 0x8000);
+            // 16-bit variant
+            return ((value >> steps) | sign);
+        }
+        else if constexpr (sizeof(T) == 4) {
+            auto sign = (value & 0x80000000);
+            // 32-bit variant
+            return ((value >> steps) | sign);
+        }
+        else if constexpr (sizeof(T) == 8) {
+            auto sign = (value & 0x8000000000000000);
+            // 64-bit variant
+            return ((value >> steps) | sign);
+        }
+    } else {
+        return (value >> steps);
+    }
+}
+
 int main(int argc, char** argv)
 {
     RefVector<String> args;

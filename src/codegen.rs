@@ -840,39 +840,53 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         }
         CheckedExpression::BinaryOp(lhs, op, rhs, ..) => {
             output.push('(');
-            output.push_str(&codegen_expr(indent, lhs, project));
+
             match op {
-                BinaryOperator::Add => output.push_str(" + "),
-                BinaryOperator::Subtract => output.push_str(" - "),
-                BinaryOperator::Multiply => output.push_str(" * "),
-                BinaryOperator::Modulo => output.push_str(" % "),
-                BinaryOperator::Divide => output.push_str(" / "),
-                BinaryOperator::Assign => output.push_str(" = "),
-                BinaryOperator::AddAssign => output.push_str(" += "),
-                BinaryOperator::SubtractAssign => output.push_str(" -= "),
-                BinaryOperator::MultiplyAssign => output.push_str(" *= "),
-                BinaryOperator::ModuloAssign => output.push_str(" %= "),
-                BinaryOperator::DivideAssign => output.push_str(" /= "),
-                BinaryOperator::BitwiseAndAssign => output.push_str(" &= "),
-                BinaryOperator::BitwiseOrAssign => output.push_str(" |= "),
-                BinaryOperator::BitwiseXorAssign => output.push_str(" ^= "),
-                BinaryOperator::BitwiseLeftShiftAssign => output.push_str(" <<= "),
-                BinaryOperator::BitwiseRightShiftAssign => output.push_str(" >>= "),
-                BinaryOperator::Equal => output.push_str(" == "),
-                BinaryOperator::NotEqual => output.push_str(" != "),
-                BinaryOperator::LessThan => output.push_str(" < "),
-                BinaryOperator::LessThanOrEqual => output.push_str(" <= "),
-                BinaryOperator::GreaterThan => output.push_str(" > "),
-                BinaryOperator::GreaterThanOrEqual => output.push_str(" >= "),
-                BinaryOperator::LogicalAnd => output.push_str(" && "),
-                BinaryOperator::LogicalOr => output.push_str(" || "),
-                BinaryOperator::BitwiseAnd => output.push_str(" & "),
-                BinaryOperator::BitwiseOr => output.push_str(" | "),
-                BinaryOperator::BitwiseXor => output.push_str(" ^ "),
-                BinaryOperator::BitwiseLeftShift => output.push_str(" << "),
-                BinaryOperator::BitwiseRightShift => output.push_str(" >> "),
+                BinaryOperator::ArithmeticRightShift => {
+                    output.push_str("__arithmetic_shift_right(");
+                    output.push_str(&codegen_expr(indent, lhs, project));
+                    output.push_str(", ");
+                    output.push_str(&codegen_expr(indent, rhs, project));
+                    output.push(')');
+                }
+                _ => {
+                    output.push_str(&codegen_expr(indent, lhs, project));
+                    match op {
+                        BinaryOperator::Add => output.push_str(" + "),
+                        BinaryOperator::Subtract => output.push_str(" - "),
+                        BinaryOperator::Multiply => output.push_str(" * "),
+                        BinaryOperator::Modulo => output.push_str(" % "),
+                        BinaryOperator::Divide => output.push_str(" / "),
+                        BinaryOperator::Assign => output.push_str(" = "),
+                        BinaryOperator::AddAssign => output.push_str(" += "),
+                        BinaryOperator::SubtractAssign => output.push_str(" -= "),
+                        BinaryOperator::MultiplyAssign => output.push_str(" *= "),
+                        BinaryOperator::ModuloAssign => output.push_str(" %= "),
+                        BinaryOperator::DivideAssign => output.push_str(" /= "),
+                        BinaryOperator::BitwiseAndAssign => output.push_str(" &= "),
+                        BinaryOperator::BitwiseOrAssign => output.push_str(" |= "),
+                        BinaryOperator::BitwiseXorAssign => output.push_str(" ^= "),
+                        BinaryOperator::BitwiseLeftShiftAssign => output.push_str(" <<= "),
+                        BinaryOperator::BitwiseRightShiftAssign => output.push_str(" >>= "),
+                        BinaryOperator::Equal => output.push_str(" == "),
+                        BinaryOperator::NotEqual => output.push_str(" != "),
+                        BinaryOperator::LessThan => output.push_str(" < "),
+                        BinaryOperator::LessThanOrEqual => output.push_str(" <= "),
+                        BinaryOperator::GreaterThan => output.push_str(" > "),
+                        BinaryOperator::GreaterThanOrEqual => output.push_str(" >= "),
+                        BinaryOperator::LogicalAnd => output.push_str(" && "),
+                        BinaryOperator::LogicalOr => output.push_str(" || "),
+                        BinaryOperator::BitwiseAnd => output.push_str(" & "),
+                        BinaryOperator::BitwiseOr => output.push_str(" | "),
+                        BinaryOperator::BitwiseXor => output.push_str(" ^ "),
+                        BinaryOperator::ArithmeticLeftShift => output.push_str(" << "),
+                        BinaryOperator::BitwiseLeftShift => output.push_str(" << "),
+                        BinaryOperator::BitwiseRightShift => output.push_str(" >> "),
+                        _ => {}
+                    }
+                    output.push_str(&codegen_expr(indent, rhs, project));
+                }
             }
-            output.push_str(&codegen_expr(indent, rhs, project));
             output.push(')');
         }
         CheckedExpression::Vector(vals, fill_size_expr, _) => {

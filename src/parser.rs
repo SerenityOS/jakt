@@ -306,6 +306,8 @@ pub enum BinaryOperator {
     BitwiseXor,
     BitwiseLeftShift,
     BitwiseRightShift,
+    ArithmeticLeftShift,
+    ArithmeticRightShift,
     Assign,
     AddAssign,
     SubtractAssign,
@@ -331,7 +333,9 @@ impl Expression {
             Expression::Operator(BinaryOperator::Add, _)
             | Expression::Operator(BinaryOperator::Subtract, _) => 90,
             Expression::Operator(BinaryOperator::BitwiseLeftShift, _)
-            | Expression::Operator(BinaryOperator::BitwiseRightShift, _) => 85,
+            | Expression::Operator(BinaryOperator::BitwiseRightShift, _)
+            | Expression::Operator(BinaryOperator::ArithmeticLeftShift, _)
+            | Expression::Operator(BinaryOperator::ArithmeticRightShift, _) => 85,
             Expression::Operator(BinaryOperator::LessThan, _)
             | Expression::Operator(BinaryOperator::LessThanOrEqual, _)
             | Expression::Operator(BinaryOperator::GreaterThan, _)
@@ -1381,6 +1385,9 @@ pub fn parse_expression(
 
     while *index < tokens.len() {
         // Test to see if the next token is an operator
+        while tokens[*index].contents == TokenContents::Eol {
+            break;
+        }
 
         let (op, err) = match expression_kind {
             ExpressionKind::ExpressionWithAssignments => {
@@ -1417,6 +1424,9 @@ pub fn parse_expression(
             break;
         }
 
+        while tokens[*index].contents == TokenContents::Eol {
+            *index += 1;
+        }
         let (rhs, err) = parse_operand(tokens, index);
         error = error.or(err);
 
@@ -1497,6 +1507,10 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
     let mut error = None;
 
     let span = tokens[*index].span;
+
+    while *index < tokens.len() && tokens[*index].contents == TokenContents::Eol {
+        *index += 1;
+    }
 
     let mut expr = match &tokens[*index].contents {
         TokenContents::Name(name) if name == "true" => {
@@ -2324,6 +2338,20 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
                 None,
             )
         }
+        TokenContents::LeftArithmeticShift => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::ArithmeticLeftShift, span),
+                None,
+            )
+        }
+        TokenContents::RightArithmeticShift => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::ArithmeticRightShift, span),
+                None,
+            )
+        }
         _ => {
             trace!("ERROR: unsupported operator (possibly just the end of an expression)");
 
@@ -2401,6 +2429,20 @@ pub fn parse_operator_with_assignment(
             *index += 1;
             (
                 Expression::Operator(BinaryOperator::BitwiseRightShift, span),
+                None,
+            )
+        }
+        TokenContents::LeftArithmeticShift => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::ArithmeticLeftShift, span),
+                None,
+            )
+        }
+        TokenContents::RightArithmeticShift => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::ArithmeticRightShift, span),
                 None,
             )
         }
@@ -2876,6 +2918,9 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktErro
                     TokenContents::RParen => {
                         *index += 1;
                         break;
+                    }
+                    TokenContents::Eol => {
+                        *index += 1;
                     }
                     TokenContents::Comma => {
                         // Treat comma as whitespace? Might require them in the future
