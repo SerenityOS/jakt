@@ -80,6 +80,13 @@
 using f32 = float;
 using f64 = double;
 
+template<typename T>
+struct Range {
+    using IndexType = T;
+    T start {};
+    T end {};
+};
+
 // FIXME: Remove this once we can call qualified functions like "String::number" directly from jakt
 inline String runtime_helper_number_to_string(i64 number)
 {
