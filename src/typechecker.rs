@@ -475,6 +475,7 @@ pub enum CheckedUnaryOperator {
     LogicalNot,
     BitwiseNot,
     TypeCast(CheckedTypeCast),
+    Is(TypeId),
 }
 
 #[derive(Clone, Debug)]
@@ -1296,6 +1297,11 @@ pub fn typecheck_expression(
                 UnaryOperator::RawAddress => CheckedUnaryOperator::RawAddress,
                 UnaryOperator::LogicalNot => CheckedUnaryOperator::LogicalNot,
                 UnaryOperator::BitwiseNot => CheckedUnaryOperator::BitwiseNot,
+                UnaryOperator::Is(unchecked_type) => {
+                    let (type_id, err) = typecheck_typename(unchecked_type, scope_id, project);
+                    error = error.or(err);
+                    CheckedUnaryOperator::Is(type_id)
+                }
                 UnaryOperator::TypeCast(cast) => {
                     let (type_id, err) =
                         typecheck_typename(&cast.unchecked_type(), scope_id, project);
@@ -1689,6 +1695,10 @@ pub fn typecheck_unary_operation(
     let expr_ty = &project.types[expr_type_id];
 
     match &op {
+        CheckedUnaryOperator::Is(ty) => (
+            CheckedExpression::UnaryOp(Box::new(expr), CheckedUnaryOperator::Is(*ty), BOOL_TYPE_ID),
+            None,
+        ),
         CheckedUnaryOperator::TypeCast(cast) => (
             CheckedExpression::UnaryOp(Box::new(expr), op.clone(), cast.ty()),
             None,

@@ -284,6 +284,7 @@ pub enum UnaryOperator {
     LogicalNot,
     BitwiseNot,
     TypeCast(TypeCast),
+    Is(UncheckedType),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -1839,6 +1840,25 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 
                 expr = Expression::UnaryOp(Box::new(expr), UnaryOperator::PostIncrement, span)
             }
+            TokenContents::Name(name) if name == "is" => {
+                let end_span = tokens[*index + 1].span;
+
+                *index += 1;
+
+                let span = Span {
+                    file_id: expr.span().file_id,
+                    start: expr.span().start,
+                    end: end_span.end,
+                };
+
+                let (typename, err) = parse_typename(tokens, index);
+                error = error.or(err);
+
+                *index += 1;
+
+                expr = Expression::UnaryOp(Box::new(expr), UnaryOperator::Is(typename), span)
+            }
+
             TokenContents::Name(name) if name == "as" => {
                 let end_span = tokens[*index + 1].span;
 

@@ -401,6 +401,15 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
     }
 }
 
+fn codegen_struct_type(type_id: TypeId, project: &Project) -> String {
+    let ty = &project.types[type_id];
+
+    match ty {
+        Type::Struct(struct_id) => project.structs[*struct_id].name.clone(),
+        _ => panic!("codegen_struct_type on non-struct"),
+    }
+}
+
 fn codegen_type(type_id: TypeId, project: &Project) -> String {
     let ty = &project.types[type_id];
     match ty {
@@ -788,6 +797,11 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 CheckedUnaryOperator::BitwiseNot => {
                     output.push_str("~");
                 }
+                CheckedUnaryOperator::Is(type_id) => {
+                    output.push_str("is<");
+                    output.push_str(&codegen_struct_type(*type_id, project));
+                    output.push_str(">(");
+                }
                 CheckedUnaryOperator::TypeCast(cast) => {
                     match cast {
                         CheckedTypeCast::Fallible(_) => {
@@ -833,7 +847,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 CheckedUnaryOperator::PostDecrement => {
                     output.push_str("--");
                 }
-                CheckedUnaryOperator::TypeCast(_) => {
+                CheckedUnaryOperator::TypeCast(_) | CheckedUnaryOperator::Is(_) => {
                     output.push(')');
                 }
                 _ => {}
