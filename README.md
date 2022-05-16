@@ -10,7 +10,7 @@ It transpiles to C++ for easy integration with existing C++ codebases.
 
 ```
 jakt file.jakt
-lang++ -std=c++20 -Iruntime -Wno-user-defined-literals output.cpp
+clang++ -std=c++20 -Iruntime -Wno-user-defined-literals output.cpp
 ```
 
 ## Goals
