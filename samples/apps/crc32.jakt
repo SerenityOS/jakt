@@ -8,21 +8,16 @@ extern fun putchar(anon ch: c_int) -> c_int
 
 fun make_lookup_table() -> [u32] {
     let mut data = [0u32; 256]
-    let mut i = 0
-    while i < data.size() {
+    for i in 0..data.size() {
         let mut value = i as! u32
-        let mut j = 0
-        while j < 8 {
+        for j in 0..8 {
             if value & 1 {
                 value = 0xedb88320u32 ^ (value >> 1)
             } else {
                 value >>= 1
             }
-            ++j
         }
-
         data[i] = value
-        ++i
     }
     return data
 }

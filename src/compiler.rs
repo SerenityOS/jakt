@@ -142,6 +142,8 @@ extern class Optional {}
 
 extern class Tuple {}
 
+extern class Range {}
+
 "#
         .as_bytes()
         .to_vec()

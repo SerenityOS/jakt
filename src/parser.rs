@@ -153,6 +153,7 @@ pub enum Statement {
     If(Expression, Block, Option<Box<Statement>>),
     Block(Block),
     While(Expression, Block),
+    For(String, Expression, Block),
     Return(Expression),
     Garbage,
 }
@@ -183,6 +184,7 @@ pub enum Expression {
     BinaryOp(Box<Expression>, BinaryOperator, Box<Expression>, Span),
     Var(String, Span),
     Tuple(Vec<Expression>, Span),
+    Range(Box<Expression>, Box<Expression>, Span),
 
     IndexedTuple(Box<Expression>, usize, Span),
     IndexedStruct(Box<Expression>, String, Span),
@@ -212,6 +214,7 @@ impl Expression {
             Expression::CharacterLiteral(_, span) => *span,
             Expression::Vector(_, _, span) => *span,
             Expression::Tuple(_, span) => *span,
+            Expression::Range(_, _, span) => *span,
             Expression::IndexedExpression(_, _, span) => *span,
             Expression::IndexedTuple(_, _, span) => *span,
             Expression::IndexedStruct(_, _, span) => *span,
@@ -1033,6 +1036,38 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
 
             (Statement::While(cond, block), error)
         }
+        TokenContents::Name(name) if name == "for" => {
+            trace!("parsing for");
+
+            *index += 1;
+
+            if let TokenContents::Name(iterator_name) = &tokens[*index].contents {
+                *index += 1;
+
+                match &tokens[*index].contents {
+                    TokenContents::Name(keyword) if keyword == "in" => {
+                        *index += 1;
+                        let (range_expr, err) = parse_expression(
+                            tokens,
+                            index,
+                            ExpressionKind::ExpressionWithoutAssignment,
+                        );
+                        error = error.or(err);
+
+                        let (block, err) = parse_block(tokens, index);
+                        error = error.or(err);
+
+                        (
+                            Statement::For(iterator_name.clone(), range_expr, block),
+                            error,
+                        )
+                    }
+                    _ => (Statement::Garbage, error),
+                }
+            } else {
+                (Statement::Garbage, error)
+            }
+        }
         TokenContents::Name(name) if name == "return" => {
             trace!("parsing return");
 
@@ -1664,6 +1699,13 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
     // Check for postfix operators, while we're at it
     while *index < tokens.len() {
         match &tokens[*index].contents {
+            TokenContents::DotDot => {
+                *index += 1;
+                let (end_expr, err) =
+                    parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+                error = error.or(err);
+                expr = Expression::Range(Box::new(expr), Box::new(end_expr), span);
+            }
             TokenContents::ExclamationPoint => {
                 *index += 1;
                 // Forced Optional unwrap

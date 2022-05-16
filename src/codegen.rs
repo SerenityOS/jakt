@@ -402,6 +402,21 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
     output.push_str(&" ".repeat(indent));
 
     match stmt {
+        CheckedStatement::For(iterator_name, range_expr, block) => {
+            output.push_str("{ auto&& _range = ");
+            output.push_str(&codegen_expr(indent, range_expr, project));
+            output.push_str("; for(auto ");
+            output.push_str(iterator_name);
+            output.push(' ');
+            output.push_str(" = _range.start;");
+            output.push_str(iterator_name);
+            output.push_str("!= _range.end;");
+            output.push_str(iterator_name);
+            output.push_str("++");
+            output.push_str(") {");
+            output.push_str(&codegen_block(indent, block, project));
+            output.push_str("}}");
+        }
         CheckedStatement::Expression(expr) => {
             let expr = codegen_expr(indent, expr, project);
             output.push_str(&expr);
@@ -473,6 +488,32 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
     let mut output = String::new();
 
     match expr {
+        CheckedExpression::Range(start_expr, end_expr, type_id) => {
+            let index_type;
+
+            let ty = &project.types[*type_id];
+            match ty {
+                Type::Generic(_, v) => {
+                    index_type = v[0];
+                }
+                _ => {
+                    panic!("Interal error: range expression doesn't have Range type");
+                }
+            }
+
+            output.push_str("(");
+            output.push_str(&codegen_type(*type_id, project));
+            output.push_str("{");
+            output.push_str("static_cast<");
+            output.push_str(&codegen_type(index_type, project));
+            output.push_str(">(");
+            output.push_str(&codegen_expr(indent, start_expr, project));
+            output.push_str("),static_cast<");
+            output.push_str(&codegen_type(index_type, project));
+            output.push_str(">(");
+            output.push_str(&codegen_expr(indent, end_expr, project));
+            output.push_str(")})");
+        }
         CheckedExpression::OptionalNone(_) => {
             output.push_str("{}");
         }
