@@ -135,6 +135,9 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
             // As we should test the visibility before codegen, we take a simple
             // approach to codegen
             output.push_str("  public:\n");
+
+            // Make sure emitted classes always have a vtable.
+            output.push_str(&format!("    virtual ~{}() = default;", structure.name));
         }
         DefinitionType::Struct => {
             output.push_str(&format!("struct {}", structure.name));
