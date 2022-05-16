@@ -1,11 +1,10 @@
 use crate::{
     compiler,
-    parser::{
-        BinaryOperator, DefinitionLinkage, DefinitionType, FunctionLinkage, TypeCast, UnaryOperator,
-    },
+    parser::{BinaryOperator, DefinitionLinkage, DefinitionType, FunctionLinkage, TypeCast},
     typechecker::{
         is_integer, CheckedBlock, CheckedExpression, CheckedFunction, CheckedStatement,
-        CheckedStruct, CheckedVariable, NumericConstant, Project, Scope, Type, TypeId,
+        CheckedStruct, CheckedUnaryOperator, CheckedVariable, NumericConstant, Project, Scope,
+        Type, TypeId,
     },
 };
 
@@ -765,28 +764,28 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         CheckedExpression::UnaryOp(expr, op, type_id) => {
             output.push('(');
             match op {
-                UnaryOperator::PreIncrement => {
+                CheckedUnaryOperator::PreIncrement => {
                     output.push_str("++");
                 }
-                UnaryOperator::PreDecrement => {
+                CheckedUnaryOperator::PreDecrement => {
                     output.push_str("--");
                 }
-                UnaryOperator::Negate => {
+                CheckedUnaryOperator::Negate => {
                     output.push_str("-");
                 }
-                UnaryOperator::Dereference => {
+                CheckedUnaryOperator::Dereference => {
                     output.push_str("*");
                 }
-                UnaryOperator::RawAddress => {
+                CheckedUnaryOperator::RawAddress => {
                     output.push_str("&");
                 }
-                UnaryOperator::LogicalNot => {
+                CheckedUnaryOperator::LogicalNot => {
                     output.push_str("!");
                 }
-                UnaryOperator::BitwiseNot => {
+                CheckedUnaryOperator::BitwiseNot => {
                     output.push_str("~");
                 }
-                UnaryOperator::TypeCast(cast) => {
+                CheckedUnaryOperator::TypeCast(cast) => {
                     match cast {
                         TypeCast::Fallible(_) => {
                             if is_integer(*type_id) {
@@ -825,13 +824,13 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
             output.push_str(&codegen_expr(indent, expr, project));
             match op {
-                UnaryOperator::PostIncrement => {
+                CheckedUnaryOperator::PostIncrement => {
                     output.push_str("++");
                 }
-                UnaryOperator::PostDecrement => {
+                CheckedUnaryOperator::PostDecrement => {
                     output.push_str("--");
                 }
-                UnaryOperator::TypeCast(_) => {
+                CheckedUnaryOperator::TypeCast(_) => {
                     output.push(')');
                 }
                 _ => {}

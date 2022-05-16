@@ -10,7 +10,7 @@ use crate::{
     lexer::Span,
     parser::{
         BinaryOperator, Block, Call, DefinitionLinkage, DefinitionType, Expression, Function,
-        FunctionLinkage, ParsedFile, Statement, Struct, UnaryOperator, UncheckedType,
+        FunctionLinkage, ParsedFile, Statement, Struct, TypeCast, UnaryOperator, UncheckedType,
     },
 };
 
@@ -444,6 +444,20 @@ impl NumericConstant {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum CheckedUnaryOperator {
+    PreIncrement,
+    PostIncrement,
+    PreDecrement,
+    PostDecrement,
+    Negate,
+    Dereference,
+    RawAddress,
+    LogicalNot,
+    BitwiseNot,
+    TypeCast(TypeCast),
+}
+
 #[derive(Clone, Debug)]
 pub enum CheckedExpression {
     // Standalone
@@ -451,7 +465,7 @@ pub enum CheckedExpression {
     NumericConstant(NumericConstant, TypeId),
     QuotedString(String),
     CharacterConstant(char),
-    UnaryOp(Box<CheckedExpression>, UnaryOperator, TypeId),
+    UnaryOp(Box<CheckedExpression>, CheckedUnaryOperator, TypeId),
     BinaryOp(
         Box<CheckedExpression>,
         BinaryOperator,
@@ -1253,9 +1267,22 @@ pub fn typecheck_expression(
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
             error = error.or(err);
 
+            let checked_op = match op {
+                UnaryOperator::PreIncrement => CheckedUnaryOperator::PreIncrement,
+                UnaryOperator::PostIncrement => CheckedUnaryOperator::PostIncrement,
+                UnaryOperator::PreDecrement => CheckedUnaryOperator::PreDecrement,
+                UnaryOperator::PostDecrement => CheckedUnaryOperator::PostDecrement,
+                UnaryOperator::Negate => CheckedUnaryOperator::Negate,
+                UnaryOperator::Dereference => CheckedUnaryOperator::Dereference,
+                UnaryOperator::RawAddress => CheckedUnaryOperator::RawAddress,
+                UnaryOperator::LogicalNot => CheckedUnaryOperator::LogicalNot,
+                UnaryOperator::BitwiseNot => CheckedUnaryOperator::BitwiseNot,
+                UnaryOperator::TypeCast(cast) => CheckedUnaryOperator::TypeCast(cast.clone()),
+            };
+
             let (checked_expr, err) = typecheck_unary_operation(
                 checked_expr,
-                op.clone(),
+                checked_op,
                 *span,
                 scope_id,
                 project,
@@ -1629,7 +1656,7 @@ pub fn typecheck_expression(
 
 pub fn typecheck_unary_operation(
     expr: CheckedExpression,
-    op: UnaryOperator,
+    op: CheckedUnaryOperator,
     span: Span,
     scope_id: ScopeId,
     project: &mut Project,
@@ -1639,12 +1666,12 @@ pub fn typecheck_unary_operation(
     let expr_ty = &project.types[expr_type_id];
 
     match &op {
-        UnaryOperator::TypeCast(cast) => {
+        CheckedUnaryOperator::TypeCast(cast) => {
             let unchecked_type = cast.unchecked_type();
             let (ty, err) = typecheck_typename(&unchecked_type, scope_id, project);
             (CheckedExpression::UnaryOp(Box::new(expr), op, ty), err)
         }
-        UnaryOperator::Dereference => match expr_ty {
+        CheckedUnaryOperator::Dereference => match expr_ty {
             Type::RawPtr(x) => {
                 if safety_mode == SafetyMode::Unsafe {
                     (CheckedExpression::UnaryOp(Box::new(expr), op, *x), None)
@@ -1666,7 +1693,7 @@ pub fn typecheck_unary_operation(
                 )),
             ),
         },
-        UnaryOperator::RawAddress => {
+        CheckedUnaryOperator::RawAddress => {
             let ty = expr.ty();
 
             let type_id = project.find_or_add_type_id(Type::RawPtr(ty));
@@ -1675,21 +1702,21 @@ pub fn typecheck_unary_operation(
                 None,
             )
         }
-        UnaryOperator::LogicalNot => {
+        CheckedUnaryOperator::LogicalNot => {
             let ty = expr.ty();
             (
-                CheckedExpression::UnaryOp(Box::new(expr), UnaryOperator::LogicalNot, ty),
+                CheckedExpression::UnaryOp(Box::new(expr), CheckedUnaryOperator::LogicalNot, ty),
                 None,
             )
         }
-        UnaryOperator::BitwiseNot => {
+        CheckedUnaryOperator::BitwiseNot => {
             let ty = expr.ty();
             (
-                CheckedExpression::UnaryOp(Box::new(expr), UnaryOperator::BitwiseNot, ty),
+                CheckedExpression::UnaryOp(Box::new(expr), CheckedUnaryOperator::BitwiseNot, ty),
                 None,
             )
         }
-        UnaryOperator::Negate => {
+        CheckedUnaryOperator::Negate => {
             let ty = expr.ty();
 
             match ty {
@@ -1703,11 +1730,11 @@ pub fn typecheck_unary_operation(
                 | crate::compiler::U64_TYPE_ID
                 | crate::compiler::F32_TYPE_ID
                 | crate::compiler::F64_TYPE_ID => (
-                    CheckedExpression::UnaryOp(Box::new(expr), UnaryOperator::Negate, ty),
+                    CheckedExpression::UnaryOp(Box::new(expr), CheckedUnaryOperator::Negate, ty),
                     None,
                 ),
                 _ => (
-                    CheckedExpression::UnaryOp(Box::new(expr), UnaryOperator::Negate, ty),
+                    CheckedExpression::UnaryOp(Box::new(expr), CheckedUnaryOperator::Negate, ty),
                     Some(JaktError::TypecheckError(
                         "negate on non-numeric value".to_string(),
                         span,
@@ -1715,10 +1742,10 @@ pub fn typecheck_unary_operation(
                 ),
             }
         }
-        UnaryOperator::PostDecrement
-        | UnaryOperator::PostIncrement
-        | UnaryOperator::PreDecrement
-        | UnaryOperator::PreIncrement => match expr.ty() {
+        CheckedUnaryOperator::PostDecrement
+        | CheckedUnaryOperator::PostIncrement
+        | CheckedUnaryOperator::PreDecrement
+        | CheckedUnaryOperator::PreIncrement => match expr.ty() {
             crate::compiler::I8_TYPE_ID
             | crate::compiler::I16_TYPE_ID
             | crate::compiler::I32_TYPE_ID
