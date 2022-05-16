@@ -1,0 +1,9 @@
+struct Foo<T> {
+    x: T
+}
+
+fun main() {
+    let f = Foo(x: 100);
+
+    println(f.x);
+}

@@ -1,0 +1,7 @@
+fun id<T>(anon x: T) -> T {
+    return x;
+}
+
+fun main() {
+    println(id(3) + 100)
+}

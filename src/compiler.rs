@@ -133,12 +133,12 @@ extern class String {
     fun length(this) -> i64 {}
 }
 
-extern class RefVector {
+extern class RefVector<T> {
     fun size(this) -> i64 {}
     fun resize(mut this, anon size: i64) {}
 }
 
-extern class Optional {}
+extern class Optional<T> {}
 
 extern class Tuple {}
 
