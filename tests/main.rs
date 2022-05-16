@@ -183,3 +183,8 @@ fn test_pointers() -> Result<(), JaktError> {
 fn test_boolean() -> Result<(), JaktError> {
     test_samples("samples/boolean")
 }
+
+#[test]
+fn test_ranges() -> Result<(), JaktError> {
+    test_samples("samples/ranges")
+}
