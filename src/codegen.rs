@@ -571,7 +571,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
     let mut output = String::new();
 
     match expr {
-        CheckedExpression::Range(start_expr, end_expr, type_id) => {
+        CheckedExpression::Range(start_expr, end_expr, _, type_id) => {
             let index_type;
 
             let ty = &project.types[*type_id];
@@ -597,30 +597,30 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             output.push_str(&codegen_expr(indent, end_expr, project));
             output.push_str(")})");
         }
-        CheckedExpression::OptionalNone(_) => {
+        CheckedExpression::OptionalNone(_, _) => {
             output.push_str("{}");
         }
-        CheckedExpression::OptionalSome(expr, _) => {
+        CheckedExpression::OptionalSome(expr, _, _) => {
             output.push('(');
             output.push_str(&codegen_expr(indent, expr, project));
             output.push(')');
         }
-        CheckedExpression::ForcedUnwrap(expr, _) => {
+        CheckedExpression::ForcedUnwrap(expr, _, _) => {
             output.push('(');
             output.push_str(&codegen_expr(indent, expr, project));
             output.push_str(".value())");
         }
-        CheckedExpression::QuotedString(qs) => {
+        CheckedExpression::QuotedString(qs, _) => {
             output.push_str("String(\"");
             output.push_str(qs);
             output.push_str("\")");
         }
-        CheckedExpression::CharacterConstant(c) => {
+        CheckedExpression::CharacterConstant(c, _) => {
             output.push('\'');
             output.push(*c);
             output.push('\'');
         }
-        CheckedExpression::NumericConstant(constant, _) => match constant {
+        CheckedExpression::NumericConstant(constant, _, _) => match constant {
             NumericConstant::I8(value) => {
                 output.push_str("static_cast<i8>(");
                 output.push_str(&value.to_string());
@@ -665,7 +665,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         CheckedExpression::Var(var, ..) => {
             output.push_str(&var.name);
         }
-        CheckedExpression::Boolean(bool) => {
+        CheckedExpression::Boolean(bool, _) => {
             if *bool {
                 output.push_str("true");
             } else {
@@ -737,7 +737,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             output.push_str(")");
 
             match &**expr {
-                CheckedExpression::Var(CheckedVariable { name, .. }) if name == "this" => {
+                CheckedExpression::Var(CheckedVariable { name, .. }, _) if name == "this" => {
                     output.push_str("->");
                 }
                 x => match &project.types[x.ty()] {
@@ -773,7 +773,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
             output.push_str("))");
         }
-        CheckedExpression::UnaryOp(expr, op, type_id) => {
+        CheckedExpression::UnaryOp(expr, op, _, type_id) => {
             output.push('(');
             match op {
                 CheckedUnaryOperator::PreIncrement => {
@@ -905,7 +905,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
             output.push(')');
         }
-        CheckedExpression::Vector(vals, fill_size_expr, _) => {
+        CheckedExpression::Vector(vals, fill_size_expr, _, _) => {
             if let Some(fill_size_expr) = fill_size_expr {
                 output.push_str("(RefVector<");
                 output.push_str(&codegen_type(vals.first().unwrap().ty(), project));
@@ -930,7 +930,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 output.push_str("}))");
             }
         }
-        CheckedExpression::Tuple(vals, _) => {
+        CheckedExpression::Tuple(vals, _, _) => {
             // (Tuple{1, 2, 3})
             output.push_str("(Tuple{");
             let mut first = true;
@@ -945,27 +945,27 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
             output.push_str("})");
         }
-        CheckedExpression::IndexedExpression(expr, idx, _) => {
+        CheckedExpression::IndexedExpression(expr, idx, _, _) => {
             output.push_str("((");
             output.push_str(&codegen_expr(indent, expr, project));
             output.push_str(")[");
             output.push_str(&codegen_expr(indent, idx, project));
             output.push_str("])");
         }
-        CheckedExpression::IndexedTuple(expr, idx, _) => {
+        CheckedExpression::IndexedTuple(expr, idx, _, _) => {
             // x.get<1>()
             output.push_str("((");
             output.push_str(&codegen_expr(indent, expr, project));
             output.push_str(&format!(").get<{}>())", idx));
         }
-        CheckedExpression::IndexedStruct(expr, name, _) => {
+        CheckedExpression::IndexedStruct(expr, name, _, _) => {
             // x.foo or x->foo
             output.push_str("((");
             output.push_str(&codegen_expr(indent, expr, project));
             output.push(')');
 
             match &**expr {
-                CheckedExpression::Var(CheckedVariable { name, .. }) if name == "this" => {
+                CheckedExpression::Var(CheckedVariable { name, .. }, _) if name == "this" => {
                     output.push_str("->");
                 }
                 x => match &project.types[x.ty()] {
@@ -989,7 +989,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
 
             output.push_str(&format!("{})", name));
         }
-        CheckedExpression::Garbage => {
+        CheckedExpression::Garbage(_) => {
             // Incorrect parse/typecheck
             // Probably shouldn't be able to get to this point?
         }
