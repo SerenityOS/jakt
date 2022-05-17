@@ -707,7 +707,7 @@ fn typecheck_struct_predecl(
                 });
             } else {
                 let (param_type, err) =
-                    typecheck_typename(&param.variable.ty, struct_scope_id, project);
+                    typecheck_typename(&param.variable.ty, method_scope_id, project);
                 error = error.or(err);
 
                 let checked_variable = CheckedVariable {
@@ -2512,6 +2512,34 @@ pub fn typecheck_typename(
             let type_id = project.find_or_add_type_id(Type::RawPtr(inner_ty));
 
             (type_id, error)
+        }
+        UncheckedType::GenericType(name, inner_types, span) => {
+            let mut checked_inner_types = vec![];
+
+            for inner_type in inner_types {
+                let (inner_ty, err) = typecheck_typename(inner_type, scope_id, project);
+                error = error.or(err);
+
+                checked_inner_types.push(inner_ty);
+            }
+
+            let struct_id = project.find_struct_in_scope(scope_id, name);
+
+            if let Some(struct_id) = struct_id {
+                (
+                    project
+                        .find_or_add_type_id(Type::GenericInstance(struct_id, checked_inner_types)),
+                    error,
+                )
+            } else {
+                (
+                    UNKNOWN_TYPE_ID,
+                    Some(JaktError::TypecheckError(
+                        format!("could not find {}", name),
+                        *span,
+                    )),
+                )
+            }
         }
     }
 }
