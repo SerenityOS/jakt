@@ -692,7 +692,12 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 }
                 output.push(')');
             } else {
-                for namespace in &call.namespace {
+                for (idx, namespace) in call.namespace.iter().enumerate() {
+                    // hack warning: this is to get around C++'s limitation that a constructor
+                    // can't be called like other static methods
+                    if idx == call.namespace.len() - 1 && namespace == &call.name {
+                        break;
+                    }
                     output.push_str(namespace);
                     output.push_str("::")
                 }
@@ -701,7 +706,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     let type_id = call.ty;
                     let ty = &project.types[type_id];
                     match ty {
-                        Type::Struct(struct_id) => {
+                        Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
                             let structure = &project.structs[*struct_id];
 
                             if structure.definition_type == DefinitionType::Class {
@@ -718,6 +723,21 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     }
                 } else {
                     output.push_str(&call.name);
+                }
+
+                if !call.type_args.is_empty() {
+                    output.push('<');
+                    let mut first = true;
+                    for type_arg in &call.type_args {
+                        if !first {
+                            output.push_str(", ")
+                        } else {
+                            first = false;
+                        }
+
+                        output.push_str(&codegen_type(*type_arg, project));
+                    }
+                    output.push('>');
                 }
 
                 output.push('(');

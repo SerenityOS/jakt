@@ -1,0 +1,5 @@
+fun main() {
+    let item = Optional::Optional(100);
+
+    println(item!)
+}

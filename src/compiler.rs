@@ -140,7 +140,11 @@ extern class Array<T> {
     fun pop(mut this) -> T?
 }
 
-extern class Optional<T> {}
+extern class Optional<T> {
+    fun has_value(this) -> bool
+    fun value(this) -> T
+    fun Optional<S>(anon x: S) -> Optional<S>
+}
 
 extern class Tuple {}
 

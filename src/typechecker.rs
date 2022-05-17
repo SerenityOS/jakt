@@ -577,6 +577,7 @@ pub struct CheckedCall {
     pub namespace: Vec<String>,
     pub name: String,
     pub args: Vec<(String, CheckedExpression)>,
+    pub type_args: Vec<TypeId>,
     pub linkage: FunctionLinkage,
     pub ty: TypeId,
 }
@@ -662,13 +663,33 @@ fn typecheck_struct_predecl(
     let struct_scope_id = project.create_scope(parent_scope_id);
 
     for fun in &structure.methods {
+        let mut generic_parameters = vec![];
         let method_scope_id = project.create_scope(struct_scope_id);
+
+        for (generic_parameter, parameter_span) in &fun.generic_parameters {
+            project
+                .types
+                .push(Type::TypeVariable(generic_parameter.to_string()));
+            let type_var_type_id = project.types.len() - 1;
+
+            generic_parameters.push(type_var_type_id);
+
+            if let Err(err) = project.add_type_to_scope(
+                method_scope_id,
+                generic_parameter.to_string(),
+                type_var_type_id,
+                *parameter_span,
+            ) {
+                error = error.or(Some(err));
+            }
+        }
+
         let mut checked_function = CheckedFunction {
             name: fun.name.clone(),
             params: vec![],
             return_type: UNKNOWN_TYPE_ID,
             function_scope_id: method_scope_id,
-            generic_parameters: vec![],
+            generic_parameters,
             block: CheckedBlock::new(),
             linkage: fun.linkage.clone(),
         };
@@ -687,7 +708,7 @@ fn typecheck_struct_predecl(
                 });
             } else {
                 let (param_type, err) =
-                    typecheck_typename(&param.variable.ty, struct_scope_id, project);
+                    typecheck_typename(&param.variable.ty, method_scope_id, project);
                 error = error.or(err);
 
                 let checked_variable = CheckedVariable {
@@ -838,12 +859,7 @@ fn typecheck_struct(
     }
 
     for fun in &structure.methods {
-        error = error.or(typecheck_method(
-            fun,
-            checked_struct_scope_id,
-            project,
-            struct_id,
-        ));
+        error = error.or(typecheck_method(fun, project, struct_id));
     }
 
     error
@@ -978,7 +994,6 @@ fn typecheck_fun(
 
 fn typecheck_method(
     fun: &Function,
-    parent_scope_id: ScopeId,
     project: &mut Project,
     struct_id: StructId,
 ) -> Option<JaktError> {
@@ -1009,7 +1024,7 @@ fn typecheck_method(
     let (block, err) = typecheck_block(&fun.block, function_scope_id, project, SafetyMode::Safe);
     error = error.or(err);
 
-    let (fun_return_type, err) = typecheck_typename(&fun.return_type, parent_scope_id, project);
+    let (fun_return_type, err) = typecheck_typename(&fun.return_type, function_scope_id, project);
     error = error.or(err);
 
     // If the return type is unknown, and the function starts with a return statement,
@@ -1582,7 +1597,7 @@ pub fn typecheck_expression(
 
             let checked_expr_ty = &project.types[checked_expr.ty()];
             match checked_expr_ty {
-                Type::Struct(struct_id) => {
+                Type::GenericInstance(struct_id, _) | Type::Struct(struct_id) => {
                     let structure = &project.structs[*struct_id];
 
                     for member in &structure.fields {
@@ -2015,6 +2030,8 @@ pub fn typecheck_call(
     let mut error = None;
     let mut return_ty = UNKNOWN_TYPE_ID;
     let mut linkage = FunctionLinkage::Internal;
+    let mut generic_inferences = HashMap::new();
+    let mut type_args = vec![];
 
     match call.name.as_str() {
         "println" | "eprintln" => {
@@ -2040,10 +2057,12 @@ pub fn typecheck_call(
             error = error.or(err);
 
             if let Some(callee) = callee {
-                return_ty = callee.return_type;
-                linkage = callee.linkage;
+                // Borrow checker workaround, would be nice to clean this up
+                let callee = callee.clone();
 
-                let mut generic_inferences = HashMap::new();
+                return_ty = callee.return_type;
+
+                linkage = callee.linkage;
 
                 // Check that we have the right number of arguments.
                 if callee.params.len() != call.args.len() {
@@ -2111,6 +2130,17 @@ pub fn typecheck_call(
                 // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
                 // type variable. For the moment, we'll just checked to see if it's a type variable.
                 return_ty = substitute_typevars_in_type(return_ty, &generic_inferences, project);
+
+                for generic_typevar in &callee.generic_parameters {
+                    if let Some(substitution) = generic_inferences.get(&generic_typevar) {
+                        type_args.push(*substitution)
+                    } else {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "not all generic parameters have known types".into(),
+                            *span,
+                        )))
+                    }
+                }
             }
         }
     }
@@ -2120,6 +2150,7 @@ pub fn typecheck_call(
             namespace: call.namespace.clone(),
             name: call.name.clone(),
             args: checked_args,
+            type_args,
             linkage,
             ty: return_ty,
         },
@@ -2140,15 +2171,19 @@ pub fn typecheck_method_call(
     let mut error = None;
     let mut return_ty = UNKNOWN_TYPE_ID;
     let mut linkage = FunctionLinkage::Internal;
+    let mut type_args = vec![];
+
+    let mut generic_inferences = HashMap::new();
 
     let (callee, err) = resolve_call(call, span, project.structs[struct_id].scope_id, project);
     error = error.or(err);
 
     if let Some(callee) = callee {
+        // Borrow checker workaround, would be nice to clean this up
+        let callee = callee.clone();
+
         return_ty = callee.return_type;
         linkage = callee.linkage;
-
-        let mut generic_inferences = HashMap::new();
 
         // Before we check the method, let's go ahead and make sure we know any instantiated generic types
         // This will make it easier later to know how to create the proper return type
@@ -2235,6 +2270,17 @@ pub fn typecheck_method_call(
         // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
         // type variable. For the moment, we'll just checked to see if it's a type variable.
         return_ty = substitute_typevars_in_type(return_ty, &generic_inferences, project);
+
+        for generic_typevar in &callee.generic_parameters {
+            if let Some(substitution) = generic_inferences.get(&generic_typevar) {
+                type_args.push(*substitution)
+            } else {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "not all generic parameters have known types".into(),
+                    *span,
+                )))
+            }
+        }
     }
 
     (
@@ -2242,6 +2288,7 @@ pub fn typecheck_method_call(
             namespace: Vec::new(),
             name: call.name.clone(),
             args: checked_args,
+            type_args,
             linkage,
             ty: return_ty,
         },
@@ -2270,6 +2317,20 @@ pub fn substitute_typevars_in_type(
             }
 
             return project.find_or_add_type_id(Type::GenericInstance(struct_id, new_args));
+        }
+        Type::Struct(struct_id) => {
+            let struct_id = *struct_id;
+            let structure = &project.structs[struct_id];
+
+            if !structure.generic_parameters.is_empty() {
+                let mut new_args = structure.generic_parameters.clone();
+
+                for arg in &mut new_args {
+                    *arg = substitute_typevars_in_type(*arg, generic_inferences, project);
+                }
+
+                return project.find_or_add_type_id(Type::GenericInstance(struct_id, new_args));
+            }
         }
         _ => {}
     }
@@ -2492,6 +2553,34 @@ pub fn typecheck_typename(
             let type_id = project.find_or_add_type_id(Type::RawPtr(inner_ty));
 
             (type_id, error)
+        }
+        UncheckedType::GenericType(name, inner_types, span) => {
+            let mut checked_inner_types = vec![];
+
+            for inner_type in inner_types {
+                let (inner_ty, err) = typecheck_typename(inner_type, scope_id, project);
+                error = error.or(err);
+
+                checked_inner_types.push(inner_ty);
+            }
+
+            let struct_id = project.find_struct_in_scope(scope_id, name);
+
+            if let Some(struct_id) = struct_id {
+                (
+                    project
+                        .find_or_add_type_id(Type::GenericInstance(struct_id, checked_inner_types)),
+                    error,
+                )
+            } else {
+                (
+                    UNKNOWN_TYPE_ID,
+                    Some(JaktError::TypecheckError(
+                        format!("could not find {}", name),
+                        *span,
+                    )),
+                )
+            }
         }
     }
 }

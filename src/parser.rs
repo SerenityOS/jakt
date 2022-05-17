@@ -38,6 +38,7 @@ pub enum ExpressionKind {
 #[derive(Debug, Clone, PartialEq)]
 pub enum UncheckedType {
     Name(String, Span),
+    GenericType(String, Vec<UncheckedType>, Span),
     Array(Box<UncheckedType>, Span),
     Optional(Box<UncheckedType>, Span),
     RawPtr(Box<UncheckedType>, Span),
@@ -2045,7 +2046,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                                     let span = Span {
                                         file_id: expr.span().file_id,
                                         start: expr.span().start,
-                                        end: tokens[*index].span.end,
+                                        end: tokens[*index - 1].span.end,
                                     };
 
                                     expr = Expression::IndexedStruct(
@@ -2806,6 +2807,8 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
 
     let start = tokens[*index].span;
 
+    let mut typename = String::new();
+
     trace!(format!("parse_typename: {:?}", tokens[*index]));
 
     let (vector_type, err) = parse_vector_type(tokens, index);
@@ -2836,6 +2839,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
                     );
                 }
             } else {
+                typename = name.clone();
                 unchecked_type = UncheckedType::Name(name.clone(), tokens[*index].span);
             }
         }
@@ -2861,6 +2865,46 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
                     end: tokens[*index].span.end,
                 },
             );
+        }
+
+        if let TokenContents::LessThan = tokens[*index + 1].contents {
+            // Generic type
+            *index += 2;
+
+            let mut inner_types = vec![];
+
+            while *index < tokens.len() {
+                match tokens[*index].contents {
+                    TokenContents::GreaterThan => {
+                        *index += 1;
+                        break;
+                    }
+                    TokenContents::Comma => {
+                        *index += 1;
+                    }
+                    TokenContents::Eol => {
+                        *index += 1;
+                    }
+                    _ => {
+                        let (inner_ty, err) = parse_typename(tokens, index);
+                        error = error.or(err);
+
+                        *index += 1;
+
+                        inner_types.push(inner_ty);
+                    }
+                }
+            }
+
+            unchecked_type = UncheckedType::GenericType(
+                typename,
+                inner_types,
+                Span {
+                    file_id: start.file_id,
+                    start: start.start,
+                    end: tokens[*index].span.end,
+                },
+            )
         }
     };
 
