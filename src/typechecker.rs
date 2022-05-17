@@ -1935,6 +1935,12 @@ pub fn typecheck_call(
                     typecheck_expression(&arg.1, scope_id, project, safety_mode);
                 error = error.or(err);
 
+                if checked_arg.ty() == VOID_TYPE_ID {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "println/eprintln can't take void values".into(),
+                        *span,
+                    )));
+                }
                 return_ty = VOID_TYPE_ID;
 
                 checked_args.push((arg.0.clone(), checked_arg));
@@ -1990,53 +1996,24 @@ pub fn typecheck_call(
                         }
 
                         let lhs_type_id = callee.params[idx].variable.ty;
-                        let lhs_type = &project.types[lhs_type_id];
 
-                        if let Type::TypeVariable(_) = lhs_type {
-                            // If the call expects a generic type variable, let's see if we've already seen it
-                            if let Some(seen_type) = generic_inferences.get(&lhs_type_id) {
-                                // We've seen this type variable assigned something before
-                                // we should error if it's incompatible.
+                        let err =
+                            try_promote_constant_expr_to_type(lhs_type_id, &mut checked_arg, &span);
+                        error = error.or(err);
 
-                                let err = try_promote_constant_expr_to_type(
-                                    *seen_type,
-                                    &mut checked_arg,
-                                    &call.args[idx].1.span(),
-                                );
-                                error = error.or(err);
+                        let rhs_type_id = checked_arg.ty();
 
-                                if checked_arg.ty() != callee.params[idx].variable.ty {
-                                    error = error.or(Some(JaktError::TypecheckError(
-                                        "Parameter type mismatch".to_string(),
-                                        call.args[idx].1.span(),
-                                    )))
-                                }
-
-                                checked_args.push((call.args[idx].0.clone(), checked_arg));
-                            } else {
-                                // We haven't seen this type variable before, so go ahead
-                                // and give it an actual type during this call
-                                generic_inferences.insert(lhs_type_id, checked_arg.ty());
-
-                                checked_args.push((call.args[idx].0.clone(), checked_arg));
-                            }
-                        } else {
-                            let err = try_promote_constant_expr_to_type(
-                                lhs_type_id,
-                                &mut checked_arg,
-                                &call.args[idx].1.span(),
-                            );
-                            error = error.or(err);
-
-                            if checked_arg.ty() != callee.params[idx].variable.ty {
-                                error = error.or(Some(JaktError::TypecheckError(
-                                    "Parameter type mismatch".to_string(),
-                                    call.args[idx].1.span(),
-                                )))
-                            }
-
-                            checked_args.push((call.args[idx].0.clone(), checked_arg));
+                        if let Some(err) = check_types_for_compat(
+                            callee.params[idx].variable.ty,
+                            rhs_type_id,
+                            &mut generic_inferences,
+                            call.args[idx].1.span(),
+                            project,
+                        ) {
+                            error = error.or(Some(err));
                         }
+
+                        checked_args.push((call.args[idx].0.clone(), checked_arg));
 
                         idx += 1;
                     }
@@ -2132,53 +2109,23 @@ pub fn typecheck_method_call(
                 }
 
                 let lhs_type_id = callee.params[idx + 1].variable.ty;
-                let lhs_type = &project.types[lhs_type_id];
 
-                if let Type::TypeVariable(_) = lhs_type {
-                    // If the call expects a generic type variable, let's see if we've already seen it
-                    if let Some(seen_type) = generic_inferences.get(&lhs_type_id) {
-                        // We've seen this type variable assigned something before
-                        // we should error if it's incompatible.
+                let err = try_promote_constant_expr_to_type(lhs_type_id, &mut checked_arg, &span);
+                error = error.or(err);
 
-                        let err = try_promote_constant_expr_to_type(
-                            *seen_type,
-                            &mut checked_arg,
-                            &call.args[idx].1.span(),
-                        );
-                        error = error.or(err);
+                let rhs_type_id = checked_arg.ty();
 
-                        if checked_arg.ty() != callee.params[idx].variable.ty {
-                            error = error.or(Some(JaktError::TypecheckError(
-                                "Parameter type mismatch".to_string(),
-                                call.args[idx].1.span(),
-                            )))
-                        }
-
-                        checked_args.push((call.args[idx].0.clone(), checked_arg));
-                    } else {
-                        // We haven't seen this type variable before, so go ahead
-                        // and give it an actual type during this call
-                        generic_inferences.insert(lhs_type_id, checked_arg.ty());
-
-                        checked_args.push((call.args[idx].0.clone(), checked_arg));
-                    }
-                } else {
-                    let err = try_promote_constant_expr_to_type(
-                        lhs_type_id,
-                        &mut checked_arg,
-                        &call.args[idx].1.span(),
-                    );
-                    error = error.or(err);
-
-                    if checked_arg.ty() != callee.params[idx + 1].variable.ty {
-                        error = error.or(Some(JaktError::TypecheckError(
-                            "Parameter type mismatch".to_string(),
-                            call.args[idx].1.span(),
-                        )))
-                    }
-
-                    checked_args.push((call.args[idx].0.clone(), checked_arg));
+                if let Some(err) = check_types_for_compat(
+                    lhs_type_id,
+                    rhs_type_id,
+                    &mut generic_inferences,
+                    call.args[idx].1.span(),
+                    project,
+                ) {
+                    error = error.or(Some(err));
                 }
+
+                checked_args.push((call.args[idx].0.clone(), checked_arg));
 
                 idx += 1;
             }
@@ -2209,6 +2156,151 @@ pub fn typecheck_method_call(
     )
 }
 
+pub fn check_types_for_compat(
+    lhs_type_id: TypeId,
+    rhs_type_id: TypeId,
+    generic_inferences: &mut HashMap<TypeId, TypeId>,
+    span: Span,
+    project: &mut Project,
+) -> Option<JaktError> {
+    let mut error = None;
+    let lhs_type = &project.types[lhs_type_id];
+
+    match lhs_type {
+        Type::TypeVariable(_) => {
+            // If the call expects a generic type variable, let's see if we've already seen it
+            if let Some(seen_type_id) = generic_inferences.get(&lhs_type_id) {
+                // We've seen this type variable assigned something before
+                // we should error if it's incompatible.
+
+                if rhs_type_id != *seen_type_id {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "Parameter type mismatch".to_string(),
+                        span,
+                    )))
+                }
+            } else {
+                // We haven't seen this type variable before, so go ahead
+                // and give it an actual type during this call
+                generic_inferences.insert(lhs_type_id, rhs_type_id);
+            }
+        }
+        Type::Generic(lhs_struct_id, lhs_args) => {
+            let lhs_args = lhs_args.clone();
+            let rhs_type = &project.types[rhs_type_id];
+            match rhs_type {
+                Type::Generic(rhs_struct_id, rhs_args) => {
+                    if lhs_struct_id == rhs_struct_id {
+                        let rhs_args = rhs_args.clone();
+                        // Same struct, perhaps this is an instantiation of it
+
+                        let lhs_struct = &project.structs[*lhs_struct_id];
+                        if rhs_args.len() != lhs_args.len() {
+                            return Some(JaktError::TypecheckError(
+                                format!(
+                                    "mismatched number of generic parameters for {}",
+                                    lhs_struct.name
+                                ),
+                                span,
+                            ));
+                        }
+
+                        let mut idx = 0;
+
+                        let lhs_arg_type_id = lhs_args[idx];
+                        let rhs_arg_type_id = rhs_args[idx];
+
+                        while idx < lhs_args.len() {
+                            if let Some(err) = check_types_for_compat(
+                                lhs_arg_type_id,
+                                rhs_arg_type_id,
+                                generic_inferences,
+                                span,
+                                project,
+                            ) {
+                                return Some(err);
+                            }
+                            idx += 1;
+                        }
+                    }
+                }
+                _ => {
+                    if rhs_type_id != lhs_type_id {
+                        // They're the same type, might be okay to just leave now
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "Parameter type mismatch".to_string(),
+                            span,
+                        )))
+                    }
+                }
+            }
+        }
+        Type::Struct(lhs_struct_id) => {
+            if rhs_type_id == lhs_type_id {
+                // They're the same type, might be okay to just leave now
+                return None;
+            }
+
+            let rhs_type = &project.types[rhs_type_id];
+            match rhs_type {
+                Type::Generic(rhs_struct_id, args) => {
+                    if lhs_struct_id == rhs_struct_id {
+                        let args = args.clone();
+                        // Same struct, perhaps this is an instantiation of it
+
+                        let lhs_struct = &project.structs[*lhs_struct_id];
+                        if args.len() != lhs_struct.generic_parameters.len() {
+                            return Some(JaktError::TypecheckError(
+                                format!(
+                                    "mismatched number of generic parameters for {}",
+                                    lhs_struct.name
+                                ),
+                                span,
+                            ));
+                        }
+
+                        let mut idx = 0;
+
+                        let lhs_arg_type_id = lhs_struct.generic_parameters[idx];
+                        let rhs_arg_type_id = args[idx];
+
+                        while idx < args.len() {
+                            if let Some(err) = check_types_for_compat(
+                                lhs_arg_type_id,
+                                rhs_arg_type_id,
+                                generic_inferences,
+                                span,
+                                project,
+                            ) {
+                                return Some(err);
+                            }
+                            idx += 1;
+                        }
+                    }
+                }
+                _ => {
+                    if rhs_type_id != lhs_type_id {
+                        // They're the same type, might be okay to just leave now
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "Parameter type mismatch".to_string(),
+                            span,
+                        )))
+                    }
+                }
+            }
+        }
+        _ => {
+            if rhs_type_id != lhs_type_id {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "Parameter type mismatch".to_string(),
+                    span,
+                )))
+            }
+        }
+    }
+
+    error
+}
 pub fn typecheck_typename(
     unchecked_type: &UncheckedType,
     scope_id: ScopeId,

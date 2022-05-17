@@ -2655,19 +2655,7 @@ pub fn parse_vector(tokens: &[Token], index: &mut usize) -> (Expression, Option<
         }
     }
 
-    let end;
-    if *index >= tokens.len() {
-        trace!("ERROR: incomplete function");
-
-        error = error.or(Some(JaktError::ParserError(
-            "incomplete function".to_string(),
-            tokens[*index - 1].span,
-        )));
-
-        end = *index - 1;
-    } else {
-        end = *index;
-    }
+    let end = *index - 1;
 
     (
         Expression::Vector(
