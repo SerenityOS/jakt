@@ -630,8 +630,12 @@ pub fn parse_struct(
                         TokenContents::Name(name) if name == "fun" => {
                             // Lets parse a method
 
-                            let (fun_decl, err) =
-                                parse_function(tokens, index, FunctionLinkage::Internal);
+                            let function_linkage = match definition_linkage {
+                                DefinitionLinkage::Internal => FunctionLinkage::Internal,
+                                DefinitionLinkage::External => FunctionLinkage::External,
+                            };
+
+                            let (fun_decl, err) = parse_function(tokens, index, function_linkage);
                             error = error.or(err);
 
                             methods.push(fun_decl);

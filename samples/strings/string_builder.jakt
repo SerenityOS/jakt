@@ -1,6 +1,6 @@
 extern struct StringBuilder {
-    fun append(mut this, anon s: raw c_char) {}
-    fun to_string(mut this) -> String {}
+    fun append(mut this, anon s: raw c_char)
+    fun to_string(mut this) -> String
 }
 
 fun main() {
