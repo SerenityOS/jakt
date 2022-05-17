@@ -527,6 +527,7 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
 
 #[derive(Debug)]
 pub enum LiteralSuffix {
+    UZ,
     U8,
     U16,
     U32,
@@ -548,6 +549,11 @@ fn consume_numeric_literal_suffix(bytes: &[u8], index: &mut usize) -> Option<Lit
     let mut local_index = *index + 1;
     if local_index >= bytes.len() {
         return None;
+    }
+
+    if bytes[*index] == b'u' && bytes[local_index] == b'z' {
+        *index += 2;
+        return Some(LiteralSuffix::UZ);
     }
 
     let start = local_index;
@@ -592,6 +598,9 @@ fn make_number_token(number: i64, suffix: Option<LiteralSuffix>) -> TokenContent
         Some(LiteralSuffix::U8) => TokenContents::Number(NumericConstant::U8(number as u8)),
         Some(LiteralSuffix::U16) => TokenContents::Number(NumericConstant::U16(number as u16)),
         Some(LiteralSuffix::U32) => TokenContents::Number(NumericConstant::U32(number as u32)),
+
+        // FIXME: This loses precision if usize is 64-bit
+        Some(LiteralSuffix::UZ) => TokenContents::Number(NumericConstant::USize(number as u64)),
 
         // FIXME: This loses precision:
         Some(LiteralSuffix::U64) => TokenContents::Number(NumericConstant::U64(number as u64)),

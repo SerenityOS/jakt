@@ -25,8 +25,9 @@ pub const F32_TYPE_ID: usize = 11;
 pub const F64_TYPE_ID: usize = 12;
 pub const CCHAR_TYPE_ID: usize = 13;
 pub const CINT_TYPE_ID: usize = 14;
+pub const USIZE_TYPE_ID: usize = 15;
 // Note: keep STRING_TYPE_ID last as it is how we know how many slots to pre-fill
-pub const STRING_TYPE_ID: usize = 15;
+pub const STRING_TYPE_ID: usize = 16;
 
 pub struct Compiler {
     raw_files: Vec<(String, Vec<u8>)>,
@@ -130,12 +131,12 @@ extern class String {
     fun to_lowercase(this) -> String {}
     fun to_uppercase(this) -> String {}
     fun is_empty(this) -> bool {}
-    fun length(this) -> i64 {}
+    fun length(this) -> usize {}
 }
 
 extern class RefVector<T> {
-    fun size(this) -> i64 {}
-    fun resize(mut this, anon size: i64) {}
+    fun size(this) -> usize {}
+    fun resize(mut this, anon size: usize) {}
     fun pop(mut this) -> T? {}
 }
 
