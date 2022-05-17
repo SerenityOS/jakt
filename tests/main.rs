@@ -145,8 +145,8 @@ fn test_variables() -> Result<(), JaktError> {
 }
 
 #[test]
-fn test_vectors() -> Result<(), JaktError> {
-    test_samples("samples/vectors")
+fn test_arrays() -> Result<(), JaktError> {
+    test_samples("samples/arrays")
 }
 
 #[test]
@@ -192,9 +192,4 @@ fn test_ranges() -> Result<(), JaktError> {
 #[test]
 fn test_generics() -> Result<(), JaktError> {
     test_samples("samples/generics")
-}
-
-#[test]
-fn test_arrays() -> Result<(), JaktError> {
-    test_samples("samples/arrays")
 }
