@@ -662,13 +662,33 @@ fn typecheck_struct_predecl(
     let struct_scope_id = project.create_scope(parent_scope_id);
 
     for fun in &structure.methods {
+        let mut generic_parameters = vec![];
         let method_scope_id = project.create_scope(struct_scope_id);
+
+        for (generic_parameter, parameter_span) in &fun.generic_parameters {
+            project
+                .types
+                .push(Type::TypeVariable(generic_parameter.to_string()));
+            let type_var_type_id = project.types.len() - 1;
+
+            generic_parameters.push(type_var_type_id);
+
+            if let Err(err) = project.add_type_to_scope(
+                method_scope_id,
+                generic_parameter.to_string(),
+                type_var_type_id,
+                *parameter_span,
+            ) {
+                error = error.or(Some(err));
+            }
+        }
+
         let mut checked_function = CheckedFunction {
             name: fun.name.clone(),
             params: vec![],
             return_type: UNKNOWN_TYPE_ID,
             function_scope_id: method_scope_id,
-            generic_parameters: vec![],
+            generic_parameters,
             block: CheckedBlock::new(),
             linkage: fun.linkage.clone(),
         };
