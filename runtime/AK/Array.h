@@ -2,6 +2,7 @@
 
 #include <AK/Checked.h>
 #include <AK/RefCounted.h>
+#include <stdlib.h>
 #include <initializer_list>
 
 namespace AK {
