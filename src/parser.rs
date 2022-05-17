@@ -159,6 +159,8 @@ pub enum Statement {
     Loop(Block),
     While(Expression, Block),
     For(String, Expression, Block),
+    Break,
+    Continue,
     Return(Expression),
     Garbage,
 }
@@ -1134,6 +1136,16 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             (Statement::UnsafeBlock(block), error)
         }
         TokenContents::Name(name) if name == "if" => parse_if_statement(tokens, index),
+        TokenContents::Name(name) if name == "break" => {
+            trace!("parsing break");
+            *index += 1;
+            (Statement::Break, None)
+        }
+        TokenContents::Name(name) if name == "continue" => {
+            trace!("parsing continue");
+            *index += 1;
+            (Statement::Continue, None)
+        }
         TokenContents::Name(name) if name == "loop" => {
             trace!("parsing loop");
 

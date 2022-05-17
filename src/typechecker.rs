@@ -346,6 +346,8 @@ pub enum CheckedStatement {
     While(CheckedExpression, CheckedBlock),
     Return(CheckedExpression),
     For(String, CheckedExpression, CheckedBlock),
+    Break,
+    Continue,
     Garbage,
 }
 
@@ -1121,6 +1123,8 @@ pub fn typecheck_statement(
                 error,
             )
         }
+        Statement::Continue => (CheckedStatement::Continue, None),
+        Statement::Break => (CheckedStatement::Break, None),
         Statement::Expression(expr) => {
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
 

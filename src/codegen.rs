@@ -486,6 +486,12 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
     output.push_str(&" ".repeat(indent));
 
     match stmt {
+        CheckedStatement::Continue => {
+            output.push_str("continue;");
+        }
+        CheckedStatement::Break => {
+            output.push_str("break;");
+        }
         CheckedStatement::For(iterator_name, range_expr, block) => {
             output.push_str("{ auto&& _range = ");
             output.push_str(&codegen_expr(indent, range_expr, project));
