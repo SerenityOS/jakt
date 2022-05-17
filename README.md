@@ -172,16 +172,16 @@ foo.set(9)
 
 ## Arrays
 
-Dynamic arrays are provided via a built-in `RefVector<T>` type. They can grow and shrink at runtime.
+Dynamic arrays are provided via a built-in `Array<T>` type. They can grow and shrink at runtime.
 
-`RefVector` is memory safe:
+`Array` is memory safe:
 - Out-of-bounds will panic the program with a runtime error.
-- Slices of a `RefVector` keep the underlying data alive via automatic reference counting.
+- Slices of a `Array` keep the underlying data alive via automatic reference counting.
 
 ### Declaring arrays
 
 ```jakt
-// Function that takes a RefVector<i64> and returns a RefVector<String>
+// Function that takes a Array<i64> and returns a Array<String>
 fun foo(numbers: [i64]) -> [String] {
     ...
 }
@@ -190,10 +190,10 @@ fun foo(numbers: [i64]) -> [String] {
 ### Shorthand for creating arrays
 
 ```jakt
-// RefVector<i64> with 256 elements, all initialized to 0.
+// Array<i64> with 256 elements, all initialized to 0.
 let values = [0; 256]
 
-// RefVector<String> with 3 elements: "foo", "bar" and "baz".
+// Array<String> with 3 elements: "foo", "bar" and "baz".
 let values = ["foo", "bar", "baz"]
 ```
 

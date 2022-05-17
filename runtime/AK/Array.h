@@ -1,115 +1,220 @@
-/*
- * Copyright (c) 2020, the SerenityOS developers.
- *
- * SPDX-License-Identifier: BSD-2-Clause
- */
-
 #pragma once
 
-#include <AK/Iterator.h>
-#include <AK/Span.h>
+#include <AK/Checked.h>
+#include <AK/RefCounted.h>
+#include <stdlib.h>
+#include <initializer_list>
 
 namespace AK {
 
-template<typename T, size_t Size>
-struct Array {
-    using ValueType = T;
+template<typename T>
+class ArrayStorage : public RefCounted<ArrayStorage<T>> {
+public:
+    ArrayStorage() { }
 
-    [[nodiscard]] constexpr T const* data() const { return __data; }
-    [[nodiscard]] constexpr T* data() { return __data; }
+    bool is_empty() const { return m_size == 0; }
+    size_t size() const { return m_size; }
+    size_t capacity() const { return m_capacity; }
 
-    [[nodiscard]] constexpr size_t size() const { return Size; }
-
-    [[nodiscard]] constexpr Span<T const> span() const { return { __data, Size }; }
-    [[nodiscard]] constexpr Span<T> span() { return { __data, Size }; }
-
-    [[nodiscard]] constexpr T const& at(size_t index) const
+    void ensure_capacity(size_t capacity)
     {
-        VERIFY(index < size());
-        return __data[index];
-    }
-    [[nodiscard]] constexpr T& at(size_t index)
-    {
-        VERIFY(index < size());
-        return __data[index];
-    }
-
-    [[nodiscard]] constexpr T const& first() const { return at(0); }
-    [[nodiscard]] constexpr T& first() { return at(0); }
-
-    [[nodiscard]] constexpr T const& last() const requires(Size > 0) { return at(Size - 1); }
-    [[nodiscard]] constexpr T& last() requires(Size > 0) { return at(Size - 1); }
-
-    [[nodiscard]] constexpr bool is_empty() const { return size() == 0; }
-
-    [[nodiscard]] constexpr T const& operator[](size_t index) const { return at(index); }
-    [[nodiscard]] constexpr T& operator[](size_t index) { return at(index); }
-
-    template<typename T2, size_t Size2>
-    [[nodiscard]] constexpr bool operator==(Array<T2, Size2> const& other) const { return span() == other.span(); }
-
-    using ConstIterator = SimpleIterator<Array const, T const>;
-    using Iterator = SimpleIterator<Array, T>;
-
-    [[nodiscard]] constexpr ConstIterator begin() const { return ConstIterator::begin(*this); }
-    [[nodiscard]] constexpr Iterator begin() { return Iterator::begin(*this); }
-
-    [[nodiscard]] constexpr ConstIterator end() const { return ConstIterator::end(*this); }
-    [[nodiscard]] constexpr Iterator end() { return Iterator::end(*this); }
-
-    [[nodiscard]] constexpr operator Span<T const>() const { return span(); }
-    [[nodiscard]] constexpr operator Span<T>() { return span(); }
-
-    constexpr size_t fill(T const& value)
-    {
-        for (size_t idx = 0; idx < Size; ++idx)
-            __data[idx] = value;
-
-        return Size;
+        if (m_capacity >= capacity) {
+            return;
+        }
+        VERIFY(!Checked<size_t>::multiplication_would_overflow(capacity, sizeof(T)));
+        auto* new_elements = static_cast<T*>(malloc(capacity * sizeof(T)));
+        for (size_t i = 0; i < m_size; ++i) {
+            new (&new_elements[i]) T(move(m_elements[i]));
+            m_elements[i].~T();
+        }
+        free(m_elements);
+        m_elements = new_elements;
+        m_capacity = capacity;
     }
 
-    [[nodiscard]] constexpr T max() const requires(requires(T x, T y) { x < y; })
+    void add_capacity(size_t capacity)
     {
-        static_assert(Size > 0, "No values to max() over");
-
-        T value = __data[0];
-        for (size_t i = 1; i < Size; ++i)
-            value = AK::max(__data[i], value);
-        return value;
+        VERIFY(!Checked<size_t>::addition_would_overflow(m_capacity, capacity));
+        ensure_capacity(m_capacity + capacity);
     }
 
-    [[nodiscard]] constexpr T min() const requires(requires(T x, T y) { x > y; })
+    void resize(size_t size)
     {
-        static_assert(Size > 0, "No values to min() over");
-
-        T value = __data[0];
-        for (size_t i = 1; i < Size; ++i)
-            value = AK::min(__data[i], value);
-        return value;
+        ensure_capacity(size);
+        if (size > m_size) {
+            for (size_t i = m_size; i < size; ++i) {
+                new (&m_elements[i]) T();
+            }
+        } else {
+            for (size_t i = size; i < m_size; ++i) {
+                m_elements[i].~T();
+            }
+        }
+        m_size = size;
     }
 
-    T __data[Size];
+    T const& at(size_t index) const
+    {
+        VERIFY(index < m_size);
+        return m_elements[index];
+    }
+
+    T& at(size_t index)
+    {
+        VERIFY(index < m_size);
+        return m_elements[index];
+    }
+
+    void append(T value)
+    {
+        ensure_capacity(m_size + 1);
+        new (&m_elements[m_size]) T(move(value));
+        ++m_size;
+    }
+
+private:
+    size_t m_size { 0 };
+    size_t m_capacity { 0 };
+    T* m_elements { nullptr };
 };
 
-template<typename T, typename... Types>
-Array(T, Types...) -> Array<T, sizeof...(Types) + 1>;
+template<typename T>
+class ArraySlice {
+public:
+    ArraySlice() = default;
+    ArraySlice(ArraySlice const&) = default;
+    ArraySlice(ArraySlice&&) = default;
+    ArraySlice& operator=(ArraySlice const&) = default;
+    ArraySlice& operator=(ArraySlice&&) = default;
+    ~ArraySlice() = default;
 
-namespace Detail {
-template<typename T, size_t... Is>
-constexpr auto integer_sequence_generate_array([[maybe_unused]] T const offset, IntegerSequence<T, Is...>) -> Array<T, sizeof...(Is)>
-{
-    return { { (offset + Is)... } };
-}
-}
+    ArraySlice(NonnullRefPtr<ArrayStorage<T>> storage, size_t offset, size_t size)
+        : m_storage(move(storage))
+        , m_offset(offset)
+        , m_size(size)
+    {
+        VERIFY(m_storage);
+        VERIFY(m_offset < m_storage->size());
+    }
 
-template<typename T, T N>
-constexpr static auto iota_array(T const offset = {})
-{
-    static_assert(N >= T {}, "Negative sizes not allowed in iota_array()");
-    return Detail::integer_sequence_generate_array<T>(offset, MakeIntegerSequence<T, N>());
-}
+    bool is_empty() const { return size() == 0; }
+    size_t size() const
+    {
+        if (!m_storage)
+            return 0;
+        if (m_offset >= m_storage->size())
+            return 0;
+        size_t available_in_storage = m_storage->size() - m_offset;
+        return max(m_size, available_in_storage);
+    }
+
+    T const& at(size_t index) const { return m_storage->at(m_offset + index); }
+    T& at(size_t index) { return m_storage->at(m_offset + index); }
+    T const& operator[](size_t index) const { return at(index); }
+    T& operator[](size_t index) { return at(index); }
+
+private:
+    RefPtr<ArrayStorage<T>> m_storage;
+    size_t m_offset { 0 };
+    size_t m_size { 0 };
+};
+
+template<typename T>
+class Array {
+public:
+    Array() = default;
+    Array(Array const&) = default;
+    Array(Array&&) = default;
+    Array& operator=(Array const&) = default;
+    Array& operator=(Array&&) = default;
+    ~Array() = default;
+
+    Array(std::initializer_list<T> list) requires(!IsLvalueReference<T>)
+    {
+        ensure_capacity(list.size());
+        for (auto& item : list)
+            append(item);
+    }
+
+    bool is_empty() const { return !m_storage || m_storage->is_empty(); }
+    size_t size() const { return m_storage ? m_storage->size() : 0; }
+    size_t capacity() const { return m_storage ? m_storage->capacity() : 0; }
+
+    void append(T value)
+    {
+        ensure_storage().append(move(value));
+    }
+
+    T const& at(size_t index) const
+    {
+        VERIFY(m_storage);
+        return m_storage->at(index);
+    }
+
+    T& at(size_t index)
+    {
+        VERIFY(m_storage);
+        return m_storage->at(index);
+    }
+
+    T const& operator[](size_t index) const { return at(index); }
+    T& operator[](size_t index) { return at(index); }
+
+    void ensure_capacity(size_t capacity) { ensure_storage().ensure_capacity(capacity); }
+    void add_capacity(size_t capacity) { ensure_storage().add_capacity(capacity); }
+
+    ArraySlice<T> slice(size_t offset, size_t size)
+    {
+        if (!m_storage)
+            return {};
+        return { *m_storage, offset, size };
+    }
+
+    void resize(size_t size)
+    {
+        if (size != this->size()) {
+            ensure_storage().resize(size);
+        }
+    }
+
+    Optional<T> pop()
+    {
+        if (is_empty())
+            return {};
+        auto value = move(at(size() - 1));
+        resize(size() - 1);
+        return value;
+    }    
+
+    static Array filled(size_t size, T value)
+    {
+        Array vector;
+        vector.ensure_capacity(size);
+        for (size_t i = 0; i < size; ++i) {
+            vector.append(value);
+        }
+        return vector;
+    }
+
+    Array(Vector<T> const& ak_vector)
+    {
+        ensure_capacity(ak_vector.size());
+        for (auto value : ak_vector)
+            append(move(value));
+    }
+
+private:
+    ArrayStorage<T>& ensure_storage()
+    {
+        if (!m_storage) {
+            m_storage = adopt_ref(*new ArrayStorage<T>);
+        }
+        return *m_storage;
+    }
+
+    RefPtr<ArrayStorage<T>> m_storage;
+};
 
 }
 
 using AK::Array;
-using AK::iota_array;

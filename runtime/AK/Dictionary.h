@@ -14,7 +14,7 @@
 namespace AK {
 
 template<typename K, typename V, typename KeyTraits, bool IsOrdered>
-class HashMap {
+class Dictionary {
 private:
     struct Entry {
         K key;
@@ -30,9 +30,9 @@ public:
     using KeyType = K;
     using ValueType = V;
 
-    HashMap() = default;
+    Dictionary() = default;
 
-    HashMap(std::initializer_list<Entry> list)
+    Dictionary(std::initializer_list<Entry> list)
     {
         ensure_capacity(list.size());
         for (auto& item : list)
@@ -243,5 +243,5 @@ private:
 
 }
 
-using AK::HashMap;
+using AK::Dictionary;
 using AK::OrderedHashMap;

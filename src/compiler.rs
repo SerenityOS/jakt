@@ -134,7 +134,7 @@ extern class String {
     fun length(this) -> usize {}
 }
 
-extern class RefVector<T> {
+extern class Array<T> {
     fun size(this) -> usize {}
     fun resize(mut this, anon size: usize) {}
     fun pop(mut this) -> T? {}
