@@ -25,8 +25,9 @@ pub const F32_TYPE_ID: usize = 11;
 pub const F64_TYPE_ID: usize = 12;
 pub const CCHAR_TYPE_ID: usize = 13;
 pub const CINT_TYPE_ID: usize = 14;
+pub const USIZE_TYPE_ID: usize = 15;
 // Note: keep STRING_TYPE_ID last as it is how we know how many slots to pre-fill
-pub const STRING_TYPE_ID: usize = 15;
+pub const STRING_TYPE_ID: usize = 16;
 
 pub struct Compiler {
     raw_files: Vec<(String, Vec<u8>)>,

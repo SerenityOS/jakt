@@ -4,7 +4,7 @@ use crate::{
     compiler::{
         BOOL_TYPE_ID, CCHAR_TYPE_ID, CINT_TYPE_ID, F32_TYPE_ID, F64_TYPE_ID, I16_TYPE_ID,
         I32_TYPE_ID, I64_TYPE_ID, I8_TYPE_ID, STRING_TYPE_ID, U16_TYPE_ID, U32_TYPE_ID,
-        U64_TYPE_ID, U8_TYPE_ID, UNKNOWN_TYPE_ID, VOID_TYPE_ID,
+        U64_TYPE_ID, U8_TYPE_ID, UNKNOWN_TYPE_ID, USIZE_TYPE_ID, VOID_TYPE_ID,
     },
     error::JaktError,
     lexer::Span,
@@ -38,8 +38,8 @@ pub enum Type {
 
 pub fn is_integer(type_id: TypeId) -> bool {
     match type_id {
-        I8_TYPE_ID | I16_TYPE_ID | I32_TYPE_ID | I64_TYPE_ID | U8_TYPE_ID | U16_TYPE_ID
-        | U32_TYPE_ID | U64_TYPE_ID => true,
+        USIZE_TYPE_ID | I8_TYPE_ID | I16_TYPE_ID | I32_TYPE_ID | I64_TYPE_ID | U8_TYPE_ID
+        | U16_TYPE_ID | U32_TYPE_ID | U64_TYPE_ID => true,
         _ => false,
     }
 }
@@ -55,6 +55,8 @@ pub fn can_fit_integer(type_id: TypeId, value: &IntegerConstant) -> bool {
             U16_TYPE_ID => value >= 0 && value <= u16::MAX as i64,
             U32_TYPE_ID => value >= 0 && value <= u32::MAX as i64,
             U64_TYPE_ID => value >= 0,
+            // FIXME: Don't assume that usize is 64-bit
+            USIZE_TYPE_ID => value >= 0,
             _ => false,
         },
         IntegerConstant::Unsigned(value) => match type_id {
@@ -65,6 +67,8 @@ pub fn can_fit_integer(type_id: TypeId, value: &IntegerConstant) -> bool {
             U8_TYPE_ID => value <= u8::MAX as u64,
             U16_TYPE_ID => value <= u16::MAX as u64,
             U32_TYPE_ID => value <= u32::MAX as u64,
+            // FIXME: Don't assume that usize is 64-bit
+            USIZE_TYPE_ID => true,
             U64_TYPE_ID => true,
             _ => false,
         },
@@ -372,6 +376,7 @@ impl IntegerConstant {
                 U16_TYPE_ID => NumericConstant::U16(*value as u16),
                 U32_TYPE_ID => NumericConstant::U32(*value as u32),
                 U64_TYPE_ID => NumericConstant::U64(*value as u64),
+                USIZE_TYPE_ID => NumericConstant::USize(*value as u64),
                 _ => panic!("Bogus state in IntegerConstant::promote"),
             },
             IntegerConstant::Unsigned(value) => match type_id {
@@ -383,6 +388,7 @@ impl IntegerConstant {
                 U16_TYPE_ID => NumericConstant::U16(*value as u16),
                 U32_TYPE_ID => NumericConstant::U32(*value as u32),
                 U64_TYPE_ID => NumericConstant::U64(*value as u64),
+                USIZE_TYPE_ID => NumericConstant::USize(*value as u64),
                 _ => panic!("Bogus state in IntegerConstant::promote"),
             },
         };
@@ -400,6 +406,7 @@ pub enum NumericConstant {
     U16(u16),
     U32(u32),
     U64(u64),
+    USize(u64),
 }
 
 impl PartialEq for NumericConstant {
@@ -413,6 +420,7 @@ impl PartialEq for NumericConstant {
             (NumericConstant::U16(l), NumericConstant::U16(r)) => l == r,
             (NumericConstant::U32(l), NumericConstant::U32(r)) => l == r,
             (NumericConstant::U64(l), NumericConstant::U64(r)) => l == r,
+            (NumericConstant::USize(l), NumericConstant::USize(r)) => l == r,
             _ => false,
         }
     }
@@ -429,6 +437,7 @@ impl NumericConstant {
             NumericConstant::U16(value) => Some(IntegerConstant::Unsigned(*value as u64)),
             NumericConstant::U32(value) => Some(IntegerConstant::Unsigned(*value as u64)),
             NumericConstant::U64(value) => Some(IntegerConstant::Unsigned(*value as u64)),
+            NumericConstant::USize(value) => Some(IntegerConstant::Unsigned(*value as u64)),
         }
     }
 
@@ -442,6 +451,7 @@ impl NumericConstant {
             NumericConstant::U16(_) => U16_TYPE_ID,
             NumericConstant::U32(_) => U32_TYPE_ID,
             NumericConstant::U64(_) => U64_TYPE_ID,
+            NumericConstant::USize(_) => USIZE_TYPE_ID,
         }
     }
 }
@@ -2426,6 +2436,7 @@ pub fn typecheck_typename(
             "f64" => (F64_TYPE_ID, None),
             "c_char" => (CCHAR_TYPE_ID, None),
             "c_int" => (CINT_TYPE_ID, None),
+            "usize" => (USIZE_TYPE_ID, None),
             "String" => (STRING_TYPE_ID, None),
             "bool" => (BOOL_TYPE_ID, None),
             "void" => (VOID_TYPE_ID, None),

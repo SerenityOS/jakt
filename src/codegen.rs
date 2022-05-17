@@ -441,6 +441,7 @@ fn codegen_type(type_id: TypeId, project: &Project) -> String {
             }
         }
         Type::Builtin => match type_id {
+            compiler::USIZE_TYPE_ID => String::from("size_t"),
             compiler::BOOL_TYPE_ID => String::from("bool"),
             compiler::STRING_TYPE_ID => String::from("String"),
             compiler::CCHAR_TYPE_ID => String::from("char"),
@@ -658,6 +659,11 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
             NumericConstant::U64(value) => {
                 output.push_str("static_cast<u64>(");
+                output.push_str(&value.to_string());
+                output.push_str("ULL)");
+            }
+            NumericConstant::USize(value) => {
+                output.push_str("static_cast<size_t>(");
                 output.push_str(&value.to_string());
                 output.push_str("ULL)");
             }
