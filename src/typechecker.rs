@@ -483,78 +483,80 @@ pub enum CheckedUnaryOperator {
 #[derive(Clone, Debug)]
 pub enum CheckedExpression {
     // Standalone
-    Boolean(bool),
-    NumericConstant(NumericConstant, TypeId),
-    QuotedString(String),
-    CharacterConstant(char),
-    UnaryOp(Box<CheckedExpression>, CheckedUnaryOperator, TypeId),
+    Boolean(bool, Span),
+    NumericConstant(NumericConstant, Span, TypeId),
+    QuotedString(String, Span),
+    CharacterConstant(char, Span),
+    UnaryOp(Box<CheckedExpression>, CheckedUnaryOperator, Span, TypeId),
     BinaryOp(
         Box<CheckedExpression>,
         BinaryOperator,
         Box<CheckedExpression>,
+        Span,
         TypeId,
     ),
-    Tuple(Vec<CheckedExpression>, TypeId),
-    Range(Box<CheckedExpression>, Box<CheckedExpression>, TypeId),
+    Tuple(Vec<CheckedExpression>, Span, TypeId),
+    Range(Box<CheckedExpression>, Box<CheckedExpression>, Span, TypeId),
     Vector(
         Vec<CheckedExpression>,
         Option<Box<CheckedExpression>>,
+        Span,
         TypeId,
     ),
-    IndexedExpression(Box<CheckedExpression>, Box<CheckedExpression>, TypeId),
-    IndexedTuple(Box<CheckedExpression>, usize, TypeId),
-    IndexedStruct(Box<CheckedExpression>, String, TypeId),
+    IndexedExpression(Box<CheckedExpression>, Box<CheckedExpression>, Span, TypeId),
+    IndexedTuple(Box<CheckedExpression>, usize, Span, TypeId),
+    IndexedStruct(Box<CheckedExpression>, String, Span, TypeId),
 
-    Call(CheckedCall, TypeId),
-    MethodCall(Box<CheckedExpression>, CheckedCall, TypeId),
+    Call(CheckedCall, Span, TypeId),
+    MethodCall(Box<CheckedExpression>, CheckedCall, Span, TypeId),
 
-    Var(CheckedVariable),
+    Var(CheckedVariable, Span),
 
-    OptionalNone(TypeId),
-    OptionalSome(Box<CheckedExpression>, TypeId),
-    ForcedUnwrap(Box<CheckedExpression>, TypeId),
+    OptionalNone(Span, TypeId),
+    OptionalSome(Box<CheckedExpression>, Span, TypeId),
+    ForcedUnwrap(Box<CheckedExpression>, Span, TypeId),
 
     // Parsing error
-    Garbage,
+    Garbage(Span),
 }
 
 impl CheckedExpression {
     pub fn ty(&self) -> TypeId {
         match self {
-            CheckedExpression::Boolean(_) => BOOL_TYPE_ID,
-            CheckedExpression::Call(_, ty) => *ty,
-            CheckedExpression::NumericConstant(_, ty) => *ty,
-            CheckedExpression::QuotedString(_) => STRING_TYPE_ID,
-            CheckedExpression::CharacterConstant(_) => CCHAR_TYPE_ID, // use the C one for now
-            CheckedExpression::UnaryOp(_, _, ty) => *ty,
-            CheckedExpression::BinaryOp(_, _, _, ty) => *ty,
-            CheckedExpression::Vector(_, _, ty) => *ty,
-            CheckedExpression::Tuple(_, ty) => *ty,
-            CheckedExpression::Range(_, _, ty) => *ty,
-            CheckedExpression::IndexedExpression(_, _, ty) => *ty,
-            CheckedExpression::IndexedTuple(_, _, ty) => *ty,
-            CheckedExpression::IndexedStruct(_, _, ty) => *ty,
-            CheckedExpression::MethodCall(_, _, ty) => *ty,
-            CheckedExpression::Var(CheckedVariable { ty, .. }) => *ty,
-            CheckedExpression::OptionalNone(ty) => *ty,
-            CheckedExpression::OptionalSome(_, ty) => *ty,
-            CheckedExpression::ForcedUnwrap(_, ty) => *ty,
-            CheckedExpression::Garbage => UNKNOWN_TYPE_ID,
+            CheckedExpression::Boolean(_, _) => BOOL_TYPE_ID,
+            CheckedExpression::Call(_, _, ty) => *ty,
+            CheckedExpression::NumericConstant(_, _, ty) => *ty,
+            CheckedExpression::QuotedString(_, _) => STRING_TYPE_ID,
+            CheckedExpression::CharacterConstant(_, _) => CCHAR_TYPE_ID, // use the C one for now
+            CheckedExpression::UnaryOp(_, _, _, ty) => *ty,
+            CheckedExpression::BinaryOp(_, _, _, _, ty) => *ty,
+            CheckedExpression::Vector(_, _, _, ty) => *ty,
+            CheckedExpression::Tuple(_, _, ty) => *ty,
+            CheckedExpression::Range(_, _, _, ty) => *ty,
+            CheckedExpression::IndexedExpression(_, _, _, ty) => *ty,
+            CheckedExpression::IndexedTuple(_, _, _, ty) => *ty,
+            CheckedExpression::IndexedStruct(_, _, _, ty) => *ty,
+            CheckedExpression::MethodCall(_, _, _, ty) => *ty,
+            CheckedExpression::Var(CheckedVariable { ty, .. }, _) => *ty,
+            CheckedExpression::OptionalNone(_, ty) => *ty,
+            CheckedExpression::OptionalSome(_, _, ty) => *ty,
+            CheckedExpression::ForcedUnwrap(_, _, ty) => *ty,
+            CheckedExpression::Garbage(_) => UNKNOWN_TYPE_ID,
         }
     }
 
     pub fn to_integer_constant(&self) -> Option<IntegerConstant> {
         match self {
-            CheckedExpression::NumericConstant(constant, _) => constant.integer_constant(),
+            CheckedExpression::NumericConstant(constant, _, _) => constant.integer_constant(),
             _ => None,
         }
     }
 
     pub fn is_mutable(&self) -> bool {
         match self {
-            CheckedExpression::Var(var) => var.mutable,
-            CheckedExpression::IndexedStruct(expr, _, _) => expr.is_mutable(),
-            CheckedExpression::IndexedExpression(expr, _, _) => expr.is_mutable(),
+            CheckedExpression::Var(var, _) => var.mutable,
+            CheckedExpression::IndexedStruct(expr, _, _, _) => expr.is_mutable(),
+            CheckedExpression::IndexedExpression(expr, _, _, _) => expr.is_mutable(),
             _ => false,
         }
     }
@@ -1209,7 +1211,7 @@ pub fn try_promote_constant_expr_to_type(
     }
     if let Some(rhs_constant) = checked_rhs.to_integer_constant() {
         if let (Some(new_constant), new_ty) = rhs_constant.promote(lhs_type_id) {
-            *checked_rhs = CheckedExpression::NumericConstant(new_constant, new_ty);
+            *checked_rhs = CheckedExpression::NumericConstant(new_constant, *span, new_ty);
         } else {
             return Some(JaktError::TypecheckError(
                 "Integer promotion failed".to_string(),
@@ -1255,6 +1257,7 @@ pub fn typecheck_expression(
                 CheckedExpression::Range(
                     Box::new(checked_start),
                     Box::new(checked_end),
+                    *span,
                     project.find_or_add_type_id(ty),
                 ),
                 error,
@@ -1280,6 +1283,7 @@ pub fn typecheck_expression(
                     Box::new(checked_lhs),
                     op.clone(),
                     Box::new(checked_rhs),
+                    *span,
                     ty,
                 ),
                 error,
@@ -1324,16 +1328,19 @@ pub fn typecheck_expression(
 
             (checked_expr, error)
         }
-        Expression::OptionalNone(_) => (CheckedExpression::OptionalNone(UNKNOWN_TYPE_ID), None),
-        Expression::OptionalSome(expr, _) => {
+        Expression::OptionalNone(span) => (
+            CheckedExpression::OptionalNone(*span, UNKNOWN_TYPE_ID),
+            None,
+        ),
+        Expression::OptionalSome(expr, span) => {
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
             let ty = checked_expr.ty();
             (
-                CheckedExpression::OptionalSome(Box::new(checked_expr), ty),
+                CheckedExpression::OptionalSome(Box::new(checked_expr), *span, ty),
                 err,
             )
         }
-        Expression::ForcedUnwrap(expr, _) => {
+        Expression::ForcedUnwrap(expr, span) => {
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
 
             let ty = &project.types[checked_expr.ty()];
@@ -1355,32 +1362,39 @@ pub fn typecheck_expression(
                 ),
             };
             (
-                CheckedExpression::ForcedUnwrap(Box::new(checked_expr), ty),
+                CheckedExpression::ForcedUnwrap(Box::new(checked_expr), *span, ty),
                 err,
             )
         }
-        Expression::Boolean(b, _) => (CheckedExpression::Boolean(*b), None),
+        Expression::Boolean(b, span) => (CheckedExpression::Boolean(*b, *span), None),
         Expression::Call(call, span) => {
             let (checked_call, err) = typecheck_call(call, scope_id, span, project, safety_mode);
             let ty = checked_call.ty;
-            (CheckedExpression::Call(checked_call, ty), err)
+            (CheckedExpression::Call(checked_call, *span, ty), err)
         }
-        Expression::NumericConstant(constant, _) => (
-            CheckedExpression::NumericConstant(constant.clone(), constant.ty()),
+        Expression::NumericConstant(constant, span) => (
+            CheckedExpression::NumericConstant(constant.clone(), *span, constant.ty()),
             None,
         ),
-        Expression::QuotedString(qs, _) => (CheckedExpression::QuotedString(qs.clone()), None),
-        Expression::CharacterLiteral(c, _) => (CheckedExpression::CharacterConstant(*c), None),
+        Expression::QuotedString(qs, span) => {
+            (CheckedExpression::QuotedString(qs.clone(), *span), None)
+        }
+        Expression::CharacterLiteral(c, span) => {
+            (CheckedExpression::CharacterConstant(*c, *span), None)
+        }
         Expression::Var(v, span) => {
             if let Some(var) = project.find_var_in_scope(scope_id, v) {
-                (CheckedExpression::Var(var.clone()), None)
+                (CheckedExpression::Var(var.clone(), *span), None)
             } else {
                 (
-                    CheckedExpression::Var(CheckedVariable {
-                        name: v.clone(),
-                        ty: UNKNOWN_TYPE_ID,
-                        mutable: false,
-                    }),
+                    CheckedExpression::Var(
+                        CheckedVariable {
+                            name: v.clone(),
+                            ty: UNKNOWN_TYPE_ID,
+                            mutable: false,
+                        },
+                        *span,
+                    ),
                     Some(JaktError::TypecheckError(
                         "variable not found".to_string(),
                         *span,
@@ -1388,7 +1402,7 @@ pub fn typecheck_expression(
                 )
             }
         }
-        Expression::Vector(vec, fill_size_expr, ..) => {
+        Expression::Vector(vec, fill_size_expr, span) => {
             let mut inner_ty = UNKNOWN_TYPE_ID;
             let mut output = Vec::new();
 
@@ -1426,11 +1440,11 @@ pub fn typecheck_expression(
                 .find_or_add_type_id(Type::GenericInstance(vector_struct_id, vec![inner_ty]));
 
             (
-                CheckedExpression::Vector(output, checked_fill_size_expr, type_id),
+                CheckedExpression::Vector(output, checked_fill_size_expr, *span, type_id),
                 error,
             )
         }
-        Expression::Tuple(items, _) => {
+        Expression::Tuple(items, span) => {
             let mut checked_items = Vec::new();
             let mut checked_types = Vec::new();
 
@@ -1450,9 +1464,12 @@ pub fn typecheck_expression(
             let type_id =
                 project.find_or_add_type_id(Type::GenericInstance(tuple_struct_id, checked_types));
 
-            (CheckedExpression::Tuple(checked_items, type_id), error)
+            (
+                CheckedExpression::Tuple(checked_items, *span, type_id),
+                error,
+            )
         }
-        Expression::IndexedExpression(expr, idx, _) => {
+        Expression::IndexedExpression(expr, idx, span) => {
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
             error = error.or(err);
 
@@ -1495,6 +1512,7 @@ pub fn typecheck_expression(
                 CheckedExpression::IndexedExpression(
                     Box::new(checked_expr),
                     Box::new(checked_idx),
+                    *span,
                     expr_ty,
                 ),
                 error,
@@ -1534,7 +1552,7 @@ pub fn typecheck_expression(
             }
 
             (
-                CheckedExpression::IndexedTuple(Box::new(checked_expr), *idx, ty),
+                CheckedExpression::IndexedTuple(Box::new(checked_expr), *idx, *span, ty),
                 error,
             )
         }
@@ -1556,6 +1574,7 @@ pub fn typecheck_expression(
                                 CheckedExpression::IndexedStruct(
                                     Box::new(checked_expr),
                                     name.to_string(),
+                                    *span,
                                     member.ty.clone(),
                                 ),
                                 None,
@@ -1578,7 +1597,12 @@ pub fn typecheck_expression(
             }
 
             (
-                CheckedExpression::IndexedStruct(Box::new(checked_expr), name.to_string(), ty),
+                CheckedExpression::IndexedStruct(
+                    Box::new(checked_expr),
+                    name.to_string(),
+                    *span,
+                    ty,
+                ),
                 error,
             )
         }
@@ -1605,7 +1629,12 @@ pub fn typecheck_expression(
 
                         let ty = checked_call.ty.clone();
                         (
-                            CheckedExpression::MethodCall(Box::new(checked_expr), checked_call, ty),
+                            CheckedExpression::MethodCall(
+                                Box::new(checked_expr),
+                                checked_call,
+                                *span,
+                                ty,
+                            ),
                             error,
                         )
                     }
@@ -1615,7 +1644,7 @@ pub fn typecheck_expression(
                             expr.span(),
                         )));
 
-                        (CheckedExpression::Garbage, error)
+                        (CheckedExpression::Garbage(*span), error)
                     }
                 }
             } else {
@@ -1636,7 +1665,12 @@ pub fn typecheck_expression(
 
                         let ty = checked_call.ty.clone();
                         (
-                            CheckedExpression::MethodCall(Box::new(checked_expr), checked_call, ty),
+                            CheckedExpression::MethodCall(
+                                Box::new(checked_expr),
+                                checked_call,
+                                *span,
+                                ty,
+                            ),
                             error,
                         )
                     }
@@ -1656,7 +1690,12 @@ pub fn typecheck_expression(
 
                         let ty = checked_call.ty.clone();
                         (
-                            CheckedExpression::MethodCall(Box::new(checked_expr), checked_call, ty),
+                            CheckedExpression::MethodCall(
+                                Box::new(checked_expr),
+                                checked_call,
+                                *span,
+                                ty,
+                            ),
                             error,
                         )
                     }
@@ -1666,21 +1705,21 @@ pub fn typecheck_expression(
                             expr.span(),
                         )));
 
-                        (CheckedExpression::Garbage, error)
+                        (CheckedExpression::Garbage(*span), error)
                     }
                 }
             }
         }
 
         Expression::Operator(_, span) => (
-            CheckedExpression::Garbage,
+            CheckedExpression::Garbage(*span),
             Some(JaktError::TypecheckError(
                 "garbage in expression".to_string(),
                 *span,
             )),
         ),
         Expression::Garbage(span) => (
-            CheckedExpression::Garbage,
+            CheckedExpression::Garbage(*span),
             Some(JaktError::TypecheckError(
                 "garbage in expression".to_string(),
                 *span,
@@ -1701,20 +1740,28 @@ pub fn typecheck_unary_operation(
 
     match &op {
         CheckedUnaryOperator::Is(ty) => (
-            CheckedExpression::UnaryOp(Box::new(expr), CheckedUnaryOperator::Is(*ty), BOOL_TYPE_ID),
+            CheckedExpression::UnaryOp(
+                Box::new(expr),
+                CheckedUnaryOperator::Is(*ty),
+                span,
+                BOOL_TYPE_ID,
+            ),
             None,
         ),
         CheckedUnaryOperator::TypeCast(cast) => (
-            CheckedExpression::UnaryOp(Box::new(expr), op.clone(), cast.ty()),
+            CheckedExpression::UnaryOp(Box::new(expr), op.clone(), span, cast.ty()),
             None,
         ),
         CheckedUnaryOperator::Dereference => match expr_ty {
             Type::RawPtr(x) => {
                 if safety_mode == SafetyMode::Unsafe {
-                    (CheckedExpression::UnaryOp(Box::new(expr), op, *x), None)
+                    (
+                        CheckedExpression::UnaryOp(Box::new(expr), op, span, *x),
+                        None,
+                    )
                 } else {
                     (
-                        CheckedExpression::UnaryOp(Box::new(expr), op, *x),
+                        CheckedExpression::UnaryOp(Box::new(expr), op, span, *x),
                         Some(JaktError::TypecheckError(
                             "dereference of raw pointer outside of unsafe block".to_string(),
                             span,
@@ -1723,7 +1770,7 @@ pub fn typecheck_unary_operation(
                 }
             }
             _ => (
-                CheckedExpression::UnaryOp(Box::new(expr), op, UNKNOWN_TYPE_ID),
+                CheckedExpression::UnaryOp(Box::new(expr), op, span, UNKNOWN_TYPE_ID),
                 Some(JaktError::TypecheckError(
                     "dereference of a non-pointer value".to_string(),
                     span,
@@ -1735,21 +1782,31 @@ pub fn typecheck_unary_operation(
 
             let type_id = project.find_or_add_type_id(Type::RawPtr(ty));
             (
-                CheckedExpression::UnaryOp(Box::new(expr), op, type_id),
+                CheckedExpression::UnaryOp(Box::new(expr), op, span, type_id),
                 None,
             )
         }
         CheckedUnaryOperator::LogicalNot => {
             let ty = expr.ty();
             (
-                CheckedExpression::UnaryOp(Box::new(expr), CheckedUnaryOperator::LogicalNot, ty),
+                CheckedExpression::UnaryOp(
+                    Box::new(expr),
+                    CheckedUnaryOperator::LogicalNot,
+                    span,
+                    ty,
+                ),
                 None,
             )
         }
         CheckedUnaryOperator::BitwiseNot => {
             let ty = expr.ty();
             (
-                CheckedExpression::UnaryOp(Box::new(expr), CheckedUnaryOperator::BitwiseNot, ty),
+                CheckedExpression::UnaryOp(
+                    Box::new(expr),
+                    CheckedUnaryOperator::BitwiseNot,
+                    span,
+                    ty,
+                ),
                 None,
             )
         }
@@ -1767,11 +1824,21 @@ pub fn typecheck_unary_operation(
                 | crate::compiler::U64_TYPE_ID
                 | crate::compiler::F32_TYPE_ID
                 | crate::compiler::F64_TYPE_ID => (
-                    CheckedExpression::UnaryOp(Box::new(expr), CheckedUnaryOperator::Negate, ty),
+                    CheckedExpression::UnaryOp(
+                        Box::new(expr),
+                        CheckedUnaryOperator::Negate,
+                        span,
+                        ty,
+                    ),
                     None,
                 ),
                 _ => (
-                    CheckedExpression::UnaryOp(Box::new(expr), CheckedUnaryOperator::Negate, ty),
+                    CheckedExpression::UnaryOp(
+                        Box::new(expr),
+                        CheckedUnaryOperator::Negate,
+                        span,
+                        ty,
+                    ),
                     Some(JaktError::TypecheckError(
                         "negate on non-numeric value".to_string(),
                         span,
@@ -1795,7 +1862,7 @@ pub fn typecheck_unary_operation(
             | crate::compiler::F64_TYPE_ID => {
                 if !expr.is_mutable() {
                     (
-                        CheckedExpression::UnaryOp(Box::new(expr), op, expr_type_id),
+                        CheckedExpression::UnaryOp(Box::new(expr), op, span, expr_type_id),
                         Some(JaktError::TypecheckError(
                             "increment/decrement of immutable variable".to_string(),
                             span,
@@ -1803,13 +1870,13 @@ pub fn typecheck_unary_operation(
                     )
                 } else {
                     (
-                        CheckedExpression::UnaryOp(Box::new(expr), op, expr_type_id),
+                        CheckedExpression::UnaryOp(Box::new(expr), op, span, expr_type_id),
                         None,
                     )
                 }
             }
             _ => (
-                CheckedExpression::UnaryOp(Box::new(expr), op, expr_type_id),
+                CheckedExpression::UnaryOp(Box::new(expr), op, span, expr_type_id),
                 Some(JaktError::TypecheckError(
                     "unary operation on non-numeric value".to_string(),
                     span,
