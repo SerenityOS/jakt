@@ -136,7 +136,7 @@ extern class String {
 extern class RefVector<T> {
     fun size(this) -> i64 {}
     fun resize(mut this, anon size: i64) {}
-    fun pop(this) -> T? {}
+    fun pop(mut this) -> T? {}
 }
 
 extern class Optional<T> {}

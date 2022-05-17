@@ -29,7 +29,9 @@ pub enum SafetyMode {
 pub enum Type {
     Builtin,
     TypeVariable(String),
-    Generic(StructId, Vec<TypeId>),
+    // A GenericInstance is a generic that has known values for its type param
+    // For example Foo<Bar> is an instance of the generic Foo<T>
+    GenericInstance(StructId, Vec<TypeId>),
     Struct(StructId),
     RawPtr(TypeId),
 }
@@ -1060,7 +1062,7 @@ pub fn typecheck_statement(
                 .expect("internal error: Range builtin definition not found");
 
             let index_type;
-            if let Type::Generic(id, inner_type) = &project.types[checked_expr.ty()] {
+            if let Type::GenericInstance(id, inner_type) = &project.types[checked_expr.ty()] {
                 if id == &range_struct_id {
                     index_type = inner_type[0];
                 } else {
@@ -1248,7 +1250,7 @@ pub fn typecheck_expression(
                 .find_struct_in_scope(0, "Range")
                 .expect("internal error: Range builtin definition not found");
 
-            let ty = Type::Generic(range_struct_id, vec![checked_start.ty()]);
+            let ty = Type::GenericInstance(range_struct_id, vec![checked_start.ty()]);
             (
                 CheckedExpression::Range(
                     Box::new(checked_start),
@@ -1341,7 +1343,7 @@ pub fn typecheck_expression(
                 .expect("internal error: can't find builtin Optional type");
 
             let (ty, err) = match ty {
-                Type::Generic(struct_id, inner_tys) if struct_id == &optional_struct_id => {
+                Type::GenericInstance(struct_id, inner_tys) if struct_id == &optional_struct_id => {
                     (inner_tys[0], None)
                 }
                 _ => (
@@ -1420,8 +1422,8 @@ pub fn typecheck_expression(
                 .find_struct_in_scope(0, "RefVector")
                 .expect("internal error: RefVector builtin definition not found");
 
-            let type_id =
-                project.find_or_add_type_id(Type::Generic(vector_struct_id, vec![inner_ty]));
+            let type_id = project
+                .find_or_add_type_id(Type::GenericInstance(vector_struct_id, vec![inner_ty]));
 
             (
                 CheckedExpression::Vector(output, checked_fill_size_expr, type_id),
@@ -1446,7 +1448,7 @@ pub fn typecheck_expression(
                 .expect("internal error: Tuple builtin definition not found");
 
             let type_id =
-                project.find_or_add_type_id(Type::Generic(tuple_struct_id, checked_types));
+                project.find_or_add_type_id(Type::GenericInstance(tuple_struct_id, checked_types));
 
             (CheckedExpression::Tuple(checked_items, type_id), error)
         }
@@ -1465,7 +1467,7 @@ pub fn typecheck_expression(
 
             let ty = &project.types[checked_expr.ty()];
             match ty {
-                Type::Generic(parent_struct_id, inner_tys)
+                Type::GenericInstance(parent_struct_id, inner_tys)
                     if parent_struct_id == &vector_struct_id =>
                 {
                     match checked_idx.ty() {
@@ -1510,7 +1512,7 @@ pub fn typecheck_expression(
 
             let checked_expr_ty = &project.types[checked_expr.ty()];
             match checked_expr_ty {
-                Type::Generic(parent_struct_id, inner_tys)
+                Type::GenericInstance(parent_struct_id, inner_tys)
                     if parent_struct_id == &tuple_struct_id =>
                 {
                     match inner_tys.get(*idx) {
@@ -1595,6 +1597,7 @@ pub fn typecheck_expression(
                             scope_id,
                             span,
                             project,
+                            &checked_expr,
                             struct_id,
                             safety_mode,
                         );
@@ -1625,6 +1628,7 @@ pub fn typecheck_expression(
                             scope_id,
                             span,
                             project,
+                            &checked_expr,
                             struct_id,
                             safety_mode,
                         );
@@ -1636,7 +1640,7 @@ pub fn typecheck_expression(
                             error,
                         )
                     }
-                    Type::Generic(struct_id, _) => {
+                    Type::GenericInstance(struct_id, _) => {
                         // ignore the inner types for now, but we'll need them in the future
                         let struct_id = *struct_id;
                         let (checked_call, err) = typecheck_method_call(
@@ -1644,6 +1648,7 @@ pub fn typecheck_expression(
                             scope_id,
                             span,
                             project,
+                            &checked_expr,
                             struct_id,
                             safety_mode,
                         );
@@ -2021,15 +2026,7 @@ pub fn typecheck_call(
 
                 // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
                 // type variable. For the moment, we'll just checked to see if it's a type variable.
-                let ty = &project.types[return_ty];
-                match ty {
-                    Type::TypeVariable(_) => {
-                        if let Some(replacement) = generic_inferences.get(&return_ty) {
-                            return_ty = *replacement;
-                        }
-                    }
-                    _ => {}
-                }
+                return_ty = substitute_typevars_in_type(return_ty, &generic_inferences, project);
             }
         }
     }
@@ -2051,6 +2048,7 @@ pub fn typecheck_method_call(
     scope_id: ScopeId,
     span: &Span,
     project: &mut Project,
+    this_expr: &CheckedExpression,
     struct_id: StructId,
     safety_mode: SafetyMode,
 ) -> (CheckedCall, Option<JaktError>) {
@@ -2067,6 +2065,25 @@ pub fn typecheck_method_call(
         linkage = callee.linkage;
 
         let mut generic_inferences = HashMap::new();
+
+        // Before we check the method, let's go ahead and make sure we know any instantiated generic types
+        // This will make it easier later to know how to create the proper return type
+        let type_id = this_expr.ty();
+        let param_type = &project.types[type_id];
+
+        match param_type {
+            Type::GenericInstance(struct_id, args) => {
+                let structure = &project.structs[*struct_id];
+
+                let mut idx = 0;
+
+                while idx < structure.generic_parameters.len() {
+                    generic_inferences.insert(structure.generic_parameters[idx], args[idx]);
+                    idx += 1;
+                }
+            }
+            _ => {}
+        }
 
         // Check that we have the right number of arguments.
         if callee.params.len() != (call.args.len() + 1) {
@@ -2133,15 +2150,7 @@ pub fn typecheck_method_call(
 
         // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
         // type variable. For the moment, we'll just checked to see if it's a type variable.
-        let ty = &project.types[return_ty];
-        match ty {
-            Type::TypeVariable(_) => {
-                if let Some(replacement) = generic_inferences.get(&return_ty) {
-                    return_ty = *replacement;
-                }
-            }
-            _ => {}
-        }
+        return_ty = substitute_typevars_in_type(return_ty, &generic_inferences, project);
     }
 
     (
@@ -2154,6 +2163,34 @@ pub fn typecheck_method_call(
         },
         error,
     )
+}
+
+pub fn substitute_typevars_in_type(
+    type_id: TypeId,
+    generic_inferences: &HashMap<TypeId, TypeId>,
+    project: &mut Project,
+) -> TypeId {
+    let ty = &project.types[type_id];
+    match ty {
+        Type::TypeVariable(_) => {
+            if let Some(replacement) = generic_inferences.get(&type_id) {
+                return *replacement;
+            }
+        }
+        Type::GenericInstance(struct_id, args) => {
+            let struct_id = *struct_id;
+            let mut new_args = args.clone();
+
+            for arg in &mut new_args {
+                *arg = substitute_typevars_in_type(*arg, generic_inferences, project);
+            }
+
+            return project.find_or_add_type_id(Type::GenericInstance(struct_id, new_args));
+        }
+        _ => {}
+    }
+
+    type_id
 }
 
 pub fn check_types_for_compat(
@@ -2185,11 +2222,11 @@ pub fn check_types_for_compat(
                 generic_inferences.insert(lhs_type_id, rhs_type_id);
             }
         }
-        Type::Generic(lhs_struct_id, lhs_args) => {
+        Type::GenericInstance(lhs_struct_id, lhs_args) => {
             let lhs_args = lhs_args.clone();
             let rhs_type = &project.types[rhs_type_id];
             match rhs_type {
-                Type::Generic(rhs_struct_id, rhs_args) => {
+                Type::GenericInstance(rhs_struct_id, rhs_args) => {
                     if lhs_struct_id == rhs_struct_id {
                         let rhs_args = rhs_args.clone();
                         // Same struct, perhaps this is an instantiation of it
@@ -2243,7 +2280,7 @@ pub fn check_types_for_compat(
 
             let rhs_type = &project.types[rhs_type_id];
             match rhs_type {
-                Type::Generic(rhs_struct_id, args) => {
+                Type::GenericInstance(rhs_struct_id, args) => {
                     if lhs_struct_id == rhs_struct_id {
                         let args = args.clone();
                         // Same struct, perhaps this is an instantiation of it
@@ -2345,8 +2382,8 @@ pub fn typecheck_typename(
                 .find_struct_in_scope(0, "RefVector")
                 .expect("internal error: RefVector builtin definition not found");
 
-            let type_id =
-                project.find_or_add_type_id(Type::Generic(vector_struct_id, vec![inner_ty]));
+            let type_id = project
+                .find_or_add_type_id(Type::GenericInstance(vector_struct_id, vec![inner_ty]));
 
             (type_id, error)
         }
@@ -2358,8 +2395,8 @@ pub fn typecheck_typename(
                 .find_struct_in_scope(0, "Optional")
                 .expect("internal error: Optional builtin definition not found");
 
-            let type_id =
-                project.find_or_add_type_id(Type::Generic(optional_struct_id, vec![inner_ty]));
+            let type_id = project
+                .find_or_add_type_id(Type::GenericInstance(optional_struct_id, vec![inner_ty]));
 
             (type_id, error)
         }

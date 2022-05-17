@@ -193,3 +193,8 @@ fn test_ranges() -> Result<(), JaktError> {
 fn test_generics() -> Result<(), JaktError> {
     test_samples("samples/generics")
 }
+
+#[test]
+fn test_arrays() -> Result<(), JaktError> {
+    test_samples("samples/arrays")
+}
