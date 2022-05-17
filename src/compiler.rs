@@ -131,12 +131,12 @@ extern class String {
     fun to_lowercase(this) -> String {}
     fun to_uppercase(this) -> String {}
     fun is_empty(this) -> bool {}
-    fun length(this) -> i64 {}
+    fun length(this) -> usize {}
 }
 
 extern class RefVector<T> {
-    fun size(this) -> i64 {}
-    fun resize(mut this, anon size: i64) {}
+    fun size(this) -> usize {}
+    fun resize(mut this, anon size: usize) {}
     fun pop(mut this) -> T? {}
 }
 
