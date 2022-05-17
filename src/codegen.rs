@@ -416,7 +416,7 @@ fn codegen_type(type_id: TypeId, project: &Project) -> String {
         Type::RawPtr(ty) => {
             format!("{}*", codegen_type(*ty, project))
         }
-        Type::Generic(struct_id, inner_tys) => {
+        Type::GenericInstance(struct_id, inner_tys) => {
             let mut output = project.structs[*struct_id].name.clone();
             output.push('<');
             let mut first = true;
@@ -576,7 +576,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
 
             let ty = &project.types[*type_id];
             match ty {
-                Type::Generic(_, v) => {
+                Type::GenericInstance(_, v) => {
                     index_type = v[0];
                 }
                 _ => {

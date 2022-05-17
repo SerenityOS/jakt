@@ -145,8 +145,8 @@ fn test_variables() -> Result<(), JaktError> {
 }
 
 #[test]
-fn test_vectors() -> Result<(), JaktError> {
-    test_samples("samples/vectors")
+fn test_arrays() -> Result<(), JaktError> {
+    test_samples("samples/arrays")
 }
 
 #[test]

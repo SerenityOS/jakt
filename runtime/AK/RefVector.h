@@ -176,6 +176,15 @@ public:
         }
     }
 
+    Optional<T> pop()
+    {
+        if (is_empty())
+            return {};
+        auto value = move(at(size() - 1));
+        resize(size() - 1);
+        return value;
+    }    
+
     static RefVector filled(size_t size, T value)
     {
         RefVector vector;

@@ -29,7 +29,9 @@ pub enum SafetyMode {
 pub enum Type {
     Builtin,
     TypeVariable(String),
-    Generic(StructId, Vec<TypeId>),
+    // A GenericInstance is a generic that has known values for its type param
+    // For example Foo<Bar> is an instance of the generic Foo<T>
+    GenericInstance(StructId, Vec<TypeId>),
     Struct(StructId),
     RawPtr(TypeId),
 }
@@ -1060,7 +1062,7 @@ pub fn typecheck_statement(
                 .expect("internal error: Range builtin definition not found");
 
             let index_type;
-            if let Type::Generic(id, inner_type) = &project.types[checked_expr.ty()] {
+            if let Type::GenericInstance(id, inner_type) = &project.types[checked_expr.ty()] {
                 if id == &range_struct_id {
                     index_type = inner_type[0];
                 } else {
@@ -1248,7 +1250,7 @@ pub fn typecheck_expression(
                 .find_struct_in_scope(0, "Range")
                 .expect("internal error: Range builtin definition not found");
 
-            let ty = Type::Generic(range_struct_id, vec![checked_start.ty()]);
+            let ty = Type::GenericInstance(range_struct_id, vec![checked_start.ty()]);
             (
                 CheckedExpression::Range(
                     Box::new(checked_start),
@@ -1341,7 +1343,7 @@ pub fn typecheck_expression(
                 .expect("internal error: can't find builtin Optional type");
 
             let (ty, err) = match ty {
-                Type::Generic(struct_id, inner_tys) if struct_id == &optional_struct_id => {
+                Type::GenericInstance(struct_id, inner_tys) if struct_id == &optional_struct_id => {
                     (inner_tys[0], None)
                 }
                 _ => (
@@ -1420,8 +1422,8 @@ pub fn typecheck_expression(
                 .find_struct_in_scope(0, "RefVector")
                 .expect("internal error: RefVector builtin definition not found");
 
-            let type_id =
-                project.find_or_add_type_id(Type::Generic(vector_struct_id, vec![inner_ty]));
+            let type_id = project
+                .find_or_add_type_id(Type::GenericInstance(vector_struct_id, vec![inner_ty]));
 
             (
                 CheckedExpression::Vector(output, checked_fill_size_expr, type_id),
@@ -1446,7 +1448,7 @@ pub fn typecheck_expression(
                 .expect("internal error: Tuple builtin definition not found");
 
             let type_id =
-                project.find_or_add_type_id(Type::Generic(tuple_struct_id, checked_types));
+                project.find_or_add_type_id(Type::GenericInstance(tuple_struct_id, checked_types));
 
             (CheckedExpression::Tuple(checked_items, type_id), error)
         }
@@ -1465,7 +1467,7 @@ pub fn typecheck_expression(
 
             let ty = &project.types[checked_expr.ty()];
             match ty {
-                Type::Generic(parent_struct_id, inner_tys)
+                Type::GenericInstance(parent_struct_id, inner_tys)
                     if parent_struct_id == &vector_struct_id =>
                 {
                     match checked_idx.ty() {
@@ -1510,7 +1512,7 @@ pub fn typecheck_expression(
 
             let checked_expr_ty = &project.types[checked_expr.ty()];
             match checked_expr_ty {
-                Type::Generic(parent_struct_id, inner_tys)
+                Type::GenericInstance(parent_struct_id, inner_tys)
                     if parent_struct_id == &tuple_struct_id =>
                 {
                     match inner_tys.get(*idx) {
@@ -1595,6 +1597,7 @@ pub fn typecheck_expression(
                             scope_id,
                             span,
                             project,
+                            &checked_expr,
                             struct_id,
                             safety_mode,
                         );
@@ -1625,6 +1628,7 @@ pub fn typecheck_expression(
                             scope_id,
                             span,
                             project,
+                            &checked_expr,
                             struct_id,
                             safety_mode,
                         );
@@ -1636,7 +1640,7 @@ pub fn typecheck_expression(
                             error,
                         )
                     }
-                    Type::Generic(struct_id, _) => {
+                    Type::GenericInstance(struct_id, _) => {
                         // ignore the inner types for now, but we'll need them in the future
                         let struct_id = *struct_id;
                         let (checked_call, err) = typecheck_method_call(
@@ -1644,6 +1648,7 @@ pub fn typecheck_expression(
                             scope_id,
                             span,
                             project,
+                            &checked_expr,
                             struct_id,
                             safety_mode,
                         );
@@ -1935,6 +1940,12 @@ pub fn typecheck_call(
                     typecheck_expression(&arg.1, scope_id, project, safety_mode);
                 error = error.or(err);
 
+                if checked_arg.ty() == VOID_TYPE_ID {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "println/eprintln can't take void values".into(),
+                        *span,
+                    )));
+                }
                 return_ty = VOID_TYPE_ID;
 
                 checked_args.push((arg.0.clone(), checked_arg));
@@ -1990,53 +2001,24 @@ pub fn typecheck_call(
                         }
 
                         let lhs_type_id = callee.params[idx].variable.ty;
-                        let lhs_type = &project.types[lhs_type_id];
 
-                        if let Type::TypeVariable(_) = lhs_type {
-                            // If the call expects a generic type variable, let's see if we've already seen it
-                            if let Some(seen_type) = generic_inferences.get(&lhs_type_id) {
-                                // We've seen this type variable assigned something before
-                                // we should error if it's incompatible.
+                        let err =
+                            try_promote_constant_expr_to_type(lhs_type_id, &mut checked_arg, &span);
+                        error = error.or(err);
 
-                                let err = try_promote_constant_expr_to_type(
-                                    *seen_type,
-                                    &mut checked_arg,
-                                    &call.args[idx].1.span(),
-                                );
-                                error = error.or(err);
+                        let rhs_type_id = checked_arg.ty();
 
-                                if checked_arg.ty() != callee.params[idx].variable.ty {
-                                    error = error.or(Some(JaktError::TypecheckError(
-                                        "Parameter type mismatch".to_string(),
-                                        call.args[idx].1.span(),
-                                    )))
-                                }
-
-                                checked_args.push((call.args[idx].0.clone(), checked_arg));
-                            } else {
-                                // We haven't seen this type variable before, so go ahead
-                                // and give it an actual type during this call
-                                generic_inferences.insert(lhs_type_id, checked_arg.ty());
-
-                                checked_args.push((call.args[idx].0.clone(), checked_arg));
-                            }
-                        } else {
-                            let err = try_promote_constant_expr_to_type(
-                                lhs_type_id,
-                                &mut checked_arg,
-                                &call.args[idx].1.span(),
-                            );
-                            error = error.or(err);
-
-                            if checked_arg.ty() != callee.params[idx].variable.ty {
-                                error = error.or(Some(JaktError::TypecheckError(
-                                    "Parameter type mismatch".to_string(),
-                                    call.args[idx].1.span(),
-                                )))
-                            }
-
-                            checked_args.push((call.args[idx].0.clone(), checked_arg));
+                        if let Some(err) = check_types_for_compat(
+                            callee.params[idx].variable.ty,
+                            rhs_type_id,
+                            &mut generic_inferences,
+                            call.args[idx].1.span(),
+                            project,
+                        ) {
+                            error = error.or(Some(err));
                         }
+
+                        checked_args.push((call.args[idx].0.clone(), checked_arg));
 
                         idx += 1;
                     }
@@ -2044,15 +2026,7 @@ pub fn typecheck_call(
 
                 // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
                 // type variable. For the moment, we'll just checked to see if it's a type variable.
-                let ty = &project.types[return_ty];
-                match ty {
-                    Type::TypeVariable(_) => {
-                        if let Some(replacement) = generic_inferences.get(&return_ty) {
-                            return_ty = *replacement;
-                        }
-                    }
-                    _ => {}
-                }
+                return_ty = substitute_typevars_in_type(return_ty, &generic_inferences, project);
             }
         }
     }
@@ -2074,6 +2048,7 @@ pub fn typecheck_method_call(
     scope_id: ScopeId,
     span: &Span,
     project: &mut Project,
+    this_expr: &CheckedExpression,
     struct_id: StructId,
     safety_mode: SafetyMode,
 ) -> (CheckedCall, Option<JaktError>) {
@@ -2090,6 +2065,25 @@ pub fn typecheck_method_call(
         linkage = callee.linkage;
 
         let mut generic_inferences = HashMap::new();
+
+        // Before we check the method, let's go ahead and make sure we know any instantiated generic types
+        // This will make it easier later to know how to create the proper return type
+        let type_id = this_expr.ty();
+        let param_type = &project.types[type_id];
+
+        match param_type {
+            Type::GenericInstance(struct_id, args) => {
+                let structure = &project.structs[*struct_id];
+
+                let mut idx = 0;
+
+                while idx < structure.generic_parameters.len() {
+                    generic_inferences.insert(structure.generic_parameters[idx], args[idx]);
+                    idx += 1;
+                }
+            }
+            _ => {}
+        }
 
         // Check that we have the right number of arguments.
         if callee.params.len() != (call.args.len() + 1) {
@@ -2132,53 +2126,23 @@ pub fn typecheck_method_call(
                 }
 
                 let lhs_type_id = callee.params[idx + 1].variable.ty;
-                let lhs_type = &project.types[lhs_type_id];
 
-                if let Type::TypeVariable(_) = lhs_type {
-                    // If the call expects a generic type variable, let's see if we've already seen it
-                    if let Some(seen_type) = generic_inferences.get(&lhs_type_id) {
-                        // We've seen this type variable assigned something before
-                        // we should error if it's incompatible.
+                let err = try_promote_constant_expr_to_type(lhs_type_id, &mut checked_arg, &span);
+                error = error.or(err);
 
-                        let err = try_promote_constant_expr_to_type(
-                            *seen_type,
-                            &mut checked_arg,
-                            &call.args[idx].1.span(),
-                        );
-                        error = error.or(err);
+                let rhs_type_id = checked_arg.ty();
 
-                        if checked_arg.ty() != callee.params[idx].variable.ty {
-                            error = error.or(Some(JaktError::TypecheckError(
-                                "Parameter type mismatch".to_string(),
-                                call.args[idx].1.span(),
-                            )))
-                        }
-
-                        checked_args.push((call.args[idx].0.clone(), checked_arg));
-                    } else {
-                        // We haven't seen this type variable before, so go ahead
-                        // and give it an actual type during this call
-                        generic_inferences.insert(lhs_type_id, checked_arg.ty());
-
-                        checked_args.push((call.args[idx].0.clone(), checked_arg));
-                    }
-                } else {
-                    let err = try_promote_constant_expr_to_type(
-                        lhs_type_id,
-                        &mut checked_arg,
-                        &call.args[idx].1.span(),
-                    );
-                    error = error.or(err);
-
-                    if checked_arg.ty() != callee.params[idx + 1].variable.ty {
-                        error = error.or(Some(JaktError::TypecheckError(
-                            "Parameter type mismatch".to_string(),
-                            call.args[idx].1.span(),
-                        )))
-                    }
-
-                    checked_args.push((call.args[idx].0.clone(), checked_arg));
+                if let Some(err) = check_types_for_compat(
+                    lhs_type_id,
+                    rhs_type_id,
+                    &mut generic_inferences,
+                    call.args[idx].1.span(),
+                    project,
+                ) {
+                    error = error.or(Some(err));
                 }
+
+                checked_args.push((call.args[idx].0.clone(), checked_arg));
 
                 idx += 1;
             }
@@ -2186,15 +2150,7 @@ pub fn typecheck_method_call(
 
         // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
         // type variable. For the moment, we'll just checked to see if it's a type variable.
-        let ty = &project.types[return_ty];
-        match ty {
-            Type::TypeVariable(_) => {
-                if let Some(replacement) = generic_inferences.get(&return_ty) {
-                    return_ty = *replacement;
-                }
-            }
-            _ => {}
-        }
+        return_ty = substitute_typevars_in_type(return_ty, &generic_inferences, project);
     }
 
     (
@@ -2209,6 +2165,179 @@ pub fn typecheck_method_call(
     )
 }
 
+pub fn substitute_typevars_in_type(
+    type_id: TypeId,
+    generic_inferences: &HashMap<TypeId, TypeId>,
+    project: &mut Project,
+) -> TypeId {
+    let ty = &project.types[type_id];
+    match ty {
+        Type::TypeVariable(_) => {
+            if let Some(replacement) = generic_inferences.get(&type_id) {
+                return *replacement;
+            }
+        }
+        Type::GenericInstance(struct_id, args) => {
+            let struct_id = *struct_id;
+            let mut new_args = args.clone();
+
+            for arg in &mut new_args {
+                *arg = substitute_typevars_in_type(*arg, generic_inferences, project);
+            }
+
+            return project.find_or_add_type_id(Type::GenericInstance(struct_id, new_args));
+        }
+        _ => {}
+    }
+
+    type_id
+}
+
+pub fn check_types_for_compat(
+    lhs_type_id: TypeId,
+    rhs_type_id: TypeId,
+    generic_inferences: &mut HashMap<TypeId, TypeId>,
+    span: Span,
+    project: &mut Project,
+) -> Option<JaktError> {
+    let mut error = None;
+    let lhs_type = &project.types[lhs_type_id];
+
+    match lhs_type {
+        Type::TypeVariable(_) => {
+            // If the call expects a generic type variable, let's see if we've already seen it
+            if let Some(seen_type_id) = generic_inferences.get(&lhs_type_id) {
+                // We've seen this type variable assigned something before
+                // we should error if it's incompatible.
+
+                if rhs_type_id != *seen_type_id {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "Parameter type mismatch".to_string(),
+                        span,
+                    )))
+                }
+            } else {
+                // We haven't seen this type variable before, so go ahead
+                // and give it an actual type during this call
+                generic_inferences.insert(lhs_type_id, rhs_type_id);
+            }
+        }
+        Type::GenericInstance(lhs_struct_id, lhs_args) => {
+            let lhs_args = lhs_args.clone();
+            let rhs_type = &project.types[rhs_type_id];
+            match rhs_type {
+                Type::GenericInstance(rhs_struct_id, rhs_args) => {
+                    if lhs_struct_id == rhs_struct_id {
+                        let rhs_args = rhs_args.clone();
+                        // Same struct, perhaps this is an instantiation of it
+
+                        let lhs_struct = &project.structs[*lhs_struct_id];
+                        if rhs_args.len() != lhs_args.len() {
+                            return Some(JaktError::TypecheckError(
+                                format!(
+                                    "mismatched number of generic parameters for {}",
+                                    lhs_struct.name
+                                ),
+                                span,
+                            ));
+                        }
+
+                        let mut idx = 0;
+
+                        let lhs_arg_type_id = lhs_args[idx];
+                        let rhs_arg_type_id = rhs_args[idx];
+
+                        while idx < lhs_args.len() {
+                            if let Some(err) = check_types_for_compat(
+                                lhs_arg_type_id,
+                                rhs_arg_type_id,
+                                generic_inferences,
+                                span,
+                                project,
+                            ) {
+                                return Some(err);
+                            }
+                            idx += 1;
+                        }
+                    }
+                }
+                _ => {
+                    if rhs_type_id != lhs_type_id {
+                        // They're the same type, might be okay to just leave now
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "Parameter type mismatch".to_string(),
+                            span,
+                        )))
+                    }
+                }
+            }
+        }
+        Type::Struct(lhs_struct_id) => {
+            if rhs_type_id == lhs_type_id {
+                // They're the same type, might be okay to just leave now
+                return None;
+            }
+
+            let rhs_type = &project.types[rhs_type_id];
+            match rhs_type {
+                Type::GenericInstance(rhs_struct_id, args) => {
+                    if lhs_struct_id == rhs_struct_id {
+                        let args = args.clone();
+                        // Same struct, perhaps this is an instantiation of it
+
+                        let lhs_struct = &project.structs[*lhs_struct_id];
+                        if args.len() != lhs_struct.generic_parameters.len() {
+                            return Some(JaktError::TypecheckError(
+                                format!(
+                                    "mismatched number of generic parameters for {}",
+                                    lhs_struct.name
+                                ),
+                                span,
+                            ));
+                        }
+
+                        let mut idx = 0;
+
+                        let lhs_arg_type_id = lhs_struct.generic_parameters[idx];
+                        let rhs_arg_type_id = args[idx];
+
+                        while idx < args.len() {
+                            if let Some(err) = check_types_for_compat(
+                                lhs_arg_type_id,
+                                rhs_arg_type_id,
+                                generic_inferences,
+                                span,
+                                project,
+                            ) {
+                                return Some(err);
+                            }
+                            idx += 1;
+                        }
+                    }
+                }
+                _ => {
+                    if rhs_type_id != lhs_type_id {
+                        // They're the same type, might be okay to just leave now
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "Parameter type mismatch".to_string(),
+                            span,
+                        )))
+                    }
+                }
+            }
+        }
+        _ => {
+            if rhs_type_id != lhs_type_id {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "Parameter type mismatch".to_string(),
+                    span,
+                )))
+            }
+        }
+    }
+
+    error
+}
 pub fn typecheck_typename(
     unchecked_type: &UncheckedType,
     scope_id: ScopeId,
@@ -2253,8 +2382,8 @@ pub fn typecheck_typename(
                 .find_struct_in_scope(0, "RefVector")
                 .expect("internal error: RefVector builtin definition not found");
 
-            let type_id =
-                project.find_or_add_type_id(Type::Generic(vector_struct_id, vec![inner_ty]));
+            let type_id = project
+                .find_or_add_type_id(Type::GenericInstance(vector_struct_id, vec![inner_ty]));
 
             (type_id, error)
         }
@@ -2266,8 +2395,8 @@ pub fn typecheck_typename(
                 .find_struct_in_scope(0, "Optional")
                 .expect("internal error: Optional builtin definition not found");
 
-            let type_id =
-                project.find_or_add_type_id(Type::Generic(optional_struct_id, vec![inner_ty]));
+            let type_id = project
+                .find_or_add_type_id(Type::GenericInstance(optional_struct_id, vec![inner_ty]));
 
             (type_id, error)
         }
