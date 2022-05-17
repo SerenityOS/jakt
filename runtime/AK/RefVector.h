@@ -176,14 +176,14 @@ public:
         }
     }
 
-    T pop()
+    Optional<T> pop()
     {
-        VERIFY(m_storage);
-
-        T result = m_storage->at(this->size() - 1);
-        ensure_storage().resize(this->size() - 1);
-        return result;
-    }
+        if (is_empty())
+            return {};
+        auto value = move(at(size() - 1));
+        resize(size() - 1);
+        return value;
+    }    
 
     static RefVector filled(size_t size, T value)
     {
