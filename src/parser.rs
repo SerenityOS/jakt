@@ -156,6 +156,7 @@ pub enum Statement {
     VarDecl(VarDecl, Expression),
     If(Expression, Block, Option<Box<Statement>>),
     Block(Block),
+    Loop(Block),
     While(Expression, Block),
     For(String, Expression, Block),
     Return(Expression),
@@ -1133,6 +1134,16 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             (Statement::UnsafeBlock(block), error)
         }
         TokenContents::Name(name) if name == "if" => parse_if_statement(tokens, index),
+        TokenContents::Name(name) if name == "loop" => {
+            trace!("parsing loop");
+
+            *index += 1;
+
+            let (block, err) = parse_block(tokens, index);
+            error = error.or(err);
+
+            (Statement::Loop(block), error)
+        }
         TokenContents::Name(name) if name == "while" => {
             trace!("parsing while");
 

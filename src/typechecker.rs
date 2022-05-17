@@ -342,6 +342,7 @@ pub enum CheckedStatement {
         Option<Box<CheckedStatement>>, // optional else case
     ),
     Block(CheckedBlock),
+    Loop(CheckedBlock),
     While(CheckedExpression, CheckedBlock),
     Return(CheckedExpression),
     For(String, CheckedExpression, CheckedBlock),
@@ -1203,6 +1204,12 @@ pub fn typecheck_statement(
                 CheckedStatement::If(checked_cond, checked_block, else_output),
                 error,
             )
+        }
+        Statement::Loop(block) => {
+            let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
+            error = error.or(err);
+
+            (CheckedStatement::Loop(checked_block), error)
         }
         Statement::While(cond, block) => {
             let (checked_cond, err) = typecheck_expression(cond, scope_id, project, safety_mode);
