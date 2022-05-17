@@ -142,6 +142,7 @@ extern class Array<T> {
 
 extern class Optional<T> {
     fun has_value(this) -> bool
+    fun value(this) -> T
     fun Optional<S>(anon x: S) -> Optional<S>
 }
 

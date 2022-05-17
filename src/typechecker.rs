@@ -577,6 +577,7 @@ pub struct CheckedCall {
     pub namespace: Vec<String>,
     pub name: String,
     pub args: Vec<(String, CheckedExpression)>,
+    pub type_args: Vec<TypeId>,
     pub linkage: FunctionLinkage,
     pub ty: TypeId,
 }
@@ -2035,6 +2036,8 @@ pub fn typecheck_call(
     let mut error = None;
     let mut return_ty = UNKNOWN_TYPE_ID;
     let mut linkage = FunctionLinkage::Internal;
+    let mut generic_inferences = HashMap::new();
+    let mut type_args = vec![];
 
     match call.name.as_str() {
         "println" | "eprintln" => {
@@ -2060,10 +2063,11 @@ pub fn typecheck_call(
             error = error.or(err);
 
             if let Some(callee) = callee {
+                // Borrow checker workaround, would be nice to clean this up
+                let callee = callee.clone();
+
                 return_ty = callee.return_type;
                 linkage = callee.linkage;
-
-                let mut generic_inferences = HashMap::new();
 
                 // Check that we have the right number of arguments.
                 if callee.params.len() != call.args.len() {
@@ -2131,6 +2135,17 @@ pub fn typecheck_call(
                 // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
                 // type variable. For the moment, we'll just checked to see if it's a type variable.
                 return_ty = substitute_typevars_in_type(return_ty, &generic_inferences, project);
+
+                for generic_typevar in &callee.generic_parameters {
+                    if let Some(substitution) = generic_inferences.get(&generic_typevar) {
+                        type_args.push(*substitution)
+                    } else {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "not all generic parameters have known types".into(),
+                            *span,
+                        )))
+                    }
+                }
             }
         }
     }
@@ -2140,6 +2155,7 @@ pub fn typecheck_call(
             namespace: call.namespace.clone(),
             name: call.name.clone(),
             args: checked_args,
+            type_args,
             linkage,
             ty: return_ty,
         },
@@ -2160,15 +2176,19 @@ pub fn typecheck_method_call(
     let mut error = None;
     let mut return_ty = UNKNOWN_TYPE_ID;
     let mut linkage = FunctionLinkage::Internal;
+    let mut type_args = vec![];
+
+    let mut generic_inferences = HashMap::new();
 
     let (callee, err) = resolve_call(call, span, project.structs[struct_id].scope_id, project);
     error = error.or(err);
 
     if let Some(callee) = callee {
+        // Borrow checker workaround, would be nice to clean this up
+        let callee = callee.clone();
+
         return_ty = callee.return_type;
         linkage = callee.linkage;
-
-        let mut generic_inferences = HashMap::new();
 
         // Before we check the method, let's go ahead and make sure we know any instantiated generic types
         // This will make it easier later to know how to create the proper return type
@@ -2255,6 +2275,17 @@ pub fn typecheck_method_call(
         // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
         // type variable. For the moment, we'll just checked to see if it's a type variable.
         return_ty = substitute_typevars_in_type(return_ty, &generic_inferences, project);
+
+        for generic_typevar in &callee.generic_parameters {
+            if let Some(substitution) = generic_inferences.get(&generic_typevar) {
+                type_args.push(*substitution)
+            } else {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "not all generic parameters have known types".into(),
+                    *span,
+                )))
+            }
+        }
     }
 
     (
@@ -2262,6 +2293,7 @@ pub fn typecheck_method_call(
             namespace: Vec::new(),
             name: call.name.clone(),
             args: checked_args,
+            type_args,
             linkage,
             ty: return_ty,
         },
