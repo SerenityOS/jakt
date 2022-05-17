@@ -39,7 +39,7 @@ pub enum ExpressionKind {
 pub enum UncheckedType {
     Name(String, Span),
     GenericType(String, Vec<UncheckedType>, Span),
-    Vector(Box<UncheckedType>, Span),
+    Array(Box<UncheckedType>, Span),
     Optional(Box<UncheckedType>, Span),
     RawPtr(Box<UncheckedType>, Span),
     Empty,
@@ -182,7 +182,7 @@ pub enum Expression {
     NumericConstant(NumericConstant, Span),
     QuotedString(String, Span),
     CharacterLiteral(char, Span),
-    Vector(Vec<Expression>, Option<Box<Expression>>, Span),
+    Array(Vec<Expression>, Option<Box<Expression>>, Span),
     IndexedExpression(Box<Expression>, Box<Expression>, Span),
     UnaryOp(Box<Expression>, UnaryOperator, Span),
     BinaryOp(Box<Expression>, BinaryOperator, Box<Expression>, Span),
@@ -216,7 +216,7 @@ impl Expression {
             Expression::NumericConstant(_, span) => *span,
             Expression::QuotedString(_, span) => *span,
             Expression::CharacterLiteral(_, span) => *span,
-            Expression::Vector(_, _, span) => *span,
+            Expression::Array(_, _, span) => *span,
             Expression::Tuple(_, span) => *span,
             Expression::Range(_, _, span) => *span,
             Expression::IndexedExpression(_, _, span) => *span,
@@ -631,8 +631,12 @@ pub fn parse_struct(
                         TokenContents::Name(name) if name == "fun" => {
                             // Lets parse a method
 
-                            let (fun_decl, err) =
-                                parse_function(tokens, index, FunctionLinkage::Internal);
+                            let function_linkage = match definition_linkage {
+                                DefinitionLinkage::Internal => FunctionLinkage::Internal,
+                                DefinitionLinkage::External => FunctionLinkage::External,
+                            };
+
+                            let (fun_decl, err) = parse_function(tokens, index, function_linkage);
                             error = error.or(err);
 
                             methods.push(fun_decl);
@@ -2641,7 +2645,7 @@ pub fn parse_vector(tokens: &[Token], index: &mut usize) -> (Expression, Option<
                     fill_size_expr = Some(Box::new(expr));
                 } else {
                     error = error.or(Some(JaktError::ParserError(
-                        "Can't fill a Vector with more than one expression".to_string(),
+                        "Can't fill an Array with more than one expression".to_string(),
                         tokens[*index].span,
                     )));
                 }
@@ -2659,7 +2663,7 @@ pub fn parse_vector(tokens: &[Token], index: &mut usize) -> (Expression, Option<
     let end = *index - 1;
 
     (
-        Expression::Vector(
+        Expression::Array(
             output,
             fill_size_expr,
             Span {
@@ -2773,7 +2777,7 @@ pub fn parse_vector_type(
     tokens: &[Token],
     index: &mut usize,
 ) -> (UncheckedType, Option<JaktError>) {
-    // [T] is shorthand for Vector<T>
+    // [T] is shorthand for Array<T>
     if *index + 2 >= tokens.len() {
         return (UncheckedType::Empty, None);
     }
@@ -2781,7 +2785,7 @@ pub fn parse_vector_type(
     if let TokenContents::LSquare = &tokens[*index].contents {
         if let TokenContents::RSquare = &tokens[*index + 2].contents {
             if let TokenContents::Name(name) = &tokens[*index + 1].contents {
-                let unchecked_type = UncheckedType::Vector(
+                let unchecked_type = UncheckedType::Array(
                     Box::new(UncheckedType::Name(name.clone(), tokens[*index + 1].span)),
                     Span {
                         file_id: start.file_id,
@@ -2810,7 +2814,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
     let (vector_type, err) = parse_vector_type(tokens, index);
     error = error.or(err);
 
-    if let UncheckedType::Vector(..) = &vector_type {
+    if let UncheckedType::Array(..) = &vector_type {
         return (vector_type, error);
     }
 

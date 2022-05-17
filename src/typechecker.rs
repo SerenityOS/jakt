@@ -507,7 +507,7 @@ pub enum CheckedExpression {
     ),
     Tuple(Vec<CheckedExpression>, Span, TypeId),
     Range(Box<CheckedExpression>, Box<CheckedExpression>, Span, TypeId),
-    Vector(
+    Array(
         Vec<CheckedExpression>,
         Option<Box<CheckedExpression>>,
         Span,
@@ -540,7 +540,7 @@ impl CheckedExpression {
             CheckedExpression::CharacterConstant(_, _) => CCHAR_TYPE_ID, // use the C one for now
             CheckedExpression::UnaryOp(_, _, _, ty) => *ty,
             CheckedExpression::BinaryOp(_, _, _, _, ty) => *ty,
-            CheckedExpression::Vector(_, _, _, ty) => *ty,
+            CheckedExpression::Array(_, _, _, ty) => *ty,
             CheckedExpression::Tuple(_, _, ty) => *ty,
             CheckedExpression::Range(_, _, _, ty) => *ty,
             CheckedExpression::IndexedExpression(_, _, _, ty) => *ty,
@@ -1439,7 +1439,7 @@ pub fn typecheck_expression(
                 )
             }
         }
-        Expression::Vector(vec, fill_size_expr, span) => {
+        Expression::Array(vec, fill_size_expr, span) => {
             let mut inner_ty = UNKNOWN_TYPE_ID;
             let mut output = Vec::new();
 
@@ -1470,14 +1470,14 @@ pub fn typecheck_expression(
             }
 
             let vector_struct_id = project
-                .find_struct_in_scope(0, "RefVector")
-                .expect("internal error: RefVector builtin definition not found");
+                .find_struct_in_scope(0, "Array")
+                .expect("internal error: Array builtin definition not found");
 
             let type_id = project
                 .find_or_add_type_id(Type::GenericInstance(vector_struct_id, vec![inner_ty]));
 
             (
-                CheckedExpression::Vector(output, checked_fill_size_expr, *span, type_id),
+                CheckedExpression::Array(output, checked_fill_size_expr, *span, type_id),
                 error,
             )
         }
@@ -1516,8 +1516,8 @@ pub fn typecheck_expression(
             let mut expr_ty = UNKNOWN_TYPE_ID;
 
             let vector_struct_id = project
-                .find_struct_in_scope(0, "RefVector")
-                .expect("internal error: RefVector builtin definition not found");
+                .find_struct_in_scope(0, "Array")
+                .expect("internal error: Array builtin definition not found");
 
             let ty = &project.types[checked_expr.ty()];
             match ty {
@@ -2479,13 +2479,13 @@ pub fn typecheck_typename(
             }
         },
         UncheckedType::Empty => (UNKNOWN_TYPE_ID, None),
-        UncheckedType::Vector(inner, _) => {
+        UncheckedType::Array(inner, _) => {
             let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
             let vector_struct_id = project
-                .find_struct_in_scope(0, "RefVector")
-                .expect("internal error: RefVector builtin definition not found");
+                .find_struct_in_scope(0, "Array")
+                .expect("internal error: Array builtin definition not found");
 
             let type_id = project
                 .find_or_add_type_id(Type::GenericInstance(vector_struct_id, vec![inner_ty]));

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <AK/Array.h>
+#include <AK/LinearArray.h>
 #include <AK/Assertions.h>
 #include <AK/Span.h>
 #include <AK/Types.h>
@@ -122,7 +122,7 @@ inline Optional<size_t> memmem_optional(void const* haystack, size_t haystack_le
     }
 
     // Fallback to KMP.
-    Array<Span<const u8>, 1> spans { Span<const u8> { (u8 const*)haystack, haystack_length } };
+    LinearArray<Span<const u8>, 1> spans { Span<const u8> { (u8 const*)haystack, haystack_length } };
     return memmem(spans.begin(), spans.end(), { (u8 const*)needle, needle_length });
 }
 

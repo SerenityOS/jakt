@@ -8,7 +8,7 @@
 
 #include <AK/AllOf.h>
 #include <AK/AnyOf.h>
-#include <AK/Array.h>
+#include <AK/LinearArray.h>
 #include <AK/StdLibExtras.h>
 #include <AK/StringView.h>
 
@@ -73,7 +73,7 @@ consteval auto count_fmt_params(char const (&fmt)[N])
 {
     struct {
         // FIXME: Switch to variable-sized storage whenever we can come up with one :)
-        Array<size_t, 128> used_arguments { 0 };
+        LinearArray<size_t, 128> used_arguments { 0 };
         size_t total_used_argument_count { 0 };
         size_t next_implicit_argument_index { 0 };
         bool has_explicit_argument_references { false };
@@ -82,7 +82,7 @@ consteval auto count_fmt_params(char const (&fmt)[N])
         size_t extra_closed_braces { 0 };
         size_t nesting_level { 0 };
 
-        Array<size_t, 4> last_format_specifier_start { 0 };
+        LinearArray<size_t, 4> last_format_specifier_start { 0 };
         size_t total_used_last_format_specifier_start_count { 0 };
     } result;
 
@@ -190,7 +190,7 @@ private:
         // otherwise, the check above covers this check too, as implicit refs
         // monotonically increase, and cannot have 'gaps'.
         if (check.has_explicit_argument_references) {
-            auto all_parameters = iota_array<size_t, param_count>(0);
+            auto all_parameters = iota_LinearArray<size_t, param_count>(0);
             constexpr auto contains = [](auto begin, auto end, auto entry) {
                 for (; begin != end; begin++) {
                     if (*begin == entry)

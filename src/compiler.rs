@@ -126,23 +126,23 @@ impl Compiler {
     pub fn prelude() -> Vec<u8> {
         r#"
 extern class String {
-    fun split(this, anon c: c_char) -> [String] {}
-    fun characters(this) -> raw c_char {}
-    fun to_lowercase(this) -> String {}
-    fun to_uppercase(this) -> String {}
-    fun is_empty(this) -> bool {}
-    fun length(this) -> usize {}
+    fun split(this, anon c: c_char) -> [String]
+    fun characters(this) -> raw c_char
+    fun to_lowercase(this) -> String
+    fun to_uppercase(this) -> String
+    fun is_empty(this) -> bool
+    fun length(this) -> usize
 }
 
-extern class RefVector<T> {
-    fun size(this) -> usize {}
-    fun resize(mut this, anon size: usize) {}
-    fun pop(mut this) -> T? {}
+extern class Array<T> {
+    fun size(this) -> usize
+    fun resize(mut this, anon size: usize)
+    fun pop(mut this) -> T?
 }
 
 extern class Optional<T> {
-    fun has_value(this) -> bool {}
-    fun Optional<S>(anon x: S) -> Optional<S> {}
+    fun has_value(this) -> bool
+    fun Optional<S>(anon x: S) -> Optional<S>
 }
 
 extern class Tuple {}
