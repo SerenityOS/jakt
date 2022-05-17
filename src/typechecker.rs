@@ -859,12 +859,7 @@ fn typecheck_struct(
     }
 
     for fun in &structure.methods {
-        error = error.or(typecheck_method(
-            fun,
-            checked_struct_scope_id,
-            project,
-            struct_id,
-        ));
+        error = error.or(typecheck_method(fun, project, struct_id));
     }
 
     error
@@ -999,7 +994,6 @@ fn typecheck_fun(
 
 fn typecheck_method(
     fun: &Function,
-    parent_scope_id: ScopeId,
     project: &mut Project,
     struct_id: StructId,
 ) -> Option<JaktError> {
@@ -1030,7 +1024,7 @@ fn typecheck_method(
     let (block, err) = typecheck_block(&fun.block, function_scope_id, project, SafetyMode::Safe);
     error = error.or(err);
 
-    let (fun_return_type, err) = typecheck_typename(&fun.return_type, parent_scope_id, project);
+    let (fun_return_type, err) = typecheck_typename(&fun.return_type, function_scope_id, project);
     error = error.or(err);
 
     // If the return type is unknown, and the function starts with a return statement,
@@ -1603,7 +1597,7 @@ pub fn typecheck_expression(
 
             let checked_expr_ty = &project.types[checked_expr.ty()];
             match checked_expr_ty {
-                Type::Struct(struct_id) => {
+                Type::GenericInstance(struct_id, _) | Type::Struct(struct_id) => {
                     let structure = &project.structs[*struct_id];
 
                     for member in &structure.fields {
@@ -2067,6 +2061,7 @@ pub fn typecheck_call(
                 let callee = callee.clone();
 
                 return_ty = callee.return_type;
+
                 linkage = callee.linkage;
 
                 // Check that we have the right number of arguments.
@@ -2322,6 +2317,20 @@ pub fn substitute_typevars_in_type(
             }
 
             return project.find_or_add_type_id(Type::GenericInstance(struct_id, new_args));
+        }
+        Type::Struct(struct_id) => {
+            let struct_id = *struct_id;
+            let structure = &project.structs[struct_id];
+
+            if !structure.generic_parameters.is_empty() {
+                let mut new_args = structure.generic_parameters.clone();
+
+                for arg in &mut new_args {
+                    *arg = substitute_typevars_in_type(*arg, generic_inferences, project);
+                }
+
+                return project.find_or_add_type_id(Type::GenericInstance(struct_id, new_args));
+            }
         }
         _ => {}
     }

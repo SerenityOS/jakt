@@ -548,8 +548,8 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             if !var_decl.mutable {
                 output.push_str("const ");
             }
-            //output.push_str(&codegen_type(var_decl.ty, project));
-            output.push_str("auto ");
+            output.push_str(&codegen_type(var_decl.ty, project));
+            output.push(' ');
             output.push_str(&var_decl.name);
             output.push_str(" = ");
             output.push_str(&codegen_expr(indent, expr, project));
@@ -706,7 +706,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     let type_id = call.ty;
                     let ty = &project.types[type_id];
                     match ty {
-                        Type::Struct(struct_id) => {
+                        Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
                             let structure = &project.structs[*struct_id];
 
                             if structure.definition_type == DefinitionType::Class {

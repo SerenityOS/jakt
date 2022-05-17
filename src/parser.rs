@@ -2046,7 +2046,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                                     let span = Span {
                                         file_id: expr.span().file_id,
                                         start: expr.span().start,
-                                        end: tokens[*index].span.end,
+                                        end: tokens[*index - 1].span.end,
                                     };
 
                                     expr = Expression::IndexedStruct(
