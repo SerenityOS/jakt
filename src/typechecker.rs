@@ -1243,12 +1243,19 @@ pub fn typecheck_expression(
 
     match expr {
         Expression::Range(start_expr, end_expr, span) => {
-            let (checked_start, err) =
+            let (mut checked_start, err) =
                 typecheck_expression(&start_expr, scope_id, project, safety_mode);
             error = error.or(err);
 
-            let (checked_end, err) =
+            let (mut checked_end, err) =
                 typecheck_expression(&end_expr, scope_id, project, safety_mode);
+            error = error.or(err);
+
+            // If the range starts or ends at a constant number, we try promoting the constant to the
+            // type of the other end. This makes ranges like `0..array.size()` (as the 0 becomes 0uz).
+            let err = try_promote_constant_expr_to_type(checked_start.ty(), &mut checked_end, span);
+            error = error.or(err);
+            let err = try_promote_constant_expr_to_type(checked_end.ty(), &mut checked_start, span);
             error = error.or(err);
 
             if checked_start.ty() != checked_end.ty() {
