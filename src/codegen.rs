@@ -266,7 +266,7 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
     output.push('(');
 
     if fun.name == "main" && fun.params.is_empty() {
-        output.push_str("RefVector<String>");
+        output.push_str("Array<String>");
     }
 
     let mut first = true;
@@ -911,9 +911,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
             output.push(')');
         }
-        CheckedExpression::Vector(vals, fill_size_expr, _, _) => {
+        CheckedExpression::Array(vals, fill_size_expr, _, _) => {
             if let Some(fill_size_expr) = fill_size_expr {
-                output.push_str("(RefVector<");
+                output.push_str("(Array<");
                 output.push_str(&codegen_type(vals.first().unwrap().ty(), project));
                 output.push_str(">::filled(");
                 output.push_str(&codegen_expr(indent, fill_size_expr, project));
@@ -921,8 +921,8 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 output.push_str(&codegen_expr(indent, vals.first().unwrap(), project));
                 output.push_str("))");
             } else {
-                // (RefVector({1, 2, 3}))
-                output.push_str("(RefVector({");
+                // (Array({1, 2, 3}))
+                output.push_str("(Array({");
                 let mut first = true;
                 for val in vals {
                     if !first {

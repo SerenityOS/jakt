@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <AK/Array.h>
+#include <AK/LinearArray.h>
 #include <AK/Assertions.h>
 #include <AK/Iterator.h>
 #include <AK/TypedTransfer.h>
@@ -35,7 +35,7 @@ public:
     }
 
     template<size_t size>
-    ALWAYS_INLINE constexpr Span(Array<T, size>& array)
+    ALWAYS_INLINE constexpr Span(LinearArray<T, size>& array)
         : m_values(array.data())
         , m_size(size)
     {
@@ -43,7 +43,7 @@ public:
 
     template<size_t size>
     requires(IsConst<T>)
-        ALWAYS_INLINE constexpr Span(Array<T, size> const& array)
+        ALWAYS_INLINE constexpr Span(LinearArray<T, size> const& array)
         : m_values(array.data())
         , m_size(size)
     {

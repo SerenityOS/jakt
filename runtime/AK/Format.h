@@ -10,7 +10,7 @@
 
 #include <AK/AllOf.h>
 #include <AK/AnyOf.h>
-#include <AK/Array.h>
+#include <AK/LinearArray.h>
 #include <AK/Error.h>
 #include <AK/FixedPoint.h>
 #include <AK/Forward.h>
@@ -270,7 +270,7 @@ public:
     }
 
 private:
-    Array<TypeErasedParameter, sizeof...(Parameters)> m_data;
+    LinearArray<TypeErasedParameter, sizeof...(Parameters)> m_data;
 };
 
 // We use the same format for most types for consistency. This is taken directly from

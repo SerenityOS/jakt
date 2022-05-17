@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <AK/Array.h>
+#include <AK/LinearArray.h>
 #include <AK/BitCast.h>
 #include <AK/StdLibExtras.h>
 #include <AK/TypeList.h>
@@ -427,8 +427,8 @@ public:
     }
 
 private:
-    static constexpr auto data_size = Detail::integer_sequence_generate_array<size_t>(0, IntegerSequence<size_t, sizeof(Ts)...>()).max();
-    static constexpr auto data_alignment = Detail::integer_sequence_generate_array<size_t>(0, IntegerSequence<size_t, alignof(Ts)...>()).max();
+    static constexpr auto data_size = Detail::integer_sequence_generate_LinearArray<size_t>(0, IntegerSequence<size_t, sizeof(Ts)...>()).max();
+    static constexpr auto data_alignment = Detail::integer_sequence_generate_LinearArray<size_t>(0, IntegerSequence<size_t, alignof(Ts)...>()).max();
     using Helper = Detail::Variant<IndexType, 0, Ts...>;
     using VisitHelper = Detail::VisitImpl<IndexType, Ts...>;
 
