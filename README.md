@@ -348,8 +348,6 @@ To keep things safe, there are a few kinds of analysis we'd like to do (non-exha
 
 ## Error handling
 
-**(Not yet implemented)**
-
 Functions that can fail with an error instead of returning normally are marked with the `throws` keyword:
 
 ```jakt

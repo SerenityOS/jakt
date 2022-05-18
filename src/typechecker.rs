@@ -286,6 +286,7 @@ pub struct CheckedParameter {
 #[derive(Debug, Clone)]
 pub struct CheckedFunction {
     pub name: String,
+    pub throws: bool,
     pub return_type: TypeId,
     pub params: Vec<CheckedParameter>,
     pub generic_parameters: Vec<TypeId>,
@@ -349,6 +350,7 @@ pub enum CheckedStatement {
     For(String, CheckedExpression, CheckedBlock),
     Break,
     Continue,
+    Throw(CheckedExpression),
     Garbage,
 }
 
@@ -613,6 +615,7 @@ impl CheckedExpression {
 pub struct CheckedCall {
     pub namespace: Vec<String>,
     pub name: String,
+    pub callee_throws: bool,
     pub args: Vec<(String, CheckedExpression)>,
     pub type_args: Vec<TypeId>,
     pub linkage: FunctionLinkage,
@@ -748,6 +751,7 @@ fn typecheck_struct_predecl(
         let mut checked_function = CheckedFunction {
             name: function.name.clone(),
             params: vec![],
+            throws: false,
             return_type: UNKNOWN_TYPE_ID,
             function_scope_id: method_scope_id,
             generic_parameters,
@@ -868,6 +872,7 @@ fn typecheck_struct(
 
         let checked_constructor = CheckedFunction {
             name: structure.name.clone(),
+            throws: false,
             return_type: struct_type_id,
             params: constructor_params,
             function_scope_id,
@@ -912,6 +917,7 @@ fn typecheck_fun_predecl(
     let mut checked_function = CheckedFunction {
         name: function.name.clone(),
         params: vec![],
+        throws: function.throws,
         return_type: UNKNOWN_TYPE_ID,
         function_scope_id,
         generic_parameters: vec![],
@@ -1126,6 +1132,13 @@ pub fn typecheck_statement(
     let mut error = None;
 
     match stmt {
+        Statement::Throw(expr) => {
+            let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
+            error = error.or(err);
+
+            // FIXME: Verify that the expression produces an Error
+            (CheckedStatement::Throw(checked_expr), error)
+        }
         Statement::For(iterator_name, range_expr, block) => {
             let (checked_expr, err) =
                 typecheck_expression(range_expr, scope_id, project, safety_mode);
@@ -2189,6 +2202,7 @@ pub fn typecheck_call(
     let mut linkage = FunctionLinkage::Internal;
     let mut generic_substitutions = HashMap::new();
     let mut type_args = vec![];
+    let mut callee_throws = false;
 
     match call.name.as_str() {
         "println" | "eprintln" => {
@@ -2216,6 +2230,8 @@ pub fn typecheck_call(
             if let Some(callee) = callee {
                 // Borrow checker workaround, would be nice to clean this up
                 let callee = callee.clone();
+
+                callee_throws = callee.throws;
 
                 // If the user gave us explicit type arguments, let's use them in our substitutions
                 for (idx, type_arg) in call.type_args.iter().enumerate() {
@@ -2317,6 +2333,7 @@ pub fn typecheck_call(
         CheckedCall {
             namespace: call.namespace.clone(),
             name: call.name.clone(),
+            callee_throws,
             args: checked_args,
             type_args,
             linkage,
@@ -2340,6 +2357,7 @@ pub fn typecheck_method_call(
     let mut return_ty = UNKNOWN_TYPE_ID;
     let mut linkage = FunctionLinkage::Internal;
     let mut type_args = vec![];
+    let mut callee_throws = false;
 
     let mut generic_inferences = HashMap::new();
 
@@ -2352,6 +2370,7 @@ pub fn typecheck_method_call(
 
         return_ty = callee.return_type;
         linkage = callee.linkage;
+        callee_throws = callee.throws;
 
         // Check our 'this' pointer for the correct mutability
         if let Some(checked_param) = callee.params.get(0) {
@@ -2465,6 +2484,7 @@ pub fn typecheck_method_call(
         CheckedCall {
             namespace: Vec::new(),
             name: call.name.clone(),
+            callee_throws,
             args: checked_args,
             type_args,
             linkage,

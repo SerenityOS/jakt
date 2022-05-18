@@ -93,7 +93,7 @@ inline String runtime_helper_number_to_string(i64 number)
     return String::number(number);
 }
 
-int __jakt_main(Array<String>);
+ErrorOr<int> _jakt_main(Array<String>);
 
 template<typename T>
 inline constexpr T __arithmetic_shift_right(T value, size_t steps)
@@ -130,5 +130,10 @@ int main(int argc, char** argv)
     for (int i = 0; i < argc; ++i) {
         args.push(argv[i]);
     }
-    return __jakt_main(move(args));
+    auto result = _jakt_main(move(args));
+    if (result.is_error()) {
+        warnln("Runtime error: {}", result.error());
+        return 1;
+    }
+    return result.value();
 }

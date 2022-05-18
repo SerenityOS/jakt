@@ -115,6 +115,7 @@ pub struct Function {
     pub params: Vec<Parameter>,
     pub generic_parameters: Vec<(String, Span)>,
     pub block: Block,
+    pub throws: bool,
     pub return_type: UncheckedType,
     pub linkage: FunctionLinkage,
 }
@@ -144,6 +145,7 @@ impl Function {
             params: Vec::new(),
             generic_parameters: Vec::new(),
             block: Block::new(),
+            throws: false,
             return_type: UncheckedType::Empty,
             linkage,
         }
@@ -164,6 +166,7 @@ pub enum Statement {
     Break,
     Continue,
     Return(Expression),
+    Throw(Expression),
     Garbage,
 }
 
@@ -929,6 +932,18 @@ pub fn parse_function(
                     )));
                 }
 
+                let mut throws = false;
+
+                if *index + 1 < tokens.len() {
+                    match &tokens[*index].contents {
+                        TokenContents::Name(name) if name == "throws" => {
+                            *index += 1;
+                            throws = true;
+                        }
+                        _ => {}
+                    }
+                }
+
                 let mut return_type = UncheckedType::Empty;
 
                 let mut fat_arrow_expr = None;
@@ -1005,6 +1020,7 @@ pub fn parse_function(
                             params,
                             generic_parameters,
                             block: Block::new(),
+                            throws,
                             return_type,
                             linkage,
                         },
@@ -1029,6 +1045,7 @@ pub fn parse_function(
                         params,
                         generic_parameters,
                         block,
+                        throws,
                         return_type,
                         linkage,
                     },
@@ -1119,6 +1136,17 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
     let mut error = None;
 
     match &tokens[*index].contents {
+        TokenContents::Name(name) if name == "throw" => {
+            trace!("parsing throw");
+
+            *index += 1;
+
+            let (expr, err) =
+                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+            error = error.or(err);
+
+            (Statement::Throw(expr), error)
+        }
         TokenContents::Name(name) if name == "defer" => {
             trace!("parsing defer");
 

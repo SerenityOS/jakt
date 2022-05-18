@@ -51,3 +51,7 @@ extern class Dictionary<K, V> {
 extern class Tuple {}
 
 extern class Range {}
+
+extern class Error {
+    function from_errno(anon errno: i32)
+}
