@@ -146,6 +146,10 @@ extern class Optional<T> {
     fun Optional<S>(anon x: S) -> Optional<S>
 }
 
+extern class Dictionary<K, V> {
+    fun get(this, key: K) -> V?
+ }
+
 extern class Tuple {}
 
 extern class Range {}

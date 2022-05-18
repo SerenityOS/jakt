@@ -186,6 +186,7 @@ pub enum Expression {
     QuotedString(String, Span),
     CharacterLiteral(char, Span),
     Array(Vec<Expression>, Option<Box<Expression>>, Span),
+    Dictionary(Vec<(Expression, Expression)>, Span),
     IndexedExpression(Box<Expression>, Box<Expression>, Span),
     UnaryOp(Box<Expression>, UnaryOperator, Span),
     BinaryOp(Box<Expression>, BinaryOperator, Box<Expression>, Span),
@@ -220,6 +221,7 @@ impl Expression {
             Expression::QuotedString(_, span) => *span,
             Expression::CharacterLiteral(_, span) => *span,
             Expression::Array(_, _, span) => *span,
+            Expression::Dictionary(_, span) => *span,
             Expression::Tuple(_, span) => *span,
             Expression::Range(_, _, span) => *span,
             Expression::IndexedExpression(_, _, span) => *span,
@@ -1687,7 +1689,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
             expr
         }
         TokenContents::LSquare => {
-            let (expr, err) = parse_vector(tokens, index);
+            let (expr, err) = parse_array(tokens, index);
             error = error.or(err);
             expr
         }
@@ -2605,10 +2607,13 @@ pub fn parse_operator_with_assignment(
     }
 }
 
-pub fn parse_vector(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
+pub fn parse_array(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
     let mut error = None;
 
     let mut output = Vec::new();
+    let mut dict_output = Vec::new();
+
+    let mut is_dictionary = false;
 
     let start;
     if *index < tokens.len() {
@@ -2678,25 +2683,72 @@ pub fn parse_vector(tokens: &[Token], index: &mut usize) -> (Expression, Option<
                     parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
                 error = error.or(err);
 
-                output.push(expr);
+                if *index < tokens.len() {
+                    if tokens[*index].contents == TokenContents::Colon {
+                        if !output.is_empty() {
+                            error = error.or(Some(JaktError::ParserError(
+                                "mixing dictionary and array values".to_string(),
+                                tokens[*index].span,
+                            )))
+                        }
+
+                        is_dictionary = true;
+
+                        *index += 1;
+
+                        if *index < tokens.len() {
+                            let (value, err) = parse_expression(
+                                tokens,
+                                index,
+                                ExpressionKind::ExpressionWithoutAssignment,
+                            );
+                            error = error.or(err);
+
+                            dict_output.push((expr, value));
+                        } else {
+                            error = error.or(Some(JaktError::ParserError(
+                                "key missing value in dictionary".to_string(),
+                                tokens[*index - 1].span,
+                            )))
+                        }
+                    } else if !is_dictionary {
+                        output.push(expr);
+                    }
+                } else if !is_dictionary {
+                    output.push(expr);
+                }
             }
         }
     }
 
     let end = *index - 1;
 
-    (
-        Expression::Array(
-            output,
-            fill_size_expr,
-            Span {
-                file_id: tokens[start].span.file_id,
-                start: tokens[start].span.start,
-                end: tokens[end].span.end,
-            },
-        ),
-        error,
-    )
+    if is_dictionary {
+        (
+            Expression::Dictionary(
+                dict_output,
+                Span {
+                    file_id: tokens[start].span.file_id,
+                    start: tokens[start].span.start,
+                    end: tokens[end].span.end,
+                },
+            ),
+            error,
+        )
+    } else {
+        (
+            Expression::Array(
+                output,
+                fill_size_expr,
+                Span {
+                    file_id: tokens[start].span.file_id,
+                    start: tokens[start].span.start,
+                    end: tokens[end].span.end,
+                },
+            ),
+            error,
+        )
+    }
 }
 
 pub fn parse_variable_declaration(
@@ -2796,10 +2848,7 @@ pub fn parse_variable_declaration(
     }
 }
 
-pub fn parse_vector_type(
-    tokens: &[Token],
-    index: &mut usize,
-) -> (UncheckedType, Option<JaktError>) {
+pub fn parse_array_type(tokens: &[Token], index: &mut usize) -> (UncheckedType, Option<JaktError>) {
     // [T] is shorthand for Array<T>
     if *index + 2 >= tokens.len() {
         return (UncheckedType::Empty, None);
@@ -2834,7 +2883,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
 
     trace!(format!("parse_typename: {:?}", tokens[*index]));
 
-    let (vector_type, err) = parse_vector_type(tokens, index);
+    let (vector_type, err) = parse_array_type(tokens, index);
     error = error.or(err);
 
     if let UncheckedType::Array(..) = &vector_type {
