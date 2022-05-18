@@ -40,7 +40,7 @@ impl Compiler {
         }
     }
 
-    pub fn include_prelude(&mut self, project: &mut Project) {
+    pub fn include_prelude(&mut self, project: &mut Project) -> Option<JaktError> {
         // First, let's make types for all the builtin types
         // This order *must* match the order of the constants the typechecker expects
         project.types.resize(STRING_TYPE_ID + 1, Type::Builtin);
@@ -58,13 +58,19 @@ impl Compiler {
         let (file, _) = parse_file(&lexed);
 
         // Scope ID 0 is the global project-level scope that all files can see
-        typecheck_file(&file, 0, project);
+        typecheck_file(&file, 0, project)
     }
 
     pub fn convert_to_cpp(&mut self, fname: &Path) -> Result<String, JaktError> {
         let mut project = Project::new();
 
-        self.include_prelude(&mut project);
+        let err = self.include_prelude(&mut project);
+        match err {
+            Some(err) => {
+                return Err(err);
+            }
+            _ => {}
+        }
 
         let contents = std::fs::read(fname)?;
 
@@ -147,7 +153,8 @@ extern class Optional<T> {
 }
 
 extern class Dictionary<K, V> {
-    fun get(this, key: K) -> V?
+    fun get(this, anon key: K) -> V?
+    fun contains(this, anon key: K) -> bool
  }
 
 extern class Tuple {}

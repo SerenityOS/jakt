@@ -410,7 +410,7 @@ fn codegen_struct_type(type_id: TypeId, project: &Project) -> String {
     }
 }
 
-fn codegen_type(type_id: TypeId, project: &Project) -> String {
+pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
     let ty = &project.types[type_id];
     match ty {
         Type::RawPtr(ty) => {
