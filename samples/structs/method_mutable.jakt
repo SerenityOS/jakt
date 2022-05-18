@@ -15,5 +15,5 @@ fun main() {
 
     rect.grow()
 
-    println(rect.area())
+    println("{}", rect.area())
 }

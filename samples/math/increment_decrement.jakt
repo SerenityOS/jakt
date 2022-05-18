@@ -1,11 +1,11 @@
 fun main() {
     let mut x = 10
 
-    println(++x)
-    println(x++)
-    println(x)
+    println("{}", ++x)
+    println("{}", x++)
+    println("{}", x)
 
-    println(--x)
-    println(x--)
-    println(x)
+    println("{}", --x)
+    println("{}", x--)
+    println("{}", x)
 }

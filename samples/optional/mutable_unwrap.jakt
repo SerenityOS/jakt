@@ -16,5 +16,5 @@ fun main() {
 
     opt_foo!.set(value: 2)
 
-    println(opt_foo!.get())
+    println("{}", opt_foo!.get())
 }

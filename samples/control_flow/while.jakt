@@ -2,7 +2,7 @@ fun main() {
     let mut x: i64 = 10
 
     while (x > 0) {
-        println(x)
+        println("{}", x)
         x = x - 1
     }
 }

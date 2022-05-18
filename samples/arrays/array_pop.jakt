@@ -3,5 +3,5 @@ fun main() {
 
     let last = v.pop()
 
-    println(last!)
+    println("{}", last!)
 }

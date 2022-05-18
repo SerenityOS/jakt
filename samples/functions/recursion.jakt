@@ -3,7 +3,7 @@ fun main() {
 }
 
 fun recurse(count: i64) {
-    println(count)
+    println("{}", count)
     if count > 0 {
         recurse(count: count - 1)
     }

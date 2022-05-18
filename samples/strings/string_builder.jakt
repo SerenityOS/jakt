@@ -9,5 +9,5 @@ fun main() {
     s.append("abc".characters());
     s.append("123".characters());
 
-    println(s.to_string())
+    println("{}", s.to_string())
 }

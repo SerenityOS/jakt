@@ -7,11 +7,11 @@ fun main() {
     let f = -127 as truncated i8
     let g = 128 as truncated i8
 
-    println(a)
-    println(b)
-    println(c)
-    println(d)
-    println(e)
-    println(f)
-    println(g)
+    println("{}", a)
+    println("{}", b)
+    println("{}", c)
+    println("{}", d)
+    println("{}", e)
+    println("{}", f)
+    println("{}", g)
 }

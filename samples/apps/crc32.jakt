@@ -41,5 +41,5 @@ fun main(args: [String]) {
     }
 
     let digest = ~state
-    println(digest)
+    println("{}", digest)
 }

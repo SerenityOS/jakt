@@ -692,15 +692,21 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         }
         CheckedExpression::Call(call, ..) => {
             if call.name == "println" {
-                output.push_str("outln(\"{}\", ");
-                for param in &call.args {
+                output.push_str("outln(");
+                for (i, param) in call.args.iter().enumerate() {
                     output.push_str(&codegen_expr(indent, &param.1, project));
+                    if i != call.args.len() - 1 {
+                        output.push(',');
+                    }
                 }
                 output.push(')');
             } else if call.name == "eprintln" {
-                output.push_str("warnln(\"{}\", ");
-                for param in &call.args {
+                output.push_str("warnln(");
+                for (i, param) in call.args.iter().enumerate() {
                     output.push_str(&codegen_expr(indent, &param.1, project));
+                    if i != call.args.len() - 1 {
+                        output.push(',');
+                    }
                 }
                 output.push(')');
             } else {

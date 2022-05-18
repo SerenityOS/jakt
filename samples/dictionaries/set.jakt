@@ -3,5 +3,5 @@ fun main() {
 
     dict.set(key: "c", value: 3);
 
-    println(dict.get("c")!)
+    println("{}", dict.get("c")!)
 }

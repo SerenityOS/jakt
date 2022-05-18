@@ -1,5 +1,5 @@
 fun main() {
-    println(0b10000000)
-    println(0b111)
-    println(0b11111111111110101)
+    println("{}", 0b10000000)
+    println("{}", 0b111)
+    println("{}", 0b11111111111110101)
 }

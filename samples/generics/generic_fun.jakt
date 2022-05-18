@@ -1,5 +1,5 @@
 fun id<T>(anon x: T) => x
 
 fun main() {
-    println(id(3))
+    println("{}", id(3))
 }

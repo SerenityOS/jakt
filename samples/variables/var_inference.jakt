@@ -1,4 +1,4 @@
 fun main() {
     let mut x = 100
-    println(x)
+    println("{}", x)
 }

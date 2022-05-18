@@ -1,5 +1,5 @@
 fun main() {
     let vec = [1, 2, 3, 4]
 
-    println(vec.size())
+    println("{}", vec.size())
 }
