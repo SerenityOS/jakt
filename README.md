@@ -197,6 +197,20 @@ let values = [0; 256]
 let values = ["foo", "bar", "baz"]
 ```
 
+## Dictionaries
+
+- [x] Creating dictionaries
+- [x] Indexing dictionaries
+- [ ] Assigning into indexes (aka lvalue)
+
+```jakt
+fun main() {
+    let dict = ["a": 1, "b": 2]
+
+    println(dict["a"]!)
+}
+```
+
 ## Generics
 
 - [x] Generic types
