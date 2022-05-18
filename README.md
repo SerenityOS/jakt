@@ -275,7 +275,7 @@ There are four built-in casting operators in **jakt**.
 
 **(Not yet implemented)**
 
-```
+```jakt
 namespace Foo {
     fun bar() => 3
 }
@@ -289,7 +289,7 @@ fun main() {
 
 **(Not yet implemented)**
 
-```
+```jakt
 enum Node {
     I64(i64),
     Nothing,
@@ -306,6 +306,28 @@ fun main() {
     }
 }
 ```
+
+## Traits
+
+**(Not yet implemented)**
+
+To make generics a bit more powerful and expressive, you can add additional information to them:
+
+```jakt
+trait Hashable {
+    fun hash(self) -> i128
+}
+
+class Foo implements Hashable {
+    fun hash(self) => 42
+}
+
+type i64 implements Hashable {
+    fun hash(self) => 100
+}
+```
+
+The intention is that generics use traits to limit what is passed into a generic parameter, and also to grant that variable more capabilities in the body. It's not really intended to do vtable types of things (for that, just use a subclass)
 
 ## Error handling
 
