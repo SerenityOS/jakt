@@ -1,0 +1,4 @@
+fun main() {
+    let exes = String::repeated(character: 'x', count: 4)
+    println("{}Hello", exes);
+}
