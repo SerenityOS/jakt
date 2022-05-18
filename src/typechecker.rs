@@ -601,6 +601,9 @@ impl CheckedExpression {
             CheckedExpression::Var(var, _) => var.mutable,
             CheckedExpression::IndexedStruct(expr, _, _, _) => expr.is_mutable(),
             CheckedExpression::IndexedExpression(expr, _, _, _) => expr.is_mutable(),
+            CheckedExpression::IndexedTuple(expr, _, _, _) => expr.is_mutable(),
+            CheckedExpression::IndexedDictionary(expr, _, _, _) => expr.is_mutable(),
+            CheckedExpression::ForcedUnwrap(expr, _, _) => expr.is_mutable(),
             _ => false,
         }
     }
