@@ -155,6 +155,7 @@ extern class Optional<T> {
 extern class Dictionary<K, V> {
     fun get(this, anon key: K) -> V?
     fun contains(this, anon key: K) -> bool
+    fun set(mut this, key: K, value: V)
  }
 
 extern class Tuple {}

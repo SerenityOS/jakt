@@ -563,6 +563,32 @@ impl CheckedExpression {
         }
     }
 
+    pub fn span(&self) -> Span {
+        match self {
+            CheckedExpression::Boolean(_, span) => *span,
+            CheckedExpression::Call(_, span, _) => *span,
+            CheckedExpression::NumericConstant(_, span, _) => *span,
+            CheckedExpression::QuotedString(_, span) => *span,
+            CheckedExpression::CharacterConstant(_, span) => *span,
+            CheckedExpression::UnaryOp(_, _, span, _) => *span,
+            CheckedExpression::BinaryOp(_, _, _, span, _) => *span,
+            CheckedExpression::Dictionary(_, span, _) => *span,
+            CheckedExpression::Array(_, _, span, _) => *span,
+            CheckedExpression::Tuple(_, span, _) => *span,
+            CheckedExpression::Range(_, _, span, _) => *span,
+            CheckedExpression::IndexedDictionary(_, _, span, _) => *span,
+            CheckedExpression::IndexedExpression(_, _, span, _) => *span,
+            CheckedExpression::IndexedTuple(_, _, span, _) => *span,
+            CheckedExpression::IndexedStruct(_, _, span, _) => *span,
+            CheckedExpression::MethodCall(_, _, span, _) => *span,
+            CheckedExpression::Var(_, span) => *span,
+            CheckedExpression::OptionalNone(span, _) => *span,
+            CheckedExpression::OptionalSome(_, span, _) => *span,
+            CheckedExpression::ForcedUnwrap(_, span, _) => *span,
+            CheckedExpression::Garbage(span) => *span,
+        }
+    }
+
     pub fn to_integer_constant(&self) -> Option<IntegerConstant> {
         match self {
             CheckedExpression::NumericConstant(constant, _, _) => constant.integer_constant(),
@@ -2299,6 +2325,16 @@ pub fn typecheck_method_call(
         return_ty = callee.return_type;
         linkage = callee.linkage;
 
+        // Check our 'this' pointer for the correct mutability
+        if let Some(checked_param) = callee.params.get(0) {
+            if checked_param.variable.mutable && !this_expr.is_mutable() {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "call requires 'this' to be mutable".to_string(),
+                    this_expr.span(),
+                )))
+            }
+        }
+
         // Before we check the method, let's go ahead and make sure we know any instantiated generic types
         // This will make it easier later to know how to create the proper return type
         let type_id = this_expr.ty();
@@ -2349,7 +2385,7 @@ pub fn typecheck_method_call(
                             call.args[idx].1.span(),
                         )));
                     }
-                } else if callee.params[idx].requires_label
+                } else if callee.params[idx + 1].requires_label
                     && call.args[idx].0 != callee.params[idx + 1].variable.name
                 {
                     error = error.or(Some(JaktError::TypecheckError(
