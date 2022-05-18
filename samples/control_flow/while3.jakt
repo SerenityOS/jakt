@@ -1,0 +1,8 @@
+fun main() {
+    let mut x: i64 = 0
+
+    while (x < 10) {
+        println(x)
+        ++x
+    }
+}

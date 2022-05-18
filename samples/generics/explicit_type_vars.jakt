@@ -1,0 +1,7 @@
+fun main() {
+    let mut  item = Dictionary<String, i64>();
+
+    item.set(key: "bob", value: 123);
+
+    println(item.get("bob")!)
+}
