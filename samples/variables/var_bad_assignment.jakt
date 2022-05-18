@@ -1,4 +1,4 @@
-fun main() {
+function main() {
     let x: i64 = 100
     x += 1
     println("{}", x)

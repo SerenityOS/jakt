@@ -6,7 +6,7 @@ class Bar {
     y: i64
 }
 
-fun main() {
+function main() {
     let foo = Foo(x: 1)
 
     if foo is Foo {

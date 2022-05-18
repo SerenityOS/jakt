@@ -123,7 +123,7 @@ class Size {
     width: i64
     height: i64
 
-    pub fun area(this) => width * height
+    pub function area(this) => width * height
 }
 ```
 
@@ -143,7 +143,7 @@ There are three kinds of member functions:
 
 ```jakt
 class Foo {
-    fun func() => println("Hello!")
+    function func() => println("Hello!")
 }
 
 // Foo::func() can be called without an object.
@@ -154,7 +154,7 @@ Foo::func()
 
 ```jakt
 class Foo {
-    fun func(this) => println("Hello!")
+    function func(this) => println("Hello!")
 }
 
 // Foo::func() can only be called on an instance of Foo.
@@ -167,7 +167,7 @@ x.func()
 class Foo {
     x: i64
 
-    fun set(mut this, anon x: i64) {
+    function set(mut this, anon x: i64) {
         this.x = x
     }
 }
@@ -284,7 +284,7 @@ There are four built-in casting operators in **jakt**.
 
 ```jakt
 namespace Foo {
-    fun bar() => 3
+    function bar() => 3
 }
 
 fun main() {
@@ -322,15 +322,15 @@ To make generics a bit more powerful and expressive, you can add additional info
 
 ```jakt
 trait Hashable {
-    fun hash(self) -> i128
+    function hash(self) -> i128
 }
 
 class Foo implements Hashable {
-    fun hash(self) => 42
+    function hash(self) => 42
 }
 
 type i64 implements Hashable {
-    fun hash(self) => 100
+    function hash(self) => 100
 }
 ```
 

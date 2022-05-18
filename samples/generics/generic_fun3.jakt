@@ -1,7 +1,7 @@
-fun id<T>(anon x: T) -> T {
+function id<T>(anon x: T) -> T {
     return x;
 }
 
-fun main() {
+function main() {
     println("{}", id(3) + 100)
 }

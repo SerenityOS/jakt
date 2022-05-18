@@ -1,4 +1,4 @@
-fun main() {
+function main() {
     let mut x = 10
 
     println("{}", ++x)

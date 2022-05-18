@@ -1,4 +1,4 @@
-fun bubble_sort(values: mut [i64]) {
+function bubble_sort(values: mut [i64]) {
     let mut i = 0
     while i < values.size() - 1 {
         let mut j = 0
@@ -14,7 +14,7 @@ fun bubble_sort(values: mut [i64]) {
     }
 }
 
-fun main() {
+function main() {
     let mut v = [25, 13, 8, 1, 9, 22, 50, 2]
     bubble_sort(values: v)
     let mut i = 0

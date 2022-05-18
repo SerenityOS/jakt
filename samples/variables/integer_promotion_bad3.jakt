@@ -1,4 +1,4 @@
-fun main() {
+function main() {
     let mut i: u8 = 0;
     i += 1000;
 }

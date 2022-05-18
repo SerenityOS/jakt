@@ -31,7 +31,7 @@
 				},
 				{
 					"name": "keyword.jakt",
-					"match": "\\b(fun|extern|struct|class)\\b"
+					"match": "\\b(function|extern|struct|class)\\b"
 				},
 				{
 					"name": "keyword.jakt",

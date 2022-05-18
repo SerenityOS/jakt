@@ -1,16 +1,16 @@
 class Foo {
     x: i64
 
-    fun set(mut this, value: i64) {
+    function set(mut this, value: i64) {
         this.x = value
     }
 
-    fun get(this) {
+    function get(this) {
         return this.x
     }
 }
 
-fun main() {
+function main() {
     let mut foo = Foo(x: 1)
     let mut opt_foo: Foo? = foo
 

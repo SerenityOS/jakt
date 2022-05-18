@@ -1,8 +1,8 @@
-fun make_v() -> [String] {
+function make_v() -> [String] {
     return ["foo", "bar"]
 }
 
-fun main() {
+function main() {
     let v: [String] = make_v()
     let mut i = 0
     while i < 2 {

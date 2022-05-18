@@ -2,10 +2,10 @@ struct Rectangle {
     width: i64,
     height: i64,
 
-    fun area(this) => this.width * this.height
+    function area(this) => this.width * this.height
 }
 
-fun main() {
+function main() {
     let rect = Rectangle(width: 4, height: 8)
 
     println("{}", rect.area())

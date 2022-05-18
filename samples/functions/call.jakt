@@ -1,7 +1,7 @@
-fun greet() {
+function greet() {
     println("Well, hello friends.")
 }
 
-fun main() {
+function main() {
     greet()
 }

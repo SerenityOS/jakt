@@ -1,4 +1,4 @@
-fun main() {
+function main() {
     let i = 5
     if i == 5 and 7 > 6 {
         println("OK")

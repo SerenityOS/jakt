@@ -1,5 +1,5 @@
-fun id<T>(anon x: T) => x
+function id<T>(anon x: T) => x
 
-fun main() {
+function main() {
     println("{}", id(3) + 10)
 }

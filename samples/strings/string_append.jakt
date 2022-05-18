@@ -1,4 +1,4 @@
-fun main() {
+function main() {
     let a = "ja"
     let b = "kt"
     println("{}", a + b)

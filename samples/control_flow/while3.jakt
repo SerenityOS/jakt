@@ -1,4 +1,4 @@
-fun main() {
+function main() {
     let mut x: i64 = 0
 
     while (x < 10) {

@@ -1,4 +1,4 @@
-fun main() {
+function main() {
     let x = ("a", 2, true);
 
     println("{}", x.1)

@@ -1,4 +1,4 @@
-fun main() {
+function main() {
     let x = 10
     {
         let x = 20

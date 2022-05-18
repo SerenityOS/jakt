@@ -1,6 +1,6 @@
-extern fun runtime_helper_number_to_string(number: i64) -> String
+extern function runtime_helper_number_to_string(number: i64) -> String
 
-fun main() {
+function main() {
     let s = runtime_helper_number_to_string(number: 5 + 10)
     println("Five plus ten = " + s)
 }
