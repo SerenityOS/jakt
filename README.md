@@ -2,7 +2,7 @@
 
 **jakt** is a memory-safe systems programming language.
 
-It transpiles to C++ for easy integration with existing C++ codebases.
+It currently transpiles to C++.
 
 **NOTE:** The language is under heavy development.
 
@@ -41,8 +41,8 @@ Note that **weak** pointers must always be wrapped in `Optional`. There is no **
 
 ## Math safety
 
-- Integer overflow (both signed and unsigned) is a runtime error.
-- Numeric values are not automatically coerced to `int`. All casts must be explicit.
+- [ ] Integer overflow (both signed and unsigned) is a runtime error.
+- [x] Numeric values are not automatically coerced to `int`. All casts must be explicit.
 
 For cases where silent integer overflow is desired, there are explicit functions that provide this functionality.
 
@@ -66,7 +66,7 @@ Some of the features that encourage more readable programs:
 
 When calling a function, you must specify the name of each argument as you're passing it:
 
-```
+```jakt
 rect.set_size(width: 640, height: 480);
 ```
 
@@ -270,3 +270,31 @@ There are four built-in casting operators in **jakt**.
 - `as truncated T`: Returns a `T` with out-of-range values truncated in a manner specific to each type.
 - `as saturated T`: Returns a `T` with the out-of-range values saturated to the minimum or maximum value possible for `T`.
 
+## Error handling
+
+**(Not yet implemented)**
+
+Functions that can fail with an error instead of returning normally are marked with the `throws` keyword:
+
+```jakt
+fun task_that_might_fail() throws -> usize {
+    if problem {
+        throw Error::from_errno(EPROBLEM)
+    }
+    ...
+    return result
+}
+
+fun task_that_cannot_fail() -> usize {
+    ...
+    return result
+}
+```
+
+Unlike languages like C++ and Java, errors don't unwind the call stack automatically. Instead, they bubble up to the nearest caller.
+
+If nothing else is specified, calling a function that `throws` from within a function that `throws` will implicitly bubble errors.
+
+### Syntax for catching errors
+
+To be determined.
