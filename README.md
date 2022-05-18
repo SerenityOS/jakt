@@ -110,6 +110,11 @@ Struct members are *public* by default.
 
 ### `class`
 
+- [x] basic class support
+- [ ] private-by-default members
+- [ ] inheritance
+- [ ] class-based polymorphism (assign child instance to things requiring the parent type)
+
 Same basic syntax as `struct`:
 ```
 class Size {
