@@ -968,6 +968,32 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 output.push_str("}))");
             }
         }
+        CheckedExpression::Dictionary(vals, _, _) => {
+            // (Dictionary({1, 2, 3}))
+            let key_type_id = vals[0].0.ty();
+            let value_type_id = vals[0].1.ty();
+
+            output.push_str(&format!(
+                "(Dictionary<{}, {}>({{",
+                codegen_type(key_type_id, project),
+                codegen_type(value_type_id, project),
+            ));
+            let mut first = true;
+            for (key, value) in vals {
+                if !first {
+                    output.push_str(", ");
+                } else {
+                    first = false;
+                }
+
+                output.push('{');
+                output.push_str(&codegen_expr(indent, key, project));
+                output.push_str(", ");
+                output.push_str(&codegen_expr(indent, value, project));
+                output.push('}');
+            }
+            output.push_str("}))");
+        }
         CheckedExpression::Tuple(vals, _, _) => {
             // (Tuple{1, 2, 3})
             output.push_str("(Tuple{");
@@ -989,6 +1015,13 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             output.push_str(")[");
             output.push_str(&codegen_expr(indent, idx, project));
             output.push_str("])");
+        }
+        CheckedExpression::IndexedDictionary(expr, idx, _, _) => {
+            output.push_str("((");
+            output.push_str(&codegen_expr(indent, expr, project));
+            output.push_str(").get(");
+            output.push_str(&codegen_expr(indent, idx, project));
+            output.push_str("))");
         }
         CheckedExpression::IndexedTuple(expr, idx, _, _) => {
             // x.get<1>()

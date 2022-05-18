@@ -190,6 +190,11 @@ fn test_ranges() -> Result<(), JaktError> {
 }
 
 #[test]
+fn test_dictionaries() -> Result<(), JaktError> {
+    test_samples("samples/dictionaries")
+}
+
+#[test]
 fn test_generics() -> Result<(), JaktError> {
     test_samples("samples/generics")
 }

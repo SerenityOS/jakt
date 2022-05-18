@@ -516,7 +516,9 @@ pub enum CheckedExpression {
         Span,
         TypeId,
     ),
+    Dictionary(Vec<(CheckedExpression, CheckedExpression)>, Span, TypeId),
     IndexedExpression(Box<CheckedExpression>, Box<CheckedExpression>, Span, TypeId),
+    IndexedDictionary(Box<CheckedExpression>, Box<CheckedExpression>, Span, TypeId),
     IndexedTuple(Box<CheckedExpression>, usize, Span, TypeId),
     IndexedStruct(Box<CheckedExpression>, String, Span, TypeId),
 
@@ -543,9 +545,11 @@ impl CheckedExpression {
             CheckedExpression::CharacterConstant(_, _) => CCHAR_TYPE_ID, // use the C one for now
             CheckedExpression::UnaryOp(_, _, _, ty) => *ty,
             CheckedExpression::BinaryOp(_, _, _, _, ty) => *ty,
+            CheckedExpression::Dictionary(_, _, ty) => *ty,
             CheckedExpression::Array(_, _, _, ty) => *ty,
             CheckedExpression::Tuple(_, _, ty) => *ty,
             CheckedExpression::Range(_, _, _, ty) => *ty,
+            CheckedExpression::IndexedDictionary(_, _, _, ty) => *ty,
             CheckedExpression::IndexedExpression(_, _, _, ty) => *ty,
             CheckedExpression::IndexedTuple(_, _, _, ty) => *ty,
             CheckedExpression::IndexedStruct(_, _, _, ty) => *ty,
@@ -1465,17 +1469,61 @@ pub fn typecheck_expression(
                 output.push(checked_expr);
             }
 
-            let vector_struct_id = project
+            let array_struct_id = project
                 .find_struct_in_scope(0, "Array")
                 .expect("internal error: Array builtin definition not found");
 
-            let type_id = project
-                .find_or_add_type_id(Type::GenericInstance(vector_struct_id, vec![inner_ty]));
+            let type_id =
+                project.find_or_add_type_id(Type::GenericInstance(array_struct_id, vec![inner_ty]));
 
             (
                 CheckedExpression::Array(output, checked_fill_size_expr, *span, type_id),
                 error,
             )
+        }
+        Expression::Dictionary(kv_pairs, span) => {
+            let mut inner_ty = (UNKNOWN_TYPE_ID, UNKNOWN_TYPE_ID);
+            let mut output = Vec::new();
+
+            for (key, value) in kv_pairs {
+                let (checked_key, err) = typecheck_expression(key, scope_id, project, safety_mode);
+                error = error.or(err);
+
+                let (checked_value, err) =
+                    typecheck_expression(value, scope_id, project, safety_mode);
+                error = error.or(err);
+
+                if inner_ty == (UNKNOWN_TYPE_ID, UNKNOWN_TYPE_ID) {
+                    inner_ty = (checked_key.ty(), checked_value.ty());
+                } else {
+                    if inner_ty.0 != checked_key.ty() {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "does not match type of previous values in dictionary".to_string(),
+                            key.span(),
+                        )))
+                    }
+
+                    if inner_ty.1 != checked_value.ty() {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "does not match type of previous values in dictionary".to_string(),
+                            value.span(),
+                        )))
+                    }
+                }
+
+                output.push((checked_key, checked_value));
+            }
+
+            let dictionary_struct_id = project
+                .find_struct_in_scope(0, "Dictionary")
+                .expect("internal error: Dictionary builtin definition not found");
+
+            let type_id = project.find_or_add_type_id(Type::GenericInstance(
+                dictionary_struct_id,
+                vec![inner_ty.0, inner_ty.1],
+            ));
+
+            (CheckedExpression::Dictionary(output, *span, type_id), error)
         }
         Expression::Tuple(items, span) => {
             let mut checked_items = Vec::new();
@@ -1511,14 +1559,18 @@ pub fn typecheck_expression(
 
             let mut expr_ty = UNKNOWN_TYPE_ID;
 
-            let vector_struct_id = project
+            let array_struct_id = project
                 .find_struct_in_scope(0, "Array")
                 .expect("internal error: Array builtin definition not found");
+
+            let dict_struct_id = project
+                .find_struct_in_scope(0, "Dictionary")
+                .expect("internal error: Dictionary builtin definition not found");
 
             let ty = &project.types[checked_expr.ty()];
             match ty {
                 Type::GenericInstance(parent_struct_id, inner_tys)
-                    if parent_struct_id == &vector_struct_id =>
+                    if parent_struct_id == &array_struct_id =>
                 {
                     match checked_idx.ty() {
                         _ if is_integer(checked_idx.ty()) => {
@@ -1532,24 +1584,58 @@ pub fn typecheck_expression(
                             )))
                         }
                     }
+
+                    (
+                        CheckedExpression::IndexedExpression(
+                            Box::new(checked_expr),
+                            Box::new(checked_idx),
+                            *span,
+                            expr_ty,
+                        ),
+                        error,
+                    )
+                }
+                Type::GenericInstance(parent_struct_id, inner_tys)
+                    if parent_struct_id == &dict_struct_id =>
+                {
+                    let value_ty = inner_tys[1];
+                    let optional_struct_id = project
+                        .find_struct_in_scope(0, "Optional")
+                        .expect("internal error: Optional builtin definition not found");
+
+                    let inner_ty = project.find_or_add_type_id(Type::GenericInstance(
+                        optional_struct_id,
+                        vec![value_ty],
+                    ));
+                    expr_ty = inner_ty;
+
+                    (
+                        CheckedExpression::IndexedDictionary(
+                            Box::new(checked_expr),
+                            Box::new(checked_idx),
+                            *span,
+                            expr_ty,
+                        ),
+                        error,
+                    )
                 }
                 _ => {
                     error = error.or(Some(JaktError::TypecheckError(
                         "index used on value that can't be indexed".to_string(),
                         expr.span(),
-                    )))
+                    )));
+
+                    (
+                        CheckedExpression::IndexedExpression(
+                            Box::new(checked_expr),
+                            Box::new(checked_idx),
+                            *span,
+                            expr_ty,
+                        ),
+                        error,
+                    )
                 }
             }
-
-            (
-                CheckedExpression::IndexedExpression(
-                    Box::new(checked_expr),
-                    Box::new(checked_idx),
-                    *span,
-                    expr_ty,
-                ),
-                error,
-            )
         }
         Expression::IndexedTuple(expr, idx, span) => {
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
