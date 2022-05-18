@@ -1,6 +1,6 @@
 fun main() {
     let name = "Andreas";
 
-    println(name.to_lowercase())
-    println(name.to_uppercase())
+    println("{}", name.to_lowercase())
+    println("{}", name.to_uppercase())
 }

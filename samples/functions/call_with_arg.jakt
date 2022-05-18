@@ -1,5 +1,5 @@
 fun greet(msg: String) {
-    println(msg)
+    println("{}", msg)
 }
 
 fun main() {

@@ -3,5 +3,5 @@ fun id<T>(anon x: T) -> T {
 }
 
 fun main() {
-    println(id(3) + 100)
+    println("{}", id(3) + 100)
 }

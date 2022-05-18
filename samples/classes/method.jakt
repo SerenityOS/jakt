@@ -12,5 +12,5 @@ fun main() {
 
     p.birthday()
 
-    println(p.age)
+    println("{}", p.age)
 }

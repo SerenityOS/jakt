@@ -1,5 +1,5 @@
 fun main() {
     let item = Optional(100);
 
-    println(item!)
+    println("{}", item!)
 }

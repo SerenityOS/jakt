@@ -5,5 +5,5 @@ fun id<T>(anon x: T) -> T {
 fun main() {
     let y = id(3);
 
-    println(y + 1000)
+    println("{}", y + 1000)
 }

@@ -3,6 +3,6 @@ fun main() {
     let y = &raw x
 
     unsafe {
-        println(*y)
+        println("{}", *y)
     }
 }

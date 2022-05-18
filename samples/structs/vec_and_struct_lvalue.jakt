@@ -11,6 +11,6 @@ fun main() {
 
     arr[1].name = "foobar";
 
-    println(arr[0].name)
-    println(arr[1].name)
+    println("{}", arr[0].name)
+    println("{}", arr[1].name)
 }

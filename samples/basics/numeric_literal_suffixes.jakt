@@ -1,7 +1,7 @@
 fun main() {
     let mut a = 0uz
     a += 5 as! usize
-    println(a)
+    println("{}", a)
 
     {
         let mut i = 0u8
@@ -14,10 +14,10 @@ fun main() {
         k += 5 as! u32
         l += 5 as! u64
         
-        println(i)
-        println(j)
-        println(k)
-        println(l)
+        println("{}", i)
+        println("{}", j)
+        println("{}", k)
+        println("{}", l)
     }
     {
         let mut i = 0i8
@@ -30,9 +30,9 @@ fun main() {
         k += 5 as! i32
         l += 5 as! i64
 
-        println(i)
-        println(j)
-        println(k)
-        println(l)
+        println("{}", i)
+        println("{}", j)
+        println("{}", k)
+        println("{}", l)
     }
 }

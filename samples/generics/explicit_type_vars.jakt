@@ -3,5 +3,5 @@ fun main() {
 
     item.set(key: "bob", value: 123);
 
-    println(item.get("bob")!)
+    println("{}", item.get("bob")!)
 }

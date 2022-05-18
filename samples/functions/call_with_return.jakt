@@ -3,5 +3,5 @@ fun greet() -> String {
 }
 
 fun main() {
-    println(greet())
+    println("{}", greet())
 }

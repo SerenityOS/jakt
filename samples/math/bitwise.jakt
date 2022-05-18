@@ -1,8 +1,8 @@
 fun check(anon a: i64, anon b: i64) -> i64 {
     if a != b {
         println("Not equal!")
-        println(a)
-        println(b)
+        println("{}", a)
+        println("{}", b)
         return 1
     }
     return 0

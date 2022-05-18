@@ -207,7 +207,7 @@ let values = ["foo", "bar", "baz"]
 fun main() {
     let dict = ["a": 1, "b": 2]
 
-    println(dict["a"]!)
+    println("{}", dict["a"]!)
 }
 ```
 
@@ -227,7 +227,7 @@ fun id<T>(anon x: T) -> T {
 fun main() {
     let y = id(3);
 
-    println(y + 1000)
+    println("{}", y + 1000)
 }
 ```
 
@@ -239,7 +239,7 @@ struct Foo<T> {
 fun main() {
     let f = Foo(x: 100);
 
-    println(f.x);
+    println("{}", f.x);
 }
 ```
 ## Type casts

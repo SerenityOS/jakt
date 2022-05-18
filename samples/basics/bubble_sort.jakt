@@ -19,7 +19,7 @@ fun main() {
     bubble_sort(values: v)
     let mut i = 0
     while i < v.size() {
-        println(v[i])
+        println("{}", v[i])
         ++i
     }
 }

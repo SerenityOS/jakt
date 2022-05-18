@@ -8,12 +8,12 @@ fun set_x(foo: mut Foo, x: i64) {
 
 fun main() {
     let foo = Foo(x: 5)
-    println(foo.x)
+    println("{}", foo.x)
 
     set_x(foo: foo, x: 10)
-    println(foo.x)
+    println("{}", foo.x)
 
     let mut bar = foo
     bar.x = 15
-    println(foo.x)
+    println("{}", foo.x)
 }

@@ -5,5 +5,5 @@ fun main() {
         total += x
     }
 
-    println(total)
+    println("{}", total)
 }
