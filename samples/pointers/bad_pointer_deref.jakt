@@ -1,4 +1,4 @@
-fun main() {
+function main() {
     let x = 4
 
     println("{}", *x)

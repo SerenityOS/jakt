@@ -1,8 +1,8 @@
-fun do_pop<T>(anon arr: mut [T]) -> Optional<T> {
+function do_pop<T>(anon arr: mut [T]) -> Optional<T> {
   return arr.pop()
 }
 
-fun main() {
+function main() {
   let mut arr = [1, 2, 3];
 
   println("{}", do_pop(arr)!)

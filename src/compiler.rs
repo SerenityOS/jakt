@@ -132,53 +132,53 @@ impl Compiler {
     pub fn prelude() -> Vec<u8> {
         r#"
 extern class String {
-    fun split(this, anon c: c_char) -> [String]
-    fun characters(this) -> raw c_char
-    fun reverse(this) -> String
-    fun to_lowercase(this) -> String
-    fun to_uppercase(this) -> String
-    fun to_snakecase(this) -> String
-    fun to_titlecase(this) -> String
-    fun to_int(this) -> i32?
-    fun to_uint(this) -> u32?
-    fun is_whitespace(this) -> bool
-    fun hash(this) -> u32
-    fun substring(this, start: usize, length: usize) -> String
-    fun repeated(character: c_char, count: usize) -> String
-    fun is_empty(this) -> bool
-    fun length(this) -> usize
+    function split(this, anon c: c_char) -> [String]
+    function characters(this) -> raw c_char
+    function reverse(this) -> String
+    function to_lowercase(this) -> String
+    function to_uppercase(this) -> String
+    function to_snakecase(this) -> String
+    function to_titlecase(this) -> String
+    function to_int(this) -> i32?
+    function to_uint(this) -> u32?
+    function is_whitespace(this) -> bool
+    function hash(this) -> u32
+    function substring(this, start: usize, length: usize) -> String
+    function repeated(character: c_char, count: usize) -> String
+    function is_empty(this) -> bool
+    function length(this) -> usize
 }
 
 extern class Array<T> {
-    fun is_empty(this) -> bool
-    fun size(this) -> usize
-    fun capacity(this) -> usize
-    fun ensure_capacity(this, anon capacity: usize)
-    fun add_capacity(this, anon capacity: usize)
-    fun resize(mut this, anon size: usize)
-    fun push(mut this, anon value: T)
-    fun pop(mut this) -> T?
+    function is_empty(this) -> bool
+    function size(this) -> usize
+    function capacity(this) -> usize
+    function ensure_capacity(this, anon capacity: usize)
+    function add_capacity(this, anon capacity: usize)
+    function resize(mut this, anon size: usize)
+    function push(mut this, anon value: T)
+    function pop(mut this) -> T?
 }
 
 extern class Optional<T> {
-    fun has_value(this) -> bool
-    fun value(this) -> T
-    fun value_or(this, anon x: T) -> T
-    fun Optional<S>(anon x: S) -> Optional<S>
+    function has_value(this) -> bool
+    function value(this) -> T
+    function value_or(this, anon x: T) -> T
+    function Optional<S>(anon x: S) -> Optional<S>
 }
 
 extern class Dictionary<K, V> {
-    fun get(this, anon key: K) -> V?
-    fun contains(this, anon key: K) -> bool
-    fun set(mut this, key: K, value: V)
-    fun remove(mut this, anon key: K) -> bool
-    fun ensure_capacity(mut this, anon capacity: usize)
-    fun clear(mut this)
-    fun size(this) -> usize
-    fun capacity(this) -> usize
-    fun keys(this) -> [K]
-    fun hash(this) -> u32
-    fun Dictionary<A, B>() -> Dictionary<A, B>
+    function get(this, anon key: K) -> V?
+    function contains(this, anon key: K) -> bool
+    function set(mut this, key: K, value: V)
+    function remove(mut this, anon key: K) -> bool
+    function ensure_capacity(mut this, anon capacity: usize)
+    function clear(mut this)
+    function size(this) -> usize
+    function capacity(this) -> usize
+    function keys(this) -> [K]
+    function hash(this) -> u32
+    function Dictionary<A, B>() -> Dictionary<A, B>
  }
 
 extern class Tuple {}

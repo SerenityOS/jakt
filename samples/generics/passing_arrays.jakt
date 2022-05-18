@@ -1,5 +1,5 @@
-fun dump<T>(anon v: [T]) { return v[0] }
+function dump<T>(anon v: [T]) { return v[0] }
 
-fun main() {
+function main() {
     println("{}", dump([1, 2, 3]))
 }

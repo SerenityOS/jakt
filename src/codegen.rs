@@ -39,8 +39,8 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
 
     output.push('\n');
 
-    for (_, fun_id) in &scope.funs {
-        let fun = &project.funs[*fun_id];
+    for (_, fun_id) in &scope.functions {
+        let fun = &project.functions[*fun_id];
         let fun_output = codegen_function_predecl(fun, project);
 
         if fun.linkage != FunctionLinkage::ImplicitConstructor && fun.name != "main" {
@@ -51,8 +51,8 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
 
     output.push('\n');
 
-    for (_, fun_id) in &scope.funs {
-        let fun = &project.funs[*fun_id];
+    for (_, fun_id) in &scope.functions {
+        let fun = &project.functions[*fun_id];
         if fun.linkage == FunctionLinkage::External {
             continue;
         } else if fun.linkage == FunctionLinkage::ImplicitConstructor {
@@ -156,8 +156,8 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
     }
 
     let scope = &project.scopes[structure.scope_id];
-    for (_, fun_id) in &scope.funs {
-        let fun = &project.funs[*fun_id];
+    for (_, fun_id) in &scope.functions {
+        let fun = &project.functions[*fun_id];
         if fun.linkage == FunctionLinkage::ImplicitConstructor {
             let fun_output = codegen_constructor(fun, project);
 

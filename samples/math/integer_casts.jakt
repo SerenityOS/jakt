@@ -1,4 +1,4 @@
-fun main() {
+function main() {
     let a = 500 as saturated u8
     let b = 257 as truncated u8
     let c = 127 as! i8

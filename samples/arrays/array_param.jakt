@@ -1,5 +1,5 @@
-fun get_first(anon v: [String]) => v[0]
+function get_first(anon v: [String]) => v[0]
 
-fun main() {
+function main() {
     println("{}", get_first(["one", "two"]))
 }

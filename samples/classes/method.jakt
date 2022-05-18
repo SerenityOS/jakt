@@ -2,12 +2,12 @@ class Person {
     name: String
     age: i64
 
-    fun birthday(mut this) {
+    function birthday(mut this) {
         ++this.age
     }
 }
 
-fun main() {
+function main() {
     let mut p = Person(name: "Bob", age: 1000)
 
     p.birthday()

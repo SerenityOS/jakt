@@ -1,8 +1,8 @@
-fun change_value(vector: mut [String]) {
+function change_value(vector: mut [String]) {
     vector[1] = "bar"
 }
 
-fun main() {
+function main() {
     let mut v = ["foo", "foo"]
     change_value(vector: v)
 

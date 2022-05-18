@@ -1,4 +1,4 @@
-fun main() {
+function main() {
     if not (1 < 2) {
         println("whoops")
     }

@@ -1,8 +1,8 @@
-fun id<T>(anon x: T) -> T {
+function id<T>(anon x: T) -> T {
     return x;
 }
 
-fun main() {
+function main() {
     let y = id(3);
 
     println("{}", y + 1000)

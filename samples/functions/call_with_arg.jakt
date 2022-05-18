@@ -1,7 +1,7 @@
-fun greet(msg: String) {
+function greet(msg: String) {
     println("{}", msg)
 }
 
-fun main() {
+function main() {
     greet(msg: "Well, hello friends.")
 }

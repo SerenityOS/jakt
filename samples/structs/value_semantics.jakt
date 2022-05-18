@@ -2,11 +2,11 @@ struct Foo {
     x: i64
 }
 
-fun set_x(foo: mut Foo, x: i64) {
+function set_x(foo: mut Foo, x: i64) {
     foo.x = x
 }
 
-fun main() {
+function main() {
     let foo = Foo(x: 5)
     println("{}", foo.x)
 

@@ -2,7 +2,7 @@ struct Foo {
     x: u16
 }
 
-fun main() {
+function main() {
     let mut a: u8 = 100
     a += 100
 

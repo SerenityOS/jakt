@@ -1,9 +1,9 @@
 extern struct StringBuilder {
-    fun append(mut this, anon s: raw c_char)
-    fun to_string(mut this) -> String
+    function append(mut this, anon s: raw c_char)
+    function to_string(mut this) -> String
 }
 
-fun main() {
+function main() {
     let mut s = StringBuilder()
 
     s.append("abc".characters());

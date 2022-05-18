@@ -78,7 +78,7 @@ pub fn can_fit_integer(type_id: TypeId, value: &IntegerConstant) -> bool {
 
 #[derive(Debug, Clone)]
 pub struct Project {
-    pub funs: Vec<CheckedFunction>,
+    pub functions: Vec<CheckedFunction>,
     pub structs: Vec<CheckedStruct>,
     pub scopes: Vec<Scope>,
     pub types: Vec<Type>,
@@ -91,7 +91,7 @@ impl Project {
         let project_global_scope = Scope::new(None);
 
         Self {
-            funs: Vec::new(),
+            functions: Vec::new(),
             structs: Vec::new(),
             scopes: vec![project_global_scope],
             types: Vec::new(),
@@ -199,7 +199,7 @@ impl Project {
     ) -> Result<(), JaktError> {
         let scope = &mut self.scopes[scope_id];
 
-        for (existing_fun, _) in &scope.funs {
+        for (existing_fun, _) in &scope.functions {
             if &name == existing_fun {
                 return Err(JaktError::TypecheckError(
                     format!("redefinition of function {}", name),
@@ -207,7 +207,7 @@ impl Project {
                 ));
             }
         }
-        scope.funs.push((name, function_id));
+        scope.functions.push((name, function_id));
 
         Ok(())
     }
@@ -217,7 +217,7 @@ impl Project {
 
         while let Some(current_id) = scope_id {
             let scope = &self.scopes[current_id];
-            for s in &scope.funs {
+            for s in &scope.functions {
                 if s.0 == fun_name {
                     return Some(s.1);
                 }
@@ -623,7 +623,7 @@ pub struct CheckedCall {
 pub struct Scope {
     pub vars: Vec<CheckedVariable>,
     pub structs: Vec<(String, StructId)>,
-    pub funs: Vec<(String, FunctionId)>,
+    pub functions: Vec<(String, FunctionId)>,
     pub types: Vec<(String, TypeId)>,
     pub parent: Option<ScopeId>,
 }
@@ -633,7 +633,7 @@ impl Scope {
         Self {
             vars: Vec::new(),
             structs: Vec::new(),
-            funs: Vec::new(),
+            functions: Vec::new(),
             types: Vec::new(),
             parent,
         }
@@ -671,9 +671,9 @@ pub fn typecheck_file(
         }
     }
 
-    for fun in &parsed_file.funs {
+    for function in &parsed_file.functions {
         //Ensure we know the function ahead of time, so they can be recursive
-        error = error.or(typecheck_fun_predecl(fun, scope_id, project));
+        error = error.or(typecheck_fun_predecl(function, scope_id, project));
     }
 
     for (struct_id, structure) in parsed_file.structs.iter().enumerate() {
@@ -685,8 +685,8 @@ pub fn typecheck_file(
         ));
     }
 
-    for fun in &parsed_file.funs {
-        error = error.or(typecheck_fun(fun, scope_id, project));
+    for function in &parsed_file.functions {
+        error = error.or(typecheck_fun(function, scope_id, project));
     }
 
     error
@@ -723,11 +723,11 @@ fn typecheck_struct_predecl(
         }
     }
 
-    for fun in &structure.methods {
+    for function in &structure.methods {
         let mut generic_parameters = vec![];
         let method_scope_id = project.create_scope(struct_scope_id);
 
-        for (generic_parameter, parameter_span) in &fun.generic_parameters {
+        for (generic_parameter, parameter_span) in &function.generic_parameters {
             project
                 .types
                 .push(Type::TypeVariable(generic_parameter.to_string()));
@@ -746,16 +746,16 @@ fn typecheck_struct_predecl(
         }
 
         let mut checked_function = CheckedFunction {
-            name: fun.name.clone(),
+            name: function.name.clone(),
             params: vec![],
             return_type: UNKNOWN_TYPE_ID,
             function_scope_id: method_scope_id,
             generic_parameters,
             block: CheckedBlock::new(),
-            linkage: fun.linkage.clone(),
+            linkage: function.linkage.clone(),
         };
 
-        for param in &fun.params {
+        for param in &function.params {
             if param.variable.name == "this" {
                 let checked_variable = CheckedVariable {
                     name: param.variable.name.clone(),
@@ -785,11 +785,11 @@ fn typecheck_struct_predecl(
             }
         }
 
-        project.funs.push(checked_function);
+        project.functions.push(checked_function);
         if let Err(err) = project.add_function_to_scope(
             struct_scope_id,
-            fun.name.clone(),
-            project.funs.len() - 1,
+            function.name.clone(),
+            project.functions.len() - 1,
             structure.span,
         ) {
             error = error.or(Some(err));
@@ -877,13 +877,13 @@ fn typecheck_struct(
         };
 
         // Internal constructor
-        project.funs.push(checked_constructor);
+        project.functions.push(checked_constructor);
 
         // Add constructor to the struct's scope
         if let Err(err) = project.add_function_to_scope(
             checked_struct_scope_id,
             structure.name.clone(),
-            project.funs.len() - 1,
+            project.functions.len() - 1,
             structure.span,
         ) {
             error = error.or(Some(err));
@@ -893,15 +893,15 @@ fn typecheck_struct(
     let checked_struct = &mut project.structs[struct_id];
     checked_struct.fields = fields;
 
-    for fun in &structure.methods {
-        error = error.or(typecheck_method(fun, project, struct_id));
+    for function in &structure.methods {
+        error = error.or(typecheck_method(function, project, struct_id));
     }
 
     error
 }
 
 fn typecheck_fun_predecl(
-    fun: &Function,
+    function: &Function,
     parent_scope_id: ScopeId,
     project: &mut Project,
 ) -> Option<JaktError> {
@@ -910,20 +910,20 @@ fn typecheck_fun_predecl(
     let function_scope_id = project.create_scope(parent_scope_id);
 
     let mut checked_function = CheckedFunction {
-        name: fun.name.clone(),
+        name: function.name.clone(),
         params: vec![],
         return_type: UNKNOWN_TYPE_ID,
         function_scope_id,
         generic_parameters: vec![],
         block: CheckedBlock::new(),
-        linkage: fun.linkage.clone(),
+        linkage: function.linkage.clone(),
     };
 
     let checked_function_scope_id = checked_function.function_scope_id;
 
     let mut generic_parameters = vec![];
 
-    for (generic_parameter, parameter_span) in &fun.generic_parameters {
+    for (generic_parameter, parameter_span) in &function.generic_parameters {
         project
             .types
             .push(Type::TypeVariable(generic_parameter.to_string()));
@@ -943,7 +943,7 @@ fn typecheck_fun_predecl(
 
     checked_function.generic_parameters = generic_parameters;
 
-    for param in &fun.params {
+    for param in &function.params {
         let (param_type, err) = typecheck_typename(&param.variable.ty, function_scope_id, project);
         error = error.or(err);
 
@@ -959,15 +959,15 @@ fn typecheck_fun_predecl(
         });
     }
 
-    let function_id = project.funs.len();
+    let function_id = project.functions.len();
 
-    project.funs.push(checked_function);
+    project.functions.push(checked_function);
 
     match project.add_function_to_scope(
         parent_scope_id,
-        fun.name.clone(),
+        function.name.clone(),
         function_id,
-        fun.name_span,
+        function.name_span,
     ) {
         Ok(_) => {}
         Err(err) => error = error.or(Some(err)),
@@ -977,17 +977,17 @@ fn typecheck_fun_predecl(
 }
 
 fn typecheck_fun(
-    fun: &Function,
+    function: &Function,
     parent_scope_id: ScopeId,
     project: &mut Project,
 ) -> Option<JaktError> {
     let mut error = None;
 
     let function_id = project
-        .find_function_in_scope(parent_scope_id, &fun.name)
+        .find_function_in_scope(parent_scope_id, &function.name)
         .expect("Internal error: missing previously defined function");
 
-    let checked_function = &mut project.funs[function_id];
+    let checked_function = &mut project.functions[function_id];
     let function_scope_id = checked_function.function_scope_id;
 
     let mut param_vars = Vec::new();
@@ -996,15 +996,15 @@ fn typecheck_fun(
     }
 
     for variable in param_vars.into_iter() {
-        if let Err(err) = project.add_var_to_scope(function_scope_id, variable, fun.name_span) {
+        if let Err(err) = project.add_var_to_scope(function_scope_id, variable, function.name_span) {
             error = error.or(Some(err));
         }
     }
 
-    let (block, err) = typecheck_block(&fun.block, function_scope_id, project, SafetyMode::Safe);
+    let (block, err) = typecheck_block(&function.block, function_scope_id, project, SafetyMode::Safe);
     error = error.or(err);
 
-    let (fun_return_type, err) = typecheck_typename(&fun.return_type, function_scope_id, project);
+    let (fun_return_type, err) = typecheck_typename(&function.return_type, function_scope_id, project);
     error = error.or(err);
 
     // If the return type is unknown, and the function starts with a return statement,
@@ -1019,7 +1019,7 @@ fn typecheck_fun(
         fun_return_type.clone()
     };
 
-    let checked_function = &mut project.funs[function_id];
+    let checked_function = &mut project.functions[function_id];
 
     checked_function.block = block;
     checked_function.return_type = return_type;
@@ -1028,7 +1028,7 @@ fn typecheck_fun(
 }
 
 fn typecheck_method(
-    fun: &Function,
+    function: &Function,
     project: &mut Project,
     struct_id: StructId,
 ) -> Option<JaktError> {
@@ -1037,12 +1037,12 @@ fn typecheck_method(
     let structure = &mut project.structs[struct_id];
     let structure_scope_id = structure.scope_id;
 
-    let method_id = project.find_function_in_scope(structure_scope_id, &fun.name);
+    let method_id = project.find_function_in_scope(structure_scope_id, &function.name);
 
     let method_id = method_id
         .expect("Internal error: we just pushed the checked function, but it's not present");
 
-    let checked_function = &mut project.funs[method_id];
+    let checked_function = &mut project.functions[method_id];
     let function_scope_id = checked_function.function_scope_id;
 
     let mut param_vars = Vec::new();
@@ -1051,15 +1051,15 @@ fn typecheck_method(
     }
 
     for variable in param_vars.into_iter() {
-        if let Err(err) = project.add_var_to_scope(function_scope_id, variable, fun.name_span) {
+        if let Err(err) = project.add_var_to_scope(function_scope_id, variable, function.name_span) {
             error = error.or(Some(err));
         }
     }
 
-    let (block, err) = typecheck_block(&fun.block, function_scope_id, project, SafetyMode::Safe);
+    let (block, err) = typecheck_block(&function.block, function_scope_id, project, SafetyMode::Safe);
     error = error.or(err);
 
-    let (fun_return_type, err) = typecheck_typename(&fun.return_type, function_scope_id, project);
+    let (fun_return_type, err) = typecheck_typename(&function.return_type, function_scope_id, project);
     error = error.or(err);
 
     // If the return type is unknown, and the function starts with a return statement,
@@ -1074,7 +1074,7 @@ fn typecheck_method(
         fun_return_type.clone()
     };
 
-    let checked_function = &mut project.funs[method_id];
+    let checked_function = &mut project.functions[method_id];
 
     checked_function.block = block;
     checked_function.return_type = return_type;
@@ -2119,12 +2119,12 @@ pub fn resolve_call<'a>(
                 if let Some(function_id) =
                     project.find_function_in_scope(structure.scope_id, &call.name)
                 {
-                    callee = Some(&project.funs[function_id]);
+                    callee = Some(&project.functions[function_id]);
                 }
             } else if let Some(function_id) =
                 project.find_function_in_scope(structure.scope_id, &call.name)
             {
-                callee = Some(&project.funs[function_id]);
+                callee = Some(&project.functions[function_id]);
             }
 
             (callee, error)
@@ -2145,10 +2145,10 @@ pub fn resolve_call<'a>(
             if let Some(function_id) =
                 project.find_function_in_scope(structure.scope_id, &call.name)
             {
-                callee = Some(&project.funs[function_id]);
+                callee = Some(&project.functions[function_id]);
             }
         } else if let Some(function_id) = project.find_function_in_scope(scope_id, &call.name) {
-            callee = Some(&project.funs[function_id]);
+            callee = Some(&project.functions[function_id]);
         }
 
         if callee.is_none() {

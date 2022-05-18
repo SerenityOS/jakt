@@ -1,17 +1,17 @@
-fun foo(a: bool, b: bool) {
+function foo(a: bool, b: bool) {
 }
 
-fun bar(anon a: bool, b: bool) {
+function bar(anon a: bool, b: bool) {
 }
 
-fun baz(anon a: bool, anon b: bool) {
+function baz(anon a: bool, anon b: bool) {
 }
 
-fun qux(a: bool) {
+function qux(a: bool) {
 
 }
 
-fun main() {
+function main() {
     foo(a: true, b: true)
     bar(true, b: true)
     baz(true, true)

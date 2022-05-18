@@ -1,7 +1,7 @@
-fun subtract(x: i64, y: i64) {
+function subtract(x: i64, y: i64) {
     println("{}", x - y)
 }
 
-fun main() {
+function main() {
     subtract(x: 10, y: 3)
 }

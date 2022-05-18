@@ -1,4 +1,4 @@
-fun check(anon a: i64, anon b: i64) -> i64 {
+function check(anon a: i64, anon b: i64) -> i64 {
     if a != b {
         println("Not equal!")
         println("{}", a)
@@ -8,7 +8,7 @@ fun check(anon a: i64, anon b: i64) -> i64 {
     return 0
 }
 
-fun main() {
+function main() {
     let mut errors = 0
 
     let mut a = 1

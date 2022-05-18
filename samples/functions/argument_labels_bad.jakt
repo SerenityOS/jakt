@@ -1,6 +1,6 @@
-fun foo(a: bool, b: bool) {
+function foo(a: bool, b: bool) {
 }
 
-fun main() {
+function main() {
     foo(x: true, y: false)
 }

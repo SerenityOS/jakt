@@ -1,8 +1,8 @@
-fun greet(msg: String, msg2: String) {
+function greet(msg: String, msg2: String) {
     println("{}", msg)
     println("{}", msg2)
 }
 
-fun main() {
+function main() {
     greet(msg: 1, msg2: 2)
 }

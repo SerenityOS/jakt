@@ -74,7 +74,7 @@ impl PartialEq for VarDecl {
 
 #[derive(Debug)]
 pub struct ParsedFile {
-    pub funs: Vec<Function>,
+    pub functions: Vec<Function>,
     pub structs: Vec<Struct>,
 }
 
@@ -375,7 +375,7 @@ impl Expression {
 impl ParsedFile {
     pub fn new() -> Self {
         Self {
-            funs: Vec::new(),
+            functions: Vec::new(),
             structs: Vec::new(),
         }
     }
@@ -398,11 +398,11 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
                 contents: TokenContents::Name(name),
                 span,
             } => match name.as_str() {
-                "fun" => {
+                "function" => {
                     let (fun, err) = parse_function(tokens, &mut index, FunctionLinkage::Internal);
                     error = error.or(err);
 
-                    parsed_file.funs.push(fun);
+                    parsed_file.functions.push(fun);
                 }
                 "struct" => {
                     let (structure, err) = parse_struct(
@@ -433,7 +433,7 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
                                 contents: TokenContents::Name(name),
                                 span,
                             } => match name.as_str() {
-                                "fun" => {
+                                "function" => {
                                     index += 1;
                                     let (fun, err) = parse_function(
                                         tokens,
@@ -442,7 +442,7 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
                                     );
                                     error = error.or(err);
 
-                                    parsed_file.funs.push(fun);
+                                    parsed_file.functions.push(fun);
                                 }
                                 "struct" => {
                                     index += 1;
@@ -635,7 +635,7 @@ pub fn parse_struct(
                             *index += 1;
                         }
 
-                        TokenContents::Name(name) if name == "fun" => {
+                        TokenContents::Name(name) if name == "function" => {
                             // Lets parse a method
 
                             let function_linkage = match definition_linkage {

@@ -1,4 +1,4 @@
-fun main() {
+function main() {
     let foo = 123
     let bar = foo!
 }

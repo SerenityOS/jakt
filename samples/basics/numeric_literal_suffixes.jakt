@@ -1,4 +1,4 @@
-fun main() {
+function main() {
     let mut a = 0uz
     a += 5 as! usize
     println("{}", a)

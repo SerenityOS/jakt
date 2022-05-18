@@ -1,7 +1,7 @@
-fun greet() -> String {
+function greet() -> String {
     return "Well, hello friends."
 }
 
-fun main() {
+function main() {
     println("{}", greet())
 }

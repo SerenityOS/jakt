@@ -1,6 +1,6 @@
-fun foo(a: i32, b: i32, c: i32) {
+function foo(a: i32, b: i32, c: i32) {
 }
 
-fun main() {
+function main() {
     foo(a: 1, b: 2)
 }
