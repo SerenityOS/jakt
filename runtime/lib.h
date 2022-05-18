@@ -128,7 +128,7 @@ int main(int argc, char** argv)
 {
     Array<String> args;
     for (int i = 0; i < argc; ++i) {
-        args.append(argv[i]);
+        args.push(argv[i]);
     }
     return __jakt_main(move(args));
 }
