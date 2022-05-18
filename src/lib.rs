@@ -1,3 +1,5 @@
+extern crate core;
+
 mod codegen;
 mod compiler;
 mod error;
