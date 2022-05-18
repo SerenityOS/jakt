@@ -17,6 +17,7 @@ pub struct Call {
     pub namespace: Vec<String>,
     pub name: String,
     pub args: Vec<(String, Expression)>,
+    pub type_args: Vec<UncheckedType>,
 }
 
 impl Call {
@@ -25,6 +26,7 @@ impl Call {
             namespace: Vec::new(),
             name: String::new(),
             args: Vec::new(),
+            type_args: Vec::new(),
         }
     }
 }
@@ -1597,6 +1599,21 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                             Expression::Call(call, span)
                         }
                     },
+                    TokenContents::LessThan => {
+                        // We *try* to see if it's a generic, but the parse errors, we back up and try something else
+                        let (call, err) = parse_call(tokens, index);
+
+                        if err.is_some() {
+                            match name.as_str() {
+                                "None" => Expression::OptionalNone(span),
+                                _ => Expression::Var(name.to_string(), span),
+                            }
+                        } else {
+                            error = error.or(err);
+
+                            Expression::Call(call, span)
+                        }
+                    }
                     _ => {
                         *index += 1;
 
@@ -2939,44 +2956,58 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
             );
         }
 
-        if let TokenContents::LessThan = tokens[*index + 1].contents {
-            // Generic type
-            *index += 2;
+        if *index + 1 < tokens.len() {
+            if let TokenContents::LessThan = tokens[*index + 1].contents {
+                // Generic type
+                *index += 2;
 
-            let mut inner_types = vec![];
+                let mut inner_types = vec![];
 
-            while *index < tokens.len() {
-                match tokens[*index].contents {
-                    TokenContents::GreaterThan => {
-                        *index += 1;
-                        break;
-                    }
-                    TokenContents::Comma => {
-                        *index += 1;
-                    }
-                    TokenContents::Eol => {
-                        *index += 1;
-                    }
-                    _ => {
-                        let (inner_ty, err) = parse_typename(tokens, index);
-                        error = error.or(err);
+                while *index < tokens.len() {
+                    match tokens[*index].contents {
+                        TokenContents::GreaterThan => {
+                            *index += 1;
+                            break;
+                        }
+                        TokenContents::Comma => {
+                            *index += 1;
+                        }
+                        TokenContents::Eol => {
+                            *index += 1;
+                        }
+                        _ => {
+                            let (inner_ty, err) = parse_typename(tokens, index);
+                            error = error.or(err);
 
-                        *index += 1;
+                            *index += 1;
 
-                        inner_types.push(inner_ty);
+                            inner_types.push(inner_ty);
+                        }
                     }
                 }
-            }
 
-            unchecked_type = UncheckedType::GenericType(
-                typename,
-                inner_types,
-                Span {
-                    file_id: start.file_id,
-                    start: start.start,
-                    end: tokens[*index].span.end,
-                },
-            )
+                if *index >= tokens.len() {
+                    unchecked_type = UncheckedType::GenericType(
+                        typename,
+                        inner_types,
+                        Span {
+                            file_id: start.file_id,
+                            start: start.start,
+                            end: tokens[*index - 1].span.end,
+                        },
+                    )
+                } else {
+                    unchecked_type = UncheckedType::GenericType(
+                        typename,
+                        inner_types,
+                        Span {
+                            file_id: start.file_id,
+                            start: start.start,
+                            end: tokens[*index].span.end,
+                        },
+                    )
+                }
+            }
         }
     };
 
@@ -3012,6 +3043,44 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktErro
 
             *index += 1;
 
+            // this is to allow the lookahead. Without it, we may see something like
+            // foo < Bar, think the start of a generic call when it actually isn't
+            let index_reset = *index;
+
+            if *index < tokens.len() {
+                if let TokenContents::LessThan = tokens[*index].contents {
+                    // Generic type
+                    *index += 1;
+
+                    let mut inner_types = vec![];
+
+                    while *index < tokens.len() {
+                        match tokens[*index].contents {
+                            TokenContents::GreaterThan => {
+                                *index += 1;
+                                break;
+                            }
+                            TokenContents::Comma => {
+                                *index += 1;
+                            }
+                            TokenContents::Eol => {
+                                *index += 1;
+                            }
+                            _ => {
+                                let (inner_ty, err) = parse_typename(tokens, index);
+                                error = error.or(err);
+
+                                *index += 1;
+
+                                inner_types.push(inner_ty);
+                            }
+                        }
+                    }
+
+                    call.type_args = inner_types;
+                }
+            }
+
             if *index < tokens.len() {
                 match &tokens[*index] {
                     Token {
@@ -3022,7 +3091,7 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktErro
                     }
                     Token { span, .. } => {
                         trace!("ERROR: expected '('");
-
+                        *index = index_reset;
                         return (
                             call,
                             Some(JaktError::ParserError("expected '('".to_string(), *span)),
@@ -3031,6 +3100,7 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktErro
                 }
             } else {
                 trace!("ERROR: incomplete function");
+                *index = index_reset;
 
                 return (
                     call,

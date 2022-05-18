@@ -156,6 +156,7 @@ extern class Dictionary<K, V> {
     fun get(this, anon key: K) -> V?
     fun contains(this, anon key: K) -> bool
     fun set(mut this, key: K, value: V)
+    fun Dictionary<A, B>() -> Dictionary<A, B>
  }
 
 extern class Tuple {}

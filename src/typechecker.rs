@@ -2173,7 +2173,7 @@ pub fn typecheck_call(
     let mut error = None;
     let mut return_ty = UNKNOWN_TYPE_ID;
     let mut linkage = FunctionLinkage::Internal;
-    let mut generic_inferences = HashMap::new();
+    let mut generic_substitutions = HashMap::new();
     let mut type_args = vec![];
 
     match call.name.as_str() {
@@ -2202,6 +2202,17 @@ pub fn typecheck_call(
             if let Some(callee) = callee {
                 // Borrow checker workaround, would be nice to clean this up
                 let callee = callee.clone();
+
+                // If the user gave us explicit type arguments, let's use them in our substitutions
+                for (idx, type_arg) in call.type_args.iter().enumerate() {
+                    let (checked_type, err) = typecheck_typename(type_arg, scope_id, project);
+                    error = error.or(err);
+
+                    // Find the associated type variable for this parameter, we'll use it in substitution
+                    let typevar_type_id = callee.generic_parameters[idx];
+
+                    generic_substitutions.insert(typevar_type_id, checked_type);
+                }
 
                 return_ty = callee.return_type;
 
@@ -2257,7 +2268,7 @@ pub fn typecheck_call(
                         if let Some(err) = check_types_for_compat(
                             callee.params[idx].variable.ty,
                             rhs_type_id,
-                            &mut generic_inferences,
+                            &mut generic_substitutions,
                             call.args[idx].1.span(),
                             project,
                         ) {
@@ -2272,10 +2283,10 @@ pub fn typecheck_call(
 
                 // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
                 // type variable. For the moment, we'll just checked to see if it's a type variable.
-                return_ty = substitute_typevars_in_type(return_ty, &generic_inferences, project);
+                return_ty = substitute_typevars_in_type(return_ty, &generic_substitutions, project);
 
                 for generic_typevar in &callee.generic_parameters {
-                    if let Some(substitution) = generic_inferences.get(&generic_typevar) {
+                    if let Some(substitution) = generic_substitutions.get(&generic_typevar) {
                         type_args.push(*substitution)
                     } else {
                         error = error.or(Some(JaktError::TypecheckError(
