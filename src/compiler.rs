@@ -130,63 +130,6 @@ impl Compiler {
     }
 
     pub fn prelude() -> Vec<u8> {
-        r#"
-extern class String {
-    function split(this, anon c: c_char) -> [String]
-    function characters(this) -> raw c_char
-    function reverse(this) -> String
-    function to_lowercase(this) -> String
-    function to_uppercase(this) -> String
-    function to_snakecase(this) -> String
-    function to_titlecase(this) -> String
-    function to_int(this) -> i32?
-    function to_uint(this) -> u32?
-    function is_whitespace(this) -> bool
-    function hash(this) -> u32
-    function substring(this, start: usize, length: usize) -> String
-    function repeated(character: c_char, count: usize) -> String
-    function is_empty(this) -> bool
-    function length(this) -> usize
-}
-
-extern class Array<T> {
-    function is_empty(this) -> bool
-    function size(this) -> usize
-    function capacity(this) -> usize
-    function ensure_capacity(this, anon capacity: usize)
-    function add_capacity(this, anon capacity: usize)
-    function resize(mut this, anon size: usize)
-    function push(mut this, anon value: T)
-    function pop(mut this) -> T?
-}
-
-extern class Optional<T> {
-    function has_value(this) -> bool
-    function value(this) -> T
-    function value_or(this, anon x: T) -> T
-    function Optional<S>(anon x: S) -> Optional<S>
-}
-
-extern class Dictionary<K, V> {
-    function get(this, anon key: K) -> V?
-    function contains(this, anon key: K) -> bool
-    function set(mut this, key: K, value: V)
-    function remove(mut this, anon key: K) -> bool
-    function ensure_capacity(mut this, anon capacity: usize)
-    function clear(mut this)
-    function size(this) -> usize
-    function capacity(this) -> usize
-    function keys(this) -> [K]
-    function hash(this) -> u32
-    function Dictionary<A, B>() -> Dictionary<A, B>
- }
-
-extern class Tuple {}
-
-extern class Range {}
-
-"#
-        .as_bytes()
-        .to_vec()
+        include_bytes!("../runtime/prelude.jakt").to_vec()
     }
 }
