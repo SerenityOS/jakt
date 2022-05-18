@@ -996,15 +996,22 @@ fn typecheck_fun(
     }
 
     for variable in param_vars.into_iter() {
-        if let Err(err) = project.add_var_to_scope(function_scope_id, variable, function.name_span) {
+        if let Err(err) = project.add_var_to_scope(function_scope_id, variable, function.name_span)
+        {
             error = error.or(Some(err));
         }
     }
 
-    let (block, err) = typecheck_block(&function.block, function_scope_id, project, SafetyMode::Safe);
+    let (block, err) = typecheck_block(
+        &function.block,
+        function_scope_id,
+        project,
+        SafetyMode::Safe,
+    );
     error = error.or(err);
 
-    let (fun_return_type, err) = typecheck_typename(&function.return_type, function_scope_id, project);
+    let (fun_return_type, err) =
+        typecheck_typename(&function.return_type, function_scope_id, project);
     error = error.or(err);
 
     // If the return type is unknown, and the function starts with a return statement,
@@ -1051,15 +1058,22 @@ fn typecheck_method(
     }
 
     for variable in param_vars.into_iter() {
-        if let Err(err) = project.add_var_to_scope(function_scope_id, variable, function.name_span) {
+        if let Err(err) = project.add_var_to_scope(function_scope_id, variable, function.name_span)
+        {
             error = error.or(Some(err));
         }
     }
 
-    let (block, err) = typecheck_block(&function.block, function_scope_id, project, SafetyMode::Safe);
+    let (block, err) = typecheck_block(
+        &function.block,
+        function_scope_id,
+        project,
+        SafetyMode::Safe,
+    );
     error = error.or(err);
 
-    let (fun_return_type, err) = typecheck_typename(&function.return_type, function_scope_id, project);
+    let (fun_return_type, err) =
+        typecheck_typename(&function.return_type, function_scope_id, project);
     error = error.or(err);
 
     // If the return type is unknown, and the function starts with a return statement,
