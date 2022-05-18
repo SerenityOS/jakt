@@ -851,16 +851,6 @@ fn typecheck_struct(
         error = error.or(Some(err));
     }
 
-    // Add helper function for constructor to the parent scope
-    if let Err(err) = project.add_function_to_scope(
-        parent_scope_id,
-        structure.name.clone(),
-        project.funs.len() - 1,
-        structure.span,
-    ) {
-        error = error.or(Some(err));
-    }
-
     for fun in &structure.methods {
         error = error.or(typecheck_method(fun, project, struct_id));
     }
@@ -1998,7 +1988,16 @@ pub fn resolve_call<'a>(
         if let Some(struct_id) = project.find_struct_in_scope(scope_id, namespace) {
             let structure = &project.structs[struct_id];
 
-            if let Some(function_id) =
+            // Look for the constructor
+            if let Some(struct_id) = project.find_struct_in_scope(structure.scope_id, &call.name) {
+                let structure = &project.structs[struct_id];
+
+                if let Some(function_id) =
+                    project.find_function_in_scope(structure.scope_id, &call.name)
+                {
+                    callee = Some(&project.funs[function_id]);
+                }
+            } else if let Some(function_id) =
                 project.find_function_in_scope(structure.scope_id, &call.name)
             {
                 callee = Some(&project.funs[function_id]);
@@ -2015,7 +2014,16 @@ pub fn resolve_call<'a>(
         }
     } else {
         // FIXME: Support function overloading.
-        if let Some(function_id) = project.find_function_in_scope(scope_id, &call.name) {
+        // Look for the constructor
+        if let Some(struct_id) = project.find_struct_in_scope(scope_id, &call.name) {
+            let structure = &project.structs[struct_id];
+
+            if let Some(function_id) =
+                project.find_function_in_scope(structure.scope_id, &call.name)
+            {
+                callee = Some(&project.funs[function_id]);
+            }
+        } else if let Some(function_id) = project.find_function_in_scope(scope_id, &call.name) {
             callee = Some(&project.funs[function_id]);
         }
 
