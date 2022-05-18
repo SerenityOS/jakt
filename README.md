@@ -199,6 +199,10 @@ let values = ["foo", "bar", "baz"]
 
 ## Generics
 
+- [x] Generic types
+- [x] Generic type inference
+- [ ] Traits
+
 Jakt supports both generic structures and generic functions. 
 
 ```jakt
