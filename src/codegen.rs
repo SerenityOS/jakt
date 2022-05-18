@@ -203,9 +203,15 @@ fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String 
     }
 
     if fun.name == "main" {
-        output.push_str("int");
+        output.push_str("ErrorOr<int>");
     } else {
-        output.push_str(&codegen_type(fun.return_type, project));
+        let return_type;
+        if fun.throws {
+            return_type = format!("ErrorOr<{}>", &codegen_type(fun.return_type, project));
+        } else {
+            return_type = codegen_type(fun.return_type, project);
+        }
+        output.push_str(&return_type);
     }
     output.push(' ');
     output.push_str(&fun.name);
@@ -253,13 +259,19 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
     }
 
     if fun.name == "main" {
-        output.push_str("int");
+        output.push_str("ErrorOr<int>");
     } else {
-        output.push_str(&codegen_type(fun.return_type, project));
+        let return_type;
+        if fun.throws {
+            return_type = format!("ErrorOr<{}>", &codegen_type(fun.return_type, project));
+        } else {
+            return_type = codegen_type(fun.return_type, project);
+        }
+        output.push_str(&return_type);
     }
     output.push(' ');
     if fun.name == "main" {
-        output.push_str("__jakt_main");
+        output.push_str("_jakt_main");
     } else {
         output.push_str(&fun.name);
     }
@@ -486,6 +498,11 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
     output.push_str(&" ".repeat(indent));
 
     match stmt {
+        CheckedStatement::Throw(expr) => {
+            output.push_str("return ");
+            output.push_str(&codegen_expr(indent, expr, project));
+            output.push_str(";");
+        }
         CheckedStatement::Continue => {
             output.push_str("continue;");
         }
@@ -691,6 +708,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
         }
         CheckedExpression::Call(call, ..) => {
+            if call.callee_throws {
+                output.push_str("TRY(");
+            }
             if call.name == "println" {
                 output.push_str("outln(");
                 for (i, param) in call.args.iter().enumerate() {
@@ -772,8 +792,15 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 }
                 output.push(')');
             }
+            if call.callee_throws {
+                output.push_str(")");
+            }
         }
         CheckedExpression::MethodCall(expr, call, ..) => {
+            if call.callee_throws {
+                output.push_str("TRY(");
+            }
+
             output.push('(');
 
             output.push('(');
@@ -816,6 +843,10 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 output.push_str(&codegen_expr(indent, &param.1, project));
             }
             output.push_str("))");
+
+            if call.callee_throws {
+                output.push_str(")");
+            }
         }
         CheckedExpression::UnaryOp(expr, op, _, type_id) => {
             output.push('(');
