@@ -8,9 +8,7 @@ fn main() -> Result<(), JaktError> {
 
     for arg in std::env::args_os().skip(1) {
         match compiler.compile(&PathBuf::from(&arg)) {
-            Ok(_) => {
-                println!("success");
-            }
+            Ok(_) => {}
             Err(err) => {
                 match &err {
                     JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
