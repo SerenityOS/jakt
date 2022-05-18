@@ -39,8 +39,8 @@ pub enum Type {
 
 pub fn is_integer(type_id: TypeId) -> bool {
     match type_id {
-        USIZE_TYPE_ID | I8_TYPE_ID | I16_TYPE_ID | I32_TYPE_ID | I64_TYPE_ID | U8_TYPE_ID
-        | U16_TYPE_ID | U32_TYPE_ID | U64_TYPE_ID => true,
+        CCHAR_TYPE_ID | CINT_TYPE_ID | USIZE_TYPE_ID | I8_TYPE_ID | I16_TYPE_ID | I32_TYPE_ID
+        | I64_TYPE_ID | U8_TYPE_ID | U16_TYPE_ID | U32_TYPE_ID | U64_TYPE_ID => true,
         _ => false,
     }
 }
