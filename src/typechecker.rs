@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
+    codegen::{self},
     compiler::{
         BOOL_TYPE_ID, CCHAR_TYPE_ID, CINT_TYPE_ID, F32_TYPE_ID, F64_TYPE_ID, I16_TYPE_ID,
         I32_TYPE_ID, I64_TYPE_ID, I8_TYPE_ID, STRING_TYPE_ID, U16_TYPE_ID, U32_TYPE_ID,
@@ -126,7 +127,7 @@ impl Project {
         for existing_var in &scope.vars {
             if var.name == existing_var.name {
                 return Err(JaktError::TypecheckError(
-                    format!("redefinition of {}", var.name),
+                    format!("redefinition of variable {}", var.name),
                     span,
                 ));
             }
@@ -163,7 +164,7 @@ impl Project {
         for (existing_struct, _) in &scope.structs {
             if &name == existing_struct {
                 return Err(JaktError::TypecheckError(
-                    format!("redefinition of {}", name),
+                    format!("redefinition of struct/class {}", name),
                     span,
                 ));
             }
@@ -201,7 +202,7 @@ impl Project {
         for (existing_fun, _) in &scope.funs {
             if &name == existing_fun {
                 return Err(JaktError::TypecheckError(
-                    format!("redefinition of {}", name),
+                    format!("redefinition of function {}", name),
                     span,
                 ));
             }
@@ -239,7 +240,7 @@ impl Project {
         for (existing_type, _) in &scope.types {
             if &type_name == existing_type {
                 return Err(JaktError::TypecheckError(
-                    format!("redefinition of {}", type_name),
+                    format!("redefinition of type {}", type_name),
                     span,
                 ));
             }
@@ -634,7 +635,11 @@ pub fn typecheck_file(
             error = error.or(Some(err));
         }
 
-        typecheck_struct_predecl(structure, struct_type_id, struct_id, scope_id, project);
+        if let Some(err) =
+            typecheck_struct_predecl(structure, struct_type_id, struct_id, scope_id, project)
+        {
+            error = error.or(Some(err));
+        }
     }
 
     for fun in &parsed_file.funs {
@@ -668,6 +673,26 @@ fn typecheck_struct_predecl(
     let mut error = None;
 
     let struct_scope_id = project.create_scope(parent_scope_id);
+
+    let mut generic_parameters = vec![];
+
+    for (generic_parameter, parameter_span) in &structure.generic_parameters {
+        project
+            .types
+            .push(Type::TypeVariable(generic_parameter.to_string()));
+        let parameter_type_id = project.types.len() - 1;
+
+        generic_parameters.push(parameter_type_id);
+
+        if let Err(err) = project.add_type_to_scope(
+            struct_scope_id,
+            generic_parameter.to_string(),
+            parameter_type_id,
+            *parameter_span,
+        ) {
+            error = error.or(Some(err));
+        }
+    }
 
     for fun in &structure.methods {
         let mut generic_parameters = vec![];
@@ -744,7 +769,7 @@ fn typecheck_struct_predecl(
 
     project.structs.push(CheckedStruct {
         name: structure.name.clone(),
-        generic_parameters: vec![],
+        generic_parameters,
         fields: Vec::new(),
         scope_id: struct_scope_id,
         definition_linkage: structure.definition_linkage,
@@ -774,27 +799,6 @@ fn typecheck_struct(
 
     let mut fields = Vec::new();
 
-    for (generic_parameter, parameter_span) in &structure.generic_parameters {
-        project
-            .types
-            .push(Type::TypeVariable(generic_parameter.to_string()));
-        let parameter_type_id = project.types.len() - 1;
-
-        let checked_struct = &mut project.structs[struct_id];
-        let checked_struct_scope_id = checked_struct.scope_id;
-
-        checked_struct.generic_parameters.push(parameter_type_id);
-
-        if let Err(err) = project.add_type_to_scope(
-            checked_struct_scope_id,
-            generic_parameter.to_string(),
-            parameter_type_id,
-            *parameter_span,
-        ) {
-            error = error.or(Some(err));
-        }
-    }
-
     let checked_struct = &mut project.structs[struct_id];
     let checked_struct_scope_id = checked_struct.scope_id;
 
@@ -813,47 +817,52 @@ fn typecheck_struct(
         });
     }
 
-    let mut constructor_params = Vec::new();
-    for field in &fields {
-        constructor_params.push(CheckedParameter {
-            requires_label: true,
-            variable: CheckedVariable {
-                name: field.name.clone(),
-                ty: field.ty,
-                mutable: field.mutable,
-            },
-        });
-    }
+    if project
+        .find_function_in_scope(checked_struct_scope_id, &structure.name)
+        .is_none()
+    {
+        // No constructor found, so let's make one
 
-    let function_scope_id = project.create_scope(parent_scope_id);
+        let mut constructor_params = Vec::new();
+        for field in &fields {
+            constructor_params.push(CheckedParameter {
+                requires_label: true,
+                variable: CheckedVariable {
+                    name: field.name.clone(),
+                    ty: field.ty,
+                    mutable: field.mutable,
+                },
+            });
+        }
+
+        let function_scope_id = project.create_scope(parent_scope_id);
+
+        let checked_constructor = CheckedFunction {
+            name: structure.name.clone(),
+            return_type: struct_type_id,
+            params: constructor_params,
+            function_scope_id,
+            generic_parameters: vec![],
+            block: CheckedBlock::new(),
+            linkage: FunctionLinkage::ImplicitConstructor,
+        };
+
+        // Internal constructor
+        project.funs.push(checked_constructor);
+
+        // Add constructor to the struct's scope
+        if let Err(err) = project.add_function_to_scope(
+            checked_struct_scope_id,
+            structure.name.clone(),
+            project.funs.len() - 1,
+            structure.span,
+        ) {
+            error = error.or(Some(err));
+        }
+    }
 
     let checked_struct = &mut project.structs[struct_id];
     checked_struct.fields = fields;
-
-    let checked_constructor = CheckedFunction {
-        name: structure.name.clone(),
-        return_type: struct_type_id,
-        params: constructor_params,
-        function_scope_id,
-        generic_parameters: vec![],
-        block: CheckedBlock::new(),
-        linkage: FunctionLinkage::ImplicitConstructor,
-    };
-
-    // Internal constructor
-    project.funs.push(checked_constructor);
-
-    let checked_struct_scope_id = checked_struct.scope_id;
-
-    // Add constructor to the struct's scope
-    if let Err(err) = project.add_function_to_scope(
-        checked_struct_scope_id,
-        structure.name.clone(),
-        project.funs.len() - 1,
-        structure.span,
-    ) {
-        error = error.or(Some(err));
-    }
 
     for fun in &structure.methods {
         error = error.or(typecheck_method(fun, project, struct_id));
@@ -2462,7 +2471,11 @@ pub fn check_types_for_compat(
 
                 if rhs_type_id != *seen_type_id {
                     error = error.or(Some(JaktError::TypecheckError(
-                        "Parameter type mismatch".to_string(),
+                        format!(
+                            "Parameter type mismatch: {} vs {}",
+                            codegen::codegen_type(*seen_type_id, project),
+                            codegen::codegen_type(rhs_type_id, project)
+                        ),
                         span,
                     )))
                 }
@@ -2515,7 +2528,11 @@ pub fn check_types_for_compat(
                     if rhs_type_id != lhs_type_id {
                         // They're the same type, might be okay to just leave now
                         error = error.or(Some(JaktError::TypecheckError(
-                            "Parameter type mismatch".to_string(),
+                            format!(
+                                "Parameter type mismatch: {} vs {}",
+                                codegen::codegen_type(lhs_type_id, project),
+                                codegen::codegen_type(rhs_type_id, project)
+                            ),
                             span,
                         )))
                     }
@@ -2569,7 +2586,11 @@ pub fn check_types_for_compat(
                     if rhs_type_id != lhs_type_id {
                         // They're the same type, might be okay to just leave now
                         error = error.or(Some(JaktError::TypecheckError(
-                            "Parameter type mismatch".to_string(),
+                            format!(
+                                "Parameter type mismatch: {} vs {}",
+                                codegen::codegen_type(lhs_type_id, project),
+                                codegen::codegen_type(rhs_type_id, project)
+                            ),
                             span,
                         )))
                     }
@@ -2579,7 +2600,11 @@ pub fn check_types_for_compat(
         _ => {
             if rhs_type_id != lhs_type_id {
                 error = error.or(Some(JaktError::TypecheckError(
-                    "Parameter type mismatch".to_string(),
+                    format!(
+                        "Parameter type mismatch: {} vs {}",
+                        codegen::codegen_type(lhs_type_id, project),
+                        codegen::codegen_type(rhs_type_id, project)
+                    ),
                     span,
                 )))
             }
