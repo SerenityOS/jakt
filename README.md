@@ -211,6 +211,20 @@ fun main() {
 }
 ```
 
+## Tuples
+
+- [x] Creating tuples
+- [x] Index tuples
+- [ ] Tuple types
+
+```
+fun main() {
+    let x = ("a", 2, true);
+
+    println("{}", x.1)
+}
+```
+
 ## Generics
 
 - [x] Generic types
