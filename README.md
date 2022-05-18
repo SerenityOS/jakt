@@ -336,6 +336,16 @@ type i64 implements Hashable {
 
 The intention is that generics use traits to limit what is passed into a generic parameter, and also to grant that variable more capabilities in the body. It's not really intended to do vtable types of things (for that, just use a subclass)
 
+## Safety analysis
+
+**(Not yet implemented)**
+
+To keep things safe, there are a few kinds of analysis we'd like to do (non-exhaustive):
+
+* Preventing overlapping of method calls that would collide with each other. For example, creating an iterator over a container, and while that's live, resizing the container
+* Using and manipulating raw pointers
+* Calling out to C code that may have side effects
+
 ## Error handling
 
 **(Not yet implemented)**
