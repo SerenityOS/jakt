@@ -1,0 +1,121 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "jakt",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#comment"
+		},
+		{
+			"include": "#constant"
+		},
+		{
+			"include": "#number"
+		},
+		{
+			"include": "#strings"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [
+				{
+					"name": "keyword.control.jakt",
+					"match": "\\b(if|else|while|for|return|defer|unsafe)\\b"
+				},
+				{
+					"name": "keyword.jakt",
+					"match": "\\b(print|this)\\b"
+				},
+				{
+					"name": "keyword.jakt",
+					"match": "\\b(fun|extern|struct|class)\\b"
+				},
+				{
+					"name": "keyword.jakt",
+					"match": "\\b(mut|let|anon|raw)\\b"
+				},
+				{
+					"name": "keyword.operator.new.jakt",
+					"match": "\\b(not|and|or)\\b"
+				},
+				{
+					"name": "support.type",
+					"match": "\\b(String|i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|bool|c_int|c_char)\\b"
+				}
+			]
+		},
+		"constant": {
+			"match": "\\b(?:true|false)\\b",
+			"name": "constant.language.jakt"
+		},
+		"number": {
+			"patterns": [
+				{
+					"name": "constant.numeric.hex.jakt",
+					"match": "\\b(?<!\\$)0(?:x|X)[0-9a-fA-F][0-9a-fA-F_]*(n)?\\b(?!\\$)",
+					"captures": {
+						"1": {
+							"name": "storage.type.numeric.bigint.jakt"
+						}
+					}
+				},
+				{
+					"name": "constant.numeric.binary.jakt",
+					"match": "\\b(?<!\\$)0(?:b|B)[01][01_]*(n)?\\b(?!\\$)",
+					"captures": {
+						"1": {
+							"name": "storage.type.numeric.bigint.jakt"
+						}
+					}
+				},
+				{
+					"name": "constant.numeric.octal.jakt",
+					"match": "\\b(?<!\\$)0(?:o|O)?[0-7][0-7_]*(n)?\\b(?!\\$)",
+					"captures": {
+						"1": {
+							"name": "storage.type.numeric.bigint.jakt"
+						}
+					}
+				},
+				{
+					"name": "constant.numeric.jakt",
+					"match": "\\b(?<!\\$)[0-9][0-9_]*(n)?\\b(?!\\$)",
+					"captures": {
+						"1": {
+							"name": "storage.type.numeric.bigint.jakt"
+						}
+					}
+				}
+			],
+			"name": "constant.numeric.jakt"
+		},
+		"comment": {
+			"patterns": [
+				{
+					"captures": {
+						"1": {
+							"name": "punctuation.definition.comment.jakt"
+						}
+					},
+					"match": "(//).*$\\n?",
+					"name": "comment.line.double-slash.jakt"
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.jakt",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.jakt",
+					"match": "\\\\."
+				}
+			]
+		}
+	},
+	"scopeName": "source.jakt"
+}
