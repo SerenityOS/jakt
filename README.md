@@ -256,6 +256,7 @@ fun main() {
     println("{}", f.x);
 }
 ```
+
 ## Type casts
 
 There are four built-in casting operators in **jakt**.
@@ -269,6 +270,42 @@ There are four built-in casting operators in **jakt**.
 
 - `as truncated T`: Returns a `T` with out-of-range values truncated in a manner specific to each type.
 - `as saturated T`: Returns a `T` with the out-of-range values saturated to the minimum or maximum value possible for `T`.
+
+## Namespaces
+
+**(Not yet implemented)**
+
+```
+namespace Foo {
+    fun bar() => 3
+}
+
+fun main() {
+    println("{}", Foo::bar())
+}
+```
+
+## Enums and pattern matching
+
+**(Not yet implemented)**
+
+```
+enum Node {
+    I64(i64),
+    Nothing,
+    SpannedString { string: String, span: Span }
+}
+
+fun main() {
+    let node = Node::I64(18);
+    
+    match node {
+        .I64(x) => println("I64 {}", x)
+        .Nothing => println("Nothing")
+        .Spanned String { string, span } => println("A spanned string {}", string)
+    }
+}
+```
 
 ## Error handling
 
