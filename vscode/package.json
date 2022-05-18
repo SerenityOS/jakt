@@ -1,0 +1,25 @@
+{
+    "name": "jakt",
+    "displayName": "jakt",
+    "description": "Jakt language support",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.67.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "jakt",
+            "aliases": ["jakt", "jakt"],
+            "extensions": [".jakt"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "jakt",
+            "scopeName": "source.jakt",
+            "path": "./syntaxes/jakt.tmLanguage.json"
+        }]
+    }
+}
