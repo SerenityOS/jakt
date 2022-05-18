@@ -114,6 +114,8 @@ Struct members are *public* by default.
 - [ ] private-by-default members
 - [ ] inheritance
 - [ ] class-based polymorphism (assign child instance to things requiring the parent type)
+- [ ] `Super` type
+- [ ] `Self` type
 
 Same basic syntax as `struct`:
 ```
