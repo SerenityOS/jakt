@@ -60,16 +60,24 @@ ALWAYS_INLINE Optional<OutputType> fallible_integer_cast(InputType input)
     return static_cast<OutputType>(input);
 }
 
+template<typename... Ts>
+void compiletime_fail(Ts...) {}
+
 template<typename OutputType, typename InputType>
-ALWAYS_INLINE OutputType infallible_integer_cast(InputType input)
+ALWAYS_INLINE constexpr OutputType infallible_integer_cast(InputType input)
 {
     static_assert(IsIntegral<InputType>);
-    VERIFY(is_within_range<OutputType>(input));
+    if (is_constant_evaluated()) {
+        if (!is_within_range<OutputType>(input))
+            compiletime_fail("Integer cast out of range");
+    } else {
+      VERIFY(is_within_range<OutputType>(input));
+    }
     return static_cast<OutputType>(input);
 }
 
 template<typename OutputType, typename InputType>
-ALWAYS_INLINE OutputType saturating_integer_cast(InputType input)
+ALWAYS_INLINE constexpr OutputType saturating_integer_cast(InputType input)
 {
     static_assert(IsIntegral<InputType>);
     if (!is_within_range<OutputType>(input)) {
@@ -83,7 +91,7 @@ ALWAYS_INLINE OutputType saturating_integer_cast(InputType input)
 }
 
 template<typename OutputType, typename InputType>
-ALWAYS_INLINE OutputType truncating_integer_cast(InputType input)
+ALWAYS_INLINE constexpr OutputType truncating_integer_cast(InputType input)
 {
     static_assert(IsIntegral<InputType>);
     return static_cast<OutputType>(input);
