@@ -1,4 +1,4 @@
-extern class String {
+extern struct String {
     function split(this, anonymous c: c_char) -> [String]
     function characters(this) -> raw c_char
     function reverse(this) -> String
@@ -16,7 +16,7 @@ extern class String {
     function length(this) -> usize
 }
 
-extern class Array<T> {
+extern struct Array<T> {
     function is_empty(this) -> bool
     function size(this) -> usize
     function capacity(this) -> usize
@@ -27,14 +27,14 @@ extern class Array<T> {
     function pop(mutable this) -> T?
 }
 
-extern class Optional<T> {
+extern struct Optional<T> {
     function has_value(this) -> bool
     function value(this) -> T
     function value_or(this, anonymous x: T) -> T
     function Optional<S>(anonymous x: S) -> Optional<S>
 }
 
-extern class Dictionary<K, V> {
+extern struct Dictionary<K, V> {
     function get(this, anonymous key: K) -> V?
     function contains(this, anonymous key: K) -> bool
     function set(mutable this, key: K, value: V)
@@ -48,10 +48,10 @@ extern class Dictionary<K, V> {
     function Dictionary<A, B>() -> Dictionary<A, B>
  }
 
-extern class Tuple {}
+extern struct Tuple {}
 
-extern class Range {}
+extern struct Range {}
 
-extern class Error {
+extern struct Error {
     function from_errno(anonymous errno: i32)
 }
