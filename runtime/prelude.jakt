@@ -20,10 +20,10 @@ extern class Array<T> {
     function is_empty(this) -> bool
     function size(this) -> usize
     function capacity(this) -> usize
-    function ensure_capacity(this, anon capacity: usize)
-    function add_capacity(this, anon capacity: usize)
-    function resize(mut this, anon size: usize)
-    function push(mut this, anon value: T)
+    function ensure_capacity(this, anon capacity: usize) throws
+    function add_capacity(this, anon capacity: usize) throws
+    function resize(mut this, anon size: usize) throws
+    function push(mut this, anon value: T) throws
     function pop(mut this) -> T?
 }
 

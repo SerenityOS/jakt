@@ -1,9 +1,10 @@
 #pragma once
 
 #include <AK/Checked.h>
+#include <AK/Error.h>
 #include <AK/RefCounted.h>
-#include <stdlib.h>
 #include <initializer_list>
+#include <stdlib.h>
 
 namespace AK {
 
@@ -16,13 +17,18 @@ public:
     size_t size() const { return m_size; }
     size_t capacity() const { return m_capacity; }
 
-    void ensure_capacity(size_t capacity)
+    ErrorOr<void> ensure_capacity(size_t capacity)
     {
         if (m_capacity >= capacity) {
-            return;
+            return {};
         }
-        VERIFY(!Checked<size_t>::multiplication_would_overflow(capacity, sizeof(T)));
+        if (Checked<size_t>::multiplication_would_overflow(capacity, sizeof(T))) {
+            return Error::from_errno(EOVERFLOW);
+        }
         auto* new_elements = static_cast<T*>(malloc(capacity * sizeof(T)));
+        if (!new_elements) {
+            return Error::from_errno(ENOMEM);
+        }
         for (size_t i = 0; i < m_size; ++i) {
             new (&new_elements[i]) T(move(m_elements[i]));
             m_elements[i].~T();
@@ -30,17 +36,21 @@ public:
         free(m_elements);
         m_elements = new_elements;
         m_capacity = capacity;
+        return {};
     }
 
-    void add_capacity(size_t capacity)
+    ErrorOr<void> add_capacity(size_t capacity)
     {
-        VERIFY(!Checked<size_t>::addition_would_overflow(m_capacity, capacity));
-        ensure_capacity(m_capacity + capacity);
+        if (Checked<size_t>::addition_would_overflow(m_capacity, capacity)) {
+            return Error::from_errno(EOVERFLOW);
+        }
+        TRY(ensure_capacity(m_capacity + capacity));
+        return {};
     }
 
-    void resize(size_t size)
+    ErrorOr<void> resize(size_t size)
     {
-        ensure_capacity(size);
+        TRY(ensure_capacity(size));
         if (size > m_size) {
             for (size_t i = m_size; i < size; ++i) {
                 new (&m_elements[i]) T();
@@ -51,6 +61,7 @@ public:
             }
         }
         m_size = size;
+        return {};
     }
 
     T const& at(size_t index) const
@@ -65,11 +76,12 @@ public:
         return m_elements[index];
     }
 
-    void push(T value)
+    ErrorOr<void> push(T value)
     {
-        ensure_capacity(m_size + 1);
+        TRY(ensure_capacity(m_size + 1));
         new (&m_elements[m_size]) T(move(value));
         ++m_size;
+        return {};
     }
 
 private:
@@ -131,18 +143,21 @@ public:
 
     Array(std::initializer_list<T> list) requires(!IsLvalueReference<T>)
     {
-        ensure_capacity(list.size());
+        // FIXME: Should not MUST()
+        MUST(ensure_capacity(list.size()));
         for (auto& item : list)
-            push(item);
+            MUST(push(item));
     }
 
     bool is_empty() const { return !m_storage || m_storage->is_empty(); }
     size_t size() const { return m_storage ? m_storage->size() : 0; }
     size_t capacity() const { return m_storage ? m_storage->capacity() : 0; }
 
-    void push(T value)
+    ErrorOr<void> push(T value)
     {
-        ensure_storage().push(move(value));
+        auto* storage = TRY(ensure_storage());
+        TRY(storage->push(move(value)));
+        return {};
     }
 
     T const& at(size_t index) const
@@ -160,8 +175,19 @@ public:
     T const& operator[](size_t index) const { return at(index); }
     T& operator[](size_t index) { return at(index); }
 
-    void ensure_capacity(size_t capacity) { ensure_storage().ensure_capacity(capacity); }
-    void add_capacity(size_t capacity) { ensure_storage().add_capacity(capacity); }
+    ErrorOr<void> ensure_capacity(size_t capacity)
+    {
+        auto* storage = TRY(ensure_storage());
+        TRY(storage->ensure_capacity(capacity));
+        return {};
+    }
+
+    ErrorOr<void> add_capacity(size_t capacity)
+    {
+        auto* storage = TRY(ensure_storage());
+        TRY(storage->add_capacity(capacity));
+        return {};
+    }
 
     ArraySlice<T> slice(size_t offset, size_t size)
     {
@@ -170,11 +196,13 @@ public:
         return { *m_storage, offset, size };
     }
 
-    void resize(size_t size)
+    ErrorOr<void> resize(size_t size)
     {
         if (size != this->size()) {
-            ensure_storage().resize(size);
+            auto* storage = TRY(ensure_storage());
+            TRY(storage->resize(size));
         }
+        return {};
     }
 
     Optional<T> pop()
@@ -186,30 +214,30 @@ public:
         return value;
     }
 
-    static Array filled(size_t size, T value)
+    static ErrorOr<Array> filled(size_t size, T value)
     {
         Array array;
-        array.ensure_capacity(size);
+        TRY(array.ensure_capacity(size));
         for (size_t i = 0; i < size; ++i) {
-            array.push(value);
+            TRY(array.push(value));
         }
         return array;
     }
 
     Array(Vector<T> const& ak_vector)
     {
-        ensure_capacity(ak_vector.size());
+        MUST(ensure_capacity(ak_vector.size()));
         for (auto value : ak_vector)
-            push(move(value));
+            MUST(push(move(value)));
     }
 
 private:
-    ArrayStorage<T>& ensure_storage()
+    ErrorOr<ArrayStorage<T>*> ensure_storage()
     {
         if (!m_storage) {
-            m_storage = adopt_ref(*new ArrayStorage<T>);
+            m_storage = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ArrayStorage<T>));
         }
-        return *m_storage;
+        return m_storage.ptr();
     }
 
     RefPtr<ArrayStorage<T>> m_storage;

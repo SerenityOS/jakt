@@ -128,7 +128,7 @@ int main(int argc, char** argv)
 {
     Array<String> args;
     for (int i = 0; i < argc; ++i) {
-        args.push(argv[i]);
+        MUST(args.push(argv[i]));
     }
     auto result = _jakt_main(move(args));
     if (result.is_error()) {
