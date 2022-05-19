@@ -372,4 +372,24 @@ If nothing else is specified, calling a function that `throws` from within a fun
 
 ### Syntax for catching errors
 
-To be determined.
+If you want to catch errors locally instead of letting them bubble up to the caller, use a `try`/`catch` construct like this:
+
+```jakt
+try {
+    task_that_might_fail()
+} catch error {
+    println("Caught error: {}", error)
+}
+```
+
+There's also a shorter form:
+
+```jakt
+try task_that_might_fail() catch error {
+    println("Caught error: {}", error)
+}
+```
+
+### Rethrowing errors
+
+**(Not yet implemented)**

@@ -498,6 +498,21 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
     output.push_str(&" ".repeat(indent));
 
     match stmt {
+        CheckedStatement::Try(stmt, error_name, catch_block) => {
+            output.push('{');
+            output.push_str("auto _jakt_try_result = [&]() -> ErrorOr<void> {");
+            output.push_str(&codegen_statement(indent, stmt, project));
+            output.push(';');
+            output.push_str("return {};");
+            output.push_str("}();");
+            output.push_str("if (_jakt_try_result.is_error()) {");
+            output.push_str("auto ");
+            output.push_str(error_name);
+            output.push_str(" = _jakt_try_result.release_error();");
+            output.push_str(&codegen_block(indent, catch_block, project));
+            output.push_str("}");
+            output.push('}');
+        }
         CheckedStatement::Throw(expr) => {
             output.push_str("return ");
             output.push_str(&codegen_expr(indent, expr, project));

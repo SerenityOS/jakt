@@ -351,6 +351,7 @@ pub enum CheckedStatement {
     Break,
     Continue,
     Throw(CheckedExpression),
+    Try(Box<CheckedStatement>, String, CheckedBlock),
     Garbage,
 }
 
@@ -1132,6 +1133,40 @@ pub fn typecheck_statement(
     let mut error = None;
 
     match stmt {
+        Statement::Try(stmt, error_name, error_span, catch_block) => {
+            let (checked_stmt, err) = typecheck_statement(stmt, scope_id, project, safety_mode);
+            error = error.or(err);
+
+            let error_struct_id = project
+                .find_struct_in_scope(0, "Error")
+                .expect("internal error: Error builtin definition not found");
+
+            let error_decl = CheckedVariable {
+                name: error_name.clone(),
+                mutable: false,
+                ty: project.find_or_add_type_id(Type::Struct(error_struct_id)),
+            };
+
+            let catch_scope_id = project.create_scope(scope_id);
+
+            if let Err(err) =
+                project.add_var_to_scope(catch_scope_id, error_decl, error_span.clone())
+            {
+                error = error.or(Some(err));
+            }
+
+            let (checked_catch_block, err) =
+                typecheck_block(catch_block, catch_scope_id, project, safety_mode);
+            error = error.or(err);
+            (
+                CheckedStatement::Try(
+                    Box::new(checked_stmt),
+                    error_name.clone(),
+                    checked_catch_block,
+                ),
+                error,
+            )
+        }
         Statement::Throw(expr) => {
             let (checked_expr, err) = typecheck_expression(expr, scope_id, project, safety_mode);
             error = error.or(err);
