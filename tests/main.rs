@@ -198,3 +198,8 @@ fn test_dictionaries() -> Result<(), JaktError> {
 fn test_generics() -> Result<(), JaktError> {
     test_samples("samples/generics")
 }
+
+#[test]
+fn test_inline_cpp() -> Result<(), JaktError> {
+    test_samples("samples/inline_cpp")
+}

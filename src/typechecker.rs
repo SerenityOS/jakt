@@ -356,6 +356,7 @@ pub enum CheckedStatement {
     Continue,
     Throw(CheckedExpression),
     Try(Box<CheckedStatement>, String, CheckedBlock),
+    InlineCpp(Vec<String>),
     Garbage,
 }
 
@@ -1344,6 +1345,37 @@ pub fn typecheck_statement(
         Statement::Block(block) => {
             let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
             (CheckedStatement::Block(checked_block), err)
+        }
+        Statement::InlineCpp(block, span) => {
+            if safety_mode == SafetyMode::Safe {
+                return (
+                    CheckedStatement::InlineCpp(vec![]),
+                    Some(JaktError::TypecheckError(
+                        "Use of inline cpp block outside of unsafe block".to_string(),
+                        *span,
+                    )),
+                );
+            }
+
+            let mut strings: Vec<String> = vec![];
+
+            for statement in &block.stmts {
+                match statement {
+                    Statement::Expression(Expression::QuotedString(string, _)) => {
+                        strings.push(string.clone())
+                    }
+                    _ => {
+                        return (
+                            CheckedStatement::InlineCpp(vec![]),
+                            Some(JaktError::TypecheckError(
+                                "Expected block of strings".to_string(),
+                                *span,
+                            )),
+                        )
+                    }
+                }
+            }
+            (CheckedStatement::InlineCpp(strings), None)
         }
         Statement::Garbage => (CheckedStatement::Garbage, None),
     }
