@@ -184,12 +184,12 @@ Dynamic arrays are provided via a built-in `Array<T>` type. They can grow and sh
 
 `Array` is memory safe:
 - Out-of-bounds will panic the program with a runtime error.
-- Slices of a `Array` keep the underlying data alive via automatic reference counting.
+- Slices of an `Array` keep the underlying data alive via automatic reference counting.
 
 ### Declaring arrays
 
 ```jakt
-// Function that takes a Array<i64> and returns a Array<String>
+// Function that takes an Array<i64> and returns an Array<String>
 fun foo(numbers: [i64]) -> [String] {
     ...
 }
