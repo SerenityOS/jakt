@@ -393,3 +393,17 @@ try task_that_might_fail() catch error {
 ### Rethrowing errors
 
 **(Not yet implemented)**
+
+## Inline C++
+
+For better interoperability with existing C++ code, as well as situations where the capabilities of **jakt** within `unsafe` blocks are not powerful enough, the possibility of embedding inline C++ code into the program exists in the form of `cpp` blocks:
+
+```jakt
+let mutable x = 0
+unsafe {
+    cpp {
+        "x = (i64)&x;"
+    }
+}
+println("{}", x)
+```
