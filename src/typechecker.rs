@@ -1024,7 +1024,7 @@ fn typecheck_fun(
     // If the return type is unknown, and the function starts with a return statement,
     // we infer the return type from its expression.
     let return_type = if fun_return_type == UNKNOWN_TYPE_ID {
-        if let Some(CheckedStatement::Return(ret)) = block.stmts.first() {
+        if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
             ret.ty()
         } else {
             VOID_TYPE_ID
@@ -1505,7 +1505,8 @@ pub fn typecheck_expression(
         }
         Expression::Boolean(b, span) => (CheckedExpression::Boolean(*b, *span), None),
         Expression::Call(call, span) => {
-            let (checked_call, err) = typecheck_call(call, scope_id, span, project, safety_mode);
+            let (checked_call, err) =
+                typecheck_call(call, scope_id, span, project, None, None, safety_mode);
             let ty = checked_call.ty;
             (CheckedExpression::Call(checked_call, *span, ty), err)
         }
@@ -1698,15 +1699,7 @@ pub fn typecheck_expression(
                 Type::GenericInstance(parent_struct_id, inner_tys)
                     if parent_struct_id == &dict_struct_id =>
                 {
-                    let value_ty = inner_tys[1];
-                    let optional_struct_id = project
-                        .find_struct_in_scope(0, "Optional")
-                        .expect("internal error: Optional builtin definition not found");
-
-                    let inner_ty = project.find_or_add_type_id(Type::GenericInstance(
-                        optional_struct_id,
-                        vec![value_ty],
-                    ));
+                    let inner_ty = inner_tys[1];
                     expr_ty = inner_ty;
 
                     (
@@ -1835,13 +1828,13 @@ pub fn typecheck_expression(
 
                 match string_struct {
                     Some(struct_id) => {
-                        let (checked_call, err) = typecheck_method_call(
+                        let (checked_call, err) = typecheck_call(
                             call,
                             scope_id,
                             span,
                             project,
-                            &checked_expr,
-                            struct_id,
+                            Some(&checked_expr),
+                            Some(struct_id),
                             safety_mode,
                         );
                         error = error.or(err);
@@ -1871,13 +1864,13 @@ pub fn typecheck_expression(
                 match checked_expr_ty {
                     Type::Struct(struct_id) => {
                         let struct_id = *struct_id;
-                        let (checked_call, err) = typecheck_method_call(
+                        let (checked_call, err) = typecheck_call(
                             call,
                             scope_id,
                             span,
                             project,
-                            &checked_expr,
-                            struct_id,
+                            Some(&checked_expr),
+                            Some(struct_id),
                             safety_mode,
                         );
                         error = error.or(err);
@@ -1896,13 +1889,13 @@ pub fn typecheck_expression(
                     Type::GenericInstance(struct_id, _) => {
                         // ignore the inner types for now, but we'll need them in the future
                         let struct_id = *struct_id;
-                        let (checked_call, err) = typecheck_method_call(
+                        let (checked_call, err) = typecheck_call(
                             call,
                             scope_id,
                             span,
                             project,
-                            &checked_expr,
-                            struct_id,
+                            Some(&checked_expr),
+                            Some(struct_id),
                             safety_mode,
                         );
                         error = error.or(err);
@@ -2226,9 +2219,11 @@ pub fn resolve_call<'a>(
 
 pub fn typecheck_call(
     call: &Call,
-    scope_id: ScopeId,
+    caller_scope_id: ScopeId,
     span: &Span,
     project: &mut Project,
+    this_expr: Option<&CheckedExpression>,
+    struct_id: Option<StructId>,
     safety_mode: SafetyMode,
 ) -> (CheckedCall, Option<JaktError>) {
     let mut checked_args = Vec::new();
@@ -2239,15 +2234,26 @@ pub fn typecheck_call(
     let mut type_args = vec![];
     let mut callee_throws = false;
 
+    let callee_scope_id = match struct_id {
+        Some(struct_id) => {
+            // We are a method, so let's look up the scope id for our struct
+            project.structs[struct_id].scope_id
+        }
+        _ => caller_scope_id,
+    };
+
     match call.name.as_str() {
-        "println" | "eprintln" => {
+        "println" | "eprintln" if struct_id.is_none() => {
             // FIXME: This is a hack since println() and eprintln() are hard-coded into codegen at the moment.
             for arg in &call.args {
                 let (checked_arg, err) =
-                    typecheck_expression(&arg.1, scope_id, project, safety_mode);
+                    typecheck_expression(&arg.1, caller_scope_id, project, safety_mode);
                 error = error.or(err);
 
-                if checked_arg.ty() == VOID_TYPE_ID {
+                let result_ty =
+                    substitute_typevars_in_type(checked_arg.ty(), &generic_substitutions, project);
+
+                if result_ty == VOID_TYPE_ID {
                     error = error.or(Some(JaktError::TypecheckError(
                         "println/eprintln can't take void values".into(),
                         *span,
@@ -2259,7 +2265,7 @@ pub fn typecheck_call(
             }
         }
         _ => {
-            let (callee, err) = resolve_call(call, span, scope_id, project);
+            let (callee, err) = resolve_call(call, span, callee_scope_id, project);
             error = error.or(err);
 
             if let Some(callee) = callee {
@@ -2267,10 +2273,13 @@ pub fn typecheck_call(
                 let callee = callee.clone();
 
                 callee_throws = callee.throws;
+                return_ty = callee.return_type;
+                linkage = callee.linkage;
 
                 // If the user gave us explicit type arguments, let's use them in our substitutions
                 for (idx, type_arg) in call.type_args.iter().enumerate() {
-                    let (checked_type, err) = typecheck_typename(type_arg, scope_id, project);
+                    let (checked_type, err) =
+                        typecheck_typename(type_arg, caller_scope_id, project);
                     error = error.or(err);
 
                     // Find the associated type variable for this parameter, we'll use it in substitution
@@ -2279,12 +2288,33 @@ pub fn typecheck_call(
                     generic_substitutions.insert(typevar_type_id, checked_type);
                 }
 
-                return_ty = callee.return_type;
+                // If this is a method, let's also add the types we know from our 'this' pointer
+                if let Some(this_expr) = this_expr {
+                    let type_id = this_expr.ty();
+                    let param_type = &project.types[type_id];
 
-                linkage = callee.linkage;
+                    match param_type {
+                        Type::GenericInstance(struct_id, args) => {
+                            let structure = &project.structs[*struct_id];
+
+                            let mut idx = 0;
+
+                            while idx < structure.generic_parameters.len() {
+                                generic_substitutions
+                                    .insert(structure.generic_parameters[idx], args[idx]);
+                                idx += 1;
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+
+                // This will be 0 for functions or 1 for instance methods, because of the
+                // 'this' ptr
+                let arg_offset = if this_expr.is_some() { 1 } else { 0 };
 
                 // Check that we have the right number of arguments.
-                if callee.params.len() != call.args.len() {
+                if callee.params.len() != (call.args.len() + arg_offset) {
                     error = error.or(Some(JaktError::TypecheckError(
                         "wrong number of arguments".to_string(),
                         *span,
@@ -2293,28 +2323,32 @@ pub fn typecheck_call(
                     let mut idx = 0;
 
                     while idx < call.args.len() {
-                        let (mut checked_arg, err) =
-                            typecheck_expression(&call.args[idx].1, scope_id, project, safety_mode);
+                        let (mut checked_arg, err) = typecheck_expression(
+                            &call.args[idx].1,
+                            caller_scope_id,
+                            project,
+                            safety_mode,
+                        );
                         error = error.or(err);
 
                         // Borrowchecker workaround: since we need project to be mutable above, we
                         // need to let go of the previous callee and then look it up again
-                        let (callee, _) = resolve_call(call, span, scope_id, project);
+                        let (callee, _) = resolve_call(call, span, callee_scope_id, project);
                         let callee = callee
                             .expect("internal error: previously resolved call is now unresolved");
 
                         if let Expression::Var(var_name, _) = &call.args[idx].1 {
-                            if var_name != &callee.params[idx].variable.name
-                                && callee.params[idx].requires_label
-                                && call.args[idx].0 != callee.params[idx].variable.name
+                            if var_name != &callee.params[idx + arg_offset].variable.name
+                                && callee.params[idx + arg_offset].requires_label
+                                && call.args[idx].0 != callee.params[idx + arg_offset].variable.name
                             {
                                 error = error.or(Some(JaktError::TypecheckError(
                                     "Wrong parameter name in argument label".to_string(),
                                     call.args[idx].1.span(),
                                 )));
                             }
-                        } else if callee.params[idx].requires_label
-                            && call.args[idx].0 != callee.params[idx].variable.name
+                        } else if callee.params[idx + arg_offset].requires_label
+                            && call.args[idx].0 != callee.params[idx + arg_offset].variable.name
                         {
                             error = error.or(Some(JaktError::TypecheckError(
                                 "Wrong parameter name in argument label".to_string(),
@@ -2322,16 +2356,17 @@ pub fn typecheck_call(
                             )));
                         }
 
-                        let lhs_type_id = callee.params[idx].variable.ty;
+                        let lhs_type_id = callee.params[idx + arg_offset].variable.ty;
 
                         let err =
                             try_promote_constant_expr_to_type(lhs_type_id, &mut checked_arg, &span);
                         error = error.or(err);
 
+                        let lhs_type_id = callee.params[idx + arg_offset].variable.ty;
                         let rhs_type_id = checked_arg.ty();
 
                         if let Some(err) = check_types_for_compat(
-                            callee.params[idx].variable.ty,
+                            lhs_type_id,
                             rhs_type_id,
                             &mut generic_substitutions,
                             call.args[idx].1.span(),
@@ -2378,158 +2413,27 @@ pub fn typecheck_call(
     )
 }
 
-pub fn typecheck_method_call(
-    call: &Call,
-    scope_id: ScopeId,
-    span: &Span,
+pub fn substitute_typevars_in_type(
+    type_id: TypeId,
+    generic_inferences: &HashMap<TypeId, TypeId>,
     project: &mut Project,
-    this_expr: &CheckedExpression,
-    struct_id: StructId,
-    safety_mode: SafetyMode,
-) -> (CheckedCall, Option<JaktError>) {
-    let mut checked_args = Vec::new();
-    let mut error = None;
-    let mut return_ty = UNKNOWN_TYPE_ID;
-    let mut linkage = FunctionLinkage::Internal;
-    let mut type_args = vec![];
-    let mut callee_throws = false;
+) -> TypeId {
+    let mut result = substitute_typevars_in_type_helper(type_id, generic_inferences, project);
 
-    let mut generic_inferences = HashMap::new();
+    loop {
+        let fixed_point = substitute_typevars_in_type_helper(type_id, generic_inferences, project);
 
-    let (callee, err) = resolve_call(call, span, project.structs[struct_id].scope_id, project);
-    error = error.or(err);
-
-    if let Some(callee) = callee {
-        // Borrow checker workaround, would be nice to clean this up
-        let callee = callee.clone();
-
-        return_ty = callee.return_type;
-        linkage = callee.linkage;
-        callee_throws = callee.throws;
-
-        // Check our 'this' pointer for the correct mutability
-        if let Some(checked_param) = callee.params.get(0) {
-            if checked_param.variable.mutable && !this_expr.is_mutable() {
-                error = error.or(Some(JaktError::TypecheckError(
-                    "call requires 'this' to be mutable".to_string(),
-                    this_expr.span(),
-                )))
-            }
-        }
-
-        // Before we check the method, let's go ahead and make sure we know any instantiated generic types
-        // This will make it easier later to know how to create the proper return type
-        let type_id = this_expr.ty();
-        let param_type = &project.types[type_id];
-
-        match param_type {
-            Type::GenericInstance(struct_id, args) => {
-                let structure = &project.structs[*struct_id];
-
-                let mut idx = 0;
-
-                while idx < structure.generic_parameters.len() {
-                    generic_inferences.insert(structure.generic_parameters[idx], args[idx]);
-                    idx += 1;
-                }
-            }
-            _ => {}
-        }
-
-        // Check that we have the right number of arguments.
-        if callee.params.len() != (call.args.len() + 1) {
-            error = error.or(Some(JaktError::TypecheckError(
-                "wrong number of arguments".to_string(),
-                *span,
-            )));
+        if fixed_point == result {
+            break;
         } else {
-            let mut idx = 0;
-
-            while idx < call.args.len() {
-                let (mut checked_arg, err) =
-                    typecheck_expression(&call.args[idx].1, scope_id, project, safety_mode);
-                error = error.or(err);
-
-                // Borrowchecker workaround: since we need project to be mutable above, we
-                // need to let go of the previous callee and then look it up again
-                let (callee, _) =
-                    resolve_call(call, span, project.structs[struct_id].scope_id, project);
-                let callee =
-                    callee.expect("internal error: previously resolved call is now unresolved");
-
-                if let Expression::Var(var_name, _) = &call.args[idx].1 {
-                    if var_name != &callee.params[idx + 1].variable.name
-                        && callee.params[idx + 1].requires_label
-                        && call.args[idx].0 != callee.params[idx + 1].variable.name
-                    {
-                        error = error.or(Some(JaktError::TypecheckError(
-                            "Wrong parameter name in argument label".to_string(),
-                            call.args[idx].1.span(),
-                        )));
-                    }
-                } else if callee.params[idx + 1].requires_label
-                    && call.args[idx].0 != callee.params[idx + 1].variable.name
-                {
-                    error = error.or(Some(JaktError::TypecheckError(
-                        "Wrong parameter name in argument label".to_string(),
-                        call.args[idx].1.span(),
-                    )));
-                }
-
-                let lhs_type_id = callee.params[idx + 1].variable.ty;
-
-                let err = try_promote_constant_expr_to_type(lhs_type_id, &mut checked_arg, &span);
-                error = error.or(err);
-
-                let rhs_type_id = checked_arg.ty();
-
-                if let Some(err) = check_types_for_compat(
-                    lhs_type_id,
-                    rhs_type_id,
-                    &mut generic_inferences,
-                    call.args[idx].1.span(),
-                    project,
-                ) {
-                    error = error.or(Some(err));
-                }
-
-                checked_args.push((call.args[idx].0.clone(), checked_arg));
-
-                idx += 1;
-            }
-        }
-
-        // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
-        // type variable. For the moment, we'll just checked to see if it's a type variable.
-        return_ty = substitute_typevars_in_type(return_ty, &generic_inferences, project);
-
-        for generic_typevar in &callee.generic_parameters {
-            if let Some(substitution) = generic_inferences.get(&generic_typevar) {
-                type_args.push(*substitution)
-            } else {
-                error = error.or(Some(JaktError::TypecheckError(
-                    "not all generic parameters have known types".into(),
-                    *span,
-                )))
-            }
+            result = fixed_point;
         }
     }
 
-    (
-        CheckedCall {
-            namespace: Vec::new(),
-            name: call.name.clone(),
-            callee_throws,
-            args: checked_args,
-            type_args,
-            linkage,
-            ty: return_ty,
-        },
-        error,
-    )
+    result
 }
 
-pub fn substitute_typevars_in_type(
+fn substitute_typevars_in_type_helper(
     type_id: TypeId,
     generic_inferences: &HashMap<TypeId, TypeId>,
     project: &mut Project,
