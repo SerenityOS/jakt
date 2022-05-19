@@ -982,13 +982,13 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         }
         CheckedExpression::Array(vals, fill_size_expr, _, _) => {
             if let Some(fill_size_expr) = fill_size_expr {
-                output.push_str("(Array<");
+                output.push_str("(TRY(Array<");
                 output.push_str(&codegen_type(vals.first().unwrap().ty(), project));
                 output.push_str(">::filled(");
                 output.push_str(&codegen_expr(indent, fill_size_expr, project));
                 output.push_str(", ");
                 output.push_str(&codegen_expr(indent, vals.first().unwrap(), project));
-                output.push_str("))");
+                output.push_str(")))");
             } else {
                 // (Array({1, 2, 3}))
                 output.push_str("(Array({");
