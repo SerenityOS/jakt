@@ -39,28 +39,28 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
 
     output.push('\n');
 
-    for (_, fun_id) in &scope.functions {
-        let fun = &project.functions[*fun_id];
-        let fun_output = codegen_function_predecl(fun, project);
+    for (_, function_id) in &scope.functions {
+        let function = &project.functions[*function_id];
+        let function_output = codegen_function_predecl(function, project);
 
-        if fun.linkage != FunctionLinkage::ImplicitConstructor && fun.name != "main" {
-            output.push_str(&fun_output);
+        if function.linkage != FunctionLinkage::ImplicitConstructor && function.name != "main" {
+            output.push_str(&function_output);
             output.push('\n');
         }
     }
 
     output.push('\n');
 
-    for (_, fun_id) in &scope.functions {
-        let fun = &project.functions[*fun_id];
-        if fun.linkage == FunctionLinkage::External {
+    for (_, function_id) in &scope.functions {
+        let function = &project.functions[*function_id];
+        if function.linkage == FunctionLinkage::External {
             continue;
-        } else if fun.linkage == FunctionLinkage::ImplicitConstructor {
+        } else if function.linkage == FunctionLinkage::ImplicitConstructor {
             continue;
         } else {
-            let fun_output = codegen_function(fun, project);
+            let function_output = codegen_function(function, project);
 
-            output.push_str(&fun_output);
+            output.push_str(&function_output);
             output.push('\n');
         }
     }
@@ -156,20 +156,20 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
     }
 
     let scope = &project.scopes[structure.scope_id];
-    for (_, fun_id) in &scope.functions {
-        let fun = &project.functions[*fun_id];
-        if fun.linkage == FunctionLinkage::ImplicitConstructor {
-            let fun_output = codegen_constructor(fun, project);
+    for (_, function_id) in &scope.functions {
+        let function = &project.functions[*function_id];
+        if function.linkage == FunctionLinkage::ImplicitConstructor {
+            let function_output = codegen_constructor(function, project);
 
             output.push_str(&" ".repeat(INDENT_SIZE));
-            output.push_str(&fun_output);
+            output.push_str(&function_output);
             output.push('\n');
         } else {
             output.push_str(&" ".repeat(INDENT_SIZE));
-            if fun.is_static() {
+            if function.is_static() {
                 output.push_str("static ");
             }
-            let method_output = codegen_function(fun, project);
+            let method_output = codegen_function(function, project);
             output.push_str(&method_output);
         }
     }
@@ -282,11 +282,11 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
     }
 
     let mut first = true;
-    let mut const_fun = false;
+    let mut const_function = false;
 
     for param in &fun.params {
         if param.variable.name == "this" {
-            const_fun = !param.variable.mutable;
+            const_function = !param.variable.mutable;
             continue;
         }
 
@@ -307,7 +307,7 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
     }
     output.push(')');
 
-    if const_fun {
+    if const_function {
         output.push_str(" const");
     }
 

@@ -199,8 +199,8 @@ impl Project {
     ) -> Result<(), JaktError> {
         let scope = &mut self.scopes[scope_id];
 
-        for (existing_fun, _) in &scope.functions {
-            if &name == existing_fun {
+        for (existing_function, _) in &scope.functions {
+            if &name == existing_function {
                 return Err(JaktError::TypecheckError(
                     format!("redefinition of function {}", name),
                     span,
@@ -212,13 +212,17 @@ impl Project {
         Ok(())
     }
 
-    pub fn find_function_in_scope(&self, scope_id: ScopeId, fun_name: &str) -> Option<FunctionId> {
+    pub fn find_function_in_scope(
+        &self,
+        scope_id: ScopeId,
+        function_name: &str,
+    ) -> Option<FunctionId> {
         let mut scope_id = Some(scope_id);
 
         while let Some(current_id) = scope_id {
             let scope = &self.scopes[current_id];
             for s in &scope.functions {
-                if s.0 == fun_name {
+                if s.0 == function_name {
                     return Some(s.1);
                 }
             }
@@ -677,7 +681,7 @@ pub fn typecheck_file(
 
     for function in &parsed_file.functions {
         //Ensure we know the function ahead of time, so they can be recursive
-        error = error.or(typecheck_fun_predecl(function, scope_id, project));
+        error = error.or(typecheck_function_predecl(function, scope_id, project));
     }
 
     for (struct_id, structure) in parsed_file.structs.iter().enumerate() {
@@ -906,7 +910,7 @@ fn typecheck_struct(
     error
 }
 
-fn typecheck_fun_predecl(
+fn typecheck_function_predecl(
     function: &Function,
     parent_scope_id: ScopeId,
     project: &mut Project,
@@ -1017,20 +1021,20 @@ fn typecheck_fun(
     );
     error = error.or(err);
 
-    let (fun_return_type, err) =
+    let (function_return_type, err) =
         typecheck_typename(&function.return_type, function_scope_id, project);
     error = error.or(err);
 
     // If the return type is unknown, and the function starts with a return statement,
     // we infer the return type from its expression.
-    let return_type = if fun_return_type == UNKNOWN_TYPE_ID {
+    let return_type = if function_return_type == UNKNOWN_TYPE_ID {
         if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
             ret.ty()
         } else {
             VOID_TYPE_ID
         }
     } else {
-        fun_return_type.clone()
+        function_return_type.clone()
     };
 
     let checked_function = &mut project.functions[function_id];
@@ -1079,20 +1083,20 @@ fn typecheck_method(
     );
     error = error.or(err);
 
-    let (fun_return_type, err) =
+    let (function_return_type, err) =
         typecheck_typename(&function.return_type, function_scope_id, project);
     error = error.or(err);
 
     // If the return type is unknown, and the function starts with a return statement,
     // we infer the return type from its expression.
-    let return_type = if fun_return_type == UNKNOWN_TYPE_ID {
+    let return_type = if function_return_type == UNKNOWN_TYPE_ID {
         if let Some(CheckedStatement::Return(ret)) = block.stmts.first() {
             ret.ty()
         } else {
             VOID_TYPE_ID
         }
     } else {
-        fun_return_type.clone()
+        function_return_type.clone()
     };
 
     let checked_function = &mut project.functions[method_id];
