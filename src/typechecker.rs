@@ -1288,6 +1288,13 @@ pub fn typecheck_statement(
             let (checked_cond, err) = typecheck_expression(cond, scope_id, project, safety_mode);
             error = error.or(err);
 
+            if checked_cond.ty() != BOOL_TYPE_ID {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "Condition must be a boolean expression".to_string(),
+                    checked_cond.span(),
+                )));
+            }
+
             let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
             error = error.or(err);
 
@@ -1316,6 +1323,13 @@ pub fn typecheck_statement(
         Statement::While(cond, block) => {
             let (checked_cond, err) = typecheck_expression(cond, scope_id, project, safety_mode);
             error = error.or(err);
+
+            if checked_cond.ty() != BOOL_TYPE_ID {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "Condition must be a boolean expression".to_string(),
+                    checked_cond.span(),
+                )));
+            }
 
             let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
             error = error.or(err);
