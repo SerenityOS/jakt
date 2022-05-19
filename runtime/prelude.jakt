@@ -53,5 +53,6 @@ extern struct Tuple {}
 extern struct Range {}
 
 extern struct Error {
+    function code(this) -> i32
     function from_errno(anonymous errno: i32)
 }

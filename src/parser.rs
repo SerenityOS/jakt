@@ -167,6 +167,7 @@ pub enum Statement {
     Continue,
     Return(Expression),
     Throw(Expression),
+    Try(Box<Statement>, String, Span, Block),
     Garbage,
 }
 
@@ -1203,6 +1204,45 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             error = error.or(err);
 
             (Statement::While(cond, block), error)
+        }
+        TokenContents::Name(name) if name == "try" => {
+            trace!("parsing try");
+
+            *index += 1;
+
+            let (stmt, err) = parse_statement(tokens, index);
+            error = error.or(err);
+
+            let mut error_name = String::new();
+            let mut error_span = &tokens[*index].span;
+
+            match &tokens[*index].contents {
+                TokenContents::Name(name) if name == "catch" => {
+                    *index += 1;
+
+                    match &tokens[*index].contents {
+                        TokenContents::Name(name) => {
+                            error_span = &tokens[*index].span;
+                            error_name = name.clone();
+                            *index += 1;
+                        }
+                        _ => {
+                            // FIXME: Error about missing error binding
+                        }
+                    }
+                }
+                _ => {
+                    // FIXME: Error about missing "catch"
+                }
+            }
+
+            let (catch_block, err) = parse_block(tokens, index);
+            error = error.or(err);
+
+            (
+                Statement::Try(Box::new(stmt), error_name, error_span.clone(), catch_block),
+                error,
+            )
         }
         TokenContents::Name(name) if name == "for" => {
             trace!("parsing for");

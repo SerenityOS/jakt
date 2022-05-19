@@ -1,0 +1,30 @@
+function notoss() throws -> i32 {
+    if not true {
+        throw Error::from_errno(123456)
+    }
+    return 5
+}
+
+function toss(anonymous value: i32) throws {
+    throw Error::from_errno(value)
+}
+
+function main() {
+    try toss(1234) catch error {
+        println("Caught {}", error.code())
+    }
+
+    try {
+        toss(6969)
+    } catch error {
+        println("Caught {}", error.code())
+    }
+
+    try {
+        notoss()
+        toss(5252)
+        println("FAIL")
+    } catch error {
+        println("Caught {}", error.code())
+    }
+}

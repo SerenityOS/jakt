@@ -23,7 +23,7 @@
 			"patterns": [
 				{
 					"name": "keyword.control.jakt",
-					"match": "\\b(if|else|while|for|return|defer|unsafe|loop|throw|continue|break)\\b"
+					"match": "\\b(if|else|while|for|return|defer|unsafe|loop|throw|continue|break|try|catch)\\b"
 				},
 				{
 					"name": "keyword.jakt",
