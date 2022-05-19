@@ -1,5 +1,5 @@
 function main() {
-    let mut x: i64 = 0
+    let mutable x: i64 = 0
 
     while (x < 10) {
         println("{}", x)

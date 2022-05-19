@@ -1,5 +1,5 @@
 function main() {
-    let mut total = 0
+    let mutable total = 0
 
     for x in 1..10 {
         total += x

@@ -3,7 +3,7 @@ function main() {
     let b = "kt"
     println("{}", a + b)
 
-    let mut str = "programming "
+    let mutable str = "programming "
     str += "language"
     println("{}", str)
 }

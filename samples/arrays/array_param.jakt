@@ -1,4 +1,4 @@
-function get_first(anon v: [String]) => v[0]
+function get_first(anonymous v: [String]) => v[0]
 
 function main() {
     println("{}", get_first(["one", "two"]))

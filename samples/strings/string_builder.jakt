@@ -1,10 +1,10 @@
 extern struct StringBuilder {
-    function append(mut this, anon s: raw c_char)
-    function to_string(mut this) -> String
+    function append(mutable this, anonymous s: raw c_char)
+    function to_string(mutable this) -> String
 }
 
 function main() {
-    let mut s = StringBuilder()
+    let mutable s = StringBuilder()
 
     s.append("abc".characters());
     s.append("123".characters());

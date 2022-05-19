@@ -163,18 +163,18 @@ let x = Foo()
 x.func()
 ```
 
-**Mutating member functions** require an object to be called, and may modify the object. The first parameter is `mut this`.
+**Mutating member functions** require an object to be called, and may modify the object. The first parameter is `mutable this`.
 ```jakt
 class Foo {
     x: i64
 
-    function set(mut this, anon x: i64) {
+    function set(mutable this, anonymous x: i64) {
         this.x = x
     }
 }
 
 // Foo::set() can only be called on a mutable Foo:
-let mut foo = Foo(x: 3)
+let mutable foo = Foo(x: 3)
 foo.set(9)
 ```
 
@@ -242,7 +242,7 @@ fun main() {
 Jakt supports both generic structures and generic functions. 
 
 ```jakt
-fun id<T>(anon x: T) -> T {
+fun id<T>(anonymous x: T) -> T {
     return x;
 }
 

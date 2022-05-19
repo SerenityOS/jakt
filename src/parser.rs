@@ -867,12 +867,12 @@ pub fn parse_function(
                             current_param_requires_label = true;
                         }
 
-                        TokenContents::Name(name) if name == "anon" => {
+                        TokenContents::Name(name) if name == "anonymous" => {
                             current_param_requires_label = false;
                             *index += 1;
                         }
 
-                        TokenContents::Name(name) if name == "mut" => {
+                        TokenContents::Name(name) if name == "mutable" => {
                             current_param_is_mutable = true;
                             *index += 1;
                         }
@@ -1252,7 +1252,7 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
 
             let mutable = if *index + 1 < tokens.len() {
                 match &tokens[*index + 1].contents {
-                    TokenContents::Name(name) if name == "mut" => {
+                    TokenContents::Name(name) if name == "mutable" => {
                         *index += 1;
                         true
                     }
@@ -2858,7 +2858,7 @@ pub fn parse_variable_declaration(
             if *index < tokens.len() {
                 let mutable = *index + 1 < tokens.len()
                     && match &tokens[*index].contents {
-                        TokenContents::Name(name) if name == "mut" => {
+                        TokenContents::Name(name) if name == "mutable" => {
                             *index += 1;
                             true
                         }

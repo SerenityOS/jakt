@@ -35,7 +35,7 @@
 				},
 				{
 					"name": "keyword.jakt",
-					"match": "\\b(mut|let|anon|raw)\\b"
+					"match": "\\b(mutable|let|anonymous|raw)\\b"
 				},
 				{
 					"name": "keyword.operator.new.jakt",
