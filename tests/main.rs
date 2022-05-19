@@ -203,3 +203,8 @@ fn test_generics() -> Result<(), JaktError> {
 fn test_enums() -> Result<(), JaktError> {
     test_samples("samples/enums")
 }
+
+#[test]
+fn test_inline_cpp() -> Result<(), JaktError> {
+    test_samples("samples/inline_cpp")
+}

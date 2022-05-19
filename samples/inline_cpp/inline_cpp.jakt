@@ -1,0 +1,18 @@
+function main() {
+    let mutable i: i32? = None
+    unsafe {
+        cpp {
+            "i = 32;"
+        }
+    }
+
+    let x = 3
+    unsafe {
+        cpp {
+            "auto const y = 7;"
+            "*i += (x + y);"
+        }
+    }
+
+    println("{}", i!)
+}
