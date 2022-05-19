@@ -5,8 +5,8 @@ function main() {
     let mutable counts = Dictionary<String, i64>();
 
     for i in 0..words.size() {
-        counts.set(key: words[i], value: counts[words[i]].value_or(0) + 1)
+        counts.set(key: words[i], value: counts.get(words[i]).value_or(0) + 1)
     }
 
-    println("the: {}", counts["the"]!)
+    println("the: {}", counts["the"])
 }
