@@ -1209,7 +1209,7 @@ pub fn typecheck_statement(
             }
 
             let (checked_block, err) =
-                typecheck_block(block, iterator_scope_id, project, SafetyMode::Unsafe);
+                typecheck_block(block, iterator_scope_id, project, safety_mode);
             error = error.or(err);
 
             (
