@@ -386,7 +386,11 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
                     output.push_str(" a_");
                     output.push_str(&param.variable.name);
                 }
-                output.push_str("): ");
+                output.push_str(") ");
+
+                if !fun.params.is_empty() {
+                    output.push(':');
+                }
 
                 let mut first = true;
                 for param in &fun.params {

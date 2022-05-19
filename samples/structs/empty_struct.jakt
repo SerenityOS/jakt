@@ -1,0 +1,7 @@
+struct EmptyStruct {
+}
+
+function main() {
+    let e = EmptyStruct()
+    println("Compiled!")
+}
