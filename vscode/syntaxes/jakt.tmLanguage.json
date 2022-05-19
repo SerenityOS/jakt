@@ -23,7 +23,7 @@
 			"patterns": [
 				{
 					"name": "keyword.control.jakt",
-					"match": "\\b(if|else|while|for|return|defer|unsafe)\\b"
+					"match": "\\b(if|else|while|for|return|defer|unsafe|loop|throw|continue|break)\\b"
 				},
 				{
 					"name": "keyword.jakt",
@@ -31,7 +31,7 @@
 				},
 				{
 					"name": "keyword.jakt",
-					"match": "\\b(function|extern|struct|class)\\b"
+					"match": "\\b(function|extern|struct|class|throws)\\b"
 				},
 				{
 					"name": "keyword.jakt",
@@ -43,7 +43,7 @@
 				},
 				{
 					"name": "support.type",
-					"match": "\\b(String|i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|bool|c_int|c_char)\\b"
+					"match": "\\b(String|i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|bool|c_int|c_char|usize)\\b"
 				}
 			]
 		},
