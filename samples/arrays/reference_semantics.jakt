@@ -1,12 +1,12 @@
-function change_value(vector: mut [String]) {
+function change_value(vector: mutable [String]) {
     vector[1] = "bar"
 }
 
 function main() {
-    let mut v = ["foo", "foo"]
+    let mutable v = ["foo", "foo"]
     change_value(vector: v)
 
-    let mut i = 0
+    let mutable i = 0
     while i < v.size() {
         println("{}", v[i])
         ++i

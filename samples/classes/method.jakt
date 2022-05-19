@@ -2,13 +2,13 @@ class Person {
     name: String
     age: i64
 
-    function birthday(mut this) {
+    function birthday(mutable this) {
         ++this.age
     }
 }
 
 function main() {
-    let mut p = Person(name: "Bob", age: 1000)
+    let mutable p = Person(name: "Bob", age: 1000)
 
     p.birthday()
 

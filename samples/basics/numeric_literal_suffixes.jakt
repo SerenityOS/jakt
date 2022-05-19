@@ -1,13 +1,13 @@
 function main() {
-    let mut a = 0uz
+    let mutable a = 0uz
     a += 5 as! usize
     println("{}", a)
 
     {
-        let mut i = 0u8
-        let mut j = 0u16
-        let mut k = 0u32
-        let mut l = 0u64
+        let mutable i = 0u8
+        let mutable j = 0u16
+        let mutable k = 0u32
+        let mutable l = 0u64
 
         i += 5 as! u8
         j += 5 as! u16
@@ -20,10 +20,10 @@ function main() {
         println("{}", l)
     }
     {
-        let mut i = 0i8
-        let mut j = 0i16
-        let mut k = 0i32
-        let mut l = 0i64
+        let mutable i = 0i8
+        let mutable j = 0i16
+        let mutable k = 0i32
+        let mutable l = 0i64
 
         i += 5 as! i8
         j += 5 as! i16

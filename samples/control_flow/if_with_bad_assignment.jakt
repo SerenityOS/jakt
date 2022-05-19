@@ -1,5 +1,5 @@
 function main() {
-    let mut x = 100;
+    let mutable x = 100;
 
     if (x = 99) {
         println("true")

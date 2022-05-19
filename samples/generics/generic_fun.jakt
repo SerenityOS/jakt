@@ -1,4 +1,4 @@
-function id<T>(anon x: T) => x
+function id<T>(anonymous x: T) => x
 
 function main() {
     println("{}", id(3))

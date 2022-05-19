@@ -1,4 +1,4 @@
 function main() {
-    let mut i: u8 = 0;
+    let mutable i: u8 = 0;
     i += 1000;
 }

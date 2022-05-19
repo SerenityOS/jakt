@@ -1,5 +1,5 @@
 function main() {
-    let mut x = [1, 2, 3]
+    let mutable x = [1, 2, 3]
     x[1] = 55
 
     println("{}", x[1])

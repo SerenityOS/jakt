@@ -1,5 +1,5 @@
 extern class String {
-    function split(this, anon c: c_char) -> [String]
+    function split(this, anonymous c: c_char) -> [String]
     function characters(this) -> raw c_char
     function reverse(this) -> String
     function to_lowercase(this) -> String
@@ -20,27 +20,27 @@ extern class Array<T> {
     function is_empty(this) -> bool
     function size(this) -> usize
     function capacity(this) -> usize
-    function ensure_capacity(this, anon capacity: usize) throws
-    function add_capacity(this, anon capacity: usize) throws
-    function resize(mut this, anon size: usize) throws
-    function push(mut this, anon value: T) throws
-    function pop(mut this) -> T?
+    function ensure_capacity(this, anonymous capacity: usize) throws
+    function add_capacity(this, anonymous capacity: usize) throws
+    function resize(mutable this, anonymous size: usize) throws
+    function push(mutable this, anonymous value: T) throws
+    function pop(mutable this) -> T?
 }
 
 extern class Optional<T> {
     function has_value(this) -> bool
     function value(this) -> T
-    function value_or(this, anon x: T) -> T
-    function Optional<S>(anon x: S) -> Optional<S>
+    function value_or(this, anonymous x: T) -> T
+    function Optional<S>(anonymous x: S) -> Optional<S>
 }
 
 extern class Dictionary<K, V> {
-    function get(this, anon key: K) -> V?
-    function contains(this, anon key: K) -> bool
-    function set(mut this, key: K, value: V)
-    function remove(mut this, anon key: K) -> bool
-    function ensure_capacity(mut this, anon capacity: usize)
-    function clear(mut this)
+    function get(this, anonymous key: K) -> V?
+    function contains(this, anonymous key: K) -> bool
+    function set(mutable this, key: K, value: V)
+    function remove(mutable this, anonymous key: K) -> bool
+    function ensure_capacity(mutable this, anonymous capacity: usize)
+    function clear(mutable this)
     function size(this) -> usize
     function capacity(this) -> usize
     function keys(this) -> [K]
@@ -53,5 +53,5 @@ extern class Tuple {}
 extern class Range {}
 
 extern class Error {
-    function from_errno(anon errno: i32)
+    function from_errno(anonymous errno: i32)
 }

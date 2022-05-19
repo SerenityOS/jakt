@@ -1,5 +1,5 @@
 function main() {
-    let mut values = [0; 0]
+    let mutable values = [0; 0]
 
     for i in 0..10 {
         values.push(i)

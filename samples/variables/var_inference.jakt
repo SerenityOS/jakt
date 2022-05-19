@@ -1,4 +1,4 @@
 function main() {
-    let mut x = 100
+    let mutable x = 100
     println("{}", x)
 }

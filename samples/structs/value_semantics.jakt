@@ -2,7 +2,7 @@ struct Foo {
     x: i64
 }
 
-function set_x(foo: mut Foo, x: i64) {
+function set_x(foo: mutable Foo, x: i64) {
     foo.x = x
 }
 
@@ -13,7 +13,7 @@ function main() {
     set_x(foo: foo, x: 10)
     println("{}", foo.x)
 
-    let mut bar = foo
+    let mutable bar = foo
     bar.x = 15
     println("{}", foo.x)
 }

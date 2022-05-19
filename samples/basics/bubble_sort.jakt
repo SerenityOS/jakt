@@ -1,7 +1,7 @@
-function bubble_sort(values: mut [i64]) {
-    let mut i = 0
+function bubble_sort(values: mutable [i64]) {
+    let mutable i = 0
     while i < values.size() - 1 {
-        let mut j = 0
+        let mutable j = 0
         while j < values.size() - i - 1 {
             if values[j] > values[j + 1] {
                 let tmp = values[j]
@@ -15,9 +15,9 @@ function bubble_sort(values: mut [i64]) {
 }
 
 function main() {
-    let mut v = [25, 13, 8, 1, 9, 22, 50, 2]
+    let mutable v = [25, 13, 8, 1, 9, 22, 50, 2]
     bubble_sort(values: v)
-    let mut i = 0
+    let mutable i = 0
     while i < v.size() {
         println("{}", v[i])
         ++i
