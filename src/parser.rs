@@ -168,6 +168,7 @@ pub enum Statement {
     Return(Expression),
     Throw(Expression),
     Try(Box<Statement>, String, Span, Block),
+    InlineCpp(Block, Span),
     Garbage,
 }
 
@@ -1351,6 +1352,24 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
                     )),
                 )
             }
+        }
+        TokenContents::Name(name) if name == "cpp" => {
+            trace!("parsing inline cpp block");
+
+            *index += 1;
+
+            let start_span = tokens[*index].span;
+
+            let (block, err) = parse_block(tokens, index);
+            error = error.or(err);
+
+            let span = Span {
+                file_id: start_span.file_id,
+                start: start_span.start,
+                end: tokens[*index].span.end,
+            };
+
+            (Statement::InlineCpp(block, span), error)
         }
         TokenContents::LCurly => {
             trace!("parsing block from statement parser");
