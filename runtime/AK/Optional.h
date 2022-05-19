@@ -197,6 +197,14 @@ public:
         return move(fallback);
     }
 
+    template<typename Callback>
+    [[nodiscard]] ALWAYS_INLINE T value_or_lazy_evaluated(Callback callback) const
+    {
+        if (m_has_value)
+            return value();
+        return callback();
+    }
+
     ALWAYS_INLINE T const& operator*() const { return value(); }
     ALWAYS_INLINE T& operator*() { return value(); }
 

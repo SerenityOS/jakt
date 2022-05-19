@@ -57,6 +57,7 @@ Some of the features that encourage more readable programs:
 - [ ] Inferred `enum` scope. (You can say `Foo` instead of `MyEnum::Foo`).
 - [ ] Pattern matching with `match`.
 - [ ] Optional chaining (`foo?.bar?.baz` (fallible) and `foo!.bar!.baz` (infallible))
+- [x] None coalescing for optionals (`foo ?? bar` yields `foo` if `foo` has a value, otherwise `bar`)
 - [x] `defer` statements.
 - [x] Pointers are always dereferenced with `.` (never `->`)
 - [ ] Trailing closure parameters can be passed outside the call parentheses.
