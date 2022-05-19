@@ -190,7 +190,7 @@ Dynamic arrays are provided via a built-in `Array<T>` type. They can grow and sh
 
 ```jakt
 // Function that takes an Array<i64> and returns an Array<String>
-fun foo(numbers: [i64]) -> [String] {
+function foo(numbers: [i64]) -> [String] {
     ...
 }
 ```
@@ -212,7 +212,7 @@ let values = ["foo", "bar", "baz"]
 - [ ] Assigning into indexes (aka lvalue)
 
 ```jakt
-fun main() {
+function main() {
     let dict = ["a": 1, "b": 2]
 
     println("{}", dict["a"]!)
@@ -226,7 +226,7 @@ fun main() {
 - [ ] Tuple types
 
 ```
-fun main() {
+function main() {
     let x = ("a", 2, true);
 
     println("{}", x.1)
@@ -242,11 +242,11 @@ fun main() {
 Jakt supports both generic structures and generic functions. 
 
 ```jakt
-fun id<T>(anonymous x: T) -> T {
+function id<T>(anonymous x: T) -> T {
     return x;
 }
 
-fun main() {
+function main() {
     let y = id(3);
 
     println("{}", y + 1000)
@@ -258,7 +258,7 @@ struct Foo<T> {
     x: T
 }
 
-fun main() {
+function main() {
     let f = Foo(x: 100);
 
     println("{}", f.x);
@@ -288,7 +288,7 @@ namespace Foo {
     function bar() => 3
 }
 
-fun main() {
+function main() {
     println("{}", Foo::bar())
 }
 ```
@@ -304,7 +304,7 @@ enum Node {
     SpannedString { string: String, span: Span }
 }
 
-fun main() {
+function main() {
     let node = Node::I64(18);
     
     match node {
@@ -352,7 +352,7 @@ To keep things safe, there are a few kinds of analysis we'd like to do (non-exha
 Functions that can fail with an error instead of returning normally are marked with the `throws` keyword:
 
 ```jakt
-fun task_that_might_fail() throws -> usize {
+function task_that_might_fail() throws -> usize {
     if problem {
         throw Error::from_errno(EPROBLEM)
     }
@@ -360,7 +360,7 @@ fun task_that_might_fail() throws -> usize {
     return result
 }
 
-fun task_that_cannot_fail() -> usize {
+function task_that_cannot_fail() -> usize {
     ...
     return result
 }
