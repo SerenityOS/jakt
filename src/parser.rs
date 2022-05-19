@@ -649,10 +649,10 @@ pub fn parse_struct(
                                 DefinitionLinkage::External => FunctionLinkage::External,
                             };
 
-                            let (fun_decl, err) = parse_function(tokens, index, function_linkage);
+                            let (function, err) = parse_function(tokens, index, function_linkage);
                             error = error.or(err);
 
-                            methods.push(fun_decl);
+                            methods.push(function);
                         }
 
                         TokenContents::Name(..) => {
@@ -773,7 +773,7 @@ pub fn parse_function(
         // we're expecting the name of the function
         match &tokens[*index] {
             Token {
-                contents: TokenContents::Name(fun_name),
+                contents: TokenContents::Name(function_name),
                 ..
             } => {
                 let name_span = tokens[*index].span;
@@ -1018,7 +1018,7 @@ pub fn parse_function(
                 if let FunctionLinkage::External = linkage {
                     return (
                         Function {
-                            name: fun_name.clone(),
+                            name: function_name.clone(),
                             name_span,
                             params,
                             generic_parameters,
@@ -1043,7 +1043,7 @@ pub fn parse_function(
 
                 return (
                     Function {
-                        name: fun_name.clone(),
+                        name: function_name.clone(),
                         name_span,
                         params,
                         generic_parameters,
