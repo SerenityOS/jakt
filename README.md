@@ -68,7 +68,7 @@ Some of the features that encourage more readable programs:
 When calling a function, you must specify the name of each argument as you're passing it:
 
 ```jakt
-rect.set_size(width: 640, height: 480);
+rect.set_size(width: 640, height: 480)
 ```
 
 There are two exceptions to this:
@@ -227,7 +227,7 @@ function main() {
 
 ```
 function main() {
-    let x = ("a", 2, true);
+    let x = ("a", 2, true)
 
     println("{}", x.1)
 }
@@ -243,11 +243,11 @@ Jakt supports both generic structures and generic functions.
 
 ```jakt
 function id<T>(anonymous x: T) -> T {
-    return x;
+    return x
 }
 
 function main() {
-    let y = id(3);
+    let y = id(3)
 
     println("{}", y + 1000)
 }
@@ -259,9 +259,9 @@ struct Foo<T> {
 }
 
 function main() {
-    let f = Foo(x: 100);
+    let f = Foo(x: 100)
 
-    println("{}", f.x);
+    println("{}", f.x)
 }
 ```
 
@@ -305,7 +305,7 @@ enum Node {
 }
 
 function main() {
-    let node = Node::I64(18);
+    let node = Node::I64(18)
     
     match node {
         .I64(x) => println("I64 {}", x)
