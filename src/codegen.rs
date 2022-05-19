@@ -933,6 +933,12 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             output.push('(');
 
             match op {
+                BinaryOperator::NoneCoalescing => {
+                    output.push_str(&codegen_expr(indent, lhs, project));
+                    output.push_str(".value_or_lazy_evaluated([&] { return ");
+                    output.push_str(&codegen_expr(indent, rhs, project));
+                    output.push_str("; })");
+                }
                 BinaryOperator::ArithmeticRightShift => {
                     output.push_str("__arithmetic_shift_right(");
                     output.push_str(&codegen_expr(indent, lhs, project));

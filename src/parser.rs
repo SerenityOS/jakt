@@ -331,6 +331,7 @@ pub enum BinaryOperator {
     BitwiseXorAssign,
     BitwiseLeftShiftAssign,
     BitwiseRightShiftAssign,
+    NoneCoalescing,
 }
 
 impl Expression {
@@ -358,7 +359,8 @@ impl Expression {
             Expression::Operator(BinaryOperator::BitwiseXor, _) => 72,
             Expression::Operator(BinaryOperator::BitwiseOr, _) => 71,
             Expression::Operator(BinaryOperator::LogicalAnd, _) => 70,
-            Expression::Operator(BinaryOperator::LogicalOr, _) => 69,
+            Expression::Operator(BinaryOperator::LogicalOr, _)
+            | Expression::Operator(BinaryOperator::NoneCoalescing, _) => 69,
             Expression::Operator(BinaryOperator::Assign, _)
             | Expression::Operator(BinaryOperator::BitwiseAndAssign, _)
             | Expression::Operator(BinaryOperator::BitwiseOrAssign, _)
@@ -2214,6 +2216,13 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
     let span = tokens[*index].span;
 
     match &tokens[*index].contents {
+        TokenContents::QuestionMarkQuestionMark => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::NoneCoalescing, span),
+                None,
+            )
+        }
         TokenContents::Name(name) if name == "and" => {
             *index += 1;
             (Expression::Operator(BinaryOperator::LogicalAnd, span), None)
@@ -2473,6 +2482,13 @@ pub fn parse_operator_with_assignment(
     let span = tokens[*index].span;
 
     match &tokens[*index].contents {
+        TokenContents::QuestionMarkQuestionMark => {
+            *index += 1;
+            (
+                Expression::Operator(BinaryOperator::NoneCoalescing, span),
+                None,
+            )
+        }
         TokenContents::Plus => {
             *index += 1;
             (Expression::Operator(BinaryOperator::Add, span), None)
