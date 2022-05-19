@@ -2110,7 +2110,14 @@ pub fn typecheck_binary_operation(
 ) -> (TypeId, Option<JaktError>) {
     let mut ty = lhs.ty();
     match op {
-        BinaryOperator::LogicalAnd | BinaryOperator::LogicalOr => {
+        BinaryOperator::LogicalAnd
+        | BinaryOperator::LogicalOr
+        | BinaryOperator::LessThan
+        | BinaryOperator::LessThanOrEqual
+        | BinaryOperator::GreaterThan
+        | BinaryOperator::GreaterThanOrEqual
+        | BinaryOperator::Equal
+        | BinaryOperator::NotEqual => {
             ty = BOOL_TYPE_ID;
         }
         BinaryOperator::Assign
