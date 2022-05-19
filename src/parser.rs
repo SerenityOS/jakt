@@ -2661,14 +2661,14 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                                 } else {
                                     *index += 1;
                                     error = error.or(Some(JaktError::ParserError(
-                                        "Unsupported static method call 1".to_string(),
+                                        "Unsupported static method call".to_string(),
                                         tokens[*index].span,
                                     )));
                                     break;
                                 }
                             } else {
                                 error = error.or(Some(JaktError::ParserError(
-                                    "Unsupported static method call 2".to_string(),
+                                    "Unsupported static method call".to_string(),
                                     tokens[*index].span,
                                 )));
                                 break;
@@ -2678,7 +2678,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                         _ => {
                             *index += 1;
                             error = error.or(Some(JaktError::ParserError(
-                                "Unsupported static method call 3".to_string(),
+                                "Unsupported static method call".to_string(),
                                 tokens[*index].span,
                             )));
                             break;
