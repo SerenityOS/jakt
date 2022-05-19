@@ -1,3 +1,8 @@
+use crate::compiler::{UNKNOWN_TYPE_ID, VOID_TYPE_ID};
+use crate::parser::FunctionLinkage::ImplicitEnumConstructor;
+use crate::typechecker::{
+    CheckedEnum, CheckedEnumVariant, CheckedMatchBody, CheckedMatchCase, FunctionGenericParameter,
+};
 use crate::{
     compiler,
     parser::{BinaryOperator, DefinitionLinkage, DefinitionType, FunctionLinkage},
@@ -25,6 +30,16 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
         }
     }
 
+    for (_, enum_id) in &scope.enums {
+        let enum_ = &project.enums[*enum_id];
+        let enum_output = codegen_enum_predecl(enum_, project);
+
+        if !enum_output.is_empty() {
+            output.push_str(&enum_output);
+            output.push('\n');
+        }
+    }
+
     output.push('\n');
 
     for (_, struct_id) in &scope.structs {
@@ -41,6 +56,10 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
 
     for (_, function_id) in &scope.functions {
         let function = &project.functions[*function_id];
+        if function.linkage == ImplicitEnumConstructor {
+            continue;
+        }
+
         let function_output = codegen_function_predecl(function, project);
 
         if function.linkage != FunctionLinkage::ImplicitConstructor && function.name != "main" {
@@ -57,6 +76,8 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
             continue;
         } else if function.linkage == FunctionLinkage::ImplicitConstructor {
             continue;
+        } else if function.linkage == ImplicitEnumConstructor {
+            continue;
         } else {
             let function_output = codegen_function(function, project);
 
@@ -64,6 +85,179 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
             output.push('\n');
         }
     }
+
+    output
+}
+
+fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
+    if enum_.underlying_type.is_some() {
+        let ty = enum_.underlying_type.unwrap();
+        if is_integer(ty) {
+            let mut output = String::new();
+
+            output.push_str("enum class ");
+            output.push_str(&enum_.name);
+            output.push_str(": ");
+            output.push_str(&codegen_type(ty, project));
+            output.push_str(" {\n");
+            for variant in &enum_.variants {
+                match variant {
+                    CheckedEnumVariant::Untyped(name, _) => {
+                        output.push_str("    ");
+                        output.push_str(name);
+                        output.push_str(",\n");
+                    }
+                    CheckedEnumVariant::WithValue(name, value, _) => {
+                        output.push_str("    ");
+                        output.push_str(name);
+                        output.push_str(" = ");
+                        output.push_str(&codegen_expr(0, value, project));
+                        output.push_str(",\n");
+                    }
+                    _ => unreachable!(),
+                }
+            }
+            output.push_str("};\n");
+            return output;
+        } else {
+            todo!("Enums with a non-integer underlying type")
+        }
+    }
+
+    // These are all Variant<Ts...>, make a new namespace and define the variant types first.
+    let is_generic = enum_.generic_parameters.len() > 0;
+    let generic_parameter_names = enum_
+        .generic_parameters
+        .iter()
+        .map(|p| match &project.types[*p] {
+            Type::TypeVariable(name) => name.clone(),
+            _ => unreachable!(),
+        })
+        .collect::<Vec<_>>();
+    let template_args = generic_parameter_names
+        .iter()
+        .map(|p| "typename ".to_string() + p)
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    let mut output = String::new();
+    output.push_str("namespace ");
+    output.push_str(&enum_.name);
+    output.push_str("_Details {\n");
+    for variant in &enum_.variants {
+        match variant {
+            CheckedEnumVariant::StructLike(name, members, _) => {
+                if is_generic {
+                    output.push_str("    template<");
+                    output.push_str(template_args.as_str());
+                    output.push_str(">\n");
+                }
+                output.push_str("    struct ");
+                output.push_str(&name);
+                output.push_str(" {\n");
+                for member in members {
+                    output.push_str("        ");
+                    output.push_str(&codegen_type(member.ty, project));
+                    output.push_str(" ");
+                    output.push_str(&member.name);
+                    output.push_str(";\n");
+                }
+                output.push_str("    };\n");
+            }
+            CheckedEnumVariant::Untyped(name, _) => {
+                if is_generic {
+                    output.push_str("    template<");
+                    output.push_str(template_args.as_str());
+                    output.push_str(">\n");
+                }
+                output.push_str("    struct ");
+                output.push_str(&name);
+                output.push_str(" {};\n");
+            }
+            CheckedEnumVariant::Typed(name, type_id, _) => {
+                if is_generic {
+                    output.push_str("    template<");
+                    output.push_str(template_args.as_str());
+                    output.push_str(">\n");
+                }
+                output.push_str("    struct ");
+                output.push_str(&name);
+                output.push_str(" {\n");
+                output.push_str("        ");
+                output.push_str(&codegen_type(*type_id, project));
+                output.push_str(" value;\n");
+                output.push_str("\n");
+                output.push_str("        template<typename... Args>\n");
+                output.push_str("        ");
+                output.push_str(&name);
+                output.push_str("(Args&&... args): ");
+                output.push_str(" value { forward<Args>(args)... } {}\n");
+                output.push_str("    };\n");
+            }
+            _ => (),
+        }
+    }
+    output.push_str("}\n");
+
+    // Now define the variant itself.
+    if is_generic {
+        output.push_str("template<");
+        output.push_str(template_args.as_str());
+        output.push_str(">\n");
+    }
+    output.push_str("struct ");
+    output.push_str(&enum_.name);
+    output.push_str(" : public Variant<");
+    let mut variant_args = String::new();
+    let mut first = true;
+    let mut variant_names = Vec::new();
+    for variant in &enum_.variants {
+        if first {
+            first = false;
+        } else {
+            variant_args.push_str(", ");
+        }
+        match variant {
+            CheckedEnumVariant::StructLike(name, _, _)
+            | CheckedEnumVariant::Untyped(name, _)
+            | CheckedEnumVariant::Typed(name, _, _) => {
+                variant_args.push_str(&enum_.name);
+                variant_args.push_str("_Details::");
+                variant_args.push_str(&name);
+                variant_names.push(name.clone());
+                if is_generic {
+                    variant_args.push_str("<");
+                    variant_args.push_str(generic_parameter_names.join(", ").as_str());
+                    variant_args.push_str(">");
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    output.push_str(&variant_args);
+    output.push_str("> {\n");
+
+    output.push_str("    using Variant<");
+    output.push_str(&variant_args);
+    output.push_str(">::Variant;\n");
+
+    for name in &variant_names {
+        output.push_str("    using ");
+        output.push_str(&name);
+        output.push_str(" = ");
+        output.push_str(&enum_.name);
+        output.push_str("_Details::");
+        output.push_str(&name);
+        if is_generic {
+            output.push_str("<");
+            output.push_str(generic_parameter_names.join(", ").as_str());
+            output.push_str(">");
+        }
+        output.push_str(";\n");
+    }
+
+    output.push_str("};\n");
 
     output
 }
@@ -196,7 +390,11 @@ fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String 
             first = false;
         }
         output.push_str("typename ");
-        output.push_str(&codegen_type(*generic_parameter, project))
+        let id = match generic_parameter {
+            FunctionGenericParameter::InferenceGuide(id)
+            | FunctionGenericParameter::Parameter(id) => *id,
+        };
+        output.push_str(&codegen_type(id, project))
     }
     if !fun.generic_parameters.is_empty() {
         output.push_str(">\n");
@@ -252,7 +450,11 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
             first = false;
         }
         output.push_str("typename ");
-        output.push_str(&codegen_type(*generic_parameter, project))
+        let id = match generic_parameter {
+            FunctionGenericParameter::InferenceGuide(id)
+            | FunctionGenericParameter::Parameter(id) => *id,
+        };
+        output.push_str(&codegen_type(id, project))
     }
     if !fun.generic_parameters.is_empty() {
         output.push_str(">\n");
@@ -317,13 +519,37 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
         output.push_str(&" ".repeat(INDENT_SIZE));
     }
 
+    // Put the return type in scope.
+    if fun.name == "main" {
+        output.push_str("using _JaktCurrentFunctionReturnType = ErrorOr<int>;\n");
+    } else {
+        let return_type = fun.return_type;
+        if return_type == UNKNOWN_TYPE_ID {
+            panic!("Function type unknown at codegen time in {}", fun.name);
+        }
+        output.push_str("{\n");
+        if fun.throws {
+            output.push_str(&format!(
+                "using _JaktCurrentFunctionReturnType = ErrorOr<{}>;\n",
+                codegen_type(fun.return_type, project)
+            ));
+        } else {
+            output.push_str(&format!(
+                "using _JaktCurrentFunctionReturnType = {};\n",
+                codegen_type(fun.return_type, project)
+            ));
+        }
+    }
+
     let block = codegen_block(INDENT_SIZE, &fun.block, project);
     output.push_str(&block);
 
     if fun.name == "main" {
         output.push_str(&" ".repeat(INDENT_SIZE));
-        output.push_str("return 0;\n}");
+        output.push_str("return 0;\n");
     }
+
+    output.push_str("}\n");
 
     output
 }
@@ -449,6 +675,22 @@ pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
             output.push('>');
             output
         }
+        Type::GenericEnumInstance(enum_id, inner_tys) => {
+            let mut output = project.enums[*enum_id].name.clone();
+            output.push('<');
+            let mut first = true;
+            for ty in inner_tys {
+                if !first {
+                    output.push_str(", ");
+                } else {
+                    first = false;
+                }
+
+                output.push_str(&codegen_type(*ty, project));
+            }
+            output.push('>');
+            output
+        }
         Type::Struct(struct_id) => {
             if project.structs[*struct_id].definition_type == DefinitionType::Class {
                 format!("NonnullRefPtr<{}>", project.structs[*struct_id].name)
@@ -456,6 +698,7 @@ pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
                 project.structs[*struct_id].name.clone()
             }
         }
+        Type::Enum(enum_id) => project.enums[*enum_id].name.clone(),
         Type::Builtin => match type_id {
             compiler::USIZE_TYPE_ID => String::from("size_t"),
             compiler::BOOL_TYPE_ID => String::from("bool"),
@@ -757,10 +1000,23 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 for (idx, namespace) in call.namespace.iter().enumerate() {
                     // hack warning: this is to get around C++'s limitation that a constructor
                     // can't be called like other static methods
-                    if idx == call.namespace.len() - 1 && namespace == &call.name {
+                    if idx == call.namespace.len() - 1 && namespace.name == call.name {
                         break;
                     }
-                    output.push_str(namespace);
+                    if call.linkage == FunctionLinkage::ImplicitEnumConstructor {
+                        output.push_str("typename ");
+                    }
+                    output.push_str(namespace.name.as_str());
+                    if let Some(params) = &namespace.generic_parameters {
+                        output.push('<');
+                        for (i, param) in params.iter().enumerate() {
+                            output.push_str(&codegen_type(*param, project));
+                            if i != params.len() - 1 {
+                                output.push(',');
+                            }
+                        }
+                        output.push('>');
+                    }
                     output.push_str("::")
                 }
 
@@ -870,6 +1126,165 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
 
             if call.callee_throws {
                 output.push_str(")");
+            }
+        }
+        CheckedExpression::Match(expr, cases, _, return_ty) => {
+            let expr_type = &project.types[expr.ty()];
+            let id = match expr_type {
+                Type::GenericEnumInstance(id, _) | Type::Enum(id) => *id,
+                _ => {
+                    panic!("Expected enum type");
+                }
+            };
+            let enum_ = &project.enums[id];
+            match enum_.underlying_type {
+                Some(_) => {
+                    output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(([&]() -> _JaktExplicitValueOrReturn<");
+                    output.push_str(&codegen_type(*return_ty, project));
+                    output.push_str(", ");
+                    output.push_str("_JaktCurrentFunctionReturnType");
+                    output.push_str("> { \n");
+                    output.push_str("switch (");
+                    output.push_str(&codegen_expr(indent, expr, project));
+                    output.push_str(") {\n");
+                    for case in cases {
+                        output.push_str("case ");
+                        output.push_str(&codegen_type(expr.ty(), project));
+                        output.push_str("::");
+                        match case {
+                            CheckedMatchCase::EnumVariant {
+                                variant_name, body, ..
+                            } => {
+                                output.push_str(&variant_name);
+                                output.push_str(":\n");
+                                output.push_str(&" ".repeat(indent));
+                                match body {
+                                    CheckedMatchBody::Expression(expr) => {
+                                        output.push_str("return _JaktExplicitReturn(");
+                                        output.push_str(&codegen_expr(0, expr, project));
+                                        output.push_str(")");
+                                    }
+                                    CheckedMatchBody::Block(block) => {
+                                        output.push_str(&codegen_block(indent, block, project));
+                                        output.push_str("break;\n");
+                                    }
+                                }
+                            }
+                        }
+                        output.push_str("\n");
+                    }
+                    output.push_str("}\n");
+                    output.push_str("}()))");
+                }
+                None => {
+                    output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN((");
+                    output.push_str(&codegen_expr(indent, expr, project));
+                    output.push_str(").visit(");
+                    let mut first = true;
+                    for case in cases {
+                        if !first {
+                            output.push_str(", ");
+                        } else {
+                            first = false;
+                        }
+                        output.push_str("[&] (");
+                        match case {
+                            CheckedMatchCase::EnumVariant {
+                                variant_name: _,
+                                variant_arguments: args,
+                                subject_type_id,
+                                variant_index,
+                                scope_id,
+                                body,
+                            } => {
+                                let enum_id;
+                                let type_ = &project.types[*subject_type_id];
+                                match type_ {
+                                    Type::GenericEnumInstance(id, _) | Type::Enum(id) => {
+                                        enum_id = id;
+                                    }
+                                    _ => {
+                                        panic!("Expected enum type");
+                                    }
+                                }
+
+                                let enum_ = &project.enums[*enum_id];
+                                let variant = &enum_.variants[*variant_index];
+                                match variant {
+                                    CheckedEnumVariant::Typed(name, _, _) => {
+                                        output.push_str(&codegen_type(*subject_type_id, project));
+                                        output.push_str("::");
+                                        output.push_str(name);
+                                        output.push_str(
+                                            " const& value) -> _JaktExplicitValueOrReturn<",
+                                        );
+                                        output.push_str(&codegen_type(*return_ty, project));
+                                        output.push_str(", ");
+                                        output.push_str("_JaktCurrentFunctionReturnType");
+                                        output.push_str(">");
+                                        output.push_str(" {\n");
+                                        output.push_str("   ");
+                                        if !args.is_empty() {
+                                            let var = project
+                                                .find_var_in_scope(*scope_id, args[0].1.as_str())
+                                                .unwrap();
+                                            output.push_str(codegen_type(var.ty, project).as_str());
+                                            output.push_str(" const& ");
+                                            output.push_str(args[0].1.as_str());
+                                            output.push_str(" = value.value;\n");
+                                        }
+                                    }
+                                    CheckedEnumVariant::Untyped(name, _) => {
+                                        output.push_str(&codegen_type(*subject_type_id, project));
+                                        output.push_str("::");
+                                        output.push_str(name);
+                                        output.push_str(
+                                            " const& value) -> _JaktExplicitValueOrReturn<",
+                                        );
+                                        output.push_str(&codegen_type(*return_ty, project));
+                                        output.push_str(", ");
+                                        output.push_str("_JaktCurrentFunctionReturnType");
+                                        output.push_str(">");
+                                        output.push_str(" {\n");
+                                    }
+                                    CheckedEnumVariant::WithValue(_, _, _) => unreachable!(),
+                                    _ => todo!(),
+                                }
+
+                                match body {
+                                    CheckedMatchBody::Block(block) => {
+                                        output.push_str(&codegen_block(indent + 1, block, project));
+                                        output.push_str("\nreturn _JaktExplicitValue<");
+                                        output.push_str(&codegen_type(*return_ty, project));
+                                        output.push_str(">();\n");
+                                    }
+                                    CheckedMatchBody::Expression(expr) => {
+                                        if expr.ty() == VOID_TYPE_ID {
+                                            output.push_str("   return (");
+                                            output.push_str(&codegen_expr(
+                                                indent + 1,
+                                                expr,
+                                                project,
+                                            ));
+                                            output.push_str("), _JaktExplicitValue<void>();\n");
+                                        } else {
+                                            output.push_str("   return _JaktExplicitValue(");
+                                            output.push_str(&codegen_expr(
+                                                indent + 1,
+                                                expr,
+                                                project,
+                                            ));
+                                            output.push_str(");\n");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        output.push_str("}\n");
+                    }
+                    output.push_str(")");
+                    output.push_str(")");
+                }
             }
         }
         CheckedExpression::UnaryOp(expr, op, _, type_id) => {

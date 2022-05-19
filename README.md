@@ -55,7 +55,7 @@ Some of the features that encourage more readable programs:
 - [x] Immutable by default.
 - [x] Argument labels in call expressions (`object.function(width: 10, height: 5)`)
 - [ ] Inferred `enum` scope. (You can say `Foo` instead of `MyEnum::Foo`).
-- [ ] Pattern matching with `match`.
+- [x] Pattern matching with `match`.
 - [ ] Optional chaining (`foo?.bar?.baz` (fallible) and `foo!.bar!.baz` (infallible))
 - [x] None coalescing for optionals (`foo ?? bar` yields `foo` if `foo` has a value, otherwise `bar`)
 - [x] `defer` statements.
@@ -233,6 +233,47 @@ function main() {
 }
 ```
 
+## Enums and Pattern Matching
+
+- [x] Enums as sum-types
+- [x] Generic enums
+- [ ] Enums as names for values of an underlying type (partial)
+- [x] `match` expressions
+- [x] Enum scope inference in `match` arms
+- [ ] Nested `match` patterns
+- [ ] Traits as `match` patterns
+- [ ] Support for interop with the `?`, `??` and `!` operators
+
+```jakt
+enum MyOptional<T> {
+    Some: T
+    None
+}
+
+function value_or_default<T>(anonymous x: MyOptional<T>, default: T) -> T {
+    return match x {
+        Some(value) => value
+        None => default
+    }
+}
+
+// Not yet implemented:
+enum Foo {
+    StructLikeThingy {
+        field_a: i32
+        field_b: i32
+    }
+}
+
+function look_at_foo(anonymous x: Foo) -> i32 {
+    match x {
+        StructureLikeThingy(field_a: a, field_b: b) => {
+            return a + b
+        }
+    }
+}
+```
+
 ## Generics
 
 - [x] Generic types
@@ -290,28 +331,6 @@ namespace Foo {
 
 function main() {
     println("{}", Foo::bar())
-}
-```
-
-## Enums and pattern matching
-
-**(Not yet implemented)**
-
-```jakt
-enum Node {
-    I64(i64),
-    Nothing,
-    SpannedString { string: String, span: Span }
-}
-
-function main() {
-    let node = Node::I64(18)
-    
-    match node {
-        .I64(x) => println("I64 {}", x)
-        .Nothing => println("Nothing")
-        .Spanned String { string, span } => println("A spanned string {}", string)
-    }
 }
 ```
 

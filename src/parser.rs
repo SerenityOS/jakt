@@ -12,7 +12,7 @@ macro_rules! trace {
     };
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Call {
     pub namespace: Vec<String>,
     pub name: String,
@@ -76,6 +76,7 @@ impl PartialEq for VarDecl {
 pub struct ParsedFile {
     pub functions: Vec<Function>,
     pub structs: Vec<Struct>,
+    pub enums: Vec<Enum>,
 }
 
 #[derive(Debug)]
@@ -89,11 +90,30 @@ pub struct Struct {
     pub definition_type: DefinitionType,
 }
 
+#[derive(Debug)]
+pub enum EnumVariant {
+    Untyped(String, Span),
+    WithValue(String, Expression, Span),
+    StructLike(String, Vec<VarDecl>, Span),
+    Typed(String, UncheckedType, Span),
+}
+
+#[derive(Debug)]
+pub struct Enum {
+    pub name: String,
+    pub generic_parameters: Vec<(String, Span)>,
+    pub variants: Vec<EnumVariant>,
+    pub span: Span,
+    pub definition_linkage: DefinitionLinkage,
+    pub underlying_type: UncheckedType,
+}
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum FunctionLinkage {
     Internal,
     External,
     ImplicitConstructor,
+    ImplicitEnumConstructor,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -152,7 +172,7 @@ impl Function {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Statement {
     Expression(Expression),
     Defer(Box<Statement>),
@@ -172,7 +192,7 @@ pub enum Statement {
     Garbage,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Block {
     pub stmts: Vec<Statement>,
 }
@@ -183,9 +203,25 @@ impl Block {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum MatchBody {
+    Expression(Expression),
+    Block(Block),
+}
+
+#[derive(Debug, Clone)]
+pub enum MatchCase {
+    EnumVariant {
+        variant_name: Vec<(String, Span)>,
+        variant_arguments: Vec<(Option<String>, String)>,
+        arguments_span: Span,
+        body: MatchBody,
+    },
+}
+
 // TODO: add spans to individual expressions
 // so we can give better errors during typecheck
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expression {
     // Standalone
     Boolean(bool, Span),
@@ -200,6 +236,7 @@ pub enum Expression {
     Var(String, Span),
     Tuple(Vec<Expression>, Span),
     Range(Box<Expression>, Box<Expression>, Span),
+    Match(Box<Expression>, Vec<MatchCase>, Span),
 
     IndexedTuple(Box<Expression>, usize, Span),
     IndexedStruct(Box<Expression>, String, Span),
@@ -243,6 +280,7 @@ impl Expression {
             Expression::OptionalNone(span) => *span,
             Expression::OptionalSome(_, span) => *span,
             Expression::ForcedUnwrap(_, span) => *span,
+            Expression::Match(_, _, span) => *span,
             Expression::Garbage(span) => *span,
         }
     }
@@ -384,6 +422,7 @@ impl ParsedFile {
         Self {
             functions: Vec::new(),
             structs: Vec::new(),
+            enums: Vec::new(),
         }
     }
 }
@@ -410,6 +449,12 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
                     error = error.or(err);
 
                     parsed_file.functions.push(fun);
+                }
+                "enum" => {
+                    let (enum_, err) = parse_enum(tokens, &mut index, DefinitionLinkage::Internal);
+                    error = error.or(err);
+
+                    parsed_file.enums.push(enum_);
                 }
                 "struct" => {
                     let (structure, err) = parse_struct(
@@ -533,6 +578,344 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
     (parsed_file, error)
 }
 
+fn skip_newlines(tokens: &[Token], index: &mut usize) {
+    while let Token {
+        contents: TokenContents::Eol,
+        ..
+    } = tokens[*index]
+    {
+        *index += 1;
+    }
+}
+
+pub fn parse_enum(
+    tokens: &[Token],
+    index: &mut usize,
+    definition_linkage: DefinitionLinkage,
+) -> (Enum, Option<JaktError>) {
+    trace!(format!("parse_enum({:?})", tokens[*index]));
+
+    let mut error = None;
+    let start_index = *index;
+    let mut enum_ = Enum {
+        name: "".to_string(),
+        definition_linkage,
+        generic_parameters: vec![],
+        variants: Vec::new(),
+        span: Span {
+            file_id: tokens[start_index].span.file_id,
+            start: tokens[start_index].span.start,
+            end: tokens[*index].span.end,
+        },
+        underlying_type: UncheckedType::Empty,
+    };
+
+    *index += 1;
+
+    skip_newlines(tokens, index);
+    if let Some(Token {
+        contents: TokenContents::Name(name),
+        ..
+    }) = tokens.get(*index)
+    {
+        trace!(format!("enum name: {}", name));
+        *index += 1;
+        enum_.name = name.to_string();
+        // Following the name can either be a `:` to denote the underlying type, a `<` to denote generic parameters, or nothing.
+        skip_newlines(tokens, index);
+        match tokens.get(*index) {
+            Some(Token {
+                contents: TokenContents::Colon,
+                ..
+            }) => {
+                trace!("enum with underlying type");
+                *index += 1;
+                let (type_, parse_error) = parse_typename(tokens, index);
+                enum_.underlying_type = type_;
+                error = error.or(parse_error);
+                trace!(format!("next token: {:?}", tokens[*index]));
+                *index += 1;
+            }
+            Some(Token {
+                contents: TokenContents::LessThan,
+                ..
+            }) => {
+                trace!("enum with generic parameters");
+                let (params, parse_error) = parse_generic_parameters(tokens, index);
+                enum_.generic_parameters = params;
+                error = error.or(parse_error);
+            }
+            _ => (),
+        }
+
+        // Now parse the body of the enum, starting with the `{`
+        skip_newlines(tokens, index);
+        if !matches!(
+            tokens.get(*index),
+            Some(Token {
+                contents: TokenContents::LCurly,
+                ..
+            })
+        ) {
+            error = error.or(Some(JaktError::ParserError(
+                "expected `{` to start the enum body".to_string(),
+                tokens[*index].span,
+            )));
+        } else {
+            *index += 1;
+        }
+        trace!(format!("enum body: {:?}", tokens[*index]));
+
+        // Variants in one of the following forms:
+        // - Ident(name) Colon Type
+        // - Ident(name) LCurly struct_body RCurly
+        // - Ident(name) Equal Expression
+        //    expression should evaluate to the underlying type (not allowed if no underlying type)
+        // - Ident(name)
+
+        skip_newlines(tokens, index);
+        while !matches!(
+            tokens.get(*index),
+            Some(Token {
+                contents: TokenContents::RCurly,
+                ..
+            }) | None
+        ) {
+            trace!(format!("parse_enum_variant({:?})", tokens[*index]));
+            let start_index = *index;
+            let variant_name = tokens.get(*index);
+            if !matches!(
+                variant_name,
+                Some(Token {
+                    contents: TokenContents::Name(_),
+                    ..
+                })
+            ) {
+                error = error.or(Some(JaktError::ParserError(
+                    "expected variant name".to_string(),
+                    tokens[*index].span,
+                )));
+                break;
+            }
+
+            let name = match &variant_name.unwrap().contents {
+                TokenContents::Name(name) => name,
+                _ => unreachable!(),
+            };
+
+            *index += 1;
+
+            match tokens.get(*index) {
+                Some(Token {
+                    contents: TokenContents::Colon,
+                    ..
+                }) => {
+                    trace!("variant with type");
+                    *index += 1;
+                    let (variant_type, type_error) = parse_typename(tokens, index);
+                    *index += 1;
+                    error = error.or(type_error);
+                    enum_.variants.push(EnumVariant::Typed(
+                        name.to_string(),
+                        variant_type,
+                        Span {
+                            file_id: tokens[*index].span.file_id,
+                            start: tokens[start_index].span.start,
+                            end: tokens[*index].span.end,
+                        },
+                    ));
+                }
+                Some(Token {
+                    contents: TokenContents::LCurly,
+                    ..
+                }) => {
+                    *index += 1;
+                    let mut members = Vec::new();
+                    skip_newlines(tokens, index);
+                    while !matches!(
+                        tokens.get(*index),
+                        Some(Token {
+                            contents: TokenContents::RCurly,
+                            ..
+                        }) | None
+                    ) {
+                        let (decl, parse_error) = parse_variable_declaration(tokens, index);
+                        error = error.or(parse_error);
+                        members.push(decl);
+                        // Allow a comma or a newline after each member
+                        if let Some(Token {
+                            contents: TokenContents::Comma | TokenContents::Eol,
+                            ..
+                        }) = tokens.get(*index)
+                        {
+                            *index += 1;
+                        }
+                    }
+                    *index += 1;
+                    enum_.variants.push(EnumVariant::StructLike(
+                        name.to_string(),
+                        members,
+                        Span {
+                            file_id: tokens[*index].span.file_id,
+                            start: tokens[start_index].span.start,
+                            end: tokens[*index].span.end,
+                        },
+                    ));
+                }
+                Some(Token {
+                    contents: TokenContents::Equal,
+                    ..
+                }) => {
+                    if let UncheckedType::Empty = enum_.underlying_type {
+                        error = error.or(Some(JaktError::ParserError(
+                            "enums with explicit values must have an underlying type".to_string(),
+                            tokens[*index].span,
+                        )));
+                    }
+                    *index += 1;
+                    let (expr, parse_error) = parse_expression(
+                        tokens,
+                        index,
+                        ExpressionKind::ExpressionWithoutAssignment,
+                    );
+                    error = error.or(parse_error);
+                    enum_.variants.push(EnumVariant::WithValue(
+                        name.to_string(),
+                        expr,
+                        Span {
+                            file_id: tokens[*index].span.file_id,
+                            start: tokens[*index].span.start,
+                            end: tokens[*index].span.end,
+                        },
+                    ));
+                }
+                Some(Token {
+                    contents: TokenContents::RCurly,
+                    ..
+                }) => {
+                    break;
+                }
+                _ => {
+                    enum_.variants.push(EnumVariant::Untyped(
+                        name.to_string(),
+                        Span {
+                            file_id: tokens[*index].span.file_id,
+                            start: tokens[*index].span.start,
+                            end: tokens[*index].span.end,
+                        },
+                    ));
+                }
+            }
+
+            // Require a comma or a newline after each variant
+            if let Some(Token {
+                contents: TokenContents::Comma | TokenContents::Eol,
+                ..
+            }) = tokens.get(*index)
+            {
+                *index += 1;
+            } else {
+                trace!(format!(
+                    "Expected comma or newline after enum variant, found {:?}",
+                    tokens.get(*index)
+                ));
+                error = error.or(Some(JaktError::ParserError(
+                    "expected comma or newline after enum variant".to_string(),
+                    tokens[*index].span,
+                )));
+            }
+        }
+
+        if tokens.len() == *index {
+            error = error.or(Some(JaktError::ParserError(
+                "expected `}` to end the enum body".to_string(),
+                tokens[*index].span,
+            )));
+        } else {
+            *index += 1;
+        }
+    } else {
+        error = error.or(Some(JaktError::ParserError(
+            "expected enum name".to_string(),
+            tokens[*index].span,
+        )));
+    }
+
+    (enum_, error)
+}
+
+pub fn parse_generic_parameters(
+    tokens: &[Token],
+    index: &mut usize,
+) -> (Vec<(String, Span)>, Option<JaktError>) {
+    if !matches!(
+        tokens.get(*index),
+        Some(Token {
+            contents: TokenContents::LessThan,
+            ..
+        })
+    ) {
+        return (Vec::new(), None);
+    }
+
+    *index += 1;
+
+    let mut generic_parameters = vec![];
+
+    while !matches!(
+        tokens.get(*index),
+        Some(Token {
+            contents: TokenContents::GreaterThan,
+            ..
+        }) | None
+    ) {
+        skip_newlines(tokens, index);
+        match tokens.get(*index) {
+            Some(Token {
+                contents: TokenContents::Name(name),
+                span,
+            }) => {
+                generic_parameters.push((name.to_string(), span.clone()));
+                *index += 1;
+                if let Some(Token {
+                    contents: TokenContents::Comma | TokenContents::Eol,
+                    ..
+                }) = tokens.get(*index)
+                {
+                    *index += 1;
+                }
+            }
+            _ => {
+                return (
+                    generic_parameters,
+                    Some(JaktError::ParserError(
+                        "expected generic parameter name".to_string(),
+                        tokens[*index].span,
+                    )),
+                );
+            }
+        }
+    }
+
+    if let Some(Token {
+        contents: TokenContents::GreaterThan,
+        ..
+    }) = tokens.get(*index)
+    {
+        *index += 1;
+    } else {
+        return (
+            generic_parameters,
+            Some(JaktError::ParserError(
+                "expected `>` to end the generic parameters".to_string(),
+                tokens[*index].span,
+            )),
+        );
+    }
+
+    (generic_parameters, None)
+}
+
 pub fn parse_struct(
     tokens: &[Token],
     index: &mut usize,
@@ -556,49 +939,9 @@ pub fn parse_struct(
                 *index += 1;
 
                 // Check for generic
-                if *index < tokens.len() {
-                    match tokens[*index] {
-                        Token {
-                            contents: TokenContents::LessThan,
-                            ..
-                        } => {
-                            *index += 1;
-
-                            while *index < tokens.len() {
-                                match &tokens[*index].contents {
-                                    TokenContents::GreaterThan => {
-                                        *index += 1;
-                                        break;
-                                    }
-                                    TokenContents::Comma | TokenContents::Eol => {
-                                        // Treat comma as whitespace? Might require them in the future
-                                        *index += 1;
-                                    }
-
-                                    TokenContents::Name(name) => {
-                                        *index += 1;
-                                        generic_parameters
-                                            .push((name.clone(), tokens[*index].span));
-                                    }
-
-                                    _ => {
-                                        trace!(format!(
-                                            "ERROR: expected generic parameter, found: {:?}",
-                                            tokens[*index].contents
-                                        ));
-
-                                        error = error.or(Some(JaktError::ParserError(
-                                            "expected generic parameter".to_string(),
-                                            tokens[*index].span,
-                                        )));
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        _ => {}
-                    }
-                }
+                let (params, parse_error) = parse_generic_parameters(tokens, index);
+                generic_parameters = params;
+                error = error.or(parse_error);
 
                 // Read in definition
                 if *index < tokens.len() {
@@ -766,7 +1109,7 @@ pub fn parse_function(
     trace!(format!("parse_function: {:?}", tokens[*index]));
 
     let mut error = None;
-    let mut generic_parameters = vec![];
+    let generic_parameters;
 
     *index += 1;
 
@@ -782,49 +1125,9 @@ pub fn parse_function(
                 *index += 1;
 
                 // Check for generic
-                if *index < tokens.len() {
-                    match tokens[*index] {
-                        Token {
-                            contents: TokenContents::LessThan,
-                            ..
-                        } => {
-                            *index += 1;
-
-                            while *index < tokens.len() {
-                                match &tokens[*index].contents {
-                                    TokenContents::GreaterThan => {
-                                        *index += 1;
-                                        break;
-                                    }
-                                    TokenContents::Comma | TokenContents::Eol => {
-                                        // Treat comma as whitespace? Might require them in the future
-                                        *index += 1;
-                                    }
-
-                                    TokenContents::Name(name) => {
-                                        *index += 1;
-                                        generic_parameters
-                                            .push((name.clone(), tokens[*index].span));
-                                    }
-
-                                    _ => {
-                                        trace!(format!(
-                                            "ERROR: expected generic parameter, found: {:?}",
-                                            tokens[*index].contents
-                                        ));
-
-                                        error = error.or(Some(JaktError::ParserError(
-                                            "expected generic parameter".to_string(),
-                                            tokens[*index].span,
-                                        )));
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        _ => {}
-                    }
-                }
+                let (params, err) = parse_generic_parameters(tokens, index);
+                error = error.or(err);
+                generic_parameters = params;
 
                 if *index < tokens.len() {
                     match tokens[*index] {
@@ -954,32 +1257,19 @@ pub fn parse_function(
 
                 if *index + 2 < tokens.len() {
                     match &tokens[*index].contents {
-                        TokenContents::Equal => {
+                        TokenContents::FatArrow => {
                             *index += 1;
-                            match &tokens[*index].contents {
-                                TokenContents::GreaterThan => {
-                                    *index += 1;
 
-                                    let (expr, err) = parse_expression(
-                                        tokens,
-                                        index,
-                                        ExpressionKind::ExpressionWithoutAssignment,
-                                    );
-                                    return_type = UncheckedType::Empty;
-                                    fat_arrow_expr = Some(expr);
-                                    error = error.or(err);
+                            let (expr, err) = parse_expression(
+                                tokens,
+                                index,
+                                ExpressionKind::ExpressionWithoutAssignment,
+                            );
+                            return_type = UncheckedType::Empty;
+                            fat_arrow_expr = Some(expr);
+                            error = error.or(err);
 
-                                    *index += 1;
-                                }
-                                _ => {
-                                    trace!("ERROR: expected =>");
-
-                                    error = error.or(Some(JaktError::ParserError(
-                                        "expected =>".to_string(),
-                                        tokens[*index - 1].span,
-                                    )));
-                                }
-                            }
+                            *index += 1;
                         }
                         TokenContents::Minus => {
                             *index += 1;
@@ -1012,7 +1302,7 @@ pub fn parse_function(
                     trace!("ERROR: incomplete function");
                     error = error.or(Some(JaktError::ParserError(
                         "incomplete function".to_string(),
-                        tokens[*index - 1].span,
+                        tokens[tokens.len() - 1].span,
                     )));
                 }
 
@@ -1085,6 +1375,15 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (Block, Option<JaktEr
 
     let mut block = Block::new();
     let mut error = None;
+
+    if tokens.get(*index).is_none() {
+        trace!("ERROR: incomplete block");
+        error = Some(JaktError::ParserError(
+            "incomplete block".to_string(),
+            tokens[tokens.len() - 1].span,
+        ));
+        return (block, error);
+    }
 
     let start = tokens[*index].span;
 
@@ -1416,7 +1715,7 @@ fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option
                     "expected if statement".to_string(),
                     tokens[*index].span,
                 )),
-            )
+            );
         }
     }
 
@@ -1507,7 +1806,7 @@ pub fn parse_expression(
 
     while *index < tokens.len() {
         // Test to see if the next token is an operator
-        while tokens[*index].contents == TokenContents::Eol {
+        if tokens[*index].contents == TokenContents::Eol {
             break;
         }
 
@@ -1623,6 +1922,246 @@ pub fn parse_expression(
     (output, error)
 }
 
+pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Option<JaktError>) {
+    // case:
+    // QualifiedName('(' ((name ':')? expression),* ')')? '=>' (expression | block)
+
+    let mut error = None;
+    let mut pattern = Vec::new();
+    while let Some(Token {
+        contents: TokenContents::Name(name),
+        span,
+    }) = tokens.get(*index)
+    {
+        *index += 1;
+        if let Some(Token {
+            contents: TokenContents::ColonColon,
+            ..
+        }) = tokens.get(*index)
+        {
+            *index += 1;
+        } else {
+            pattern.push((name.clone(), span.clone()));
+            break;
+        }
+        pattern.push((name.clone(), span.clone()));
+    }
+
+    let mut arguments = Vec::new();
+    let mut has_parens = false;
+    let args_start = *index;
+
+    if let Some(Token {
+        contents: TokenContents::LParen,
+        ..
+    }) = tokens.get(*index)
+    {
+        has_parens = true;
+        *index += 1;
+        while !matches!(
+            tokens.get(*index),
+            Some(Token {
+                contents: TokenContents::RParen,
+                ..
+            }) | None
+        ) {
+            if let Some(Token {
+                contents: TokenContents::Name(name),
+                ..
+            }) = tokens.get(*index)
+            {
+                if let Some(Token {
+                    contents: TokenContents::Colon,
+                    ..
+                }) = tokens.get(*index + 1)
+                {
+                    *index += 1;
+                    if let Some(Token {
+                        contents: TokenContents::Colon,
+                        ..
+                    }) = tokens.get(*index)
+                    {
+                        *index += 1;
+                    } else {
+                        error = Some(JaktError::ParserError(
+                            "expected ':' after explicit pattern argument name".to_string(),
+                            tokens.get(*index).unwrap().span.clone(),
+                        ));
+                        break;
+                    }
+
+                    if let Some(Token {
+                        contents: TokenContents::Name(binding),
+                        ..
+                    }) = tokens.get(*index)
+                    {
+                        *index += 1;
+                        arguments.push((Some(name.clone()), binding.clone()));
+                    } else {
+                        error = Some(JaktError::ParserError(
+                            "expected pattern argument name".to_string(),
+                            tokens.get(*index).unwrap().span.clone(),
+                        ));
+                        break;
+                    }
+                } else {
+                    if let Some(Token {
+                        contents: TokenContents::Name(binding),
+                        ..
+                    }) = tokens.get(*index)
+                    {
+                        *index += 1;
+                        arguments.push((None, binding.clone()));
+                    } else {
+                        error = Some(JaktError::ParserError(
+                            "expected pattern argument name".to_string(),
+                            tokens.get(*index).unwrap().span.clone(),
+                        ));
+                        break;
+                    }
+
+                    if let Some(Token {
+                        contents: TokenContents::Comma,
+                        ..
+                    }) = tokens.get(*index)
+                    {
+                        *index += 1;
+                    }
+                }
+            } else {
+                if let Some(Token {
+                    contents: TokenContents::Name(binding),
+                    ..
+                }) = tokens.get(*index)
+                {
+                    *index += 1;
+                    arguments.push((None, binding.clone()));
+                } else {
+                    error = Some(JaktError::ParserError(
+                        "expected pattern argument name".to_string(),
+                        tokens.get(*index).unwrap().span.clone(),
+                    ));
+                    break;
+                }
+            }
+        }
+    }
+
+    if has_parens {
+        *index += 1;
+    }
+    let args_end = *index;
+
+    if let Some(Token {
+        contents: TokenContents::FatArrow,
+        ..
+    }) = tokens.get(*index)
+    {
+        *index += 1;
+    } else {
+        error = Some(JaktError::ParserError(
+            "expected '=>' after pattern case".to_string(),
+            tokens.get(*index).unwrap().span.clone(),
+        ));
+    }
+
+    if let Some(Token {
+        contents: TokenContents::LCurly,
+        ..
+    }) = tokens.get(*index)
+    {
+        *index += 1;
+        let (block, err) = parse_block(tokens, index);
+        error = error.or(err);
+        (
+            MatchCase::EnumVariant {
+                variant_name: pattern,
+                variant_arguments: arguments,
+                arguments_span: Span {
+                    file_id: tokens[args_start].span.file_id,
+                    start: tokens[args_start].span.start,
+                    end: tokens[args_end - 1].span.end,
+                },
+                body: MatchBody::Block(block),
+            },
+            error,
+        )
+    } else {
+        let (expr, err) =
+            parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+        error = error.or(err);
+        (
+            MatchCase::EnumVariant {
+                variant_name: pattern,
+                variant_arguments: arguments,
+                arguments_span: Span {
+                    file_id: tokens[args_start].span.file_id,
+                    start: tokens[args_start].span.start,
+                    end: tokens[args_end - 1].span.end,
+                },
+                body: MatchBody::Expression(expr),
+            },
+            error,
+        )
+    }
+}
+
+pub fn parse_patterns(tokens: &[Token], index: &mut usize) -> (Vec<MatchCase>, Option<JaktError>) {
+    let mut cases = Vec::new();
+    let mut error = None;
+
+    skip_newlines(tokens, index);
+    if !matches!(
+        tokens.get(*index),
+        Some(Token {
+            contents: TokenContents::LCurly,
+            ..
+        })
+    ) {
+        skip_newlines(tokens, index);
+        error = error.or(Some(JaktError::ParserError(
+            "expected '{'".to_string(),
+            tokens[*index].span,
+        )));
+        return (cases, error);
+    }
+    *index += 1;
+    skip_newlines(tokens, index);
+
+    while !matches!(
+        tokens.get(*index),
+        Some(Token {
+            contents: TokenContents::RCurly,
+            ..
+        })
+    ) {
+        let (pattern, err) = parse_pattern_case(tokens, index);
+        error = error.or(err);
+        cases.push(pattern);
+
+        if let TokenContents::Eol | TokenContents::Comma = tokens[*index].contents {
+            *index += 1;
+        }
+    }
+
+    skip_newlines(tokens, index);
+    if !matches!(
+        tokens.get(*index),
+        Some(Token {
+            contents: TokenContents::RCurly,
+            ..
+        })
+    ) {
+        error = error.or(Some(JaktError::ParserError(
+            "expected '}'".to_string(),
+            tokens[*index].span,
+        )));
+    }
+    *index += 1;
+
+    (cases, error)
+}
+
 pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
     trace!(format!("parse_operand: {:?}", tokens[*index]));
 
@@ -1666,6 +2205,25 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
             };
 
             Expression::UnaryOp(Box::new(expr), UnaryOperator::LogicalNot, span)
+        }
+        TokenContents::Name(name) if name == "match" => {
+            let start_span = tokens[*index].span;
+
+            *index += 1;
+
+            let (expr, err) = parse_operand(tokens, index);
+            error = error.or(err);
+
+            let (patterns, err) = parse_patterns(tokens, index);
+            error = error.or(err);
+
+            let span = Span {
+                file_id: start_span.file_id,
+                start: start_span.start,
+                end: expr.span().end,
+            };
+
+            Expression::Match(Box::new(expr), patterns, span)
         }
         TokenContents::Name(name) => {
             if *index + 1 < tokens.len() {
@@ -2109,6 +2667,16 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                                         }
                                     }
                                     *index += 1;
+                                } else if tokens[*index].contents == TokenContents::LessThan {
+                                    *index -= 1;
+                                    let (mut call, err) = parse_call(tokens, index);
+                                    if err.is_some() {
+                                        error = error.or(err);
+                                    } else {
+                                        call.namespace = namespace;
+                                        expr = Expression::Call(call, span);
+                                    }
+                                    break;
                                 } else {
                                     *index += 1;
                                     error = error.or(Some(JaktError::ParserError(
@@ -3096,7 +3664,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
                         Span {
                             file_id: start.file_id,
                             start: start.start,
-                            end: tokens[*index - 1].span.end,
+                            end: tokens[tokens.len() - 1].span.end,
                         },
                     )
                 } else {

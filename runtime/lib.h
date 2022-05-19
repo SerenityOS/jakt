@@ -103,18 +103,15 @@ inline constexpr T __arithmetic_shift_right(T value, size_t steps)
             auto sign = (value & 0x80);
             // 8-bit variant
             return ((value >> steps) | sign);
-        }
-        else if constexpr (sizeof(T) == 2) {
+        } else if constexpr (sizeof(T) == 2) {
             auto sign = (value & 0x8000);
             // 16-bit variant
             return ((value >> steps) | sign);
-        }
-        else if constexpr (sizeof(T) == 4) {
+        } else if constexpr (sizeof(T) == 4) {
             auto sign = (value & 0x80000000);
             // 32-bit variant
             return ((value >> steps) | sign);
-        }
-        else if constexpr (sizeof(T) == 8) {
+        } else if constexpr (sizeof(T) == 8) {
             auto sign = (value & 0x8000000000000000);
             // 64-bit variant
             return ((value >> steps) | sign);
@@ -123,6 +120,73 @@ inline constexpr T __arithmetic_shift_right(T value, size_t steps)
         return (value >> steps);
     }
 }
+
+template<typename Value>
+struct _JaktExplicitValue {
+    _JaktExplicitValue(Value&& v)
+        : value(move(v))
+    {
+    }
+    _JaktExplicitValue(Value const& v)
+        : value(v)
+    {
+    }
+
+    Value value;
+};
+
+template<>
+struct _JaktExplicitValue<void> {
+    _JaktExplicitValue()
+    {
+    }
+};
+
+template<typename Value, typename Return>
+struct _JaktExplicitValueOrReturn {
+    _JaktExplicitValueOrReturn(_JaktExplicitValue<Value>&& v)
+        : value(move(v))
+    {
+    }
+
+    template<typename U>
+    _JaktExplicitValueOrReturn(U&& v)
+        requires(!IsVoid<Return>)
+    : value(Return { forward<U>(v) })
+    {
+    }
+
+    _JaktExplicitValueOrReturn(void)
+        requires(IsVoid<Return>)
+    : value(Empty {})
+    {
+    }
+
+    bool is_return() const { return value.template has<Return>(); }
+    Return release_return()
+    {
+        if constexpr (IsVoid<Return>)
+            return;
+        else
+            return move(value).template get<Return>();
+    }
+    Value release_value()
+    {
+        if constexpr (IsVoid<Value>)
+            return;
+        else
+            return move(value).template get<_JaktExplicitValue<Value>>().value;
+    }
+
+    Variant<Conditional<IsVoid<Return>, Empty, Return>, _JaktExplicitValue<Value>> value;
+};
+
+#define JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(x) ({ \
+    auto&& _jakt_value = x;                         \
+    if (_jakt_value.is_return())                    \
+        return _jakt_value.release_return();        \
+    _jakt_value.release_value();                    \
+})
 
 int main(int argc, char** argv)
 {

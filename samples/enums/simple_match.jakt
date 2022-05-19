@@ -1,0 +1,44 @@
+enum BetterOptional<T> {
+    Some: T
+    None
+}
+
+enum BetterResult<T, E> {
+    ImFineHowAreYou: T
+    TheWorldIsBurning: E
+}
+
+function make_result(okay: bool) -> BetterResult<i64, String> {
+    if okay {
+        return BetterResult::ImFineHowAreYou(42)
+    }
+    return BetterResult::TheWorldIsBurning("666")
+}
+
+function better_optional_from<T>(anonymous optional: T?) -> BetterOptional<T> {
+    if optional.has_value() {
+        return BetterOptional::Some(optional!)
+    }
+    return BetterOptional::None()
+}
+
+function main() {
+    match make_result(okay: true) {
+        ImFineHowAreYou(x) => {
+            let a: i64? = x
+            match better_optional_from(a) {
+                Some(x) => println("Success! we're fine and there's a {} in our optional", x)
+                None => println("What??????")
+            }
+        }
+        TheWorldIsBurning => println("What do you mean the world is burning, it's perfectly fine")
+    }
+    let str = match make_result(okay: false) {
+        ImFineHowAreYou => "No you're not!!!!111One!"
+        TheWorldIsBurning => "So it is..."
+    }
+    if str == "So it is..." {
+        return 0
+    }
+    return 1
+}

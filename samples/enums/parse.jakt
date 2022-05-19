@@ -1,0 +1,34 @@
+enum Simple {
+    A
+    B
+    C
+}
+
+enum SimpleWithType {
+    A: i32
+    B: u32
+}
+
+enum SimpleWithStructType {
+    A {
+        a: i32
+        b: u32
+    }
+    B: i32
+}
+
+enum SimpleWithTypeParameter<T> {
+    A: T
+    B
+}
+
+enum SimpleWithMultipleTypeParameters<T, U> {
+    A: T
+    B: U
+}
+
+enum IntegralWithUnderlyingType: i32 {
+    Zero
+    One = 2
+    Two
+}
