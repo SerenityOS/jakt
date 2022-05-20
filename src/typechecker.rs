@@ -3261,6 +3261,14 @@ pub fn typecheck_call(
                     }
                 }
 
+                // Make sure that our call doesn't have a 'this' pointer to a static callee
+                if this_expr.is_some() && callee.is_static() {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "Cannot call static method on an instance of an object".to_string(),
+                        *span,
+                    )));
+                }
+
                 // This will be 0 for functions or 1 for instance methods, because of the
                 // 'this' ptr
                 let arg_offset = if this_expr.is_some() { 1 } else { 0 };
