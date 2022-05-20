@@ -1,4 +1,4 @@
-use std::{io::Write, path::Path};
+use std::path::Path;
 
 use crate::{
     codegen::codegen,
@@ -102,15 +102,6 @@ impl Compiler {
 
         // Hardwire to first file for now
         Ok(codegen(&project, &project.scopes[file_scope_id]))
-    }
-
-    pub fn compile(&mut self, fname: &Path) -> Result<(), JaktError> {
-        let cpp_string = self.convert_to_cpp(fname)?;
-
-        let mut out_file = std::fs::File::create("output.cpp")?;
-        out_file.write_all(cpp_string.as_bytes())?;
-
-        Ok(())
     }
 
     pub fn get_file_contents(&self, file_id: FileId) -> &[u8] {
