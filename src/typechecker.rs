@@ -2272,13 +2272,11 @@ pub fn typecheck_expression(
 
                 if inner_ty == UNKNOWN_TYPE_ID {
                     inner_ty = checked_value.ty();
-                } else {
-                    if inner_ty != checked_value.ty() {
-                        error = error.or(Some(JaktError::TypecheckError(
-                            "does not match type of previous values in set".to_string(),
-                            value.span(),
-                        )))
-                    }
+                } else if inner_ty != checked_value.ty() {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "does not match type of previous values in set".to_string(),
+                        value.span(),
+                    )))
                 }
                 output.push(checked_value);
             }
@@ -3263,7 +3261,7 @@ pub fn typecheck_binary_operation(
 
 pub fn resolve_call<'a>(
     call: &Call,
-    namespaces: &mut Vec<ResolvedNamespace>,
+    namespaces: &mut [ResolvedNamespace],
     span: &Span,
     scope_id: ScopeId,
     project: &'a Project,
@@ -3368,7 +3366,7 @@ pub fn typecheck_call(
             name: n.clone(),
             generic_parameters: None,
         })
-        .collect();
+        .collect::<Vec<_>>();
 
     let callee_scope_id = match struct_id {
         Some(struct_id) => {
