@@ -1,0 +1,5 @@
+// When the lexer sees the dot, it increments the index into the `bytes` array
+// and then uses the incremented index to check for another dot. However, it did not
+// check if this was out-of-bounds, meaning if a dot is followed by EOF, the lexer
+// would panic with an array OOB.
+.
