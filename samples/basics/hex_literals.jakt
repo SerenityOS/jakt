@@ -2,4 +2,5 @@ function main() {
     println("{}", 0x123456789abcde)
     println("{}", 0x0)
     println("{}", 0xfffffffff)
+    println("{}", 0xff_ff_ff_ff)
 }
