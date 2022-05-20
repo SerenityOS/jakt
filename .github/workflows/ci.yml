@@ -27,7 +27,7 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.rust }}
           override: true
-          components: rustfmt, clippy
+          components: rustfmt
 
       - name: Rustfmt
         uses: actions-rs/cargo@v1
@@ -41,11 +41,27 @@ jobs:
           command: test
           args: --workspace ${{ matrix.flags }}
   clippy:
+    strategy:
+      fail-fast: true
+      matrix:
+        platform: [ubuntu-latest]
+        style: [default]
+        rust:
+          - stable
+
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - run: rustup component add clippy
-      - uses: actions-rs/clippy-check@v1
+      - uses: actions/checkout@v2
+
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+          components: clippy
+      - name: Clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
           args: --all-features
