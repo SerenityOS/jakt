@@ -54,6 +54,9 @@ using OrderedHashTable = HashTable<T, TraitsForT, true>;
 template<typename K, typename V, typename KeyTraits = Traits<K>, bool IsOrdered = false>
 class Dictionary;
 
+template<typename T, typename TraitsForT = Traits<T>, bool IsOrdered = false>
+class Set;
+
 template<typename K, typename V, typename KeyTraits = Traits<K>>
 using OrderedHashMap = Dictionary<K, V, KeyTraits, true>;
 

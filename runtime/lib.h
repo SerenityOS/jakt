@@ -42,6 +42,7 @@
 #include <AK/Result.h>
 #include <AK/ReverseIterator.h>
 #include <AK/ScopeGuard.h>
+#include <AK/Set.h>
 #include <AK/Span.h>
 #include <AK/StdLibExtraDetails.h>
 #include <AK/StdLibExtras.h>
@@ -156,15 +157,13 @@ struct _JaktExplicitValueOrReturn {
     }
 
     template<typename U>
-    _JaktExplicitValueOrReturn(U&& v)
-        requires(!IsVoid<Return>)
-    : value(Return { forward<U>(v) })
+    _JaktExplicitValueOrReturn(U&& v) requires(!IsVoid<Return>)
+        : value(Return { forward<U>(v) })
     {
     }
 
-    _JaktExplicitValueOrReturn(void)
-        requires(IsVoid<Return>)
-    : value(Empty {})
+    _JaktExplicitValueOrReturn(void) requires(IsVoid<Return>)
+        : value(Empty {})
     {
     }
 

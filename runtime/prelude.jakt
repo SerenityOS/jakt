@@ -46,7 +46,19 @@ extern struct Dictionary<K, V> {
     function keys(this) -> [K]
     function hash(this) -> u32
     function Dictionary<A, B>() -> Dictionary<A, B>
- }
+}
+
+extern struct Set<V> {
+    function contains(this, anonymous value: V) -> bool
+    function add(mutable this, anonymous value: V) throws
+    function remove(mutable this, anonymous value: V) -> bool
+    function ensure_capacity(mutable this, anonymous capacity: usize) throws
+    function clear(mutable this)
+    function size(this) -> usize
+    function capacity(this) -> usize
+    function hash(this) -> u32
+    function Set<A>() -> Set<A>
+}
 
 extern struct Tuple {}
 
