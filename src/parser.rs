@@ -4075,7 +4075,16 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (ParsedCall, Option<Ja
                             index,
                             ExpressionKind::ExpressionWithoutAssignment,
                         );
-                        error = error.or(err);
+
+                        if let Some(jakt_error) = err {
+                            trace!(
+                                "ERROR: error while parsing expression in function call parameter"
+                            );
+                            error = error.or(Some(jakt_error));
+                            break;
+                        } else {
+                            error = error.or(err);
+                        }
 
                         call.args.push((param_name, expr));
                     }
