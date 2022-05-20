@@ -647,10 +647,21 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
         // Hex number
         let start = *index;
         *index += 2;
-        while *index < bytes.len() && bytes[*index].is_ascii_hexdigit() {
+        while *index < bytes.len() && bytes[*index].is_ascii_hexdigit()
+            || (bytes[*index] == b'_' && bytes[*index - 1] != b'_')
+        {
             *index += 1;
         }
-        let str = String::from_utf8_lossy(&bytes[start + 2..*index]);
+        if bytes[*index - 1] == b'_' {
+            return (
+                Token::unknown(Span::new(file_id, start, *index)),
+                Some(JaktError::ParserError(
+                    "hex number literal cannot end with underscore".to_string(),
+                    Span::new(file_id, start, *index),
+                )),
+            );
+        }
+        let str = String::from_utf8_lossy(&bytes[start + 2..*index]).replace("_", "");
         let number = i64::from_str_radix(&str, 16);
         let suffix = consume_numeric_literal_suffix(bytes, index);
         match number {
@@ -673,10 +684,23 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
         // Binary number
         let start = *index;
         *index += 2;
-        while *index < bytes.len() && (bytes[*index] == b'0' || bytes[*index] == b'1') {
+        while *index < bytes.len()
+            && (bytes[*index] == b'0'
+                || bytes[*index] == b'1'
+                || (bytes[*index] == b'_' && bytes[*index - 1] != b'_'))
+        {
             *index += 1;
         }
-        let str = String::from_utf8_lossy(&bytes[start + 2..*index]);
+        if bytes[*index - 1] == b'_' {
+            return (
+                Token::unknown(Span::new(file_id, start, *index)),
+                Some(JaktError::ParserError(
+                    "binary number literal cannot end with underscore".to_string(),
+                    Span::new(file_id, start, *index),
+                )),
+            );
+        }
+        let str = String::from_utf8_lossy(&bytes[start + 2..*index]).replace("_", "");
         let number = i64::from_str_radix(&str, 2);
         let suffix = consume_numeric_literal_suffix(bytes, index);
         match number {
@@ -695,15 +719,25 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
                 )),
             ),
         }
-    } else if bytes[*index].is_ascii_digit() {
+    } else if bytes[*index].is_ascii_digit() || bytes[*index] == b'_' {
         // Number
         let start = *index;
-        while *index < bytes.len() && bytes[*index].is_ascii_digit() {
+        while *index < bytes.len() && bytes[*index].is_ascii_digit()
+            || (bytes[*index] == b'_' && bytes[*index - 1] != b'_')
+        {
             *index += 1;
         }
-
+        if bytes[*index - 1] == b'_' {
+            return (
+                Token::unknown(Span::new(file_id, start, *index)),
+                Some(JaktError::ParserError(
+                    "number literal cannot end with underscore".to_string(),
+                    Span::new(file_id, start, *index),
+                )),
+            );
+        }
         let str = String::from_utf8_lossy(&bytes[start..*index]);
-        let number: Result<i64, _> = str.parse();
+        let number: Result<i64, _> = str.replace("_", "").parse();
         let suffix = consume_numeric_literal_suffix(bytes, index);
         match number {
             Ok(number) => (
