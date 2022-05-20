@@ -11,7 +11,7 @@ function make_lookup_table() -> [u32] {
     for i in 0..data.size() {
         let mutable value = i as! u32
         for j in 0..8 {
-            if value & 1 {
+            if (value & 1) != 0 {
                 value = 0xedb88320u32 ^ (value >> 1)
             } else {
                 value >>= 1
@@ -35,7 +35,7 @@ function main(args: [String]) {
     
     let mutable state = 0xffffffffu32
     let mutable c = fgetc(file)
-    while not feof(file) {
+    while feof(file) == 0 {
         state = table[(state ^ c) & 0xff] ^ (state >> 8);
         c = fgetc(file)
     }

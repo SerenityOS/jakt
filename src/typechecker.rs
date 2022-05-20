@@ -16,6 +16,7 @@ use crate::{
         UnaryOperator, UncheckedType,
     },
 };
+use std::os::raw::{c_char, c_int};
 
 pub type StructId = usize;
 pub type EnumId = usize;
@@ -50,9 +51,41 @@ pub fn is_integer(type_id: TypeId) -> bool {
     }
 }
 
+pub fn is_signed(type_id: TypeId) -> bool {
+    match type_id {
+        // c_char types can be both signed or unsigned values thus we have to check which variant
+        // we have here. c_int on the other hand will always be signed.
+        CCHAR_TYPE_ID => c_char::MIN < 0,
+        USIZE_TYPE_ID | U8_TYPE_ID | U16_TYPE_ID | U32_TYPE_ID | U64_TYPE_ID => false,
+        _ => true,
+    }
+}
+
+pub fn get_bits(type_id: TypeId) -> u32 {
+    match type_id {
+        BOOL_TYPE_ID => 8,
+        I8_TYPE_ID => i8::BITS,
+        I16_TYPE_ID => i16::BITS,
+        I32_TYPE_ID => i32::BITS,
+        I64_TYPE_ID => i64::BITS,
+        U8_TYPE_ID => u8::BITS,
+        U16_TYPE_ID => u16::BITS,
+        U32_TYPE_ID => u32::BITS,
+        U64_TYPE_ID => u64::BITS,
+        F32_TYPE_ID => 32,
+        F64_TYPE_ID => 64,
+        CCHAR_TYPE_ID => c_char::BITS,
+        CINT_TYPE_ID => c_int::BITS,
+        USIZE_TYPE_ID => usize::BITS,
+        _ => panic!("get_bits not supported for type {}", type_id),
+    }
+}
+
 pub fn can_fit_integer(type_id: TypeId, value: &IntegerConstant) -> bool {
     match *value {
         IntegerConstant::Signed(value) => match type_id {
+            CCHAR_TYPE_ID => value >= c_char::MIN as i64 && value <= c_char::MAX as i64,
+            CINT_TYPE_ID => value >= c_int::MIN as i64 && value <= c_int::MAX as i64,
             I8_TYPE_ID => value >= i8::MIN as i64 && value <= i8::MAX as i64,
             I16_TYPE_ID => value >= i16::MIN as i64 && value <= i16::MAX as i64,
             I32_TYPE_ID => value >= i32::MIN as i64 && value <= i32::MAX as i64,
@@ -450,30 +483,32 @@ impl IntegerConstant {
         if !can_fit_integer(type_id, self) {
             return (None, UNKNOWN_TYPE_ID);
         }
+
+        let bits = get_bits(type_id);
+        let signed = is_signed(type_id);
+
         let new_constant = match self {
-            IntegerConstant::Signed(value) => match type_id {
-                I8_TYPE_ID => NumericConstant::I8(*value as i8),
-                I16_TYPE_ID => NumericConstant::I16(*value as i16),
-                I32_TYPE_ID => NumericConstant::I32(*value as i32),
-                I64_TYPE_ID => NumericConstant::I64(*value as i64),
-                U8_TYPE_ID => NumericConstant::U8(*value as u8),
-                U16_TYPE_ID => NumericConstant::U16(*value as u16),
-                U32_TYPE_ID => NumericConstant::U32(*value as u32),
-                U64_TYPE_ID => NumericConstant::U64(*value as u64),
-                USIZE_TYPE_ID => NumericConstant::USize(*value as u64),
-                _ => panic!("Bogus state in IntegerConstant::promote"),
+            IntegerConstant::Signed(value) => match (bits, signed) {
+                (8, false) => NumericConstant::U8(*value as u8),
+                (16, false) => NumericConstant::U16(*value as u16),
+                (32, false) => NumericConstant::U32(*value as u32),
+                (64, false) => NumericConstant::U64(*value as u64),
+                (8, true) => NumericConstant::I8(*value as i8),
+                (16, true) => NumericConstant::I16(*value as i16),
+                (32, true) => NumericConstant::I32(*value as i32),
+                (64, true) => NumericConstant::I64(*value as i64),
+                _ => panic!("Numeric constants can only be 8, 16, 32, or 64 bits long"),
             },
-            IntegerConstant::Unsigned(value) => match type_id {
-                I8_TYPE_ID => NumericConstant::I8(*value as i8),
-                I16_TYPE_ID => NumericConstant::I16(*value as i16),
-                I32_TYPE_ID => NumericConstant::I32(*value as i32),
-                I64_TYPE_ID => NumericConstant::I64(*value as i64),
-                U8_TYPE_ID => NumericConstant::U8(*value as u8),
-                U16_TYPE_ID => NumericConstant::U16(*value as u16),
-                U32_TYPE_ID => NumericConstant::U32(*value as u32),
-                U64_TYPE_ID => NumericConstant::U64(*value as u64),
-                USIZE_TYPE_ID => NumericConstant::USize(*value as u64),
-                _ => panic!("Bogus state in IntegerConstant::promote"),
+            IntegerConstant::Unsigned(value) => match (bits, signed) {
+                (8, false) => NumericConstant::U8(*value as u8),
+                (16, false) => NumericConstant::U16(*value as u16),
+                (32, false) => NumericConstant::U32(*value as u32),
+                (64, false) => NumericConstant::U64(*value as u64),
+                (8, true) => NumericConstant::I8(*value as i8),
+                (16, true) => NumericConstant::I16(*value as i16),
+                (32, true) => NumericConstant::I32(*value as i32),
+                (64, true) => NumericConstant::I64(*value as i64),
+                _ => panic!("Numeric constants can only be 8, 16, 32, or 64 bits long"),
             },
         };
         (Some(new_constant), type_id)
