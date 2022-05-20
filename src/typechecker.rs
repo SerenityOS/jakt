@@ -972,7 +972,7 @@ fn typecheck_enum(
                     }
 
                     if project
-                        .find_function_in_scope(parent_scope_id, name.as_str())
+                        .find_function_in_scope(enum_scope_id, name.as_str())
                         .is_none()
                     {
                         let function_scope_id = project.create_scope(parent_scope_id);
@@ -1001,7 +1001,7 @@ fn typecheck_enum(
                         project.functions.push(checked_constructor);
 
                         if let Err(err) = project.add_function_to_scope(
-                            parent_scope_id,
+                            enum_scope_id,
                             name.clone(),
                             project.functions.len() - 1,
                             span.clone(),
@@ -1081,11 +1081,60 @@ fn typecheck_enum(
 
                     variants.push(CheckedEnumVariant::StructLike(
                         name.clone(),
-                        checked_members,
+                        checked_members.clone(),
                         *span,
                     ));
 
-                    // FIXME: Generate a constructor
+                    if project
+                        .find_function_in_scope(enum_scope_id, name.as_str())
+                        .is_none()
+                    {
+                        // Generate a constructor
+                        let constructor_params = checked_members
+                            .iter()
+                            .map(|member| CheckedParameter {
+                                requires_label: true,
+                                variable: CheckedVariable {
+                                    name: member.name.clone(),
+                                    ty: member.ty,
+                                    mutable: false,
+                                },
+                            })
+                            .collect();
+                        let function_scope_id = project.create_scope(parent_scope_id);
+
+                        let checked_constructor = CheckedFunction {
+                            name: name.clone(),
+                            throws: false,
+                            return_type: enum_type_id,
+                            params: constructor_params,
+                            function_scope_id,
+                            generic_parameters: enum_
+                                .generic_parameters
+                                .iter()
+                                .map(|x| {
+                                    FunctionGenericParameter::InferenceGuide(
+                                        project
+                                            .find_type_in_scope(enum_scope_id, x.0.as_str())
+                                            .unwrap(),
+                                    )
+                                })
+                                .collect(),
+                            block: CheckedBlock::new(),
+                            linkage: FunctionLinkage::ImplicitEnumConstructor,
+                        };
+
+                        project.functions.push(checked_constructor);
+
+                        if let Err(err) = project.add_function_to_scope(
+                            enum_scope_id,
+                            name.clone(),
+                            project.functions.len() - 1,
+                            span.clone(),
+                        ) {
+                            error = error.or(Some(err));
+                        }
+                    }
                 }
             }
             EnumVariant::Typed(name, unchecked_type, span) => {
@@ -1114,7 +1163,7 @@ fn typecheck_enum(
                         ));
 
                         if project
-                            .find_function_in_scope(parent_scope_id, name.as_str())
+                            .find_function_in_scope(enum_scope_id, name.as_str())
                             .is_none()
                         {
                             // Generate a constructor
@@ -1152,7 +1201,7 @@ fn typecheck_enum(
                             project.functions.push(checked_constructor);
 
                             if let Err(err) = project.add_function_to_scope(
-                                parent_scope_id,
+                                enum_scope_id,
                                 name.clone(),
                                 project.functions.len() - 1,
                                 span.clone(),
@@ -1862,7 +1911,7 @@ pub fn typecheck_statement(
                                 "Expected block of strings".to_string(),
                                 *span,
                             )),
-                        )
+                        );
                     }
                 }
             }
@@ -2531,7 +2580,77 @@ pub fn typecheck_expression(
                                                         )));
                                                     }
                                                 }
-                                                _ => todo!(),
+                                                CheckedEnumVariant::StructLike(
+                                                    variant_name,
+                                                    fields,
+                                                    _,
+                                                ) => {
+                                                    // Make the borrow checker shut up
+                                                    let variant_name = variant_name.clone();
+                                                    let fields = fields.clone();
+
+                                                    let mut names_seen = HashMap::new();
+                                                    for arg in args {
+                                                        let name = &arg.0;
+                                                        if name.is_none() {
+                                                            error = error.or(Some(JaktError::TypecheckError(
+                                                                format!("match case argument '{}' for struct-like enum variant cannot be anonymous", arg.1),
+                                                                *arg_span,
+                                                            )));
+                                                        } else {
+                                                            let name =
+                                                                name.as_ref().unwrap().clone();
+                                                            if names_seen.contains_key(&name) {
+                                                                error = error.or(Some(JaktError::TypecheckError(
+                                                                    format!(
+                                                                        "match case argument '{}' is already defined",
+                                                                        name
+                                                                    ),
+                                                                    *arg_span,
+                                                                )));
+                                                            } else {
+                                                                names_seen.insert(name.clone(), ());
+                                                                let field_type = fields
+                                                                    .iter()
+                                                                    .find(|f| f.name == name)
+                                                                    .map(|f| f.ty.clone());
+
+                                                                let field_type =
+                                                                    if field_type.is_some() {
+                                                                        Some(
+                                                                        substitute_typevars_in_type(
+                                                                            field_type.unwrap(),
+                                                                            &generic_parameters,
+                                                                            project,
+                                                                        ),
+                                                                    )
+                                                                    } else {
+                                                                        field_type
+                                                                    };
+
+                                                                match field_type {
+                                                                    Some(ty) => {
+                                                                        let span = *span;
+                                                                        vars.push((
+                                                                            CheckedVariable {
+                                                                                name: arg.1.clone(),
+                                                                                ty,
+                                                                                mutable: false,
+                                                                            },
+                                                                            span.clone(),
+                                                                        ))
+                                                                    }
+                                                                    None => {
+                                                                        error = error.or(Some(JaktError::TypecheckError(
+                                                                            format!("match case argument '{}' does not exist in struct-like enum variant '{}'", name, variant_name),
+                                                                            *arg_span,
+                                                                        )));
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
 
                                             // Look these up again to appease the borrow checker

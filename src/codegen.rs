@@ -162,7 +162,45 @@ fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
                     output.push_str(&member.name);
                     output.push_str(";\n");
                 }
-                output.push_str("    };\n");
+                output.push_str("\n");
+                output.push_str("        template<");
+                for i in 0..members.len() {
+                    if i > 0 {
+                        output.push_str(", ");
+                    }
+                    output.push_str("typename _MemberT");
+                    output.push_str(&i.to_string());
+                }
+                output.push_str(">\n");
+                output.push_str("        ");
+                output.push_str(&name);
+                output.push_str("(");
+                for i in 0..members.len() {
+                    if i > 0 {
+                        output.push_str(", ");
+                    }
+                    output.push_str("_MemberT");
+                    output.push_str(&i.to_string());
+                    output.push_str("&& member_");
+                    output.push_str(&i.to_string());
+                }
+                output.push_str("):\n");
+                for (i, member) in members.iter().enumerate() {
+                    output.push_str("            ");
+                    output.push_str(&member.name);
+                    output.push_str("{ forward<_MemberT");
+                    output.push_str(&i.to_string());
+                    output.push_str(">(member_");
+                    output.push_str(&i.to_string());
+                    output.push_str(")}");
+                    if i < members.len() - 1 {
+                        output.push_str(",\n");
+                    } else {
+                        output.push_str("\n");
+                    }
+                }
+                output.push_str("    {}\n");
+                output.push_str("};\n");
             }
             CheckedEnumVariant::Untyped(name, _) => {
                 if is_generic {
@@ -1212,11 +1250,12 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                 let variant = &enum_.variants[*variant_index];
                                 match variant {
                                     CheckedEnumVariant::Typed(name, _, _) => {
+                                        output.push_str("typename ");
                                         output.push_str(&codegen_type(*subject_type_id, project));
                                         output.push_str("::");
                                         output.push_str(name);
                                         output.push_str(
-                                            " const& value) -> _JaktExplicitValueOrReturn<",
+                                            " const& __jakt_match_value) -> _JaktExplicitValueOrReturn<",
                                         );
                                         output.push_str(&codegen_type(*return_ty, project));
                                         output.push_str(", ");
@@ -1231,15 +1270,16 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                             output.push_str(codegen_type(var.ty, project).as_str());
                                             output.push_str(" const& ");
                                             output.push_str(args[0].1.as_str());
-                                            output.push_str(" = value.value;\n");
+                                            output.push_str(" = __jakt_match_value.value;\n");
                                         }
                                     }
                                     CheckedEnumVariant::Untyped(name, _) => {
+                                        output.push_str("typename ");
                                         output.push_str(&codegen_type(*subject_type_id, project));
                                         output.push_str("::");
                                         output.push_str(name);
                                         output.push_str(
-                                            " const& value) -> _JaktExplicitValueOrReturn<",
+                                            " const& __jakt_match_value) -> _JaktExplicitValueOrReturn<",
                                         );
                                         output.push_str(&codegen_type(*return_ty, project));
                                         output.push_str(", ");
@@ -1247,8 +1287,37 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                         output.push_str(">");
                                         output.push_str(" {\n");
                                     }
+                                    CheckedEnumVariant::StructLike(name, _, _) => {
+                                        output.push_str("typename ");
+                                        output.push_str(&codegen_type(*subject_type_id, project));
+                                        output.push_str("::");
+                                        output.push_str(name);
+                                        output.push_str(
+                                            " const& __jakt_match_value) -> _JaktExplicitValueOrReturn<",
+                                        );
+                                        output.push_str(&codegen_type(*return_ty, project));
+                                        output.push_str(", ");
+                                        output.push_str("_JaktCurrentFunctionReturnType");
+                                        output.push_str(">");
+                                        output.push_str(" {\n");
+
+                                        if !args.is_empty() {
+                                            for arg in args {
+                                                let var = project
+                                                    .find_var_in_scope(*scope_id, &arg.1)
+                                                    .unwrap();
+                                                output.push_str(
+                                                    codegen_type(var.ty, project).as_str(),
+                                                );
+                                                output.push_str(" const& ");
+                                                output.push_str(arg.1.as_str());
+                                                output.push_str(" = __jakt_match_value.");
+                                                output.push_str(arg.0.as_ref().unwrap());
+                                                output.push_str(";\n");
+                                            }
+                                        }
+                                    }
                                     CheckedEnumVariant::WithValue(_, _, _) => unreachable!(),
-                                    _ => todo!(),
                                 }
 
                                 match body {
