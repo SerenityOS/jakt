@@ -1,3 +1,5 @@
+#![allow(clippy::or_fun_call)]
+
 extern crate core;
 
 mod codegen;
