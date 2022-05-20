@@ -1,0 +1,5 @@
+function main() {
+    let set = {"a", "b"}
+    println("{}", set.contains("b"))
+    println("{}", set.contains("c"))
+}

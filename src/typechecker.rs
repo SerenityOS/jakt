@@ -651,6 +651,7 @@ pub enum CheckedExpression {
         TypeId,
     ),
     Dictionary(Vec<(CheckedExpression, CheckedExpression)>, Span, TypeId),
+    Set(Vec<CheckedExpression>, Span, TypeId),
     IndexedExpression(Box<CheckedExpression>, Box<CheckedExpression>, Span, TypeId),
     IndexedDictionary(Box<CheckedExpression>, Box<CheckedExpression>, Span, TypeId),
     IndexedTuple(Box<CheckedExpression>, usize, Span, TypeId),
@@ -682,6 +683,7 @@ impl CheckedExpression {
             CheckedExpression::UnaryOp(_, _, _, ty) => *ty,
             CheckedExpression::BinaryOp(_, _, _, _, ty) => *ty,
             CheckedExpression::Dictionary(_, _, ty) => *ty,
+            CheckedExpression::Set(_, _, ty) => *ty,
             CheckedExpression::Array(_, _, _, ty) => *ty,
             CheckedExpression::Tuple(_, _, ty) => *ty,
             CheckedExpression::Range(_, _, _, ty) => *ty,
@@ -709,6 +711,7 @@ impl CheckedExpression {
             CheckedExpression::UnaryOp(_, _, span, _) => *span,
             CheckedExpression::BinaryOp(_, _, _, span, _) => *span,
             CheckedExpression::Dictionary(_, span, _) => *span,
+            CheckedExpression::Set(_, span, _) => *span,
             CheckedExpression::Array(_, _, span, _) => *span,
             CheckedExpression::Tuple(_, span, _) => *span,
             CheckedExpression::Range(_, _, span, _) => *span,
@@ -2261,6 +2264,40 @@ pub fn typecheck_expression(
                     *span,
                     unify_with_type_hint(project, &type_id),
                 ),
+                error,
+            )
+        }
+        Expression::Set(values, span) => {
+            let mut inner_ty = UNKNOWN_TYPE_ID;
+            let mut output = Vec::new();
+
+            for value in values {
+                let (checked_value, err) =
+                    typecheck_expression(value, scope_id, project, safety_mode, None);
+                error = error.or(err);
+
+                if inner_ty == UNKNOWN_TYPE_ID {
+                    inner_ty = checked_value.ty();
+                } else {
+                    if inner_ty != checked_value.ty() {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "does not match type of previous values in set".to_string(),
+                            value.span(),
+                        )))
+                    }
+                }
+                output.push(checked_value);
+            }
+
+            let set_struct_id = project
+                .find_struct_in_scope(0, "Set")
+                .expect("internal error: Set builtin definition not found");
+
+            let type_id =
+                project.find_or_add_type_id(Type::GenericInstance(set_struct_id, vec![inner_ty]));
+
+            (
+                CheckedExpression::Set(output, *span, unify_with_type_hint(project, &type_id)),
                 error,
             )
         }
