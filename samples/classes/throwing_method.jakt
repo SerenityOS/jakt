@@ -1,0 +1,12 @@
+class Foo {
+    function toss(this) throws {
+        throw Error::from_errno(0)
+    }
+}
+
+function main() {
+    let foo = Foo()
+    try foo.toss() catch error {
+        println("PASS")
+    }
+}
