@@ -832,7 +832,7 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
         CheckedStatement::Defer(statement) => {
             // NOTE: We let the preprocessor generate a unique name for the RAII helper.
             output.push_str("#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n");
-            output.push_str("ScopeGuard __SCOPE_GUARD_NAME  ([&] \n");
+            output.push_str("ScopeGuard __SCOPE_GUARD_NAME ([&] \n");
             output.push_str("#undef __SCOPE_GUARD_NAME\n{");
             output.push_str(&codegen_statement(indent, statement, project));
             output.push_str("});\n");
