@@ -1545,6 +1545,25 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
             output.push_str("}))");
         }
+        CheckedExpression::Set(values, _, _) => {
+            // (Set({1, 2, 3}))
+            let value_type_id = values.first().unwrap().ty();
+
+            output.push_str(&format!(
+                "(Set<{}>({{",
+                codegen_type(value_type_id, project),
+            ));
+            let mut first = true;
+            for value in values {
+                if !first {
+                    output.push_str(", ");
+                } else {
+                    first = false;
+                }
+                output.push_str(&codegen_expr(indent, value, project));
+            }
+            output.push_str("}))");
+        }
         CheckedExpression::Tuple(vals, _, _) => {
             // (Tuple{1, 2, 3})
             output.push_str("(Tuple{");

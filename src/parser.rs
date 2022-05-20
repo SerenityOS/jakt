@@ -230,6 +230,7 @@ pub enum Expression {
     CharacterLiteral(char, Span),
     Array(Vec<Expression>, Option<Box<Expression>>, Span),
     Dictionary(Vec<(Expression, Expression)>, Span),
+    Set(Vec<Expression>, Span),
     IndexedExpression(Box<Expression>, Box<Expression>, Span),
     UnaryOp(Box<Expression>, UnaryOperator, Span),
     BinaryOp(Box<Expression>, BinaryOperator, Box<Expression>, Span),
@@ -266,6 +267,7 @@ impl Expression {
             Expression::CharacterLiteral(_, span) => *span,
             Expression::Array(_, _, span) => *span,
             Expression::Dictionary(_, span) => *span,
+            Expression::Set(_, span) => *span,
             Expression::Tuple(_, span) => *span,
             Expression::Range(_, _, span) => *span,
             Expression::IndexedExpression(_, _, span) => *span,
@@ -2361,6 +2363,11 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
             error = error.or(err);
             expr
         }
+        TokenContents::LCurly => {
+            let (expr, err) = parse_set(tokens, index);
+            error = error.or(err);
+            expr
+        }
         TokenContents::PlusPlus => {
             let start_span = tokens[*index].span;
 
@@ -3296,6 +3303,78 @@ pub fn parse_operator_with_assignment(
             )
         }
     }
+}
+
+pub fn parse_set(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
+    let mut error = None;
+
+    let mut output = Vec::new();
+
+    let start;
+    if *index < tokens.len() {
+        start = *index;
+        match tokens[*index] {
+            Token {
+                contents: TokenContents::LCurly,
+                ..
+            } => {
+                *index += 1;
+            }
+            _ => {
+                trace!("ERROR: expected '{'");
+
+                error = error.or(Some(JaktError::ParserError(
+                    "expected '{'".to_string(),
+                    tokens[*index].span,
+                )));
+            }
+        }
+    } else {
+        start = *index - 1;
+        trace!("ERROR: incomplete set");
+
+        error = error.or(Some(JaktError::ParserError(
+            "incomplete set".to_string(),
+            tokens[*index - 1].span,
+        )));
+    }
+
+    while *index < tokens.len() {
+        match &tokens[*index].contents {
+            TokenContents::RCurly => {
+                *index += 1;
+                break;
+            }
+            TokenContents::Comma => {
+                // Treat comma as whitespace? Might require them in the future
+                *index += 1;
+            }
+            TokenContents::Eol => {
+                // Treat comma as whitespace? Might require them in the future
+                *index += 1;
+            }
+            _ => {
+                let (expr, err) =
+                    parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+                error = error.or(err);
+                output.push(expr);
+            }
+        }
+    }
+
+    let end = *index - 1;
+
+    (
+        Expression::Set(
+            output,
+            Span {
+                file_id: tokens[start].span.file_id,
+                start: tokens[start].span.start,
+                end: tokens[end].span.end,
+            },
+        ),
+        error,
+    )
 }
 
 pub fn parse_array(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {

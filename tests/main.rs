@@ -213,3 +213,8 @@ fn test_inline_cpp() -> Result<(), JaktError> {
 fn test_parser() -> Result<(), JaktError> {
     test_samples("tests/parser")
 }
+
+#[test]
+fn test_sets() -> Result<(), JaktError> {
+    test_samples("samples/sets")
+}
