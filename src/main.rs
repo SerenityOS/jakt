@@ -1,4 +1,4 @@
-use std::{path::PathBuf, process::exit};
+use std::{io::Write, path::PathBuf, process::exit};
 
 use pico_args::Arguments;
 
@@ -7,12 +7,29 @@ use jakt::{Compiler, JaktError, Span};
 fn main() -> Result<(), JaktError> {
     let arguments = parse_arguments();
 
+    let binary_directory = match arguments.binary_directory {
+        Some(dir) => dir,
+        None => {
+            let mut dir = std::env::current_dir().expect("Current directory unusable!");
+            dir.push("build");
+            dir
+        }
+    };
+    std::fs::create_dir_all(&binary_directory)?;
+
     let mut compiler = Compiler::new();
+
     let mut first_error = None;
 
     for file in arguments.input_files {
-        match compiler.compile(&file) {
-            Ok(_) => {}
+        match compiler.convert_to_cpp(&file) {
+            Ok(str) => {
+                let mut out_filepath = binary_directory.clone();
+                out_filepath.push(file.file_name().unwrap());
+                out_filepath.set_extension("cpp");
+                let mut out_file = std::fs::File::create(out_filepath)?;
+                out_file.write_all(str.as_bytes())?;
+            }
             Err(err) => {
                 match &err {
                     JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
@@ -33,20 +50,25 @@ fn main() -> Result<(), JaktError> {
 }
 
 /// Make sure to keep these up-to-date if you're adding arguments.
-const USAGE: &str = "usage: jakt [-h] [FILES...]";
+const USAGE: &str = "usage: jakt [-h] [OPTIONS] [FILES...]";
 
 // FIXME: Once format is stable as a const function, include USAGE in this string.
 const HELP: &str = "\
 Flags:
-  -h, --help           Print this help and exit 
+  -h,--help              Print this help and exit
 
 Options:
-  FILES...             List of files to compile. The output is `output.cpp`
-                       in the cwd.
+  -o,--binary-dir PATH   Output directory for compiled files.
+                         Defaults to $PWD/build.
+
+Arguments:
+  FILES...               List of files to compile. The outputs are
+                         `<input-filename>.cpp` in the binary directory.
 ";
 
 #[derive(Debug)]
 struct JaktArguments {
+    binary_directory: Option<PathBuf>,
     input_files: Vec<PathBuf>,
 }
 
@@ -59,8 +81,16 @@ fn parse_arguments() -> JaktArguments {
     }
 
     let mut arguments = JaktArguments {
+        binary_directory: None,
         input_files: Vec::new(),
     };
+
+    if let Ok(binary_directory) = pico_arguments.opt_value_from_os_str(
+        ["-o", "--binary-dir"],
+        |s| -> Result<PathBuf, &'static str> { Ok(s.into()) },
+    ) {
+        arguments.binary_directory = binary_directory;
+    }
 
     while let Ok(filename) = pico_arguments.free_from_str::<PathBuf>() {
         if !filename.exists() {
