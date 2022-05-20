@@ -65,11 +65,8 @@ impl Compiler {
         let mut project = Project::new();
 
         let err = self.include_prelude(&mut project);
-        match err {
-            Some(err) => {
-                return Err(err);
-            }
-            _ => {}
+        if let Some(err) = err {
+            return Err(err);
         }
 
         let contents = std::fs::read(fname)?;
@@ -82,20 +79,14 @@ impl Compiler {
             &self.raw_files[self.raw_files.len() - 1].1,
         );
 
-        match err {
-            Some(err) => {
-                return Err(err);
-            }
-            _ => {}
+        if let Some(err) = err {
+            return Err(err);
         }
 
         let (file, err) = parse_file(&lexed);
 
-        match err {
-            Some(err) => {
-                return Err(err);
-            }
-            _ => {}
+        if let Some(err) = err {
+            return Err(err);
         }
 
         let scope = Scope::new(Some(0));
@@ -105,11 +96,8 @@ impl Compiler {
 
         let err = typecheck_file(&file, file_scope_id, &mut project);
 
-        match err {
-            Some(err) => {
-                return Err(err);
-            }
-            _ => {}
+        if let Some(err) = err {
+            return Err(err);
         }
 
         // Hardwire to first file for now

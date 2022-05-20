@@ -12,9 +12,9 @@ fn main() -> Result<(), JaktError> {
             Err(err) => {
                 match &err {
                     JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
-                    JaktError::ParserError(msg, span) => display_error(&compiler, &msg, *span),
-                    JaktError::TypecheckError(msg, span) => display_error(&compiler, &msg, *span),
-                    JaktError::ValidationError(msg, span) => display_error(&compiler, &msg, *span),
+                    JaktError::ParserError(msg, span) => display_error(&compiler, msg, *span),
+                    JaktError::TypecheckError(msg, span) => display_error(&compiler, msg, *span),
+                    JaktError::ValidationError(msg, span) => display_error(&compiler, msg, *span),
                 }
                 first_error = first_error.or(Some(err));
             }
@@ -57,6 +57,6 @@ fn display_error(compiler: &Compiler, msg: &str, span: Span) {
         }
         index += 1;
     }
-    println!("");
+    println!();
     println!("\u{001b}[0m-----");
 }

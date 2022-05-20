@@ -27,8 +27,8 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
                             if error_output_path.exists() {
                                 let expected_error_msg =
                                     std::fs::read_to_string(&error_output_path)?;
-                                let expected_error_msg = expected_error_msg.replace("\r", "");
-                                let expected_error_msg = expected_error_msg.replace("\n", "");
+                                let expected_error_msg = expected_error_msg.replace('\r', "");
+                                let expected_error_msg = expected_error_msg.replace('\n', "");
 
                                 panic!(
                                     "\r\nTest: {:?}\r\nExpected error not created: {}",
@@ -41,8 +41,8 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
                             if error_output_path.exists() {
                                 let expected_error_msg =
                                     std::fs::read_to_string(&error_output_path)?;
-                                let expected_error_msg = expected_error_msg.replace("\r", "");
-                                let expected_error_msg = expected_error_msg.replace("\n", "");
+                                let expected_error_msg = expected_error_msg.replace('\r', "");
+                                let expected_error_msg = expected_error_msg.replace('\n', "");
 
                                 let returned_error = format!("{:#?}", err);
 

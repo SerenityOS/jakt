@@ -184,15 +184,13 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
             let start = index;
             index += 1;
 
-            if index < bytes.len() {
-                if bytes[index] == b'=' {
-                    index += 1;
-                    output.push(Token::new(
-                        TokenContents::AsteriskEqual,
-                        Span::new(file_id, start, start + 2),
-                    ));
-                    continue;
-                }
+            if index < bytes.len() && bytes[index] == b'=' {
+                index += 1;
+                output.push(Token::new(
+                    TokenContents::AsteriskEqual,
+                    Span::new(file_id, start, start + 2),
+                ));
+                continue;
             }
 
             output.push(Token::new(
@@ -335,15 +333,13 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
         } else if c == b'!' {
             let start = index;
             index += 1;
-            if index < bytes.len() {
-                if bytes[index] == b'=' {
-                    index += 1;
-                    output.push(Token::new(
-                        TokenContents::NotEqual,
-                        Span::new(file_id, start, start + 2),
-                    ));
-                    continue;
-                }
+            if index < bytes.len() && bytes[index] == b'=' {
+                index += 1;
+                output.push(Token::new(
+                    TokenContents::NotEqual,
+                    Span::new(file_id, start, start + 2),
+                ));
+                continue;
             }
             output.push(Token::new(
                 TokenContents::ExclamationPoint,
@@ -353,15 +349,13 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
             let start = index;
             index += 1;
 
-            if index < bytes.len() {
-                if bytes[index] == b'=' {
-                    index += 1;
-                    output.push(Token::new(
-                        TokenContents::AmpersandEqual,
-                        Span::new(file_id, start, start + 2),
-                    ));
-                    continue;
-                }
+            if index < bytes.len() && bytes[index] == b'=' {
+                index += 1;
+                output.push(Token::new(
+                    TokenContents::AmpersandEqual,
+                    Span::new(file_id, start, start + 2),
+                ));
+                continue;
             }
             output.push(Token::new(
                 TokenContents::Ampersand,
@@ -371,15 +365,13 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
             let start = index;
             index += 1;
 
-            if index < bytes.len() {
-                if bytes[index] == b'=' {
-                    index += 1;
-                    output.push(Token::new(
-                        TokenContents::PipeEqual,
-                        Span::new(file_id, start, start + 2),
-                    ));
-                    continue;
-                }
+            if index < bytes.len() && bytes[index] == b'=' {
+                index += 1;
+                output.push(Token::new(
+                    TokenContents::PipeEqual,
+                    Span::new(file_id, start, start + 2),
+                ));
+                continue;
             }
 
             output.push(Token::new(
@@ -390,15 +382,13 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
             let start = index;
             index += 1;
 
-            if index < bytes.len() {
-                if bytes[index] == b'=' {
-                    index += 1;
-                    output.push(Token::new(
-                        TokenContents::CaretEqual,
-                        Span::new(file_id, start, start + 2),
-                    ));
-                    continue;
-                }
+            if index < bytes.len() && bytes[index] == b'=' {
+                index += 1;
+                output.push(Token::new(
+                    TokenContents::CaretEqual,
+                    Span::new(file_id, start, start + 2),
+                ));
+                continue;
             }
 
             output.push(Token::new(
@@ -416,15 +406,13 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
             let start = index;
             index += 1;
 
-            if index < bytes.len() {
-                if bytes[index] == b'=' {
-                    index += 1;
-                    output.push(Token::new(
-                        TokenContents::PercentSignEqual,
-                        Span::new(file_id, start, start + 2),
-                    ));
-                    continue;
-                }
+            if index < bytes.len() && bytes[index] == b'=' {
+                index += 1;
+                output.push(Token::new(
+                    TokenContents::PercentSignEqual,
+                    Span::new(file_id, start, start + 2),
+                ));
+                continue;
             }
 
             output.push(Token::new(
@@ -435,15 +423,13 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
             let start = index;
             index += 1;
 
-            if index < bytes.len() {
-                if bytes[index] == b'?' {
-                    index += 1;
-                    output.push(Token::new(
-                        TokenContents::QuestionMarkQuestionMark,
-                        Span::new(file_id, start, start + 2),
-                    ));
-                    continue;
-                }
+            if index < bytes.len() && bytes[index] == b'?' {
+                index += 1;
+                output.push(Token::new(
+                    TokenContents::QuestionMarkQuestionMark,
+                    Span::new(file_id, start, start + 2),
+                ));
+                continue;
             }
 
             output.push(Token::new(
@@ -460,15 +446,13 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
         } else if c == b'.' {
             let start = index;
             index += 1;
-            if index < bytes.len() {
-                if bytes[index] == b'.' {
-                    index += 1;
-                    output.push(Token::new(
-                        TokenContents::DotDot,
-                        Span::new(file_id, start, start + 2),
-                    ));
-                    continue;
-                }
+            if index < bytes.len() && bytes[index] == b'.' {
+                index += 1;
+                output.push(Token::new(
+                    TokenContents::DotDot,
+                    Span::new(file_id, start, start + 2),
+                ));
+                continue;
             }
             output.push(Token::new(
                 TokenContents::Dot,
@@ -585,7 +569,7 @@ fn consume_numeric_literal_suffix(bytes: &[u8], index: &mut usize) -> Option<Lit
         local_index += 1;
     }
     let str = String::from_utf8_lossy(&bytes[start..local_index]);
-    let width = i64::from_str_radix(&str, 10).ok();
+    let width = (&str).parse::<i64>().ok();
 
     let suffix = match bytes[*index] {
         b'u' => match width {
@@ -663,7 +647,7 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
                 )),
             );
         }
-        let str = String::from_utf8_lossy(&bytes[start + 2..*index]).replace("_", "");
+        let str = String::from_utf8_lossy(&bytes[start + 2..*index]).replace('_', "");
         let number = i64::from_str_radix(&str, 16);
         let suffix = consume_numeric_literal_suffix(bytes, index);
         match number {
@@ -702,7 +686,7 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
                 )),
             );
         }
-        let str = String::from_utf8_lossy(&bytes[start + 2..*index]).replace("_", "");
+        let str = String::from_utf8_lossy(&bytes[start + 2..*index]).replace('_', "");
         let number = i64::from_str_radix(&str, 2);
         let suffix = consume_numeric_literal_suffix(bytes, index);
         match number {
@@ -739,7 +723,7 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
             );
         }
         let str = String::from_utf8_lossy(&bytes[start..*index]);
-        let number: Result<i64, _> = str.replace("_", "").parse();
+        let number: Result<i64, _> = str.replace('_', "").parse();
         let suffix = consume_numeric_literal_suffix(bytes, index);
         match number {
             Ok(number) => (
