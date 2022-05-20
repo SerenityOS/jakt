@@ -634,7 +634,6 @@ pub fn parse_enum(
                 enum_.underlying_type = type_;
                 error = error.or(parse_error);
                 trace!(format!("next token: {:?}", tokens[*index]));
-                *index += 1;
             }
             Some(Token {
                 contents: TokenContents::LessThan,
@@ -713,7 +712,6 @@ pub fn parse_enum(
                     trace!("variant with type");
                     *index += 1;
                     let (variant_type, type_error) = parse_typename(tokens, index);
-                    *index += 1;
                     error = error.or(type_error);
                     enum_.variants.push(EnumVariant::Typed(
                         name.to_string(),
@@ -1281,8 +1279,6 @@ pub fn parse_function(
                                     let (ret_type, err) = parse_typename(tokens, index);
                                     return_type = ret_type;
                                     error = error.or(err);
-
-                                    *index += 1;
                                 }
                                 _ => {
                                     trace!("ERROR: expected ->");
@@ -2004,6 +2000,14 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
                         ));
                         break;
                     }
+
+                    if let Some(Token {
+                                    contents: TokenContents::Comma,
+                                    ..
+                                }) = tokens.get(*index)
+                    {
+                        *index += 1;
+                    }
                 } else {
                     if let Some(Token {
                         contents: TokenContents::Name(binding),
@@ -2547,8 +2551,6 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 
                 let (typename, err) = parse_typename(tokens, index);
                 error = error.or(err);
-
-                *index += 1;
 
                 expr = Expression::UnaryOp(Box::new(expr), UnaryOperator::Is(typename), span)
             }
@@ -3484,6 +3486,7 @@ pub fn parse_variable_declaration(
             }
 
             if *index < tokens.len() {
+                let decl_span = tokens[*index - 1].span;
                 let mutable = *index + 1 < tokens.len()
                     && match &tokens[*index].contents {
                         TokenContents::Name(name) if name == "mutable" => {
@@ -3500,10 +3503,8 @@ pub fn parse_variable_declaration(
                     name: var_name,
                     ty: var_type,
                     mutable,
-                    span: tokens[*index - 3].span,
+                    span: decl_span,
                 };
-
-                *index += 1;
 
                 (result, error)
             } else {
@@ -3543,23 +3544,28 @@ pub fn parse_array_type(tokens: &[Token], index: &mut usize) -> (UncheckedType, 
         return (UncheckedType::Empty, None);
     }
     let start = tokens[*index].span;
-    if let TokenContents::LSquare = &tokens[*index].contents {
-        if let TokenContents::RSquare = &tokens[*index + 2].contents {
-            if let TokenContents::Name(name) = &tokens[*index + 1].contents {
-                let unchecked_type = UncheckedType::Array(
-                    Box::new(UncheckedType::Name(name.clone(), tokens[*index + 1].span)),
-                    Span {
-                        file_id: start.file_id,
-                        start: start.start,
-                        end: tokens[*index + 2].span.end,
-                    },
-                );
-                *index += 2;
-                return (unchecked_type, None);
-            }
+    return if let TokenContents::LSquare = &tokens[*index].contents {
+        *index += 1;
+        let (ty, err) = parse_typename(tokens, index);
+        if let TokenContents::RSquare = &tokens[*index].contents {
+            *index += 1;
+            return (UncheckedType::Array(
+                Box::new(ty),
+                Span {
+                    file_id: start.file_id,
+                    start: start.start,
+                    end: tokens[*index - 1].span.end,
+                }
+            ), err);
         }
+
+        (UncheckedType::Empty, err.or(Some(JaktError::ParserError(
+            "expected ]".to_string(),
+            tokens[*index].span,
+        ))))
+    } else {
+        (UncheckedType::Empty, None)
     }
-    (UncheckedType::Empty, None)
 }
 
 pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Option<JaktError>) {
@@ -3602,6 +3608,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
             } else {
                 typename = name.clone();
                 unchecked_type = UncheckedType::Name(name.clone(), tokens[*index].span);
+                *index += 1;
             }
         }
         _ => {
@@ -3614,10 +3621,9 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
         }
     };
 
-    if *index + 1 < tokens.len() {
-        if let TokenContents::QuestionMark = tokens[*index + 1].contents {
+    if *index < tokens.len() {
+        if let TokenContents::QuestionMark = tokens[*index].contents {
             // T? is shorthand for Optional<T>
-            *index += 1;
             unchecked_type = UncheckedType::Optional(
                 Box::new(unchecked_type),
                 Span {
@@ -3626,13 +3632,14 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
                     end: tokens[*index].span.end,
                 },
             );
+            *index += 1;
         }
 
-        if *index + 1 < tokens.len() {
-            if let TokenContents::LessThan = tokens[*index + 1].contents {
+        if *index < tokens.len() {
+            let previous_index = *index;
+            if let TokenContents::LessThan = tokens[*index].contents {
                 // Generic type
-                *index += 2;
-
+                *index += 1;
                 let mut inner_types = vec![];
 
                 while *index < tokens.len() {
@@ -3648,11 +3655,14 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
                             *index += 1;
                         }
                         _ => {
+                            let i = *index;
                             let (inner_ty, err) = parse_typename(tokens, index);
+                            if i == *index {
+                                // This is not a generic parameter, reset and leave.
+                                error = error.or(err);
+                                break
+                            }
                             error = error.or(err);
-
-                            *index += 1;
-
                             inner_types.push(inner_ty);
                         }
                     }
@@ -3678,6 +3688,10 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
                             end: tokens[*index].span.end,
                         },
                     )
+                }
+
+                if error.is_some() {
+                    *index = previous_index;
                 }
             }
         }
@@ -3739,11 +3753,14 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktErro
                                 *index += 1;
                             }
                             _ => {
+                                let i = *index;
                                 let (inner_ty, err) = parse_typename(tokens, index);
+                                if i == *index {
+                                    // Can't parse further, this is not a generic call.
+                                    *index = index_reset;
+                                    break
+                                }
                                 error = error.or(err);
-
-                                *index += 1;
-
                                 inner_types.push(inner_ty);
                             }
                         }
