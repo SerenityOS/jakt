@@ -1,0 +1,18 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug current file compilation (Jakt)",
+			"cargo": {
+				"args": [
+					"run"
+				]
+			},
+			"program": "${cargo:program}",
+			"args": ["${file}"]
+		}
+		
+	]
+}
