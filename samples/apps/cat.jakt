@@ -18,7 +18,7 @@ function main(args: [String]) {
     defer fclose(file)
 
     let mutable c = fgetc(file)
-    while not feof(file) {
+    while feof(file) == 0 {
         putchar(c)
         c = fgetc(file)
     }
