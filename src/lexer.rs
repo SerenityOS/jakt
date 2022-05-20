@@ -221,6 +221,31 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
                         index += 1;
                     }
                     continue;
+                } else if bytes[index] == b'*' {
+                    // We are in a block comment, skip it
+                    let comment_beginning = index - 1;
+                    let mut closed_comment = false;
+                    while index < bytes.len() {
+                        if bytes[index] == b'*' {
+                            if index == bytes.len() - 1 {
+                                index += 1;
+                                break;
+                            }
+                            else if bytes[index+1] == b'/' {
+                                index += 2;
+                                closed_comment = true;
+                                break;
+                            }
+                        }
+                        index += 1;
+                    }
+                    if !closed_comment {
+                        error = error.or(Some(JaktError::ParserError(
+                            "unclosed block comment".to_string(),
+                            Span::new(file_id, comment_beginning, index),
+                        )));
+                    }
+                    continue;
                 }
             }
 
