@@ -6,7 +6,7 @@ extern function fclose(anonymous file: mutable raw FILE) -> c_int
 extern function feof(anonymous file: mutable raw FILE) -> c_int
 extern function putchar(anonymous ch: c_int) -> c_int
 
-function make_lookup_table() -> [u32] {
+function make_lookup_table() throws -> [u32] {
     let mutable data = [0u32; 256]
     for i in 0..data.size() {
         let mutable value = i as! u32
