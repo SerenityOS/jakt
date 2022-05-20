@@ -1227,7 +1227,7 @@ fn typecheck_struct_predecl(
         let mut checked_function = CheckedFunction {
             name: function.name.clone(),
             params: vec![],
-            throws: false,
+            throws: function.throws,
             return_type: UNKNOWN_TYPE_ID,
             function_scope_id: method_scope_id,
             generic_parameters,
