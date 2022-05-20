@@ -873,7 +873,7 @@ pub fn parse_generic_parameters(
                 contents: TokenContents::Name(name),
                 span,
             }) => {
-                generic_parameters.push((name.to_string(), span.clone()));
+                generic_parameters.push((name.to_string(), *span));
                 *index += 1;
                 if let Some(Token {
                     contents: TokenContents::Comma | TokenContents::Eol,
@@ -1328,7 +1328,7 @@ pub fn parse_function(
                 };
                 error = error.or(err);
 
-                return (
+                (
                     Function {
                         name: function_name.clone(),
                         name_span,
@@ -1340,7 +1340,7 @@ pub fn parse_function(
                         linkage,
                     },
                     error,
-                );
+                )
             }
             _ => {
                 trace!("ERROR: expected function name");
@@ -1516,15 +1516,11 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
                 TokenContents::Name(name) if name == "catch" => {
                     *index += 1;
 
-                    match &tokens[*index].contents {
-                        TokenContents::Name(name) => {
-                            error_span = &tokens[*index].span;
-                            error_name = name.clone();
-                            *index += 1;
-                        }
-                        _ => {
-                            // FIXME: Error about missing error binding
-                        }
+                    // FIXME: Error about missing error binding
+                    if let TokenContents::Name(name) = &tokens[*index].contents {
+                        error_span = &tokens[*index].span;
+                        error_name = name.clone();
+                        *index += 1;
                     }
                 }
                 _ => {
@@ -1536,7 +1532,7 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             error = error.or(err);
 
             (
-                Statement::Try(Box::new(stmt), error_name, error_span.clone(), catch_block),
+                Statement::Try(Box::new(stmt), error_name, *error_span, catch_block),
                 error,
             )
         }
@@ -1678,16 +1674,14 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             trace!("parsing expression from statement parser");
 
             let (expr, err) =
-                parse_expression(&tokens, index, ExpressionKind::ExpressionWithAssignments);
+                parse_expression(tokens, index, ExpressionKind::ExpressionWithAssignments);
             error = error.or(err);
 
             // Make sure, if there is an error and we can make progress, that we make progress.
             // This allows the parser to be more forgiving when there are errors
             // and to ensure parsing continues to make progress.
-            if error.is_some() {
-                if *index < tokens.len() {
-                    *index += 1;
-                }
+            if error.is_some() && *index < tokens.len() {
+                *index += 1;
             }
 
             (Statement::Expression(expr), error)
@@ -1937,10 +1931,10 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
         {
             *index += 1;
         } else {
-            pattern.push((name.clone(), span.clone()));
+            pattern.push((name.clone(), *span));
             break;
         }
-        pattern.push((name.clone(), span.clone()));
+        pattern.push((name.clone(), *span));
     }
 
     let mut arguments = Vec::new();
@@ -1981,7 +1975,7 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
                     } else {
                         error = Some(JaktError::ParserError(
                             "expected ':' after explicit pattern argument name".to_string(),
-                            tokens.get(*index).unwrap().span.clone(),
+                            tokens.get(*index).unwrap().span,
                         ));
                         break;
                     }
@@ -1996,7 +1990,7 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
                     } else {
                         error = Some(JaktError::ParserError(
                             "expected pattern argument name".to_string(),
-                            tokens.get(*index).unwrap().span.clone(),
+                            tokens.get(*index).unwrap().span,
                         ));
                         break;
                     }
@@ -2019,7 +2013,7 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
                     } else {
                         error = Some(JaktError::ParserError(
                             "expected pattern argument name".to_string(),
-                            tokens.get(*index).unwrap().span.clone(),
+                            tokens.get(*index).unwrap().span,
                         ));
                         break;
                     }
@@ -2032,21 +2026,19 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
                         *index += 1;
                     }
                 }
+            } else if let Some(Token {
+                contents: TokenContents::Name(binding),
+                ..
+            }) = tokens.get(*index)
+            {
+                *index += 1;
+                arguments.push((None, binding.clone()));
             } else {
-                if let Some(Token {
-                    contents: TokenContents::Name(binding),
-                    ..
-                }) = tokens.get(*index)
-                {
-                    *index += 1;
-                    arguments.push((None, binding.clone()));
-                } else {
-                    error = Some(JaktError::ParserError(
-                        "expected pattern argument name".to_string(),
-                        tokens.get(*index).unwrap().span.clone(),
-                    ));
-                    break;
-                }
+                error = Some(JaktError::ParserError(
+                    "expected pattern argument name".to_string(),
+                    tokens.get(*index).unwrap().span,
+                ));
+                break;
             }
         }
     }
@@ -2065,7 +2057,7 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
     } else {
         error = Some(JaktError::ParserError(
             "expected '=>' after pattern case".to_string(),
-            tokens.get(*index).unwrap().span.clone(),
+            tokens.get(*index).unwrap().span,
         ));
     }
 
@@ -2294,8 +2286,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 }
                 TokenContents::Comma => {
                     // We have a tuple
-                    let mut exprs = Vec::new();
-                    exprs.push(expr);
+                    let mut exprs = vec![expr];
 
                     *index += 1;
 
@@ -3544,7 +3535,7 @@ pub fn parse_array_type(tokens: &[Token], index: &mut usize) -> (UncheckedType, 
         return (UncheckedType::Empty, None);
     }
     let start = tokens[*index].span;
-    return if let TokenContents::LSquare = &tokens[*index].contents {
+    if let TokenContents::LSquare = &tokens[*index].contents {
         *index += 1;
         let (ty, err) = parse_typename(tokens, index);
         if let TokenContents::RSquare = &tokens[*index].contents {
@@ -3571,7 +3562,7 @@ pub fn parse_array_type(tokens: &[Token], index: &mut usize) -> (UncheckedType, 
         )
     } else {
         (UncheckedType::Empty, None)
-    };
+    }
 }
 
 pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Option<JaktError>) {

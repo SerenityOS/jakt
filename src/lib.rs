@@ -1,4 +1,7 @@
 #![allow(clippy::or_fun_call)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::new_without_default)]
+#![allow(clippy::enum_variant_names)]
 
 extern crate core;
 

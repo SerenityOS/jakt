@@ -1,5 +1,4 @@
 use crate::compiler::{UNKNOWN_TYPE_ID, VOID_TYPE_ID};
-use crate::parser::FunctionLinkage::ImplicitEnumConstructor;
 use crate::typechecker::{
     CheckedEnum, CheckedEnumVariant, CheckedMatchBody, CheckedMatchCase, FunctionGenericParameter,
 };
@@ -56,7 +55,7 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
 
     for (_, function_id) in &scope.functions {
         let function = &project.functions[*function_id];
-        if function.linkage == ImplicitEnumConstructor {
+        if function.linkage == FunctionLinkage::ImplicitEnumConstructor {
             continue;
         }
 
@@ -72,11 +71,10 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
 
     for (_, function_id) in &scope.functions {
         let function = &project.functions[*function_id];
-        if function.linkage == FunctionLinkage::External {
-            continue;
-        } else if function.linkage == FunctionLinkage::ImplicitConstructor {
-            continue;
-        } else if function.linkage == ImplicitEnumConstructor {
+        if function.linkage == FunctionLinkage::External
+            || function.linkage == FunctionLinkage::ImplicitConstructor
+            || function.linkage == FunctionLinkage::ImplicitEnumConstructor
+        {
             continue;
         } else {
             let function_output = codegen_function(function, project);
@@ -125,7 +123,7 @@ fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
     }
 
     // These are all Variant<Ts...>, make a new namespace and define the variant types first.
-    let is_generic = enum_.generic_parameters.len() > 0;
+    let is_generic = !enum_.generic_parameters.is_empty();
     let generic_parameter_names = enum_
         .generic_parameters
         .iter()
@@ -153,16 +151,16 @@ fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
                     output.push_str(">\n");
                 }
                 output.push_str("    struct ");
-                output.push_str(&name);
+                output.push_str(name);
                 output.push_str(" {\n");
                 for member in members {
                     output.push_str("        ");
                     output.push_str(&codegen_type(member.ty, project));
-                    output.push_str(" ");
+                    output.push(' ');
                     output.push_str(&member.name);
                     output.push_str(";\n");
                 }
-                output.push_str("\n");
+                output.push('\n');
                 output.push_str("        template<");
                 for i in 0..members.len() {
                     if i > 0 {
@@ -173,8 +171,8 @@ fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
                 }
                 output.push_str(">\n");
                 output.push_str("        ");
-                output.push_str(&name);
-                output.push_str("(");
+                output.push_str(name);
+                output.push('(');
                 for i in 0..members.len() {
                     if i > 0 {
                         output.push_str(", ");
@@ -196,7 +194,7 @@ fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
                     if i < members.len() - 1 {
                         output.push_str(",\n");
                     } else {
-                        output.push_str("\n");
+                        output.push('\n');
                     }
                 }
                 output.push_str("    {}\n");
@@ -209,7 +207,7 @@ fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
                     output.push_str(">\n");
                 }
                 output.push_str("    struct ");
-                output.push_str(&name);
+                output.push_str(name);
                 output.push_str(" {};\n");
             }
             CheckedEnumVariant::Typed(name, type_id, _) => {
@@ -219,15 +217,15 @@ fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
                     output.push_str(">\n");
                 }
                 output.push_str("    struct ");
-                output.push_str(&name);
+                output.push_str(name);
                 output.push_str(" {\n");
                 output.push_str("        ");
                 output.push_str(&codegen_type(*type_id, project));
                 output.push_str(" value;\n");
-                output.push_str("\n");
+                output.push('\n');
                 output.push_str("        template<typename... Args>\n");
                 output.push_str("        ");
-                output.push_str(&name);
+                output.push_str(name);
                 output.push_str("(Args&&... args): ");
                 output.push_str(" value { forward<Args>(args)... } {}\n");
                 output.push_str("    };\n");
@@ -261,12 +259,12 @@ fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
             | CheckedEnumVariant::Typed(name, _, _) => {
                 variant_args.push_str(&enum_.name);
                 variant_args.push_str("_Details::");
-                variant_args.push_str(&name);
+                variant_args.push_str(name);
                 variant_names.push(name.clone());
                 if is_generic {
-                    variant_args.push_str("<");
+                    variant_args.push('<');
                     variant_args.push_str(generic_parameter_names.join(", ").as_str());
-                    variant_args.push_str(">");
+                    variant_args.push('>');
                 }
             }
             _ => unreachable!(),
@@ -282,15 +280,15 @@ fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
 
     for name in &variant_names {
         output.push_str("    using ");
-        output.push_str(&name);
+        output.push_str(name);
         output.push_str(" = ");
         output.push_str(&enum_.name);
         output.push_str("_Details::");
-        output.push_str(&name);
+        output.push_str(name);
         if is_generic {
-            output.push_str("<");
+            output.push('<');
             output.push_str(generic_parameter_names.join(", ").as_str());
-            output.push_str(">");
+            output.push('>');
         }
         output.push_str(";\n");
     }
@@ -441,12 +439,12 @@ fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String 
     if fun.name == "main" {
         output.push_str("ErrorOr<int>");
     } else {
-        let return_type;
-        if fun.throws {
-            return_type = format!("ErrorOr<{}>", &codegen_type(fun.return_type, project));
+        let return_type = if fun.throws {
+            format!("ErrorOr<{}>", &codegen_type(fun.return_type, project))
         } else {
-            return_type = codegen_type(fun.return_type, project);
-        }
+            codegen_type(fun.return_type, project)
+        };
+
         output.push_str(&return_type);
     }
     output.push(' ');
@@ -501,12 +499,12 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
     if fun.name == "main" {
         output.push_str("ErrorOr<int>");
     } else {
-        let return_type;
-        if fun.throws {
-            return_type = format!("ErrorOr<{}>", &codegen_type(fun.return_type, project));
+        let return_type = if fun.throws {
+            format!("ErrorOr<{}>", &codegen_type(fun.return_type, project))
         } else {
-            return_type = codegen_type(fun.return_type, project);
-        }
+            codegen_type(fun.return_type, project)
+        };
+
         output.push_str(&return_type);
     }
     output.push(' ');
@@ -552,7 +550,7 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
     }
 
     if fun.name == "main" {
-        output.push_str("\n");
+        output.push('\n');
         output.push_str("{\n");
         output.push_str(&" ".repeat(INDENT_SIZE));
     }
@@ -795,13 +793,13 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str(error_name);
             output.push_str(" = _jakt_try_result.release_error();");
             output.push_str(&codegen_block(indent, catch_block, project));
-            output.push_str("}");
+            output.push('}');
             output.push('}');
         }
         CheckedStatement::Throw(expr) => {
             output.push_str("return ");
             output.push_str(&codegen_expr(indent, expr, project));
-            output.push_str(";");
+            output.push(';');
         }
         CheckedStatement::Continue => {
             output.push_str("continue;");
@@ -862,7 +860,7 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str("for (;;) {");
             let block = codegen_block(indent, block, project);
             output.push_str(&block);
-            output.push_str("}");
+            output.push('}');
         }
         CheckedStatement::While(cond, block) => {
             let expr = codegen_expr(indent, cond, project);
@@ -907,21 +905,15 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
 
     match expr {
         CheckedExpression::Range(start_expr, end_expr, _, type_id) => {
-            let index_type;
-
             let ty = &project.types[*type_id];
-            match ty {
-                Type::GenericInstance(_, v) => {
-                    index_type = v[0];
-                }
-                _ => {
-                    panic!("Interal error: range expression doesn't have Range type");
-                }
-            }
+            let index_type = match ty {
+                Type::GenericInstance(_, v) => v[0],
+                _ => panic!("Interal error: range expression doesn't have Range type"),
+            };
 
-            output.push_str("(");
+            output.push('(');
             output.push_str(&codegen_type(*type_id, project));
-            output.push_str("{");
+            output.push('{');
             output.push_str("static_cast<");
             output.push_str(&codegen_type(index_type, project));
             output.push_str(">(");
@@ -959,17 +951,17 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             NumericConstant::I8(value) => {
                 output.push_str("static_cast<i8>(");
                 output.push_str(&value.to_string());
-                output.push_str(")");
+                output.push(')');
             }
             NumericConstant::I16(value) => {
                 output.push_str("static_cast<i16>(");
                 output.push_str(&value.to_string());
-                output.push_str(")");
+                output.push(')');
             }
             NumericConstant::I32(value) => {
                 output.push_str("static_cast<i32>(");
                 output.push_str(&value.to_string());
-                output.push_str(")");
+                output.push(')');
             }
             NumericConstant::I64(value) => {
                 output.push_str("static_cast<i64>(");
@@ -979,17 +971,17 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             NumericConstant::U8(value) => {
                 output.push_str("static_cast<u8>(");
                 output.push_str(&value.to_string());
-                output.push_str(")");
+                output.push(')');
             }
             NumericConstant::U16(value) => {
                 output.push_str("static_cast<u16>(");
                 output.push_str(&value.to_string());
-                output.push_str(")");
+                output.push(')');
             }
             NumericConstant::U32(value) => {
                 output.push_str("static_cast<u32>(");
                 output.push_str(&value.to_string());
-                output.push_str(")");
+                output.push(')');
             }
             NumericConstant::U64(value) => {
                 output.push_str("static_cast<u64>(");
@@ -1111,7 +1103,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 output.push(')');
             }
             if call.callee_throws {
-                output.push_str(")");
+                output.push(')');
             }
         }
         CheckedExpression::MethodCall(expr, call, ..) => {
@@ -1123,7 +1115,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
 
             output.push('(');
             output.push_str(&codegen_expr(indent, expr, project));
-            output.push_str(")");
+            output.push(')');
 
             match &**expr {
                 CheckedExpression::Var(CheckedVariable { name, .. }, _) if name == "this" => {
@@ -1163,7 +1155,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             output.push_str("))");
 
             if call.callee_throws {
-                output.push_str(")");
+                output.push(')');
             }
         }
         CheckedExpression::Match(expr, cases, _, return_ty) => {
@@ -1193,14 +1185,14 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                             CheckedMatchCase::EnumVariant {
                                 variant_name, body, ..
                             } => {
-                                output.push_str(&variant_name);
+                                output.push_str(variant_name);
                                 output.push_str(":\n");
                                 output.push_str(&" ".repeat(indent));
                                 match body {
                                     CheckedMatchBody::Expression(expr) => {
                                         output.push_str("return _JaktExplicitReturn(");
                                         output.push_str(&codegen_expr(0, expr, project));
-                                        output.push_str(")");
+                                        output.push(')');
                                     }
                                     CheckedMatchBody::Block(block) => {
                                         output.push_str(&codegen_block(indent, block, project));
@@ -1209,7 +1201,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                 }
                             }
                         }
-                        output.push_str("\n");
+                        output.push('\n');
                     }
                     output.push_str("}\n");
                     output.push_str("}()))");
@@ -1235,16 +1227,11 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                 scope_id,
                                 body,
                             } => {
-                                let enum_id;
                                 let type_ = &project.types[*subject_type_id];
-                                match type_ {
-                                    Type::GenericEnumInstance(id, _) | Type::Enum(id) => {
-                                        enum_id = id;
-                                    }
-                                    _ => {
-                                        panic!("Expected enum type");
-                                    }
-                                }
+                                let enum_id = match type_ {
+                                    Type::GenericEnumInstance(id, _) | Type::Enum(id) => id,
+                                    _ => panic!("Expected enum type"),
+                                };
 
                                 let enum_ = &project.enums[*enum_id];
                                 let variant = &enum_.variants[*variant_index];
@@ -1260,7 +1247,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                         output.push_str(&codegen_type(*return_ty, project));
                                         output.push_str(", ");
                                         output.push_str("_JaktCurrentFunctionReturnType");
-                                        output.push_str(">");
+                                        output.push('>');
                                         output.push_str(" {\n");
                                         output.push_str("   ");
                                         if !args.is_empty() {
@@ -1284,7 +1271,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                         output.push_str(&codegen_type(*return_ty, project));
                                         output.push_str(", ");
                                         output.push_str("_JaktCurrentFunctionReturnType");
-                                        output.push_str(">");
+                                        output.push('>');
                                         output.push_str(" {\n");
                                     }
                                     CheckedEnumVariant::StructLike(name, _, _) => {
@@ -1298,7 +1285,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                         output.push_str(&codegen_type(*return_ty, project));
                                         output.push_str(", ");
                                         output.push_str("_JaktCurrentFunctionReturnType");
-                                        output.push_str(">");
+                                        output.push('>');
                                         output.push_str(" {\n");
 
                                         if !args.is_empty() {
@@ -1351,8 +1338,8 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                         }
                         output.push_str("}\n");
                     }
-                    output.push_str(")");
-                    output.push_str(")");
+                    output.push(')');
+                    output.push(')');
                 }
             }
         }
@@ -1366,19 +1353,19 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     output.push_str("--");
                 }
                 CheckedUnaryOperator::Negate => {
-                    output.push_str("-");
+                    output.push('-');
                 }
                 CheckedUnaryOperator::Dereference => {
-                    output.push_str("*");
+                    output.push('*');
                 }
                 CheckedUnaryOperator::RawAddress => {
-                    output.push_str("&");
+                    output.push('&');
                 }
                 CheckedUnaryOperator::LogicalNot => {
-                    output.push_str("!");
+                    output.push('!');
                 }
                 CheckedUnaryOperator::BitwiseNot => {
-                    output.push_str("~");
+                    output.push('~');
                 }
                 CheckedUnaryOperator::Is(type_id) => {
                     output.push_str("is<");
