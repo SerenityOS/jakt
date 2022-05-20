@@ -2002,9 +2002,9 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
                     }
 
                     if let Some(Token {
-                                    contents: TokenContents::Comma,
-                                    ..
-                                }) = tokens.get(*index)
+                        contents: TokenContents::Comma,
+                        ..
+                    }) = tokens.get(*index)
                     {
                         *index += 1;
                     }
@@ -3548,23 +3548,29 @@ pub fn parse_array_type(tokens: &[Token], index: &mut usize) -> (UncheckedType, 
         let (ty, err) = parse_typename(tokens, index);
         if let TokenContents::RSquare = &tokens[*index].contents {
             *index += 1;
-            return (UncheckedType::Array(
-                Box::new(ty),
-                Span {
-                    file_id: start.file_id,
-                    start: start.start,
-                    end: tokens[*index - 1].span.end,
-                }
-            ), err);
+            return (
+                UncheckedType::Array(
+                    Box::new(ty),
+                    Span {
+                        file_id: start.file_id,
+                        start: start.start,
+                        end: tokens[*index - 1].span.end,
+                    },
+                ),
+                err,
+            );
         }
 
-        (UncheckedType::Empty, err.or(Some(JaktError::ParserError(
-            "expected ]".to_string(),
-            tokens[*index].span,
-        ))))
+        (
+            UncheckedType::Empty,
+            err.or(Some(JaktError::ParserError(
+                "expected ]".to_string(),
+                tokens[*index].span,
+            ))),
+        )
     } else {
         (UncheckedType::Empty, None)
-    }
+    };
 }
 
 pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Option<JaktError>) {
@@ -3659,7 +3665,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
                             if i == *index {
                                 // This is not a generic parameter, reset and leave.
                                 error = error.or(err);
-                                break
+                                break;
                             }
                             error = error.or(err);
                             inner_types.push(inner_ty);
@@ -3757,7 +3763,7 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktErro
                                 if i == *index {
                                     // Can't parse further, this is not a generic call.
                                     *index = index_reset;
-                                    break
+                                    break;
                                 }
                                 error = error.or(err);
                                 inner_types.push(inner_ty);

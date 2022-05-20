@@ -257,7 +257,6 @@ function value_or_default<T>(anonymous x: MyOptional<T>, default: T) -> T {
     }
 }
 
-// Not yet implemented:
 enum Foo {
     StructLikeThingy {
         field_a: i32
@@ -267,7 +266,7 @@ enum Foo {
 
 function look_at_foo(anonymous x: Foo) -> i32 {
     match x {
-        StructureLikeThingy(field_a: a, field_b: b) => {
+        StructLikeThingy(field_a: a, field_b: b) => {
             return a + b
         }
     }

@@ -8,6 +8,14 @@ enum BetterResult<T, E> {
     TheWorldIsBurning: E
 }
 
+enum ObjectivelyBetterOptional<T> {
+    Some {
+        value: T
+        joke_metadata: String
+    }
+    None
+}
+
 function make_result(okay: bool) -> BetterResult<i64, String> {
     if okay {
         return BetterResult::ImFineHowAreYou(42)
@@ -22,12 +30,19 @@ function better_optional_from<T>(anonymous optional: T?) -> BetterOptional<T> {
     return BetterOptional::None()
 }
 
+function to_objectively_better_optional<T>(anonymous optional: BetterOptional<T>) -> ObjectivelyBetterOptional<T> {
+    return match optional {
+        BetterOptional::Some(value) => ObjectivelyBetterOptional::Some(value: value, joke_metadata: "I'm a joke")
+        BetterOptional::None => ObjectivelyBetterOptional::None()
+    }
+}
+
 function main() {
     match make_result(okay: true) {
         ImFineHowAreYou(x) => {
             let a: i64? = x
-            match better_optional_from(a) {
-                Some(x) => println("Success! we're fine and there's a {} in our optional", x)
+            match to_objectively_better_optional(better_optional_from(a)) {
+                Some(value: x) => println("Success! we're fine and there's a {} in our optional", x)
                 None => println("What??????")
             }
         }
