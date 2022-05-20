@@ -153,7 +153,7 @@
             </dict>
            </array>
           <key>end</key>
-          <string>(\}|;)</string>
+          <string>(\}|;|\s+)</string>
           <key>endCaptures</key>
           <dict>
             <key>1</key>
