@@ -460,13 +460,15 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
         } else if c == b'.' {
             let start = index;
             index += 1;
-            if bytes[index] == b'.' {
-                index += 1;
-                output.push(Token::new(
-                    TokenContents::DotDot,
-                    Span::new(file_id, start, start + 2),
-                ));
-                continue;
+            if index < bytes.len() {
+                if bytes[index] == b'.' {
+                    index += 1;
+                    output.push(Token::new(
+                        TokenContents::DotDot,
+                        Span::new(file_id, start, start + 2),
+                    ));
+                    continue;
+                }
             }
             output.push(Token::new(
                 TokenContents::Dot,

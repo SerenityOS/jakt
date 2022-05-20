@@ -208,3 +208,8 @@ fn test_enums() -> Result<(), JaktError> {
 fn test_inline_cpp() -> Result<(), JaktError> {
     test_samples("samples/inline_cpp")
 }
+
+#[test]
+fn test_parser() -> Result<(), JaktError> {
+    test_samples("tests/parser")
+}
