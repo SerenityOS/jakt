@@ -18,8 +18,8 @@
         }],
         "grammars": [{
             "language": "jakt",
-            "scopeName": "source.jakt",
-            "path": "./syntaxes/jakt.tmLanguage.json"
+            "scopeName": "source.Jakt",
+            "path": "./syntaxes/jakt.tmLanguage"
         }]
     }
 }
