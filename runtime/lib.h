@@ -77,6 +77,10 @@
 #include <AK/Utf8View.cpp>
 #include <AK/kmalloc.cpp>
 
+#include <IO/File.h>
+
+#include <IO/File.cpp>
+
 using f32 = float;
 using f64 = double;
 

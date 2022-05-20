@@ -48,6 +48,15 @@ public:
         return {};
     }
 
+    ErrorOr<void> add_size(size_t size)
+    {
+        if (Checked<size_t>::addition_would_overflow(m_size, size)) {
+            return Error::from_errno(EOVERFLOW);
+        }
+        TRY(resize(m_size + size));
+        return {};
+    }
+
     ErrorOr<void> resize(size_t size)
     {
         TRY(ensure_capacity(size));
@@ -83,6 +92,8 @@ public:
         ++m_size;
         return {};
     }
+
+    T* unsafe_data() { return m_elements; }
 
 private:
     size_t m_size { 0 };
@@ -189,6 +200,13 @@ public:
         return {};
     }
 
+    ErrorOr<void> add_size(size_t size)
+    {
+        auto* storage = TRY(ensure_storage());
+        TRY(storage->add_size(size));
+        return {};
+    }
+
     ArraySlice<T> slice(size_t offset, size_t size)
     {
         if (!m_storage)
@@ -229,6 +247,13 @@ public:
         MUST(ensure_capacity(ak_vector.size()));
         for (auto value : ak_vector)
             MUST(push(move(value)));
+    }
+
+    T* unsafe_data()
+    {
+        if (!m_storage)
+            return nullptr;
+        return m_storage->unsafe_data();
     }
 
 private:
