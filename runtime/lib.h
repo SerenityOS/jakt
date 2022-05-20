@@ -144,8 +144,14 @@ struct _JaktExplicitValue<void> {
 
 template<typename Value, typename Return>
 struct _JaktExplicitValueOrReturn {
-    _JaktExplicitValueOrReturn(_JaktExplicitValue<Value>&& v)
-        : value(move(v))
+    template<typename U>
+    _JaktExplicitValueOrReturn(_JaktExplicitValue<U>&& v)
+        : value(_JaktExplicitValue<Value> { move(v.value) })
+    {
+    }
+
+    _JaktExplicitValueOrReturn(_JaktExplicitValue<void>&&)
+        : value(_JaktExplicitValue<void> { })
     {
     }
 
