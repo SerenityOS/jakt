@@ -73,7 +73,7 @@ rect.set_size(width: 640, height: 480)
 
 There are two exceptions to this:
 
-- [x] If the parameter in the function declaration is declared as `anon`, omitting the argument label is allowed.
+- [x] If the parameter in the function declaration is declared as `anonymous`, omitting the argument label is allowed.
 - [x] When passing a variable with the same name as the parameter.
 
 ## Structures and classes
