@@ -162,7 +162,10 @@ struct _JaktExplicitValueOrReturn {
     {
     }
 
-    bool is_return() const { return value.template has<Return>(); }
+    bool is_return() const {
+        return value.template has<Conditional<IsVoid<Return>, Empty, Return>>();
+    }
+
     Return release_return()
     {
         if constexpr (IsVoid<Return>)
@@ -171,6 +174,7 @@ struct _JaktExplicitValueOrReturn {
             return move(value).template get<Return>();
     }
     Value release_value()
+
     {
         if constexpr (IsVoid<Value>)
             return;
