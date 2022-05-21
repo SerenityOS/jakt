@@ -3385,6 +3385,13 @@ pub fn parse_operator_with_assignment(
                 None,
             )
         }
+        TokenContents::PercentSignEqual => {
+            *index += 1;
+            (
+                ParsedExpression::Operator(BinaryOperator::ModuloAssign, span),
+                None,
+            )
+        }
         TokenContents::DoubleEqual => {
             *index += 1;
             (
