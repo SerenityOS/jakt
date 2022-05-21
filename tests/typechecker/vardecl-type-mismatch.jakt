@@ -1,0 +1,4 @@
+function main() {
+    let foo: u64 = 0
+    let bar: String = foo
+}
