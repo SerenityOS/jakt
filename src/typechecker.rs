@@ -2102,24 +2102,28 @@ pub fn typecheck_expression(
 ) -> (CheckedExpression, Option<JaktError>) {
     let mut error = None;
 
-    let unify_with_type_hint = |project: &mut Project, ty: &TypeId| {
-        if let Some(hint) = type_hint {
-            if hint == UNKNOWN_TYPE_ID {
-                return *ty;
+    let unify_with_type_hint =
+        |project: &mut Project, ty: &TypeId| -> (TypeId, Option<JaktError>) {
+            if let Some(hint) = type_hint {
+                if hint == UNKNOWN_TYPE_ID {
+                    return (*ty, None);
+                }
+
+                let mut generic_interface = HashMap::new();
+                let err =
+                    check_types_for_compat(*ty, hint, &mut generic_interface, expr.span(), project);
+                if err.is_some() {
+                    return (*ty, err);
+                }
+
+                return (
+                    substitute_typevars_in_type(*ty, &generic_interface, project),
+                    None,
+                );
             }
 
-            let mut generic_interface = HashMap::new();
-            let err =
-                check_types_for_compat(*ty, hint, &mut generic_interface, expr.span(), project);
-            if err.is_some() {
-                return *ty;
-            }
-
-            return substitute_typevars_in_type(*ty, &generic_interface, project);
-        }
-
-        *ty
-    };
+            (*ty, None)
+        };
 
     match expr {
         ParsedExpression::Range(start_expr, end_expr, span) => {
@@ -2152,13 +2156,11 @@ pub fn typecheck_expression(
             let ty = Type::GenericInstance(range_struct_id, vec![checked_start.ty()]);
             let ty = project.find_or_add_type_id(ty);
 
+            let (ty, err) = unify_with_type_hint(project, &ty);
+            error = error.or(err);
+
             (
-                CheckedExpression::Range(
-                    Box::new(checked_start),
-                    Box::new(checked_end),
-                    *span,
-                    unify_with_type_hint(project, &ty),
-                ),
+                CheckedExpression::Range(Box::new(checked_start), Box::new(checked_end), *span, ty),
                 error,
             )
         }
@@ -2179,13 +2181,16 @@ pub fn typecheck_expression(
             let (ty, err) = typecheck_binary_operation(&checked_lhs, op, &checked_rhs, *span);
             error = error.or(err);
 
+            let (ty, err) = unify_with_type_hint(project, &ty);
+            error = error.or(err);
+
             (
                 CheckedExpression::BinaryOp(
                     Box::new(checked_lhs),
                     op.clone(),
                     Box::new(checked_rhs),
                     *span,
-                    unify_with_type_hint(project, &ty),
+                    ty,
                 ),
                 error,
             )
@@ -2266,14 +2271,14 @@ pub fn typecheck_expression(
                     ))),
                 ),
             };
+            error = error.or(err);
+
+            let (ty, err) = unify_with_type_hint(project, &ty);
+            error = error.or(err);
 
             (
-                CheckedExpression::ForcedUnwrap(
-                    Box::new(checked_expr),
-                    *span,
-                    unify_with_type_hint(project, &ty),
-                ),
-                err,
+                CheckedExpression::ForcedUnwrap(Box::new(checked_expr), *span, ty),
+                error,
             )
         }
         ParsedExpression::Boolean(b, span) => (CheckedExpression::Boolean(*b, *span), None),
@@ -2288,27 +2293,37 @@ pub fn typecheck_expression(
                 safety_mode,
                 type_hint,
             );
+            error = error.or(err);
 
-            let ty = unify_with_type_hint(project, &checked_call.ty);
-            (CheckedExpression::Call(checked_call, *span, ty), err)
+            let (ty, err) = unify_with_type_hint(project, &checked_call.ty);
+            error = error.or(err);
+
+            (CheckedExpression::Call(checked_call, *span, ty), error)
         }
-        ParsedExpression::NumericConstant(constant, span) => (
-            CheckedExpression::NumericConstant(
-                constant.clone(),
-                *span,
-                unify_with_type_hint(project, &constant.ty()),
-            ),
-            None,
-        ),
+        ParsedExpression::NumericConstant(constant, span) => {
+            // FIXME: Don't ignore type hint unification errors
+            let (ty, _) = unify_with_type_hint(project, &constant.ty());
+
+            (
+                CheckedExpression::NumericConstant(constant.clone(), *span, ty),
+                None,
+            )
+        }
         ParsedExpression::QuotedString(qs, span) => {
-            (CheckedExpression::QuotedString(qs.clone(), *span), None)
+            let (_, err) = unify_with_type_hint(project, &STRING_TYPE_ID);
+
+            (CheckedExpression::QuotedString(qs.clone(), *span), err)
         }
         ParsedExpression::CharacterLiteral(c, span) => {
-            (CheckedExpression::CharacterConstant(*c, *span), None)
+            let (_, err) = unify_with_type_hint(project, &CCHAR_TYPE_ID);
+
+            (CheckedExpression::CharacterConstant(*c, *span), err)
         }
         ParsedExpression::Var(v, span) => {
             if let Some(var) = project.find_var_in_scope(scope_id, v) {
-                (CheckedExpression::Var(var, *span), None)
+                let (_, err) = unify_with_type_hint(project, &var.ty);
+
+                (CheckedExpression::Var(var, *span), err)
             } else {
                 (
                     CheckedExpression::Var(
@@ -2362,13 +2377,11 @@ pub fn typecheck_expression(
             let type_id =
                 project.find_or_add_type_id(Type::GenericInstance(array_struct_id, vec![inner_ty]));
 
+            let (ty, err) = unify_with_type_hint(project, &type_id);
+            error = error.or(err);
+
             (
-                CheckedExpression::Array(
-                    output,
-                    checked_fill_size_expr,
-                    *span,
-                    unify_with_type_hint(project, &type_id),
-                ),
+                CheckedExpression::Array(output, checked_fill_size_expr, *span, ty),
                 error,
             )
         }
@@ -2399,10 +2412,10 @@ pub fn typecheck_expression(
             let type_id =
                 project.find_or_add_type_id(Type::GenericInstance(set_struct_id, vec![inner_ty]));
 
-            (
-                CheckedExpression::Set(output, *span, unify_with_type_hint(project, &type_id)),
-                error,
-            )
+            let (ty, err) = unify_with_type_hint(project, &type_id);
+            error = error.or(err);
+
+            (CheckedExpression::Set(output, *span, ty), error)
         }
         ParsedExpression::Dictionary(kv_pairs, span) => {
             let mut inner_ty = (UNKNOWN_TYPE_ID, UNKNOWN_TYPE_ID);
@@ -2447,14 +2460,10 @@ pub fn typecheck_expression(
                 vec![inner_ty.0, inner_ty.1],
             ));
 
-            (
-                CheckedExpression::Dictionary(
-                    output,
-                    *span,
-                    unify_with_type_hint(project, &type_id),
-                ),
-                error,
-            )
+            let (ty, err) = unify_with_type_hint(project, &type_id);
+            error = error.or(err);
+
+            (CheckedExpression::Dictionary(output, *span, ty), error)
         }
         ParsedExpression::Tuple(items, span) => {
             let mut checked_items = Vec::new();
@@ -2476,14 +2485,10 @@ pub fn typecheck_expression(
             let type_id =
                 project.find_or_add_type_id(Type::GenericInstance(tuple_struct_id, checked_types));
 
-            (
-                CheckedExpression::Tuple(
-                    checked_items,
-                    *span,
-                    unify_with_type_hint(project, &type_id),
-                ),
-                error,
-            )
+            let (ty, err) = unify_with_type_hint(project, &type_id);
+            error = error.or(err);
+
+            (CheckedExpression::Tuple(checked_items, *span, ty), error)
         }
         ParsedExpression::IndexedExpression(expr, idx, span) => {
             let (checked_expr, err) =
@@ -2505,6 +2510,7 @@ pub fn typecheck_expression(
                 .expect("internal error: Dictionary builtin definition not found");
 
             let ty = &project.types[checked_expr.ty()];
+
             match ty {
                 Type::GenericInstance(parent_struct_id, inner_tys)
                     if parent_struct_id == &array_struct_id =>
@@ -2522,12 +2528,15 @@ pub fn typecheck_expression(
                         }
                     }
 
+                    let (expr_ty, err) = unify_with_type_hint(project, &expr_ty);
+                    error = error.or(err);
+
                     (
                         CheckedExpression::IndexedExpression(
                             Box::new(checked_expr),
                             Box::new(checked_idx),
                             *span,
-                            unify_with_type_hint(project, &expr_ty),
+                            expr_ty,
                         ),
                         error,
                     )
@@ -2546,12 +2555,15 @@ pub fn typecheck_expression(
                     ));
                     expr_ty = inner_ty;
 
+                    let (expr_ty, err) = unify_with_type_hint(project, &expr_ty);
+                    error = error.or(err);
+
                     (
                         CheckedExpression::IndexedDictionary(
                             Box::new(checked_expr),
                             Box::new(checked_idx),
                             *span,
-                            unify_with_type_hint(project, &expr_ty),
+                            expr_ty,
                         ),
                         error,
                     )
@@ -2562,12 +2574,15 @@ pub fn typecheck_expression(
                         expr.span(),
                     )));
 
+                    let (expr_ty, err) = unify_with_type_hint(project, &expr_ty);
+                    error = error.or(err);
+
                     (
                         CheckedExpression::IndexedExpression(
                             Box::new(checked_expr),
                             Box::new(checked_idx),
                             *span,
-                            unify_with_type_hint(project, &expr_ty),
+                            expr_ty,
                         ),
                         error,
                     )
@@ -2608,13 +2623,11 @@ pub fn typecheck_expression(
                 }
             }
 
+            let (ty, err) = unify_with_type_hint(project, &ty);
+            error = error.or(err);
+
             (
-                CheckedExpression::IndexedTuple(
-                    Box::new(checked_expr),
-                    *idx,
-                    *span,
-                    unify_with_type_hint(project, &ty),
-                ),
+                CheckedExpression::IndexedTuple(Box::new(checked_expr), *idx, *span, ty),
                 error,
             )
         }
@@ -2962,7 +2975,13 @@ pub fn typecheck_expression(
                 }
             }
 
-            final_result_type = final_result_type.map(|p| unify_with_type_hint(project, &p));
+            let mut err: Option<JaktError> = None;
+            final_result_type = final_result_type.map(|p| {
+                let (ty, unification_error) = unify_with_type_hint(project, &p);
+                err = unification_error;
+                ty
+            });
+            error = error.or(err);
 
             (
                 CheckedExpression::Match(
@@ -3014,12 +3033,15 @@ pub fn typecheck_expression(
                 }
             }
 
+            let (ty, err) = unify_with_type_hint(project, &ty);
+            error = error.or(err);
+
             (
                 CheckedExpression::IndexedStruct(
                     Box::new(checked_expr),
                     name.to_string(),
                     *span,
-                    unify_with_type_hint(project, &ty),
+                    ty,
                 ),
                 error,
             )
@@ -3047,14 +3069,15 @@ pub fn typecheck_expression(
                         );
                         error = error.or(err);
 
-                        let ty = checked_call.ty;
+                        let (ty, err) = unify_with_type_hint(project, &checked_call.ty);
+                        error = error.or(err);
 
                         (
                             CheckedExpression::MethodCall(
                                 Box::new(checked_expr),
                                 checked_call,
                                 *span,
-                                unify_with_type_hint(project, &ty),
+                                ty,
                             ),
                             error,
                         )
@@ -3085,14 +3108,15 @@ pub fn typecheck_expression(
                         );
                         error = error.or(err);
 
-                        let ty = checked_call.ty;
+                        let (ty, err) = unify_with_type_hint(project, &checked_call.ty);
+                        error = error.or(err);
 
                         (
                             CheckedExpression::MethodCall(
                                 Box::new(checked_expr),
                                 checked_call,
                                 *span,
-                                unify_with_type_hint(project, &ty),
+                                ty,
                             ),
                             error,
                         )
@@ -3112,13 +3136,15 @@ pub fn typecheck_expression(
                         );
                         error = error.or(err);
 
-                        let ty = checked_call.ty;
+                        let (ty, err) = unify_with_type_hint(project, &checked_call.ty);
+                        error = error.or(err);
+
                         (
                             CheckedExpression::MethodCall(
                                 Box::new(checked_expr),
                                 checked_call,
                                 *span,
-                                unify_with_type_hint(project, &ty),
+                                ty,
                             ),
                             error,
                         )
