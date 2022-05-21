@@ -1,4 +1,6 @@
 extern struct String {
+    function number(anonymous number: i64) -> String
+
     function split(this, anonymous c: c_char) -> [String]
     function characters(this) -> raw c_char
     function reverse(this) -> String
