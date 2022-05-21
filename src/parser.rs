@@ -13,14 +13,14 @@ macro_rules! trace {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Call {
+pub struct ParsedCall {
     pub namespace: Vec<String>,
     pub name: String,
-    pub args: Vec<(String, Expression)>,
-    pub type_args: Vec<UncheckedType>,
+    pub args: Vec<(String, ParsedExpression)>,
+    pub type_args: Vec<ParsedType>,
 }
 
-impl Call {
+impl ParsedCall {
     pub fn new() -> Self {
         Self {
             namespace: Vec::new(),
@@ -38,54 +38,56 @@ pub enum ExpressionKind {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum UncheckedType {
+pub enum ParsedType {
     Name(String, Span),
-    GenericType(String, Vec<UncheckedType>, Span),
-    Array(Box<UncheckedType>, Span),
-    Set(Box<UncheckedType>, Span),
-    Optional(Box<UncheckedType>, Span),
-    RawPtr(Box<UncheckedType>, Span),
+    GenericType(String, Vec<ParsedType>, Span),
+    Array(Box<ParsedType>, Span),
+    Set(Box<ParsedType>, Span),
+    Optional(Box<ParsedType>, Span),
+    RawPtr(Box<ParsedType>, Span),
     Empty,
 }
 
 #[derive(Debug, Clone)]
-pub struct VarDecl {
+pub struct ParsedVarDecl {
     pub name: String,
-    pub ty: UncheckedType,
+    pub ty: ParsedType,
     pub mutable: bool,
     pub span: Span,
 }
 
-impl VarDecl {
+impl ParsedVarDecl {
     pub fn new(span: Span) -> Self {
         Self {
             name: String::new(),
-            ty: UncheckedType::Empty,
+            ty: ParsedType::Empty,
             mutable: false,
             span,
         }
     }
 }
 
-impl PartialEq for VarDecl {
+impl PartialEq for ParsedVarDecl {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name && self.ty == other.ty && self.mutable == other.mutable
     }
 }
 
 #[derive(Debug)]
-pub struct ParsedFile {
-    pub functions: Vec<Function>,
-    pub structs: Vec<Struct>,
-    pub enums: Vec<Enum>,
+pub struct ParsedNamespace {
+    pub name: Option<String>,
+    pub functions: Vec<ParsedFunction>,
+    pub structs: Vec<ParsedStruct>,
+    pub enums: Vec<ParsedEnum>,
+    pub namespaces: Vec<ParsedNamespace>,
 }
 
 #[derive(Debug)]
-pub struct Struct {
+pub struct ParsedStruct {
     pub name: String,
     pub generic_parameters: Vec<(String, Span)>,
-    pub fields: Vec<VarDecl>,
-    pub methods: Vec<Function>,
+    pub fields: Vec<ParsedVarDecl>,
+    pub methods: Vec<ParsedFunction>,
     pub span: Span,
     pub definition_linkage: DefinitionLinkage,
     pub definition_type: DefinitionType,
@@ -94,19 +96,19 @@ pub struct Struct {
 #[derive(Debug)]
 pub enum EnumVariant {
     Untyped(String, Span),
-    WithValue(String, Expression, Span),
-    StructLike(String, Vec<VarDecl>, Span),
-    Typed(String, UncheckedType, Span),
+    WithValue(String, ParsedExpression, Span),
+    StructLike(String, Vec<ParsedVarDecl>, Span),
+    Typed(String, ParsedType, Span),
 }
 
 #[derive(Debug)]
-pub struct Enum {
+pub struct ParsedEnum {
     pub name: String,
     pub generic_parameters: Vec<(String, Span)>,
     pub variants: Vec<EnumVariant>,
     pub span: Span,
     pub definition_linkage: DefinitionLinkage,
-    pub underlying_type: UncheckedType,
+    pub underlying_type: ParsedType,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -130,33 +132,33 @@ pub enum DefinitionType {
 }
 
 #[derive(Debug)]
-pub struct Function {
+pub struct ParsedFunction {
     pub name: String,
     pub name_span: Span,
-    pub params: Vec<Parameter>,
+    pub params: Vec<ParsedParameter>,
     pub generic_parameters: Vec<(String, Span)>,
-    pub block: Block,
+    pub block: ParsedBlock,
     pub throws: bool,
-    pub return_type: UncheckedType,
+    pub return_type: ParsedType,
     pub linkage: FunctionLinkage,
 }
 
 #[derive(Clone, Debug)]
-pub struct Parameter {
+pub struct ParsedParameter {
     pub requires_label: bool,
-    pub variable: Variable,
+    pub variable: ParsedVariable,
 }
 
 #[derive(Clone, Debug)]
-pub struct Variable {
+pub struct ParsedVariable {
     pub name: String,
-    pub ty: UncheckedType,
+    pub ty: ParsedType,
     pub mutable: bool,
 }
 
-impl Function {
+impl ParsedFunction {
     pub fn new(linkage: FunctionLinkage) -> Self {
-        Function {
+        ParsedFunction {
             name: String::new(),
             name_span: Span {
                 file_id: 0,
@@ -165,40 +167,40 @@ impl Function {
             },
             params: Vec::new(),
             generic_parameters: Vec::new(),
-            block: Block::new(),
+            block: ParsedBlock::new(),
             throws: false,
-            return_type: UncheckedType::Empty,
+            return_type: ParsedType::Empty,
             linkage,
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Statement {
-    Expression(Expression),
-    Defer(Box<Statement>),
-    UnsafeBlock(Block),
-    VarDecl(VarDecl, Expression),
-    If(Expression, Block, Option<Box<Statement>>),
-    Block(Block),
-    Loop(Block),
-    While(Expression, Block),
-    For(String, Expression, Block),
+pub enum ParsedStatement {
+    Expression(ParsedExpression),
+    Defer(Box<ParsedStatement>),
+    UnsafeBlock(ParsedBlock),
+    VarDecl(ParsedVarDecl, ParsedExpression),
+    If(ParsedExpression, ParsedBlock, Option<Box<ParsedStatement>>),
+    Block(ParsedBlock),
+    Loop(ParsedBlock),
+    While(ParsedExpression, ParsedBlock),
+    For(String, ParsedExpression, ParsedBlock),
     Break,
     Continue,
-    Return(Expression),
-    Throw(Expression),
-    Try(Box<Statement>, String, Span, Block),
-    InlineCpp(Block, Span),
+    Return(ParsedExpression),
+    Throw(ParsedExpression),
+    Try(Box<ParsedStatement>, String, Span, ParsedBlock),
+    InlineCpp(ParsedBlock, Span),
     Garbage,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Block {
-    pub stmts: Vec<Statement>,
+pub struct ParsedBlock {
+    pub stmts: Vec<ParsedStatement>,
 }
 
-impl Block {
+impl ParsedBlock {
     pub fn new() -> Self {
         Self { stmts: Vec::new() }
     }
@@ -206,8 +208,8 @@ impl Block {
 
 #[derive(Debug, Clone)]
 pub enum MatchBody {
-    Expression(Expression),
-    Block(Block),
+    Expression(ParsedExpression),
+    Block(ParsedBlock),
 }
 
 #[derive(Debug, Clone)]
@@ -223,34 +225,39 @@ pub enum MatchCase {
 // TODO: add spans to individual expressions
 // so we can give better errors during typecheck
 #[derive(Debug, Clone)]
-pub enum Expression {
+pub enum ParsedExpression {
     // Standalone
     Boolean(bool, Span),
     NumericConstant(NumericConstant, Span),
     QuotedString(String, Span),
     CharacterLiteral(char, Span),
-    Array(Vec<Expression>, Option<Box<Expression>>, Span),
-    Dictionary(Vec<(Expression, Expression)>, Span),
-    Set(Vec<Expression>, Span),
-    IndexedExpression(Box<Expression>, Box<Expression>, Span),
-    UnaryOp(Box<Expression>, UnaryOperator, Span),
-    BinaryOp(Box<Expression>, BinaryOperator, Box<Expression>, Span),
+    Array(Vec<ParsedExpression>, Option<Box<ParsedExpression>>, Span),
+    Dictionary(Vec<(ParsedExpression, ParsedExpression)>, Span),
+    Set(Vec<ParsedExpression>, Span),
+    IndexedExpression(Box<ParsedExpression>, Box<ParsedExpression>, Span),
+    UnaryOp(Box<ParsedExpression>, UnaryOperator, Span),
+    BinaryOp(
+        Box<ParsedExpression>,
+        BinaryOperator,
+        Box<ParsedExpression>,
+        Span,
+    ),
     Var(String, Span),
-    Tuple(Vec<Expression>, Span),
-    Range(Box<Expression>, Box<Expression>, Span),
-    Match(Box<Expression>, Vec<MatchCase>, Span),
+    Tuple(Vec<ParsedExpression>, Span),
+    Range(Box<ParsedExpression>, Box<ParsedExpression>, Span),
+    Match(Box<ParsedExpression>, Vec<MatchCase>, Span),
 
-    IndexedTuple(Box<Expression>, usize, Span),
-    IndexedStruct(Box<Expression>, String, Span),
+    IndexedTuple(Box<ParsedExpression>, usize, Span),
+    IndexedStruct(Box<ParsedExpression>, String, Span),
 
-    Call(Call, Span),
-    MethodCall(Box<Expression>, Call, Span),
+    Call(ParsedCall, Span),
+    MethodCall(Box<ParsedExpression>, ParsedCall, Span),
 
-    ForcedUnwrap(Box<Expression>, Span),
+    ForcedUnwrap(Box<ParsedExpression>, Span),
 
     // FIXME: These should be implemented as `enum` variant values once available.
     OptionalNone(Span),
-    OptionalSome(Box<Expression>, Span),
+    OptionalSome(Box<ParsedExpression>, Span),
 
     // Not standalone
     Operator(BinaryOperator, Span),
@@ -259,37 +266,37 @@ pub enum Expression {
     Garbage(Span),
 }
 
-impl Expression {
+impl ParsedExpression {
     pub fn span(&self) -> Span {
         match self {
-            Expression::Boolean(_, span) => *span,
-            Expression::NumericConstant(_, span) => *span,
-            Expression::QuotedString(_, span) => *span,
-            Expression::CharacterLiteral(_, span) => *span,
-            Expression::Array(_, _, span) => *span,
-            Expression::Dictionary(_, span) => *span,
-            Expression::Set(_, span) => *span,
-            Expression::Tuple(_, span) => *span,
-            Expression::Range(_, _, span) => *span,
-            Expression::IndexedExpression(_, _, span) => *span,
-            Expression::IndexedTuple(_, _, span) => *span,
-            Expression::IndexedStruct(_, _, span) => *span,
-            Expression::Call(_, span) => *span,
-            Expression::MethodCall(_, _, span) => *span,
-            Expression::UnaryOp(_, _, span) => *span,
-            Expression::BinaryOp(_, _, _, span) => *span,
-            Expression::Var(_, span) => *span,
-            Expression::Operator(_, span) => *span,
-            Expression::OptionalNone(span) => *span,
-            Expression::OptionalSome(_, span) => *span,
-            Expression::ForcedUnwrap(_, span) => *span,
-            Expression::Match(_, _, span) => *span,
-            Expression::Garbage(span) => *span,
+            ParsedExpression::Boolean(_, span) => *span,
+            ParsedExpression::NumericConstant(_, span) => *span,
+            ParsedExpression::QuotedString(_, span) => *span,
+            ParsedExpression::CharacterLiteral(_, span) => *span,
+            ParsedExpression::Array(_, _, span) => *span,
+            ParsedExpression::Dictionary(_, span) => *span,
+            ParsedExpression::Set(_, span) => *span,
+            ParsedExpression::Tuple(_, span) => *span,
+            ParsedExpression::Range(_, _, span) => *span,
+            ParsedExpression::IndexedExpression(_, _, span) => *span,
+            ParsedExpression::IndexedTuple(_, _, span) => *span,
+            ParsedExpression::IndexedStruct(_, _, span) => *span,
+            ParsedExpression::Call(_, span) => *span,
+            ParsedExpression::MethodCall(_, _, span) => *span,
+            ParsedExpression::UnaryOp(_, _, span) => *span,
+            ParsedExpression::BinaryOp(_, _, _, span) => *span,
+            ParsedExpression::Var(_, span) => *span,
+            ParsedExpression::Operator(_, span) => *span,
+            ParsedExpression::OptionalNone(span) => *span,
+            ParsedExpression::OptionalSome(_, span) => *span,
+            ParsedExpression::ForcedUnwrap(_, span) => *span,
+            ParsedExpression::Match(_, _, span) => *span,
+            ParsedExpression::Garbage(span) => *span,
         }
     }
 }
 
-impl PartialEq for Expression {
+impl PartialEq for ParsedExpression {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Boolean(l0, _), Self::Boolean(r0, _)) => l0 == r0,
@@ -309,14 +316,14 @@ impl PartialEq for Expression {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TypeCast {
-    Fallible(UncheckedType),
-    Infallible(UncheckedType),
-    Saturating(UncheckedType),
-    Truncating(UncheckedType),
+    Fallible(ParsedType),
+    Infallible(ParsedType),
+    Saturating(ParsedType),
+    Truncating(ParsedType),
 }
 
 impl TypeCast {
-    pub fn unchecked_type(&self) -> UncheckedType {
+    pub fn unchecked_type(&self) -> ParsedType {
         match self {
             TypeCast::Fallible(ty) => ty.clone(),
             TypeCast::Infallible(ty) => ty.clone(),
@@ -338,7 +345,7 @@ pub enum UnaryOperator {
     LogicalNot,
     BitwiseNot,
     TypeCast(TypeCast),
-    Is(UncheckedType),
+    Is(ParsedType),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -377,70 +384,73 @@ pub enum BinaryOperator {
     NoneCoalescing,
 }
 
-impl Expression {
+impl ParsedExpression {
     // Relative weighting of precedence. Numbers are made up
     // with the only importance being how they relate to each
     // other
     pub fn precedence(&self) -> u64 {
         match self {
-            Expression::Operator(BinaryOperator::Multiply, _)
-            | Expression::Operator(BinaryOperator::Modulo, _)
-            | Expression::Operator(BinaryOperator::Divide, _) => 100,
-            Expression::Operator(BinaryOperator::Add, _)
-            | Expression::Operator(BinaryOperator::Subtract, _) => 90,
-            Expression::Operator(BinaryOperator::BitwiseLeftShift, _)
-            | Expression::Operator(BinaryOperator::BitwiseRightShift, _)
-            | Expression::Operator(BinaryOperator::ArithmeticLeftShift, _)
-            | Expression::Operator(BinaryOperator::ArithmeticRightShift, _) => 85,
-            Expression::Operator(BinaryOperator::LessThan, _)
-            | Expression::Operator(BinaryOperator::LessThanOrEqual, _)
-            | Expression::Operator(BinaryOperator::GreaterThan, _)
-            | Expression::Operator(BinaryOperator::GreaterThanOrEqual, _)
-            | Expression::Operator(BinaryOperator::Equal, _)
-            | Expression::Operator(BinaryOperator::NotEqual, _) => 80,
-            Expression::Operator(BinaryOperator::BitwiseAnd, _) => 73,
-            Expression::Operator(BinaryOperator::BitwiseXor, _) => 72,
-            Expression::Operator(BinaryOperator::BitwiseOr, _) => 71,
-            Expression::Operator(BinaryOperator::LogicalAnd, _) => 70,
-            Expression::Operator(BinaryOperator::LogicalOr, _)
-            | Expression::Operator(BinaryOperator::NoneCoalescing, _) => 69,
-            Expression::Operator(BinaryOperator::Assign, _)
-            | Expression::Operator(BinaryOperator::BitwiseAndAssign, _)
-            | Expression::Operator(BinaryOperator::BitwiseOrAssign, _)
-            | Expression::Operator(BinaryOperator::BitwiseXorAssign, _)
-            | Expression::Operator(BinaryOperator::BitwiseLeftShiftAssign, _)
-            | Expression::Operator(BinaryOperator::BitwiseRightShiftAssign, _)
-            | Expression::Operator(BinaryOperator::AddAssign, _)
-            | Expression::Operator(BinaryOperator::SubtractAssign, _)
-            | Expression::Operator(BinaryOperator::MultiplyAssign, _)
-            | Expression::Operator(BinaryOperator::ModuloAssign, _)
-            | Expression::Operator(BinaryOperator::DivideAssign, _) => 50,
+            ParsedExpression::Operator(BinaryOperator::Multiply, _)
+            | ParsedExpression::Operator(BinaryOperator::Modulo, _)
+            | ParsedExpression::Operator(BinaryOperator::Divide, _) => 100,
+            ParsedExpression::Operator(BinaryOperator::Add, _)
+            | ParsedExpression::Operator(BinaryOperator::Subtract, _) => 90,
+            ParsedExpression::Operator(BinaryOperator::BitwiseLeftShift, _)
+            | ParsedExpression::Operator(BinaryOperator::BitwiseRightShift, _)
+            | ParsedExpression::Operator(BinaryOperator::ArithmeticLeftShift, _)
+            | ParsedExpression::Operator(BinaryOperator::ArithmeticRightShift, _) => 85,
+            ParsedExpression::Operator(BinaryOperator::LessThan, _)
+            | ParsedExpression::Operator(BinaryOperator::LessThanOrEqual, _)
+            | ParsedExpression::Operator(BinaryOperator::GreaterThan, _)
+            | ParsedExpression::Operator(BinaryOperator::GreaterThanOrEqual, _)
+            | ParsedExpression::Operator(BinaryOperator::Equal, _)
+            | ParsedExpression::Operator(BinaryOperator::NotEqual, _) => 80,
+            ParsedExpression::Operator(BinaryOperator::BitwiseAnd, _) => 73,
+            ParsedExpression::Operator(BinaryOperator::BitwiseXor, _) => 72,
+            ParsedExpression::Operator(BinaryOperator::BitwiseOr, _) => 71,
+            ParsedExpression::Operator(BinaryOperator::LogicalAnd, _) => 70,
+            ParsedExpression::Operator(BinaryOperator::LogicalOr, _)
+            | ParsedExpression::Operator(BinaryOperator::NoneCoalescing, _) => 69,
+            ParsedExpression::Operator(BinaryOperator::Assign, _)
+            | ParsedExpression::Operator(BinaryOperator::BitwiseAndAssign, _)
+            | ParsedExpression::Operator(BinaryOperator::BitwiseOrAssign, _)
+            | ParsedExpression::Operator(BinaryOperator::BitwiseXorAssign, _)
+            | ParsedExpression::Operator(BinaryOperator::BitwiseLeftShiftAssign, _)
+            | ParsedExpression::Operator(BinaryOperator::BitwiseRightShiftAssign, _)
+            | ParsedExpression::Operator(BinaryOperator::AddAssign, _)
+            | ParsedExpression::Operator(BinaryOperator::SubtractAssign, _)
+            | ParsedExpression::Operator(BinaryOperator::MultiplyAssign, _)
+            | ParsedExpression::Operator(BinaryOperator::ModuloAssign, _)
+            | ParsedExpression::Operator(BinaryOperator::DivideAssign, _) => 50,
             _ => 0,
         }
     }
 }
 
-impl ParsedFile {
+impl ParsedNamespace {
     pub fn new() -> Self {
         Self {
+            name: None,
             functions: Vec::new(),
             structs: Vec::new(),
             enums: Vec::new(),
+            namespaces: Vec::new(),
         }
     }
 }
 
-pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
-    trace!("parse_file");
+pub fn parse_namespace(
+    tokens: &[Token],
+    index: &mut usize,
+) -> (ParsedNamespace, Option<JaktError>) {
+    trace!("parse_namespace");
 
     let mut error = None;
 
-    let mut parsed_file = ParsedFile::new();
+    let mut parsed_namespace = ParsedNamespace::new();
 
-    let mut index = 0;
-
-    while index < tokens.len() {
-        let token = &tokens[index];
+    while *index < tokens.len() {
+        let token = &tokens[*index];
 
         match token {
             Token {
@@ -448,80 +458,112 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
                 span,
             } => match name.as_str() {
                 "function" => {
-                    let (fun, err) = parse_function(tokens, &mut index, FunctionLinkage::Internal);
+                    let (fun, err) = parse_function(tokens, index, FunctionLinkage::Internal);
                     error = error.or(err);
 
-                    parsed_file.functions.push(fun);
+                    parsed_namespace.functions.push(fun);
                 }
                 "enum" => {
-                    let (enum_, err) = parse_enum(tokens, &mut index, DefinitionLinkage::Internal);
+                    let (enum_, err) = parse_enum(tokens, index, DefinitionLinkage::Internal);
                     error = error.or(err);
 
-                    parsed_file.enums.push(enum_);
+                    parsed_namespace.enums.push(enum_);
                 }
                 "struct" => {
                     let (structure, err) = parse_struct(
                         tokens,
-                        &mut index,
+                        index,
                         DefinitionLinkage::Internal,
                         DefinitionType::Struct,
                     );
                     error = error.or(err);
 
-                    parsed_file.structs.push(structure);
+                    parsed_namespace.structs.push(structure);
                 }
                 "class" => {
                     let (structure, err) = parse_struct(
                         tokens,
-                        &mut index,
+                        index,
                         DefinitionLinkage::Internal,
                         DefinitionType::Class,
                     );
                     error = error.or(err);
 
-                    parsed_file.structs.push(structure);
+                    parsed_namespace.structs.push(structure);
+                }
+                "namespace" => {
+                    *index += 1;
+
+                    if *index + 2 < tokens.len() {
+                        // First is the name
+                        // Then the LCurly and RCurly, then we parse the contents inside
+                        let mut name = None;
+                        match &tokens[*index].contents {
+                            TokenContents::Name(namespace_name) => {
+                                *index += 1;
+                                name = Some(namespace_name.clone())
+                            }
+                            _ => {}
+                        }
+
+                        match &tokens[*index].contents {
+                            TokenContents::LCurly => {
+                                *index += 1;
+
+                                let (mut namespace, err) = parse_namespace(tokens, index);
+                                error = error.or(err);
+
+                                *index += 1;
+                                if *index < tokens.len() {
+                                    if tokens[*index].contents == TokenContents::RCurly {
+                                        *index += 1;
+                                    }
+                                }
+                                namespace.name = name;
+                                parsed_namespace.namespaces.push(namespace);
+                            }
+                            _ => {}
+                        }
+                    }
                 }
                 "extern" => {
-                    if index + 1 < tokens.len() {
-                        match &tokens[index + 1] {
+                    if *index + 1 < tokens.len() {
+                        match &tokens[*index + 1] {
                             Token {
                                 contents: TokenContents::Name(name),
                                 span,
                             } => match name.as_str() {
                                 "function" => {
-                                    index += 1;
-                                    let (fun, err) = parse_function(
-                                        tokens,
-                                        &mut index,
-                                        FunctionLinkage::External,
-                                    );
+                                    *index += 1;
+                                    let (fun, err) =
+                                        parse_function(tokens, index, FunctionLinkage::External);
                                     error = error.or(err);
 
-                                    parsed_file.functions.push(fun);
+                                    parsed_namespace.functions.push(fun);
                                 }
                                 "struct" => {
-                                    index += 1;
+                                    *index += 1;
                                     let (structure, err) = parse_struct(
                                         tokens,
-                                        &mut index,
+                                        index,
                                         DefinitionLinkage::External,
                                         DefinitionType::Struct,
                                     );
                                     error = error.or(err);
 
-                                    parsed_file.structs.push(structure);
+                                    parsed_namespace.structs.push(structure);
                                 }
                                 "class" => {
-                                    index += 1;
+                                    *index += 1;
                                     let (structure, err) = parse_struct(
                                         tokens,
-                                        &mut index,
+                                        index,
                                         DefinitionLinkage::External,
                                         DefinitionType::Class,
                                     );
                                     error = error.or(err);
 
-                                    parsed_file.structs.push(structure);
+                                    parsed_namespace.structs.push(structure);
                                 }
                                 _ => {
                                     trace!("ERROR: unexpected keyword");
@@ -545,7 +587,7 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
                 }
                 _ => {
                     trace!("ERROR: unexpected keyword");
-                    index += 1;
+                    *index += 1;
 
                     error = error.or(Some(JaktError::ParserError(
                         "unexpected keyword".to_string(),
@@ -558,7 +600,13 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
                 ..
             } => {
                 //ignore
-                index += 1;
+                *index += 1;
+            }
+            Token {
+                contents: TokenContents::RCurly,
+                ..
+            } => {
+                break;
             }
             Token {
                 contents: TokenContents::Eof,
@@ -568,7 +616,7 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
             }
             Token { span, .. } => {
                 trace!("ERROR: unexpected token (expected keyword)");
-                index += 1;
+                *index += 1;
 
                 error = error.or(Some(JaktError::ParserError(
                     "unexpected token (expected keyword)".to_string(),
@@ -578,7 +626,7 @@ pub fn parse_file(tokens: &[Token]) -> (ParsedFile, Option<JaktError>) {
         }
     }
 
-    (parsed_file, error)
+    (parsed_namespace, error)
 }
 
 fn skip_newlines(tokens: &[Token], index: &mut usize) {
@@ -595,12 +643,12 @@ pub fn parse_enum(
     tokens: &[Token],
     index: &mut usize,
     definition_linkage: DefinitionLinkage,
-) -> (Enum, Option<JaktError>) {
+) -> (ParsedEnum, Option<JaktError>) {
     trace!(format!("parse_enum({:?})", tokens[*index]));
 
     let mut error = None;
     let start_index = *index;
-    let mut enum_ = Enum {
+    let mut enum_ = ParsedEnum {
         name: "".to_string(),
         definition_linkage,
         generic_parameters: vec![],
@@ -610,7 +658,7 @@ pub fn parse_enum(
             start: tokens[start_index].span.start,
             end: tokens[*index].span.end,
         },
-        underlying_type: UncheckedType::Empty,
+        underlying_type: ParsedType::Empty,
     };
 
     *index += 1;
@@ -767,7 +815,7 @@ pub fn parse_enum(
                     contents: TokenContents::Equal,
                     ..
                 }) => {
-                    if let UncheckedType::Empty = enum_.underlying_type {
+                    if let ParsedType::Empty = enum_.underlying_type {
                         error = error.or(Some(JaktError::ParserError(
                             "enums with explicit values must have an underlying type".to_string(),
                             tokens[*index].span,
@@ -922,7 +970,7 @@ pub fn parse_struct(
     index: &mut usize,
     definition_linkage: DefinitionLinkage,
     definition_type: DefinitionType,
-) -> (Struct, Option<JaktError>) {
+) -> (ParsedStruct, Option<JaktError>) {
     trace!(format!("parse_struct: {:?}", tokens[*index]));
 
     let mut error = None;
@@ -1009,7 +1057,7 @@ pub fn parse_struct(
                             // Ignore immutable flag for now
                             var_decl.mutable = false;
 
-                            if var_decl.ty == UncheckedType::Empty {
+                            if var_decl.ty == ParsedType::Empty {
                                 trace!("ERROR: parameter missing type");
 
                                 error = error.or(Some(JaktError::ParserError(
@@ -1045,7 +1093,7 @@ pub fn parse_struct(
                 }
 
                 (
-                    Struct {
+                    ParsedStruct {
                         name: struct_name.clone(),
                         generic_parameters,
                         fields,
@@ -1066,7 +1114,7 @@ pub fn parse_struct(
                 )));
 
                 (
-                    Struct {
+                    ParsedStruct {
                         name: String::new(),
                         generic_parameters,
                         fields: Vec::new(),
@@ -1088,7 +1136,7 @@ pub fn parse_struct(
         )));
 
         (
-            Struct {
+            ParsedStruct {
                 name: String::new(),
                 generic_parameters,
                 fields: Vec::new(),
@@ -1106,7 +1154,7 @@ pub fn parse_function(
     tokens: &[Token],
     index: &mut usize,
     linkage: FunctionLinkage,
-) -> (Function, Option<JaktError>) {
+) -> (ParsedFunction, Option<JaktError>) {
     trace!(format!("parse_function: {:?}", tokens[*index]));
 
     let mut error = None;
@@ -1186,11 +1234,11 @@ pub fn parse_function(
                         TokenContents::Name(name) if name == "this" => {
                             *index += 1;
 
-                            params.push(Parameter {
+                            params.push(ParsedParameter {
                                 requires_label: false,
-                                variable: Variable {
+                                variable: ParsedVariable {
                                     name: "this".to_string(),
-                                    ty: UncheckedType::Empty,
+                                    ty: ParsedType::Empty,
                                     mutable: current_param_is_mutable,
                                 },
                             });
@@ -1202,7 +1250,7 @@ pub fn parse_function(
                             let (var_decl, err) = parse_variable_declaration(tokens, index);
                             error = error.or(err);
 
-                            if var_decl.ty == UncheckedType::Empty {
+                            if var_decl.ty == ParsedType::Empty {
                                 trace!("ERROR: parameter missing type");
 
                                 error = error.or(Some(JaktError::ParserError(
@@ -1211,9 +1259,9 @@ pub fn parse_function(
                                 )))
                             }
 
-                            params.push(Parameter {
+                            params.push(ParsedParameter {
                                 requires_label: current_param_requires_label,
-                                variable: Variable {
+                                variable: ParsedVariable {
                                     name: var_decl.name,
                                     ty: var_decl.ty,
                                     mutable: var_decl.mutable,
@@ -1252,7 +1300,7 @@ pub fn parse_function(
                     }
                 }
 
-                let mut return_type = UncheckedType::Empty;
+                let mut return_type = ParsedType::Empty;
 
                 let mut fat_arrow_expr = None;
 
@@ -1266,7 +1314,7 @@ pub fn parse_function(
                                 index,
                                 ExpressionKind::ExpressionWithoutAssignment,
                             );
-                            return_type = UncheckedType::Empty;
+                            return_type = ParsedType::Empty;
                             fat_arrow_expr = Some(expr);
                             error = error.or(err);
 
@@ -1307,12 +1355,12 @@ pub fn parse_function(
 
                 if let FunctionLinkage::External = linkage {
                     return (
-                        Function {
+                        ParsedFunction {
                             name: function_name.clone(),
                             name_span,
                             params,
                             generic_parameters,
-                            block: Block::new(),
+                            block: ParsedBlock::new(),
                             throws,
                             return_type,
                             linkage,
@@ -1323,8 +1371,8 @@ pub fn parse_function(
 
                 let (block, err) = match fat_arrow_expr {
                     Some(expr) => {
-                        let mut block = Block::new();
-                        block.stmts.push(Statement::Return(expr));
+                        let mut block = ParsedBlock::new();
+                        block.stmts.push(ParsedStatement::Return(expr));
                         (block, None)
                     }
                     None => parse_block(tokens, index),
@@ -1332,7 +1380,7 @@ pub fn parse_function(
                 error = error.or(err);
 
                 (
-                    Function {
+                    ParsedFunction {
                         name: function_name.clone(),
                         name_span,
                         params,
@@ -1349,7 +1397,7 @@ pub fn parse_function(
                 trace!("ERROR: expected function name");
 
                 (
-                    Function::new(FunctionLinkage::Internal),
+                    ParsedFunction::new(FunctionLinkage::Internal),
                     Some(JaktError::ParserError(
                         "expected function name".to_string(),
                         tokens[*index].span,
@@ -1360,7 +1408,7 @@ pub fn parse_function(
     } else {
         trace!("ERROR: incomplete function definition");
         (
-            Function::new(FunctionLinkage::Internal),
+            ParsedFunction::new(FunctionLinkage::Internal),
             Some(JaktError::ParserError(
                 "incomplete function definition".to_string(),
                 tokens[*index].span,
@@ -1369,10 +1417,10 @@ pub fn parse_function(
     }
 }
 
-pub fn parse_block(tokens: &[Token], index: &mut usize) -> (Block, Option<JaktError>) {
+pub fn parse_block(tokens: &[Token], index: &mut usize) -> (ParsedBlock, Option<JaktError>) {
     trace!(format!("parse_block: {:?}", tokens[*index]));
 
-    let mut block = Block::new();
+    let mut block = ParsedBlock::new();
     let mut error = None;
 
     if tokens.get(*index).is_none() {
@@ -1420,7 +1468,7 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (Block, Option<JaktEr
 
     trace!("ERROR: expected complete block");
     (
-        Block::new(),
+        ParsedBlock::new(),
         Some(JaktError::ParserError(
             "expected complete block".to_string(),
             Span {
@@ -1432,7 +1480,10 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (Block, Option<JaktEr
     )
 }
 
-pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option<JaktError>) {
+pub fn parse_statement(
+    tokens: &[Token],
+    index: &mut usize,
+) -> (ParsedStatement, Option<JaktError>) {
     trace!(format!("parse_statement: {:?}", tokens[*index]));
 
     let mut error = None;
@@ -1447,7 +1498,7 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
                 parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
             error = error.or(err);
 
-            (Statement::Throw(expr), error)
+            (ParsedStatement::Throw(expr), error)
         }
         TokenContents::Name(name) if name == "defer" => {
             trace!("parsing defer");
@@ -1457,7 +1508,7 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             let (statement, err) = parse_statement(tokens, index);
             error = error.or(err);
 
-            (Statement::Defer(Box::new(statement)), error)
+            (ParsedStatement::Defer(Box::new(statement)), error)
         }
         TokenContents::Name(name) if name == "unsafe" => {
             trace!("parsing unsafe");
@@ -1467,18 +1518,18 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             let (block, err) = parse_block(tokens, index);
             error = error.or(err);
 
-            (Statement::UnsafeBlock(block), error)
+            (ParsedStatement::UnsafeBlock(block), error)
         }
         TokenContents::Name(name) if name == "if" => parse_if_statement(tokens, index),
         TokenContents::Name(name) if name == "break" => {
             trace!("parsing break");
             *index += 1;
-            (Statement::Break, None)
+            (ParsedStatement::Break, None)
         }
         TokenContents::Name(name) if name == "continue" => {
             trace!("parsing continue");
             *index += 1;
-            (Statement::Continue, None)
+            (ParsedStatement::Continue, None)
         }
         TokenContents::Name(name) if name == "loop" => {
             trace!("parsing loop");
@@ -1488,7 +1539,7 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             let (block, err) = parse_block(tokens, index);
             error = error.or(err);
 
-            (Statement::Loop(block), error)
+            (ParsedStatement::Loop(block), error)
         }
         TokenContents::Name(name) if name == "while" => {
             trace!("parsing while");
@@ -1502,7 +1553,7 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             let (block, err) = parse_block(tokens, index);
             error = error.or(err);
 
-            (Statement::While(cond, block), error)
+            (ParsedStatement::While(cond, block), error)
         }
         TokenContents::Name(name) if name == "try" => {
             trace!("parsing try");
@@ -1535,7 +1586,7 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             error = error.or(err);
 
             (
-                Statement::Try(Box::new(stmt), error_name, *error_span, catch_block),
+                ParsedStatement::Try(Box::new(stmt), error_name, *error_span, catch_block),
                 error,
             )
         }
@@ -1561,14 +1612,14 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
                         error = error.or(err);
 
                         (
-                            Statement::For(iterator_name.clone(), range_expr, block),
+                            ParsedStatement::For(iterator_name.clone(), range_expr, block),
                             error,
                         )
                     }
-                    _ => (Statement::Garbage, error),
+                    _ => (ParsedStatement::Garbage, error),
                 }
             } else {
-                (Statement::Garbage, error)
+                (ParsedStatement::Garbage, error)
             }
         }
         TokenContents::Name(name) if name == "return" => {
@@ -1580,7 +1631,7 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
                 parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
             error = error.or(err);
 
-            (Statement::Return(expr), error)
+            (ParsedStatement::Return(expr), error)
         }
         TokenContents::Name(name) if name == "let" => {
             trace!("parsing let");
@@ -1618,10 +1669,10 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
                             );
                             error = error.or(err);
 
-                            (Statement::VarDecl(var_decl, expr), error)
+                            (ParsedStatement::VarDecl(var_decl, expr), error)
                         } else {
                             (
-                                Statement::Garbage,
+                                ParsedStatement::Garbage,
                                 Some(JaktError::ParserError(
                                     "expected initializer".to_string(),
                                     tokens[*index - 1].span,
@@ -1630,7 +1681,7 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
                         }
                     }
                     _ => (
-                        Statement::Garbage,
+                        ParsedStatement::Garbage,
                         Some(JaktError::ParserError(
                             "expected initializer".to_string(),
                             tokens[*index].span,
@@ -1639,7 +1690,7 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
                 }
             } else {
                 (
-                    Statement::Garbage,
+                    ParsedStatement::Garbage,
                     Some(JaktError::ParserError(
                         "expected initializer".to_string(),
                         tokens[*index].span,
@@ -1663,7 +1714,7 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
                 end: tokens[*index].span.end,
             };
 
-            (Statement::InlineCpp(block, span), error)
+            (ParsedStatement::InlineCpp(block, span), error)
         }
         TokenContents::LCurly => {
             trace!("parsing block from statement parser");
@@ -1671,7 +1722,7 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
             let (block, err) = parse_block(tokens, index);
             error = error.or(err);
 
-            (Statement::Block(block), error)
+            (ParsedStatement::Block(block), error)
         }
         _ => {
             trace!("parsing expression from statement parser");
@@ -1687,12 +1738,12 @@ pub fn parse_statement(tokens: &[Token], index: &mut usize) -> (Statement, Optio
                 *index += 1;
             }
 
-            (Statement::Expression(expr), error)
+            (ParsedStatement::Expression(expr), error)
         }
     }
 }
 
-fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option<JaktError>) {
+fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (ParsedStatement, Option<JaktError>) {
     trace!(format!("parse_if_statement: {:?}", tokens[*index]));
 
     let mut error = None;
@@ -1703,7 +1754,7 @@ fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option
         }
         _ => {
             return (
-                Statement::Garbage,
+                ParsedStatement::Garbage,
                 Some(JaktError::ParserError(
                     "expected if statement".to_string(),
                     tokens[*index].span,
@@ -1751,7 +1802,7 @@ fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option
                                 )));
                             }
 
-                            else_stmt = Some(Box::new(Statement::Block(else_block)));
+                            else_stmt = Some(Box::new(ParsedStatement::Block(else_block)));
                             error = error.or(err);
                         }
                         _ => {
@@ -1773,14 +1824,14 @@ fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (Statement, Option
         // try to parse an if statement again if we see an else
     }
 
-    (Statement::If(cond, block, else_stmt), error)
+    (ParsedStatement::If(cond, block, else_stmt), error)
 }
 
 pub fn parse_expression(
     tokens: &[Token],
     index: &mut usize,
     expression_kind: ExpressionKind,
-) -> (Expression, Option<JaktError>) {
+) -> (ParsedExpression, Option<JaktError>) {
     trace!(format!("parse_expression: {:?}", tokens[*index]));
 
     // As the expr_stack grows, we increase the required precedence.
@@ -1789,7 +1840,7 @@ pub fn parse_expression(
 
     let mut error = None;
 
-    let mut expr_stack: Vec<Expression> = vec![];
+    let mut expr_stack: Vec<ParsedExpression> = vec![];
     let mut last_prec = 1000000;
 
     let (lhs, err) = parse_operand(tokens, index);
@@ -1833,8 +1884,8 @@ pub fn parse_expression(
                 tokens[*index - 1].span,
             )));
 
-            expr_stack.push(Expression::Garbage(tokens[*index - 1].span));
-            expr_stack.push(Expression::Garbage(tokens[*index - 1].span));
+            expr_stack.push(ParsedExpression::Garbage(tokens[*index - 1].span));
+            expr_stack.push(ParsedExpression::Garbage(tokens[*index - 1].span));
             break;
         }
 
@@ -1866,13 +1917,18 @@ pub fn parse_expression(
                 .expect("internal error: expression stack empty");
 
             match op {
-                Expression::Operator(op, _) => {
+                ParsedExpression::Operator(op, _) => {
                     let span = Span {
                         file_id: lhs.span().file_id,
                         start: lhs.span().start,
                         end: rhs.span().end,
                     };
-                    expr_stack.push(Expression::BinaryOp(Box::new(lhs), op, Box::new(rhs), span));
+                    expr_stack.push(ParsedExpression::BinaryOp(
+                        Box::new(lhs),
+                        op,
+                        Box::new(rhs),
+                        span,
+                    ));
                 }
                 _ => panic!("internal error: operator is not an operator"),
             }
@@ -1896,13 +1952,18 @@ pub fn parse_expression(
             .expect("internal error: expression stack empty");
 
         match op {
-            Expression::Operator(op, _) => {
+            ParsedExpression::Operator(op, _) => {
                 let span = Span {
                     file_id: lhs.span().file_id,
                     start: lhs.span().start,
                     end: rhs.span().end,
                 };
-                expr_stack.push(Expression::BinaryOp(Box::new(lhs), op, Box::new(rhs), span));
+                expr_stack.push(ParsedExpression::BinaryOp(
+                    Box::new(lhs),
+                    op,
+                    Box::new(rhs),
+                    span,
+                ));
             }
             _ => panic!("internal error: operator is not an operator"),
         }
@@ -2161,7 +2222,7 @@ pub fn parse_patterns(tokens: &[Token], index: &mut usize) -> (Vec<MatchCase>, O
     (cases, error)
 }
 
-pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
+pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Option<JaktError>) {
     trace!(format!("parse_operand: {:?}", tokens[*index]));
 
     let mut error = None;
@@ -2175,19 +2236,19 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
     let mut expr = match &tokens[*index].contents {
         TokenContents::Name(name) if name == "true" => {
             *index += 1;
-            Expression::Boolean(true, span)
+            ParsedExpression::Boolean(true, span)
         }
         TokenContents::Name(name) if name == "false" => {
             *index += 1;
-            Expression::Boolean(false, span)
+            ParsedExpression::Boolean(false, span)
         }
         TokenContents::Name(name) if name == "and" => {
             *index += 1;
-            Expression::Operator(BinaryOperator::LogicalAnd, span)
+            ParsedExpression::Operator(BinaryOperator::LogicalAnd, span)
         }
         TokenContents::Name(name) if name == "or" => {
             *index += 1;
-            Expression::Operator(BinaryOperator::LogicalOr, span)
+            ParsedExpression::Operator(BinaryOperator::LogicalOr, span)
         }
         TokenContents::Name(name) if name == "not" => {
             let start_span = tokens[*index].span;
@@ -2203,7 +2264,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 end: expr.span().end,
             };
 
-            Expression::UnaryOp(Box::new(expr), UnaryOperator::LogicalNot, span)
+            ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::LogicalNot, span)
         }
         TokenContents::Name(name) if name == "match" => {
             let start_span = tokens[*index].span;
@@ -2222,7 +2283,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 end: expr.span().end,
             };
 
-            Expression::Match(Box::new(expr), patterns, span)
+            ParsedExpression::Match(Box::new(expr), patterns, span)
         }
         TokenContents::Name(name) => {
             if *index + 1 < tokens.len() {
@@ -2236,13 +2297,13 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                                 ExpressionKind::ExpressionWithoutAssignment,
                             );
                             error = error.or(err);
-                            Expression::OptionalSome(Box::new(expr), span)
+                            ParsedExpression::OptionalSome(Box::new(expr), span)
                         }
                         _ => {
                             let (call, err) = parse_call(tokens, index);
                             error = error.or(err);
 
-                            Expression::Call(call, span)
+                            ParsedExpression::Call(call, span)
                         }
                     },
                     TokenContents::LessThan => {
@@ -2251,28 +2312,28 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
 
                         if err.is_some() {
                             match name.as_str() {
-                                "None" => Expression::OptionalNone(span),
-                                _ => Expression::Var(name.to_string(), span),
+                                "None" => ParsedExpression::OptionalNone(span),
+                                _ => ParsedExpression::Var(name.to_string(), span),
                             }
                         } else {
                             error = error.or(err);
 
-                            Expression::Call(call, span)
+                            ParsedExpression::Call(call, span)
                         }
                     }
                     _ => {
                         *index += 1;
 
                         match name.as_str() {
-                            "None" => Expression::OptionalNone(span),
-                            _ => Expression::Var(name.to_string(), span),
+                            "None" => ParsedExpression::OptionalNone(span),
+                            _ => ParsedExpression::Var(name.to_string(), span),
                         }
                     }
                 }
             } else {
                 *index += 1;
 
-                Expression::Var(name.to_string(), span)
+                ParsedExpression::Var(name.to_string(), span)
             }
         }
         TokenContents::LParen => {
@@ -2329,7 +2390,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                         )))
                     }
 
-                    expr = Expression::Tuple(
+                    expr = ParsedExpression::Tuple(
                         exprs,
                         Span {
                             file_id: start.file_id,
@@ -2374,7 +2435,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 end: expr.span().end,
             };
 
-            Expression::UnaryOp(Box::new(expr), UnaryOperator::PreIncrement, span)
+            ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::PreIncrement, span)
         }
         TokenContents::MinusMinus => {
             let start_span = tokens[*index].span;
@@ -2390,7 +2451,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 end: expr.span().end,
             };
 
-            Expression::UnaryOp(Box::new(expr), UnaryOperator::PreDecrement, span)
+            ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::PreDecrement, span)
         }
         TokenContents::Minus => {
             let start_span = tokens[*index].span;
@@ -2406,7 +2467,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 end: expr.span().end,
             };
 
-            Expression::UnaryOp(Box::new(expr), UnaryOperator::Negate, span)
+            ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::Negate, span)
         }
         TokenContents::Tilde => {
             let start_span = tokens[*index].span;
@@ -2422,7 +2483,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 end: expr.span().end,
             };
 
-            Expression::UnaryOp(Box::new(expr), UnaryOperator::BitwiseNot, span)
+            ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::BitwiseNot, span)
         }
         TokenContents::Asterisk => {
             let start_span = tokens[*index].span;
@@ -2438,7 +2499,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 end: expr.span().end,
             };
 
-            Expression::UnaryOp(Box::new(expr), UnaryOperator::Dereference, span)
+            ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::Dereference, span)
         }
         TokenContents::Ampersand => {
             *index += 1;
@@ -2464,14 +2525,14 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                             end: expr.span().end,
                         };
 
-                        Expression::UnaryOp(Box::new(expr), UnaryOperator::RawAddress, span)
+                        ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::RawAddress, span)
                     }
                     _ => {
                         error = error.or(Some(JaktError::ParserError(
                             "ampersand not currently supported".to_string(),
                             tokens[*index - 1].span,
                         )));
-                        Expression::Garbage(tokens[*index - 1].span)
+                        ParsedExpression::Garbage(tokens[*index - 1].span)
                     }
                 }
             } else {
@@ -2479,23 +2540,23 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                     "ampersand not currently supported".to_string(),
                     tokens[*index - 1].span,
                 )));
-                Expression::Garbage(tokens[*index - 1].span)
+                ParsedExpression::Garbage(tokens[*index - 1].span)
             }
         }
         TokenContents::Number(constant) => {
             *index += 1;
-            Expression::NumericConstant(constant.clone(), span)
+            ParsedExpression::NumericConstant(constant.clone(), span)
         }
         TokenContents::QuotedString(str) => {
             *index += 1;
-            Expression::QuotedString(str.to_string(), span)
+            ParsedExpression::QuotedString(str.to_string(), span)
         }
         TokenContents::SingleQuotedString(c) => {
             *index += 1;
             if let Some(first) = c.chars().next() {
-                Expression::CharacterLiteral(first, span)
+                ParsedExpression::CharacterLiteral(first, span)
             } else {
-                Expression::Garbage(span)
+                ParsedExpression::Garbage(span)
             }
         }
         _ => {
@@ -2505,7 +2566,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 tokens[*index].span,
             )));
 
-            Expression::Garbage(span)
+            ParsedExpression::Garbage(span)
         }
     };
 
@@ -2517,12 +2578,12 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 let (end_expr, err) =
                     parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
                 error = error.or(err);
-                expr = Expression::Range(Box::new(expr), Box::new(end_expr), span);
+                expr = ParsedExpression::Range(Box::new(expr), Box::new(end_expr), span);
             }
             TokenContents::ExclamationPoint => {
                 *index += 1;
                 // Forced Optional unwrap
-                expr = Expression::ForcedUnwrap(Box::new(expr), span);
+                expr = ParsedExpression::ForcedUnwrap(Box::new(expr), span);
             }
             TokenContents::PlusPlus => {
                 let end_span = tokens[*index].span;
@@ -2535,7 +2596,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                     end: end_span.end,
                 };
 
-                expr = Expression::UnaryOp(Box::new(expr), UnaryOperator::PostIncrement, span)
+                expr = ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::PostIncrement, span)
             }
             TokenContents::Name(name) if name == "is" => {
                 let end_span = tokens[*index + 1].span;
@@ -2551,7 +2612,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 let (typename, err) = parse_typename(tokens, index);
                 error = error.or(err);
 
-                expr = Expression::UnaryOp(Box::new(expr), UnaryOperator::Is(typename), span)
+                expr = ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::Is(typename), span)
             }
 
             TokenContents::Name(name) if name == "as" => {
@@ -2595,12 +2656,13 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                             "Invalid cast syntax".to_string(),
                             span,
                         )));
-                        TypeCast::Truncating(UncheckedType::Empty)
+                        TypeCast::Truncating(ParsedType::Empty)
                     }
                 };
 
                 *index += 1;
-                expr = Expression::UnaryOp(Box::new(expr), UnaryOperator::TypeCast(cast), span)
+                expr =
+                    ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::TypeCast(cast), span)
             }
             TokenContents::MinusMinus => {
                 let end_span = tokens[*index].span;
@@ -2613,7 +2675,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                     end: end_span.end,
                 };
 
-                expr = Expression::UnaryOp(Box::new(expr), UnaryOperator::PostDecrement, span)
+                expr = ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::PostDecrement, span)
             }
             TokenContents::ColonColon => {
                 *index += 1;
@@ -2621,7 +2683,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                 let mut namespace = Vec::new();
 
                 match &expr {
-                    Expression::Var(name, _) => namespace.push(name.clone()),
+                    ParsedExpression::Var(name, _) => namespace.push(name.clone()),
                     x => {
                         error = error.or(Some(JaktError::ParserError(
                             "expected namespace".to_string(),
@@ -2655,7 +2717,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                                         end: tokens[*index].span.end,
                                     };
 
-                                    expr = Expression::Call(method, span);
+                                    expr = ParsedExpression::Call(method, span);
                                     break;
                                 } else if tokens[*index].contents == TokenContents::ColonColon {
                                     match &tokens[*index - 1].contents {
@@ -2675,7 +2737,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                                         error = error.or(err);
                                     } else {
                                         call.namespace = namespace;
-                                        expr = Expression::Call(call, span);
+                                        expr = ParsedExpression::Call(call, span);
                                     }
                                     break;
                                 } else {
@@ -2720,7 +2782,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                                 end: tokens[*index].span.end,
                             };
 
-                            expr = Expression::IndexedTuple(
+                            expr = ParsedExpression::IndexedTuple(
                                 Box::new(expr),
                                 constant.integer_constant().unwrap().to_usize(),
                                 span,
@@ -2742,7 +2804,8 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                                     let (method, err) = parse_call(tokens, index);
                                     error = error.or(err);
 
-                                    expr = Expression::MethodCall(Box::new(expr), method, span)
+                                    expr =
+                                        ParsedExpression::MethodCall(Box::new(expr), method, span)
                                 } else {
                                     let span = Span {
                                         file_id: expr.span().file_id,
@@ -2750,7 +2813,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                                         end: tokens[*index - 1].span.end,
                                     };
 
-                                    expr = Expression::IndexedStruct(
+                                    expr = ParsedExpression::IndexedStruct(
                                         Box::new(expr),
                                         name.to_string(),
                                         span,
@@ -2763,7 +2826,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                                     end: tokens[*index].span.end,
                                 };
 
-                                expr = Expression::IndexedStruct(
+                                expr = ParsedExpression::IndexedStruct(
                                     Box::new(expr),
                                     name.to_string(),
                                     span,
@@ -2821,7 +2884,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
                         )));
                     }
 
-                    expr = Expression::IndexedExpression(
+                    expr = ParsedExpression::IndexedExpression(
                         Box::new(expr),
                         Box::new(idx),
                         Span {
@@ -2839,7 +2902,10 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (Expression, Option
     (expr, error)
 }
 
-pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
+pub fn parse_operator(
+    tokens: &[Token],
+    index: &mut usize,
+) -> (ParsedExpression, Option<JaktError>) {
     trace!(format!("parse_operator: {:?}", tokens[*index]));
 
     let span = tokens[*index].span;
@@ -2848,44 +2914,62 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
         TokenContents::QuestionMarkQuestionMark => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::NoneCoalescing, span),
+                ParsedExpression::Operator(BinaryOperator::NoneCoalescing, span),
                 None,
             )
         }
         TokenContents::Name(name) if name == "and" => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::LogicalAnd, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::LogicalAnd, span),
+                None,
+            )
         }
         TokenContents::Name(name) if name == "or" => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::LogicalOr, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::LogicalOr, span),
+                None,
+            )
         }
         TokenContents::Plus => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::Add, span), None)
+            (ParsedExpression::Operator(BinaryOperator::Add, span), None)
         }
         TokenContents::Minus => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::Subtract, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::Subtract, span),
+                None,
+            )
         }
         TokenContents::Asterisk => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::Multiply, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::Multiply, span),
+                None,
+            )
         }
         TokenContents::ForwardSlash => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::Divide, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::Divide, span),
+                None,
+            )
         }
         TokenContents::PercentSign => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::Modulo, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::Modulo, span),
+                None,
+            )
         }
         TokenContents::Equal => {
             trace!("ERROR: assignment not allowed in this position");
 
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::Assign, span),
+                ParsedExpression::Operator(BinaryOperator::Assign, span),
                 Some(JaktError::ValidationError(
                     "assignment is not allowed in this position".to_string(),
                     span,
@@ -2897,7 +2981,7 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
 
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::BitwiseLeftShiftAssign, span),
+                ParsedExpression::Operator(BinaryOperator::BitwiseLeftShiftAssign, span),
                 Some(JaktError::ValidationError(
                     "assignment is not allowed in this position".to_string(),
                     span,
@@ -2909,7 +2993,7 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
 
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::BitwiseRightShiftAssign, span),
+                ParsedExpression::Operator(BinaryOperator::BitwiseRightShiftAssign, span),
                 Some(JaktError::ValidationError(
                     "assignment is not allowed in this position".to_string(),
                     span,
@@ -2921,7 +3005,7 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
 
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::BitwiseAndAssign, span),
+                ParsedExpression::Operator(BinaryOperator::BitwiseAndAssign, span),
                 Some(JaktError::ValidationError(
                     "assignment is not allowed in this position".to_string(),
                     span,
@@ -2933,7 +3017,7 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
 
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::BitwiseOrAssign, span),
+                ParsedExpression::Operator(BinaryOperator::BitwiseOrAssign, span),
                 Some(JaktError::ValidationError(
                     "assignment is not allowed in this position".to_string(),
                     span,
@@ -2945,7 +3029,7 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
 
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::BitwiseXorAssign, span),
+                ParsedExpression::Operator(BinaryOperator::BitwiseXorAssign, span),
                 Some(JaktError::ValidationError(
                     "assignment is not allowed in this position".to_string(),
                     span,
@@ -2957,7 +3041,7 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
 
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::AddAssign, span),
+                ParsedExpression::Operator(BinaryOperator::AddAssign, span),
                 Some(JaktError::ValidationError(
                     "assignment is not allowed in this position".to_string(),
                     span,
@@ -2969,7 +3053,7 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
 
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::SubtractAssign, span),
+                ParsedExpression::Operator(BinaryOperator::SubtractAssign, span),
                 Some(JaktError::ValidationError(
                     "assignment is not allowed in this position".to_string(),
                     span,
@@ -2981,7 +3065,7 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
 
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::MultiplyAssign, span),
+                ParsedExpression::Operator(BinaryOperator::MultiplyAssign, span),
                 Some(JaktError::ValidationError(
                     "assignment is not allowed in this position".to_string(),
                     span,
@@ -2993,7 +3077,7 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
 
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::DivideAssign, span),
+                ParsedExpression::Operator(BinaryOperator::DivideAssign, span),
                 Some(JaktError::ValidationError(
                     "assignment is not allowed in this position".to_string(),
                     span,
@@ -3005,7 +3089,7 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
 
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::ModuloAssign, span),
+                ParsedExpression::Operator(BinaryOperator::ModuloAssign, span),
                 Some(JaktError::ValidationError(
                     "assignment is not allowed in this position".to_string(),
                     span,
@@ -3014,74 +3098,92 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
         }
         TokenContents::DoubleEqual => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::Equal, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::Equal, span),
+                None,
+            )
         }
         TokenContents::NotEqual => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::NotEqual, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::NotEqual, span),
+                None,
+            )
         }
         TokenContents::LessThan => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::LessThan, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::LessThan, span),
+                None,
+            )
         }
         TokenContents::LessThanOrEqual => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::LessThanOrEqual, span),
+                ParsedExpression::Operator(BinaryOperator::LessThanOrEqual, span),
                 None,
             )
         }
         TokenContents::GreaterThan => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::GreaterThan, span),
+                ParsedExpression::Operator(BinaryOperator::GreaterThan, span),
                 None,
             )
         }
         TokenContents::GreaterThanOrEqual => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::GreaterThanOrEqual, span),
+                ParsedExpression::Operator(BinaryOperator::GreaterThanOrEqual, span),
                 None,
             )
         }
         TokenContents::Ampersand => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::BitwiseAnd, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::BitwiseAnd, span),
+                None,
+            )
         }
         TokenContents::Pipe => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::BitwiseOr, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::BitwiseOr, span),
+                None,
+            )
         }
         TokenContents::Caret => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::BitwiseXor, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::BitwiseXor, span),
+                None,
+            )
         }
         TokenContents::LeftShift => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::BitwiseLeftShift, span),
+                ParsedExpression::Operator(BinaryOperator::BitwiseLeftShift, span),
                 None,
             )
         }
         TokenContents::RightShift => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::BitwiseRightShift, span),
+                ParsedExpression::Operator(BinaryOperator::BitwiseRightShift, span),
                 None,
             )
         }
         TokenContents::LeftArithmeticShift => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::ArithmeticLeftShift, span),
+                ParsedExpression::Operator(BinaryOperator::ArithmeticLeftShift, span),
                 None,
             )
         }
         TokenContents::RightArithmeticShift => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::ArithmeticRightShift, span),
+                ParsedExpression::Operator(BinaryOperator::ArithmeticRightShift, span),
                 None,
             )
         }
@@ -3089,7 +3191,7 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
             trace!("ERROR: unsupported operator (possibly just the end of an expression)");
 
             (
-                Expression::Garbage(span),
+                ParsedExpression::Garbage(span),
                 Some(JaktError::ParserError(
                     "unsupported operator".to_string(),
                     tokens[*index].span,
@@ -3102,7 +3204,7 @@ pub fn parse_operator(tokens: &[Token], index: &mut usize) -> (Expression, Optio
 pub fn parse_operator_with_assignment(
     tokens: &[Token],
     index: &mut usize,
-) -> (Expression, Option<JaktError>) {
+) -> (ParsedExpression, Option<JaktError>) {
     trace!(format!(
         "parse_operator_with_assignment: {:?}",
         tokens[*index]
@@ -3114,172 +3216,214 @@ pub fn parse_operator_with_assignment(
         TokenContents::QuestionMarkQuestionMark => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::NoneCoalescing, span),
+                ParsedExpression::Operator(BinaryOperator::NoneCoalescing, span),
                 None,
             )
         }
         TokenContents::Plus => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::Add, span), None)
+            (ParsedExpression::Operator(BinaryOperator::Add, span), None)
         }
         TokenContents::Minus => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::Subtract, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::Subtract, span),
+                None,
+            )
         }
         TokenContents::Asterisk => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::Multiply, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::Multiply, span),
+                None,
+            )
         }
         TokenContents::ForwardSlash => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::Divide, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::Divide, span),
+                None,
+            )
         }
         TokenContents::PercentSign => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::Modulo, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::Modulo, span),
+                None,
+            )
         }
         TokenContents::Name(name) if name == "and" => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::LogicalAnd, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::LogicalAnd, span),
+                None,
+            )
         }
         TokenContents::Name(name) if name == "or" => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::LogicalOr, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::LogicalOr, span),
+                None,
+            )
         }
         TokenContents::Ampersand => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::BitwiseAnd, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::BitwiseAnd, span),
+                None,
+            )
         }
         TokenContents::Pipe => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::BitwiseOr, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::BitwiseOr, span),
+                None,
+            )
         }
         TokenContents::Caret => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::BitwiseXor, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::BitwiseXor, span),
+                None,
+            )
         }
         TokenContents::LeftShift => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::BitwiseLeftShift, span),
+                ParsedExpression::Operator(BinaryOperator::BitwiseLeftShift, span),
                 None,
             )
         }
         TokenContents::RightShift => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::BitwiseRightShift, span),
+                ParsedExpression::Operator(BinaryOperator::BitwiseRightShift, span),
                 None,
             )
         }
         TokenContents::LeftArithmeticShift => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::ArithmeticLeftShift, span),
+                ParsedExpression::Operator(BinaryOperator::ArithmeticLeftShift, span),
                 None,
             )
         }
         TokenContents::RightArithmeticShift => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::ArithmeticRightShift, span),
+                ParsedExpression::Operator(BinaryOperator::ArithmeticRightShift, span),
                 None,
             )
         }
         TokenContents::Equal => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::Assign, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::Assign, span),
+                None,
+            )
         }
         TokenContents::LeftShiftEqual => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::BitwiseLeftShiftAssign, span),
+                ParsedExpression::Operator(BinaryOperator::BitwiseLeftShiftAssign, span),
                 None,
             )
         }
         TokenContents::RightShiftEqual => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::BitwiseRightShiftAssign, span),
+                ParsedExpression::Operator(BinaryOperator::BitwiseRightShiftAssign, span),
                 None,
             )
         }
         TokenContents::AmpersandEqual => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::BitwiseAndAssign, span),
+                ParsedExpression::Operator(BinaryOperator::BitwiseAndAssign, span),
                 None,
             )
         }
         TokenContents::PipeEqual => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::BitwiseOrAssign, span),
+                ParsedExpression::Operator(BinaryOperator::BitwiseOrAssign, span),
                 None,
             )
         }
         TokenContents::CaretEqual => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::BitwiseXorAssign, span),
+                ParsedExpression::Operator(BinaryOperator::BitwiseXorAssign, span),
                 None,
             )
         }
         TokenContents::PlusEqual => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::AddAssign, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::AddAssign, span),
+                None,
+            )
         }
         TokenContents::MinusEqual => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::SubtractAssign, span),
+                ParsedExpression::Operator(BinaryOperator::SubtractAssign, span),
                 None,
             )
         }
         TokenContents::AsteriskEqual => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::MultiplyAssign, span),
+                ParsedExpression::Operator(BinaryOperator::MultiplyAssign, span),
                 None,
             )
         }
         TokenContents::ForwardSlashEqual => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::DivideAssign, span),
+                ParsedExpression::Operator(BinaryOperator::DivideAssign, span),
                 None,
             )
         }
         TokenContents::DoubleEqual => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::Equal, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::Equal, span),
+                None,
+            )
         }
         TokenContents::NotEqual => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::NotEqual, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::NotEqual, span),
+                None,
+            )
         }
         TokenContents::LessThan => {
             *index += 1;
-            (Expression::Operator(BinaryOperator::LessThan, span), None)
+            (
+                ParsedExpression::Operator(BinaryOperator::LessThan, span),
+                None,
+            )
         }
         TokenContents::LessThanOrEqual => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::LessThanOrEqual, span),
+                ParsedExpression::Operator(BinaryOperator::LessThanOrEqual, span),
                 None,
             )
         }
         TokenContents::GreaterThan => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::GreaterThan, span),
+                ParsedExpression::Operator(BinaryOperator::GreaterThan, span),
                 None,
             )
         }
         TokenContents::GreaterThanOrEqual => {
             *index += 1;
             (
-                Expression::Operator(BinaryOperator::GreaterThanOrEqual, span),
+                ParsedExpression::Operator(BinaryOperator::GreaterThanOrEqual, span),
                 None,
             )
         }
@@ -3287,7 +3431,7 @@ pub fn parse_operator_with_assignment(
             trace!("ERROR: unsupported operator (possibly just the end of an expression)");
 
             (
-                Expression::Garbage(span),
+                ParsedExpression::Garbage(span),
                 Some(JaktError::ParserError(
                     "unsupported operator".to_string(),
                     tokens[*index].span,
@@ -3297,7 +3441,7 @@ pub fn parse_operator_with_assignment(
     }
 }
 
-pub fn parse_set(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
+pub fn parse_set(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Option<JaktError>) {
     let mut error = None;
 
     let mut output = Vec::new();
@@ -3357,7 +3501,7 @@ pub fn parse_set(tokens: &[Token], index: &mut usize) -> (Expression, Option<Jak
     let end = *index - 1;
 
     (
-        Expression::Set(
+        ParsedExpression::Set(
             output,
             Span {
                 file_id: tokens[start].span.file_id,
@@ -3369,7 +3513,7 @@ pub fn parse_set(tokens: &[Token], index: &mut usize) -> (Expression, Option<Jak
     )
 }
 
-pub fn parse_array(tokens: &[Token], index: &mut usize) -> (Expression, Option<JaktError>) {
+pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Option<JaktError>) {
     let mut error = None;
 
     let mut output = Vec::new();
@@ -3487,7 +3631,7 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (Expression, Option<J
 
     if is_dictionary {
         (
-            Expression::Dictionary(
+            ParsedExpression::Dictionary(
                 dict_output,
                 Span {
                     file_id: tokens[start].span.file_id,
@@ -3499,7 +3643,7 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (Expression, Option<J
         )
     } else {
         (
-            Expression::Array(
+            ParsedExpression::Array(
                 output,
                 fill_size_expr,
                 Span {
@@ -3516,7 +3660,7 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (Expression, Option<J
 pub fn parse_variable_declaration(
     tokens: &[Token],
     index: &mut usize,
-) -> (VarDecl, Option<JaktError>) {
+) -> (ParsedVarDecl, Option<JaktError>) {
     trace!(format!("parse_variable_declaration: {:?}", tokens[*index]));
 
     let mut error = None;
@@ -3534,9 +3678,9 @@ pub fn parse_variable_declaration(
                     }
                     _ => {
                         return (
-                            VarDecl {
+                            ParsedVarDecl {
                                 name: name.to_string(),
-                                ty: UncheckedType::Empty,
+                                ty: ParsedType::Empty,
                                 mutable: false,
                                 span: tokens[*index - 1].span,
                             },
@@ -3546,9 +3690,9 @@ pub fn parse_variable_declaration(
                 }
             } else {
                 return (
-                    VarDecl {
+                    ParsedVarDecl {
                         name: name.to_string(),
-                        ty: UncheckedType::Empty,
+                        ty: ParsedType::Empty,
                         mutable: false,
                         span: tokens[*index - 1].span,
                     },
@@ -3570,7 +3714,7 @@ pub fn parse_variable_declaration(
                 let (var_type, err) = parse_typename(tokens, index);
                 error = error.or(err);
 
-                let result = VarDecl {
+                let result = ParsedVarDecl {
                     name: var_name,
                     ty: var_type,
                     mutable,
@@ -3582,9 +3726,9 @@ pub fn parse_variable_declaration(
                 trace!("ERROR: expected type");
 
                 (
-                    VarDecl {
+                    ParsedVarDecl {
                         name: name.to_string(),
-                        ty: UncheckedType::Empty,
+                        ty: ParsedType::Empty,
                         mutable: false,
                         span: tokens[*index - 2].span,
                     },
@@ -3599,7 +3743,7 @@ pub fn parse_variable_declaration(
             trace!("ERROR: expected name");
 
             (
-                VarDecl::new(tokens[*index].span),
+                ParsedVarDecl::new(tokens[*index].span),
                 Some(JaktError::ParserError(
                     "expected name".to_string(),
                     tokens[*index].span,
@@ -3612,9 +3756,9 @@ pub fn parse_variable_declaration(
 pub fn parse_shorthand_type(
     tokens: &[Token],
     index: &mut usize,
-) -> (UncheckedType, Option<JaktError>) {
+) -> (ParsedType, Option<JaktError>) {
     if *index + 2 >= tokens.len() {
-        return (UncheckedType::Empty, None);
+        return (ParsedType::Empty, None);
     }
     let start = tokens[*index].span;
     if let TokenContents::LSquare = &tokens[*index].contents {
@@ -3624,7 +3768,7 @@ pub fn parse_shorthand_type(
         if let TokenContents::RSquare = &tokens[*index].contents {
             *index += 1;
             return (
-                UncheckedType::Array(
+                ParsedType::Array(
                     Box::new(ty),
                     Span {
                         file_id: start.file_id,
@@ -3637,7 +3781,7 @@ pub fn parse_shorthand_type(
         }
 
         (
-            UncheckedType::Empty,
+            ParsedType::Empty,
             err.or(Some(JaktError::ParserError(
                 "expected ]".to_string(),
                 tokens[*index].span,
@@ -3650,7 +3794,7 @@ pub fn parse_shorthand_type(
         if let TokenContents::RCurly = &tokens[*index].contents {
             *index += 1;
             return (
-                UncheckedType::Set(
+                ParsedType::Set(
                     Box::new(ty),
                     Span {
                         file_id: start.file_id,
@@ -3665,19 +3809,19 @@ pub fn parse_shorthand_type(
         // TODO: Add {K:V} shorthand for Dictionary<K,V>?
 
         (
-            UncheckedType::Empty,
+            ParsedType::Empty,
             err.or(Some(JaktError::ParserError(
                 "expected ]".to_string(),
                 tokens[*index].span,
             ))),
         )
     } else {
-        (UncheckedType::Empty, None)
+        (ParsedType::Empty, None)
     }
 }
 
-pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Option<JaktError>) {
-    let mut unchecked_type = UncheckedType::Empty;
+pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Option<JaktError>) {
+    let mut unchecked_type = ParsedType::Empty;
     let mut error = None;
 
     let start = tokens[*index].span;
@@ -3689,7 +3833,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
     let (shorthand_type, err) = parse_shorthand_type(tokens, index);
     error = error.or(err);
 
-    if shorthand_type != UncheckedType::Empty {
+    if shorthand_type != ParsedType::Empty {
         return (shorthand_type, error);
     }
 
@@ -3704,7 +3848,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
                     let (child_ty, err) = parse_typename(tokens, index);
                     error = error.or(err);
 
-                    unchecked_type = UncheckedType::RawPtr(
+                    unchecked_type = ParsedType::RawPtr(
                         Box::new(child_ty),
                         Span {
                             file_id: start.file_id,
@@ -3715,7 +3859,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
                 }
             } else {
                 typename = name.clone();
-                unchecked_type = UncheckedType::Name(name.clone(), tokens[*index].span);
+                unchecked_type = ParsedType::Name(name.clone(), tokens[*index].span);
                 *index += 1;
             }
         }
@@ -3732,7 +3876,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
     if *index < tokens.len() {
         if let TokenContents::QuestionMark = tokens[*index].contents {
             // T? is shorthand for Optional<T>
-            unchecked_type = UncheckedType::Optional(
+            unchecked_type = ParsedType::Optional(
                 Box::new(unchecked_type),
                 Span {
                     file_id: start.file_id,
@@ -3777,7 +3921,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
                 }
 
                 if *index >= tokens.len() {
-                    unchecked_type = UncheckedType::GenericType(
+                    unchecked_type = ParsedType::GenericType(
                         typename,
                         inner_types,
                         Span {
@@ -3787,7 +3931,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
                         },
                     )
                 } else {
-                    unchecked_type = UncheckedType::GenericType(
+                    unchecked_type = ParsedType::GenericType(
                         typename,
                         inner_types,
                         Span {
@@ -3823,9 +3967,9 @@ pub fn parse_call_parameter_name(
     (String::new(), None)
 }
 
-pub fn parse_call(tokens: &[Token], index: &mut usize) -> (Call, Option<JaktError>) {
+pub fn parse_call(tokens: &[Token], index: &mut usize) -> (ParsedCall, Option<JaktError>) {
     trace!(format!("parse_call: {:?}", tokens[*index]));
-    let mut call = Call::new();
+    let mut call = ParsedCall::new();
     let mut error = None;
 
     match &tokens[*index] {

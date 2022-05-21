@@ -4,8 +4,8 @@ use crate::{
     codegen::codegen,
     error::JaktError,
     lexer::lex,
-    parser::parse_file,
-    typechecker::{typecheck_file, Project, Scope, Type},
+    parser::parse_namespace,
+    typechecker::{typecheck_namespace, Project, Scope, Type},
 };
 
 pub type FileId = usize;
@@ -55,10 +55,10 @@ impl Compiler {
             self.raw_files.len() - 1,
             &self.raw_files[self.raw_files.len() - 1].1,
         );
-        let (file, _) = parse_file(&lexed);
+        let (file, _) = parse_namespace(&lexed, &mut 0);
 
         // Scope ID 0 is the global project-level scope that all files can see
-        typecheck_file(&file, 0, project)
+        typecheck_namespace(&file, 0, project)
     }
 
     pub fn convert_to_cpp(&mut self, fname: &Path) -> Result<String, JaktError> {
@@ -83,7 +83,7 @@ impl Compiler {
             return Err(err);
         }
 
-        let (file, err) = parse_file(&lexed);
+        let (file, err) = parse_namespace(&lexed, &mut 0);
 
         if let Some(err) = err {
             return Err(err);
@@ -94,7 +94,7 @@ impl Compiler {
 
         let file_scope_id = project.scopes.len() - 1;
 
-        let err = typecheck_file(&file, file_scope_id, &mut project);
+        let err = typecheck_namespace(&file, file_scope_id, &mut project);
 
         if let Some(err) = err {
             return Err(err);
