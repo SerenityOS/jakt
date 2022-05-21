@@ -387,7 +387,7 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
     }
 
     for field in &structure.fields {
-        output.push_str(&" ".repeat(INDENT_SIZE));
+        output.push_str(&codegen_indent(INDENT_SIZE));
 
         output.push_str(&codegen_type(field.ty, project));
         output.push(' ');
@@ -401,11 +401,11 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
         if function.linkage == FunctionLinkage::ImplicitConstructor {
             let function_output = codegen_constructor(function, project);
 
-            output.push_str(&" ".repeat(INDENT_SIZE));
+            output.push_str(&codegen_indent(INDENT_SIZE));
             output.push_str(&function_output);
             output.push('\n');
         } else {
-            output.push_str(&" ".repeat(INDENT_SIZE));
+            output.push_str(&codegen_indent(INDENT_SIZE));
             if function.is_static() {
                 output.push_str("static ");
             }
@@ -418,14 +418,14 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
     output
 }
 
-fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String {
+fn codegen_function_predecl(function: &CheckedFunction, project: &Project) -> String {
     let mut output = String::new();
 
-    if fun.linkage == FunctionLinkage::External {
+    if function.linkage == FunctionLinkage::External {
         output.push_str("extern ");
     }
 
-    if !fun.generic_parameters.is_empty() {
+    if !function.generic_parameters.is_empty() {
         output.push_str("template <");
     }
     for (idx, generic_parameter) in fun.generic_parameters.iter().enumerate() {
@@ -439,23 +439,23 @@ fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String 
         };
         output.push_str(&codegen_type(id, project))
     }
-    if !fun.generic_parameters.is_empty() {
+    if !function.generic_parameters.is_empty() {
         output.push_str(">\n");
     }
 
-    if fun.name == "main" {
+    if function.name == "main" {
         output.push_str("ErrorOr<int>");
     } else {
-        let return_type = if fun.throws {
-            format!("ErrorOr<{}>", &codegen_type(fun.return_type, project))
+        let return_type = if function.throws {
+            format!("ErrorOr<{}>", &codegen_type(function.return_type, project))
         } else {
-            codegen_type(fun.return_type, project)
+            codegen_type(function.return_type, project)
         };
 
         output.push_str(&return_type);
     }
     output.push(' ');
-    output.push_str(&fun.name);
+    output.push_str(&function.name);
     output.push('(');
 
     for (idx, param) in fun.params.iter().enumerate() {
@@ -476,16 +476,16 @@ fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String 
     output
 }
 
-fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
+fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
     let mut output = String::new();
 
-    if !fun.generic_parameters.is_empty() {
+    if !function.generic_parameters.is_empty() {
         output.push_str("template <");
     }
     for (idx, generic_parameter) in fun.generic_parameters.iter().enumerate() {
         if idx > 0 {
             output.push_str(", ");
-        }
+        } 
         output.push_str("typename ");
         let id = match generic_parameter {
             FunctionGenericParameter::InferenceGuide(id)
@@ -493,37 +493,37 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
         };
         output.push_str(&codegen_type(id, project))
     }
-    if !fun.generic_parameters.is_empty() {
+    if !function.generic_parameters.is_empty() {
         output.push_str(">\n");
     }
 
-    if fun.name == "main" {
+    if function.name == "main" {
         output.push_str("ErrorOr<int>");
     } else {
-        let return_type = if fun.throws {
-            format!("ErrorOr<{}>", &codegen_type(fun.return_type, project))
+        let return_type = if function.throws {
+            format!("ErrorOr<{}>", &codegen_type(function.return_type, project))
         } else {
-            codegen_type(fun.return_type, project)
+            codegen_type(function.return_type, project)
         };
 
         output.push_str(&return_type);
     }
     output.push(' ');
-    if fun.name == "main" {
+    if function.name == "main" {
         output.push_str("_jakt_main");
     } else {
-        output.push_str(&fun.name);
+        output.push_str(&function.name);
     }
     output.push('(');
 
-    if fun.name == "main" && fun.params.is_empty() {
+    if function.name == "main" && function.params.is_empty() {
         output.push_str("Array<String>");
     }
 
     let mut first = true;
     let mut const_function = false;
 
-    for param in &fun.params {
+    for param in &function.params {
         if param.variable.name == "this" {
             const_function = !param.variable.mutable;
             continue;
@@ -550,40 +550,43 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
         output.push_str(" const");
     }
 
-    if fun.name == "main" {
+    if function.name == "main" {
         output.push('\n');
         output.push_str("{\n");
-        output.push_str(&" ".repeat(INDENT_SIZE));
+        output.push_str(&codegen_indent(INDENT_SIZE));
     }
 
     // Put the return type in scope.
-    if fun.name == "main" {
+    if function.name == "main" {
         output.push_str("using _JaktCurrentFunctionReturnType = ErrorOr<int>;\n");
     } else {
-        let return_type = fun.return_type;
+        let return_type = function.return_type;
         if return_type == UNKNOWN_TYPE_ID {
-            panic!("Function type unknown at codegen time in {}", fun.name);
+            panic!("Function type unknown at codegen time in {}", function.name);
         }
         output.push_str("{\n");
-        if fun.throws {
+        if function.throws {
             output.push_str(&format!(
                 "using _JaktCurrentFunctionReturnType = ErrorOr<{}>;\n",
-                codegen_type(fun.return_type, project)
+                codegen_type(function.return_type, project)
             ));
         } else {
             output.push_str(&format!(
                 "using _JaktCurrentFunctionReturnType = {};\n",
-                codegen_type(fun.return_type, project)
+                codegen_type(function.return_type, project)
             ));
         }
     }
 
-    let block = codegen_block(INDENT_SIZE, &fun.block, project);
+    let block = codegen_block(INDENT_SIZE, &function.block, project);
     output.push_str(&block);
 
-    if fun.name == "main" {
-        output.push_str(&" ".repeat(INDENT_SIZE));
+    if function.name == "main" {
+        output.push_str(&codegen_indent(INDENT_SIZE));
         output.push_str("return 0;\n");
+    } else if function.throws && function.return_type == VOID_TYPE_ID {
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str("return {};\n");
     }
 
     output.push_str("}\n");
@@ -591,8 +594,8 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
     output
 }
 
-fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
-    let type_id = fun.return_type;
+fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String {
+    let type_id = function.return_type;
     let ty = &project.types[type_id];
 
     match ty {
@@ -600,7 +603,7 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
             let structure = &project.structs[*struct_id];
 
             if structure.definition_type == DefinitionType::Class {
-                let mut output = format!("static NonnullRefPtr<{}> create", fun.name);
+                let mut output = format!("static NonnullRefPtr<{}> create", function.name);
 
                 output.push('(');
 
@@ -614,9 +617,12 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
                     output.push(' ');
                     output.push_str(&param.variable.name);
                 }
-                output.push_str(&format!(") {{ auto o = adopt_ref(*new {}); ", fun.name));
+                output.push_str(&format!(
+                    ") {{ auto o = adopt_ref(*new {}); ",
+                    function.name
+                ));
 
-                for param in &fun.params {
+                for param in &function.params {
                     output.push_str("o->");
                     output.push_str(&param.variable.name);
                     output.push_str(" = ");
@@ -630,7 +636,7 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
             } else {
                 let mut output = String::new();
 
-                output.push_str(&fun.name);
+                output.push_str(&function.name);
                 output.push('(');
 
                 for (idx, param) in fun.params.iter().enumerate() {
@@ -645,7 +651,7 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
                 }
                 output.push_str(") ");
 
-                if !fun.params.is_empty() {
+                if !function.params.is_empty() {
                     output.push(':');
                 }
 
@@ -929,6 +935,115 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             // Probably shouldn't be able to get to this point?
         }
     }
+
+    output
+}
+
+fn codegen_checked_binary_op(
+    indent: usize,
+    lhs: &CheckedExpression,
+    rhs: &CheckedExpression,
+    type_id: TypeId,
+    op: &BinaryOperator,
+    project: &Project,
+) -> String {
+    let mut output = String::new();
+
+    output.push_str("[](auto _jakt_lhs, auto _jakt_rhs) {\n");
+    output.push_str("Checked<");
+    output.push_str(&codegen_type(type_id, project));
+    output.push_str("> _jakt_checked = _jakt_lhs;\n");
+    output.push_str("_jakt_checked ");
+
+    let op_str = match op {
+        BinaryOperator::Add => '+',
+        BinaryOperator::Subtract => '-',
+        BinaryOperator::Multiply => '*',
+        BinaryOperator::Divide => '/',
+        BinaryOperator::Modulo => '%',
+        _ => panic!(
+            "Checked binary operation codegen is not supported for BinaryOperator::{:?}",
+            op
+        ),
+    };
+
+    output.push(op_str);
+    output.push_str("= ");
+    output.push_str("_jakt_rhs;\n");
+    output.push_str("if (_jakt_checked.has_overflow()) {\n");
+    output.push_str(&format!(
+        r#"
+        // FIXME: This should print to stderr, but the tests compare stdout.
+        outln(
+            "Panic: {{}} in checked binary operation `{{}} {} {{}}`",
+            _jakt_rhs == 0 ? "Division by zero" : "Overflow", _jakt_lhs, _jakt_rhs
+        );
+        "#,
+        op_str
+    ));
+    output.push_str("if (!_jakt_continue_on_panic) VERIFY_NOT_REACHED();\n");
+    output.push_str("}\n");
+    output.push_str("return _jakt_checked.value_unchecked();\n");
+    output.push_str("}(");
+    output.push_str(&codegen_expr(indent, lhs, project));
+    output.push_str(", ");
+    output.push_str(&codegen_expr(indent, rhs, project));
+    output.push(')');
+
+    output
+}
+
+fn codegen_checked_binary_op_assign(
+    indent: usize,
+    lhs: &CheckedExpression,
+    rhs: &CheckedExpression,
+    type_id: TypeId,
+    op: &BinaryOperator,
+    project: &Project,
+) -> String {
+    let mut output = String::new();
+
+    output.push('{');
+    output.push_str("auto& _jakt_lhs = ");
+    output.push_str(&codegen_expr(indent, lhs, project));
+    output.push(';');
+    output.push_str("auto _jakt_rhs = ");
+    output.push_str(&codegen_expr(indent, rhs, project));
+    output.push(';');
+    output.push_str("Checked<");
+    output.push_str(&codegen_type(type_id, project));
+    output.push_str("> _jakt_checked = _jakt_lhs;");
+    output.push_str("_jakt_checked ");
+
+    let op_str = match op {
+        BinaryOperator::AddAssign => '+',
+        BinaryOperator::SubtractAssign => '-',
+        BinaryOperator::MultiplyAssign => '*',
+        BinaryOperator::DivideAssign => '/',
+        BinaryOperator::ModuloAssign => '%',
+        _ => panic!(
+            "Checked binary operation assignment codegen is not supported for BinaryOperator::{:?}",
+            op
+        ),
+    };
+
+    output.push(op_str);
+    output.push_str("= _jakt_rhs;");
+    output.push_str("if (_jakt_checked.has_overflow()) {");
+    output.push_str(&format!(
+        r#"
+        // FIXME: This should print to stderr, but the tests compare stdout.
+        outln(
+            "Panic: {{}} in checked binary operation `{{}} {} {{}}`",
+            _jakt_rhs == 0 ? "Division by zero" : "Overflow", _jakt_lhs, _jakt_rhs
+        );
+        "#,
+        op_str
+    ));
+    output.push_str("if (!_jakt_continue_on_panic) VERIFY_NOT_REACHED();");
+    output.push('}');
+    output.push_str("_jakt_lhs = _jakt_checked.value_unchecked();");
+    output.push('}');
 
     output
 }
@@ -1462,6 +1577,38 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     output.push_str(&codegen_expr(indent, rhs, project));
                     output.push(')');
                 }
+                BinaryOperator::Add
+                | BinaryOperator::Subtract
+                | BinaryOperator::Multiply
+                | BinaryOperator::Divide
+                | BinaryOperator::Modulo
+                    if is_integer(expr.ty()) =>
+                {
+                    output.push_str(&codegen_checked_binary_op(
+                        indent,
+                        lhs,
+                        rhs,
+                        expr.ty(),
+                        op,
+                        project,
+                    ))
+                }
+                BinaryOperator::AddAssign
+                | BinaryOperator::SubtractAssign
+                | BinaryOperator::MultiplyAssign
+                | BinaryOperator::DivideAssign
+                | BinaryOperator::ModuloAssign
+                    if is_integer(expr.ty()) =>
+                {
+                    output.push_str(&codegen_checked_binary_op_assign(
+                        indent,
+                        lhs,
+                        rhs,
+                        expr.ty(),
+                        op,
+                        project,
+                    ))
+                }
                 _ => {
                     output.push_str(&codegen_expr(indent, lhs, project));
                     match op {
@@ -1530,7 +1677,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             let value_type_id = vals[0].1.ty();
 
             output.push_str(&format!(
-                "(Dictionary<{}, {}>({{",
+                "(TRY(Dictionary<{}, {}>::create_with_entries({{",
                 codegen_type(key_type_id, project),
                 codegen_type(value_type_id, project),
             ));
@@ -1545,7 +1692,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 output.push_str(&codegen_expr(indent, value, project));
                 output.push('}');
             }
-            output.push_str("}))");
+            output.push_str("})))");
         }
         CheckedExpression::Set(values, _, _) => {
             // (Set({1, 2, 3}))

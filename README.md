@@ -41,7 +41,7 @@ Note that **weak** pointers must always be wrapped in `Optional`. There is no **
 
 ## Math safety
 
-- [ ] Integer overflow (both signed and unsigned) is a runtime error.
+- [x] Integer overflow (both signed and unsigned) is a runtime error.
 - [x] Numeric values are not automatically coerced to `int`. All casts must be explicit.
 
 For cases where silent integer overflow is desired, there are explicit functions that provide this functionality.
