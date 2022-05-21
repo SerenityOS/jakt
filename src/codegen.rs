@@ -396,7 +396,7 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
     }
 
     for field in &structure.fields {
-        output.push_str(&" ".repeat(INDENT_SIZE));
+        output.push_str(&codegen_indent(INDENT_SIZE));
 
         output.push_str(&codegen_type(field.ty, project));
         output.push(' ');
@@ -410,11 +410,11 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
         if function.linkage == FunctionLinkage::ImplicitConstructor {
             let function_output = codegen_constructor(function, project);
 
-            output.push_str(&" ".repeat(INDENT_SIZE));
+            output.push_str(&codegen_indent(INDENT_SIZE));
             output.push_str(&function_output);
             output.push('\n');
         } else {
-            output.push_str(&" ".repeat(INDENT_SIZE));
+            output.push_str(&codegen_indent(INDENT_SIZE));
             if function.is_static() {
                 output.push_str("static ");
             }
@@ -571,7 +571,7 @@ fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
     if function.name == "main" {
         output.push('\n');
         output.push_str("{\n");
-        output.push_str(&" ".repeat(INDENT_SIZE));
+        output.push_str(&codegen_indent(INDENT_SIZE));
     }
 
     // Put the return type in scope.
@@ -600,7 +600,7 @@ fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
     output.push_str(&block);
 
     if function.name == "main" {
-        output.push_str(&" ".repeat(INDENT_SIZE));
+        output.push_str(&codegen_indent(INDENT_SIZE));
         output.push_str("return 0;\n");
     }
 
