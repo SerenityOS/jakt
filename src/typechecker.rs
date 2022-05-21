@@ -951,7 +951,7 @@ pub fn typecheck_namespace(
 
     for (i, function) in parsed_namespace.functions.iter().enumerate() {
         project.current_function_index = Some(i + project_function_len);
-        error = error.or(typecheck_fun(function, scope_id, project));
+        error = error.or(typecheck_function(function, scope_id, project));
         project.current_function_index = None;
     }
 
@@ -1609,7 +1609,7 @@ fn typecheck_function_predecl(
     error
 }
 
-fn typecheck_fun(
+fn typecheck_function(
     function: &ParsedFunction,
     parent_scope_id: ScopeId,
     project: &mut Project,
