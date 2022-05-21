@@ -601,29 +601,59 @@ fn consume_numeric_literal_suffix(bytes: &[u8], index: &mut usize) -> Option<Lit
     suffix
 }
 
-fn make_number_token(number: i64, suffix: Option<LiteralSuffix>) -> TokenContents {
-    match suffix {
-        Some(LiteralSuffix::U8) => TokenContents::Number(NumericConstant::U8(number as u8)),
-        Some(LiteralSuffix::U16) => TokenContents::Number(NumericConstant::U16(number as u16)),
-        Some(LiteralSuffix::U32) => TokenContents::Number(NumericConstant::U32(number as u32)),
+fn make_number_token(
+    number: i128,
+    suffix: Option<LiteralSuffix>,
+    span: Span,
+) -> (TokenContents, Option<JaktError>) {
+    let mut error = None;
+    (
+        match suffix {
+            Some(LiteralSuffix::U8) => TokenContents::Number(NumericConstant::U8(number as u8)),
+            Some(LiteralSuffix::U16) => TokenContents::Number(NumericConstant::U16(number as u16)),
+            Some(LiteralSuffix::U32) => TokenContents::Number(NumericConstant::U32(number as u32)),
 
-        // FIXME: This loses precision if usize is 64-bit
-        Some(LiteralSuffix::UZ) => TokenContents::Number(NumericConstant::USize(number as u64)),
+            // FIXME: This loses precision if usize is 64-bit
+            Some(LiteralSuffix::UZ) => TokenContents::Number(NumericConstant::USize(number as u64)),
 
-        // FIXME: This loses precision:
-        Some(LiteralSuffix::U64) => TokenContents::Number(NumericConstant::U64(number as u64)),
+            // FIXME: This loses precision:
+            Some(LiteralSuffix::U64) => TokenContents::Number(NumericConstant::U64(number as u64)),
 
-        Some(LiteralSuffix::I8) => TokenContents::Number(NumericConstant::I8(number as i8)),
-        Some(LiteralSuffix::I16) => TokenContents::Number(NumericConstant::I16(number as i16)),
-        Some(LiteralSuffix::I32) => TokenContents::Number(NumericConstant::I32(number as i32)),
-        Some(LiteralSuffix::I64) => TokenContents::Number(NumericConstant::I64(number)),
+            Some(LiteralSuffix::I8) => TokenContents::Number(NumericConstant::I8(number as i8)),
+            Some(LiteralSuffix::I16) => TokenContents::Number(NumericConstant::I16(number as i16)),
+            Some(LiteralSuffix::I32) => TokenContents::Number(NumericConstant::I32(number as i32)),
+            Some(LiteralSuffix::I64) => TokenContents::Number(NumericConstant::I64(number as i64)),
 
-        // FIXME: These 2 don't work at all:
-        Some(LiteralSuffix::F32) => TokenContents::Number(NumericConstant::I64(number as i64)),
-        Some(LiteralSuffix::F64) => TokenContents::Number(NumericConstant::I64(number as i64)),
+            // FIXME: These 2 don't work at all:
+            Some(LiteralSuffix::F32) => TokenContents::Number(NumericConstant::I64(number as i64)),
+            Some(LiteralSuffix::F64) => TokenContents::Number(NumericConstant::I64(number as i64)),
 
-        _ => TokenContents::Number(NumericConstant::I64(number)),
-    }
+            _ => {
+                // FIXME: We should use a generic "integer" type here that stores i128, and infer the type later.
+                // For now, just check the size of the integer and create an i64 or u64.
+                if number > i64::MAX.into() {
+                    if number <= u64::MAX.into() {
+                        TokenContents::Number(NumericConstant::U64(number as u64))
+                    } else {
+                        error = Some(JaktError::ParserError(
+                            format!("Integer literal {} too large", number),
+                            span,
+                        ));
+                        TokenContents::Garbage
+                    }
+                } else if number >= i64::MIN.into() {
+                    TokenContents::Number(NumericConstant::I64(number as i64))
+                } else {
+                    error = Some(JaktError::ParserError(
+                        format!("Integer literal {} too small", number),
+                        span,
+                    ));
+                    TokenContents::Garbage
+                }
+            }
+        },
+        error,
+    )
 }
 
 fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<JaktError>) {
@@ -648,21 +678,19 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
             );
         }
         let str = String::from_utf8_lossy(&bytes[start + 2..*index]).replace('_', "");
-        let number = i64::from_str_radix(&str, 16);
+        let number = i128::from_str_radix(&str, 16);
         let suffix = consume_numeric_literal_suffix(bytes, index);
+        let span = Span::new(file_id, start, *index);
         match number {
-            Ok(number) => (
-                Token::new(
-                    make_number_token(number, suffix),
-                    Span::new(file_id, start, *index),
-                ),
-                None,
-            ),
+            Ok(number) => {
+                let (token_contents, err) = make_number_token(number, suffix, span);
+                (Token::new(token_contents, span), err)
+            }
             Err(_) => (
-                Token::unknown(Span::new(file_id, start, *index)),
+                Token::unknown(span),
                 Some(JaktError::ParserError(
                     "could not parse hex".to_string(),
-                    Span::new(file_id, start, *index),
+                    span,
                 )),
             ),
         }
@@ -676,9 +704,10 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
         {
             *index += 1;
         }
+        let span = Span::new(file_id, start, *index);
         if bytes[*index - 1] == b'_' {
             return (
-                Token::unknown(Span::new(file_id, start, *index)),
+                Token::unknown(span),
                 Some(JaktError::ParserError(
                     "octal number literal cannot end with underscore".to_string(),
                     Span::new(file_id, start, *index),
@@ -686,21 +715,19 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
             );
         }
         let str = String::from_utf8_lossy(&bytes[start + 2..*index]).replace('_', "");
-        let number = i64::from_str_radix(&str, 8);
+        let number = i128::from_str_radix(&str, 8);
         let suffix = consume_numeric_literal_suffix(bytes, index);
+        let span = Span::new(file_id, start, *index);
         match number {
-            Ok(number) => (
-                Token::new(
-                    make_number_token(number, suffix),
-                    Span::new(file_id, start, *index),
-                ),
-                None,
-            ),
+            Ok(number) => {
+                let (token_contents, err) = make_number_token(number, suffix, span);
+                (Token::new(token_contents, span), err)
+            }
             Err(_) => (
-                Token::unknown(Span::new(file_id, start, *index)),
+                Token::unknown(span),
                 Some(JaktError::ParserError(
                     "could not parse octal number".to_string(),
-                    Span::new(file_id, start, *index),
+                    span,
                 )),
             ),
         }
@@ -725,21 +752,19 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
             );
         }
         let str = String::from_utf8_lossy(&bytes[start + 2..*index]).replace('_', "");
-        let number = i64::from_str_radix(&str, 2);
+        let number = i128::from_str_radix(&str, 2);
         let suffix = consume_numeric_literal_suffix(bytes, index);
+        let span = Span::new(file_id, start, *index);
         match number {
-            Ok(number) => (
-                Token::new(
-                    make_number_token(number, suffix),
-                    Span::new(file_id, start, *index),
-                ),
-                None,
-            ),
+            Ok(number) => {
+                let (token_contents, err) = make_number_token(number, suffix, span);
+                (Token::new(token_contents, span), err)
+            }
             Err(_) => (
-                Token::unknown(Span::new(file_id, start, *index)),
+                Token::unknown(span),
                 Some(JaktError::ParserError(
                     "could not parse binary number".to_string(),
-                    Span::new(file_id, start, *index),
+                    span,
                 )),
             ),
         }
@@ -761,21 +786,19 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
             );
         }
         let str = String::from_utf8_lossy(&bytes[start..*index]);
-        let number: Result<i64, _> = str.replace('_', "").parse();
+        let number: Result<i128, _> = str.replace('_', "").parse();
         let suffix = consume_numeric_literal_suffix(bytes, index);
+        let span = Span::new(file_id, start, *index);
         match number {
-            Ok(number) => (
-                Token::new(
-                    make_number_token(number, suffix),
-                    Span::new(file_id, start, *index),
-                ),
-                None,
-            ),
+            Ok(number) => {
+                let (token_contents, err) = make_number_token(number, suffix, span);
+                (Token::new(token_contents, span), err)
+            }
             Err(_) => (
-                Token::unknown(Span::new(file_id, start, *index)),
+                Token::unknown(span),
                 Some(JaktError::ParserError(
                     "could not parse int".to_string(),
-                    Span::new(file_id, start, *index),
+                    span,
                 )),
             ),
         }
