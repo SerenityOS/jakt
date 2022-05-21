@@ -42,6 +42,7 @@ pub enum UncheckedType {
     Name(String, Span),
     GenericType(String, Vec<UncheckedType>, Span),
     Array(Box<UncheckedType>, Span),
+    Set(Box<UncheckedType>, Span),
     Optional(Box<UncheckedType>, Span),
     RawPtr(Box<UncheckedType>, Span),
     Empty,
@@ -3608,13 +3609,16 @@ pub fn parse_variable_declaration(
     }
 }
 
-pub fn parse_array_type(tokens: &[Token], index: &mut usize) -> (UncheckedType, Option<JaktError>) {
-    // [T] is shorthand for Array<T>
+pub fn parse_shorthand_type(
+    tokens: &[Token],
+    index: &mut usize,
+) -> (UncheckedType, Option<JaktError>) {
     if *index + 2 >= tokens.len() {
         return (UncheckedType::Empty, None);
     }
     let start = tokens[*index].span;
     if let TokenContents::LSquare = &tokens[*index].contents {
+        // [T] is shorthand for Array<T>
         *index += 1;
         let (ty, err) = parse_typename(tokens, index);
         if let TokenContents::RSquare = &tokens[*index].contents {
@@ -3639,6 +3643,34 @@ pub fn parse_array_type(tokens: &[Token], index: &mut usize) -> (UncheckedType, 
                 tokens[*index].span,
             ))),
         )
+    } else if let TokenContents::LCurly = &tokens[*index].contents {
+        // {T} is shorthand for Set<T>
+        *index += 1;
+        let (ty, err) = parse_typename(tokens, index);
+        if let TokenContents::RCurly = &tokens[*index].contents {
+            *index += 1;
+            return (
+                UncheckedType::Set(
+                    Box::new(ty),
+                    Span {
+                        file_id: start.file_id,
+                        start: start.start,
+                        end: tokens[*index - 1].span.end,
+                    },
+                ),
+                err,
+            );
+        }
+
+        // TODO: Add {K:V} shorthand for Dictionary<K,V>?
+
+        (
+            UncheckedType::Empty,
+            err.or(Some(JaktError::ParserError(
+                "expected ]".to_string(),
+                tokens[*index].span,
+            ))),
+        )
     } else {
         (UncheckedType::Empty, None)
     }
@@ -3654,11 +3686,11 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (UncheckedType, Op
 
     trace!(format!("parse_typename: {:?}", tokens[*index]));
 
-    let (vector_type, err) = parse_array_type(tokens, index);
+    let (shorthand_type, err) = parse_shorthand_type(tokens, index);
     error = error.or(err);
 
-    if let UncheckedType::Array(..) = &vector_type {
-        return (vector_type, error);
+    if shorthand_type != UncheckedType::Empty {
+        return (shorthand_type, error);
     }
 
     match &tokens[*index] {
