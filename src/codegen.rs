@@ -427,18 +427,18 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
     output
 }
 
-fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String {
+fn codegen_function_predecl(function: &CheckedFunction, project: &Project) -> String {
     let mut output = String::new();
 
-    if fun.linkage == FunctionLinkage::External {
+    if function.linkage == FunctionLinkage::External {
         output.push_str("extern ");
     }
 
-    if !fun.generic_parameters.is_empty() {
+    if !function.generic_parameters.is_empty() {
         output.push_str("template <");
     }
     let mut first = true;
-    for generic_parameter in &fun.generic_parameters {
+    for generic_parameter in &function.generic_parameters {
         if !first {
             output.push_str(", ");
         } else {
@@ -451,27 +451,27 @@ fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String 
         };
         output.push_str(&codegen_type(id, project))
     }
-    if !fun.generic_parameters.is_empty() {
+    if !function.generic_parameters.is_empty() {
         output.push_str(">\n");
     }
 
-    if fun.name == "main" {
+    if function.name == "main" {
         output.push_str("ErrorOr<int>");
     } else {
-        let return_type = if fun.throws {
-            format!("ErrorOr<{}>", &codegen_type(fun.return_type, project))
+        let return_type = if function.throws {
+            format!("ErrorOr<{}>", &codegen_type(function.return_type, project))
         } else {
-            codegen_type(fun.return_type, project)
+            codegen_type(function.return_type, project)
         };
 
         output.push_str(&return_type);
     }
     output.push(' ');
-    output.push_str(&fun.name);
+    output.push_str(&function.name);
     output.push('(');
 
     let mut first = true;
-    for param in &fun.params {
+    for param in &function.params {
         if !first {
             output.push_str(", ");
         } else {
@@ -491,14 +491,14 @@ fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String 
     output
 }
 
-fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
+fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
     let mut output = String::new();
 
-    if !fun.generic_parameters.is_empty() {
+    if !function.generic_parameters.is_empty() {
         output.push_str("template <");
     }
     let mut first = true;
-    for generic_parameter in &fun.generic_parameters {
+    for generic_parameter in &function.generic_parameters {
         if !first {
             output.push_str(", ");
         } else {
@@ -511,37 +511,37 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
         };
         output.push_str(&codegen_type(id, project))
     }
-    if !fun.generic_parameters.is_empty() {
+    if !function.generic_parameters.is_empty() {
         output.push_str(">\n");
     }
 
-    if fun.name == "main" {
+    if function.name == "main" {
         output.push_str("ErrorOr<int>");
     } else {
-        let return_type = if fun.throws {
-            format!("ErrorOr<{}>", &codegen_type(fun.return_type, project))
+        let return_type = if function.throws {
+            format!("ErrorOr<{}>", &codegen_type(function.return_type, project))
         } else {
-            codegen_type(fun.return_type, project)
+            codegen_type(function.return_type, project)
         };
 
         output.push_str(&return_type);
     }
     output.push(' ');
-    if fun.name == "main" {
+    if function.name == "main" {
         output.push_str("_jakt_main");
     } else {
-        output.push_str(&fun.name);
+        output.push_str(&function.name);
     }
     output.push('(');
 
-    if fun.name == "main" && fun.params.is_empty() {
+    if function.name == "main" && function.params.is_empty() {
         output.push_str("Array<String>");
     }
 
     let mut first = true;
     let mut const_function = false;
 
-    for param in &fun.params {
+    for param in &function.params {
         if param.variable.name == "this" {
             const_function = !param.variable.mutable;
             continue;
@@ -568,38 +568,38 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
         output.push_str(" const");
     }
 
-    if fun.name == "main" {
+    if function.name == "main" {
         output.push('\n');
         output.push_str("{\n");
         output.push_str(&" ".repeat(INDENT_SIZE));
     }
 
     // Put the return type in scope.
-    if fun.name == "main" {
+    if function.name == "main" {
         output.push_str("using _JaktCurrentFunctionReturnType = ErrorOr<int>;\n");
     } else {
-        let return_type = fun.return_type;
+        let return_type = function.return_type;
         if return_type == UNKNOWN_TYPE_ID {
-            panic!("Function type unknown at codegen time in {}", fun.name);
+            panic!("Function type unknown at codegen time in {}", function.name);
         }
         output.push_str("{\n");
-        if fun.throws {
+        if function.throws {
             output.push_str(&format!(
                 "using _JaktCurrentFunctionReturnType = ErrorOr<{}>;\n",
-                codegen_type(fun.return_type, project)
+                codegen_type(function.return_type, project)
             ));
         } else {
             output.push_str(&format!(
                 "using _JaktCurrentFunctionReturnType = {};\n",
-                codegen_type(fun.return_type, project)
+                codegen_type(function.return_type, project)
             ));
         }
     }
 
-    let block = codegen_block(INDENT_SIZE, &fun.block, project);
+    let block = codegen_block(INDENT_SIZE, &function.block, project);
     output.push_str(&block);
 
-    if fun.name == "main" {
+    if function.name == "main" {
         output.push_str(&" ".repeat(INDENT_SIZE));
         output.push_str("return 0;\n");
     }
@@ -609,8 +609,8 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
     output
 }
 
-fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
-    let type_id = fun.return_type;
+fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String {
+    let type_id = function.return_type;
     let ty = &project.types[type_id];
 
     match ty {
@@ -618,12 +618,12 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
             let structure = &project.structs[*struct_id];
 
             if structure.definition_type == DefinitionType::Class {
-                let mut output = format!("static NonnullRefPtr<{}> create", fun.name);
+                let mut output = format!("static NonnullRefPtr<{}> create", function.name);
 
                 output.push('(');
 
                 let mut first = true;
-                for param in &fun.params {
+                for param in &function.params {
                     if !first {
                         output.push_str(", ");
                     } else {
@@ -635,9 +635,9 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
                     output.push(' ');
                     output.push_str(&param.variable.name);
                 }
-                output.push_str(&format!(") {{ auto o = adopt_ref(*new {}); ", fun.name));
+                output.push_str(&format!(") {{ auto o = adopt_ref(*new {}); ", function.name));
 
-                for param in &fun.params {
+                for param in &function.params {
                     output.push_str("o->");
                     output.push_str(&param.variable.name);
                     output.push_str(" = ");
@@ -651,11 +651,11 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
             } else {
                 let mut output = String::new();
 
-                output.push_str(&fun.name);
+                output.push_str(&function.name);
                 output.push('(');
 
                 let mut first = true;
-                for param in &fun.params {
+                for param in &function.params {
                     if !first {
                         output.push_str(", ");
                     } else {
@@ -669,12 +669,12 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
                 }
                 output.push_str(") ");
 
-                if !fun.params.is_empty() {
+                if !function.params.is_empty() {
                     output.push(':');
                 }
 
                 let mut first = true;
-                for param in &fun.params {
+                for param in &function.params {
                     if !first {
                         output.push_str(", ");
                     } else {
