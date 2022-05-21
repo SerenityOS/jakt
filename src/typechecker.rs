@@ -477,11 +477,15 @@ impl CheckedFunction {
 #[derive(Debug, Clone)]
 pub struct CheckedBlock {
     pub stmts: Vec<CheckedStatement>,
+    pub definitely_returns: bool,
 }
 
 impl CheckedBlock {
     pub fn new() -> Self {
-        Self { stmts: Vec::new() }
+        Self {
+            stmts: Vec::new(),
+            definitely_returns: false,
+        }
     }
 }
 
@@ -1622,6 +1626,7 @@ fn typecheck_function(
 
     let checked_function = &mut project.functions[function_id];
     let function_scope_id = checked_function.function_scope_id;
+    let function_linkage = checked_function.linkage;
 
     let mut param_vars = Vec::new();
     for param in &checked_function.params {
@@ -1668,6 +1673,17 @@ fn typecheck_function(
         function_return_type
     };
 
+    if function_linkage != FunctionLinkage::External
+        && return_type != VOID_TYPE_ID
+        && !block.definitely_returns
+    {
+        // FIXME: Use better span
+        error = error.or(Some(JaktError::TypecheckError(
+            "Control reaches end of non-void function".to_string(),
+            function.name_span,
+        )));
+    }
+
     let checked_function = &mut project.functions[function_id];
 
     checked_function.block = block;
@@ -1685,6 +1701,7 @@ fn typecheck_method(
 
     let structure = &mut project.structs[struct_id];
     let structure_scope_id = structure.scope_id;
+    let structure_linkage = structure.definition_linkage;
 
     let method_id = project.find_function_in_scope(structure_scope_id, &function.name);
 
@@ -1730,12 +1747,44 @@ fn typecheck_method(
         function_return_type
     };
 
+    if structure_linkage != DefinitionLinkage::External
+        && return_type != VOID_TYPE_ID
+        && !block.definitely_returns
+    {
+        // FIXME: Use better span
+        error = error.or(Some(JaktError::TypecheckError(
+            "Control reaches end of non-void function".to_string(),
+            function.name_span,
+        )));
+    }
+
     let checked_function = &mut project.functions[method_id];
 
     checked_function.block = block;
     checked_function.return_type = return_type;
 
     error
+}
+
+pub fn statement_definitely_returns(stmt: &CheckedStatement) -> bool {
+    match stmt {
+        CheckedStatement::Return(_) => true,
+        CheckedStatement::If(_, then_block, optional_else_stmt) => {
+            // TODO: Things like `if true` should be also accepted as
+            //       definitely returning, if we can prove at typecheck time
+            //       that it's always truthy.
+            if let Some(else_stmt) = optional_else_stmt {
+                then_block.definitely_returns && statement_definitely_returns(else_stmt.as_ref())
+            } else {
+                false
+            }
+        }
+        CheckedStatement::Block(block) => block.definitely_returns,
+        CheckedStatement::Loop(block) => block.definitely_returns,
+        CheckedStatement::While(_, block) => block.definitely_returns,
+        CheckedStatement::For(_, _, block) => block.definitely_returns,
+        _ => false,
+    }
 }
 
 pub fn typecheck_block(
@@ -1752,6 +1801,10 @@ pub fn typecheck_block(
     for stmt in &block.stmts {
         let (checked_stmt, err) = typecheck_statement(stmt, block_scope_id, project, safety_mode);
         error = error.or(err);
+
+        if statement_definitely_returns(&checked_stmt) {
+            checked_block.definitely_returns = true;
+        }
 
         checked_block.stmts.push(checked_stmt);
     }

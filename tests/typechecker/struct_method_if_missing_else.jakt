@@ -1,0 +1,14 @@
+struct Foo {
+    value: i32,
+
+    function get_value(this) -> i32 {
+        if this.value > 3 {
+            return this.value
+        }
+    }
+}
+
+function main() {
+    let foo = Foo(value: 1)
+    println("{}", foo.get_value())
+}

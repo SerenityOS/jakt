@@ -1,0 +1,9 @@
+function foo() -> i32 {
+    loop {
+        return 684
+    }
+}
+
+function main() {
+    println("{}", foo())
+}
