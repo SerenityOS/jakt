@@ -1,0 +1,9 @@
+namespace Greeters {
+    function greet() {
+        println("Well, hello friends")
+    }
+}
+
+function main() {
+    Greeters::greet()
+}
