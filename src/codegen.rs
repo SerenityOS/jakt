@@ -264,12 +264,9 @@ fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
     output.push_str(&enum_.name);
     output.push_str(" : public Variant<");
     let mut variant_args = String::new();
-    let mut first = true;
     let mut variant_names = Vec::new();
-    for variant in &enum_.variants {
-        if first {
-            first = false;
-        } else {
+    for (idx, variant) in enum_.variants.iter().enumerate() {
+        if idx > 0 {
             variant_args.push_str(", ");
         }
         match variant {
@@ -326,12 +323,9 @@ fn codegen_struct_predecl(structure: &CheckedStruct, project: &Project) -> Strin
         if !structure.generic_parameters.is_empty() {
             output.push_str("template <");
         }
-        let mut first = true;
-        for generic_parameter in &structure.generic_parameters {
-            if !first {
+        for (idx, generic_parameter) in structure.generic_parameters.iter().enumerate() {
+            if idx > 0 {
                 output.push_str(", ");
-            } else {
-                first = false;
             }
             output.push_str("typename ");
             output.push_str(&codegen_type(*generic_parameter, project))
@@ -361,12 +355,9 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
     if !structure.generic_parameters.is_empty() {
         output.push_str("template <");
     }
-    let mut first = true;
-    for generic_parameter in &structure.generic_parameters {
-        if !first {
+    for (idx, generic_parameter) in structure.generic_parameters.iter().enumerate() {
+        if idx > 0 {
             output.push_str(", ");
-        } else {
-            first = false;
         }
         output.push_str("typename ");
         output.push_str(&codegen_type(*generic_parameter, project))
@@ -437,12 +428,9 @@ fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String 
     if !fun.generic_parameters.is_empty() {
         output.push_str("template <");
     }
-    let mut first = true;
-    for generic_parameter in &fun.generic_parameters {
-        if !first {
+    for (idx, generic_parameter) in fun.generic_parameters.iter().enumerate() {
+        if idx > 0 {
             output.push_str(", ");
-        } else {
-            first = false;
         }
         output.push_str("typename ");
         let id = match generic_parameter {
@@ -470,12 +458,9 @@ fn codegen_function_predecl(fun: &CheckedFunction, project: &Project) -> String 
     output.push_str(&fun.name);
     output.push('(');
 
-    let mut first = true;
-    for param in &fun.params {
-        if !first {
+    for (idx, param) in fun.params.iter().enumerate() {
+        if idx > 0 {
             output.push_str(", ");
-        } else {
-            first = false;
         }
 
         if !param.variable.mutable {
@@ -497,12 +482,9 @@ fn codegen_function(fun: &CheckedFunction, project: &Project) -> String {
     if !fun.generic_parameters.is_empty() {
         output.push_str("template <");
     }
-    let mut first = true;
-    for generic_parameter in &fun.generic_parameters {
-        if !first {
+    for (idx, generic_parameter) in fun.generic_parameters.iter().enumerate() {
+        if idx > 0 {
             output.push_str(", ");
-        } else {
-            first = false;
         }
         output.push_str("typename ");
         let id = match generic_parameter {
@@ -622,12 +604,9 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
 
                 output.push('(');
 
-                let mut first = true;
-                for param in &fun.params {
-                    if !first {
+                for (idx, param) in fun.params.iter().enumerate() {
+                    if idx > 0 {
                         output.push_str(", ");
-                    } else {
-                        first = false;
                     }
 
                     let ty = codegen_type(param.variable.ty, project);
@@ -654,12 +633,9 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
                 output.push_str(&fun.name);
                 output.push('(');
 
-                let mut first = true;
-                for param in &fun.params {
-                    if !first {
+                for (idx, param) in fun.params.iter().enumerate() {
+                    if idx > 0 {
                         output.push_str(", ");
-                    } else {
-                        first = false;
                     }
 
                     let ty = codegen_type(param.variable.ty, project);
@@ -673,12 +649,9 @@ fn codegen_constructor(fun: &CheckedFunction, project: &Project) -> String {
                     output.push(':');
                 }
 
-                let mut first = true;
-                for param in &fun.params {
-                    if !first {
+                for (idx, param) in fun.params.iter().enumerate() {
+                    if idx > 0 {
                         output.push_str(", ");
-                    } else {
-                        first = false;
                     }
 
                     output.push_str(&param.variable.name);
@@ -738,12 +711,9 @@ pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
             ));
             output.push_str(&project.structs[*struct_id].name.clone());
             output.push('<');
-            let mut first = true;
-            for ty in inner_tys {
-                if !first {
+            for (idx, ty) in inner_tys.iter().enumerate() {
+                if idx > 0 {
                     output.push_str(", ");
-                } else {
-                    first = false;
                 }
 
                 output.push_str(&codegen_type(*ty, project));
@@ -759,12 +729,9 @@ pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
             ));
             output.push_str(&project.enums[*enum_id].name);
             output.push('<');
-            let mut first = true;
-            for ty in inner_tys {
-                if !first {
+            for (idx, ty) in inner_tys.iter().enumerate() {
+                if idx > 0 {
                     output.push_str(", ");
-                } else {
-                    first = false;
                 }
 
                 output.push_str(&codegen_type(*ty, project));
@@ -1141,12 +1108,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
 
                 if !call.type_args.is_empty() {
                     output.push('<');
-                    let mut first = true;
-                    for type_arg in &call.type_args {
-                        if !first {
+                    for (idx, type_arg) in call.type_args.iter().enumerate() {
+                        if idx > 0 {
                             output.push_str(", ")
-                        } else {
-                            first = false;
                         }
 
                         output.push_str(&codegen_type(*type_arg, project));
@@ -1156,12 +1120,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
 
                 output.push('(');
 
-                let mut first = true;
-                for param in &call.args {
-                    if !first {
+                for (idx, param) in call.args.iter().enumerate() {
+                    if idx > 0 {
                         output.push_str(", ");
-                    } else {
-                        first = false;
                     }
 
                     output.push_str(&codegen_expr(indent, &param.1, project));
@@ -1208,12 +1169,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
 
             output.push_str(&call.name);
             output.push('(');
-            let mut first = true;
-            for param in &call.args {
-                if !first {
+            for (idx, param) in call.args.iter().enumerate() {
+                if idx > 0 {
                     output.push_str(", ");
-                } else {
-                    first = false;
                 }
 
                 output.push_str(&codegen_expr(indent, &param.1, project));
@@ -1276,12 +1234,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN((");
                     output.push_str(&codegen_expr(indent, expr, project));
                     output.push_str(").visit(");
-                    let mut first = true;
-                    for case in cases {
-                        if !first {
+                    for (idx, case) in cases.iter().enumerate() {
+                        if idx > 0 {
                             output.push_str(", ");
-                        } else {
-                            first = false;
                         }
                         output.push_str("[&] (");
                         match case {
@@ -1559,12 +1514,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             } else {
                 // (Array({1, 2, 3}))
                 output.push_str("(Array({");
-                let mut first = true;
-                for val in vals {
-                    if !first {
+                for (idx, val) in vals.iter().enumerate() {
+                    if idx > 0 {
                         output.push_str(", ");
-                    } else {
-                        first = false;
                     }
 
                     output.push_str(&codegen_expr(indent, val, project))
@@ -1582,12 +1534,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 codegen_type(key_type_id, project),
                 codegen_type(value_type_id, project),
             ));
-            let mut first = true;
-            for (key, value) in vals {
-                if !first {
+            for (idx, (key, value)) in vals.iter().enumerate() {
+                if idx > 0 {
                     output.push_str(", ");
-                } else {
-                    first = false;
                 }
 
                 output.push('{');
@@ -1606,12 +1555,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 "(Set<{}>({{",
                 codegen_type(value_type_id, project),
             ));
-            let mut first = true;
-            for value in values {
-                if !first {
+            for (idx, value) in values.iter().enumerate() {
+                if idx > 0 {
                     output.push_str(", ");
-                } else {
-                    first = false;
                 }
                 output.push_str(&codegen_expr(indent, value, project));
             }
@@ -1620,12 +1566,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         CheckedExpression::Tuple(vals, _, _) => {
             // (Tuple{1, 2, 3})
             output.push_str("(Tuple{");
-            let mut first = true;
-            for val in vals {
-                if !first {
+            for (idx, val) in vals.iter().enumerate() {
+                if idx > 0 {
                     output.push_str(", ");
-                } else {
-                    first = false;
                 }
 
                 output.push_str(&codegen_expr(indent, val, project))
