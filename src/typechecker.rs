@@ -931,6 +931,7 @@ pub enum CheckedStatement {
         Option<Box<CheckedStatement>>, // optional else case
     ),
     Block(CheckedBlock),
+    Must(CheckedBlock),
     Loop(CheckedBlock),
     While(CheckedExpression, CheckedBlock),
     Return(CheckedExpression),
@@ -1194,6 +1195,7 @@ pub enum CheckedExpression {
         TypeId,
         bool,
     ),
+    Must(Box<CheckedExpression>, Span, TypeId),
 
     Call(CheckedCall, Span, TypeId),
     MethodCall(Box<CheckedExpression>, CheckedCall, Span, TypeId),
@@ -1239,6 +1241,7 @@ impl CheckedExpression {
             CheckedExpression::ForcedUnwrap(_, _, type_id) => *type_id,
             CheckedExpression::Match(_, _, _, type_id, _) => *type_id,
             CheckedExpression::Block(_, _, type_id) => *type_id,
+            CheckedExpression::Must(_, _, ty) => *ty,
             CheckedExpression::Garbage(_) => UNKNOWN_TYPE_ID,
         }
     }
@@ -1274,6 +1277,7 @@ impl CheckedExpression {
             CheckedExpression::ForcedUnwrap(_, span, _) => *span,
             CheckedExpression::Match(_, _, span, _, _) => *span,
             CheckedExpression::Block(_, span, _) => *span,
+            CheckedExpression::Must(_, span, _) => *span,
             CheckedExpression::Garbage(span) => *span,
         }
     }
@@ -3356,6 +3360,11 @@ pub fn typecheck_statement(
 
             (CheckedStatement::Block(checked_block), err)
         }
+        ParsedStatement::Must(block) => {
+            let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
+
+            (CheckedStatement::Must(checked_block), err)
+        }
         ParsedStatement::VarDecl(var_decl, init) => {
             let (mut checked_type_id, typename_err) =
                 typecheck_typename(&var_decl.parsed_type, scope_id, project);
@@ -4355,6 +4364,22 @@ pub fn typecheck_expression(
 
             (
                 CheckedExpression::Tuple(checked_items, *span, type_id),
+                error,
+            )
+        }
+        ParsedExpression::Must(expr, span) => {
+            let (checked_interior, mut error) =
+                typecheck_expression(expr, scope_id, project, safety_mode, type_hint);
+            let (interior_type, err) = unify_with_type(
+                // TODO: Check whether scope 0 is correct for this case
+                checked_interior.type_id(0, project),
+                type_hint,
+                *span,
+                project,
+            );
+            error = error.or(err);
+            (
+                CheckedExpression::Must(Box::new(checked_interior), *span, interior_type),
                 error,
             )
         }

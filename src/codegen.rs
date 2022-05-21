@@ -1991,6 +1991,27 @@ fn codegen_statement(
             output.push_str(&codegen_expr(indent, expr, project, context));
             output.push_str(";\n");
         }
+        CheckedStatement::Must(block) => {
+            // TODO: We should be showing the jakt source file/line number when an error is caught,
+            //       not the source file/line number of the generated C++.
+            output.push('{');
+            output.push_str(&codegen_indent(indent + INDENT_SIZE));
+            output.push_str("auto _jakt_try_result = [&]() -> ErrorOr<void> {\n");
+            output.push_str(&codegen_block(
+                indent + 2 * INDENT_SIZE,
+                block,
+                project,
+                context,
+            ));
+            output.push_str(&codegen_indent(indent + 2 * INDENT_SIZE));
+            output.push_str("return {};\n");
+            output.push_str(&codegen_indent(indent + INDENT_SIZE));
+            output.push_str("}();\n");
+            output.push_str(&codegen_indent(indent + INDENT_SIZE));
+            output.push_str("MUST(_jakt_try_result);");
+            output.push_str(&codegen_indent(indent));
+            output.push('}');
+        }
         CheckedStatement::Block(checked_block) => {
             let block = codegen_block(indent, checked_block, project, context);
             output.push('{');
@@ -2892,6 +2913,19 @@ fn codegen_expr(
             if call.callee_throws {
                 output.push(')');
             }
+        }
+        CheckedExpression::Must(expr, _, type_id) => {
+            // TODO: We should be showing the jakt source file/line number when an error is caught,
+            //       not the source file/line number of the generated C++.
+            output.push_str("MUST(([&]() -> ErrorOr<");
+            output.push_str(&codegen_type(*type_id, project));
+            output.push_str("> {\n");
+            output.push_str(&codegen_indent(indent + INDENT_SIZE));
+            output.push_str("return ");
+            output.push_str(&codegen_expr(indent + INDENT_SIZE, expr, project, context));
+            output.push_str(";\n");
+            output.push_str(&codegen_indent(indent));
+            output.push_str("})())\n");
         }
         CheckedExpression::Match(expr, cases, _, return_type_id, match_values_are_all_constant) => {
             let match_values_are_all_constant = *match_values_are_all_constant;

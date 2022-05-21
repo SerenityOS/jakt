@@ -224,6 +224,7 @@ pub enum ParsedStatement {
     Yield(ParsedExpression, Span),
     Throw(ParsedExpression),
     Try(Box<ParsedStatement>, String, Span, ParsedBlock),
+    Must(Box<ParsedBlock>),
     InlineCpp(ParsedBlock, Span),
     Garbage,
 }
@@ -291,6 +292,7 @@ pub enum ParsedExpression {
     Tuple(Vec<ParsedExpression>, Span),
     Range(Box<ParsedExpression>, Box<ParsedExpression>, Span),
     Match(Box<ParsedExpression>, Vec<MatchCase>, Span),
+    Must(Box<ParsedExpression>, Span),
 
     IndexedTuple(Box<ParsedExpression>, usize, Span),
     IndexedStruct(Box<ParsedExpression>, String, Span),
@@ -338,6 +340,7 @@ impl ParsedExpression {
             ParsedExpression::OptionalSome(_, span) => *span,
             ParsedExpression::ForcedUnwrap(_, span) => *span,
             ParsedExpression::Match(_, _, span) => *span,
+            ParsedExpression::Must(_, span) => *span,
             ParsedExpression::Garbage(span) => *span,
         }
     }
@@ -1967,6 +1970,15 @@ pub fn parse_statement(
 
             (ParsedStatement::While(cond, block), error)
         }
+        TokenContents::Name(name) if name == "must" => {
+            trace!("parsing must");
+
+            *index += 1;
+
+            let (block, err) = parse_block(tokens, index);
+            error = error.or(err);
+            (ParsedStatement::Must(Box::new(block)), error)
+        }
         TokenContents::Name(name) if name == "try" => {
             trace!("parsing try");
 
@@ -2816,6 +2828,22 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
             };
 
             ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::LogicalNot, span)
+        }
+        TokenContents::Name(name) if name == "must" => {
+            let start_span = tokens[*index].span;
+
+            *index += 1;
+
+            let (expr, err) = parse_operand(tokens, index);
+            error = error.or(err);
+
+            let span = Span {
+                file_id: start_span.file_id,
+                start: start_span.start,
+                end: expr.span().end,
+            };
+
+            ParsedExpression::Must(Box::new(expr), span)
         }
         TokenContents::Name(name) if name == "match" => {
             let start_span = tokens[*index].span;
