@@ -219,6 +219,22 @@ function main() {
 }
 ```
 
+### Declaring dictionaries
+
+```jakt
+// Function that takes a Dictionary<i64, String> and returns an Dictionary<String, bool>
+function foo(numbers: [i64:String]) -> [String:bool] {
+    ...
+}
+```
+
+### Shorthand for creating dictionaries
+
+```jakt
+// Dictionary<String, i64> with 3 entries.
+let values = ["foo": 500, "bar": 600, "baz": 700]
+```
+
 ## Sets
 
 - [x] Creating sets

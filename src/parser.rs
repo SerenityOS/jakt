@@ -42,6 +42,7 @@ pub enum ParsedType {
     Name(String, Span),
     GenericType(String, Vec<ParsedType>, Span),
     Array(Box<ParsedType>, Span),
+    Dictionary(Box<ParsedType>, Box<ParsedType>, Span),
     Set(Box<ParsedType>, Span),
     Optional(Box<ParsedType>, Span),
     RawPtr(Box<ParsedType>, Span),
@@ -3764,22 +3765,47 @@ pub fn parse_shorthand_type(
     let start = tokens[*index].span;
     if let TokenContents::LSquare = &tokens[*index].contents {
         // [T] is shorthand for Array<T>
+        // [K:V] is shorthand for Dictionary<K, V>
         *index += 1;
         let (ty, err) = parse_typename(tokens, index);
-        if let TokenContents::RSquare = &tokens[*index].contents {
-            *index += 1;
-            return (
-                ParsedType::Array(
-                    Box::new(ty),
-                    Span {
-                        file_id: start.file_id,
-                        start: start.start,
-                        end: tokens[*index - 1].span.end,
-                    },
-                ),
-                err,
-            );
-        }
+        match &tokens[*index].contents {
+            TokenContents::RSquare => {
+                *index += 1;
+                return (
+                    ParsedType::Array(
+                        Box::new(ty),
+                        Span {
+                            file_id: start.file_id,
+                            start: start.start,
+                            end: tokens[*index - 1].span.end,
+                        },
+                    ),
+                    err,
+                );
+            }
+            TokenContents::Colon => {
+                *index += 1;
+                let (value_ty, value_err) = parse_typename(tokens, index);
+                if *index < tokens.len() {
+                    if let TokenContents::RSquare = &tokens[*index].contents {
+                        *index += 1;
+                        return (
+                            ParsedType::Dictionary(
+                                Box::new(ty),
+                                Box::new(value_ty),
+                                Span {
+                                    file_id: start.file_id,
+                                    start: start.start,
+                                    end: tokens[*index - 1].span.end,
+                                },
+                            ),
+                            err.or(value_err),
+                        );
+                    }
+                }
+            }
+            _ => {}
+        };
 
         (
             ParsedType::Empty,
@@ -3806,8 +3832,6 @@ pub fn parse_shorthand_type(
                 err,
             );
         }
-
-        // TODO: Add {K:V} shorthand for Dictionary<K,V>?
 
         (
             ParsedType::Empty,
