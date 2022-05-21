@@ -876,6 +876,22 @@ impl Scope {
             children: Vec::new(),
         }
     }
+
+    pub fn can_access(own: ScopeId, other: ScopeId, project: &Project) -> bool {
+        // We can access another scope if we're either the same scope, or we are a direct children scope of the other scope.
+        if own == other {
+            true
+        } else {
+            let mut own_scope = &project.scopes[own];
+            while let Some(parent) = own_scope.parent {
+                if parent == other {
+                    return true;
+                }
+                own_scope = &project.scopes[parent];
+            }
+            false
+        }
+    }
 }
 
 pub fn typecheck_namespace(
