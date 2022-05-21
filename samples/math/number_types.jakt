@@ -9,4 +9,7 @@ function main() {
     let h: u64 = 0;
     let i: f32 = 0;
     let j: f64 = 0;
+
+    let large_u64 = 18_446_744_073_709_551_615
+    let small_i64 = -9_223_372_036_854_775_808
 }
