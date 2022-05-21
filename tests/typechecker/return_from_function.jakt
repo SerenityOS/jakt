@@ -1,0 +1,7 @@
+function foo() -> i32 {
+    return 1
+}
+
+function main() {
+    println("{}", foo())
+}

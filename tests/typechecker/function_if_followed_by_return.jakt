@@ -1,0 +1,12 @@
+function foo() -> i32 {
+    if false {
+        return 123
+    }
+    // It's okay that we're missing an else branch here, since the function
+    // eventually definitely returns here:
+    return 456
+}
+
+function main() {
+    println("{}", foo())
+}

@@ -215,6 +215,11 @@ fn test_parser() -> Result<(), JaktError> {
 }
 
 #[test]
+fn test_typechecker() -> Result<(), JaktError> {
+    test_samples("tests/typechecker")
+}
+
+#[test]
 fn test_sets() -> Result<(), JaktError> {
     test_samples("samples/sets")
 }

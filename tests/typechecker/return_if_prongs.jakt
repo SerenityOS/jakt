@@ -1,0 +1,11 @@
+function foo() -> i32 {
+    if true {
+        return 123
+    } else {
+        return 456
+    }
+}
+
+function main() {
+    println("{}", foo())
+}

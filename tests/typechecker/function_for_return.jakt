@@ -1,0 +1,9 @@
+function foo() -> i32 {
+    for i in 1..10 {
+        return 187
+    }
+}
+
+function main() {
+    println("{}", foo())
+}
