@@ -1013,6 +1013,23 @@
         </dict>
         <dict>
           <key>match</key>
+          <string>(?:(-?0o(?:[0-7]|_(?!=_))+)(\w+)?)</string>
+          <key>captures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>constant.numeric.Jakt</string>
+            </dict>
+            <key>2</key>
+            <dict>
+              <key>name</key>
+              <string>entity.name.type.Jakt</string>
+            </dict>
+          </dict>
+        </dict>
+        <dict>
+          <key>match</key>
           <string>(?:(-?0b(?:[01]|_(?!=_))+)(\w+)?)</string>
           <key>captures</key>
           <dict>
