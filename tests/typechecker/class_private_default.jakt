@@ -1,0 +1,11 @@
+class GoodEncapsulation {
+    function cant_touch(this) {}
+    public function oraoraora(this) {}
+}
+
+function main() {
+    let encapsulated = GoodEncapsulation()
+    // This is okay!
+    encapsulated.oraoraora()
+    encapsulated.cant_touch()
+}
