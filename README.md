@@ -124,7 +124,7 @@ class Size {
     width: i64
     height: i64
 
-    public function area(this) => width * height
+    public function area(this) => this.width * this.height
 }
 ```
 
