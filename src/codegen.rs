@@ -602,6 +602,9 @@ fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
     if function.name == "main" {
         output.push_str(&codegen_indent(INDENT_SIZE));
         output.push_str("return 0;\n");
+    } else if function.throws && function.return_type == VOID_TYPE_ID {
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str("return {};\n");
     }
 
     output.push_str("}\n");
