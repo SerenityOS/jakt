@@ -826,6 +826,7 @@ pub enum CheckedExpression {
     Call(CheckedCall, Span, TypeId),
     MethodCall(Box<CheckedExpression>, CheckedCall, Span, TypeId),
 
+    NamespacedVar(Vec<CheckedNamespace>, CheckedVariable, Span),
     Var(CheckedVariable, Span),
 
     OptionalNone(Span, TypeId),
@@ -857,6 +858,7 @@ impl CheckedExpression {
             CheckedExpression::IndexedStruct(_, _, _, ty) => *ty,
             CheckedExpression::MethodCall(_, _, _, ty) => *ty,
             CheckedExpression::Var(CheckedVariable { ty, .. }, _) => *ty,
+            CheckedExpression::NamespacedVar(_, CheckedVariable { ty, .. }, _) => *ty,
             CheckedExpression::OptionalNone(_, ty) => *ty,
             CheckedExpression::OptionalSome(_, _, ty) => *ty,
             CheckedExpression::ForcedUnwrap(_, _, ty) => *ty,
@@ -885,6 +887,7 @@ impl CheckedExpression {
             CheckedExpression::IndexedStruct(_, _, span, _) => *span,
             CheckedExpression::MethodCall(_, _, span, _) => *span,
             CheckedExpression::Var(_, span) => *span,
+            CheckedExpression::NamespacedVar(_, _, span) => *span,
             CheckedExpression::OptionalNone(span, _) => *span,
             CheckedExpression::OptionalSome(_, span, _) => *span,
             CheckedExpression::ForcedUnwrap(_, span, _) => *span,
@@ -1180,6 +1183,18 @@ fn typecheck_enum(
                                 *span,
                             ));
                             next_constant_value = Some(next_constant_value? + 1);
+
+                            // This has a value, so generate a "variable" for it.
+                            let err = project.add_var_to_scope(
+                                enum_scope_id,
+                                CheckedVariable {
+                                    name: name.clone(),
+                                    ty: enum_type_id,
+                                    mutable: false,
+                                },
+                                *span,
+                            );
+                            error = error.or(err.err());
                         }
                     } else {
                         variants.push(CheckedEnumVariant::Untyped(name.clone(), *span));
@@ -1257,7 +1272,17 @@ fn typecheck_enum(
                         *span,
                     ));
 
-                    // FIXME: Generate a constructor
+                    // This has a value, so generate a "variable" for it.
+                    let err = project.add_var_to_scope(
+                        enum_scope_id,
+                        CheckedVariable {
+                            name: name.clone(),
+                            ty: enum_type_id,
+                            mutable: false,
+                        },
+                        *span,
+                    );
+                    error = error.or(err.err());
                 }
             }
             EnumVariant::StructLike(name, members, span) => {
@@ -2443,6 +2468,74 @@ pub fn typecheck_expression(
                 )
             }
         }
+        ParsedExpression::NamespacedVar(v, ns, span) => {
+            let scopes = ns.iter().fold(vec![Some(scope_id)], |mut scopes, ns| {
+                let scope = scopes.last().unwrap().and_then(|scope_id|
+                    // Could either be a namespace or an enum with an underlying type, prefer the namespace.
+                    project
+                        .find_namespace_in_scope(scope_id, ns)
+                        .or_else(||
+                            project
+                                .find_enum_in_scope(scope_id, ns)
+                                .map(|id| project.enums[id].scope_id)
+                        ));
+
+                scopes.push(scope);
+                scopes
+            });
+
+            let scope = *scopes.last().unwrap();
+            let checked_namespace = scopes
+                .iter()
+                .zip(ns.iter())
+                .map(|(scope, ns)| CheckedNamespace {
+                    name: Some(ns.clone()),
+                    scope: scope.unwrap(),
+                })
+                .collect();
+
+            match scope {
+                Some(scope_id) => {
+                    if let Some(var) = project.find_var_in_scope(scope_id, v) {
+                        (
+                            CheckedExpression::NamespacedVar(checked_namespace, var, *span),
+                            None,
+                        )
+                    } else {
+                        (
+                            CheckedExpression::NamespacedVar(
+                                checked_namespace,
+                                CheckedVariable {
+                                    name: v.clone(),
+                                    ty: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
+                                    mutable: false,
+                                },
+                                *span,
+                            ),
+                            Some(JaktError::TypecheckError(
+                                "variable not found".to_string(),
+                                *span,
+                            )),
+                        )
+                    }
+                }
+                None => (
+                    CheckedExpression::NamespacedVar(
+                        checked_namespace,
+                        CheckedVariable {
+                            name: v.clone(),
+                            ty: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
+                            mutable: false,
+                        },
+                        *span,
+                    ),
+                    Some(JaktError::TypecheckError(
+                        "namespace not found".to_string(),
+                        *span,
+                    )),
+                ),
+            }
+        }
         ParsedExpression::Array(vec, fill_size_expr, span) => {
             let mut inner_ty = UNKNOWN_TYPE_ID;
             let mut output = Vec::new();
@@ -2824,24 +2917,24 @@ pub fn typecheck_expression(
                                                     CheckedEnumVariant::Untyped(name, _) => {
                                                         if !args.is_empty() {
                                                             error = error.or(Some(JaktError::TypecheckError(
-                                                            format!(
-                                                                "match case '{}' cannot have arguments",
-                                                                name
-                                                            ),
-                                                            *arg_span,
-                                                        )));
+                                                                format!(
+                                                                    "match case '{}' cannot have arguments",
+                                                                    name
+                                                                ),
+                                                                *arg_span,
+                                                            )));
                                                         }
                                                     }
                                                     CheckedEnumVariant::Typed(name, ty, span) => {
                                                         if !args.is_empty() {
                                                             if args.len() != 1 {
                                                                 error = error.or(Some(JaktError::TypecheckError(
-                                                                format!(
-                                                                    "match case '{}' must have exactly one argument",
-                                                                    name
-                                                                ),
-                                                                *arg_span,
-                                                            )));
+                                                                    format!(
+                                                                        "match case '{}' must have exactly one argument",
+                                                                        name
+                                                                    ),
+                                                                    *arg_span,
+                                                                )));
                                                             }
                                                             let span = *span;
 
@@ -2863,12 +2956,12 @@ pub fn typecheck_expression(
                                                     CheckedEnumVariant::WithValue(name, _, _) => {
                                                         if !args.is_empty() {
                                                             error = error.or(Some(JaktError::TypecheckError(
-                                                            format!(
-                                                                "match case '{}' cannot have arguments",
-                                                                name
-                                                            ),
-                                                            *arg_span,
-                                                        )));
+                                                                format!(
+                                                                    "match case '{}' cannot have arguments",
+                                                                    name
+                                                                ),
+                                                                *arg_span,
+                                                            )));
                                                         }
                                                     }
                                                     CheckedEnumVariant::StructLike(
@@ -2885,20 +2978,20 @@ pub fn typecheck_expression(
                                                             let name = &arg.0;
                                                             if name.is_none() {
                                                                 error = error.or(Some(JaktError::TypecheckError(
-                                                                format!("match case argument '{}' for struct-like enum variant cannot be anonymous", arg.1),
-                                                                *arg_span,
-                                                            )));
+                                                                    format!("match case argument '{}' for struct-like enum variant cannot be anonymous", arg.1),
+                                                                    *arg_span,
+                                                                )));
                                                             } else {
                                                                 let name =
                                                                     name.as_ref().unwrap().clone();
                                                                 if names_seen.contains_key(&name) {
                                                                     error = error.or(Some(JaktError::TypecheckError(
-                                                                    format!(
-                                                                        "match case argument '{}' is already defined",
-                                                                        name
-                                                                    ),
-                                                                    *arg_span,
-                                                                )));
+                                                                        format!(
+                                                                            "match case argument '{}' is already defined",
+                                                                            name
+                                                                        ),
+                                                                        *arg_span,
+                                                                    )));
                                                                 } else {
                                                                     names_seen
                                                                         .insert(name.clone(), ());
@@ -2907,20 +3000,21 @@ pub fn typecheck_expression(
                                                                         .find(|f| f.name == name)
                                                                         .map(|f| f.ty);
 
-                                                                    let field_type =
-                                                                        if let Some(field_type) =
-                                                                            field_type
-                                                                        {
-                                                                            Some(
-                                                                        substitute_typevars_in_type(
-                                                                            field_type,
-                                                                            &generic_parameters,
-                                                                            project,
-                                                                        ),
-                                                                    )
-                                                                        } else {
-                                                                            field_type
-                                                                        };
+                                                                    let field_type = if let Some(
+                                                                        field_type,
+                                                                    ) =
+                                                                        field_type
+                                                                    {
+                                                                        Some(
+                                                                                substitute_typevars_in_type(
+                                                                                    field_type,
+                                                                                    &generic_parameters,
+                                                                                    project,
+                                                                                ),
+                                                                            )
+                                                                    } else {
+                                                                        field_type
+                                                                    };
 
                                                                     match field_type {
                                                                         Some(ty) => {
@@ -2938,9 +3032,9 @@ pub fn typecheck_expression(
                                                                         }
                                                                         None => {
                                                                             error = error.or(Some(JaktError::TypecheckError(
-                                                                            format!("match case argument '{}' does not exist in struct-like enum variant '{}'", name, variant_name),
-                                                                            *arg_span,
-                                                                        )));
+                                                                                format!("match case argument '{}' does not exist in struct-like enum variant '{}'", name, variant_name),
+                                                                                *arg_span,
+                                                                            )));
                                                                         }
                                                                     }
                                                                 }
@@ -3034,20 +3128,23 @@ pub fn typecheck_expression(
                                             );
                                             let span = *span;
                                             error = error.or(err);
-                                            match final_result_type {
-                                                Some(ty) => {
-                                                    if let Some(err) = check_types_for_compat(
-                                                        VOID_TYPE_ID,
-                                                        ty,
-                                                        &mut generic_parameters,
-                                                        span,
-                                                        project,
-                                                    ) {
-                                                        error = error.or(Some(err));
+                                            if !body.definitely_returns {
+                                                println!("{:?}", body);
+                                                match final_result_type {
+                                                    Some(ty) => {
+                                                        if let Some(err) = check_types_for_compat(
+                                                            VOID_TYPE_ID,
+                                                            ty,
+                                                            &mut generic_parameters,
+                                                            span,
+                                                            project,
+                                                        ) {
+                                                            error = error.or(Some(err));
+                                                        }
                                                     }
-                                                }
-                                                None => {
-                                                    final_result_type = Some(VOID_TYPE_ID);
+                                                    None => {
+                                                        final_result_type = Some(VOID_TYPE_ID);
+                                                    }
                                                 }
                                             }
 

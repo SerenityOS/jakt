@@ -244,6 +244,7 @@ pub enum ParsedExpression {
         Span,
     ),
     Var(String, Span),
+    NamespacedVar(String, Vec<String>, Span),
     Tuple(Vec<ParsedExpression>, Span),
     Range(Box<ParsedExpression>, Box<ParsedExpression>, Span),
     Match(Box<ParsedExpression>, Vec<MatchCase>, Span),
@@ -287,6 +288,7 @@ impl ParsedExpression {
             ParsedExpression::UnaryOp(_, _, span) => *span,
             ParsedExpression::BinaryOp(_, _, _, span) => *span,
             ParsedExpression::Var(_, span) => *span,
+            ParsedExpression::NamespacedVar(_, _, span) => *span,
             ParsedExpression::Operator(_, span) => *span,
             ParsedExpression::OptionalNone(span) => *span,
             ParsedExpression::OptionalSome(_, span) => *span,
@@ -308,6 +310,9 @@ impl PartialEq for ParsedExpression {
                 l0 == r0 && l1 == r1 && l2 == r2
             }
             (Self::Var(l0, _), Self::Var(r0, _)) => l0 == r0,
+            (Self::NamespacedVar(l0, l1, _), Self::NamespacedVar(r0, r1, _)) => {
+                l0 == r0 && l1 == r1
+            }
             (Self::Operator(l0, _), Self::Operator(r0, _)) => l0 == r0,
             (Self::Garbage(_), Self::Garbage(_)) => true,
             _ => false,
@@ -2736,11 +2741,21 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                                     }
                                     break;
                                 } else {
-                                    *index += 1;
-                                    error = error.or(Some(JaktError::ParserError(
-                                        "Unsupported static method call".to_string(),
-                                        tokens[*index].span,
-                                    )));
+                                    let name = match &tokens[*index - 1].contents {
+                                        TokenContents::Name(name) => name.clone(),
+                                        _ => unreachable!(),
+                                    };
+
+                                    // Just a reference to a variable in a namespace
+                                    expr = ParsedExpression::NamespacedVar(
+                                        name,
+                                        namespace,
+                                        Span {
+                                            file_id: span.file_id,
+                                            start: span.start,
+                                            end: tokens[*index].span.end,
+                                        },
+                                    );
                                     break;
                                 }
                             } else {
