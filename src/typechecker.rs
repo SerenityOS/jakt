@@ -2,7 +2,6 @@ use std::collections::{HashMap, HashSet};
 
 use crate::parser::{MatchBody, MatchCase};
 use crate::{
-    codegen::{self},
     compiler::{
         BOOL_TYPE_ID, CCHAR_TYPE_ID, CINT_TYPE_ID, F32_TYPE_ID, F64_TYPE_ID, I16_TYPE_ID,
         I32_TYPE_ID, I64_TYPE_ID, I8_TYPE_ID, STRING_TYPE_ID, U16_TYPE_ID, U32_TYPE_ID,
@@ -400,6 +399,79 @@ impl Project {
         }
 
         None
+    }
+
+    pub fn typename_for_type_id(&self, type_id: TypeId) -> String {
+        match &self.types[type_id] {
+            Type::Builtin => match type_id {
+                crate::compiler::VOID_TYPE_ID => "void".to_string(),
+                crate::compiler::I8_TYPE_ID => "i8".to_string(),
+                crate::compiler::I16_TYPE_ID => "i16".to_string(),
+                crate::compiler::I32_TYPE_ID => "i32".to_string(),
+                crate::compiler::I64_TYPE_ID => "i64".to_string(),
+                crate::compiler::U8_TYPE_ID => "u8".to_string(),
+                crate::compiler::U16_TYPE_ID => "u16".to_string(),
+                crate::compiler::U32_TYPE_ID => "u32".to_string(),
+                crate::compiler::U64_TYPE_ID => "u64".to_string(),
+                crate::compiler::USIZE_TYPE_ID => "usize".to_string(),
+                crate::compiler::CCHAR_TYPE_ID => "c_char".to_string(),
+                crate::compiler::CINT_TYPE_ID => "c_int".to_string(),
+                crate::compiler::STRING_TYPE_ID => "String".to_string(),
+                crate::compiler::BOOL_TYPE_ID => "bool".to_string(),
+                _ => "unknown".to_string(),
+            },
+            Type::Enum(enum_id) => {
+                format!("enum {}", self.enums[*enum_id].name)
+            }
+            Type::Struct(struct_id) => {
+                if self.structs[*struct_id].definition_type == DefinitionType::Class {
+                    format!("class {}", self.structs[*struct_id].name)
+                } else {
+                    format!("struct {}", self.structs[*struct_id].name)
+                }
+            }
+            Type::GenericEnumInstance(enum_id, type_args) => {
+                let mut output = format!("enum {}", self.enums[*enum_id].name);
+
+                output.push('<');
+                let mut first = true;
+                for arg in type_args {
+                    if !first {
+                        output.push_str(", ");
+                    } else {
+                        first = false;
+                    }
+                    output.push_str(&self.typename_for_type_id(*arg))
+                }
+                output.push('>');
+
+                output
+            }
+            Type::GenericInstance(struct_id, type_args) => {
+                let mut output =
+                    if self.structs[*struct_id].definition_type == DefinitionType::Class {
+                        format!("class {}", self.structs[*struct_id].name)
+                    } else {
+                        format!("struct {}", self.structs[*struct_id].name)
+                    };
+
+                output.push('<');
+                let mut first = true;
+                for arg in type_args {
+                    if !first {
+                        output.push_str(", ");
+                    } else {
+                        first = false;
+                    }
+                    output.push_str(&self.typename_for_type_id(*arg))
+                }
+                output.push('>');
+
+                output
+            }
+            Type::TypeVariable(name) => name.clone(),
+            Type::RawPtr(type_id) => format!("raw {}", self.typename_for_type_id(*type_id)),
+        }
     }
 }
 
@@ -3893,8 +3965,8 @@ pub fn check_types_for_compat(
                     error = error.or(Some(JaktError::TypecheckError(
                         format!(
                             "Type mismatch: expected {}, but got {}",
-                            codegen::codegen_type(*seen_type_id, project),
-                            codegen::codegen_type(rhs_type_id, project)
+                            project.typename_for_type_id(*seen_type_id),
+                            project.typename_for_type_id(rhs_type_id),
                         ),
                         span,
                     )))
@@ -3950,8 +4022,8 @@ pub fn check_types_for_compat(
                         error = error.or(Some(JaktError::TypecheckError(
                             format!(
                                 "Type mismatch: expected {}, but got {}",
-                                codegen::codegen_type(lhs_type_id, project),
-                                codegen::codegen_type(rhs_type_id, project)
+                                project.typename_for_type_id(lhs_type_id),
+                                project.typename_for_type_id(rhs_type_id),
                             ),
                             span,
                         )))
@@ -4004,8 +4076,8 @@ pub fn check_types_for_compat(
                         error = error.or(Some(JaktError::TypecheckError(
                             format!(
                                 "Type mismatch: expected {}, but got {}",
-                                codegen::codegen_type(lhs_type_id, project),
-                                codegen::codegen_type(rhs_type_id, project)
+                                project.typename_for_type_id(lhs_type_id),
+                                project.typename_for_type_id(rhs_type_id),
                             ),
                             span,
                         )))
@@ -4062,8 +4134,8 @@ pub fn check_types_for_compat(
                         error = error.or(Some(JaktError::TypecheckError(
                             format!(
                                 "Type mismatch: expected {}, but got {}",
-                                codegen::codegen_type(lhs_type_id, project),
-                                codegen::codegen_type(rhs_type_id, project)
+                                project.typename_for_type_id(lhs_type_id),
+                                project.typename_for_type_id(rhs_type_id),
                             ),
                             span,
                         )))
@@ -4120,8 +4192,8 @@ pub fn check_types_for_compat(
                         error = error.or(Some(JaktError::TypecheckError(
                             format!(
                                 "Type mismatch: expected {}, but got {}",
-                                codegen::codegen_type(lhs_type_id, project),
-                                codegen::codegen_type(rhs_type_id, project)
+                                project.typename_for_type_id(lhs_type_id),
+                                project.typename_for_type_id(rhs_type_id),
                             ),
                             span,
                         )))
@@ -4134,8 +4206,8 @@ pub fn check_types_for_compat(
                 error = error.or(Some(JaktError::TypecheckError(
                     format!(
                         "Type mismatch: expected {}, but got {}",
-                        codegen::codegen_type(lhs_type_id, project),
-                        codegen::codegen_type(rhs_type_id, project)
+                        project.typename_for_type_id(lhs_type_id),
+                        project.typename_for_type_id(rhs_type_id),
                     ),
                     span,
                 )))
