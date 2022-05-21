@@ -2,6 +2,7 @@ use crate::error::JaktError;
 
 use crate::lexer::{Span, Token, TokenContents};
 use crate::typechecker::NumericConstant;
+use crate::Compiler;
 
 macro_rules! trace {
     ($x: expr) => {
@@ -441,6 +442,7 @@ impl ParsedNamespace {
 }
 
 pub fn parse_namespace(
+    compiler: &Compiler,
     tokens: &[Token],
     index: &mut usize,
 ) -> (ParsedNamespace, Option<JaktError>) {
@@ -459,19 +461,22 @@ pub fn parse_namespace(
                 span,
             } => match name.as_str() {
                 "function" => {
-                    let (fun, err) = parse_function(tokens, index, FunctionLinkage::Internal);
+                    let (fun, err) =
+                        parse_function(&compiler, tokens, index, FunctionLinkage::Internal);
                     error = error.or(err);
 
                     parsed_namespace.functions.push(fun);
                 }
                 "enum" => {
-                    let (enum_, err) = parse_enum(tokens, index, DefinitionLinkage::Internal);
+                    let (enum_, err) =
+                        parse_enum(&compiler, tokens, index, DefinitionLinkage::Internal);
                     error = error.or(err);
 
                     parsed_namespace.enums.push(enum_);
                 }
                 "struct" => {
                     let (structure, err) = parse_struct(
+                        &compiler,
                         tokens,
                         index,
                         DefinitionLinkage::Internal,
@@ -483,6 +488,7 @@ pub fn parse_namespace(
                 }
                 "class" => {
                     let (structure, err) = parse_struct(
+                        &compiler,
                         tokens,
                         index,
                         DefinitionLinkage::Internal,
@@ -507,7 +513,7 @@ pub fn parse_namespace(
                         if let TokenContents::LCurly = &tokens[*index].contents {
                             *index += 1;
 
-                            let (mut namespace, err) = parse_namespace(tokens, index);
+                            let (mut namespace, err) = parse_namespace(&compiler, tokens, index);
                             error = error.or(err);
 
                             *index += 1;
@@ -530,8 +536,12 @@ pub fn parse_namespace(
                             } => match name.as_str() {
                                 "function" => {
                                     *index += 1;
-                                    let (fun, err) =
-                                        parse_function(tokens, index, FunctionLinkage::External);
+                                    let (fun, err) = parse_function(
+                                        &compiler,
+                                        tokens,
+                                        index,
+                                        FunctionLinkage::External,
+                                    );
                                     error = error.or(err);
 
                                     parsed_namespace.functions.push(fun);
@@ -539,6 +549,7 @@ pub fn parse_namespace(
                                 "struct" => {
                                     *index += 1;
                                     let (structure, err) = parse_struct(
+                                        &compiler,
                                         tokens,
                                         index,
                                         DefinitionLinkage::External,
@@ -551,6 +562,7 @@ pub fn parse_namespace(
                                 "class" => {
                                     *index += 1;
                                     let (structure, err) = parse_struct(
+                                        &compiler,
                                         tokens,
                                         index,
                                         DefinitionLinkage::External,
@@ -635,6 +647,7 @@ fn skip_newlines(tokens: &[Token], index: &mut usize) {
 }
 
 pub fn parse_enum(
+    compiler: &Compiler,
     tokens: &[Token],
     index: &mut usize,
     definition_linkage: DefinitionLinkage,
@@ -676,7 +689,7 @@ pub fn parse_enum(
             }) => {
                 trace!("enum with underlying type");
                 *index += 1;
-                let (type_, parse_error) = parse_typename(tokens, index);
+                let (type_, parse_error) = parse_typename(&compiler, tokens, index);
                 enum_.underlying_type = type_;
                 error = error.or(parse_error);
                 trace!(format!("next token: {:?}", tokens[*index]));
@@ -686,7 +699,7 @@ pub fn parse_enum(
                 ..
             }) => {
                 trace!("enum with generic parameters");
-                let (params, parse_error) = parse_generic_parameters(tokens, index);
+                let (params, parse_error) = parse_generic_parameters(&compiler, tokens, index);
                 enum_.generic_parameters = params;
                 error = error.or(parse_error);
             }
@@ -757,7 +770,7 @@ pub fn parse_enum(
                 }) => {
                     trace!("variant with type");
                     *index += 1;
-                    let (variant_type, type_error) = parse_typename(tokens, index);
+                    let (variant_type, type_error) = parse_typename(&compiler, tokens, index);
                     error = error.or(type_error);
                     enum_.variants.push(EnumVariant::Typed(
                         name.to_string(),
@@ -783,7 +796,8 @@ pub fn parse_enum(
                             ..
                         }) | None
                     ) {
-                        let (decl, parse_error) = parse_variable_declaration(tokens, index);
+                        let (decl, parse_error) =
+                            parse_variable_declaration(&compiler, tokens, index);
                         error = error.or(parse_error);
                         members.push(decl);
                         // Allow a comma or a newline after each member
@@ -818,6 +832,7 @@ pub fn parse_enum(
                     }
                     *index += 1;
                     let (expr, parse_error) = parse_expression(
+                        &compiler,
                         tokens,
                         index,
                         ExpressionKind::ExpressionWithoutAssignment,
@@ -889,6 +904,7 @@ pub fn parse_enum(
 }
 
 pub fn parse_generic_parameters(
+    _compiler: &Compiler,
     tokens: &[Token],
     index: &mut usize,
 ) -> (Vec<(String, Span)>, Option<JaktError>) {
@@ -961,6 +977,7 @@ pub fn parse_generic_parameters(
 }
 
 pub fn parse_struct(
+    compiler: &Compiler,
     tokens: &[Token],
     index: &mut usize,
     definition_linkage: DefinitionLinkage,
@@ -983,7 +1000,7 @@ pub fn parse_struct(
                 *index += 1;
 
                 // Check for generic
-                let (params, parse_error) = parse_generic_parameters(tokens, index);
+                let (params, parse_error) = parse_generic_parameters(&compiler, tokens, index);
                 generic_parameters = params;
                 error = error.or(parse_error);
 
@@ -1037,7 +1054,8 @@ pub fn parse_struct(
                                 DefinitionLinkage::External => FunctionLinkage::External,
                             };
 
-                            let (function, err) = parse_function(tokens, index, function_linkage);
+                            let (function, err) =
+                                parse_function(&compiler, tokens, index, function_linkage);
                             error = error.or(err);
 
                             methods.push(function);
@@ -1046,7 +1064,8 @@ pub fn parse_struct(
                         TokenContents::Name(..) => {
                             // Lets parse a parameter
 
-                            let (mut var_decl, err) = parse_variable_declaration(tokens, index);
+                            let (mut var_decl, err) =
+                                parse_variable_declaration(&compiler, tokens, index);
                             error = error.or(err);
 
                             // Ignore immutable flag for now
@@ -1146,6 +1165,7 @@ pub fn parse_struct(
 }
 
 pub fn parse_function(
+    compiler: &Compiler,
     tokens: &[Token],
     index: &mut usize,
     linkage: FunctionLinkage,
@@ -1169,7 +1189,7 @@ pub fn parse_function(
                 *index += 1;
 
                 // Check for generic
-                let (params, err) = parse_generic_parameters(tokens, index);
+                let (params, err) = parse_generic_parameters(&compiler, tokens, index);
                 error = error.or(err);
                 generic_parameters = params;
 
@@ -1242,7 +1262,8 @@ pub fn parse_function(
                         TokenContents::Name(..) => {
                             // Now lets parse a parameter
 
-                            let (var_decl, err) = parse_variable_declaration(tokens, index);
+                            let (var_decl, err) =
+                                parse_variable_declaration(&compiler, tokens, index);
                             error = error.or(err);
 
                             if var_decl.ty == ParsedType::Empty {
@@ -1305,6 +1326,7 @@ pub fn parse_function(
                             *index += 1;
 
                             let (expr, err) = parse_expression(
+                                &compiler,
                                 tokens,
                                 index,
                                 ExpressionKind::ExpressionWithoutAssignment,
@@ -1322,7 +1344,7 @@ pub fn parse_function(
                                 TokenContents::GreaterThan => {
                                     *index += 1;
 
-                                    let (ret_type, err) = parse_typename(tokens, index);
+                                    let (ret_type, err) = parse_typename(&compiler, tokens, index);
                                     return_type = ret_type;
                                     error = error.or(err);
                                 }
@@ -1370,7 +1392,7 @@ pub fn parse_function(
                         block.stmts.push(ParsedStatement::Return(expr));
                         (block, None)
                     }
-                    None => parse_block(tokens, index),
+                    None => parse_block(&compiler, tokens, index),
                 };
                 error = error.or(err);
 
@@ -1412,7 +1434,11 @@ pub fn parse_function(
     }
 }
 
-pub fn parse_block(tokens: &[Token], index: &mut usize) -> (ParsedBlock, Option<JaktError>) {
+pub fn parse_block(
+    compiler: &Compiler,
+    tokens: &[Token],
+    index: &mut usize,
+) -> (ParsedBlock, Option<JaktError>) {
     trace!(format!("parse_block: {:?}", tokens[*index]));
 
     let mut block = ParsedBlock::new();
@@ -1453,7 +1479,7 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (ParsedBlock, Option<
                 *index += 1;
             }
             _ => {
-                let (stmt, err) = parse_statement(tokens, index);
+                let (stmt, err) = parse_statement(&compiler, tokens, index);
                 error = error.or(err);
 
                 block.stmts.push(stmt);
@@ -1476,6 +1502,7 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (ParsedBlock, Option<
 }
 
 pub fn parse_statement(
+    compiler: &Compiler,
     tokens: &[Token],
     index: &mut usize,
 ) -> (ParsedStatement, Option<JaktError>) {
@@ -1489,8 +1516,12 @@ pub fn parse_statement(
 
             *index += 1;
 
-            let (expr, err) =
-                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+            let (expr, err) = parse_expression(
+                &compiler,
+                tokens,
+                index,
+                ExpressionKind::ExpressionWithoutAssignment,
+            );
             error = error.or(err);
 
             (ParsedStatement::Throw(expr), error)
@@ -1500,7 +1531,7 @@ pub fn parse_statement(
 
             *index += 1;
 
-            let (statement, err) = parse_statement(tokens, index);
+            let (statement, err) = parse_statement(&compiler, tokens, index);
             error = error.or(err);
 
             (ParsedStatement::Defer(Box::new(statement)), error)
@@ -1510,12 +1541,12 @@ pub fn parse_statement(
 
             *index += 1;
 
-            let (block, err) = parse_block(tokens, index);
+            let (block, err) = parse_block(&compiler, tokens, index);
             error = error.or(err);
 
             (ParsedStatement::UnsafeBlock(block), error)
         }
-        TokenContents::Name(name) if name == "if" => parse_if_statement(tokens, index),
+        TokenContents::Name(name) if name == "if" => parse_if_statement(&compiler, tokens, index),
         TokenContents::Name(name) if name == "break" => {
             trace!("parsing break");
             *index += 1;
@@ -1531,7 +1562,7 @@ pub fn parse_statement(
 
             *index += 1;
 
-            let (block, err) = parse_block(tokens, index);
+            let (block, err) = parse_block(&compiler, tokens, index);
             error = error.or(err);
 
             (ParsedStatement::Loop(block), error)
@@ -1541,11 +1572,15 @@ pub fn parse_statement(
 
             *index += 1;
 
-            let (cond, err) =
-                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+            let (cond, err) = parse_expression(
+                &compiler,
+                tokens,
+                index,
+                ExpressionKind::ExpressionWithoutAssignment,
+            );
             error = error.or(err);
 
-            let (block, err) = parse_block(tokens, index);
+            let (block, err) = parse_block(&compiler, tokens, index);
             error = error.or(err);
 
             (ParsedStatement::While(cond, block), error)
@@ -1555,7 +1590,7 @@ pub fn parse_statement(
 
             *index += 1;
 
-            let (stmt, err) = parse_statement(tokens, index);
+            let (stmt, err) = parse_statement(&compiler, tokens, index);
             error = error.or(err);
 
             let mut error_name = String::new();
@@ -1577,7 +1612,7 @@ pub fn parse_statement(
                 }
             }
 
-            let (catch_block, err) = parse_block(tokens, index);
+            let (catch_block, err) = parse_block(&compiler, tokens, index);
             error = error.or(err);
 
             (
@@ -1597,13 +1632,14 @@ pub fn parse_statement(
                     TokenContents::Name(keyword) if keyword == "in" => {
                         *index += 1;
                         let (range_expr, err) = parse_expression(
+                            &compiler,
                             tokens,
                             index,
                             ExpressionKind::ExpressionWithoutAssignment,
                         );
                         error = error.or(err);
 
-                        let (block, err) = parse_block(tokens, index);
+                        let (block, err) = parse_block(&compiler, tokens, index);
                         error = error.or(err);
 
                         (
@@ -1622,8 +1658,12 @@ pub fn parse_statement(
 
             *index += 1;
 
-            let (expr, err) =
-                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+            let (expr, err) = parse_expression(
+                &compiler,
+                tokens,
+                index,
+                ExpressionKind::ExpressionWithoutAssignment,
+            );
             error = error.or(err);
 
             (ParsedStatement::Return(expr), error)
@@ -1645,7 +1685,7 @@ pub fn parse_statement(
 
             *index += 1;
 
-            let (mut var_decl, err) = parse_variable_declaration(tokens, index);
+            let (mut var_decl, err) = parse_variable_declaration(&compiler, tokens, index);
             error = error.or(err);
 
             var_decl.mutable = mutable;
@@ -1658,6 +1698,7 @@ pub fn parse_statement(
 
                         if *index < tokens.len() {
                             let (expr, err) = parse_expression(
+                                &compiler,
                                 tokens,
                                 index,
                                 ExpressionKind::ExpressionWithoutAssignment,
@@ -1700,7 +1741,7 @@ pub fn parse_statement(
 
             let start_span = tokens[*index].span;
 
-            let (block, err) = parse_block(tokens, index);
+            let (block, err) = parse_block(&compiler, tokens, index);
             error = error.or(err);
 
             let span = Span {
@@ -1714,7 +1755,7 @@ pub fn parse_statement(
         TokenContents::LCurly => {
             trace!("parsing block from statement parser");
 
-            let (block, err) = parse_block(tokens, index);
+            let (block, err) = parse_block(&compiler, tokens, index);
             error = error.or(err);
 
             (ParsedStatement::Block(block), error)
@@ -1722,8 +1763,12 @@ pub fn parse_statement(
         _ => {
             trace!("parsing expression from statement parser");
 
-            let (expr, err) =
-                parse_expression(tokens, index, ExpressionKind::ExpressionWithAssignments);
+            let (expr, err) = parse_expression(
+                &compiler,
+                tokens,
+                index,
+                ExpressionKind::ExpressionWithAssignments,
+            );
             error = error.or(err);
 
             // Make sure, if there is an error and we can make progress, that we make progress.
@@ -1738,7 +1783,11 @@ pub fn parse_statement(
     }
 }
 
-fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (ParsedStatement, Option<JaktError>) {
+fn parse_if_statement(
+    compiler: &Compiler,
+    tokens: &[Token],
+    index: &mut usize,
+) -> (ParsedStatement, Option<JaktError>) {
     trace!(format!("parse_if_statement: {:?}", tokens[*index]));
 
     let mut error = None;
@@ -1762,10 +1811,15 @@ fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (ParsedStatement, 
 
     *index += 1;
 
-    let (cond, err) = parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+    let (cond, err) = parse_expression(
+        &compiler,
+        tokens,
+        index,
+        ExpressionKind::ExpressionWithoutAssignment,
+    );
     error = error.or(err);
 
-    let (block, err) = parse_block(tokens, index);
+    let (block, err) = parse_block(&compiler, tokens, index);
     error = error.or(err);
 
     let mut else_stmt = None;
@@ -1781,12 +1835,12 @@ fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (ParsedStatement, 
                 if *index < tokens.len() {
                     match &tokens[*index].contents {
                         TokenContents::Name(name) if name == "if" => {
-                            let (else_if_stmt, err) = parse_if_statement(tokens, index);
+                            let (else_if_stmt, err) = parse_if_statement(&compiler, tokens, index);
                             else_stmt = Some(Box::new(else_if_stmt));
                             error = error.or(err);
                         }
                         TokenContents::LCurly => {
-                            let (else_block, err) = parse_block(tokens, index);
+                            let (else_block, err) = parse_block(&compiler, tokens, index);
 
                             // Before we continue, quickly lint that the else block and the if block are not
                             // the same. This helps prevent a copy/paste error
@@ -1823,6 +1877,7 @@ fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (ParsedStatement, 
 }
 
 pub fn parse_expression(
+    compiler: &Compiler,
     tokens: &[Token],
     index: &mut usize,
     expression_kind: ExpressionKind,
@@ -1838,7 +1893,7 @@ pub fn parse_expression(
     let mut expr_stack: Vec<ParsedExpression> = vec![];
     let mut last_prec = 1000000;
 
-    let (lhs, err) = parse_operand(tokens, index);
+    let (lhs, err) = parse_operand(&compiler, tokens, index);
     error = error.or(err);
 
     expr_stack.push(lhs);
@@ -1851,9 +1906,9 @@ pub fn parse_expression(
 
         let (op, err) = match expression_kind {
             ExpressionKind::ExpressionWithAssignments => {
-                parse_operator_with_assignment(tokens, index)
+                parse_operator_with_assignment(&compiler, tokens, index)
             }
-            ExpressionKind::ExpressionWithoutAssignment => parse_operator(tokens, index),
+            ExpressionKind::ExpressionWithoutAssignment => parse_operator(&compiler, tokens, index),
         };
 
         if let Some(jakt_error) = &err {
@@ -1887,7 +1942,7 @@ pub fn parse_expression(
         while tokens[*index].contents == TokenContents::Eol {
             *index += 1;
         }
-        let (rhs, err) = parse_operand(tokens, index);
+        let (rhs, err) = parse_operand(&compiler, tokens, index);
         error = error.or(err);
 
         while precedence <= last_prec && expr_stack.len() > 1 {
@@ -1971,7 +2026,11 @@ pub fn parse_expression(
     (output, error)
 }
 
-pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Option<JaktError>) {
+pub fn parse_pattern_case(
+    compiler: &Compiler,
+    tokens: &[Token],
+    index: &mut usize,
+) -> (MatchCase, Option<JaktError>) {
     // case:
     // QualifiedName('(' ((name ':')? expression),* ')')? '=>' (expression | block)
 
@@ -2126,7 +2185,7 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
     }) = tokens.get(*index)
     {
         *index += 1;
-        let (block, err) = parse_block(tokens, index);
+        let (block, err) = parse_block(&compiler, tokens, index);
         error = error.or(err);
         (
             MatchCase::EnumVariant {
@@ -2142,8 +2201,12 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
             error,
         )
     } else {
-        let (expr, err) =
-            parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+        let (expr, err) = parse_expression(
+            &compiler,
+            tokens,
+            index,
+            ExpressionKind::ExpressionWithoutAssignment,
+        );
         error = error.or(err);
         (
             MatchCase::EnumVariant {
@@ -2161,7 +2224,11 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
     }
 }
 
-pub fn parse_patterns(tokens: &[Token], index: &mut usize) -> (Vec<MatchCase>, Option<JaktError>) {
+pub fn parse_patterns(
+    compiler: &Compiler,
+    tokens: &[Token],
+    index: &mut usize,
+) -> (Vec<MatchCase>, Option<JaktError>) {
     let mut cases = Vec::new();
     let mut error = None;
 
@@ -2190,7 +2257,7 @@ pub fn parse_patterns(tokens: &[Token], index: &mut usize) -> (Vec<MatchCase>, O
             ..
         })
     ) {
-        let (pattern, err) = parse_pattern_case(tokens, index);
+        let (pattern, err) = parse_pattern_case(&compiler, tokens, index);
         error = error.or(err);
         cases.push(pattern);
 
@@ -2217,7 +2284,11 @@ pub fn parse_patterns(tokens: &[Token], index: &mut usize) -> (Vec<MatchCase>, O
     (cases, error)
 }
 
-pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Option<JaktError>) {
+pub fn parse_operand(
+    compiler: &Compiler,
+    tokens: &[Token],
+    index: &mut usize,
+) -> (ParsedExpression, Option<JaktError>) {
     trace!(format!("parse_operand: {:?}", tokens[*index]));
 
     let mut error = None;
@@ -2250,7 +2321,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
             *index += 1;
 
-            let (expr, err) = parse_operand(tokens, index);
+            let (expr, err) = parse_operand(&compiler, tokens, index);
             error = error.or(err);
 
             let span = Span {
@@ -2266,10 +2337,10 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
             *index += 1;
 
-            let (expr, err) = parse_operand(tokens, index);
+            let (expr, err) = parse_operand(&compiler, tokens, index);
             error = error.or(err);
 
-            let (patterns, err) = parse_patterns(tokens, index);
+            let (patterns, err) = parse_patterns(&compiler, tokens, index);
             error = error.or(err);
 
             let span = Span {
@@ -2287,6 +2358,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                         "Some" => {
                             *index += 1;
                             let (expr, err) = parse_expression(
+                                &compiler,
                                 tokens,
                                 index,
                                 ExpressionKind::ExpressionWithoutAssignment,
@@ -2295,7 +2367,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                             ParsedExpression::OptionalSome(Box::new(expr), span)
                         }
                         _ => {
-                            let (call, err) = parse_call(tokens, index);
+                            let (call, err) = parse_call(&compiler, tokens, index);
                             error = error.or(err);
 
                             ParsedExpression::Call(call, span)
@@ -2303,7 +2375,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                     },
                     TokenContents::LessThan => {
                         // We *try* to see if it's a generic, but the parse errors, we back up and try something else
-                        let (call, err) = parse_call(tokens, index);
+                        let (call, err) = parse_call(&compiler, tokens, index);
 
                         if err.is_some() {
                             match name.as_str() {
@@ -2335,8 +2407,12 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
             let start = tokens[*index].span;
 
             *index += 1;
-            let (mut expr, err) =
-                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+            let (mut expr, err) = parse_expression(
+                &compiler,
+                tokens,
+                index,
+                ExpressionKind::ExpressionWithoutAssignment,
+            );
             error = error.or(err);
 
             match &tokens[*index].contents {
@@ -2362,6 +2438,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                             }
                             _ => {
                                 let (expr, err) = parse_expression(
+                                    &compiler,
                                     tokens,
                                     index,
                                     ExpressionKind::ExpressionWithoutAssignment,
@@ -2407,12 +2484,12 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
             expr
         }
         TokenContents::LSquare => {
-            let (expr, err) = parse_array(tokens, index);
+            let (expr, err) = parse_array(&compiler, tokens, index);
             error = error.or(err);
             expr
         }
         TokenContents::LCurly => {
-            let (expr, err) = parse_set(tokens, index);
+            let (expr, err) = parse_set(&compiler, tokens, index);
             error = error.or(err);
             expr
         }
@@ -2421,7 +2498,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
             *index += 1;
 
-            let (expr, err) = parse_operand(tokens, index);
+            let (expr, err) = parse_operand(&compiler, tokens, index);
             error = error.or(err);
 
             let span = Span {
@@ -2437,7 +2514,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
             *index += 1;
 
-            let (expr, err) = parse_operand(tokens, index);
+            let (expr, err) = parse_operand(&compiler, tokens, index);
             error = error.or(err);
 
             let span = Span {
@@ -2453,7 +2530,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
             *index += 1;
 
-            let (expr, err) = parse_operand(tokens, index);
+            let (expr, err) = parse_operand(&compiler, tokens, index);
             error = error.or(err);
 
             let span = Span {
@@ -2469,7 +2546,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
             *index += 1;
 
-            let (expr, err) = parse_operand(tokens, index);
+            let (expr, err) = parse_operand(&compiler, tokens, index);
             error = error.or(err);
 
             let span = Span {
@@ -2485,7 +2562,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
             *index += 1;
 
-            let (expr, err) = parse_operand(tokens, index);
+            let (expr, err) = parse_operand(&compiler, tokens, index);
             error = error.or(err);
 
             let span = Span {
@@ -2511,7 +2588,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
                         *index += 1;
 
-                        let (expr, err) = parse_operand(tokens, index);
+                        let (expr, err) = parse_operand(&compiler, tokens, index);
                         error = error.or(err);
 
                         let span = Span {
@@ -2570,8 +2647,12 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
         match &tokens[*index].contents {
             TokenContents::DotDot => {
                 *index += 1;
-                let (end_expr, err) =
-                    parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+                let (end_expr, err) = parse_expression(
+                    &compiler,
+                    tokens,
+                    index,
+                    ExpressionKind::ExpressionWithoutAssignment,
+                );
                 error = error.or(err);
                 expr = ParsedExpression::Range(Box::new(expr), Box::new(end_expr), span);
             }
@@ -2604,7 +2685,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                     end: end_span.end,
                 };
 
-                let (typename, err) = parse_typename(tokens, index);
+                let (typename, err) = parse_typename(&compiler, tokens, index);
                 error = error.or(err);
 
                 expr = ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::Is(typename), span)
@@ -2624,25 +2705,25 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                 let cast = match &tokens[*index].contents {
                     TokenContents::ExclamationPoint => {
                         *index += 1;
-                        let (typename, err) = parse_typename(tokens, index);
+                        let (typename, err) = parse_typename(&compiler, tokens, index);
                         error = error.or(err);
                         TypeCast::Infallible(typename)
                     }
                     TokenContents::QuestionMark => {
                         *index += 1;
-                        let (typename, err) = parse_typename(tokens, index);
+                        let (typename, err) = parse_typename(&compiler, tokens, index);
                         error = error.or(err);
                         TypeCast::Fallible(typename)
                     }
                     TokenContents::Name(name) if name == "truncated" => {
                         *index += 1;
-                        let (typename, err) = parse_typename(tokens, index);
+                        let (typename, err) = parse_typename(&compiler, tokens, index);
                         error = error.or(err);
                         TypeCast::Truncating(typename)
                     }
                     TokenContents::Name(name) if name == "saturated" => {
                         *index += 1;
-                        let (typename, err) = parse_typename(tokens, index);
+                        let (typename, err) = parse_typename(&compiler, tokens, index);
                         error = error.or(err);
                         TypeCast::Saturating(typename)
                     }
@@ -2701,7 +2782,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                             if *index < tokens.len() {
                                 if tokens[*index].contents == TokenContents::LParen {
                                     *index -= 1;
-                                    let (mut method, err) = parse_call(tokens, index);
+                                    let (mut method, err) = parse_call(&compiler, tokens, index);
                                     error = error.or(err);
 
                                     method.namespace = namespace;
@@ -2727,7 +2808,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                                     *index += 1;
                                 } else if tokens[*index].contents == TokenContents::LessThan {
                                     *index -= 1;
-                                    let (mut call, err) = parse_call(tokens, index);
+                                    let (mut call, err) = parse_call(&compiler, tokens, index);
                                     if err.is_some() {
                                         error = error.or(err);
                                     } else {
@@ -2796,7 +2877,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                                         end: tokens[*index].span.end,
                                     };
 
-                                    let (method, err) = parse_call(tokens, index);
+                                    let (method, err) = parse_call(&compiler, tokens, index);
                                     error = error.or(err);
 
                                     expr =
@@ -2851,6 +2932,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
                 if *index < tokens.len() {
                     let (idx, err) = parse_expression(
+                        &compiler,
                         tokens,
                         index,
                         ExpressionKind::ExpressionWithoutAssignment,
@@ -2898,6 +2980,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 }
 
 pub fn parse_operator(
+    _compiler: &Compiler,
     tokens: &[Token],
     index: &mut usize,
 ) -> (ParsedExpression, Option<JaktError>) {
@@ -3197,6 +3280,7 @@ pub fn parse_operator(
 }
 
 pub fn parse_operator_with_assignment(
+    _compiler: &Compiler,
     tokens: &[Token],
     index: &mut usize,
 ) -> (ParsedExpression, Option<JaktError>) {
@@ -3443,7 +3527,11 @@ pub fn parse_operator_with_assignment(
     }
 }
 
-pub fn parse_set(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Option<JaktError>) {
+pub fn parse_set(
+    compiler: &Compiler,
+    tokens: &[Token],
+    index: &mut usize,
+) -> (ParsedExpression, Option<JaktError>) {
     let mut error = None;
 
     let mut output = Vec::new();
@@ -3492,8 +3580,12 @@ pub fn parse_set(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Opti
                 *index += 1;
             }
             _ => {
-                let (expr, err) =
-                    parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+                let (expr, err) = parse_expression(
+                    &compiler,
+                    tokens,
+                    index,
+                    ExpressionKind::ExpressionWithoutAssignment,
+                );
                 error = error.or(err);
                 output.push(expr);
             }
@@ -3515,7 +3607,11 @@ pub fn parse_set(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Opti
     )
 }
 
-pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Option<JaktError>) {
+pub fn parse_array(
+    compiler: &Compiler,
+    tokens: &[Token],
+    index: &mut usize,
+) -> (ParsedExpression, Option<JaktError>) {
     let mut error = None;
 
     let mut output = Vec::new();
@@ -3573,6 +3669,7 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Op
                     *index += 1;
 
                     let (expr, err) = parse_expression(
+                        &compiler,
                         tokens,
                         index,
                         ExpressionKind::ExpressionWithoutAssignment,
@@ -3587,8 +3684,12 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Op
                 }
             }
             _ => {
-                let (expr, err) =
-                    parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+                let (expr, err) = parse_expression(
+                    &compiler,
+                    tokens,
+                    index,
+                    ExpressionKind::ExpressionWithoutAssignment,
+                );
                 error = error.or(err);
 
                 if *index < tokens.len() {
@@ -3606,6 +3707,7 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Op
 
                         if *index < tokens.len() {
                             let (value, err) = parse_expression(
+                                &compiler,
                                 tokens,
                                 index,
                                 ExpressionKind::ExpressionWithoutAssignment,
@@ -3660,6 +3762,7 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Op
 }
 
 pub fn parse_variable_declaration(
+    compiler: &Compiler,
     tokens: &[Token],
     index: &mut usize,
 ) -> (ParsedVarDecl, Option<JaktError>) {
@@ -3713,7 +3816,7 @@ pub fn parse_variable_declaration(
                         _ => false,
                     };
 
-                let (var_type, err) = parse_typename(tokens, index);
+                let (var_type, err) = parse_typename(&compiler, tokens, index);
                 error = error.or(err);
 
                 let result = ParsedVarDecl {
@@ -3756,6 +3859,7 @@ pub fn parse_variable_declaration(
 }
 
 pub fn parse_shorthand_type(
+    compiler: &Compiler,
     tokens: &[Token],
     index: &mut usize,
 ) -> (ParsedType, Option<JaktError>) {
@@ -3767,7 +3871,7 @@ pub fn parse_shorthand_type(
         // [T] is shorthand for Array<T>
         // [K:V] is shorthand for Dictionary<K, V>
         *index += 1;
-        let (ty, err) = parse_typename(tokens, index);
+        let (ty, err) = parse_typename(&compiler, tokens, index);
         match &tokens[*index].contents {
             TokenContents::RSquare => {
                 *index += 1;
@@ -3785,7 +3889,7 @@ pub fn parse_shorthand_type(
             }
             TokenContents::Colon => {
                 *index += 1;
-                let (value_ty, value_err) = parse_typename(tokens, index);
+                let (value_ty, value_err) = parse_typename(&compiler, tokens, index);
                 if *index < tokens.len() {
                     if let TokenContents::RSquare = &tokens[*index].contents {
                         *index += 1;
@@ -3817,7 +3921,7 @@ pub fn parse_shorthand_type(
     } else if let TokenContents::LCurly = &tokens[*index].contents {
         // {T} is shorthand for Set<T>
         *index += 1;
-        let (ty, err) = parse_typename(tokens, index);
+        let (ty, err) = parse_typename(&compiler, tokens, index);
         if let TokenContents::RCurly = &tokens[*index].contents {
             *index += 1;
             return (
@@ -3845,7 +3949,11 @@ pub fn parse_shorthand_type(
     }
 }
 
-pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Option<JaktError>) {
+pub fn parse_typename(
+    compiler: &Compiler,
+    tokens: &[Token],
+    index: &mut usize,
+) -> (ParsedType, Option<JaktError>) {
     let mut unchecked_type = ParsedType::Empty;
     let mut error = None;
 
@@ -3855,7 +3963,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Optio
 
     trace!(format!("parse_typename: {:?}", tokens[*index]));
 
-    let (shorthand_type, err) = parse_shorthand_type(tokens, index);
+    let (shorthand_type, err) = parse_shorthand_type(&compiler, tokens, index);
     error = error.or(err);
 
     if shorthand_type != ParsedType::Empty {
@@ -3870,7 +3978,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Optio
             if name == "raw" {
                 *index += 1;
                 if *index < tokens.len() {
-                    let (child_ty, err) = parse_typename(tokens, index);
+                    let (child_ty, err) = parse_typename(&compiler, tokens, index);
                     error = error.or(err);
 
                     unchecked_type = ParsedType::RawPtr(
@@ -3933,7 +4041,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Optio
                         }
                         _ => {
                             let i = *index;
-                            let (inner_ty, err) = parse_typename(tokens, index);
+                            let (inner_ty, err) = parse_typename(&compiler, tokens, index);
                             if i == *index {
                                 // This is not a generic parameter, reset and leave.
                                 error = error.or(err);
@@ -3978,6 +4086,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Optio
 }
 
 pub fn parse_call_parameter_name(
+    _compiler: &Compiler,
     tokens: &[Token],
     index: &mut usize,
 ) -> (String, Option<JaktError>) {
@@ -3992,7 +4101,11 @@ pub fn parse_call_parameter_name(
     (String::new(), None)
 }
 
-pub fn parse_call(tokens: &[Token], index: &mut usize) -> (ParsedCall, Option<JaktError>) {
+pub fn parse_call(
+    compiler: &Compiler,
+    tokens: &[Token],
+    index: &mut usize,
+) -> (ParsedCall, Option<JaktError>) {
     trace!(format!("parse_call: {:?}", tokens[*index]));
     let mut call = ParsedCall::new();
     let mut error = None;
@@ -4031,7 +4144,7 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (ParsedCall, Option<Ja
                             }
                             _ => {
                                 let i = *index;
-                                let (inner_ty, err) = parse_typename(tokens, index);
+                                let (inner_ty, err) = parse_typename(&compiler, tokens, index);
                                 if i == *index {
                                     // Can't parse further, this is not a generic call.
                                     *index = index_reset;
@@ -4091,10 +4204,11 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (ParsedCall, Option<Ja
                         *index += 1;
                     }
                     _ => {
-                        let (param_name, err) = parse_call_parameter_name(tokens, index);
+                        let (param_name, err) = parse_call_parameter_name(&compiler, tokens, index);
                         error = error.or(err);
 
                         let (expr, err) = parse_expression(
+                            &compiler,
                             tokens,
                             index,
                             ExpressionKind::ExpressionWithoutAssignment,

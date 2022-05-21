@@ -55,7 +55,7 @@ impl Compiler {
             self.raw_files.len() - 1,
             &self.raw_files[self.raw_files.len() - 1].1,
         );
-        let (file, _) = parse_namespace(&lexed, &mut 0);
+        let (file, _) = parse_namespace(&self, &lexed, &mut 0);
 
         // Scope ID 0 is the global project-level scope that all files can see
         typecheck_namespace(&file, 0, project)
@@ -83,7 +83,7 @@ impl Compiler {
             return Err(err);
         }
 
-        let (file, err) = parse_namespace(&lexed, &mut 0);
+        let (file, err) = parse_namespace(&self, &lexed, &mut 0);
 
         if let Some(err) = err {
             return Err(err);
