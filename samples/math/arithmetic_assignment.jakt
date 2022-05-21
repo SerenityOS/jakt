@@ -1,0 +1,18 @@
+function main() {
+    let mutable a = 123
+    a += 10
+    let mutable b = 123
+    b -= 10
+    let mutable c = 123
+    c *= 10
+    let mutable d = 123
+    d /= 10
+    let mutable e = 123
+    e %= 10
+
+    println("{}", a)
+    println("{}", b)
+    println("{}", c)
+    println("{}", d)
+    println("{}", e)
+}
