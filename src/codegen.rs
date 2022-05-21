@@ -834,7 +834,7 @@ fn codegen_block(indent: usize, checked_block: &CheckedBlock, project: &Project)
         output.push_str(&stmt);
     }
 
-    output.push_str(&" ".repeat(indent));
+    output.push_str(&codegen_indent(indent));
     output.push_str("}\n");
 
     output
@@ -843,7 +843,7 @@ fn codegen_block(indent: usize, checked_block: &CheckedBlock, project: &Project)
 fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) -> String {
     let mut output = String::new();
 
-    output.push_str(&" ".repeat(indent));
+    output.push_str(&codegen_indent(indent));
 
     match stmt {
         CheckedStatement::Try(stmt, error_name, catch_block) => {
@@ -1252,7 +1252,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                             } => {
                                 output.push_str(variant_name);
                                 output.push_str(":\n");
-                                output.push_str(&" ".repeat(indent));
+                                output.push_str(&codegen_indent(indent));
                                 match body {
                                     CheckedMatchBody::Expression(expr) => {
                                         output.push_str("return _JaktExplicitReturn(");
@@ -1689,4 +1689,8 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
     }
 
     output
+}
+
+fn codegen_indent(indent: usize) -> String {
+    " ".repeat(indent)
 }
