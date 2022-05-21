@@ -3550,6 +3550,14 @@ pub fn typecheck_call(
                         typecheck_typename(type_arg, caller_scope_id, project);
                     error = error.or(err);
 
+                    if callee.generic_parameters.len() <= idx {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "Trying to access generic parameter out of bounds".to_string(),
+                            *span,
+                        )));
+                        continue;
+                    }
+
                     // Find the associated type variable for this parameter, we'll use it in substitution
                     let typevar_type_id = match callee.generic_parameters[idx] {
                         FunctionGenericParameter::InferenceGuide(typevar_type_id)
