@@ -1,0 +1,9 @@
+function main() {
+    unsafe {
+        cpp {
+            []{
+                printf("\"test\"\n");
+            }();
+        }
+    }
+}

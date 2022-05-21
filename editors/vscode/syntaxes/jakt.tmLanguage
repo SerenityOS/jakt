@@ -1058,8 +1058,44 @@
           <string>keyword.Jakt</string>
         </dict>
         <dict>
+          <key>begin</key>
+          <string>(?:\b(cpp) *(\{))</string>
+          <key>beginCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>keyword.Jakt.cpp</string>
+            </dict>
+            <key>2</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.section.block.begin.bracket.curly.Jakt</string>
+            </dict>
+          </dict>
+          <key>contentName</key>
+          <string>meta.embedded.block.cpp</string>
+          <key>patterns</key>
+          <array>
+            <dict>
+              <key>include</key>
+              <string>source.cpp</string>
+            </dict>
+          </array>
+          <key>end</key>
+          <string>(?:\})</string>
+          <key>endCaptures</key>
+          <dict>
+            <key>0</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.section.block.end.bracket.curly.Jakt</string>
+            </dict>
+          </dict>
+        </dict>
+        <dict>
           <key>match</key>
-          <string>(?:\b(unsafe|cpp)\b)</string>
+          <string>(?:\b(unsafe)\b)</string>
           <key>name</key>
           <string>variable.other.property.Jakt</string>
         </dict>

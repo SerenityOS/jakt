@@ -453,7 +453,7 @@ For better interoperability with existing C++ code, as well as situations where 
 let mutable x = 0
 unsafe {
     cpp {
-        "x = (i64)&x;"
+        x = (i64)&x;
     }
 }
 println("{}", x)

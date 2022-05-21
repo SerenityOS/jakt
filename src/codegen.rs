@@ -958,11 +958,7 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             let block = codegen_block(indent, checked_block, project);
             output.push_str(&block);
         }
-        CheckedStatement::InlineCpp(strings) => {
-            for string in strings {
-                output.push_str(&string.replace("\\\"", "\"").replace("\\\\", "\\"))
-            }
-        }
+        CheckedStatement::InlineCpp(string) => output.push_str(&string),
         CheckedStatement::Garbage => {
             // Incorrect parse/typecheck
             // Probably shouldn't be able to get to this point?

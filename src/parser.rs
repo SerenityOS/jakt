@@ -193,7 +193,7 @@ pub enum ParsedStatement {
     Return(ParsedExpression),
     Throw(ParsedExpression),
     Try(Box<ParsedStatement>, String, Span, ParsedBlock),
-    InlineCpp(ParsedBlock, Span),
+    InlineCpp(Span, String),
     Garbage,
 }
 
@@ -1740,17 +1740,54 @@ pub fn parse_statement(
             *index += 1;
 
             let start_span = tokens[*index].span;
+            // This uses the fact that our bracket matching logic coincides with
+            // c++ bracket matching
+            // If we ever get issues with unmatched brackets after a cpp-block,
+            // because we changed our behaviour we will need to change this
+            let mut nested_blocks: i64 = 0;
+            while *index < tokens.len() {
+                match tokens[*index].contents {
+                    TokenContents::LCurly => {
+                        nested_blocks += 1;
+                    }
+                    TokenContents::RCurly => {
+                        nested_blocks -= 1;
+                        if nested_blocks == 0 {
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+                *index += 1;
+            }
 
-            let (block, err) = parse_block(&compiler, tokens, index);
-            error = error.or(err);
+            if *index == tokens.len() {
+                trace!("ERROR: expected complete block in inline cpp parsing");
+                error = Some(JaktError::ParserError(
+                    "incomplete block".to_string(),
+                    tokens[tokens.len() - 1].span,
+                ));
+                return (ParsedStatement::InlineCpp(start_span, String::new()), error);
+            }
 
             let span = Span {
                 file_id: start_span.file_id,
                 start: start_span.start,
                 end: tokens[*index].span.end,
             };
+            // We need to point to the next unconsumed token
+            // and we are currently pointing to the closing brace,
+            // so we need to increment index again
+            *index += 1;
 
-            (ParsedStatement::InlineCpp(block, span), error)
+            let string: String;
+            unsafe {
+                string = String::from_utf8_unchecked(
+                    compiler.get_file_contents(span.file_id)[span.start + 1..span.end - 1].to_vec(),
+                );
+            }
+
+            (ParsedStatement::InlineCpp(span, string), error)
         }
         TokenContents::LCurly => {
             trace!("parsing block from statement parser");

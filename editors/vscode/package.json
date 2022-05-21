@@ -19,7 +19,10 @@
         "grammars": [{
             "language": "jakt",
             "scopeName": "source.Jakt",
-            "path": "./syntaxes/jakt.tmLanguage"
+            "path": "./syntaxes/jakt.tmLanguage",
+            "embeddedLanguages": {
+                "meta.embedded.block.cpp": "cpp"
+            }
         }]
     }
 }

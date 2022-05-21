@@ -523,7 +523,7 @@ pub enum CheckedStatement {
     Continue,
     Throw(CheckedExpression),
     Try(Box<CheckedStatement>, String, CheckedBlock),
-    InlineCpp(Vec<String>),
+    InlineCpp(String),
     Garbage,
 }
 
@@ -2035,36 +2035,17 @@ pub fn typecheck_statement(
             let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
             (CheckedStatement::Block(checked_block), err)
         }
-        ParsedStatement::InlineCpp(block, span) => {
+        ParsedStatement::InlineCpp(span, string) => {
             if safety_mode == SafetyMode::Safe {
                 return (
-                    CheckedStatement::InlineCpp(vec![]),
+                    CheckedStatement::InlineCpp(String::new()),
                     Some(JaktError::TypecheckError(
                         "Use of inline cpp block outside of unsafe block".to_string(),
                         *span,
                     )),
                 );
             }
-
-            let mut strings: Vec<String> = vec![];
-
-            for statement in &block.stmts {
-                match statement {
-                    ParsedStatement::Expression(ParsedExpression::QuotedString(string, _)) => {
-                        strings.push(string.clone())
-                    }
-                    _ => {
-                        return (
-                            CheckedStatement::InlineCpp(vec![]),
-                            Some(JaktError::TypecheckError(
-                                "Expected block of strings".to_string(),
-                                *span,
-                            )),
-                        );
-                    }
-                }
-            }
-            (CheckedStatement::InlineCpp(strings), None)
+            (CheckedStatement::InlineCpp(string.to_string()), None)
         }
         ParsedStatement::Garbage => (CheckedStatement::Garbage, None),
     }
