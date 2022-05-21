@@ -7,6 +7,9 @@ function main() {
     let f = -127 as truncated i8
     let g = 128 as truncated i8
 
+    // as Should not eat the token after the type
+    let h = (1 as! i8)
+
     println("{}", a)
     println("{}", b)
     println("{}", c)
@@ -14,4 +17,5 @@ function main() {
     println("{}", e)
     println("{}", f)
     println("{}", g)
+    println("{}", h)
 }
