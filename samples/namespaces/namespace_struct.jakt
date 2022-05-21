@@ -1,0 +1,16 @@
+namespace Greeters {
+    struct Person {
+        name: String
+        age: i64
+
+        function greet(this) {
+            println("I am {} and my age is {}", name, age)
+        }
+    }
+}
+
+function main() {
+    let p = Greeters::Person(name: "Jane", age: 100)
+
+    p.greet()
+}

@@ -218,3 +218,8 @@ fn test_parser() -> Result<(), JaktError> {
 fn test_sets() -> Result<(), JaktError> {
     test_samples("samples/sets")
 }
+
+#[test]
+fn test_namespaces() -> Result<(), JaktError> {
+    test_samples("samples/namespaces")
+}
