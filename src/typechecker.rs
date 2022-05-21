@@ -4007,6 +4007,19 @@ pub fn typecheck_typename(
 
             (type_id, error)
         }
+        UncheckedType::Set(inner, _) => {
+            let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
+            error = error.or(err);
+
+            let set_struct_id = project
+                .find_struct_in_scope(0, "Set")
+                .expect("internal error: Set builtin definition not found");
+
+            let type_id =
+                project.find_or_add_type_id(Type::GenericInstance(set_struct_id, vec![inner_ty]));
+
+            (type_id, error)
+        }
         UncheckedType::Optional(inner, _) => {
             let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
