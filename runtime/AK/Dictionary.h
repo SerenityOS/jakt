@@ -51,25 +51,16 @@ public:
     {
     }
 
-    // FIXME: Remove this constructor once jakt knows how to call Dictionary::create_with_entries()
-    struct Entry {
-        K key;
-        V value;
-    };
-    Dictionary(std::initializer_list<Entry> list)
-        : m_storage(MUST(adopt_nonnull_ref_or_enomem(new (nothrow) Storage)))
-    {
-        MUST(ensure_capacity(list.size()));
-        for (auto& item : list)
-            MUST(set(item.key, item.value));
-    }
-
     static ErrorOr<Dictionary> create_empty()
     {
         auto storage = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Storage));
         return Dictionary { move(storage) };
     }
 
+    struct Entry {
+        K key;
+        V value;
+    };
     static ErrorOr<Dictionary> create_with_entries(std::initializer_list<Entry> list)
     {
         auto dictionary = TRY(create_empty());
