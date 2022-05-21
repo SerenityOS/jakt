@@ -2,7 +2,7 @@ class Person {
     name: String
     age: i64
 
-    function birthday(mutable this) {
+    public function birthday(mutable this) {
         ++this.age
     }
 }

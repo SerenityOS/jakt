@@ -1,11 +1,11 @@
 class Foo {
     x: i64
 
-    function set(mutable this, value: i64) {
+    public function set(mutable this, value: i64) {
         this.x = value
     }
 
-    function get(this) {
+    public function get(this) {
         return this.x
     }
 }

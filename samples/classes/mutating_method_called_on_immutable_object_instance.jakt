@@ -1,5 +1,5 @@
 class Foo {
-    function bar(mutable this) {}
+    public function bar(mutable this) {}
 }
 
 function main() {

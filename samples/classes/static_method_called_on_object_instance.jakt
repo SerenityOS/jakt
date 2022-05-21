@@ -1,5 +1,5 @@
 class Foo {
-    function bar() {
+    public function bar() {
         println("I am a static method")
     }
 }

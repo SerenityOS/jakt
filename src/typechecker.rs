@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::parser::{MatchBody, MatchCase};
+use crate::parser::{MatchBody, MatchCase, Visibility};
 use crate::{
     codegen::{self},
     compiler::{
@@ -453,6 +453,7 @@ pub enum FunctionGenericParameter {
 #[derive(Debug, Clone)]
 pub struct CheckedFunction {
     pub name: String,
+    pub visibility: Visibility,
     pub throws: bool,
     pub return_type: TypeId,
     pub params: Vec<CheckedParameter>,
@@ -1117,6 +1118,8 @@ fn typecheck_enum(
                             return_type: enum_type_id,
                             params: vec![],
                             function_scope_id,
+                            // Enum variant constructors are always visible.
+                            visibility: Visibility::Public,
                             generic_parameters: enum_
                                 .generic_parameters
                                 .iter()
@@ -1242,6 +1245,7 @@ fn typecheck_enum(
                             throws: false,
                             return_type: enum_type_id,
                             params: constructor_params,
+                            visibility: Visibility::Public,
                             function_scope_id,
                             generic_parameters: enum_
                                 .generic_parameters
@@ -1311,6 +1315,7 @@ fn typecheck_enum(
                             throws: false,
                             return_type: enum_type_id,
                             params: constructor_params,
+                            visibility: Visibility::Public,
                             function_scope_id,
                             generic_parameters: enum_
                                 .generic_parameters
@@ -1406,6 +1411,7 @@ fn typecheck_struct_predecl(
             params: vec![],
             throws: function.throws,
             return_type: UNKNOWN_TYPE_ID,
+            visibility: function.visibility,
             function_scope_id: method_scope_id,
             generic_parameters,
             block: CheckedBlock::new(),
@@ -1528,6 +1534,8 @@ fn typecheck_struct(
             throws: structure.definition_type == DefinitionType::Class,
             return_type: struct_type_id,
             params: constructor_params,
+            // The default constructor is public.
+            visibility: Visibility::Public,
             function_scope_id,
             generic_parameters: vec![],
             block: CheckedBlock::new(),
@@ -1572,6 +1580,7 @@ fn typecheck_function_predecl(
         params: vec![],
         throws: function.throws,
         return_type: UNKNOWN_TYPE_ID,
+        visibility: function.visibility,
         function_scope_id,
         generic_parameters: vec![],
         block: CheckedBlock::new(),
@@ -3588,6 +3597,20 @@ pub fn typecheck_call(
             if let Some(callee) = callee {
                 // Borrow checker workaround, would be nice to clean this up
                 let callee = callee.clone();
+
+                // Make sure we are allowed to access this method.
+                if callee.visibility != Visibility::Public
+                    && !Scope::can_access(caller_scope_id, callee_scope_id, project)
+                {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        // FIXME: Improve this error
+                        format!(
+                            "Can't access function `{}` from scope {:?}",
+                            callee.name, project.scopes[caller_scope_id].namespace_name,
+                        ),
+                        *span,
+                    )));
+                }
 
                 callee_throws = callee.throws;
                 return_ty = callee.return_type;

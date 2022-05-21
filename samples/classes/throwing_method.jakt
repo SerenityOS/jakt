@@ -1,5 +1,5 @@
 class Foo {
-    function toss(this) throws {
+    public function toss(this) throws {
         throw Error::from_errno(0)
     }
 }
