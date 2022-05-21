@@ -2660,7 +2660,6 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                     }
                 };
 
-                *index += 1;
                 expr =
                     ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::TypeCast(cast), span)
             }
