@@ -69,6 +69,21 @@ pub fn is_signed(type_id: TypeId) -> bool {
     }
 }
 
+pub fn flip_signedness(type_id: TypeId) -> Option<TypeId> {
+    match type_id {
+        I8_TYPE_ID => Some(U8_TYPE_ID),
+        I16_TYPE_ID => Some(U16_TYPE_ID),
+        I32_TYPE_ID => Some(U32_TYPE_ID),
+        I64_TYPE_ID => Some(U64_TYPE_ID),
+        U8_TYPE_ID => Some(I8_TYPE_ID),
+        U16_TYPE_ID => Some(I16_TYPE_ID),
+        U32_TYPE_ID => Some(I32_TYPE_ID),
+        U64_TYPE_ID => Some(I64_TYPE_ID),
+        // FIXME: What about the C types?
+        _ => None,
+    }
+}
+
 pub fn get_bits(type_id: TypeId) -> u32 {
     match type_id {
         BOOL_TYPE_ID => 8,
@@ -652,6 +667,15 @@ impl IntegerConstant {
             },
         };
         (Some(new_constant), type_id)
+    }
+}
+
+impl From<IntegerConstant> for i128 {
+    fn from(integer: IntegerConstant) -> Self {
+        match integer {
+            IntegerConstant::Signed(value) => value as i128,
+            IntegerConstant::Unsigned(value) => value as i128,
+        }
     }
 }
 
@@ -3354,15 +3378,89 @@ pub fn typecheck_unary_operation(
                 | crate::compiler::U32_TYPE_ID
                 | crate::compiler::U64_TYPE_ID
                 | crate::compiler::F32_TYPE_ID
-                | crate::compiler::F64_TYPE_ID => (
-                    CheckedExpression::UnaryOp(
-                        Box::new(expr),
-                        CheckedUnaryOperator::Negate,
-                        span,
-                        ty,
-                    ),
-                    None,
-                ),
+                | crate::compiler::F64_TYPE_ID => {
+                    // FIXME: This at least allows us to check out-of-bounds constants at compile time.
+                    //        We should expand it to check any compile-time known value.
+                    if let CheckedExpression::NumericConstant(ref number, span, type_id) = expr {
+                        // Flipping the sign on a small enough unsigned constant is fine. We'll change the type to the signed variant.
+                        if is_integer(type_id) && !is_signed(type_id) {
+                            // FIXME: What about integer types whose signedness we can't yet flip?
+                            let flipped_sign_type = flip_signedness(type_id).unwrap();
+                            let negated_value = -i128::from(number.integer_constant().unwrap());
+                            if !can_fit_integer(
+                                flipped_sign_type,
+                                &IntegerConstant::Signed(negated_value as i64),
+                            )
+                            // This is the case if the above "as i64" overflows.
+                            || negated_value < i64::MIN.into()
+                            {
+                                (
+                                    CheckedExpression::Garbage(span),
+                                    Some(JaktError::TypecheckError(
+                                        // FIXME: Print this more nicely
+                                        format!(
+                                            "Literal {:?} too small for unsigned integer type {}",
+                                            number.integer_constant().unwrap(),
+                                            type_id
+                                        ),
+                                        span,
+                                    )),
+                                )
+                            } else {
+                                (
+                                    CheckedExpression::NumericConstant(
+                                        match flipped_sign_type {
+                                            I8_TYPE_ID => NumericConstant::I8(negated_value as i8),
+                                            I16_TYPE_ID => {
+                                                NumericConstant::I16(negated_value as i16)
+                                            }
+                                            I32_TYPE_ID => {
+                                                NumericConstant::I32(negated_value as i32)
+                                            }
+                                            I64_TYPE_ID => {
+                                                NumericConstant::I64(negated_value as i64)
+                                            }
+                                            U8_TYPE_ID => NumericConstant::U8(negated_value as u8),
+                                            U16_TYPE_ID => {
+                                                NumericConstant::U16(negated_value as u16)
+                                            }
+                                            U32_TYPE_ID => {
+                                                NumericConstant::U32(negated_value as u32)
+                                            }
+                                            U64_TYPE_ID => {
+                                                NumericConstant::U64(negated_value as u64)
+                                            }
+                                            _ => unreachable!(),
+                                        },
+                                        span,
+                                        flipped_sign_type,
+                                    ),
+                                    None,
+                                )
+                            }
+                        } else {
+                            (
+                                CheckedExpression::UnaryOp(
+                                    Box::new(expr),
+                                    CheckedUnaryOperator::Negate,
+                                    span,
+                                    ty,
+                                ),
+                                None,
+                            )
+                        }
+                    } else {
+                        (
+                            CheckedExpression::UnaryOp(
+                                Box::new(expr),
+                                CheckedUnaryOperator::Negate,
+                                span,
+                                ty,
+                            ),
+                            None,
+                        )
+                    }
+                }
                 _ => (
                     CheckedExpression::UnaryOp(
                         Box::new(expr),
