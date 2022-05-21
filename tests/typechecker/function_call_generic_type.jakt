@@ -1,0 +1,5 @@
+function foo() {}
+
+function main() {
+    foo<String>()
+}
