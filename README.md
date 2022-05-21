@@ -213,7 +213,7 @@ let values = ["foo", "bar", "baz"]
 
 ```jakt
 function main() {
-    let dict = ["a": 1, "b": 2]
+    let dict = {"a": 1, "b": 2}
 
     println("{}", dict["a"]!)
 }
@@ -223,7 +223,7 @@ function main() {
 
 ```jakt
 // Function that takes a Dictionary<i64, String> and returns an Dictionary<String, bool>
-function foo(numbers: [i64:String]) -> [String:bool] {
+function foo(numbers: {i64:String}) -> {String:bool} {
     ...
 }
 ```
@@ -232,7 +232,7 @@ function foo(numbers: [i64:String]) -> [String:bool] {
 
 ```jakt
 // Dictionary<String, i64> with 3 entries.
-let values = ["foo": 500, "bar": 600, "baz": 700]
+let values = {"foo": 500, "bar": 600, "baz": 700}
 ```
 
 ## Sets
