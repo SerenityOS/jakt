@@ -3339,6 +3339,7 @@ pub fn typecheck_binary_operation(
         | BinaryOperator::SubtractAssign
         | BinaryOperator::MultiplyAssign
         | BinaryOperator::DivideAssign
+        | BinaryOperator::ModuloAssign
         | BinaryOperator::BitwiseAndAssign
         | BinaryOperator::BitwiseOrAssign
         | BinaryOperator::BitwiseXorAssign
