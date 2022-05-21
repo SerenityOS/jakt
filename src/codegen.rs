@@ -966,6 +966,115 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
     output
 }
 
+fn codegen_checked_binary_op(
+    indent: usize,
+    lhs: &CheckedExpression,
+    rhs: &CheckedExpression,
+    type_id: TypeId,
+    op: &BinaryOperator,
+    project: &Project,
+) -> String {
+    let mut output = String::new();
+
+    output.push_str("[](auto _jakt_lhs, auto _jakt_rhs) {\n");
+    output.push_str("Checked<");
+    output.push_str(&codegen_type(type_id, project));
+    output.push_str("> _jakt_checked = _jakt_lhs;\n");
+    output.push_str("_jakt_checked ");
+
+    let op_str = match op {
+        BinaryOperator::Add => '+',
+        BinaryOperator::Subtract => '-',
+        BinaryOperator::Multiply => '*',
+        BinaryOperator::Divide => '/',
+        BinaryOperator::Modulo => '%',
+        _ => panic!(
+            "Checked binary operation codegen is not supported for BinaryOperator::{:?}",
+            op
+        ),
+    };
+
+    output.push(op_str);
+    output.push_str("= ");
+    output.push_str("_jakt_rhs;\n");
+    output.push_str("if (_jakt_checked.has_overflow()) {\n");
+    output.push_str(&format!(
+        r#"
+        // FIXME: This should print to stderr, but the tests compare stdout.
+        outln(
+            "Panic: {{}} in checked binary operation `{{}} {} {{}}`",
+            _jakt_rhs == 0 ? "Division by zero" : "Overflow", _jakt_lhs, _jakt_rhs
+        );
+        "#,
+        op_str
+    ));
+    output.push_str("if (!_jakt_continue_on_panic) VERIFY_NOT_REACHED();\n");
+    output.push_str("}\n");
+    output.push_str("return _jakt_checked.value_unchecked();\n");
+    output.push_str("}(");
+    output.push_str(&codegen_expr(indent, lhs, project));
+    output.push_str(", ");
+    output.push_str(&codegen_expr(indent, rhs, project));
+    output.push(')');
+
+    output
+}
+
+fn codegen_checked_binary_op_assign(
+    indent: usize,
+    lhs: &CheckedExpression,
+    rhs: &CheckedExpression,
+    type_id: TypeId,
+    op: &BinaryOperator,
+    project: &Project,
+) -> String {
+    let mut output = String::new();
+
+    output.push('{');
+    output.push_str("auto& _jakt_lhs = ");
+    output.push_str(&codegen_expr(indent, lhs, project));
+    output.push(';');
+    output.push_str("auto _jakt_rhs = ");
+    output.push_str(&codegen_expr(indent, rhs, project));
+    output.push(';');
+    output.push_str("Checked<");
+    output.push_str(&codegen_type(type_id, project));
+    output.push_str("> _jakt_checked = _jakt_lhs;");
+    output.push_str("_jakt_checked ");
+
+    let op_str = match op {
+        BinaryOperator::AddAssign => '+',
+        BinaryOperator::SubtractAssign => '-',
+        BinaryOperator::MultiplyAssign => '*',
+        BinaryOperator::DivideAssign => '/',
+        BinaryOperator::ModuloAssign => '%',
+        _ => panic!(
+            "Checked binary operation assignment codegen is not supported for BinaryOperator::{:?}",
+            op
+        ),
+    };
+
+    output.push(op_str);
+    output.push_str("= _jakt_rhs;");
+    output.push_str("if (_jakt_checked.has_overflow()) {");
+    output.push_str(&format!(
+        r#"
+        // FIXME: This should print to stderr, but the tests compare stdout.
+        outln(
+            "Panic: {{}} in checked binary operation `{{}} {} {{}}`",
+            _jakt_rhs == 0 ? "Division by zero" : "Overflow", _jakt_lhs, _jakt_rhs
+        );
+        "#,
+        op_str
+    ));
+    output.push_str("if (!_jakt_continue_on_panic) VERIFY_NOT_REACHED();");
+    output.push('}');
+    output.push_str("_jakt_lhs = _jakt_checked.value_unchecked();");
+    output.push('}');
+
+    output
+}
+
 fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> String {
     let mut output = String::new();
 
@@ -1506,6 +1615,38 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     output.push_str(", ");
                     output.push_str(&codegen_expr(indent, rhs, project));
                     output.push(')');
+                }
+                BinaryOperator::Add
+                | BinaryOperator::Subtract
+                | BinaryOperator::Multiply
+                | BinaryOperator::Divide
+                | BinaryOperator::Modulo
+                    if is_integer(expr.ty()) =>
+                {
+                    output.push_str(&codegen_checked_binary_op(
+                        indent,
+                        lhs,
+                        rhs,
+                        expr.ty(),
+                        op,
+                        project,
+                    ))
+                }
+                BinaryOperator::AddAssign
+                | BinaryOperator::SubtractAssign
+                | BinaryOperator::MultiplyAssign
+                | BinaryOperator::DivideAssign
+                | BinaryOperator::ModuloAssign
+                    if is_integer(expr.ty()) =>
+                {
+                    output.push_str(&codegen_checked_binary_op_assign(
+                        indent,
+                        lhs,
+                        rhs,
+                        expr.ty(),
+                        op,
+                        project,
+                    ))
                 }
                 _ => {
                     output.push_str(&codegen_expr(indent, lhs, project));

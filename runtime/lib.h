@@ -82,6 +82,12 @@
 
 #include <IO/File.cpp>
 
+#ifdef JAKT_CONTINUE_ON_PANIC
+constexpr auto _jakt_continue_on_panic = true;
+#else
+constexpr auto _jakt_continue_on_panic = false;
+#endif
+
 using f32 = float;
 using f64 = double;
 

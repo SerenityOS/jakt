@@ -89,6 +89,7 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
                         .arg(&exe_name)
                         .arg("-std=c++20")
                         .arg("-Wno-user-defined-literals")
+                        .arg("-DJAKT_CONTINUE_ON_PANIC")
                         .output()?;
 
                     if !status.status.success() {
