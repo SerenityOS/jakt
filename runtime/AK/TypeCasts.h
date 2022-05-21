@@ -51,57 +51,7 @@ ALWAYS_INLINE CopyConst<InputType, OutputType>& verify_cast(InputType& input)
     return static_cast<CopyConst<InputType, OutputType>&>(input);
 }
 
-template<typename OutputType, typename InputType>
-ALWAYS_INLINE Optional<OutputType> fallible_integer_cast(InputType input)
-{
-    static_assert(IsIntegral<InputType>);
-    if (!is_within_range<OutputType>(input))
-        return {};
-    return static_cast<OutputType>(input);
 }
 
-template<typename... Ts>
-void compiletime_fail(Ts...) {}
-
-template<typename OutputType, typename InputType>
-ALWAYS_INLINE constexpr OutputType infallible_integer_cast(InputType input)
-{
-    static_assert(IsIntegral<InputType>);
-    if (is_constant_evaluated()) {
-        if (!is_within_range<OutputType>(input))
-            compiletime_fail("Integer cast out of range");
-    } else {
-      VERIFY(is_within_range<OutputType>(input));
-    }
-    return static_cast<OutputType>(input);
-}
-
-template<typename OutputType, typename InputType>
-ALWAYS_INLINE constexpr OutputType saturating_integer_cast(InputType input)
-{
-    static_assert(IsIntegral<InputType>);
-    if (!is_within_range<OutputType>(input)) {
-        if constexpr (IsSigned<InputType>) {
-            if (input < 0)
-                return NumericLimits<OutputType>::min();
-        }
-        return NumericLimits<OutputType>::max();
-    }
-    return static_cast<OutputType>(input);
-}
-
-template<typename OutputType, typename InputType>
-ALWAYS_INLINE constexpr OutputType truncating_integer_cast(InputType input)
-{
-    static_assert(IsIntegral<InputType>);
-    return static_cast<OutputType>(input);
-}
-
-}
-
-using AK::fallible_integer_cast;
-using AK::infallible_integer_cast;
 using AK::is;
-using AK::saturating_integer_cast;
-using AK::truncating_integer_cast;
 using AK::verify_cast;

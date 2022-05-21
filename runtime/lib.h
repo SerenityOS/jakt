@@ -225,7 +225,7 @@ struct ExplicitValueOrReturn {
     }
 
     ExplicitValueOrReturn(ExplicitValue<void>&&)
-        : value(ExplicitValue<void> { })
+        : value(ExplicitValue<void> {})
     {
     }
 
@@ -240,7 +240,8 @@ struct ExplicitValueOrReturn {
     {
     }
 
-    bool is_return() const {
+    bool is_return() const
+    {
         return value.template has<Conditional<IsVoid<Return>, Empty, Return>>();
     }
 
@@ -270,7 +271,74 @@ struct ExplicitValueOrReturn {
     _jakt_value.release_value();                    \
 })
 
+template<typename OutputType, typename InputType>
+ALWAYS_INLINE Optional<OutputType> fallible_integer_cast(InputType input)
+{
+    if constexpr (IsEnum<InputType>) {
+        return fallible_integer_cast<OutputType>(to_underlying(input));
+    } else {
+        static_assert(IsIntegral<InputType>);
+        if (!AK::is_within_range<OutputType>(input))
+            return {};
+        return static_cast<OutputType>(input);
+    }
 }
+
+template<typename... Ts>
+void compiletime_fail(Ts...) { }
+
+template<typename OutputType, typename InputType>
+ALWAYS_INLINE constexpr OutputType infallible_integer_cast(InputType input)
+{
+    if constexpr (IsEnum<InputType>) {
+        return infallible_integer_cast<OutputType>(to_underlying(input));
+    } else {
+        static_assert(IsIntegral<InputType>);
+        if (is_constant_evaluated()) {
+            if (!AK::is_within_range<OutputType>(input))
+                compiletime_fail("Integer cast out of range");
+        } else {
+            VERIFY(AK::is_within_range<OutputType>(input));
+        }
+        return static_cast<OutputType>(input);
+    }
+}
+
+template<typename OutputType, typename InputType>
+ALWAYS_INLINE constexpr OutputType saturating_integer_cast(InputType input)
+{
+    if constexpr (IsEnum<InputType>) {
+        return saturating_integer_cast<OutputType>(to_underlying(input));
+    } else {
+        static_assert(IsIntegral<InputType>);
+        if (!AK::is_within_range<OutputType>(input)) {
+            if constexpr (IsSigned<InputType>) {
+                if (input < 0)
+                    return NumericLimits<OutputType>::min();
+            }
+            return NumericLimits<OutputType>::max();
+        }
+        return static_cast<OutputType>(input);
+    }
+}
+
+template<typename OutputType, typename InputType>
+ALWAYS_INLINE constexpr OutputType truncating_integer_cast(InputType input)
+{
+    if constexpr (IsEnum<InputType>) {
+        return truncating_integer_cast<OutputType>(to_underlying(input));
+    } else {
+        static_assert(IsIntegral<InputType>);
+        return static_cast<OutputType>(input);
+    }
+}
+
+}
+
+using JaktInternal::fallible_integer_cast;
+using JaktInternal::infallible_integer_cast;
+using JaktInternal::saturating_integer_cast;
+using JaktInternal::truncating_integer_cast;
 
 int main(int argc, char** argv)
 {
