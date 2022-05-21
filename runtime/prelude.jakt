@@ -37,9 +37,9 @@ extern struct Optional<T> {
 extern struct Dictionary<K, V> {
     function get(this, anonymous key: K) -> V?
     function contains(this, anonymous key: K) -> bool
-    function set(mutable this, key: K, value: V)
+    function set(mutable this, key: K, value: V) throws
     function remove(mutable this, anonymous key: K) -> bool
-    function ensure_capacity(mutable this, anonymous capacity: usize)
+    function ensure_capacity(mutable this, anonymous capacity: usize) throws
     function clear(mutable this)
     function size(this) -> usize
     function capacity(this) -> usize
