@@ -464,10 +464,8 @@ pub struct CheckedFunction {
 
 impl CheckedFunction {
     pub fn is_static(&self) -> bool {
-        for param in &self.params {
-            if param.variable.name == "this" {
-                return false;
-            }
+        if let Some(param) = self.params.get(0) {
+            return param.variable.name != "this";
         }
 
         true
