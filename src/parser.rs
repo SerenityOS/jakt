@@ -3765,14 +3765,39 @@ pub fn parse_shorthand_type(
     let start = tokens[*index].span;
     if let TokenContents::LSquare = &tokens[*index].contents {
         // [T] is shorthand for Array<T>
-        // [K:V] is shorthand for Dictionary<K, V>
+        *index += 1;
+        let (ty, err) = parse_typename(tokens, index);
+        if let TokenContents::RSquare = &tokens[*index].contents {
+            *index += 1;
+            return (
+                ParsedType::Array(
+                    Box::new(ty),
+                    Span {
+                        file_id: start.file_id,
+                        start: start.start,
+                        end: tokens[*index - 1].span.end,
+                    },
+                ),
+                err,
+            );
+        };
+
+        (
+            ParsedType::Empty,
+            err.or(Some(JaktError::ParserError(
+                "expected ]".to_string(),
+                tokens[*index].span,
+            ))),
+        )
+    } else if let TokenContents::LCurly = &tokens[*index].contents {
+        // {T} is shorthand for Set<T>
         *index += 1;
         let (ty, err) = parse_typename(tokens, index);
         match &tokens[*index].contents {
-            TokenContents::RSquare => {
+            TokenContents::RCurly => {
                 *index += 1;
                 return (
-                    ParsedType::Array(
+                    ParsedType::Set(
                         Box::new(ty),
                         Span {
                             file_id: start.file_id,
@@ -3783,11 +3808,12 @@ pub fn parse_shorthand_type(
                     err,
                 );
             }
+            // {K:V} is shorthand for Dictionary<K, V>
             TokenContents::Colon => {
                 *index += 1;
                 let (value_ty, value_err) = parse_typename(tokens, index);
                 if *index < tokens.len() {
-                    if let TokenContents::RSquare = &tokens[*index].contents {
+                    if let TokenContents::RCurly = &tokens[*index].contents {
                         *index += 1;
                         return (
                             ParsedType::Dictionary(
@@ -3805,38 +3831,12 @@ pub fn parse_shorthand_type(
                 }
             }
             _ => {}
-        };
-
-        (
-            ParsedType::Empty,
-            err.or(Some(JaktError::ParserError(
-                "expected ]".to_string(),
-                tokens[*index].span,
-            ))),
-        )
-    } else if let TokenContents::LCurly = &tokens[*index].contents {
-        // {T} is shorthand for Set<T>
-        *index += 1;
-        let (ty, err) = parse_typename(tokens, index);
-        if let TokenContents::RCurly = &tokens[*index].contents {
-            *index += 1;
-            return (
-                ParsedType::Set(
-                    Box::new(ty),
-                    Span {
-                        file_id: start.file_id,
-                        start: start.start,
-                        end: tokens[*index - 1].span.end,
-                    },
-                ),
-                err,
-            );
         }
 
         (
             ParsedType::Empty,
             err.or(Some(JaktError::ParserError(
-                "expected ]".to_string(),
+                "expected }".to_string(),
                 tokens[*index].span,
             ))),
         )

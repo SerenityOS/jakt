@@ -1,4 +1,4 @@
-function change_value(dictionary: mutable [String:String]) throws {
+function change_value(dictionary: mutable {String:String}) throws {
     dictionary.set(key: "foo", value: "PASS")
 }
 

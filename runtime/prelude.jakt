@@ -47,7 +47,7 @@ extern struct Dictionary<K, V> {
     function capacity(this) -> usize
     function keys(this) -> [K]
     function hash(this) -> u32
-    function Dictionary<A, B>() -> [A:B]
+    function Dictionary<A, B>() -> {A:B}
 }
 
 extern struct Set<V> {
