@@ -1,0 +1,13 @@
+// FIXME: change_value() returns a value because a function that `throws` can't return void
+
+function change_value(dictionary: mutable Dictionary<String, String>) throws -> i64 {
+    dictionary.set(key: "foo", value: "PASS")
+    return 123
+}
+
+function main() {
+    let mutable dictionary = ["foo": "FAIL", "bar": ":^)"]
+    change_value(dictionary)
+
+    println("{}", dictionary["foo"]);
+}
