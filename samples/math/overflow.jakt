@@ -1,0 +1,5 @@
+function main() {
+	let x: u32 = 0xffffffff
+	let y: u32 = x + 1
+	println("{} + 1 = {}", x, y)
+}

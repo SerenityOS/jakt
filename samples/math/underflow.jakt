@@ -1,0 +1,6 @@
+function main() {
+	let x: i32 = -0x7fffffff - 1
+	// FIXME: The typechecker doesn't decuce the correct type for the literal yet.
+	let y: i32 = x + -1 as! i32
+	println("{} - 1 = {}", x, y)
+}

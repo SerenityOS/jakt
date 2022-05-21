@@ -1491,7 +1491,17 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             output.push(')');
         }
         CheckedExpression::BinaryOp(lhs, op, rhs, ..) => {
-            output.push('(');
+            let is_integer_op = is_integer(expr.ty());
+            // FIXME: Do the same for other binary ops.
+            if let BinaryOperator::Add = op {
+                if is_integer_op {
+                    output.push_str("__checked_add(");
+                } else {
+                    output.push('(');
+                }
+            } else {
+                output.push('(');
+            }
 
             match op {
                 BinaryOperator::NoneCoalescing => {
@@ -1510,7 +1520,14 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 _ => {
                     output.push_str(&codegen_expr(indent, lhs, project));
                     match op {
-                        BinaryOperator::Add => output.push_str(" + "),
+                        // FIXME: Do the same for other binary ops.
+                        BinaryOperator::Add => {
+                            if is_integer_op {
+                                output.push_str(", ")
+                            } else {
+                                output.push_str(" + ")
+                            }
+                        }
                         BinaryOperator::Subtract => output.push_str(" - "),
                         BinaryOperator::Multiply => output.push_str(" * "),
                         BinaryOperator::Modulo => output.push_str(" % "),
