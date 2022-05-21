@@ -104,8 +104,7 @@ ErrorOr<int> main(Array<String>);
 
 inline void panic(StringView message)
 {
-    // FIXME: This should print to stderr, but the tests compare stdout.
-    outln("Panic: {}", message);
+    warnln("Panic: {}", message);
     if (continue_on_panic)
         return;
     VERIFY_NOT_REACHED();
