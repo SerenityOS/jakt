@@ -1139,6 +1139,15 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 output.push_str("ULL)");
             }
         },
+        CheckedExpression::NamespacedVar(ns, var, _) => {
+            for ns in ns.iter() {
+                if ns.name.is_some() {
+                    output.push_str(ns.name.as_ref().unwrap());
+                    output.push_str("::");
+                }
+            }
+            output.push_str(&var.name);
+        }
         CheckedExpression::Var(var, ..) => {
             output.push_str(&var.name);
         }
@@ -1335,9 +1344,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                 output.push_str(&codegen_indent(indent));
                                 match body {
                                     CheckedMatchBody::Expression(expr) => {
-                                        output.push_str("return JaktInternal::ExplicitReturn(");
+                                        output.push_str("return JaktInternal::ExplicitValue(");
                                         output.push_str(&codegen_expr(0, expr, project));
-                                        output.push(')');
+                                        output.push_str(");");
                                     }
                                     CheckedMatchBody::Block(block) => {
                                         output.push_str(&codegen_block(indent, block, project));

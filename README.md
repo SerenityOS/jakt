@@ -267,7 +267,7 @@ function main() {
 
 - [x] Enums as sum-types
 - [x] Generic enums
-- [ ] Enums as names for values of an underlying type (partial)
+- [x] Enums as names for values of an underlying type
 - [x] `match` expressions
 - [x] Enum scope inference in `match` arms
 - [ ] Nested `match` patterns
@@ -300,6 +300,20 @@ function look_at_foo(anonymous x: Foo) -> i32 {
             return a + b
         }
     }
+}
+
+enum AlertDescription: i8 {
+    CloseNotify = 0
+    UnexpectedMessage = 10
+    BadRecordMAC = 20
+    // etc
+}
+
+// Use in match:
+function do_nothing_in_particular() => match AlertDescription::CloseNotify {
+    CloseNotify => { ... }
+    UnexpectedMessage => { ... }
+    BadRecordMAC => { ... }
 }
 ```
 
