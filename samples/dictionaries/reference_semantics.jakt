@@ -3,7 +3,7 @@ function change_value(dictionary: mutable [String:String]) throws {
 }
 
 function main() {
-    let mutable dictionary = ["foo": "FAIL", "bar": ":^)"]
+    let mutable dictionary = {"foo": "FAIL", "bar": ":^)"}
     change_value(dictionary)
 
     println("{}", dictionary["foo"]);

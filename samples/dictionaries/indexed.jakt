@@ -1,5 +1,5 @@
 function main() {
-    let dict = ["a": 1, "b": 2]
+    let dict = {"a": 1, "b": 2}
 
     println("{}", dict["a"])
 }

@@ -3447,6 +3447,9 @@ pub fn parse_set(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Opti
     let mut error = None;
 
     let mut output = Vec::new();
+    let mut dict_output = Vec::new();
+
+    let mut is_dictionary = false;
 
     let start;
     if *index < tokens.len() {
@@ -3495,33 +3498,78 @@ pub fn parse_set(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Opti
                 let (expr, err) =
                     parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
                 error = error.or(err);
-                output.push(expr);
+
+                if *index < tokens.len() {
+                    if tokens[*index].contents == TokenContents::Colon {
+                        if !output.is_empty() {
+                            error = error.or(Some(JaktError::ParserError(
+                                "mixing dictionary and set values".to_string(),
+                                tokens[*index].span,
+                            )))
+                        }
+
+                        is_dictionary = true;
+
+                        *index += 1;
+
+                        if *index < tokens.len() {
+                            let (value, err) = parse_expression(
+                                tokens,
+                                index,
+                                ExpressionKind::ExpressionWithoutAssignment,
+                            );
+                            error = error.or(err);
+
+                            dict_output.push((expr, value));
+                        } else {
+                            error = error.or(Some(JaktError::ParserError(
+                                "key missing value in dictionary".to_string(),
+                                tokens[*index - 1].span,
+                            )))
+                        }
+                    } else if !is_dictionary {
+                        output.push(expr);
+                    }
+                } else if !is_dictionary {
+                    output.push(expr);
+                }
             }
         }
     }
 
     let end = *index - 1;
 
-    (
-        ParsedExpression::Set(
-            output,
-            Span {
-                file_id: tokens[start].span.file_id,
-                start: tokens[start].span.start,
-                end: tokens[end].span.end,
-            },
-        ),
-        error,
-    )
+    if is_dictionary {
+        (
+            ParsedExpression::Dictionary(
+                dict_output,
+                Span {
+                    file_id: tokens[start].span.file_id,
+                    start: tokens[start].span.start,
+                    end: tokens[end].span.end,
+                },
+            ),
+            error,
+        )
+    } else {
+        (
+            ParsedExpression::Set(
+                output,
+                Span {
+                    file_id: tokens[start].span.file_id,
+                    start: tokens[start].span.start,
+                    end: tokens[end].span.end,
+                },
+            ),
+            error,
+        )
+    }
 }
 
 pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Option<JaktError>) {
     let mut error = None;
 
     let mut output = Vec::new();
-    let mut dict_output = Vec::new();
-
-    let mut is_dictionary = false;
 
     let start;
     if *index < tokens.len() {
@@ -3590,73 +3638,25 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Op
                 let (expr, err) =
                     parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
                 error = error.or(err);
-
-                if *index < tokens.len() {
-                    if tokens[*index].contents == TokenContents::Colon {
-                        if !output.is_empty() {
-                            error = error.or(Some(JaktError::ParserError(
-                                "mixing dictionary and array values".to_string(),
-                                tokens[*index].span,
-                            )))
-                        }
-
-                        is_dictionary = true;
-
-                        *index += 1;
-
-                        if *index < tokens.len() {
-                            let (value, err) = parse_expression(
-                                tokens,
-                                index,
-                                ExpressionKind::ExpressionWithoutAssignment,
-                            );
-                            error = error.or(err);
-
-                            dict_output.push((expr, value));
-                        } else {
-                            error = error.or(Some(JaktError::ParserError(
-                                "key missing value in dictionary".to_string(),
-                                tokens[*index - 1].span,
-                            )))
-                        }
-                    } else if !is_dictionary {
-                        output.push(expr);
-                    }
-                } else if !is_dictionary {
-                    output.push(expr);
-                }
+                output.push(expr);
             }
         }
     }
 
     let end = *index - 1;
 
-    if is_dictionary {
-        (
-            ParsedExpression::Dictionary(
-                dict_output,
-                Span {
-                    file_id: tokens[start].span.file_id,
-                    start: tokens[start].span.start,
-                    end: tokens[end].span.end,
-                },
-            ),
-            error,
-        )
-    } else {
-        (
-            ParsedExpression::Array(
-                output,
-                fill_size_expr,
-                Span {
-                    file_id: tokens[start].span.file_id,
-                    start: tokens[start].span.start,
-                    end: tokens[end].span.end,
-                },
-            ),
-            error,
-        )
-    }
+    (
+        ParsedExpression::Array(
+            output,
+            fill_size_expr,
+            Span {
+                file_id: tokens[start].span.file_id,
+                start: tokens[start].span.start,
+                end: tokens[end].span.end,
+            },
+        ),
+        error,
+    )
 }
 
 pub fn parse_variable_declaration(
