@@ -428,7 +428,7 @@ fn codegen_function_predecl(function: &CheckedFunction, project: &Project) -> St
     if !function.generic_parameters.is_empty() {
         output.push_str("template <");
     }
-    for (idx, generic_parameter) in fun.generic_parameters.iter().enumerate() {
+    for (idx, generic_parameter) in function.generic_parameters.iter().enumerate() {
         if idx > 0 {
             output.push_str(", ");
         }
@@ -458,7 +458,7 @@ fn codegen_function_predecl(function: &CheckedFunction, project: &Project) -> St
     output.push_str(&function.name);
     output.push('(');
 
-    for (idx, param) in fun.params.iter().enumerate() {
+    for (idx, param) in function.params.iter().enumerate() {
         if idx > 0 {
             output.push_str(", ");
         }
@@ -482,10 +482,10 @@ fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
     if !function.generic_parameters.is_empty() {
         output.push_str("template <");
     }
-    for (idx, generic_parameter) in fun.generic_parameters.iter().enumerate() {
+    for (idx, generic_parameter) in function.generic_parameters.iter().enumerate() {
         if idx > 0 {
             output.push_str(", ");
-        } 
+        }
         output.push_str("typename ");
         let id = match generic_parameter {
             FunctionGenericParameter::InferenceGuide(id)
@@ -607,7 +607,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
 
                 output.push('(');
 
-                for (idx, param) in fun.params.iter().enumerate() {
+                for (idx, param) in function.params.iter().enumerate() {
                     if idx > 0 {
                         output.push_str(", ");
                     }
@@ -639,7 +639,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
                 output.push_str(&function.name);
                 output.push('(');
 
-                for (idx, param) in fun.params.iter().enumerate() {
+                for (idx, param) in function.params.iter().enumerate() {
                     if idx > 0 {
                         output.push_str(", ");
                     }
@@ -655,7 +655,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
                     output.push(':');
                 }
 
-                for (idx, param) in fun.params.iter().enumerate() {
+                for (idx, param) in function.params.iter().enumerate() {
                     if idx > 0 {
                         output.push_str(", ");
                     }
