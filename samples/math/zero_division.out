@@ -1,8 +1,8 @@
-Panic: Division by zero in checked binary operation `127 / 0`
-Panic: Division by zero in checked binary operation `32767 / 0`
-Panic: Division by zero in checked binary operation `2147483647 / 0`
-Panic: Division by zero in checked binary operation `9223372036854775807 / 0`
-Panic: Division by zero in checked binary operation `255 / 0`
-Panic: Division by zero in checked binary operation `65535 / 0`
-Panic: Division by zero in checked binary operation `4294967295 / 0`
-Panic: Division by zero in checked binary operation `18446744073709551615 / 0`
+Panic: Division by zero in checked division '127 / 0'
+Panic: Division by zero in checked division '32767 / 0'
+Panic: Division by zero in checked division '2147483647 / 0'
+Panic: Division by zero in checked division '9223372036854775807 / 0'
+Panic: Division by zero in checked division '255 / 0'
+Panic: Division by zero in checked division '65535 / 0'
+Panic: Division by zero in checked division '4294967295 / 0'
+Panic: Division by zero in checked division '18446744073709551615 / 0'

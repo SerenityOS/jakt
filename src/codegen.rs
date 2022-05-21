@@ -982,42 +982,23 @@ fn codegen_checked_binary_op(
 ) -> String {
     let mut output = String::new();
 
-    output.push_str("[](auto _jakt_lhs, auto _jakt_rhs) {\n");
-    output.push_str("Checked<");
-    output.push_str(&codegen_type(type_id, project));
-    output.push_str("> _jakt_checked = _jakt_lhs;\n");
-    output.push_str("_jakt_checked ");
+    output.push_str("JaktInternal::");
 
-    let op_str = match op {
-        BinaryOperator::Add => '+',
-        BinaryOperator::Subtract => '-',
-        BinaryOperator::Multiply => '*',
-        BinaryOperator::Divide => '/',
-        BinaryOperator::Modulo => '%',
+    match op {
+        BinaryOperator::Add => output.push_str("checked_add"),
+        BinaryOperator::Subtract => output.push_str("checked_sub"),
+        BinaryOperator::Multiply => output.push_str("checked_mul"),
+        BinaryOperator::Divide => output.push_str("checked_div"),
+        BinaryOperator::Modulo => output.push_str("checked_mod"),
         _ => panic!(
             "Checked binary operation codegen is not supported for BinaryOperator::{:?}",
             op
         ),
     };
 
-    output.push(op_str);
-    output.push_str("= ");
-    output.push_str("_jakt_rhs;\n");
-    output.push_str("if (_jakt_checked.has_overflow()) {\n");
-    output.push_str(&format!(
-        r#"
-        // FIXME: This should print to stderr, but the tests compare stdout.
-        outln(
-            "Panic: {{}} in checked binary operation `{{}} {} {{}}`",
-            _jakt_rhs == 0 ? "Division by zero" : "Overflow", _jakt_lhs, _jakt_rhs
-        );
-        "#,
-        op_str
-    ));
-    output.push_str("if (!JaktInternal::continue_on_panic) VERIFY_NOT_REACHED();\n");
-    output.push_str("}\n");
-    output.push_str("return _jakt_checked.value_unchecked();\n");
-    output.push_str("}(");
+    output.push('<');
+    output.push_str(&codegen_type(type_id, project));
+    output.push_str(">(");
     output.push_str(&codegen_expr(indent, lhs, project));
     output.push_str(", ");
     output.push_str(&codegen_expr(indent, rhs, project));
@@ -1037,45 +1018,28 @@ fn codegen_checked_binary_op_assign(
     let mut output = String::new();
 
     output.push('{');
-    output.push_str("auto& _jakt_lhs = ");
+    output.push_str("auto& _jakt_ref = ");
     output.push_str(&codegen_expr(indent, lhs, project));
     output.push(';');
-    output.push_str("auto _jakt_rhs = ");
-    output.push_str(&codegen_expr(indent, rhs, project));
-    output.push(';');
-    output.push_str("Checked<");
-    output.push_str(&codegen_type(type_id, project));
-    output.push_str("> _jakt_checked = _jakt_lhs;");
-    output.push_str("_jakt_checked ");
+    output.push_str("_jakt_ref = JaktInternal::");
 
-    let op_str = match op {
-        BinaryOperator::AddAssign => '+',
-        BinaryOperator::SubtractAssign => '-',
-        BinaryOperator::MultiplyAssign => '*',
-        BinaryOperator::DivideAssign => '/',
-        BinaryOperator::ModuloAssign => '%',
+    match op {
+        BinaryOperator::AddAssign => output.push_str("checked_add"),
+        BinaryOperator::SubtractAssign => output.push_str("checked_sub"),
+        BinaryOperator::MultiplyAssign => output.push_str("checked_mul"),
+        BinaryOperator::DivideAssign => output.push_str("checked_div"),
+        BinaryOperator::ModuloAssign => output.push_str("checked_mod"),
         _ => panic!(
             "Checked binary operation assignment codegen is not supported for BinaryOperator::{:?}",
             op
         ),
     };
 
-    output.push(op_str);
-    output.push_str("= _jakt_rhs;");
-    output.push_str("if (_jakt_checked.has_overflow()) {");
-    output.push_str(&format!(
-        r#"
-        // FIXME: This should print to stderr, but the tests compare stdout.
-        outln(
-            "Panic: {{}} in checked binary operation `{{}} {} {{}}`",
-            _jakt_rhs == 0 ? "Division by zero" : "Overflow", _jakt_lhs, _jakt_rhs
-        );
-        "#,
-        op_str
-    ));
-    output.push_str("if (!JaktInternal::continue_on_panic) VERIFY_NOT_REACHED();");
-    output.push('}');
-    output.push_str("_jakt_lhs = _jakt_checked.value_unchecked();");
+    output.push('<');
+    output.push_str(&codegen_type(type_id, project));
+    output.push_str(">(_jakt_ref, ");
+    output.push_str(&codegen_expr(indent, rhs, project));
+    output.push_str(");");
     output.push('}');
 
     output
