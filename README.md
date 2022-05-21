@@ -219,6 +219,20 @@ function main() {
 }
 ```
 
+## Sets
+
+- [x] Creating sets
+- [ ] Reference semantics
+
+```jakt
+function main() {
+    let set = {1, 2, 3}
+
+    println("{}", set.contains(1))
+    println("{}", set.contains(5))
+}
+```
+
 ## Tuples
 
 - [x] Creating tuples
