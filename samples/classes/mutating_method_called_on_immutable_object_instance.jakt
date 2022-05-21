@@ -1,0 +1,8 @@
+class Foo {
+    function bar(mutable this) {}
+}
+
+function main() {
+    let foo = Foo()
+    foo.bar()
+}
