@@ -27,6 +27,35 @@
       <array> 
         <dict>
           <key>begin</key>
+          <string>(\{)</string>
+          <key>beginCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.Jakt</string>
+            </dict>
+          </dict>
+          <key>patterns</key>
+          <array>
+            <dict>
+              <key>include</key>
+              <string>#main__1</string>
+            </dict>
+           </array>
+          <key>end</key>
+          <string>(\})</string>
+          <key>endCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.Jakt</string>
+            </dict>
+          </dict>
+        </dict>
+        <dict>
+          <key>begin</key>
           <string>(?:(extern)(\s*)(function)((?:[\x{0020}\t\f\b])+)(\w+(?:[\x{0020}\t\f\b])*)(?:(&lt;)((?:(?:[\x{0020}\t\f\b])*(?:\w+)(?:[\x{0020}\t\f\b])*,?)+)(&gt;))?((?:[\x{0020}\t\f\b])*)(\())</string>
           <key>beginCaptures</key>
           <dict>
@@ -342,6 +371,28 @@
             <dict>
               <key>name</key>
               <string>punctuation.Jakt</string>
+            </dict>
+          </dict>
+        </dict>
+        <dict>
+          <key>match</key>
+          <string>(?:(\bnamespace\b)((?:[\x{0020}\t\f\b])*)(\w*))</string>
+          <key>captures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>keyword.Jakt</string>
+            </dict>
+            <key>2</key>
+            <dict>
+              <key>name</key>
+              <string>text.Jakt</string>
+            </dict>
+            <key>3</key>
+            <dict>
+              <key>name</key>
+              <string>entity.name.namespace.Jakt</string>
             </dict>
           </dict>
         </dict>
@@ -722,6 +773,57 @@
           </dict>
         </dict>
         <dict>
+          <key>match</key>
+          <string>(?:(\w+)(\s*)(::))</string>
+          <key>captures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>entity.name.namespace.Jakt</string>
+            </dict>
+            <key>2</key>
+            <dict>
+              <key>name</key>
+              <string>text.Jakt</string>
+            </dict>
+            <key>3</key>
+            <dict>
+              <key>name</key>
+              <string>keyword.operator.Jakt</string>
+            </dict>
+          </dict>
+        </dict>
+        <dict>
+          <key>begin</key>
+          <string>(\{)</string>
+          <key>beginCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.Jakt</string>
+            </dict>
+          </dict>
+          <key>patterns</key>
+          <array> 
+            <dict>
+              <key>include</key>
+              <string>#expr__1</string>
+            </dict>
+           </array>
+          <key>end</key>
+          <string>(\})</string>
+          <key>endCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.Jakt</string>
+            </dict>
+          </dict>
+        </dict>
+        <dict>
           <key>begin</key>
           <string>(?:(let)((?:[\x{0020}\t\f\b])*)(\bmutable\b)?((?:[\x{0020}\t\f\b])*)(\w+)((?:[\x{0020}\t\f\b])*)(:))</string>
           <key>beginCaptures</key>
@@ -766,7 +868,7 @@
           <array> 
             <dict>
               <key>include</key>
-              <string>#expr__1</string>
+              <string>#expr__2</string>
             </dict>
            </array>
           <key>end</key>
@@ -820,7 +922,7 @@
           <array> 
             <dict>
               <key>include</key>
-              <string>#expr__2</string>
+              <string>#expr__3</string>
             </dict>
            </array>
           <key>end</key>
@@ -849,7 +951,7 @@
           <array> 
             <dict>
               <key>include</key>
-              <string>#expr__3</string>
+              <string>#expr__4</string>
             </dict>
            </array>
           <key>end</key>
@@ -878,7 +980,7 @@
           <array> 
             <dict>
               <key>include</key>
-              <string>#expr__4</string>
+              <string>#expr__5</string>
             </dict>
            </array>
           <key>end</key>
@@ -894,7 +996,7 @@
         </dict>
         <dict>
           <key>match</key>
-          <string>(?:(-?0x[0-9a-fA-F]+)(\w+)?)</string>
+          <string>(?:(-?0x(?:[0-9a-fA-F]|_(?!=_))+)(\w+)?)</string>
           <key>captures</key>
           <dict>
             <key>1</key>
@@ -911,7 +1013,7 @@
         </dict>
         <dict>
           <key>match</key>
-          <string>(?:(-?0b[01]+)(\w+)?)</string>
+          <string>(?:(-?0b(?:[01]|_(?!=_))+)(\w+)?)</string>
           <key>captures</key>
           <dict>
             <key>1</key>
@@ -928,7 +1030,7 @@
         </dict>
         <dict>
           <key>match</key>
-          <string>(?:(-?\d+(?:\.\d+)?)(\w+)?)</string>
+          <string>(?:(-?(?:\d|_(?!=_))+(?:\.\d+)?)(\w+)?)</string>
           <key>captures</key>
           <dict>
             <key>1</key>
@@ -945,13 +1047,13 @@
         </dict>
         <dict>
           <key>match</key>
-          <string>(==|!=|=|;|!|\(|\)|\{|\}|&amp;&amp;|&amp;|,|\|\||\[|\]|\+|-|\*|/(?!/)|%|\?\?|\?|\!|\+\+|--|\.|&lt;|&gt;|&lt;=|&gt;=|\^|&gt;&gt;|&lt;&lt;|~|\||&lt;&lt;&lt;|&gt;&gt;&gt;|\^=)</string>
+          <string>(==|!=|=|;|!|\(|\)|\{|\}|&amp;&amp;|&amp;|,|\|\||\[|\]|\+\+|--|\+|-|\*|/(?!/)|%|\?\?|\?|\!|\.\.|&lt;&lt;&lt;|&gt;&gt;&gt;|&lt;|&gt;|&lt;=|&gt;=|\^|&gt;&gt;|&lt;&lt;|~|\||\^=|\.|::)</string>
           <key>name</key>
           <string>keyword.operator.Jakt</string>
         </dict>
         <dict>
           <key>match</key>
-          <string>(?:\b(let|function|while|if|else|return|for|defer|enum|struct|class|match|and|or|not|try|catch|must|throw|continue|break|loop|mutable)\b)</string>
+          <string>(?:\b(let|function|while|if|else|return|for|defer|enum|struct|class|match|and|or|not|try|catch|must|throw|continue|break|loop|mutable|in|raw)\b)</string>
           <key>name</key>
           <string>keyword.Jakt</string>
         </dict>
@@ -1002,7 +1104,7 @@
           <array> 
             <dict>
               <key>include</key>
-              <string>#expr__6</string>
+              <string>#expr__7</string>
             </dict>
            </array>
           <key>end</key>
@@ -1036,7 +1138,7 @@
       <array> 
         <dict>
           <key>include</key>
-          <string>#type</string>
+          <string>#expr</string>
         </dict>
        </array>
     </dict>
@@ -1065,6 +1167,16 @@
       <key>patterns</key>
       <array> 
         <dict>
+          <key>include</key>
+          <string>#type</string>
+        </dict>
+       </array>
+    </dict>
+    <key>expr__5</key>
+    <dict>
+      <key>patterns</key>
+      <array> 
+        <dict>
           <key>begin</key>
           <string>(?:)</string>
           <key>beginCaptures</key>
@@ -1079,7 +1191,7 @@
           <array> 
             <dict>
               <key>include</key>
-              <string>#expr__5</string>
+              <string>#expr__6</string>
             </dict>
            </array>
           <key>end</key>
@@ -1090,7 +1202,7 @@
         </dict>
        </array>
     </dict>
-    <key>expr__5</key>
+    <key>expr__6</key>
     <dict>
       <key>patterns</key>
       <array> 
@@ -1124,7 +1236,7 @@
         </dict>
        </array>
     </dict>
-    <key>expr__6</key>
+    <key>expr__7</key>
     <dict>
       <key>patterns</key>
       <array> 
@@ -1174,7 +1286,7 @@
         </dict>
         <dict>
           <key>begin</key>
-          <string>((?:[\x{0020}\t\f\b])*-&gt;(?:[\x{0020}\t\f\b])*)</string>
+          <string>((?:[\x{0020}\t\f\b])*-&gt;(?:[\x{0020}\t\f\b])*\{?)</string>
           <key>beginCaptures</key>
           <dict>
             <key>1</key>
@@ -1191,7 +1303,7 @@
             </dict>
            </array>
           <key>end</key>
-          <string>(?=[^\w\x{002a}\[])</string>
+          <string>(?=[^\w\x{002a}\[\{])</string>
           <key>endCaptures</key>
           <dict>
           </dict>
@@ -1338,7 +1450,7 @@
             </dict>
            </array>
           <key>end</key>
-          <string>(?=[^\w\x{002a}\[])</string>
+          <string>(?=[^\w\x{002a}\[\{])</string>
           <key>endCaptures</key>
           <dict>
           </dict>
@@ -1352,6 +1464,16 @@
         <dict>
           <key>include</key>
           <string>#type</string>
+        </dict>
+       </array>
+    </dict>
+    <key>main__1</key>
+    <dict>
+      <key>patterns</key>
+      <array> 
+        <dict>
+          <key>include</key>
+          <string>#main</string>
         </dict>
        </array>
     </dict>
@@ -1568,8 +1690,37 @@
         </dict>
         <dict>
           <key>begin</key>
-          <string>(?:\b(raw|weak|mutable)\b)((?:[\x{0020}\t\f\b])*)</string>
+          <string>(\{)</string>
           <key>beginCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.Jakt</string>
+            </dict>
+          </dict>
+          <key>patterns</key>
+          <array> 
+            <dict>
+              <key>include</key>
+              <string>#type__2</string>
+            </dict>
+           </array>
+          <key>end</key>
+          <string>(\})</string>
+          <key>endCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.Jakt</string>
+            </dict>
+          </dict>
+        </dict>
+        <dict>
+          <key>match</key>
+          <string>(?:\b(raw|weak|mutable)\b)((?:[\x{0020}\t\f\b])*)</string>
+          <key>captures</key>
           <dict>
             <key>1</key>
             <dict>
@@ -1581,18 +1732,6 @@
               <key>name</key>
               <string>text.Jakt</string>
             </dict>
-          </dict>
-          <key>patterns</key>
-          <array> 
-            <dict>
-              <key>include</key>
-              <string>#type__2</string>
-            </dict>
-           </array>
-          <key>end</key>
-          <string>(?:^|(?=[^\x{003c}\x{003f}\w\x{002a}\[\x{0020}]))</string>
-          <key>endCaptures</key>
-          <dict>
           </dict>
         </dict>
         <dict>
@@ -1610,17 +1749,17 @@
           <array> 
             <dict>
               <key>include</key>
-              <string>#type__3</string>
+              <string>#type_suffix</string>
             </dict>
            </array>
           <key>end</key>
-          <string>(?:^|(?=[^\x{003c}\x{003f}\w\[\x{0020}]))</string>
+          <string>(?:^|(?=[^\x{003f}\x{003c}]))</string>
           <key>endCaptures</key>
           <dict>
             <key>1</key>
             <dict>
               <key>name</key>
-              <string>punctuation.Jakt</string>
+              <string>text.Jakt</string>
             </dict>
           </dict>
         </dict>
@@ -1647,81 +1786,6 @@
         <dict>
           <key>include</key>
           <string>#type</string>
-        </dict>
-       </array>
-    </dict>
-    <key>type__3</key>
-    <dict>
-      <key>patterns</key>
-      <array> 
-        <dict>
-          <key>begin</key>
-          <string>(\?)</string>
-          <key>beginCaptures</key>
-          <dict>
-            <key>1</key>
-            <dict>
-              <key>name</key>
-              <string>entity.name.type.Jakt</string>
-            </dict>
-          </dict>
-          <key>contentName</key>
-          <string>entity.name.type.Jakt</string>
-          <key>end</key>
-          <string>(?:)</string>
-          <key>endCaptures</key>
-          <dict>
-            <key>1</key>
-            <dict>
-              <key>name</key>
-              <string>entity.name.type.Jakt</string>
-            </dict>
-          </dict>
-        </dict>
-        <dict>
-          <key>begin</key>
-          <string>(&lt;)</string>
-          <key>beginCaptures</key>
-          <dict>
-            <key>1</key>
-            <dict>
-              <key>name</key>
-              <string>punctuation.Jakt</string>
-            </dict>
-          </dict>
-          <key>patterns</key>
-          <array> 
-            <dict>
-              <key>include</key>
-              <string>#type__5</string>
-            </dict>
-           </array>
-          <key>end</key>
-          <string>(&gt;)</string>
-          <key>endCaptures</key>
-          <dict>
-            <key>1</key>
-            <dict>
-              <key>name</key>
-              <string>punctuation.Jakt</string>
-            </dict>
-          </dict>
-        </dict>
-       </array>
-    </dict>
-    <key>type__4</key>
-    <dict>
-      <key>patterns</key>
-      <array> 
-       </array>
-    </dict>
-    <key>type__5</key>
-    <dict>
-      <key>patterns</key>
-      <array> 
-        <dict>
-          <key>include</key>
-          <string>#type_list</string>
         </dict>
        </array>
     </dict>
@@ -1766,6 +1830,81 @@
         <dict>
           <key>include</key>
           <string>#type</string>
+        </dict>
+       </array>
+    </dict>
+    <key>type_suffix</key>
+    <dict>
+      <key>patterns</key>
+      <array> 
+        <dict>
+          <key>begin</key>
+          <string>(\?)</string>
+          <key>beginCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>entity.name.type.Jakt</string>
+            </dict>
+          </dict>
+          <key>contentName</key>
+          <string>entity.name.type.Jakt</string>
+          <key>end</key>
+          <string>(?:)</string>
+          <key>endCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>entity.name.type.Jakt</string>
+            </dict>
+          </dict>
+        </dict>
+        <dict>
+          <key>begin</key>
+          <string>(&lt;)</string>
+          <key>beginCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.Jakt</string>
+            </dict>
+          </dict>
+          <key>patterns</key>
+          <array> 
+            <dict>
+              <key>include</key>
+              <string>#type_suffix__2</string>
+            </dict>
+           </array>
+          <key>end</key>
+          <string>(&gt;)</string>
+          <key>endCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.Jakt</string>
+            </dict>
+          </dict>
+        </dict>
+       </array>
+    </dict>
+    <key>type_suffix__1</key>
+    <dict>
+      <key>patterns</key>
+      <array> 
+       </array>
+    </dict>
+    <key>type_suffix__2</key>
+    <dict>
+      <key>patterns</key>
+      <array> 
+        <dict>
+          <key>include</key>
+          <string>#type_list</string>
         </dict>
        </array>
     </dict>
