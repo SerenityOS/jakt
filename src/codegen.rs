@@ -635,7 +635,10 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
                     output.push(' ');
                     output.push_str(&param.variable.name);
                 }
-                output.push_str(&format!(") {{ auto o = adopt_ref(*new {}); ", function.name));
+                output.push_str(&format!(
+                    ") {{ auto o = adopt_ref(*new {}); ",
+                    function.name
+                ));
 
                 for param in &function.params {
                     output.push_str("o->");
