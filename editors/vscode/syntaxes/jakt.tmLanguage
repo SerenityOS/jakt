@@ -1076,6 +1076,12 @@
         </dict>
         <dict>
           <key>match</key>
+          <string>(:?\b(public|private)\b)</string>
+          <key>name</key>
+          <string>storage.modifier.visibility.Jakt</string>
+        </dict>
+        <dict>
+          <key>match</key>
           <string>(?:\b(unsafe|cpp)\b)</string>
           <key>name</key>
           <string>variable.other.property.Jakt</string>
