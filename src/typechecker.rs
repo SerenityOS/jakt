@@ -4135,6 +4135,23 @@ pub fn typecheck_typename(
 
             (type_id, error)
         }
+        ParsedType::Dictionary(key, value, _) => {
+            let (key_ty, err) = typecheck_typename(key, scope_id, project);
+            error = error.or(err);
+            let (value_ty, err) = typecheck_typename(value, scope_id, project);
+            error = error.or(err);
+
+            let dictionary_struct_id = project
+                .find_struct_in_scope(0, "Dictionary")
+                .expect("internal error: Dictionary builtin definition not found");
+
+            let type_id = project.find_or_add_type_id(Type::GenericInstance(
+                dictionary_struct_id,
+                vec![key_ty, value_ty],
+            ));
+
+            (type_id, error)
+        }
         ParsedType::Set(inner, _) => {
             let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
