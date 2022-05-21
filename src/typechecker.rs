@@ -11,9 +11,9 @@ use crate::{
     error::JaktError,
     lexer::Span,
     parser::{
-        BinaryOperator, Block, Call, DefinitionLinkage, DefinitionType, Enum, EnumVariant,
-        Expression, Function, FunctionLinkage, ParsedFile, Statement, Struct, TypeCast,
-        UnaryOperator, UncheckedType,
+        BinaryOperator, DefinitionLinkage, DefinitionType, EnumVariant, FunctionLinkage,
+        ParsedBlock, ParsedCall, ParsedEnum, ParsedExpression, ParsedFunction, ParsedNamespace,
+        ParsedStatement, ParsedStruct, ParsedType, TypeCast, UnaryOperator,
     },
 };
 use std::os::raw::{c_char, c_int};
@@ -279,6 +279,49 @@ impl Project {
         None
     }
 
+    // Find the namespace in the current scope, or one of its parents
+    pub fn find_namespace_in_scope(
+        &self,
+        scope_id: ScopeId,
+        namespace_name: &str,
+    ) -> Option<StructId> {
+        let mut scope_id = Some(scope_id);
+
+        while let Some(current_id) = scope_id {
+            let scope = &self.scopes[current_id];
+            for child_scope_id in &scope.children {
+                let child_scope = &self.scopes[*child_scope_id];
+                if let Some(name) = &child_scope.namespace_name {
+                    if name == namespace_name {
+                        return Some(*child_scope_id);
+                    }
+                }
+            }
+            scope_id = scope.parent;
+        }
+
+        None
+    }
+
+    // Find namespace in the current scope, but not any of its parents (strictly in the current scope)
+    pub fn find_namespace_in_scope_strict(
+        &self,
+        scope_id: ScopeId,
+        namespace_name: &str,
+    ) -> Option<StructId> {
+        let scope = &self.scopes[scope_id];
+        for child_scope_id in &scope.children {
+            let child_scope = &self.scopes[*child_scope_id];
+            if let Some(name) = &child_scope.namespace_name {
+                if name == namespace_name {
+                    return Some(*child_scope_id);
+                }
+            }
+        }
+
+        None
+    }
+
     pub fn add_function_to_scope(
         &mut self,
         scope_id: ScopeId,
@@ -387,6 +430,12 @@ pub enum CheckedEnumVariant {
     Typed(String, TypeId, Span),
     WithValue(String, CheckedExpression, Span),
     StructLike(String, Vec<CheckedVarDecl>, Span),
+}
+
+#[derive(Clone, Debug)]
+pub struct CheckedNamespace {
+    pub name: Option<String>,
+    pub scope: ScopeId,
 }
 
 #[derive(Clone, Debug)]
@@ -793,29 +842,34 @@ pub struct CheckedCall {
 
 #[derive(Clone, Debug)]
 pub struct Scope {
+    pub namespace_name: Option<String>,
     pub vars: Vec<CheckedVariable>,
     pub structs: Vec<(String, StructId)>,
     pub functions: Vec<(String, FunctionId)>,
     pub enums: Vec<(String, EnumId)>,
     pub types: Vec<(String, TypeId)>,
     pub parent: Option<ScopeId>,
+    // Namespaces may also have children that are also namespaces
+    pub children: Vec<ScopeId>,
 }
 
 impl Scope {
     pub fn new(parent: Option<ScopeId>) -> Self {
         Self {
+            namespace_name: None,
             vars: Vec::new(),
             structs: Vec::new(),
             functions: Vec::new(),
             enums: Vec::new(),
             types: Vec::new(),
             parent,
+            children: Vec::new(),
         }
     }
 }
 
-pub fn typecheck_file(
-    parsed_file: &ParsedFile,
+pub fn typecheck_namespace(
+    parsed_namespace: &ParsedNamespace,
     scope_id: ScopeId,
     project: &mut Project,
 ) -> Option<JaktError> {
@@ -825,7 +879,14 @@ pub fn typecheck_file(
     let project_enum_len = project.enums.len();
     let project_function_len = project.functions.len();
 
-    for (struct_id, structure) in parsed_file.structs.iter().enumerate() {
+    for namespace in parsed_namespace.namespaces.iter() {
+        let namespace_scope_id = project.create_scope(scope_id);
+        project.scopes[namespace_scope_id].namespace_name = namespace.name.clone();
+        project.scopes[scope_id].children.push(namespace_scope_id);
+        typecheck_namespace(namespace, namespace_scope_id, project);
+    }
+
+    for (struct_id, structure) in parsed_namespace.structs.iter().enumerate() {
         //Ensure we know the types ahead of time, so they can be recursive
         let struct_id = struct_id + project_struct_len;
         project.types.push(Type::Struct(struct_id));
@@ -847,7 +908,7 @@ pub fn typecheck_file(
         }
     }
 
-    for (enum_id, enum_) in parsed_file.enums.iter().enumerate() {
+    for (enum_id, enum_) in parsed_namespace.enums.iter().enumerate() {
         let enum_id = enum_id + project_enum_len;
         project.types.push(Type::Enum(enum_id));
 
@@ -863,12 +924,12 @@ pub fn typecheck_file(
         }
     }
 
-    for function in &parsed_file.functions {
+    for function in &parsed_namespace.functions {
         //Ensure we know the function ahead of time, so they can be recursive
         error = error.or(typecheck_function_predecl(function, scope_id, project));
     }
 
-    for (struct_id, structure) in parsed_file.structs.iter().enumerate() {
+    for (struct_id, structure) in parsed_namespace.structs.iter().enumerate() {
         error = error.or(typecheck_struct(
             structure,
             struct_id + project_struct_len,
@@ -877,7 +938,7 @@ pub fn typecheck_file(
         ));
     }
 
-    for (enum_id, enum_) in parsed_file.enums.iter().enumerate() {
+    for (enum_id, enum_) in parsed_namespace.enums.iter().enumerate() {
         error = error.or(typecheck_enum(
             enum_,
             enum_id + project_enum_len,
@@ -888,7 +949,7 @@ pub fn typecheck_file(
         ));
     }
 
-    for (i, function) in parsed_file.functions.iter().enumerate() {
+    for (i, function) in parsed_namespace.functions.iter().enumerate() {
         project.current_function_index = Some(i + project_function_len);
         error = error.or(typecheck_fun(function, scope_id, project));
         project.current_function_index = None;
@@ -898,7 +959,7 @@ pub fn typecheck_file(
 }
 
 fn typecheck_enum_predecl(
-    enum_: &Enum,
+    enum_: &ParsedEnum,
     enum_id: EnumId,
     parent_scope_id: ScopeId,
     project: &mut Project,
@@ -953,7 +1014,7 @@ fn typecheck_enum_predecl(
 }
 
 fn typecheck_enum(
-    enum_: &Enum,
+    enum_: &ParsedEnum,
     enum_id: EnumId,
     enum_type_id: TypeId,
     enum_scope_id: ScopeId,
@@ -969,9 +1030,9 @@ fn typecheck_enum(
     let mut seen_names = HashSet::new();
 
     let cast_to_underlying =
-        |x: Expression, project: &mut Project| -> (CheckedExpression, Option<JaktError>) {
+        |x: ParsedExpression, project: &mut Project| -> (CheckedExpression, Option<JaktError>) {
             let span = x.span();
-            let expression = Expression::UnaryOp(
+            let expression = ParsedExpression::UnaryOp(
                 Box::new(x),
                 UnaryOperator::TypeCast(TypeCast::Infallible(enum_.underlying_type.clone())),
                 span,
@@ -999,7 +1060,7 @@ fn typecheck_enum(
                             )));
                         } else {
                             let (checked_expression, type_error) = cast_to_underlying(
-                                Expression::NumericConstant(
+                                ParsedExpression::NumericConstant(
                                     NumericConstant::U64(next_constant_value?),
                                     *span,
                                 ),
@@ -1185,7 +1246,7 @@ fn typecheck_enum(
                 }
             }
             EnumVariant::Typed(name, unchecked_type, span) => {
-                if !matches!(enum_.underlying_type, UncheckedType::Empty) {
+                if !matches!(enum_.underlying_type, ParsedType::Empty) {
                     error = error.or(Some(JaktError::TypecheckError(
                         "Enum variants cannot have a type if the enum has an underlying type"
                             .to_string(),
@@ -1262,7 +1323,7 @@ fn typecheck_enum(
 }
 
 fn typecheck_struct_predecl(
-    structure: &Struct,
+    structure: &ParsedStruct,
     struct_type_id: TypeId,
     struct_id: StructId,
     parent_scope_id: ScopeId,
@@ -1389,7 +1450,7 @@ fn typecheck_struct_predecl(
 }
 
 fn typecheck_struct(
-    structure: &Struct,
+    structure: &ParsedStruct,
     struct_id: StructId,
     parent_scope_id: ScopeId,
     project: &mut Project,
@@ -1472,7 +1533,7 @@ fn typecheck_struct(
 }
 
 fn typecheck_function_predecl(
-    function: &Function,
+    function: &ParsedFunction,
     parent_scope_id: ScopeId,
     project: &mut Project,
 ) -> Option<JaktError> {
@@ -1549,7 +1610,7 @@ fn typecheck_function_predecl(
 }
 
 fn typecheck_fun(
-    function: &Function,
+    function: &ParsedFunction,
     parent_scope_id: ScopeId,
     project: &mut Project,
 ) -> Option<JaktError> {
@@ -1616,7 +1677,7 @@ fn typecheck_fun(
 }
 
 fn typecheck_method(
-    function: &Function,
+    function: &ParsedFunction,
     project: &mut Project,
     struct_id: StructId,
 ) -> Option<JaktError> {
@@ -1678,7 +1739,7 @@ fn typecheck_method(
 }
 
 pub fn typecheck_block(
-    block: &Block,
+    block: &ParsedBlock,
     parent_scope_id: ScopeId,
     project: &mut Project,
     safety_mode: SafetyMode,
@@ -1699,7 +1760,7 @@ pub fn typecheck_block(
 }
 
 pub fn typecheck_statement(
-    stmt: &Statement,
+    stmt: &ParsedStatement,
     scope_id: ScopeId,
     project: &mut Project,
     safety_mode: SafetyMode,
@@ -1707,7 +1768,7 @@ pub fn typecheck_statement(
     let mut error = None;
 
     match stmt {
-        Statement::Try(stmt, error_name, error_span, catch_block) => {
+        ParsedStatement::Try(stmt, error_name, error_span, catch_block) => {
             let (checked_stmt, err) = typecheck_statement(stmt, scope_id, project, safety_mode);
             error = error.or(err);
 
@@ -1739,7 +1800,7 @@ pub fn typecheck_statement(
                 error,
             )
         }
-        Statement::Throw(expr) => {
+        ParsedStatement::Throw(expr) => {
             let (checked_expr, err) =
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
             error = error.or(err);
@@ -1747,7 +1808,7 @@ pub fn typecheck_statement(
             // FIXME: Verify that the expression produces an Error
             (CheckedStatement::Throw(checked_expr), error)
         }
-        Statement::For(iterator_name, range_expr, block) => {
+        ParsedStatement::For(iterator_name, range_expr, block) => {
             let (checked_expr, err) =
                 typecheck_expression(range_expr, scope_id, project, safety_mode, None);
             error = error.or(err);
@@ -1790,27 +1851,27 @@ pub fn typecheck_statement(
                 error,
             )
         }
-        Statement::Continue => (CheckedStatement::Continue, None),
-        Statement::Break => (CheckedStatement::Break, None),
-        Statement::Expression(expr) => {
+        ParsedStatement::Continue => (CheckedStatement::Continue, None),
+        ParsedStatement::Break => (CheckedStatement::Break, None),
+        ParsedStatement::Expression(expr) => {
             let (checked_expr, err) =
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
 
             (CheckedStatement::Expression(checked_expr), err)
         }
-        Statement::Defer(statement) => {
+        ParsedStatement::Defer(statement) => {
             let (checked_statement, err) =
                 typecheck_statement(statement, scope_id, project, safety_mode);
 
             (CheckedStatement::Defer(Box::new(checked_statement)), err)
         }
-        Statement::UnsafeBlock(block) => {
+        ParsedStatement::UnsafeBlock(block) => {
             let (checked_block, err) =
                 typecheck_block(block, scope_id, project, SafetyMode::Unsafe);
 
             (CheckedStatement::Block(checked_block), err)
         }
-        Statement::VarDecl(var_decl, init) => {
+        ParsedStatement::VarDecl(var_decl, init) => {
             let (mut checked_expression, err) =
                 typecheck_expression(init, scope_id, project, safety_mode, None);
             error = error.or(err);
@@ -1854,7 +1915,7 @@ pub fn typecheck_statement(
                 error,
             )
         }
-        Statement::If(cond, block, else_stmt) => {
+        ParsedStatement::If(cond, block, else_stmt) => {
             let (checked_cond, err) =
                 typecheck_expression(cond, scope_id, project, safety_mode, None);
             error = error.or(err);
@@ -1885,13 +1946,13 @@ pub fn typecheck_statement(
                 error,
             )
         }
-        Statement::Loop(block) => {
+        ParsedStatement::Loop(block) => {
             let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
             error = error.or(err);
 
             (CheckedStatement::Loop(checked_block), error)
         }
-        Statement::While(cond, block) => {
+        ParsedStatement::While(cond, block) => {
             let (checked_cond, err) =
                 typecheck_expression(cond, scope_id, project, safety_mode, None);
             error = error.or(err);
@@ -1908,7 +1969,7 @@ pub fn typecheck_statement(
 
             (CheckedStatement::While(checked_cond, checked_block), error)
         }
-        Statement::Return(expr) => {
+        ParsedStatement::Return(expr) => {
             let (output, err) = typecheck_expression(
                 expr,
                 scope_id,
@@ -1921,11 +1982,11 @@ pub fn typecheck_statement(
 
             (CheckedStatement::Return(output), err)
         }
-        Statement::Block(block) => {
+        ParsedStatement::Block(block) => {
             let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
             (CheckedStatement::Block(checked_block), err)
         }
-        Statement::InlineCpp(block, span) => {
+        ParsedStatement::InlineCpp(block, span) => {
             if safety_mode == SafetyMode::Safe {
                 return (
                     CheckedStatement::InlineCpp(vec![]),
@@ -1940,7 +2001,7 @@ pub fn typecheck_statement(
 
             for statement in &block.stmts {
                 match statement {
-                    Statement::Expression(Expression::QuotedString(string, _)) => {
+                    ParsedStatement::Expression(ParsedExpression::QuotedString(string, _)) => {
                         strings.push(string.clone())
                     }
                     _ => {
@@ -1956,7 +2017,7 @@ pub fn typecheck_statement(
             }
             (CheckedStatement::InlineCpp(strings), None)
         }
-        Statement::Garbage => (CheckedStatement::Garbage, None),
+        ParsedStatement::Garbage => (CheckedStatement::Garbage, None),
     }
 }
 
@@ -1983,7 +2044,7 @@ pub fn try_promote_constant_expr_to_type(
 }
 
 pub fn typecheck_expression(
-    expr: &Expression,
+    expr: &ParsedExpression,
     scope_id: ScopeId,
     project: &mut Project,
     safety_mode: SafetyMode,
@@ -2011,7 +2072,7 @@ pub fn typecheck_expression(
     };
 
     match expr {
-        Expression::Range(start_expr, end_expr, span) => {
+        ParsedExpression::Range(start_expr, end_expr, span) => {
             let (mut checked_start, err) =
                 typecheck_expression(start_expr, scope_id, project, safety_mode, None);
             error = error.or(err);
@@ -2051,7 +2112,7 @@ pub fn typecheck_expression(
                 error,
             )
         }
-        Expression::BinaryOp(lhs, op, rhs, span) => {
+        ParsedExpression::BinaryOp(lhs, op, rhs, span) => {
             let (checked_lhs, err) =
                 typecheck_expression(lhs, scope_id, project, safety_mode, None);
             error = error.or(err);
@@ -2079,7 +2140,7 @@ pub fn typecheck_expression(
                 error,
             )
         }
-        Expression::UnaryOp(expr, op, span) => {
+        ParsedExpression::UnaryOp(expr, op, span) => {
             let (checked_expr, err) =
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
             error = error.or(err);
@@ -2119,11 +2180,11 @@ pub fn typecheck_expression(
 
             (checked_expr, error)
         }
-        Expression::OptionalNone(span) => (
+        ParsedExpression::OptionalNone(span) => (
             CheckedExpression::OptionalNone(*span, UNKNOWN_TYPE_ID),
             None,
         ),
-        Expression::OptionalSome(expr, span) => {
+        ParsedExpression::OptionalSome(expr, span) => {
             let (checked_expr, err) =
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
             let ty = checked_expr.ty();
@@ -2133,7 +2194,7 @@ pub fn typecheck_expression(
                 err,
             )
         }
-        Expression::ForcedUnwrap(expr, span) => {
+        ParsedExpression::ForcedUnwrap(expr, span) => {
             let (checked_expr, err) =
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
 
@@ -2165,8 +2226,8 @@ pub fn typecheck_expression(
                 err,
             )
         }
-        Expression::Boolean(b, span) => (CheckedExpression::Boolean(*b, *span), None),
-        Expression::Call(call, span) => {
+        ParsedExpression::Boolean(b, span) => (CheckedExpression::Boolean(*b, *span), None),
+        ParsedExpression::Call(call, span) => {
             let (checked_call, err) = typecheck_call(
                 call,
                 scope_id,
@@ -2181,7 +2242,7 @@ pub fn typecheck_expression(
             let ty = unify_with_type_hint(project, &checked_call.ty);
             (CheckedExpression::Call(checked_call, *span, ty), err)
         }
-        Expression::NumericConstant(constant, span) => (
+        ParsedExpression::NumericConstant(constant, span) => (
             CheckedExpression::NumericConstant(
                 constant.clone(),
                 *span,
@@ -2189,13 +2250,13 @@ pub fn typecheck_expression(
             ),
             None,
         ),
-        Expression::QuotedString(qs, span) => {
+        ParsedExpression::QuotedString(qs, span) => {
             (CheckedExpression::QuotedString(qs.clone(), *span), None)
         }
-        Expression::CharacterLiteral(c, span) => {
+        ParsedExpression::CharacterLiteral(c, span) => {
             (CheckedExpression::CharacterConstant(*c, *span), None)
         }
-        Expression::Var(v, span) => {
+        ParsedExpression::Var(v, span) => {
             if let Some(var) = project.find_var_in_scope(scope_id, v) {
                 (CheckedExpression::Var(var, *span), None)
             } else {
@@ -2215,7 +2276,7 @@ pub fn typecheck_expression(
                 )
             }
         }
-        Expression::Array(vec, fill_size_expr, span) => {
+        ParsedExpression::Array(vec, fill_size_expr, span) => {
             let mut inner_ty = UNKNOWN_TYPE_ID;
             let mut output = Vec::new();
 
@@ -2261,7 +2322,7 @@ pub fn typecheck_expression(
                 error,
             )
         }
-        Expression::Set(values, span) => {
+        ParsedExpression::Set(values, span) => {
             let mut inner_ty = UNKNOWN_TYPE_ID;
             let mut output = Vec::new();
 
@@ -2293,7 +2354,7 @@ pub fn typecheck_expression(
                 error,
             )
         }
-        Expression::Dictionary(kv_pairs, span) => {
+        ParsedExpression::Dictionary(kv_pairs, span) => {
             let mut inner_ty = (UNKNOWN_TYPE_ID, UNKNOWN_TYPE_ID);
             let mut output = Vec::new();
 
@@ -2345,7 +2406,7 @@ pub fn typecheck_expression(
                 error,
             )
         }
-        Expression::Tuple(items, span) => {
+        ParsedExpression::Tuple(items, span) => {
             let mut checked_items = Vec::new();
             let mut checked_types = Vec::new();
 
@@ -2374,7 +2435,7 @@ pub fn typecheck_expression(
                 error,
             )
         }
-        Expression::IndexedExpression(expr, idx, span) => {
+        ParsedExpression::IndexedExpression(expr, idx, span) => {
             let (checked_expr, err) =
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
             error = error.or(err);
@@ -2463,7 +2524,7 @@ pub fn typecheck_expression(
                 }
             }
         }
-        Expression::IndexedTuple(expr, idx, span) => {
+        ParsedExpression::IndexedTuple(expr, idx, span) => {
             let (checked_expr, err) =
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
             error = error.or(err);
@@ -2507,7 +2568,7 @@ pub fn typecheck_expression(
                 error,
             )
         }
-        Expression::Match(expr, cases, span) => {
+        ParsedExpression::Match(expr, cases, span) => {
             let (checked_expr, err) =
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
             error = error.or(err);
@@ -2729,7 +2790,7 @@ pub fn typecheck_expression(
                                                     .variants
                                                     .iter()
                                                     .find(|v| {
-                                                        matches!(v, 
+                                                        matches!(v,
                                                         CheckedEnumVariant::WithValue(
                                                             name,
                                                             _,
@@ -2863,7 +2924,7 @@ pub fn typecheck_expression(
                 error,
             )
         }
-        Expression::IndexedStruct(expr, name, span) => {
+        ParsedExpression::IndexedStruct(expr, name, span) => {
             let (checked_expr, err) =
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
             error = error.or(err);
@@ -2913,7 +2974,7 @@ pub fn typecheck_expression(
                 error,
             )
         }
-        Expression::MethodCall(expr, call, span) => {
+        ParsedExpression::MethodCall(expr, call, span) => {
             let (checked_expr, err) =
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
             error = error.or(err);
@@ -3014,7 +3075,10 @@ pub fn typecheck_expression(
                     }
                     _ => {
                         error = error.or(Some(JaktError::TypecheckError(
-                            "no methods available on value".to_string(),
+                            format!(
+                                "no methods available on value (type: {})",
+                                checked_expr.ty()
+                            ),
                             expr.span(),
                         )));
 
@@ -3024,14 +3088,14 @@ pub fn typecheck_expression(
             }
         }
 
-        Expression::Operator(_, span) => (
+        ParsedExpression::Operator(_, span) => (
             CheckedExpression::Garbage(*span),
             Some(JaktError::TypecheckError(
                 "garbage in expression".to_string(),
                 *span,
             )),
         ),
-        Expression::Garbage(span) => (
+        ParsedExpression::Garbage(span) => (
             CheckedExpression::Garbage(*span),
             Some(JaktError::TypecheckError(
                 "garbage in expression".to_string(),
@@ -3260,7 +3324,7 @@ pub fn typecheck_binary_operation(
 }
 
 pub fn resolve_call<'a>(
-    call: &Call,
+    call: &ParsedCall,
     namespaces: &mut [ResolvedNamespace],
     span: &Span,
     scope_id: ScopeId,
@@ -3308,6 +3372,20 @@ pub fn resolve_call<'a>(
             }
 
             (callee, error)
+        } else if let Some(scope_id) = project.find_namespace_in_scope(scope_id, namespace) {
+            if let Some(struct_id) = project.find_struct_in_scope(scope_id, &call.name) {
+                let structure = &project.structs[struct_id];
+
+                if let Some(function_id) =
+                    project.find_function_in_scope(structure.scope_id, &call.name)
+                {
+                    callee = Some(&project.functions[function_id]);
+                }
+            } else if let Some(function_id) = project.find_function_in_scope(scope_id, &call.name) {
+                callee = Some(&project.functions[function_id]);
+            }
+
+            (callee, error)
         } else {
             error = Some(JaktError::TypecheckError(
                 format!("unknown namespace or class: {}", namespace),
@@ -3343,7 +3421,7 @@ pub fn resolve_call<'a>(
 }
 
 pub fn typecheck_call(
-    call: &Call,
+    call: &ParsedCall,
     caller_scope_id: ScopeId,
     span: &Span,
     project: &mut Project,
@@ -3492,7 +3570,7 @@ pub fn typecheck_call(
                         let callee = callee
                             .expect("internal error: previously resolved call is now unresolved");
 
-                        if let Expression::Var(var_name, _) = &call.args[idx].1 {
+                        if let ParsedExpression::Var(var_name, _) = &call.args[idx].1 {
                             if var_name != &callee.params[idx + arg_offset].variable.name
                                 && callee.params[idx + arg_offset].requires_label
                                 && call.args[idx].0 != callee.params[idx + arg_offset].variable.name
@@ -3958,14 +4036,14 @@ pub fn check_types_for_compat(
 }
 
 pub fn typecheck_typename(
-    unchecked_type: &UncheckedType,
+    unchecked_type: &ParsedType,
     scope_id: ScopeId,
     project: &mut Project,
 ) -> (TypeId, Option<JaktError>) {
     let mut error = None;
 
     match unchecked_type {
-        UncheckedType::Name(name, span) => match name.as_str() {
+        ParsedType::Name(name, span) => match name.as_str() {
             "i8" => (I8_TYPE_ID, None),
             "i16" => (I16_TYPE_ID, None),
             "i32" => (I32_TYPE_ID, None),
@@ -3993,8 +4071,8 @@ pub fn typecheck_typename(
                 }
             }
         },
-        UncheckedType::Empty => (UNKNOWN_TYPE_ID, None),
-        UncheckedType::Array(inner, _) => {
+        ParsedType::Empty => (UNKNOWN_TYPE_ID, None),
+        ParsedType::Array(inner, _) => {
             let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
@@ -4007,7 +4085,7 @@ pub fn typecheck_typename(
 
             (type_id, error)
         }
-        UncheckedType::Set(inner, _) => {
+        ParsedType::Set(inner, _) => {
             let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
@@ -4020,7 +4098,7 @@ pub fn typecheck_typename(
 
             (type_id, error)
         }
-        UncheckedType::Optional(inner, _) => {
+        ParsedType::Optional(inner, _) => {
             let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
@@ -4033,7 +4111,7 @@ pub fn typecheck_typename(
 
             (type_id, error)
         }
-        UncheckedType::RawPtr(inner, _) => {
+        ParsedType::RawPtr(inner, _) => {
             let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
@@ -4041,7 +4119,7 @@ pub fn typecheck_typename(
 
             (type_id, error)
         }
-        UncheckedType::GenericType(name, inner_types, span) => {
+        ParsedType::GenericType(name, inner_types, span) => {
             let mut checked_inner_types = vec![];
 
             for inner_type in inner_types {

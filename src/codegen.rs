@@ -1,6 +1,7 @@
 use crate::compiler::{UNKNOWN_TYPE_ID, VOID_TYPE_ID};
 use crate::typechecker::{
     CheckedEnum, CheckedEnumVariant, CheckedMatchBody, CheckedMatchCase, FunctionGenericParameter,
+    ScopeId,
 };
 use crate::{
     compiler,
@@ -18,6 +19,25 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
     let mut output = String::new();
 
     output.push_str("#include \"runtime/lib.h\"\n");
+
+    output.push_str(&codegen_namespace(project, scope));
+
+    output
+}
+
+fn codegen_namespace(project: &Project, scope: &Scope) -> String {
+    let mut output = String::new();
+
+    // Output the namespaces (and their children)
+    for child_scope_id in &scope.children {
+        // For now, require children of the current namespace to have names before being emitted
+        let child_scope = &project.scopes[*child_scope_id];
+        if let Some(name) = &child_scope.namespace_name {
+            output.push_str(&format!("namespace {} {{\n", name));
+            output.push_str(&codegen_namespace(project, child_scope));
+            output.push_str("}\n");
+        }
+    }
 
     for (_, struct_id) in &scope.structs {
         let structure = &project.structs[*struct_id];
@@ -86,7 +106,6 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
 
     output
 }
-
 fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
     if enum_.underlying_type.is_some() {
         let ty = enum_.underlying_type.unwrap();
@@ -688,14 +707,36 @@ fn codegen_struct_type(type_id: TypeId, project: &Project) -> String {
     }
 }
 
+pub fn codegen_namespace_qualifier(scope_id: ScopeId, project: &Project) -> String {
+    let mut output = String::new();
+
+    let mut current_scope_id = project.scopes[scope_id].parent.clone();
+
+    while let Some(current) = current_scope_id {
+        // Walk backward, prepending the parents with names to the current output
+        if let Some(namespace_name) = &project.scopes[current].namespace_name {
+            output.insert_str(0, &format!("{}::", namespace_name));
+        }
+
+        current_scope_id = project.scopes[current].parent;
+    }
+
+    output
+}
+
 pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
+    let mut output = String::new();
     let ty = &project.types[type_id];
     match ty {
         Type::RawPtr(ty) => {
             format!("{}*", codegen_type(*ty, project))
         }
         Type::GenericInstance(struct_id, inner_tys) => {
-            let mut output = project.structs[*struct_id].name.clone();
+            output.push_str(&codegen_namespace_qualifier(
+                project.structs[*struct_id].scope_id,
+                project,
+            ));
+            output.push_str(&project.structs[*struct_id].name.clone());
             output.push('<');
             let mut first = true;
             for ty in inner_tys {
@@ -712,7 +753,11 @@ pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
             output
         }
         Type::GenericEnumInstance(enum_id, inner_tys) => {
-            let mut output = project.enums[*enum_id].name.clone();
+            output.push_str(&codegen_namespace_qualifier(
+                project.enums[*enum_id].scope_id,
+                project,
+            ));
+            output.push_str(&project.enums[*enum_id].name);
             output.push('<');
             let mut first = true;
             for ty in inner_tys {
@@ -729,12 +774,32 @@ pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
         }
         Type::Struct(struct_id) => {
             if project.structs[*struct_id].definition_type == DefinitionType::Class {
-                format!("NonnullRefPtr<{}>", project.structs[*struct_id].name)
+                output.push_str("NonnullRefPtr<");
+                output.push_str(&codegen_namespace_qualifier(
+                    project.structs[*struct_id].scope_id,
+                    project,
+                ));
+                output.push_str(&project.structs[*struct_id].name);
+                output.push('>');
             } else {
-                project.structs[*struct_id].name.clone()
+                output.push_str(&codegen_namespace_qualifier(
+                    project.structs[*struct_id].scope_id,
+                    project,
+                ));
+                output.push_str(&project.structs[*struct_id].name);
             }
+
+            output
         }
-        Type::Enum(enum_id) => project.enums[*enum_id].name.clone(),
+        Type::Enum(enum_id) => {
+            output.push_str(&codegen_namespace_qualifier(
+                project.enums[*enum_id].scope_id,
+                project,
+            ));
+            output.push_str(&project.enums[*enum_id].name);
+
+            output
+        }
         Type::Builtin => match type_id {
             compiler::USIZE_TYPE_ID => String::from("size_t"),
             compiler::BOOL_TYPE_ID => String::from("bool"),
