@@ -1,4 +1,4 @@
-function foo() -> i32 {
+function foo() -> i64 {
     // Even though we're in a block, since we're not redirecting control flow
     // this is valid.
     {
