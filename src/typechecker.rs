@@ -2111,7 +2111,7 @@ pub fn typecheck_expression(
 
                 let mut generic_interface = HashMap::new();
                 let err =
-                    check_types_for_compat(*ty, hint, &mut generic_interface, expr.span(), project);
+                    check_types_for_compat(hint, *ty, &mut generic_interface, expr.span(), project);
                 if err.is_some() {
                     return (*ty, err);
                 }
@@ -3852,9 +3852,9 @@ pub fn check_types_for_compat(
         .find_struct_in_scope(0, "Optional")
         .expect("internal error: can't find builtin Optional type");
     // This skips the type compatibility check if assigning a T to a T? without going through `Some`.
-    if let Type::GenericInstance(rhs_struct_id, args) = &project.types[rhs_type_id] {
-        if *rhs_struct_id == optional_struct_id
-            && args.first().map_or(false, |arg_id| *arg_id == lhs_type_id)
+    if let Type::GenericInstance(lhs_struct_id, args) = lhs_type {
+        if *lhs_struct_id == optional_struct_id
+            && args.first().map_or(false, |arg_id| *arg_id == rhs_type_id)
         {
             return None;
         }
@@ -3870,7 +3870,7 @@ pub fn check_types_for_compat(
                 if rhs_type_id != *seen_type_id {
                     error = error.or(Some(JaktError::TypecheckError(
                         format!(
-                            "Parameter type mismatch: {} vs {}",
+                            "Type mismatch: expected {}, but got {}",
                             codegen::codegen_type(*seen_type_id, project),
                             codegen::codegen_type(rhs_type_id, project)
                         ),
@@ -3927,7 +3927,7 @@ pub fn check_types_for_compat(
                         // They're the same type, might be okay to just leave now
                         error = error.or(Some(JaktError::TypecheckError(
                             format!(
-                                "Parameter type mismatch: {} vs {}",
+                                "Type mismatch: expected {}, but got {}",
                                 codegen::codegen_type(lhs_type_id, project),
                                 codegen::codegen_type(rhs_type_id, project)
                             ),
@@ -3981,7 +3981,7 @@ pub fn check_types_for_compat(
                         // They're the same type, might be okay to just leave now
                         error = error.or(Some(JaktError::TypecheckError(
                             format!(
-                                "Parameter type mismatch: {} vs {}",
+                                "Type mismatch: expected {}, but got {}",
                                 codegen::codegen_type(lhs_type_id, project),
                                 codegen::codegen_type(rhs_type_id, project)
                             ),
@@ -4039,7 +4039,7 @@ pub fn check_types_for_compat(
                         // They're the same type, might be okay to just leave now
                         error = error.or(Some(JaktError::TypecheckError(
                             format!(
-                                "Parameter type mismatch: {} vs {}",
+                                "Type mismatch: expected {}, but got {}",
                                 codegen::codegen_type(lhs_type_id, project),
                                 codegen::codegen_type(rhs_type_id, project)
                             ),
@@ -4097,7 +4097,7 @@ pub fn check_types_for_compat(
                         // They're the same type, might be okay to just leave now
                         error = error.or(Some(JaktError::TypecheckError(
                             format!(
-                                "Parameter type mismatch: {} vs {}",
+                                "Type mismatch: expected {}, but got {}",
                                 codegen::codegen_type(lhs_type_id, project),
                                 codegen::codegen_type(rhs_type_id, project)
                             ),
@@ -4111,7 +4111,7 @@ pub fn check_types_for_compat(
             if rhs_type_id != lhs_type_id {
                 error = error.or(Some(JaktError::TypecheckError(
                     format!(
-                        "Parameter type mismatch: {} vs {}",
+                        "Type mismatch: expected {}, but got {}",
                         codegen::codegen_type(lhs_type_id, project),
                         codegen::codegen_type(rhs_type_id, project)
                     ),

@@ -1,1 +1,1 @@
-Parameter type mismatch: String vs u64
+Type mismatch: expected u64, but got String
