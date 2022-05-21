@@ -135,6 +135,7 @@ pub enum DefinitionType {
 #[derive(Debug)]
 pub struct ParsedFunction {
     pub name: String,
+    pub visibility: Visibility,
     pub name_span: Span,
     pub params: Vec<ParsedParameter>,
     pub generic_parameters: Vec<(String, Span)>,
@@ -142,6 +143,12 @@ pub struct ParsedFunction {
     pub throws: bool,
     pub return_type: ParsedType,
     pub linkage: FunctionLinkage,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Visibility {
+    Public,
+    Private,
 }
 
 #[derive(Clone, Debug)]
@@ -166,6 +173,7 @@ impl ParsedFunction {
                 start: 0,
                 end: 0,
             },
+            visibility: Visibility::Public,
             params: Vec::new(),
             generic_parameters: Vec::new(),
             block: ParsedBlock::new(),
@@ -459,7 +467,12 @@ pub fn parse_namespace(
                 span,
             } => match name.as_str() {
                 "function" => {
-                    let (fun, err) = parse_function(tokens, index, FunctionLinkage::Internal);
+                    let (fun, err) = parse_function(
+                        tokens,
+                        index,
+                        FunctionLinkage::Internal,
+                        Visibility::Public,
+                    );
                     error = error.or(err);
 
                     parsed_namespace.functions.push(fun);
@@ -530,8 +543,12 @@ pub fn parse_namespace(
                             } => match name.as_str() {
                                 "function" => {
                                     *index += 1;
-                                    let (fun, err) =
-                                        parse_function(tokens, index, FunctionLinkage::External);
+                                    let (fun, err) = parse_function(
+                                        tokens,
+                                        index,
+                                        FunctionLinkage::External,
+                                        Visibility::Public,
+                                    );
                                     error = error.or(err);
 
                                     parsed_namespace.functions.push(fun);
@@ -1018,10 +1035,20 @@ pub fn parse_struct(
 
                 let mut methods = Vec::new();
 
+                // This gets reset after each loop. If someone doesn't consume it, we error out.
+                let mut last_visibility = None;
+
                 while *index < tokens.len() {
                     match &tokens[*index].contents {
                         TokenContents::RCurly => {
                             *index += 1;
+                            if last_visibility.is_some() {
+                                error = error.or(Some(JaktError::ParserError(
+                                    "Expected function or parameter after visibility modifier"
+                                        .to_string(),
+                                    tokens[*index].span,
+                                )))
+                            }
                             break;
                         }
                         TokenContents::Comma | TokenContents::Eol => {
@@ -1037,10 +1064,33 @@ pub fn parse_struct(
                                 DefinitionLinkage::External => FunctionLinkage::External,
                             };
 
-                            let (function, err) = parse_function(tokens, index, function_linkage);
+                            let visibility = last_visibility
+                                .or(Some(match definition_type {
+                                    DefinitionType::Class => Visibility::Private,
+                                    DefinitionType::Struct => Visibility::Public,
+                                }))
+                                .unwrap();
+                            last_visibility = None;
+
+                            let (function, err) =
+                                parse_function(tokens, index, function_linkage, visibility);
                             error = error.or(err);
 
                             methods.push(function);
+                        }
+
+                        TokenContents::Name(name) if name == "public" => {
+                            last_visibility = Some(Visibility::Public);
+                            *index += 1;
+                            // By using continue, we skip the "visibility consumed"-check
+                            continue;
+                        }
+
+                        TokenContents::Name(name) if name == "private" => {
+                            last_visibility = Some(Visibility::Private);
+                            *index += 1;
+                            // By using continue, we skip the "visibility consumed"-check
+                            continue;
                         }
 
                         TokenContents::Name(..) => {
@@ -1048,6 +1098,9 @@ pub fn parse_struct(
 
                             let (mut var_decl, err) = parse_variable_declaration(tokens, index);
                             error = error.or(err);
+
+                            // FIXME: Actually use the visibility
+                            last_visibility = None;
 
                             // Ignore immutable flag for now
                             var_decl.mutable = false;
@@ -1076,6 +1129,13 @@ pub fn parse_struct(
                             )));
                             break;
                         }
+                    }
+
+                    if last_visibility.is_some() {
+                        error = error.or(Some(JaktError::ParserError(
+                            "Expected function or parameter after visibility modifier".to_string(),
+                            tokens[*index].span,
+                        )))
                     }
                 }
                 if *index >= tokens.len() {
@@ -1149,6 +1209,7 @@ pub fn parse_function(
     tokens: &[Token],
     index: &mut usize,
     linkage: FunctionLinkage,
+    visibility: Visibility,
 ) -> (ParsedFunction, Option<JaktError>) {
     trace!(format!("parse_function: {:?}", tokens[*index]));
 
