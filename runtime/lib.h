@@ -102,6 +102,73 @@ constexpr auto continue_on_panic = false;
 
 ErrorOr<int> main(Array<String>);
 
+inline void panic(StringView message)
+{
+    // FIXME: This should print to stderr, but the tests compare stdout.
+    outln("Panic: {}", message);
+    if (continue_on_panic)
+        return;
+    VERIFY_NOT_REACHED();
+}
+
+template<typename T>
+inline constexpr T checked_add(T value, T other)
+{
+    Checked<T> checked = value;
+    checked += other;
+    if (checked.has_overflow())
+        panic(String::formatted("Overflow in checked addition '{} + {}'", value, other));
+    return checked.value_unchecked();
+}
+
+template<typename T>
+inline constexpr T checked_sub(T value, T other)
+{
+    Checked<T> checked = value;
+    checked -= other;
+    if (checked.has_overflow())
+        panic(String::formatted("Overflow in checked subtraction '{} - {}'", value, other));
+    return checked.value_unchecked();
+}
+
+template<typename T>
+inline constexpr T checked_mul(T value, T other)
+{
+    Checked<T> checked = value;
+    checked *= other;
+    if (checked.has_overflow())
+        panic(String::formatted("Overflow in checked multiplication '{} * {}'", value, other));
+    return checked.value_unchecked();
+}
+
+template<typename T>
+inline constexpr T checked_div(T value, T other)
+{
+    Checked<T> checked = value;
+    checked /= other;
+    if (checked.has_overflow()) {
+        if (other == 0)
+            panic(String::formatted("Division by zero in checked division '{} / {}'", value, other));
+        else
+            panic(String::formatted("Overflow in checked division '{} / {}'", value, other));
+    }
+    return checked.value_unchecked();
+}
+
+template<typename T>
+inline constexpr T checked_mod(T value, T other)
+{
+    Checked<T> checked = value;
+    checked %= other;
+    if (checked.has_overflow()) {
+        if (other == 0)
+            panic(String::formatted("Division by zero in checked modulo '{} % {}'", value, other));
+        else
+            panic(String::formatted("Overflow in checked modulo '{} % {}'", value, other));
+    }
+    return checked.value_unchecked();
+}
+
 template<typename T>
 inline constexpr T arithmetic_shift_right(T value, size_t steps)
 {
