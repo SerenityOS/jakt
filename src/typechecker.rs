@@ -470,6 +470,14 @@ impl CheckedFunction {
 
         true
     }
+
+    pub fn is_mutating(&self) -> bool {
+        if !self.is_static() {
+            return self.params.first().unwrap().variable.mutable;
+        }
+
+        false
+    }
 }
 
 #[derive(Debug, Clone)]

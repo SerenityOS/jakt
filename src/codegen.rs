@@ -539,11 +539,9 @@ fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
     }
 
     let mut first = true;
-    let mut const_function = false;
 
     for param in &function.params {
         if param.variable.name == "this" {
-            const_function = !param.variable.mutable;
             continue;
         }
 
@@ -564,7 +562,7 @@ fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
     }
     output.push(')');
 
-    if const_function {
+    if !function.is_static() && !function.is_mutating() {
         output.push_str(" const");
     }
 
