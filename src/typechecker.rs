@@ -2772,229 +2772,253 @@ pub fn typecheck_expression(
                                         ),
                                         name[0].1,
                                     )));
-                                } else {
-                                    let variant_index: usize;
-                                    let mut vars = Vec::new();
+                                    continue;
+                                }
+
+                                let variant_index: usize;
+                                let mut vars = Vec::new();
+                                let enum_ = &project.enums[enum_id];
+                                let constructor_name = &name[1].0;
+                                let variant = (*enum_).variants.iter().find(|v| match v {
+                                    CheckedEnumVariant::WithValue(name, _, _)
+                                    | CheckedEnumVariant::Untyped(name, _)
+                                    | CheckedEnumVariant::Typed(name, _, _)
+                                    | CheckedEnumVariant::StructLike(name, _, _)
+                                        if name == constructor_name =>
                                     {
-                                        let enum_ = &project.enums[enum_id];
-                                        let constructor_name = &name[1].0;
-                                        let variant = (*enum_).variants.iter().find(|v| match v {
-                                            CheckedEnumVariant::WithValue(name, _, _)
-                                            | CheckedEnumVariant::Untyped(name, _)
-                                            | CheckedEnumVariant::Typed(name, _, _)
-                                            | CheckedEnumVariant::StructLike(name, _, _)
-                                                if name == constructor_name =>
-                                            {
-                                                true
-                                            }
+                                        true
+                                    }
 
-                                            _ => false,
-                                        });
+                                    _ => false,
+                                });
+                                match variant {
+                                    None => {
+                                        error = error.or(Some(JaktError::TypecheckError(
+                                            format!(
+                                                "match case '{}' does not match enum '{}'",
+                                                name[0].0, enum_name
+                                            ),
+                                            name[1].1,
+                                        )));
+                                        return (
+                                            CheckedExpression::Match(
+                                                Box::new(checked_expr),
+                                                checked_cases,
+                                                *span,
+                                                // FIXME: Figure this out.
+                                                UNKNOWN_TYPE_ID,
+                                            ),
+                                            error,
+                                        );
+                                    }
+                                    Some(variant) => {
                                         match variant {
-                                            None => {
-                                                error = error.or(Some(JaktError::TypecheckError(
-                                                    format!(
-                                                        "match case '{}' does not match enum '{}'",
-                                                        name[0].0, enum_name
-                                                    ),
-                                                    name[1].1,
-                                                )));
-                                                return (
-                                                    CheckedExpression::Match(
-                                                        Box::new(checked_expr),
-                                                        checked_cases,
-                                                        *span,
-                                                        // FIXME: Figure this out.
-                                                        UNKNOWN_TYPE_ID,
-                                                    ),
-                                                    error,
-                                                );
+                                            CheckedEnumVariant::Untyped(name, _) => {
+                                                if !args.is_empty() {
+                                                    error =
+                                                        error.or(Some(JaktError::TypecheckError(
+                                                            format!(
+                                                            "match case '{}' cannot have arguments",
+                                                            name
+                                                        ),
+                                                            *arg_span,
+                                                        )));
+                                                }
                                             }
-                                            Some(variant) => {
-                                                match variant {
-                                                    CheckedEnumVariant::Untyped(name, _) => {
-                                                        if !args.is_empty() {
-                                                            error = error.or(Some(JaktError::TypecheckError(
-                                                                format!(
-                                                                    "match case '{}' cannot have arguments",
-                                                                    name
-                                                                ),
-                                                                *arg_span,
-                                                            )));
-                                                        }
+                                            CheckedEnumVariant::Typed(name, ty, span) => {
+                                                if !args.is_empty() {
+                                                    if args.len() != 1 {
+                                                        error = error.or(Some(JaktError::TypecheckError(
+                                                            format!(
+                                                                "match case '{}' must have exactly one argument",
+                                                                name
+                                                            ),
+                                                            *arg_span,
+                                                        )));
                                                     }
-                                                    CheckedEnumVariant::Typed(name, ty, span) => {
-                                                        if !args.is_empty() {
-                                                            if args.len() != 1 {
-                                                                error = error.or(Some(JaktError::TypecheckError(
-                                                                    format!(
-                                                                        "match case '{}' must have exactly one argument",
-                                                                        name
-                                                                    ),
-                                                                    *arg_span,
-                                                                )));
-                                                            }
-                                                            let span = *span;
+                                                    let span = *span;
 
-                                                            let ty = substitute_typevars_in_type(
-                                                                *ty,
+                                                    let ty = substitute_typevars_in_type(
+                                                        *ty,
+                                                        &generic_parameters,
+                                                        project,
+                                                    );
+                                                    vars.push((
+                                                        CheckedVariable {
+                                                            name: args[0].1.clone(),
+                                                            ty,
+                                                            mutable: false,
+                                                        },
+                                                        span,
+                                                    ));
+                                                }
+                                            }
+                                            CheckedEnumVariant::WithValue(name, _, _) => {
+                                                if !args.is_empty() {
+                                                    error =
+                                                        error.or(Some(JaktError::TypecheckError(
+                                                            format!(
+                                                            "match case '{}' cannot have arguments",
+                                                            name
+                                                        ),
+                                                            *arg_span,
+                                                        )));
+                                                }
+                                            }
+                                            CheckedEnumVariant::StructLike(
+                                                variant_name,
+                                                fields,
+                                                _,
+                                            ) => {
+                                                // Make the borrow checker shut up
+                                                let variant_name = variant_name.clone();
+                                                let fields = fields.clone();
+
+                                                let mut names_seen = HashMap::new();
+                                                for arg in args {
+                                                    let name = &arg.0;
+                                                    if name.is_none() {
+                                                        error = error.or(Some(JaktError::TypecheckError(
+                                                            format!("match case argument '{}' for struct-like enum variant cannot be anonymous", arg.1),
+                                                            *arg_span,
+                                                        )));
+                                                        continue;
+                                                    }
+                                                    let name = name.as_ref().unwrap().clone();
+                                                    if names_seen.contains_key(&name) {
+                                                        error = error.or(Some(JaktError::TypecheckError(
+                                                            format!(
+                                                                "match case argument '{}' is already defined",
+                                                                name
+                                                            ),
+                                                            *arg_span,
+                                                        )));
+                                                        continue;
+                                                    }
+
+                                                    names_seen.insert(name.clone(), ());
+                                                    let field_type = fields
+                                                        .iter()
+                                                        .find(|f| f.name == name)
+                                                        .map(|f| f.ty);
+
+                                                    let field_type =
+                                                        if let Some(field_type) = field_type {
+                                                            Some(substitute_typevars_in_type(
+                                                                field_type,
                                                                 &generic_parameters,
                                                                 project,
-                                                            );
+                                                            ))
+                                                        } else {
+                                                            field_type
+                                                        };
+
+                                                    match field_type {
+                                                        Some(ty) => {
+                                                            let span = *span;
                                                             vars.push((
                                                                 CheckedVariable {
-                                                                    name: args[0].1.clone(),
+                                                                    name: arg.1.clone(),
                                                                     ty,
                                                                     mutable: false,
                                                                 },
                                                                 span,
-                                                            ));
+                                                            ))
                                                         }
-                                                    }
-                                                    CheckedEnumVariant::WithValue(name, _, _) => {
-                                                        if !args.is_empty() {
+                                                        None => {
                                                             error = error.or(Some(JaktError::TypecheckError(
-                                                                format!(
-                                                                    "match case '{}' cannot have arguments",
-                                                                    name
-                                                                ),
+                                                                format!("match case argument '{}' does not exist in struct-like enum variant '{}'", name, variant_name),
                                                                 *arg_span,
                                                             )));
                                                         }
                                                     }
-                                                    CheckedEnumVariant::StructLike(
-                                                        variant_name,
-                                                        fields,
-                                                        _,
-                                                    ) => {
-                                                        // Make the borrow checker shut up
-                                                        let variant_name = variant_name.clone();
-                                                        let fields = fields.clone();
-
-                                                        let mut names_seen = HashMap::new();
-                                                        for arg in args {
-                                                            let name = &arg.0;
-                                                            if name.is_none() {
-                                                                error = error.or(Some(JaktError::TypecheckError(
-                                                                    format!("match case argument '{}' for struct-like enum variant cannot be anonymous", arg.1),
-                                                                    *arg_span,
-                                                                )));
-                                                            } else {
-                                                                let name =
-                                                                    name.as_ref().unwrap().clone();
-                                                                if names_seen.contains_key(&name) {
-                                                                    error = error.or(Some(JaktError::TypecheckError(
-                                                                        format!(
-                                                                            "match case argument '{}' is already defined",
-                                                                            name
-                                                                        ),
-                                                                        *arg_span,
-                                                                    )));
-                                                                } else {
-                                                                    names_seen
-                                                                        .insert(name.clone(), ());
-                                                                    let field_type = fields
-                                                                        .iter()
-                                                                        .find(|f| f.name == name)
-                                                                        .map(|f| f.ty);
-
-                                                                    let field_type = if let Some(
-                                                                        field_type,
-                                                                    ) =
-                                                                        field_type
-                                                                    {
-                                                                        Some(
-                                                                                substitute_typevars_in_type(
-                                                                                    field_type,
-                                                                                    &generic_parameters,
-                                                                                    project,
-                                                                                ),
-                                                                            )
-                                                                    } else {
-                                                                        field_type
-                                                                    };
-
-                                                                    match field_type {
-                                                                        Some(ty) => {
-                                                                            let span = *span;
-                                                                            vars.push((
-                                                                                CheckedVariable {
-                                                                                    name: arg
-                                                                                        .1
-                                                                                        .clone(),
-                                                                                    ty,
-                                                                                    mutable: false,
-                                                                                },
-                                                                                span,
-                                                                            ))
-                                                                        }
-                                                                        None => {
-                                                                            error = error.or(Some(JaktError::TypecheckError(
-                                                                                format!("match case argument '{}' does not exist in struct-like enum variant '{}'", name, variant_name),
-                                                                                *arg_span,
-                                                                            )));
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
                                                 }
-
-                                                // Look these up again to appease the borrow checker
-                                                let enum_ = &project.enums[enum_id];
-                                                let variant = (*enum_)
-                                                    .variants
-                                                    .iter()
-                                                    .find(|v| {
-                                                        matches!(v,
-                                                        CheckedEnumVariant::WithValue(
-                                                            name,
-                                                            _,
-                                                            _,
-                                                        )
-                                                        | CheckedEnumVariant::Untyped(name, _)
-                                                        | CheckedEnumVariant::Typed(name, _, _)
-                                                        | CheckedEnumVariant::StructLike(
-                                                            name,
-                                                            _,
-                                                            _,
-                                                        ) if name == constructor_name)
-                                                    })
-                                                    .unwrap();
-                                                variant_index = enum_
-                                                    .variants
-                                                    .iter()
-                                                    .position(|p| std::ptr::eq(p, variant))
-                                                    .unwrap();
                                             }
-                                        };
-                                    }
-
-                                    let new_scope_id = project.create_scope(scope_id);
-                                    for (var, span) in vars {
-                                        if let Err(err) =
-                                            project.add_var_to_scope(new_scope_id, var, span)
-                                        {
-                                            error = error.or(Some(err));
                                         }
-                                    }
 
-                                    match body {
-                                        MatchBody::Expression(expr) => {
-                                            let (body, err) = typecheck_expression(
-                                                expr,
-                                                new_scope_id,
-                                                project,
-                                                safety_mode,
-                                                None,
-                                            );
-                                            let span = *span;
-                                            error = error.or(err);
+                                        // Look these up again to appease the borrow checker
+                                        let enum_ = &project.enums[enum_id];
+                                        let variant = (*enum_)
+                                            .variants
+                                            .iter()
+                                            .find(|v| {
+                                                matches!(v,
+                                                        CheckedEnumVariant::WithValue(name, ..)
+                                                        | CheckedEnumVariant::Untyped(name, _)
+                                                        | CheckedEnumVariant::Typed(name, ..)
+                                                        | CheckedEnumVariant::StructLike(name, ..)
+                                                    if name == constructor_name)
+                                            })
+                                            .unwrap();
+                                        variant_index = enum_
+                                            .variants
+                                            .iter()
+                                            .position(|p| std::ptr::eq(p, variant))
+                                            .unwrap();
+                                    }
+                                };
+
+                                let new_scope_id = project.create_scope(scope_id);
+                                for (var, span) in vars {
+                                    if let Err(err) =
+                                        project.add_var_to_scope(new_scope_id, var, span)
+                                    {
+                                        error = error.or(Some(err));
+                                    }
+                                }
+
+                                match body {
+                                    MatchBody::Expression(expr) => {
+                                        let (body, err) = typecheck_expression(
+                                            expr,
+                                            new_scope_id,
+                                            project,
+                                            safety_mode,
+                                            None,
+                                        );
+                                        let span = *span;
+                                        error = error.or(err);
+                                        match final_result_type {
+                                            Some(ty) => {
+                                                if let Some(err) = check_types_for_compat(
+                                                    body.ty(),
+                                                    ty,
+                                                    &mut generic_parameters,
+                                                    span,
+                                                    project,
+                                                ) {
+                                                    error = error.or(Some(err));
+                                                }
+                                            }
+                                            None => {
+                                                final_result_type = Some(body.ty());
+                                            }
+                                        }
+
+                                        checked_cases.push(CheckedMatchCase::EnumVariant {
+                                            variant_name: name[1].0.clone(),
+                                            variant_arguments: (*args).clone(),
+                                            subject_type_id: subject_ty,
+                                            variant_index,
+                                            scope_id: new_scope_id,
+                                            body: CheckedMatchBody::Expression(body),
+                                        });
+                                    }
+                                    MatchBody::Block(block) => {
+                                        let (body, err) = typecheck_block(
+                                            block,
+                                            new_scope_id,
+                                            project,
+                                            safety_mode,
+                                        );
+                                        let span = *span;
+                                        error = error.or(err);
+                                        if !body.definitely_returns {
+                                            println!("{:?}", body);
                                             match final_result_type {
                                                 Some(ty) => {
                                                     if let Some(err) = check_types_for_compat(
-                                                        body.ty(),
+                                                        VOID_TYPE_ID,
                                                         ty,
                                                         &mut generic_parameters,
                                                         span,
@@ -3004,57 +3028,19 @@ pub fn typecheck_expression(
                                                     }
                                                 }
                                                 None => {
-                                                    final_result_type = Some(body.ty());
+                                                    final_result_type = Some(VOID_TYPE_ID);
                                                 }
                                             }
-
-                                            checked_cases.push(CheckedMatchCase::EnumVariant {
-                                                variant_name: name[1].0.clone(),
-                                                variant_arguments: (*args).clone(),
-                                                subject_type_id: subject_ty,
-                                                variant_index,
-                                                scope_id: new_scope_id,
-                                                body: CheckedMatchBody::Expression(body),
-                                            });
                                         }
-                                        MatchBody::Block(block) => {
-                                            let (body, err) = typecheck_block(
-                                                block,
-                                                new_scope_id,
-                                                project,
-                                                safety_mode,
-                                            );
-                                            let span = *span;
-                                            error = error.or(err);
-                                            if !body.definitely_returns {
-                                                println!("{:?}", body);
-                                                match final_result_type {
-                                                    Some(ty) => {
-                                                        if let Some(err) = check_types_for_compat(
-                                                            VOID_TYPE_ID,
-                                                            ty,
-                                                            &mut generic_parameters,
-                                                            span,
-                                                            project,
-                                                        ) {
-                                                            error = error.or(Some(err));
-                                                        }
-                                                    }
-                                                    None => {
-                                                        final_result_type = Some(VOID_TYPE_ID);
-                                                    }
-                                                }
-                                            }
 
-                                            checked_cases.push(CheckedMatchCase::EnumVariant {
-                                                variant_name: name[1].0.clone(),
-                                                variant_arguments: (*args).clone(),
-                                                subject_type_id: subject_ty,
-                                                variant_index,
-                                                scope_id: new_scope_id,
-                                                body: CheckedMatchBody::Block(body),
-                                            });
-                                        }
+                                        checked_cases.push(CheckedMatchCase::EnumVariant {
+                                            variant_name: name[1].0.clone(),
+                                            variant_arguments: (*args).clone(),
+                                            subject_type_id: subject_ty,
+                                            variant_index,
+                                            scope_id: new_scope_id,
+                                            body: CheckedMatchBody::Block(body),
+                                        });
                                     }
                                 }
                             }
