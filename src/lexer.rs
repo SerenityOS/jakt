@@ -666,6 +666,44 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
                 )),
             ),
         }
+    } else if bytes[*index] == b'0' && *index + 2 < bytes.len() && bytes[*index + 1] == b'o' {
+        // Octal number
+        let start = *index;
+        *index += 2;
+        while *index < bytes.len()
+            && (bytes[*index].is_ascii_digit() && bytes[*index] != b'8' && bytes[*index] != b'9')
+            || (bytes[*index] == b'_' && bytes[*index - 1] != b'_')
+        {
+            *index += 1;
+        }
+        if bytes[*index - 1] == b'_' {
+            return (
+                Token::unknown(Span::new(file_id, start, *index)),
+                Some(JaktError::ParserError(
+                    "octal number literal cannot end with underscore".to_string(),
+                    Span::new(file_id, start, *index),
+                )),
+            );
+        }
+        let str = String::from_utf8_lossy(&bytes[start + 2..*index]).replace('_', "");
+        let number = i64::from_str_radix(&str, 8);
+        let suffix = consume_numeric_literal_suffix(bytes, index);
+        match number {
+            Ok(number) => (
+                Token::new(
+                    make_number_token(number, suffix),
+                    Span::new(file_id, start, *index),
+                ),
+                None,
+            ),
+            Err(_) => (
+                Token::unknown(Span::new(file_id, start, *index)),
+                Some(JaktError::ParserError(
+                    "could not parse octal number".to_string(),
+                    Span::new(file_id, start, *index),
+                )),
+            ),
+        }
     } else if bytes[*index] == b'0' && *index + 2 < bytes.len() && bytes[*index + 1] == b'b' {
         // Binary number
         let start = *index;

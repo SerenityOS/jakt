@@ -1,0 +1,6 @@
+function main() {
+    println("{}", 0o11)
+    println("{}", 0o1401)
+    println("{}", 0o623_5126)
+    println("{}", 0o777777777_77777)
+}
