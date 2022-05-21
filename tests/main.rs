@@ -17,7 +17,11 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
                 let mut error_output_path = path.clone();
                 error_output_path.set_extension("error");
 
-                if output_path.exists() || error_output_path.exists() {
+                let mut stderr_output_path = path.clone();
+                stderr_output_path.set_extension("error_out");
+
+                if output_path.exists() || error_output_path.exists() || stderr_output_path.exists()
+                {
                     // We have an output to compare to, let's do it.
                     let mut compiler = Compiler::new();
                     let cpp_string = compiler.convert_to_cpp(&path);
@@ -102,15 +106,42 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
                     let binary_output = String::from_utf8_lossy(&binary_run.stdout).to_string();
                     let binary_output = binary_output.replace("\r\n", "\n");
 
-                    let baseline_text = std::fs::read_to_string(&output_path)?;
-                    let baseline_text = baseline_text.replace("\r\n", "\n");
+                    let binary_stderr_output =
+                        String::from_utf8_lossy(&binary_run.stderr).to_string();
+                    let binary_stderr_output = binary_stderr_output.replace("\r\n", "\n");
 
-                    assert_eq!(
-                        binary_output,
-                        baseline_text,
-                        "\r\nTest: {}",
-                        path.to_string_lossy()
-                    );
+                    let baseline_text = std::fs::read_to_string(&output_path);
+                    let baseline_text =
+                        baseline_text.and_then(|text| Ok(text.replace("\r\n", "\n")));
+
+                    let baseline_stderr_text = std::fs::read_to_string(&stderr_output_path);
+                    let baseline_stderr_text =
+                        baseline_stderr_text.and_then(|text| Ok(text.replace("\r\n", "\n")));
+
+                    let mut stderr_checked = false;
+                    if let Ok(baseline_stderr_text) = baseline_stderr_text {
+                        assert!(
+                            // Because runtime assertion text depends on file name, C++ library line names etc., the exact stderr text is both unpredictable and volatile.
+                            // Therefore, stderr checks allow to only check for some substring of the actual output,
+                            // where we can e.g. put in the exact assertion text we are checking for.
+                            // This is still vulnerable to changes in the assertion expression, but we do need to check for something.
+                            // It looks like the best solution right now.
+                            binary_stderr_output.contains(&baseline_stderr_text),
+                            "\r\n Test (stderr): {}",
+                            path.to_string_lossy()
+                        );
+                        stderr_checked = true;
+                    }
+
+                    // If we checked stderr, we're not required to check stdout.
+                    if !stderr_checked || baseline_text.is_ok() {
+                        assert_eq!(
+                            binary_output,
+                            baseline_text?,
+                            "\r\nTest: {}",
+                            path.to_string_lossy()
+                        );
+                    }
                 }
             }
         }
