@@ -82,6 +82,8 @@
 
 #include <IO/File.cpp>
 
+#include <jakt_math.h>
+
 using f32 = float;
 using f64 = double;
 
