@@ -82,12 +82,6 @@
 
 #include <IO/File.cpp>
 
-#ifdef JAKT_CONTINUE_ON_PANIC
-constexpr auto _jakt_continue_on_panic = true;
-#else
-constexpr auto _jakt_continue_on_panic = false;
-#endif
-
 using f32 = float;
 using f64 = double;
 
@@ -98,10 +92,18 @@ struct Range {
     T end {};
 };
 
-ErrorOr<int> _jakt_main(Array<String>);
+namespace JaktInternal {
+
+#ifdef JAKT_CONTINUE_ON_PANIC
+constexpr auto continue_on_panic = true;
+#else
+constexpr auto continue_on_panic = false;
+#endif
+
+ErrorOr<int> main(Array<String>);
 
 template<typename T>
-inline constexpr T __arithmetic_shift_right(T value, size_t steps)
+inline constexpr T arithmetic_shift_right(T value, size_t steps)
 {
     if constexpr (IsSigned<T>) {
         if constexpr (sizeof(T) == 1) {
@@ -127,12 +129,12 @@ inline constexpr T __arithmetic_shift_right(T value, size_t steps)
 }
 
 template<typename Value>
-struct _JaktExplicitValue {
-    _JaktExplicitValue(Value&& v)
+struct ExplicitValue {
+    ExplicitValue(Value&& v)
         : value(move(v))
     {
     }
-    _JaktExplicitValue(Value const& v)
+    ExplicitValue(Value const& v)
         : value(v)
     {
     }
@@ -141,32 +143,32 @@ struct _JaktExplicitValue {
 };
 
 template<>
-struct _JaktExplicitValue<void> {
-    _JaktExplicitValue()
+struct ExplicitValue<void> {
+    ExplicitValue()
     {
     }
 };
 
 template<typename Value, typename Return>
-struct _JaktExplicitValueOrReturn {
+struct ExplicitValueOrReturn {
     template<typename U>
-    _JaktExplicitValueOrReturn(_JaktExplicitValue<U>&& v)
-        : value(_JaktExplicitValue<Value> { move(v.value) })
+    ExplicitValueOrReturn(ExplicitValue<U>&& v)
+        : value(ExplicitValue<Value> { move(v.value) })
     {
     }
 
-    _JaktExplicitValueOrReturn(_JaktExplicitValue<void>&&)
-        : value(_JaktExplicitValue<void> { })
+    ExplicitValueOrReturn(ExplicitValue<void>&&)
+        : value(ExplicitValue<void> { })
     {
     }
 
     template<typename U>
-    _JaktExplicitValueOrReturn(U&& v) requires(!IsVoid<Return>)
+    ExplicitValueOrReturn(U&& v) requires(!IsVoid<Return>)
         : value(Return { forward<U>(v) })
     {
     }
 
-    _JaktExplicitValueOrReturn(void) requires(IsVoid<Return>)
+    ExplicitValueOrReturn(void) requires(IsVoid<Return>)
         : value(Empty {})
     {
     }
@@ -188,10 +190,10 @@ struct _JaktExplicitValueOrReturn {
         if constexpr (IsVoid<Value>)
             return;
         else
-            return move(value).template get<_JaktExplicitValue<Value>>().value;
+            return move(value).template get<ExplicitValue<Value>>().value;
     }
 
-    Variant<Conditional<IsVoid<Return>, Empty, Return>, _JaktExplicitValue<Value>> value;
+    Variant<Conditional<IsVoid<Return>, Empty, Return>, ExplicitValue<Value>> value;
 };
 
 #define JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(x) ({ \
@@ -201,13 +203,15 @@ struct _JaktExplicitValueOrReturn {
     _jakt_value.release_value();                    \
 })
 
+}
+
 int main(int argc, char** argv)
 {
     Array<String> args;
     for (int i = 0; i < argc; ++i) {
         MUST(args.push(argv[i]));
     }
-    auto result = _jakt_main(move(args));
+    auto result = JaktInternal::main(move(args));
     if (result.is_error()) {
         warnln("Runtime error: {}", result.error());
         return 1;

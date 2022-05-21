@@ -528,7 +528,7 @@ fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
     }
     output.push(' ');
     if function.name == "main" {
-        output.push_str("_jakt_main");
+        output.push_str("JaktInternal::main");
     } else {
         output.push_str(&function.name);
     }
@@ -1014,7 +1014,7 @@ fn codegen_checked_binary_op(
         "#,
         op_str
     ));
-    output.push_str("if (!_jakt_continue_on_panic) VERIFY_NOT_REACHED();\n");
+    output.push_str("if (!JaktInternal::continue_on_panic) VERIFY_NOT_REACHED();\n");
     output.push_str("}\n");
     output.push_str("return _jakt_checked.value_unchecked();\n");
     output.push_str("}(");
@@ -1073,7 +1073,7 @@ fn codegen_checked_binary_op_assign(
         "#,
         op_str
     ));
-    output.push_str("if (!_jakt_continue_on_panic) VERIFY_NOT_REACHED();");
+    output.push_str("if (!JaktInternal::continue_on_panic) VERIFY_NOT_REACHED();");
     output.push('}');
     output.push_str("_jakt_lhs = _jakt_checked.value_unchecked();");
     output.push('}');
@@ -1350,7 +1350,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             let enum_ = &project.enums[id];
             match enum_.underlying_type {
                 Some(_) => {
-                    output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(([&]() -> _JaktExplicitValueOrReturn<");
+                    output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(([&]() -> JaktInternal::ExplicitValueOrReturn<");
                     output.push_str(&codegen_type(*return_ty, project));
                     output.push_str(", ");
                     output.push_str("_JaktCurrentFunctionReturnType");
@@ -1371,7 +1371,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                 output.push_str(&codegen_indent(indent));
                                 match body {
                                     CheckedMatchBody::Expression(expr) => {
-                                        output.push_str("return _JaktExplicitReturn(");
+                                        output.push_str("return JaktInternal::ExplicitReturn(");
                                         output.push_str(&codegen_expr(0, expr, project));
                                         output.push(')');
                                     }
@@ -1423,7 +1423,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                         output.push_str("::");
                                         output.push_str(name);
                                         output.push_str(
-                                            " const& __jakt_match_value) -> _JaktExplicitValueOrReturn<",
+                                            " const& __jakt_match_value) -> JaktInternal::ExplicitValueOrReturn<",
                                         );
                                         output.push_str(&codegen_type(*return_ty, project));
                                         output.push_str(", ");
@@ -1447,7 +1447,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                         output.push_str("::");
                                         output.push_str(name);
                                         output.push_str(
-                                            " const& __jakt_match_value) -> _JaktExplicitValueOrReturn<",
+                                            " const& __jakt_match_value) -> JaktInternal::ExplicitValueOrReturn<",
                                         );
                                         output.push_str(&codegen_type(*return_ty, project));
                                         output.push_str(", ");
@@ -1461,7 +1461,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                         output.push_str("::");
                                         output.push_str(name);
                                         output.push_str(
-                                            " const& __jakt_match_value) -> _JaktExplicitValueOrReturn<",
+                                            " const& __jakt_match_value) -> JaktInternal::ExplicitValueOrReturn<",
                                         );
                                         output.push_str(&codegen_type(*return_ty, project));
                                         output.push_str(", ");
@@ -1491,7 +1491,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                 match body {
                                     CheckedMatchBody::Block(block) => {
                                         output.push_str(&codegen_block(indent + 1, block, project));
-                                        output.push_str("\nreturn _JaktExplicitValue<");
+                                        output.push_str("\nreturn JaktInternal::ExplicitValue<");
                                         output.push_str(&codegen_type(*return_ty, project));
                                         output.push_str(">();\n");
                                     }
@@ -1503,9 +1503,12 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                                 expr,
                                                 project,
                                             ));
-                                            output.push_str("), _JaktExplicitValue<void>();\n");
+                                            output.push_str(
+                                                "), JaktInternal::ExplicitValue<void>();\n",
+                                            );
                                         } else {
-                                            output.push_str("   return _JaktExplicitValue(");
+                                            output
+                                                .push_str("   return JaktInternal::ExplicitValue(");
                                             output.push_str(&codegen_expr(
                                                 indent + 1,
                                                 expr,
@@ -1616,7 +1619,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     output.push_str("; })");
                 }
                 BinaryOperator::ArithmeticRightShift => {
-                    output.push_str("__arithmetic_shift_right(");
+                    output.push_str("JaktInternal::arithmetic_shift_right(");
                     output.push_str(&codegen_expr(indent, lhs, project));
                     output.push_str(", ");
                     output.push_str(&codegen_expr(indent, rhs, project));
