@@ -386,7 +386,7 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
             output.push_str("  public:\n");
 
             // Make sure emitted classes always have a vtable.
-            output.push_str(&format!("    virtual ~{}() = default;", structure.name));
+            output.push_str(&format!("    virtual ~{}() = default;\n", structure.name));
         }
         DefinitionType::Struct => {
             output.push_str(&format!("struct {}", structure.name));
@@ -826,6 +826,7 @@ pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
 fn codegen_block(indent: usize, checked_block: &CheckedBlock, project: &Project) -> String {
     let mut output = String::new();
 
+    output.push_str(&codegen_indent(indent));
     output.push_str("{\n");
 
     for stmt in &checked_block.stmts {
