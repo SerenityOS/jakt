@@ -3856,6 +3856,18 @@ pub fn check_types_for_compat(
     let mut error = None;
     let lhs_type = &project.types[lhs_type_id];
 
+    let optional_struct_id = project
+        .find_struct_in_scope(0, "Optional")
+        .expect("internal error: can't find builtin Optional type");
+    // This skips the type compatibility check if assigning a T to a T? without going through `Some`.
+    if let Type::GenericInstance(rhs_struct_id, args) = &project.types[rhs_type_id] {
+        if *rhs_struct_id == optional_struct_id
+            && args.first().map_or(false, |arg_id| *arg_id == lhs_type_id)
+        {
+            return None;
+        }
+    }
+
     match lhs_type {
         Type::TypeVariable(_) => {
             // If the call expects a generic type variable, let's see if we've already seen it

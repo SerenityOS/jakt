@@ -1,0 +1,4 @@
+function main() {
+    let foo: String? = "Foo"
+    println("{}", foo!)
+}

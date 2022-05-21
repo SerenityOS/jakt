@@ -1,4 +1,4 @@
-function foo() -> i32 {
+function foo() -> i64 {
     for i in 1..10 {
         if i == 5 {
             return i
