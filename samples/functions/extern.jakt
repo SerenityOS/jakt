@@ -1,6 +1,4 @@
-extern function runtime_helper_number_to_string(number: i64) -> String
-
 function main() {
-    let s = runtime_helper_number_to_string(number: 5 + 10)
+    let s = String::number(5 + 10)
     println("Five plus ten = " + s)
 }
