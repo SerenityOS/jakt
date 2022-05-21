@@ -319,6 +319,23 @@ function main() {
 }
 ```
 
+## Namespaces
+
+- [x] Namespace support for functions and struct/class/enum
+- [ ] Deep namespace support
+
+```
+namespace Greeters {
+    function greet() {
+        println("Well, hello friends")
+    }
+}
+
+function main() {
+    Greeters::greet()
+}
+```
+
 ## Type casts
 
 There are four built-in casting operators in **jakt**.
@@ -332,20 +349,6 @@ There are four built-in casting operators in **jakt**.
 
 - `as truncated T`: Returns a `T` with out-of-range values truncated in a manner specific to each type.
 - `as saturated T`: Returns a `T` with the out-of-range values saturated to the minimum or maximum value possible for `T`.
-
-## Namespaces
-
-**(Not yet implemented)**
-
-```jakt
-namespace Foo {
-    function bar() => 3
-}
-
-function main() {
-    println("{}", Foo::bar())
-}
-```
 
 ## Traits
 
