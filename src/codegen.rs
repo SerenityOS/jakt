@@ -621,7 +621,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
             let structure = &project.structs[*struct_id];
 
             if structure.definition_type == DefinitionType::Class {
-                let mut output = format!("static NonnullRefPtr<{}> create", function.name);
+                let mut output = format!("static ErrorOr<NonnullRefPtr<{}>> create", function.name);
 
                 output.push('(');
 
@@ -639,7 +639,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
                     output.push_str(&param.variable.name);
                 }
                 output.push_str(&format!(
-                    ") {{ auto o = adopt_ref(*new {}); ",
+                    ") {{ auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) {})); ",
                     function.name
                 ));
 
