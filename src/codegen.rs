@@ -1719,7 +1719,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             let value_type_id = vals[0].1.ty();
 
             output.push_str(&format!(
-                "(Dictionary<{}, {}>({{",
+                "(TRY(Dictionary<{}, {}>::create_with_entries({{",
                 codegen_type(key_type_id, project),
                 codegen_type(value_type_id, project),
             ));
@@ -1737,7 +1737,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 output.push_str(&codegen_expr(indent, value, project));
                 output.push('}');
             }
-            output.push_str("}))");
+            output.push_str("})))");
         }
         CheckedExpression::Set(values, _, _) => {
             // (Set({1, 2, 3}))
