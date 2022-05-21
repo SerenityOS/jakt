@@ -34,9 +34,9 @@ public:
 
     Dictionary(std::initializer_list<Entry> list)
     {
-        ensure_capacity(list.size());
+        MUST(ensure_capacity(list.size()));
         for (auto& item : list)
-            set(item.key, item.value);
+            MUST(set(item.key, item.value));
     }
 
     [[nodiscard]] bool is_empty() const
@@ -48,12 +48,9 @@ public:
     void clear() { m_table.clear(); }
     void clear_with_capacity() { m_table.clear_with_capacity(); }
 
-    HashSetResult set(const K& key, const V& value) { return m_table.set({ key, value }); }
-    HashSetResult set(const K& key, V&& value) { return m_table.set({ key, move(value) }); }
-    HashSetResult set(K&& key, V&& value) { return m_table.set({ move(key), move(value) }); }
-    ErrorOr<HashSetResult> try_set(const K& key, const V& value) { return m_table.try_set({ key, value }); }
-    ErrorOr<HashSetResult> try_set(const K& key, V&& value) { return m_table.try_set({ key, move(value) }); }
-    ErrorOr<HashSetResult> try_set(K&& key, V&& value) { return m_table.try_set({ move(key), move(value) }); }
+    ErrorOr<HashSetResult> set(const K& key, const V& value) { return m_table.try_set({ key, value }); }
+    ErrorOr<HashSetResult> set(const K& key, V&& value) { return m_table.try_set({ key, move(value) }); }
+    ErrorOr<HashSetResult> set(K&& key, V&& value) { return m_table.try_set({ move(key), move(value) }); }
 
     bool remove(const K& key)
     {
@@ -124,8 +121,7 @@ public:
         return m_table.find(Traits<Key>::hash(key), [&](auto& entry) { return Traits<K>::equals(key, entry.key); });
     }
 
-    void ensure_capacity(size_t capacity) { m_table.ensure_capacity(capacity); }
-    ErrorOr<void> try_ensure_capacity(size_t capacity) { return m_table.try_ensure_capacity(capacity); }
+    ErrorOr<void> ensure_capacity(size_t capacity) { return m_table.try_ensure_capacity(capacity); }
 
     Optional<typename Traits<V>::ConstPeekType> get(const K& key) const requires(!IsPointer<typename Traits<V>::PeekType>)
     {
