@@ -498,31 +498,25 @@ pub fn parse_namespace(
                         // First is the name
                         // Then the LCurly and RCurly, then we parse the contents inside
                         let mut name = None;
-                        match &tokens[*index].contents {
-                            TokenContents::Name(namespace_name) => {
-                                *index += 1;
-                                name = Some(namespace_name.clone())
-                            }
-                            _ => {}
+                        if let TokenContents::Name(namespace_name) = &tokens[*index].contents {
+                            *index += 1;
+                            name = Some(namespace_name.clone())
                         }
 
-                        match &tokens[*index].contents {
-                            TokenContents::LCurly => {
-                                *index += 1;
+                        if let TokenContents::LCurly = &tokens[*index].contents {
+                            *index += 1;
 
-                                let (mut namespace, err) = parse_namespace(tokens, index);
-                                error = error.or(err);
+                            let (mut namespace, err) = parse_namespace(tokens, index);
+                            error = error.or(err);
 
+                            *index += 1;
+                            if *index < tokens.len()
+                                && tokens[*index].contents == TokenContents::RCurly
+                            {
                                 *index += 1;
-                                if *index < tokens.len() {
-                                    if tokens[*index].contents == TokenContents::RCurly {
-                                        *index += 1;
-                                    }
-                                }
-                                namespace.name = name;
-                                parsed_namespace.namespaces.push(namespace);
                             }
-                            _ => {}
+                            namespace.name = name;
+                            parsed_namespace.namespaces.push(namespace);
                         }
                     }
                 }
