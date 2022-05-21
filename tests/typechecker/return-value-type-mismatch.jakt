@@ -1,0 +1,3 @@
+function foo() -> u64 {
+    return "Foo"
+}
