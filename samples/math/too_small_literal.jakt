@@ -1,0 +1,3 @@
+function main() {
+    let too_small_i64 = -9_223_372_036_854_775_809;
+}
