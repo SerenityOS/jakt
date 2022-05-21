@@ -710,7 +710,7 @@ fn codegen_struct_type(type_id: TypeId, project: &Project) -> String {
 pub fn codegen_namespace_qualifier(scope_id: ScopeId, project: &Project) -> String {
     let mut output = String::new();
 
-    let mut current_scope_id = project.scopes[scope_id].parent.clone();
+    let mut current_scope_id = project.scopes[scope_id].parent;
 
     while let Some(current) = current_scope_id {
         // Walk backward, prepending the parents with names to the current output
