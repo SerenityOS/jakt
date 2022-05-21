@@ -225,7 +225,7 @@ struct ExplicitValueOrReturn {
     }
 
     ExplicitValueOrReturn(ExplicitValue<void>&&)
-        : value(ExplicitValue<void> { })
+        : value(ExplicitValue<void> {})
     {
     }
 
@@ -240,7 +240,8 @@ struct ExplicitValueOrReturn {
     {
     }
 
-    bool is_return() const {
+    bool is_return() const
+    {
         return value.template has<Conditional<IsVoid<Return>, Empty, Return>>();
     }
 
