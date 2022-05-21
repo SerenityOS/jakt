@@ -1921,16 +1921,17 @@ pub fn typecheck_statement(
             (CheckedStatement::Block(checked_block), err)
         }
         ParsedStatement::VarDecl(var_decl, init) => {
-            let (mut checked_expression, err) =
-                typecheck_expression(init, scope_id, project, safety_mode, None);
-            error = error.or(err);
+            let (mut checked_type_id, typename_err) =
+                typecheck_typename(&var_decl.ty, scope_id, project);
 
-            let (mut checked_type_id, err) = typecheck_typename(&var_decl.ty, scope_id, project);
+            let (mut checked_expression, err) =
+                typecheck_expression(init, scope_id, project, safety_mode, Some(checked_type_id));
+            error = error.or(err);
 
             if checked_type_id == UNKNOWN_TYPE_ID && checked_expression.ty() != UNKNOWN_TYPE_ID {
                 checked_type_id = checked_expression.ty()
             } else {
-                error = error.or(err);
+                error = error.or(typename_err);
             }
 
             let err = try_promote_constant_expr_to_type(
