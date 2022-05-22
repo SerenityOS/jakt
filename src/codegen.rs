@@ -569,21 +569,16 @@ fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
         output.push_str(" const");
     }
 
-    if function.name == "main" {
-        output.push('\n');
-        output.push_str("{\n");
-        output.push_str(&codegen_indent(INDENT_SIZE));
-    }
+    output.push_str("\n{\n");
+    output.push_str(&codegen_indent(INDENT_SIZE));
 
     // Put the return type in scope.
     if function.name == "main" {
         output.push_str("using _JaktCurrentFunctionReturnType = ErrorOr<int>;\n");
     } else {
-        let return_type = function.return_type;
-        if return_type == UNKNOWN_TYPE_ID {
+        if function.return_type == UNKNOWN_TYPE_ID {
             panic!("Function type unknown at codegen time in {}", function.name);
         }
-        output.push_str("{\n");
         if function.throws {
             output.push_str(&format!(
                 "using _JaktCurrentFunctionReturnType = ErrorOr<{}>;\n",
