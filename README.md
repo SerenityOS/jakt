@@ -375,6 +375,21 @@ There are four built-in casting operators in **Jakt**.
 - `as? T`: Returns an `Optional<T>`, empty if the source value isn't convertible to `T`.
 - `as! T`: Returns a `T`, aborts the program if the source value isn't convertible to `T`.
 
+The `as` cast can do these things (note that the implementation may not agree yet):
+- Casts to the same type are infallible and pointless, so might be forbidden in the future.
+- If both types are primitive, a safe conversion is done.
+    - Integer casts will fail if the value is out of range. This means that promotion casts like i32 -> i64 are infallible.
+    - Float -> Integer casts truncate the decimal point (?)
+    - Integer -> Float casts resolve to the closest value to the integer representable by the floating-point type (?). If the integer value is too large, they resolve to infinity (?)
+    - Any primitive -> bool will create `true` for any value except 0, which is `false`.
+    - bool -> any primitive will do `false -> 0` and `true -> 1`, even for floats.
+- If the types are two different pointer types (see above), the cast is essentially a no-op. A cast to `T` will increment the reference count as expected; that's the preferred way of creating a strong reference from a weak reference. A cast from and to `raw T` is unsafe.
+- If the types are part of the same type hierarchy (i.e. one is a child type of another):
+    - A child can be cast to its parent infallibly.
+    - A parent can be cast to a child, but this will check the type at runtime and fail if the object was not of the child type or one of its subtypes.
+- If the types are incompatible, a user-defined cast is attempted to be used. The details here are not decided yet.
+- If nothing works, the cast will not even compile.
+
 ### Casts specific to numeric types
 
 - `as truncated T`: Returns a `T` with out-of-range values truncated in a manner specific to each type.
