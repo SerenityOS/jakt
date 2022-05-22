@@ -1,0 +1,19 @@
+class Foo {
+    public function hello(this) => "friends"
+}
+
+function main() {
+    let mutable weak_foo: weak Foo = None
+
+    println("weak_foo has_value? {}", weak_foo.has_value())
+
+    {
+        let foo = Foo()
+        weak_foo = foo
+
+        println("weak_foo has_value? {}", weak_foo.has_value())
+        println("weak_foo hello: {}", weak_foo!.hello())
+    }
+
+    println("weak_foo has_value? {}", weak_foo.has_value())
+}

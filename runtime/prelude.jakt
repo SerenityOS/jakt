@@ -36,6 +36,11 @@ extern struct Optional<T> {
     function Optional<S>(anonymous x: S) -> Optional<S>
 }
 
+extern struct WeakPtr<T> {
+    function has_value(this) -> bool
+    function clear(mutable this)
+}
+
 extern struct Dictionary<K, V> {
     function get(this, anonymous key: K) -> V?
     function contains(this, anonymous key: K) -> bool

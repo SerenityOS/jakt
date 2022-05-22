@@ -259,3 +259,8 @@ fn test_sets() -> Result<(), JaktError> {
 fn test_namespaces() -> Result<(), JaktError> {
     test_samples("samples/namespaces")
 }
+
+#[test]
+fn test_weak() -> Result<(), JaktError> {
+    test_samples("samples/weak")
+}

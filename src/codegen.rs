@@ -378,8 +378,8 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
     match structure.definition_type {
         DefinitionType::Class => {
             output.push_str(&format!(
-                "class {} : public RefCounted<{}> {{\n",
-                structure.name, structure.name
+                "class {} : public RefCounted<{}>, public Weakable<{}> {{\n",
+                structure.name, structure.name, structure.name
             ));
             // As we should test the visibility before codegen, we take a simple
             // approach to codegen
@@ -734,9 +734,28 @@ pub fn codegen_namespace_qualifier(scope_id: ScopeId, project: &Project) -> Stri
 pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
     let mut output = String::new();
     let ty = &project.types[type_id];
+
+    let weakptr_struct_id = project
+        .find_struct_in_scope(0, "WeakPtr")
+        .expect("internal error: can't find builtin WeakPtr type");
+
     match ty {
         Type::RawPtr(ty) => {
             format!("{}*", codegen_type(*ty, project))
+        }
+        Type::GenericInstance(struct_id, inner_tys) if *struct_id == weakptr_struct_id => {
+            let inner_ty = inner_tys[0];
+            if let Type::Struct(struct_id) = project.types[inner_ty] {
+                output.push_str("WeakPtr<");
+                output.push_str(&codegen_namespace_qualifier(
+                    project.structs[struct_id].scope_id,
+                    project,
+                ));
+                output.push_str(&project.structs[struct_id].name);
+                output.push('>');
+            }
+
+            output
         }
         Type::GenericInstance(struct_id, inner_tys) => {
             output.push_str(&codegen_namespace_qualifier(
