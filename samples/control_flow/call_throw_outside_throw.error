@@ -1,0 +1,1 @@
+try to call a throwing function bar in a non-throw function foo

@@ -1,0 +1,2 @@
+function bar() throws -> i64 { return 5 }
+function foo() -> i64 { return bar() }

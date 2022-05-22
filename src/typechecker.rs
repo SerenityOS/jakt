@@ -137,6 +137,11 @@ pub fn can_fit_integer(type_id: TypeId, value: &IntegerConstant) -> bool {
     }
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+struct ScopeStatus {
+    pub(crate) try_block: bool,
+}
+
 #[derive(Debug, Clone)]
 pub struct Project {
     pub functions: Vec<CheckedFunction>,
@@ -146,6 +151,7 @@ pub struct Project {
     pub types: Vec<Type>,
 
     pub current_function_index: Option<usize>,
+    scope_status: ScopeStatus,
 }
 
 impl Project {
@@ -161,6 +167,7 @@ impl Project {
             scopes: vec![project_global_scope],
             types: Vec::new(),
             current_function_index: None,
+            scope_status: ScopeStatus::default(),
         }
     }
 
@@ -1920,7 +1927,10 @@ pub fn typecheck_statement(
 
     match stmt {
         ParsedStatement::Try(stmt, error_name, error_span, catch_block) => {
+            let scope_statue = project.scope_status;
+            project.scope_status.try_block = true;
             let (checked_stmt, err) = typecheck_statement(stmt, scope_id, project, safety_mode);
+            project.scope_status = scope_statue;
             error = error.or(err);
 
             let error_struct_id = project
@@ -3660,6 +3670,30 @@ pub fn resolve_call<'a>(
             }
         } else if let Some(function_id) = project.find_function_in_scope(scope_id, &call.name) {
             callee = Some(&project.functions[function_id]);
+        }
+
+        // check the throw status of the call site
+        if let Some(callee) = callee {
+            if callee.throws {
+                if let Some(current_function_index) = project.current_function_index {
+                    let calling_function = &project.functions[current_function_index];
+                    // Call fails if:
+                    // - the calling function is not throw
+                    // - the function call is not in a try-catch block
+                    if !calling_function.throws && !project.scope_status.try_block {
+                        // fix: the error message for methods
+                        error = Some(JaktError::TypecheckError(
+                            format!(
+                                "try to call a throwing function {} in a non-throw function {}",
+                                callee.name, calling_function.name
+                            ),
+                            *span,
+                        ));
+                    }
+                } else {
+                    unreachable!("should always be calling another function from a function");
+                }
+            }
         }
 
         if callee.is_none() {
