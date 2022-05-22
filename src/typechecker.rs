@@ -2622,6 +2622,13 @@ pub fn typecheck_expression(
                 error = error.or(err);
 
                 if inner_ty == UNKNOWN_TYPE_ID {
+                    if checked_value.ty() == VOID_TYPE_ID {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "cannot create a set with values of type void".to_string(),
+                            value.span(),
+                        )))
+                    }
+
                     inner_ty = checked_value.ty();
                 } else if inner_ty != checked_value.ty() {
                     error = error.or(Some(JaktError::TypecheckError(
