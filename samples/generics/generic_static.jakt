@@ -1,0 +1,9 @@
+struct Test {
+    function test<T>(foo: T) -> T {
+        return foo;
+    }
+}
+
+function main() {
+    println("{}", Test::test(foo: 1));
+}
