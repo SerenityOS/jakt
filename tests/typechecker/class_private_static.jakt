@@ -1,0 +1,7 @@
+class Foo {
+    function private_static_function() {}
+}
+
+function main() {
+    Foo::private_static_function()
+}
