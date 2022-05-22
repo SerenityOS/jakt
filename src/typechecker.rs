@@ -2247,8 +2247,8 @@ pub fn try_promote_constant_expr_to_type(
         return None;
     }
     if let Some(rhs_constant) = checked_rhs.to_integer_constant() {
-        if let (Some(new_constant), new_ty) = rhs_constant.promote(lhs_type_id) {
-            *checked_rhs = CheckedExpression::NumericConstant(new_constant, *span, new_ty);
+        if let (Some(new_constant), new_type_id) = rhs_constant.promote(lhs_type_id) {
+            *checked_rhs = CheckedExpression::NumericConstant(new_constant, *span, new_type_id);
         } else {
             return Some(JaktError::TypecheckError(
                 "Integer promotion failed".to_string(),
@@ -2687,7 +2687,7 @@ pub fn typecheck_expression(
             (CheckedExpression::Set(output, *span, type_id), error)
         }
         ParsedExpression::Dictionary(kv_pairs, span) => {
-            let mut inner_ty = (UNKNOWN_TYPE_ID, UNKNOWN_TYPE_ID);
+            let mut inner_type_id = (UNKNOWN_TYPE_ID, UNKNOWN_TYPE_ID);
             let mut output = Vec::new();
 
             for (key, value) in kv_pairs {
@@ -2699,7 +2699,7 @@ pub fn typecheck_expression(
                     typecheck_expression(value, scope_id, project, safety_mode, None);
                 error = error.or(err);
 
-                if inner_ty == (UNKNOWN_TYPE_ID, UNKNOWN_TYPE_ID) {
+                if inner_type_id == (UNKNOWN_TYPE_ID, UNKNOWN_TYPE_ID) {
                     if checked_key.type_id() == VOID_TYPE_ID {
                         error = error.or(Some(JaktError::TypecheckError(
                             "cannot create a dictionary with keys of type void".to_string(),
@@ -2714,16 +2714,16 @@ pub fn typecheck_expression(
                         )))
                     }
 
-                    inner_ty = (checked_key.type_id(), checked_value.type_id());
+                    inner_type_id = (checked_key.type_id(), checked_value.type_id());
                 } else {
-                    if inner_ty.0 != checked_key.type_id() {
+                    if inner_type_id.0 != checked_key.type_id() {
                         error = error.or(Some(JaktError::TypecheckError(
                             "does not match type of previous values in dictionary".to_string(),
                             key.span(),
                         )))
                     }
 
-                    if inner_ty.1 != checked_value.type_id() {
+                    if inner_type_id.1 != checked_value.type_id() {
                         error = error.or(Some(JaktError::TypecheckError(
                             "does not match type of previous values in dictionary".to_string(),
                             value.span(),
@@ -2740,7 +2740,7 @@ pub fn typecheck_expression(
 
             let type_id = project.find_or_add_type_id(Type::GenericInstance(
                 dictionary_struct_id,
-                vec![inner_ty.0, inner_ty.1],
+                vec![inner_type_id.0, inner_type_id.1],
             ));
 
             let (type_id, err) = unify_with_type_hint(project, &type_id);
@@ -2792,7 +2792,7 @@ pub fn typecheck_expression(
                 typecheck_expression(idx, scope_id, project, safety_mode, None);
             error = error.or(err);
 
-            let mut expr_ty = UNKNOWN_TYPE_ID;
+            let mut expr_type_id = UNKNOWN_TYPE_ID;
 
             let array_struct_id = project
                 .find_struct_in_scope(0, "Array")
@@ -2805,12 +2805,12 @@ pub fn typecheck_expression(
             let type_ = &project.types[checked_expr.type_id()];
 
             match type_ {
-                Type::GenericInstance(parent_struct_id, inner_tys)
+                Type::GenericInstance(parent_struct_id, inner_type_ids)
                     if parent_struct_id == &array_struct_id =>
                 {
                     match checked_idx.type_id() {
                         _ if is_integer(checked_idx.type_id()) => {
-                            expr_ty = inner_tys[0];
+                            expr_type_id = inner_type_ids[0];
                         }
 
                         _ => {
@@ -2821,7 +2821,7 @@ pub fn typecheck_expression(
                         }
                     }
 
-                    let (expr_ty, err) = unify_with_type_hint(project, &expr_ty);
+                    let (expr_type_id, err) = unify_with_type_hint(project, &expr_type_id);
                     error = error.or(err);
 
                     (
@@ -2829,26 +2829,26 @@ pub fn typecheck_expression(
                             Box::new(checked_expr),
                             Box::new(checked_idx),
                             *span,
-                            expr_ty,
+                            expr_type_id,
                         ),
                         error,
                     )
                 }
-                Type::GenericInstance(parent_struct_id, inner_tys)
+                Type::GenericInstance(parent_struct_id, inner_type_ids)
                     if parent_struct_id == &dict_struct_id =>
                 {
-                    let value_ty = inner_tys[1];
+                    let value_type_id = inner_type_ids[1];
                     let optional_struct_id = project
                         .find_struct_in_scope(0, "Optional")
                         .expect("internal error: Optional builtin definition not found");
 
-                    let inner_ty = project.find_or_add_type_id(Type::GenericInstance(
+                    let inner_type_id = project.find_or_add_type_id(Type::GenericInstance(
                         optional_struct_id,
-                        vec![value_ty],
+                        vec![value_type_id],
                     ));
-                    expr_ty = inner_ty;
+                    expr_type_id = inner_type_id;
 
-                    let (expr_ty, err) = unify_with_type_hint(project, &expr_ty);
+                    let (expr_type_id, err) = unify_with_type_hint(project, &expr_type_id);
                     error = error.or(err);
 
                     (
@@ -2856,7 +2856,7 @@ pub fn typecheck_expression(
                             Box::new(checked_expr),
                             Box::new(checked_idx),
                             *span,
-                            expr_ty,
+                            expr_type_id,
                         ),
                         error,
                     )
@@ -2867,7 +2867,7 @@ pub fn typecheck_expression(
                         expr.span(),
                     )));
 
-                    let (expr_ty, err) = unify_with_type_hint(project, &expr_ty);
+                    let (expr_type_id, err) = unify_with_type_hint(project, &expr_type_id);
                     error = error.or(err);
 
                     (
@@ -2875,7 +2875,7 @@ pub fn typecheck_expression(
                             Box::new(checked_expr),
                             Box::new(checked_idx),
                             *span,
-                            expr_ty,
+                            expr_type_id,
                         ),
                         error,
                     )
@@ -2893,8 +2893,8 @@ pub fn typecheck_expression(
                 .find_struct_in_scope(0, "Tuple")
                 .expect("internal error: Tuple builtin definition not found");
 
-            let checked_expr_ty = &project.types[checked_expr.type_id()];
-            match checked_expr_ty {
+            let checked_expr_type_id = &project.types[checked_expr.type_id()];
+            match checked_expr_type_id {
                 Type::GenericInstance(parent_struct_id, inner_type_ids)
                     if parent_struct_id == &tuple_struct_id =>
                 {
@@ -2931,17 +2931,18 @@ pub fn typecheck_expression(
 
             let mut checked_cases = Vec::new();
             let type_ = &project.types[checked_expr.type_id()];
-            let subject_ty = checked_expr.type_id();
+            let subject_type_id = checked_expr.type_id();
             let mut generic_parameters = match type_ {
-                Type::GenericEnumInstance(enum_id, inner_tys) => {
+                Type::GenericEnumInstance(enum_id, inner_type_ids) => {
                     let enum_ = &project.enums[*enum_id];
-                    enum_.generic_parameters.iter().zip(inner_tys.iter()).fold(
-                        HashMap::new(),
-                        |mut acc, (param, type_id)| {
+                    enum_
+                        .generic_parameters
+                        .iter()
+                        .zip(inner_type_ids.iter())
+                        .fold(HashMap::new(), |mut acc, (param, type_id)| {
                             acc.insert(*param, *type_id);
                             acc
-                        },
-                    )
+                        })
                 }
                 _ => HashMap::new(),
             };
@@ -3198,7 +3199,7 @@ pub fn typecheck_expression(
                                         checked_cases.push(CheckedMatchCase::EnumVariant {
                                             variant_name: name[1].0.clone(),
                                             variant_arguments: (*args).clone(),
-                                            subject_type_id: subject_ty,
+                                            subject_type_id,
                                             variant_index,
                                             scope_id: new_scope_id,
                                             body: CheckedMatchBody::Expression(body),
@@ -3236,7 +3237,7 @@ pub fn typecheck_expression(
                                         checked_cases.push(CheckedMatchCase::EnumVariant {
                                             variant_name: name[1].0.clone(),
                                             variant_arguments: (*args).clone(),
-                                            subject_type_id: subject_ty,
+                                            subject_type_id,
                                             variant_index,
                                             scope_id: new_scope_id,
                                             body: CheckedMatchBody::Block(body),
@@ -3251,7 +3252,7 @@ pub fn typecheck_expression(
                     error = error.or(Some(JaktError::TypecheckError(
                         format!(
                             "match used on non-enum value (nyi: {:?})",
-                            project.types[subject_ty]
+                            project.types[subject_type_id]
                         ),
                         expr.span(),
                     )))
@@ -3283,8 +3284,8 @@ pub fn typecheck_expression(
 
             let type_id = UNKNOWN_TYPE_ID;
 
-            let checked_expr_ty = &project.types[checked_expr.type_id()];
-            match checked_expr_ty {
+            let checked_expr_type_id = &project.types[checked_expr.type_id()];
+            match checked_expr_type_id {
                 Type::GenericInstance(struct_id, _) | Type::Struct(struct_id) => {
                     let structure = &project.structs[*struct_id];
 
@@ -3375,8 +3376,8 @@ pub fn typecheck_expression(
                     }
                 }
             } else {
-                let checked_expr_ty = &project.types[checked_expr.type_id()];
-                match checked_expr_ty {
+                let checked_expr_type = &project.types[checked_expr.type_id()];
+                match checked_expr_type {
                     Type::Struct(struct_id) => {
                         let struct_id = *struct_id;
                         let (checked_call, err) = typecheck_call(
@@ -3472,7 +3473,7 @@ pub fn typecheck_unary_operation(
     safety_mode: SafetyMode,
 ) -> (CheckedExpression, Option<JaktError>) {
     let expr_type_id = expr.type_id();
-    let expr_ty = &project.types[expr_type_id];
+    let expr_type = &project.types[expr_type_id];
 
     match &op {
         CheckedUnaryOperator::Is(type_id) => (
@@ -3488,7 +3489,7 @@ pub fn typecheck_unary_operation(
             CheckedExpression::UnaryOp(Box::new(expr), op.clone(), span, cast.type_id()),
             None,
         ),
-        CheckedUnaryOperator::Dereference => match expr_ty {
+        CheckedUnaryOperator::Dereference => match expr_type {
             Type::RawPtr(x) => {
                 if safety_mode == SafetyMode::Unsafe {
                     (
@@ -3764,10 +3765,10 @@ pub fn typecheck_binary_operation(
                 .find_struct_in_scope(0, "WeakPtr")
                 .expect("internal error: can't find builtin WeakPtr type");
 
-            if let Type::GenericInstance(struct_id, inner_tys) = &project.types[lhs_type_id] {
+            if let Type::GenericInstance(struct_id, inner_type_ids) = &project.types[lhs_type_id] {
                 if *struct_id == weakptr_struct_id {
-                    let inner_ty = inner_tys[0];
-                    if let Type::Struct(lhs_struct_id) = project.types[inner_ty] {
+                    let inner_type_id = inner_type_ids[0];
+                    if let Type::Struct(lhs_struct_id) = project.types[inner_type_id] {
                         match project.types[rhs_type_id] {
                             Type::Struct(rhs_struct_id) if lhs_struct_id == rhs_struct_id => {
                                 return (lhs_type_id, None)
@@ -4626,7 +4627,7 @@ pub fn typecheck_typename(
         },
         ParsedType::Empty => (UNKNOWN_TYPE_ID, None),
         ParsedType::Array(inner, _) => {
-            let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
+            let (inner_type_id, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
             let vector_struct_id = project
@@ -4634,14 +4635,14 @@ pub fn typecheck_typename(
                 .expect("internal error: Array builtin definition not found");
 
             let type_id = project
-                .find_or_add_type_id(Type::GenericInstance(vector_struct_id, vec![inner_ty]));
+                .find_or_add_type_id(Type::GenericInstance(vector_struct_id, vec![inner_type_id]));
 
             (type_id, error)
         }
         ParsedType::Dictionary(key, value, _) => {
-            let (key_ty, err) = typecheck_typename(key, scope_id, project);
+            let (key_type_id, err) = typecheck_typename(key, scope_id, project);
             error = error.or(err);
-            let (value_ty, err) = typecheck_typename(value, scope_id, project);
+            let (value_type_id, err) = typecheck_typename(value, scope_id, project);
             error = error.or(err);
 
             let dictionary_struct_id = project
@@ -4650,55 +4651,59 @@ pub fn typecheck_typename(
 
             let type_id = project.find_or_add_type_id(Type::GenericInstance(
                 dictionary_struct_id,
-                vec![key_ty, value_ty],
+                vec![key_type_id, value_type_id],
             ));
 
             (type_id, error)
         }
         ParsedType::Set(inner, _) => {
-            let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
+            let (inner_type_id, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
             let set_struct_id = project
                 .find_struct_in_scope(0, "Set")
                 .expect("internal error: Set builtin definition not found");
 
-            let type_id =
-                project.find_or_add_type_id(Type::GenericInstance(set_struct_id, vec![inner_ty]));
+            let type_id = project
+                .find_or_add_type_id(Type::GenericInstance(set_struct_id, vec![inner_type_id]));
 
             (type_id, error)
         }
         ParsedType::Optional(inner, _) => {
-            let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
+            let (inner_type_id, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
             let optional_struct_id = project
                 .find_struct_in_scope(0, "Optional")
                 .expect("internal error: Optional builtin definition not found");
 
-            let type_id = project
-                .find_or_add_type_id(Type::GenericInstance(optional_struct_id, vec![inner_ty]));
+            let type_id = project.find_or_add_type_id(Type::GenericInstance(
+                optional_struct_id,
+                vec![inner_type_id],
+            ));
 
             (type_id, error)
         }
         ParsedType::WeakPtr(inner, _) => {
-            let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
+            let (inner_type_id, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
             let weakptr_struct_id = project
                 .find_struct_in_scope(0, "WeakPtr")
                 .expect("internal error: WeakPtr builtin definition not found");
 
-            let type_id = project
-                .find_or_add_type_id(Type::GenericInstance(weakptr_struct_id, vec![inner_ty]));
+            let type_id = project.find_or_add_type_id(Type::GenericInstance(
+                weakptr_struct_id,
+                vec![inner_type_id],
+            ));
 
             (type_id, error)
         }
         ParsedType::RawPtr(inner, _) => {
-            let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
+            let (inner_type_id, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
-            let type_id = project.find_or_add_type_id(Type::RawPtr(inner_ty));
+            let type_id = project.find_or_add_type_id(Type::RawPtr(inner_type_id));
 
             (type_id, error)
         }
@@ -4706,10 +4711,10 @@ pub fn typecheck_typename(
             let mut checked_inner_types = vec![];
 
             for inner_type in inner_types {
-                let (inner_ty, err) = typecheck_typename(inner_type, scope_id, project);
+                let (inner_type_id, err) = typecheck_typename(inner_type, scope_id, project);
                 error = error.or(err);
 
-                checked_inner_types.push(inner_ty);
+                checked_inner_types.push(inner_type_id);
             }
 
             let struct_id = project.find_struct_in_scope(scope_id, name);

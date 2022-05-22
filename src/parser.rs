@@ -3943,12 +3943,12 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Optio
             if name == "raw" || name == "weak" {
                 *index += 1;
                 if *index < tokens.len() {
-                    let (child_ty, err) = parse_typename(tokens, index);
+                    let (child_parsed_type, err) = parse_typename(tokens, index);
                     error = error.or(err);
 
                     if name == "raw" {
                         unchecked_type = ParsedType::RawPtr(
-                            Box::new(child_ty),
+                            Box::new(child_parsed_type),
                             Span {
                                 file_id: start.file_id,
                                 start: start.start,
@@ -3957,7 +3957,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Optio
                         );
                     } else if name == "weak" {
                         unchecked_type = ParsedType::WeakPtr(
-                            Box::new(child_ty),
+                            Box::new(child_parsed_type),
                             Span {
                                 file_id: start.file_id,
                                 start: start.start,
@@ -4017,14 +4017,14 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Optio
                         }
                         _ => {
                             let i = *index;
-                            let (inner_ty, err) = parse_typename(tokens, index);
+                            let (inner_type, err) = parse_typename(tokens, index);
                             if i == *index {
                                 // This is not a generic parameter, reset and leave.
                                 error = error.or(err);
                                 break;
                             }
                             error = error.or(err);
-                            inner_types.push(inner_ty);
+                            inner_types.push(inner_type);
                         }
                     }
                 }
@@ -4115,14 +4115,14 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (ParsedCall, Option<Ja
                             }
                             _ => {
                                 let i = *index;
-                                let (inner_ty, err) = parse_typename(tokens, index);
+                                let (inner_type, err) = parse_typename(tokens, index);
                                 if i == *index {
                                     // Can't parse further, this is not a generic call.
                                     *index = index_reset;
                                     break;
                                 }
                                 error = error.or(err);
-                                inner_types.push(inner_ty);
+                                inner_types.push(inner_type);
                             }
                         }
                     }
