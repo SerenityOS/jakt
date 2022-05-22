@@ -1817,6 +1817,9 @@ fn typecheck_method(
     let method_id = method_id
         .expect("Internal error: we just pushed the checked function, but it's not present");
 
+    let previous_function_id = project.current_function_index;
+    project.current_function_index = Some(method_id);
+
     let checked_function = &mut project.functions[method_id];
     let function_scope_id = checked_function.function_scope_id;
 
@@ -1871,6 +1874,8 @@ fn typecheck_method(
 
     checked_function.block = block;
     checked_function.return_type = return_type;
+
+    project.current_function_index = previous_function_id;
 
     error
 }
@@ -3691,7 +3696,10 @@ pub fn resolve_call<'a>(
                         ));
                     }
                 } else {
-                    unreachable!("should always be calling another function from a function");
+                    unreachable!(
+                        "should always be calling another function from a function {}",
+                        call.name
+                    );
                 }
             }
         }
