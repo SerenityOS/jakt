@@ -1765,6 +1765,136 @@ fn typecheck_function_predecl(
     error
 }
 
+fn get_return_type_of_statement(statement: &CheckedStatement) -> TypeId {
+    match statement {
+        CheckedStatement::Return(ret) => ret.ty(),
+
+        CheckedStatement::If(_, then_block, maybe_else_statement) => {
+            // Examples:
+
+            // if (true) {
+            //     true
+            // }
+            // Inferred type: void
+
+            // if (true) {
+            //     true
+            // } else {
+            //     2
+            // }
+            // Inferred type: void
+
+            // if (true) {
+            //     true
+            // } else {
+            //     return 2
+            // }
+            // Inferred type: i64
+
+            // if (true) {
+            //     return true
+            // } else {
+            //     return 2
+            // }
+            // Inferred type: bool
+
+            let then_block_return_type =
+                get_return_type_from_first_return_statement_in_block_tree(then_block);
+
+            if then_block_return_type != VOID_TYPE_ID {
+                return then_block_return_type;
+            }
+
+            if let Some(else_statement) = maybe_else_statement {
+                return get_return_type_of_statement(else_statement.as_ref());
+            }
+
+            VOID_TYPE_ID
+        }
+
+        CheckedStatement::Block(block) => {
+            get_return_type_from_first_return_statement_in_block_tree(block)
+        }
+
+        CheckedStatement::Loop(block) => {
+            get_return_type_from_first_return_statement_in_block_tree(block)
+        }
+
+        CheckedStatement::While(_, block) => {
+            get_return_type_from_first_return_statement_in_block_tree(block)
+        }
+
+        CheckedStatement::For(_, _, block) => {
+            get_return_type_from_first_return_statement_in_block_tree(block)
+        }
+
+        CheckedStatement::Try(statement, _, catch_block) => {
+            // Examples:
+
+            // try {
+            //     throw Error::from_errno(123456)
+            //     true
+            // } catch error {
+            //     2
+            // }
+            // Inferred type: void
+
+            // try {
+            //     throw Error::from_errno(123456)
+            //     true
+            // } catch error {
+            //     return 2
+            // }
+            // Inferred type: i64
+
+            // try {
+            //     throw Error::from_errno(123456)
+            //     return true
+            // } catch error {
+            //     return 2
+            // }
+            // Inferred type: bool
+
+            let statement_return_type = get_return_type_of_statement(statement.as_ref());
+
+            if statement_return_type != VOID_TYPE_ID {
+                return statement_return_type;
+            }
+
+            get_return_type_from_first_return_statement_in_block_tree(catch_block)
+        }
+
+        _ => VOID_TYPE_ID,
+    }
+}
+
+fn get_return_type_from_first_return_statement_in_block_tree(block: &CheckedBlock) -> TypeId {
+    // If the return type is unknown, and the function contains a return statement anywhere in
+    // the function body, we infer the return type from the first return statement in the function
+    // body. For example:
+    // function foo() {
+    //     if (false) {
+    //         return 1
+    //     } else {
+    //         return true
+    //     }
+    //     return "foo"
+    // }
+    // We will infer the return type to be i64 from `return 1`, as it appears before `return true` and `return "foo"`, even though `return 1` is unreachable.
+    // This is because we cannot know ahead of time which blocks may be executed, for example, if the if statement was `if (rand() % 2 == 0)` instead of `if (false)`.
+    // If there is no return statement in the function, the return type is inferred to be `void`.
+
+    for statement in &block.stmts {
+        let type_: TypeId = get_return_type_of_statement(statement);
+
+        if type_ != VOID_TYPE_ID {
+            return type_;
+        }
+    }
+
+    VOID_TYPE_ID
+}
+
 fn typecheck_function(
     function: &ParsedFunction,
     parent_scope_id: ScopeId,
@@ -1813,14 +1943,8 @@ fn typecheck_function(
         typecheck_typename(&function.return_type, function_scope_id, project);
     error = error.or(err);
 
-    // If the return type is unknown, and the function starts with a return statement,
-    // we infer the return type from its expression.
     let return_type = if function_return_type == UNKNOWN_TYPE_ID {
-        if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
-            ret.ty()
-        } else {
-            VOID_TYPE_ID
-        }
+        get_return_type_from_first_return_statement_in_block_tree(&block)
     } else {
         function_return_type
     };
