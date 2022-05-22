@@ -70,6 +70,7 @@ pub enum TokenContents {
     Comma,
     Dot,
     DotDot,
+    DotDotDot,
     Eol,
     Eof,
     FatArrow,
@@ -448,6 +449,15 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
             index += 1;
             if index < bytes.len() && bytes[index] == b'.' {
                 index += 1;
+                if index < bytes.len() && bytes[index] == b'.' {
+                    index += 1;
+                    output.push(Token::new(
+                        TokenContents::DotDotDot,
+                        Span::new(file_id, start, start + 3),
+                    ));
+                    continue;
+                }
+
                 output.push(Token::new(
                     TokenContents::DotDot,
                     Span::new(file_id, start, start + 2),

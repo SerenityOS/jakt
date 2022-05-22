@@ -1,3 +1,7 @@
+extern function println<Ts...>(anonymous format: String, anonymous args: Ts...)
+extern function print<Ts...>(anonymous format: String, anonymous args: Ts...)
+extern function eprintln<Ts...>(anonymous format: String, anonymous args: Ts...)
+
 extern struct String {
     function number(anonymous number: i64) -> String
 
@@ -62,7 +66,7 @@ extern struct Set<V> {
     function Set<A>() -> Set<A>
 }
 
-extern struct Tuple {}
+extern struct Tuple<Ts...> {}
 
 extern struct Range {}
 

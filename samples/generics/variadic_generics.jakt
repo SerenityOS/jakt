@@ -1,0 +1,8 @@
+function cat<Ts...>(anonymous a: Ts...) -> Ts {
+    return a
+}
+
+function main() {
+    let a: Tuple<i64, String> = (1, "hello")
+    println("{} world!", cat(a...).1)
+}

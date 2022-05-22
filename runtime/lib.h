@@ -82,6 +82,8 @@
 
 #include <IO/File.cpp>
 
+#include <IO/Print.h>
+
 using f32 = float;
 using f64 = double;
 

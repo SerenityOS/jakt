@@ -106,6 +106,7 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
 
     output
 }
+
 fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
     if enum_.underlying_type.is_some() {
         let ty = enum_.underlying_type.unwrap();
@@ -147,7 +148,7 @@ fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
         .generic_parameters
         .iter()
         .map(|p| match &project.types[*p] {
-            Type::TypeVariable(name) => name.clone(),
+            Type::TypeVariable { name, .. } => name.clone(),
             _ => unreachable!(),
         })
         .collect::<Vec<_>>();
@@ -826,7 +827,7 @@ pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
             compiler::VOID_TYPE_ID => String::from("void"),
             _ => String::from("auto"),
         },
-        Type::TypeVariable(name) => name.clone(),
+        Type::TypeVariable { name, .. } => name.clone(),
     }
 }
 
@@ -1163,109 +1164,80 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             if call.callee_throws {
                 output.push_str("TRY(");
             }
-            if call.name == "print" {
-                output.push_str("out(");
-                for (i, param) in call.args.iter().enumerate() {
-                    output.push_str(&codegen_expr(indent, &param.1, project));
-                    if i != call.args.len() - 1 {
-                        output.push(',');
-                    }
+            for (idx, namespace) in call.namespace.iter().enumerate() {
+                // hack warning: this is to get around C++'s limitation that a constructor
+                // can't be called like other static methods
+                if idx == call.namespace.len() - 1 && namespace.name == call.name {
+                    break;
                 }
-                output.push(')');
-            } else if call.name == "println" {
-                output.push_str("outln(");
-                for (i, param) in call.args.iter().enumerate() {
-                    output.push_str(&codegen_expr(indent, &param.1, project));
-                    if i != call.args.len() - 1 {
-                        output.push(',');
-                    }
+                if call.linkage == FunctionLinkage::ImplicitEnumConstructor {
+                    output.push_str("typename ");
                 }
-                output.push(')');
-            } else if call.name == "eprintln" {
-                output.push_str("warnln(");
-                for (i, param) in call.args.iter().enumerate() {
-                    output.push_str(&codegen_expr(indent, &param.1, project));
-                    if i != call.args.len() - 1 {
-                        output.push(',');
-                    }
-                }
-                output.push(')');
-            } else {
-                for (idx, namespace) in call.namespace.iter().enumerate() {
-                    // hack warning: this is to get around C++'s limitation that a constructor
-                    // can't be called like other static methods
-                    if idx == call.namespace.len() - 1 && namespace.name == call.name {
-                        break;
-                    }
-                    if call.linkage == FunctionLinkage::ImplicitEnumConstructor {
-                        output.push_str("typename ");
-                    }
-                    output.push_str(namespace.name.as_str());
-                    if let Some(params) = &namespace.generic_parameters {
-                        output.push('<');
-                        for (i, param) in params.iter().enumerate() {
-                            output.push_str(&codegen_type(*param, project));
-                            if i != params.len() - 1 {
-                                output.push(',');
-                            }
-                        }
-                        output.push('>');
-                    }
-                    output.push_str("::")
-                }
-
-                if call.linkage == FunctionLinkage::ImplicitConstructor {
-                    let type_id = call.ty;
-                    let ty = &project.types[type_id];
-                    match ty {
-                        Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
-                            let structure = &project.structs[*struct_id];
-
-                            if structure.definition_type == DefinitionType::Class {
-                                output.push_str(&call.name);
-                                output.push_str("::");
-                                output.push_str("create");
-                            } else {
-                                output.push_str(&call.name);
-                            }
-                        }
-                        _ => {
-                            panic!("internal error: constructor expected class or struct type")
-                        }
-                    }
-                } else {
-                    output.push_str(&call.name);
-                }
-
-                if !call.type_args.is_empty() {
+                output.push_str(namespace.name.as_str());
+                if let Some(params) = &namespace.generic_parameters {
                     output.push('<');
-                    let mut first = true;
-                    for type_arg in &call.type_args {
-                        if !first {
-                            output.push_str(", ")
-                        } else {
-                            first = false;
+                    for (i, param) in params.iter().enumerate() {
+                        output.push_str(&codegen_type(*param, project));
+                        if i != params.len() - 1 {
+                            output.push(',');
                         }
-
-                        output.push_str(&codegen_type(*type_arg, project));
                     }
                     output.push('>');
                 }
+                output.push_str("::");
+            }
 
-                output.push('(');
+            if call.linkage == FunctionLinkage::ImplicitConstructor {
+                let type_id = call.ty;
+                let ty = &project.types[type_id];
+                match ty {
+                    Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
+                        let structure = &project.structs[*struct_id];
 
+                        if structure.definition_type == DefinitionType::Class {
+                            output.push_str(&call.name);
+                            output.push_str("::");
+                            output.push_str("create");
+                        } else {
+                            output.push_str(&call.name);
+                        }
+                    }
+                    _ => {
+                        panic!("internal error: constructor expected class or struct type")
+                    }
+                }
+            } else {
+                output.push_str(&call.name);
+            }
+
+            if !call.type_args.is_empty() {
+                output.push('<');
                 let mut first = true;
-                for param in &call.args {
+                for type_arg in &call.type_args {
                     if !first {
-                        output.push_str(", ");
+                        output.push_str(", ")
                     } else {
                         first = false;
                     }
 
-                    output.push_str(&codegen_expr(indent, &param.1, project));
+                    output.push_str(&codegen_type(*type_arg, project));
                 }
-                output.push(')');
+                output.push('>');
             }
+
+            output.push('(');
+
+            let mut first = true;
+            for param in &call.args {
+                if !first {
+                    output.push_str(", ");
+                } else {
+                    first = false;
+                }
+
+                output.push_str(&codegen_expr(indent, &param.1, project));
+            }
+            output.push(')');
             if call.callee_throws {
                 output.push(')');
             }
@@ -1613,33 +1585,33 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 | BinaryOperator::Multiply
                 | BinaryOperator::Divide
                 | BinaryOperator::Modulo
-                    if is_integer(expr.ty()) =>
-                {
-                    output.push_str(&codegen_checked_binary_op(
-                        indent,
-                        lhs,
-                        rhs,
-                        expr.ty(),
-                        op,
-                        project,
-                    ))
-                }
+                if is_integer(expr.ty()) =>
+                    {
+                        output.push_str(&codegen_checked_binary_op(
+                            indent,
+                            lhs,
+                            rhs,
+                            expr.ty(),
+                            op,
+                            project,
+                        ))
+                    }
                 BinaryOperator::AddAssign
                 | BinaryOperator::SubtractAssign
                 | BinaryOperator::MultiplyAssign
                 | BinaryOperator::DivideAssign
                 | BinaryOperator::ModuloAssign
-                    if is_integer(expr.ty()) =>
-                {
-                    output.push_str(&codegen_checked_binary_op_assign(
-                        indent,
-                        lhs,
-                        rhs,
-                        expr.ty(),
-                        op,
-                        project,
-                    ))
-                }
+                if is_integer(expr.ty()) =>
+                    {
+                        output.push_str(&codegen_checked_binary_op_assign(
+                            indent,
+                            lhs,
+                            rhs,
+                            expr.ty(),
+                            op,
+                            project,
+                        ))
+                    }
                 _ => {
                     output.push_str(&codegen_expr(indent, lhs, project));
                     match op {
@@ -1765,6 +1737,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
             output.push_str("})");
         }
+        CheckedExpression::SplatTuple(..) => panic!("SplatTuple not allowed at codegen"),
         CheckedExpression::IndexedExpression(expr, idx, _, _) => {
             output.push_str("((");
             output.push_str(&codegen_expr(indent, expr, project));
@@ -1783,7 +1756,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             // x.get<1>()
             output.push_str("((");
             output.push_str(&codegen_expr(indent, expr, project));
-            output.push_str(&format!(").get<{}>())", idx));
+            output.push_str(&format!(").template get<{}>())", idx));
         }
         CheckedExpression::IndexedStruct(expr, name, _, _) => {
             // x.foo or x->foo

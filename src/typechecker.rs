@@ -1,20 +1,15 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::parser::{MatchBody, MatchCase, Visibility};
-use crate::{
-    compiler::{
-        BOOL_TYPE_ID, CCHAR_TYPE_ID, CINT_TYPE_ID, F32_TYPE_ID, F64_TYPE_ID, I16_TYPE_ID,
-        I32_TYPE_ID, I64_TYPE_ID, I8_TYPE_ID, STRING_TYPE_ID, U16_TYPE_ID, U32_TYPE_ID,
-        U64_TYPE_ID, U8_TYPE_ID, UNKNOWN_TYPE_ID, USIZE_TYPE_ID, VOID_TYPE_ID,
-    },
-    error::JaktError,
-    lexer::Span,
-    parser::{
-        BinaryOperator, DefinitionLinkage, DefinitionType, EnumVariant, FunctionLinkage,
-        ParsedBlock, ParsedCall, ParsedEnum, ParsedExpression, ParsedFunction, ParsedNamespace,
-        ParsedStatement, ParsedStruct, ParsedType, TypeCast, UnaryOperator,
-    },
-};
+use crate::{codegen, compiler::{
+    BOOL_TYPE_ID, CCHAR_TYPE_ID, CINT_TYPE_ID, F32_TYPE_ID, F64_TYPE_ID, I16_TYPE_ID,
+    I32_TYPE_ID, I64_TYPE_ID, I8_TYPE_ID, STRING_TYPE_ID, U16_TYPE_ID, U32_TYPE_ID,
+    U64_TYPE_ID, U8_TYPE_ID, UNKNOWN_TYPE_ID, USIZE_TYPE_ID, VOID_TYPE_ID,
+}, error::JaktError, lexer::Span, parser::{
+    BinaryOperator, DefinitionLinkage, DefinitionType, EnumVariant, FunctionLinkage,
+    ParsedBlock, ParsedCall, ParsedEnum, ParsedExpression, ParsedFunction, ParsedNamespace,
+    ParsedStatement, ParsedStruct, ParsedType, TypeCast, UnaryOperator,
+}};
 use std::os::raw::{c_char, c_int};
 
 pub type StructId = usize;
@@ -22,6 +17,7 @@ pub type EnumId = usize;
 pub type FunctionId = usize;
 pub type ScopeId = usize;
 pub type TypeId = usize;
+
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SafetyMode {
@@ -32,7 +28,10 @@ pub enum SafetyMode {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Builtin,
-    TypeVariable(String),
+    TypeVariable {
+        name: String,
+        is_pack: bool,
+    },
     // A GenericInstance is a generic that has known values for its type param
     // For example Foo<Bar> is an instance of the generic Foo<T>
     GenericInstance(StructId, Vec<TypeId>),
@@ -484,7 +483,7 @@ impl Project {
 
                 output
             }
-            Type::TypeVariable(name) => name.clone(),
+            Type::TypeVariable { name, .. } => name.clone(),
             Type::RawPtr(type_id) => format!("raw {}", self.typename_for_type_id(*type_id)),
         }
     }
@@ -808,6 +807,7 @@ pub enum CheckedExpression {
         TypeId,
     ),
     Tuple(Vec<CheckedExpression>, Span, TypeId),
+    SplatTuple(Box<CheckedExpression>, Span, TypeId),
     Range(Box<CheckedExpression>, Box<CheckedExpression>, Span, TypeId),
     Array(
         Vec<CheckedExpression>,
@@ -857,6 +857,7 @@ impl CheckedExpression {
             CheckedExpression::IndexedExpression(_, _, _, ty) => *ty,
             CheckedExpression::IndexedTuple(_, _, _, ty) => *ty,
             CheckedExpression::IndexedStruct(_, _, _, ty) => *ty,
+            CheckedExpression::SplatTuple(_, _, ty) => *ty,
             CheckedExpression::MethodCall(_, _, _, ty) => *ty,
             CheckedExpression::Var(CheckedVariable { ty, .. }, _) => *ty,
             CheckedExpression::NamespacedVar(_, CheckedVariable { ty, .. }, _) => *ty,
@@ -886,6 +887,7 @@ impl CheckedExpression {
             CheckedExpression::IndexedExpression(_, _, span, _) => *span,
             CheckedExpression::IndexedTuple(_, _, span, _) => *span,
             CheckedExpression::IndexedStruct(_, _, span, _) => *span,
+            CheckedExpression::SplatTuple(_, span, _) => *span,
             CheckedExpression::MethodCall(_, _, span, _) => *span,
             CheckedExpression::Var(_, span) => *span,
             CheckedExpression::NamespacedVar(_, _, span) => *span,
@@ -1028,7 +1030,7 @@ pub fn typecheck_namespace(
         }
 
         if let Some(err) =
-            typecheck_struct_predecl(structure, struct_type_id, struct_id, scope_id, project)
+        typecheck_struct_predecl(structure, struct_type_id, struct_id, scope_id, project)
         {
             error = error.or(Some(err));
         }
@@ -1040,7 +1042,7 @@ pub fn typecheck_namespace(
 
         let enum_type_id = project.types.len() - 1;
         if let Err(err) =
-            project.add_type_to_scope(scope_id, enum_.name.clone(), enum_type_id, enum_.span)
+        project.add_type_to_scope(scope_id, enum_.name.clone(), enum_type_id, enum_.span)
         {
             error = error.or(Some(err));
         }
@@ -1098,11 +1100,11 @@ fn typecheck_enum_predecl(
     for (generic_parameter, parameter_span) in &enum_.generic_parameters {
         project
             .types
-            .push(Type::TypeVariable(generic_parameter.to_string()));
+            .push(Type::TypeVariable { name: generic_parameter.name.to_string(), is_pack: generic_parameter.is_variadic });
         let parameter_type_id = project.types.len() - 1;
         if let Err(err) = project.add_type_to_scope(
             enum_scope_id,
-            generic_parameter.to_string(),
+            generic_parameter.name.to_string(),
             parameter_type_id,
             *parameter_span,
         ) {
@@ -1237,7 +1239,7 @@ fn typecheck_enum(
                                 .map(|x| {
                                     FunctionGenericParameter::InferenceGuide(
                                         project
-                                            .find_type_in_scope(enum_scope_id, x.0.as_str())
+                                            .find_type_in_scope(enum_scope_id, x.0.name.as_str())
                                             .unwrap(),
                                     )
                                 })
@@ -1374,7 +1376,7 @@ fn typecheck_enum(
                                 .map(|x| {
                                     FunctionGenericParameter::InferenceGuide(
                                         project
-                                            .find_type_in_scope(enum_scope_id, x.0.as_str())
+                                            .find_type_in_scope(enum_scope_id, x.0.name.as_str())
                                             .unwrap(),
                                     )
                                 })
@@ -1444,7 +1446,7 @@ fn typecheck_enum(
                                 .map(|x| {
                                     FunctionGenericParameter::InferenceGuide(
                                         project
-                                            .find_type_in_scope(enum_scope_id, x.0.as_str())
+                                            .find_type_in_scope(enum_scope_id, x.0.name.as_str())
                                             .unwrap(),
                                     )
                                 })
@@ -1490,14 +1492,14 @@ fn typecheck_struct_predecl(
     for (generic_parameter, parameter_span) in &structure.generic_parameters {
         project
             .types
-            .push(Type::TypeVariable(generic_parameter.to_string()));
+            .push(Type::TypeVariable { name: generic_parameter.name.to_string(), is_pack: generic_parameter.is_variadic });
         let parameter_type_id = project.types.len() - 1;
 
         generic_parameters.push(parameter_type_id);
 
         if let Err(err) = project.add_type_to_scope(
             struct_scope_id,
-            generic_parameter.to_string(),
+            generic_parameter.name.to_string(),
             parameter_type_id,
             *parameter_span,
         ) {
@@ -1512,14 +1514,14 @@ fn typecheck_struct_predecl(
         for (generic_parameter, parameter_span) in &function.generic_parameters {
             project
                 .types
-                .push(Type::TypeVariable(generic_parameter.to_string()));
+                .push(Type::TypeVariable { name: generic_parameter.name.to_string(), is_pack: generic_parameter.is_variadic });
             let type_var_type_id = project.types.len() - 1;
 
             generic_parameters.push(FunctionGenericParameter::Parameter(type_var_type_id));
 
             if let Err(err) = project.add_type_to_scope(
                 method_scope_id,
-                generic_parameter.to_string(),
+                generic_parameter.name.to_string(),
                 type_var_type_id,
                 *parameter_span,
             ) {
@@ -1715,14 +1717,14 @@ fn typecheck_function_predecl(
     for (generic_parameter, parameter_span) in &function.generic_parameters {
         project
             .types
-            .push(Type::TypeVariable(generic_parameter.to_string()));
+            .push(Type::TypeVariable { name: generic_parameter.name.to_string(), is_pack: generic_parameter.is_variadic });
         let type_var_type_id = project.types.len() - 1;
 
         generic_parameters.push(FunctionGenericParameter::Parameter(type_var_type_id));
 
         if let Err(err) = project.add_type_to_scope(
             checked_function_scope_id,
-            generic_parameter.to_string(),
+            generic_parameter.name.to_string(),
             type_var_type_id,
             *parameter_span,
         ) {
@@ -2038,7 +2040,7 @@ pub fn typecheck_statement(
             };
 
             if let Err(err) =
-                project.add_var_to_scope(iterator_scope_id, iterator_decl, range_expr.span())
+            project.add_var_to_scope(iterator_scope_id, iterator_decl, range_expr.span())
             {
                 error = error.or(Some(err));
             }
@@ -2745,6 +2747,16 @@ pub fn typecheck_expression(
 
             (CheckedExpression::Tuple(checked_items, *span, ty), error)
         }
+        ParsedExpression::SplatTuple(expr, span) => {
+            let (checked_expr, err) =
+                typecheck_expression(expr, scope_id, project, safety_mode, None);
+            error = error.or(err);
+
+            let (ty, err) = unify_with_type_hint(project, &checked_expr.ty());
+            error = error.or(err);
+
+            (CheckedExpression::SplatTuple(Box::new(checked_expr), *span, ty), error)
+        }
         ParsedExpression::IndexedExpression(expr, idx, span) => {
             let (checked_expr, err) =
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
@@ -2768,61 +2780,61 @@ pub fn typecheck_expression(
 
             match ty {
                 Type::GenericInstance(parent_struct_id, inner_tys)
-                    if parent_struct_id == &array_struct_id =>
-                {
-                    match checked_idx.ty() {
-                        _ if is_integer(checked_idx.ty()) => {
-                            expr_ty = inner_tys[0];
+                if parent_struct_id == &array_struct_id =>
+                    {
+                        match checked_idx.ty() {
+                            _ if is_integer(checked_idx.ty()) => {
+                                expr_ty = inner_tys[0];
+                            }
+
+                            _ => {
+                                error = error.or(Some(JaktError::TypecheckError(
+                                    "index is not an integer".to_string(),
+                                    idx.span(),
+                                )))
+                            }
                         }
 
-                        _ => {
-                            error = error.or(Some(JaktError::TypecheckError(
-                                "index is not an integer".to_string(),
-                                idx.span(),
-                            )))
-                        }
+                        let (expr_ty, err) = unify_with_type_hint(project, &expr_ty);
+                        error = error.or(err);
+
+                        (
+                            CheckedExpression::IndexedExpression(
+                                Box::new(checked_expr),
+                                Box::new(checked_idx),
+                                *span,
+                                expr_ty,
+                            ),
+                            error,
+                        )
                     }
-
-                    let (expr_ty, err) = unify_with_type_hint(project, &expr_ty);
-                    error = error.or(err);
-
-                    (
-                        CheckedExpression::IndexedExpression(
-                            Box::new(checked_expr),
-                            Box::new(checked_idx),
-                            *span,
-                            expr_ty,
-                        ),
-                        error,
-                    )
-                }
                 Type::GenericInstance(parent_struct_id, inner_tys)
-                    if parent_struct_id == &dict_struct_id =>
-                {
-                    let value_ty = inner_tys[1];
-                    let optional_struct_id = project
-                        .find_struct_in_scope(0, "Optional")
-                        .expect("internal error: Optional builtin definition not found");
+                if parent_struct_id == &dict_struct_id =>
+                    {
+                        let value_ty = inner_tys[1];
+                        let optional_struct_id = project
+                            .find_struct_in_scope(0, "Optional")
+                            .expect("internal error: Optional builtin definition not found");
 
-                    let inner_ty = project.find_or_add_type_id(Type::GenericInstance(
-                        optional_struct_id,
-                        vec![value_ty],
-                    ));
-                    expr_ty = inner_ty;
+                        let inner_ty = project.find_or_add_type_id(Type::GenericInstance(
+                            optional_struct_id,
+                            vec![value_ty],
+                        ));
+                        expr_ty = inner_ty;
 
-                    let (expr_ty, err) = unify_with_type_hint(project, &expr_ty);
-                    error = error.or(err);
+                        let (expr_ty, err) = unify_with_type_hint(project, &expr_ty);
+                        error = error.or(err);
 
-                    (
-                        CheckedExpression::IndexedDictionary(
-                            Box::new(checked_expr),
-                            Box::new(checked_idx),
-                            *span,
-                            expr_ty,
-                        ),
-                        error,
-                    )
-                }
+                        (
+                            CheckedExpression::IndexedDictionary(
+                                Box::new(checked_expr),
+                                Box::new(checked_idx),
+                                *span,
+                                expr_ty,
+                            ),
+                            error,
+                        )
+                    }
                 _ => {
                     error = error.or(Some(JaktError::TypecheckError(
                         "index used on value that can't be indexed".to_string(),
@@ -2858,21 +2870,24 @@ pub fn typecheck_expression(
             let checked_expr_ty = &project.types[checked_expr.ty()];
             match checked_expr_ty {
                 Type::GenericInstance(parent_struct_id, inner_tys)
-                    if parent_struct_id == &tuple_struct_id =>
-                {
-                    match inner_tys.get(*idx) {
-                        Some(t) => ty = *t,
-                        None => {
-                            error = error.or(Some(JaktError::TypecheckError(
-                                "tuple index past the end of the tuple".to_string(),
-                                *span,
-                            )))
+                if parent_struct_id == &tuple_struct_id =>
+                    {
+                        match inner_tys.get(*idx) {
+                            Some(t) => ty = *t,
+                            None => {
+                                error = error.or(Some(JaktError::TypecheckError(
+                                    "tuple index past the end of the tuple".to_string(),
+                                    *span,
+                                )))
+                            }
                         }
                     }
+                Type::TypeVariable { .. } => {
+                    // Defer checking until we know the type of the expression
                 }
                 _ => {
                     error = error.or(Some(JaktError::TypecheckError(
-                        "tuple index used non-tuple value".to_string(),
+                        format!("tuple index used non-tuple value", ),
                         expr.span(),
                     )))
                 }
@@ -2946,10 +2961,10 @@ pub fn typecheck_expression(
                                     | CheckedEnumVariant::Untyped(name, _)
                                     | CheckedEnumVariant::Typed(name, _, _)
                                     | CheckedEnumVariant::StructLike(name, _, _)
-                                        if name == constructor_name =>
-                                    {
-                                        true
-                                    }
+                                    if name == constructor_name =>
+                                        {
+                                            true
+                                        }
 
                                     _ => false,
                                 });
@@ -2980,9 +2995,9 @@ pub fn typecheck_expression(
                                                     error =
                                                         error.or(Some(JaktError::TypecheckError(
                                                             format!(
-                                                            "match case '{}' cannot have arguments",
-                                                            name
-                                                        ),
+                                                                "match case '{}' cannot have arguments",
+                                                                name
+                                                            ),
                                                             *arg_span,
                                                         )));
                                                 }
@@ -3020,9 +3035,9 @@ pub fn typecheck_expression(
                                                     error =
                                                         error.or(Some(JaktError::TypecheckError(
                                                             format!(
-                                                            "match case '{}' cannot have arguments",
-                                                            name
-                                                        ),
+                                                                "match case '{}' cannot have arguments",
+                                                                name
+                                                            ),
                                                             *arg_span,
                                                         )));
                                                 }
@@ -3123,7 +3138,7 @@ pub fn typecheck_expression(
                                 let new_scope_id = project.create_scope(scope_id);
                                 for (var, span) in vars {
                                     if let Err(err) =
-                                        project.add_var_to_scope(new_scope_id, var, span)
+                                    project.add_var_to_scope(new_scope_id, var, span)
                                     {
                                         error = error.or(Some(err));
                                     }
@@ -3176,7 +3191,6 @@ pub fn typecheck_expression(
                                         let span = *span;
                                         error = error.or(err);
                                         if !body.definitely_returns {
-                                            println!("{:?}", body);
                                             match final_result_type {
                                                 Some(ty) => {
                                                     if let Some(err) = check_types_for_compat(
@@ -3534,8 +3548,8 @@ pub fn typecheck_unary_operation(
                                 flipped_sign_type,
                                 &IntegerConstant::Signed(negated_value as i64),
                             )
-                            // This is the case if the above "as i64" overflows.
-                            || negated_value < i64::MIN.into()
+                                // This is the case if the above "as i64" overflows.
+                                || negated_value < i64::MIN.into()
                             {
                                 (
                                     CheckedExpression::Garbage(span),
@@ -3789,12 +3803,12 @@ pub fn resolve_call<'a>(
                 let structure = &project.structs[struct_id];
 
                 if let Some(function_id) =
-                    project.find_function_in_scope(structure.scope_id, &call.name)
+                project.find_function_in_scope(structure.scope_id, &call.name)
                 {
                     callee = Some(&project.functions[function_id]);
                 }
             } else if let Some(function_id) =
-                project.find_function_in_scope(structure.scope_id, &call.name)
+            project.find_function_in_scope(structure.scope_id, &call.name)
             {
                 callee = Some(&project.functions[function_id]);
             }
@@ -3821,7 +3835,7 @@ pub fn resolve_call<'a>(
                 let structure = &project.structs[struct_id];
 
                 if let Some(function_id) =
-                    project.find_function_in_scope(structure.scope_id, &call.name)
+                project.find_function_in_scope(structure.scope_id, &call.name)
                 {
                     callee = Some(&project.functions[function_id]);
                 }
@@ -3845,7 +3859,7 @@ pub fn resolve_call<'a>(
             let structure = &project.structs[struct_id];
 
             if let Some(function_id) =
-                project.find_function_in_scope(structure.scope_id, &call.name)
+            project.find_function_in_scope(structure.scope_id, &call.name)
             {
                 callee = Some(&project.functions[function_id]);
             }
@@ -3898,238 +3912,363 @@ pub fn typecheck_call(
         _ => caller_scope_id,
     };
 
-    match call.name.as_str() {
-        "print" | "println" | "eprintln" if struct_id.is_none() => {
-            // FIXME: This is a hack since println() and eprintln() are hard-coded into codegen at the moment.
-            for arg in &call.args {
-                let (checked_arg, err) =
-                    typecheck_expression(&arg.1, caller_scope_id, project, safety_mode, None);
-                error = error.or(err);
+    let (callee, err) = resolve_call(
+        call,
+        &mut resolved_namespaces,
+        span,
+        callee_scope_id,
+        project,
+    );
+    error = error.or(err);
 
-                let result_ty =
-                    substitute_typevars_in_type(checked_arg.ty(), &generic_substitutions, project);
+    if let Some(callee) = callee {
+        // Borrow checker workaround, would be nice to clean this up
+        let callee = callee.clone();
 
-                if result_ty == VOID_TYPE_ID {
-                    error = error.or(Some(JaktError::TypecheckError(
-                        "println/eprintln can't take void values".into(),
-                        *span,
-                    )));
+        // Make sure we are allowed to access this method.
+        if callee.visibility != Visibility::Public
+            && !Scope::can_access(caller_scope_id, callee_scope_id, project)
+        {
+            error = error.or(Some(JaktError::TypecheckError(
+                // FIXME: Improve this error
+                format!(
+                    "Can't access function `{}` from scope {:?}",
+                    callee.name, project.scopes[caller_scope_id].namespace_name,
+                ),
+                *span,
+            )));
+        }
+
+        callee_throws = callee.throws;
+        return_ty = callee.return_type;
+        linkage = callee.linkage;
+
+        // If the user gave us explicit type arguments, let's use them in our substitutions
+        for (idx, type_arg) in call.type_args.iter().enumerate() {
+            let (checked_type, err) =
+                typecheck_typename(type_arg, caller_scope_id, project);
+            error = error.or(err);
+
+            if callee.generic_parameters.len() <= idx {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "Trying to access generic parameter out of bounds".to_string(),
+                    *span,
+                )));
+                continue;
+            }
+
+            // Find the associated type variable for this parameter, we'll use it in substitution
+            let typevar_type_id = match callee.generic_parameters[idx] {
+                FunctionGenericParameter::InferenceGuide(typevar_type_id)
+                | FunctionGenericParameter::Parameter(typevar_type_id) => typevar_type_id,
+            };
+
+            generic_substitutions.insert(typevar_type_id, checked_type);
+        }
+
+        // If this is a method, let's also add the types we know from our 'this' pointer
+        if let Some(this_expr) = this_expr {
+            let type_id = this_expr.ty();
+            let param_type = &project.types[type_id];
+
+            if let Type::GenericInstance(struct_id, args) = param_type {
+                let structure = &project.structs[*struct_id];
+
+                let mut idx = 0;
+
+                while idx < structure.generic_parameters.len() {
+                    generic_substitutions
+                        .insert(structure.generic_parameters[idx], args[idx]);
+                    idx += 1;
                 }
-                return_ty = VOID_TYPE_ID;
+            }
 
-                checked_args.push((arg.0.clone(), checked_arg));
+            // Make sure that our call doesn't have a 'this' pointer to a static callee
+            if callee.is_static() {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "Cannot call static method on an instance of an object".to_string(),
+                    *span,
+                )));
+            }
+
+            if callee.is_mutating() && !this_expr.is_mutable() {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "Cannot call mutating method on an immutable object instance"
+                        .to_string(),
+                    *span,
+                )));
             }
         }
-        _ => {
-            let (callee, err) = resolve_call(
+
+        // This will be 0 for functions or 1 for instance methods, because of the
+        // 'this' ptr
+        let arg_offset = if this_expr.is_some() { 1 } else { 0 };
+
+        let tuple_struct_id = project
+            .find_struct_in_scope(0, "Tuple")
+            .expect("internal error: Tuple builtin definition not found");
+
+        let mut idx = 0;
+        let mut type_idx = 0;
+        let args = call
+            .args
+            .iter()
+            .flat_map(|arg|
+                match &arg.1 {
+                    ParsedExpression::SplatTuple(tuple, span) => {
+                        match &**tuple {
+                            ParsedExpression::Tuple(fields, ..) => {
+                                fields
+                                    .iter()
+                                    .map(|field| (
+                                        arg.0.clone(),
+                                        field.clone(),
+                                    ))
+                                    .collect()
+                            }
+                            ParsedExpression::Var(name, span) => {
+                                // Get the type, then generate a series of `.N` accesses.
+                                let (checked_arg, err) = typecheck_expression(&arg.1, caller_scope_id, project, safety_mode, None);
+                                if error.is_none() {
+                                    error = err;
+                                }
+                                match &project.types[checked_arg.ty()] {
+                                    Type::GenericInstance(id, fields) => {
+                                        if *id == tuple_struct_id {
+                                            (0..fields.len())
+                                                .map(|i| (
+                                                    arg.0.clone(),
+                                                    ParsedExpression::IndexedTuple(Box::new(ParsedExpression::Var(name.clone(), *span)), i, *span),
+                                                ))
+                                                .collect()
+                                        } else {
+                                            if error.is_none() {
+                                                error = Some(JaktError::TypecheckError(
+                                                    format!("Cannot splat a non-tuple type {:?}", project.types[checked_arg.ty()]),
+                                                    *span,
+                                                ));
+                                            }
+                                            vec![]
+                                        }
+                                    }
+                                    Type::TypeVariable { .. } => {
+                                        if error.is_none() {
+                                            error = Some(JaktError::TypecheckError(
+                                                format!("Cannot splat a generic type variable {} (yet)", codegen::codegen_type(checked_arg.ty(), project)),
+                                                *span,
+                                            ));
+                                        }
+                                        vec![]
+                                    }
+                                    _ => {
+                                        if error.is_none() {
+                                            error = Some(JaktError::TypecheckError(
+                                                format!("Cannot splat a non-tuple type {}", codegen::codegen_type(checked_arg.ty(), project)),
+                                                *span,
+                                            ));
+                                        }
+                                        vec![]
+                                    }
+                                }
+                            }
+                            _ => {
+                                if error.is_none() {
+                                    error = Some(JaktError::TypecheckError(
+                                        "Can only splat tuple literals and variable references (nyi)".to_string(),
+                                        *span,
+                                    ));
+                                }
+                                vec![]
+                            }
+                        }
+                    }
+                    _ => vec![arg.clone()],
+                }
+            )
+            .collect::<Vec<(String, ParsedExpression)>>();
+
+        while idx < args.len() {
+            let (mut checked_arg, err) = typecheck_expression(
+                &args[idx].1,
+                caller_scope_id,
+                project,
+                safety_mode,
+                None,
+            );
+            error = error.or(err);
+
+            // Borrowchecker workaround: since we need project to be mutable above, we
+            // need to let go of the previous callee and then look it up again
+            let (callee, _) = resolve_call(
                 call,
                 &mut resolved_namespaces,
                 span,
                 callee_scope_id,
                 project,
             );
-            error = error.or(err);
+            let callee = callee
+                .expect("internal error: previously resolved call is now unresolved");
 
-            if let Some(callee) = callee {
-                // Borrow checker workaround, would be nice to clean this up
-                let callee = callee.clone();
+            let parameter = callee.params.get(type_idx);
+            if parameter.is_none() {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "Too many arguments passed to function".to_string(),
+                    args[idx].1.span(),
+                )));
+                break;
+            }
 
-                // Make sure we are allowed to access this method.
-                if callee.visibility != Visibility::Public
-                    && !Scope::can_access(caller_scope_id, callee_scope_id, project)
-                {
-                    error = error.or(Some(JaktError::TypecheckError(
-                        // FIXME: Improve this error
-                        format!(
-                            "Can't access function `{}` from scope {:?}",
-                            callee.name, project.scopes[caller_scope_id].namespace_name,
-                        ),
-                        *span,
-                    )));
-                }
+            let parameter = parameter.unwrap();
+            let expected_type_id = parameter.variable.ty;
+            let expected_type = &project.types[expected_type_id];
 
-                callee_throws = callee.throws;
-                return_ty = callee.return_type;
-                linkage = callee.linkage;
-
-                // If the user gave us explicit type arguments, let's use them in our substitutions
-                for (idx, type_arg) in call.type_args.iter().enumerate() {
-                    let (checked_type, err) =
-                        typecheck_typename(type_arg, caller_scope_id, project);
-                    error = error.or(err);
-
-                    if callee.generic_parameters.len() <= idx {
+            match expected_type {
+                Type::TypeVariable { is_pack, .. } if *is_pack => {
+                    // If we're here, we need to take as many arguments as possible and put
+                    // them in a tuple, then resolve this type variable to that tuple.
+                    let number_of_required_arguments = callee.params.len() - type_idx - 1 + arg_offset;
+                    let number_of_available_arguments = args.len() - idx - arg_offset;
+                    if number_of_required_arguments > number_of_available_arguments {
                         error = error.or(Some(JaktError::TypecheckError(
-                            "Trying to access generic parameter out of bounds".to_string(),
-                            *span,
+                            "Too few arguments passed to function".to_string(),
+                            args[idx].1.span(),
                         )));
-                        continue;
+                        break;
                     }
-
-                    // Find the associated type variable for this parameter, we'll use it in substitution
-                    let typevar_type_id = match callee.generic_parameters[idx] {
-                        FunctionGenericParameter::InferenceGuide(typevar_type_id)
-                        | FunctionGenericParameter::Parameter(typevar_type_id) => typevar_type_id,
-                    };
-
-                    generic_substitutions.insert(typevar_type_id, checked_type);
-                }
-
-                // If this is a method, let's also add the types we know from our 'this' pointer
-                if let Some(this_expr) = this_expr {
-                    let type_id = this_expr.ty();
-                    let param_type = &project.types[type_id];
-
-                    if let Type::GenericInstance(struct_id, args) = param_type {
-                        let structure = &project.structs[*struct_id];
-
-                        let mut idx = 0;
-
-                        while idx < structure.generic_parameters.len() {
-                            generic_substitutions
-                                .insert(structure.generic_parameters[idx], args[idx]);
-                            idx += 1;
-                        }
-                    }
-
-                    // Make sure that our call doesn't have a 'this' pointer to a static callee
-                    if callee.is_static() {
-                        error = error.or(Some(JaktError::TypecheckError(
-                            "Cannot call static method on an instance of an object".to_string(),
-                            *span,
-                        )));
-                    }
-
-                    if callee.is_mutating() && !this_expr.is_mutable() {
-                        error = error.or(Some(JaktError::TypecheckError(
-                            "Cannot call mutating method on an immutable object instance"
-                                .to_string(),
-                            *span,
-                        )));
-                    }
-                }
-
-                // This will be 0 for functions or 1 for instance methods, because of the
-                // 'this' ptr
-                let arg_offset = if this_expr.is_some() { 1 } else { 0 };
-
-                // Check that we have the right number of arguments.
-                if callee.params.len() != (call.args.len() + arg_offset) {
-                    error = error.or(Some(JaktError::TypecheckError(
-                        "wrong number of arguments".to_string(),
-                        *span,
-                    )));
-                } else {
-                    let mut idx = 0;
-
-                    while idx < call.args.len() {
-                        let (mut checked_arg, err) = typecheck_expression(
-                            &call.args[idx].1,
+                    let type_pack_size = number_of_available_arguments - number_of_required_arguments;
+                    let mut type_pack = Vec::with_capacity(type_pack_size);
+                    let mut arg_pack = Vec::with_capacity(type_pack_size);
+                    let first_span = args[idx].1.span();
+                    let mut last_span = first_span.clone();
+                    for _ in 0..type_pack_size {
+                        last_span = args[idx].1.span();
+                        let (arg, err) = typecheck_expression(
+                            &args[idx].1,
                             caller_scope_id,
                             project,
                             safety_mode,
                             None,
                         );
+                        checked_arg = arg;
                         error = error.or(err);
-
-                        // Borrowchecker workaround: since we need project to be mutable above, we
-                        // need to let go of the previous callee and then look it up again
-                        let (callee, _) = resolve_call(
-                            call,
-                            &mut resolved_namespaces,
-                            span,
-                            callee_scope_id,
-                            project,
-                        );
-                        let callee = callee
-                            .expect("internal error: previously resolved call is now unresolved");
-
-                        if let ParsedExpression::Var(var_name, _) = &call.args[idx].1 {
-                            if var_name != &callee.params[idx + arg_offset].variable.name
-                                && callee.params[idx + arg_offset].requires_label
-                                && call.args[idx].0 != callee.params[idx + arg_offset].variable.name
-                            {
-                                error = error.or(Some(JaktError::TypecheckError(
-                                    "Wrong parameter name in argument label".to_string(),
-                                    call.args[idx].1.span(),
-                                )));
-                            }
-                        } else if callee.params[idx + arg_offset].requires_label
-                            && call.args[idx].0 != callee.params[idx + arg_offset].variable.name
-                        {
-                            error = error.or(Some(JaktError::TypecheckError(
-                                "Wrong parameter name in argument label".to_string(),
-                                call.args[idx].1.span(),
-                            )));
-                        }
-
-                        let lhs_type_id = callee.params[idx + arg_offset].variable.ty;
-
-                        let err =
-                            try_promote_constant_expr_to_type(lhs_type_id, &mut checked_arg, span);
-                        error = error.or(err);
-
-                        let lhs_type_id = callee.params[idx + arg_offset].variable.ty;
-                        let rhs_type_id = checked_arg.ty();
-
-                        if let Some(err) = check_types_for_compat(
-                            lhs_type_id,
-                            rhs_type_id,
-                            &mut generic_substitutions,
-                            call.args[idx].1.span(),
-                            project,
-                        ) {
-                            error = error.or(Some(err));
-                        }
-
-                        checked_args.push((call.args[idx].0.clone(), checked_arg));
-
+                        type_pack.push(checked_arg.ty());
+                        arg_pack.push(checked_arg);
                         idx += 1;
                     }
-                }
 
-                // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
-                // type variable. For the moment, we'll just checked to see if it's a type variable.
-                if let Some(type_hint) = type_hint {
-                    check_types_for_compat(
-                        return_ty,
-                        type_hint,
+                    let type_pack = project.find_or_add_type_id(Type::GenericInstance(tuple_struct_id, type_pack));
+                    let span = Span {
+                        file_id: first_span.file_id,
+                        start: first_span.start,
+                        end: last_span.end,
+                    };
+
+                    if let Some(err) = check_types_for_compat(
+                        expected_type_id,
+                        type_pack,
                         &mut generic_substitutions,
-                        *span,
+                        span,
                         project,
-                    );
-                }
-                return_ty = substitute_typevars_in_type(return_ty, &generic_substitutions, project);
-
-                resolved_namespaces = resolved_namespaces
-                    .iter()
-                    .map(|n| ResolvedNamespace {
-                        name: n.name.clone(),
-                        generic_parameters: n.generic_parameters.as_ref().map(|p| {
-                            p.iter()
-                                .map(|ty| {
-                                    substitute_typevars_in_type(
-                                        *ty,
-                                        &generic_substitutions,
-                                        project,
-                                    )
-                                })
-                                .collect()
-                        }),
-                    })
-                    .collect();
-
-                for generic_typevar in &callee.generic_parameters {
-                    if let FunctionGenericParameter::Parameter(id) = generic_typevar {
-                        if let Some(substitution) = generic_substitutions.get(id) {
-                            type_args.push(*substitution)
-                        } else {
-                            error = error.or(Some(JaktError::TypecheckError(
-                                "not all generic parameters have known types".into(),
-                                *span,
-                            )))
-                        }
+                    ) {
+                        error = Some(error.unwrap_or(err));
                     }
+
+                    checked_args.push(("".into(), CheckedExpression::Tuple(arg_pack, span, type_pack)));
+
+                    if type_pack_size == 0 {
+                        type_idx += 1;
+                    }
+
+                    continue;
+                }
+                _ => {
+                    type_idx += 1;
+                }
+            }
+
+            if let ParsedExpression::Var(var_name, _) = &args[idx].1 {
+                if var_name != &callee.params[idx + arg_offset].variable.name
+                    && callee.params[idx + arg_offset].requires_label
+                    && args[idx].0 != callee.params[idx + arg_offset].variable.name
+                {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "Wrong parameter name in argument label".to_string(),
+                        args[idx].1.span(),
+                    )));
+                }
+            } else if callee.params[idx + arg_offset].requires_label
+                && args[idx].0 != callee.params[idx + arg_offset].variable.name
+            {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "Wrong parameter name in argument label".to_string(),
+                    args[idx].1.span(),
+                )));
+            }
+
+            let lhs_type_id = callee.params[idx + arg_offset].variable.ty;
+
+            let err =
+                try_promote_constant_expr_to_type(lhs_type_id, &mut checked_arg, span);
+            error = error.or(err);
+
+            let lhs_type_id = callee.params[idx + arg_offset].variable.ty;
+            let rhs_type_id = checked_arg.ty();
+
+            if let Some(err) = check_types_for_compat(
+                lhs_type_id,
+                rhs_type_id,
+                &mut generic_substitutions,
+                args[idx].1.span(),
+                project,
+            ) {
+                error = error.or(Some(err));
+            }
+
+            checked_args.push((args[idx].0.clone(), checked_arg));
+
+            idx += 1;
+        }
+
+        // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
+        // type variable. For the moment, we'll just checked to see if it's a type variable.
+        if let Some(type_hint) = type_hint {
+            check_types_for_compat(
+                return_ty,
+                type_hint,
+                &mut generic_substitutions,
+                *span,
+                project,
+            );
+        }
+        return_ty = substitute_typevars_in_type(return_ty, &generic_substitutions, project);
+
+        resolved_namespaces = resolved_namespaces
+            .iter()
+            .map(|n| ResolvedNamespace {
+                name: n.name.clone(),
+                generic_parameters: n.generic_parameters.as_ref().map(|p| {
+                    p.iter()
+                        .map(|ty| {
+                            substitute_typevars_in_type(
+                                *ty,
+                                &generic_substitutions,
+                                project,
+                            )
+                        })
+                        .collect()
+                }),
+            })
+            .collect();
+
+        for generic_typevar in &callee.generic_parameters {
+            if let FunctionGenericParameter::Parameter(id) = generic_typevar {
+                if let Some(substitution) = generic_substitutions.get(id) {
+                    type_args.push(*substitution)
+                } else {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        format!("not all generic parameters have known types, missing: {}({})", id, codegen::codegen_type(*id, project)),
+                        *span,
+                    )))
                 }
             }
         }
@@ -4176,7 +4315,7 @@ fn substitute_typevars_in_type_helper(
 ) -> TypeId {
     let ty = &project.types[type_id];
     match ty {
-        Type::TypeVariable(_) => {
+        Type::TypeVariable { .. } => {
             if let Some(replacement) = generic_inferences.get(&type_id) {
                 return *replacement;
             }
@@ -4258,7 +4397,7 @@ pub fn check_types_for_compat(
     }
 
     match lhs_type {
-        Type::TypeVariable(_) => {
+        Type::TypeVariable { .. } => {
             // If the call expects a generic type variable, let's see if we've already seen it
             if let Some(seen_type_id) = generic_inferences.get(&lhs_type_id) {
                 // We've seen this type variable assigned something before
@@ -4557,6 +4696,32 @@ pub fn typecheck_typename(
                 }
             }
         },
+        ParsedType::TypePack(name, span) => {
+            let type_id = project.find_type_in_scope(scope_id, name.as_str());
+            match type_id.map(|id| &project.types[id]) {
+                Some(Type::TypeVariable { is_pack, .. }) => {
+                    if *is_pack {
+                        (type_id.unwrap(), None)
+                    } else {
+                        (
+                            UNKNOWN_TYPE_ID,
+                            Some(JaktError::TypecheckError(
+                                "expanding non-pack types is currently not supported".to_string(),
+                                *span,
+                            )),
+                        )
+                    }
+                }
+                _ => {
+                    (
+                        UNKNOWN_TYPE_ID,
+                        Some(JaktError::TypecheckError(
+                            format!("Unknown type {}", name),
+                            *span)),
+                    )
+                }
+            }
+        }
         ParsedType::Empty => (UNKNOWN_TYPE_ID, None),
         ParsedType::Array(inner, _) => {
             let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
