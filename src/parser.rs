@@ -63,6 +63,7 @@ pub struct ParsedVarDecl {
     pub parsed_type: ParsedType,
     pub mutable: bool,
     pub span: Span,
+    pub visibility: Visibility,
 }
 
 impl ParsedVarDecl {
@@ -72,6 +73,7 @@ impl ParsedVarDecl {
             parsed_type: ParsedType::Empty,
             mutable: false,
             span,
+            visibility: Visibility::Public,
         }
     }
 }
@@ -811,7 +813,9 @@ pub fn parse_enum(
                             ..
                         }) | None
                     ) {
-                        let (decl, parse_error) = parse_variable_declaration(tokens, index);
+                        // Fields in struct-like enums are always public.
+                        let (decl, parse_error) =
+                            parse_variable_declaration(tokens, index, Visibility::Public);
                         error = error.or(parse_error);
                         if decl.name == enum_.name
                             && decl.parsed_type == ParsedType::Empty
@@ -1141,11 +1145,15 @@ pub fn parse_struct(
                         TokenContents::Name(..) => {
                             // Lets parse a parameter
 
-                            let (mut var_decl, err) = parse_variable_declaration(tokens, index);
-                            error = error.or(err);
-
-                            // FIXME: Actually use the visibility
+                            let visibility = last_visibility.unwrap_or(match definition_type {
+                                DefinitionType::Class => Visibility::Private,
+                                DefinitionType::Struct => Visibility::Public,
+                            });
                             last_visibility = None;
+
+                            let (mut var_decl, err) =
+                                parse_variable_declaration(tokens, index, visibility);
+                            error = error.or(err);
 
                             // Ignore immutable flag for now
                             var_decl.mutable = false;
@@ -1348,7 +1356,8 @@ pub fn parse_function(
                         TokenContents::Name(..) => {
                             // Now lets parse a parameter
 
-                            let (var_decl, err) = parse_variable_declaration(tokens, index);
+                            let (var_decl, err) =
+                                parse_variable_declaration(tokens, index, Visibility::Public);
                             error = error.or(err);
 
                             if var_decl.parsed_type == ParsedType::Empty {
@@ -1753,7 +1762,7 @@ pub fn parse_statement(
 
             *index += 1;
 
-            let (mut var_decl, err) = parse_variable_declaration(tokens, index);
+            let (mut var_decl, err) = parse_variable_declaration(tokens, index, Visibility::Public);
             error = error.or(err);
 
             var_decl.mutable = mutable;
@@ -3779,6 +3788,7 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Op
 pub fn parse_variable_declaration(
     tokens: &[Token],
     index: &mut usize,
+    visibility: Visibility,
 ) -> (ParsedVarDecl, Option<JaktError>) {
     trace!(format!("parse_variable_declaration: {:?}", tokens[*index]));
 
@@ -3802,6 +3812,7 @@ pub fn parse_variable_declaration(
                                 parsed_type: ParsedType::Empty,
                                 mutable: false,
                                 span: tokens[*index - 1].span,
+                                visibility,
                             },
                             None,
                         );
@@ -3814,6 +3825,7 @@ pub fn parse_variable_declaration(
                         parsed_type: ParsedType::Empty,
                         mutable: false,
                         span: tokens[*index - 1].span,
+                        visibility,
                     },
                     None,
                 );
@@ -3838,6 +3850,7 @@ pub fn parse_variable_declaration(
                     parsed_type: var_type,
                     mutable,
                     span: decl_span,
+                    visibility,
                 };
 
                 (result, error)
@@ -3850,6 +3863,7 @@ pub fn parse_variable_declaration(
                         parsed_type: ParsedType::Empty,
                         mutable: false,
                         span: tokens[*index - 2].span,
+                        visibility,
                     },
                     Some(JaktError::ParserError(
                         "expected type".to_string(),
