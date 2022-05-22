@@ -2722,6 +2722,13 @@ pub fn typecheck_expression(
                     typecheck_expression(item, scope_id, project, safety_mode, None);
                 error = error.or(err);
 
+                if checked_item.ty() == VOID_TYPE_ID {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "cannot create a tuple that contains a value of type void".to_string(),
+                        item.span(),
+                    )))
+                }
+
                 checked_types.push(checked_item.ty());
                 checked_items.push(checked_item);
             }

@@ -1,0 +1,8 @@
+enum Bar {
+    Value
+}
+
+function main() {
+    let foo = Bar::Value()
+    let b = (match foo {}, 1)
+}
