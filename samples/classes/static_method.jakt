@@ -1,6 +1,6 @@
 class Person {
-    name: String
-    age: i64
+    public name: String
+    public age: i64
 
     public function generate(name: String, age: i64) throws -> Person {
         return Person(name: name, age: age + 1000);

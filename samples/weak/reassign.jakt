@@ -1,5 +1,5 @@
 class Foo {
-    x: i64
+    public x: i64
 }
 
 function main() {

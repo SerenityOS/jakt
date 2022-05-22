@@ -1,6 +1,6 @@
 class Person {
-    name: String
-    age: i64
+    public name: String
+    public age: i64
 
     public function birthday(mutable this) {
         ++this.age
