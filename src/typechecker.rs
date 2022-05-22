@@ -1823,6 +1823,12 @@ fn typecheck_function(
             VOID_TYPE_ID
         }
     } else if function_return_type == UNKNOWN_TYPE_ID {
+        if function.name != "main" && block.definitely_returns {
+            error = error.or(Some(JaktError::TypecheckError(
+                "Block definitely returns, but function is void".to_string(),
+                function.name_span,
+            )));
+        }
         VOID_TYPE_ID
     } else {
         function_return_type
@@ -1893,12 +1899,18 @@ fn typecheck_method(
     // If the return type should be inferred, and the function ends with a return statement
     // we infer the return type from its expression.
     let return_type = if function_return_type == INFERRED_TYPE_ID {
-        if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
+        if let Some(CheckedStatement::Return(ret)) = block.stmts.first() {
             ret.ty()
         } else {
             VOID_TYPE_ID
         }
     } else if function_return_type == UNKNOWN_TYPE_ID {
+        if function.name != "main" && block.definitely_returns {
+            error = error.or(Some(JaktError::TypecheckError(
+                "Block definitely returns, but function is void".to_string(),
+                function.name_span,
+            )));
+        }
         VOID_TYPE_ID
     } else {
         function_return_type
@@ -1926,11 +1938,19 @@ fn typecheck_method(
 pub fn statement_definitely_returns(stmt: &CheckedStatement) -> bool {
     match stmt {
         CheckedStatement::Return(_) => true,
-        CheckedStatement::If(_, then_block, Some(else_stmt)) => {
-            // TODO: Things like `if true` should be also accepted as
-            //       definitely returning, if we can prove at typecheck time
-            //       that it's always truthy.
-            then_block.definitely_returns && statement_definitely_returns(else_stmt.as_ref())
+        CheckedStatement::If(CheckedExpression::Boolean(cond, _), then_block, None) => {
+            if *cond {
+                then_block.definitely_returns
+            } else {
+                false
+            }
+        }
+        CheckedStatement::If(CheckedExpression::Boolean(cond, _), then_block, Some(else_stmt)) => {
+            if *cond {
+                then_block.definitely_returns
+            } else {
+                statement_definitely_returns(else_stmt.as_ref())
+            }
         }
         CheckedStatement::Block(block) => block.definitely_returns,
         CheckedStatement::Loop(block) => block.definitely_returns,

@@ -1,4 +1,4 @@
-function dump<T>(anonymous v: [T]) { return v[0] }
+function dump<T>(anonymous v: [T]) => v[0]
 
 function main() {
     println("{}", dump([1, 2, 3]))

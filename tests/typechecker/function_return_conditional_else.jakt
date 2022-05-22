@@ -1,0 +1,8 @@
+function foo() {
+    if false {
+        println("Will never print")
+    } else {
+        // Will always be called
+        return 42
+    }
+}
