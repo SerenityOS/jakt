@@ -2579,6 +2579,13 @@ pub fn typecheck_expression(
                 error = error.or(err);
 
                 if inner_ty == UNKNOWN_TYPE_ID {
+                    if checked_expr.ty() == VOID_TYPE_ID {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "cannot create an array with values of type void".to_string(),
+                            v.span(),
+                        )))
+                    }
+
                     inner_ty = checked_expr.ty();
                 } else if inner_ty != checked_expr.ty() {
                     error = error.or(Some(JaktError::TypecheckError(
