@@ -1,6 +1,6 @@
-# The jakt programming language
+# The Jakt programming language
 
-**jakt** is a memory-safe systems programming language.
+**Jakt** is a memory-safe systems programming language.
 
 It currently transpiles to C++.
 
@@ -29,7 +29,7 @@ The following strategies are employed to achieve memory safety:
 - Bounds checking
 - No raw pointers in safe mode
 
-In **jakt**, there are three pointer types:
+In **Jakt**, there are three pointer types:
 
 - [x] **T** (Strong pointer to reference-counted class `T`.)
 - [ ] **weak T?** (Weak pointer to reference-counted class `T`. Becomes empty on pointee destruction.)
@@ -48,7 +48,7 @@ For cases where silent integer overflow is desired, there are explicit functions
 
 ## Code readability
 
-Far more time is spent reading code than writing it. For that reason, **jakt** puts a high emphasis on readability.
+Far more time is spent reading code than writing it. For that reason, **Jakt** puts a high emphasis on readability.
 
 Some of the features that encourage more readable programs:
 
@@ -101,7 +101,7 @@ let b = a
 // "b" is a deep copy of "a", they do not refer to the same Point
 ```
 
-**jakt** generates a default constructor for structs. It takes all fields by name. For the `Point` struct above, it looks like this:
+**Jakt** generates a default constructor for structs. It takes all fields by name. For the `Point` struct above, it looks like this:
 
 ```jakt
 Point(x: i64, y: i64)
@@ -368,7 +368,7 @@ function main() {
 
 ## Type casts
 
-There are four built-in casting operators in **jakt**.
+There are four built-in casting operators in **Jakt**.
 
 ### Casts for all types
 
@@ -461,7 +461,7 @@ try task_that_might_fail() catch error {
 
 ## Inline C++
 
-For better interoperability with existing C++ code, as well as situations where the capabilities of **jakt** within `unsafe` blocks are not powerful enough, the possibility of embedding inline C++ code into the program exists in the form of `cpp` blocks:
+For better interoperability with existing C++ code, as well as situations where the capabilities of **Jakt** within `unsafe` blocks are not powerful enough, the possibility of embedding inline C++ code into the program exists in the form of `cpp` blocks:
 
 ```jakt
 let mutable x = 0
