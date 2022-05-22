@@ -3626,8 +3626,6 @@ pub fn resolve_call<'a>(
             if !structure.generic_parameters.is_empty() {
                 namespaces[0].generic_parameters = Some(structure.generic_parameters.clone());
             }
-
-            (callee, error)
         } else if let Some(enum_id) = project.find_enum_in_scope(scope_id, namespace) {
             let enum_ = &project.enums[enum_id];
 
@@ -3638,8 +3636,6 @@ pub fn resolve_call<'a>(
             if !enum_.generic_parameters.is_empty() {
                 namespaces[0].generic_parameters = Some(enum_.generic_parameters.clone());
             }
-
-            (callee, error)
         } else if let Some(scope_id) = project.find_namespace_in_scope(scope_id, namespace) {
             if let Some(struct_id) = project.find_struct_in_scope(scope_id, &call.name) {
                 let structure = &project.structs[struct_id];
@@ -3652,15 +3648,11 @@ pub fn resolve_call<'a>(
             } else if let Some(function_id) = project.find_function_in_scope(scope_id, &call.name) {
                 callee = Some(&project.functions[function_id]);
             }
-
-            (callee, error)
         } else {
             error = Some(JaktError::TypecheckError(
                 format!("unknown namespace or class: {}", namespace),
                 *span,
             ));
-
-            (callee, error)
         }
     } else {
         // FIXME: Support function overloading.
@@ -3676,43 +3668,45 @@ pub fn resolve_call<'a>(
         } else if let Some(function_id) = project.find_function_in_scope(scope_id, &call.name) {
             callee = Some(&project.functions[function_id]);
         }
+    }
 
-        // check the throw status of the call site
-        if let Some(callee) = callee {
-            if callee.throws {
-                if let Some(current_function_index) = project.current_function_index {
-                    let calling_function = &project.functions[current_function_index];
-                    // Call fails if:
-                    // - the calling function is not throw
-                    // - the function call is not in a try-catch block
-                    if !calling_function.throws && !project.scope_status.try_block {
-                        // fix: the error message for methods
-                        error = Some(JaktError::TypecheckError(
-                            format!(
-                                "try to call a throwing function {} in a non-throw function {}",
-                                callee.name, calling_function.name
-                            ),
-                            *span,
-                        ));
-                    }
-                } else {
-                    unreachable!(
-                        "should always be calling another function from a function {}",
-                        call.name
-                    );
+    if callee.is_none() {
+        error = Some(JaktError::TypecheckError(
+            format!("call to unknown function: {}", call.name),
+            *span,
+        ));
+
+        return (callee, error);
+    }
+
+    // check the throw status of the call site
+    if let Some(callee) = callee {
+        if callee.throws {
+            if let Some(current_function_index) = project.current_function_index {
+                let calling_function = &project.functions[current_function_index];
+                // Call fails if:
+                // - the calling function is not throw
+                // - the function call is not in a try-catch block
+                if !calling_function.throws && !project.scope_status.try_block {
+                    // fix: the error message for methods
+                    error = Some(JaktError::TypecheckError(
+                        format!(
+                            "try to call a throwing function {} in a non-throw function {}",
+                            callee.name, calling_function.name
+                        ),
+                        *span,
+                    ));
                 }
+            } else {
+                unreachable!(
+                    "should always be calling another function from a function {}",
+                    call.name
+                );
             }
         }
-
-        if callee.is_none() {
-            error = Some(JaktError::TypecheckError(
-                format!("call to unknown function: {}", call.name),
-                *span,
-            ));
-        }
-
-        (callee, error)
     }
+
+    (callee, error)
 }
 
 pub fn typecheck_call(
