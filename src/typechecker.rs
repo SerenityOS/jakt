@@ -2665,6 +2665,20 @@ pub fn typecheck_expression(
                 error = error.or(err);
 
                 if inner_ty == (UNKNOWN_TYPE_ID, UNKNOWN_TYPE_ID) {
+                    if checked_key.ty() == VOID_TYPE_ID {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "cannot create a dictionary with keys of type void".to_string(),
+                            key.span(),
+                        )))
+                    }
+
+                    if checked_value.ty() == VOID_TYPE_ID {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "cannot create a dictionary with values of type void".to_string(),
+                            value.span(),
+                        )))
+                    }
+
                     inner_ty = (checked_key.ty(), checked_value.ty());
                 } else {
                     if inner_ty.0 != checked_key.ty() {
