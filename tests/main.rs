@@ -112,12 +112,11 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
                     let binary_stderr_output = binary_stderr_output.replace("\r\n", "\n");
 
                     let baseline_text = std::fs::read_to_string(&output_path);
-                    let baseline_text =
-                        baseline_text.and_then(|text| Ok(text.replace("\r\n", "\n")));
+                    let baseline_text = baseline_text.map(|text| text.replace("\r\n", "\n"));
 
                     let baseline_stderr_text = std::fs::read_to_string(&stderr_output_path);
                     let baseline_stderr_text =
-                        baseline_stderr_text.and_then(|text| Ok(text.replace("\r\n", "\n")));
+                        baseline_stderr_text.map(|text| text.replace("\r\n", "\n"));
 
                     let mut stderr_checked = false;
                     if let Ok(baseline_stderr_text) = baseline_stderr_text {
