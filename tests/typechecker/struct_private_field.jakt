@@ -1,0 +1,8 @@
+struct WeirdEncapsulation {
+    private age: i32
+}
+
+function main() {
+    let useless = WeirdEncapsulation(age: 2)
+    useless.age
+}
