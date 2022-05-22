@@ -77,11 +77,11 @@ extern struct Error {
 }
 
 extern class File {
-    function open_for_reading(anonymous path: String) throws -> File
-    function open_for_writing(anonymous path: String) throws -> File
+    public function open_for_reading(anonymous path: String) throws -> File
+    public function open_for_writing(anonymous path: String) throws -> File
 
-    function read(mutable this, anonymous buffer: [u8]) throws -> usize
-    function write(mutable this, anonymous data: [u8]) throws -> usize
+    public function read(mutable this, anonymous buffer: [u8]) throws -> usize
+    public function write(mutable this, anonymous data: [u8]) throws -> usize
 
-    function read_all(mutable this) throws -> [u8]
+    public function read_all(mutable this) throws -> [u8]
 }
