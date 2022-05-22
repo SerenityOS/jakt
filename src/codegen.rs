@@ -415,9 +415,6 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
             output.push('\n');
         } else {
             output.push_str(&codegen_indent(INDENT_SIZE));
-            if function.is_static() {
-                output.push_str("static ");
-            }
             let method_output = codegen_function(function, project);
             output.push_str(&method_output);
         }
@@ -458,6 +455,9 @@ fn codegen_function_predecl(function: &CheckedFunction, project: &Project) -> St
     if function.name == "main" {
         output.push_str("ErrorOr<int>");
     } else {
+        if function.is_static() && function.linkage != FunctionLinkage::External {
+            output.push_str("static ");
+        }
         let return_type = if function.throws {
             format!("ErrorOr<{}>", &codegen_type(function.return_type, project))
         } else {
@@ -518,6 +518,9 @@ fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
     if function.name == "main" {
         output.push_str("ErrorOr<int>");
     } else {
+        if function.is_static() {
+            output.push_str("static ");
+        }
         let return_type = if function.throws {
             format!("ErrorOr<{}>", &codegen_type(function.return_type, project))
         } else {
