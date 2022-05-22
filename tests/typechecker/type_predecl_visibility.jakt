@@ -1,0 +1,13 @@
+struct Foo {
+    function bar(mutable this, baz: mutable Bar) {
+        println("OK")
+    }
+}
+
+class Bar {}
+
+function main() {
+    let mutable foo = Foo()
+    let baz = Bar()
+    foo.bar(baz)
+}
