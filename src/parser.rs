@@ -47,6 +47,7 @@ pub enum ParsedType {
     Optional(Box<ParsedType>, Span),
     RawPtr(Box<ParsedType>, Span),
     Empty,
+    Inferred,
 }
 
 #[derive(Debug, Clone)]
@@ -1375,7 +1376,7 @@ pub fn parse_function(
                                 index,
                                 ExpressionKind::ExpressionWithoutAssignment,
                             );
-                            return_type = ParsedType::Empty;
+                            return_type = ParsedType::Inferred;
                             fat_arrow_expr = Some(expr);
                             error = error.or(err);
 

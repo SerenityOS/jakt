@@ -4,8 +4,8 @@ use crate::parser::{MatchBody, MatchCase, Visibility};
 use crate::{
     compiler::{
         BOOL_TYPE_ID, CCHAR_TYPE_ID, CINT_TYPE_ID, F32_TYPE_ID, F64_TYPE_ID, I16_TYPE_ID,
-        I32_TYPE_ID, I64_TYPE_ID, I8_TYPE_ID, STRING_TYPE_ID, U16_TYPE_ID, U32_TYPE_ID,
-        U64_TYPE_ID, U8_TYPE_ID, UNKNOWN_TYPE_ID, USIZE_TYPE_ID, VOID_TYPE_ID,
+        I32_TYPE_ID, I64_TYPE_ID, I8_TYPE_ID, INFERRED_TYPE_ID, STRING_TYPE_ID, U16_TYPE_ID,
+        U32_TYPE_ID, U64_TYPE_ID, U8_TYPE_ID, UNKNOWN_TYPE_ID, USIZE_TYPE_ID, VOID_TYPE_ID,
     },
     error::JaktError,
     lexer::Span,
@@ -433,6 +433,7 @@ impl Project {
                 crate::compiler::CINT_TYPE_ID => "c_int".to_string(),
                 crate::compiler::STRING_TYPE_ID => "String".to_string(),
                 crate::compiler::BOOL_TYPE_ID => "bool".to_string(),
+                crate::compiler::INFERRED_TYPE_ID => "inferred".to_string(),
                 _ => "unknown".to_string(),
             },
             Type::Enum(enum_id) => {
@@ -1813,14 +1814,16 @@ fn typecheck_function(
         typecheck_typename(&function.return_type, function_scope_id, project);
     error = error.or(err);
 
-    // If the return type is unknown, and the function starts with a return statement,
+    // If the return type should be inferred, and the function ends with a return statement
     // we infer the return type from its expression.
-    let return_type = if function_return_type == UNKNOWN_TYPE_ID {
+    let return_type = if function_return_type == INFERRED_TYPE_ID {
         if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
             ret.ty()
         } else {
             VOID_TYPE_ID
         }
+    } else if function_return_type == UNKNOWN_TYPE_ID {
+        VOID_TYPE_ID
     } else {
         function_return_type
     };
@@ -1887,14 +1890,16 @@ fn typecheck_method(
         typecheck_typename(&function.return_type, function_scope_id, project);
     error = error.or(err);
 
-    // If the return type is unknown, and the function starts with a return statement,
+    // If the return type should be inferred, and the function ends with a return statement
     // we infer the return type from its expression.
-    let return_type = if function_return_type == UNKNOWN_TYPE_ID {
-        if let Some(CheckedStatement::Return(ret)) = block.stmts.first() {
+    let return_type = if function_return_type == INFERRED_TYPE_ID {
+        if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
             ret.ty()
         } else {
             VOID_TYPE_ID
         }
+    } else if function_return_type == UNKNOWN_TYPE_ID {
+        VOID_TYPE_ID
     } else {
         function_return_type
     };
@@ -2172,17 +2177,21 @@ pub fn typecheck_statement(
             (CheckedStatement::While(checked_cond, checked_block), error)
         }
         ParsedStatement::Return(expr) => {
-            let (output, err) = typecheck_expression(
-                expr,
-                scope_id,
-                project,
-                safety_mode,
-                project
-                    .current_function_index
-                    .map(|i| project.functions[i].return_type),
-            );
+            let type_hint = project
+                .current_function_index
+                .map(|i| project.functions[i].return_type);
 
-            (CheckedStatement::Return(output), err)
+            let (output, err) =
+                typecheck_expression(expr, scope_id, project, safety_mode, type_hint);
+
+            if let Some(VOID_TYPE_ID) = type_hint {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "Trying to return from void function".to_string(),
+                    output.span(),
+                )));
+            }
+
+            (CheckedStatement::Return(output), error.or(err))
         }
         ParsedStatement::Block(block) => {
             let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
@@ -4422,7 +4431,7 @@ pub fn check_types_for_compat(
             }
         }
         _ => {
-            if rhs_type_id != lhs_type_id {
+            if lhs_type_id != INFERRED_TYPE_ID && rhs_type_id != lhs_type_id {
                 error = error.or(Some(JaktError::TypecheckError(
                     format!(
                         "Type mismatch: expected {}, but got {}",
@@ -4475,6 +4484,7 @@ pub fn typecheck_typename(
             }
         },
         ParsedType::Empty => (UNKNOWN_TYPE_ID, None),
+        ParsedType::Inferred => (INFERRED_TYPE_ID, None),
         ParsedType::Array(inner, _) => {
             let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
