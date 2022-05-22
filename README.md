@@ -276,7 +276,7 @@ function main() {
 
 ```jakt
 enum MyOptional<T> {
-    Some: T
+    Some(T)
     None
 }
 
@@ -288,10 +288,10 @@ function value_or_default<T>(anonymous x: MyOptional<T>, default: T) -> T {
 }
 
 enum Foo {
-    StructLikeThingy {
+    StructLikeThingy (
         field_a: i32
         field_b: i32
-    }
+    )
 }
 
 function look_at_foo(anonymous x: Foo) -> i32 {
