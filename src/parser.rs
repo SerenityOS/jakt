@@ -46,6 +46,7 @@ pub enum ParsedType {
     Set(Box<ParsedType>, Span),
     Optional(Box<ParsedType>, Span),
     RawPtr(Box<ParsedType>, Span),
+    WeakPtr(Box<ParsedType>, Span),
     Empty,
 }
 
@@ -3942,20 +3943,31 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Optio
             contents: TokenContents::Name(name),
             ..
         } => {
-            if name == "raw" {
+            if name == "raw" || name == "weak" {
                 *index += 1;
                 if *index < tokens.len() {
                     let (child_ty, err) = parse_typename(tokens, index);
                     error = error.or(err);
 
-                    unchecked_type = ParsedType::RawPtr(
-                        Box::new(child_ty),
-                        Span {
-                            file_id: start.file_id,
-                            start: start.start,
-                            end: tokens[*index - 1].span.end,
-                        },
-                    );
+                    if name == "raw" {
+                        unchecked_type = ParsedType::RawPtr(
+                            Box::new(child_ty),
+                            Span {
+                                file_id: start.file_id,
+                                start: start.start,
+                                end: tokens[*index - 1].span.end,
+                            },
+                        );
+                    } else if name == "weak" {
+                        unchecked_type = ParsedType::WeakPtr(
+                            Box::new(child_ty),
+                            Span {
+                                file_id: start.file_id,
+                                start: start.start,
+                                end: tokens[*index - 1].span.end,
+                            },
+                        );
+                    }
                 }
             } else {
                 typename = name.clone();

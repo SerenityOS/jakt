@@ -1,0 +1,18 @@
+class Foo {
+    x: i64
+}
+
+function main() {
+    let foo1 = Foo(x: 1)
+    let foo2 = Foo(x: 2)
+
+    let mutable weak_foo: weak Foo = None
+    weak_foo = foo1
+    println("{}", weak_foo!.x)
+
+    weak_foo = foo2
+    println("{}", weak_foo!.x)
+
+    weak_foo.clear()
+    println("{}", weak_foo.has_value())
+}

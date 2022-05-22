@@ -136,6 +136,11 @@ public:
     operator bool() const { return m_link ? !m_link->is_null() : false; }
 
     [[nodiscard]] bool is_null() const { return !m_link || m_link->is_null(); }
+
+    [[nodiscard]] bool has_value() const { return !is_null(); }
+    T* value() { return ptr(); }
+    T const* value() const { return ptr(); }
+
     void clear() { m_link = nullptr; }
 
     [[nodiscard]] RefPtr<WeakLink> take_link() { return move(m_link); }

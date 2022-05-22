@@ -2330,7 +2330,8 @@ pub fn typecheck_expression(
 
             // TODO: actually do the binary operator typecheck against safe operations
             // For now, use a type we know
-            let (ty, err) = typecheck_binary_operation(&checked_lhs, op, &checked_rhs, *span);
+            let (ty, err) =
+                typecheck_binary_operation(&checked_lhs, op, &checked_rhs, *span, project);
             error = error.or(err);
 
             let (ty, err) = unify_with_type_hint(project, &ty);
@@ -2411,8 +2412,14 @@ pub fn typecheck_expression(
                 .find_struct_in_scope(0, "Optional")
                 .expect("internal error: can't find builtin Optional type");
 
+            let weakptr_struct_id = project
+                .find_struct_in_scope(0, "WeakPtr")
+                .expect("internal error: can't find builtin WeakPtr type");
+
             let (ty, err) = match ty {
-                Type::GenericInstance(struct_id, inner_tys) if struct_id == &optional_struct_id => {
+                Type::GenericInstance(struct_id, inner_tys)
+                    if struct_id == &optional_struct_id || struct_id == &weakptr_struct_id =>
+                {
                     (inner_tys[0], None)
                 }
                 _ => (
@@ -3663,6 +3670,7 @@ pub fn typecheck_binary_operation(
     op: &BinaryOperator,
     rhs: &CheckedExpression,
     span: Span,
+    project: &Project,
 ) -> (TypeId, Option<JaktError>) {
     let lhs_ty = lhs.ty();
     let rhs_ty = rhs.ty();
@@ -3721,6 +3729,24 @@ pub fn typecheck_binary_operation(
         | BinaryOperator::BitwiseXorAssign
         | BinaryOperator::BitwiseLeftShiftAssign
         | BinaryOperator::BitwiseRightShiftAssign => {
+            let weakptr_struct_id = project
+                .find_struct_in_scope(0, "WeakPtr")
+                .expect("internal error: can't find builtin WeakPtr type");
+
+            if let Type::GenericInstance(struct_id, inner_tys) = &project.types[lhs_ty] {
+                if *struct_id == weakptr_struct_id {
+                    let inner_ty = inner_tys[0];
+                    if let Type::Struct(lhs_struct_id) = project.types[inner_ty] {
+                        match project.types[rhs_ty] {
+                            Type::Struct(rhs_struct_id) if lhs_struct_id == rhs_struct_id => {
+                                return (lhs_ty, None)
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+            }
+
             if lhs_ty != rhs_ty {
                 return (
                     lhs.ty(),
@@ -4611,6 +4637,19 @@ pub fn typecheck_typename(
 
             let type_id = project
                 .find_or_add_type_id(Type::GenericInstance(optional_struct_id, vec![inner_ty]));
+
+            (type_id, error)
+        }
+        ParsedType::WeakPtr(inner, _) => {
+            let (inner_ty, err) = typecheck_typename(inner, scope_id, project);
+            error = error.or(err);
+
+            let weakptr_struct_id = project
+                .find_struct_in_scope(0, "WeakPtr")
+                .expect("internal error: WeakPtr builtin definition not found");
+
+            let type_id = project
+                .find_or_add_type_id(Type::GenericInstance(weakptr_struct_id, vec![inner_ty]));
 
             (type_id, error)
         }
