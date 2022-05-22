@@ -3634,14 +3634,45 @@ pub fn typecheck_binary_operation(
 
     let mut ty = lhs.ty();
     match op {
-        BinaryOperator::LogicalAnd
-        | BinaryOperator::LogicalOr
-        | BinaryOperator::LessThan
+        BinaryOperator::LessThan
         | BinaryOperator::LessThanOrEqual
         | BinaryOperator::GreaterThan
         | BinaryOperator::GreaterThanOrEqual
         | BinaryOperator::Equal
         | BinaryOperator::NotEqual => {
+            if lhs_ty != rhs_ty {
+                return (
+                    lhs.ty(),
+                    Some(JaktError::TypecheckError(
+                        "binary comparison operation between incompatible types".to_string(),
+                        span,
+                    )),
+                );
+            }
+
+            ty = BOOL_TYPE_ID;
+        }
+        BinaryOperator::LogicalAnd | BinaryOperator::LogicalOr => {
+            if lhs_ty != BOOL_TYPE_ID {
+                return (
+                    lhs.ty(),
+                    Some(JaktError::TypecheckError(
+                        "left side of logical binary operation is not a boolean".to_string(),
+                        span,
+                    )),
+                );
+            }
+
+            if rhs_ty != BOOL_TYPE_ID {
+                return (
+                    rhs.ty(),
+                    Some(JaktError::TypecheckError(
+                        "right side of logical binary operation is not a boolean".to_string(),
+                        span,
+                    )),
+                );
+            }
+
             ty = BOOL_TYPE_ID;
         }
         BinaryOperator::Assign
@@ -3655,9 +3686,6 @@ pub fn typecheck_binary_operation(
         | BinaryOperator::BitwiseXorAssign
         | BinaryOperator::BitwiseLeftShiftAssign
         | BinaryOperator::BitwiseRightShiftAssign => {
-            let lhs_ty = lhs.ty();
-            let rhs_ty = rhs.ty();
-
             if lhs_ty != rhs_ty {
                 return (
                     lhs.ty(),
@@ -3690,7 +3718,7 @@ pub fn typecheck_binary_operation(
                 return (
                     lhs.ty(),
                     Some(JaktError::TypecheckError(
-                        format!("binary operation between incompatible types",),
+                        "binary operation between incompatible types".to_string(),
                         span,
                     )),
                 );

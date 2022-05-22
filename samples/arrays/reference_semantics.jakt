@@ -7,7 +7,7 @@ function main() {
     change_value(vector: v)
 
     let mutable i = 0
-    while i < v.size() {
+    while i < v.size() as! i64 {
         println("{}", v[i])
         ++i
     }
