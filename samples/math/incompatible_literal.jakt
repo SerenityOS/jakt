@@ -1,0 +1,8 @@
+function main() {
+    let x: u8 = 12;
+    let y: u16 = 34;
+    println("{}", x + y);
+    println("{}", x - y);
+    println("{}", x * y);
+    println("{}", x / y);
+}
