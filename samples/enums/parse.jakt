@@ -5,20 +5,20 @@ enum Simple {
 }
 
 enum SimpleWithType {
-    A: i32
-    B: u32
+    A(i32)
+    B(u32)
 }
 
 enum SimpleWithStructType {
-    A {
+    A (
         a: i32
         b: u32
-    }
+    )
     B: i32
 }
 
 enum SimpleWithTypeParameter<T> {
-    A: T
+    A(T)
     B
 }
 
