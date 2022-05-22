@@ -2,7 +2,7 @@ function bubble_sort(values: mutable [i64]) {
     let mutable i = 0
     while i < values.size() - 1 {
         let mutable j = 0
-        while j < values.size() - i - 1 {
+        while j < (values.size() as! i64) - i - 1 {
             if values[j] > values[j + 1] {
                 let tmp = values[j]
                 values[j] = values[j + 1]

@@ -3629,6 +3629,9 @@ pub fn typecheck_binary_operation(
     rhs: &CheckedExpression,
     span: Span,
 ) -> (TypeId, Option<JaktError>) {
+    let lhs_ty = lhs.ty();
+    let rhs_ty = rhs.ty();
+
     let mut ty = lhs.ty();
     match op {
         BinaryOperator::LogicalAnd
@@ -3677,6 +3680,23 @@ pub fn typecheck_binary_operation(
                     )),
                 );
             }
+        }
+        BinaryOperator::Add
+        | BinaryOperator::Subtract
+        | BinaryOperator::Multiply
+        | BinaryOperator::Divide
+        | BinaryOperator::Modulo => {
+            if lhs_ty != rhs_ty {
+                return (
+                    lhs.ty(),
+                    Some(JaktError::TypecheckError(
+                        format!("binary operation between incompatible types",),
+                        span,
+                    )),
+                );
+            }
+
+            ty = lhs_ty;
         }
         _ => {}
     }
