@@ -340,10 +340,10 @@ pub enum TypeCast {
 impl TypeCast {
     pub fn unchecked_type(&self) -> ParsedType {
         match self {
-            TypeCast::Fallible(ty) => ty.clone(),
-            TypeCast::Infallible(ty) => ty.clone(),
-            TypeCast::Saturating(ty) => ty.clone(),
-            TypeCast::Truncating(ty) => ty.clone(),
+            TypeCast::Fallible(parsed_type) => parsed_type.clone(),
+            TypeCast::Infallible(parsed_type) => parsed_type.clone(),
+            TypeCast::Saturating(parsed_type) => parsed_type.clone(),
+            TypeCast::Truncating(parsed_type) => parsed_type.clone(),
         }
     }
 }
@@ -3840,13 +3840,13 @@ pub fn parse_shorthand_type(
         // [T] is shorthand for Array<T>
         // [K:V] is shorthand for Dictionary<K, V>
         *index += 1;
-        let (ty, err) = parse_typename(tokens, index);
+        let (parsed_type, err) = parse_typename(tokens, index);
         match &tokens[*index].contents {
             TokenContents::RSquare => {
                 *index += 1;
                 return (
                     ParsedType::Array(
-                        Box::new(ty),
+                        Box::new(parsed_type),
                         Span {
                             file_id: start.file_id,
                             start: start.start,
@@ -3858,14 +3858,14 @@ pub fn parse_shorthand_type(
             }
             TokenContents::Colon => {
                 *index += 1;
-                let (value_ty, value_err) = parse_typename(tokens, index);
+                let (value_parsed_type, value_err) = parse_typename(tokens, index);
                 if *index < tokens.len() {
                     if let TokenContents::RSquare = &tokens[*index].contents {
                         *index += 1;
                         return (
                             ParsedType::Dictionary(
-                                Box::new(ty),
-                                Box::new(value_ty),
+                                Box::new(parsed_type),
+                                Box::new(value_parsed_type),
                                 Span {
                                     file_id: start.file_id,
                                     start: start.start,
@@ -3890,12 +3890,12 @@ pub fn parse_shorthand_type(
     } else if let TokenContents::LCurly = &tokens[*index].contents {
         // {T} is shorthand for Set<T>
         *index += 1;
-        let (ty, err) = parse_typename(tokens, index);
+        let (parsed_type, err) = parse_typename(tokens, index);
         if let TokenContents::RCurly = &tokens[*index].contents {
             *index += 1;
             return (
                 ParsedType::Set(
-                    Box::new(ty),
+                    Box::new(parsed_type),
                     Span {
                         file_id: start.file_id,
                         start: start.start,
