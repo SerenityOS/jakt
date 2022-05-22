@@ -2,7 +2,7 @@ function main() {
     let mutable values = [0; 0]
 
     for i in 0..10 {
-        values.push(i)
+        try values.push(i) catch err {}
     }
 
     while not values.is_empty() {

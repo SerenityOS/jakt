@@ -1,7 +1,7 @@
 function main() {
-    let mutable item = Dictionary<String, i64>();
+    let mutable item = Dictionary<String, i64>()
 
-    item.set(key: "bob", value: 123);
+    try item.set(key: "bob", value: 123) catch err {}
 
     println("{}", item.get("bob")!)
 }

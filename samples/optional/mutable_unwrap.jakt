@@ -11,10 +11,12 @@ class Foo {
 }
 
 function main() {
-    let mutable foo = Foo(x: 1)
-    let mutable opt_foo: Foo? = foo
+    try {
+        let mutable foo = Foo(x: 1)
+        let mutable opt_foo: Foo? = foo
 
-    opt_foo!.set(value: 2)
+        opt_foo!.set(value: 2)
 
-    println("{}", opt_foo!.get())
+        println("{}", opt_foo!.get())
+    } catch err {}
 }

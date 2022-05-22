@@ -4,8 +4,10 @@ class Person {
 }
 
 function main() {
-    let p = Person(name: "Jane", age: 100)
+    try {
+        let p = Person(name: "Jane", age: 100)
 
-    println("{}", p.name)
-    println("{}", p.age)
+        println("{}", p.name)
+        println("{}", p.age)
+    } catch err {}
 }

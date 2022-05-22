@@ -3,9 +3,12 @@ function main() {
     let words = text.split(' ')
 
     let mutable counts = Dictionary<String, i64>();
-
-    for i in 0..words.size() {
-        counts.set(key: words[i], value: counts.get(words[i]).value_or(0) + 1)
+    try {
+        for i in 0..words.size() {
+            counts.set(key: words[i], value: counts.get(words[i]).value_or(0) + 1)
+        }
+    } catch err {
+        println("err {}", err)
     }
 
     println("the: {}", counts["the"])

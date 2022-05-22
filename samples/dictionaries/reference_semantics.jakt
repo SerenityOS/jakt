@@ -4,7 +4,7 @@ function change_value(dictionary: mutable [String:String]) throws {
 
 function main() {
     let mutable dictionary = ["foo": "FAIL", "bar": ":^)"]
-    change_value(dictionary)
+    try change_value(dictionary) catch err {}
 
     println("{}", dictionary["foo"]);
 }

@@ -8,9 +8,11 @@ class Person {
 }
 
 function main() {
-    let mutable p = Person(name: "Bob", age: 1000)
+    try {
+        let mutable p = Person(name: "Bob", age: 1000)
 
-    p.birthday()
+        p.birthday()
 
-    println("{}", p.age)
+        println("{}", p.age)
+    } catch err {}
 }

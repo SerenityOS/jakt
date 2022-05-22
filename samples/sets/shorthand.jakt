@@ -1,13 +1,15 @@
 function get_unique(nums: [i64]) throws -> {i64} {
     let mutable set = {nums[0]}
     for i in 1..nums.size() {
-        set.add(nums[i])
+        try set.add(nums[i]) catch err {}
     }
     return set
 }
 
 function main() {
     let nums = [1, 2, 3, 4, 5, 5]
-    let set = get_unique(nums)
-    println("{}", set.size())
+    try {
+        let set = get_unique(nums)
+        println("{}", set.size())
+    } catch err {}
 }

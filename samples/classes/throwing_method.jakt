@@ -5,8 +5,10 @@ class Foo {
 }
 
 function main() {
-    let foo = Foo()
-    try foo.toss() catch error {
+    try {
+        let foo = Foo()
+        foo.toss()
+    } catch err {
         println("PASS")
     }
 }

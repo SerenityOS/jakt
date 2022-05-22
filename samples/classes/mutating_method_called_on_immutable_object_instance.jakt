@@ -3,6 +3,8 @@ class Foo {
 }
 
 function main() {
-    let foo = Foo()
-    foo.bar()
+    try {
+        let foo = Foo()
+        foo.bar()
+    } catch err {}
 }
