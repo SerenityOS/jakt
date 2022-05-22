@@ -3791,7 +3791,7 @@ pub fn typecheck_call(
     };
 
     match call.name.as_str() {
-        "println" | "eprintln" if struct_id.is_none() => {
+        "print" | "println" | "eprintln" if struct_id.is_none() => {
             // FIXME: This is a hack since println() and eprintln() are hard-coded into codegen at the moment.
             for arg in &call.args {
                 let (checked_arg, err) =

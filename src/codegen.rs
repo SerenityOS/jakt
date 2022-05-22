@@ -1160,7 +1160,16 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             if call.callee_throws {
                 output.push_str("TRY(");
             }
-            if call.name == "println" {
+            if call.name == "print" {
+                output.push_str("out(");
+                for (i, param) in call.args.iter().enumerate() {
+                    output.push_str(&codegen_expr(indent, &param.1, project));
+                    if i != call.args.len() - 1 {
+                        output.push(',');
+                    }
+                }
+                output.push(')');
+            } else if call.name == "println" {
                 output.push_str("outln(");
                 for (i, param) in call.args.iter().enumerate() {
                     output.push_str(&codegen_expr(indent, &param.1, project));
