@@ -597,6 +597,7 @@ pub struct CheckedVarDecl {
     pub type_id: TypeId,
     pub mutable: bool,
     pub span: Span,
+    pub visibility: Visibility,
 }
 
 #[derive(Clone, Debug)]
@@ -604,6 +605,7 @@ pub struct CheckedVariable {
     pub name: String,
     pub type_id: TypeId,
     pub mutable: bool,
+    pub visibility: Visibility,
 }
 
 #[derive(Debug, Clone)]
@@ -1002,6 +1004,79 @@ impl Scope {
     }
 }
 
+/// A trait to collect common namespace member properties.
+trait NamespaceMember {
+    fn visibility(&self) -> Visibility;
+    fn name(&self) -> String;
+    /// e.g. variable, function etc.
+    fn kind(&self) -> &'static str;
+}
+
+impl NamespaceMember for CheckedVarDecl {
+    fn visibility(&self) -> Visibility {
+        self.visibility
+    }
+
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn kind(&self) -> &'static str {
+        "variable"
+    }
+}
+impl NamespaceMember for CheckedVariable {
+    fn visibility(&self) -> Visibility {
+        self.visibility
+    }
+
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn kind(&self) -> &'static str {
+        "variable"
+    }
+}
+impl NamespaceMember for CheckedFunction {
+    fn visibility(&self) -> Visibility {
+        self.visibility
+    }
+
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn kind(&self) -> &'static str {
+        "function"
+    }
+}
+
+fn check_accessibility(
+    own_scope: ScopeId,
+    member_scope: ScopeId,
+    member: impl NamespaceMember,
+    span: &Span,
+    project: &Project,
+) -> Option<JaktError> {
+    if member.visibility() != Visibility::Public
+        && !Scope::can_access(own_scope, member_scope, project)
+    {
+        Some(JaktError::TypecheckError(
+            // FIXME: Improve this error
+            format!(
+                "Can't access {} '{}' from scope {:?}",
+                member.kind(),
+                member.name(),
+                project.scopes[own_scope].namespace_name,
+            ),
+            *span,
+        ))
+    } else {
+        None
+    }
+}
+
 pub fn typecheck_namespace(
     parsed_namespace: &ParsedNamespace,
     scope_id: ScopeId,
@@ -1235,6 +1310,7 @@ fn typecheck_enum(
                                     name: name.clone(),
                                     type_id: enum_type_id,
                                     mutable: false,
+                                    visibility: Visibility::Public,
                                 },
                                 *span,
                             );
@@ -1325,6 +1401,7 @@ fn typecheck_enum(
                             name: name.clone(),
                             type_id: enum_type_id,
                             mutable: false,
+                            visibility: Visibility::Public,
                         },
                         *span,
                     );
@@ -1360,6 +1437,7 @@ fn typecheck_enum(
                                 type_id: decl,
                                 mutable: member.mutable,
                                 span: member.span,
+                                visibility: member.visibility,
                             })
                         }
                     }
@@ -1383,6 +1461,7 @@ fn typecheck_enum(
                                     name: member.name.clone(),
                                     type_id: member.type_id,
                                     mutable: false,
+                                    visibility: member.visibility,
                                 },
                             })
                             .collect();
@@ -1454,6 +1533,7 @@ fn typecheck_enum(
                                 name: "value".to_string(),
                                 type_id: checked_type,
                                 mutable: false,
+                                visibility: Visibility::Public,
                             },
                         }];
                         let function_scope_id = project.create_scope(parent_scope_id);
@@ -1573,6 +1653,7 @@ fn typecheck_struct_predecl(
                     name: param.variable.name.clone(),
                     type_id: struct_type_id,
                     mutable: param.variable.mutable,
+                    visibility: Visibility::Public,
                 };
 
                 checked_function.params.push(CheckedParameter {
@@ -1588,6 +1669,7 @@ fn typecheck_struct_predecl(
                     name: param.variable.name.clone(),
                     type_id: param_type,
                     mutable: param.variable.mutable,
+                    visibility: Visibility::Public,
                 };
 
                 checked_function.params.push(CheckedParameter {
@@ -1657,6 +1739,7 @@ fn typecheck_struct(
             type_id: checked_member_type,
             mutable: unchecked_member.mutable,
             span: unchecked_member.span,
+            visibility: unchecked_member.visibility,
         });
     }
 
@@ -1674,6 +1757,8 @@ fn typecheck_struct(
                     name: field.name.clone(),
                     type_id: field.type_id,
                     mutable: field.mutable,
+                    // This is the constructor parameter, not the field. It can be public.
+                    visibility: Visibility::Public,
                 },
             });
         }
@@ -1771,6 +1856,7 @@ fn typecheck_function_predecl(
             name: param.variable.name.clone(),
             type_id: param_type,
             mutable: param.variable.mutable,
+            visibility: Visibility::Public,
         };
 
         checked_function.params.push(CheckedParameter {
@@ -2048,6 +2134,7 @@ pub fn typecheck_statement(
                 name: error_name.clone(),
                 mutable: false,
                 type_id: project.find_or_add_type_id(Type::Struct(error_struct_id)),
+                visibility: Visibility::Public,
             };
 
             let catch_scope_id = project.create_scope(scope_id);
@@ -2102,6 +2189,7 @@ pub fn typecheck_statement(
                 name: iterator_name.clone(),
                 mutable: true,
                 type_id: index_type,
+                visibility: Visibility::Public,
             };
 
             if let Err(err) =
@@ -2166,6 +2254,7 @@ pub fn typecheck_statement(
                 type_id: checked_type_id,
                 span: var_decl.span,
                 mutable: var_decl.mutable,
+                visibility: var_decl.visibility,
             };
 
             if let Err(err) = project.add_var_to_scope(
@@ -2174,6 +2263,7 @@ pub fn typecheck_statement(
                     name: checked_var_decl.name.clone(),
                     type_id: checked_var_decl.type_id,
                     mutable: checked_var_decl.mutable,
+                    visibility: checked_var_decl.visibility,
                 },
                 checked_var_decl.span,
             ) {
@@ -2571,6 +2661,7 @@ pub fn typecheck_expression(
                             name: v.clone(),
                             type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
                             mutable: false,
+                            visibility: Visibility::Public,
                         },
                         *span,
                     ),
@@ -2608,11 +2699,11 @@ pub fn typecheck_expression(
                 .collect();
 
             match scope {
-                Some(scope_id) => {
-                    if let Some(var) = project.find_var_in_scope(scope_id, v) {
+                Some(variable_scope_id) => {
+                    if let Some(var) = project.find_var_in_scope(variable_scope_id, v) {
                         (
-                            CheckedExpression::NamespacedVar(checked_namespace, var, *span),
-                            None,
+                            CheckedExpression::NamespacedVar(checked_namespace, var.clone(), *span),
+                            check_accessibility(scope_id, variable_scope_id, var, span, project),
                         )
                     } else {
                         (
@@ -2622,6 +2713,7 @@ pub fn typecheck_expression(
                                     name: v.clone(),
                                     type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
                                     mutable: false,
+                                    visibility: Visibility::Public,
                                 },
                                 *span,
                             ),
@@ -2639,6 +2731,7 @@ pub fn typecheck_expression(
                             name: v.clone(),
                             type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
                             mutable: false,
+                            visibility: Visibility::Public,
                         },
                         *span,
                     ),
@@ -3102,6 +3195,7 @@ pub fn typecheck_expression(
                                                             name: args[0].1.clone(),
                                                             type_id,
                                                             mutable: false,
+                                                            visibility: Visibility::Public,
                                                         },
                                                         span,
                                                     ));
@@ -3175,6 +3269,7 @@ pub fn typecheck_expression(
                                                                     name: arg.1.clone(),
                                                                     type_id,
                                                                     mutable: false,
+                                                                    visibility: Visibility::Public,
                                                                 },
                                                                 span,
                                                             ))
@@ -3350,7 +3445,13 @@ pub fn typecheck_expression(
                                     *span,
                                     member.type_id,
                                 ),
-                                None,
+                                check_accessibility(
+                                    scope_id,
+                                    structure.scope_id,
+                                    member.clone(),
+                                    span,
+                                    project,
+                                ),
                             );
                         }
                     }
@@ -4049,20 +4150,14 @@ pub fn typecheck_call(
             if let Some(callee) = callee {
                 // Borrow checker workaround, would be nice to clean this up
                 let callee = callee.clone();
-
                 // Make sure we are allowed to access this method.
-                if callee.visibility != Visibility::Public
-                    && !Scope::can_access(caller_scope_id, callee.function_scope_id, project)
-                {
-                    error = error.or(Some(JaktError::TypecheckError(
-                        // FIXME: Improve this error
-                        format!(
-                            "Can't access function `{}` from scope {:?}",
-                            callee.name, project.scopes[caller_scope_id].namespace_name,
-                        ),
-                        *span,
-                    )));
-                }
+                error = error.or(check_accessibility(
+                    caller_scope_id,
+                    callee.function_scope_id,
+                    callee.clone(),
+                    span,
+                    project,
+                ));
 
                 callee_throws = callee.throws;
                 return_type_id = callee.return_type_id;
