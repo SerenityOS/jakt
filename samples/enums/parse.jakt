@@ -14,7 +14,7 @@ enum SimpleWithStructType {
         a: i32
         b: u32
     )
-    B: i32
+    B(i32)
 }
 
 enum SimpleWithTypeParameter<T> {
@@ -23,8 +23,8 @@ enum SimpleWithTypeParameter<T> {
 }
 
 enum SimpleWithMultipleTypeParameters<T, U> {
-    A: T
-    B: U
+    A(T)
+    B(U)
 }
 
 enum IntegralWithUnderlyingType: i32 {
@@ -32,3 +32,5 @@ enum IntegralWithUnderlyingType: i32 {
     One = 2
     Two
 }
+
+function main() {}
