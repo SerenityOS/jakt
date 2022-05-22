@@ -2,7 +2,7 @@ class Person {
     name: String
     age: i64
 
-    function generate(name: String, age: i64) throws -> Person {
+    public function generate(name: String, age: i64) throws -> Person {
         return Person(name: name, age: age + 1000);
     }
 }

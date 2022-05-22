@@ -3976,7 +3976,7 @@ pub fn typecheck_call(
 
                 // Make sure we are allowed to access this method.
                 if callee.visibility != Visibility::Public
-                    && !Scope::can_access(caller_scope_id, callee_scope_id, project)
+                    && !Scope::can_access(caller_scope_id, callee.function_scope_id, project)
                 {
                     error = error.or(Some(JaktError::TypecheckError(
                         // FIXME: Improve this error
