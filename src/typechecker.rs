@@ -1794,6 +1794,9 @@ fn typecheck_function(
         .find_function_in_scope(parent_scope_id, &function.name)
         .expect("Internal error: missing previously defined function");
 
+    if function.name == "main" {
+        error = typecheck_jakt_main(function);
+    }
     let checked_function = &mut project.functions[function_id];
     let function_scope_id = checked_function.function_scope_id;
     let function_linkage = checked_function.linkage;
@@ -1860,6 +1863,39 @@ fn typecheck_function(
     checked_function.return_type_id = return_type_id;
 
     error
+}
+
+fn typecheck_jakt_main(function: &ParsedFunction) -> Option<JaktError> {
+    let param_type_error = Some(JaktError::TypecheckError(
+        "Main function must take a single array of strings as its parameter".to_string(),
+        function.name_span,
+    ));
+
+    if function.params.len() > 1 {
+        return param_type_error;
+    }
+
+    if !function.params.is_empty() {
+        match &function.params[0].variable.parsed_type {
+            ParsedType::Array(parsed_type, _) => match &**parsed_type {
+                ParsedType::Empty => {}
+                ParsedType::Name(name, _) if name == "String" => {}
+                _ => return param_type_error,
+            },
+            _ => return param_type_error,
+        };
+    }
+
+    let return_type_error = Some(JaktError::TypecheckError(
+        "Main function must return c_int".to_string(),
+        function.name_span,
+    ));
+    match &function.return_type {
+        ParsedType::Empty => {}
+        ParsedType::Name(name, _) if name == "c_int" => {}
+        _ => return return_type_error,
+    }
+    None
 }
 
 fn typecheck_method(
