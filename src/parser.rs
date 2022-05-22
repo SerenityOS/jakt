@@ -735,8 +735,8 @@ pub fn parse_enum(
         trace!(format!("enum body: {:?}", tokens[*index]));
 
         // Variants in one of the following forms:
-        // - Ident(name) Colon Type
-        // - Ident(name) LCurly struct_body RCurly
+        // - Ident(name) LParen Type RParen
+        // - Ident(name) LParen struct_body RParen
         // - Ident(name) Equal Expression
         //    expression should evaluate to the underlying type (not allowed if no underlying type)
         // - Ident(name)
@@ -775,34 +775,18 @@ pub fn parse_enum(
 
             match tokens.get(*index) {
                 Some(Token {
-                    contents: TokenContents::Colon,
+                    contents: TokenContents::LParen,
                     ..
                 }) => {
                     trace!("variant with type");
                     *index += 1;
-                    let (variant_type, type_error) = parse_typename(tokens, index);
-                    error = error.or(type_error);
-                    enum_.variants.push(EnumVariant::Typed(
-                        name.to_string(),
-                        variant_type,
-                        Span {
-                            file_id: tokens[*index].span.file_id,
-                            start: tokens[start_index].span.start,
-                            end: tokens[*index].span.end,
-                        },
-                    ));
-                }
-                Some(Token {
-                    contents: TokenContents::LCurly,
-                    ..
-                }) => {
-                    *index += 1;
+
                     let mut members = Vec::new();
                     skip_newlines(tokens, index);
                     while !matches!(
                         tokens.get(*index),
                         Some(Token {
-                            contents: TokenContents::RCurly,
+                            contents: TokenContents::RParen,
                             ..
                         }) | None
                     ) {
@@ -819,15 +803,28 @@ pub fn parse_enum(
                         }
                     }
                     *index += 1;
-                    enum_.variants.push(EnumVariant::StructLike(
-                        name.to_string(),
-                        members,
-                        Span {
-                            file_id: tokens[*index].span.file_id,
-                            start: tokens[start_index].span.start,
-                            end: tokens[*index].span.end,
-                        },
-                    ));
+                    if members.len() == 1 && members[0].ty == ParsedType::Empty {
+                        // We have a simple value (non-struct) case
+                        enum_.variants.push(EnumVariant::Typed(
+                            name.to_string(),
+                            ParsedType::Name(members[0].name.clone(), members[0].span),
+                            Span {
+                                file_id: tokens[*index].span.file_id,
+                                start: tokens[start_index].span.start,
+                                end: tokens[*index].span.end,
+                            },
+                        ));
+                    } else {
+                        enum_.variants.push(EnumVariant::StructLike(
+                            name.to_string(),
+                            members,
+                            Span {
+                                file_id: tokens[*index].span.file_id,
+                                start: tokens[start_index].span.start,
+                                end: tokens[*index].span.end,
+                            },
+                        ));
+                    }
                 }
                 Some(Token {
                     contents: TokenContents::Equal,
