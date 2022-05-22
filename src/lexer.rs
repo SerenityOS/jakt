@@ -607,53 +607,51 @@ fn make_number_token(
     span: Span,
 ) -> (TokenContents, Option<JaktError>) {
     let mut error = None;
-    (
-        match suffix {
-            Some(LiteralSuffix::U8) => TokenContents::Number(NumericConstant::U8(number as u8)),
-            Some(LiteralSuffix::U16) => TokenContents::Number(NumericConstant::U16(number as u16)),
-            Some(LiteralSuffix::U32) => TokenContents::Number(NumericConstant::U32(number as u32)),
+    let token_contents = match suffix {
+        Some(LiteralSuffix::U8) => TokenContents::Number(NumericConstant::U8(number as u8)),
+        Some(LiteralSuffix::U16) => TokenContents::Number(NumericConstant::U16(number as u16)),
+        Some(LiteralSuffix::U32) => TokenContents::Number(NumericConstant::U32(number as u32)),
 
-            // FIXME: This loses precision if usize is 64-bit
-            Some(LiteralSuffix::UZ) => TokenContents::Number(NumericConstant::USize(number as u64)),
+        // FIXME: This loses precision if usize is 64-bit
+        Some(LiteralSuffix::UZ) => TokenContents::Number(NumericConstant::USize(number as u64)),
 
-            // FIXME: This loses precision:
-            Some(LiteralSuffix::U64) => TokenContents::Number(NumericConstant::U64(number as u64)),
+        // FIXME: This loses precision:
+        Some(LiteralSuffix::U64) => TokenContents::Number(NumericConstant::U64(number as u64)),
 
-            Some(LiteralSuffix::I8) => TokenContents::Number(NumericConstant::I8(number as i8)),
-            Some(LiteralSuffix::I16) => TokenContents::Number(NumericConstant::I16(number as i16)),
-            Some(LiteralSuffix::I32) => TokenContents::Number(NumericConstant::I32(number as i32)),
-            Some(LiteralSuffix::I64) => TokenContents::Number(NumericConstant::I64(number as i64)),
+        Some(LiteralSuffix::I8) => TokenContents::Number(NumericConstant::I8(number as i8)),
+        Some(LiteralSuffix::I16) => TokenContents::Number(NumericConstant::I16(number as i16)),
+        Some(LiteralSuffix::I32) => TokenContents::Number(NumericConstant::I32(number as i32)),
+        Some(LiteralSuffix::I64) => TokenContents::Number(NumericConstant::I64(number as i64)),
 
-            // FIXME: These 2 don't work at all:
-            Some(LiteralSuffix::F32) => TokenContents::Number(NumericConstant::I64(number as i64)),
-            Some(LiteralSuffix::F64) => TokenContents::Number(NumericConstant::I64(number as i64)),
+        // FIXME: These 2 don't work at all:
+        Some(LiteralSuffix::F32) => TokenContents::Number(NumericConstant::I64(number as i64)),
+        Some(LiteralSuffix::F64) => TokenContents::Number(NumericConstant::I64(number as i64)),
 
-            _ => {
-                // FIXME: We should use a generic "integer" type here that stores i128, and infer the type later.
-                // For now, just check the size of the integer and create an i64 or u64.
-                if number > i64::MAX.into() {
-                    if number <= u64::MAX.into() {
-                        TokenContents::Number(NumericConstant::U64(number as u64))
-                    } else {
-                        error = Some(JaktError::ParserError(
-                            format!("Integer literal {} too large", number),
-                            span,
-                        ));
-                        TokenContents::Garbage
-                    }
-                } else if number >= i64::MIN.into() {
-                    TokenContents::Number(NumericConstant::I64(number as i64))
+        _ => {
+            // FIXME: We should use a generic "integer" type here that stores i128, and infer the type later.
+            // For now, just check the size of the integer and create an i64 or u64.
+            if number > i64::MAX.into() {
+                if number <= u64::MAX.into() {
+                    TokenContents::Number(NumericConstant::U64(number as u64))
                 } else {
                     error = Some(JaktError::ParserError(
-                        format!("Integer literal {} too small", number),
+                        format!("Integer literal {} too large", number),
                         span,
                     ));
                     TokenContents::Garbage
                 }
+            } else if number >= i64::MIN.into() {
+                TokenContents::Number(NumericConstant::I64(number as i64))
+            } else {
+                error = Some(JaktError::ParserError(
+                    format!("Integer literal {} too small", number),
+                    span,
+                ));
+                TokenContents::Garbage
             }
-        },
-        error,
-    )
+        }
+    };
+    (token_contents, error)
 }
 
 fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<JaktError>) {
