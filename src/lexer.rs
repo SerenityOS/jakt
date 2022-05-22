@@ -689,7 +689,7 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
             Err(_) => (
                 Token::unknown(span),
                 Some(JaktError::ParserError(
-                    "could not parse hex".to_string(),
+                    "could not parse hex number".to_string(),
                     span,
                 )),
             ),
@@ -714,6 +714,17 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
                 )),
             );
         }
+
+        if bytes[*index].is_ascii_digit() {
+            return (
+                Token::unknown(Span::new(file_id, start, *index)),
+                Some(JaktError::ParserError(
+                    "could not parse octal number".to_string(),
+                    Span::new(file_id, start, *index),
+                )),
+            );
+        }
+
         let str = String::from_utf8_lossy(&bytes[start + 2..*index]).replace('_', "");
         let number = i128::from_str_radix(&str, 8);
         let suffix = consume_numeric_literal_suffix(bytes, index);
@@ -751,6 +762,17 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
                 )),
             );
         }
+
+        if bytes[*index].is_ascii_digit() {
+            return (
+                Token::unknown(Span::new(file_id, start, *index)),
+                Some(JaktError::ParserError(
+                    "could not parse binary number".to_string(),
+                    Span::new(file_id, start, *index),
+                )),
+            );
+        }
+
         let str = String::from_utf8_lossy(&bytes[start + 2..*index]).replace('_', "");
         let number = i128::from_str_radix(&str, 2);
         let suffix = consume_numeric_literal_suffix(bytes, index);
