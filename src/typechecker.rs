@@ -1006,6 +1006,7 @@ pub fn typecheck_namespace(
     let project_function_len = project.functions.len();
 
     for namespace in parsed_namespace.namespaces.iter() {
+        // Do full typechecks of all the namespaces that are children of this namespace
         let namespace_scope_id = project.create_scope(scope_id);
         project.scopes[namespace_scope_id].namespace_name = namespace.name.clone();
         project.scopes[scope_id].children.push(namespace_scope_id);
@@ -1013,7 +1014,7 @@ pub fn typecheck_namespace(
     }
 
     for (struct_id, structure) in parsed_namespace.structs.iter().enumerate() {
-        //Ensure we know the types ahead of time, so they can be recursive
+        // Bring the struct names into scope for future typechecking
         let struct_id = struct_id + project_struct_len;
         project.types.push(Type::Struct(struct_id));
 
@@ -1026,15 +1027,10 @@ pub fn typecheck_namespace(
         ) {
             error = error.or(Some(err));
         }
-
-        if let Some(err) =
-            typecheck_struct_predecl(structure, struct_type_id, struct_id, scope_id, project)
-        {
-            error = error.or(Some(err));
-        }
     }
 
     for (enum_id, enum_) in parsed_namespace.enums.iter().enumerate() {
+        // Bring the enum names into scope for future typechecking
         let enum_id = enum_id + project_enum_len;
         project.types.push(Type::Enum(enum_id));
 
@@ -1044,6 +1040,20 @@ pub fn typecheck_namespace(
         {
             error = error.or(Some(err));
         }
+    }
+
+    for (struct_id, structure) in parsed_namespace.structs.iter().enumerate() {
+        // Typecheck the protype of the struct
+        let struct_id = struct_id + project_struct_len;
+
+        if let Some(err) = typecheck_struct_predecl(structure, struct_id, scope_id, project) {
+            error = error.or(Some(err));
+        }
+    }
+
+    for (enum_id, enum_) in parsed_namespace.enums.iter().enumerate() {
+        // Typecheck the protype of the enum
+        let enum_id = enum_id + project_enum_len;
 
         if let Some(err) = typecheck_enum_predecl(enum_, enum_id, scope_id, project) {
             error = error.or(Some(err));
@@ -1051,11 +1061,13 @@ pub fn typecheck_namespace(
     }
 
     for function in &parsed_namespace.functions {
-        //Ensure we know the function ahead of time, so they can be recursive
+        // Ensure we know the function prototypes ahead of time, so that
+        // and calls can find and resolve to them
         error = error.or(typecheck_function_predecl(function, scope_id, project));
     }
 
     for (struct_id, structure) in parsed_namespace.structs.iter().enumerate() {
+        // Finish typechecking the full struct (including methods)
         error = error.or(typecheck_struct(
             structure,
             struct_id + project_struct_len,
@@ -1065,6 +1077,7 @@ pub fn typecheck_namespace(
     }
 
     for (enum_id, enum_) in parsed_namespace.enums.iter().enumerate() {
+        // Finish typechecking the full enum
         error = error.or(typecheck_enum(
             enum_,
             enum_id + project_enum_len,
@@ -1076,6 +1089,7 @@ pub fn typecheck_namespace(
     }
 
     for (i, function) in parsed_namespace.functions.iter().enumerate() {
+        // Typecheck the function bodies
         project.current_function_index = Some(i + project_function_len);
         error = error.or(typecheck_function(function, scope_id, project));
         project.current_function_index = None;
@@ -1476,12 +1490,13 @@ fn typecheck_enum(
 
 fn typecheck_struct_predecl(
     structure: &ParsedStruct,
-    struct_type_id: TypeId,
     struct_id: StructId,
     parent_scope_id: ScopeId,
     project: &mut Project,
 ) -> Option<JaktError> {
     let mut error = None;
+
+    let struct_type_id = project.find_or_add_type_id(Type::Struct(struct_id));
 
     let struct_scope_id = project.create_scope(parent_scope_id);
 
@@ -1614,7 +1629,6 @@ fn typecheck_struct(
 
     let checked_struct = &mut project.structs[struct_id];
     let checked_struct_scope_id = checked_struct.scope_id;
-
     let struct_type_id = project.find_or_add_type_id(Type::Struct(struct_id));
 
     for unchecked_member in &structure.fields {
