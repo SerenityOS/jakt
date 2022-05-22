@@ -1,0 +1,15 @@
+function main(args: [String]) {
+    if args.size() <= 1 {
+        eprintln("usage: cat <path>")
+        return 1
+    }
+
+    let mutable file = File::open_for_reading(args[1])
+    let mutable array: [u8] = [0u8]
+
+    while file.read(array) != 0 {
+        for idx in 0..array.size() {
+            print("{:c}", array[idx])
+        }
+    }
+}
