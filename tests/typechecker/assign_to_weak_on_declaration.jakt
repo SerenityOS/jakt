@@ -1,0 +1,10 @@
+class Foo {
+    public function call(this) => "Foo"
+}
+
+function main() {
+    let foo = Foo()
+    let weak_foo: weak Foo = foo
+
+    println("{}", weak_foo!.call())
+}

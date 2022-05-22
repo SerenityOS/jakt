@@ -4288,9 +4288,15 @@ pub fn check_types_for_compat(
     let optional_struct_id = project
         .find_struct_in_scope(0, "Optional")
         .expect("internal error: can't find builtin Optional type");
-    // This skips the type compatibility check if assigning a T to a T? without going through `Some`.
+
+    let weak_ptr_struct_id = project
+        .find_struct_in_scope(0, "WeakPtr")
+        .expect("internal error: can't find builtin WeakPtr type");
+
+    // This skips the type compatibility check if assigning a T to a T? or to a
+    // weak T? without going through `Some`.
     if let Type::GenericInstance(lhs_struct_id, args) = lhs_type {
-        if *lhs_struct_id == optional_struct_id
+        if (*lhs_struct_id == optional_struct_id || *lhs_struct_id == weak_ptr_struct_id)
             && args.first().map_or(false, |arg_id| *arg_id == rhs_type_id)
         {
             return None;
