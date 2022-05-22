@@ -1069,12 +1069,10 @@ pub fn parse_struct(
                                 DefinitionLinkage::External => FunctionLinkage::External,
                             };
 
-                            let visibility = last_visibility
-                                .or(Some(match definition_type {
-                                    DefinitionType::Class => Visibility::Private,
-                                    DefinitionType::Struct => Visibility::Public,
-                                }))
-                                .unwrap();
+                            let visibility = last_visibility.unwrap_or(match definition_type {
+                                DefinitionType::Class => Visibility::Private,
+                                DefinitionType::Struct => Visibility::Public,
+                            });
                             last_visibility = None;
 
                             let (function, err) =
