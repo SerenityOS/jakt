@@ -1,0 +1,23 @@
+enum CuteLittleEnum: u64 {
+    A = 1
+    B
+    C = 69
+}
+
+enum CuterLittlerEnum: u32 {
+    A
+    B
+    C
+}
+
+function main() throws -> i32 {
+    println("A = {}, B = {}, C = {}",
+        CuteLittleEnum::A as! u64,
+        CuteLittleEnum::B as! u64,
+        CuteLittleEnum::C as! u64)
+    println("A = {}, B = {}, C = {}",
+        CuterLittlerEnum::A as! u32,
+        CuterLittlerEnum::B as! u32,
+        CuterLittlerEnum::C as! u32)
+    return 0
+}
