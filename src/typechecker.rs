@@ -7,7 +7,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::parser::{MatchBody, MatchCase, Visibility};
+use crate::parser::{MatchBody, MatchCase, ParsedVarDecl, Visibility};
 use crate::{
     compiler::{
         BOOL_TYPE_ID, CCHAR_TYPE_ID, CINT_TYPE_ID, F32_TYPE_ID, F64_TYPE_ID, I16_TYPE_ID,
@@ -622,7 +622,6 @@ pub enum CheckedStatement {
     Loop(CheckedBlock),
     While(CheckedExpression, CheckedBlock),
     Return(CheckedExpression),
-    For(String, CheckedExpression, CheckedBlock),
     Break,
     Continue,
     Throw(CheckedExpression),
@@ -2083,7 +2082,6 @@ pub fn statement_definitely_returns(stmt: &CheckedStatement) -> bool {
         CheckedStatement::Block(block) => block.definitely_returns,
         CheckedStatement::Loop(block) => block.definitely_returns,
         CheckedStatement::While(_, block) => block.definitely_returns,
-        CheckedStatement::For(_, _, block) => block.definitely_returns,
         _ => false,
     }
 }
@@ -2163,49 +2161,158 @@ pub fn typecheck_statement(
             // FIXME: Verify that the expression produces an Error
             (CheckedStatement::Throw(checked_expr), error)
         }
-        ParsedStatement::For(iterator_name, range_expr, block) => {
-            let (checked_expr, err) =
+        ParsedStatement::For((iterator_name, iterator_span), range_expr, block) => {
+            // Translate `for x in expr { body }` to
+            // block {
+            //     let (mutable) _magic = expr
+            //     loop {
+            //         let x = _magic.next()
+            //         if not x.has_value() {
+            //             break
+            //         }
+            //         let iterator_name = x!
+            //         body
+            //     }
+            // }
+            //
+            // The only restrictions placed on the iterator are such:
+            //     1- Must respond to .next(); the mutability of the iterator is inferred from .next()'s signature
+            //     2- The result of .next() must be an Optional.
+
+            let (iterable_expr, err) =
                 typecheck_expression(range_expr, scope_id, project, safety_mode, None);
             error = error.or(err);
 
-            let iterator_scope_id = project.create_scope(scope_id);
-
-            let range_struct_id = project
-                .find_struct_in_scope(0, "Range")
-                .expect("internal error: Range builtin definition not found");
-
-            let index_type;
-            if let Type::GenericInstance(id, inner_type) = &project.types[checked_expr.type_id()] {
-                if id == &range_struct_id {
-                    index_type = inner_type[0];
-                } else {
-                    panic!("Range expression doesn't have Range type");
+            let iterable_type = &project.types[iterable_expr.type_id()];
+            let mut iterable_should_be_mutable = false;
+            // Requirement 1: Iterator must have a .next() method
+            //                This currently limits it to structs and classes.
+            // Right now we do a single pass check, and check generic functions at declaration time (as opposed to doing so at instantiation time)
+            // so we have to pretend it's okay if we don't know the iterable type right now.
+            match iterable_type {
+                Type::TypeVariable(_) => {
+                    // Since we're not sure, just make it mutable.
+                    iterable_should_be_mutable = true;
                 }
-            } else {
-                panic!("Range expression doesn't have Range type");
+                Type::GenericInstance(struct_id, _) | Type::Struct(struct_id) => {
+                    let struct_ = &project.structs[*struct_id];
+                    let next_method_function_id =
+                        project.find_function_in_scope(struct_.scope_id, "next");
+                    if let Some(next_method_function_id) = next_method_function_id {
+                        let next_method_function = &project.functions[next_method_function_id];
+                        // Check whether we need to make the iterator mutable
+                        if next_method_function.is_mutating() {
+                            iterable_should_be_mutable = true;
+                        }
+                    } else {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "Iterator must have a .next() method".into(),
+                            range_expr.span(),
+                        )));
+                    }
+                }
+                _ => {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "Iterator must have a .next() method".into(),
+                        *iterator_span,
+                    )));
+                }
             }
 
-            let iterator_decl = CheckedVariable {
-                name: iterator_name.clone(),
-                mutable: true,
-                type_id: index_type,
-                visibility: Visibility::Public,
-            };
+            let rewritten_statement = ParsedStatement::Block(ParsedBlock {
+                stmts: vec![
+                    // let (mutable) _magic = expr
+                    ParsedStatement::VarDecl(
+                        ParsedVarDecl {
+                            name: "_magic".to_string(),
+                            parsed_type: ParsedType::Empty,
+                            mutable: iterable_should_be_mutable,
+                            span: *iterator_span,
+                            visibility: Visibility::Public,
+                        },
+                        range_expr.clone(),
+                    ),
+                    // loop {
+                    ParsedStatement::Loop(ParsedBlock {
+                        stmts: vec![
+                            // let x = _magic.next()
+                            ParsedStatement::VarDecl(
+                                ParsedVarDecl {
+                                    name: "_magic_value".to_string(),
+                                    parsed_type: ParsedType::Empty,
+                                    mutable: iterable_should_be_mutable,
+                                    span: *iterator_span,
+                                    visibility: Visibility::Public,
+                                },
+                                ParsedExpression::MethodCall(
+                                    Box::new(ParsedExpression::Var(
+                                        "_magic".to_string(),
+                                        *iterator_span,
+                                    )),
+                                    ParsedCall {
+                                        name: "next".to_string(),
+                                        namespace: vec![],
+                                        args: vec![],
+                                        type_args: vec![],
+                                    },
+                                    *iterator_span,
+                                ),
+                            ),
+                            // if not x.has_value() {
+                            ParsedStatement::If(
+                                ParsedExpression::UnaryOp(
+                                    Box::new(ParsedExpression::MethodCall(
+                                        Box::new(ParsedExpression::Var(
+                                            "_magic_value".to_string(),
+                                            *iterator_span,
+                                        )),
+                                        ParsedCall {
+                                            name: "has_value".to_string(),
+                                            namespace: vec![],
+                                            args: vec![],
+                                            type_args: vec![],
+                                        },
+                                        *iterator_span,
+                                    )),
+                                    UnaryOperator::LogicalNot,
+                                    *iterator_span,
+                                ),
+                                ParsedBlock {
+                                    stmts: vec![
+                                        // break
+                                        ParsedStatement::Break,
+                                    ],
+                                },
+                                None,
+                            ),
+                            // let iterator_name = x!
+                            ParsedStatement::VarDecl(
+                                ParsedVarDecl {
+                                    name: iterator_name.to_string(),
+                                    parsed_type: ParsedType::Empty,
+                                    mutable: iterable_should_be_mutable,
+                                    span: *iterator_span,
+                                    visibility: Visibility::Public,
+                                },
+                                ParsedExpression::ForcedUnwrap(
+                                    Box::new(ParsedExpression::Var(
+                                        "_magic_value".to_string(),
+                                        *iterator_span,
+                                    )),
+                                    *iterator_span,
+                                ),
+                            ),
+                            // body
+                            ParsedStatement::Block(block.clone()),
+                        ],
+                    }),
+                ],
+            });
 
-            if let Err(err) =
-                project.add_var_to_scope(iterator_scope_id, iterator_decl, range_expr.span())
-            {
-                error = error.or(Some(err));
-            }
-
-            let (checked_block, err) =
-                typecheck_block(block, iterator_scope_id, project, safety_mode);
+            let (statement, err) =
+                typecheck_statement(&rewritten_statement, scope_id, project, safety_mode);
             error = error.or(err);
-
-            (
-                CheckedStatement::For(iterator_name.clone(), checked_expr, checked_block),
-                error,
-            )
+            (statement, error)
         }
         ParsedStatement::Continue => (CheckedStatement::Continue, None),
         ParsedStatement::Break => (CheckedStatement::Break, None),
@@ -2666,7 +2773,7 @@ pub fn typecheck_expression(
                         *span,
                     ),
                     Some(JaktError::TypecheckError(
-                        "variable not found".to_string(),
+                        format!("variable '{}' not found", v),
                         *span,
                     )),
                 )
@@ -2718,7 +2825,7 @@ pub fn typecheck_expression(
                                 *span,
                             ),
                             Some(JaktError::TypecheckError(
-                                "variable not found".to_string(),
+                                format!("variable '{}' not found", v),
                                 *span,
                             )),
                         )
@@ -3726,8 +3833,8 @@ pub fn typecheck_unary_operation(
                                 flipped_sign_type,
                                 &IntegerConstant::Signed(negated_value as i64),
                             )
-                            // This is the case if the above "as i64" overflows.
-                            || negated_value < i64::MIN.into()
+                                // This is the case if the above "as i64" overflows.
+                                || negated_value < i64::MIN.into()
                             {
                                 (
                                     CheckedExpression::Garbage(span),
@@ -3927,7 +4034,7 @@ pub fn typecheck_binary_operation(
                     if let Type::Struct(lhs_struct_id) = project.types[inner_type_id] {
                         match project.types[rhs_type_id] {
                             Type::Struct(rhs_struct_id) if lhs_struct_id == rhs_struct_id => {
-                                return (lhs_type_id, None)
+                                return (lhs_type_id, None);
                             }
                             _ => {}
                         }

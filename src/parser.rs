@@ -207,7 +207,7 @@ pub enum ParsedStatement {
     Block(ParsedBlock),
     Loop(ParsedBlock),
     While(ParsedExpression, ParsedBlock),
-    For(String, ParsedExpression, ParsedBlock),
+    For((String, Span), ParsedExpression, ParsedBlock),
     Break,
     Continue,
     Return(ParsedExpression),
@@ -1707,7 +1707,11 @@ pub fn parse_statement(
 
             *index += 1;
 
-            if let TokenContents::Name(iterator_name) = &tokens[*index].contents {
+            if let Token {
+                contents: TokenContents::Name(iterator_name),
+                span,
+            } = &tokens[*index]
+            {
                 *index += 1;
 
                 match &tokens[*index].contents {
@@ -1724,7 +1728,7 @@ pub fn parse_statement(
                         error = error.or(err);
 
                         (
-                            ParsedStatement::For(iterator_name.clone(), range_expr, block),
+                            ParsedStatement::For((iterator_name.clone(), *span), range_expr, block),
                             error,
                         )
                     }
