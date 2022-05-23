@@ -1861,6 +1861,10 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (ParsedBlock, Option<
     while *index < tokens.len() {
         match tokens[*index] {
             Token {
+                contents: TokenContents::Eof,
+                ..
+            } => break,
+            Token {
                 contents: TokenContents::RCurly,
                 ..
             } => {
