@@ -1088,7 +1088,6 @@ pub fn typecheck_namespace(
 
     let project_struct_len = project.structs.len();
     let project_enum_len = project.enums.len();
-    let project_function_len = project.functions.len();
 
     for namespace in parsed_namespace.namespaces.iter() {
         // Do full typechecks of all the namespaces that are children of this namespace
@@ -1144,6 +1143,8 @@ pub fn typecheck_namespace(
             error = error.or(Some(err));
         }
     }
+
+    let project_function_len = project.functions.len();
 
     for function in &parsed_namespace.functions {
         // Ensure we know the function prototypes ahead of time, so that
