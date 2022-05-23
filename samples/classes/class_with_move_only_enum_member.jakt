@@ -1,0 +1,11 @@
+enum E {
+    Okay
+}
+
+class C {
+    e: E
+}
+
+function main() {
+    let c = C(e: E::Okay())
+}
