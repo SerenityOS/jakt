@@ -215,7 +215,7 @@ pub enum ParsedStatement {
     For((String, Span), ParsedExpression, ParsedBlock),
     Break,
     Continue,
-    Return(ParsedExpression),
+    Return(ParsedExpression, Span),
     Throw(ParsedExpression),
     Try(Box<ParsedStatement>, String, Span, ParsedBlock),
     InlineCpp(ParsedBlock, Span),
@@ -1572,7 +1572,7 @@ pub fn parse_function(
                 let (block, err) = match fat_arrow_expr {
                     Some(expr) => {
                         let mut block = ParsedBlock::new();
-                        block.stmts.push(ParsedStatement::Return(expr));
+                        block.stmts.push(ParsedStatement::Return(expr, name_span));
                         (block, None)
                     }
                     None => parse_block(tokens, index),
@@ -1689,6 +1689,7 @@ pub fn parse_statement(
     trace!(format!("parse_statement: {:?}", tokens[*index]));
 
     let mut error = None;
+    let start = tokens[*index].span;
 
     match &tokens[*index].contents {
         TokenContents::Name(name) if name == "throw" => {
@@ -1837,7 +1838,17 @@ pub fn parse_statement(
                 parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
             error = error.or(err);
 
-            (ParsedStatement::Return(expr), error)
+            (
+                ParsedStatement::Return(
+                    expr,
+                    Span {
+                        file_id: start.file_id,
+                        start: start.start,
+                        end: tokens[(*index - 1)].span.end,
+                    },
+                ),
+                error,
+            )
         }
         TokenContents::Name(name) if name == "let" => {
             trace!("parsing let");

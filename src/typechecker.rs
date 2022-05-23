@@ -162,6 +162,7 @@ pub struct Project {
     pub types: Vec<Type>,
 
     pub current_function_index: Option<usize>,
+    pub inside_defer: bool,
 }
 
 impl Project {
@@ -177,6 +178,7 @@ impl Project {
             scopes: vec![project_global_scope],
             types: Vec::new(),
             current_function_index: None,
+            inside_defer: false,
         }
     }
 
@@ -2679,8 +2681,11 @@ pub fn typecheck_statement(
             (CheckedStatement::Expression(checked_expr), err)
         }
         ParsedStatement::Defer(statement) => {
+            let was_inside_defer = project.inside_defer;
+            project.inside_defer = true;
             let (checked_statement, err) =
                 typecheck_statement(statement, scope_id, project, safety_mode);
+            project.inside_defer = was_inside_defer;
 
             (CheckedStatement::Defer(Box::new(checked_statement)), err)
         }
@@ -2810,7 +2815,7 @@ pub fn typecheck_statement(
 
             (CheckedStatement::While(checked_cond, checked_block), error)
         }
-        ParsedStatement::Return(expr) => {
+        ParsedStatement::Return(expr, span) => {
             let (output, err) = typecheck_expression(
                 expr,
                 scope_id,
@@ -2820,8 +2825,16 @@ pub fn typecheck_statement(
                     .current_function_index
                     .map(|i| project.functions[i].return_type_id),
             );
+            error = error.or(err);
 
-            (CheckedStatement::Return(output), err)
+            if project.inside_defer {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "‘return’ is not allowed inside ‘defer’".to_string(),
+                    *span,
+                )));
+            }
+
+            (CheckedStatement::Return(output), error)
         }
         ParsedStatement::Block(block) => {
             let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
