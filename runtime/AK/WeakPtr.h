@@ -22,6 +22,9 @@ class [[nodiscard]] WeakPtr {
 public:
     WeakPtr() = default;
 
+    // Someone decided that `WeakPtr<T>` should be constructible from `None` in Jakt.
+    WeakPtr(NullOptional) {}
+
     template<typename U>
     WeakPtr(WeakPtr<U> const& other) requires(IsBaseOf<T, U>)
         : m_link(other.m_link)
