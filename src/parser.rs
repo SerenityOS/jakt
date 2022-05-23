@@ -1482,7 +1482,9 @@ pub fn parse_struct(
                     }
                 }
 
-                if *index == tokens.len() || matches!(tokens[*index].contents, TokenContents::Eof) {
+                if *index == tokens.len()
+                    || !matches!(tokens[*index].contents, TokenContents::RCurly)
+                {
                     trace!("ERROR: incomplete struct");
 
                     error = error.or(Some(JaktError::ParserError(
@@ -1490,6 +1492,8 @@ pub fn parse_struct(
                         tokens[*index - 1].span,
                     )));
                 }
+                // skip the RCurly
+                *index += 1;
 
                 (
                     ParsedStruct {
@@ -1611,8 +1615,7 @@ pub fn parse_function(
 
                 while *index < tokens.len() {
                     match &tokens[*index].contents {
-                        TokenContents::RParen => {
-                            *index += 1;
+                        TokenContents::RParen | TokenContents::Eof => {
                             break;
                         }
                         TokenContents::Comma => {
@@ -1684,7 +1687,7 @@ pub fn parse_function(
                     }
                 }
 
-                if *index >= tokens.len() {
+                if *index == tokens.len() || matches!(tokens[*index].contents, TokenContents::Eof) {
                     trace!("ERROR: incomplete function");
 
                     error = error.or(Some(JaktError::ParserError(
@@ -1692,6 +1695,7 @@ pub fn parse_function(
                         tokens[*index - 1].span,
                     )));
                 }
+                *index += 1;
 
                 let mut throws = false;
 
