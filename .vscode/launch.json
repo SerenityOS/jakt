@@ -12,7 +12,14 @@
 			},
 			"program": "${cargo:program}",
 			"args": ["${file}"]
+		},
+		{
+			"name": "Launch VSCode extension",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}/editors/vscode"
+			]
 		}
-		
 	]
 }
