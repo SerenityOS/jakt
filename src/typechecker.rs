@@ -3722,7 +3722,10 @@ pub fn typecheck_unary_operation(
             | crate::compiler::U32_TYPE_ID
             | crate::compiler::U64_TYPE_ID
             | crate::compiler::F32_TYPE_ID
-            | crate::compiler::F64_TYPE_ID => {
+            | crate::compiler::F64_TYPE_ID
+            | crate::compiler::USIZE_TYPE_ID
+            | crate::compiler::CCHAR_TYPE_ID
+            | crate::compiler::CINT_TYPE_ID => {
                 if !expr.is_mutable() {
                     (
                         CheckedExpression::UnaryOp(Box::new(expr), op, span, expr_type_id),
