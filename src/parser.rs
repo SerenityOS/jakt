@@ -1307,8 +1307,9 @@ pub fn parse_struct(
 
                 while *index < tokens.len() {
                     match &tokens[*index].contents {
+                        // avoid infinite loops
+                        TokenContents::Eof => break,
                         TokenContents::RCurly => {
-                            *index += 1;
                             if last_visibility.is_some() {
                                 error = error.or(Some(JaktError::ParserError(
                                     "Expected function or parameter after visibility modifier"
@@ -1480,7 +1481,8 @@ pub fn parse_struct(
                         )))
                     }
                 }
-                if *index >= tokens.len() {
+
+                if *index == tokens.len() || matches!(tokens[*index].contents, TokenContents::Eof) {
                     trace!("ERROR: incomplete struct");
 
                     error = error.or(Some(JaktError::ParserError(
