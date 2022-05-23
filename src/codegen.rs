@@ -1485,6 +1485,15 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             output.push_str(qs);
             output.push_str("\")");
         }
+        CheckedExpression::ByteConstant(b, _) => {
+            if b.is_ascii() {
+                output.push('\'');
+                output.push(*b as char);
+                output.push('\'');
+            } else {
+                output.push_str(&format!("0x{:x}", *b));
+            }
+        }
         CheckedExpression::CharacterConstant(c, _) => {
             output.push('\'');
             output.push(*c);

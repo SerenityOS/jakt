@@ -27,6 +27,7 @@ impl Span {
 #[derive(Debug, PartialEq)]
 pub enum TokenContents {
     SingleQuotedString(String),
+    SingleQuotedByteString(String),
     QuotedString(String),
     Number(NumericConstant),
     Name(String),
@@ -829,8 +830,18 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
                 )),
             ),
         }
-    } else if bytes[*index] == b'\'' {
-        // Character
+    } else if bytes[*index] == b'\''
+        || (bytes[*index] == b'b' && *index + 1 < bytes.len() && bytes[*index + 1] == b'\'')
+    {
+        // 'c' Character literal
+        // b'c' Byte literal (u8)
+
+        let is_byte = if bytes[*index] == b'b' {
+            *index += 1;
+            true
+        } else {
+            false
+        };
 
         let start = *index;
         *index += 1;
@@ -861,13 +872,11 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
 
         let end = *index;
 
-        (
-            Token::new(
-                TokenContents::SingleQuotedString(str.to_string()),
-                Span::new(file_id, start, end),
-            ),
-            error,
-        )
+        let contents = match is_byte {
+            true => TokenContents::SingleQuotedByteString(str.to_string()),
+            false => TokenContents::SingleQuotedString(str.to_string()),
+        };
+        (Token::new(contents, Span::new(file_id, start, end)), error)
     } else if bytes[*index] == b'"' {
         // Quoted string
 
