@@ -980,7 +980,48 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
             let structure = &project.structs[*struct_id];
 
             if structure.definition_type == DefinitionType::Class {
-                let mut output = format!("static ErrorOr<NonnullRefPtr<{}>> create", function.name);
+                let mut output = String::new();
+
+                // First, generate a private constructor:
+                output.push_str("private:\n");
+
+                output.push_str(&format!("explicit {}(", function.name));
+                let mut first = true;
+                for param in &function.params {
+                    if !first {
+                        output.push_str(", ");
+                    } else {
+                        first = false;
+                    }
+                    output.push_str(&codegen_type(param.variable.type_id, project));
+                    output.push_str("&& a_");
+                    output.push_str(&param.variable.name);
+                }
+                output.push(')');
+
+                if !function.params.is_empty() {
+                    output.push_str(": ");
+                    let mut first = true;
+                    for param in &function.params {
+                        if !first {
+                            output.push_str(", ");
+                        } else {
+                            first = false;
+                        }
+                        output.push_str(&param.variable.name);
+                        output.push_str("(move(a_");
+                        output.push_str(&param.variable.name);
+                        output.push_str("))");
+                    }
+                }
+
+                output.push_str("{}\n");
+
+                output.push_str("public:\n");
+                output.push_str(&format!(
+                    "static ErrorOr<NonnullRefPtr<{}>> create",
+                    function.name
+                ));
 
                 output.push('(');
 
@@ -997,19 +1038,24 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
                     output.push_str(&param.variable.name);
                 }
                 output.push_str(&format!(
-                    ") {{ auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) {})); ",
+                    ") {{ auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) {} (",
                     function.name
                 ));
 
+                let mut first = true;
                 for param in &function.params {
-                    output.push_str("o->");
+                    if !first {
+                        output.push_str(", ");
+                    } else {
+                        first = false;
+                    }
+
+                    output.push_str("move(");
                     output.push_str(&param.variable.name);
-                    output.push_str(" = ");
-                    output.push_str(&param.variable.name);
-                    output.push_str("; ");
+                    output.push(')');
                 }
 
-                output.push_str("return o; }");
+                output.push_str("))); return o; }");
 
                 output
             } else {
