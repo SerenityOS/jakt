@@ -1,0 +1,11 @@
+function test(i : i32) -> i32 {
+    return i
+}
+
+class TestClass {
+    function init(mutable this) {}
+}
+
+function main() {
+    println("{}", test(i: 3));
+}
