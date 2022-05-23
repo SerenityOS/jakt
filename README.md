@@ -10,7 +10,7 @@ It currently transpiles to C++.
 
 ```
 jakt file.jakt
-clang++ -std=c++20 -Iruntime -Wno-user-defined-literals build/file.cpp
+clang++ -std=c++20 -I. -Iruntime -Wno-user-defined-literals ./build/file.cpp
 ```
 
 ## Goals
