@@ -1,0 +1,21 @@
+// This should not be typechecked here, but rather when it's fully instantiated and used.
+function foo<T>(anonymous x: T, anonymous y: T) -> T {
+    return x + y
+}
+
+// Make sure type inference kinda works
+function bar<T>(anonymous x: T) {
+    return x + 1
+}
+
+// Make sure we can access struct members
+struct Test {
+    a: i32
+}
+function baz<T>(anonymous x: T) -> i32 {
+    return x.a
+}
+
+function main() {
+    println("{} {} {}", foo(1, 2), bar(1 as! i8), baz(Test(a: 1)))
+}

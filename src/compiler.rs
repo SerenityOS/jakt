@@ -107,6 +107,10 @@ impl Compiler {
             return Err(err);
         }
 
+        if let Some(err) = check_codegen_preconditions(&project) {
+            return Err(err);
+        }
+
         // Hardwire to first file for now
         Ok(codegen(&project, &project.scopes[file_scope_id]))
     }
@@ -118,4 +122,19 @@ impl Compiler {
     pub fn prelude() -> Vec<u8> {
         include_bytes!("../runtime/prelude.jakt").to_vec()
     }
+}
+
+fn check_codegen_preconditions(project: &Project) -> Option<JaktError> {
+    // Make sure all functions have a known return type
+    for function in &project.functions {
+        if function.return_type_id == UNKNOWN_TYPE_ID {
+            return Some(JaktError::TypecheckError(
+                format!("Could not infer the return type of function '{}', please explicitly specify it",
+                function.name),
+                function.parsed_function.as_ref().expect("Typechecking non-parsed function").name_span,
+            ));
+        }
+    }
+
+    None
 }
