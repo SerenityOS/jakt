@@ -1154,7 +1154,7 @@ pub fn parse_enum(
             }
         }
 
-        if tokens.len() == *index {
+        if tokens.len() == *index || matches!(tokens[*index].contents, TokenContents::Eof) {
             error = error.or(Some(JaktError::ParserError(
                 "expected `}` to end the enum body".to_string(),
                 tokens[*index].span,
@@ -3891,6 +3891,12 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Op
             _ => {
                 let (expr, err) =
                     parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+
+                if err.is_some() {
+                    // bail out with no expression and an error
+                    return (ParsedExpression::OptionalNone(tokens[*index].span), err);
+                }
+
                 error = error.or(err);
 
                 if *index < tokens.len() {
