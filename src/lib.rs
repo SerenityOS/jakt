@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2022, JT <jt@serenityos.org>
+ * Copyright (c) 2022, Andreas Kling <kling@serenityos.org>
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 #![deny(clippy::all)]
 #![allow(clippy::or_fun_call)]
 #![allow(clippy::too_many_arguments)]
