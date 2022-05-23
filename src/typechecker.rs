@@ -4334,7 +4334,7 @@ pub fn typecheck_binary_operation(
                     lhs_type_id,
                     Some(JaktError::TypecheckError(
                         format!(
-                            "binary comparison operation between incompatible types {} and {}",
+                            "Binary comparison operation between incompatible types (‘{}’ and ‘{}’)",
                             project.typename_for_type_id(lhs_type_id),
                             project.typename_for_type_id(rhs_type_id)
                         ),
@@ -4402,8 +4402,9 @@ pub fn typecheck_binary_operation(
                     lhs_type_id,
                     Some(JaktError::TypecheckError(
                         format!(
-                            "assignment between incompatible types ({:?} and {:?})",
-                            lhs_type_id, rhs_type_id
+                            "Assignment between incompatible types (‘{}’ and ‘{}’)",
+                            project.typename_for_type_id(lhs_type_id),
+                            project.typename_for_type_id(rhs_type_id),
                         ),
                         span,
                     )),
@@ -4430,9 +4431,9 @@ pub fn typecheck_binary_operation(
                     lhs_type_id,
                     Some(JaktError::TypecheckError(
                         format!(
-                            "binary arithmetic operation between incompatible types {} and {}",
+                            "Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)",
                             project.typename_for_type_id(lhs_type_id),
-                            project.typename_for_type_id(rhs_type_id)
+                            project.typename_for_type_id(rhs_type_id),
                         ),
                         span,
                     )),
