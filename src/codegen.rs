@@ -1,7 +1,7 @@
 use crate::compiler::{UNKNOWN_TYPE_ID, VOID_TYPE_ID};
 use crate::typechecker::{
-    CheckedEnum, CheckedEnumVariant, CheckedMatchBody, CheckedMatchCase, FunctionGenericParameter,
-    ScopeId,
+    CheckedCall, CheckedEnum, CheckedEnumVariant, CheckedMatchBody, CheckedMatchCase,
+    FunctionGenericParameter, ScopeId,
 };
 use crate::{
     compiler,
@@ -73,6 +73,18 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
 
     output.push('\n');
 
+    for (_, enum_id) in &scope.enums {
+        let enum_ = &project.enums[*enum_id];
+        let enum_output = codegen_enum(enum_, project);
+
+        if !enum_output.is_empty() {
+            output.push_str(&enum_output);
+            output.push('\n');
+        }
+    }
+
+    output.push('\n');
+
     for (_, function_id) in &scope.functions {
         let function = &project.functions[*function_id];
         if function.linkage == FunctionLinkage::ImplicitEnumConstructor {
@@ -106,7 +118,24 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
 
     output
 }
+
 fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
+    if enum_.definition_type == DefinitionType::Class {
+        codegen_recursive_enum_predecl(enum_, project)
+    } else {
+        codegen_nonrecursive_enum_predecl(enum_, project)
+    }
+}
+
+fn codegen_enum(enum_: &CheckedEnum, project: &Project) -> String {
+    if enum_.definition_type == DefinitionType::Class {
+        codegen_recursive_enum(enum_, project)
+    } else {
+        String::new()
+    }
+}
+
+fn codegen_nonrecursive_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
     if enum_.underlying_type_id.is_some() {
         let type_id = enum_.underlying_type_id.unwrap();
         if is_integer(type_id) {
@@ -310,6 +339,329 @@ fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
             output.push('>');
         }
         output.push_str(";\n");
+    }
+
+    output.push_str("};\n");
+
+    output
+}
+
+fn codegen_recursive_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
+    if enum_.underlying_type_id.is_some() {
+        let type_id = enum_.underlying_type_id.unwrap();
+        if is_integer(type_id) {
+            let mut output = String::new();
+
+            output.push_str("enum class ");
+            output.push_str(&enum_.name);
+            output.push_str(": ");
+            output.push_str(&codegen_type(type_id, project));
+            output.push_str(";\n");
+            return output;
+        } else {
+            todo!("Enums with a non-integer underlying type")
+        }
+    }
+
+    // These are all Variant<Ts...>, make a new namespace and define the variant types first.
+    let is_generic = !enum_.generic_parameters.is_empty();
+    let generic_parameter_names = enum_
+        .generic_parameters
+        .iter()
+        .map(|p| match &project.types[*p] {
+            Type::TypeVariable(name) => name.clone(),
+            _ => unreachable!(),
+        })
+        .collect::<Vec<_>>();
+    let template_args = generic_parameter_names
+        .iter()
+        .map(|p| "typename ".to_string() + p)
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    let mut output = String::new();
+    output.push_str("namespace ");
+    output.push_str(&enum_.name);
+    output.push_str("_Details {\n");
+    for variant in &enum_.variants {
+        match variant {
+            CheckedEnumVariant::StructLike(name, _, _) => {
+                if is_generic {
+                    output.push_str("    template<");
+                    output.push_str(template_args.as_str());
+                    output.push_str(">\n");
+                }
+                output.push_str("    struct ");
+                output.push_str(name);
+                output.push_str(";\n");
+            }
+            CheckedEnumVariant::Untyped(name, _) => {
+                if is_generic {
+                    output.push_str("    template<");
+                    output.push_str(template_args.as_str());
+                    output.push_str(">\n");
+                }
+                output.push_str("    struct ");
+                output.push_str(name);
+                output.push_str(";\n");
+            }
+            CheckedEnumVariant::Typed(name, _, _) => {
+                if is_generic {
+                    output.push_str("    template<");
+                    output.push_str(template_args.as_str());
+                    output.push_str(">\n");
+                }
+                output.push_str("    struct ");
+                output.push_str(name);
+                output.push_str(";\n");
+            }
+            _ => (),
+        }
+    }
+    output.push_str("}\n");
+
+    // Now declare the variant itself.
+    if is_generic {
+        output.push_str("template<");
+        output.push_str(template_args.as_str());
+        output.push_str(">\n");
+    }
+    output.push_str("struct ");
+    output.push_str(&enum_.name);
+    output.push(';');
+
+    output
+}
+
+fn codegen_recursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
+    if enum_.underlying_type_id.is_some() {
+        let type_id = enum_.underlying_type_id.unwrap();
+        if is_integer(type_id) {
+            let mut output = String::new();
+
+            output.push_str("enum class ");
+            output.push_str(&enum_.name);
+            output.push_str(": ");
+            output.push_str(&codegen_type(type_id, project));
+            output.push_str(" {\n");
+            for variant in &enum_.variants {
+                match variant {
+                    CheckedEnumVariant::Untyped(name, _) => {
+                        output.push_str("    ");
+                        output.push_str(name);
+                        output.push_str(",\n");
+                    }
+                    CheckedEnumVariant::WithValue(name, value, _) => {
+                        output.push_str("    ");
+                        output.push_str(name);
+                        output.push_str(" = ");
+                        output.push_str(&codegen_expr(0, value, project));
+                        output.push_str(",\n");
+                    }
+                    _ => unreachable!(),
+                }
+            }
+            output.push_str("};\n");
+            return output;
+        } else {
+            todo!("Enums with a non-integer underlying type")
+        }
+    }
+
+    // These are all Variant<Ts...>, make a new namespace and define the variant types first.
+    let is_generic = !enum_.generic_parameters.is_empty();
+    let generic_parameter_names = enum_
+        .generic_parameters
+        .iter()
+        .map(|p| match &project.types[*p] {
+            Type::TypeVariable(name) => name.clone(),
+            _ => unreachable!(),
+        })
+        .collect::<Vec<_>>();
+    let template_args = generic_parameter_names
+        .iter()
+        .map(|p| "typename ".to_string() + p)
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    let mut output = String::new();
+    output.push_str("namespace ");
+    output.push_str(&enum_.name);
+    output.push_str("_Details {\n");
+    for variant in &enum_.variants {
+        match variant {
+            CheckedEnumVariant::StructLike(name, members, _) => {
+                if is_generic {
+                    output.push_str("    template<");
+                    output.push_str(template_args.as_str());
+                    output.push_str(">\n");
+                }
+                output.push_str("    struct ");
+                output.push_str(name);
+                output.push_str(" {\n");
+                for member in members {
+                    output.push_str("        ");
+                    output.push_str(&codegen_type(member.type_id, project));
+                    output.push(' ');
+                    output.push_str(&member.name);
+                    output.push_str(";\n");
+                }
+                output.push('\n');
+                output.push_str("        template<");
+                for i in 0..members.len() {
+                    if i > 0 {
+                        output.push_str(", ");
+                    }
+                    output.push_str("typename _MemberT");
+                    output.push_str(&i.to_string());
+                }
+                output.push_str(">\n");
+                output.push_str("        ");
+                output.push_str(name);
+                output.push('(');
+                for i in 0..members.len() {
+                    if i > 0 {
+                        output.push_str(", ");
+                    }
+                    output.push_str("_MemberT");
+                    output.push_str(&i.to_string());
+                    output.push_str("&& member_");
+                    output.push_str(&i.to_string());
+                }
+                output.push_str("):\n");
+                for (i, member) in members.iter().enumerate() {
+                    output.push_str("            ");
+                    output.push_str(&member.name);
+                    output.push_str("{ forward<_MemberT");
+                    output.push_str(&i.to_string());
+                    output.push_str(">(member_");
+                    output.push_str(&i.to_string());
+                    output.push_str(")}");
+                    if i < members.len() - 1 {
+                        output.push_str(",\n");
+                    } else {
+                        output.push('\n');
+                    }
+                }
+                output.push_str("    {}\n");
+                output.push_str("};\n");
+            }
+            CheckedEnumVariant::Untyped(name, _) => {
+                if is_generic {
+                    output.push_str("    template<");
+                    output.push_str(template_args.as_str());
+                    output.push_str(">\n");
+                }
+                output.push_str("    struct ");
+                output.push_str(name);
+                output.push_str(" {};\n");
+            }
+            CheckedEnumVariant::Typed(name, type_id, _) => {
+                if is_generic {
+                    output.push_str("    template<");
+                    output.push_str(template_args.as_str());
+                    output.push_str(">\n");
+                }
+                output.push_str("    struct ");
+                output.push_str(name);
+                output.push_str(" {\n");
+                output.push_str("        ");
+                output.push_str(&codegen_type(*type_id, project));
+                output.push_str(" value;\n");
+                output.push('\n');
+                output.push_str("        template<typename... Args>\n");
+                output.push_str("        ");
+                output.push_str(name);
+                output.push_str("(Args&&... args): ");
+                output.push_str(" value { forward<Args>(args)... } {}\n");
+                output.push_str("    };\n");
+            }
+            _ => (),
+        }
+    }
+    output.push_str("}\n");
+
+    // Now define the variant itself.
+    if is_generic {
+        output.push_str("template<");
+        output.push_str(template_args.as_str());
+        output.push_str(">\n");
+    }
+    output.push_str("struct ");
+    output.push_str(&enum_.name);
+    output.push_str(" : public Variant<");
+    let mut variant_args = String::new();
+    let mut first = true;
+    let mut variant_names = Vec::new();
+    for variant in &enum_.variants {
+        if first {
+            first = false;
+        } else {
+            variant_args.push_str(", ");
+        }
+        match variant {
+            CheckedEnumVariant::StructLike(name, _, _)
+            | CheckedEnumVariant::Untyped(name, _)
+            | CheckedEnumVariant::Typed(name, _, _) => {
+                variant_args.push_str(&enum_.name);
+                variant_args.push_str("_Details::");
+                variant_args.push_str(name);
+                variant_names.push(name.clone());
+                if is_generic {
+                    variant_args.push('<');
+                    variant_args.push_str(generic_parameter_names.join(", ").as_str());
+                    variant_args.push('>');
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    output.push_str(&variant_args);
+    output.push_str("> ");
+    if enum_.definition_type == DefinitionType::Class {
+        output.push_str(", public RefCounted<");
+        output.push_str(&enum_.name);
+        if is_generic {
+            output.push('<');
+            output.push_str(generic_parameter_names.join(", ").as_str());
+            output.push('>');
+        }
+        output.push('>');
+    }
+    output.push_str(" {\n");
+
+    output.push_str("    using Variant<");
+    output.push_str(&variant_args);
+    output.push_str(">::Variant;\n");
+
+    for name in &variant_names {
+        output.push_str("    using ");
+        output.push_str(name);
+        output.push_str(" = ");
+        output.push_str(&enum_.name);
+        output.push_str("_Details::");
+        output.push_str(name);
+        if is_generic {
+            output.push('<');
+            output.push_str(generic_parameter_names.join(", ").as_str());
+            output.push('>');
+        }
+        output.push_str(";\n");
+    }
+
+    if enum_.definition_type == DefinitionType::Class {
+        let mut fully_instantiated_name = enum_.name.clone();
+        if is_generic {
+            fully_instantiated_name.push('<');
+            fully_instantiated_name.push_str(generic_parameter_names.join(", ").as_str());
+            fully_instantiated_name.push('>');
+        }
+        output.push_str(
+            "    template<typename V, typename... Args> static auto create(Args&&... args) {\n",
+        );
+        output.push_str(format!("        return adopt_nonnull_ref_or_enomem(new (nothrow) {}(V(forward<Args>(args)...)));\n", fully_instantiated_name).as_str());
+        output.push_str("    }\n");
     }
 
     output.push_str("};\n");
@@ -729,6 +1081,14 @@ pub fn codegen_namespace_qualifier(scope_id: ScopeId, project: &Project) -> Stri
 }
 
 pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
+    codegen_type_possibly_as_namespace(type_id, project, false)
+}
+
+pub fn codegen_type_possibly_as_namespace(
+    type_id: TypeId,
+    project: &Project,
+    as_namespace: bool,
+) -> String {
     let mut output = String::new();
     let ty = &project.types[type_id];
 
@@ -776,11 +1136,24 @@ pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
             output
         }
         Type::GenericEnumInstance(enum_id, inner_type_ids) => {
-            output.push_str(&codegen_namespace_qualifier(
-                project.enums[*enum_id].scope_id,
-                project,
-            ));
-            output.push_str(&project.enums[*enum_id].name);
+            let mut close_tag = false;
+            if !as_namespace && project.enums[*enum_id].definition_type == DefinitionType::Class {
+                output.push_str("NonnullRefPtr<");
+                let qualifier =
+                    codegen_namespace_qualifier(project.enums[*enum_id].scope_id, project);
+                if !qualifier.is_empty() {
+                    output.push_str("typename ");
+                    output.push_str(&qualifier);
+                }
+                output.push_str(&project.enums[*enum_id].name);
+                close_tag = true;
+            } else {
+                output.push_str(&codegen_namespace_qualifier(
+                    project.enums[*enum_id].scope_id,
+                    project,
+                ));
+                output.push_str(&project.enums[*enum_id].name);
+            }
             output.push('<');
             let mut first = true;
             for type_id in inner_type_ids {
@@ -793,10 +1166,14 @@ pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
                 output.push_str(&codegen_type(*type_id, project));
             }
             output.push('>');
+            if close_tag {
+                output.push('>');
+            }
             output
         }
         Type::Struct(struct_id) => {
-            if project.structs[*struct_id].definition_type == DefinitionType::Class {
+            if !as_namespace && project.structs[*struct_id].definition_type == DefinitionType::Class
+            {
                 output.push_str("NonnullRefPtr<");
                 output.push_str(&codegen_namespace_qualifier(
                     project.structs[*struct_id].scope_id,
@@ -815,11 +1192,23 @@ pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
             output
         }
         Type::Enum(enum_id) => {
-            output.push_str(&codegen_namespace_qualifier(
-                project.enums[*enum_id].scope_id,
-                project,
-            ));
-            output.push_str(&project.enums[*enum_id].name);
+            if !as_namespace && project.enums[*enum_id].definition_type == DefinitionType::Class {
+                output.push_str("NonnullRefPtr<");
+                let qualifier =
+                    codegen_namespace_qualifier(project.enums[*enum_id].scope_id, project);
+                if !qualifier.is_empty() {
+                    output.push_str("typename ");
+                    output.push_str(&qualifier);
+                }
+                output.push_str(&project.enums[*enum_id].name);
+                output.push('>');
+            } else {
+                output.push_str(&codegen_namespace_qualifier(
+                    project.enums[*enum_id].scope_id,
+                    project,
+                ));
+                output.push_str(&project.enums[*enum_id].name);
+            }
 
             output
         }
@@ -1207,32 +1596,11 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 }
                 output.push(')');
             } else {
-                for (idx, namespace) in call.namespace.iter().enumerate() {
-                    // hack warning: this is to get around C++'s limitation that a constructor
-                    // can't be called like other static methods
-                    if idx == call.namespace.len() - 1 && namespace.name == call.name {
-                        break;
-                    }
-                    if call.linkage == FunctionLinkage::ImplicitEnumConstructor {
-                        output.push_str("typename ");
-                    }
-                    output.push_str(namespace.name.as_str());
-                    if let Some(params) = &namespace.generic_parameters {
-                        output.push('<');
-                        for (i, param) in params.iter().enumerate() {
-                            output.push_str(&codegen_type(*param, project));
-                            if i != params.len() - 1 {
-                                output.push(',');
-                            }
-                        }
-                        output.push('>');
-                    }
-                    output.push_str("::")
-                }
-
                 if call.linkage == FunctionLinkage::ImplicitConstructor {
                     let type_id = call.type_id;
                     let ty = &project.types[type_id];
+
+                    output.push_str(&codegen_namespace_path(call, project));
                     match ty {
                         Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
                             let structure = &project.structs[*struct_id];
@@ -1249,7 +1617,35 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                             panic!("internal error: constructor expected class or struct type")
                         }
                     }
+                } else if call.linkage == FunctionLinkage::ImplicitEnumConstructor {
+                    let type_id = call.type_id;
+                    let type_ = &project.types[type_id];
+                    match type_ {
+                        Type::Enum(enum_id) | Type::GenericEnumInstance(enum_id, _) => {
+                            let enum_ = &project.enums[*enum_id];
+
+                            if enum_.definition_type == DefinitionType::Struct {
+                                output.push_str("typename ");
+                                output.push_str(&codegen_namespace_path(call, project));
+                                output.push_str(&call.name);
+                            } else {
+                                output.push_str(&codegen_namespace_path(call, project));
+                                output.push_str("template create<");
+                                output.push_str("typename ");
+                                output.push_str(&codegen_type_possibly_as_namespace(
+                                    type_id, project, true,
+                                ));
+                                output.push_str("::");
+                                output.push_str(&call.name);
+                                output.push('>');
+                            }
+                        }
+                        _ => {
+                            panic!("internal error: constructor expected enum type")
+                        }
+                    }
                 } else {
+                    output.push_str(&codegen_namespace_path(call, project));
                     output.push_str(&call.name);
                 }
 
@@ -1347,6 +1743,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 }
             };
             let enum_ = &project.enums[id];
+            let needs_deref = enum_.definition_type == DefinitionType::Class;
             match enum_.underlying_type_id {
                 Some(_) => {
                     output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(([&]() -> JaktInternal::ExplicitValueOrReturn<");
@@ -1355,11 +1752,18 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     output.push_str("_JaktCurrentFunctionReturnType");
                     output.push_str("> { \n");
                     output.push_str("switch (");
+                    if needs_deref {
+                        output.push('*');
+                    }
                     output.push_str(&codegen_expr(indent, expr, project));
                     output.push_str(") {\n");
                     for case in cases {
                         output.push_str("case ");
-                        output.push_str(&codegen_type(expr.type_id(), project));
+                        output.push_str(&codegen_type_possibly_as_namespace(
+                            expr.type_id(),
+                            project,
+                            true,
+                        ));
                         output.push_str("::");
                         match case {
                             CheckedMatchCase::EnumVariant {
@@ -1389,7 +1793,13 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 None => {
                     output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN((");
                     output.push_str(&codegen_expr(indent, expr, project));
-                    output.push_str(").visit(");
+                    output.push(')');
+                    if needs_deref {
+                        output.push_str("->");
+                    } else {
+                        output.push('.');
+                    }
+                    output.push_str("visit(");
                     let mut first = true;
                     for case in cases {
                         if !first {
@@ -1418,7 +1828,11 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                 match variant {
                                     CheckedEnumVariant::Typed(name, _, _) => {
                                         output.push_str("typename ");
-                                        output.push_str(&codegen_type(*subject_type_id, project));
+                                        output.push_str(&codegen_type_possibly_as_namespace(
+                                            *subject_type_id,
+                                            project,
+                                            true,
+                                        ));
                                         output.push_str("::");
                                         output.push_str(name);
                                         output.push_str(
@@ -1444,7 +1858,11 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                     }
                                     CheckedEnumVariant::Untyped(name, _) => {
                                         output.push_str("typename ");
-                                        output.push_str(&codegen_type(*subject_type_id, project));
+                                        output.push_str(&codegen_type_possibly_as_namespace(
+                                            *subject_type_id,
+                                            project,
+                                            true,
+                                        ));
                                         output.push_str("::");
                                         output.push_str(name);
                                         output.push_str(
@@ -1458,7 +1876,11 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                     }
                                     CheckedEnumVariant::StructLike(name, _, _) => {
                                         output.push_str("typename ");
-                                        output.push_str(&codegen_type(*subject_type_id, project));
+                                        output.push_str(&codegen_type_possibly_as_namespace(
+                                            *subject_type_id,
+                                            project,
+                                            true,
+                                        ));
                                         output.push_str("::");
                                         output.push_str(name);
                                         output.push_str(
@@ -1838,6 +2260,31 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             // Incorrect parse/typecheck
             // Probably shouldn't be able to get to this point?
         }
+    }
+
+    output
+}
+
+fn codegen_namespace_path(call: &CheckedCall, project: &Project) -> String {
+    let mut output = String::new();
+    for (idx, namespace) in call.namespace.iter().enumerate() {
+        // hack warning: this is to get around C++'s limitation that a constructor
+        // can't be called like other static methods
+        if idx == call.namespace.len() - 1 && namespace.name == call.name {
+            break;
+        }
+        output.push_str(namespace.name.as_str());
+        if let Some(params) = &namespace.generic_parameters {
+            output.push('<');
+            for (i, param) in params.iter().enumerate() {
+                output.push_str(&codegen_type(*param, project));
+                if i != params.len() - 1 {
+                    output.push(',');
+                }
+            }
+            output.push('>');
+        }
+        output.push_str("::")
     }
 
     output

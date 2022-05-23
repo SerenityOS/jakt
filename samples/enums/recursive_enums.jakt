@@ -1,0 +1,35 @@
+enum Operation {
+    Add
+}
+
+ref enum AST {
+    Int(i64)
+    BinaryOperation(lhs: AST, op: Operation, rhs: AST)
+}
+
+function eval(anonymous ast: AST) -> i64 {
+    match ast {
+        AST::Int(i) => {
+            return i
+        }
+        AST::BinaryOperation(lhs: lhs, op: op, rhs: rhs) => {
+            match op {
+                Operation::Add => {
+                    return eval(lhs) + eval(rhs)
+                }
+            }
+        }
+    }
+
+    return 0
+}
+
+function main() {
+    let ast = AST::BinaryOperation(
+        lhs: AST::Int(5), 
+        op: Operation::Add(), 
+        rhs: AST::Int(10)
+    )
+
+    println("result: {}", eval(ast))
+}
