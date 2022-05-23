@@ -1180,8 +1180,6 @@ pub fn typecheck_namespace(
         }
     }
 
-    let project_function_len = project.functions.len();
-
     for (enum_id, enum_) in parsed_namespace.enums.iter().enumerate() {
         // Finish typechecking the full enum
         error = error.or(typecheck_enum(
@@ -1193,6 +1191,8 @@ pub fn typecheck_namespace(
             project,
         ));
     }
+
+    let project_function_len = project.functions.len();
 
     for function in &parsed_namespace.functions {
         // Ensure we know the function prototypes ahead of time, so that
