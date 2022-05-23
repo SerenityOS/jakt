@@ -1,4 +1,4 @@
-# Vim syntax highlighting for jakt
+# Vim syntax highlighting for Jakt
 
 **Install**
 
