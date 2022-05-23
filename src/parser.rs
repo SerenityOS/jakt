@@ -500,10 +500,25 @@ pub fn parse_namespace(
                 "ref" => {
                     *index += 1;
 
-                    let (enum_, err) = parse_enum(tokens, index, DefinitionLinkage::Internal, true);
-                    error = error.or(err);
+                    if let Some(Token {
+                        contents: TokenContents::Name(name),
+                        ..
+                    }) = tokens.get(*index)
+                    {
+                        if name == "enum" {
+                            let (enum_, err) =
+                                parse_enum(tokens, index, DefinitionLinkage::Internal, true);
+                            error = error.or(err);
 
-                    parsed_namespace.enums.push(enum_);
+                            parsed_namespace.enums.push(enum_);
+                            continue;
+                        }
+                    }
+
+                    error = error.or(Some(JaktError::ParserError(
+                        "expected enum keyword".to_string(),
+                        tokens[*index].span,
+                    )));
                 }
                 "enum" => {
                     let (enum_, err) =
@@ -671,10 +686,10 @@ pub fn parse_namespace(
 }
 
 fn skip_newlines(tokens: &[Token], index: &mut usize) {
-    while let Token {
+    while let Some(Token {
         contents: TokenContents::Eol,
         ..
-    } = tokens[*index]
+    }) = tokens.get(*index)
     {
         *index += 1;
     }
