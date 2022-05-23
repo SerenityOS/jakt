@@ -25,6 +25,8 @@ namespace AK {
 template<typename>
 class Optional;
 
+struct NullOptional {};
+
 template<typename T>
 requires(!IsLvalueReference<T>) class [[nodiscard]] Optional<T> {
     template<typename U>
@@ -36,6 +38,10 @@ public:
     using ValueType = T;
 
     ALWAYS_INLINE Optional() = default;
+
+    ALWAYS_INLINE Optional(NullOptional)
+    {
+    }
 
 #ifdef AK_HAS_CONDITIONALLY_TRIVIAL
     Optional(Optional const& other) requires(!IsCopyConstructible<T>) = delete;
