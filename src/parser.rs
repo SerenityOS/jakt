@@ -145,7 +145,7 @@ pub enum DefinitionType {
     Struct,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ParsedFunction {
     pub name: String,
     pub visibility: Visibility,
@@ -156,6 +156,7 @@ pub struct ParsedFunction {
     pub throws: bool,
     pub return_type: ParsedType,
     pub linkage: FunctionLinkage,
+    pub must_instantiate: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -175,6 +176,7 @@ pub struct ParsedVariable {
     pub name: String,
     pub parsed_type: ParsedType,
     pub mutable: bool,
+    pub span: Span,
 }
 
 impl ParsedFunction {
@@ -193,6 +195,7 @@ impl ParsedFunction {
             throws: false,
             return_type: ParsedType::Empty,
             linkage,
+            must_instantiate: false,
         }
     }
 }
@@ -1138,9 +1141,13 @@ pub fn parse_struct(
                             });
                             last_visibility = None;
 
-                            let (function, err) =
+                            let (mut function, err) =
                                 parse_function(tokens, index, function_linkage, visibility);
                             error = error.or(err);
+
+                            if definition_linkage == DefinitionLinkage::External {
+                                function.must_instantiate = true;
+                            }
 
                             methods.push(function);
                         }
@@ -1366,6 +1373,7 @@ pub fn parse_function(
                                     name: "this".to_string(),
                                     parsed_type: ParsedType::Empty,
                                     mutable: current_param_is_mutable,
+                                    span: tokens[*index - 1].span,
                                 },
                             });
                         }
@@ -1392,6 +1400,7 @@ pub fn parse_function(
                                     name: var_decl.name,
                                     parsed_type: var_decl.parsed_type,
                                     mutable: var_decl.mutable,
+                                    span: tokens[*index - 1].span,
                                 },
                             });
                         }
@@ -1492,6 +1501,7 @@ pub fn parse_function(
                             throws,
                             return_type,
                             linkage,
+                            must_instantiate: true,
                         },
                         error,
                     );
@@ -1518,6 +1528,7 @@ pub fn parse_function(
                         throws,
                         return_type,
                         linkage,
+                        must_instantiate: false,
                     },
                     error,
                 )

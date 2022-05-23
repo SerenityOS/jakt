@@ -955,7 +955,14 @@ fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
         }
     }
 
-    let block = codegen_block(INDENT_SIZE, &function.block, project);
+    let block = codegen_block(
+        INDENT_SIZE,
+        function
+            .block
+            .as_ref()
+            .expect("Function being generated must be checked"),
+        project,
+    );
     output.push_str(&block);
 
     if function.name == "main" {
@@ -1201,10 +1208,12 @@ pub fn codegen_type_possibly_as_namespace(
                 output.push_str(&project.enums[*enum_id].name);
                 close_tag = true;
             } else {
-                output.push_str(&codegen_namespace_qualifier(
-                    project.enums[*enum_id].scope_id,
-                    project,
-                ));
+                let qualifier =
+                    codegen_namespace_qualifier(project.enums[*enum_id].scope_id, project);
+                if !qualifier.is_empty() {
+                    output.push_str("typename ");
+                    output.push_str(&qualifier);
+                }
                 output.push_str(&project.enums[*enum_id].name);
             }
             output.push('<');
@@ -1256,10 +1265,12 @@ pub fn codegen_type_possibly_as_namespace(
                 output.push_str(&project.enums[*enum_id].name);
                 output.push('>');
             } else {
-                output.push_str(&codegen_namespace_qualifier(
-                    project.enums[*enum_id].scope_id,
-                    project,
-                ));
+                let qualifier =
+                    codegen_namespace_qualifier(project.enums[*enum_id].scope_id, project);
+                if !qualifier.is_empty() {
+                    output.push_str("typename ");
+                    output.push_str(&qualifier);
+                }
                 output.push_str(&project.enums[*enum_id].name);
             }
 
@@ -1410,6 +1421,7 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
         CheckedStatement::Garbage => {
             // Incorrect parse/typecheck
             // Probably shouldn't be able to get to this point?
+            panic!("Garbage statement in codegen");
         }
     }
 
@@ -1744,7 +1756,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 CheckedExpression::Var(CheckedVariable { name, .. }, _) if name == "this" => {
                     output.push_str("->");
                 }
-                x => match &project.types[x.type_id()] {
+                x => match &project.types[x.type_id_or_type_var()] {
                     Type::RawPtr(_) => {
                         output.push_str("->");
                     }
@@ -1782,7 +1794,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
         }
         CheckedExpression::Match(expr, cases, _, return_type_id) => {
-            let expr_type = &project.types[expr.type_id()];
+            let expr_type = &project.types[expr.type_id_or_type_var()];
             let id = match expr_type {
                 Type::GenericEnumInstance(id, _) | Type::Enum(id) => *id,
                 _ => {
@@ -1807,7 +1819,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     for case in cases {
                         output.push_str("case ");
                         output.push_str(&codegen_type_possibly_as_namespace(
-                            expr.type_id(),
+                            expr.type_id_or_type_var(),
                             project,
                             true,
                         ));
@@ -1966,7 +1978,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                         output.push_str(">();\n");
                                     }
                                     CheckedMatchBody::Expression(expr) => {
-                                        if expr.type_id() == VOID_TYPE_ID {
+                                        if expr.type_id_or_type_var() == VOID_TYPE_ID {
                                             output.push_str("   return (");
                                             output.push_str(&codegen_expr(
                                                 indent + 1,
@@ -2100,13 +2112,13 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 | BinaryOperator::Multiply
                 | BinaryOperator::Divide
                 | BinaryOperator::Modulo
-                    if is_integer(expr.type_id()) =>
+                    if is_integer(expr.type_id_or_type_var()) =>
                 {
                     output.push_str(&codegen_checked_binary_op(
                         indent,
                         lhs,
                         rhs,
-                        expr.type_id(),
+                        expr.type_id_or_type_var(),
                         op,
                         project,
                     ))
@@ -2116,13 +2128,13 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 | BinaryOperator::MultiplyAssign
                 | BinaryOperator::DivideAssign
                 | BinaryOperator::ModuloAssign
-                    if is_integer(expr.type_id()) =>
+                    if is_integer(expr.type_id_or_type_var()) =>
                 {
                     output.push_str(&codegen_checked_binary_op_assign(
                         indent,
                         lhs,
                         rhs,
-                        expr.type_id(),
+                        expr.type_id_or_type_var(),
                         op,
                         project,
                     ))
@@ -2170,7 +2182,10 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         CheckedExpression::Array(vals, fill_size_expr, _, _) => {
             if let Some(fill_size_expr) = fill_size_expr {
                 output.push_str("(TRY(Array<");
-                output.push_str(&codegen_type(vals.first().unwrap().type_id(), project));
+                output.push_str(&codegen_type(
+                    vals.first().unwrap().type_id_or_type_var(),
+                    project,
+                ));
                 output.push_str(">::filled(");
                 output.push_str(&codegen_expr(indent, fill_size_expr, project));
                 output.push_str(", ");
@@ -2194,8 +2209,8 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         }
         CheckedExpression::Dictionary(vals, _, _) => {
             // (Dictionary({1, 2, 3}))
-            let key_type_id = vals[0].0.type_id();
-            let value_type_id = vals[0].1.type_id();
+            let key_type_id = vals[0].0.type_id_or_type_var();
+            let value_type_id = vals[0].1.type_id_or_type_var();
 
             output.push_str(&format!(
                 "(TRY(Dictionary<{}, {}>::create_with_entries({{",
@@ -2220,7 +2235,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         }
         CheckedExpression::Set(values, _, _) => {
             // (Set({1, 2, 3}))
-            let value_type_id = values.first().unwrap().type_id();
+            let value_type_id = values.first().unwrap().type_id_or_type_var();
 
             output.push_str(&format!(
                 "(Set<{}>({{",
@@ -2282,7 +2297,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 CheckedExpression::Var(CheckedVariable { name, .. }, _) if name == "this" => {
                     output.push_str("->");
                 }
-                x => match &project.types[x.type_id()] {
+                x => match &project.types[x.type_id_or_type_var()] {
                     Type::RawPtr(_) => {
                         output.push_str("->");
                     }
