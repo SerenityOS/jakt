@@ -921,12 +921,6 @@ pub fn parse_enum(
                         },
                     ));
                 }
-                Some(Token {
-                    contents: TokenContents::RCurly,
-                    ..
-                }) => {
-                    break;
-                }
                 _ => {
                     enum_.variants.push(EnumVariant::Untyped(
                         name.to_string(),
@@ -936,6 +930,13 @@ pub fn parse_enum(
                             end: tokens[*index].span.end,
                         },
                     ));
+                    if let Some(Token {
+                        contents: TokenContents::RCurly,
+                        ..
+                    }) = tokens.get(*index)
+                    {
+                        break;
+                    }
                 }
             }
 
