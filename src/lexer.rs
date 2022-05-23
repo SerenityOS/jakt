@@ -881,8 +881,8 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
 
         if *index == bytes.len() || bytes[*index] != b'"' {
             error = error.or(Some(JaktError::ParserError(
-                "expected quote".to_string(),
-                Span::new(file_id, *index, *index),
+                "expected end quote".to_string(),
+                Span::new(file_id, start, start + 1),
             )));
         }
 

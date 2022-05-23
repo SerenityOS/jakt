@@ -42,8 +42,8 @@ fn main() -> Result<(), JaktError> {
         }
     }
 
-    if let Some(error) = first_error {
-        Err(error)
+    if first_error.is_some() {
+        std::process::exit(1)
     } else {
         Ok(())
     }
@@ -123,24 +123,99 @@ fn parse_arguments() -> JaktArguments {
 
 fn display_error(compiler: &Compiler, msg: &str, span: Span) {
     println!("Error: {}", msg);
-    println!("-----");
 
     let file_contents = compiler.get_file_contents(span.file_id);
 
-    let mut index = 0;
+    let line_spans = line_spans(file_contents);
 
-    while index <= file_contents.len() {
+    let mut line_index = 0;
+    let largest_line_number = line_spans.len();
+
+    let width = format!("{}", largest_line_number).len();
+    println!("{}", "-".repeat(width + 3));
+
+    while line_index < line_spans.len() {
+        if span.start >= line_spans[line_index].0 && span.start < line_spans[line_index].1 {
+            if line_index > 0 {
+                print_source_line(
+                    file_contents,
+                    line_spans[line_index - 1],
+                    span,
+                    line_index - 1,
+                    largest_line_number,
+                );
+            }
+            print_source_line(
+                file_contents,
+                line_spans[line_index],
+                span,
+                line_index,
+                largest_line_number,
+            );
+
+            print!(
+                "{}",
+                " ".repeat(line_spans[line_index].1 - line_spans[line_index].0 + width + 2)
+            );
+            println!("\u{001b}[31m^- {}\u{001b}[0m", msg);
+
+            while line_index < line_spans.len() && span.end > line_spans[line_index].0 {
+                line_index += 1;
+                if line_index >= line_spans.len() {
+                    break;
+                }
+                print_source_line(
+                    file_contents,
+                    line_spans[line_index],
+                    span,
+                    line_index,
+                    largest_line_number,
+                );
+            }
+
+            break;
+        } else {
+            line_index += 1
+        }
+    }
+
+    if span.start == span.end && span.start == file_contents.len() && line_index > 0 {
+        print_source_line(
+            file_contents,
+            line_spans[line_index - 1],
+            span,
+            line_index - 1,
+            largest_line_number,
+        );
+    }
+
+    println!("\u{001b}[0m{}", "-".repeat(width + 3));
+}
+
+fn print_source_line(
+    file_contents: &[u8],
+    file_span: (usize, usize),
+    error_span: Span,
+    line_number: usize,
+    largest_line_number: usize,
+) {
+    let mut index = file_span.0;
+
+    let width = format!("{}", largest_line_number).len();
+
+    print!(" {:<width$} | ", line_number);
+    while index <= file_span.1 {
         let c;
-        if index < file_contents.len() {
+        if index < file_span.1 {
             c = file_contents[index];
-        } else if span.start == span.end && index == span.start {
+        } else if error_span.start == error_span.end && index == error_span.start {
             c = b'_';
         } else {
             c = b' ';
         }
 
-        if (index >= span.start && index < span.end)
-            || (span.start == span.end && index == span.start)
+        if (index >= error_span.start && index < error_span.end)
+            || (error_span.start == error_span.end && index == error_span.start)
         {
             // In the error span
 
@@ -151,5 +226,23 @@ fn display_error(compiler: &Compiler, msg: &str, span: Span) {
         index += 1;
     }
     println!();
-    println!("\u{001b}[0m-----");
+}
+
+fn line_spans(contents: &[u8]) -> Vec<(usize, usize)> {
+    let mut idx = 0;
+    let mut output = vec![];
+
+    let mut start = idx;
+    while idx < contents.len() {
+        if contents[idx] == b'\n' {
+            output.push((start, idx));
+            start = idx + 1;
+        }
+        idx += 1;
+    }
+    if start < idx {
+        output.push((start, idx));
+    }
+
+    output
 }
