@@ -636,6 +636,7 @@ pub fn parse_namespace(
                                 _ => {
                                     trace!("ERROR: unexpected keyword");
 
+                                    *index += 1;
                                     error = error.or(Some(JaktError::ParserError(
                                         "unexpected keyword".to_string(),
                                         *span,
@@ -643,11 +644,12 @@ pub fn parse_namespace(
                                 }
                             },
                             _ => {
-                                trace!("ERROR: unexpected keyword");
+                                trace!("ERROR: unexpected token");
 
+                                *index += 1;
                                 error = error.or(Some(JaktError::ParserError(
-                                    "unexpected keyword".to_string(),
-                                    *span,
+                                    "unexpected token".to_string(),
+                                    tokens[*index].span,
                                 )));
                             }
                         }
