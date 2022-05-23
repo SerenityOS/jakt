@@ -3197,7 +3197,6 @@ pub fn typecheck_expression(
                                         let span = *span;
                                         error = error.or(err);
                                         if !body.definitely_returns {
-                                            println!("{:?}", body);
                                             match final_result_type {
                                                 Some(ty) => {
                                                     if let Some(err) = check_types_for_compat(
