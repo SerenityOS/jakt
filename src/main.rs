@@ -43,6 +43,7 @@ fn main() -> Result<(), JaktError> {
                     JaktError::ParserError(msg, span) => display_error(&compiler, msg, *span),
                     JaktError::TypecheckError(msg, span) => display_error(&compiler, msg, *span),
                     JaktError::ValidationError(msg, span) => display_error(&compiler, msg, *span),
+                    JaktError::GlobalError(msg) => println!("Error: {}", msg),
                 }
                 first_error = first_error.or(Some(err));
             }

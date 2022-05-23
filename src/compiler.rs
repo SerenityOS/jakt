@@ -107,6 +107,14 @@ impl Compiler {
             return Err(err);
         }
 
+        let main_function_id = project.find_function_in_scope(file_scope_id, "main");
+        if main_function_id.is_none() {
+            return Err(JaktError::GlobalError(
+                "No program entry point was specified (the main function needs to be defined)"
+                    .to_string(),
+            ));
+        }
+
         // Hardwire to first file for now
         Ok(codegen(&project, &project.scopes[file_scope_id]))
     }

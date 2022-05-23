@@ -1,0 +1,3 @@
+function not_main() -> c_int {
+    return 42;
+}

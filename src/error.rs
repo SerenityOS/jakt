@@ -13,6 +13,7 @@ pub enum JaktError {
     ParserError(String, Span),
     ValidationError(String, Span),
     TypecheckError(String, Span),
+    GlobalError(String),
 }
 
 impl From<std::io::Error> for JaktError {
