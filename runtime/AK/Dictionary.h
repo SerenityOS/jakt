@@ -45,7 +45,7 @@ public:
         return {};
     }
 
-    // FIXME: Remove this constructor once jakt knows how to call Dictionary::create_empty()
+    // FIXME: Remove this constructor once Jakt knows how to call Dictionary::create_empty()
     Dictionary()
         : m_storage(MUST(adopt_nonnull_ref_or_enomem(new (nothrow) Storage)))
     {
