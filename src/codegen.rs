@@ -25,7 +25,7 @@ const INDENT_SIZE: usize = 4;
 pub fn codegen(project: &Project, scope: &Scope) -> String {
     let mut output = String::new();
 
-    output.push_str("#include \"runtime/lib.h\"\n");
+    output.push_str("#include <lib.h>\n");
 
     output.push_str(&codegen_namespace(project, scope));
 
