@@ -1,0 +1,6 @@
+function main() {
+    let mutable b = b'b'
+    println("{:c} {:c}", b, b'b')
+    ++b 
+    println("{:x}", b)
+}

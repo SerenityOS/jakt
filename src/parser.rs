@@ -253,6 +253,7 @@ pub enum ParsedExpression {
     NumericConstant(NumericConstant, Span),
     QuotedString(String, Span),
     CharacterLiteral(char, Span),
+    ByteLiteral(u8, Span),
     Array(Vec<ParsedExpression>, Option<Box<ParsedExpression>>, Span),
     Dictionary(Vec<(ParsedExpression, ParsedExpression)>, Span),
     Set(Vec<ParsedExpression>, Span),
@@ -295,6 +296,7 @@ impl ParsedExpression {
             ParsedExpression::Boolean(_, span) => *span,
             ParsedExpression::NumericConstant(_, span) => *span,
             ParsedExpression::QuotedString(_, span) => *span,
+            ParsedExpression::ByteLiteral(_, span) => *span,
             ParsedExpression::CharacterLiteral(_, span) => *span,
             ParsedExpression::Array(_, _, span) => *span,
             ParsedExpression::Dictionary(_, span) => *span,
@@ -2671,6 +2673,14 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
             *index += 1;
             if let Some(first) = c.chars().next() {
                 ParsedExpression::CharacterLiteral(first, span)
+            } else {
+                ParsedExpression::Garbage(span)
+            }
+        }
+        TokenContents::SingleQuotedByteString(c) => {
+            *index += 1;
+            if let Some(first) = c.chars().next() {
+                ParsedExpression::ByteLiteral(first as u8, span)
             } else {
                 ParsedExpression::Garbage(span)
             }

@@ -807,6 +807,7 @@ pub enum CheckedExpression {
     Boolean(bool, Span),
     NumericConstant(NumericConstant, Span, TypeId),
     QuotedString(String, Span),
+    ByteConstant(u8, Span),
     CharacterConstant(char, Span),
     UnaryOp(Box<CheckedExpression>, CheckedUnaryOperator, Span, TypeId),
     BinaryOp(
@@ -854,6 +855,7 @@ impl CheckedExpression {
             CheckedExpression::Call(_, _, type_id) => *type_id,
             CheckedExpression::NumericConstant(_, _, type_id) => *type_id,
             CheckedExpression::QuotedString(_, _) => STRING_TYPE_ID,
+            CheckedExpression::ByteConstant(_, _) => U8_TYPE_ID,
             CheckedExpression::CharacterConstant(_, _) => CCHAR_TYPE_ID, // use the C one for now
             CheckedExpression::UnaryOp(_, _, _, type_id) => *type_id,
             CheckedExpression::BinaryOp(_, _, _, _, type_id) => *type_id,
@@ -883,6 +885,7 @@ impl CheckedExpression {
             CheckedExpression::Call(_, span, _) => *span,
             CheckedExpression::NumericConstant(_, span, _) => *span,
             CheckedExpression::QuotedString(_, span) => *span,
+            CheckedExpression::ByteConstant(_, span) => *span,
             CheckedExpression::CharacterConstant(_, span) => *span,
             CheckedExpression::UnaryOp(_, _, span, _) => *span,
             CheckedExpression::BinaryOp(_, _, _, span, _) => *span,
@@ -2750,6 +2753,11 @@ pub fn typecheck_expression(
             let (_, err) = unify_with_type_hint(project, &STRING_TYPE_ID);
 
             (CheckedExpression::QuotedString(qs.clone(), *span), err)
+        }
+        ParsedExpression::ByteLiteral(b, span) => {
+            let (_, err) = unify_with_type_hint(project, &U8_TYPE_ID);
+
+            (CheckedExpression::ByteConstant(*b, *span), err)
         }
         ParsedExpression::CharacterLiteral(c, span) => {
             let (_, err) = unify_with_type_hint(project, &CCHAR_TYPE_ID);
