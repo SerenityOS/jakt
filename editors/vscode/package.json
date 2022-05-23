@@ -14,7 +14,11 @@
             "id": "jakt",
             "aliases": ["jakt", "jakt"],
             "extensions": [".jakt"],
-            "configuration": "./language-configuration.json"
+            "configuration": "./language-configuration.json",
+            "icon": {
+                "light": "./logo.svg",
+                "dark": "./logo.svg"
+            }
         }],
         "grammars": [{
             "language": "jakt",
