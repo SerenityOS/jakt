@@ -6,7 +6,7 @@ function main() {
     let foo1 = Foo(x: 1)
     let foo2 = Foo(x: 2)
 
-    let mutable weak_foo: weak Foo = None
+    let mutable weak_foo: weak Foo? = None
     weak_foo = foo1
     println("{}", weak_foo!.x)
 

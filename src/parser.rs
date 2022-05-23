@@ -4005,6 +4005,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Optio
             if name == "raw" || name == "weak" {
                 *index += 1;
                 if *index < tokens.len() {
+                    let typename_start = tokens[*index].span;
                     let (child_parsed_type, err) = parse_typename(tokens, index);
                     error = error.or(err);
 
@@ -4018,14 +4019,30 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Optio
                             },
                         );
                     } else if name == "weak" {
-                        unchecked_type = ParsedType::WeakPtr(
-                            Box::new(child_parsed_type),
-                            Span {
-                                file_id: start.file_id,
-                                start: start.start,
-                                end: tokens[*index - 1].span.end,
-                            },
-                        );
+                        match child_parsed_type {
+                            ParsedType::Optional(optional_type, ..) => {
+                                unchecked_type = ParsedType::WeakPtr(
+                                    optional_type,
+                                    Span {
+                                        file_id: start.file_id,
+                                        start: start.start,
+                                        end: tokens[*index - 1].span.end,
+                                    },
+                                );
+                            }
+                            _ => {
+                                trace!("ERROR: missing `?` after weak pointer type name");
+
+                                error = error.or(Some(JaktError::ParserError(
+                                    "missing `?` after weak pointer type name".to_string(),
+                                    Span {
+                                        file_id: typename_start.file_id,
+                                        start: typename_start.start,
+                                        end: tokens[*index - 1].span.end,
+                                    },
+                                )));
+                            }
+                        }
                     }
                 }
             } else {

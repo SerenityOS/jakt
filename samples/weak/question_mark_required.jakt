@@ -1,0 +1,11 @@
+class Foo {
+
+}
+
+function main() {
+
+   let foo: weak Foo = None
+
+   println("Oh no!")
+
+}
