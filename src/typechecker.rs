@@ -164,15 +164,15 @@ impl Project {
         }
     }
 
-    pub fn find_or_add_type_id(&mut self, ty: Type) -> TypeId {
+    pub fn find_or_add_type_id(&mut self, type_: Type) -> TypeId {
         for (idx, t) in self.types.iter().enumerate() {
-            if t == &ty {
+            if t == &type_ {
                 return idx;
             }
         }
 
         // in the future, we may want to group related types (like instantiations of the same generic)
-        self.types.push(ty);
+        self.types.push(type_);
 
         self.types.len() - 1
     }
@@ -1340,7 +1340,7 @@ fn typecheck_enum(
                         } else {
                             member_names.insert(member.name.clone());
                             let (decl, type_error) =
-                                typecheck_typename(&member.ty, enum_scope_id, project);
+                                typecheck_typename(&member.parsed_type, enum_scope_id, project);
                             error = error.or(type_error);
                             checked_members.push(CheckedVarDecl {
                                 name: member.name.clone(),
@@ -1568,7 +1568,7 @@ fn typecheck_struct_predecl(
                 });
             } else {
                 let (param_type, err) =
-                    typecheck_typename(&param.variable.ty, method_scope_id, project);
+                    typecheck_typename(&param.variable.parsed_type, method_scope_id, project);
                 error = error.or(err);
 
                 let checked_variable = CheckedVariable {
@@ -1632,8 +1632,11 @@ fn typecheck_struct(
     let struct_type_id = project.find_or_add_type_id(Type::Struct(struct_id));
 
     for unchecked_member in &structure.fields {
-        let (checked_member_type, err) =
-            typecheck_typename(&unchecked_member.ty, checked_struct_scope_id, project);
+        let (checked_member_type, err) = typecheck_typename(
+            &unchecked_member.parsed_type,
+            checked_struct_scope_id,
+            project,
+        );
         error = error.or(err);
 
         fields.push(CheckedVarDecl {
@@ -1747,7 +1750,8 @@ fn typecheck_function_predecl(
     checked_function.generic_parameters = generic_parameters;
 
     for param in &function.params {
-        let (param_type, err) = typecheck_typename(&param.variable.ty, function_scope_id, project);
+        let (param_type, err) =
+            typecheck_typename(&param.variable.parsed_type, function_scope_id, project);
         error = error.or(err);
 
         let checked_variable = CheckedVariable {
@@ -2088,7 +2092,7 @@ pub fn typecheck_statement(
         }
         ParsedStatement::VarDecl(var_decl, init) => {
             let (mut checked_type_id, typename_err) =
-                typecheck_typename(&var_decl.ty, scope_id, project);
+                typecheck_typename(&var_decl.parsed_type, scope_id, project);
 
             let (mut checked_expression, err) =
                 typecheck_expression(init, scope_id, project, safety_mode, Some(checked_type_id));

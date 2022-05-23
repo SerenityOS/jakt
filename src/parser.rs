@@ -53,7 +53,7 @@ pub enum ParsedType {
 #[derive(Debug, Clone)]
 pub struct ParsedVarDecl {
     pub name: String,
-    pub ty: ParsedType,
+    pub parsed_type: ParsedType,
     pub mutable: bool,
     pub span: Span,
 }
@@ -62,7 +62,7 @@ impl ParsedVarDecl {
     pub fn new(span: Span) -> Self {
         Self {
             name: String::new(),
-            ty: ParsedType::Empty,
+            parsed_type: ParsedType::Empty,
             mutable: false,
             span,
         }
@@ -71,7 +71,9 @@ impl ParsedVarDecl {
 
 impl PartialEq for ParsedVarDecl {
     fn eq(&self, other: &Self) -> bool {
-        self.name == other.name && self.ty == other.ty && self.mutable == other.mutable
+        self.name == other.name
+            && self.parsed_type == other.parsed_type
+            && self.mutable == other.mutable
     }
 }
 
@@ -161,7 +163,7 @@ pub struct ParsedParameter {
 #[derive(Clone, Debug)]
 pub struct ParsedVariable {
     pub name: String,
-    pub ty: ParsedType,
+    pub parsed_type: ParsedType,
     pub mutable: bool,
 }
 
@@ -803,7 +805,7 @@ pub fn parse_enum(
                         }
                     }
                     *index += 1;
-                    if members.len() == 1 && members[0].ty == ParsedType::Empty {
+                    if members.len() == 1 && members[0].parsed_type == ParsedType::Empty {
                         // We have a simple value (non-struct) case
                         enum_.variants.push(EnumVariant::Typed(
                             name.to_string(),
@@ -1106,7 +1108,7 @@ pub fn parse_struct(
                             // Ignore immutable flag for now
                             var_decl.mutable = false;
 
-                            if var_decl.ty == ParsedType::Empty {
+                            if var_decl.parsed_type == ParsedType::Empty {
                                 trace!("ERROR: parameter missing type");
 
                                 error = error.or(Some(JaktError::ParserError(
@@ -1295,7 +1297,7 @@ pub fn parse_function(
                                 requires_label: false,
                                 variable: ParsedVariable {
                                     name: "this".to_string(),
-                                    ty: ParsedType::Empty,
+                                    parsed_type: ParsedType::Empty,
                                     mutable: current_param_is_mutable,
                                 },
                             });
@@ -1307,7 +1309,7 @@ pub fn parse_function(
                             let (var_decl, err) = parse_variable_declaration(tokens, index);
                             error = error.or(err);
 
-                            if var_decl.ty == ParsedType::Empty {
+                            if var_decl.parsed_type == ParsedType::Empty {
                                 trace!("ERROR: parameter missing type");
 
                                 error = error.or(Some(JaktError::ParserError(
@@ -1320,7 +1322,7 @@ pub fn parse_function(
                                 requires_label: current_param_requires_label,
                                 variable: ParsedVariable {
                                     name: var_decl.name,
-                                    ty: var_decl.ty,
+                                    parsed_type: var_decl.parsed_type,
                                     mutable: var_decl.mutable,
                                 },
                             });
@@ -3755,7 +3757,7 @@ pub fn parse_variable_declaration(
                         return (
                             ParsedVarDecl {
                                 name: name.to_string(),
-                                ty: ParsedType::Empty,
+                                parsed_type: ParsedType::Empty,
                                 mutable: false,
                                 span: tokens[*index - 1].span,
                             },
@@ -3767,7 +3769,7 @@ pub fn parse_variable_declaration(
                 return (
                     ParsedVarDecl {
                         name: name.to_string(),
-                        ty: ParsedType::Empty,
+                        parsed_type: ParsedType::Empty,
                         mutable: false,
                         span: tokens[*index - 1].span,
                     },
@@ -3791,7 +3793,7 @@ pub fn parse_variable_declaration(
 
                 let result = ParsedVarDecl {
                     name: var_name,
-                    ty: var_type,
+                    parsed_type: var_type,
                     mutable,
                     span: decl_span,
                 };
@@ -3803,7 +3805,7 @@ pub fn parse_variable_declaration(
                 (
                     ParsedVarDecl {
                         name: name.to_string(),
-                        ty: ParsedType::Empty,
+                        parsed_type: ParsedType::Empty,
                         mutable: false,
                         span: tokens[*index - 2].span,
                     },
