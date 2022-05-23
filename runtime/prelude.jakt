@@ -75,7 +75,7 @@ extern struct Range<T> {
 
 extern struct Error {
     function code(this) -> i32
-    function from_errno(anonymous errno: i32)
+    function from_errno(anonymous errno: i32) -> Error
 }
 
 extern class File {

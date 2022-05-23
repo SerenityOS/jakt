@@ -2161,7 +2161,17 @@ pub fn typecheck_statement(
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
             error = error.or(err);
 
-            // FIXME: Verify that the expression produces an Error
+            let error_struct_type_id = project
+                .find_type_in_scope(0, "Error")
+                .expect("internal error: Error builtin definition not found");
+
+            if checked_expr.type_id() != error_struct_type_id {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "throw expression does not produce an error".to_string(),
+                    expr.span(),
+                )));
+            }
+
             (CheckedStatement::Throw(checked_expr), error)
         }
         ParsedStatement::For((iterator_name, iterator_span), range_expr, block) => {

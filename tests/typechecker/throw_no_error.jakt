@@ -1,0 +1,9 @@
+function foo() throws -> u32 {
+    throw 1
+    return 2
+}
+
+function main() {
+    let x = foo()
+    println("{}", x)
+}
