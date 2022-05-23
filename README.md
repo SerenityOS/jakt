@@ -78,7 +78,7 @@ There are two exceptions to this:
 
 ## Structures and classes
 
-There are two main ways to declare a structure in Jakt: `struct` and `class`.
+There are two main ways to declare a structure in **Jakt**: `struct` and `class`.
 
 ### `struct`
 
@@ -91,7 +91,7 @@ struct Point {
 }
 ```
 
-Structs in Jakt have *value semantics*:
+Structs in **Jakt** have *value semantics*:
 - Variables that contain a struct always have a unique instance of the struct.
 - Copying a `struct` instance always makes a deep copy.
 
@@ -128,7 +128,7 @@ class Size {
 }
 ```
 
-Classes in Jakt have *reference semantics*:
+Classes in **Jakt** have *reference semantics*:
 - Copying a `class` instance (aka an "object") copies a reference to the object.
 - All objects are reference-counted by default. This ensures that objects don't get accessed after being deleted.
 
@@ -323,7 +323,7 @@ function do_nothing_in_particular() => match AlertDescription::CloseNotify {
 - [x] Generic type inference
 - [ ] Traits
 
-Jakt supports both generic structures and generic functions. 
+**Jakt** supports both generic structures and generic functions.
 
 ```jakt
 function id<T>(anonymous x: T) -> T {
