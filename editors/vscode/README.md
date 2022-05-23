@@ -1,6 +1,8 @@
-# jakt vscode extension
+# Jakt vscode extension
 
 This is the vscode extension for the Jakt language.
+
+There are no pre-packaged versions of this extension, as changes to language and tooling happen frequently.
 
 To build:
 
