@@ -424,6 +424,10 @@ impl Project {
     }
 
     pub fn typename_for_type_id(&self, type_id: TypeId) -> String {
+        let optional_struct_id = self
+            .find_struct_in_scope(0, "Optional")
+            .expect("internal error: can't find builtin Optional type");
+
         match &self.types[type_id] {
             Type::Builtin => match type_id {
                 crate::compiler::VOID_TYPE_ID => "void".to_string(),
@@ -468,6 +472,9 @@ impl Project {
                 output.push('>');
 
                 output
+            }
+            Type::GenericInstance(struct_id, type_args) if *struct_id == optional_struct_id => {
+                format!("{}?", self.typename_for_type_id(type_args[0]))
             }
             Type::GenericInstance(struct_id, type_args) => {
                 let mut output =
