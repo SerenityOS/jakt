@@ -1,0 +1,13 @@
+enum Apple { GrannySmith }
+
+function apple_name(apple: Apple) {
+    match (apple) {
+        Apple::GrannySmith => {
+            println("Granny Smith")
+        }
+    }
+}
+
+function main() {
+    apple_name(apple: Apple::GrannySmith())
+}
