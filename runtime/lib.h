@@ -100,6 +100,8 @@ constexpr auto continue_on_panic = true;
 constexpr auto continue_on_panic = false;
 #endif
 
+using OptionalNone = AK::NullOptional;
+
 ErrorOr<int> main(Array<String>);
 
 inline void panic(StringView message)

@@ -1483,7 +1483,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             output.push_str(")})");
         }
         CheckedExpression::OptionalNone(_, _) => {
-            output.push_str("{}");
+            output.push_str("JaktInternal::OptionalNone()");
         }
         CheckedExpression::OptionalSome(expr, _, _) => {
             output.push('(');
