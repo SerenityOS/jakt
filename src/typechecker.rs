@@ -427,6 +427,9 @@ impl Project {
         let optional_struct_id = self
             .find_struct_in_scope(0, "Optional")
             .expect("internal error: can't find builtin Optional type");
+        let weak_ptr_struct_id = self
+            .find_struct_in_scope(0, "WeakPtr")
+            .expect("internal error: can't find builtin WeakPtr type");
 
         match &self.types[type_id] {
             Type::Builtin => match type_id {
@@ -475,6 +478,9 @@ impl Project {
             }
             Type::GenericInstance(struct_id, type_args) if *struct_id == optional_struct_id => {
                 format!("{}?", self.typename_for_type_id(type_args[0]))
+            }
+            Type::GenericInstance(struct_id, type_args) if *struct_id == weak_ptr_struct_id => {
+                format!("weak {}?", self.typename_for_type_id(type_args[0]))
             }
             Type::GenericInstance(struct_id, type_args) => {
                 let mut output =
