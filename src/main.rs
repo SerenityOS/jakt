@@ -203,14 +203,14 @@ fn print_source_line(
     file_contents: &[u8],
     file_span: (usize, usize),
     error_span: Span,
-    line_number: usize,
+    line_index: usize,
     largest_line_number: usize,
 ) {
     let mut index = file_span.0;
 
     let width = format!("{}", largest_line_number).len();
 
-    print!(" {:<width$} | ", line_number);
+    print!(" {:<width$} | ", line_index + 1);
     while index <= file_span.1 {
         let c;
         if index < file_span.1 {
