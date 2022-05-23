@@ -1,1 +1,1 @@
-binary arithmetic operation between incompatible types String and i64
+Binary arithmetic operation between incompatible types (‘String’ and ‘i64’)

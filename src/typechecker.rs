@@ -4994,7 +4994,7 @@ pub fn check_types_for_compat(
                 if rhs_type_id != *seen_type_id {
                     error = error.or(Some(JaktError::TypecheckError(
                         format!(
-                            "Type mismatch: expected {}, but got {}",
+                            "Type mismatch: expected ‘{}’, but got ‘{}’",
                             project.typename_for_type_id(*seen_type_id),
                             project.typename_for_type_id(rhs_type_id),
                         ),
@@ -5051,7 +5051,7 @@ pub fn check_types_for_compat(
                         // They're the same type, might be okay to just leave now
                         error = error.or(Some(JaktError::TypecheckError(
                             format!(
-                                "Type mismatch: expected {}, but got {}",
+                                "Type mismatch: expected ‘{}’, but got ‘{}’",
                                 project.typename_for_type_id(lhs_type_id),
                                 project.typename_for_type_id(rhs_type_id),
                             ),
@@ -5105,7 +5105,7 @@ pub fn check_types_for_compat(
                         // They're the same type, might be okay to just leave now
                         error = error.or(Some(JaktError::TypecheckError(
                             format!(
-                                "Type mismatch: expected {}, but got {}",
+                                "Type mismatch: expected ‘{}’, but got ‘{}’",
                                 project.typename_for_type_id(lhs_type_id),
                                 project.typename_for_type_id(rhs_type_id),
                             ),
@@ -5163,7 +5163,7 @@ pub fn check_types_for_compat(
                         // They're the same type, might be okay to just leave now
                         error = error.or(Some(JaktError::TypecheckError(
                             format!(
-                                "Type mismatch: expected {}, but got {}",
+                                "Type mismatch: expected ‘{}’, but got ‘{}’",
                                 project.typename_for_type_id(lhs_type_id),
                                 project.typename_for_type_id(rhs_type_id),
                             ),
@@ -5221,7 +5221,7 @@ pub fn check_types_for_compat(
                         // They're the same type, might be okay to just leave now
                         error = error.or(Some(JaktError::TypecheckError(
                             format!(
-                                "Type mismatch: expected {}, but got {}",
+                                "Type mismatch: expected ‘{}’, but got ‘{}’",
                                 project.typename_for_type_id(lhs_type_id),
                                 project.typename_for_type_id(rhs_type_id),
                             ),
@@ -5235,7 +5235,7 @@ pub fn check_types_for_compat(
             if rhs_type_id != lhs_type_id {
                 error = error.or(Some(JaktError::TypecheckError(
                     format!(
-                        "Type mismatch: expected {}, but got {}",
+                        "Type mismatch: expected ‘{}’, but got ‘{}’",
                         project.typename_for_type_id(lhs_type_id),
                         project.typename_for_type_id(rhs_type_id),
                     ),
