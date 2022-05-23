@@ -806,14 +806,16 @@ pub fn parse_enum(
                     ) {
                         let (decl, parse_error) = parse_variable_declaration(tokens, index);
                         error = error.or(parse_error);
-                        if decl.name == enum_.name && decl.ty == ParsedType::Empty && !is_recursive
+                        if decl.name == enum_.name
+                            && decl.parsed_type == ParsedType::Empty
+                            && !is_recursive
                         {
                             error = error.or(Some(JaktError::ParserError(
                                 "use 'ref enum' to make the enum recursive".into(),
                                 tokens[*index - 1].span,
                             )));
                         } else {
-                            match &decl.ty {
+                            match &decl.parsed_type {
                                 ParsedType::Name(decl_name, _)
                                     if decl_name == &enum_.name && !is_recursive =>
                                 {
