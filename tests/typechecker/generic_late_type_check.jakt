@@ -16,6 +16,16 @@ function baz<T>(anonymous x: T) -> i32 {
     return x.a
 }
 
-function main() {
-    println("{} {} {}", foo(1, 2), bar(1 as! i8), baz(Test(a: 1)))
+// Make sure it works inside structs
+struct Test2<T> {
+    a: T
+
+    function test(this) -> T {
+        return this.a + 0
+    }
 }
+
+function main() {
+    println("{} {} {} {}", foo(1, 2), bar(1 as! i8), baz(Test(a: 1)), Test2(a: 0).test())
+}
+
