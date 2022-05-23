@@ -1197,7 +1197,9 @@ pub fn typecheck_namespace(
     for function in &parsed_namespace.functions {
         // Ensure we know the function prototypes ahead of time, so that
         // and calls can find and resolve to them
-        error = error.or(typecheck_function_predecl(function, scope_id, project));
+        error = error.or(typecheck_function_predecl(
+            function, scope_id, None, project,
+        ));
     }
 
     for (struct_id, structure) in parsed_namespace.structs.iter().enumerate() {
@@ -1685,11 +1687,7 @@ fn typecheck_struct_predecl(
             visibility: function.visibility,
             function_scope_id: method_scope_id,
             generic_parameters: vec![],
-            block: if function.generic_parameters.is_empty() {
-                Some(CheckedBlock::new())
-            } else {
-                None
-            },
+            block: Some(CheckedBlock::new()),
             parsed_function: Some(function.clone()),
             linkage: function.linkage,
             is_instantiated: !is_generic || is_extern,
@@ -1930,11 +1928,22 @@ fn typecheck_struct(
 fn typecheck_function_predecl(
     function: &ParsedFunction,
     parent_scope_id: ScopeId,
+    this_arg_type_id: Option<TypeId>,
     project: &mut Project,
 ) -> Option<JaktError> {
     let mut error = None;
 
     let function_scope_id = project.create_scope(parent_scope_id);
+
+    let is_generic = if let Some(type_id) = this_arg_type_id {
+        if let Type::GenericInstance(_, _) = &project.types[type_id] {
+            true
+        } else {
+            !function.generic_parameters.is_empty()
+        }
+    } else {
+        !function.generic_parameters.is_empty()
+    };
 
     let mut checked_function = CheckedFunction {
         name: function.name.clone(),
@@ -1947,7 +1956,7 @@ fn typecheck_function_predecl(
         block: Some(CheckedBlock::new()),
         parsed_function: Some(function.clone()),
         linkage: function.linkage,
-        is_instantiated: function.generic_parameters.is_empty(),
+        is_instantiated: !is_generic,
     };
     project.functions.push(checked_function.clone());
     let function_id = project.functions.len() - 1;
@@ -1979,16 +1988,21 @@ fn typecheck_function_predecl(
     }
 
     checked_function.generic_parameters = generic_parameters;
-    let check_scope = if function.generic_parameters.is_empty() {
+    let check_scope = if !is_generic {
         None
     } else {
         Some(project.create_scope(function_scope_id))
     };
 
+    let first = true;
     for param in &function.params {
-        let (param_type, err) =
+        let (mut param_type, err) =
             typecheck_typename(&param.variable.parsed_type, function_scope_id, project);
         error = error.or(err);
+
+        if first && param.variable.name == "this" {
+            param_type = this_arg_type_id.unwrap_or(param_type);
+        }
 
         let checked_variable = CheckedVariable {
             name: param.variable.name.clone(),
@@ -2056,13 +2070,11 @@ fn typecheck_and_specialize_generic_function(
     function_id: FunctionId,
     generic_arguments: Vec<TypeId>,
     parent_scope_id: ScopeId,
+    this_type_id: Option<TypeId>,
+    generic_substitutions: &HashMap<TypeId, TypeId>,
     project: &mut Project,
 ) -> Option<JaktError> {
     let function = &project.functions[function_id];
-
-    if function.generic_parameters.is_empty() {
-        panic!("Generic function without generic parameters");
-    }
 
     // Now we can actually resolve it, let's gooooo
     let function_id = project.functions.len();
@@ -2081,16 +2093,14 @@ fn typecheck_and_specialize_generic_function(
             function.name_span,
         ));
     }
-    for (generic_parameter, generic_argument) in
-        function.generic_parameters.iter().zip(generic_arguments)
-    {
-        if let Err(err) = project.add_type_to_scope(
-            scope_id,
-            generic_parameter.0.clone(),
-            generic_argument,
-            generic_parameter.1,
-        ) {
-            error = error.or(Some(err));
+
+    let span = function.name_span;
+    for (k, v) in generic_substitutions {
+        if let Type::TypeVariable(name) = &project.types[*k] {
+            let name_copy = name.clone();
+            if let Err(err) = project.add_type_to_scope(scope_id, name_copy, *v, span) {
+                error = error.or(Some(err));
+            };
         }
     }
 
@@ -2098,7 +2108,7 @@ fn typecheck_and_specialize_generic_function(
 
     project.current_function_index = Some(function_id);
 
-    let err = typecheck_function_predecl(&function, scope_id, project);
+    let err = typecheck_function_predecl(&function, scope_id, this_type_id, project);
     error = error.or(err);
 
     let err = typecheck_function(&function, scope_id, project);
@@ -3824,24 +3834,33 @@ pub fn typecheck_expression(
 
             let type_id = UNKNOWN_TYPE_ID;
 
-            let checked_expr_type_id = &project.types[checked_expr.type_id(scope_id, project)];
-            match checked_expr_type_id {
+            let checked_expr_type_id = checked_expr.type_id(scope_id, project);
+            let checked_expr_type = &project.types[checked_expr_type_id];
+            match checked_expr_type {
                 Type::GenericInstance(struct_id, _) | Type::Struct(struct_id) => {
                     let structure = &project.structs[*struct_id];
 
                     for member in &structure.fields {
                         if &member.name == name {
+                            let struct_id = *struct_id;
+                            let member = member.clone();
+                            let resolved_type_id =
+                                resolve_type_var(member.type_id, scope_id, project);
+                            let (unified_type, _) =
+                                unify_with_type_hint(project, &resolved_type_id);
+
+                            let structure = &project.structs[struct_id];
                             return (
                                 CheckedExpression::IndexedStruct(
                                     Box::new(checked_expr),
                                     name.to_string(),
                                     *span,
-                                    member.type_id,
+                                    unified_type,
                                 ),
                                 check_accessibility(
                                     scope_id,
                                     structure.scope_id,
-                                    member.clone(),
+                                    member,
                                     span,
                                     project,
                                 ),
@@ -3857,7 +3876,10 @@ pub fn typecheck_expression(
 
                 _ => {
                     error = error.or(Some(JaktError::TypecheckError(
-                        "member access of non-struct value".to_string(),
+                        format!(
+                            "member access on value of non-struct type {} is not allowed",
+                            project.typename_for_type_id(checked_expr_type_id)
+                        ),
                         *span,
                     )));
                 }
@@ -4557,6 +4579,7 @@ pub fn typecheck_call(
     };
 
     let mut generic_checked_function_to_instantiate = None;
+    let mut maybe_this_type_id = None;
 
     match call.name.as_str() {
         "print" | "println" | "eprintln" if struct_id.is_none() => {
@@ -4595,6 +4618,10 @@ pub fn typecheck_call(
 
             if let Some(callee_id) = callee {
                 let callee = &project.functions[callee_id];
+                if !callee.is_instantiated {
+                    generic_checked_function_to_instantiate = Some(callee_id);
+                }
+
                 // Make sure we are allowed to access this method.
                 error = error.or(check_accessibility(
                     caller_scope_id,
@@ -4635,6 +4662,7 @@ pub fn typecheck_call(
                 // If this is a method, let's also add the types we know from our 'this' pointer
                 if let Some(this_expr) = this_expr {
                     let type_id = this_expr.type_id(callee_scope_id, project);
+                    maybe_this_type_id = Some(type_id);
                     let param_type = &project.types[type_id];
 
                     if let Type::GenericInstance(struct_id, args) = param_type {
@@ -4704,10 +4732,6 @@ pub fn typecheck_call(
                             .expect("internal error: previously resolved call is now unresolved");
 
                         let callee = &project.functions[callee_id];
-
-                        if !callee.is_instantiated {
-                            generic_checked_function_to_instantiate = Some(callee_id);
-                        }
 
                         if let ParsedExpression::Var(var_name, _) = &call.args[idx].1 {
                             if var_name != &callee.params[idx + arg_offset].variable.name
@@ -4804,10 +4828,15 @@ pub fn typecheck_call(
 
     if let Some(function_id) = generic_checked_function_to_instantiate {
         // Clear the generic parameters and typecheck in the fully specialised scope.
+        maybe_this_type_id = maybe_this_type_id
+            .map(|id| substitute_typevars_in_type(id, &generic_substitutions, project));
+
         let err = typecheck_and_specialize_generic_function(
             function_id,
             type_args.clone(),
             callee_scope_id,
+            maybe_this_type_id,
+            &generic_substitutions,
             project,
         );
         error = error.or(err);
