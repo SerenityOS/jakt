@@ -507,6 +507,7 @@ pub struct CheckedEnum {
     pub variants: Vec<CheckedEnumVariant>,
     pub scope_id: ScopeId,
     pub definition_linkage: DefinitionLinkage,
+    pub definition_type: DefinitionType,
     pub underlying_type_id: Option<TypeId>,
     pub span: Span,
 }
@@ -1141,6 +1142,11 @@ fn typecheck_enum_predecl(
         variants: Vec::new(),
         scope_id: enum_scope_id,
         definition_linkage: enum_.definition_linkage,
+        definition_type: if enum_.is_recursive {
+            DefinitionType::Class
+        } else {
+            DefinitionType::Struct
+        },
         underlying_type_id,
         span: enum_.span,
     });
@@ -1239,7 +1245,7 @@ fn typecheck_enum(
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
-                            throws: false,
+                            throws: enum_.is_recursive,
                             return_type_id: enum_type_id,
                             params: vec![],
                             function_scope_id,
@@ -1377,7 +1383,7 @@ fn typecheck_enum(
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
-                            throws: false,
+                            throws: enum_.is_recursive,
                             return_type_id: enum_type_id,
                             params: constructor_params,
                             visibility: Visibility::Public,
@@ -1447,7 +1453,7 @@ fn typecheck_enum(
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
-                            throws: false,
+                            throws: enum_.is_recursive,
                             return_type_id: enum_type_id,
                             params: constructor_params,
                             visibility: Visibility::Public,

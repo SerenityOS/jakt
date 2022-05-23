@@ -111,6 +111,7 @@ pub struct ParsedEnum {
     pub generic_parameters: Vec<(String, Span)>,
     pub variants: Vec<EnumVariant>,
     pub span: Span,
+    pub is_recursive: bool,
     pub definition_linkage: DefinitionLinkage,
     pub underlying_type: ParsedType,
 }
@@ -485,8 +486,17 @@ pub fn parse_namespace(
 
                     parsed_namespace.functions.push(fun);
                 }
+                "ref" => {
+                    *index += 1;
+
+                    let (enum_, err) = parse_enum(tokens, index, DefinitionLinkage::Internal, true);
+                    error = error.or(err);
+
+                    parsed_namespace.enums.push(enum_);
+                }
                 "enum" => {
-                    let (enum_, err) = parse_enum(tokens, index, DefinitionLinkage::Internal);
+                    let (enum_, err) =
+                        parse_enum(tokens, index, DefinitionLinkage::Internal, false);
                     error = error.or(err);
 
                     parsed_namespace.enums.push(enum_);
@@ -663,6 +673,7 @@ pub fn parse_enum(
     tokens: &[Token],
     index: &mut usize,
     definition_linkage: DefinitionLinkage,
+    is_recursive: bool,
 ) -> (ParsedEnum, Option<JaktError>) {
     trace!(format!("parse_enum({:?})", tokens[*index]));
 
@@ -673,6 +684,7 @@ pub fn parse_enum(
         definition_linkage,
         generic_parameters: vec![],
         variants: Vec::new(),
+        is_recursive,
         span: Span {
             file_id: tokens[start_index].span.file_id,
             start: tokens[start_index].span.start,
@@ -794,7 +806,28 @@ pub fn parse_enum(
                     ) {
                         let (decl, parse_error) = parse_variable_declaration(tokens, index);
                         error = error.or(parse_error);
+                        if decl.name == enum_.name && decl.ty == ParsedType::Empty && !is_recursive
+                        {
+                            error = error.or(Some(JaktError::ParserError(
+                                "use 'ref enum' to make the enum recursive".into(),
+                                tokens[*index - 1].span,
+                            )));
+                        } else {
+                            match &decl.ty {
+                                ParsedType::Name(decl_name, _)
+                                    if decl_name == &enum_.name && !is_recursive =>
+                                {
+                                    error = error.or(Some(JaktError::ParserError(
+                                        "use 'ref enum' to make the enum recursive".into(),
+                                        tokens[*index - 1].span,
+                                    )));
+                                }
+                                _ => {}
+                            }
+                        }
+
                         members.push(decl);
+
                         // Allow a comma or a newline after each member
                         if let Some(Token {
                             contents: TokenContents::Comma | TokenContents::Eol,
