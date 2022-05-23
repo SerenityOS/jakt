@@ -155,7 +155,7 @@ fn display_error(compiler: &Compiler, msg: &str, span: Span) {
 
             print!(
                 "{}",
-                " ".repeat(line_spans[line_index].1 - line_spans[line_index].0 + width + 2)
+                " ".repeat(span.start - line_spans[line_index].0 + width + 4)
             );
             println!("\u{001b}[31m^- {}\u{001b}[0m", msg);
 
