@@ -24,9 +24,6 @@
 namespace AK {
 
 template<typename T>
-class OwnPtr;
-
-template<typename T>
 class [[nodiscard]] RefPtr {
     template<typename U>
     friend class RefPtr;
@@ -106,11 +103,6 @@ public:
         m_ptr = reinterpret_cast<T*>(explode_byte(REFPTR_SCRUB_BYTE));
 #    endif
     }
-
-    template<typename U>
-    RefPtr(OwnPtr<U> const&) = delete;
-    template<typename U>
-    RefPtr& operator=(OwnPtr<U> const&) = delete;
 
     void swap(RefPtr& other)
     {

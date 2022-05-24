@@ -24,7 +24,6 @@ class RefCountedBase {
 
 public:
     using RefCountType = unsigned int;
-    using AllowOwnPtr = FalseType;
 
     ALWAYS_INLINE void ref() const
     {

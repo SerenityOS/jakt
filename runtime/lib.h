@@ -30,11 +30,9 @@
 #include <AK/Math.h>
 #include <AK/Memory.h>
 #include <AK/Noncopyable.h>
-#include <AK/NonnullOwnPtr.h>
 #include <AK/NonnullRefPtr.h>
 #include <AK/NumericLimits.h>
 #include <AK/Optional.h>
-#include <AK/OwnPtr.h>
 #include <AK/Platform.h>
 #include <AK/RefCounted.h>
 #include <AK/RefPtr.h>
