@@ -1,0 +1,3 @@
+// Strings defined using a single pair of quotes should not span multiple lines
+"hello
+world"
