@@ -57,7 +57,7 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
         }
     }
 
-    for (_, enum_id) in &scope.enums {
+    for (_, enum_id, _) in &scope.enums {
         let enum_ = &project.enums[*enum_id];
         let enum_output = codegen_enum_predecl(enum_, project);
 
@@ -126,7 +126,7 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
 
     output.push('\n');
 
-    for (_, enum_id) in &scope.enums {
+    for (_, enum_id, _) in &scope.enums {
         let enum_ = &project.enums[*enum_id];
         if seen_types.contains(&enum_.type_id) {
             continue;
