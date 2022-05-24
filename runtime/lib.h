@@ -39,7 +39,6 @@
 #include <AK/Result.h>
 #include <AK/ReverseIterator.h>
 #include <AK/ScopeGuard.h>
-#include <AK/Set.h>
 #include <AK/Span.h>
 #include <AK/StdLibExtraDetails.h>
 #include <AK/StdLibExtras.h>
@@ -75,7 +74,13 @@
 #include <AK/Utf8View.cpp>
 #include <AK/kmalloc.cpp>
 
+namespace JaktInternal {
+template<typename T, typename TraitsForT = Traits<T>, bool IsOrdered = false>
+class Set;
+}
+
 #include <Builtins/Dictionary.h>
+#include <Builtins/Set.h>
 
 #include <IO/File.h>
 
