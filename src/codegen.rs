@@ -138,11 +138,11 @@ fn codegen_enum(enum_: &CheckedEnum, project: &Project) -> String {
     if enum_.definition_type == DefinitionType::Class {
         codegen_recursive_enum(enum_, project)
     } else {
-        String::new()
+        codegen_nonrecursive_enum(enum_, project)
     }
 }
 
-fn codegen_nonrecursive_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
+fn codegen_nonrecursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
     if enum_.underlying_type_id.is_some() {
         let type_id = enum_.underlying_type_id.unwrap();
         if is_integer(type_id) {
@@ -349,6 +349,93 @@ fn codegen_nonrecursive_enum_predecl(enum_: &CheckedEnum, project: &Project) -> 
     }
 
     output.push_str("};\n");
+
+    output
+}
+
+fn codegen_nonrecursive_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
+    if enum_.underlying_type_id.is_some() {
+        let type_id = enum_.underlying_type_id.unwrap();
+        if is_integer(type_id) {
+            let mut output = String::new();
+
+            output.push_str("enum class ");
+            output.push_str(&enum_.name);
+            output.push_str(": ");
+            output.push_str(&codegen_type(type_id, project));
+            output.push_str(";\n");
+            return output;
+        } else {
+            todo!("Enums with a non-integer underlying type")
+        }
+    }
+
+    // These are all Variant<Ts...>, make a new namespace and define the variant types first.
+    let is_generic = !enum_.generic_parameters.is_empty();
+    let generic_parameter_names = enum_
+        .generic_parameters
+        .iter()
+        .map(|p| match &project.types[*p] {
+            Type::TypeVariable(name) => name.clone(),
+            _ => unreachable!(),
+        })
+        .collect::<Vec<_>>();
+    let template_args = generic_parameter_names
+        .iter()
+        .map(|p| "typename ".to_string() + p)
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    let mut output = String::new();
+    output.push_str("namespace ");
+    output.push_str(&enum_.name);
+    output.push_str("_Details {\n");
+    for variant in &enum_.variants {
+        match variant {
+            CheckedEnumVariant::StructLike(name, _, _) => {
+                if is_generic {
+                    output.push_str("    template<");
+                    output.push_str(template_args.as_str());
+                    output.push_str(">\n");
+                }
+                output.push_str("    struct ");
+                output.push_str(name);
+                output.push_str(";\n");
+            }
+            CheckedEnumVariant::Untyped(name, _) => {
+                if is_generic {
+                    output.push_str("    template<");
+                    output.push_str(template_args.as_str());
+                    output.push_str(">\n");
+                }
+                output.push_str("    struct ");
+                output.push_str(name);
+                output.push_str(";\n");
+            }
+            CheckedEnumVariant::Typed(name, _, _) => {
+                if is_generic {
+                    output.push_str("    template<");
+                    output.push_str(template_args.as_str());
+                    output.push_str(">\n");
+                }
+                output.push_str("    struct ");
+                output.push_str(name);
+                output.push_str(";\n");
+            }
+            _ => (),
+        }
+    }
+    output.push_str("}\n");
+
+    // Now define the variant itself.
+    if is_generic {
+        output.push_str("template<");
+        output.push_str(template_args.as_str());
+        output.push_str(">\n");
+    }
+    output.push_str("struct ");
+    output.push_str(&enum_.name);
+    output.push(';');
 
     output
 }
