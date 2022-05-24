@@ -1,4 +1,5 @@
 extern struct StringBuilder {
+    function StringBuilder() -> StringBuilder
     function append(mutable this, anonymous s: raw c_char)
     function to_string(mutable this) -> String
 }
