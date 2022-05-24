@@ -2338,11 +2338,14 @@ fn typecheck_method(
 pub fn statement_definitely_returns(stmt: &CheckedStatement) -> bool {
     match stmt {
         CheckedStatement::Return(_) => true,
-        CheckedStatement::If(_, then_block, Some(else_stmt)) => {
-            // TODO: Things like `if true` should be also accepted as
-            //       definitely returning, if we can prove at typecheck time
-            //       that it's always truthy.
-            then_block.definitely_returns && statement_definitely_returns(else_stmt.as_ref())
+        CheckedStatement::If(CheckedExpression::Boolean(cond, _), then_block, else_stmt) => {
+            if *cond {
+                then_block.definitely_returns
+            } else if let Some(else_block) = else_stmt {
+                statement_definitely_returns(else_block)
+            } else {
+                false
+            }
         }
         CheckedStatement::Block(block) => block.definitely_returns,
         CheckedStatement::Loop(block) => block.definitely_returns,
