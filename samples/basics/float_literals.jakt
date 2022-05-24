@@ -1,0 +1,6 @@
+function main() {
+    println("{}", 0.0)
+    println("{}", 3.14159265358979)
+    println("{}", 1.61803399)
+    println("{}", 2.71827)
+}
