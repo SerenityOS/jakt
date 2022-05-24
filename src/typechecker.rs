@@ -4443,93 +4443,116 @@ pub fn typecheck_expression(
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
             error = error.or(err);
 
+            let type_id = UNKNOWN_TYPE_ID;
             let optional_struct_id = project
                 .find_struct_in_scope(0, "Optional")
                 .expect("internal error: Optional builtin definition not found");
 
-            match &project.types[checked_expr.type_id(scope_id, project)] {
-                Type::Builtin => todo!(),
-                Type::TypeVariable(_) => todo!(),
-                Type::GenericInstance(struct_id, inner_type_ids) => {
-                    assert_eq!(
-                        *struct_id, optional_struct_id,
-                        "GenericInstance must be Optional"
-                    );
-                    assert_eq!(inner_type_ids.len(), 1, "Optional must have 1 inner type");
-                    match project.types[inner_type_ids[0]] {
-                        Type::Builtin => todo!(),
-                        Type::TypeVariable(_) => todo!(),
-                        Type::GenericInstance(_, _) => todo!(),
-                        Type::GenericEnumInstance(_, _) => todo!(),
-                        Type::Struct(inner_struct_id) => {
-                            match project.structs[inner_struct_id]
-                                .fields
-                                .iter()
-                                .find(|member| member.name == *name)
-                                .ok_or_else(|| {
-                                    JaktError::TypecheckError(
-                                        format!(
-                                            "Unknown member of struct {}: {}",
-                                            project.structs[inner_struct_id].name, name
-                                        ),
+            let checked_expr_type_id = checked_expr.type_id(scope_id, project);
+            match &project.types[checked_expr_type_id] {
+                Type::GenericInstance(_, type_args) => match project.types[type_args[0]] {
+                    Type::Builtin => todo!(),
+                    Type::TypeVariable(_) => todo!(),
+                    Type::GenericInstance(_, _) => todo!(),
+                    Type::GenericEnumInstance(_, _) => todo!(),
+                    Type::Struct(struct_id) => {
+                        match project.structs[struct_id]
+                            .fields
+                            .iter()
+                            .find(|member| member.name == *name)
+                            .ok_or_else(|| {
+                                JaktError::TypecheckError(
+                                    format!(
+                                        "Unknown member of struct {}: {}",
+                                        project.structs[struct_id].name, name
+                                    ),
+                                    *span,
+                                )
+                            })
+                            .and_then(|member| {
+                                if let Some(err) = check_accessibility(
+                                    scope_id,
+                                    project.structs[struct_id].scope_id,
+                                    member.clone(),
+                                    span,
+                                    project,
+                                ) {
+                                    Err(err)
+                                } else {
+                                    Ok(member.type_id)
+                                }
+                            }) {
+                            Ok(member_type_id) => {
+                                let return_type = match &project.types[member_type_id] {
+                                    Type::Builtin => Type::GenericInstance(
+                                        optional_struct_id,
+                                        vec![member_type_id],
+                                    ),
+                                    Type::TypeVariable(_) => todo!(),
+                                    Type::GenericInstance(_, type_args) => Type::GenericInstance(
+                                        optional_struct_id,
+                                        vec![type_args[0]],
+                                    ),
+                                    Type::GenericEnumInstance(_, _) => todo!(),
+                                    Type::Struct(_) => Type::GenericInstance(
+                                        optional_struct_id,
+                                        vec![member_type_id],
+                                    ),
+                                    Type::Enum(_) => todo!(),
+                                    Type::RawPtr(_) => todo!(),
+                                };
+                                let return_type_id = project.find_or_add_type_id(return_type);
+
+                                return (
+                                    CheckedExpression::OptionalIndexedStruct(
+                                        Box::new(checked_expr),
+                                        name.to_string(),
                                         *span,
-                                    )
-                                })
-                                .and_then(|member| {
-                                    if let Some(err) = check_accessibility(
-                                        scope_id,
-                                        project.structs[inner_struct_id].scope_id,
-                                        member.clone(),
-                                        span,
-                                        project,
-                                    ) {
-                                        Err(err)
-                                    } else {
-                                        Ok(member.type_id)
-                                    }
-                                }) {
-                                Ok(member_type_id) => {
-                                    let new_type_id =
-                                        project.find_or_add_type_id(Type::GenericInstance(
-                                            optional_struct_id,
-                                            vec![member_type_id],
-                                        ));
-                                    return (
-                                        CheckedExpression::OptionalIndexedStruct(
-                                            Box::new(checked_expr),
-                                            name.to_string(),
-                                            *span,
-                                            new_type_id,
-                                        ),
-                                        None,
-                                    );
-                                }
-                                Err(err) => {
-                                    error = error.or(Some(err));
-                                }
-                            };
+                                        return_type_id,
+                                    ),
+                                    None,
+                                );
+                            }
+                            Err(err) => {
+                                error = error.or(Some(err));
+                            }
                         }
-                        Type::Enum(_) => todo!(),
-                        Type::RawPtr(_) => todo!(),
                     }
-                }
-                Type::GenericEnumInstance(_, _) => todo!(),
+                    Type::Enum(_) => todo!(),
+                    Type::RawPtr(_) => todo!(),
+                },
                 Type::Struct(_) => {
                     error = error.or(Some(JaktError::TypecheckError(
-                        "Optional member access of non-optional value".to_string(),
+                        format!(
+                            "Optional access on non-optional type {} not allowed",
+                            project.typename_for_type_id(checked_expr_type_id)
+                        ),
                         *span,
                     )));
                 }
-                Type::Enum(_) => todo!(),
-                Type::RawPtr(_) => todo!(),
+                _ => {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        format!(
+                            "Member access on value of non-struct type {} is not allowed",
+                            project.typename_for_type_id(checked_expr_type_id)
+                        ),
+                        *span,
+                    )));
+                }
             }
 
+            let (type_id, err) = unify_with_type_hint(project, &type_id);
+
+            error = error.or(err);
+
             (
-                CheckedExpression::Garbage(*span),
-                error.or(Some(JaktError::TypecheckError(
-                    "Unimplemented optional indexed struct in typechecker".to_string(),
+                CheckedExpression::IndexedStruct(
+                    Box::new(checked_expr),
+                    name.to_string(),
                     *span,
-                ))),
+                    type_id,
+                ),
+                error,
             )
         }
         ParsedExpression::MethodCall(expr, call, span) => {

@@ -2827,20 +2827,13 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             output.push_str(&format!("{})", name));
         }
         CheckedExpression::OptionalIndexedStruct(expr, name, _, type_id) => {
-            if let Type::GenericInstance(struct_id, inner_type_ids) = &project.types[*type_id] {
-                let inner_expr = &codegen_expr(indent, expr, project);
-                let optional_type_name = &project.structs[*struct_id].name;
-                if let Some(inner_type_name) = &project
-                    .typename_for_type_id(inner_type_ids[0])
-                    .split(' ')
-                    .last()
-                {
-                    let return_type_name = &format!("{}<{}>", optional_type_name, inner_type_name);
-                    output.push_str(&format!(
-                        "({}.has_value() ? ({} {{ {}.value()->{} }}) : ({}{{}}))",
-                        inner_expr, return_type_name, inner_expr, name, return_type_name
-                    ));
-                }
+            if let Type::GenericInstance(_, _) = &project.types[*type_id] {
+                let optional = &codegen_expr(indent, expr, project);
+                let return_type = codegen_type(*type_id, project);
+                output.push_str(&format!(
+                    "({}.has_value() ? ({} {{ {}.value()->{} }} ) : (JaktInternal::OptionalNone()))",
+                    optional, return_type, optional, name
+                ));
             }
         }
         CheckedExpression::Garbage(_) => {

@@ -2,7 +2,7 @@ class Foo {
     public bar: Bar?
 }
 class Bar {
-    public x: Baz?
+    public baz: Baz?
 }
 class Baz {
     public x: String?
@@ -11,13 +11,7 @@ class Baz {
 function main() {
     let foo: Foo? = Foo(bar: Bar(baz: Baz(x: "well hello friends :^)")))
     let null_foo: Foo? = None
-    let null_bar: Foo? = Foo(bar: None)
-    let null_baz: Foo? = Foo(bar: Bar(baz: None))
-    let null_x: Foo? = Foo(bar: Bar(baz: Baz(x: None)))
 
     println("{}", foo?.bar?.baz?.x ?? "no value")
-    println("{}", null_foo?.bar?.baz?.x ?? "no value")
-    println("{}", null_foo?.bar?.baz?.x ?? "no value")
-    println("{}", null_foo?.bar?.baz?.x ?? "no value")
     println("{}", null_foo?.bar?.baz?.x ?? "no value")
 }
