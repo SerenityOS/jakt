@@ -171,6 +171,29 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
         }
     }
 
+    for (_, struct_id) in &scope.structs {
+        let struct_id = *struct_id;
+        let structure = &project.structs[struct_id];
+        if structure.definition_linkage == DefinitionLinkage::External {
+            continue;
+        }
+        if !structure.generic_parameters.is_empty() {
+            continue;
+        }
+
+        let scope = &project.scopes[structure.scope_id];
+        for (_, function_id) in &scope.functions {
+            let function = &project.functions[*function_id];
+            if function.linkage != FunctionLinkage::ImplicitConstructor {
+                let function_output =
+                    codegen_function_in_namespace(function, Some(structure.type_id), project);
+
+                output.push_str(&function_output);
+                output.push('\n');
+            }
+        }
+    }
+
     output
 }
 
@@ -909,7 +932,11 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
             output.push('\n');
         } else {
             output.push_str(&codegen_indent(INDENT_SIZE));
-            let method_output = codegen_function(function, project);
+            let method_output = if structure.generic_parameters.is_empty() {
+                codegen_function_predecl(function, project)
+            } else {
+                codegen_function(function, project)
+            };
             output.push_str(&method_output);
         }
     }
@@ -969,6 +996,10 @@ fn codegen_function_predecl(function: &CheckedFunction, project: &Project) -> St
 
     let mut first = true;
     for param in &function.params {
+        if first && param.variable.name == "this" {
+            continue;
+        }
+
         if !first {
             output.push_str(", ");
         } else {
@@ -982,12 +1013,25 @@ fn codegen_function_predecl(function: &CheckedFunction, project: &Project) -> St
         output.push(' ');
         output.push_str(&param.variable.name);
     }
-    output.push_str(");");
+
+    if !function.is_static() && !function.is_mutating() {
+        output.push_str(") const;");
+    } else {
+        output.push_str(");");
+    }
 
     output
 }
 
 fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
+    codegen_function_in_namespace(function, None, project)
+}
+
+fn codegen_function_in_namespace(
+    function: &CheckedFunction,
+    containing_struct: Option<TypeId>,
+    project: &Project,
+) -> String {
     let mut output = String::new();
 
     if !function.generic_parameters.is_empty() {
@@ -1014,7 +1058,7 @@ fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
     if function.name == "main" {
         output.push_str("ErrorOr<int>");
     } else {
-        if function.is_static() {
+        if function.is_static() && containing_struct.is_none() {
             output.push_str("static ");
         }
         let return_type = if function.throws {
@@ -1029,14 +1073,23 @@ fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
         output.push_str(&return_type);
     }
     output.push(' ');
-    if function.name == "main" {
+    let is_main = function.name == "main" && containing_struct.is_none();
+    if is_main {
         output.push_str("JaktInternal::main");
     } else {
+        let qualifier = containing_struct
+            .map(|type_id| codegen_type_possibly_as_namespace(type_id, project, true));
+        if let Some(qualifier) = qualifier {
+            if !qualifier.is_empty() {
+                output.push_str(&qualifier);
+                output.push_str("::");
+            }
+        }
         output.push_str(&function.name);
     }
     output.push('(');
 
-    if function.name == "main" && function.params.is_empty() {
+    if is_main && function.params.is_empty() {
         output.push_str("Array<String>");
     }
 
@@ -1071,7 +1124,7 @@ fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
     output.push_str(&codegen_indent(INDENT_SIZE));
 
     // Put the return type in scope.
-    if function.name == "main" {
+    if is_main {
         output.push_str("using _JaktCurrentFunctionReturnType = ErrorOr<int>;\n");
     } else {
         if function.return_type_id == UNKNOWN_TYPE_ID {
@@ -1100,7 +1153,7 @@ fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
     );
     output.push_str(&block);
 
-    if function.name == "main" {
+    if is_main {
         output.push_str(&codegen_indent(INDENT_SIZE));
         output.push_str("return 0;\n");
     } else if function.throws && function.return_type_id == VOID_TYPE_ID {
