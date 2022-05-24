@@ -5,7 +5,6 @@
  */
 
 #include <AK/AnyOf.h>
-#include <AK/ByteBuffer.h>
 #include <AK/Find.h>
 #include <AK/Function.h>
 #include <AK/Memory.h>
@@ -25,12 +24,6 @@ StringView::StringView(String const& string)
 {
 }
 #endif
-
-StringView::StringView(ByteBuffer const& buffer)
-    : m_characters((char const*)buffer.data())
-    , m_length(buffer.size())
-{
-}
 
 Vector<StringView> StringView::split_view(char const separator, bool keep_empty) const
 {
