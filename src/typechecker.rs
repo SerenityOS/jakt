@@ -5107,6 +5107,15 @@ pub fn check_types_for_compat(
                             }
                             idx += 1;
                         }
+                    } else {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            format!(
+                                "Type mismatch: expected ‘{}’, but got ‘{}’",
+                                project.typename_for_type_id(lhs_type_id),
+                                project.typename_for_type_id(rhs_type_id),
+                            ),
+                            span,
+                        )))
                     }
                 }
                 _ => {
