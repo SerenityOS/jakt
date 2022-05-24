@@ -913,6 +913,13 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
         // Everything but the quotes
         let str = String::from_utf8_lossy(&bytes[(start + 1)..(*index)]);
 
+        if str.lines().count() > 1 {
+            error = error.or(Some(JaktError::ParserError(
+                "strings spanning multiple lines are not allowed".to_string(),
+                Span::new(file_id, start, *index),
+            )));
+        }
+
         *index += 1;
 
         let end = *index;
