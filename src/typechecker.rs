@@ -3158,17 +3158,37 @@ pub fn typecheck_expression(
             let mut inner_type_id = UNKNOWN_TYPE_ID;
             let mut output = Vec::new();
 
+            let array_struct_id = project
+                .find_struct_in_scope(0, "Array")
+                .expect("internal error: Array builtin definition not found");
+
+            let mut inner_hint = None;
+            if let Some(hint) = type_hint {
+                if let Type::GenericInstance(hint_struct_id, hint_inner_types) =
+                    &project.types[hint]
+                {
+                    if hint_struct_id == &array_struct_id {
+                        inner_hint = Some(hint_inner_types[0]);
+                    }
+                }
+            }
+
             let mut checked_fill_size_expr = None;
             if let Some(fill_size_expr) = fill_size_expr {
-                let (checked_expr, err) =
-                    typecheck_expression(fill_size_expr, scope_id, project, safety_mode, None);
+                let (checked_expr, err) = typecheck_expression(
+                    fill_size_expr,
+                    scope_id,
+                    project,
+                    safety_mode,
+                    inner_hint,
+                );
                 checked_fill_size_expr = Some(Box::new(checked_expr));
                 error = error.or(err);
             }
 
             for v in vec {
                 let (checked_expr, err) =
-                    typecheck_expression(v, scope_id, project, safety_mode, None);
+                    typecheck_expression(v, scope_id, project, safety_mode, inner_hint);
                 error = error.or(err);
 
                 if inner_type_id == UNKNOWN_TYPE_ID {
@@ -3190,9 +3210,16 @@ pub fn typecheck_expression(
                 output.push(checked_expr);
             }
 
-            let array_struct_id = project
-                .find_struct_in_scope(0, "Array")
-                .expect("internal error: Array builtin definition not found");
+            if inner_type_id == UNKNOWN_TYPE_ID {
+                if let Some(hint_inner_type) = inner_hint {
+                    inner_type_id = hint_inner_type
+                } else if type_hint.is_none() {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "Cannot infer generic type for Array<T>".to_string(),
+                        *span,
+                    )))
+                }
+            }
 
             let type_id = project
                 .find_or_add_type_id(Type::GenericInstance(array_struct_id, vec![inner_type_id]));
@@ -3209,9 +3236,24 @@ pub fn typecheck_expression(
             let mut inner_type_id = UNKNOWN_TYPE_ID;
             let mut output = Vec::new();
 
+            let set_struct_id = project
+                .find_struct_in_scope(0, "Set")
+                .expect("internal error: Set builtin definition not found");
+
+            let mut inner_hint = None;
+            if let Some(hint) = type_hint {
+                if let Type::GenericInstance(hint_struct_id, hint_inner_types) =
+                    &project.types[hint]
+                {
+                    if hint_struct_id == &set_struct_id {
+                        inner_hint = Some(hint_inner_types[0]);
+                    }
+                }
+            }
+
             for value in values {
                 let (checked_value, err) =
-                    typecheck_expression(value, scope_id, project, safety_mode, None);
+                    typecheck_expression(value, scope_id, project, safety_mode, inner_hint);
                 error = error.or(err);
 
                 if inner_type_id == UNKNOWN_TYPE_ID {
@@ -3232,9 +3274,16 @@ pub fn typecheck_expression(
                 output.push(checked_value);
             }
 
-            let set_struct_id = project
-                .find_struct_in_scope(0, "Set")
-                .expect("internal error: Set builtin definition not found");
+            if inner_type_id == UNKNOWN_TYPE_ID {
+                if let Some(hint_inner_type) = inner_hint {
+                    inner_type_id = hint_inner_type
+                } else if type_hint.is_none() {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "Cannot infer generic type for Set<T>".to_string(),
+                        *span,
+                    )))
+                }
+            }
 
             let type_id = project
                 .find_or_add_type_id(Type::GenericInstance(set_struct_id, vec![inner_type_id]));
@@ -3245,19 +3294,37 @@ pub fn typecheck_expression(
             (CheckedExpression::Set(output, *span, type_id), error)
         }
         ParsedExpression::Dictionary(kv_pairs, span) => {
-            let mut inner_type_id = (UNKNOWN_TYPE_ID, UNKNOWN_TYPE_ID);
+            let mut key_type_id = UNKNOWN_TYPE_ID;
+            let mut value_type_id = UNKNOWN_TYPE_ID;
             let mut output = Vec::new();
+
+            let dictionary_struct_id = project
+                .find_struct_in_scope(0, "Dictionary")
+                .expect("internal error: Dictionary builtin definition not found");
+
+            let mut key_hint = None;
+            let mut value_hint = None;
+            if let Some(hint) = type_hint {
+                if let Type::GenericInstance(hint_struct_id, hint_inner_types) =
+                    &project.types[hint]
+                {
+                    if hint_struct_id == &dictionary_struct_id {
+                        key_hint = Some(hint_inner_types[0]);
+                        value_hint = Some(hint_inner_types[1]);
+                    }
+                }
+            }
 
             for (key, value) in kv_pairs {
                 let (checked_key, err) =
-                    typecheck_expression(key, scope_id, project, safety_mode, None);
+                    typecheck_expression(key, scope_id, project, safety_mode, key_hint);
                 error = error.or(err);
 
                 let (checked_value, err) =
-                    typecheck_expression(value, scope_id, project, safety_mode, None);
+                    typecheck_expression(value, scope_id, project, safety_mode, value_hint);
                 error = error.or(err);
 
-                if inner_type_id == (UNKNOWN_TYPE_ID, UNKNOWN_TYPE_ID) {
+                if (key_type_id, value_type_id) == (UNKNOWN_TYPE_ID, UNKNOWN_TYPE_ID) {
                     if checked_key.type_id(scope_id, project) == VOID_TYPE_ID {
                         error = error.or(Some(JaktError::TypecheckError(
                             "cannot create a dictionary with keys of type void".to_string(),
@@ -3272,19 +3339,17 @@ pub fn typecheck_expression(
                         )))
                     }
 
-                    inner_type_id = (
-                        checked_key.type_id(scope_id, project),
-                        checked_value.type_id(scope_id, project),
-                    );
+                    key_type_id = checked_key.type_id(scope_id, project);
+                    value_type_id = checked_value.type_id(scope_id, project);
                 } else {
-                    if inner_type_id.0 != checked_key.type_id(scope_id, project) {
+                    if key_type_id != checked_key.type_id(scope_id, project) {
                         error = error.or(Some(JaktError::TypecheckError(
                             "does not match type of previous values in dictionary".to_string(),
                             key.span(),
                         )))
                     }
 
-                    if inner_type_id.1 != checked_value.type_id(scope_id, project) {
+                    if value_type_id != checked_value.type_id(scope_id, project) {
                         error = error.or(Some(JaktError::TypecheckError(
                             "does not match type of previous values in dictionary".to_string(),
                             value.span(),
@@ -3295,13 +3360,31 @@ pub fn typecheck_expression(
                 output.push((checked_key, checked_value));
             }
 
-            let dictionary_struct_id = project
-                .find_struct_in_scope(0, "Dictionary")
-                .expect("internal error: Dictionary builtin definition not found");
+            if key_type_id == UNKNOWN_TYPE_ID {
+                if let Some(key_hint) = key_hint {
+                    key_type_id = key_hint;
+                } else if type_hint.is_none() {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "Cannot infer key type for Dictionary".to_string(),
+                        *span,
+                    )))
+                }
+            }
+
+            if value_type_id == UNKNOWN_TYPE_ID {
+                if let Some(value_hint) = value_hint {
+                    value_type_id = value_hint;
+                } else if type_hint.is_none() {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "Cannot infer value type for Dictionary".to_string(),
+                        *span,
+                    )))
+                }
+            }
 
             let type_id = project.find_or_add_type_id(Type::GenericInstance(
                 dictionary_struct_id,
-                vec![inner_type_id.0, inner_type_id.1],
+                vec![key_type_id, value_type_id],
             ));
 
             let (type_id, err) = unify_with_type_hint(project, &type_id);
