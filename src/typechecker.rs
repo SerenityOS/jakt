@@ -855,7 +855,7 @@ pub enum CheckedExpression {
     NumericConstant(NumericConstant, Span, TypeId),
     QuotedString(String, Span),
     ByteConstant(u8, Span),
-    CharacterConstant(char, Span),
+    CharacterConstant(String, Span),
     UnaryOp(Box<CheckedExpression>, CheckedUnaryOperator, Span, TypeId),
     BinaryOp(
         Box<CheckedExpression>,
@@ -3084,7 +3084,7 @@ pub fn typecheck_expression(
         ParsedExpression::CharacterLiteral(c, span) => {
             let (_, err) = unify_with_type_hint(project, &CCHAR_TYPE_ID);
 
-            (CheckedExpression::CharacterConstant(*c, *span), err)
+            (CheckedExpression::CharacterConstant(c.clone(), *span), err)
         }
         ParsedExpression::Var(v, span) => {
             if let Some(var) = project.find_var_in_scope(scope_id, v) {
