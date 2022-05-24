@@ -3189,6 +3189,7 @@ pub fn typecheck_expression(
         }
         ParsedExpression::Array(vec, fill_size_expr, span) => {
             let mut inner_type_id = UNKNOWN_TYPE_ID;
+            let mut inner_type_span: Option<Span> = None;
             let mut output = Vec::new();
 
             let array_struct_id = project
@@ -3224,19 +3225,32 @@ pub fn typecheck_expression(
                     typecheck_expression(v, scope_id, project, safety_mode, inner_hint);
                 error = error.or(err);
 
+                let current_value_type_id = checked_expr.type_id(scope_id, project);
+
                 if inner_type_id == UNKNOWN_TYPE_ID {
-                    if checked_expr.type_id(scope_id, project) == VOID_TYPE_ID {
+                    if current_value_type_id == VOID_TYPE_ID {
                         error = error.or(Some(JaktError::TypecheckError(
                             "cannot create an array with values of type void".to_string(),
                             v.span(),
                         )))
                     }
 
-                    inner_type_id = checked_expr.type_id(scope_id, project);
-                } else if inner_type_id != checked_expr.type_id(scope_id, project) {
-                    error = error.or(Some(JaktError::TypecheckError(
-                        "does not match type of previous values in vector".to_string(),
+                    inner_type_id = current_value_type_id;
+                    inner_type_span = Some(v.span());
+                } else if inner_type_id != current_value_type_id {
+                    let array_type_name = project.typename_for_type_id(inner_type_id);
+                    error = error.or(Some(JaktError::TypecheckErrorWithHint(
+                        format!(
+                            "type '{}' does not match type '{}' of previous values in array",
+                            project.typename_for_type_id(current_value_type_id),
+                            array_type_name
+                        ),
                         v.span(),
+                        format!(
+                            "array was inferred to store type '{}' here",
+                            array_type_name
+                        ),
+                        inner_type_span.unwrap(),
                     )))
                 }
 
