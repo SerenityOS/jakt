@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-use std::{io::Write, path::PathBuf, process::exit};
+use std::{io, io::Write, path::PathBuf, process::exit, process::Command};
 
 use pico_args::Arguments;
 
@@ -34,8 +34,41 @@ fn main() -> Result<(), JaktError> {
                 let mut out_filepath = binary_directory.clone();
                 out_filepath.push(file.file_name().unwrap());
                 out_filepath.set_extension("cpp");
-                let mut out_file = std::fs::File::create(out_filepath)?;
+                let mut out_file = std::fs::File::create(out_filepath.clone())?;
                 out_file.write_all(str.as_bytes())?;
+                if !arguments.emit_source_only {
+                    let path_as_string =
+                        |path: &PathBuf| path.clone().into_os_string().into_string().unwrap();
+
+                    let input_cpp = path_as_string(&out_filepath);
+                    let output_executable = path_as_string(&out_filepath.with_extension(""));
+                    let runtime_path = if let Some(ref runtime_path) = arguments.runtime_path {
+                        path_as_string(runtime_path)
+                    } else {
+                        String::from("runtime")
+                    };
+                    let default_cxx_compiler_path = PathBuf::from("clang++");
+                    let clang_output = Command::new(
+                        arguments
+                            .cxx_compiler_path
+                            .as_ref()
+                            .unwrap_or(&default_cxx_compiler_path),
+                    )
+                    .args([
+                        "-fcolor-diagnostics",
+                        "-std=c++20",
+                        // These warnings if enabled create loads of unnecessary noise:
+                        "-Wno-unqualified-std-cast-call",
+                        "-Wno-user-defined-literals",
+                        "-I",
+                        &runtime_path,
+                        &input_cpp,
+                        "-o",
+                        &output_executable,
+                    ])
+                    .output()?;
+                    io::stderr().write_all(&clang_output.stderr)?;
+                }
             }
             Err(err) => {
                 match &err {
@@ -66,26 +99,34 @@ fn main() -> Result<(), JaktError> {
 }
 
 /// Make sure to keep these up-to-date if you're adding arguments.
-const USAGE: &str = "usage: jakt [-h] [OPTIONS] [FILES...]";
+const USAGE: &str = "usage: jakt [-h,-S] [OPTIONS] [FILES...]";
 
 // FIXME: Once format is stable as a const function, include USAGE in this string.
 const HELP: &str = "\
 Flags:
-  -h,--help              Print this help and exit
+  -h,--help                     Print this help and exit.
+  -S,--emit-cpp-source-only     Only emit the generated C++ source, do not compile.
 
 Options:
-  -o,--binary-dir PATH   Output directory for compiled files.
-                         Defaults to $PWD/build.
+  -o,--binary-dir PATH          Output directory for compiled files.
+                                Defaults to $PWD/build.
+  -C,--cxx-compiler-path PATH   Path of the C++ compiler to use when compiling the generated sources.
+                                Defaults to clang++.
+  -R,--runtime-path PATH        Path of the Jakt runtime headers.
+                                Defaults to $PWD/runtime.
 
 Arguments:
-  FILES...               List of files to compile. The outputs are
-                         `<input-filename>.cpp` in the binary directory.
+  FILES...                      List of files to compile. The outputs are
+                                `<input-filename>.cpp` in the binary directory.
 ";
 
 #[derive(Debug)]
 struct JaktArguments {
     binary_directory: Option<PathBuf>,
     input_files: Vec<PathBuf>,
+    emit_source_only: bool,
+    cxx_compiler_path: Option<PathBuf>,
+    runtime_path: Option<PathBuf>,
 }
 
 /// Exits if the arguments are invalid or the user doesn't want to run Jakt (e.g. help output)
@@ -95,17 +136,31 @@ fn parse_arguments() -> JaktArguments {
         println!("{}\n\n{}", USAGE, HELP);
         exit(0);
     }
+    let emit_source_only = pico_arguments.contains(["-S", "--emit-cpp-source-only"]);
 
     let mut arguments = JaktArguments {
         binary_directory: None,
         input_files: Vec::new(),
+        emit_source_only,
+        cxx_compiler_path: None,
+        runtime_path: None,
     };
 
-    if let Ok(binary_directory) = pico_arguments.opt_value_from_os_str(
-        ["-o", "--binary-dir"],
-        |s| -> Result<PathBuf, &'static str> { Ok(s.into()) },
-    ) {
+    let mut get_path_arg = |keys| {
+        pico_arguments
+            .opt_value_from_os_str(keys, |s| -> Result<PathBuf, &'static str> { Ok(s.into()) })
+    };
+
+    if let Ok(binary_directory) = get_path_arg(["-o", "--binary-dir"]) {
         arguments.binary_directory = binary_directory;
+    }
+
+    if let Ok(cxx_compiler_path) = get_path_arg(["-C", "--cxx-compiler-path"]) {
+        arguments.cxx_compiler_path = cxx_compiler_path;
+    }
+
+    if let Ok(runtime_path) = get_path_arg(["-R", "--runtime-path"]) {
+        arguments.runtime_path = runtime_path;
     }
 
     while let Ok(filename) = pico_arguments.free_from_str::<PathBuf>() {
