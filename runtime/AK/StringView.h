@@ -44,12 +44,10 @@ public:
     {
     }
 
-    StringView(ByteBuffer const&);
 #ifndef KERNEL
     StringView(String const&);
 #endif
 
-    explicit StringView(ByteBuffer&&) = delete;
 #ifndef KERNEL
     explicit StringView(String&&) = delete;
 #endif

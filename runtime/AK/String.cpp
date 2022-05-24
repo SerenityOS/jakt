@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteBuffer.h>
 #include <AK/Format.h>
 #include <AK/Function.h>
 #include <AK/Memory.h>
@@ -143,14 +142,6 @@ Vector<StringView> String::split_view(Function<bool(char)> separator, bool keep_
 Vector<StringView> String::split_view(char const separator, bool keep_empty) const
 {
     return split_view([separator](char ch) { return ch == separator; }, keep_empty);
-}
-
-ByteBuffer String::to_byte_buffer() const
-{
-    if (!m_impl)
-        return {};
-    // FIXME: Handle OOM failure.
-    return ByteBuffer::copy(bytes()).release_value_but_fixme_should_propagate_errors();
 }
 
 template<typename T>
