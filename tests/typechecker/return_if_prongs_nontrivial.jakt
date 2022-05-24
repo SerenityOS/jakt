@@ -1,0 +1,11 @@
+function max(a: i32, b: i32) -> i32 {
+    if a > b {
+        return a
+    } else {
+        return b
+    }
+}
+
+function main() {
+    println("{}", max(a: 123i32, b: -123i32))
+}
