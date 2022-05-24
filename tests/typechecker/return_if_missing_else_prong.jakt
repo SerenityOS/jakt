@@ -1,5 +1,5 @@
 function foo() -> i32 {
-    if true {
+    if false {
         return 123
     }
 }
