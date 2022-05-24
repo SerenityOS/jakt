@@ -4435,6 +4435,13 @@ pub fn typecheck_expression(
                 error,
             )
         }
+        ParsedExpression::OptionalIndexedStruct(_, _, span) => (
+            CheckedExpression::Garbage(*span),
+            Some(JaktError::TypecheckError(
+                "Unimplemented optional indexed struct in typechecker".to_string(),
+                *span,
+            )),
+        ),
         ParsedExpression::MethodCall(expr, call, span) => {
             let (checked_expr, err) =
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
