@@ -352,6 +352,27 @@ ALWAYS_INLINE constexpr OutputType truncating_integer_cast(InputType input)
     }
 }
 
+template<typename T>
+struct _RemoveRefPtr {
+    using Type = T;
+};
+
+template<typename T>
+struct _RemoveRefPtr<NonnullRefPtr<T>> {
+    using Type = T;
+};
+
+template<typename T>
+using RemoveRefPtr = typename _RemoveRefPtr<RemoveCVReference<T>>::Type;
+
+template<typename T>
+ALWAYS_INLINE decltype(auto) deref_if_ref_pointer(T&& value) {
+    if constexpr (IsSpecializationOf<RemoveCVReference<T>, NonnullRefPtr>)
+        return static_cast<CopyConst<RemoveReference<T>, RemoveRefPtr<T>>&>(*value);
+    else
+        return static_cast<Conditional<IsRvalueReference<T>, RemoveReference<T>, T>>(value);
+}
+
 }
 
 using JaktInternal::fallible_integer_cast;

@@ -3834,7 +3834,7 @@ pub fn typecheck_expression(
                                     Some(subject_type_id),
                                 );
                                 error = error.or(err);
-                                if checked_expr.to_integer_constant().is_none() {
+                                if checked_expr.to_number_constant().is_none() {
                                     all_variants_are_constants = false;
                                 }
 
@@ -4166,17 +4166,58 @@ pub fn typecheck_expression(
                     }
                 }
                 _ => {
+                    let mut is_enum_match = false;
+                    let mut is_value_match = false;
                     let mut seen_catch_all = false;
                     for case in cases {
                         match case {
-                            MatchCase::EnumVariant { marker_span, .. } => {
-                                error = error.or(Some(JaktError::TypecheckError(
-                                    format!(
-                                        "Cannot use enum variant names to match non-enum type '{}'",
-                                        project.typename_for_type_id(subject_type_id)
-                                    ),
+                            MatchCase::EnumVariant {
+                                marker_span,
+                                body,
+                                variant_name,
+                                variant_arguments,
+                                ..
+                            } => {
+                                if is_value_match {
+                                    error = error.or(Some(JaktError::TypecheckError(
+                                        "Cannot have an enum match case in a match expression containing value matches".to_string(),
+                                        *marker_span,
+                                    )));
+                                }
+                                is_enum_match = true;
+
+                                // We don't know what the enum type is, but we have the type var for it, so generate a generic enum match.
+                                // note that this will be fully checked when this match expression is actually instantiated.
+
+                                let (body, err) = typecheck_match_body(
+                                    body,
+                                    scope_id,
+                                    project,
+                                    safety_mode,
+                                    &mut generic_parameters,
+                                    &mut final_result_type,
                                     *marker_span,
-                                )));
+                                );
+                                error = error.or(err);
+
+                                if let Some(type_id) = final_result_type {
+                                    if type_id == UNKNOWN_TYPE_ID {
+                                        final_result_type = None;
+                                    }
+                                }
+
+                                checked_cases.push(CheckedMatchCase::EnumVariant {
+                                    variant_name: variant_name
+                                        .last()
+                                        .expect("Must have at least one enum variant name here")
+                                        .0
+                                        .clone(),
+                                    subject_type_id,
+                                    variant_arguments: variant_arguments.clone(),
+                                    variant_index: 0,
+                                    scope_id,
+                                    body,
+                                });
                             }
                             MatchCase::CatchAll { body, marker_span } => {
                                 if seen_catch_all {
@@ -4251,6 +4292,14 @@ pub fn typecheck_expression(
                                 body,
                                 marker_span,
                             } => {
+                                if is_enum_match {
+                                    error = error.or(Some(JaktError::TypecheckError(
+                                        "Cannot have a value match case in a match expression containing enum matches".to_string(),
+                                        *marker_span,
+                                    )));
+                                    continue;
+                                }
+                                is_value_match = true;
                                 let (checked_expr, err) = typecheck_expression(
                                     matched_expression,
                                     scope_id,
@@ -4259,7 +4308,7 @@ pub fn typecheck_expression(
                                     Some(subject_type_id),
                                 );
                                 error = error.or(err);
-                                if checked_expr.to_integer_constant().is_none() {
+                                if checked_expr.to_number_constant().is_none() {
                                     all_variants_are_constants = false;
                                 }
 
