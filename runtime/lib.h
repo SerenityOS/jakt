@@ -7,7 +7,6 @@
 #include <AK/Badge.h>
 #include <AK/BitCast.h>
 #include <AK/BuiltinWrappers.h>
-#include <AK/ByteBuffer.h>
 #include <AK/CharacterTypes.h>
 #include <AK/Checked.h>
 #include <AK/CheckedFormatString.h>

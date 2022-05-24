@@ -254,8 +254,6 @@ public:
         return m_impl->hash();
     }
 
-    [[nodiscard]] ByteBuffer to_byte_buffer() const;
-
     template<typename BufferType>
     [[nodiscard]] static String copy(BufferType const& buffer, ShouldChomp should_chomp = NoChomp)
     {
