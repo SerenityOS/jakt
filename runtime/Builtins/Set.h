@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include "AK/HashTable.h"
+#include <AK/HashTable.h>
 #include <initializer_list>
 
-namespace AK {
+namespace JaktInternal {
 
 template<typename T, typename TraitsForT, bool IsOrdered>
 class Set : public HashTable<T, TraitsForT, IsOrdered> {
@@ -28,8 +28,8 @@ public:
 
     using HashTableType::contains;
 
-    ErrorOr<HashSetResult> add(T const& value) { return HashTableType::try_set(value); }
-    ErrorOr<HashSetResult> add(T&& value) { return HashTableType::try_set(move(value)); }
+    ErrorOr<AK::HashSetResult> add(T const& value) { return HashTableType::try_set(value); }
+    ErrorOr<AK::HashSetResult> add(T&& value) { return HashTableType::try_set(move(value)); }
     ErrorOr<void> ensure_capacity(size_t capacity) { return HashTableType::try_ensure_capacity(capacity); }
 
     using HashTableType::capacity;
@@ -49,4 +49,4 @@ public:
 
 }
 
-using AK::Set;
+using JaktInternal::Set;
