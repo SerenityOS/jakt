@@ -1,0 +1,25 @@
+struct A<T> {
+    field: B<T>
+}
+
+class C {
+    field1: A<i32>
+    field2: B<i32>
+}
+
+struct B<T> {
+    field: MyEnum
+}
+
+enum MyEnum {
+    A(MyRecursiveEnum)
+}
+
+ref enum MyRecursiveEnum {
+    A(MyRecursiveEnum)
+    B
+}
+
+function main() {
+    // Should compile.
+}

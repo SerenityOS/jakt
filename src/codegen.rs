@@ -19,6 +19,7 @@ use crate::{
         Project, Scope, Type, TypeId,
     },
 };
+use std::collections::{HashMap, HashSet};
 
 const INDENT_SIZE: usize = 4;
 
@@ -68,8 +69,53 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
 
     output.push('\n');
 
+    // Figure out the right order to output the structs
+    // This is necessary as C++ requires a type to be defined before it's used as a value type,
+    // we can ignore the generic types as they are only resolved when used by other non-generic code.
+    let type_dependency_graph = produce_type_dependency_graph(project, scope);
+    let mut seen_types = HashSet::new();
+    for type_id in type_dependency_graph.keys() {
+        let mut traversal = Vec::new();
+        postorder_traversal(
+            project,
+            *type_id,
+            &mut seen_types,
+            &type_dependency_graph,
+            &mut traversal,
+        );
+
+        for type_id in traversal {
+            let type_ = &project.types[type_id];
+            seen_types.insert(type_id);
+            match type_ {
+                Type::Enum(enum_id) => {
+                    let enum_ = &project.enums[*enum_id];
+                    let enum_output = codegen_enum(enum_, project);
+
+                    if !enum_output.is_empty() {
+                        output.push_str(&enum_output);
+                        output.push('\n');
+                    }
+                }
+                Type::Struct(struct_id) => {
+                    let structure = &project.structs[*struct_id];
+                    let struct_output = codegen_struct(structure, project);
+
+                    if !struct_output.is_empty() {
+                        output.push_str(&struct_output);
+                        output.push('\n');
+                    }
+                }
+                _ => panic!("Unexpected type in dependency graph: {:?}", type_),
+            }
+        }
+    }
+
     for (_, struct_id) in &scope.structs {
         let structure = &project.structs[*struct_id];
+        if seen_types.contains(&structure.type_id) {
+            continue;
+        }
         let struct_output = codegen_struct(structure, project);
 
         if !struct_output.is_empty() {
@@ -82,8 +128,10 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
 
     for (_, enum_id) in &scope.enums {
         let enum_ = &project.enums[*enum_id];
+        if seen_types.contains(&enum_.type_id) {
+            continue;
+        }
         let enum_output = codegen_enum(enum_, project);
-
         if !enum_output.is_empty() {
             output.push_str(&enum_output);
             output.push('\n');
@@ -2441,4 +2489,114 @@ fn codegen_namespace_path(call: &CheckedCall, project: &Project) -> String {
 
 fn codegen_indent(indent: usize) -> String {
     " ".repeat(indent)
+}
+
+fn extract_dependencies_from(
+    project: &Project,
+    type_id: TypeId,
+    deps: &mut HashSet<TypeId>,
+    graph: &HashMap<TypeId, Vec<TypeId>>,
+    top_level: bool,
+) {
+    if let Some(existing_deps) = graph.get(&type_id) {
+        for dep in existing_deps {
+            deps.insert(*dep);
+        }
+        return;
+    }
+
+    let type_ = &project.types[type_id];
+    match type_ {
+        Type::GenericInstance(struct_id, _) | Type::Struct(struct_id) => {
+            let struct_ = &project.structs[*struct_id];
+            if struct_.definition_linkage == DefinitionLinkage::External {
+                // This type is defined somewhere else,
+                // so we can skip marking it as a dependency.
+                return;
+            }
+
+            if struct_.definition_type == DefinitionType::Class && !top_level {
+                // We store and pass these as pointers, so we don't need to
+                // include them in the dependency graph.
+                return;
+            }
+
+            deps.insert(struct_.type_id);
+            // The struct's fields are also dependencies.
+            for field in &struct_.fields {
+                extract_dependencies_from(project, field.type_id, deps, graph, false);
+            }
+        }
+        Type::GenericEnumInstance(enum_id, _) | Type::Enum(enum_id) => {
+            let enum_ = &project.enums[*enum_id];
+            if enum_.definition_linkage == DefinitionLinkage::External {
+                // This type is defined somewhere else,
+                // so we can skip marking it as a dependency.
+                return;
+            }
+
+            if enum_.definition_type == DefinitionType::Class && !top_level {
+                // We store and pass these as pointers, so we don't need to
+                // include them in the dependency graph.
+                return;
+            }
+
+            deps.insert(enum_.type_id);
+            if let Some(type_id) = enum_.underlying_type_id {
+                extract_dependencies_from(project, type_id, deps, graph, false);
+            }
+
+            // The enum variants' types are also dependencies.
+            for variant in &enum_.variants {
+                match variant {
+                    CheckedEnumVariant::Typed(_, type_id, _) => {
+                        extract_dependencies_from(project, *type_id, deps, graph, false);
+                    }
+                    CheckedEnumVariant::StructLike(_, fields, _) => {
+                        for field in fields {
+                            extract_dependencies_from(project, field.type_id, deps, graph, false);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        Type::Builtin => {}
+        Type::TypeVariable(_) => {}
+        Type::RawPtr(_) => {}
+    }
+}
+
+fn produce_type_dependency_graph(project: &Project, scope: &Scope) -> HashMap<TypeId, Vec<TypeId>> {
+    let mut graph = HashMap::new();
+
+    for (_, type_id) in &scope.types {
+        let mut deps = HashSet::new();
+        extract_dependencies_from(project, *type_id, &mut deps, &graph, true);
+        graph.insert(*type_id, deps.into_iter().collect());
+    }
+
+    graph
+}
+
+fn postorder_traversal(
+    project: &Project,
+    type_id: TypeId,
+    visited: &mut HashSet<TypeId>,
+    graph: &HashMap<TypeId, Vec<TypeId>>,
+    output: &mut Vec<TypeId>,
+) {
+    if visited.contains(&type_id) {
+        return;
+    }
+
+    visited.insert(type_id);
+
+    if let Some(deps) = graph.get(&type_id) {
+        for dep in deps {
+            postorder_traversal(project, *dep, visited, graph, output);
+        }
+    }
+
+    output.push(type_id);
 }
