@@ -10,7 +10,7 @@
 #include <AK/NonnullRefPtr.h>
 #include <AK/RefCounted.h>
 
-namespace AK {
+namespace JaktInternal {
 
 template<typename K, typename V>
 struct DictionaryStorage : public RefCounted<DictionaryStorage<K, V>> {
@@ -81,4 +81,4 @@ private:
 
 }
 
-using AK::Dictionary;
+using JaktInternal::Dictionary;
