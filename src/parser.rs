@@ -825,6 +825,8 @@ pub fn parse_enum(
                     *index += 1;
 
                     let mut members = Vec::new();
+                    let mut parsed_type = None;
+
                     skip_newlines(tokens, index);
                     while !matches!(
                         tokens.get(*index),
@@ -833,6 +835,48 @@ pub fn parse_enum(
                             ..
                         }) | None
                     ) {
+                        // If we have (Ident Colon), parse as a variable
+                        // otherwise parse as a type.
+                        let parse_as_type = members.is_empty() && parsed_type.is_none() && {
+                            let lookahead_save = *index;
+                            skip_newlines(tokens, index);
+                            let result = !matches!(
+                                (tokens.get(*index), tokens.get(*index + 1)),
+                                (
+                                    Some(Token {
+                                        contents: TokenContents::Name(_),
+                                        ..
+                                    }),
+                                    Some(Token {
+                                        contents: TokenContents::Colon,
+                                        ..
+                                    }),
+                                )
+                            );
+                            *index = lookahead_save;
+                            result
+                        };
+
+                        if parse_as_type {
+                            let (type_, parse_error) = parse_typename(tokens, index);
+                            error = error.or(parse_error);
+                            parsed_type = Some(type_);
+                            skip_newlines(tokens, index);
+                            if !matches!(
+                                tokens.get(*index),
+                                Some(Token {
+                                    contents: TokenContents::RParen,
+                                    ..
+                                }) | None
+                            ) {
+                                error = error.or(Some(JaktError::ParserError(
+                                    "expected `)` to end type in enum variant".to_string(),
+                                    tokens[*index].span,
+                                )));
+                            }
+                            break;
+                        }
+
                         // Fields in struct-like enums are always public.
                         let (decl, parse_error) =
                             parse_variable_declaration(tokens, index, Visibility::Public);
@@ -871,11 +915,11 @@ pub fn parse_enum(
                         }
                     }
                     *index += 1;
-                    if members.len() == 1 && members[0].parsed_type == ParsedType::Empty {
+                    if let Some(type_) = parsed_type {
                         // We have a simple value (non-struct) case
                         enum_.variants.push(EnumVariant::Typed(
                             name.to_string(),
-                            ParsedType::Name(members[0].name.clone(), members[0].span),
+                            type_,
                             Span {
                                 file_id: tokens[*index].span.file_id,
                                 start: tokens[start_index].span.start,

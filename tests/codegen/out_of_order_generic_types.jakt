@@ -8,15 +8,15 @@ class C {
 }
 
 struct B<T> {
-    field: MyEnum
+    field: MyEnum<T>
 }
 
-enum MyEnum {
-    A(MyRecursiveEnum)
+enum MyEnum<T> {
+    A(MyRecursiveEnum<T>)
 }
 
-ref enum MyRecursiveEnum {
-    A(MyRecursiveEnum)
+ref enum MyRecursiveEnum<T> {
+    A(MyRecursiveEnum<T>)
     B
 }
 
