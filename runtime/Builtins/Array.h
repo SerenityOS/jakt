@@ -6,7 +6,7 @@
 #include <initializer_list>
 #include <stdlib.h>
 
-namespace AK {
+namespace JaktInternal {
 
 template<typename T>
 class ArrayStorage : public RefCounted<ArrayStorage<T>> {
@@ -270,4 +270,4 @@ private:
 
 }
 
-using AK::Array;
+using JaktInternal::Array;

@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include <AK/Array.h>
 #include <AK/Error.h>
 #include <AK/RefCounted.h>
 #include <AK/String.h>
+#include <Builtins/Array.h>
 #include <stdio.h>
 
 class File final : public RefCounted<File> {
