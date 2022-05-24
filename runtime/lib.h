@@ -2,7 +2,6 @@
 
 #include <AK/AllOf.h>
 #include <AK/AnyOf.h>
-#include <AK/Array.h>
 #include <AK/Assertions.h>
 #include <AK/Atomic.h>
 #include <AK/Badge.h>
@@ -79,6 +78,7 @@ template<typename T, typename TraitsForT = Traits<T>, bool IsOrdered = false>
 class Set;
 }
 
+#include <Builtins/Array.h>
 #include <Builtins/Dictionary.h>
 #include <Builtins/Set.h>
 
