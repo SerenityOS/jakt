@@ -2641,6 +2641,22 @@ pub fn typecheck_statement(
             );
             error = error.or(err);
 
+            let weakptr_struct_id = project
+                .find_struct_in_scope(0, "WeakPtr")
+                .expect("internal error: can't find builtin WeakPtr type");
+
+            match &project.types[checked_type_id] {
+                Type::GenericInstance(struct_id, _) if *struct_id == weakptr_struct_id => {
+                    if !var_decl.mutable {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "Weak reference must be mutable".into(),
+                            var_decl.span,
+                        )));
+                    }
+                }
+                _ => {}
+            }
+
             let checked_var_decl = CheckedVarDecl {
                 name: var_decl.name.clone(),
                 type_id: checked_type_id,
