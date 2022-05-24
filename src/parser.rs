@@ -132,6 +132,7 @@ pub enum FunctionLinkage {
     External,
     ImplicitConstructor,
     ImplicitEnumConstructor,
+    ExternalClassConstructor,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
