@@ -66,6 +66,10 @@ pub fn is_integer(type_id: TypeId) -> bool {
     )
 }
 
+pub fn is_floating(type_id: TypeId) -> bool {
+    matches!(type_id, F32_TYPE_ID | F64_TYPE_ID)
+}
+
 pub fn is_signed(type_id: TypeId) -> bool {
     match type_id {
         // c_char types can be both signed or unsigned values thus we have to check which variant
@@ -111,9 +115,9 @@ pub fn get_bits(type_id: TypeId) -> u32 {
     }
 }
 
-pub fn can_fit_integer(type_id: TypeId, value: &IntegerConstant) -> bool {
+pub fn can_fit_number(type_id: TypeId, value: &NumberConstant) -> bool {
     match *value {
-        IntegerConstant::Signed(value) => match type_id {
+        NumberConstant::Signed(value) => match type_id {
             CCHAR_TYPE_ID => value >= c_char::MIN as i64 && value <= c_char::MAX as i64,
             CINT_TYPE_ID => value >= c_int::MIN as i64 && value <= c_int::MAX as i64,
             I8_TYPE_ID => value >= i8::MIN as i64 && value <= i8::MAX as i64,
@@ -128,7 +132,7 @@ pub fn can_fit_integer(type_id: TypeId, value: &IntegerConstant) -> bool {
             USIZE_TYPE_ID => value >= 0,
             _ => false,
         },
-        IntegerConstant::Unsigned(value) => match type_id {
+        NumberConstant::Unsigned(value) => match type_id {
             I8_TYPE_ID => value <= i8::MAX as u64,
             I16_TYPE_ID => value <= i16::MAX as u64,
             I32_TYPE_ID => value <= i32::MAX as u64,
@@ -139,6 +143,11 @@ pub fn can_fit_integer(type_id: TypeId, value: &IntegerConstant) -> bool {
             // FIXME: Don't assume that usize is 64-bit
             USIZE_TYPE_ID => true,
             U64_TYPE_ID => true,
+            _ => false,
+        },
+        NumberConstant::Floating(value) => match type_id {
+            F32_TYPE_ID => value >= f32::MIN as f64 && value <= f32::MAX as f64,
+            F64_TYPE_ID => true,
             _ => false,
         },
     }
@@ -452,6 +461,8 @@ impl Project {
                 crate::compiler::U16_TYPE_ID => "u16".to_string(),
                 crate::compiler::U32_TYPE_ID => "u32".to_string(),
                 crate::compiler::U64_TYPE_ID => "u64".to_string(),
+                crate::compiler::F32_TYPE_ID => "f32".to_string(),
+                crate::compiler::F64_TYPE_ID => "f64".to_string(),
                 crate::compiler::USIZE_TYPE_ID => "usize".to_string(),
                 crate::compiler::CCHAR_TYPE_ID => "c_char".to_string(),
                 crate::compiler::CINT_TYPE_ID => "c_int".to_string(),
@@ -666,21 +677,23 @@ pub enum CheckedStatement {
 }
 
 #[derive(Clone, Debug)]
-pub enum IntegerConstant {
+pub enum NumberConstant {
     Signed(i64),
     Unsigned(u64),
+    Floating(f64),
 }
 
-impl IntegerConstant {
+impl NumberConstant {
     pub fn to_usize(&self) -> usize {
         match self {
-            IntegerConstant::Signed(value) => *value as usize,
-            IntegerConstant::Unsigned(value) => *value as usize,
+            NumberConstant::Signed(value) => *value as usize,
+            NumberConstant::Unsigned(value) => *value as usize,
+            NumberConstant::Floating(value) => *value as usize,
         }
     }
 
     pub fn promote(&self, type_id: TypeId) -> (Option<NumericConstant>, TypeId) {
-        if !can_fit_integer(type_id, self) {
+        if !can_fit_number(type_id, self) {
             return (None, UNKNOWN_TYPE_ID);
         }
 
@@ -688,7 +701,7 @@ impl IntegerConstant {
         let signed = is_signed(type_id);
 
         let new_constant = match self {
-            IntegerConstant::Signed(value) => match (bits, signed) {
+            NumberConstant::Signed(value) => match (bits, signed) {
                 (8, false) => NumericConstant::U8(*value as u8),
                 (16, false) => NumericConstant::U16(*value as u16),
                 (32, false) => NumericConstant::U32(*value as u32),
@@ -699,7 +712,7 @@ impl IntegerConstant {
                 (64, true) => NumericConstant::I64(*value as i64),
                 _ => panic!("Numeric constants can only be 8, 16, 32, or 64 bits long"),
             },
-            IntegerConstant::Unsigned(value) => match (bits, signed) {
+            NumberConstant::Unsigned(value) => match (bits, signed) {
                 (8, false) => NumericConstant::U8(*value as u8),
                 (16, false) => NumericConstant::U16(*value as u16),
                 (32, false) => NumericConstant::U32(*value as u32),
@@ -709,17 +722,23 @@ impl IntegerConstant {
                 (32, true) => NumericConstant::I32(*value as i32),
                 (64, true) => NumericConstant::I64(*value as i64),
                 _ => panic!("Numeric constants can only be 8, 16, 32, or 64 bits long"),
+            },
+            NumberConstant::Floating(value) => match (bits, signed) {
+                (32, true) => NumericConstant::F32(*value as f32),
+                (64, true) => NumericConstant::F64(*value as f64),
+                _ => panic!("Floating numeric constants can only be 32, or 64 bits long"),
             },
         };
         (Some(new_constant), type_id)
     }
 }
 
-impl From<IntegerConstant> for i128 {
-    fn from(integer: IntegerConstant) -> Self {
-        match integer {
-            IntegerConstant::Signed(value) => value as i128,
-            IntegerConstant::Unsigned(value) => value as i128,
+impl From<NumberConstant> for i128 {
+    fn from(number: NumberConstant) -> Self {
+        match number {
+            NumberConstant::Signed(value) => value as i128,
+            NumberConstant::Unsigned(value) => value as i128,
+            _ => panic!("Not supported for floating numbers"),
         }
     }
 }
@@ -735,6 +754,8 @@ pub enum NumericConstant {
     U32(u32),
     U64(u64),
     USize(u64),
+    F32(f32),
+    F64(f64),
 }
 
 impl PartialEq for NumericConstant {
@@ -749,23 +770,27 @@ impl PartialEq for NumericConstant {
             (NumericConstant::U32(l), NumericConstant::U32(r)) => l == r,
             (NumericConstant::U64(l), NumericConstant::U64(r)) => l == r,
             (NumericConstant::USize(l), NumericConstant::USize(r)) => l == r,
+            (NumericConstant::F32(l), NumericConstant::F32(r)) => l == r,
+            (NumericConstant::F64(l), NumericConstant::F64(r)) => l == r,
             _ => false,
         }
     }
 }
 
 impl NumericConstant {
-    pub fn integer_constant(&self) -> Option<IntegerConstant> {
+    pub fn number_constant(&self) -> Option<NumberConstant> {
         match self {
-            NumericConstant::I8(value) => Some(IntegerConstant::Signed(*value as i64)),
-            NumericConstant::I16(value) => Some(IntegerConstant::Signed(*value as i64)),
-            NumericConstant::I32(value) => Some(IntegerConstant::Signed(*value as i64)),
-            NumericConstant::I64(value) => Some(IntegerConstant::Signed(*value as i64)),
-            NumericConstant::U8(value) => Some(IntegerConstant::Unsigned(*value as u64)),
-            NumericConstant::U16(value) => Some(IntegerConstant::Unsigned(*value as u64)),
-            NumericConstant::U32(value) => Some(IntegerConstant::Unsigned(*value as u64)),
-            NumericConstant::U64(value) => Some(IntegerConstant::Unsigned(*value as u64)),
-            NumericConstant::USize(value) => Some(IntegerConstant::Unsigned(*value as u64)),
+            NumericConstant::I8(value) => Some(NumberConstant::Signed(*value as i64)),
+            NumericConstant::I16(value) => Some(NumberConstant::Signed(*value as i64)),
+            NumericConstant::I32(value) => Some(NumberConstant::Signed(*value as i64)),
+            NumericConstant::I64(value) => Some(NumberConstant::Signed(*value as i64)),
+            NumericConstant::U8(value) => Some(NumberConstant::Unsigned(*value as u64)),
+            NumericConstant::U16(value) => Some(NumberConstant::Unsigned(*value as u64)),
+            NumericConstant::U32(value) => Some(NumberConstant::Unsigned(*value as u64)),
+            NumericConstant::U64(value) => Some(NumberConstant::Unsigned(*value as u64)),
+            NumericConstant::USize(value) => Some(NumberConstant::Unsigned(*value as u64)),
+            NumericConstant::F32(value) => Some(NumberConstant::Floating(*value as f64)),
+            NumericConstant::F64(value) => Some(NumberConstant::Floating(*value as f64)),
         }
     }
 
@@ -780,6 +805,8 @@ impl NumericConstant {
             NumericConstant::U32(_) => U32_TYPE_ID,
             NumericConstant::U64(_) => U64_TYPE_ID,
             NumericConstant::USize(_) => USIZE_TYPE_ID,
+            NumericConstant::F32(_) => F32_TYPE_ID,
+            NumericConstant::F64(_) => F64_TYPE_ID,
         }
     }
 }
@@ -971,21 +998,21 @@ impl CheckedExpression {
         }
     }
 
-    pub fn to_integer_constant(&self) -> Option<IntegerConstant> {
+    pub fn to_number_constant(&self) -> Option<NumberConstant> {
         match self {
-            CheckedExpression::NumericConstant(constant, _, _) => constant.integer_constant(),
+            CheckedExpression::NumericConstant(constant, _, _) => constant.number_constant(),
             CheckedExpression::UnaryOp(
                 value,
                 CheckedUnaryOperator::TypeCast(CheckedTypeCast::Infallible(_)),
                 _,
                 type_id,
             ) => {
-                if !is_integer(*type_id) {
+                if !is_integer(*type_id) && !is_floating(*type_id) {
                     return None;
                 }
                 match &**value {
                     CheckedExpression::NumericConstant(constant, _, _) => {
-                        constant.integer_constant()
+                        constant.number_constant()
                     }
                     _ => None,
                 }
@@ -1445,7 +1472,7 @@ fn typecheck_enum(
                     seen_names.insert(name.clone());
                     let (checked_expression, type_error) =
                         cast_to_underlying((*value).clone(), project);
-                    match checked_expression.to_integer_constant() {
+                    match checked_expression.to_number_constant() {
                         Some(constant) => {
                             next_constant_value = Some(constant.to_usize() as u64 + 1);
                         }
@@ -2818,7 +2845,7 @@ pub fn try_promote_constant_expr_to_type(
     if !is_integer(lhs_type_id) {
         return None;
     }
-    if let Some(rhs_constant) = checked_rhs.to_integer_constant() {
+    if let Some(rhs_constant) = checked_rhs.to_number_constant() {
         if let (Some(new_constant), new_type_id) = rhs_constant.promote(lhs_type_id) {
             *checked_rhs = CheckedExpression::NumericConstant(new_constant, *span, new_type_id);
         } else {
@@ -4371,10 +4398,10 @@ pub fn typecheck_unary_operation(
                         if is_integer(type_id) && !is_signed(type_id) {
                             // FIXME: What about integer types whose signedness we can't yet flip?
                             let flipped_sign_type = flip_signedness(type_id).unwrap();
-                            let negated_value = -i128::from(number.integer_constant().unwrap());
-                            if !can_fit_integer(
+                            let negated_value = -i128::from(number.number_constant().unwrap());
+                            if !can_fit_number(
                                 flipped_sign_type,
-                                &IntegerConstant::Signed(negated_value as i64),
+                                &NumberConstant::Signed(negated_value as i64),
                             )
                                 // This is the case if the above "as i64" overflows.
                                 || negated_value < i64::MIN.into()
@@ -4385,7 +4412,7 @@ pub fn typecheck_unary_operation(
                                         // FIXME: Print this more nicely
                                         format!(
                                             "Literal {:?} too small for unsigned integer type {}",
-                                            number.integer_constant().unwrap(),
+                                            number.number_constant().unwrap(),
                                             type_id
                                         ),
                                         span,

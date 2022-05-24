@@ -1791,6 +1791,16 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 output.push_str(&value.to_string());
                 output.push_str("ULL)");
             }
+            NumericConstant::F32(value) => {
+                output.push_str("static_cast<f32>(");
+                output.push_str(&value.to_string());
+                output.push(')');
+            }
+            NumericConstant::F64(value) => {
+                output.push_str("static_cast<f64>(");
+                output.push_str(&value.to_string());
+                output.push(')');
+            }
         },
         CheckedExpression::NamespacedVar(ns, var, _) => {
             for ns in ns.iter() {

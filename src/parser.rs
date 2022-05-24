@@ -3012,7 +3012,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
                             expr = ParsedExpression::IndexedTuple(
                                 Box::new(expr),
-                                constant.integer_constant().unwrap().to_usize(),
+                                constant.number_constant().unwrap().to_usize(),
                                 span,
                             );
                         }

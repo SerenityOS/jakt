@@ -639,9 +639,8 @@ fn make_number_token(
         Some(LiteralSuffix::I32) => TokenContents::Number(NumericConstant::I32(number as i32)),
         Some(LiteralSuffix::I64) => TokenContents::Number(NumericConstant::I64(number as i64)),
 
-        // FIXME: These 2 don't work at all:
-        Some(LiteralSuffix::F32) => TokenContents::Number(NumericConstant::I64(number as i64)),
-        Some(LiteralSuffix::F64) => TokenContents::Number(NumericConstant::I64(number as i64)),
+        Some(LiteralSuffix::F32) => TokenContents::Number(NumericConstant::F32(number as f32)),
+        Some(LiteralSuffix::F64) => TokenContents::Number(NumericConstant::F64(number as f64)),
 
         _ => {
             // FIXME: We should use a generic "integer" type here that stores i128, and infer the type later.
