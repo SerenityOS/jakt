@@ -2179,13 +2179,15 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
             output.push(')');
         }
-        CheckedExpression::Array(vals, fill_size_expr, _, _) => {
+        CheckedExpression::Array(vals, fill_size_expr, _, type_id) => {
+            let value_type_id = match &project.types[*type_id] {
+                Type::GenericInstance(_, v) => v[0],
+                _ => panic!("Internal error: Array doesn't have inner type"),
+            };
+
             if let Some(fill_size_expr) = fill_size_expr {
                 output.push_str("(TRY(Array<");
-                output.push_str(&codegen_type(
-                    vals.first().unwrap().type_id_or_type_var(),
-                    project,
-                ));
+                output.push_str(&codegen_type(value_type_id, project));
                 output.push_str(">::filled(");
                 output.push_str(&codegen_expr(indent, fill_size_expr, project));
                 output.push_str(", ");
@@ -2193,7 +2195,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 output.push_str(")))");
             } else {
                 // (Array({1, 2, 3}))
-                output.push_str("(Array({");
+                output.push_str("(Array<");
+                output.push_str(&codegen_type(value_type_id, project));
+                output.push_str(">({");
                 let mut first = true;
                 for val in vals {
                     if !first {
@@ -2207,10 +2211,12 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 output.push_str("}))");
             }
         }
-        CheckedExpression::Dictionary(vals, _, _) => {
+        CheckedExpression::Dictionary(vals, _, type_id) => {
             // (Dictionary({1, 2, 3}))
-            let key_type_id = vals[0].0.type_id_or_type_var();
-            let value_type_id = vals[0].1.type_id_or_type_var();
+            let (key_type_id, value_type_id) = match &project.types[*type_id] {
+                Type::GenericInstance(_, v) => (v[0], v[1]),
+                _ => panic!("Internal error: Dictionary doesn't have inner type"),
+            };
 
             output.push_str(&format!(
                 "(TRY(Dictionary<{}, {}>::create_with_entries({{",
@@ -2233,9 +2239,12 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
             output.push_str("})))");
         }
-        CheckedExpression::Set(values, _, _) => {
+        CheckedExpression::Set(values, _, type_id) => {
             // (Set({1, 2, 3}))
-            let value_type_id = values.first().unwrap().type_id_or_type_var();
+            let value_type_id = match &project.types[*type_id] {
+                Type::GenericInstance(_, v) => v[0],
+                _ => panic!("Internal error: Set doesn't have inner type"),
+            };
 
             output.push_str(&format!(
                 "(Set<{}>({{",
