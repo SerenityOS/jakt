@@ -43,6 +43,15 @@ fn main() -> Result<(), JaktError> {
                     JaktError::ParserError(msg, span) => display_error(&compiler, msg, *span),
                     JaktError::TypecheckError(msg, span) => display_error(&compiler, msg, *span),
                     JaktError::ValidationError(msg, span) => display_error(&compiler, msg, *span),
+                    JaktError::TypecheckErrorWithHint(
+                        error_msg,
+                        error_span,
+                        hint_msg,
+                        hint_span,
+                    ) => {
+                        display_error(&compiler, error_msg, *error_span);
+                        display_hint(&compiler, hint_msg, *hint_span);
+                    }
                 }
                 first_error = first_error.or(Some(err));
             }
@@ -128,8 +137,34 @@ fn parse_arguments() -> JaktArguments {
     arguments
 }
 
-fn display_error(compiler: &Compiler, msg: &str, span: Span) {
-    println!("Error: {}", msg);
+enum MessageSeverity {
+    Hint,
+    Error,
+}
+
+impl MessageSeverity {
+    pub fn name(&self) -> String {
+        match self {
+            MessageSeverity::Hint => "Hint".to_string(),
+            MessageSeverity::Error => "Error".to_string(),
+        }
+    }
+
+    pub fn ansi_color_code(&self) -> String {
+        match self {
+            MessageSeverity::Hint => "94".to_string(),  // Bright Blue
+            MessageSeverity::Error => "31".to_string(), // Red
+        }
+    }
+}
+
+fn display_message_with_span(
+    severity: MessageSeverity,
+    compiler: &Compiler,
+    msg: &str,
+    span: Span,
+) {
+    println!("{}: {}", severity.name(), msg);
 
     let file_contents = compiler.get_file_contents(span.file_id);
 
@@ -145,6 +180,7 @@ fn display_error(compiler: &Compiler, msg: &str, span: Span) {
         if span.start >= line_spans[line_index].0 && span.start < line_spans[line_index].1 {
             if line_index > 0 {
                 print_source_line(
+                    &severity,
                     file_contents,
                     line_spans[line_index - 1],
                     span,
@@ -153,6 +189,7 @@ fn display_error(compiler: &Compiler, msg: &str, span: Span) {
                 );
             }
             print_source_line(
+                &severity,
                 file_contents,
                 line_spans[line_index],
                 span,
@@ -164,7 +201,11 @@ fn display_error(compiler: &Compiler, msg: &str, span: Span) {
                 "{}",
                 " ".repeat(span.start - line_spans[line_index].0 + width + 4)
             );
-            println!("\u{001b}[31m^- {}\u{001b}[0m", msg);
+            println!(
+                "\u{001b}[{}m^- {}\u{001b}[0m",
+                severity.ansi_color_code(),
+                msg
+            );
 
             while line_index < line_spans.len() && span.end > line_spans[line_index].0 {
                 line_index += 1;
@@ -172,6 +213,7 @@ fn display_error(compiler: &Compiler, msg: &str, span: Span) {
                     break;
                 }
                 print_source_line(
+                    &severity,
                     file_contents,
                     line_spans[line_index],
                     span,
@@ -188,6 +230,7 @@ fn display_error(compiler: &Compiler, msg: &str, span: Span) {
 
     if span.start == span.end && span.start == file_contents.len() && line_index > 0 {
         print_source_line(
+            &severity,
             file_contents,
             line_spans[line_index - 1],
             span,
@@ -199,7 +242,16 @@ fn display_error(compiler: &Compiler, msg: &str, span: Span) {
     println!("\u{001b}[0m{}", "-".repeat(width + 3));
 }
 
+fn display_error(compiler: &Compiler, msg: &str, span: Span) {
+    display_message_with_span(MessageSeverity::Error, compiler, msg, span)
+}
+
+fn display_hint(compiler: &Compiler, msg: &str, span: Span) {
+    display_message_with_span(MessageSeverity::Hint, compiler, msg, span)
+}
+
 fn print_source_line(
+    severity: &MessageSeverity,
     file_contents: &[u8],
     file_span: (usize, usize),
     error_span: Span,
@@ -226,7 +278,7 @@ fn print_source_line(
         {
             // In the error span
 
-            print!("\u{001b}[31m{}", c as char)
+            print!("\u{001b}[{}m{}", severity.ansi_color_code(), c as char)
         } else {
             print!("\u{001b}[0m{}", c as char)
         }
