@@ -1883,10 +1883,19 @@ fn typecheck_struct(
         });
     }
 
-    if project
-        .find_function_in_scope(checked_struct_scope_id, &structure.name)
-        .is_none()
+    if let Some(constructor_id) =
+        project.find_function_in_scope(checked_struct_scope_id, &structure.name)
     {
+        if structure.definition_type == DefinitionType::Class
+            && structure.definition_linkage == DefinitionLinkage::External
+        {
+            // XXX: The parser always sets the linkage type of an extern class'
+            //      constructor to External, but we actually want to call the
+            //      class' ::create function, just like we do with a
+            //      ImplicitConstructor class.
+            project.functions[constructor_id].linkage = FunctionLinkage::ExternalClassConstructor;
+        }
+    } else {
         // No constructor found, so let's make one
 
         let mut constructor_params = Vec::new();

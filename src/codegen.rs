@@ -1843,7 +1843,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 }
                 output.push(')');
             } else {
-                if call.linkage == FunctionLinkage::ImplicitConstructor {
+                if call.linkage == FunctionLinkage::ImplicitConstructor
+                    || call.linkage == FunctionLinkage::ExternalClassConstructor
+                {
                     let type_id = call.type_id;
                     let ty = &project.types[type_id];
 
