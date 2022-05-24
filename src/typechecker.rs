@@ -3281,6 +3281,7 @@ pub fn typecheck_expression(
         }
         ParsedExpression::Set(values, span) => {
             let mut inner_type_id = UNKNOWN_TYPE_ID;
+            let mut inner_type_span: Option<Span> = None;
             let mut output = Vec::new();
 
             let set_struct_id = project
@@ -3303,19 +3304,29 @@ pub fn typecheck_expression(
                     typecheck_expression(value, scope_id, project, safety_mode, inner_hint);
                 error = error.or(err);
 
+                let current_value_type_id = checked_value.type_id(scope_id, project);
+
                 if inner_type_id == UNKNOWN_TYPE_ID {
-                    if checked_value.type_id(scope_id, project) == VOID_TYPE_ID {
+                    if current_value_type_id == VOID_TYPE_ID {
                         error = error.or(Some(JaktError::TypecheckError(
                             "cannot create a set with values of type void".to_string(),
                             value.span(),
                         )))
                     }
 
-                    inner_type_id = checked_value.type_id(scope_id, project);
-                } else if inner_type_id != checked_value.type_id(scope_id, project) {
-                    error = error.or(Some(JaktError::TypecheckError(
-                        "does not match type of previous values in set".to_string(),
+                    inner_type_id = current_value_type_id;
+                    inner_type_span = Some(value.span());
+                } else if inner_type_id != current_value_type_id {
+                    let set_type_name = project.typename_for_type_id(inner_type_id);
+                    error = error.or(Some(JaktError::TypecheckErrorWithHint(
+                        format!(
+                            "type '{}' does not match type '{}' of previous values in set",
+                            project.typename_for_type_id(current_value_type_id),
+                            set_type_name
+                        ),
                         value.span(),
+                        format!("set was inferred to store type '{}' here", set_type_name),
+                        inner_type_span.unwrap(),
                     )))
                 }
                 output.push(checked_value);
