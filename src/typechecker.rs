@@ -257,15 +257,17 @@ impl Project {
         span: Span,
     ) -> Result<(), JaktError> {
         let scope = &mut self.scopes[scope_id];
-        for (existing_enum, _) in &scope.enums {
+        for (existing_enum, _, definition_span) in &scope.enums {
             if &name == existing_enum {
-                return Err(JaktError::TypecheckError(
+                return Err(JaktError::TypecheckErrorWithHint(
                     format!("redefinition of enum {}", name),
                     span,
+                    format!("enum {} was first defined here", name),
+                    *definition_span,
                 ));
             }
         }
-        scope.enums.push((name, enum_id));
+        scope.enums.push((name, enum_id, span));
 
         Ok(())
     }
@@ -1023,7 +1025,7 @@ pub struct Scope {
     pub vars: Vec<CheckedVariable>,
     pub structs: Vec<(String, StructId, Span)>,
     pub functions: Vec<(String, FunctionId, Span)>,
-    pub enums: Vec<(String, EnumId)>,
+    pub enums: Vec<(String, EnumId, Span)>,
     pub types: Vec<(String, TypeId)>,
     pub parent: Option<ScopeId>,
     // Namespaces may also have children that are also namespaces
