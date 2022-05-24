@@ -23,6 +23,12 @@ use std::collections::{HashMap, HashSet};
 
 const INDENT_SIZE: usize = 4;
 
+#[derive(Clone, Copy, PartialEq)]
+enum UseRawReturn {
+    No,
+    Yes
+}
+
 pub fn codegen(project: &Project, scope: &Scope) -> String {
     let mut output = String::new();
 
@@ -1126,6 +1132,16 @@ fn codegen_function_in_namespace(
     // Put the return type in scope.
     if is_main {
         output.push_str("using _JaktCurrentFunctionReturnType = ErrorOr<int>;\n");
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str("using _JaktCurrentFunctionDeferBlockReturnType = Optional<Error>;\n");
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str("auto _jakt_current_function_return_value = Optional<ErrorOr<int>>();\n");
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str("#define _JAKT_RETURN(_jakt_expression) \\\n");
+        output.push_str(&codegen_indent(INDENT_SIZE*2));
+        output.push_str("_jakt_current_function_return_value = static_cast<_JaktCurrentFunctionReturnType>(_jakt_expression); \\\n");
+        output.push_str(&codegen_indent(INDENT_SIZE*2));
+        output.push_str("goto _jakt_current_function_return_handler;\n");
     } else {
         if function.return_type_id == UNKNOWN_TYPE_ID {
             panic!("Function type unknown at codegen time in {}", function.name);
@@ -1135,13 +1151,44 @@ fn codegen_function_in_namespace(
                 "using _JaktCurrentFunctionReturnType = ErrorOr<{}>;\n",
                 codegen_type(function.return_type_id, project)
             ));
+            output.push_str(&codegen_indent(INDENT_SIZE));
+            output.push_str("using _JaktCurrentFunctionDeferBlockReturnType = Optional<Error>;\n");
+            output.push_str(&codegen_indent(INDENT_SIZE));
+            output.push_str("auto _jakt_current_function_return_value = Optional<_JaktCurrentFunctionReturnType>();\n");
+            output.push_str(&codegen_indent(INDENT_SIZE));
+            output.push_str("#define _JAKT_RETURN(_jakt_expression) \\\n");
+            output.push_str(&codegen_indent(INDENT_SIZE*2));
+            output.push_str("_jakt_current_function_return_value = static_cast<_JaktCurrentFunctionReturnType>(_jakt_expression); \\\n");
+            output.push_str(&codegen_indent(INDENT_SIZE*2));
+            output.push_str("goto _jakt_current_function_return_handler;\n");
+        } else if function.return_type_id == VOID_TYPE_ID {
+            output.push_str("using _JaktCurrentFunctionReturnType = void;\n");
+            output.push_str(&codegen_indent(INDENT_SIZE));
+            output.push_str("using _JaktCurrentFunctionDeferBlockReturnType = void;\n");
+            output.push_str(&codegen_indent(INDENT_SIZE));
+            output.push_str("#define _JAKT_RETURN(_jakt_expression) \\\n");
+            output.push_str(&codegen_indent(INDENT_SIZE*2));
+            output.push_str("static_cast<void>((_jakt_expression));\\\n");
+            output.push_str(&codegen_indent(INDENT_SIZE*2));
+            output.push_str("goto _jakt_current_function_return_handler;\n");
         } else {
             output.push_str(&format!(
                 "using _JaktCurrentFunctionReturnType = {};\n",
                 codegen_type(function.return_type_id, project)
             ));
+            output.push_str(&codegen_indent(INDENT_SIZE));
+            output.push_str("using _JaktCurrentFunctionDeferBlockReturnType = void;\n");
+            output.push_str(&codegen_indent(INDENT_SIZE));
+            output.push_str(&format!("auto _jakt_current_function_return_value = Optional<{}>();\n", codegen_type(function.return_type_id, project)));
+            output.push_str("#define _JAKT_RETURN(_jakt_expression) \\\n");
+            output.push_str(&codegen_indent(INDENT_SIZE*2));
+            output.push_str("_jakt_current_function_return_value = static_cast<_JaktCurrentFunctionReturnType>(_jakt_expression); \\\n");
+            output.push_str(&codegen_indent(INDENT_SIZE*2));
+            output.push_str("goto _jakt_current_function_return_handler;\n");
         }
     }
+    output.push_str(&codegen_indent(INDENT_SIZE));
+    output.push_str("auto _jakt_current_function_deferred_blocks = Vector<Function<_JaktCurrentFunctionDeferBlockReturnType()>>();\n");
 
     let block = codegen_block(
         INDENT_SIZE,
@@ -1150,17 +1197,56 @@ fn codegen_function_in_namespace(
             .as_ref()
             .expect("Function being generated must be checked"),
         project,
+        UseRawReturn::No 
     );
     output.push_str(&block);
+    output.push_str(&codegen_indent(INDENT_SIZE));
+    output.push_str("#undef _JAKT_RETURN\n");
 
-    if is_main {
+    if is_main || function.throws {
         output.push_str(&codegen_indent(INDENT_SIZE));
-        output.push_str("return 0;\n");
-    } else if function.throws && function.return_type_id == VOID_TYPE_ID {
+        output.push_str("[[maybe_unused]] _jakt_current_function_return_handler:\n");
         output.push_str(&codegen_indent(INDENT_SIZE));
-        output.push_str("return {};\n");
+        output.push_str("auto _jakt_defer_already_failed = false;\n");
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str("for (auto const& _jakt_defer_block : _jakt_current_function_deferred_blocks.in_reverse()) {\n");
+        output.push_str(&codegen_indent(INDENT_SIZE*2));
+        output.push_str("auto _jakt_maybe_error = _jakt_defer_block();\n");
+        output.push_str(&codegen_indent(INDENT_SIZE*2));
+        output.push_str("if (!_jakt_defer_already_failed && _jakt_maybe_error.has_value())\n");
+        output.push_str(&codegen_indent(INDENT_SIZE*3));
+        output.push_str("_jakt_current_function_return_value = _jakt_maybe_error.value();\n");
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str("}\n");
+    } else {
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str("[[maybe_unused]] _jakt_current_function_return_handler:\n");
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str("for (auto const& _jakt_defer_block : _jakt_current_function_deferred_blocks.in_reverse())\n");
+        output.push_str(&codegen_indent(INDENT_SIZE*2));
+        output.push_str("_jakt_defer_block();\n");
     }
 
+    if function.throws || is_main {
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str("if (_jakt_current_function_return_value.has_value())\n");
+        output.push_str(&codegen_indent(INDENT_SIZE*2));
+        output.push_str("return _jakt_current_function_return_value.release_value();\n");
+        if is_main {
+            output.push_str(&codegen_indent(INDENT_SIZE));
+            output.push_str("return 0;\n");
+        } else if function.return_type_id == VOID_TYPE_ID {
+            output.push_str(&codegen_indent(INDENT_SIZE));
+            output.push_str("return {};\n");
+        } else {
+            output.push_str(&codegen_indent(INDENT_SIZE));
+            output.push_str("return _jakt_current_function_return_value.release_value();\n");
+        }
+    } else if function.return_type_id != VOID_TYPE_ID {
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str("return _jakt_current_function_return_value.release_value();\n");
+    }
     output.push_str("}\n");
 
     output
@@ -1487,15 +1573,14 @@ pub fn codegen_type_possibly_as_namespace(
     }
 }
 
-fn codegen_block(indent: usize, checked_block: &CheckedBlock, project: &Project) -> String {
+fn codegen_block(indent: usize, checked_block: &CheckedBlock, project: &Project, use_raw_return: UseRawReturn) -> String {
     let mut output = String::new();
 
     output.push_str(&codegen_indent(indent));
     output.push_str("{\n");
 
     for stmt in &checked_block.stmts {
-        let stmt = codegen_statement(indent + INDENT_SIZE, stmt, project);
-
+        let stmt = codegen_statement(indent + INDENT_SIZE, stmt, project, use_raw_return);
         output.push_str(&stmt);
     }
 
@@ -1505,16 +1590,15 @@ fn codegen_block(indent: usize, checked_block: &CheckedBlock, project: &Project)
     output
 }
 
-fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) -> String {
+fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project, use_raw_return: UseRawReturn) -> String {
     let mut output = String::new();
-
     output.push_str(&codegen_indent(indent));
 
     match stmt {
         CheckedStatement::Try(stmt, error_name, catch_block) => {
             output.push('{');
             output.push_str("auto _jakt_try_result = [&]() -> ErrorOr<void> {");
-            output.push_str(&codegen_statement(indent, stmt, project));
+            output.push_str(&codegen_statement(indent, stmt, project, use_raw_return));
             output.push(';');
             output.push_str("return {};");
             output.push_str("}();");
@@ -1522,7 +1606,7 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str("auto ");
             output.push_str(error_name);
             output.push_str(" = _jakt_try_result.release_error();");
-            output.push_str(&codegen_block(indent, catch_block, project));
+            output.push_str(&codegen_block(indent, catch_block, project, use_raw_return));
             output.push('}');
             output.push('}');
         }
@@ -1543,18 +1627,25 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str(";\n");
         }
         CheckedStatement::Defer(statement) => {
-            // NOTE: We let the preprocessor generate a unique name for the RAII helper.
-            output.push_str("#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n");
-            output.push_str("ScopeGuard __SCOPE_GUARD_NAME ([&] \n");
-            output.push_str("#undef __SCOPE_GUARD_NAME\n{");
-            output.push_str(&codegen_statement(indent, statement, project));
-            output.push_str("});\n");
+            output.push_str("TRY(_jakt_current_function_deferred_blocks.try_append([=]()->_JaktCurrentFunctionDeferBlockReturnType {\n");
+            output.push_str(&codegen_indent(indent+INDENT_SIZE));
+            output.push_str(&codegen_statement(indent, statement, project, UseRawReturn::Yes));
+            output.push_str(&codegen_indent(indent+INDENT_SIZE));
+            output.push_str("return _JaktCurrentFunctionDeferBlockReturnType();\n");
+            output.push_str(&codegen_indent(indent));
+            output.push_str("}));\n");
         }
         CheckedStatement::Return(expr) => {
             let expr = codegen_expr(indent, expr, project);
-            output.push_str("return (");
-            output.push_str(&expr);
-            output.push_str(");\n")
+            if use_raw_return == UseRawReturn::No {
+                output.push_str("_JAKT_RETURN((");
+                output.push_str(&expr);
+                output.push_str("));\n");
+            } else {
+                output.push_str("return (");
+                output.push_str(&expr);
+                output.push_str(");\n");
+            }
         }
         CheckedStatement::If(cond, block, else_stmt) => {
             let expr = codegen_expr(indent, cond, project);
@@ -1562,18 +1653,18 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str(&expr);
             output.push_str(") ");
 
-            let block = codegen_block(indent, block, project);
+            let block = codegen_block(indent, block, project, use_raw_return);
             output.push_str(&block);
 
             if let Some(else_stmt) = else_stmt {
                 output.push_str(" else ");
-                let else_string = codegen_statement(indent, else_stmt, project);
+                let else_string = codegen_statement(indent, else_stmt, project, UseRawReturn::Yes);
                 output.push_str(&else_string);
             }
         }
         CheckedStatement::Loop(block) => {
             output.push_str("for (;;) {");
-            let block = codegen_block(indent, block, project);
+            let block = codegen_block(indent, block, project, use_raw_return);
             output.push_str(&block);
             output.push('}');
         }
@@ -1583,7 +1674,7 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str(&expr);
             output.push_str(") ");
 
-            let block = codegen_block(indent, block, project);
+            let block = codegen_block(indent, block, project, use_raw_return);
             output.push_str(&block);
         }
         CheckedStatement::VarDecl(var_decl, expr) => {
@@ -1598,7 +1689,7 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str(";\n");
         }
         CheckedStatement::Block(checked_block) => {
-            let block = codegen_block(indent, checked_block, project);
+            let block = codegen_block(indent, checked_block, project, use_raw_return);
             output.push_str(&block);
         }
         CheckedStatement::InlineCpp(strings) => {
@@ -2026,7 +2117,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                         output.push_str(");");
                                     }
                                     CheckedMatchBody::Block(block) => {
-                                        output.push_str(&codegen_block(indent, block, project));
+                                        output.push_str(&codegen_block(indent, block, project, UseRawReturn::Yes));
                                         output.push_str("break;\n");
                                     }
                                 }
@@ -2160,7 +2251,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
 
                                 match body {
                                     CheckedMatchBody::Block(block) => {
-                                        output.push_str(&codegen_block(indent + 1, block, project));
+                                        output.push_str(&codegen_block(indent + 1, block, project, UseRawReturn::Yes));
                                         output.push_str("\nreturn JaktInternal::ExplicitValue<");
                                         output.push_str(&codegen_type(*return_type_id, project));
                                         output.push_str(">();\n");
