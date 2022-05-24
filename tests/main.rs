@@ -271,3 +271,8 @@ fn test_namespaces() -> Result<(), JaktError> {
 fn test_weak() -> Result<(), JaktError> {
     test_samples("samples/weak")
 }
+
+#[test]
+fn test_codegen() -> Result<(), JaktError> {
+    test_samples("tests/codegen")
+}

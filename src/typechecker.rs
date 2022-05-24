@@ -518,6 +518,7 @@ pub struct CheckedStruct {
     pub scope_id: ScopeId,
     pub definition_linkage: DefinitionLinkage,
     pub definition_type: DefinitionType,
+    pub type_id: TypeId,
 }
 
 #[derive(Clone, Debug)]
@@ -530,6 +531,7 @@ pub struct CheckedEnum {
     pub definition_type: DefinitionType,
     pub underlying_type_id: Option<TypeId>,
     pub span: Span,
+    pub type_id: TypeId,
 }
 
 #[derive(Clone, Debug)]
@@ -1285,6 +1287,9 @@ fn typecheck_enum_predecl(
         },
         underlying_type_id,
         span: enum_.span,
+        type_id: project
+            .find_type_in_scope(parent_scope_id, &enum_.name)
+            .expect("Enum must exist before predeclaration"),
     });
 
     match project.add_enum_to_scope(parent_scope_id, enum_.name.clone(), enum_id, enum_.span) {
@@ -1664,6 +1669,7 @@ fn typecheck_struct_predecl(
         scope_id: struct_scope_id,
         definition_linkage: structure.definition_linkage,
         definition_type: structure.definition_type,
+        type_id: struct_type_id,
     });
 
     for (generic_parameter, parameter_span) in &structure.generic_parameters {
