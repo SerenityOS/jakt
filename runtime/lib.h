@@ -14,7 +14,6 @@
 #include <AK/CheckedFormatString.h>
 #include <AK/Concepts.h>
 #include <AK/Debug.h>
-#include <AK/Dictionary.h>
 #include <AK/Error.h>
 #include <AK/Find.h>
 #include <AK/FixedPoint.h>
@@ -77,6 +76,8 @@
 #include <AK/StringView.cpp>
 #include <AK/Utf8View.cpp>
 #include <AK/kmalloc.cpp>
+
+#include <Builtins/Dictionary.h>
 
 #include <IO/File.h>
 
