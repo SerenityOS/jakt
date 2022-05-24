@@ -55,7 +55,6 @@
 #include <AK/TypedTransfer.h>
 #include <AK/Types.h>
 #include <AK/UnicodeUtils.h>
-#include <AK/Utf8View.h>
 #include <AK/Variant.h>
 #include <AK/Vector.h>
 #include <AK/WeakPtr.h>
@@ -70,7 +69,6 @@
 #include <AK/StringImpl.cpp>
 #include <AK/StringUtils.cpp>
 #include <AK/StringView.cpp>
-#include <AK/Utf8View.cpp>
 #include <AK/kmalloc.cpp>
 
 namespace JaktInternal {
@@ -103,7 +101,8 @@ struct Range {
     {
     }
 
-    Optional<T> next() {
+    Optional<T> next()
+    {
         if (current == end)
             return {};
         return current++;
