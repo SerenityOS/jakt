@@ -262,7 +262,7 @@ fn display_message_with_span(
     println!("{}", "-".repeat(width + 3));
 
     while line_index < line_spans.len() {
-        if span.start >= line_spans[line_index].0 && span.start < line_spans[line_index].1 {
+        if span.start >= line_spans[line_index].0 && span.start <= line_spans[line_index].1 {
             if line_index > 0 {
                 print_source_line(
                     &severity,
@@ -311,17 +311,6 @@ fn display_message_with_span(
         } else {
             line_index += 1
         }
-    }
-
-    if span.start == span.end && span.start == file_contents.len() && line_index > 0 {
-        print_source_line(
-            &severity,
-            file_contents,
-            line_spans[line_index - 1],
-            span,
-            line_index - 1,
-            largest_line_number,
-        );
     }
 
     println!("\u{001b}[0m{}", "-".repeat(width + 3));
