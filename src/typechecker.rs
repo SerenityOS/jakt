@@ -3353,7 +3353,9 @@ pub fn typecheck_expression(
         }
         ParsedExpression::Dictionary(kv_pairs, span) => {
             let mut key_type_id = UNKNOWN_TYPE_ID;
+            let mut key_type_span: Option<Span> = None;
             let mut value_type_id = UNKNOWN_TYPE_ID;
+            let mut value_type_span: Option<Span> = None;
             let mut output = Vec::new();
 
             let dictionary_struct_id = project
@@ -3378,39 +3380,58 @@ pub fn typecheck_expression(
                     typecheck_expression(key, scope_id, project, safety_mode, key_hint);
                 error = error.or(err);
 
+                let current_key_type_id = checked_key.type_id(scope_id, project);
+
                 let (checked_value, err) =
                     typecheck_expression(value, scope_id, project, safety_mode, value_hint);
                 error = error.or(err);
 
+                let current_value_type_id = checked_value.type_id(scope_id, project);
+
                 if (key_type_id, value_type_id) == (UNKNOWN_TYPE_ID, UNKNOWN_TYPE_ID) {
-                    if checked_key.type_id(scope_id, project) == VOID_TYPE_ID {
+                    if current_key_type_id == VOID_TYPE_ID {
                         error = error.or(Some(JaktError::TypecheckError(
                             "cannot create a dictionary with keys of type void".to_string(),
                             key.span(),
                         )))
                     }
 
-                    if checked_value.type_id(scope_id, project) == VOID_TYPE_ID {
+                    if current_value_type_id == VOID_TYPE_ID {
                         error = error.or(Some(JaktError::TypecheckError(
                             "cannot create a dictionary with values of type void".to_string(),
                             value.span(),
                         )))
                     }
 
-                    key_type_id = checked_key.type_id(scope_id, project);
-                    value_type_id = checked_value.type_id(scope_id, project);
+                    key_type_id = current_key_type_id;
+                    key_type_span = Some(key.span());
+                    value_type_id = current_value_type_id;
+                    value_type_span = Some(value.span());
                 } else {
-                    if key_type_id != checked_key.type_id(scope_id, project) {
-                        error = error.or(Some(JaktError::TypecheckError(
-                            "does not match type of previous values in dictionary".to_string(),
+                    if key_type_id != current_key_type_id {
+                        let key_type_name = project.typename_for_type_id(key_type_id);
+                        error = error.or(Some(JaktError::TypecheckErrorWithHint(
+                            format!(
+                                "type '{}' does not match type '{}' of previous keys in dictionary",
+                                project.typename_for_type_id(current_key_type_id),
+                                key_type_name
+                            ),
                             key.span(),
+                            format!(
+                                "dictionary was inferred to store keys of type '{}' here",
+                                key_type_name
+                            ),
+                            key_type_span.unwrap(),
                         )))
                     }
 
-                    if value_type_id != checked_value.type_id(scope_id, project) {
-                        error = error.or(Some(JaktError::TypecheckError(
-                            "does not match type of previous values in dictionary".to_string(),
+                    if value_type_id != current_value_type_id {
+                        let value_type_name = project.typename_for_type_id(value_type_id);
+                        error = error.or(Some(JaktError::TypecheckErrorWithHint(
+                            format!("type '{}' does not match type '{}' of previous values in dictionary", project.typename_for_type_id(current_value_type_id), value_type_name),
                             value.span(),
+                            format!("dictionary was inferred to store values of type '{}' here", value_type_name),
+                            value_type_span.unwrap(),
                         )))
                     }
                 }
