@@ -76,9 +76,6 @@ template<typename T>
 class NonnullRefPtr;
 
 template<typename T>
-class NonnullOwnPtr;
-
-template<typename T>
 class Optional;
 
 #ifdef KERNEL
@@ -91,9 +88,6 @@ class RefPtr;
 template<typename T>
 class RefPtr;
 #endif
-
-template<typename T>
-class OwnPtr;
 
 template<typename T>
 class WeakPtr;
@@ -119,10 +113,8 @@ using AK::GenericLexer;
 using AK::HashMap;
 using AK::HashTable;
 using AK::LinearArray;
-using AK::NonnullOwnPtr;
 using AK::NonnullRefPtr;
 using AK::Optional;
-using AK::OwnPtr;
 using AK::ReadonlyBytes;
 using AK::RefPtr;
 using AK::Span;

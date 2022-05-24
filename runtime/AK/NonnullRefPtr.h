@@ -20,8 +20,6 @@
 namespace AK {
 
 template<typename T>
-class OwnPtr;
-template<typename T>
 class RefPtr;
 
 template<typename T>
@@ -102,11 +100,6 @@ public:
         m_ptr = reinterpret_cast<T*>(explode_byte(NONNULLREFPTR_SCRUB_BYTE));
 #    endif
     }
-
-    template<typename U>
-    NonnullRefPtr(OwnPtr<U> const&) = delete;
-    template<typename U>
-    NonnullRefPtr& operator=(OwnPtr<U> const&) = delete;
 
     template<typename U>
     NonnullRefPtr(RefPtr<U> const&) = delete;
