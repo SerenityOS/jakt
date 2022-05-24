@@ -2826,6 +2826,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
 
             output.push_str(&format!("{})", name));
         }
+        CheckedExpression::OptionalIndexedStruct(_, _, _, _) => todo!(),
         CheckedExpression::Garbage(_) => {
             // Incorrect parse/typecheck
             // Probably shouldn't be able to get to this point?
