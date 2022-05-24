@@ -234,15 +234,17 @@ impl Project {
         span: Span,
     ) -> Result<(), JaktError> {
         let scope = &mut self.scopes[scope_id];
-        for (existing_struct, _) in &scope.structs {
+        for (existing_struct, _, definition_span) in &scope.structs {
             if &name == existing_struct {
-                return Err(JaktError::TypecheckError(
+                return Err(JaktError::TypecheckErrorWithHint(
                     format!("redefinition of struct/class {}", name),
                     span,
+                    format!("struct/class {} was first defined here", name),
+                    *definition_span,
                 ));
             }
         }
-        scope.structs.push((name, struct_id));
+        scope.structs.push((name, struct_id, span));
 
         Ok(())
     }
@@ -1019,7 +1021,7 @@ pub struct CheckedCall {
 pub struct Scope {
     pub namespace_name: Option<String>,
     pub vars: Vec<CheckedVariable>,
-    pub structs: Vec<(String, StructId)>,
+    pub structs: Vec<(String, StructId, Span)>,
     pub functions: Vec<(String, FunctionId, Span)>,
     pub enums: Vec<(String, EnumId)>,
     pub types: Vec<(String, TypeId)>,

@@ -47,7 +47,7 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
         }
     }
 
-    for (_, struct_id) in &scope.structs {
+    for (_, struct_id, _) in &scope.structs {
         let structure = &project.structs[*struct_id];
         let struct_output = codegen_struct_predecl(structure, project);
 
@@ -111,7 +111,7 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
         }
     }
 
-    for (_, struct_id) in &scope.structs {
+    for (_, struct_id, _) in &scope.structs {
         let structure = &project.structs[*struct_id];
         if seen_types.contains(&structure.type_id) {
             continue;
@@ -171,7 +171,7 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
         }
     }
 
-    for (_, struct_id) in &scope.structs {
+    for (_, struct_id, _) in &scope.structs {
         let struct_id = *struct_id;
         let structure = &project.structs[struct_id];
         if structure.definition_linkage == DefinitionLinkage::External {
