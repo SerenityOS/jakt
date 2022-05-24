@@ -199,9 +199,11 @@ impl Project {
         let scope = &mut self.scopes[scope_id];
         for existing_var in &scope.vars {
             if var.name == existing_var.name {
-                return Err(JaktError::TypecheckError(
+                return Err(JaktError::TypecheckErrorWithHint(
                     format!("redefinition of variable {}", var.name),
                     span,
+                    format!("variable {} was first defined here", var.name),
+                    existing_var.definition_span,
                 ));
             }
         }
@@ -638,6 +640,7 @@ pub struct CheckedVariable {
     pub type_id: TypeId,
     pub mutable: bool,
     pub visibility: Visibility,
+    pub definition_span: Span,
 }
 
 #[derive(Debug, Clone)]
@@ -1378,6 +1381,7 @@ fn typecheck_enum(
                                     type_id: enum_type_id,
                                     mutable: false,
                                     visibility: Visibility::Public,
+                                    definition_span: *span,
                                 },
                                 *span,
                             );
@@ -1471,6 +1475,7 @@ fn typecheck_enum(
                             type_id: enum_type_id,
                             mutable: false,
                             visibility: Visibility::Public,
+                            definition_span: *span,
                         },
                         *span,
                     );
@@ -1531,6 +1536,7 @@ fn typecheck_enum(
                                     type_id: member.type_id,
                                     mutable: false,
                                     visibility: member.visibility,
+                                    definition_span: *span,
                                 },
                             })
                             .collect();
@@ -1605,6 +1611,7 @@ fn typecheck_enum(
                                 type_id: checked_type,
                                 mutable: false,
                                 visibility: Visibility::Public,
+                                definition_span: *span,
                             },
                         }];
                         let function_scope_id = project.create_scope(parent_scope_id);
@@ -1761,6 +1768,7 @@ fn typecheck_struct_predecl(
                     type_id: struct_type_id,
                     mutable: param.variable.mutable,
                     visibility: Visibility::Public,
+                    definition_span: param.variable.span,
                 };
 
                 checked_function.params.push(CheckedParameter {
@@ -1785,6 +1793,7 @@ fn typecheck_struct_predecl(
                     type_id: param_type,
                     mutable: param.variable.mutable,
                     visibility: Visibility::Public,
+                    definition_span: param.variable.span,
                 };
 
                 checked_function.params.push(CheckedParameter {
@@ -1907,6 +1916,7 @@ fn typecheck_struct(
                     mutable: field.mutable,
                     // This is the constructor parameter, not the field. It can be public.
                     visibility: Visibility::Public,
+                    definition_span: field.span,
                 },
             });
         }
@@ -2036,6 +2046,7 @@ fn typecheck_function_predecl(
             type_id: param_type,
             mutable: param.variable.mutable,
             visibility: Visibility::Public,
+            definition_span: param.variable.span,
         };
 
         checked_function.params.push(CheckedParameter {
@@ -2415,6 +2426,7 @@ pub fn typecheck_statement(
                 mutable: false,
                 type_id: project.find_or_add_type_id(Type::Struct(error_struct_id)),
                 visibility: Visibility::Public,
+                definition_span: *error_span,
             };
 
             let catch_scope_id = project.create_scope(scope_id);
@@ -2680,6 +2692,7 @@ pub fn typecheck_statement(
                     type_id: checked_var_decl.type_id,
                     mutable: checked_var_decl.mutable,
                     visibility: checked_var_decl.visibility,
+                    definition_span: checked_var_decl.span,
                 },
                 checked_var_decl.span,
             ) {
@@ -3107,6 +3120,7 @@ pub fn typecheck_expression(
                             type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
                             mutable: false,
                             visibility: Visibility::Public,
+                            definition_span: *span,
                         },
                         *span,
                     ),
@@ -3159,6 +3173,7 @@ pub fn typecheck_expression(
                                     type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
                                     mutable: false,
                                     visibility: Visibility::Public,
+                                    definition_span: *span,
                                 },
                                 *span,
                             ),
@@ -3177,6 +3192,7 @@ pub fn typecheck_expression(
                             type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
                             mutable: false,
                             visibility: Visibility::Public,
+                            definition_span: *span,
                         },
                         *span,
                     ),
@@ -3773,6 +3789,7 @@ pub fn typecheck_expression(
                                                             type_id,
                                                             mutable: false,
                                                             visibility: Visibility::Public,
+                                                            definition_span: span,
                                                         },
                                                         span,
                                                     ));
@@ -3847,6 +3864,7 @@ pub fn typecheck_expression(
                                                                     type_id,
                                                                     mutable: false,
                                                                     visibility: Visibility::Public,
+                                                                    definition_span: span,
                                                                 },
                                                                 span,
                                                             ))
