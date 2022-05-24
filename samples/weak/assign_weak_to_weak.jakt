@@ -4,8 +4,8 @@ class Foo {
 
 function main() {
 
-    let foo: weak Foo? = None
-    let bar = foo
+    let mutable foo: weak Foo? = None
+    let mutable bar = foo
 
     println("OK")
     
