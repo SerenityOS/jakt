@@ -1,0 +1,12 @@
+function main() {
+    let x = match 42 {
+        (21 * 2) => [1, 2, 3]
+        else => []
+    }
+    let y = match "foo" {
+        ("f" + "oo") => "bar"
+        else => "baz"
+    }
+
+    println("{} {}", x.size(), y)
+}

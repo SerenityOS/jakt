@@ -884,6 +884,13 @@ pub enum CheckedMatchCase {
         scope_id: ScopeId,
         body: CheckedMatchBody,
     },
+    Expression {
+        expression: Box<CheckedExpression>,
+        body: CheckedMatchBody,
+    },
+    CatchAll {
+        body: CheckedMatchBody,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -917,7 +924,13 @@ pub enum CheckedExpression {
     IndexedTuple(Box<CheckedExpression>, usize, Span, TypeId),
     IndexedStruct(Box<CheckedExpression>, String, Span, TypeId),
 
-    Match(Box<CheckedExpression>, Vec<CheckedMatchCase>, Span, TypeId),
+    Match(
+        Box<CheckedExpression>,
+        Vec<CheckedMatchCase>,
+        Span,
+        TypeId,
+        bool,
+    ),
 
     Call(CheckedCall, Span, TypeId),
     MethodCall(Box<CheckedExpression>, CheckedCall, Span, TypeId),
@@ -959,7 +972,7 @@ impl CheckedExpression {
             CheckedExpression::OptionalNone(_, type_id) => *type_id,
             CheckedExpression::OptionalSome(_, _, type_id) => *type_id,
             CheckedExpression::ForcedUnwrap(_, _, type_id) => *type_id,
-            CheckedExpression::Match(_, _, _, type_id) => *type_id,
+            CheckedExpression::Match(_, _, _, type_id, _) => *type_id,
             CheckedExpression::Garbage(_) => UNKNOWN_TYPE_ID,
         }
     }
@@ -993,7 +1006,7 @@ impl CheckedExpression {
             CheckedExpression::OptionalNone(span, _) => *span,
             CheckedExpression::OptionalSome(_, span, _) => *span,
             CheckedExpression::ForcedUnwrap(_, span, _) => *span,
-            CheckedExpression::Match(_, _, span, _) => *span,
+            CheckedExpression::Match(_, _, span, _, _) => *span,
             CheckedExpression::Garbage(span) => *span,
         }
     }
@@ -2859,6 +2872,67 @@ pub fn try_promote_constant_expr_to_type(
     None
 }
 
+pub fn typecheck_match_body(
+    body: &MatchBody,
+    scope_id: ScopeId,
+    project: &mut Project,
+    safety_mode: SafetyMode,
+    generic_parameters: &mut HashMap<TypeId, TypeId>,
+    final_result_type: &mut Option<TypeId>,
+    span: Span,
+) -> (CheckedMatchBody, Option<JaktError>) {
+    let mut error = None;
+    let body = match body {
+        MatchBody::Block(block) => {
+            let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
+            error = error.or(err);
+            if !checked_block.definitely_returns {
+                match final_result_type {
+                    Some(type_id) => {
+                        if let Some(err) = check_types_for_compat(
+                            VOID_TYPE_ID,
+                            *type_id,
+                            generic_parameters,
+                            span,
+                            project,
+                        ) {
+                            error = error.or(Some(err));
+                        }
+                    }
+                    None => {
+                        *final_result_type = Some(VOID_TYPE_ID);
+                    }
+                }
+            }
+            CheckedMatchBody::Block(checked_block)
+        }
+        MatchBody::Expression(expr) => {
+            let (body, err) =
+                typecheck_expression(expr, scope_id, project, safety_mode, *final_result_type);
+            error = error.or(err);
+            let span = expr.span();
+            match final_result_type {
+                Some(type_id) => {
+                    if let Some(err) = check_types_for_compat(
+                        body.type_id(scope_id, project),
+                        *type_id,
+                        generic_parameters,
+                        span,
+                        project,
+                    ) {
+                        error = error.or(Some(err));
+                    }
+                }
+                None => {
+                    *final_result_type = Some(body.type_id(scope_id, project));
+                }
+            }
+            CheckedMatchBody::Expression(body)
+        }
+    };
+    (body, error)
+}
+
 pub fn typecheck_expression(
     expr: &ParsedExpression,
     scope_id: ScopeId,
@@ -3713,19 +3787,91 @@ pub fn typecheck_expression(
                 _ => HashMap::new(),
             };
             let mut final_result_type: Option<TypeId> = None;
+            let mut all_variants_are_constants = true;
 
             match type_ {
                 Type::Enum(enum_id) | Type::GenericEnumInstance(enum_id, _) => {
                     let enum_ = &project.enums[*enum_id];
                     let enum_name = enum_.name.clone();
                     let enum_id = *enum_id;
+                    let mut seen_catch_all = false;
                     for case in cases {
                         match &case {
+                            MatchCase::CatchAll { body, marker_span } => {
+                                if seen_catch_all {
+                                    error = error.or(Some(JaktError::TypecheckError(
+                                        "multiple catch-all cases in match are not allowed"
+                                            .to_string(),
+                                        *marker_span,
+                                    )));
+                                } else {
+                                    seen_catch_all = true;
+                                }
+
+                                let (body, err) = typecheck_match_body(
+                                    body,
+                                    scope_id,
+                                    project,
+                                    safety_mode,
+                                    &mut generic_parameters,
+                                    &mut final_result_type,
+                                    *span,
+                                );
+                                error = error.or(err);
+
+                                checked_cases.push(CheckedMatchCase::CatchAll { body });
+                            }
+                            MatchCase::Expression {
+                                matched_expression,
+                                body,
+                                marker_span,
+                            } => {
+                                let (checked_expr, err) = typecheck_expression(
+                                    matched_expression,
+                                    scope_id,
+                                    project,
+                                    safety_mode,
+                                    Some(subject_type_id),
+                                );
+                                error = error.or(err);
+                                if checked_expr.to_integer_constant().is_none() {
+                                    all_variants_are_constants = false;
+                                }
+
+                                // FIXME: In the future, we should really make this a "does it satisfy some trait" check.
+                                //        For now, we just check that the types are equal.
+                                if let Some(err) = check_types_for_compat(
+                                    checked_expr.type_id(scope_id, project),
+                                    subject_type_id,
+                                    &mut generic_parameters,
+                                    *marker_span,
+                                    project,
+                                ) {
+                                    error = error.or(Some(err));
+                                }
+
+                                let (body, err) = typecheck_match_body(
+                                    body,
+                                    scope_id,
+                                    project,
+                                    safety_mode,
+                                    &mut generic_parameters,
+                                    &mut final_result_type,
+                                    *span,
+                                );
+                                error = error.or(err);
+
+                                checked_cases.push(CheckedMatchCase::Expression {
+                                    body,
+                                    expression: Box::new(checked_expr),
+                                });
+                            }
                             MatchCase::EnumVariant {
                                 variant_name: name,
                                 variant_arguments: args,
                                 arguments_span: arg_span,
                                 body,
+                                ..
                             } => {
                                 let mut name = name.clone();
                                 if name.len() == 1 {
@@ -3774,6 +3920,7 @@ pub fn typecheck_expression(
                                                 *span,
                                                 // FIXME: Figure this out.
                                                 UNKNOWN_TYPE_ID,
+                                                false,
                                             ),
                                             error,
                                         );
@@ -3945,7 +4092,7 @@ pub fn typecheck_expression(
                                             new_scope_id,
                                             project,
                                             safety_mode,
-                                            None,
+                                            final_result_type,
                                         );
                                         let span = *span;
                                         error = error.or(err);
@@ -4019,13 +4166,133 @@ pub fn typecheck_expression(
                     }
                 }
                 _ => {
-                    error = error.or(Some(JaktError::TypecheckError(
-                        format!(
-                            "match used on non-enum value (nyi: {:?})",
-                            project.types[subject_type_id]
-                        ),
-                        expr.span(),
-                    )))
+                    let mut seen_catch_all = false;
+                    for case in cases {
+                        match case {
+                            MatchCase::EnumVariant { marker_span, .. } => {
+                                error = error.or(Some(JaktError::TypecheckError(
+                                    format!(
+                                        "Cannot use enum variant names to match non-enum type '{}'",
+                                        project.typename_for_type_id(subject_type_id)
+                                    ),
+                                    *marker_span,
+                                )));
+                            }
+                            MatchCase::CatchAll { body, marker_span } => {
+                                if seen_catch_all {
+                                    error = error.or(Some(JaktError::TypecheckError(
+                                        "Cannot have multiple catch-all match cases".to_string(),
+                                        *marker_span,
+                                    )));
+                                } else {
+                                    seen_catch_all = true;
+                                }
+
+                                let body = match body {
+                                    MatchBody::Block(block) => {
+                                        let span = *span;
+                                        let (checked_block, err) =
+                                            typecheck_block(block, scope_id, project, safety_mode);
+                                        error = error.or(err);
+                                        if !checked_block.definitely_returns {
+                                            match final_result_type {
+                                                Some(type_id) => {
+                                                    if let Some(err) = check_types_for_compat(
+                                                        VOID_TYPE_ID,
+                                                        type_id,
+                                                        &mut generic_parameters,
+                                                        span,
+                                                        project,
+                                                    ) {
+                                                        error = error.or(Some(err));
+                                                    }
+                                                }
+                                                None => {
+                                                    final_result_type = Some(VOID_TYPE_ID);
+                                                }
+                                            }
+                                        }
+                                        CheckedMatchBody::Block(checked_block)
+                                    }
+                                    MatchBody::Expression(expr) => {
+                                        let (body, err) = typecheck_expression(
+                                            expr,
+                                            scope_id,
+                                            project,
+                                            safety_mode,
+                                            final_result_type,
+                                        );
+                                        error = error.or(err);
+                                        let span = expr.span();
+                                        match final_result_type {
+                                            Some(type_id) => {
+                                                if let Some(err) = check_types_for_compat(
+                                                    body.type_id(scope_id, project),
+                                                    type_id,
+                                                    &mut generic_parameters,
+                                                    span,
+                                                    project,
+                                                ) {
+                                                    error = error.or(Some(err));
+                                                }
+                                            }
+                                            None => {
+                                                final_result_type =
+                                                    Some(body.type_id(scope_id, project));
+                                            }
+                                        }
+                                        CheckedMatchBody::Expression(body)
+                                    }
+                                };
+                                checked_cases.push(CheckedMatchCase::CatchAll { body });
+                            }
+                            MatchCase::Expression {
+                                matched_expression,
+                                body,
+                                marker_span,
+                            } => {
+                                let (checked_expr, err) = typecheck_expression(
+                                    matched_expression,
+                                    scope_id,
+                                    project,
+                                    safety_mode,
+                                    Some(subject_type_id),
+                                );
+                                error = error.or(err);
+                                if checked_expr.to_integer_constant().is_none() {
+                                    all_variants_are_constants = false;
+                                }
+
+                                // FIXME: In the future, we should really make this a "does it satisfy some trait" check.
+                                //        For now, we just check that the types are equal.
+                                if let Some(err) = check_types_for_compat(
+                                    checked_expr.type_id(scope_id, project),
+                                    subject_type_id,
+                                    &mut generic_parameters,
+                                    *marker_span,
+                                    project,
+                                ) {
+                                    error = error.or(Some(err));
+                                }
+
+                                let (body, err) = typecheck_match_body(
+                                    body,
+                                    scope_id,
+                                    project,
+                                    safety_mode,
+                                    &mut generic_parameters,
+                                    &mut final_result_type,
+                                    *marker_span,
+                                );
+                                error = error.or(err);
+
+                                checked_cases.push(CheckedMatchCase::Expression {
+                                    body,
+                                    expression: Box::new(checked_expr),
+                                });
+                            }
+                        }
+                    }
                 }
             }
 
@@ -4043,6 +4310,7 @@ pub fn typecheck_expression(
                     checked_cases,
                     *span,
                     final_result_type.unwrap_or(VOID_TYPE_ID),
+                    all_variants_are_constants,
                 ),
                 error,
             )
