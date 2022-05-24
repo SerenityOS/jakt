@@ -124,7 +124,7 @@ class Size {
     width: i64
     height: i64
 
-    public function area(this) => this.width * this.height
+    public function area(this) => $width * $height
 }
 ```
 
@@ -177,6 +177,10 @@ class Foo {
 let mutable foo = Foo(x: 3)
 foo.set(9)
 ```
+
+### Shorthand for accessing member variables
+
+To reduce repetitive `this.` spam in methods, the shorthand `$foo` expands to `this.foo`.
 
 ## Arrays
 

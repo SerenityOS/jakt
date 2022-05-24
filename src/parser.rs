@@ -2423,6 +2423,27 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
     }
 
     let mut expr = match &tokens[*index].contents {
+        TokenContents::Dollar => {
+            let this_expr = ParsedExpression::Var("this".to_string(), tokens[*index].span);
+            *index += 1;
+            match &tokens[*index].contents {
+                TokenContents::Name(name) => {
+                    *index += 1;
+                    ParsedExpression::IndexedStruct(
+                        Box::new(this_expr),
+                        name.clone(),
+                        tokens[*index].span,
+                    )
+                }
+                _ => {
+                    error = error.or(Some(JaktError::ParserError(
+                        "Missing member name after '$'".to_string(),
+                        tokens[*index - 1].span,
+                    )));
+                    ParsedExpression::Garbage(tokens[*index].span)
+                }
+            }
+        }
         TokenContents::Name(name) if name == "true" => {
             *index += 1;
             ParsedExpression::Boolean(true, span)

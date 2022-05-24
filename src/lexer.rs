@@ -70,6 +70,7 @@ pub enum TokenContents {
     PipeEqual,
     Caret,
     CaretEqual,
+    Dollar,
     Tilde,
     ForwardSlash,
     ExclamationPoint,
@@ -401,6 +402,13 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
 
             output.push(Token::new(
                 TokenContents::Caret,
+                Span::new(file_id, start, start + 1),
+            ));
+        } else if c == b'$' {
+            let start = index;
+            index += 1;
+            output.push(Token::new(
+                TokenContents::Dollar,
                 Span::new(file_id, start, start + 1),
             ));
         } else if c == b'~' {
