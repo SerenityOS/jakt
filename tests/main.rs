@@ -276,3 +276,8 @@ fn test_weak() -> Result<(), JaktError> {
 fn test_codegen() -> Result<(), JaktError> {
     test_samples("tests/codegen")
 }
+
+#[test]
+fn test_match() -> Result<(), JaktError> {
+    test_samples("samples/match")
+}

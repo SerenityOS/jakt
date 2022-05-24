@@ -10,6 +10,7 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::new_without_default)]
 #![allow(clippy::enum_variant_names)]
+#![allow(clippy::never_loop)]
 
 extern crate core;
 

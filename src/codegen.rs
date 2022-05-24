@@ -1689,6 +1689,439 @@ fn codegen_checked_binary_op_assign(
     output
 }
 
+fn codegen_match_body(
+    indent: usize,
+    body: &CheckedMatchBody,
+    project: &Project,
+    return_type_id: TypeId,
+) -> String {
+    let mut output = String::new();
+    match body {
+        CheckedMatchBody::Expression(expr) => {
+            if expr.type_id_or_type_var() == VOID_TYPE_ID {
+                output.push_str("   return (");
+                output.push_str(&codegen_expr(indent + 1, expr, project));
+                output.push_str("), JaktInternal::ExplicitValue<void>();\n");
+            } else {
+                output.push_str("   return JaktInternal::ExplicitValue(");
+                output.push_str(&codegen_expr(indent + 1, expr, project));
+                output.push_str(");\n");
+            }
+        }
+        CheckedMatchBody::Block(block) => {
+            output.push_str(&codegen_block(indent, block, project));
+
+            if return_type_id == VOID_TYPE_ID {
+                output.push_str("return JaktInternal::ExplicitValue<void>();\n");
+            }
+        }
+    }
+    output
+}
+
+fn codegen_enum_match(
+    enum_: &CheckedEnum,
+    expr: &CheckedExpression,
+    cases: &Vec<CheckedMatchCase>,
+    return_type_id: &TypeId,
+    match_values_are_all_constant: bool,
+    indent: usize,
+    project: &Project,
+) -> String {
+    let mut output = String::new();
+    let needs_deref = enum_.definition_type == DefinitionType::Class;
+    match enum_.underlying_type_id {
+        Some(_) => {
+            if match_values_are_all_constant {
+                // Use a switch statement instead of if-else chains
+                output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(([&]() -> JaktInternal::ExplicitValueOrReturn<");
+                output.push_str(&codegen_type(*return_type_id, project));
+                output.push_str(", ");
+                output.push_str("_JaktCurrentFunctionReturnType");
+                output.push_str("> { \n");
+                output.push_str("switch (");
+                if needs_deref {
+                    output.push('*');
+                }
+                output.push_str(&codegen_expr(indent, expr, project));
+                output.push_str(") {\n");
+            } else {
+                output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(([&]() -> JaktInternal::ExplicitValueOrReturn<");
+                output.push_str(&codegen_type(*return_type_id, project));
+                output.push_str(", ");
+                output.push_str("_JaktCurrentFunctionReturnType");
+                output.push_str("> { \n");
+                output.push_str("auto __jakt_enum_value = ");
+                if needs_deref {
+                    output.push('*');
+                }
+                output.push_str(&codegen_expr(indent, expr, project));
+                output.push_str(";\n");
+            }
+            let mut first = true;
+            for case in cases {
+                let this_is_the_first_case = first;
+                if first {
+                    first = false;
+                }
+
+                match case {
+                    CheckedMatchCase::EnumVariant {
+                        variant_name, body, ..
+                    } => {
+                        if match_values_are_all_constant {
+                            output.push_str("case ");
+                        } else {
+                            if !this_is_the_first_case {
+                                output.push_str("else ");
+                            }
+                            output.push_str("if (__jakt_enum_value == ");
+                        }
+                        output.push_str(&codegen_type_possibly_as_namespace(
+                            expr.type_id_or_type_var(),
+                            project,
+                            true,
+                        ));
+                        output.push_str("::");
+                        output.push_str(variant_name);
+                        if match_values_are_all_constant {
+                            output.push_str(":\n");
+                        } else {
+                            output.push_str(") {\n");
+                        }
+                        output.push_str(&codegen_indent(indent));
+                        output.push_str(&codegen_match_body(
+                            indent + 1,
+                            body,
+                            project,
+                            *return_type_id,
+                        ));
+                        if match_values_are_all_constant {
+                            output.push_str("break;\n");
+                        } else {
+                            output.push('}');
+                        }
+                    }
+                    CheckedMatchCase::CatchAll { body } => {
+                        if match_values_are_all_constant {
+                            output.push_str("default:\n");
+                        } else if this_is_the_first_case {
+                            output.push('{');
+                        } else {
+                            output.push_str("else {\n");
+                        }
+                        output.push_str(&codegen_indent(indent + 1));
+                        output.push_str(&codegen_match_body(
+                            indent + 1,
+                            body,
+                            project,
+                            *return_type_id,
+                        ));
+                        if match_values_are_all_constant {
+                            output.push_str("break;\n");
+                        } else {
+                            output.push('}');
+                        }
+                    }
+                    CheckedMatchCase::Expression { expression, body } => {
+                        if match_values_are_all_constant {
+                            output.push_str("case ");
+                        } else {
+                            if !this_is_the_first_case {
+                                output.push_str("else ");
+                            }
+                            output.push_str("if (__jakt_enum_value == ");
+                        }
+                        output.push_str(&codegen_expr(indent, expression, project));
+                        if match_values_are_all_constant {
+                            output.push_str(":\n");
+                        } else {
+                            output.push_str(") {\n");
+                        }
+                        output.push_str(&codegen_indent(indent + 1));
+                        output.push_str(&codegen_match_body(
+                            indent + 1,
+                            body,
+                            project,
+                            *return_type_id,
+                        ));
+                        if match_values_are_all_constant {
+                            output.push_str("break;\n");
+                        } else {
+                            output.push('}');
+                        }
+                    }
+                }
+                output.push('\n');
+            }
+            if match_values_are_all_constant {
+                output.push_str("}\n");
+            }
+            output.push_str("}()))");
+        }
+        None => {
+            output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN((");
+            output.push_str(&codegen_expr(indent, expr, project));
+            output.push(')');
+            if needs_deref {
+                output.push_str("->");
+            } else {
+                output.push('.');
+            }
+            output.push_str("visit(");
+            let mut first = true;
+            for case in cases {
+                if !first {
+                    output.push_str(", ");
+                } else {
+                    first = false;
+                }
+                output.push_str("[&] (");
+                match case {
+                    CheckedMatchCase::EnumVariant {
+                        variant_name: _,
+                        variant_arguments: args,
+                        subject_type_id,
+                        variant_index,
+                        scope_id,
+                        body,
+                    } => {
+                        let type_ = &project.types[*subject_type_id];
+                        let enum_id = match type_ {
+                            Type::GenericEnumInstance(id, _) | Type::Enum(id) => id,
+                            _ => panic!("Expected enum type"),
+                        };
+
+                        let enum_ = &project.enums[*enum_id];
+                        let variant = &enum_.variants[*variant_index];
+                        match variant {
+                            CheckedEnumVariant::Typed(name, _, _) => {
+                                output.push_str("typename ");
+                                output.push_str(&codegen_type_possibly_as_namespace(
+                                    *subject_type_id,
+                                    project,
+                                    true,
+                                ));
+                                output.push_str("::");
+                                output.push_str(name);
+                                output.push_str(
+                                            " const& __jakt_match_value) -> JaktInternal::ExplicitValueOrReturn<",
+                                        );
+                                output.push_str(&codegen_type(*return_type_id, project));
+                                output.push_str(", ");
+                                output.push_str("_JaktCurrentFunctionReturnType");
+                                output.push('>');
+                                output.push_str(" {\n");
+                                output.push_str("   ");
+                                if !args.is_empty() {
+                                    let var = project
+                                        .find_var_in_scope(*scope_id, args[0].1.as_str())
+                                        .unwrap();
+                                    output.push_str(codegen_type(var.type_id, project).as_str());
+                                    output.push_str(" const& ");
+                                    output.push_str(args[0].1.as_str());
+                                    output.push_str(" = __jakt_match_value.value;\n");
+                                }
+                            }
+                            CheckedEnumVariant::Untyped(name, _) => {
+                                output.push_str("typename ");
+                                output.push_str(&codegen_type_possibly_as_namespace(
+                                    *subject_type_id,
+                                    project,
+                                    true,
+                                ));
+                                output.push_str("::");
+                                output.push_str(name);
+                                output.push_str(
+                                            " const& __jakt_match_value) -> JaktInternal::ExplicitValueOrReturn<",
+                                        );
+                                output.push_str(&codegen_type(*return_type_id, project));
+                                output.push_str(", ");
+                                output.push_str("_JaktCurrentFunctionReturnType");
+                                output.push('>');
+                                output.push_str(" {\n");
+                            }
+                            CheckedEnumVariant::StructLike(name, _, _) => {
+                                output.push_str("typename ");
+                                output.push_str(&codegen_type_possibly_as_namespace(
+                                    *subject_type_id,
+                                    project,
+                                    true,
+                                ));
+                                output.push_str("::");
+                                output.push_str(name);
+                                output.push_str(
+                                            " const& __jakt_match_value) -> JaktInternal::ExplicitValueOrReturn<",
+                                        );
+                                output.push_str(&codegen_type(*return_type_id, project));
+                                output.push_str(", ");
+                                output.push_str("_JaktCurrentFunctionReturnType");
+                                output.push('>');
+                                output.push_str(" {\n");
+
+                                if !args.is_empty() {
+                                    for arg in args {
+                                        let var =
+                                            project.find_var_in_scope(*scope_id, &arg.1).unwrap();
+                                        output
+                                            .push_str(codegen_type(var.type_id, project).as_str());
+                                        output.push_str(" const& ");
+                                        output.push_str(arg.1.as_str());
+                                        output.push_str(" = __jakt_match_value.");
+                                        output.push_str(arg.0.as_ref().unwrap());
+                                        output.push_str(";\n");
+                                    }
+                                }
+                            }
+                            CheckedEnumVariant::WithValue(_, _, _) => unreachable!(),
+                        }
+
+                        output.push_str(&codegen_match_body(
+                            indent + 1,
+                            body,
+                            project,
+                            *return_type_id,
+                        ));
+                    }
+                    CheckedMatchCase::CatchAll { body } => {
+                        output.push_str(
+                                            "auto const& __jakt_match_value) -> JaktInternal::ExplicitValueOrReturn<",
+                                        );
+                        output.push_str(&codegen_type(*return_type_id, project));
+                        output.push_str(", ");
+                        output.push_str("_JaktCurrentFunctionReturnType");
+                        output.push('>');
+                        output.push_str(" {\n");
+
+                        output.push_str(&codegen_match_body(
+                            indent + 1,
+                            body,
+                            project,
+                            *return_type_id,
+                        ));
+                    }
+                    _ => {
+                        panic!("Matching enum subject with non-enum value");
+                    }
+                }
+                output.push_str("}\n");
+            }
+            output.push(')');
+            output.push(')');
+        }
+    }
+
+    output
+}
+
+fn codegen_generic_match(
+    expr: &CheckedExpression,
+    cases: &Vec<CheckedMatchCase>,
+    return_type_id: &TypeId,
+    match_values_are_all_constant: bool,
+    indent: usize,
+    project: &Project,
+) -> String {
+    let mut output = String::new();
+
+    if match_values_are_all_constant {
+        // Use a switch statement instead of if-else chains
+        output.push_str(
+            "JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(([&]() -> JaktInternal::ExplicitValueOrReturn<",
+        );
+        output.push_str(&codegen_type(*return_type_id, project));
+        output.push_str(", ");
+        output.push_str("_JaktCurrentFunctionReturnType");
+        output.push_str("> { \n");
+        output.push_str("switch (");
+        output.push_str(&codegen_expr(indent, expr, project));
+        output.push_str(") {\n");
+    } else {
+        output.push_str(
+            "JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(([&]() -> JaktInternal::ExplicitValueOrReturn<",
+        );
+        output.push_str(&codegen_type(*return_type_id, project));
+        output.push_str(", ");
+        output.push_str("_JaktCurrentFunctionReturnType");
+        output.push_str("> { \n");
+        output.push_str("auto __jakt_enum_value = ");
+        output.push_str(&codegen_expr(indent, expr, project));
+        output.push_str(";\n");
+    }
+    let mut first = true;
+    for case in cases {
+        let this_is_the_first_case = first;
+        if first {
+            first = false;
+        }
+
+        match case {
+            CheckedMatchCase::EnumVariant { .. } => {
+                panic!("Attempted to do a generic match on an enum variant");
+            }
+            CheckedMatchCase::CatchAll { body } => {
+                if match_values_are_all_constant {
+                    output.push_str("default:\n");
+                } else if this_is_the_first_case {
+                    output.push('{');
+                } else {
+                    output.push_str("else {\n");
+                }
+                output.push_str(&codegen_indent(indent + 1));
+                output.push_str(&codegen_match_body(
+                    indent + 1,
+                    body,
+                    project,
+                    *return_type_id,
+                ));
+                if match_values_are_all_constant {
+                    output.push_str("break;\n");
+                } else {
+                    output.push('}');
+                }
+            }
+            CheckedMatchCase::Expression { expression, body } => {
+                if match_values_are_all_constant {
+                    output.push_str("case ");
+                } else {
+                    if !this_is_the_first_case {
+                        output.push_str("else ");
+                    }
+                    output.push_str("if (__jakt_enum_value == ");
+                }
+                output.push_str(&codegen_expr(indent, expression, project));
+                if match_values_are_all_constant {
+                    output.push_str(":\n");
+                } else {
+                    output.push_str(") {\n");
+                }
+                output.push_str(&codegen_indent(indent + 1));
+                output.push_str(&codegen_match_body(
+                    indent + 1,
+                    body,
+                    project,
+                    *return_type_id,
+                ));
+                if match_values_are_all_constant {
+                    output.push_str("break;\n");
+                } else {
+                    output.push('}');
+                }
+            }
+        }
+        output.push('\n');
+    }
+    if match_values_are_all_constant {
+        output.push_str("}\n");
+    }
+    if *return_type_id == VOID_TYPE_ID {
+        output.push_str("return JaktInternal::ExplicitValue<void>();\n");
+    }
+    output.push_str("}()))");
+
+    output
+}
+
 fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> String {
     let mut output = String::new();
 
@@ -1991,221 +2424,33 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 output.push(')');
             }
         }
-        CheckedExpression::Match(expr, cases, _, return_type_id) => {
+        CheckedExpression::Match(expr, cases, _, return_type_id, match_values_are_all_constant) => {
+            let match_values_are_all_constant = *match_values_are_all_constant;
             let expr_type = &project.types[expr.type_id_or_type_var()];
-            let id = match expr_type {
-                Type::GenericEnumInstance(id, _) | Type::Enum(id) => *id,
+            match expr_type {
+                Type::GenericEnumInstance(id, _) | Type::Enum(id) => {
+                    let enum_ = &project.enums[*id];
+                    output.push_str(&codegen_enum_match(
+                        enum_,
+                        expr,
+                        cases,
+                        return_type_id,
+                        match_values_are_all_constant,
+                        indent,
+                        project,
+                    ));
+                }
                 _ => {
-                    panic!("Expected enum type");
+                    output.push_str(&codegen_generic_match(
+                        expr,
+                        cases,
+                        return_type_id,
+                        match_values_are_all_constant,
+                        indent,
+                        project,
+                    ));
                 }
             };
-            let enum_ = &project.enums[id];
-            let needs_deref = enum_.definition_type == DefinitionType::Class;
-            match enum_.underlying_type_id {
-                Some(_) => {
-                    output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(([&]() -> JaktInternal::ExplicitValueOrReturn<");
-                    output.push_str(&codegen_type(*return_type_id, project));
-                    output.push_str(", ");
-                    output.push_str("_JaktCurrentFunctionReturnType");
-                    output.push_str("> { \n");
-                    output.push_str("switch (");
-                    if needs_deref {
-                        output.push('*');
-                    }
-                    output.push_str(&codegen_expr(indent, expr, project));
-                    output.push_str(") {\n");
-                    for case in cases {
-                        output.push_str("case ");
-                        output.push_str(&codegen_type_possibly_as_namespace(
-                            expr.type_id_or_type_var(),
-                            project,
-                            true,
-                        ));
-                        output.push_str("::");
-                        match case {
-                            CheckedMatchCase::EnumVariant {
-                                variant_name, body, ..
-                            } => {
-                                output.push_str(variant_name);
-                                output.push_str(":\n");
-                                output.push_str(&codegen_indent(indent));
-                                match body {
-                                    CheckedMatchBody::Expression(expr) => {
-                                        output.push_str("return JaktInternal::ExplicitValue(");
-                                        output.push_str(&codegen_expr(0, expr, project));
-                                        output.push_str(");");
-                                    }
-                                    CheckedMatchBody::Block(block) => {
-                                        output.push_str(&codegen_block(indent, block, project));
-                                        output.push_str("break;\n");
-                                    }
-                                }
-                            }
-                        }
-                        output.push('\n');
-                    }
-                    output.push_str("}\n");
-                    output.push_str("}()))");
-                }
-                None => {
-                    output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN((");
-                    output.push_str(&codegen_expr(indent, expr, project));
-                    output.push(')');
-                    if needs_deref {
-                        output.push_str("->");
-                    } else {
-                        output.push('.');
-                    }
-                    output.push_str("visit(");
-                    let mut first = true;
-                    for case in cases {
-                        if !first {
-                            output.push_str(", ");
-                        } else {
-                            first = false;
-                        }
-                        output.push_str("[&] (");
-                        match case {
-                            CheckedMatchCase::EnumVariant {
-                                variant_name: _,
-                                variant_arguments: args,
-                                subject_type_id,
-                                variant_index,
-                                scope_id,
-                                body,
-                            } => {
-                                let type_ = &project.types[*subject_type_id];
-                                let enum_id = match type_ {
-                                    Type::GenericEnumInstance(id, _) | Type::Enum(id) => id,
-                                    _ => panic!("Expected enum type"),
-                                };
-
-                                let enum_ = &project.enums[*enum_id];
-                                let variant = &enum_.variants[*variant_index];
-                                match variant {
-                                    CheckedEnumVariant::Typed(name, _, _) => {
-                                        output.push_str("typename ");
-                                        output.push_str(&codegen_type_possibly_as_namespace(
-                                            *subject_type_id,
-                                            project,
-                                            true,
-                                        ));
-                                        output.push_str("::");
-                                        output.push_str(name);
-                                        output.push_str(
-                                            " const& __jakt_match_value) -> JaktInternal::ExplicitValueOrReturn<",
-                                        );
-                                        output.push_str(&codegen_type(*return_type_id, project));
-                                        output.push_str(", ");
-                                        output.push_str("_JaktCurrentFunctionReturnType");
-                                        output.push('>');
-                                        output.push_str(" {\n");
-                                        output.push_str("   ");
-                                        if !args.is_empty() {
-                                            let var = project
-                                                .find_var_in_scope(*scope_id, args[0].1.as_str())
-                                                .unwrap();
-                                            output.push_str(
-                                                codegen_type(var.type_id, project).as_str(),
-                                            );
-                                            output.push_str(" const& ");
-                                            output.push_str(args[0].1.as_str());
-                                            output.push_str(" = __jakt_match_value.value;\n");
-                                        }
-                                    }
-                                    CheckedEnumVariant::Untyped(name, _) => {
-                                        output.push_str("typename ");
-                                        output.push_str(&codegen_type_possibly_as_namespace(
-                                            *subject_type_id,
-                                            project,
-                                            true,
-                                        ));
-                                        output.push_str("::");
-                                        output.push_str(name);
-                                        output.push_str(
-                                            " const& __jakt_match_value) -> JaktInternal::ExplicitValueOrReturn<",
-                                        );
-                                        output.push_str(&codegen_type(*return_type_id, project));
-                                        output.push_str(", ");
-                                        output.push_str("_JaktCurrentFunctionReturnType");
-                                        output.push('>');
-                                        output.push_str(" {\n");
-                                    }
-                                    CheckedEnumVariant::StructLike(name, _, _) => {
-                                        output.push_str("typename ");
-                                        output.push_str(&codegen_type_possibly_as_namespace(
-                                            *subject_type_id,
-                                            project,
-                                            true,
-                                        ));
-                                        output.push_str("::");
-                                        output.push_str(name);
-                                        output.push_str(
-                                            " const& __jakt_match_value) -> JaktInternal::ExplicitValueOrReturn<",
-                                        );
-                                        output.push_str(&codegen_type(*return_type_id, project));
-                                        output.push_str(", ");
-                                        output.push_str("_JaktCurrentFunctionReturnType");
-                                        output.push('>');
-                                        output.push_str(" {\n");
-
-                                        if !args.is_empty() {
-                                            for arg in args {
-                                                let var = project
-                                                    .find_var_in_scope(*scope_id, &arg.1)
-                                                    .unwrap();
-                                                output.push_str(
-                                                    codegen_type(var.type_id, project).as_str(),
-                                                );
-                                                output.push_str(" const& ");
-                                                output.push_str(arg.1.as_str());
-                                                output.push_str(" = __jakt_match_value.");
-                                                output.push_str(arg.0.as_ref().unwrap());
-                                                output.push_str(";\n");
-                                            }
-                                        }
-                                    }
-                                    CheckedEnumVariant::WithValue(_, _, _) => unreachable!(),
-                                }
-
-                                match body {
-                                    CheckedMatchBody::Block(block) => {
-                                        output.push_str(&codegen_block(indent + 1, block, project));
-                                        output.push_str("\nreturn JaktInternal::ExplicitValue<");
-                                        output.push_str(&codegen_type(*return_type_id, project));
-                                        output.push_str(">();\n");
-                                    }
-                                    CheckedMatchBody::Expression(expr) => {
-                                        if expr.type_id_or_type_var() == VOID_TYPE_ID {
-                                            output.push_str("   return (");
-                                            output.push_str(&codegen_expr(
-                                                indent + 1,
-                                                expr,
-                                                project,
-                                            ));
-                                            output.push_str(
-                                                "), JaktInternal::ExplicitValue<void>();\n",
-                                            );
-                                        } else {
-                                            output
-                                                .push_str("   return JaktInternal::ExplicitValue(");
-                                            output.push_str(&codegen_expr(
-                                                indent + 1,
-                                                expr,
-                                                project,
-                                            ));
-                                            output.push_str(");\n");
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        output.push_str("}\n");
-                    }
-                    output.push(')');
-                    output.push(')');
-                }
-            }
         }
         CheckedExpression::UnaryOp(expr, op, _, type_id) => {
             output.push('(');

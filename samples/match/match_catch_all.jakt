@@ -1,0 +1,19 @@
+enum Foo {
+    A
+    B
+    C
+}
+
+function main() {
+    let x = Foo::A()
+
+    match x {
+        C => {
+        }
+        B => {
+        }
+        else => {
+            println("Correct!")
+        }
+    }
+}

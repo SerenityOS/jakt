@@ -245,6 +245,16 @@ pub enum MatchCase {
         variant_arguments: Vec<(Option<String>, String)>,
         arguments_span: Span,
         body: MatchBody,
+        marker_span: Span,
+    },
+    CatchAll {
+        body: MatchBody,
+        marker_span: Span,
+    },
+    Expression {
+        matched_expression: ParsedExpression,
+        body: MatchBody,
+        marker_span: Span,
     },
 }
 
@@ -2168,139 +2178,198 @@ pub fn parse_expression(
 
 pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Option<JaktError>) {
     // case:
+    // 'else' '=>' (expression | block)
     // QualifiedName('(' ((name ':')? expression),* ')')? '=>' (expression | block)
+    // '(' expression ')' '=>' (expression | block)
 
     let mut error = None;
-    let mut pattern = Vec::new();
-    while let Some(Token {
-        contents: TokenContents::Name(name),
-        span,
-    }) = tokens.get(*index)
-    {
-        *index += 1;
-        if let Some(Token {
-            contents: TokenContents::ColonColon,
-            ..
+    let make_case: Box<dyn FnOnce(MatchBody) -> MatchCase> = loop {
+        if matches!(
+            tokens.get(*index),
+            Some(Token{
+                contents: TokenContents::Name(name),
+                ..
+            }) if name == "else"
+        ) {
+            *index += 1;
+            let span = Span {
+                file_id: tokens[*index - 1].span.file_id,
+                start: tokens[*index - 1].span.start,
+                end: tokens[*index - 1].span.end,
+            };
+            break Box::new(move |x| MatchCase::CatchAll {
+                body: x,
+                marker_span: span,
+            });
+        }
+
+        if matches!(
+            tokens.get(*index),
+            Some(Token {
+                contents: TokenContents::LParen,
+                ..
+            })
+        ) {
+            let (expr, err) =
+                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+            error = error.or(err);
+
+            let span = expr.span();
+            break Box::new(move |x| MatchCase::Expression {
+                matched_expression: expr,
+                body: x,
+                marker_span: span,
+            });
+        }
+
+        let pattern_start_index = *index;
+        let mut pattern = Vec::new();
+        while let Some(Token {
+            contents: TokenContents::Name(name),
+            span,
         }) = tokens.get(*index)
         {
             *index += 1;
-        } else {
-            pattern.push((name.clone(), *span));
-            break;
-        }
-        pattern.push((name.clone(), *span));
-    }
-
-    let mut arguments = Vec::new();
-    let mut has_parens = false;
-    let args_start = *index;
-
-    if let Some(Token {
-        contents: TokenContents::LParen,
-        ..
-    }) = tokens.get(*index)
-    {
-        has_parens = true;
-        *index += 1;
-        while !matches!(
-            tokens.get(*index),
-            Some(Token {
-                contents: TokenContents::RParen,
-                ..
-            }) | None
-        ) {
             if let Some(Token {
-                contents: TokenContents::Name(name),
-                ..
-            }) = tokens.get(*index)
-            {
-                if let Some(Token {
-                    contents: TokenContents::Colon,
-                    ..
-                }) = tokens.get(*index + 1)
-                {
-                    *index += 1;
-                    if let Some(Token {
-                        contents: TokenContents::Colon,
-                        ..
-                    }) = tokens.get(*index)
-                    {
-                        *index += 1;
-                    } else {
-                        error = Some(JaktError::ParserError(
-                            "expected ':' after explicit pattern argument name".to_string(),
-                            tokens.get(*index).unwrap().span,
-                        ));
-                        break;
-                    }
-
-                    if let Some(Token {
-                        contents: TokenContents::Name(binding),
-                        ..
-                    }) = tokens.get(*index)
-                    {
-                        *index += 1;
-                        arguments.push((Some(name.clone()), binding.clone()));
-                    } else {
-                        error = Some(JaktError::ParserError(
-                            "expected pattern argument name".to_string(),
-                            tokens.get(*index).unwrap().span,
-                        ));
-                        break;
-                    }
-
-                    if let Some(Token {
-                        contents: TokenContents::Comma,
-                        ..
-                    }) = tokens.get(*index)
-                    {
-                        *index += 1;
-                    }
-                } else {
-                    if let Some(Token {
-                        contents: TokenContents::Name(binding),
-                        ..
-                    }) = tokens.get(*index)
-                    {
-                        *index += 1;
-                        arguments.push((None, binding.clone()));
-                    } else {
-                        error = Some(JaktError::ParserError(
-                            "expected pattern argument name".to_string(),
-                            tokens.get(*index).unwrap().span,
-                        ));
-                        break;
-                    }
-
-                    if let Some(Token {
-                        contents: TokenContents::Comma,
-                        ..
-                    }) = tokens.get(*index)
-                    {
-                        *index += 1;
-                    }
-                }
-            } else if let Some(Token {
-                contents: TokenContents::Name(binding),
+                contents: TokenContents::ColonColon,
                 ..
             }) = tokens.get(*index)
             {
                 *index += 1;
-                arguments.push((None, binding.clone()));
             } else {
-                error = Some(JaktError::ParserError(
-                    "expected pattern argument name".to_string(),
-                    tokens.get(*index).unwrap().span,
-                ));
+                pattern.push((name.clone(), *span));
                 break;
             }
+            pattern.push((name.clone(), *span));
         }
-    }
 
-    if has_parens {
-        *index += 1;
-    }
-    let args_end = *index;
+        let mut arguments = Vec::new();
+        let mut has_parens = false;
+        let args_start = *index;
+
+        if let Some(Token {
+            contents: TokenContents::LParen,
+            ..
+        }) = tokens.get(*index)
+        {
+            has_parens = true;
+            *index += 1;
+            while !matches!(
+                tokens.get(*index),
+                Some(Token {
+                    contents: TokenContents::RParen,
+                    ..
+                }) | None
+            ) {
+                if let Some(Token {
+                    contents: TokenContents::Name(name),
+                    ..
+                }) = tokens.get(*index)
+                {
+                    if let Some(Token {
+                        contents: TokenContents::Colon,
+                        ..
+                    }) = tokens.get(*index + 1)
+                    {
+                        *index += 1;
+                        if let Some(Token {
+                            contents: TokenContents::Colon,
+                            ..
+                        }) = tokens.get(*index)
+                        {
+                            *index += 1;
+                        } else {
+                            error = Some(JaktError::ParserError(
+                                "expected ':' after explicit pattern argument name".to_string(),
+                                tokens.get(*index).unwrap().span,
+                            ));
+                            break;
+                        }
+
+                        if let Some(Token {
+                            contents: TokenContents::Name(binding),
+                            ..
+                        }) = tokens.get(*index)
+                        {
+                            *index += 1;
+                            arguments.push((Some(name.clone()), binding.clone()));
+                        } else {
+                            error = Some(JaktError::ParserError(
+                                "expected pattern argument name".to_string(),
+                                tokens.get(*index).unwrap().span,
+                            ));
+                            break;
+                        }
+
+                        if let Some(Token {
+                            contents: TokenContents::Comma,
+                            ..
+                        }) = tokens.get(*index)
+                        {
+                            *index += 1;
+                        }
+                    } else {
+                        if let Some(Token {
+                            contents: TokenContents::Name(binding),
+                            ..
+                        }) = tokens.get(*index)
+                        {
+                            *index += 1;
+                            arguments.push((None, binding.clone()));
+                        } else {
+                            error = Some(JaktError::ParserError(
+                                "expected pattern argument name".to_string(),
+                                tokens.get(*index).unwrap().span,
+                            ));
+                            break;
+                        }
+
+                        if let Some(Token {
+                            contents: TokenContents::Comma,
+                            ..
+                        }) = tokens.get(*index)
+                        {
+                            *index += 1;
+                        }
+                    }
+                } else if let Some(Token {
+                    contents: TokenContents::Name(binding),
+                    ..
+                }) = tokens.get(*index)
+                {
+                    *index += 1;
+                    arguments.push((None, binding.clone()));
+                } else {
+                    error = Some(JaktError::ParserError(
+                        "expected pattern argument name".to_string(),
+                        tokens.get(*index).unwrap().span,
+                    ));
+                    break;
+                }
+            }
+        }
+
+        if has_parens {
+            *index += 1;
+        }
+        let index = *index;
+        let span = Span {
+            file_id: tokens[pattern_start_index].span.file_id,
+            start: tokens[pattern_start_index].span.start,
+            end: tokens[index - 1].span.end,
+        };
+        break Box::new(move |x| MatchCase::EnumVariant {
+            variant_name: pattern,
+            variant_arguments: arguments,
+            arguments_span: Span {
+                file_id: tokens[args_start].span.file_id,
+                start: tokens[args_start].span.start,
+                end: tokens[index - 1].span.end,
+            },
+            body: x,
+            marker_span: span,
+        });
+    };
 
     if let Some(Token {
         contents: TokenContents::FatArrow,
@@ -2311,7 +2380,7 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
     } else {
         error = Some(JaktError::ParserError(
             "expected '=>' after pattern case".to_string(),
-            tokens.get(*index).unwrap().span,
+            tokens[*index].span,
         ));
     }
 
@@ -2323,36 +2392,12 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
         *index += 1;
         let (block, err) = parse_block(tokens, index);
         error = error.or(err);
-        (
-            MatchCase::EnumVariant {
-                variant_name: pattern,
-                variant_arguments: arguments,
-                arguments_span: Span {
-                    file_id: tokens[args_start].span.file_id,
-                    start: tokens[args_start].span.start,
-                    end: tokens[args_end - 1].span.end,
-                },
-                body: MatchBody::Block(block),
-            },
-            error,
-        )
+        (make_case(MatchBody::Block(block)), error)
     } else {
         let (expr, err) =
             parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
         error = error.or(err);
-        (
-            MatchCase::EnumVariant {
-                variant_name: pattern,
-                variant_arguments: arguments,
-                arguments_span: Span {
-                    file_id: tokens[args_start].span.file_id,
-                    start: tokens[args_start].span.start,
-                    end: tokens[args_end - 1].span.end,
-                },
-                body: MatchBody::Expression(expr),
-            },
-            error,
-        )
+        (make_case(MatchBody::Expression(expr)), error)
     }
 }
 
