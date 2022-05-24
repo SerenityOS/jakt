@@ -2830,7 +2830,11 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             if let Type::GenericInstance(struct_id, inner_type_ids) = &project.types[*type_id] {
                 let inner_expr = &codegen_expr(indent, expr, project);
                 let optional_type_name = &project.structs[*struct_id].name;
-                if let Some(inner_type_name) =  &project.typename_for_type_id(inner_type_ids[0]).split(' ').last() {
+                if let Some(inner_type_name) = &project
+                    .typename_for_type_id(inner_type_ids[0])
+                    .split(' ')
+                    .last()
+                {
                     let return_type_name = &format!("{}<{}>", optional_type_name, inner_type_name);
                     output.push_str(&format!(
                         "({}.has_value() ? ({} {{ {}.value()->{} }}) : ({}{{}}))",
