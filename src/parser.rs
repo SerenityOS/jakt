@@ -3817,6 +3817,7 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Op
                         "Can't fill an Array with more than one expression".to_string(),
                         tokens[*index].span,
                     )));
+                    *index += 1;
                 }
             }
             _ => {
