@@ -2632,7 +2632,7 @@ fn extract_dependencies_from(
 fn produce_type_dependency_graph(project: &Project, scope: &Scope) -> HashMap<TypeId, Vec<TypeId>> {
     let mut graph = HashMap::new();
 
-    for (_, type_id) in &scope.types {
+    for (_, type_id, _) in &scope.types {
         let mut deps = HashSet::new();
         extract_dependencies_from(project, *type_id, &mut deps, &graph, true);
         graph.insert(*type_id, deps.into_iter().collect());

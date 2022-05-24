@@ -400,15 +400,17 @@ impl Project {
     ) -> Result<(), JaktError> {
         let scope = &mut self.scopes[scope_id];
 
-        for (existing_type, _) in &scope.types {
+        for (existing_type, _, definition_span) in &scope.types {
             if &type_name == existing_type {
-                return Err(JaktError::TypecheckError(
+                return Err(JaktError::TypecheckErrorWithHint(
                     format!("redefinition of type {}", type_name),
                     span,
+                    format!("type {} was first defined here", type_name),
+                    *definition_span,
                 ));
             }
         }
-        scope.types.push((type_name, type_id));
+        scope.types.push((type_name, type_id, span));
 
         Ok(())
     }
@@ -1026,7 +1028,7 @@ pub struct Scope {
     pub structs: Vec<(String, StructId, Span)>,
     pub functions: Vec<(String, FunctionId, Span)>,
     pub enums: Vec<(String, EnumId, Span)>,
-    pub types: Vec<(String, TypeId)>,
+    pub types: Vec<(String, TypeId, Span)>,
     pub parent: Option<ScopeId>,
     // Namespaces may also have children that are also namespaces
     pub children: Vec<ScopeId>,
