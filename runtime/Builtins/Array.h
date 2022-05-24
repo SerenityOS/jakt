@@ -93,6 +93,16 @@ public:
         return {};
     }
 
+    ErrorOr<void> push_values(T const* values, size_t count)
+    {
+        TRY(add_capacity(count));
+        for (size_t i = 0; i < count; ++i) {
+            new (&m_elements[m_size + i]) T(values[i]);
+        }
+        m_size += count;
+        return {};
+    }
+
     T* unsafe_data() { return m_elements; }
 
 private:
@@ -168,6 +178,13 @@ public:
     {
         auto* storage = TRY(ensure_storage());
         TRY(storage->push(move(value)));
+        return {};
+    }
+
+    ErrorOr<void> push_values(T const* values, size_t count)
+    {
+        auto* storage = TRY(ensure_storage());
+        TRY(storage->push_values(values, count));
         return {};
     }
 

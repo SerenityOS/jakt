@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include <AK/ByteBuffer.h>
 #include <AK/Format.h>
 #include <AK/Forward.h>
 #include <AK/StringView.h>
+#include <Builtins/Array.h>
 #include <stdarg.h>
 
 namespace AK {
@@ -18,7 +18,7 @@ class StringBuilder {
 public:
     using OutputType = String;
 
-    explicit StringBuilder(size_t initial_capacity = inline_capacity);
+    explicit StringBuilder();
     ~StringBuilder() = default;
 
     ErrorOr<void> try_append(StringView);
@@ -52,14 +52,12 @@ public:
     [[nodiscard]] String build() const;
     [[nodiscard]] String to_string() const;
 #endif
-    [[nodiscard]] ByteBuffer to_byte_buffer() const;
 
     [[nodiscard]] StringView string_view() const;
     void clear();
 
     [[nodiscard]] size_t length() const { return m_buffer.size(); }
     [[nodiscard]] bool is_empty() const { return m_buffer.is_empty(); }
-    void trim(size_t count) { m_buffer.resize(m_buffer.size() - count); }
 
     template<class SeparatorType, class CollectionType>
     void join(SeparatorType const& separator, CollectionType const& collection, StringView fmtstr = "{}"sv)
@@ -76,11 +74,10 @@ public:
 
 private:
     ErrorOr<void> will_append(size_t);
-    u8* data() { return m_buffer.data(); }
-    u8 const* data() const { return m_buffer.data(); }
+    u8* data() { return m_buffer.unsafe_data(); }
+    u8 const* data() const { return const_cast<StringBuilder*>(this)->m_buffer.unsafe_data(); }
 
-    static constexpr size_t inline_capacity = 256;
-    AK::Detail::ByteBuffer<inline_capacity> m_buffer;
+    Array<u8> m_buffer;
 };
 
 }
