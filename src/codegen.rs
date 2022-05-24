@@ -2024,7 +2024,12 @@ fn codegen_generic_match(
 ) -> String {
     let mut output = String::new();
 
-    if match_values_are_all_constant {
+    let is_generic_enum = cases
+        .iter()
+        .any(|c| matches!(c, CheckedMatchCase::EnumVariant { .. }));
+    let match_values_are_all_constant = match_values_are_all_constant && !is_generic_enum;
+
+    if match_values_are_all_constant && !is_generic_enum {
         // Use a switch statement instead of if-else chains
         output.push_str(
             "JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(([&]() -> JaktInternal::ExplicitValueOrReturn<",
@@ -2044,9 +2049,13 @@ fn codegen_generic_match(
         output.push_str(", ");
         output.push_str("_JaktCurrentFunctionReturnType");
         output.push_str("> { \n");
-        output.push_str("auto __jakt_enum_value = ");
+        if is_generic_enum {
+            output.push_str("auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(");
+        } else {
+            output.push_str("auto __jakt_enum_value = (");
+        }
         output.push_str(&codegen_expr(indent, expr, project));
-        output.push_str(";\n");
+        output.push_str(");\n");
     }
     let mut first = true;
     for case in cases {
@@ -2056,8 +2065,46 @@ fn codegen_generic_match(
         }
 
         match case {
-            CheckedMatchCase::EnumVariant { .. } => {
-                panic!("Attempted to do a generic match on an enum variant");
+            CheckedMatchCase::EnumVariant {
+                variant_name,
+                variant_arguments,
+                body,
+                scope_id,
+                ..
+            } => {
+                output.push_str("if (__jakt_enum_value.template has<");
+                let variant_type_name = {
+                    let mut output = String::new();
+                    let qualifier = codegen_type(expr.type_id(*scope_id, project), project);
+                    if !qualifier.is_empty() {
+                        output.push_str("typename JaktInternal::RemoveRefPtr<");
+                        output.push_str(qualifier.as_str());
+                        output.push_str(">::");
+                    }
+                    output.push_str(variant_name);
+                    output
+                };
+                output.push_str(&variant_type_name);
+                output.push_str(">()) {\n");
+                output.push_str("auto& __jakt_match_value = __jakt_enum_value.template get<");
+                output.push_str(&variant_type_name);
+                output.push_str(">();\n");
+                for arg in variant_arguments {
+                    output.push_str("auto& ");
+                    output.push_str(arg.1.as_str());
+                    output.push_str(" = __jakt_match_value.");
+                    output.push_str(arg.0.as_deref().unwrap_or("value"));
+                    output.push_str(";\n");
+                }
+
+                output.push_str(&codegen_match_body(
+                    indent + 1,
+                    body,
+                    project,
+                    *return_type_id,
+                ));
+
+                output.push_str("}\n");
             }
             CheckedMatchCase::CatchAll { body } => {
                 if match_values_are_all_constant {
