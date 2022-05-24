@@ -1956,7 +1956,7 @@ fn typecheck_struct(
             //      ImplicitConstructor class.
             project.functions[constructor_id].linkage = FunctionLinkage::ExternalClassConstructor;
         }
-    } else {
+    } else if structure.definition_linkage != DefinitionLinkage::External {
         // No constructor found, so let's make one
 
         let mut constructor_params = Vec::new();
