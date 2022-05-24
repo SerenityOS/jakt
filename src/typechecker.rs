@@ -163,6 +163,15 @@ pub struct Project {
 
     pub current_function_index: Option<usize>,
     pub inside_defer: bool,
+
+    pub cached_array_struct_id: Option<StructId>,
+    pub cached_dictionary_struct_id: Option<StructId>,
+    pub cached_error_struct_id: Option<StructId>,
+    pub cached_optional_struct_id: Option<StructId>,
+    pub cached_range_struct_id: Option<StructId>,
+    pub cached_set_struct_id: Option<StructId>,
+    pub cached_tuple_struct_id: Option<StructId>,
+    pub cached_weakptr_struct_id: Option<StructId>,
 }
 
 impl Project {
@@ -179,6 +188,15 @@ impl Project {
             types: Vec::new(),
             current_function_index: None,
             inside_defer: false,
+
+            cached_array_struct_id: None,
+            cached_dictionary_struct_id: None,
+            cached_error_struct_id: None,
+            cached_optional_struct_id: None,
+            cached_range_struct_id: None,
+            cached_set_struct_id: None,
+            cached_tuple_struct_id: None,
+            cached_weakptr_struct_id: None,
         }
     }
 
@@ -445,12 +463,9 @@ impl Project {
     }
 
     pub fn typename_for_type_id(&self, type_id: TypeId) -> String {
-        let optional_struct_id = self
-            .find_struct_in_scope(0, "Optional")
-            .expect("internal error: can't find builtin Optional type");
-        let weak_ptr_struct_id = self
-            .find_struct_in_scope(0, "WeakPtr")
-            .expect("internal error: can't find builtin WeakPtr type");
+        // NOTE: Can't use get_*_struct_id here since it needs a Span.
+        let optional_struct_id = self.cached_optional_struct_id.unwrap();
+        let weak_ptr_struct_id = self.cached_weakptr_struct_id.unwrap();
 
         match &self.types[type_id] {
             Type::Builtin => match type_id {
@@ -530,6 +545,57 @@ impl Project {
             Type::TypeVariable(name) => name.clone(),
             Type::RawPtr(type_id) => format!("raw {}", self.typename_for_type_id(*type_id)),
         }
+    }
+
+    fn get_cached_struct_id(
+        &self,
+        cached_struct_id: Option<StructId>,
+        name: &'static str,
+        span: Span,
+    ) -> StructId {
+        // FIXME: Currently not being able to get an internally used struct ID
+        //        causes a panic. In the future it would be nice to report it
+        //        as an internal compiler error instead.
+        match cached_struct_id {
+            Some(id) => Ok(id),
+            None => Err(JaktError::TypecheckError(
+                format!("can't find builtin {} type", name),
+                span,
+            )),
+        }
+        .unwrap()
+    }
+
+    pub fn get_array_struct_id(&self, span: Span) -> StructId {
+        self.get_cached_struct_id(self.cached_array_struct_id, "Array", span)
+    }
+
+    pub fn get_dictionary_struct_id(&self, span: Span) -> StructId {
+        self.get_cached_struct_id(self.cached_dictionary_struct_id, "Dictionary", span)
+    }
+
+    pub fn get_error_struct_id(&self, span: Span) -> StructId {
+        self.get_cached_struct_id(self.cached_error_struct_id, "Error", span)
+    }
+
+    pub fn get_optional_struct_id(&self, span: Span) -> StructId {
+        self.get_cached_struct_id(self.cached_optional_struct_id, "Optional", span)
+    }
+
+    pub fn get_range_struct_id(&self, span: Span) -> StructId {
+        self.get_cached_struct_id(self.cached_range_struct_id, "Range", span)
+    }
+
+    pub fn get_set_struct_id(&self, span: Span) -> StructId {
+        self.get_cached_struct_id(self.cached_set_struct_id, "Set", span)
+    }
+
+    pub fn get_tuple_struct_id(&self, span: Span) -> StructId {
+        self.get_cached_struct_id(self.cached_tuple_struct_id, "Tuple", span)
+    }
+
+    pub fn get_weakptr_struct_id(&self, span: Span) -> StructId {
+        self.get_cached_struct_id(self.cached_weakptr_struct_id, "WeakPtr", span)
     }
 }
 
@@ -1910,6 +1976,28 @@ fn typecheck_struct_predecl(
         Err(err) => error = error.or(Some(err)),
     }
 
+    if parent_scope_id == 0 {
+        // Cache various well-known struct IDs as they're used internally in
+        // other Jakt code.
+        if project.cached_array_struct_id == None && structure.name == "Array" {
+            project.cached_array_struct_id = Some(struct_id);
+        } else if project.cached_dictionary_struct_id == None && structure.name == "Dictionary" {
+            project.cached_dictionary_struct_id = Some(struct_id);
+        } else if project.cached_error_struct_id == None && structure.name == "Error" {
+            project.cached_error_struct_id = Some(struct_id);
+        } else if project.cached_optional_struct_id == None && structure.name == "Optional" {
+            project.cached_optional_struct_id = Some(struct_id);
+        } else if project.cached_range_struct_id == None && structure.name == "Range" {
+            project.cached_range_struct_id = Some(struct_id);
+        } else if project.cached_set_struct_id == None && structure.name == "Set" {
+            project.cached_set_struct_id = Some(struct_id);
+        } else if project.cached_tuple_struct_id == None && structure.name == "Tuple" {
+            project.cached_tuple_struct_id = Some(struct_id);
+        } else if project.cached_weakptr_struct_id == None && structure.name == "WeakPtr" {
+            project.cached_weakptr_struct_id = Some(struct_id);
+        }
+    }
+
     error
 }
 
@@ -2467,10 +2555,7 @@ pub fn typecheck_statement(
             let (checked_stmt, err) = typecheck_statement(stmt, scope_id, project, safety_mode);
             error = error.or(err);
 
-            let error_struct_id = project
-                .find_struct_in_scope(0, "Error")
-                .expect("internal error: Error builtin definition not found");
-
+            let error_struct_id = project.get_error_struct_id(*error_span);
             let error_decl = CheckedVariable {
                 name: error_name.clone(),
                 mutable: false,
@@ -2714,9 +2799,7 @@ pub fn typecheck_statement(
             );
             error = error.or(err);
 
-            let weakptr_struct_id = project
-                .find_struct_in_scope(0, "WeakPtr")
-                .expect("internal error: can't find builtin WeakPtr type");
+            let weakptr_struct_id = project.get_weakptr_struct_id(var_decl.span);
 
             match &project.types[checked_type_id] {
                 Type::GenericInstance(struct_id, _) if *struct_id == weakptr_struct_id => {
@@ -3023,10 +3106,7 @@ pub fn typecheck_expression(
                 )))
             }
 
-            let range_struct_id = project
-                .find_struct_in_scope(0, "Range")
-                .expect("internal error: Range builtin definition not found");
-
+            let range_struct_id = project.get_range_struct_id(*span);
             let type_ = Type::GenericInstance(
                 range_struct_id,
                 vec![checked_start.type_id(scope_id, project)],
@@ -3152,13 +3232,8 @@ pub fn typecheck_expression(
 
             let type_ = &project.types[checked_expr.type_id(scope_id, project)];
 
-            let optional_struct_id = project
-                .find_struct_in_scope(0, "Optional")
-                .expect("internal error: can't find builtin Optional type");
-
-            let weakptr_struct_id = project
-                .find_struct_in_scope(0, "WeakPtr")
-                .expect("internal error: can't find builtin WeakPtr type");
+            let optional_struct_id = project.get_optional_struct_id(*span);
+            let weakptr_struct_id = project.get_weakptr_struct_id(*span);
 
             let (type_id, err) = match type_ {
                 Type::GenericInstance(struct_id, inner_type_ids)
@@ -3328,10 +3403,7 @@ pub fn typecheck_expression(
             let mut inner_type_span: Option<Span> = None;
             let mut output = Vec::new();
 
-            let array_struct_id = project
-                .find_struct_in_scope(0, "Array")
-                .expect("internal error: Array builtin definition not found");
-
+            let array_struct_id = project.get_array_struct_id(*span);
             let mut inner_hint = None;
             if let Some(hint) = type_hint {
                 if let Type::GenericInstance(hint_struct_id, hint_inner_types) =
@@ -3420,10 +3492,7 @@ pub fn typecheck_expression(
             let mut inner_type_span: Option<Span> = None;
             let mut output = Vec::new();
 
-            let set_struct_id = project
-                .find_struct_in_scope(0, "Set")
-                .expect("internal error: Set builtin definition not found");
-
+            let set_struct_id = project.get_set_struct_id(*span);
             let mut inner_hint = None;
             if let Some(hint) = type_hint {
                 if let Type::GenericInstance(hint_struct_id, hint_inner_types) =
@@ -3494,10 +3563,7 @@ pub fn typecheck_expression(
             let mut value_type_span: Option<Span> = None;
             let mut output = Vec::new();
 
-            let dictionary_struct_id = project
-                .find_struct_in_scope(0, "Dictionary")
-                .expect("internal error: Dictionary builtin definition not found");
-
+            let dictionary_struct_id = project.get_dictionary_struct_id(*span);
             let mut key_hint = None;
             let mut value_hint = None;
             if let Some(hint) = type_hint {
@@ -3627,10 +3693,7 @@ pub fn typecheck_expression(
                 checked_items.push(checked_item);
             }
 
-            let tuple_struct_id = project
-                .find_struct_in_scope(0, "Tuple")
-                .expect("internal error: Tuple builtin definition not found");
-
+            let tuple_struct_id = project.get_tuple_struct_id(*span);
             let type_id =
                 project.find_or_add_type_id(Type::GenericInstance(tuple_struct_id, checked_types));
 
@@ -3653,13 +3716,8 @@ pub fn typecheck_expression(
 
             let mut expr_type_id = UNKNOWN_TYPE_ID;
 
-            let array_struct_id = project
-                .find_struct_in_scope(0, "Array")
-                .expect("internal error: Array builtin definition not found");
-
-            let dict_struct_id = project
-                .find_struct_in_scope(0, "Dictionary")
-                .expect("internal error: Dictionary builtin definition not found");
+            let array_struct_id = project.get_array_struct_id(*span);
+            let dict_struct_id = project.get_dictionary_struct_id(*span);
 
             let optional_struct_id = project
                 .find_struct_in_scope(0, "Optional")
@@ -3822,10 +3880,7 @@ pub fn typecheck_expression(
 
             let mut type_id = UNKNOWN_TYPE_ID;
 
-            let tuple_struct_id = project
-                .find_struct_in_scope(0, "Tuple")
-                .expect("internal error: Tuple builtin definition not found");
-
+            let tuple_struct_id = project.get_tuple_struct_id(*span);
             let checked_expr_type_id = &project.types[checked_expr.type_id(scope_id, project)];
             match checked_expr_type_id {
                 Type::GenericInstance(parent_struct_id, inner_type_ids)
@@ -5251,9 +5306,7 @@ pub fn typecheck_binary_operation(
             // This branch can be the same as the above BinaryOp::Assign branch.
             // unify_with_type uses check_types_for_compact which does the same
             // as below.
-            let weakptr_struct_id = project
-                .find_struct_in_scope(0, "WeakPtr")
-                .expect("internal error: can't find builtin WeakPtr type");
+            let weakptr_struct_id = project.get_weakptr_struct_id(span);
 
             if let Type::GenericInstance(struct_id, inner_type_ids) = &project.types[lhs_type_id] {
                 if *struct_id == weakptr_struct_id {
@@ -5827,13 +5880,8 @@ pub fn check_types_for_compat(
     let mut error = None;
     let lhs_type = &project.types[lhs_type_id];
 
-    let optional_struct_id = project
-        .find_struct_in_scope(0, "Optional")
-        .expect("internal error: can't find builtin Optional type");
-
-    let weak_ptr_struct_id = project
-        .find_struct_in_scope(0, "WeakPtr")
-        .expect("internal error: can't find builtin WeakPtr type");
+    let optional_struct_id = project.get_optional_struct_id(span);
+    let weak_ptr_struct_id = project.get_weakptr_struct_id(span);
 
     // This skips the type compatibility check if assigning a T to a T? or to a
     // weak T? without going through `Some`.
@@ -6153,7 +6201,7 @@ pub fn typecheck_typename(
             }
         },
         ParsedType::Empty => (UNKNOWN_TYPE_ID, None),
-        ParsedType::Tuple(inner_types, _) => {
+        ParsedType::Tuple(inner_types, span) => {
             let mut checked_types = Vec::new();
             for inner_type in inner_types {
                 let (type_id, err) = typecheck_typename(inner_type, scope_id, project);
@@ -6161,10 +6209,7 @@ pub fn typecheck_typename(
                 checked_types.push(type_id);
             }
 
-            let tuple_struct_id = project
-                .find_struct_in_scope(0, "Tuple")
-                .expect("internal error: Tuple builtin definition not found");
-
+            let tuple_struct_id = project.get_tuple_struct_id(*span);
             // FIXME: Tuple is not a generic type since we don't have variadic generics yet, however
             // we don't actually check if the stuct_id is actually generic or not, so the type checking
             // works as expected for now.
@@ -6173,29 +6218,23 @@ pub fn typecheck_typename(
 
             (type_id, error)
         }
-        ParsedType::Array(inner, _) => {
+        ParsedType::Array(inner, span) => {
             let (inner_type_id, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
-            let vector_struct_id = project
-                .find_struct_in_scope(0, "Array")
-                .expect("internal error: Array builtin definition not found");
-
+            let vector_struct_id = project.get_array_struct_id(*span);
             let type_id = project
                 .find_or_add_type_id(Type::GenericInstance(vector_struct_id, vec![inner_type_id]));
 
             (type_id, error)
         }
-        ParsedType::Dictionary(key, value, _) => {
+        ParsedType::Dictionary(key, value, span) => {
             let (key_type_id, err) = typecheck_typename(key, scope_id, project);
             error = error.or(err);
             let (value_type_id, err) = typecheck_typename(value, scope_id, project);
             error = error.or(err);
 
-            let dictionary_struct_id = project
-                .find_struct_in_scope(0, "Dictionary")
-                .expect("internal error: Dictionary builtin definition not found");
-
+            let dictionary_struct_id = project.get_dictionary_struct_id(*span);
             let type_id = project.find_or_add_type_id(Type::GenericInstance(
                 dictionary_struct_id,
                 vec![key_type_id, value_type_id],
@@ -6203,26 +6242,21 @@ pub fn typecheck_typename(
 
             (type_id, error)
         }
-        ParsedType::Set(inner, _) => {
+        ParsedType::Set(inner, span) => {
             let (inner_type_id, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
-            let set_struct_id = project
-                .find_struct_in_scope(0, "Set")
-                .expect("internal error: Set builtin definition not found");
-
+            let set_struct_id = project.get_set_struct_id(*span);
             let type_id = project
                 .find_or_add_type_id(Type::GenericInstance(set_struct_id, vec![inner_type_id]));
 
             (type_id, error)
         }
-        ParsedType::Optional(inner, _) => {
+        ParsedType::Optional(inner, span) => {
             let (inner_type_id, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
-            let optional_struct_id = project
-                .find_struct_in_scope(0, "Optional")
-                .expect("internal error: Optional builtin definition not found");
+            let optional_struct_id = project.get_optional_struct_id(*span);
 
             let type_id = project.find_or_add_type_id(Type::GenericInstance(
                 optional_struct_id,
@@ -6231,13 +6265,11 @@ pub fn typecheck_typename(
 
             (type_id, error)
         }
-        ParsedType::WeakPtr(inner, _) => {
+        ParsedType::WeakPtr(inner, span) => {
             let (inner_type_id, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);
 
-            let weakptr_struct_id = project
-                .find_struct_in_scope(0, "WeakPtr")
-                .expect("internal error: WeakPtr builtin definition not found");
+            let weakptr_struct_id = project.get_weakptr_struct_id(*span);
 
             let type_id = project.find_or_add_type_id(Type::GenericInstance(
                 weakptr_struct_id,
