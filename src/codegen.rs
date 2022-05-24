@@ -2222,7 +2222,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         }
         CheckedExpression::CharacterConstant(c, _) => {
             output.push('\'');
-            output.push(*c);
+            output.push_str(c);
             output.push('\'');
         }
         CheckedExpression::NumericConstant(constant, _, _) => match constant {

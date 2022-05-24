@@ -266,7 +266,7 @@ pub enum ParsedExpression {
     Boolean(bool, Span),
     NumericConstant(NumericConstant, Span),
     QuotedString(String, Span),
-    CharacterLiteral(char, Span),
+    CharacterLiteral(String, Span),
     ByteLiteral(u8, Span),
     Array(Vec<ParsedExpression>, Option<Box<ParsedExpression>>, Span),
     Dictionary(Vec<(ParsedExpression, ParsedExpression)>, Span),
@@ -2809,10 +2809,10 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
         }
         TokenContents::SingleQuotedString(c) => {
             *index += 1;
-            if let Some(first) = c.chars().next() {
-                ParsedExpression::CharacterLiteral(first, span)
-            } else {
-                ParsedExpression::Garbage(span)
+            match c.chars().next() {
+                Some('\\') if c.len() == 2 => ParsedExpression::CharacterLiteral(c.clone(), span),
+                _ if c.len() == 1 => ParsedExpression::CharacterLiteral(c.clone(), span),
+                _ => ParsedExpression::Garbage(span),
             }
         }
         TokenContents::SingleQuotedByteString(c) => {
