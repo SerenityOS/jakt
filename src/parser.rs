@@ -48,6 +48,7 @@ pub enum ExpressionKind {
 pub enum ParsedType {
     Name(String, Span),
     GenericType(String, Vec<ParsedType>, Span),
+    Tuple(Vec<ParsedType>, Span),
     Array(Box<ParsedType>, Span),
     Dictionary(Box<ParsedType>, Box<ParsedType>, Span),
     Set(Box<ParsedType>, Span),
@@ -4053,6 +4054,46 @@ pub fn parse_shorthand_type(
             ParsedType::Empty,
             err.or(Some(JaktError::ParserError(
                 "expected ]".to_string(),
+                tokens[*index].span,
+            ))),
+        )
+    } else if let TokenContents::LParen = &tokens[*index].contents {
+        // (A, B, C) is shorthand for Tuple<A, B, C>
+        *index += 1;
+        let mut parsed_types = Vec::new();
+        let mut error = None;
+
+        while *index < tokens.len() {
+            if let TokenContents::RParen = &tokens[*index].contents {
+                *index += 1;
+
+                return (
+                    ParsedType::Tuple(
+                        parsed_types,
+                        Span {
+                            file_id: start.file_id,
+                            start: start.start,
+                            end: tokens[*index - 1].span.end,
+                        },
+                    ),
+                    error,
+                );
+            }
+            if let TokenContents::Comma = &tokens[*index].contents {
+                *index += 1;
+            }
+            let (parsed_type, err) = parse_typename(tokens, index);
+            parsed_types.push(parsed_type);
+            if err.is_some() {
+                error = error.or(err);
+                break;
+            }
+        }
+
+        (
+            ParsedType::Empty,
+            error.or(Some(JaktError::ParserError(
+                "expected )".to_string(),
                 tokens[*index].span,
             ))),
         )

@@ -5386,6 +5386,26 @@ pub fn typecheck_typename(
             }
         },
         ParsedType::Empty => (UNKNOWN_TYPE_ID, None),
+        ParsedType::Tuple(inner_types, _) => {
+            let mut checked_types = Vec::new();
+            for inner_type in inner_types {
+                let (type_id, err) = typecheck_typename(inner_type, scope_id, project);
+                error = error.or(err);
+                checked_types.push(type_id);
+            }
+
+            let tuple_struct_id = project
+                .find_struct_in_scope(0, "Tuple")
+                .expect("internal error: Tuple builtin definition not found");
+
+            // FIXME: Tuple is not a generic type since we don't have variadic generics yet, however
+            // we don't actually check if the stuct_id is actually generic or not, so the type checking
+            // works as expected for now.
+            let type_id =
+                project.find_or_add_type_id(Type::GenericInstance(tuple_struct_id, checked_types));
+
+            (type_id, error)
+        }
         ParsedType::Array(inner, _) => {
             let (inner_type_id, err) = typecheck_typename(inner, scope_id, project);
             error = error.or(err);

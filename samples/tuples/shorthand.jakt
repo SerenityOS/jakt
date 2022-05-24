@@ -1,0 +1,8 @@
+function foo() -> (i64, String) {
+    return (1, "hello")
+}
+
+function main() {
+    let x = foo()
+    println("{} {}", x.0, x.1)
+}
