@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <AK/ByteBuffer.h>
 #include <AK/Checked.h>
 #include <AK/StdLibExtras.h>
 #include <AK/StringBuilder.h>
@@ -15,22 +14,12 @@ namespace AK {
 
 inline ErrorOr<void> StringBuilder::will_append(size_t size)
 {
-    Checked<size_t> needed_capacity = m_buffer.size();
-    needed_capacity += size;
-    VERIFY(!needed_capacity.has_overflow());
-    // Prefer to completely use the existing capacity first
-    if (needed_capacity <= m_buffer.capacity())
-        return {};
-    Checked<size_t> expanded_capacity = needed_capacity;
-    expanded_capacity *= 2;
-    VERIFY(!expanded_capacity.has_overflow());
-    TRY(m_buffer.try_ensure_capacity(expanded_capacity.value()));
+    TRY(m_buffer.add_capacity(size));
     return {};
 }
 
-StringBuilder::StringBuilder(size_t initial_capacity)
+StringBuilder::StringBuilder()
 {
-    m_buffer.ensure_capacity(initial_capacity);
 }
 
 ErrorOr<void> StringBuilder::try_append(StringView string)
@@ -38,14 +27,14 @@ ErrorOr<void> StringBuilder::try_append(StringView string)
     if (string.is_empty())
         return {};
     TRY(will_append(string.length()));
-    TRY(m_buffer.try_append(string.characters_without_null_termination(), string.length()));
+    TRY(m_buffer.push_values((u8 const*)string.characters_without_null_termination(), string.length()));
     return {};
 }
 
 ErrorOr<void> StringBuilder::try_append(char ch)
 {
     TRY(will_append(1));
-    TRY(m_buffer.try_append(ch));
+    TRY(m_buffer.push(ch));
     return {};
 }
 
@@ -69,12 +58,6 @@ void StringBuilder::append(char ch)
     MUST(try_append(ch));
 }
 
-ByteBuffer StringBuilder::to_byte_buffer() const
-{
-    // FIXME: Handle OOM failure.
-    return ByteBuffer::copy(data(), length()).release_value_but_fixme_should_propagate_errors();
-}
-
 String StringBuilder::to_string() const
 {
     if (is_empty())
@@ -94,7 +77,7 @@ StringView StringBuilder::string_view() const
 
 void StringBuilder::clear()
 {
-    m_buffer.clear();
+    m_buffer.resize(0);
 }
 
 ErrorOr<void> StringBuilder::try_append_code_point(u32 code_point)

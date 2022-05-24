@@ -328,7 +328,7 @@ bool String::equals_ignoring_case(StringView other) const
 
 String String::reverse() const
 {
-    StringBuilder reversed_string(length());
+    StringBuilder reversed_string;
     for (size_t i = length(); i-- > 0;) {
         reversed_string.append(characters()[i]);
     }
