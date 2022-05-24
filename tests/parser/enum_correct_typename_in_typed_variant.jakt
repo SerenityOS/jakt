@@ -1,0 +1,11 @@
+ref enum Foo<T> {
+    A(T?)
+    B([T])
+    C([T:T])
+    D({T})
+    E(Foo<T>)
+}
+
+function main() {
+    // Should parse.
+}
