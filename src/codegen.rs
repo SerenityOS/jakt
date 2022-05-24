@@ -140,7 +140,7 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
 
     output.push('\n');
 
-    for (_, function_id) in &scope.functions {
+    for (_, function_id, _) in &scope.functions {
         let function = &project.functions[*function_id];
         if function.linkage == FunctionLinkage::ImplicitEnumConstructor {
             continue;
@@ -156,7 +156,7 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
 
     output.push('\n');
 
-    for (_, function_id) in &scope.functions {
+    for (_, function_id, _) in &scope.functions {
         let function = &project.functions[*function_id];
         if function.linkage == FunctionLinkage::External
             || function.linkage == FunctionLinkage::ImplicitConstructor
@@ -182,7 +182,7 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
         }
 
         let scope = &project.scopes[structure.scope_id];
-        for (_, function_id) in &scope.functions {
+        for (_, function_id, _) in &scope.functions {
             let function = &project.functions[*function_id];
             if function.linkage != FunctionLinkage::ImplicitConstructor {
                 let function_output =
@@ -922,7 +922,7 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
     }
 
     let scope = &project.scopes[structure.scope_id];
-    for (_, function_id) in &scope.functions {
+    for (_, function_id, _) in &scope.functions {
         let function = &project.functions[*function_id];
         if function.linkage == FunctionLinkage::ImplicitConstructor {
             let function_output = codegen_constructor(function, project);

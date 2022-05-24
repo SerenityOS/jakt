@@ -352,15 +352,17 @@ impl Project {
     ) -> Result<(), JaktError> {
         let scope = &mut self.scopes[scope_id];
 
-        for (existing_function, _) in &scope.functions {
+        for (existing_function, _, definition_span) in &scope.functions {
             if &name == existing_function {
-                return Err(JaktError::TypecheckError(
+                return Err(JaktError::TypecheckErrorWithHint(
                     format!("redefinition of function {}", name),
                     span,
+                    format!("function {} was first defined here", name),
+                    *definition_span,
                 ));
             }
         }
-        scope.functions.push((name, function_id));
+        scope.functions.push((name, function_id, span));
 
         Ok(())
     }
@@ -1018,7 +1020,7 @@ pub struct Scope {
     pub namespace_name: Option<String>,
     pub vars: Vec<CheckedVariable>,
     pub structs: Vec<(String, StructId)>,
-    pub functions: Vec<(String, FunctionId)>,
+    pub functions: Vec<(String, FunctionId, Span)>,
     pub enums: Vec<(String, EnumId)>,
     pub types: Vec<(String, TypeId)>,
     pub parent: Option<ScopeId>,
