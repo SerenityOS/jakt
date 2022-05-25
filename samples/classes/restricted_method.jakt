@@ -1,0 +1,17 @@
+class Limited {
+    restricted(A) function get_secret() => "Shhhh! Don't tell anyone!"
+    restricted(A,B) function open_the_bank_vault() => "Open sesame!"
+}
+
+class A {
+    public function do_things() {
+        println("The secret is: {}", Limited::get_secret())
+        println("{}", Limited::open_the_bank_vault())
+    }
+}
+
+class B {}
+
+function main() {
+    A::do_things()
+}
