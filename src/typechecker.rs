@@ -899,7 +899,7 @@ pub enum CheckedExpression {
     Boolean(bool, Span),
     NumericConstant(NumericConstant, Span, TypeId),
     QuotedString(String, Span),
-    ByteConstant(u8, Span),
+    ByteConstant(String, Span),
     CharacterConstant(String, Span),
     UnaryOp(Box<CheckedExpression>, CheckedUnaryOperator, Span, TypeId),
     BinaryOp(
@@ -1817,7 +1817,7 @@ fn typecheck_struct_predecl(
                 });
 
                 if let Some(check_scope) = check_scope {
-                    _ = project.add_var_to_scope(
+                    let _ = project.add_var_to_scope(
                         check_scope,
                         checked_variable,
                         param.variable.span,
@@ -1842,7 +1842,7 @@ fn typecheck_struct_predecl(
                 });
 
                 if let Some(check_scope) = check_scope {
-                    _ = project.add_var_to_scope(
+                    let _ = project.add_var_to_scope(
                         check_scope,
                         checked_variable,
                         param.variable.span,
@@ -2095,7 +2095,7 @@ fn typecheck_function_predecl(
         });
 
         if let Some(check_scope) = check_scope {
-            _ = project.add_var_to_scope(check_scope, checked_variable, param.variable.span)
+            let _ = project.add_var_to_scope(check_scope, checked_variable, param.variable.span);
         }
     }
 
@@ -3201,7 +3201,7 @@ pub fn typecheck_expression(
         ParsedExpression::ByteLiteral(b, span) => {
             let (_, err) = unify_with_type_hint(project, &U8_TYPE_ID);
 
-            (CheckedExpression::ByteConstant(*b, *span), err)
+            (CheckedExpression::ByteConstant(b.clone(), *span), err)
         }
         ParsedExpression::CharacterLiteral(c, span) => {
             let (_, err) = unify_with_type_hint(project, &CCHAR_TYPE_ID);

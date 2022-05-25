@@ -1,0 +1,7 @@
+function main() {
+    let x = b'\n'
+    let y = b'\"'
+    let z = b'\''
+
+    println("{} {} {}", x, y, z)
+}
