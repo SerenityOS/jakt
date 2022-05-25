@@ -1,0 +1,7 @@
+function test(arr: [f64]) {
+    println("OK")
+}
+
+function main() {
+    test(arr: [])
+}
