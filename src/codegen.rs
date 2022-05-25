@@ -1541,9 +1541,11 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str("return {};");
             output.push_str("}();");
             output.push_str("if (_jakt_try_result.is_error()) {");
-            output.push_str("auto ");
-            output.push_str(error_name);
-            output.push_str(" = _jakt_try_result.release_error();");
+            if !error_name.is_empty() {
+                output.push_str("auto ");
+                output.push_str(error_name);
+                output.push_str(" = _jakt_try_result.release_error();");
+            }
             output.push_str(&codegen_block(indent, catch_block, project));
             output.push('}');
             output.push('}');
