@@ -1320,7 +1320,7 @@ pub fn parse_function(
                                 tokens[*index].span,
                             )));
 
-                            *index += 1;
+                            return (ParsedFunction::new(FunctionLinkage::Internal), error);
                         }
                     }
                 } else {
@@ -1330,9 +1330,7 @@ pub fn parse_function(
                         "incomplete function".to_string(),
                         tokens[*index - 1].span,
                     )));
-                }
 
-                if error.is_some() {
                     return (ParsedFunction::new(FunctionLinkage::Internal), error);
                 }
 
@@ -1409,7 +1407,7 @@ pub fn parse_function(
                                 tokens[*index].span,
                             )));
 
-                            *index += 1;
+                            return (ParsedFunction::new(FunctionLinkage::Internal), error);
                         }
                     }
                 }
@@ -1421,9 +1419,7 @@ pub fn parse_function(
                         "incomplete function".to_string(),
                         tokens[*index - 1].span,
                     )));
-                }
 
-                if error.is_some() {
                     return (ParsedFunction::new(FunctionLinkage::Internal), error);
                 }
 
