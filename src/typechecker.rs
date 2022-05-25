@@ -2458,6 +2458,10 @@ fn typecheck_method(
         }
     }
 
+    // Set current function index before a block type check so that
+    // method return type is checked against its implementation
+    project.current_function_index = Some(method_id);
+
     let (block, err) = typecheck_block(
         &function.block,
         function_scope_id,

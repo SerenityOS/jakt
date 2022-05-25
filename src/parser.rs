@@ -157,6 +157,7 @@ pub struct ParsedFunction {
     pub block: ParsedBlock,
     pub throws: bool,
     pub return_type: ParsedType,
+    pub return_type_span: Option<Span>,
     pub linkage: FunctionLinkage,
     pub must_instantiate: bool,
 }
@@ -196,6 +197,7 @@ impl ParsedFunction {
             block: ParsedBlock::new(),
             throws: false,
             return_type: ParsedType::Empty,
+            return_type_span: None,
             linkage,
             must_instantiate: false,
         }
@@ -1499,48 +1501,43 @@ pub fn parse_function(
 
                 let mut return_type = ParsedType::Empty;
 
-                let mut fat_arrow_expr = None;
-
-                if *index + 2 < tokens.len() {
-                    match &tokens[*index].contents {
-                        TokenContents::FatArrow => {
-                            *index += 1;
-
-                            let (expr, err) = parse_expression(
-                                tokens,
-                                index,
-                                ExpressionKind::ExpressionWithoutAssignment,
-                            );
-                            return_type = ParsedType::Empty;
-                            fat_arrow_expr = Some(expr);
-                            error = error.or(err);
-
-                            *index += 1;
-                        }
-                        TokenContents::Minus => {
-                            *index += 1;
-
-                            match &tokens[*index].contents {
-                                TokenContents::GreaterThan => {
-                                    *index += 1;
-
-                                    let (ret_type, err) = parse_typename(tokens, index);
-                                    return_type = ret_type;
-                                    error = error.or(err);
-                                }
-                                _ => {
-                                    trace!("ERROR: expected ->");
-
-                                    error = error.or(Some(JaktError::ParserError(
-                                        "expected ->".to_string(),
-                                        tokens[*index - 1].span,
-                                    )));
-                                }
-                            }
-                        }
-                        _ => {}
+                //  accept return type specification with '->'
+                let return_type_span = if tokens[*index].contents == TokenContents::Minus {
+                    *index += 1;
+                    if tokens[*index].contents != TokenContents::GreaterThan {
+                        error = error.or(Some(JaktError::ParserError(
+                            "expected ->".to_string(),
+                            tokens[*index - 1].span,
+                        )));
                     }
-                }
+                    let start = *index;
+                    let file_id = tokens[*index].span.file_id;
+                    *index += 1;
+                    let (ret_type, err) = parse_typename(tokens, index);
+                    return_type = ret_type;
+                    error = error.or(err);
+                    Some(Span {
+                        file_id,
+                        start,
+                        end: tokens[*index - 1].span.end,
+                    })
+                } else {
+                    None
+                };
+
+                // Accept an (optional) fat arrow
+                let fat_arrow_expr = if tokens[*index].contents == TokenContents::FatArrow {
+                    *index += 1;
+                    let (expr, err) = parse_expression(
+                        tokens,
+                        index,
+                        ExpressionKind::ExpressionWithoutAssignment,
+                    );
+                    error = error.or(err);
+                    Some(expr)
+                } else {
+                    None
+                };
 
                 if *index >= tokens.len() {
                     trace!("ERROR: incomplete function");
@@ -1561,6 +1558,7 @@ pub fn parse_function(
                             block: ParsedBlock::new(),
                             throws,
                             return_type,
+                            return_type_span,
                             linkage,
                             must_instantiate: true,
                         },
@@ -1588,6 +1586,7 @@ pub fn parse_function(
                         block,
                         throws,
                         return_type,
+                        return_type_span,
                         linkage,
                         must_instantiate: false,
                     },
