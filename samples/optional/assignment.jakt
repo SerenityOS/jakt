@@ -1,0 +1,7 @@
+function main() {
+    let mutable a: String? = None
+    a = "hello"
+    println("{}", a!)
+    a = None
+    println("{}", a ?? "PASS")
+}
