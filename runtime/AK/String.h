@@ -320,6 +320,15 @@ String operator+(String const&, String const&);
 
 String escape_html_entities(StringView html);
 
+template<typename T>
+struct Formatter<NonnullRefPtr<T>> : Formatter<StringView> {
+    ErrorOr<void> format(FormatBuilder& builder, NonnullRefPtr<T> const& value)
+    {
+        auto str = AK::String::formatted("{}", *value);
+        return Formatter<StringView>::format(builder, str);
+    }
+};
+
 }
 
 using AK::CaseInsensitiveStringTraits;
