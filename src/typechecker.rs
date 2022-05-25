@@ -3377,7 +3377,7 @@ pub fn typecheck_expression(
             if inner_type_id == UNKNOWN_TYPE_ID {
                 if let Some(hint_inner_type) = inner_hint {
                     inner_type_id = hint_inner_type
-                } else if type_hint.is_none() {
+                } else if type_hint == Some(UNKNOWN_TYPE_ID) {
                     error = error.or(Some(JaktError::TypecheckError(
                         "Cannot infer generic type for Array<T>".to_string(),
                         *span,
@@ -3452,7 +3452,7 @@ pub fn typecheck_expression(
             if inner_type_id == UNKNOWN_TYPE_ID {
                 if let Some(hint_inner_type) = inner_hint {
                     inner_type_id = hint_inner_type
-                } else if type_hint.is_none() {
+                } else if type_hint == Some(UNKNOWN_TYPE_ID) {
                     error = error.or(Some(JaktError::TypecheckError(
                         "Cannot infer generic type for Set<T>".to_string(),
                         *span,
@@ -3559,9 +3559,9 @@ pub fn typecheck_expression(
             if key_type_id == UNKNOWN_TYPE_ID {
                 if let Some(key_hint) = key_hint {
                     key_type_id = key_hint;
-                } else if type_hint.is_none() {
+                } else if type_hint == Some(UNKNOWN_TYPE_ID) {
                     error = error.or(Some(JaktError::TypecheckError(
-                        "Cannot infer key type for Dictionary".to_string(),
+                        "Cannot infer key type for Dictionary<K, V>".to_string(),
                         *span,
                     )))
                 }
@@ -3570,7 +3570,7 @@ pub fn typecheck_expression(
             if value_type_id == UNKNOWN_TYPE_ID {
                 if let Some(value_hint) = value_hint {
                     value_type_id = value_hint;
-                } else if type_hint.is_none() {
+                } else if type_hint == Some(UNKNOWN_TYPE_ID) {
                     error = error.or(Some(JaktError::TypecheckError(
                         "Cannot infer value type for Dictionary".to_string(),
                         *span,
