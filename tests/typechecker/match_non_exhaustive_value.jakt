@@ -1,0 +1,5 @@
+function main() {
+    match 123 {
+        (42) => 0
+    }
+}
