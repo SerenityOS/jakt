@@ -51,9 +51,6 @@ class HashMap;
 template<typename K, typename V, typename KeyTraits = Traits<K>>
 using OrderedHashMap = HashMap<K, V, KeyTraits, true>;
 
-template<typename T>
-class Badge;
-
 template<size_t precision, typename Underlying = i32>
 class FixedPoint;
 
@@ -92,7 +89,6 @@ class [[nodiscard]] ErrorOr;
 }
 
 using AK::Atomic;
-using AK::Badge;
 using AK::Bitmap;
 using AK::Bytes;
 using AK::Error;

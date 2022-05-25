@@ -4,7 +4,6 @@
 #include <AK/AnyOf.h>
 #include <AK/Assertions.h>
 #include <AK/Atomic.h>
-#include <AK/Badge.h>
 #include <AK/BitCast.h>
 #include <AK/BuiltinWrappers.h>
 #include <AK/CharacterTypes.h>
