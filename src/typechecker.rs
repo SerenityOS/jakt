@@ -6051,39 +6051,37 @@ pub fn check_types_for_compat(
 
             let rhs_type = &project.types[rhs_type_id];
             match rhs_type {
-                Type::GenericInstance(rhs_struct_id, args) => {
-                    if lhs_struct_id == rhs_struct_id {
-                        let args = args.clone();
-                        // Same struct, perhaps this is an instantiation of it
+                Type::GenericInstance(rhs_struct_id, args) if lhs_struct_id == rhs_struct_id => {
+                    let args = args.clone();
+                    // Same struct, perhaps this is an instantiation of it
 
-                        let lhs_struct = &project.structs[*lhs_struct_id];
-                        if args.len() != lhs_struct.generic_parameters.len() {
-                            return Some(JaktError::TypecheckError(
-                                format!(
-                                    "mismatched number of generic parameters for {}",
-                                    lhs_struct.name
-                                ),
-                                span,
-                            ));
+                    let lhs_struct = &project.structs[*lhs_struct_id];
+                    if args.len() != lhs_struct.generic_parameters.len() {
+                        return Some(JaktError::TypecheckError(
+                            format!(
+                                "mismatched number of generic parameters for {}",
+                                lhs_struct.name
+                            ),
+                            span,
+                        ));
+                    }
+
+                    let mut idx = 0;
+
+                    let lhs_arg_type_id = lhs_struct.generic_parameters[idx];
+                    let rhs_arg_type_id = args[idx];
+
+                    while idx < args.len() {
+                        if let Some(err) = check_types_for_compat(
+                            lhs_arg_type_id,
+                            rhs_arg_type_id,
+                            generic_inferences,
+                            span,
+                            project,
+                        ) {
+                            return Some(err);
                         }
-
-                        let mut idx = 0;
-
-                        let lhs_arg_type_id = lhs_struct.generic_parameters[idx];
-                        let rhs_arg_type_id = args[idx];
-
-                        while idx < args.len() {
-                            if let Some(err) = check_types_for_compat(
-                                lhs_arg_type_id,
-                                rhs_arg_type_id,
-                                generic_inferences,
-                                span,
-                                project,
-                            ) {
-                                return Some(err);
-                            }
-                            idx += 1;
-                        }
+                        idx += 1;
                     }
                 }
                 _ => {
