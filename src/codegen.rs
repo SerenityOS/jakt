@@ -23,17 +23,28 @@ use std::collections::{HashMap, HashSet};
 
 const INDENT_SIZE: usize = 4;
 
+struct CodegenContext {
+    namespace_stack: Vec<String>,
+    deferred_output: String,
+}
+
 pub fn codegen(project: &Project, scope: &Scope) -> String {
     let mut output = String::new();
 
     output.push_str("#include <lib.h>\n");
+    let mut context = CodegenContext {
+        namespace_stack: Vec::new(),
+        deferred_output: String::new(),
+    };
 
-    output.push_str(&codegen_namespace(project, scope));
+    output.push_str(&codegen_namespace(project, scope, &mut context));
+
+    output.push_str(&context.deferred_output);
 
     output
 }
 
-fn codegen_namespace(project: &Project, scope: &Scope) -> String {
+fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenContext) -> String {
     let mut output = String::new();
 
     // Output the namespaces (and their children)
@@ -41,9 +52,11 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
         // For now, require children of the current namespace to have names before being emitted
         let child_scope = &project.scopes[*child_scope_id];
         if let Some(name) = &child_scope.namespace_name {
+            context.namespace_stack.push(name.clone());
             output.push_str(&format!("namespace {} {{\n", name));
-            output.push_str(&codegen_namespace(project, child_scope));
+            output.push_str(&codegen_namespace(project, child_scope, context));
             output.push_str("}\n");
+            context.namespace_stack.pop();
         }
     }
 
@@ -90,7 +103,7 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
             match type_ {
                 Type::Enum(enum_id) => {
                     let enum_ = &project.enums[*enum_id];
-                    let enum_output = codegen_enum(enum_, project);
+                    let enum_output = codegen_enum(enum_, project, context);
 
                     if !enum_output.is_empty() {
                         output.push_str(&enum_output);
@@ -99,7 +112,7 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
                 }
                 Type::Struct(struct_id) => {
                     let structure = &project.structs[*struct_id];
-                    let struct_output = codegen_struct(structure, project);
+                    let struct_output = codegen_struct(structure, project, context);
 
                     if !struct_output.is_empty() {
                         output.push_str(&struct_output);
@@ -116,7 +129,7 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
         if seen_types.contains(&structure.type_id) {
             continue;
         }
-        let struct_output = codegen_struct(structure, project);
+        let struct_output = codegen_struct(structure, project, context);
 
         if !struct_output.is_empty() {
             output.push_str(&struct_output);
@@ -131,7 +144,7 @@ fn codegen_namespace(project: &Project, scope: &Scope) -> String {
         if seen_types.contains(&enum_.type_id) {
             continue;
         }
-        let enum_output = codegen_enum(enum_, project);
+        let enum_output = codegen_enum(enum_, project, context);
         if !enum_output.is_empty() {
             output.push_str(&enum_output);
             output.push('\n');
@@ -205,15 +218,19 @@ fn codegen_enum_predecl(enum_: &CheckedEnum, project: &Project) -> String {
     }
 }
 
-fn codegen_enum(enum_: &CheckedEnum, project: &Project) -> String {
+fn codegen_enum(enum_: &CheckedEnum, project: &Project, context: &mut CodegenContext) -> String {
     if enum_.definition_type == DefinitionType::Class {
-        codegen_recursive_enum(enum_, project)
+        codegen_recursive_enum(enum_, project, context)
     } else {
-        codegen_nonrecursive_enum(enum_, project)
+        codegen_nonrecursive_enum(enum_, project, context)
     }
 }
 
-fn codegen_nonrecursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
+fn codegen_nonrecursive_enum(
+    enum_: &CheckedEnum,
+    project: &Project,
+    context: &mut CodegenContext,
+) -> String {
     if enum_.underlying_type_id.is_some() {
         let type_id = enum_.underlying_type_id.unwrap();
         if is_integer(type_id) {
@@ -419,7 +436,15 @@ fn codegen_nonrecursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
         output.push_str(";\n");
     }
 
+    output.push_str(&codegen_enum_debug_description_getter(enum_));
+
     output.push_str("};\n");
+
+    context.deferred_output.push_str(&codegen_ak_formatter(
+        &enum_.name,
+        &generic_parameter_names,
+        context,
+    ));
 
     output
 }
@@ -598,7 +623,11 @@ fn codegen_recursive_enum_predecl(enum_: &CheckedEnum, project: &Project) -> Str
     output
 }
 
-fn codegen_recursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
+fn codegen_recursive_enum(
+    enum_: &CheckedEnum,
+    project: &Project,
+    context: &mut CodegenContext,
+) -> String {
     if enum_.underlying_type_id.is_some() {
         let type_id = enum_.underlying_type_id.unwrap();
         if is_integer(type_id) {
@@ -829,7 +858,15 @@ fn codegen_recursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
         output.push_str("    }\n");
     }
 
+    output.push_str(&codegen_enum_debug_description_getter(enum_));
+
     output.push_str("};\n");
+
+    context.deferred_output.push_str(&codegen_ak_formatter(
+        &enum_.name,
+        &generic_parameter_names,
+        context,
+    ));
 
     output
 }
@@ -869,7 +906,162 @@ fn codegen_struct_predecl(structure: &CheckedStruct, project: &Project) -> Strin
     }
 }
 
-fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
+fn codegen_enum_debug_description_getter(enum_: &CheckedEnum) -> String {
+    let mut output = String::new();
+    output.push_str("String debug_description() const { ");
+
+    output.push_str("StringBuilder builder;");
+
+    output.push_str("this->visit(");
+
+    for (i, variant) in enum_.variants.iter().enumerate() {
+        let name = match variant {
+            CheckedEnumVariant::Untyped(name, ..) => name,
+            CheckedEnumVariant::Typed(name, ..) => name,
+            CheckedEnumVariant::WithValue(name, ..) => name,
+            CheckedEnumVariant::StructLike(name, ..) => name,
+        };
+        output.push_str(&format!("[&]([[maybe_unused]] {} const& that) {{\n", name));
+        output.push_str(&format!("builder.append(\"{}::{}\");", enum_.name, name));
+        match variant {
+            CheckedEnumVariant::StructLike(_, fields, ..) => {
+                output.push_str("builder.append(\"(\");");
+                for (j, field) in fields.iter().enumerate() {
+                    output.push_str(&format!("builder.append(\"{}: \");", field.name));
+                    if field.type_id == crate::compiler::STRING_TYPE_ID {
+                        output.push_str("builder.append(\"\\\"\");");
+                    }
+                    output.push_str(&format!("builder.appendff(\"{{}}\", that.{});", field.name));
+                    if field.type_id == crate::compiler::STRING_TYPE_ID {
+                        output.push_str("builder.append(\"\\\"\");");
+                    }
+                    if j != fields.len() - 1 {
+                        output.push_str("builder.append(\", \");");
+                    }
+                }
+                output.push_str("builder.append(\")\");");
+            }
+            CheckedEnumVariant::Typed(_, type_id, ..) => {
+                output.push_str("builder.append(\"(\");");
+                if *type_id == crate::compiler::STRING_TYPE_ID {
+                    output.push_str("builder.append(\"\\\"\");");
+                }
+                output.push_str("builder.appendff(\"{}\", that.value);");
+                if *type_id == crate::compiler::STRING_TYPE_ID {
+                    output.push_str("builder.append(\"\\\"\");");
+                }
+                output.push_str("builder.append(\")\");");
+            }
+            _ => {}
+        }
+        output.push('}');
+        if i != enum_.variants.len() - 1 {
+            output.push(',');
+        }
+    }
+
+    output.push_str(");");
+    output.push_str("return builder.to_string();");
+    output.push_str(" }");
+
+    output
+}
+
+fn codegen_debug_description_getter(structure: &CheckedStruct, project: &Project) -> String {
+    let mut output = String::new();
+    output.push_str("String debug_description() const { ");
+
+    output.push_str("StringBuilder builder;");
+
+    output.push_str(&format!("builder.append(\"{}(\");", structure.name));
+
+    for (i, field) in structure.fields.iter().enumerate() {
+        output.push_str(&codegen_indent(INDENT_SIZE));
+
+        output.push_str("builder.appendff(\"");
+        output.push_str(&field.name);
+        output.push_str(": {}");
+        if i != structure.fields.len() - 1 {
+            output.push_str(", ");
+        }
+
+        output.push_str("\", ");
+
+        match project.types[field.type_id] {
+            Type::Struct(struct_id)
+                if project.structs[struct_id].definition_type == DefinitionType::Class =>
+            {
+                output.push('*');
+            }
+            _ => {}
+        }
+
+        output.push_str(&field.name);
+        output.push_str(");\n");
+    }
+
+    output.push_str("builder.append(\")\");");
+    output.push_str("return builder.to_string();");
+    output.push_str(" }");
+
+    output
+}
+
+fn codegen_ak_formatter(
+    name: &str,
+    generic_parameter_names: &[String],
+    context: &CodegenContext,
+) -> String {
+    let template_args = generic_parameter_names
+        .iter()
+        .map(|p| "typename ".to_string() + p)
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    let generic_type_args = generic_parameter_names.join(", ");
+
+    let mut qualified_name = String::new();
+    for namespace in &context.namespace_stack {
+        qualified_name.push_str(namespace);
+        qualified_name.push_str("::");
+    }
+    qualified_name.push_str(name);
+    if !generic_parameter_names.is_empty() {
+        qualified_name.push('<');
+        qualified_name.push_str(generic_type_args.as_str());
+        qualified_name.push_str(">\n");
+    }
+
+    let mut output = String::new();
+
+    output.push_str("namespace AK {");
+
+    output.push_str("template<");
+    output.push_str(&template_args);
+    output.push('>');
+    output.push_str(&format!(
+        "struct Formatter<{}> : Formatter<StringView> {{\n",
+        qualified_name
+    ));
+    output.push_str(&format!(
+        "    ErrorOr<void> format(FormatBuilder& builder, {} const& value)\n",
+        qualified_name,
+    ));
+    output.push_str("{ ");
+    output.push_str("return Formatter<StringView>::format(builder, value.debug_description()); }");
+
+    output.push_str("};");
+
+    output.push_str("} ");
+
+    output
+}
+
+fn codegen_struct(
+    structure: &CheckedStruct,
+    project: &Project,
+    context: &mut CodegenContext,
+) -> String {
     let mut output = String::new();
 
     if structure.definition_linkage == DefinitionLinkage::External {
@@ -878,6 +1070,16 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
     if !structure.generic_parameters.is_empty() {
         output.push_str("template <");
     }
+
+    let generic_parameter_names = structure
+        .generic_parameters
+        .iter()
+        .map(|p| match &project.types[*p] {
+            Type::TypeVariable(name) => name.clone(),
+            _ => unreachable!(),
+        })
+        .collect::<Vec<_>>();
+
     let mut first = true;
     for generic_parameter in &structure.generic_parameters {
         if !first {
@@ -941,7 +1143,16 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
         }
     }
 
+    output.push_str(&codegen_debug_description_getter(structure, project));
+
     output.push_str("};");
+
+    context.deferred_output.push_str(&codegen_ak_formatter(
+        &structure.name,
+        &generic_parameter_names,
+        context,
+    ));
+
     output
 }
 
