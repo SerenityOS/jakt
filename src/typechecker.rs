@@ -5252,12 +5252,14 @@ pub fn typecheck_call(
                     let mut idx = 0;
 
                     while idx < call.args.len() {
+                        let param = &project.functions[callee_id].params[idx + arg_offset];
+                        let type_hint = param.variable.type_id;
                         let (mut checked_arg, err) = typecheck_expression(
                             &call.args[idx].1,
                             caller_scope_id,
                             project,
                             safety_mode,
-                            None,
+                            Some(type_hint),
                         );
                         error = error.or(err);
 
