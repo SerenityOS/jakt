@@ -1722,7 +1722,7 @@ fn codegen_match_body(
 fn codegen_enum_match(
     enum_: &CheckedEnum,
     expr: &CheckedExpression,
-    cases: &Vec<CheckedMatchCase>,
+    cases: &[CheckedMatchCase],
     return_type_id: &TypeId,
     match_values_are_all_constant: bool,
     indent: usize,
@@ -2016,7 +2016,7 @@ fn codegen_enum_match(
 
 fn codegen_generic_match(
     expr: &CheckedExpression,
-    cases: &Vec<CheckedMatchCase>,
+    cases: &[CheckedMatchCase],
     return_type_id: &TypeId,
     match_values_are_all_constant: bool,
     indent: usize,
