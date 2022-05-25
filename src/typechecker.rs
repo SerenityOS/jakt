@@ -1174,15 +1174,15 @@ impl Scope {
 
 /// A trait to collect common namespace member properties.
 trait NamespaceMember {
-    fn visibility(&self) -> Visibility;
+    fn visibility(&self) -> &Visibility;
     fn name(&self) -> String;
     /// e.g. variable, function etc.
     fn kind(&self) -> &'static str;
 }
 
 impl NamespaceMember for CheckedVarDecl {
-    fn visibility(&self) -> Visibility {
-        self.visibility
+    fn visibility(&self) -> &Visibility {
+        &self.visibility
     }
 
     fn name(&self) -> String {
@@ -1194,8 +1194,8 @@ impl NamespaceMember for CheckedVarDecl {
     }
 }
 impl NamespaceMember for CheckedVariable {
-    fn visibility(&self) -> Visibility {
-        self.visibility
+    fn visibility(&self) -> &Visibility {
+        &self.visibility
     }
 
     fn name(&self) -> String {
@@ -1207,8 +1207,8 @@ impl NamespaceMember for CheckedVariable {
     }
 }
 impl NamespaceMember for CheckedFunction {
-    fn visibility(&self) -> Visibility {
-        self.visibility
+    fn visibility(&self) -> &Visibility {
+        &self.visibility
     }
 
     fn name(&self) -> String {
@@ -1227,21 +1227,20 @@ fn check_accessibility(
     span: &Span,
     project: &Project,
 ) -> Option<JaktError> {
-    if member.visibility() != Visibility::Public
-        && !Scope::can_access(own_scope, member_scope, project)
-    {
-        Some(JaktError::TypecheckError(
-            // FIXME: Improve this error
-            format!(
-                "Can't access {} '{}' from scope {:?}",
-                member.kind(),
-                member.name(),
-                project.scopes[own_scope].namespace_name,
-            ),
-            *span,
-        ))
-    } else {
-        None
+    match member.visibility() {
+        Visibility::Private if !Scope::can_access(own_scope, member_scope, project) => {
+            Some(JaktError::TypecheckError(
+                // FIXME: Improve this error
+                format!(
+                    "Can't access {} '{}' from scope {:?}",
+                    member.kind(),
+                    member.name(),
+                    project.scopes[own_scope].namespace_name,
+                ),
+                *span,
+            ))
+        }
+        _ => None,
     }
 }
 
@@ -1615,7 +1614,7 @@ fn typecheck_enum(
                                 type_id: decl,
                                 mutable: member.mutable,
                                 span: member.span,
-                                visibility: member.visibility,
+                                visibility: member.visibility.clone(),
                             })
                         }
                     }
@@ -1639,7 +1638,7 @@ fn typecheck_enum(
                                     name: member.name.clone(),
                                     type_id: member.type_id,
                                     mutable: false,
-                                    visibility: member.visibility,
+                                    visibility: member.visibility.clone(),
                                     definition_span: *span,
                                 },
                             })
@@ -1822,7 +1821,7 @@ fn typecheck_struct_predecl(
             params: vec![],
             throws: function.throws,
             return_type_id: UNKNOWN_TYPE_ID,
-            visibility: function.visibility,
+            visibility: function.visibility.clone(),
             function_scope_id: method_scope_id,
             generic_parameters: vec![],
             block: Some(CheckedBlock::new()),
@@ -2022,7 +2021,7 @@ fn typecheck_struct(
             type_id: checked_member_type,
             mutable: unchecked_member.mutable,
             span: unchecked_member.span,
-            visibility: unchecked_member.visibility,
+            visibility: unchecked_member.visibility.clone(),
         });
     }
 
@@ -2122,7 +2121,7 @@ fn typecheck_function_predecl(
         params: vec![],
         throws: function.throws,
         return_type_id: UNKNOWN_TYPE_ID,
-        visibility: function.visibility,
+        visibility: function.visibility.clone(),
         function_scope_id,
         generic_parameters: vec![],
         block: Some(CheckedBlock::new()),
@@ -2816,7 +2815,7 @@ pub fn typecheck_statement(
                 type_id: checked_type_id,
                 span: var_decl.span,
                 mutable: var_decl.mutable,
-                visibility: var_decl.visibility,
+                visibility: var_decl.visibility.clone(),
             };
 
             if let Err(err) = project.add_var_to_scope(
@@ -2825,7 +2824,7 @@ pub fn typecheck_statement(
                     name: checked_var_decl.name.clone(),
                     type_id: checked_var_decl.type_id,
                     mutable: checked_var_decl.mutable,
-                    visibility: checked_var_decl.visibility,
+                    visibility: checked_var_decl.visibility.clone(),
                     definition_span: checked_var_decl.span,
                 },
                 checked_var_decl.span,

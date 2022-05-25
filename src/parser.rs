@@ -162,10 +162,11 @@ pub struct ParsedFunction {
     pub must_instantiate: bool,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Visibility {
     Public,
     Private,
+    Restricted(Vec<ParsedType>, Span),
 }
 
 #[derive(Clone, Debug)]
@@ -1220,6 +1221,75 @@ pub fn parse_struct(
                         TokenContents::Name(name) if name == "private" => {
                             last_visibility = Some(Visibility::Private);
                             *index += 1;
+                            // By using continue, we skip the "visibility consumed"-check
+                            continue;
+                        }
+
+                        TokenContents::Name(name) if name == "restricted" => {
+                            let restricted_start = &tokens[*index].span;
+                            *index += 1;
+
+                            if tokens[*index].contents != TokenContents::LParen {
+                                error = error.or(Some(JaktError::ParserError(
+                                    "Expected ‘(’".to_string(),
+                                    tokens[*index].span,
+                                )));
+                                break;
+                            }
+                            *index += 1;
+
+                            let mut whitelisted_types: Vec<ParsedType> = vec![];
+                            while !matches!(
+                                tokens.get(*index),
+                                Some(Token {
+                                    contents: TokenContents::RParen,
+                                    ..
+                                }) | None
+                            ) {
+                                skip_newlines(tokens, index);
+                                let (parsed_type, err) = parse_typename(tokens, index);
+                                if err.is_some() {
+                                    error = error.or(err);
+                                    break;
+                                } else {
+                                    whitelisted_types.push(parsed_type);
+                                }
+
+                                skip_newlines(tokens, index);
+                                if tokens.get(*index).is_some()
+                                    && tokens[*index].contents == TokenContents::Comma
+                                {
+                                    *index += 1;
+                                }
+
+                                skip_newlines(tokens, index);
+                            }
+
+                            if whitelisted_types.is_empty() {
+                                error = error.or(Some(JaktError::ParserError(
+                                    "Type list cannot be empty".to_string(),
+                                    tokens[*index].span,
+                                )));
+                                break;
+                            }
+
+                            if tokens[*index].contents != TokenContents::RParen {
+                                error = error.or(Some(JaktError::ParserError(
+                                    "Expected ‘)’".to_string(),
+                                    tokens[*index].span,
+                                )));
+                                break;
+                            }
+                            *index += 1;
+
+                            last_visibility = Some(Visibility::Restricted(
+                                whitelisted_types,
+                                Span::new(
+                                    restricted_start.file_id,
+                                    restricted_start.start,
+                                    tokens[*index - 1].span.end,
+                                ),
+                            ));
                             // By using continue, we skip the "visibility consumed"-check
                             continue;
                         }
