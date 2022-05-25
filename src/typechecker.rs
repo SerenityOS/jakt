@@ -5060,6 +5060,24 @@ pub fn typecheck_unary_operation(
     }
 }
 
+fn unify_with_type(
+    expected_type: TypeId,
+    found_type: TypeId,
+    span: Span,
+    project: &Project,
+) -> (TypeId, Option<JaktError>) {
+    let mut generic_inferences = HashMap::new();
+    let err = check_types_for_compat(
+        expected_type,
+        found_type,
+        &mut generic_inferences,
+        span,
+        project,
+    );
+
+    (expected_type, err)
+}
+
 pub fn typecheck_binary_operation(
     lhs: &CheckedExpression,
     op: &BinaryOperator,
@@ -5118,8 +5136,50 @@ pub fn typecheck_binary_operation(
 
             type_id = BOOL_TYPE_ID;
         }
-        BinaryOperator::Assign
-        | BinaryOperator::AddAssign
+        BinaryOperator::Assign => {
+            if !lhs.is_mutable() {
+                return (
+                    lhs_type_id,
+                    Some(JaktError::TypecheckError(
+                        "assignment to immutable variable".to_string(),
+                        span,
+                    )),
+                );
+            }
+
+            if let CheckedExpression::OptionalNone(_, _) = rhs {
+                // if the right expression is None then the left expression must be an optional
+                let lhs_type = &project.types[lhs_type_id];
+                let optional_struct_id = project
+                    .find_struct_in_scope(0, "Optional")
+                    .expect("internal error: can't find builtin Optional type");
+
+                if let Type::GenericInstance(struct_id, _) = lhs_type {
+                    if *struct_id == optional_struct_id {
+                        return (lhs_type_id, None);
+                    }
+                }
+            }
+
+            let (type_id, err) = unify_with_type(lhs_type_id, rhs_type_id, rhs.span(), project);
+
+            if err.is_some() {
+                return (
+                    type_id,
+                    Some(JaktError::TypecheckError(
+                        format!(
+                            "Assignment between incompatible types (‘{}’ and ‘{}’)",
+                            project.typename_for_type_id(lhs_type_id),
+                            project.typename_for_type_id(rhs_type_id),
+                        ),
+                        span,
+                    )),
+                );
+            } else {
+                return (type_id, None);
+            }
+        }
+        BinaryOperator::AddAssign
         | BinaryOperator::SubtractAssign
         | BinaryOperator::MultiplyAssign
         | BinaryOperator::DivideAssign
@@ -5129,6 +5189,9 @@ pub fn typecheck_binary_operation(
         | BinaryOperator::BitwiseXorAssign
         | BinaryOperator::BitwiseLeftShiftAssign
         | BinaryOperator::BitwiseRightShiftAssign => {
+            // This branch can be the same as the above BinaryOp::Assign branch.
+            // unify_with_type uses check_types_for_compact which does the same
+            // as below.
             let weakptr_struct_id = project
                 .find_struct_in_scope(0, "WeakPtr")
                 .expect("internal error: can't find builtin WeakPtr type");
@@ -5143,10 +5206,6 @@ pub fn typecheck_binary_operation(
                             }
                             _ => {}
                         }
-                    }
-                } else if let CheckedExpression::IndexedDictionary(..) = lhs {
-                    if *op == BinaryOperator::Assign && inner_type_ids[0] == rhs_type_id {
-                        return (lhs_type_id, None);
                     }
                 }
             }
@@ -5704,7 +5763,7 @@ pub fn check_types_for_compat(
     rhs_type_id: TypeId,
     generic_inferences: &mut HashMap<TypeId, TypeId>,
     span: Span,
-    project: &mut Project,
+    project: &Project,
 ) -> Option<JaktError> {
     let mut error = None;
     let lhs_type = &project.types[lhs_type_id];
