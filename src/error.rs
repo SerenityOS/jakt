@@ -11,6 +11,7 @@ use crate::lexer::Span;
 pub enum JaktError {
     IOError(std::io::Error),
     ParserError(String, Span),
+    ParserErrorWithHint(String, Span, String, Span),
     ValidationError(String, Span),
     TypecheckError(String, Span),
     TypecheckErrorWithHint(String, Span, String, Span),

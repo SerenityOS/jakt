@@ -207,6 +207,29 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
         }
     }
 
+    for (_, enum_id, _) in &scope.enums {
+        let enum_id = *enum_id;
+        let enum_ = &project.enums[enum_id];
+        if enum_.definition_linkage == DefinitionLinkage::External {
+            continue;
+        }
+        if !enum_.generic_parameters.is_empty() {
+            continue;
+        }
+
+        let scope = &project.scopes[enum_.scope_id];
+        for (_, function_id, _) in &scope.functions {
+            let function = &project.functions[*function_id];
+            if function.linkage != FunctionLinkage::ImplicitEnumConstructor {
+                let function_output =
+                    codegen_function_in_namespace(function, Some(enum_.type_id), project);
+
+                output.push_str(&function_output);
+                output.push('\n');
+            }
+        }
+    }
+
     output
 }
 
@@ -437,6 +460,21 @@ fn codegen_nonrecursive_enum(
     }
 
     output.push_str(&codegen_enum_debug_description_getter(enum_));
+
+    let scope = &project.scopes[enum_.scope_id];
+    for (_, function_id, _) in &scope.functions {
+        let function = &project.functions[*function_id];
+        if function.linkage != FunctionLinkage::ImplicitEnumConstructor {
+            output.push_str(&codegen_indent(INDENT_SIZE));
+            let method_output = if enum_.generic_parameters.is_empty() {
+                codegen_function_predecl(function, project)
+            } else {
+                codegen_function(function, project)
+            };
+            output.push_str(&method_output);
+            output.push('\n');
+        }
+    }
 
     output.push_str("};\n");
 
@@ -859,6 +897,21 @@ fn codegen_recursive_enum(
     }
 
     output.push_str(&codegen_enum_debug_description_getter(enum_));
+
+    let scope = &project.scopes[enum_.scope_id];
+    for (_, function_id, _) in &scope.functions {
+        let function = &project.functions[*function_id];
+        if function.linkage != FunctionLinkage::ImplicitEnumConstructor {
+            output.push_str(&codegen_indent(INDENT_SIZE));
+            let method_output = if enum_.generic_parameters.is_empty() {
+                codegen_function_predecl(function, project)
+            } else {
+                codegen_function(function, project)
+            };
+            output.push_str(&method_output);
+            output.push('\n');
+        }
+    }
 
     output.push_str("};\n");
 
@@ -1964,7 +2017,8 @@ fn codegen_enum_match(
     project: &Project,
 ) -> String {
     let mut output = String::new();
-    let needs_deref = enum_.definition_type == DefinitionType::Class;
+    let needs_deref = enum_.definition_type == DefinitionType::Class
+        || matches!(expr, CheckedExpression::Var(CheckedVariable{name,..}, ..) if name == "this");
     match enum_.underlying_type_id {
         Some(_) => {
             if match_values_are_all_constant {

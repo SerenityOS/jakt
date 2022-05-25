@@ -111,7 +111,8 @@ fn main() -> Result<(), JaktError> {
                         error_span,
                         hint_msg,
                         hint_span,
-                    ) => {
+                    )
+                    | JaktError::ParserErrorWithHint(error_msg, error_span, hint_msg, hint_span) => {
                         display_error(&compiler, error_msg, *error_span);
                         display_hint(&compiler, hint_msg, *hint_span);
                     }

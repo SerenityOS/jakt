@@ -124,6 +124,7 @@ pub struct ParsedEnum {
     pub is_recursive: bool,
     pub definition_linkage: DefinitionLinkage,
     pub underlying_type: ParsedType,
+    pub methods: Vec<ParsedFunction>,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -735,6 +736,7 @@ pub fn parse_enum(
             end: tokens[*index].span.end,
         },
         underlying_type: ParsedType::Empty,
+        methods: Vec::new(),
     };
 
     *index += 1;
@@ -800,6 +802,8 @@ pub fn parse_enum(
         // - Ident(name)
 
         skip_newlines(tokens, index);
+        let mut last_visibility_modifier = None;
+        let mut last_visibility_modifier_span = None;
         while !matches!(
             tokens.get(*index),
             Some(Token {
@@ -807,6 +811,16 @@ pub fn parse_enum(
                 ..
             }) | None
         ) {
+            skip_newlines(tokens, index);
+            if let Some(Token {
+                contents: TokenContents::Eol | TokenContents::Comma,
+                ..
+            }) = tokens.get(*index)
+            {
+                *index += 1;
+                continue;
+            }
+
             trace!(format!("parse_enum_variant({:?})", tokens[*index]));
             let start_index = *index;
             let variant_name = tokens.get(*index);
@@ -818,7 +832,10 @@ pub fn parse_enum(
                 })
             ) {
                 error = error.or(Some(JaktError::ParserError(
-                    "expected variant name".to_string(),
+                    format!(
+                        "expected variant name or (public/private) 'function', not {:?}",
+                        variant_name
+                    ),
                     tokens[*index].span,
                 )));
                 break;
@@ -828,6 +845,54 @@ pub fn parse_enum(
                 TokenContents::Name(name) => name,
                 _ => unreachable!(),
             };
+
+            match name.as_str() {
+                "function" => {
+                    // Lets parse a method
+                    let function_linkage = match definition_linkage {
+                        DefinitionLinkage::Internal => FunctionLinkage::Internal,
+                        DefinitionLinkage::External => FunctionLinkage::External,
+                    };
+
+                    let visibility = last_visibility_modifier.unwrap_or(Visibility::Public);
+                    last_visibility_modifier = None;
+
+                    let (mut function, err) =
+                        parse_function(tokens, index, function_linkage, visibility);
+                    error = error.or(err);
+
+                    if definition_linkage == DefinitionLinkage::External {
+                        function.must_instantiate = true;
+                    }
+
+                    enum_.methods.push(function);
+                    skip_newlines(tokens, index);
+                    continue;
+                }
+                "public" => {
+                    last_visibility_modifier = Some(Visibility::Public);
+                    last_visibility_modifier_span = Some(tokens[*index].span);
+                    *index += 1;
+                    continue;
+                }
+                "private" => {
+                    last_visibility_modifier = Some(Visibility::Private);
+                    last_visibility_modifier_span = Some(tokens[*index].span);
+                    *index += 1;
+                    continue;
+                }
+                _ if last_visibility_modifier.is_some() => {
+                    error = error.or(Some(JaktError::ParserErrorWithHint(
+                        "Only enum methods may have visibility modifiers".to_string(),
+                        tokens[*index].span,
+                        "Remove this visibility modifier".to_string(),
+                        last_visibility_modifier_span.unwrap(),
+                    )));
+                    // We came, we saw, we errored, now continue checking everything else as if nothing had happened.
+                    last_visibility_modifier = None;
+                }
+                _ => {}
+            }
 
             *index += 1;
 

@@ -1,0 +1,11 @@
+enum Foo {
+    Bar
+
+    private function test(this) {
+    }
+}
+
+function main() {
+    let x = Foo::Bar()
+    x.test() // Should not compile, access voilation.
+}
