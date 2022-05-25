@@ -3795,6 +3795,8 @@ pub fn typecheck_expression(
                     let enum_name = enum_.name.clone();
                     let enum_id = *enum_id;
                     let mut seen_catch_all = false;
+                    let mut catch_all_span = None;
+                    let mut covered_variants = HashSet::new();
                     for case in cases {
                         match &case {
                             MatchCase::CatchAll { body, marker_span } => {
@@ -3805,6 +3807,7 @@ pub fn typecheck_expression(
                                         *marker_span,
                                     )));
                                 } else {
+                                    catch_all_span = Some(*marker_span);
                                     seen_catch_all = true;
                                 }
 
@@ -3928,6 +3931,7 @@ pub fn typecheck_expression(
                                     Some(variant) => {
                                         match variant {
                                             CheckedEnumVariant::Untyped(name, _) => {
+                                                covered_variants.insert(name.clone());
                                                 if !args.is_empty() {
                                                     error =
                                                         error.or(Some(JaktError::TypecheckError(
@@ -3940,6 +3944,7 @@ pub fn typecheck_expression(
                                                 }
                                             }
                                             CheckedEnumVariant::Typed(name, type_id, span) => {
+                                                covered_variants.insert(name.clone());
                                                 if !args.is_empty() {
                                                     if args.len() != 1 {
                                                         error = error.or(Some(JaktError::TypecheckError(
@@ -3970,6 +3975,7 @@ pub fn typecheck_expression(
                                                 }
                                             }
                                             CheckedEnumVariant::WithValue(name, _, _) => {
+                                                covered_variants.insert(name.clone());
                                                 if !args.is_empty() {
                                                     error =
                                                         error.or(Some(JaktError::TypecheckError(
@@ -3986,6 +3992,7 @@ pub fn typecheck_expression(
                                                 fields,
                                                 _,
                                             ) => {
+                                                covered_variants.insert(variant_name.clone());
                                                 // Make the borrow checker shut up
                                                 let variant_name = variant_name.clone();
                                                 let fields = fields.clone();
@@ -4164,6 +4171,44 @@ pub fn typecheck_expression(
                             }
                         }
                     }
+
+                    // Check if all the variants are matched
+                    let enum_ = &project.enums[enum_id];
+                    let missing_variants = enum_
+                        .variants
+                        .iter()
+                        .map(|v| match v {
+                            CheckedEnumVariant::WithValue(name, ..)
+                            | CheckedEnumVariant::Untyped(name, ..)
+                            | CheckedEnumVariant::Typed(name, ..)
+                            | CheckedEnumVariant::StructLike(name, ..) => name.as_str(),
+                        })
+                        .filter(|name| !covered_variants.contains(*name))
+                        .collect::<Vec<_>>();
+
+                    match (missing_variants.is_empty(), seen_catch_all) {
+                        (false, false) => {
+                            error = error.or(Some(JaktError::TypecheckErrorWithHint(
+                                format!(
+                                    "match expression is not exhaustive, missing variants are: {}",
+                                    missing_variants.join(", ")
+                                ),
+                                *span,
+                                "add an irrefutable 'else' pattern or handle the missing variants"
+                                    .to_string(),
+                                expr.span(),
+                            )));
+                        }
+                        (true, true) => {
+                            error = error.or(Some(JaktError::TypecheckErrorWithHint(
+                                "all variants are covered, but an irrefutable pattern is also present".to_string(),
+                                *span,
+                                "remove this pattern".to_string(),
+                                catch_all_span.unwrap(),
+                            )));
+                        }
+                        _ => {}
+                    }
                 }
                 _ => {
                     let mut is_enum_match = false;
@@ -4341,6 +4386,13 @@ pub fn typecheck_expression(
                                 });
                             }
                         }
+                    }
+
+                    if is_value_match && !seen_catch_all {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "match expression is not exhaustive, a value match must contain an irrefutable 'else' pattern".to_string(),
+                            *span,
+                        )));
                     }
                 }
             }
