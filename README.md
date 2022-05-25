@@ -219,7 +219,7 @@ let values = ["foo", "bar", "baz"]
 function main() {
     let dict = ["a": 1, "b": 2]
 
-    println("{}", dict["a"]!)
+    println("{}", dict["a"])
 }
 ```
 
