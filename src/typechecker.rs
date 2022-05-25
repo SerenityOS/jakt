@@ -4931,6 +4931,10 @@ pub fn typecheck_binary_operation(
                             _ => {}
                         }
                     }
+                } else if let CheckedExpression::IndexedDictionary(..) = lhs {
+                    if *op == BinaryOperator::Assign && inner_type_ids[0] == rhs_type_id {
+                        return (lhs_type_id, None);
+                    }
                 }
             }
 

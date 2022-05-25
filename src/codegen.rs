@@ -2630,6 +2630,19 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     ))
                 }
                 _ => {
+                    if *op == BinaryOperator::Assign {
+                        if let CheckedExpression::IndexedDictionary(expr, index, ..) = lhs.as_ref()
+                        {
+                            output.push_str(&codegen_expr(0, expr, project));
+                            output.push_str(".set(");
+                            output.push_str(&codegen_expr(0, index, project));
+                            output.push_str(", ");
+                            output.push_str(&codegen_expr(0, rhs, project));
+                            output.push_str("))");
+                            return output;
+                        }
+                    }
+
                     output.push_str(&codegen_expr(indent, lhs, project));
                     match op {
                         BinaryOperator::Add => output.push_str(" + "),
