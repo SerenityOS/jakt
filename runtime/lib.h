@@ -5,7 +5,6 @@
 #include <AK/Assertions.h>
 #include <AK/Atomic.h>
 #include <AK/BitCast.h>
-#include <AK/BuiltinWrappers.h>
 #include <AK/CharacterTypes.h>
 #include <AK/Checked.h>
 #include <AK/CheckedFormatString.h>
@@ -22,7 +21,6 @@
 #include <AK/IterationDecision.h>
 #include <AK/Iterator.h>
 #include <AK/LinearArray.h>
-#include <AK/Math.h>
 #include <AK/Memory.h>
 #include <AK/Noncopyable.h>
 #include <AK/NonnullRefPtr.h>
