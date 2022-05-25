@@ -3864,6 +3864,26 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Op
                     )));
                 }
             }
+            TokenContents::Colon => {
+                *index += 1;
+                if dict_output.is_empty() {
+                    if *index < tokens.len() && tokens[*index].contents == TokenContents::RSquare {
+                        *index += 1;
+                        is_dictionary = true;
+                        break;
+                    } else {
+                        error = error.or(Some(JaktError::ParserError(
+                            "Expected ']'".to_string(),
+                            tokens[*index].span,
+                        )));
+                    }
+                } else {
+                    error = error.or(Some(JaktError::ParserError(
+                        "Missing key in dictionary literal".to_string(),
+                        tokens[*index].span,
+                    )));
+                }
+            }
             _ => {
                 let (expr, err) =
                     parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
