@@ -51,9 +51,6 @@ class HashMap;
 template<typename K, typename V, typename KeyTraits = Traits<K>>
 using OrderedHashMap = HashMap<K, V, KeyTraits, true>;
 
-template<size_t precision, typename Underlying = i32>
-class FixedPoint;
-
 template<typename>
 class Function;
 
@@ -93,7 +90,6 @@ using AK::Bitmap;
 using AK::Bytes;
 using AK::Error;
 using AK::ErrorOr;
-using AK::FixedPoint;
 using AK::Function;
 using AK::GenericLexer;
 using AK::HashMap;
