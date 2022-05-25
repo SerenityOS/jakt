@@ -87,3 +87,6 @@ extern class File {
 
     public function read_all(mutable this) throws -> [u8]
 }
+
+extern function as_saturated<U, T>(anonymous input: T) -> U
+extern function as_truncated<U, T>(anonymous input: T) -> U
