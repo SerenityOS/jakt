@@ -2063,7 +2063,7 @@ fn typecheck_function_predecl(
 
         generic_parameters.push(FunctionGenericParameter::Parameter(type_var_type_id));
 
-        if !function.must_instantiate {
+        if !function.must_instantiate || function.linkage == FunctionLinkage::External {
             if let Err(err) = project.add_type_to_scope(
                 checked_function_scope_id,
                 generic_parameter.to_string(),
