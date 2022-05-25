@@ -607,7 +607,7 @@ pub fn parse_namespace(
                             } => match name.as_str() {
                                 "function" => {
                                     *index += 1;
-                                    let (fun, err) = parse_function(
+                                    let (mut fun, err) = parse_function(
                                         tokens,
                                         index,
                                         FunctionLinkage::External,
@@ -615,6 +615,7 @@ pub fn parse_namespace(
                                     );
                                     error = error.or(err);
 
+                                    fun.must_instantiate = true;
                                     parsed_namespace.functions.push(fun);
                                 }
                                 "struct" => {
