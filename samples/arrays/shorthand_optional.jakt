@@ -1,0 +1,8 @@
+function main() {
+    let a: [i64]? = None
+    let b: [i64]? = [1, 2, 3]
+
+    println("{}", a.has_value())
+    println("{}", b.has_value())
+    println("{}", b.value()[2])
+}

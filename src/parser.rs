@@ -4203,72 +4203,72 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Optio
     error = error.or(err);
 
     if shorthand_type != ParsedType::Empty {
-        return (shorthand_type, error);
-    }
+        unchecked_type = shorthand_type
+    } else {
+        match &tokens[*index] {
+            Token {
+                contents: TokenContents::Name(name),
+                ..
+            } => {
+                if name == "raw" || name == "weak" {
+                    *index += 1;
+                    if *index < tokens.len() {
+                        let typename_start = tokens[*index].span;
+                        let (child_parsed_type, err) = parse_typename(tokens, index);
+                        error = error.or(err);
 
-    match &tokens[*index] {
-        Token {
-            contents: TokenContents::Name(name),
-            ..
-        } => {
-            if name == "raw" || name == "weak" {
-                *index += 1;
-                if *index < tokens.len() {
-                    let typename_start = tokens[*index].span;
-                    let (child_parsed_type, err) = parse_typename(tokens, index);
-                    error = error.or(err);
+                        if name == "raw" {
+                            unchecked_type = ParsedType::RawPtr(
+                                Box::new(child_parsed_type),
+                                Span {
+                                    file_id: start.file_id,
+                                    start: start.start,
+                                    end: tokens[*index - 1].span.end,
+                                },
+                            );
+                        } else if name == "weak" {
+                            match child_parsed_type {
+                                ParsedType::Optional(optional_type, ..) => {
+                                    unchecked_type = ParsedType::WeakPtr(
+                                        optional_type,
+                                        Span {
+                                            file_id: start.file_id,
+                                            start: start.start,
+                                            end: tokens[*index - 1].span.end,
+                                        },
+                                    );
+                                }
+                                _ => {
+                                    trace!("ERROR: missing `?` after weak pointer type name");
 
-                    if name == "raw" {
-                        unchecked_type = ParsedType::RawPtr(
-                            Box::new(child_parsed_type),
-                            Span {
-                                file_id: start.file_id,
-                                start: start.start,
-                                end: tokens[*index - 1].span.end,
-                            },
-                        );
-                    } else if name == "weak" {
-                        match child_parsed_type {
-                            ParsedType::Optional(optional_type, ..) => {
-                                unchecked_type = ParsedType::WeakPtr(
-                                    optional_type,
-                                    Span {
-                                        file_id: start.file_id,
-                                        start: start.start,
-                                        end: tokens[*index - 1].span.end,
-                                    },
-                                );
-                            }
-                            _ => {
-                                trace!("ERROR: missing `?` after weak pointer type name");
-
-                                error = error.or(Some(JaktError::ParserError(
-                                    "missing `?` after weak pointer type name".to_string(),
-                                    Span {
-                                        file_id: typename_start.file_id,
-                                        start: typename_start.start,
-                                        end: tokens[*index - 1].span.end,
-                                    },
-                                )));
+                                    error = error.or(Some(JaktError::ParserError(
+                                        "missing `?` after weak pointer type name".to_string(),
+                                        Span {
+                                            file_id: typename_start.file_id,
+                                            start: typename_start.start,
+                                            end: tokens[*index - 1].span.end,
+                                        },
+                                    )));
+                                }
                             }
                         }
                     }
+                } else {
+                    typename = name.clone();
+                    unchecked_type = ParsedType::Name(name.clone(), tokens[*index].span);
+                    *index += 1;
                 }
-            } else {
-                typename = name.clone();
-                unchecked_type = ParsedType::Name(name.clone(), tokens[*index].span);
-                *index += 1;
             }
-        }
-        _ => {
-            trace!("ERROR: expected type name");
+            _ => {
+                trace!("ERROR: expected type name");
 
-            error = error.or(Some(JaktError::ParserError(
-                "expected type name".to_string(),
-                tokens[*index].span,
-            )));
-        }
-    };
+                error = error.or(Some(JaktError::ParserError(
+                    "expected type name".to_string(),
+                    tokens[*index].span,
+                )));
+            }
+        };
+    }
 
     if *index < tokens.len() {
         if let TokenContents::QuestionMark = tokens[*index].contents {
