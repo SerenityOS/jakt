@@ -1,0 +1,14 @@
+class A {
+    public nums: [i64]
+}
+
+function main() {
+    let mutable i = 0;
+    let a: A? = A(nums: [1, 2, 3])
+    let no_a: A? = None
+
+    println("a[0] = {}", a?.nums?.[i++] ?? -1)
+    println("i = {}", i)
+    println("no_a[1] = {}", no_a?.nums?.[i++] ?? -1)
+    println("i = {}", i)
+}

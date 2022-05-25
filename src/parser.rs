@@ -288,6 +288,7 @@ pub enum ParsedExpression {
     IndexedTuple(Box<ParsedExpression>, usize, Span),
     IndexedStruct(Box<ParsedExpression>, String, Span),
 
+    OptionalIndexedExpression(Box<ParsedExpression>, Box<ParsedExpression>, Span),
     OptionalIndexedStruct(Box<ParsedExpression>, String, Span),
 
     Call(ParsedCall, Span),
@@ -335,6 +336,7 @@ impl ParsedExpression {
             ParsedExpression::ForcedUnwrap(_, span) => *span,
             ParsedExpression::Match(_, _, span) => *span,
             ParsedExpression::Garbage(span) => *span,
+            ParsedExpression::OptionalIndexedExpression(_, _, span) => *span,
         }
     }
 }
@@ -3046,33 +3048,79 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
             }
             TokenContents::QuestionMarkDot => {
                 *index += 1;
-                if let TokenContents::Name(name) = &tokens[*index].contents {
-                    *index += 1;
-                    if tokens[*index].contents != TokenContents::LParen {
-                        let span = Span {
-                            file_id: expr.span().file_id,
-                            start: expr.span().start,
-                            end: tokens[*index - 1].span.end,
-                        };
+                match &tokens[*index].contents {
+                    TokenContents::Name(name) => {
+                        *index += 1;
+                        if tokens[*index].contents != TokenContents::LParen {
+                            let span = Span {
+                                file_id: expr.span().file_id,
+                                start: expr.span().start,
+                                end: tokens[*index - 1].span.end,
+                            };
 
-                        expr = ParsedExpression::OptionalIndexedStruct(
-                            Box::new(expr),
-                            name.to_string(),
-                            span,
-                        );
-                    } else {
+                            expr = ParsedExpression::OptionalIndexedStruct(
+                                Box::new(expr),
+                                name.to_string(),
+                                span,
+                            );
+                        } else {
+                            *index += 1;
+                            error = error.or(Some(JaktError::ParserError(
+                                "Unsupported optional method call".to_string(),
+                                tokens[*index].span,
+                            )));
+                        }
+                    }
+                    TokenContents::LSquare => {
+                        *index += 1;
+                        if *index < tokens.len() {
+                            let (idx, err) = parse_expression(
+                                tokens,
+                                index,
+                                ExpressionKind::ExpressionWithoutAssignment,
+                            );
+                            error = error.or(err);
+
+                            let end;
+                            if *index < tokens.len() {
+                                end = *index;
+                                match &tokens[*index].contents {
+                                    TokenContents::RSquare => {
+                                        *index += 1;
+                                    }
+                                    _ => {
+                                        error = error.or(Some(JaktError::ParserError(
+                                            "expected ']'".to_string(),
+                                            tokens[*index].span,
+                                        )))
+                                    }
+                                }
+                            } else {
+                                end = *index - 1;
+                                error = error.or(Some(JaktError::ParserError(
+                                    "expected ']'".to_string(),
+                                    tokens[*index - 1].span,
+                                )));
+                            }
+
+                            expr = ParsedExpression::OptionalIndexedExpression(
+                                Box::new(expr),
+                                Box::new(idx),
+                                Span {
+                                    file_id: span.file_id,
+                                    start: span.start,
+                                    end,
+                                },
+                            );
+                        }
+                    }
+                    _ => {
                         *index += 1;
                         error = error.or(Some(JaktError::ParserError(
-                            "Unsupported optional method call".to_string(),
+                            "Unsupported optional dot operation".to_string(),
                             tokens[*index].span,
                         )));
                     }
-                } else {
-                    *index += 1;
-                    error = error.or(Some(JaktError::ParserError(
-                        "Unsupported optional dot operation".to_string(),
-                        tokens[*index].span,
-                    )));
                 }
             }
             TokenContents::Dot => {

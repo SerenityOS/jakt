@@ -931,6 +931,7 @@ pub enum CheckedExpression {
         TypeId,
         bool,
     ),
+    OptionalIndexedExpression(Box<CheckedExpression>, Box<CheckedExpression>, Span, TypeId),
     OptionalIndexedStruct(Box<CheckedExpression>, String, Span, TypeId),
 
     Call(CheckedCall, Span, TypeId),
@@ -976,6 +977,7 @@ impl CheckedExpression {
             CheckedExpression::ForcedUnwrap(_, _, type_id) => *type_id,
             CheckedExpression::Match(_, _, _, type_id, _) => *type_id,
             CheckedExpression::Garbage(_) => UNKNOWN_TYPE_ID,
+            CheckedExpression::OptionalIndexedExpression(_, _, _, type_id) => *type_id,
         }
     }
 
@@ -1011,6 +1013,7 @@ impl CheckedExpression {
             CheckedExpression::ForcedUnwrap(_, span, _) => *span,
             CheckedExpression::Match(_, _, span, _, _) => *span,
             CheckedExpression::Garbage(span) => *span,
+            CheckedExpression::OptionalIndexedExpression(_, _, span, _) => *span,
         }
     }
 
@@ -3645,6 +3648,10 @@ pub fn typecheck_expression(
                 .find_struct_in_scope(0, "Dictionary")
                 .expect("internal error: Dictionary builtin definition not found");
 
+            let optional_struct_id = project
+                .find_struct_in_scope(0, "Optional")
+                .expect("internal error: Optional builtin definition not found");
+
             let type_ = &project.types[checked_expr.type_id(scope_id, project)];
 
             match type_ {
@@ -3681,9 +3688,6 @@ pub fn typecheck_expression(
                     if parent_struct_id == &dict_struct_id =>
                 {
                     let value_type_id = inner_type_ids[1];
-                    let optional_struct_id = project
-                        .find_struct_in_scope(0, "Optional")
-                        .expect("internal error: Optional builtin definition not found");
 
                     let inner_type_id = project.find_or_add_type_id(Type::GenericInstance(
                         optional_struct_id,
@@ -3702,6 +3706,17 @@ pub fn typecheck_expression(
                             expr_type_id,
                         ),
                         error,
+                    )
+                }
+                Type::GenericInstance(parent_struct_id, _)
+                    if *parent_struct_id == optional_struct_id =>
+                {
+                    (
+                        CheckedExpression::Garbage(*span),
+                        error.or(Some(JaktError::TypecheckError(
+                            "Invalid index on Optional. Use \"?.\" to index.".to_string(),
+                            *span,
+                        ))),
                     )
                 }
                 _ => {
@@ -3724,6 +3739,74 @@ pub fn typecheck_expression(
                     )
                 }
             }
+        }
+        ParsedExpression::OptionalIndexedExpression(expr, idx, span) => {
+            let (checked_expr, err) =
+                typecheck_expression(expr, scope_id, project, safety_mode, None);
+            error = error.or(err);
+
+            let (checked_idx, err) =
+                typecheck_expression(idx, scope_id, project, safety_mode, None);
+            error = error.or(err);
+
+            let optional_struct_id = project
+                .find_struct_in_scope(0, "Optional")
+                .expect("internal error: Optional builtin definition not found");
+
+            let mut expr_type_id = UNKNOWN_TYPE_ID;
+
+            if let Type::GenericInstance(_, inner_type_ids) =
+                &project.types[checked_expr.type_id(scope_id, project)]
+            {
+                match checked_idx.type_id(scope_id, project) {
+                    _ if is_integer(checked_idx.type_id(scope_id, project)) => {
+                        match &project.types[inner_type_ids[0]] {
+                            Type::Builtin => todo!(),
+                            Type::TypeVariable(_) => todo!(),
+                            Type::GenericInstance(_, type_args) => {
+                                expr_type_id = type_args[0];
+                            }
+                            Type::GenericEnumInstance(_, _) => todo!(),
+                            Type::Struct(_) => todo!(),
+                            Type::Enum(_) => todo!(),
+                            Type::RawPtr(_) => todo!(),
+                        };
+                    }
+
+                    _ => {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "index is not an integer".to_string(),
+                            idx.span(),
+                        )))
+                    }
+                }
+
+                expr_type_id = project.find_or_add_type_id(Type::GenericInstance(
+                    optional_struct_id,
+                    vec![expr_type_id],
+                ));
+
+                let (expr_type_id, err) = unify_with_type_hint(project, &expr_type_id);
+                error = error.or(err);
+
+                return (
+                    CheckedExpression::OptionalIndexedExpression(
+                        Box::new(checked_expr),
+                        Box::new(checked_idx),
+                        *span,
+                        expr_type_id,
+                    ),
+                    error,
+                );
+            }
+
+            (
+                CheckedExpression::Garbage(*span),
+                error.or(Some(JaktError::TypecheckError(
+                    "Optional index on non-optional type not allowed".to_string(),
+                    *span,
+                ))),
+            )
         }
         ParsedExpression::IndexedTuple(expr, idx, span) => {
             let (checked_expr, err) =
@@ -4447,6 +4530,9 @@ pub fn typecheck_expression(
             let optional_struct_id = project
                 .find_struct_in_scope(0, "Optional")
                 .expect("internal error: Optional builtin definition not found");
+            let array_struct_id = project
+                .find_struct_in_scope(0, "Array")
+                .expect("internal error: Array builtin definition not found");
 
             let checked_expr_type_id = checked_expr.type_id(scope_id, project);
             match &project.types[checked_expr_type_id] {
@@ -4489,6 +4575,14 @@ pub fn typecheck_expression(
                                         vec![member_type_id],
                                     ),
                                     Type::TypeVariable(_) => todo!(),
+                                    Type::GenericInstance(struct_id, _)
+                                        if *struct_id == array_struct_id =>
+                                    {
+                                        Type::GenericInstance(
+                                            optional_struct_id,
+                                            vec![member_type_id],
+                                        )
+                                    }
                                     Type::GenericInstance(_, type_args) => Type::GenericInstance(
                                         optional_struct_id,
                                         vec![type_args[0]],
@@ -4708,7 +4802,6 @@ pub fn typecheck_expression(
                 }
             }
         }
-
         ParsedExpression::Operator(_, span) => (
             CheckedExpression::Garbage(*span),
             Some(JaktError::TypecheckError(

@@ -2840,6 +2840,16 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             // Incorrect parse/typecheck
             // Probably shouldn't be able to get to this point?
         }
+        CheckedExpression::OptionalIndexedExpression(expr, idx, _, type_id) => {
+            let opt_expr = &codegen_expr(indent, expr, project);
+            let index_expr = &codegen_expr(indent, idx, project);
+            let return_type = codegen_type(*type_id, project);
+
+            output.push_str(&format!(
+                "(({}).has_value() ? ({} {{ ({}).value()[{}] }} ) : (JaktInternal::OptionalNone()))",
+                opt_expr, return_type, opt_expr, index_expr
+            ));
+        }
     }
 
     output
