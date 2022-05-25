@@ -72,32 +72,46 @@ fn main() -> Result<(), JaktError> {
                     } else {
                         String::from("runtime")
                     };
-                    let default_cxx_compiler_path = PathBuf::from("clang++");
-                    let clang_output = Command::new(
-                        arguments
-                            .cxx_compiler_path
-                            .as_ref()
-                            .unwrap_or(&default_cxx_compiler_path),
-                    )
-                    .args([
-                        "-fcolor-diagnostics",
-                        "-std=c++20",
-                        // Don't complain about unsupported -W flags below.
-                        "-Wno-unknown-warning-option",
-                        // These warnings if enabled create loads of unnecessary noise:
-                        "-Wno-unqualified-std-cast-call",
-                        "-Wno-user-defined-literals",
-                        // This warning can happen for functions like fopen which Windows has deprecated but others not.
-                        // Specifically, it will happen if clang uses the MSVC runtime and/or linker.
-                        "-Wno-deprecated-declarations",
-                        "-I",
-                        &runtime_path,
-                        &input_cpp,
-                        "-o",
-                        &output_executable,
-                    ])
-                    .output()?;
-                    io::stderr().write_all(&clang_output.stderr)?;
+                    let cxx_compiler = if let Some(ref path) = arguments.cxx_compiler_path {
+                        path.to_owned()
+                    } else {
+                        PathBuf::from(std::env::var("CXX").unwrap_or("clang++".to_owned()))
+                    };
+
+                    let is_clang = cxx_compiler.to_string_lossy().contains("clang");
+
+                    let enable_color_diagnostics = if is_clang {
+                        "-fcolor-diagnostics"
+                    } else {
+                        "-fdiagnostics-color"
+                    };
+
+                    let disable_literal_warnings = if is_clang {
+                        "-Wno-user-defined-literals"
+                    } else {
+                        "-Wno-literal-suffix"
+                    };
+
+                    let cxx_compiler_output = Command::new(cxx_compiler)
+                        .args([
+                            enable_color_diagnostics,
+                            "-std=c++20",
+                            // Don't complain about unsupported -W flags below.
+                            "-Wno-unknown-warning-option",
+                            // These warnings if enabled create loads of unnecessary noise:
+                            "-Wno-unqualified-std-cast-call",
+                            disable_literal_warnings,
+                            // This warning can happen for functions like fopen which Windows has deprecated but others not.
+                            // Specifically, it will happen if clang uses the MSVC runtime and/or linker.
+                            "-Wno-deprecated-declarations",
+                            "-I",
+                            &runtime_path,
+                            &input_cpp,
+                            "-o",
+                            &output_executable,
+                        ])
+                        .output()?;
+                    io::stderr().write_all(&cxx_compiler_output.stderr)?;
                 }
             }
             Err(err) => {
