@@ -162,6 +162,7 @@ pub struct Project {
     pub types: Vec<Type>,
 
     pub current_function_index: Option<usize>,
+    pub current_struct_type_id: Option<TypeId>,
     pub inside_defer: bool,
 
     pub cached_array_struct_id: Option<StructId>,
@@ -187,6 +188,7 @@ impl Project {
             scopes: vec![project_global_scope],
             types: Vec::new(),
             current_function_index: None,
+            current_struct_type_id: None,
             inside_defer: false,
 
             cached_array_struct_id: None,
@@ -1778,6 +1780,7 @@ fn typecheck_struct_predecl(
     let mut error = None;
 
     let struct_type_id = project.find_or_add_type_id(Type::Struct(struct_id));
+    project.current_struct_type_id = Some(struct_type_id);
 
     let struct_scope_id = project.create_scope(parent_scope_id);
 
@@ -1996,6 +1999,8 @@ fn typecheck_struct_predecl(
         }
     }
 
+    project.current_struct_type_id = None;
+
     error
 }
 
@@ -2012,6 +2017,7 @@ fn typecheck_struct(
     let checked_struct = &mut project.structs[struct_id];
     let checked_struct_scope_id = checked_struct.scope_id;
     let struct_type_id = project.find_or_add_type_id(Type::Struct(struct_id));
+    project.current_struct_type_id = Some(struct_type_id);
 
     for unchecked_member in &structure.fields {
         let (checked_member_type, err) = typecheck_typename(
@@ -2098,6 +2104,7 @@ fn typecheck_struct(
         error = error.or(typecheck_method(function, project, struct_id));
     }
 
+    project.current_struct_type_id = None;
     error
 }
 
