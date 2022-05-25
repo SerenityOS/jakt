@@ -3696,13 +3696,7 @@ pub fn typecheck_expression(
                 Type::GenericInstance(parent_struct_id, inner_type_ids)
                     if parent_struct_id == &dict_struct_id =>
                 {
-                    let value_type_id = inner_type_ids[1];
-
-                    let inner_type_id = project.find_or_add_type_id(Type::GenericInstance(
-                        optional_struct_id,
-                        vec![value_type_id],
-                    ));
-                    expr_type_id = inner_type_id;
+                    expr_type_id = inner_type_ids[1];
 
                     let (expr_type_id, err) = unify_with_type_hint(project, &expr_type_id);
                     error = error.or(err);
