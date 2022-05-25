@@ -9,7 +9,6 @@
 #include <AK/Format.h>
 #include <AK/Forward.h>
 #include <AK/RefPtr.h>
-#include <AK/StringBuilder.h>
 #include <AK/StringImpl.h>
 #include <AK/StringUtils.h>
 #include <AK/Traits.h>
@@ -97,14 +96,6 @@ public:
 
     [[nodiscard]] static String bijective_base_from(size_t value, unsigned base = 26, StringView map = {});
     [[nodiscard]] static String roman_number_from(size_t value);
-
-    template<class SeparatorType, class CollectionType>
-    [[nodiscard]] static String join(SeparatorType const& separator, CollectionType const& collection, StringView fmtstr = "{}"sv)
-    {
-        StringBuilder builder;
-        builder.join(separator, collection, fmtstr);
-        return builder.build();
-    }
 
     [[nodiscard]] bool matches(StringView mask, CaseSensitivity = CaseSensitivity::CaseInsensitive) const;
     [[nodiscard]] bool matches(StringView mask, Vector<MaskSpan>&, CaseSensitivity = CaseSensitivity::CaseInsensitive) const;
