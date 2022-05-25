@@ -1236,9 +1236,8 @@ fn check_accessibility(
     match member.visibility() {
         Visibility::Private if !Scope::can_access(own_scope, member_scope, project) => {
             Some(JaktError::TypecheckError(
-                // FIXME: Improve this error
                 format!(
-                    "Can't access {} '{}' from scope {:?}",
+                    "Can't access {} ‘{}’ from scope {:?}, because it is marked private",
                     member.kind(),
                     member.name(),
                     project.scopes[own_scope].namespace_name,
