@@ -2564,20 +2564,6 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                 output.push_str("verify_cast");
                             }
                         }
-                        CheckedTypeCast::Saturating(_) => {
-                            if is_integer(*type_id) {
-                                output.push_str("as_saturated");
-                            } else {
-                                panic!("Saturating cast on non-integer type");
-                            }
-                        }
-                        CheckedTypeCast::Truncating(_) => {
-                            if is_integer(*type_id) {
-                                output.push_str("as_truncated");
-                            } else {
-                                panic!("Truncating cast on non-integer type");
-                            }
-                        }
                     }
                     output.push('<');
                     output.push_str(&codegen_type(*type_id, project));

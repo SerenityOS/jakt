@@ -836,8 +836,6 @@ fn resolve_type_var(type_var: TypeId, scope_id: ScopeId, project: &Project) -> T
 pub enum CheckedTypeCast {
     Fallible(TypeId),
     Infallible(TypeId),
-    Saturating(TypeId),
-    Truncating(TypeId),
 }
 
 impl CheckedTypeCast {
@@ -845,8 +843,6 @@ impl CheckedTypeCast {
         match self {
             CheckedTypeCast::Fallible(type_id) => *type_id,
             CheckedTypeCast::Infallible(type_id) => *type_id,
-            CheckedTypeCast::Saturating(type_id) => *type_id,
-            CheckedTypeCast::Truncating(type_id) => *type_id,
         }
     }
 
@@ -3119,8 +3115,6 @@ pub fn typecheck_expression(
                     let checked_cast = match cast {
                         TypeCast::Fallible(_) => CheckedTypeCast::Fallible(type_id),
                         TypeCast::Infallible(_) => CheckedTypeCast::Infallible(type_id),
-                        TypeCast::Saturating(_) => CheckedTypeCast::Saturating(type_id),
-                        TypeCast::Truncating(_) => CheckedTypeCast::Truncating(type_id),
                     };
                     CheckedUnaryOperator::TypeCast(checked_cast)
                 }

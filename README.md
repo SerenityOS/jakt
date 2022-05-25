@@ -372,9 +372,7 @@ function main() {
 
 ## Type casts
 
-There are four built-in casting operators in **Jakt**.
-
-### Casts for all types
+There are two built-in casting operators in **Jakt**.
 
 - `as? T`: Returns an `Optional<T>`, empty if the source value isn't convertible to `T`.
 - `as! T`: Returns a `T`, aborts the program if the source value isn't convertible to `T`.
@@ -394,10 +392,7 @@ The `as` cast can do these things (note that the implementation may not agree ye
 - If the types are incompatible, a user-defined cast is attempted to be used. The details here are not decided yet.
 - If nothing works, the cast will not even compile.
 
-### Casts specific to numeric types
-
-- `as truncated T`: Returns a `T` with out-of-range values truncated in a manner specific to each type.
-- `as saturated T`: Returns a `T` with the out-of-range values saturated to the minimum or maximum value possible for `T`.
+Additional casts are available in the standard library. Two important ones are `as_saturated` and `as_truncated`, which cast integral values while saturating to the boundaries or truncating bits, respectively.
 
 ## Traits
 
