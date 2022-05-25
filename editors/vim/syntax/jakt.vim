@@ -79,6 +79,7 @@ syntax region jaktCommentLine start="//" end="$"
 
 
 syntax region jaktString matchgroup=jaktStringDelimiter start=+"+ skip=+\\\\\|\\"+ end=+"+ oneline contains=jaktEscape
+syntax region jaktChar matchgroup=jaktCharDelimiter start=+'+ end=+'+ oneline
 syntax match jaktEscape        display contained /\\./
 
 highlight default link jaktDecNumber jaktNumber
@@ -92,6 +93,8 @@ highlight default link jaktType Type
 highlight default link jaktCommentLine Comment
 highlight default link jaktString String
 highlight default link jaktStringDelimiter String
+highlight default link jaktChar String
+highlight default link jaktCharDelimiter String
 highlight default link jaktEscape Special
 highlight default link jaktBoolean Boolean
 highlight default link jaktConstant Constant
