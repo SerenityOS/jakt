@@ -1564,6 +1564,26 @@ pub fn parse_function(
                     );
                 }
 
+                // Check for a fat arrow to tell the user that fat arrows aren't
+                // compatible with specifying the type
+                // TODO: add a hint explaining that fat arrows have their type deducted
+                if return_type != ParsedType::Empty
+                    && matches!(
+                        tokens[*index],
+                        Token {
+                            contents: TokenContents::FatArrow,
+                            ..
+                        }
+                    )
+                {
+                    trace!("ERROR: Fat arrow after explicit return type");
+                    error = error.or(Some(JaktError::ParserError(
+                        "Fat arrow '=>' can't be combined with an explicit return type".to_string(),
+                        tokens[*index].span,
+                    )));
+                    *index += 1; // skip the arrow
+                }
+
                 let (block, err) = match fat_arrow_expr {
                     Some(expr) => {
                         let mut block = ParsedBlock::new();
