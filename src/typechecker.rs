@@ -1233,7 +1233,7 @@ fn check_accessibility(
     member_scope: ScopeId,
     member: impl NamespaceMember,
     span: &Span,
-    project: &Project,
+    project: &mut Project,
 ) -> Option<JaktError> {
     match member.visibility() {
         Visibility::Private if !Scope::can_access(own_scope, member_scope, project) => {
@@ -1246,6 +1246,60 @@ fn check_accessibility(
                 ),
                 *span,
             ))
+        }
+        Visibility::Restricted(whitelisted_types, restricted_span) => {
+            return match project.current_struct_type_id {
+                Some(own_type_id) => {
+                    // Only structs/classes can be listed in `restricted()`.
+                    if let Type::Struct(struct_id) = project.types[own_type_id] {
+                        for whitelisted_type in whitelisted_types {
+                            let (type_id, err) =
+                                typecheck_typename(whitelisted_type, member_scope, project);
+                            if err.is_some() {
+                                return err;
+                            }
+                            if type_id == own_type_id {
+                                return None;
+                            }
+                        }
+
+                        Some(JaktError::TypecheckErrorWithHint(
+                            format!(
+                                "Can't access {} ‘{}’ from ‘{}’, because ‘{2}’ is not in the restricted whitelist",
+                                member.kind(),
+                                member.name(),
+                                project.structs[struct_id].name,
+                            ),
+                            *span,
+                            "Whitelist declared here".to_string(),
+                            *restricted_span,
+                        ))
+                    } else {
+                        Some(JaktError::TypecheckErrorWithHint(
+                            format!(
+                                "Can't access {} ‘{}’ from scope ‘{:?}’, because it is not in the restricted whitelist",
+                                member.kind(),
+                                member.name(),
+                                project.scopes[own_scope].namespace_name,
+                            ),
+                            *span,
+                            "Whitelist declared here".to_string(),
+                            *restricted_span,
+                        ))
+                    }
+                }
+                _ => Some(JaktError::TypecheckErrorWithHint(
+                    format!(
+                        "Can't access {} ‘{}’ from scope ‘{:?}’, because it is marked restricted",
+                        member.kind(),
+                        member.name(),
+                        project.scopes[own_scope].namespace_name,
+                    ),
+                    *span,
+                    "Whitelist declared here".to_string(),
+                    *restricted_span,
+                )),
+            };
         }
         _ => None,
     }
@@ -5556,6 +5610,9 @@ pub fn typecheck_call(
                 if !callee.is_instantiated {
                     generic_checked_function_to_instantiate = Some(callee_id);
                 }
+                callee_throws = callee.throws;
+                return_type_id = callee.return_type_id;
+                linkage = callee.linkage;
 
                 // Make sure we are allowed to access this method.
                 error = error.or(check_accessibility(
@@ -5565,10 +5622,6 @@ pub fn typecheck_call(
                     span,
                     project,
                 ));
-
-                callee_throws = callee.throws;
-                return_type_id = callee.return_type_id;
-                linkage = callee.linkage;
 
                 // If the user gave us explicit type arguments, let's use them in our substitutions
                 for (idx, type_arg) in call.type_args.iter().enumerate() {
