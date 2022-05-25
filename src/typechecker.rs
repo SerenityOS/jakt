@@ -30,6 +30,12 @@ pub type FunctionId = usize;
 pub type ScopeId = usize;
 pub type TypeId = usize;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum StructOrEnumId {
+    Struct(StructId),
+    Enum(EnumId),
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SafetyMode {
     Safe,
@@ -1443,6 +1449,10 @@ fn typecheck_enum_predecl(
         Some(type_id)
     };
 
+    let enum_type_id = project
+        .find_type_in_scope(parent_scope_id, &enum_.name)
+        .expect("Enum must exist before predeclaration");
+
     project.enums.push(CheckedEnum {
         name: enum_.name.clone(),
         generic_parameters,
@@ -1456,14 +1466,157 @@ fn typecheck_enum_predecl(
         },
         underlying_type_id,
         span: enum_.span,
-        type_id: project
-            .find_type_in_scope(parent_scope_id, &enum_.name)
-            .expect("Enum must exist before predeclaration"),
+        type_id: enum_type_id,
     });
 
     match project.add_enum_to_scope(parent_scope_id, enum_.name.clone(), enum_id, enum_.span) {
         Ok(_) => {}
         Err(err) => error = error.or(Some(err)),
+    }
+
+    for function in &enum_.methods {
+        let method_scope_id = project.create_scope(enum_scope_id);
+
+        let is_generic =
+            !enum_.generic_parameters.is_empty() || !function.generic_parameters.is_empty();
+
+        let mut checked_function = CheckedFunction {
+            name: function.name.clone(),
+            params: vec![],
+            throws: function.throws,
+            return_type_id: UNKNOWN_TYPE_ID,
+            visibility: function.visibility.clone(),
+            function_scope_id: method_scope_id,
+            generic_parameters: vec![],
+            block: Some(CheckedBlock::new()),
+            parsed_function: Some(function.clone()),
+            linkage: function.linkage,
+            is_instantiated: !is_generic,
+        };
+
+        project.functions.push(checked_function.clone());
+        let function_id = project.functions.len() - 1;
+        let previous_index = project.current_function_index;
+        project.current_function_index = Some(function_id);
+
+        let mut generic_parameters = vec![];
+
+        for (generic_parameter, parameter_span) in &function.generic_parameters {
+            project
+                .types
+                .push(Type::TypeVariable(generic_parameter.to_string()));
+            let type_var_type_id = project.types.len() - 1;
+
+            generic_parameters.push(FunctionGenericParameter::Parameter(type_var_type_id));
+
+            if !function.must_instantiate {
+                if let Err(err) = project.add_type_to_scope(
+                    method_scope_id,
+                    generic_parameter.to_string(),
+                    type_var_type_id,
+                    *parameter_span,
+                ) {
+                    error = error.or(Some(err));
+                }
+            }
+        }
+
+        checked_function.generic_parameters = generic_parameters;
+        let check_scope = if is_generic {
+            Some(project.create_scope(method_scope_id))
+        } else {
+            None
+        };
+
+        for param in &function.params {
+            if param.variable.name == "this" {
+                let checked_variable = CheckedVariable {
+                    name: param.variable.name.clone(),
+                    type_id: enum_type_id,
+                    mutable: param.variable.mutable,
+                    visibility: Visibility::Public,
+                    definition_span: param.variable.span,
+                };
+
+                checked_function.params.push(CheckedParameter {
+                    requires_label: param.requires_label,
+                    variable: checked_variable.clone(),
+                });
+
+                if let Some(check_scope) = check_scope {
+                    let _ = project.add_var_to_scope(
+                        check_scope,
+                        checked_variable,
+                        param.variable.span,
+                    );
+                }
+            } else {
+                let (param_type, err) =
+                    typecheck_typename(&param.variable.parsed_type, method_scope_id, project);
+                error = error.or(err);
+
+                let checked_variable = CheckedVariable {
+                    name: param.variable.name.clone(),
+                    type_id: param_type,
+                    mutable: param.variable.mutable,
+                    visibility: Visibility::Public,
+                    definition_span: param.variable.span,
+                };
+
+                checked_function.params.push(CheckedParameter {
+                    requires_label: param.requires_label,
+                    variable: checked_variable.clone(),
+                });
+
+                if let Some(check_scope) = check_scope {
+                    let _ = project.add_var_to_scope(
+                        check_scope,
+                        checked_variable,
+                        param.variable.span,
+                    );
+                }
+            }
+        }
+
+        if let Err(err) = project.add_function_to_scope(
+            enum_scope_id,
+            function.name.clone(),
+            project.functions.len() - 1,
+            enum_.span,
+        ) {
+            error = error.or(Some(err));
+        }
+
+        let (function_return_type_id, err) =
+            typecheck_typename(&function.return_type, method_scope_id, project);
+        error = error.or(err);
+
+        checked_function.return_type_id = function_return_type_id;
+        if is_generic {
+            let (block, _) = typecheck_block(
+                &function.block,
+                check_scope
+                    .expect("Generic method with generic parameters must have a check scope"),
+                project,
+                SafetyMode::Safe,
+            );
+
+            let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
+                if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
+                    ret.type_id(method_scope_id, project)
+                } else {
+                    VOID_TYPE_ID
+                }
+            } else {
+                resolve_type_var(function_return_type_id, parent_scope_id, project)
+            };
+
+            checked_function.block = Some(block);
+            checked_function.return_type_id = return_type_id;
+        }
+
+        project.functions[function_id] = checked_function;
+        project.current_function_index = previous_index;
     }
 
     error
@@ -1816,6 +1969,14 @@ fn typecheck_enum(
 
     project.enums[enum_id].variants = variants;
 
+    for function in &enum_.methods {
+        error = error.or(typecheck_method(
+            function,
+            project,
+            StructOrEnumId::Enum(enum_id),
+        ));
+    }
+
     error
 }
 
@@ -2149,7 +2310,11 @@ fn typecheck_struct(
     checked_struct.fields = fields;
 
     for function in &structure.methods {
-        error = error.or(typecheck_method(function, project, struct_id));
+        error = error.or(typecheck_method(
+            function,
+            project,
+            StructOrEnumId::Struct(struct_id),
+        ));
     }
 
     project.current_struct_type_id = None;
@@ -2480,20 +2645,35 @@ fn typecheck_jakt_main(function: &ParsedFunction) -> Option<JaktError> {
 fn typecheck_method(
     function: &ParsedFunction,
     project: &mut Project,
-    struct_id: StructId,
+    parent_id: StructOrEnumId,
 ) -> Option<JaktError> {
     let mut error = None;
 
-    let structure = &mut project.structs[struct_id];
+    let (parent_generic_parameters, scope_id, definition_linkage) = match parent_id {
+        StructOrEnumId::Struct(struct_id) => {
+            let structure = &mut project.structs[struct_id];
+            let parent_generic_parameters = &structure.generic_parameters;
+            let scope_id = structure.scope_id;
+            let definition_linkage = structure.definition_linkage;
+            (parent_generic_parameters, scope_id, definition_linkage)
+        }
+        StructOrEnumId::Enum(enum_id) => {
+            let enum_ = &mut project.enums[enum_id];
+            let parent_generic_parameters = &enum_.generic_parameters;
+            let scope_id = enum_.scope_id;
+            let definition_linkage = enum_.definition_linkage;
+            (parent_generic_parameters, scope_id, definition_linkage)
+        }
+    };
 
-    if (!function.generic_parameters.is_empty() || !structure.generic_parameters.is_empty())
+    if (!function.generic_parameters.is_empty() || !parent_generic_parameters.is_empty())
         && !function.must_instantiate
     {
         return None;
     }
 
-    let structure_scope_id = structure.scope_id;
-    let structure_linkage = structure.definition_linkage;
+    let structure_scope_id = scope_id;
+    let structure_linkage = definition_linkage;
 
     let method_id = project.find_function_in_scope(structure_scope_id, &function.name);
 
@@ -4605,7 +4785,7 @@ pub fn typecheck_expression(
                             span,
                             project,
                             Some(&checked_expr),
-                            Some(struct_id),
+                            Some(StructOrEnumId::Struct(struct_id)),
                             safety_mode,
                             type_hint,
                         );
@@ -4637,15 +4817,19 @@ pub fn typecheck_expression(
             } else {
                 let checked_expr_type = &project.types[checked_expr.type_id(scope_id, project)];
                 match checked_expr_type {
-                    Type::Struct(struct_id) => {
-                        let struct_id = *struct_id;
+                    Type::Struct(id) | Type::Enum(id) => {
+                        let id = match checked_expr_type {
+                            Type::Struct(_) => StructOrEnumId::Struct(*id),
+                            Type::Enum(_) => StructOrEnumId::Enum(*id),
+                            _ => unreachable!(),
+                        };
                         let (checked_call, err) = typecheck_call(
                             call,
                             scope_id,
                             span,
                             project,
                             Some(&checked_expr),
-                            Some(struct_id),
+                            Some(id),
                             safety_mode,
                             type_hint,
                         );
@@ -4665,16 +4849,20 @@ pub fn typecheck_expression(
                             error,
                         )
                     }
-                    Type::GenericInstance(struct_id, _) => {
+                    Type::GenericInstance(id, _) | Type::GenericEnumInstance(id, _) => {
                         // ignore the inner types for now, but we'll need them in the future
-                        let struct_id = *struct_id;
+                        let id = match checked_expr_type {
+                            Type::GenericInstance(..) => StructOrEnumId::Struct(*id),
+                            Type::GenericEnumInstance(..) => StructOrEnumId::Enum(*id),
+                            _ => unreachable!(),
+                        };
                         let (checked_call, err) = typecheck_call(
                             call,
                             scope_id,
                             span,
                             project,
                             Some(&checked_expr),
-                            Some(struct_id),
+                            Some(id),
                             safety_mode,
                             type_hint,
                         );
@@ -5344,7 +5532,7 @@ pub fn typecheck_call(
     span: &Span,
     project: &mut Project,
     this_expr: Option<&CheckedExpression>,
-    struct_id: Option<StructId>,
+    parent_id: Option<StructOrEnumId>,
     safety_mode: SafetyMode,
     type_hint: Option<TypeId>,
 ) -> (CheckedCall, Option<JaktError>) {
@@ -5364,11 +5552,12 @@ pub fn typecheck_call(
         })
         .collect::<Vec<_>>();
 
-    let callee_scope_id = match struct_id {
-        Some(struct_id) => {
+    let callee_scope_id = match parent_id {
+        Some(StructOrEnumId::Struct(struct_id)) => {
             // We are a method, so let's look up the scope id for our struct
             project.structs[struct_id].scope_id
         }
+        Some(StructOrEnumId::Enum(enum_id)) => project.enums[enum_id].scope_id,
         _ => caller_scope_id,
     };
 
@@ -5376,7 +5565,7 @@ pub fn typecheck_call(
     let mut maybe_this_type_id = None;
 
     match call.name.as_str() {
-        "print" | "println" | "eprintln" | "format" if struct_id.is_none() => {
+        "print" | "println" | "eprintln" | "format" if parent_id.is_none() => {
             // FIXME: This is a hack since println() and eprintln() are hard-coded into codegen at the moment.
             for arg in &call.args {
                 let (checked_arg, err) =
