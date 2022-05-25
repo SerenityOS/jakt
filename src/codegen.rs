@@ -948,6 +948,17 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
 fn codegen_function_predecl(function: &CheckedFunction, project: &Project) -> String {
     let mut output = String::new();
 
+    // Extern generics need to be in the header anyways, so we can't codegen for them.
+    if [
+        FunctionLinkage::External,
+        FunctionLinkage::ExternalClassConstructor,
+    ]
+    .contains(&function.linkage)
+        && !function.generic_parameters.is_empty()
+    {
+        return output;
+    }
+
     if function.linkage == FunctionLinkage::External {
         output.push_str("extern ");
     }
@@ -1032,6 +1043,17 @@ fn codegen_function_in_namespace(
     containing_struct: Option<TypeId>,
     project: &Project,
 ) -> String {
+    // Extern generics need to be in the header anyways, so we can't codegen for them.
+    if [
+        FunctionLinkage::External,
+        FunctionLinkage::ExternalClassConstructor,
+    ]
+    .contains(&function.linkage)
+        && !function.generic_parameters.is_empty()
+    {
+        return String::new();
+    }
+
     let mut output = String::new();
 
     if !function.generic_parameters.is_empty() {
