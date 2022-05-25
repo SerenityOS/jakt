@@ -3770,9 +3770,16 @@ pub fn parse_set(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Opti
                 *index += 1;
             }
             _ => {
+                let previous_index = *index;
+
                 let (expr, err) =
                     parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
                 error = error.or(err);
+
+                if *index == previous_index {
+                    break;
+                }
+
                 output.push(expr);
             }
         }
