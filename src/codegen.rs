@@ -227,12 +227,12 @@ fn codegen_nonrecursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
             for variant in &enum_.variants {
                 match variant {
                     CheckedEnumVariant::Untyped(name, _) => {
-                        output.push_str("    ");
+                        output.push_str(&codegen_indent(INDENT_SIZE));
                         output.push_str(name);
                         output.push_str(",\n");
                     }
                     CheckedEnumVariant::WithValue(name, value, _) => {
-                        output.push_str("    ");
+                        output.push_str(&codegen_indent(INDENT_SIZE));
                         output.push_str(name);
                         output.push_str(" = ");
                         output.push_str(&codegen_expr(0, value, project));
@@ -272,22 +272,25 @@ fn codegen_nonrecursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
         match variant {
             CheckedEnumVariant::StructLike(name, members, _) => {
                 if is_generic {
-                    output.push_str("    template<");
+                    output.push_str(&codegen_indent(INDENT_SIZE));
+                    output.push_str("template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
                 }
-                output.push_str("    struct ");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("struct ");
                 output.push_str(name);
                 output.push_str(" {\n");
                 for member in members {
-                    output.push_str("        ");
+                    output.push_str(&codegen_indent(INDENT_SIZE * 2));
                     output.push_str(&codegen_type(member.type_id, project));
                     output.push(' ');
                     output.push_str(&member.name);
                     output.push_str(";\n");
                 }
                 output.push('\n');
-                output.push_str("        template<");
+                output.push_str(&codegen_indent(INDENT_SIZE * 2));
+                output.push_str("template<");
                 for i in 0..members.len() {
                     if i > 0 {
                         output.push_str(", ");
@@ -296,7 +299,7 @@ fn codegen_nonrecursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
                     output.push_str(&i.to_string());
                 }
                 output.push_str(">\n");
-                output.push_str("        ");
+                output.push_str(&codegen_indent(INDENT_SIZE * 2));
                 output.push_str(name);
                 output.push('(');
                 for i in 0..members.len() {
@@ -310,7 +313,7 @@ fn codegen_nonrecursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
                 }
                 output.push_str("):\n");
                 for (i, member) in members.iter().enumerate() {
-                    output.push_str("            ");
+                    output.push_str(&codegen_indent(INDENT_SIZE * 3));
                     output.push_str(&member.name);
                     output.push_str("{ forward<_MemberT");
                     output.push_str(&i.to_string());
@@ -323,38 +326,45 @@ fn codegen_nonrecursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
                         output.push('\n');
                     }
                 }
-                output.push_str("    {}\n");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("{}\n");
                 output.push_str("};\n");
             }
             CheckedEnumVariant::Untyped(name, _) => {
                 if is_generic {
-                    output.push_str("    template<");
+                    output.push_str(&codegen_indent(INDENT_SIZE));
+                    output.push_str("template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
                 }
-                output.push_str("    struct ");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("struct ");
                 output.push_str(name);
                 output.push_str(" {};\n");
             }
             CheckedEnumVariant::Typed(name, type_id, _) => {
                 if is_generic {
-                    output.push_str("    template<");
+                    output.push_str(&codegen_indent(INDENT_SIZE));
+                    output.push_str("template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
                 }
-                output.push_str("    struct ");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("struct ");
                 output.push_str(name);
                 output.push_str(" {\n");
-                output.push_str("        ");
+                output.push_str(&codegen_indent(INDENT_SIZE * 2));
                 output.push_str(&codegen_type(*type_id, project));
                 output.push_str(" value;\n");
                 output.push('\n');
-                output.push_str("        template<typename... Args>\n");
-                output.push_str("        ");
+                output.push_str(&codegen_indent(INDENT_SIZE * 2));
+                output.push_str("template<typename... Args>\n");
+                output.push_str(&codegen_indent(INDENT_SIZE * 2));
                 output.push_str(name);
                 output.push_str("(Args&&... args): ");
                 output.push_str(" value { forward<Args>(args)... } {}\n");
-                output.push_str("    };\n");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("};\n");
             }
             _ => (),
         }
@@ -400,12 +410,14 @@ fn codegen_nonrecursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
     output.push_str(&variant_args);
     output.push_str("> {\n");
 
-    output.push_str("    using Variant<");
+    output.push_str(&codegen_indent(INDENT_SIZE));
+    output.push_str("using Variant<");
     output.push_str(&variant_args);
     output.push_str(">::Variant;\n");
 
     for name in &variant_names {
-        output.push_str("    using ");
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str("using ");
         output.push_str(name);
         output.push_str(" = ");
         output.push_str(&enum_.name);
@@ -465,31 +477,37 @@ fn codegen_nonrecursive_enum_predecl(enum_: &CheckedEnum, project: &Project) -> 
         match variant {
             CheckedEnumVariant::StructLike(name, _, _) => {
                 if is_generic {
-                    output.push_str("    template<");
+                    output.push_str(&codegen_indent(INDENT_SIZE));
+                    output.push_str("template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
                 }
-                output.push_str("    struct ");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("struct ");
                 output.push_str(name);
                 output.push_str(";\n");
             }
             CheckedEnumVariant::Untyped(name, _) => {
                 if is_generic {
-                    output.push_str("    template<");
+                    output.push_str(&codegen_indent(INDENT_SIZE));
+                    output.push_str("template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
                 }
-                output.push_str("    struct ");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("struct ");
                 output.push_str(name);
                 output.push_str(";\n");
             }
             CheckedEnumVariant::Typed(name, _, _) => {
                 if is_generic {
-                    output.push_str("    template<");
+                    output.push_str(&codegen_indent(INDENT_SIZE));
+                    output.push_str("template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
                 }
-                output.push_str("    struct ");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("struct ");
                 output.push_str(name);
                 output.push_str(";\n");
             }
@@ -552,31 +570,37 @@ fn codegen_recursive_enum_predecl(enum_: &CheckedEnum, project: &Project) -> Str
         match variant {
             CheckedEnumVariant::StructLike(name, _, _) => {
                 if is_generic {
-                    output.push_str("    template<");
+                    output.push_str(&codegen_indent(INDENT_SIZE));
+                    output.push_str("template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
                 }
-                output.push_str("    struct ");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("struct ");
                 output.push_str(name);
                 output.push_str(";\n");
             }
             CheckedEnumVariant::Untyped(name, _) => {
                 if is_generic {
-                    output.push_str("    template<");
+                    output.push_str(&codegen_indent(INDENT_SIZE));
+                    output.push_str("template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
                 }
-                output.push_str("    struct ");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("struct ");
                 output.push_str(name);
                 output.push_str(";\n");
             }
             CheckedEnumVariant::Typed(name, _, _) => {
                 if is_generic {
-                    output.push_str("    template<");
+                    output.push_str(&codegen_indent(INDENT_SIZE));
+                    output.push_str("template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
                 }
-                output.push_str("    struct ");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("struct ");
                 output.push_str(name);
                 output.push_str(";\n");
             }
@@ -612,12 +636,12 @@ fn codegen_recursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
             for variant in &enum_.variants {
                 match variant {
                     CheckedEnumVariant::Untyped(name, _) => {
-                        output.push_str("    ");
+                        output.push_str(&codegen_indent(INDENT_SIZE));
                         output.push_str(name);
                         output.push_str(",\n");
                     }
                     CheckedEnumVariant::WithValue(name, value, _) => {
-                        output.push_str("    ");
+                        output.push_str(&codegen_indent(INDENT_SIZE));
                         output.push_str(name);
                         output.push_str(" = ");
                         output.push_str(&codegen_expr(0, value, project));
@@ -657,22 +681,25 @@ fn codegen_recursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
         match variant {
             CheckedEnumVariant::StructLike(name, members, _) => {
                 if is_generic {
-                    output.push_str("    template<");
+                    output.push_str(&codegen_indent(INDENT_SIZE));
+                    output.push_str("template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
                 }
-                output.push_str("    struct ");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("struct ");
                 output.push_str(name);
                 output.push_str(" {\n");
                 for member in members {
-                    output.push_str("        ");
+                    output.push_str(&codegen_indent(INDENT_SIZE * 2));
                     output.push_str(&codegen_type(member.type_id, project));
                     output.push(' ');
                     output.push_str(&member.name);
                     output.push_str(";\n");
                 }
                 output.push('\n');
-                output.push_str("        template<");
+                output.push_str(&codegen_indent(INDENT_SIZE * 2));
+                output.push_str("template<");
                 for i in 0..members.len() {
                     if i > 0 {
                         output.push_str(", ");
@@ -681,7 +708,7 @@ fn codegen_recursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
                     output.push_str(&i.to_string());
                 }
                 output.push_str(">\n");
-                output.push_str("        ");
+                output.push_str(&codegen_indent(INDENT_SIZE * 2));
                 output.push_str(name);
                 output.push('(');
                 for i in 0..members.len() {
@@ -695,7 +722,7 @@ fn codegen_recursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
                 }
                 output.push_str("):\n");
                 for (i, member) in members.iter().enumerate() {
-                    output.push_str("            ");
+                    output.push_str(&codegen_indent(INDENT_SIZE * 3));
                     output.push_str(&member.name);
                     output.push_str("{ forward<_MemberT");
                     output.push_str(&i.to_string());
@@ -708,38 +735,45 @@ fn codegen_recursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
                         output.push('\n');
                     }
                 }
-                output.push_str("    {}\n");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("{}\n");
                 output.push_str("};\n");
             }
             CheckedEnumVariant::Untyped(name, _) => {
                 if is_generic {
-                    output.push_str("    template<");
+                    output.push_str(&codegen_indent(INDENT_SIZE));
+                    output.push_str("template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
                 }
-                output.push_str("    struct ");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("struct ");
                 output.push_str(name);
                 output.push_str(" {};\n");
             }
             CheckedEnumVariant::Typed(name, type_id, _) => {
                 if is_generic {
-                    output.push_str("    template<");
+                    output.push_str(&codegen_indent(INDENT_SIZE));
+                    output.push_str("template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
                 }
-                output.push_str("    struct ");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("struct ");
                 output.push_str(name);
                 output.push_str(" {\n");
-                output.push_str("        ");
+                output.push_str(&codegen_indent(INDENT_SIZE * 2));
                 output.push_str(&codegen_type(*type_id, project));
                 output.push_str(" value;\n");
                 output.push('\n');
-                output.push_str("        template<typename... Args>\n");
-                output.push_str("        ");
+                output.push_str(&codegen_indent(INDENT_SIZE * 2));
+                output.push_str("template<typename... Args>\n");
+                output.push_str(&codegen_indent(INDENT_SIZE * 2));
                 output.push_str(name);
                 output.push_str("(Args&&... args): ");
                 output.push_str(" value { forward<Args>(args)... } {}\n");
-                output.push_str("    };\n");
+                output.push_str(&codegen_indent(INDENT_SIZE));
+                output.push_str("};\n");
             }
             _ => (),
         }
@@ -796,12 +830,14 @@ fn codegen_recursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
     }
     output.push_str(" {\n");
 
-    output.push_str("    using Variant<");
+    output.push_str(&codegen_indent(INDENT_SIZE));
+    output.push_str("using Variant<");
     output.push_str(&variant_args);
     output.push_str(">::Variant;\n");
 
     for name in &variant_names {
-        output.push_str("    using ");
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str("using ");
         output.push_str(name);
         output.push_str(" = ");
         output.push_str(&enum_.name);
@@ -822,11 +858,14 @@ fn codegen_recursive_enum(enum_: &CheckedEnum, project: &Project) -> String {
             fully_instantiated_name.push_str(generic_parameter_names.join(", ").as_str());
             fully_instantiated_name.push('>');
         }
+        output.push_str(&codegen_indent(INDENT_SIZE));
         output.push_str(
-            "    template<typename V, typename... Args> static auto create(Args&&... args) {\n",
+            "template<typename V, typename... Args> static auto create(Args&&... args) {\n",
         );
-        output.push_str(format!("        return adopt_nonnull_ref_or_enomem(new (nothrow) {}(V(forward<Args>(args)...)));\n", fully_instantiated_name).as_str());
-        output.push_str("    }\n");
+        output.push_str(&codegen_indent(INDENT_SIZE * 2));
+        output.push_str(format!("return adopt_nonnull_ref_or_enomem(new (nothrow) {}(V(forward<Args>(args)...)));\n", fully_instantiated_name).as_str());
+        output.push_str(&codegen_indent(INDENT_SIZE));
+        output.push_str("}\n");
     }
 
     output.push_str("};\n");
@@ -900,21 +939,24 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
             ));
             // As we should test the visibility before codegen, we take a simple
             // approach to codegen
-            output.push_str("  public:\n");
+            output.push_str("public:\n");
 
             // Make sure emitted classes always have a vtable.
-            output.push_str(&format!("    virtual ~{}() = default;\n", structure.name));
+            output.push_str(&format!(
+                "{}virtual ~{}() = default;\n",
+                codegen_indent(INDENT_SIZE),
+                structure.name
+            ));
         }
         DefinitionType::Struct => {
-            output.push_str(&format!("struct {}", structure.name));
-            output.push_str(" {\n");
-            output.push_str("  public:\n");
+            output.push_str(&format!("struct {} ", structure.name));
+            output.push_str("{\n");
+            output.push_str("public:\n");
         }
     }
 
     for field in &structure.fields {
         output.push_str(&codegen_indent(INDENT_SIZE));
-
         output.push_str(&codegen_type(field.type_id, project));
         output.push(' ');
         output.push_str(&field.name);
@@ -927,7 +969,6 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
         if function.linkage == FunctionLinkage::ImplicitConstructor {
             let function_output = codegen_constructor(function, project);
 
-            output.push_str(&codegen_indent(INDENT_SIZE));
             output.push_str(&function_output);
             output.push('\n');
         } else {
@@ -938,6 +979,7 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
                 codegen_function(function, project)
             };
             output.push_str(&method_output);
+            output.push('\n');
         }
     }
 
@@ -1151,7 +1193,9 @@ fn codegen_function_in_namespace(
             .expect("Function being generated must be checked"),
         project,
     );
+    output.push_str(&codegen_indent(INDENT_SIZE));
     output.push_str(&block);
+    output.push('\n');
 
     if is_main {
         output.push_str(&codegen_indent(INDENT_SIZE));
@@ -1179,6 +1223,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
 
                 // First, generate a private constructor:
                 output.push_str("private:\n");
+                output.push_str(&codegen_indent(INDENT_SIZE));
 
                 output.push_str(&format!("explicit {}(", function.name));
                 let mut first = true;
@@ -1213,6 +1258,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
                 output.push_str("{}\n");
 
                 output.push_str("public:\n");
+                output.push_str(&codegen_indent(INDENT_SIZE));
                 output.push_str(&format!(
                     "static ErrorOr<NonnullRefPtr<{}>> create",
                     function.name
@@ -1256,6 +1302,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
             } else {
                 let mut output = String::new();
 
+                output.push_str(&codegen_indent(INDENT_SIZE));
                 output.push_str(&function.name);
                 output.push('(');
 
@@ -1291,7 +1338,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
                     output.push(')');
                 }
 
-                output.push_str("{}\n");
+                output.push_str("{}");
 
                 output
             }
@@ -1490,7 +1537,6 @@ pub fn codegen_type_possibly_as_namespace(
 fn codegen_block(indent: usize, checked_block: &CheckedBlock, project: &Project) -> String {
     let mut output = String::new();
 
-    output.push_str(&codegen_indent(indent));
     output.push_str("{\n");
 
     for stmt in &checked_block.stmts {
@@ -1500,7 +1546,7 @@ fn codegen_block(indent: usize, checked_block: &CheckedBlock, project: &Project)
     }
 
     output.push_str(&codegen_indent(indent));
-    output.push_str("}\n");
+    output.push('}');
 
     output
 }
@@ -1508,55 +1554,73 @@ fn codegen_block(indent: usize, checked_block: &CheckedBlock, project: &Project)
 fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) -> String {
     let mut output = String::new();
 
-    output.push_str(&codegen_indent(indent));
-
     match stmt {
         CheckedStatement::Try(stmt, error_name, catch_block) => {
-            output.push('{');
-            output.push_str("auto _jakt_try_result = [&]() -> ErrorOr<void> {");
-            output.push_str(&codegen_statement(indent, stmt, project));
-            output.push(';');
-            output.push_str("return {};");
-            output.push_str("}();");
-            output.push_str("if (_jakt_try_result.is_error()) {");
-            output.push_str("auto ");
-            output.push_str(error_name);
-            output.push_str(" = _jakt_try_result.release_error();");
-            output.push_str(&codegen_block(indent, catch_block, project));
-            output.push('}');
-            output.push('}');
+            output.push_str(&codegen_indent(indent));
+            output.push_str(&format!(
+                concat!(
+                    "{{\n",
+                    "{0}{1}auto _jakt_try_result = [&]() -> ErrorOr<void> {{\n",
+                    "{2}",
+                    "{0}{1}{1}return {{}};\n",
+                    "{0}{1}}}();\n",
+                    "{0}{1}if (_jakt_try_result.is_error()) {{\n",
+                    "{0}{1}{1}auto {3} = _jakt_try_result.release_error();\n",
+                    "{0}{1}{1}{4}\n",
+                    "{0}{1}}}\n",
+                    "{0}}}\n"
+                ),
+                &codegen_indent(indent),
+                &codegen_indent(INDENT_SIZE),
+                &codegen_statement(indent + INDENT_SIZE * 2, stmt, project),
+                error_name,
+                &codegen_block(indent + INDENT_SIZE * 2, catch_block, project)
+            ));
         }
         CheckedStatement::Throw(expr) => {
+            output.push_str(&codegen_indent(indent));
             output.push_str("return ");
             output.push_str(&codegen_expr(indent, expr, project));
-            output.push(';');
+            output.push_str(";\n");
         }
         CheckedStatement::Continue => {
-            output.push_str("continue;");
+            output.push_str(&codegen_indent(indent));
+            output.push_str("continue;\n");
         }
         CheckedStatement::Break => {
-            output.push_str("break;");
+            output.push_str(&codegen_indent(indent));
+            output.push_str("break;\n");
         }
         CheckedStatement::Expression(expr) => {
+            output.push_str(&codegen_indent(indent));
             let expr = codegen_expr(indent, expr, project);
             output.push_str(&expr);
             output.push_str(";\n");
         }
         CheckedStatement::Defer(statement) => {
             // NOTE: We let the preprocessor generate a unique name for the RAII helper.
-            output.push_str("#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n");
-            output.push_str("ScopeGuard __SCOPE_GUARD_NAME ([&] \n");
-            output.push_str("#undef __SCOPE_GUARD_NAME\n{");
-            output.push_str(&codegen_statement(indent, statement, project));
-            output.push_str("});\n");
+            output.push_str(&format!(
+                concat!(
+                    "{0}#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n",
+                    "{0}ScopeGuard __SCOPE_GUARD_NAME ([&] \n",
+                    "{0}#undef __SCOPE_GUARD_NAME\n",
+                    "{0}{{\n",
+                    "{1}",
+                    "{0}}});\n"
+                ),
+                &codegen_indent(indent),
+                &codegen_statement(indent + INDENT_SIZE, statement, project)
+            ));
         }
         CheckedStatement::Return(expr) => {
+            output.push_str(&codegen_indent(indent));
             let expr = codegen_expr(indent, expr, project);
             output.push_str("return (");
             output.push_str(&expr);
             output.push_str(");\n")
         }
         CheckedStatement::If(cond, block, else_stmt) => {
+            output.push_str(&codegen_indent(indent));
             let expr = codegen_expr(indent, cond, project);
             output.push_str("if (");
             output.push_str(&expr);
@@ -1566,18 +1630,23 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str(&block);
 
             if let Some(else_stmt) = else_stmt {
-                output.push_str(" else ");
-                let else_string = codegen_statement(indent, else_stmt, project);
+                output.push_str(" else {\n");
+                let else_string = codegen_statement(indent + INDENT_SIZE, else_stmt, project);
                 output.push_str(&else_string);
+                output.push_str(&codegen_indent(indent));
+                output.push('}');
             }
+            output.push('\n');
         }
         CheckedStatement::Loop(block) => {
-            output.push_str("for (;;) {");
+            output.push_str(&codegen_indent(indent));
+            output.push_str("for (;;) ");
             let block = codegen_block(indent, block, project);
             output.push_str(&block);
-            output.push('}');
+            output.push('\n');
         }
         CheckedStatement::While(cond, block) => {
+            output.push_str(&codegen_indent(indent));
             let expr = codegen_expr(indent, cond, project);
             output.push_str("while (");
             output.push_str(&expr);
@@ -1587,6 +1656,7 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str(&block);
         }
         CheckedStatement::VarDecl(var_decl, expr) => {
+            output.push_str(&codegen_indent(indent));
             if !var_decl.mutable {
                 output.push_str("const ");
             }
@@ -1598,10 +1668,13 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str(";\n");
         }
         CheckedStatement::Block(checked_block) => {
+            output.push_str(&codegen_indent(indent));
             let block = codegen_block(indent, checked_block, project);
             output.push_str(&block);
+            output.push('\n');
         }
         CheckedStatement::InlineCpp(strings) => {
+            output.push_str(&codegen_indent(indent));
             for string in strings {
                 output.push_str(&string.replace("\\\"", "\"").replace("\\\\", "\\"))
             }
@@ -1699,18 +1772,21 @@ fn codegen_match_body(
     match body {
         CheckedMatchBody::Expression(expr) => {
             if expr.type_id_or_type_var() == VOID_TYPE_ID {
-                output.push_str("   return (");
-                output.push_str(&codegen_expr(indent + 1, expr, project));
+                output.push_str(&codegen_indent(indent));
+                output.push_str("return (");
+                output.push_str(&codegen_expr(indent + INDENT_SIZE, expr, project));
                 output.push_str("), JaktInternal::ExplicitValue<void>();\n");
             } else {
-                output.push_str("   return JaktInternal::ExplicitValue(");
-                output.push_str(&codegen_expr(indent + 1, expr, project));
+                output.push_str(&codegen_indent(indent));
+                output.push_str("return JaktInternal::ExplicitValue(");
+                output.push_str(&codegen_expr(indent + INDENT_SIZE, expr, project));
                 output.push_str(");\n");
             }
         }
         CheckedMatchBody::Block(block) => {
             output.push_str(&codegen_block(indent, block, project));
-
+            output.push('\n');
+            output.push_str(&codegen_indent(indent));
             if return_type_id == VOID_TYPE_ID {
                 output.push_str("return JaktInternal::ExplicitValue<void>();\n");
             }
@@ -1788,10 +1864,11 @@ fn codegen_enum_match(
                             output.push_str(":\n");
                         } else {
                             output.push_str(") {\n");
+                            output.push_str(&codegen_indent(indent));
                         }
                         output.push_str(&codegen_indent(indent));
                         output.push_str(&codegen_match_body(
-                            indent + 1,
+                            indent + INDENT_SIZE,
                             body,
                             project,
                             *return_type_id,
@@ -1810,9 +1887,9 @@ fn codegen_enum_match(
                         } else {
                             output.push_str("else {\n");
                         }
-                        output.push_str(&codegen_indent(indent + 1));
+                        output.push_str(&codegen_indent(indent + INDENT_SIZE));
                         output.push_str(&codegen_match_body(
-                            indent + 1,
+                            indent + INDENT_SIZE,
                             body,
                             project,
                             *return_type_id,
@@ -1838,9 +1915,9 @@ fn codegen_enum_match(
                         } else {
                             output.push_str(") {\n");
                         }
-                        output.push_str(&codegen_indent(indent + 1));
+                        output.push_str(&codegen_indent(indent + INDENT_SIZE));
                         output.push_str(&codegen_match_body(
-                            indent + 1,
+                            indent + INDENT_SIZE,
                             body,
                             project,
                             *return_type_id,
@@ -1912,7 +1989,7 @@ fn codegen_enum_match(
                                 output.push_str("_JaktCurrentFunctionReturnType");
                                 output.push('>');
                                 output.push_str(" {\n");
-                                output.push_str("   ");
+                                output.push_str(&codegen_indent(INDENT_SIZE));
                                 if !args.is_empty() {
                                     let var = project
                                         .find_var_in_scope(*scope_id, args[0].1.as_str())
@@ -1977,7 +2054,7 @@ fn codegen_enum_match(
                         }
 
                         output.push_str(&codegen_match_body(
-                            indent + 1,
+                            indent + INDENT_SIZE,
                             body,
                             project,
                             *return_type_id,
@@ -1994,7 +2071,7 @@ fn codegen_enum_match(
                         output.push_str(" {\n");
 
                         output.push_str(&codegen_match_body(
-                            indent + 1,
+                            indent + INDENT_SIZE,
                             body,
                             project,
                             *return_type_id,
@@ -2049,6 +2126,7 @@ fn codegen_generic_match(
         output.push_str(", ");
         output.push_str("_JaktCurrentFunctionReturnType");
         output.push_str("> { \n");
+        output.push_str(&codegen_indent(indent + INDENT_SIZE));
         if is_generic_enum {
             output.push_str("auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(");
         } else {
@@ -2072,6 +2150,7 @@ fn codegen_generic_match(
                 scope_id,
                 ..
             } => {
+                output.push_str(&codegen_indent(indent + INDENT_SIZE));
                 output.push_str("if (__jakt_enum_value.template has<");
                 let variant_type_name = {
                     let mut output = String::new();
@@ -2086,10 +2165,12 @@ fn codegen_generic_match(
                 };
                 output.push_str(&variant_type_name);
                 output.push_str(">()) {\n");
+                output.push_str(&codegen_indent(indent + INDENT_SIZE * 2));
                 output.push_str("auto& __jakt_match_value = __jakt_enum_value.template get<");
                 output.push_str(&variant_type_name);
                 output.push_str(">();\n");
                 for arg in variant_arguments {
+                    output.push_str(&codegen_indent(indent + INDENT_SIZE * 2));
                     output.push_str("auto& ");
                     output.push_str(arg.1.as_str());
                     output.push_str(" = __jakt_match_value.");
@@ -2098,11 +2179,12 @@ fn codegen_generic_match(
                 }
 
                 output.push_str(&codegen_match_body(
-                    indent + 1,
+                    indent + INDENT_SIZE * 2,
                     body,
                     project,
                     *return_type_id,
                 ));
+                output.push_str(&codegen_indent(indent + INDENT_SIZE));
 
                 output.push_str("}\n");
             }
@@ -2114,9 +2196,9 @@ fn codegen_generic_match(
                 } else {
                     output.push_str("else {\n");
                 }
-                output.push_str(&codegen_indent(indent + 1));
+                output.push_str(&codegen_indent(indent + INDENT_SIZE));
                 output.push_str(&codegen_match_body(
-                    indent + 1,
+                    indent + INDENT_SIZE,
                     body,
                     project,
                     *return_type_id,
@@ -2142,9 +2224,9 @@ fn codegen_generic_match(
                 } else {
                     output.push_str(") {\n");
                 }
-                output.push_str(&codegen_indent(indent + 1));
+                output.push_str(&codegen_indent(indent + INDENT_SIZE));
                 output.push_str(&codegen_match_body(
-                    indent + 1,
+                    indent + INDENT_SIZE,
                     body,
                     project,
                     *return_type_id,
@@ -2156,14 +2238,15 @@ fn codegen_generic_match(
                 }
             }
         }
-        output.push('\n');
     }
     if match_values_are_all_constant {
         output.push_str("}\n");
     }
     if *return_type_id == VOID_TYPE_ID {
+        output.push_str(&codegen_indent(indent + INDENT_SIZE));
         output.push_str("return JaktInternal::ExplicitValue<void>();\n");
     }
+    output.push_str(&codegen_indent(indent));
     output.push_str("}()))");
 
     output
