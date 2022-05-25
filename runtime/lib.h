@@ -13,14 +13,12 @@
 #include <AK/Debug.h>
 #include <AK/Error.h>
 #include <AK/Find.h>
-#include <AK/FixedPoint.h>
 #include <AK/Format.h>
 #include <AK/Forward.h>
 #include <AK/Function.h>
 #include <AK/GenericLexer.h>
 #include <AK/HashFunctions.h>
 #include <AK/HashTable.h>
-#include <AK/IntegralMath.h>
 #include <AK/IterationDecision.h>
 #include <AK/Iterator.h>
 #include <AK/LinearArray.h>
