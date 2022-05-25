@@ -2787,9 +2787,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         CheckedExpression::IndexedDictionary(expr, idx, _, _) => {
             output.push_str("((");
             output.push_str(&codegen_expr(indent, expr, project));
-            output.push_str(").get(");
+            output.push_str(")[");
             output.push_str(&codegen_expr(indent, idx, project));
-            output.push_str(").value())");
+            output.push_str("])");
         }
         CheckedExpression::IndexedTuple(expr, idx, _, _) => {
             // x.get<1>()
