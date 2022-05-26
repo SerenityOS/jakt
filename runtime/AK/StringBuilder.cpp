@@ -77,7 +77,7 @@ StringView StringBuilder::string_view() const
 
 void StringBuilder::clear()
 {
-    m_buffer.resize(0);
+    static_cast<void>(m_buffer.resize(0));
 }
 
 ErrorOr<void> StringBuilder::try_append_code_point(u32 code_point)

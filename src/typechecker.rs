@@ -836,8 +836,6 @@ fn resolve_type_var(type_var: TypeId, scope_id: ScopeId, project: &Project) -> T
 pub enum CheckedTypeCast {
     Fallible(TypeId),
     Infallible(TypeId),
-    Saturating(TypeId),
-    Truncating(TypeId),
 }
 
 impl CheckedTypeCast {
@@ -845,8 +843,6 @@ impl CheckedTypeCast {
         match self {
             CheckedTypeCast::Fallible(type_id) => *type_id,
             CheckedTypeCast::Infallible(type_id) => *type_id,
-            CheckedTypeCast::Saturating(type_id) => *type_id,
-            CheckedTypeCast::Truncating(type_id) => *type_id,
         }
     }
 
@@ -1954,7 +1950,7 @@ fn typecheck_struct(
             //      ImplicitConstructor class.
             project.functions[constructor_id].linkage = FunctionLinkage::ExternalClassConstructor;
         }
-    } else {
+    } else if structure.definition_linkage != DefinitionLinkage::External {
         // No constructor found, so let's make one
 
         let mut constructor_params = Vec::new();
@@ -2063,7 +2059,7 @@ fn typecheck_function_predecl(
 
         generic_parameters.push(FunctionGenericParameter::Parameter(type_var_type_id));
 
-        if !function.must_instantiate {
+        if !function.must_instantiate || function.linkage == FunctionLinkage::External {
             if let Err(err) = project.add_type_to_scope(
                 checked_function_scope_id,
                 generic_parameter.to_string(),
@@ -3113,8 +3109,6 @@ pub fn typecheck_expression(
                     let checked_cast = match cast {
                         TypeCast::Fallible(_) => CheckedTypeCast::Fallible(type_id),
                         TypeCast::Infallible(_) => CheckedTypeCast::Infallible(type_id),
-                        TypeCast::Saturating(_) => CheckedTypeCast::Saturating(type_id),
-                        TypeCast::Truncating(_) => CheckedTypeCast::Truncating(type_id),
                     };
                     CheckedUnaryOperator::TypeCast(checked_cast)
                 }
@@ -3805,6 +3799,8 @@ pub fn typecheck_expression(
                     let enum_name = enum_.name.clone();
                     let enum_id = *enum_id;
                     let mut seen_catch_all = false;
+                    let mut catch_all_span = None;
+                    let mut covered_variants = HashSet::new();
                     for case in cases {
                         match &case {
                             MatchCase::CatchAll { body, marker_span } => {
@@ -3815,6 +3811,7 @@ pub fn typecheck_expression(
                                         *marker_span,
                                     )));
                                 } else {
+                                    catch_all_span = Some(*marker_span);
                                     seen_catch_all = true;
                                 }
 
@@ -3938,6 +3935,7 @@ pub fn typecheck_expression(
                                     Some(variant) => {
                                         match variant {
                                             CheckedEnumVariant::Untyped(name, _) => {
+                                                covered_variants.insert(name.clone());
                                                 if !args.is_empty() {
                                                     error =
                                                         error.or(Some(JaktError::TypecheckError(
@@ -3950,6 +3948,7 @@ pub fn typecheck_expression(
                                                 }
                                             }
                                             CheckedEnumVariant::Typed(name, type_id, span) => {
+                                                covered_variants.insert(name.clone());
                                                 if !args.is_empty() {
                                                     if args.len() != 1 {
                                                         error = error.or(Some(JaktError::TypecheckError(
@@ -3980,6 +3979,7 @@ pub fn typecheck_expression(
                                                 }
                                             }
                                             CheckedEnumVariant::WithValue(name, _, _) => {
+                                                covered_variants.insert(name.clone());
                                                 if !args.is_empty() {
                                                     error =
                                                         error.or(Some(JaktError::TypecheckError(
@@ -3996,6 +3996,7 @@ pub fn typecheck_expression(
                                                 fields,
                                                 _,
                                             ) => {
+                                                covered_variants.insert(variant_name.clone());
                                                 // Make the borrow checker shut up
                                                 let variant_name = variant_name.clone();
                                                 let fields = fields.clone();
@@ -4174,6 +4175,44 @@ pub fn typecheck_expression(
                             }
                         }
                     }
+
+                    // Check if all the variants are matched
+                    let enum_ = &project.enums[enum_id];
+                    let missing_variants = enum_
+                        .variants
+                        .iter()
+                        .map(|v| match v {
+                            CheckedEnumVariant::WithValue(name, ..)
+                            | CheckedEnumVariant::Untyped(name, ..)
+                            | CheckedEnumVariant::Typed(name, ..)
+                            | CheckedEnumVariant::StructLike(name, ..) => name.as_str(),
+                        })
+                        .filter(|name| !covered_variants.contains(*name))
+                        .collect::<Vec<_>>();
+
+                    match (missing_variants.is_empty(), seen_catch_all) {
+                        (false, false) => {
+                            error = error.or(Some(JaktError::TypecheckErrorWithHint(
+                                format!(
+                                    "match expression is not exhaustive, missing variants are: {}",
+                                    missing_variants.join(", ")
+                                ),
+                                *span,
+                                "add an irrefutable 'else' pattern or handle the missing variants"
+                                    .to_string(),
+                                expr.span(),
+                            )));
+                        }
+                        (true, true) => {
+                            error = error.or(Some(JaktError::TypecheckErrorWithHint(
+                                "all variants are covered, but an irrefutable pattern is also present".to_string(),
+                                *span,
+                                "remove this pattern".to_string(),
+                                catch_all_span.unwrap(),
+                            )));
+                        }
+                        _ => {}
+                    }
                 }
                 _ => {
                     let mut is_enum_match = false;
@@ -4351,6 +4390,13 @@ pub fn typecheck_expression(
                                 });
                             }
                         }
+                    }
+
+                    if is_value_match && !seen_catch_all {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "match expression is not exhaustive, a value match must contain an irrefutable 'else' pattern".to_string(),
+                            *span,
+                        )));
                     }
                 }
             }
@@ -5789,39 +5835,37 @@ pub fn check_types_for_compat(
 
             let rhs_type = &project.types[rhs_type_id];
             match rhs_type {
-                Type::GenericInstance(rhs_struct_id, args) => {
-                    if lhs_struct_id == rhs_struct_id {
-                        let args = args.clone();
-                        // Same struct, perhaps this is an instantiation of it
+                Type::GenericInstance(rhs_struct_id, args) if lhs_struct_id == rhs_struct_id => {
+                    let args = args.clone();
+                    // Same struct, perhaps this is an instantiation of it
 
-                        let lhs_struct = &project.structs[*lhs_struct_id];
-                        if args.len() != lhs_struct.generic_parameters.len() {
-                            return Some(JaktError::TypecheckError(
-                                format!(
-                                    "mismatched number of generic parameters for {}",
-                                    lhs_struct.name
-                                ),
-                                span,
-                            ));
+                    let lhs_struct = &project.structs[*lhs_struct_id];
+                    if args.len() != lhs_struct.generic_parameters.len() {
+                        return Some(JaktError::TypecheckError(
+                            format!(
+                                "mismatched number of generic parameters for {}",
+                                lhs_struct.name
+                            ),
+                            span,
+                        ));
+                    }
+
+                    let mut idx = 0;
+
+                    let lhs_arg_type_id = lhs_struct.generic_parameters[idx];
+                    let rhs_arg_type_id = args[idx];
+
+                    while idx < args.len() {
+                        if let Some(err) = check_types_for_compat(
+                            lhs_arg_type_id,
+                            rhs_arg_type_id,
+                            generic_inferences,
+                            span,
+                            project,
+                        ) {
+                            return Some(err);
                         }
-
-                        let mut idx = 0;
-
-                        let lhs_arg_type_id = lhs_struct.generic_parameters[idx];
-                        let rhs_arg_type_id = args[idx];
-
-                        while idx < args.len() {
-                            if let Some(err) = check_types_for_compat(
-                                lhs_arg_type_id,
-                                rhs_arg_type_id,
-                                generic_inferences,
-                                span,
-                                project,
-                            ) {
-                                return Some(err);
-                            }
-                            idx += 1;
-                        }
+                        idx += 1;
                     }
                 }
                 _ => {

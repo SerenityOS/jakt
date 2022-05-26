@@ -4,5 +4,8 @@ enum Bar {
 
 function main() {
     let foo = Bar::Value()
-    [match foo {}: 1]
+    [match foo {
+        else => {
+        }
+    }: 1]
 }

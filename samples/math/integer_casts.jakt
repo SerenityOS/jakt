@@ -1,11 +1,11 @@
 function main() {
-    let a = 500 as saturated u8
-    let b = 257 as truncated u8
+    let a: u8 = as_saturated(500u32)
+    let b: u8 = as_truncated(257u32)
     let c = 127 as! i8
     let d = -127 as! i8
-    let e = -200 as saturated i8
-    let f = -127 as truncated i8
-    let g = 128 as truncated i8
+    let e: i8 = as_saturated(-200i32)
+    let f: i8 = as_truncated(-127i32)
+    let g: i8 = as_truncated(128i32)
 
     // as Should not eat the token after the type
     let h = (1 as! i8)
