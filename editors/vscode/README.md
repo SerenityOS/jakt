@@ -11,4 +11,4 @@ To build:
 > vsce package
 ```
 
-Then install vscode by switching to the Extensions section on the left, then the `...` at the top middle and choose "Install from VSIX..." and choose the package you just created.
+Then install into vscode by switching to the Extensions section on the left, then the `...` at the top middle and choose "Install from VSIX..." and choose the package you just created.

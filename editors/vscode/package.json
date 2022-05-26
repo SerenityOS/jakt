@@ -3,12 +3,14 @@
     "displayName": "jakt",
     "description": "Jakt language support",
     "version": "0.0.1",
+    "publisher": "the SerenityOS developers",
     "engines": {
         "vscode": "^1.60.0"
     },
     "categories": [
         "Programming Languages"
     ],
+    "icon": "assets/placeholder_logo.png",
     "contributes": {
         "languages": [{
             "id": "jakt",
