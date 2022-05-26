@@ -252,6 +252,7 @@ fn display_message_with_span(
     println!("{}: {}", severity.name(), msg);
 
     let file_contents = compiler.get_file_contents(span.file_id);
+    let file_name = compiler.get_file_name(span.file_id);
 
     let line_spans = line_spans(file_contents);
 
@@ -259,10 +260,17 @@ fn display_message_with_span(
     let largest_line_number = line_spans.len();
 
     let width = format!("{}", largest_line_number).len();
-    println!("{}", "-".repeat(width + 3));
 
     while line_index < line_spans.len() {
         if span.start >= line_spans[line_index].0 && span.start <= line_spans[line_index].1 {
+            let column_index = span.start - line_spans[line_index].0;
+            println!(
+                "{} \u{001b}[33m{}:{}:{}\u{001b}[0m",
+                "-".repeat(width + 3),
+                file_name,
+                line_index + 1,
+                column_index + 1
+            );
             if line_index > 0 {
                 print_source_line(
                     &severity,
