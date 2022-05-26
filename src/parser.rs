@@ -2550,7 +2550,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
     }
 
     let mut expr = match &tokens[*index].contents {
-        TokenContents::Dollar => {
+        TokenContents::Dot => {
             let this_expr = ParsedExpression::Var("this".to_string(), tokens[*index].span);
             *index += 1;
             match &tokens[*index].contents {
@@ -2564,7 +2564,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                 }
                 _ => {
                     error = error.or(Some(JaktError::ParserError(
-                        "Missing member name after '$'".to_string(),
+                        "Missing member name after '.'".to_string(),
                         tokens[*index - 1].span,
                     )));
                     ParsedExpression::Garbage(tokens[*index].span)
