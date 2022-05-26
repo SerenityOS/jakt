@@ -5052,6 +5052,38 @@ pub fn typecheck_binary_operation(
 
     let mut type_id = lhs.type_id(scope_id, project);
     match op {
+        BinaryOperator::NoneCoalescing => {
+            // 1. LHS must be Optional<T>.
+            // 2. RHS must be T.
+            // 3. Resulting type is T.
+
+            match &project.types[lhs_type_id] {
+                Type::GenericInstance(struct_id, generic_parameters)
+                    if *struct_id == project.get_optional_struct_id(span) =>
+                {
+                    // Extract T from Optional<T>.
+                    let inner_type_id = generic_parameters[0];
+
+                    if inner_type_id == rhs_type_id {
+                        // Success: LHS is T? and RHS is T.
+                        return (inner_type_id, None);
+                    }
+                }
+                _ => {}
+            }
+
+            return (
+                lhs_type_id,
+                Some(JaktError::TypecheckError(
+                    format!(
+                        "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
+                        project.typename_for_type_id(lhs_type_id),
+                        project.typename_for_type_id(rhs_type_id),
+                    ),
+                    span,
+                )),
+            );
+        }
         BinaryOperator::LessThan
         | BinaryOperator::LessThanOrEqual
         | BinaryOperator::GreaterThan
