@@ -32,7 +32,7 @@ The following strategies are employed to achieve memory safety:
 In **Jakt**, there are three pointer types:
 
 - [x] **T** (Strong pointer to reference-counted class `T`.)
-- [ ] **weak T?** (Weak pointer to reference-counted class `T`. Becomes empty on pointee destruction.)
+- [x] **weak T?** (Weak pointer to reference-counted class `T`. Becomes empty on pointee destruction.)
 - [x] **raw T** (Raw pointer to arbitrary type `T`. Only usable in `unsafe` blocks.)
 
 Null pointers are not possible in safe mode, but pointers can be wrapped in `Optional`, i.e `Optional<T>` or `T?` for short.
@@ -213,7 +213,7 @@ let values = ["foo", "bar", "baz"]
 
 - [x] Creating dictionaries
 - [x] Indexing dictionaries
-- [ ] Assigning into indexes (aka lvalue)
+- [x] Assigning into indexes (aka lvalue)
 
 ```jakt
 function main() {
@@ -242,7 +242,7 @@ let values = ["foo": 500, "bar": 600, "baz": 700]
 ## Sets
 
 - [x] Creating sets
-- [ ] Reference semantics
+- [x] Reference semantics
 
 ```jakt
 function main() {
