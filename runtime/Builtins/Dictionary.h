@@ -9,12 +9,39 @@
 #include <AK/HashMap.h>
 #include <AK/NonnullRefPtr.h>
 #include <AK/RefCounted.h>
+#include <AK/Tuple.h>
 
 namespace JaktInternal {
 
 template<typename K, typename V>
 struct DictionaryStorage : public RefCounted<DictionaryStorage<K, V>> {
     HashMap<K, V> map;
+};
+
+template<typename K, typename V>
+class DictionaryIterator {
+    using Storage = DictionaryStorage<K, V>;
+    using Iterator = typename HashMap<K, V>::IteratorType;
+
+public:
+    DictionaryIterator(NonnullRefPtr<Storage> storage)
+        : m_storage(move(storage))
+        , m_iterator(m_storage->map.begin())
+    {
+    }
+
+    Optional<Tuple<K, V>> next()
+    {
+        if (m_iterator == m_storage->map.end())
+            return {};
+        auto res = *m_iterator;
+        ++m_iterator;
+        return Tuple<K, V>(res.key, res.value);
+    }
+
+private:
+    NonnullRefPtr<Storage> m_storage;
+    Iterator m_iterator;
 };
 
 template<typename K, typename V>
@@ -71,6 +98,8 @@ public:
             TRY(dictionary.set(item.key, item.value));
         return dictionary;
     }
+
+    DictionaryIterator<K, V> iterator() const { return DictionaryIterator<K, V> { m_storage }; }
 
 private:
     explicit Dictionary(NonnullRefPtr<Storage> storage)
