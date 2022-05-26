@@ -55,6 +55,7 @@ public:
     ErrorOr<AK::HashSetResult> add(T&& value) { return m_storage->table.set(move(value)); }
     ErrorOr<void> ensure_capacity(size_t capacity) { return m_storage->table.try_ensure_capacity(capacity); }
 
+    bool is_empty() const { return m_storage->table.is_empty(); }
     size_t capacity() const { return m_storage->table.capacity(); }
     size_t size() const { return m_storage->table.size(); }
     void clear() { m_storage->table.clear(); }
