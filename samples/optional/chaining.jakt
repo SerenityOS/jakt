@@ -1,11 +1,11 @@
 class Foo {
-    public bar: Bar?
+    public bar: Bar
 }
 class Bar {
-    public baz: Baz?
+    public baz: Baz
 }
 class Baz {
-    public x: String?
+    public x: String
 }
 
 function main() {

@@ -4732,6 +4732,7 @@ pub fn typecheck_expression(
                                     *span,
                                 )
                             })
+                            .cloned()
                             .and_then(|member| {
                                 if let Some(err) = check_accessibility(
                                     scope_id,
