@@ -1697,6 +1697,8 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (ParsedBlock, Option<
         return (block, error);
     }
 
+    skip_newlines(tokens, index);
+
     let start = tokens[*index].span;
 
     *index += 1;
@@ -2469,7 +2471,6 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
         ..
     }) = tokens.get(*index)
     {
-        *index += 1;
         let (block, err) = parse_block(tokens, index);
         error = error.or(err);
         (make_case(MatchBody::Block(block)), error)
