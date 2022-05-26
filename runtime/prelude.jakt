@@ -51,6 +51,7 @@ extern struct DictionaryIterator<K, V> {
 }
 
 extern struct Dictionary<K, V> {
+    function is_empty(this) -> bool
     function get(this, anonymous key: K) -> V?
     function contains(this, anonymous key: K) -> bool
     function set(mutable this, key: K, value: V) throws
