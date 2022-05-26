@@ -56,7 +56,17 @@ fn main() -> Result<(), JaktError> {
 
                 if !arguments.emit_source_only {
                     let input_cpp = path_as_string(&out_filepath);
-                    let output_executable = path_as_string(&out_filepath.with_extension(""));
+
+                    let output_executable;
+                    #[cfg(target_os = "windows")]
+                    {
+                        output_executable = path_as_string(&out_filepath.with_extension("exe"));
+                    }
+                    #[cfg(not(target_os = "windows"))]
+                    {
+                        output_executable = path_as_string(&out_filepath.with_extension(""));
+                    }
+
                     let runtime_path = if let Some(ref runtime_path) = arguments.runtime_path {
                         path_as_string(runtime_path)
                     } else {
