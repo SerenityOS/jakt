@@ -119,6 +119,10 @@ impl Compiler {
         &self.raw_files[file_id].1
     }
 
+    pub fn get_file_name(&self, file_id: FileId) -> &String {
+        &self.raw_files[file_id].0
+    }
+
     pub fn prelude() -> Vec<u8> {
         include_bytes!("../runtime/prelude.jakt").to_vec()
     }
