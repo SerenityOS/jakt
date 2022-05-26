@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language: Jakt
-" Latest Revision: 2022-05-21
+" Latest Revision: 2022-05-25
 
 if exists("b:current_syntax")
   finish
@@ -80,6 +80,7 @@ syntax region jaktCommentLine start="//" end="$"
 
 syntax region jaktString matchgroup=jaktStringDelimiter start=+"+ skip=+\\\\\|\\"+ end=+"+ oneline contains=jaktEscape
 syntax region jaktChar matchgroup=jaktCharDelimiter start=+'+ end=+'+ oneline
+syntax region jaktChar matchgroup=jaktCharDelimiter start=+'+ skip=+\\\\\|\\'+ end=+'+ oneline contains=jaktEscape
 syntax match jaktEscape        display contained /\\./
 
 highlight default link jaktDecNumber jaktNumber
