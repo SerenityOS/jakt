@@ -5380,7 +5380,7 @@ pub fn typecheck_call(
     let mut maybe_this_type_id = None;
 
     match call.name.as_str() {
-        "print" | "println" | "eprintln" if struct_id.is_none() => {
+        "print" | "println" | "eprintln" | "format" if struct_id.is_none() => {
             // FIXME: This is a hack since println() and eprintln() are hard-coded into codegen at the moment.
             for arg in &call.args {
                 let (checked_arg, err) =
@@ -5399,7 +5399,12 @@ pub fn typecheck_call(
                         *span,
                     )));
                 }
-                return_type_id = VOID_TYPE_ID;
+
+                if call.name == "format" {
+                    return_type_id = STRING_TYPE_ID;
+                } else {
+                    return_type_id = VOID_TYPE_ID;
+                }
 
                 checked_args.push((arg.0.clone(), checked_arg));
             }
