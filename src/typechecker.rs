@@ -5230,91 +5230,70 @@ pub fn resolve_call(
     let mut callee = None;
     let mut error = None;
 
-    if let Some(namespace) = call.namespace.first() {
-        // For now, assume class is our namespace
-        // In the future, we'll have real namespaces
+    let mut current_scope_id = scope_id;
 
-        if let Some(struct_id) = project.find_struct_in_scope(scope_id, namespace) {
+    // Resolve namespaces from left to right.
+    for scope_name in &call.namespace {
+        if let Some(scope_id) = project.find_namespace_in_scope(current_scope_id, scope_name) {
+            current_scope_id = scope_id;
+            continue;
+        }
+        if let Some(struct_id) = project.find_struct_in_scope(current_scope_id, scope_name) {
             let structure = &project.structs[struct_id];
-
-            // Look for the constructor
-            if let Some(struct_id) = project.find_struct_in_scope(structure.scope_id, &call.name) {
-                let structure = &project.structs[struct_id];
-
-                if let Some(function_id) =
-                    project.find_function_in_scope(structure.scope_id, &call.name)
-                {
-                    callee = Some(function_id);
-                }
-            } else if let Some(function_id) =
-                project.find_function_in_scope(structure.scope_id, &call.name)
-            {
-                callee = Some(function_id);
-            }
-
+            current_scope_id = structure.scope_id;
             if !structure.generic_parameters.is_empty() {
+                // FIXME: This doesn't look right.
                 namespaces[0].generic_parameters = Some(structure.generic_parameters.clone());
             }
-
-            (callee, error)
-        } else if let Some(enum_id) = project.find_enum_in_scope(scope_id, namespace) {
+            continue;
+        }
+        if let Some(enum_id) = project.find_enum_in_scope(current_scope_id, scope_name) {
             let enum_ = &project.enums[enum_id];
-
-            if let Some(function_id) = project.find_function_in_scope(enum_.scope_id, &call.name) {
-                callee = Some(function_id);
-            }
-
+            current_scope_id = enum_.scope_id;
             if !enum_.generic_parameters.is_empty() {
+                // FIXME: This doesn't look right.
                 namespaces[0].generic_parameters = Some(enum_.generic_parameters.clone());
             }
-
-            (callee, error)
-        } else if let Some(scope_id) = project.find_namespace_in_scope(scope_id, namespace) {
-            if let Some(struct_id) = project.find_struct_in_scope(scope_id, &call.name) {
-                let structure = &project.structs[struct_id];
-
-                if let Some(function_id) =
-                    project.find_function_in_scope(structure.scope_id, &call.name)
-                {
-                    callee = Some(function_id);
-                }
-            } else if let Some(function_id) = project.find_function_in_scope(scope_id, &call.name) {
-                callee = Some(function_id);
-            }
-
-            (callee, error)
-        } else {
-            error = Some(JaktError::TypecheckError(
-                format!("unknown namespace or class: {}", namespace),
-                *span,
-            ));
-
-            (callee, error)
+            continue;
         }
-    } else {
-        // FIXME: Support function overloading.
-        // Look for the constructor
-        if let Some(struct_id) = project.find_struct_in_scope(scope_id, &call.name) {
-            let structure = &project.structs[struct_id];
-
-            if let Some(function_id) =
-                project.find_function_in_scope(structure.scope_id, &call.name)
-            {
-                callee = Some(function_id);
-            }
-        } else if let Some(function_id) = project.find_function_in_scope(scope_id, &call.name) {
-            callee = Some(function_id);
-        }
-
-        if callee.is_none() {
-            error = Some(JaktError::TypecheckError(
-                format!("call to unknown function: {}", call.name),
-                *span,
-            ));
-        }
-
-        (callee, error)
+        error = error.or(Some(JaktError::TypecheckError(
+            format!(
+                "Not a namespace, enum, class, or struct: ‘{}’",
+                call.namespace.join("::")
+            ),
+            *span,
+        )));
     }
+
+    // 1. Look for a function with this name.
+    if let Some(function_id) = project.find_function_in_scope(current_scope_id, &call.name) {
+        callee = Some(function_id);
+        return (callee, error);
+    }
+
+    // 2. Look for a struct, class or enum constructor with this name.
+    if let Some(struct_id) = project.find_struct_in_scope(current_scope_id, &call.name) {
+        let structure = &project.structs[struct_id];
+        if let Some(function_id) = project.find_function_in_scope(structure.scope_id, &call.name) {
+            return (Some(function_id), error);
+        }
+        return (callee, error);
+    }
+
+    if let Some(enum_id) = project.find_enum_in_scope(current_scope_id, &call.name) {
+        let enum_ = &project.enums[enum_id];
+        if let Some(function_id) = project.find_function_in_scope(enum_.scope_id, &call.name) {
+            return (Some(function_id), error);
+        }
+        return (callee, error);
+    }
+
+    error = error.or(Some(JaktError::TypecheckError(
+        format!("call to unknown function: {}", &call.name),
+        *span,
+    )));
+
+    (callee, error)
 }
 
 pub fn typecheck_call(
