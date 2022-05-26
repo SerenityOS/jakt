@@ -1,0 +1,8 @@
+namespace NS {
+    function foo() {}
+}
+
+function main() {
+    NS::foo()
+    NS::Foo::foo()
+}
