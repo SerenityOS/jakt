@@ -18,7 +18,6 @@
 #    include <Kernel/Process.h>
 #    include <Kernel/Thread.h>
 #else
-#    include <math.h>
 #    include <stdio.h>
 #    include <string.h>
 #endif
@@ -370,7 +369,7 @@ ErrorOr<void> FormatBuilder::put_f64(
     StringBuilder string_builder;
     FormatBuilder format_builder { string_builder };
 
-    if (isnan(value) || isinf(value)) {
+    if (__builtin_isnan(value) || __builtin_isinf(value)) {
         if (value < 0.0)
             TRY(string_builder.try_append('-'));
         else if (sign_mode == SignMode::Always)
@@ -378,7 +377,7 @@ ErrorOr<void> FormatBuilder::put_f64(
         else if (sign_mode == SignMode::Reserved)
             TRY(string_builder.try_append(' '));
 
-        if (isnan(value))
+        if (__builtin_isnan(value))
             TRY(string_builder.try_append(upper_case ? "NAN"sv : "nan"sv));
         else
             TRY(string_builder.try_append(upper_case ? "INF"sv : "inf"sv));
@@ -437,7 +436,7 @@ ErrorOr<void> FormatBuilder::put_f80(
     StringBuilder string_builder;
     FormatBuilder format_builder { string_builder };
 
-    if (isnan(value) || isinf(value)) {
+    if (__builtin_isnan(value) || __builtin_isinf(value)) {
         if (value < 0.0l)
             TRY(string_builder.try_append('-'));
         else if (sign_mode == SignMode::Always)
@@ -445,7 +444,7 @@ ErrorOr<void> FormatBuilder::put_f80(
         else if (sign_mode == SignMode::Reserved)
             TRY(string_builder.try_append(' '));
 
-        if (isnan(value))
+        if (__builtin_isnan(value))
             TRY(string_builder.try_append(upper_case ? "NAN"sv : "nan"sv));
         else
             TRY(string_builder.try_append(upper_case ? "INF"sv : "inf"sv));
