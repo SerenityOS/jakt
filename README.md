@@ -124,7 +124,7 @@ class Size {
     width: i64
     height: i64
 
-    public function area(this) => $width * $height
+    public function area(this) => .width * .height
 }
 ```
 
@@ -180,7 +180,7 @@ foo.set(9)
 
 ### Shorthand for accessing member variables
 
-To reduce repetitive `this.` spam in methods, the shorthand `$foo` expands to `this.foo`.
+To reduce repetitive `this.` spam in methods, the shorthand `.foo` expands to `this.foo`.
 
 ## Arrays
 
