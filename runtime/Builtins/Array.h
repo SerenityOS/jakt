@@ -153,6 +153,31 @@ private:
 };
 
 template<typename T>
+class ArrayIterator {
+    using Storage = ArrayStorage<T>;
+
+public:
+    ArrayIterator(NonnullRefPtr<Storage> storage)
+        : m_storage(move(storage))
+    {
+    }
+
+    Optional<T> next()
+    {
+        if (m_index >= m_storage->size()) {
+            return {};
+        }
+        auto current = m_storage->at(m_index);
+        ++m_index;
+        return current;
+    }
+
+private:
+    NonnullRefPtr<Storage> m_storage;
+    size_t m_index { 0 };
+};
+
+template<typename T>
 class Array {
 public:
     Array() = default;
@@ -161,6 +186,11 @@ public:
     Array& operator=(Array const&) = default;
     Array& operator=(Array&&) = default;
     ~Array() = default;
+
+    ArrayIterator<T> iterator() const
+    {
+        return ArrayIterator<T> { *m_storage };
+    }
 
     Array(std::initializer_list<T> list) requires(!IsLvalueReference<T>)
     {

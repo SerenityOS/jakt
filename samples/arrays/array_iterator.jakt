@@ -1,0 +1,6 @@
+function main() {
+    let words = ["foo", "bar", "baz"]
+    for word in words.iterator() {
+        println("{}", word)
+    }
+}
