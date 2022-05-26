@@ -1,0 +1,7 @@
+function main()
+{
+    if true
+    {
+        print("Well, hello friends.")
+    }
+}
