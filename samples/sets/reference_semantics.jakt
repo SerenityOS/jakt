@@ -1,0 +1,10 @@
+function foo(set: mutable {i64}) throws {
+    set.add(4)
+    set.add(5)
+}
+
+function main() {
+    let mutable set = {1, 2, 3}
+    foo(set)
+    println("{}", set.size());
+}

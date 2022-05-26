@@ -362,8 +362,6 @@ impl PartialEq for ParsedExpression {
 pub enum TypeCast {
     Fallible(ParsedType),
     Infallible(ParsedType),
-    Saturating(ParsedType),
-    Truncating(ParsedType),
 }
 
 impl TypeCast {
@@ -371,8 +369,6 @@ impl TypeCast {
         match self {
             TypeCast::Fallible(parsed_type) => parsed_type.clone(),
             TypeCast::Infallible(parsed_type) => parsed_type.clone(),
-            TypeCast::Saturating(parsed_type) => parsed_type.clone(),
-            TypeCast::Truncating(parsed_type) => parsed_type.clone(),
         }
     }
 }
@@ -602,7 +598,7 @@ pub fn parse_namespace(
                             } => match name.as_str() {
                                 "function" => {
                                     *index += 1;
-                                    let (fun, err) = parse_function(
+                                    let (mut fun, err) = parse_function(
                                         tokens,
                                         index,
                                         FunctionLinkage::External,
@@ -610,6 +606,7 @@ pub fn parse_namespace(
                                     );
                                     error = error.or(err);
 
+                                    fun.must_instantiate = true;
                                     parsed_namespace.functions.push(fun);
                                 }
                                 "struct" => {
@@ -639,6 +636,7 @@ pub fn parse_namespace(
                                 _ => {
                                     trace!("ERROR: unexpected keyword");
 
+                                    *index += 1;
                                     error = error.or(Some(JaktError::ParserError(
                                         "unexpected keyword".to_string(),
                                         *span,
@@ -646,11 +644,12 @@ pub fn parse_namespace(
                                 }
                             },
                             _ => {
-                                trace!("ERROR: unexpected keyword");
+                                trace!("ERROR: unexpected token");
 
+                                *index += 1;
                                 error = error.or(Some(JaktError::ParserError(
-                                    "unexpected keyword".to_string(),
-                                    *span,
+                                    "unexpected token".to_string(),
+                                    tokens[*index].span,
                                 )));
                             }
                         }
@@ -2915,24 +2914,12 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                         error = error.or(err);
                         TypeCast::Fallible(typename)
                     }
-                    TokenContents::Name(name) if name == "truncated" => {
-                        *index += 1;
-                        let (typename, err) = parse_typename(tokens, index);
-                        error = error.or(err);
-                        TypeCast::Truncating(typename)
-                    }
-                    TokenContents::Name(name) if name == "saturated" => {
-                        *index += 1;
-                        let (typename, err) = parse_typename(tokens, index);
-                        error = error.or(err);
-                        TypeCast::Saturating(typename)
-                    }
                     _ => {
                         error = error.or(Some(JaktError::ParserError(
                             "Invalid cast syntax".to_string(),
                             span,
                         )));
-                        TypeCast::Truncating(ParsedType::Empty)
+                        TypeCast::Fallible(ParsedType::Empty)
                     }
                 };
 

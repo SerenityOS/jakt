@@ -8,6 +8,7 @@
 
 #include <AK/Format.h>
 #include <AK/Forward.h>
+#include <AK/String.h>
 #include <AK/StringView.h>
 #include <Builtins/Array.h>
 #include <stdarg.h>
@@ -83,3 +84,31 @@ private:
 }
 
 using AK::StringBuilder;
+
+namespace AK {
+
+template<typename T>
+struct Formatter<JaktInternal::Array<T>> : Formatter<StringView> {
+    ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Array<T> const& value)
+    {
+        StringBuilder string_builder;
+        string_builder.append("[");
+        for (size_t i = 0; i < value.size(); ++i) {
+            if constexpr (IsSame<String, T>) {
+                string_builder.append("\"");
+            }
+            string_builder.appendff("{}", value[i]);
+            if constexpr (IsSame<String, T>) {
+                string_builder.append("\"");
+            }
+
+            if (i != value.size() - 1) {
+                string_builder.append(",");
+            }
+        }
+        string_builder.append("]");
+        return Formatter<StringView>::format(builder, string_builder.to_string());
+    }
+};
+
+}

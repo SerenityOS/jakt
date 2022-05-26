@@ -65,7 +65,7 @@
 #include <AK/kmalloc.cpp>
 
 namespace JaktInternal {
-template<typename T, typename TraitsForT = Traits<T>, bool IsOrdered = false>
+template<typename T>
 class Set;
 }
 
@@ -316,10 +316,10 @@ ALWAYS_INLINE constexpr OutputType infallible_integer_cast(InputType input)
 }
 
 template<typename OutputType, typename InputType>
-ALWAYS_INLINE constexpr OutputType saturating_integer_cast(InputType input)
+ALWAYS_INLINE constexpr OutputType as_saturated(InputType input)
 {
     if constexpr (IsEnum<InputType>) {
-        return saturating_integer_cast<OutputType>(to_underlying(input));
+        return as_saturated<OutputType>(to_underlying(input));
     } else {
         static_assert(IsIntegral<InputType>);
         if (!AK::is_within_range<OutputType>(input)) {
@@ -334,10 +334,10 @@ ALWAYS_INLINE constexpr OutputType saturating_integer_cast(InputType input)
 }
 
 template<typename OutputType, typename InputType>
-ALWAYS_INLINE constexpr OutputType truncating_integer_cast(InputType input)
+ALWAYS_INLINE constexpr OutputType as_truncated(InputType input)
 {
     if constexpr (IsEnum<InputType>) {
-        return truncating_integer_cast<OutputType>(to_underlying(input));
+        return as_truncated<OutputType>(to_underlying(input));
     } else {
         static_assert(IsIntegral<InputType>);
         return static_cast<OutputType>(input);
@@ -358,7 +358,8 @@ template<typename T>
 using RemoveRefPtr = typename _RemoveRefPtr<RemoveCVReference<T>>::Type;
 
 template<typename T>
-ALWAYS_INLINE decltype(auto) deref_if_ref_pointer(T&& value) {
+ALWAYS_INLINE decltype(auto) deref_if_ref_pointer(T&& value)
+{
     if constexpr (IsSpecializationOf<RemoveCVReference<T>, NonnullRefPtr>)
         return static_cast<CopyConst<RemoveReference<T>, RemoveRefPtr<T>>&>(*value);
     else
@@ -367,10 +368,10 @@ ALWAYS_INLINE decltype(auto) deref_if_ref_pointer(T&& value) {
 
 }
 
+using JaktInternal::as_saturated;
+using JaktInternal::as_truncated;
 using JaktInternal::fallible_integer_cast;
 using JaktInternal::infallible_integer_cast;
-using JaktInternal::saturating_integer_cast;
-using JaktInternal::truncating_integer_cast;
 
 int main(int argc, char** argv)
 {

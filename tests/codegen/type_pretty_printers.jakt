@@ -1,0 +1,35 @@
+class Size {
+    width: i64
+    height: i64
+}
+
+class Point {
+    x: i64
+    y: i64
+}
+
+class Rect {
+    location: Point
+    size: Size
+}
+
+enum Value {
+    Foo
+    Bar(values: [String])
+}
+
+enum Foo {
+    Bar
+    Baz(i64)
+}
+
+function main() {
+    let e = Value::Bar(values: ["hello"])
+    println("{}", e)
+
+    let r = Rect(location: Point(x: 0, y: 0), size: Size(width: 15, height: 30))
+    println("{}", r)
+
+    let foo = Foo::Baz(100)
+    println("{}", foo)
+}
