@@ -60,6 +60,10 @@ extern struct Dictionary<K, V> {
     function Dictionary<A, B>() -> [A:B]
 }
 
+extern struct SetIterator<T> {
+    function next(mutable this) -> T?
+}
+
 extern struct Set<V> {
     function contains(this, anonymous value: V) -> bool
     function add(mutable this, anonymous value: V) throws
@@ -70,6 +74,7 @@ extern struct Set<V> {
     function capacity(this) -> usize
     function hash(this) -> u32
     function Set<A>() -> Set<A>
+    function iterator(this) -> SetIterator<V>
 }
 
 extern struct Tuple {}
