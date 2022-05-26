@@ -2,7 +2,7 @@ struct Size {
     width: i64
     height: i64
 
-    function area(this) => $width * $height
+    function area(this) => .width * .height
 }
 
 
