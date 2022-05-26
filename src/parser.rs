@@ -94,6 +94,7 @@ pub struct ParsedNamespace {
     pub functions: Vec<ParsedFunction>,
     pub structs: Vec<ParsedStruct>,
     pub enums: Vec<ParsedEnum>,
+    pub traits: Vec<ParsedTrait>,
     pub namespaces: Vec<ParsedNamespace>,
 }
 
@@ -126,6 +127,23 @@ pub struct ParsedEnum {
     pub definition_linkage: DefinitionLinkage,
     pub underlying_type: ParsedType,
     pub methods: Vec<ParsedFunction>,
+}
+
+#[derive(Debug)]
+pub struct ParsedTrait {
+    pub name: String,
+    pub methods: Vec<ParsedFunction>,
+    pub span: Span,
+}
+
+impl ParsedTrait {
+    pub fn new(span: Span) -> Self {
+        ParsedTrait {
+            name: "".to_string(),
+            methods: Vec::new(),
+            span,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -479,6 +497,7 @@ impl ParsedNamespace {
             functions: Vec::new(),
             structs: Vec::new(),
             enums: Vec::new(),
+            traits: Vec::new(),
             namespaces: Vec::new(),
         }
     }
@@ -629,6 +648,12 @@ pub fn parse_namespace(
                     error = error.or(err);
 
                     parsed_namespace.structs.push(structure);
+                }
+                "trait" => {
+                    let (trait_, err) = parse_trait(tokens, index);
+                    error = error.or(err);
+
+                    parsed_namespace.traits.push(trait_);
                 }
                 "namespace" => {
                     *index += 1;
@@ -1542,6 +1567,143 @@ pub fn parse_struct(
                 definition_type,
             },
             error,
+        )
+    }
+}
+
+pub fn parse_trait(tokens: &[Token], index: &mut usize) -> (ParsedTrait, Option<JaktError>) {
+    trace!(format!("parse_trait: {:?}", tokens[*index]));
+
+    let mut error = None;
+
+    *index += 1;
+
+    if *index < tokens.len() {
+        match &tokens[*index] {
+            Token {
+                contents: TokenContents::Name(trait_name),
+                ..
+            } => {
+                let name_span = tokens[*index].span;
+
+                *index += 1;
+
+                if *index >= tokens.len() {
+                    return (
+                        ParsedTrait::new(name_span),
+                        Some(JaktError::ParserError(
+                            "Expected '{' after trait name".to_string(),
+                            name_span,
+                        )),
+                    );
+                }
+                if let Token {
+                    contents: TokenContents::LCurly,
+                    ..
+                } = tokens[*index]
+                {
+                    *index += 1;
+
+                    let mut parsed_trait = ParsedTrait {
+                        name: trait_name.to_string(),
+                        span: name_span,
+                        methods: Vec::new(),
+                    };
+
+                    // Parse the trait's functions. This also allows a trait to have no functions, which means it's not implementable.
+                    while *index < tokens.len() {
+                        match &tokens[*index] {
+                            Token {
+                                contents: TokenContents::RCurly,
+                                ..
+                            } => {
+                                *index += 1;
+                                break;
+                            }
+                            Token {
+                                contents: TokenContents::Eol,
+                                ..
+                            } => {
+                                *index += 1;
+                            }
+                            Token {
+                                contents: TokenContents::Name(keyword),
+                                ..
+                            } => {
+                                if *keyword != "function" {
+                                    return (
+                                        parsed_trait,
+                                        Some(JaktError::ParserError(
+                                            "Expected 'function' inside 'trait' definition. Hint: traits can only contain function declarations".to_string(),
+                                            tokens[*index].span
+                                        )),
+                                    );
+                                }
+
+                                // We hack the function parsing by pretending to parse an external function, which doesn't have a body just like a trait function declaration.
+                                let (mut parsed_function, err) = parse_function(
+                                    tokens,
+                                    index,
+                                    FunctionLinkage::External,
+                                    Visibility::Public,
+                                );
+                                parsed_function.linkage = FunctionLinkage::Internal;
+
+                                error = error.or(err);
+                                if error.is_some() {
+                                    break;
+                                }
+
+                                parsed_trait.methods.push(parsed_function);
+                            }
+                            _ => {
+                                return (
+                                    parsed_trait,
+                                    Some(JaktError::ParserError(
+                                        format!(
+                                            "Unexpected token '{:?}' in trait definition",
+                                            &tokens[*index].contents
+                                        ),
+                                        tokens[*index].span,
+                                    )),
+                                )
+                            }
+                        }
+                    }
+                    (parsed_trait, error)
+                } else {
+                    (
+                        ParsedTrait::new(name_span),
+                        Some(JaktError::ParserError(
+                            "Expected '{' after trait name".to_string(),
+                            name_span,
+                        )),
+                    )
+                }
+            }
+            _ => {
+                trace!("ERROR: expected trait name");
+                (
+                    ParsedTrait::new(tokens[*index].span),
+                    Some(JaktError::ParserError(
+                        format!(
+                            "Expected trait name after 'trait'. Try replacing this '{:?}' with a trait name",
+                            tokens[*index].contents
+                        ),
+                        tokens[*index].span,
+                    )),
+                )
+            }
+        }
+    } else {
+        trace!("ERROR: incomplete trait");
+        (
+            ParsedTrait::new(tokens[*index - 1].span),
+            Some(JaktError::ParserError(
+                "Incomplete trait definition. Try inserting 'TraitName { ... }' after 'trait'"
+                    .to_string(),
+                tokens[*index - 1].span,
+            )),
         )
     }
 }

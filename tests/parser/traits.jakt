@@ -1,0 +1,11 @@
+trait MyTrait {}
+
+trait MyLittleTrait {
+}
+
+trait MyOtherTrait {
+	function do_something(in: i64) -> u32
+	function do_nothing(argument: String)
+}
+
+function main() {}
