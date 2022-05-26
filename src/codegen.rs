@@ -2563,6 +2563,15 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     }
                 }
                 output.push(')');
+            } else if call.name == "format" {
+                output.push_str("String::formatted(");
+                for (i, param) in call.args.iter().enumerate() {
+                    output.push_str(&codegen_expr(indent, &param.1, project));
+                    if i != call.args.len() - 1 {
+                        output.push(',');
+                    }
+                }
+                output.push(')');
             } else {
                 if call.linkage == FunctionLinkage::ImplicitConstructor
                     || call.linkage == FunctionLinkage::ExternalClassConstructor
