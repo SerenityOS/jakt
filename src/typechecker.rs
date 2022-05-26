@@ -5069,7 +5069,21 @@ pub fn typecheck_binary_operation(
                         return (inner_type_id, None);
                     }
                 }
-                _ => {}
+                _ => {
+                    return (
+                        lhs_type_id,
+                        Some(JaktError::TypecheckErrorWithHint(
+                            format!(
+                                "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
+                                project.typename_for_type_id(lhs_type_id),
+                                project.typename_for_type_id(rhs_type_id),
+                            ),
+                            span,
+                            "Left side of ?? must be an Optional but isn't".to_string(),
+                            lhs.span(),
+                        )),
+                    );
+                }
             }
 
             return (
