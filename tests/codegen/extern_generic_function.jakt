@@ -1,0 +1,7 @@
+// These generic extern functions shouldn't compile to anything.
+
+extern function do_thing_with_type<T>(anonymous input: T) -> T
+
+extern function do_more_things<T, U>(anonymous input: U) -> T
+
+function main() {}

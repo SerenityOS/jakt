@@ -1,0 +1,5 @@
+function main() {
+    let mutable dict = ["a": 1]
+    dict["a"] += 4
+    println("{}", dict["a"])
+}
