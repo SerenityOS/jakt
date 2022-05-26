@@ -1,0 +1,6 @@
+function main() {
+    let set = {1, 2, 3, 4}
+    for value in set.iterator() {
+        println("{}", value)
+    }
+}
