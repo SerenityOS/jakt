@@ -2537,7 +2537,8 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
             *index += 1;
 
-            let (expr, err) = parse_operand(tokens, index);
+            let (expr, err) =
+                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
             error = error.or(err);
 
             let (patterns, err) = parse_patterns(tokens, index);
