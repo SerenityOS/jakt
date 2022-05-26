@@ -65,7 +65,7 @@
 #include <AK/kmalloc.cpp>
 
 namespace JaktInternal {
-template<typename T, typename TraitsForT = Traits<T>, bool IsOrdered = false>
+template<typename T>
 class Set;
 }
 

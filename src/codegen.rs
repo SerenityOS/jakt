@@ -2756,7 +2756,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             };
 
             output.push_str(&format!(
-                "(Set<{}>({{",
+                "(TRY(Set<{}>::create_with_values({{",
                 codegen_type(value_type_id, project),
             ));
             let mut first = true;
@@ -2768,7 +2768,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 }
                 output.push_str(&codegen_expr(indent, value, project));
             }
-            output.push_str("}))");
+            output.push_str("})))");
         }
         CheckedExpression::Tuple(vals, _, _) => {
             // (Tuple{1, 2, 3})
