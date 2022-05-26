@@ -36,6 +36,8 @@ public:
     bool contains(K const& key) const { return m_storage->map.contains(key); }
 
     Optional<V> get(K const& key) const { return m_storage->map.get(key); }
+    V& operator[](K const& key) { return m_storage->map.get(key).value(); }
+    V const& operator[](K const& key) const { return m_storage->map.get(key).value(); }
 
     Vector<K> keys() const { return m_storage->map.keys(); }
 

@@ -1,0 +1,10 @@
+class B {
+}
+
+class A {
+    b: B
+}
+
+function main() {
+    let mutable a = A(b: [])
+}

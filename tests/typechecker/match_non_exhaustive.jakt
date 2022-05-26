@@ -1,0 +1,10 @@
+enum Foo {
+    X
+    Y
+}
+
+function main() {
+    match Foo::X() {
+        Y => 0
+    }
+}

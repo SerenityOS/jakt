@@ -948,6 +948,17 @@ fn codegen_struct(structure: &CheckedStruct, project: &Project) -> String {
 fn codegen_function_predecl(function: &CheckedFunction, project: &Project) -> String {
     let mut output = String::new();
 
+    // Extern generics need to be in the header anyways, so we can't codegen for them.
+    if [
+        FunctionLinkage::External,
+        FunctionLinkage::ExternalClassConstructor,
+    ]
+    .contains(&function.linkage)
+        && !function.generic_parameters.is_empty()
+    {
+        return output;
+    }
+
     if function.linkage == FunctionLinkage::External {
         output.push_str("extern ");
     }
@@ -1032,6 +1043,17 @@ fn codegen_function_in_namespace(
     containing_struct: Option<TypeId>,
     project: &Project,
 ) -> String {
+    // Extern generics need to be in the header anyways, so we can't codegen for them.
+    if [
+        FunctionLinkage::External,
+        FunctionLinkage::ExternalClassConstructor,
+    ]
+    .contains(&function.linkage)
+        && !function.generic_parameters.is_empty()
+    {
+        return String::new();
+    }
+
     let mut output = String::new();
 
     if !function.generic_parameters.is_empty() {
@@ -1722,7 +1744,7 @@ fn codegen_match_body(
 fn codegen_enum_match(
     enum_: &CheckedEnum,
     expr: &CheckedExpression,
-    cases: &Vec<CheckedMatchCase>,
+    cases: &[CheckedMatchCase],
     return_type_id: &TypeId,
     match_values_are_all_constant: bool,
     indent: usize,
@@ -2016,7 +2038,7 @@ fn codegen_enum_match(
 
 fn codegen_generic_match(
     expr: &CheckedExpression,
-    cases: &Vec<CheckedMatchCase>,
+    cases: &[CheckedMatchCase],
     return_type_id: &TypeId,
     match_values_are_all_constant: bool,
     indent: usize,
@@ -2542,20 +2564,6 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                 output.push_str("verify_cast");
                             }
                         }
-                        CheckedTypeCast::Saturating(_) => {
-                            if is_integer(*type_id) {
-                                output.push_str("saturating_integer_cast");
-                            } else {
-                                panic!("Saturating cast on non-integer type");
-                            }
-                        }
-                        CheckedTypeCast::Truncating(_) => {
-                            if is_integer(*type_id) {
-                                output.push_str("truncating_integer_cast");
-                            } else {
-                                panic!("Truncating cast on non-integer type");
-                            }
-                        }
                     }
                     output.push('<');
                     output.push_str(&codegen_type(*type_id, project));
@@ -2787,9 +2795,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         CheckedExpression::IndexedDictionary(expr, idx, _, _) => {
             output.push_str("((");
             output.push_str(&codegen_expr(indent, expr, project));
-            output.push_str(").get(");
+            output.push_str(")[");
             output.push_str(&codegen_expr(indent, idx, project));
-            output.push_str(").value())");
+            output.push_str("])");
         }
         CheckedExpression::IndexedTuple(expr, idx, _, _) => {
             // x.get<1>()
