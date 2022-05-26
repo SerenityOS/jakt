@@ -7,7 +7,7 @@ There are no pre-packaged versions of this extension, as changes to language and
 To build:
 
 ```
-> npm install vsce
+> npm install vsce -g
 > vsce package
 ```
 
