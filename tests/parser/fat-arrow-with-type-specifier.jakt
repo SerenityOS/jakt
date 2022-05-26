@@ -1,0 +1,9 @@
+class S {
+    public function get_answer() -> i32 => 42
+}
+
+function greeting() -> String => "Hello"
+
+function main() {
+    println("{} friends! The answer is {}", greeting(), S::get_answer())
+}
