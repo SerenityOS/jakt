@@ -36,10 +36,25 @@ fn main() -> Result<(), JaktError> {
                 out_filepath.set_extension("cpp");
                 let mut out_file = std::fs::File::create(out_filepath.clone())?;
                 out_file.write_all(str.as_bytes())?;
-                if !arguments.emit_source_only {
-                    let path_as_string =
-                        |path: &PathBuf| path.clone().into_os_string().into_string().unwrap();
 
+                let path_as_string =
+                    |path: &PathBuf| path.clone().into_os_string().into_string().unwrap();
+
+                if arguments.prettify_cpp_source {
+                    let cpp_source = path_as_string(&out_filepath);
+                    let default_clang_format_path = PathBuf::from("clang-format");
+                    let clang_format_output = Command::new(
+                        arguments
+                            .clang_format_path
+                            .as_ref()
+                            .unwrap_or(&default_clang_format_path),
+                    )
+                    .args(["-i", &cpp_source])
+                    .output()?;
+                    io::stderr().write_all(&clang_format_output.stderr)?;
+                }
+
+                if !arguments.emit_source_only {
                     let input_cpp = path_as_string(&out_filepath);
                     let output_executable = path_as_string(&out_filepath.with_extension(""));
                     let runtime_path = if let Some(ref runtime_path) = arguments.runtime_path {
@@ -108,6 +123,7 @@ const USAGE: &str = "usage: jakt [-h,-S] [OPTIONS] [FILES...]";
 const HELP: &str = "\
 Flags:
   -h,--help                     Print this help and exit.
+  -p,--prettify-cpp-source      Run emitted C++ source through clang-format.
   -S,--emit-cpp-source-only     Only emit the generated C++ source, do not compile.
 
 Options:
@@ -115,6 +131,8 @@ Options:
                                 Defaults to $PWD/build.
   -C,--cxx-compiler-path PATH   Path of the C++ compiler to use when compiling the generated sources.
                                 Defaults to clang++.
+  -F,--clang-format-path PATH   Path to clang-format executable.
+                                Defaults to clang-format.
   -R,--runtime-path PATH        Path of the Jakt runtime headers.
                                 Defaults to $PWD/runtime.
 
@@ -129,6 +147,8 @@ struct JaktArguments {
     input_files: Vec<PathBuf>,
     emit_source_only: bool,
     cxx_compiler_path: Option<PathBuf>,
+    prettify_cpp_source: bool,
+    clang_format_path: Option<PathBuf>,
     runtime_path: Option<PathBuf>,
 }
 
@@ -140,12 +160,15 @@ fn parse_arguments() -> JaktArguments {
         exit(0);
     }
     let emit_source_only = pico_arguments.contains(["-S", "--emit-cpp-source-only"]);
+    let prettify_cpp_source = pico_arguments.contains(["-p", "--prettify-cpp-source"]);
 
     let mut arguments = JaktArguments {
         binary_directory: None,
         input_files: Vec::new(),
         emit_source_only,
         cxx_compiler_path: None,
+        prettify_cpp_source,
+        clang_format_path: None,
         runtime_path: None,
     };
 
@@ -160,6 +183,10 @@ fn parse_arguments() -> JaktArguments {
 
     if let Ok(cxx_compiler_path) = get_path_arg(["-C", "--cxx-compiler-path"]) {
         arguments.cxx_compiler_path = cxx_compiler_path;
+    }
+
+    if let Ok(clang_format_path) = get_path_arg(["-F", "--clang-format-path"]) {
+        arguments.clang_format_path = clang_format_path;
     }
 
     if let Ok(runtime_path) = get_path_arg(["-R", "--runtime-path"]) {
