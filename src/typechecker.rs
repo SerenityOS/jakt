@@ -610,6 +610,7 @@ pub struct CheckedStruct {
     pub definition_linkage: DefinitionLinkage,
     pub definition_type: DefinitionType,
     pub type_id: TypeId,
+    pub span: Span,
 }
 
 #[derive(Clone, Debug)]
@@ -1844,6 +1845,7 @@ fn typecheck_struct_predecl(
         definition_linkage: structure.definition_linkage,
         definition_type: structure.definition_type,
         type_id: struct_type_id,
+        span: structure.span,
     });
 
     for (generic_parameter, parameter_span) in &structure.generic_parameters {

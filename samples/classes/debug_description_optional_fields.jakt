@@ -1,0 +1,9 @@
+class A {
+    x: i64?
+    y: String
+    z: Z?
+}
+class Z {}
+function main(){
+    println("{}", A(x: 1, y: "y", z: Z()))
+}

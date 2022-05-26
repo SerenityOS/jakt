@@ -978,26 +978,43 @@ fn codegen_debug_description_getter(structure: &CheckedStruct, project: &Project
     for (i, field) in structure.fields.iter().enumerate() {
         output.push_str(&codegen_indent(INDENT_SIZE));
 
-        output.push_str("builder.appendff(\"");
-        output.push_str(&field.name);
-        output.push_str(": {}");
-        if i != structure.fields.len() - 1 {
-            output.push_str(", ");
-        }
-
-        output.push_str("\", ");
-
         match project.types[field.type_id] {
-            Type::Struct(struct_id)
-                if project.structs[struct_id].definition_type == DefinitionType::Class =>
-            {
-                output.push('*');
-            }
-            _ => {}
-        }
+            Type::GenericInstance(struct_id, _) => {
+                if struct_id == project.get_optional_struct_id(structure.span) {
+                    let suffix = match i == structure.fields.len() - 1 {
+                        true => "",
+                        false => ", ",
+                    };
 
-        output.push_str(&field.name);
-        output.push_str(");\n");
+                    output.push_str(&format!(
+                        "{}.has_value() ? builder.appendff(\"{}: {{}}{}\",{}.value()) : builder.appendff(\"{}: {{}}{}\", \"None\");",
+                        &field.name, field.name, suffix, field.name, field.name, suffix
+                    ));
+                }
+            }
+            _ => {
+                output.push_str("builder.appendff(\"");
+                output.push_str(&field.name);
+                output.push_str(": {}");
+                if i != structure.fields.len() - 1 {
+                    output.push_str(", ");
+                }
+
+                output.push_str("\", ");
+
+                match project.types[field.type_id] {
+                    Type::Struct(struct_id)
+                        if project.structs[struct_id].definition_type == DefinitionType::Class =>
+                    {
+                        output.push('*');
+                    }
+                    _ => {}
+                }
+
+                output.push_str(&field.name);
+                output.push_str(");\n");
+            }
+        }
     }
 
     output.push_str("builder.append(\")\");");
