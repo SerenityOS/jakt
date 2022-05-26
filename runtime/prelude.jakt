@@ -18,6 +18,10 @@ extern struct String {
     function length(this) -> usize
 }
 
+extern struct ArrayIterator<T> {
+    function next(mutable this) -> T?
+}
+
 extern struct Array<T> {
     function is_empty(this) -> bool
     function size(this) -> usize
@@ -27,6 +31,7 @@ extern struct Array<T> {
     function resize(mutable this, anonymous size: usize) throws
     function push(mutable this, anonymous value: T) throws
     function pop(mutable this) -> T?
+    function iterator(this) -> ArrayIterator<T>
 }
 
 extern struct Optional<T> {
