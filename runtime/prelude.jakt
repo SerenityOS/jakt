@@ -24,6 +24,7 @@ extern struct ArrayIterator<T> {
 
 extern struct Array<T> {
     function is_empty(this) -> bool
+    function contains(this, anonymous value: T) -> bool
     function size(this) -> usize
     function capacity(this) -> usize
     function ensure_capacity(this, anonymous capacity: usize) throws
