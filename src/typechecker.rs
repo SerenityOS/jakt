@@ -3103,34 +3103,6 @@ pub fn typecheck_expression(
 ) -> (CheckedExpression, Option<JaktError>) {
     let mut error = None;
 
-    let unify_with_type_hint =
-        |project: &mut Project, type_id: &TypeId| -> (TypeId, Option<JaktError>) {
-            if let Some(hint) = type_hint {
-                if hint == UNKNOWN_TYPE_ID {
-                    return (*type_id, None);
-                }
-
-                let mut generic_interface = HashMap::new();
-                let err = check_types_for_compat(
-                    hint,
-                    *type_id,
-                    &mut generic_interface,
-                    expr.span(),
-                    project,
-                );
-                if err.is_some() {
-                    return (*type_id, err);
-                }
-
-                return (
-                    substitute_typevars_in_type(*type_id, &generic_interface, project),
-                    None,
-                );
-            }
-
-            (*type_id, None)
-        };
-
     match expr {
         ParsedExpression::Range(start_expr, end_expr, span) => {
             let (mut checked_start, err) =
@@ -3170,7 +3142,7 @@ pub fn typecheck_expression(
             );
             let type_id = project.find_or_add_type_id(type_);
 
-            let (type_id, err) = unify_with_type_hint(project, &type_id);
+            let (type_id, err) = unify_with_type(type_id, type_hint, *span, project);
             error = error.or(err);
 
             (
@@ -3211,7 +3183,7 @@ pub fn typecheck_expression(
             );
             error = error.or(err);
 
-            let (type_id, err) = unify_with_type_hint(project, &type_id);
+            let (type_id, err) = unify_with_type(type_id, type_hint, *span, project);
             error = error.or(err);
 
             (
@@ -3308,7 +3280,7 @@ pub fn typecheck_expression(
             };
             error = error.or(err);
 
-            let (type_id, err) = unify_with_type_hint(project, &type_id);
+            let (type_id, err) = unify_with_type(type_id, type_hint, *span, project);
             error = error.or(err);
 
             (
@@ -3330,14 +3302,14 @@ pub fn typecheck_expression(
             );
             error = error.or(err);
 
-            let (type_id, err) = unify_with_type_hint(project, &checked_call.type_id);
+            let (type_id, err) = unify_with_type(checked_call.type_id, type_hint, *span, project);
             error = error.or(err);
 
             (CheckedExpression::Call(checked_call, *span, type_id), error)
         }
         ParsedExpression::NumericConstant(constant, span) => {
             // FIXME: Don't ignore type hint unification errors
-            let (type_id, _) = unify_with_type_hint(project, &constant.type_id());
+            let (type_id, _) = unify_with_type(constant.type_id(), type_hint, *span, project);
 
             (
                 CheckedExpression::NumericConstant(constant.clone(), *span, type_id),
@@ -3345,23 +3317,23 @@ pub fn typecheck_expression(
             )
         }
         ParsedExpression::QuotedString(qs, span) => {
-            let (_, err) = unify_with_type_hint(project, &STRING_TYPE_ID);
+            let (_, err) = unify_with_type(STRING_TYPE_ID, type_hint, *span, project);
 
             (CheckedExpression::QuotedString(qs.clone(), *span), err)
         }
         ParsedExpression::ByteLiteral(b, span) => {
-            let (_, err) = unify_with_type_hint(project, &U8_TYPE_ID);
+            let (_, err) = unify_with_type(U8_TYPE_ID, type_hint, *span, project);
 
             (CheckedExpression::ByteConstant(b.clone(), *span), err)
         }
         ParsedExpression::CharacterLiteral(c, span) => {
-            let (_, err) = unify_with_type_hint(project, &CCHAR_TYPE_ID);
+            let (_, err) = unify_with_type(CCHAR_TYPE_ID, type_hint, *span, project);
 
             (CheckedExpression::CharacterConstant(c.clone(), *span), err)
         }
         ParsedExpression::Var(v, span) => {
             if let Some(var) = project.find_var_in_scope(scope_id, v) {
-                let (_, err) = unify_with_type_hint(project, &var.type_id);
+                let (_, err) = unify_with_type(var.type_id, type_hint, *span, project);
 
                 (CheckedExpression::Var(var, *span), err)
             } else {
@@ -3536,7 +3508,7 @@ pub fn typecheck_expression(
             let type_id = project
                 .find_or_add_type_id(Type::GenericInstance(array_struct_id, vec![inner_type_id]));
 
-            let (type_id, err) = unify_with_type_hint(project, &type_id);
+            let (type_id, err) = unify_with_type(type_id, type_hint, *span, project);
             error = error.or(err);
 
             (
@@ -3608,7 +3580,7 @@ pub fn typecheck_expression(
             let type_id = project
                 .find_or_add_type_id(Type::GenericInstance(set_struct_id, vec![inner_type_id]));
 
-            let (type_id, err) = unify_with_type_hint(project, &type_id);
+            let (type_id, err) = unify_with_type(type_id, type_hint, *span, project);
             error = error.or(err);
 
             (CheckedExpression::Set(output, *span, type_id), error)
@@ -3725,7 +3697,7 @@ pub fn typecheck_expression(
                 vec![key_type_id, value_type_id],
             ));
 
-            let (type_id, err) = unify_with_type_hint(project, &type_id);
+            let (type_id, err) = unify_with_type(type_id, type_hint, *span, project);
             error = error.or(err);
 
             (CheckedExpression::Dictionary(output, *span, type_id), error)
@@ -3754,7 +3726,7 @@ pub fn typecheck_expression(
             let type_id =
                 project.find_or_add_type_id(Type::GenericInstance(tuple_struct_id, checked_types));
 
-            let (type_id, err) = unify_with_type_hint(project, &type_id);
+            let (type_id, err) = unify_with_type(type_id, type_hint, *span, project);
             error = error.or(err);
 
             (
@@ -3795,7 +3767,8 @@ pub fn typecheck_expression(
                         }
                     }
 
-                    let (expr_type_id, err) = unify_with_type_hint(project, &expr_type_id);
+                    let (expr_type_id, err) =
+                        unify_with_type(expr_type_id, type_hint, *span, project);
                     error = error.or(err);
 
                     (
@@ -3813,7 +3786,8 @@ pub fn typecheck_expression(
                 {
                     expr_type_id = inner_type_ids[1];
 
-                    let (expr_type_id, err) = unify_with_type_hint(project, &expr_type_id);
+                    let (expr_type_id, err) =
+                        unify_with_type(expr_type_id, type_hint, *span, project);
                     error = error.or(err);
 
                     (
@@ -3832,7 +3806,8 @@ pub fn typecheck_expression(
                         expr.span(),
                     )));
 
-                    let (expr_type_id, err) = unify_with_type_hint(project, &expr_type_id);
+                    let (expr_type_id, err) =
+                        unify_with_type(expr_type_id, type_hint, *span, project);
                     error = error.or(err);
 
                     (
@@ -3878,7 +3853,7 @@ pub fn typecheck_expression(
                 }
             }
 
-            let (type_id, err) = unify_with_type_hint(project, &type_id);
+            let (type_id, err) = unify_with_type(type_id, type_hint, *span, project);
             error = error.or(err);
 
             (
@@ -4521,7 +4496,7 @@ pub fn typecheck_expression(
 
             let mut err: Option<JaktError> = None;
             final_result_type = final_result_type.map(|p| {
-                let (ty, unification_error) = unify_with_type_hint(project, &p);
+                let (ty, unification_error) = unify_with_type(p, type_hint, *span, project);
                 err = unification_error;
                 ty
             });
@@ -4558,7 +4533,7 @@ pub fn typecheck_expression(
                             let resolved_type_id =
                                 resolve_type_var(member.type_id, scope_id, project);
                             let (unified_type, _) =
-                                unify_with_type_hint(project, &resolved_type_id);
+                                unify_with_type(resolved_type_id, type_hint, *span, project);
 
                             let structure = &project.structs[struct_id];
                             return (
@@ -4596,7 +4571,7 @@ pub fn typecheck_expression(
                 }
             }
 
-            let (type_id, err) = unify_with_type_hint(project, &type_id);
+            let (type_id, err) = unify_with_type(type_id, type_hint, *span, project);
             error = error.or(err);
 
             (
@@ -4632,7 +4607,8 @@ pub fn typecheck_expression(
                         );
                         error = error.or(err);
 
-                        let (type_id, err) = unify_with_type_hint(project, &checked_call.type_id);
+                        let (type_id, err) =
+                            unify_with_type(checked_call.type_id, type_hint, *span, project);
                         error = error.or(err);
 
                         (
@@ -4671,7 +4647,8 @@ pub fn typecheck_expression(
                         );
                         error = error.or(err);
 
-                        let (type_id, err) = unify_with_type_hint(project, &checked_call.type_id);
+                        let (type_id, err) =
+                            unify_with_type(checked_call.type_id, type_hint, *span, project);
                         error = error.or(err);
 
                         (
@@ -4699,7 +4676,8 @@ pub fn typecheck_expression(
                         );
                         error = error.or(err);
 
-                        let (type_id, err) = unify_with_type_hint(project, &checked_call.type_id);
+                        let (type_id, err) =
+                            unify_with_type(checked_call.type_id, type_hint, *span, project);
                         error = error.or(err);
 
                         (
@@ -5022,21 +5000,29 @@ pub fn typecheck_unary_operation(
 }
 
 fn unify_with_type(
-    expected_type: TypeId,
     found_type: TypeId,
+    expected_type: Option<TypeId>,
     span: Span,
-    project: &Project,
+    project: &mut Project,
 ) -> (TypeId, Option<JaktError>) {
-    let mut generic_inferences = HashMap::new();
-    let err = check_types_for_compat(
-        expected_type,
-        found_type,
-        &mut generic_inferences,
-        span,
-        project,
-    );
+    if let Some(hint) = expected_type {
+        if hint == UNKNOWN_TYPE_ID {
+            return (found_type, None);
+        }
 
-    (expected_type, err)
+        let mut generic_interface = HashMap::new();
+        let err = check_types_for_compat(hint, found_type, &mut generic_interface, span, project);
+        if err.is_some() {
+            return (found_type, err);
+        }
+
+        return (
+            substitute_typevars_in_type(found_type, &generic_interface, project),
+            None,
+        );
+    }
+
+    (found_type, None)
 }
 
 pub fn typecheck_binary_operation(
@@ -5045,7 +5031,7 @@ pub fn typecheck_binary_operation(
     rhs: &CheckedExpression,
     scope_id: ScopeId,
     span: Span,
-    project: &Project,
+    project: &mut Project,
 ) -> (TypeId, Option<JaktError>) {
     let lhs_type_id = lhs.type_id(scope_id, project);
     let rhs_type_id = rhs.type_id(scope_id, project);
@@ -5122,7 +5108,8 @@ pub fn typecheck_binary_operation(
                 }
             }
 
-            let (type_id, err) = unify_with_type(lhs_type_id, rhs_type_id, rhs.span(), project);
+            let (type_id, err) =
+                unify_with_type(rhs_type_id, Some(lhs_type_id), rhs.span(), project);
 
             if err.is_some() {
                 return (
