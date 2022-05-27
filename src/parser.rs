@@ -3257,293 +3257,108 @@ pub fn parse_operator(
     let span = tokens[*index].span;
 
     match &tokens[*index].contents {
-        TokenContents::QuestionMarkQuestionMark => {
+        TokenContents::QuestionMarkQuestionMark
+        | TokenContents::Plus
+        | TokenContents::Minus
+        | TokenContents::Asterisk
+        | TokenContents::ForwardSlash
+        | TokenContents::PercentSign => {
+            let operator = match &tokens[*index].contents {
+                TokenContents::QuestionMarkQuestionMark => BinaryOperator::NoneCoalescing,
+                TokenContents::Plus => BinaryOperator::Add,
+                TokenContents::Minus => BinaryOperator::Subtract,
+                TokenContents::Asterisk => BinaryOperator::Multiply,
+                TokenContents::ForwardSlash => BinaryOperator::Divide,
+                TokenContents::PercentSign => BinaryOperator::Modulo,
+                _ => panic!("Internal error: Couldn't match token contents"),
+            };
             *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::NoneCoalescing, span),
-                None,
-            )
+            (ParsedExpression::Operator(operator, span), None)
         }
-        TokenContents::Name(name) if name == "and" => {
+        TokenContents::Name(name) if name == "and" || name == "or" => {
+            let operator = match &tokens[*index].contents {
+                TokenContents::Name(name) if name == "and" => BinaryOperator::LogicalAnd,
+                TokenContents::Name(name) if name == "or" => BinaryOperator::LogicalOr,
+                _ => panic!("Internal error: Couldn't match token contents"),
+            };
             *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::LogicalAnd, span),
-                None,
-            )
+            (ParsedExpression::Operator(operator, span), None)
         }
-        TokenContents::Name(name) if name == "or" => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::LogicalOr, span),
-                None,
-            )
-        }
-        TokenContents::Plus => {
-            *index += 1;
-            (ParsedExpression::Operator(BinaryOperator::Add, span), None)
-        }
-        TokenContents::Minus => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::Subtract, span),
-                None,
-            )
-        }
-        TokenContents::Asterisk => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::Multiply, span),
-                None,
-            )
-        }
-        TokenContents::ForwardSlash => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::Divide, span),
-                None,
-            )
-        }
-        TokenContents::PercentSign => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::Modulo, span),
-                None,
-            )
-        }
-        TokenContents::Equal => {
+        TokenContents::Equal
+        | TokenContents::LeftShiftEqual
+        | TokenContents::RightShiftEqual
+        | TokenContents::AmpersandEqual
+        | TokenContents::PipeEqual
+        | TokenContents::CaretEqual
+        | TokenContents::PlusEqual
+        | TokenContents::MinusEqual
+        | TokenContents::AsteriskEqual
+        | TokenContents::ForwardSlashEqual
+        | TokenContents::PercentSignEqual
+        | TokenContents::QuestionMarkQuestionMarkEqual => {
             trace!("ERROR: assignment not allowed in this position");
 
-            *index += 1;
+            let operator = match &tokens[*index].contents {
+                TokenContents::Equal => BinaryOperator::Assign,
+                TokenContents::LeftShiftEqual => BinaryOperator::BitwiseLeftShiftAssign,
+                TokenContents::RightShiftEqual => BinaryOperator::BitwiseRightShiftAssign,
+                TokenContents::AmpersandEqual => BinaryOperator::BitwiseAndAssign,
+                TokenContents::PipeEqual => BinaryOperator::BitwiseOrAssign,
+                TokenContents::CaretEqual => BinaryOperator::BitwiseXorAssign,
+                TokenContents::PlusEqual => BinaryOperator::AddAssign,
+                TokenContents::MinusEqual => BinaryOperator::SubtractAssign,
+                TokenContents::AsteriskEqual => BinaryOperator::MultiplyAssign,
+                TokenContents::ForwardSlashEqual => BinaryOperator::DivideAssign,
+                TokenContents::PercentSignEqual => BinaryOperator::ModuloAssign,
+                TokenContents::QuestionMarkQuestionMarkEqual => {
+                    BinaryOperator::NoneCoalescingAssign
+                }
+                _ => panic!("Internal error: Couldn't match token contents"),
+            };
+            if operator != BinaryOperator::NoneCoalescingAssign {
+                *index += 1;
+            } else {
+                *index += 2;
+            }
             (
-                ParsedExpression::Operator(BinaryOperator::Assign, span),
+                ParsedExpression::Operator(operator, span),
                 Some(JaktError::ValidationError(
                     "assignment is not allowed in this position".to_string(),
                     span,
                 )),
             )
         }
-        TokenContents::LeftShiftEqual => {
-            trace!("ERROR: assignment not allowed in this position");
-
+        TokenContents::DoubleEqual
+        | TokenContents::NotEqual
+        | TokenContents::LessThan
+        | TokenContents::LessThanOrEqual
+        | TokenContents::GreaterThan
+        | TokenContents::GreaterThanOrEqual
+        | TokenContents::Ampersand
+        | TokenContents::Pipe
+        | TokenContents::Caret
+        | TokenContents::LeftShift
+        | TokenContents::RightShift
+        | TokenContents::LeftArithmeticShift
+        | TokenContents::RightArithmeticShift => {
+            let operator = match &tokens[*index].contents {
+                TokenContents::DoubleEqual => BinaryOperator::Equal,
+                TokenContents::NotEqual => BinaryOperator::NotEqual,
+                TokenContents::LessThan => BinaryOperator::LessThan,
+                TokenContents::LessThanOrEqual => BinaryOperator::LessThanOrEqual,
+                TokenContents::GreaterThan => BinaryOperator::GreaterThan,
+                TokenContents::GreaterThanOrEqual => BinaryOperator::GreaterThanOrEqual,
+                TokenContents::Ampersand => BinaryOperator::BitwiseAnd,
+                TokenContents::Pipe => BinaryOperator::BitwiseOr,
+                TokenContents::Caret => BinaryOperator::BitwiseXor,
+                TokenContents::LeftShift => BinaryOperator::BitwiseLeftShift,
+                TokenContents::RightShift => BinaryOperator::BitwiseRightShift,
+                TokenContents::LeftArithmeticShift => BinaryOperator::ArithmeticLeftShift,
+                TokenContents::RightArithmeticShift => BinaryOperator::ArithmeticRightShift,
+                _ => panic!("Internal error: Couldn't match token contents"),
+            };
             *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseLeftShiftAssign, span),
-                Some(JaktError::ValidationError(
-                    "assignment is not allowed in this position".to_string(),
-                    span,
-                )),
-            )
-        }
-        TokenContents::RightShiftEqual => {
-            trace!("ERROR: assignment not allowed in this position");
-
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseRightShiftAssign, span),
-                Some(JaktError::ValidationError(
-                    "assignment is not allowed in this position".to_string(),
-                    span,
-                )),
-            )
-        }
-        TokenContents::AmpersandEqual => {
-            trace!("ERROR: assignment not allowed in this position");
-
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseAndAssign, span),
-                Some(JaktError::ValidationError(
-                    "assignment is not allowed in this position".to_string(),
-                    span,
-                )),
-            )
-        }
-        TokenContents::PipeEqual => {
-            trace!("ERROR: assignment not allowed in this position");
-
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseOrAssign, span),
-                Some(JaktError::ValidationError(
-                    "assignment is not allowed in this position".to_string(),
-                    span,
-                )),
-            )
-        }
-        TokenContents::CaretEqual => {
-            trace!("ERROR: assignment not allowed in this position");
-
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseXorAssign, span),
-                Some(JaktError::ValidationError(
-                    "assignment is not allowed in this position".to_string(),
-                    span,
-                )),
-            )
-        }
-        TokenContents::PlusEqual => {
-            trace!("ERROR: assignment not allowed in this position");
-
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::AddAssign, span),
-                Some(JaktError::ValidationError(
-                    "assignment is not allowed in this position".to_string(),
-                    span,
-                )),
-            )
-        }
-        TokenContents::MinusEqual => {
-            trace!("ERROR: assignment not allowed in this position");
-
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::SubtractAssign, span),
-                Some(JaktError::ValidationError(
-                    "assignment is not allowed in this position".to_string(),
-                    span,
-                )),
-            )
-        }
-        TokenContents::AsteriskEqual => {
-            trace!("ERROR: assignment not allowed in this position");
-
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::MultiplyAssign, span),
-                Some(JaktError::ValidationError(
-                    "assignment is not allowed in this position".to_string(),
-                    span,
-                )),
-            )
-        }
-        TokenContents::ForwardSlashEqual => {
-            trace!("ERROR: assignment not allowed in this position");
-
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::DivideAssign, span),
-                Some(JaktError::ValidationError(
-                    "assignment is not allowed in this position".to_string(),
-                    span,
-                )),
-            )
-        }
-        TokenContents::PercentSignEqual => {
-            trace!("ERROR: assignment not allowed in this position");
-
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::ModuloAssign, span),
-                Some(JaktError::ValidationError(
-                    "assignment is not allowed in this position".to_string(),
-                    span,
-                )),
-            )
-        }
-        TokenContents::QuestionMarkQuestionMarkEqual => {
-            trace!("ERROR: assignment not allowed in this position");
-
-            *index += 2;
-            (
-                ParsedExpression::Operator(BinaryOperator::ModuloAssign, span),
-                Some(JaktError::ValidationError(
-                    "assignment is not allowed in this position".to_string(),
-                    span,
-                )),
-            )
-        }
-        TokenContents::DoubleEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::Equal, span),
-                None,
-            )
-        }
-        TokenContents::NotEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::NotEqual, span),
-                None,
-            )
-        }
-        TokenContents::LessThan => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::LessThan, span),
-                None,
-            )
-        }
-        TokenContents::LessThanOrEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::LessThanOrEqual, span),
-                None,
-            )
-        }
-        TokenContents::GreaterThan => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::GreaterThan, span),
-                None,
-            )
-        }
-        TokenContents::GreaterThanOrEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::GreaterThanOrEqual, span),
-                None,
-            )
-        }
-        TokenContents::Ampersand => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseAnd, span),
-                None,
-            )
-        }
-        TokenContents::Pipe => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseOr, span),
-                None,
-            )
-        }
-        TokenContents::Caret => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseXor, span),
-                None,
-            )
-        }
-        TokenContents::LeftShift => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseLeftShift, span),
-                None,
-            )
-        }
-        TokenContents::RightShift => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseRightShift, span),
-                None,
-            )
-        }
-        TokenContents::LeftArithmeticShift => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::ArithmeticLeftShift, span),
-                None,
-            )
-        }
-        TokenContents::RightArithmeticShift => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::ArithmeticRightShift, span),
-                None,
-            )
+            (ParsedExpression::Operator(operator, span), None)
         }
         _ => {
             trace!("ERROR: unsupported operator (possibly just the end of an expression)");
@@ -3571,233 +3386,88 @@ pub fn parse_operator_with_assignment(
     let span = tokens[*index].span;
 
     match &tokens[*index].contents {
-        TokenContents::QuestionMarkQuestionMark => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::NoneCoalescing, span),
-                None,
-            )
+        TokenContents::QuestionMarkQuestionMark
+        | TokenContents::Plus
+        | TokenContents::Minus
+        | TokenContents::Asterisk
+        | TokenContents::ForwardSlash
+        | TokenContents::PercentSign
+        | TokenContents::Ampersand
+        | TokenContents::Pipe
+        | TokenContents::Caret
+        | TokenContents::LeftShift
+        | TokenContents::RightShift
+        | TokenContents::LeftArithmeticShift
+        | TokenContents::RightArithmeticShift
+        | TokenContents::Equal
+        | TokenContents::LeftShiftEqual
+        | TokenContents::RightShiftEqual
+        | TokenContents::AmpersandEqual
+        | TokenContents::PipeEqual
+        | TokenContents::CaretEqual
+        | TokenContents::PlusEqual
+        | TokenContents::MinusEqual
+        | TokenContents::AsteriskEqual
+        | TokenContents::ForwardSlashEqual
+        | TokenContents::PercentSignEqual
+        | TokenContents::QuestionMarkQuestionMarkEqual
+        | TokenContents::DoubleEqual
+        | TokenContents::NotEqual
+        | TokenContents::LessThan
+        | TokenContents::LessThanOrEqual
+        | TokenContents::GreaterThan
+        | TokenContents::GreaterThanOrEqual => {
+            let operator = match &tokens[*index].contents {
+                TokenContents::QuestionMarkQuestionMark => BinaryOperator::NoneCoalescing,
+                TokenContents::Plus => BinaryOperator::Add,
+                TokenContents::Minus => BinaryOperator::Subtract,
+                TokenContents::Asterisk => BinaryOperator::Multiply,
+                TokenContents::ForwardSlash => BinaryOperator::Divide,
+                TokenContents::PercentSign => BinaryOperator::Modulo,
+                TokenContents::Ampersand => BinaryOperator::BitwiseAnd,
+                TokenContents::Pipe => BinaryOperator::BitwiseOr,
+                TokenContents::Caret => BinaryOperator::BitwiseXor,
+                TokenContents::LeftShift => BinaryOperator::BitwiseLeftShift,
+                TokenContents::RightShift => BinaryOperator::BitwiseRightShift,
+                TokenContents::LeftArithmeticShift => BinaryOperator::ArithmeticLeftShift,
+                TokenContents::RightArithmeticShift => BinaryOperator::ArithmeticRightShift,
+                TokenContents::Equal => BinaryOperator::Assign,
+                TokenContents::LeftShiftEqual => BinaryOperator::BitwiseLeftShiftAssign,
+                TokenContents::RightShiftEqual => BinaryOperator::BitwiseRightShiftAssign,
+                TokenContents::AmpersandEqual => BinaryOperator::BitwiseAndAssign,
+                TokenContents::PipeEqual => BinaryOperator::BitwiseOrAssign,
+                TokenContents::CaretEqual => BinaryOperator::BitwiseXorAssign,
+                TokenContents::PlusEqual => BinaryOperator::AddAssign,
+                TokenContents::MinusEqual => BinaryOperator::SubtractAssign,
+                TokenContents::AsteriskEqual => BinaryOperator::MultiplyAssign,
+                TokenContents::ForwardSlashEqual => BinaryOperator::DivideAssign,
+                TokenContents::PercentSignEqual => BinaryOperator::ModuloAssign,
+                TokenContents::QuestionMarkQuestionMarkEqual => {
+                    BinaryOperator::NoneCoalescingAssign
+                }
+                TokenContents::DoubleEqual => BinaryOperator::Equal,
+                TokenContents::NotEqual => BinaryOperator::NotEqual,
+                TokenContents::LessThan => BinaryOperator::LessThan,
+                TokenContents::LessThanOrEqual => BinaryOperator::LessThanOrEqual,
+                TokenContents::GreaterThan => BinaryOperator::GreaterThan,
+                TokenContents::GreaterThanOrEqual => BinaryOperator::GreaterThanOrEqual,
+                _ => panic!("Internal error: Couldn't match token contents"),
+            };
+            if operator != BinaryOperator::NoneCoalescingAssign {
+                *index += 1;
+            } else {
+                *index += 2;
+            }
+            (ParsedExpression::Operator(operator, span), None)
         }
-        TokenContents::Plus => {
+        TokenContents::Name(name) if name == "and" || name == "or" => {
+            let operator = match &tokens[*index].contents {
+                TokenContents::Name(name) if name == "and" => BinaryOperator::LogicalAnd,
+                TokenContents::Name(name) if name == "or" => BinaryOperator::LogicalOr,
+                _ => panic!("Internal error: Couldn't match token contents"),
+            };
             *index += 1;
-            (ParsedExpression::Operator(BinaryOperator::Add, span), None)
-        }
-        TokenContents::Minus => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::Subtract, span),
-                None,
-            )
-        }
-        TokenContents::Asterisk => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::Multiply, span),
-                None,
-            )
-        }
-        TokenContents::ForwardSlash => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::Divide, span),
-                None,
-            )
-        }
-        TokenContents::PercentSign => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::Modulo, span),
-                None,
-            )
-        }
-        TokenContents::Name(name) if name == "and" => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::LogicalAnd, span),
-                None,
-            )
-        }
-        TokenContents::Name(name) if name == "or" => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::LogicalOr, span),
-                None,
-            )
-        }
-        TokenContents::Ampersand => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseAnd, span),
-                None,
-            )
-        }
-        TokenContents::Pipe => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseOr, span),
-                None,
-            )
-        }
-        TokenContents::Caret => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseXor, span),
-                None,
-            )
-        }
-        TokenContents::LeftShift => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseLeftShift, span),
-                None,
-            )
-        }
-        TokenContents::RightShift => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseRightShift, span),
-                None,
-            )
-        }
-        TokenContents::LeftArithmeticShift => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::ArithmeticLeftShift, span),
-                None,
-            )
-        }
-        TokenContents::RightArithmeticShift => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::ArithmeticRightShift, span),
-                None,
-            )
-        }
-        TokenContents::Equal => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::Assign, span),
-                None,
-            )
-        }
-        TokenContents::LeftShiftEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseLeftShiftAssign, span),
-                None,
-            )
-        }
-        TokenContents::RightShiftEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseRightShiftAssign, span),
-                None,
-            )
-        }
-        TokenContents::AmpersandEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseAndAssign, span),
-                None,
-            )
-        }
-        TokenContents::PipeEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseOrAssign, span),
-                None,
-            )
-        }
-        TokenContents::CaretEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::BitwiseXorAssign, span),
-                None,
-            )
-        }
-        TokenContents::PlusEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::AddAssign, span),
-                None,
-            )
-        }
-        TokenContents::MinusEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::SubtractAssign, span),
-                None,
-            )
-        }
-        TokenContents::AsteriskEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::MultiplyAssign, span),
-                None,
-            )
-        }
-        TokenContents::ForwardSlashEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::DivideAssign, span),
-                None,
-            )
-        }
-        TokenContents::PercentSignEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::ModuloAssign, span),
-                None,
-            )
-        }
-        TokenContents::QuestionMarkQuestionMarkEqual => {
-            *index += 2;
-            (
-                ParsedExpression::Operator(BinaryOperator::NoneCoalescingAssign, span),
-                None,
-            )
-        }
-        TokenContents::DoubleEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::Equal, span),
-                None,
-            )
-        }
-        TokenContents::NotEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::NotEqual, span),
-                None,
-            )
-        }
-        TokenContents::LessThan => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::LessThan, span),
-                None,
-            )
-        }
-        TokenContents::LessThanOrEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::LessThanOrEqual, span),
-                None,
-            )
-        }
-        TokenContents::GreaterThan => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::GreaterThan, span),
-                None,
-            )
-        }
-        TokenContents::GreaterThanOrEqual => {
-            *index += 1;
-            (
-                ParsedExpression::Operator(BinaryOperator::GreaterThanOrEqual, span),
-                None,
-            )
+            (ParsedExpression::Operator(operator, span), None)
         }
         _ => {
             trace!("ERROR: unsupported operator (possibly just the end of an expression)");
