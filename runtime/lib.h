@@ -18,7 +18,6 @@
 #include <AK/GenericLexer.h>
 #include <AK/HashFunctions.h>
 #include <AK/HashTable.h>
-#include <AK/IterationDecision.h>
 #include <AK/Iterator.h>
 #include <AK/LinearArray.h>
 #include <AK/Memory.h>

@@ -7,7 +7,6 @@
 #pragma once
 
 #include <AK/Forward.h>
-#include <AK/IterationDecision.h>
 #include <AK/StdLibExtras.h>
 
 namespace AK::Concepts {
@@ -88,15 +87,6 @@ concept VoidFunction = requires(Func func, Args... args)
     -> SameAs<void>;
 };
 
-template<typename Func, typename... Args>
-concept IteratorFunction = requires(Func func, Args... args)
-{
-    {
-        func(args...)
-    }
-    -> SameAs<IterationDecision>;
-};
-
 template<typename T, typename EndT>
 concept IteratorPairWith = requires(T it, EndT end)
 {
@@ -121,7 +111,6 @@ using AK::Concepts::FloatingPoint;
 using AK::Concepts::Fundamental;
 using AK::Concepts::Integral;
 using AK::Concepts::IterableContainer;
-using AK::Concepts::IteratorFunction;
 using AK::Concepts::IteratorPairWith;
 using AK::Concepts::OneOf;
 using AK::Concepts::OneOfIgnoringCV;
