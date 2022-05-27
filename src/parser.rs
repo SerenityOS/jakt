@@ -1268,6 +1268,68 @@ pub fn parse_generic_parameters(
     (generic_parameters, None)
 }
 
+fn parse_typelist(tokens: &[Token], index: &mut usize) -> (Vec<ParsedType>, Option<JaktError>) {
+    *index += 1;
+
+    if tokens[*index].contents != TokenContents::LParen {
+        return (
+            Vec::new(),
+            Some(JaktError::ParserError(
+                "Expected ‘(’".to_string(),
+                tokens[*index].span,
+            )),
+        );
+    }
+    *index += 1;
+
+    let mut typelist: Vec<ParsedType> = vec![];
+    while !matches!(
+        tokens.get(*index),
+        Some(Token {
+            contents: TokenContents::RParen,
+            ..
+        }) | None
+    ) {
+        skip_newlines(tokens, index);
+        let (parsed_type, err) = parse_typename(tokens, index);
+        if err.is_some() {
+            return (Vec::new(), err);
+        } else {
+            typelist.push(parsed_type);
+        }
+
+        skip_newlines(tokens, index);
+        if tokens.get(*index).is_some() && tokens[*index].contents == TokenContents::Comma {
+            *index += 1;
+        }
+
+        skip_newlines(tokens, index);
+    }
+
+    if typelist.is_empty() {
+        return (
+            Vec::new(),
+            Some(JaktError::ParserError(
+                "Type list cannot be empty".to_string(),
+                tokens[*index].span,
+            )),
+        );
+    }
+
+    if tokens[*index].contents != TokenContents::RParen {
+        return (
+            Vec::new(),
+            Some(JaktError::ParserError(
+                "Expected ‘)’".to_string(),
+                tokens[*index].span,
+            )),
+        );
+    }
+    *index += 1;
+
+    (typelist, None)
+}
+
 pub fn parse_struct(
     tokens: &[Token],
     index: &mut usize,
@@ -1388,61 +1450,11 @@ pub fn parse_struct(
 
                         TokenContents::Name(name) if name == "restricted" => {
                             let restricted_start = &tokens[*index].span;
-                            *index += 1;
-
-                            if tokens[*index].contents != TokenContents::LParen {
-                                error = error.or(Some(JaktError::ParserError(
-                                    "Expected ‘(’".to_string(),
-                                    tokens[*index].span,
-                                )));
+                            let (whitelisted_types, err) = parse_typelist(tokens, index);
+                            error = error.or(err);
+                            if error.is_some() {
                                 break;
                             }
-                            *index += 1;
-
-                            let mut whitelisted_types: Vec<ParsedType> = vec![];
-                            while !matches!(
-                                tokens.get(*index),
-                                Some(Token {
-                                    contents: TokenContents::RParen,
-                                    ..
-                                }) | None
-                            ) {
-                                skip_newlines(tokens, index);
-                                let (parsed_type, err) = parse_typename(tokens, index);
-                                if err.is_some() {
-                                    error = error.or(err);
-                                    break;
-                                } else {
-                                    whitelisted_types.push(parsed_type);
-                                }
-
-                                skip_newlines(tokens, index);
-                                if tokens.get(*index).is_some()
-                                    && tokens[*index].contents == TokenContents::Comma
-                                {
-                                    *index += 1;
-                                }
-
-                                skip_newlines(tokens, index);
-                            }
-
-                            if whitelisted_types.is_empty() {
-                                error = error.or(Some(JaktError::ParserError(
-                                    "Type list cannot be empty".to_string(),
-                                    tokens[*index].span,
-                                )));
-                                break;
-                            }
-
-                            if tokens[*index].contents != TokenContents::RParen {
-                                error = error.or(Some(JaktError::ParserError(
-                                    "Expected ‘)’".to_string(),
-                                    tokens[*index].span,
-                                )));
-                                break;
-                            }
-                            *index += 1;
-
                             last_visibility = Some(Visibility::Restricted(
                                 whitelisted_types,
                                 Span::new(
