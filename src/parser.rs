@@ -1455,6 +1455,8 @@ pub fn parse_function(
                                 "expected '('".to_string(),
                                 tokens[*index].span,
                             )));
+
+                            return (ParsedFunction::new(FunctionLinkage::Internal), error);
                         }
                     }
                 } else {
@@ -1464,6 +1466,8 @@ pub fn parse_function(
                         "incomplete function".to_string(),
                         tokens[*index - 1].span,
                     )));
+
+                    return (ParsedFunction::new(FunctionLinkage::Internal), error);
                 }
 
                 let mut params = Vec::new();
@@ -1540,6 +1544,8 @@ pub fn parse_function(
                                 "expected parameter".to_string(),
                                 tokens[*index].span,
                             )));
+
+                            return (ParsedFunction::new(FunctionLinkage::Internal), error);
                         }
                     }
                 }
@@ -1551,6 +1557,8 @@ pub fn parse_function(
                         "incomplete function".to_string(),
                         tokens[*index - 1].span,
                     )));
+
+                    return (ParsedFunction::new(FunctionLinkage::Internal), error);
                 }
 
                 let mut throws = false;
