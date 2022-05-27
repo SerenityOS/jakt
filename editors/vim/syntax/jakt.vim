@@ -69,6 +69,7 @@ let s:jakt_syntax_keywords = {
     \ , 'jaktStructure' :["struct"
     \ ,                   "class"
     \ ,                   "enum"
+    \ ,                   "namespace"
     \ ,                  ]
     \ , 'jaktVisModifier': ["public"
     \ ,                     "private"
