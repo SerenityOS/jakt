@@ -1,0 +1,7 @@
+function foo(= anonymous n: i32) {
+    println("{}", n)
+}
+
+function main() {
+    foo(2)
+}

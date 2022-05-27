@@ -1539,6 +1539,8 @@ pub fn parse_function(
                                 "expected parameter".to_string(),
                                 tokens[*index].span,
                             )));
+
+                            break;
                         }
                     }
                 }
