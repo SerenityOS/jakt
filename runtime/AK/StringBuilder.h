@@ -88,23 +88,25 @@ using AK::StringBuilder;
 namespace AK {
 
 template<typename T>
+void append_value(StringBuilder& string_builder, T const& value)
+{
+    if constexpr (IsSame<String, T>)
+        string_builder.append("\"");
+    string_builder.appendff("{}", value);
+    if constexpr (IsSame<String, T>)
+        string_builder.append("\"");
+}
+
+template<typename T>
 struct Formatter<JaktInternal::Array<T>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Array<T> const& value)
     {
         StringBuilder string_builder;
         string_builder.append("[");
         for (size_t i = 0; i < value.size(); ++i) {
-            if constexpr (IsSame<String, T>) {
-                string_builder.append("\"");
-            }
-            string_builder.appendff("{}", value[i]);
-            if constexpr (IsSame<String, T>) {
-                string_builder.append("\"");
-            }
-
-            if (i != value.size() - 1) {
-                string_builder.append(",");
-            }
+            append_value(string_builder, value[i]);
+            if (i != value.size() - 1)
+                string_builder.append(", ");
         }
         string_builder.append("]");
         return Formatter<StringView>::format(builder, string_builder.to_string());
