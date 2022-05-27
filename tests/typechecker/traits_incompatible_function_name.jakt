@@ -1,0 +1,9 @@
+trait A {
+	function first_name(this) -> bool
+}
+
+class B {
+	implements(A) function false_name(this) -> bool => false
+}
+
+function main() {}

@@ -1,0 +1,9 @@
+trait A {
+	function do_thing(this, anonymous in: i64) -> bool
+}
+
+class B {
+	implements(A) function do_thing(this, in: i64) -> bool => 0
+}
+
+function main() {}

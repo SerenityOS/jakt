@@ -1,0 +1,17 @@
+trait MultipleMethods {
+	function name(this) -> String
+	function category(this) -> u8
+}
+
+class NameAndCategory {
+	implements(MultipleMethods) function name(this) -> String => "General Class"
+	implements(MultipleMethods) function category(this) -> u8 => 0
+}
+
+struct NotQuiteImplemented {
+	implements(MultipleMethods) function name(this) -> String => "Incomplete Implementor"
+}
+
+function main() {
+	println("{} {} {}", NameAndCategory().name(), NameAndCategory().category(), NotQuiteImplemented().name())
+}

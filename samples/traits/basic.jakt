@@ -1,0 +1,19 @@
+
+trait MyTrait {
+	function do_something(this, in: i64) -> u32
+}
+
+class ConvertMyself {
+	implements(MyTrait) function do_something(this, in: i64) -> u32 => in as! u32
+}
+
+struct AddSomething {
+	implements(MyTrait) function do_something(this, in: i64) -> u32 => in as! u32 + 3
+}
+
+function main() {
+	let cls = ConvertMyself()
+	let str = AddSomething()
+
+	println("{}, {}", cls.do_something(in: 5), str.do_something(in: 5))
+}

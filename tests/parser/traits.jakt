@@ -1,17 +1,22 @@
 trait MyTrait {}
 
 trait MyLittleTrait {
-	function do_nothing(this, argument: String)
+	// FIXME: void type inference is buggy so use bool for the time being
+	function do_nothing(this, argument: String) -> bool
 }
 
 trait MyOtherTrait {
-	function do_something(this, in: i64) -> u32
-	function do_nothing(this, argument: String)
+	function do_something(this, anonymous in: i64) -> u32
+	function do_nothing(this, argument: String) -> bool
 }
 
 class Implementor {
-	implements(MyOtherTrait) function do_something(this, in: i64) -> u32 => in as! u32
-	implements(MyLittleTrait, MyOtherTrait) function do_nothing(this, argument: String) {}
+	implements(MyOtherTrait) function do_something(this, anonymous in: i64) -> u32 => in as! u32
+	implements(MyLittleTrait, MyOtherTrait) function do_nothing(this, argument: String) -> bool => false
+}
+
+class CrazyImplementor {
+	implements(MyOtherTrait) function do_something(this, anonymous not_the_same_name: i64) -> u32 => 3
 }
 
 function main() {}

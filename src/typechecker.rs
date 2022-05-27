@@ -2625,6 +2625,12 @@ fn typecheck_trait(
     let trait_type_id = project.find_or_add_type_id(Type::Trait(trait_id));
     let trait_scope_id = project.create_scope(parent_scope_id, false);
 
+    project.traits.push(CheckedTrait {
+        name: trait_.name.clone(),
+        scope_id: trait_scope_id,
+        type_id: trait_type_id,
+    });
+
     for function in &trait_.methods {
         error = error.or(typecheck_function_predecl(
             function,
@@ -3007,6 +3013,7 @@ fn typecheck_method(
         .expect("Internal error: we just pushed the checked function, but it's not present");
 
     let checked_function = &mut project.functions[method_id];
+    let function_name = checked_function.name.clone();
     let function_scope_id = checked_function.function_scope_id;
 
     let mut param_vars = Vec::new();
@@ -3056,20 +3063,36 @@ fn typecheck_method(
         if error.is_some() {
             break;
         }
+
         let trait_type = &project.types[trait_type_id];
-        match trait_type {
+        let trait_name = project.typename_for_type_id(trait_type_id);
+        error = error.or(match trait_type {
             Type::Trait(_trait_id) => {
-                // FIXME: check that trait has this function as well
+                let trait_ = &project.traits[*_trait_id];
+
+                project.find_function_in_scope(trait_.scope_id, &function_name)
+                .map_or_else(||
+                        Some(JaktError::TypecheckError(format!("'{}' doesn't contain a function named '{}'.", trait_name, function_name), implemented_trait.span())),
+                    |defining_function_id|
+                        check_functions_for_compat(
+                            defining_function_id,
+                            method_id,
+                            true,
+                            implemented_trait.span(),
+                            project,
+                        )
+                )
+                // FIXME: We need to store the implemented functions with the struct.
             }
-            _ => {
-                return Some(JaktError::TypecheckErrorWithHint(
-                    format!("Type '{}' is not a trait type", project.typename_for_type_id(trait_type_id)),
+            _ =>
+                Some(JaktError::TypecheckErrorWithHint(
+                    format!("Type '{}' is not a trait type", trait_name),
                     implemented_trait.span(),
                     "'implements' before functions is used for trait implementations. If you want to specify an interface implementation, move this type up here.".to_string(),
-                    // FIXME: CheckedStruct has no span
-                    implemented_trait.span()));
-            }
-        }
+                    // FIXME: CheckedStruct has no span.
+                    implemented_trait.span())
+                )
+        });
     }
 
     if structure_linkage != DefinitionLinkage::External
@@ -6678,6 +6701,80 @@ pub fn check_types_for_compat(
                     span,
                 )))
             }
+        }
+    }
+
+    error
+}
+
+fn check_functions_for_compat(
+    lhs_function_id: FunctionId,
+    rhs_function_id: FunctionId,
+    skip_this_parameters: bool,
+    span: Span,
+    project: &Project,
+) -> Option<JaktError> {
+    let lhs_function = &project.functions[lhs_function_id];
+    let rhs_function = &project.functions[rhs_function_id];
+
+    let mut error = None;
+
+    if lhs_function.params.len() != rhs_function.params.len() {
+        return Some(JaktError::TypecheckError(
+            format!("Functions '{}' and '{}' have incompatible number of arguments. The first function has {} arguments, but the second has {}",
+                lhs_function.name, rhs_function.name, lhs_function.params.len(), rhs_function.params.len()),
+            span));
+    }
+
+    // FIXME: We're not doing the inferences right here, this typechecker function probably can't handle generic types.
+    let mut generic_inferences = HashMap::new();
+
+    error = error.or(check_types_for_compat(
+        lhs_function.return_type_id,
+        rhs_function.return_type_id,
+        &mut generic_inferences,
+        // FIXME: This should be the return type span
+        span,
+        project,
+    ));
+
+    for (lhs_parameter, rhs_parameter) in lhs_function.params.iter().zip(rhs_function.params.iter())
+    {
+        // FIXME: Is this a good way to do that?
+        if skip_this_parameters && lhs_parameter.variable.name == "this" {
+            continue;
+        }
+        error = error.or(check_types_for_compat(
+            lhs_parameter.variable.type_id,
+            rhs_parameter.variable.type_id,
+            &mut generic_inferences,
+            rhs_parameter.variable.definition_span,
+            project,
+        ));
+
+        // Non-anonymous parameters need to have the same name, otherwise you can't call the function in the same way.
+        // However, things like function types automatically make all parameters unnamed.
+        if lhs_parameter.requires_label
+            && lhs_parameter.variable.name != rhs_parameter.variable.name
+        {
+            error = error.or(Some(JaktError::TypecheckErrorWithHint(
+                format!(
+                    "The parameter '{}' should be called '{}' to match the name in function '{}'",
+                    rhs_parameter.variable.name, lhs_parameter.variable.name, rhs_function.name
+                ),
+                rhs_parameter.variable.definition_span,
+                "You can make this parameter 'anonymous' instead".to_string(),
+                lhs_parameter.variable.definition_span,
+            )));
+        }
+        if lhs_parameter.requires_label != rhs_parameter.requires_label {
+            error = error.or(Some(JaktError::TypecheckError(
+                format!(
+                    "The parameter '{}' should be anonymous",
+                    rhs_parameter.variable.name
+                ),
+                rhs_parameter.variable.definition_span,
+            )));
         }
     }
 
