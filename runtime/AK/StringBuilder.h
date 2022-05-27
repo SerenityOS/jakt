@@ -154,4 +154,23 @@ struct Formatter<JaktInternal::Dictionary<K, V>> : Formatter<StringView> {
         return Formatter<StringView>::format(builder, string_builder.to_string());
     }
 };
+
+template<typename... Ts>
+struct Formatter<AK::Tuple<Ts...>> : Formatter<StringView> {
+    ErrorOr<void> format(FormatBuilder& builder, AK::Tuple<Ts...> const& tuple)
+    {
+        StringBuilder string_builder;
+        string_builder.append("(");
+        if constexpr (sizeof...(Ts) > 0) {
+            tuple.apply_as_args([&] (auto first, auto... args) {
+                append_value(string_builder, first);
+                ((string_builder.append(", "), append_value(string_builder, args)),...);
+            });
+        }
+
+        string_builder.append(")");
+        return Formatter<StringView>::format(builder, string_builder.to_string());
+    }
+};
+
 }
