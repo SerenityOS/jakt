@@ -58,16 +58,11 @@ void StringBuilder::append(char ch)
     MUST(try_append(ch));
 }
 
-String StringBuilder::to_string() const
+ErrorOr<String> StringBuilder::to_string() const
 {
     if (is_empty())
         return String::empty();
-    return String((char const*)data(), length());
-}
-
-String StringBuilder::build() const
-{
-    return to_string();
+    return String::copy(string_view());
 }
 
 StringView StringBuilder::string_view() const

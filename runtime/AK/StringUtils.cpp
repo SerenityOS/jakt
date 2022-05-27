@@ -9,77 +9,14 @@
 #include <AK/MemMem.h>
 #include <AK/Memory.h>
 #include <AK/Optional.h>
+#include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <AK/StringUtils.h>
 #include <AK/StringView.h>
-#include <AK/Vector.h>
-
-#ifndef KERNEL
-#    include <AK/String.h>
-#endif
 
 namespace AK {
 
 namespace StringUtils {
-
-bool matches(StringView str, StringView mask, CaseSensitivity case_sensitivity, Vector<MaskSpan>* match_spans)
-{
-    auto record_span = [&match_spans](size_t start, size_t length) {
-        if (match_spans)
-            match_spans->append({ start, length });
-    };
-
-    if (str.is_null() || mask.is_null())
-        return str.is_null() && mask.is_null();
-
-    if (mask == "*"sv) {
-        record_span(0, str.length());
-        return true;
-    }
-
-    char const* string_ptr = str.characters_without_null_termination();
-    char const* string_start = str.characters_without_null_termination();
-    char const* string_end = string_ptr + str.length();
-    char const* mask_ptr = mask.characters_without_null_termination();
-    char const* mask_end = mask_ptr + mask.length();
-
-    while (string_ptr < string_end && mask_ptr < mask_end) {
-        auto string_start_ptr = string_ptr;
-        switch (*mask_ptr) {
-        case '*':
-            if (mask_ptr == mask_end - 1) {
-                record_span(string_ptr - string_start, string_end - string_ptr);
-                return true;
-            }
-            while (string_ptr < string_end && !matches({ string_ptr, static_cast<size_t>(string_end - string_ptr) }, { mask_ptr + 1, static_cast<size_t>(mask_end - mask_ptr - 1) }, case_sensitivity))
-                ++string_ptr;
-            record_span(string_start_ptr - string_start, string_ptr - string_start_ptr);
-            --string_ptr;
-            break;
-        case '?':
-            record_span(string_ptr - string_start, 1);
-            break;
-        default:
-            auto p = *mask_ptr;
-            auto ch = *string_ptr;
-            if (case_sensitivity == CaseSensitivity::CaseSensitive ? p != ch : to_ascii_lowercase(p) != to_ascii_lowercase(ch))
-                return false;
-            break;
-        }
-        ++string_ptr;
-        ++mask_ptr;
-    }
-
-    if (string_ptr == string_end) {
-        // Allow ending '*' to contain nothing.
-        while (mask_ptr != mask_end && *mask_ptr == '*') {
-            record_span(string_ptr - string_start, 0);
-            ++mask_ptr;
-        }
-    }
-
-    return string_ptr == string_end && mask_ptr == mask_end;
-}
 
 template<typename T>
 Optional<T> convert_to_int(StringView str, TrimWhitespace trim_whitespace)
@@ -385,9 +322,9 @@ Optional<size_t> find_last(StringView haystack, char needle)
     return {};
 }
 
-Vector<size_t> find_all(StringView haystack, StringView needle)
+ErrorOr<JaktInternal::Array<size_t>> find_all(StringView haystack, StringView needle)
 {
-    Vector<size_t> positions;
+    JaktInternal::Array<size_t> positions;
     size_t current_position = 0;
     while (current_position <= haystack.length()) {
         auto maybe_position = AK::memmem_optional(
@@ -395,7 +332,7 @@ Vector<size_t> find_all(StringView haystack, StringView needle)
             needle.characters_without_null_termination(), needle.length());
         if (!maybe_position.has_value())
             break;
-        positions.append(current_position + *maybe_position);
+        TRY(positions.push(current_position + *maybe_position));
         current_position += *maybe_position + 1;
     }
     return positions;
@@ -418,79 +355,6 @@ Optional<size_t> find_any_of(StringView haystack, StringView needles, SearchDire
     }
     return {};
 }
-
-#ifndef KERNEL
-String to_snakecase(StringView str)
-{
-    auto should_insert_underscore = [&](auto i, auto current_char) {
-        if (i == 0)
-            return false;
-        auto previous_ch = str[i - 1];
-        if (is_ascii_lower_alpha(previous_ch) && is_ascii_upper_alpha(current_char))
-            return true;
-        if (i >= str.length() - 1)
-            return false;
-        auto next_ch = str[i + 1];
-        if (is_ascii_upper_alpha(current_char) && is_ascii_lower_alpha(next_ch))
-            return true;
-        return false;
-    };
-
-    StringBuilder builder;
-    for (size_t i = 0; i < str.length(); ++i) {
-        auto ch = str[i];
-        if (should_insert_underscore(i, ch))
-            builder.append('_');
-        builder.append_as_lowercase(ch);
-    }
-    return builder.to_string();
-}
-
-String to_titlecase(StringView str)
-{
-    StringBuilder builder;
-    bool next_is_upper = true;
-
-    for (auto ch : str) {
-        if (next_is_upper)
-            builder.append_code_point(to_ascii_uppercase(ch));
-        else
-            builder.append_code_point(to_ascii_lowercase(ch));
-        next_is_upper = ch == ' ';
-    }
-
-    return builder.to_string();
-}
-
-String replace(StringView str, StringView needle, StringView replacement, bool all_occurrences)
-{
-    if (str.is_empty())
-        return str;
-
-    Vector<size_t> positions;
-    if (all_occurrences) {
-        positions = str.find_all(needle);
-        if (!positions.size())
-            return str;
-    } else {
-        auto pos = str.find(needle);
-        if (!pos.has_value())
-            return str;
-        positions.append(pos.value());
-    }
-
-    StringBuilder replaced_string;
-    size_t last_position = 0;
-    for (auto& position : positions) {
-        replaced_string.append(str.substring_view(last_position, position - last_position));
-        replaced_string.append(replacement);
-        last_position = position + needle.length();
-    }
-    replaced_string.append(str.substring_view(last_position, str.length() - last_position));
-    return replaced_string.build();
-}
-#endif
-
 // TODO: Benchmark against KMP (AK/MemMem.h) and switch over if it's faster for short strings too
 size_t count(StringView str, StringView needle)
 {

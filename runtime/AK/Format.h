@@ -10,9 +10,9 @@
 
 #include <AK/AllOf.h>
 #include <AK/AnyOf.h>
-#include <AK/LinearArray.h>
 #include <AK/Error.h>
 #include <AK/Forward.h>
+#include <AK/LinearArray.h>
 #include <AK/Optional.h>
 #include <AK/StringView.h>
 
@@ -629,18 +629,7 @@ template<>
 struct Formatter<Error> : Formatter<FormatString> {
     ErrorOr<void> format(FormatBuilder& builder, Error const& error)
     {
-#if defined(__serenity__) && defined(KERNEL)
-        if (error.is_errno())
-            return Formatter<FormatString>::format(builder, "Error(errno={})", error.code());
-        return Formatter<FormatString>::format(builder, "Error({})", error.string_literal());
-#else
-        if (error.is_syscall())
-            return Formatter<FormatString>::format(builder, "{}: {} (errno={})", error.string_literal(), strerror(error.code()), error.code());
-        if (error.is_errno())
-            return Formatter<FormatString>::format(builder, "{} (errno={})", strerror(error.code()), error.code());
-
-        return Formatter<FormatString>::format(builder, "{}", error.string_literal());
-#endif
+        return Formatter<FormatString>::format(builder, "Error(code={})", error.code());
     }
 };
 

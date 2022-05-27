@@ -908,7 +908,7 @@ fn codegen_struct_predecl(structure: &CheckedStruct, project: &Project) -> Strin
 
 fn codegen_enum_debug_description_getter(enum_: &CheckedEnum) -> String {
     let mut output = String::new();
-    output.push_str("String debug_description() const { ");
+    output.push_str("ErrorOr<String> debug_description() const { ");
 
     output.push_str("StringBuilder builder;");
 
@@ -969,7 +969,7 @@ fn codegen_enum_debug_description_getter(enum_: &CheckedEnum) -> String {
 
 fn codegen_debug_description_getter(structure: &CheckedStruct, project: &Project) -> String {
     let mut output = String::new();
-    output.push_str("String debug_description() const { ");
+    output.push_str("ErrorOr<String> debug_description() const { ");
 
     output.push_str("StringBuilder builder;");
 
@@ -1048,7 +1048,9 @@ fn codegen_ak_formatter(
         qualified_name,
     ));
     output.push_str("{ ");
-    output.push_str("return Formatter<StringView>::format(builder, value.debug_description()); }");
+    output.push_str(
+        "return Formatter<StringView>::format(builder, MUST(value.debug_description())); }",
+    );
 
     output.push_str("};");
 
@@ -2564,14 +2566,14 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 }
                 output.push(')');
             } else if call.name == "format" {
-                output.push_str("String::formatted(");
+                output.push_str("TRY(String::formatted(");
                 for (i, param) in call.args.iter().enumerate() {
                     output.push_str(&codegen_expr(indent, &param.1, project));
                     if i != call.args.len() - 1 {
                         output.push(',');
                     }
                 }
-                output.push(')');
+                output.push_str("))");
             } else {
                 if call.linkage == FunctionLinkage::ImplicitConstructor
                     || call.linkage == FunctionLinkage::ExternalClassConstructor

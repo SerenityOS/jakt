@@ -1,6 +1,8 @@
 function area(width: i64, height: i64) => width * height
-function greeting(name: String) => "Hello, " + name + "!"
-function greet(name: String) => println("{}", greeting(name: name))
+function greeting(name: String) throws -> String => format("Hello, {}!", name)
+function greet(name: String) throws {
+    println("{}", greeting(name))
+} 
 
 function main() {
     let a = area(width: 5, height: 10)
