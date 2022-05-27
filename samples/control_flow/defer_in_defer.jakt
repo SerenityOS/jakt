@@ -1,0 +1,15 @@
+function foo(anonymous n: i8) {
+    println("foo called with {}", n)
+}
+
+function main() {
+    foo(1)
+    defer {
+        foo(3)
+        defer {
+            foo(5)
+        }
+        foo(4)
+    }
+    foo(2)
+}
