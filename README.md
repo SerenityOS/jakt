@@ -396,25 +396,57 @@ Additional casts are available in the standard library. Two important ones are `
 
 ## Traits
 
-**(Not yet implemented)**
+- [x] Parsing and function signature checking
+- [ ] Implicit generics through trait types
+- [ ] Call-site constraint checking
+- [ ] Generic traits
 
-To make generics a bit more powerful and expressive, you can add additional information to them:
+Traits are a compile-time facility helping to enforce type constraints. The basic declaration and usage of a trait looks like this:
 
 ```jakt
 trait Hashable {
-    function hash(self) -> i128
+    function hash(this) -> i128
 }
 
-class Foo implements Hashable {
-    function hash(self) => 42
+class Foo {
+    implements(Hashable) function hash(this) => 42
 }
 
-type i64 implements Hashable {
-    function hash(self) => 100
+type i64 {
+    implements(Hashable) function hash(this) => 100
 }
 ```
 
-The intention is that generics use traits to limit what is passed into a generic parameter, and also to grant that variable more capabilities in the body. It's not really intended to do vtable types of things (for that, just use a subclass)
+A trait's methods are similar to an interface's methods in that they are just declarations. Traits are used at compile time to check implementing methods, structs, constraints, etc. but they do not compile to any code and cannot be used at run time. A class is said to implement a trait if it implements all of the trait's methods. A class can also just partially implement a trait by not implementing all methods, this means that the class is not usable in places where an object implementing the trait is required.
+
+Because a trait doesn't exist at run-time, the `Self` type (the type of `this`) resolves to the implementor's type. All other formal argument types and return types must match, including mutability and `anonymous`; if an argument is not specified as `anonymous` by the trait it must have the same name.
+
+It is possible to implement multiple traits' methods at the same time, given that they have the same function type as specified above:
+
+```
+class MultiImplementor {
+    implements(Do, Use, Get, Thingamajig) function do(this) => None
+}
+```
+
+It is also possible to implement multiple generic instances of the same trait, including with the same function:
+
+```
+trait Do<T> {
+    function do(this) -> Option<bool>
+    function consume_for_doing_later(mutable this, in: T)
+}
+
+// implements three variants of Do<T> completely
+class HyperImplementor {
+    implements(Do<Nothing>, Do<i64>, Do<String>) function do(this) => None
+    implements(Do<Nothing>) function consume_for_doing_later(mutable this, in: Nothing) { ... }
+    implements(Do<i64>) function consume_for_doing_later(mutable this, in: i64) { ... }
+    implements(Do<String>) function consume_for_doing_later(mutable this, in: String) { ... }
+}
+```
+
+The intention is that generics use traits to limit what is passed into a generic parameter, and also to grant that variable more capabilities in the body. In other words: A trait specifies that methods with certain call signatures can be invoked on the object. Additionally, (almost) all language-supported operators (`+`, `^`, `<`, `==`, ...) and type transformation facilities (error handling like `?`, casting like `as!` etc.) will be handled through "magic traits" in the future, meaning the user can overwrite behavior for (almost!) anything in their own types.
 
 ## Safety analysis
 
