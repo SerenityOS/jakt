@@ -1,0 +1,9 @@
+class Omae {
+	function wa_mou(this) -> bool { return false }
+}
+
+class Shindeiru {
+	implements(Omae) function wa_mou(this) -> bool { return true }
+}
+
+function main() {}

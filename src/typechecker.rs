@@ -3049,6 +3049,29 @@ fn typecheck_method(
         function_return_type_id
     };
 
+    for implemented_trait in &function.implemented_traits {
+        let (trait_type_id, err) =
+            typecheck_typename(implemented_trait, structure_scope_id, project);
+        error = error.or(err);
+        if error.is_some() {
+            break;
+        }
+        let trait_type = &project.types[trait_type_id];
+        match trait_type {
+            Type::Trait(_trait_id) => {
+                // FIXME: check that trait has this function as well
+            }
+            _ => {
+                return Some(JaktError::TypecheckErrorWithHint(
+                    format!("Type '{}' is not a trait type", project.typename_for_type_id(trait_type_id)),
+                    implemented_trait.span(),
+                    "'implements' before functions is used for trait implementations. If you want to specify an interface implementation, move this type up here.".to_string(),
+                    // FIXME: CheckedStruct has no span
+                    implemented_trait.span()));
+            }
+        }
+    }
+
     if structure_linkage != DefinitionLinkage::External
         && return_type_id != VOID_TYPE_ID
         && !block.definitely_returns

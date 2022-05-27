@@ -59,6 +59,24 @@ pub enum ParsedType {
     Empty,
 }
 
+impl ParsedType {
+    pub fn span(&self) -> Span {
+        match self {
+            Self::GenericType(_, _, span)
+            | Self::Tuple(_, span)
+            | Self::Array(_, span)
+            | Self::Dictionary(_, _, span)
+            | Self::Set(_, span)
+            | Self::Optional(_, span)
+            | Self::RawPtr(_, span)
+            | Self::WeakPtr(_, span)
+            | Self::Name(_, span) => *span,
+            // FIXME: will look bad but better than crashing
+            Self::Empty => Span::new(0, 0, 0),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ParsedVarDecl {
     pub name: String,
