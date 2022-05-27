@@ -2813,8 +2813,19 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
 
             match op {
                 BinaryOperator::NoneCoalescing => {
+                    let rhs_type = &project.types[rhs.type_id_or_type_var()];
+                    let optional_struct_id = project.cached_optional_struct_id.unwrap();
+
                     output.push_str(&codegen_expr(indent, lhs, project));
-                    output.push_str(".value_or_lazy_evaluated([&] { return ");
+
+                    match rhs_type {
+                        Type::GenericInstance(struct_id, _) if *struct_id == optional_struct_id => {
+                            output.push_str(".value_or_lazy_evaluated_optional([&] { return ");
+                        }
+                        _ => {
+                            output.push_str(".value_or_lazy_evaluated([&] { return ");
+                        }
+                    }
                     output.push_str(&codegen_expr(indent, rhs, project));
                     output.push_str("; })");
                 }

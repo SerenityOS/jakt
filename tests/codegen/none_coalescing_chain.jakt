@@ -1,0 +1,17 @@
+function main() {
+    let my_first_none: i64? = None
+    let my_second_none: i64? = None
+
+    let my_first_some: i64? = 6
+    let my_second_some: i64? = 7
+
+    let a = my_first_none ?? my_second_none ?? 1
+    let b = my_first_none ?? my_second_some ?? 2
+    let c = my_first_none ?? my_second_none ?? my_second_none ?? my_second_none ?? 3
+    let d = my_first_some ?? my_second_some ?? 4
+
+    println("{}", a)
+    println("{}", b)
+    println("{}", c)
+    println("{}", d)
+}
