@@ -11,6 +11,7 @@
 #include <AK/String.h>
 #include <AK/StringView.h>
 #include <Builtins/Array.h>
+#include <Builtins/Set.h>
 #include <stdarg.h>
 
 namespace AK {
@@ -109,6 +110,24 @@ struct Formatter<JaktInternal::Array<T>> : Formatter<StringView> {
                 string_builder.append(", ");
         }
         string_builder.append("]");
+        return Formatter<StringView>::format(builder, string_builder.to_string());
+    }
+};
+
+template<typename T>
+struct Formatter<JaktInternal::Set<T>> : Formatter<StringView> {
+    ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Set<T> const& set)
+    {
+        StringBuilder string_builder;
+        string_builder.append("{");
+        auto iter = set.iterator();
+
+        for (size_t i = 0; i < set.size(); ++i) {
+            append_value(string_builder, iter.next().value());
+            if (i != set.size() - 1)
+                string_builder.append(", ");
+        }
+        string_builder.append("}");
         return Formatter<StringView>::format(builder, string_builder.to_string());
     }
 };
