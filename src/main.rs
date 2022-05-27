@@ -67,51 +67,74 @@ fn main() -> Result<(), JaktError> {
                         output_executable = path_as_string(&out_filepath.with_extension(""));
                     }
 
-                    let runtime_path = if let Some(ref runtime_path) = arguments.runtime_path {
-                        path_as_string(runtime_path)
-                    } else {
-                        String::from("runtime")
-                    };
                     let cxx_compiler = if let Some(ref path) = arguments.cxx_compiler_path {
                         path.to_owned()
                     } else {
-                        PathBuf::from(std::env::var("CXX").unwrap_or("clang++".to_owned()))
+                        PathBuf::from(std::env::var("CXX").unwrap_or_else(|_| "clang++".to_owned()))
                     };
 
-                    let is_clang = cxx_compiler.to_string_lossy().contains("clang");
+                    fn not_found_error() -> JaktError {
+                        JaktError::IOError(std::io::Error::from(io::ErrorKind::NotFound))
+                    }
 
-                    let enable_color_diagnostics = if is_clang {
-                        "-fcolor-diagnostics"
+                    if !compiler_exists(&cxx_compiler) {
+                        eprintln!(
+                            "Setup Error: Failed to find C++ compiler! Looking for: {}",
+                            path_as_string(&cxx_compiler)
+                        );
+                        first_error = Some(not_found_error());
+                    }
+
+                    let runtime_path = if let Some(ref runtime_path) = arguments.runtime_path {
+                        runtime_path.to_owned()
                     } else {
-                        "-fdiagnostics-color"
+                        PathBuf::from("./runtime")
                     };
 
-                    let disable_literal_warnings = if is_clang {
-                        "-Wno-user-defined-literals"
-                    } else {
-                        "-Wno-literal-suffix"
-                    };
+                    if !runtime_path.exists() {
+                        eprintln!(
+                            "Setup Error: Failed to find Jakt runtime headers! Looking for: {}",
+                            path_as_string(&runtime_path)
+                        );
+                        first_error = Some(not_found_error());
+                    }
 
-                    let cxx_compiler_output = Command::new(cxx_compiler)
-                        .args([
-                            enable_color_diagnostics,
-                            "-std=c++20",
-                            // Don't complain about unsupported -W flags below.
+                    if first_error.is_none() {
+                        let is_clang = cxx_compiler.to_string_lossy().contains("clang");
+
+                        let clang_specific_options = [
+                            "-fcolor-diagnostics",
+                            "-Wno-user-defined-literals",
+                            // Don't complain about unsupported -W flags.
                             "-Wno-unknown-warning-option",
-                            // These warnings if enabled create loads of unnecessary noise:
                             "-Wno-unqualified-std-cast-call",
-                            disable_literal_warnings,
-                            // This warning can happen for functions like fopen which Windows has deprecated but others not.
-                            // Specifically, it will happen if clang uses the MSVC runtime and/or linker.
-                            "-Wno-deprecated-declarations",
-                            "-I",
-                            &runtime_path,
-                            &input_cpp,
-                            "-o",
-                            &output_executable,
-                        ])
-                        .output()?;
-                    io::stderr().write_all(&cxx_compiler_output.stderr)?;
+                        ];
+
+                        let gcc_specific_options = ["-fdiagnostics-color", "-Wno-literal-suffix"];
+
+                        let runtime_path = path_as_string(&runtime_path);
+                        let mut cxx_compiler = Command::new(cxx_compiler)
+                            .args([
+                                "-std=c++2a",
+                                // This warning can happen for functions like fopen which Windows has deprecated but others not.
+                                // Specifically, it will happen if clang uses the MSVC runtime and/or linker.
+                                "-Wno-deprecated-declarations",
+                                "-I",
+                                &runtime_path,
+                                &input_cpp,
+                                "-o",
+                                &output_executable,
+                            ])
+                            .args(if is_clang {
+                                clang_specific_options.as_slice()
+                            } else {
+                                // Assume g++
+                                gcc_specific_options.as_slice()
+                            })
+                            .spawn()
+                            .expect("Failed to start C++ compiler");
+                        cxx_compiler.wait()?;
+                    }
                 }
             }
             Err(err) => {
@@ -141,6 +164,13 @@ fn main() -> Result<(), JaktError> {
         std::process::exit(1)
     } else {
         Ok(())
+    }
+}
+
+fn compiler_exists(path: &PathBuf) -> bool {
+    match Command::new(path).arg("-v").output() {
+        Ok(_) => true,
+        Err(err) => err.kind() != std::io::ErrorKind::NotFound,
     }
 }
 
