@@ -82,6 +82,8 @@ fn main() -> Result<(), JaktError> {
                     .args([
                         "-fcolor-diagnostics",
                         "-std=c++20",
+                        // Don't complain about unsupported -W flags below.
+                        "-Wno-unknown-warning-option",
                         // These warnings if enabled create loads of unnecessary noise:
                         "-Wno-unqualified-std-cast-call",
                         "-Wno-user-defined-literals",
