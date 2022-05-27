@@ -4,7 +4,7 @@ function main() {
         else => []
     }
     let y = match "foo" {
-        ("f" + "oo") => "bar"
+        ("foo") => "bar"
         else => "baz"
     }
 

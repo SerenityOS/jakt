@@ -20,8 +20,6 @@ namespace AK {
 
 class StringBuilder {
 public:
-    using OutputType = String;
-
     explicit StringBuilder();
     ~StringBuilder() = default;
 
@@ -52,10 +50,7 @@ public:
         MUST(vformat(*this, fmtstr.view(), variadic_format_params));
     }
 
-#ifndef KERNEL
-    [[nodiscard]] String build() const;
-    [[nodiscard]] String to_string() const;
-#endif
+    [[nodiscard]] ErrorOr<String> to_string() const;
 
     [[nodiscard]] StringView string_view() const;
     void clear();
@@ -112,7 +107,7 @@ struct Formatter<JaktInternal::Array<T>> : Formatter<StringView> {
                 string_builder.append(", ");
         }
         string_builder.append("]");
-        return Formatter<StringView>::format(builder, string_builder.to_string());
+        return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
 
@@ -130,7 +125,7 @@ struct Formatter<JaktInternal::Set<T>> : Formatter<StringView> {
                 string_builder.append(", ");
         }
         string_builder.append("}");
-        return Formatter<StringView>::format(builder, string_builder.to_string());
+        return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
 
@@ -151,7 +146,7 @@ struct Formatter<JaktInternal::Dictionary<K, V>> : Formatter<StringView> {
                 string_builder.append(", ");
         }
         string_builder.append("]");
-        return Formatter<StringView>::format(builder, string_builder.to_string());
+        return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
 
@@ -162,14 +157,14 @@ struct Formatter<AK::Tuple<Ts...>> : Formatter<StringView> {
         StringBuilder string_builder;
         string_builder.append("(");
         if constexpr (sizeof...(Ts) > 0) {
-            tuple.apply_as_args([&] (auto first, auto... args) {
+            tuple.apply_as_args([&](auto first, auto... args) {
                 append_value(string_builder, first);
-                ((string_builder.append(", "), append_value(string_builder, args)),...);
+                ((string_builder.append(", "), append_value(string_builder, args)), ...);
             });
         }
 
         string_builder.append(")");
-        return Formatter<StringView>::format(builder, string_builder.to_string());
+        return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
 

@@ -9,6 +9,7 @@
 
 #include <AK/Concepts.h>
 #include <AK/Forward.h>
+#include <Builtins/Array.h>
 
 namespace AK {
 
@@ -49,7 +50,6 @@ struct MaskSpan {
 
 namespace StringUtils {
 
-bool matches(StringView str, StringView mask, CaseSensitivity = CaseSensitivity::CaseInsensitive, Vector<MaskSpan>* match_spans = nullptr);
 template<typename T = int>
 Optional<T> convert_to_int(StringView, TrimWhitespace = TrimWhitespace::Yes);
 template<typename T = unsigned>
@@ -69,17 +69,14 @@ StringView trim_whitespace(StringView string, TrimMode mode);
 Optional<size_t> find(StringView haystack, char needle, size_t start = 0);
 Optional<size_t> find(StringView haystack, StringView needle, size_t start = 0);
 Optional<size_t> find_last(StringView haystack, char needle);
-Vector<size_t> find_all(StringView haystack, StringView needle);
+ErrorOr<JaktInternal::Array<size_t>> find_all(StringView haystack, StringView needle);
 enum class SearchDirection {
     Forward,
     Backward
 };
 Optional<size_t> find_any_of(StringView haystack, StringView needles, SearchDirection);
 
-String to_snakecase(StringView);
-String to_titlecase(StringView);
-
-String replace(StringView, StringView needle, StringView replacement, bool all_occurrences = false);
+ErrorOr<String> replace(StringView, StringView needle, StringView replacement, bool all_occurrences = false);
 size_t count(StringView, StringView needle);
 
 }

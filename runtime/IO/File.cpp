@@ -18,7 +18,7 @@ File::~File()
 
 ErrorOr<NonnullRefPtr<File>> File::open_for_reading(String path)
 {
-    auto* stdio_file = fopen(path.characters(), "rb");
+    auto* stdio_file = fopen(path.c_string(), "rb");
     if (!stdio_file) {
         return Error::from_errno(errno);
     }
@@ -29,7 +29,7 @@ ErrorOr<NonnullRefPtr<File>> File::open_for_reading(String path)
 
 ErrorOr<NonnullRefPtr<File>> File::open_for_writing(String path)
 {
-    auto* stdio_file = fopen(path.characters(), "wb");
+    auto* stdio_file = fopen(path.c_string(), "wb");
     if (!stdio_file) {
         return Error::from_errno(errno);
     }

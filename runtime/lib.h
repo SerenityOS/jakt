@@ -35,7 +35,6 @@
 #include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <AK/StringHash.h>
-#include <AK/StringImpl.h>
 #include <AK/StringUtils.h>
 #include <AK/StringView.h>
 #include <AK/Traits.h>
@@ -57,7 +56,6 @@
 #include <AK/GenericLexer.cpp>
 #include <AK/String.cpp>
 #include <AK/StringBuilder.cpp>
-#include <AK/StringImpl.cpp>
 #include <AK/StringUtils.cpp>
 #include <AK/StringView.cpp>
 #include <AK/kmalloc.cpp>
@@ -126,7 +124,7 @@ inline constexpr T checked_add(T value, T other)
     Checked<T> checked = value;
     checked += other;
     if (checked.has_overflow())
-        panic(String::formatted("Overflow in checked addition '{} + {}'", value, other));
+        panic(MUST(String::formatted("Overflow in checked addition '{} + {}'", value, other)));
     return checked.value_unchecked();
 }
 
@@ -136,7 +134,7 @@ inline constexpr T checked_sub(T value, T other)
     Checked<T> checked = value;
     checked -= other;
     if (checked.has_overflow())
-        panic(String::formatted("Overflow in checked subtraction '{} - {}'", value, other));
+        panic(MUST(String::formatted("Overflow in checked subtraction '{} - {}'", value, other)));
     return checked.value_unchecked();
 }
 
@@ -146,7 +144,7 @@ inline constexpr T checked_mul(T value, T other)
     Checked<T> checked = value;
     checked *= other;
     if (checked.has_overflow())
-        panic(String::formatted("Overflow in checked multiplication '{} * {}'", value, other));
+        panic(MUST(String::formatted("Overflow in checked multiplication '{} * {}'", value, other)));
     return checked.value_unchecked();
 }
 
@@ -157,9 +155,9 @@ inline constexpr T checked_div(T value, T other)
     checked /= other;
     if (checked.has_overflow()) {
         if (other == 0)
-            panic(String::formatted("Division by zero in checked division '{} / {}'", value, other));
+            panic(MUST(String::formatted("Division by zero in checked division '{} / {}'", value, other)));
         else
-            panic(String::formatted("Overflow in checked division '{} / {}'", value, other));
+            panic(MUST(String::formatted("Overflow in checked division '{} / {}'", value, other)));
     }
     return checked.value_unchecked();
 }
@@ -171,9 +169,9 @@ inline constexpr T checked_mod(T value, T other)
     checked %= other;
     if (checked.has_overflow()) {
         if (other == 0)
-            panic(String::formatted("Division by zero in checked modulo '{} % {}'", value, other));
+            panic(MUST(String::formatted("Division by zero in checked modulo '{} % {}'", value, other)));
         else
-            panic(String::formatted("Overflow in checked modulo '{} % {}'", value, other));
+            panic(MUST(String::formatted("Overflow in checked modulo '{} % {}'", value, other)));
     }
     return checked.value_unchecked();
 }
@@ -375,7 +373,7 @@ int main(int argc, char** argv)
 {
     Array<String> args;
     for (int i = 0; i < argc; ++i) {
-        MUST(args.push(argv[i]));
+        MUST(args.push(MUST(String::copy(StringView(argv[i])))));
     }
     auto result = JaktInternal::main(move(args));
     if (result.is_error()) {

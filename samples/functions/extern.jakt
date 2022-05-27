@@ -1,4 +1,4 @@
 function main() {
     let s = String::number(5 + 10)
-    println("Five plus ten = " + s)
+    println("Five plus ten = {}", s)
 }
