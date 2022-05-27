@@ -172,6 +172,7 @@ pub struct ParsedFunction {
     pub name: String,
     pub visibility: Visibility,
     pub name_span: Span,
+    pub implemented_traits: Vec<ParsedType>,
     pub params: Vec<ParsedParameter>,
     pub generic_parameters: Vec<(String, Span)>,
     pub block: ParsedBlock,
@@ -214,6 +215,7 @@ impl ParsedFunction {
             },
             visibility: Visibility::Public,
             params: Vec::new(),
+            implemented_traits: Vec::new(),
             generic_parameters: Vec::new(),
             block: ParsedBlock::new(),
             throws: false,
@@ -592,6 +594,7 @@ pub fn parse_namespace(
                         index,
                         FunctionLinkage::Internal,
                         Visibility::Public,
+                        Vec::new(),
                     );
                     error = error.or(err);
 
@@ -703,6 +706,7 @@ pub fn parse_namespace(
                                         index,
                                         FunctionLinkage::External,
                                         Visibility::Public,
+                                        Vec::new(),
                                     );
                                     error = error.or(err);
 
@@ -953,7 +957,7 @@ pub fn parse_enum(
                     last_visibility_modifier = None;
 
                     let (mut function, err) =
-                        parse_function(tokens, index, function_linkage, visibility);
+                        parse_function(tokens, index, function_linkage, visibility, Vec::new());
                     error = error.or(err);
 
                     if definition_linkage == DefinitionLinkage::External {
@@ -1388,8 +1392,9 @@ pub fn parse_struct(
 
                 let mut methods = Vec::new();
 
-                // This gets reset after each loop. If someone doesn't consume it, we error out.
+                // These get reset after each loop. If someone doesn't consume them, we error out.
                 let mut last_visibility = None;
+                let mut last_implements_list = None;
 
                 while *index < tokens.len() {
                     match &tokens[*index].contents {
@@ -1417,14 +1422,25 @@ pub fn parse_struct(
                                 DefinitionLinkage::External => FunctionLinkage::External,
                             };
 
-                            let visibility = last_visibility.unwrap_or(match definition_type {
-                                DefinitionType::Class => Visibility::Private,
-                                DefinitionType::Struct => Visibility::Public,
-                            });
+                            let visibility = if last_implements_list.is_some() {
+                                Visibility::Public
+                            } else {
+                                last_visibility.unwrap_or(match definition_type {
+                                    DefinitionType::Class => Visibility::Private,
+                                    DefinitionType::Struct => Visibility::Public,
+                                })
+                            };
                             last_visibility = None;
+                            let implements_list = last_implements_list.unwrap_or_default();
+                            last_implements_list = None;
 
-                            let (mut function, err) =
-                                parse_function(tokens, index, function_linkage, visibility);
+                            let (mut function, err) = parse_function(
+                                tokens,
+                                index,
+                                function_linkage,
+                                visibility,
+                                implements_list,
+                            );
                             error = error.or(err);
 
                             if definition_linkage == DefinitionLinkage::External {
@@ -1464,6 +1480,16 @@ pub fn parse_struct(
                                 ),
                             ));
                             // By using continue, we skip the "visibility consumed"-check
+                            continue;
+                        }
+
+                        TokenContents::Name(name) if name == "implements" => {
+                            let (implemented_types, err) = parse_typelist(tokens, index);
+                            error = error.or(err);
+                            if error.is_some() {
+                                break;
+                            }
+                            last_implements_list = Some(implemented_types);
                             continue;
                         }
 
@@ -1512,6 +1538,11 @@ pub fn parse_struct(
                     if last_visibility.is_some() {
                         error = error.or(Some(JaktError::ParserError(
                             "Expected function or parameter after visibility modifier".to_string(),
+                            tokens[*index].span,
+                        )))
+                    } else if last_implements_list.is_some() {
+                        error = error.or(Some(JaktError::ParserError(
+                            "Expected function after 'implements' list".to_string(),
                             tokens[*index].span,
                         )))
                     }
@@ -1658,6 +1689,7 @@ pub fn parse_trait(tokens: &[Token], index: &mut usize) -> (ParsedTrait, Option<
                                     index,
                                     FunctionLinkage::External,
                                     Visibility::Public,
+                                    Vec::new(),
                                 );
                                 parsed_function.linkage = FunctionLinkage::Internal;
 
@@ -1725,6 +1757,7 @@ pub fn parse_function(
     index: &mut usize,
     linkage: FunctionLinkage,
     visibility: Visibility,
+    implemented_traits: Vec<ParsedType>,
 ) -> (ParsedFunction, Option<JaktError>) {
     trace!(format!("parse_function: {:?}", tokens[*index]));
 
@@ -1935,6 +1968,7 @@ pub fn parse_function(
                             name_span,
                             params,
                             visibility,
+                            implemented_traits,
                             generic_parameters,
                             block: ParsedBlock::new(),
                             throws,
@@ -1963,6 +1997,7 @@ pub fn parse_function(
                         name_span,
                         params,
                         visibility,
+                        implemented_traits,
                         generic_parameters,
                         block,
                         throws,
