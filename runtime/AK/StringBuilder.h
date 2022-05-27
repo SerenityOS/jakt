@@ -10,7 +10,9 @@
 #include <AK/Forward.h>
 #include <AK/String.h>
 #include <AK/StringView.h>
+#include <AK/Tuple.h>
 #include <Builtins/Array.h>
+#include <Builtins/Dictionary.h>
 #include <Builtins/Set.h>
 #include <stdarg.h>
 
@@ -132,4 +134,24 @@ struct Formatter<JaktInternal::Set<T>> : Formatter<StringView> {
     }
 };
 
+template<typename K, typename V>
+struct Formatter<JaktInternal::Dictionary<K, V>> : Formatter<StringView> {
+    ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Dictionary<K, V> const& dict)
+    {
+        StringBuilder string_builder;
+        string_builder.append("[");
+        auto iter = dict.iterator();
+
+        for (size_t i = 0; i < dict.size(); ++i) {
+            auto item = iter.next().value();
+            append_value(string_builder, item.template get<0>());
+            string_builder.append(": ");
+            append_value(string_builder, item.template get<1>());
+            if (i != dict.size() - 1)
+                string_builder.append(", ");
+        }
+        string_builder.append("]");
+        return Formatter<StringView>::format(builder, string_builder.to_string());
+    }
+};
 }
