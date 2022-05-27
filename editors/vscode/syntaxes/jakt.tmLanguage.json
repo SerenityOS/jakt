@@ -114,7 +114,7 @@
       "patterns": [
         {
           "name": "meta.type.struct.jakt",
-          "match": "(\\bextern\\s+)?\\b(class|struct)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
+          "match": "(\\bextern\\s+)?\\b(class|struct|trait)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
           "captures": {
             "1": {
               "name": "storage.modifier.linkage.jakt"
@@ -129,7 +129,7 @@
         },
         {
           "name": "meta.block.struct.jakt",
-          "begin": "(?<=(?:class|struct).*?)(\\{)",
+          "begin": "(?<=(?:class|struct|trait).*?)(\\{)",
           "beginCaptures": {
             "1": {
               "name": "punctuation.begin.brace.jakt"
@@ -152,7 +152,7 @@
         },
         {
           "name": "meta.type.generic-arguments.jakt",
-          "begin": "(?<=(?:class|struct|enum).*?)\\s*(<)",
+          "begin": "(?<=(?:class|struct|enum|trait).*?)\\s*(<)",
           "beginCaptures": {
             "1": {
               "name": "punctuation.begin.angle-bracket.jakt"
@@ -852,7 +852,7 @@
               "name": "constant.character.escape.jakt",
               "match": "\\\\."
             }
-          ]    
+          ]
         },
         {
           "name": "string.quoted.single.jakt",
@@ -873,7 +873,7 @@
               "name": "constant.character.escape.jakt",
               "match": "\\\\."
             }
-          ]    
+          ]
         }
       ]
     }
