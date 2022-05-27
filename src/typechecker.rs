@@ -5038,7 +5038,7 @@ pub fn typecheck_binary_operation(
 
     let mut type_id = lhs.type_id(scope_id, project);
     match op {
-        BinaryOperator::NoneCoalescing => {
+        BinaryOperator::NoneCoalescing | BinaryOperator::NoneCoalescingAssign => {
             // 1. LHS must be Optional<T>.
             // 2. RHS must be Optional<T> or T.
             // 3. Resulting type is Optional<T> or T, respectively.

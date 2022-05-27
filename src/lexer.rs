@@ -76,6 +76,7 @@ pub enum TokenContents {
     ExclamationPoint,
     QuestionMark,
     QuestionMarkQuestionMark,
+    QuestionMarkQuestionMarkEqual,
     Comma,
     Dot,
     DotDot,
@@ -439,7 +440,14 @@ pub fn lex(file_id: FileId, bytes: &[u8]) -> (Vec<Token>, Option<JaktError>) {
             let start = index;
             index += 1;
 
-            if index < bytes.len() && bytes[index] == b'?' {
+            if index + 1 < bytes.len() && bytes[index] == b'?' && bytes[index + 1] == b'=' {
+                index += 1;
+                output.push(Token::new(
+                    TokenContents::QuestionMarkQuestionMarkEqual,
+                    Span::new(file_id, start, start + 3),
+                ));
+                continue;
+            } else if index < bytes.len() && bytes[index] == b'?' {
                 index += 1;
                 output.push(Token::new(
                     TokenContents::QuestionMarkQuestionMark,

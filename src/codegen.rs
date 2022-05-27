@@ -2829,6 +2829,12 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     output.push_str(&codegen_expr(indent, rhs, project));
                     output.push_str("; })");
                 }
+                BinaryOperator::NoneCoalescingAssign => {
+                    output.push_str(&codegen_expr(indent, lhs, project));
+                    output.push_str(".lazy_emplace([&] { return ");
+                    output.push_str(&codegen_expr(indent, rhs, project));
+                    output.push_str("; })");
+                }
                 BinaryOperator::ArithmeticRightShift => {
                     output.push_str("JaktInternal::arithmetic_shift_right(");
                     output.push_str(&codegen_expr(indent, lhs, project));

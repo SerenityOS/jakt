@@ -1,0 +1,5 @@
+function main() {
+    let mutable i: String? = None
+    i ??= "mayb"
+    println(i ?? "hello")
+}
