@@ -425,6 +425,7 @@ pub enum BinaryOperator {
     BitwiseLeftShiftAssign,
     BitwiseRightShiftAssign,
     NoneCoalescing,
+    NoneCoalescingAssign,
 }
 
 impl ParsedExpression {
@@ -3439,6 +3440,18 @@ pub fn parse_operator(
                 )),
             )
         }
+        TokenContents::QuestionMarkQuestionMarkEqual => {
+            trace!("ERROR: assignment not allowed in this position");
+
+            *index += 2;
+            (
+                ParsedExpression::Operator(BinaryOperator::ModuloAssign, span),
+                Some(JaktError::ValidationError(
+                    "assignment is not allowed in this position".to_string(),
+                    span,
+                )),
+            )
+        }
         TokenContents::DoubleEqual => {
             *index += 1;
             (
@@ -3732,6 +3745,13 @@ pub fn parse_operator_with_assignment(
             *index += 1;
             (
                 ParsedExpression::Operator(BinaryOperator::ModuloAssign, span),
+                None,
+            )
+        }
+        TokenContents::QuestionMarkQuestionMarkEqual => {
+            *index += 2;
+            (
+                ParsedExpression::Operator(BinaryOperator::NoneCoalescingAssign, span),
                 None,
             )
         }
