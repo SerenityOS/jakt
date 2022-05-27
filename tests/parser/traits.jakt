@@ -1,17 +1,17 @@
 trait MyTrait {}
 
 trait MyLittleTrait {
-	function do_nothing(argument: String)
+	function do_nothing(this, argument: String)
 }
 
 trait MyOtherTrait {
-	function do_something(in: i64) -> u32
-	function do_nothing(argument: String)
+	function do_something(this, in: i64) -> u32
+	function do_nothing(this, argument: String)
 }
 
 class Implementor {
-	implements(MyOtherTrait) function do_something(in: i64) -> u32 => in as! u32
-	implements(MyLittleTrait, MyOtherTrait) function do_nothing(argument: String) {}
+	implements(MyOtherTrait) function do_something(this, in: i64) -> u32 => in as! u32
+	implements(MyLittleTrait, MyOtherTrait) function do_nothing(this, argument: String) {}
 }
 
 function main() {}

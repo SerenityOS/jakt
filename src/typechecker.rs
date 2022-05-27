@@ -7,7 +7,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::parser::{MatchBody, MatchCase, ParsedVarDecl, Visibility};
+use crate::parser::{MatchBody, MatchCase, ParsedTrait, ParsedVarDecl, Visibility};
 use crate::{
     compiler::{
         BOOL_TYPE_ID, CCHAR_TYPE_ID, CINT_TYPE_ID, F32_TYPE_ID, F64_TYPE_ID, I16_TYPE_ID,
@@ -26,6 +26,7 @@ use std::os::raw::{c_char, c_int};
 
 pub type StructId = usize;
 pub type EnumId = usize;
+pub type TraitId = usize;
 pub type FunctionId = usize;
 pub type ScopeId = usize;
 pub type TypeId = usize;
@@ -52,6 +53,7 @@ pub enum Type {
     GenericEnumInstance(EnumId, Vec<TypeId>),
     Struct(StructId),
     Enum(EnumId),
+    Trait(TraitId),
     RawPtr(TypeId),
 }
 
@@ -204,6 +206,7 @@ pub struct Project {
     pub functions: Vec<CheckedFunction>,
     pub structs: Vec<CheckedStruct>,
     pub enums: Vec<CheckedEnum>,
+    pub traits: Vec<CheckedTrait>,
     pub scopes: Vec<Scope>,
     pub types: Vec<Type>,
 
@@ -231,6 +234,7 @@ impl Project {
             functions: Vec::new(),
             structs: Vec::new(),
             enums: Vec::new(),
+            traits: Vec::new(),
             scopes: vec![project_global_scope],
             types: Vec::new(),
             current_function_index: None,
@@ -691,6 +695,9 @@ impl Project {
                     format!("struct {}", self.structs[*struct_id].name)
                 }
             }
+            Type::Trait(trait_id) => {
+                format!("trait {}", self.traits[*trait_id].name)
+            }
             Type::GenericEnumInstance(enum_id, type_args) => {
                 let mut output = format!("enum {}", self.enums[*enum_id].name);
 
@@ -801,6 +808,13 @@ pub struct CheckedStruct {
     pub scope_id: ScopeId,
     pub definition_linkage: DefinitionLinkage,
     pub definition_type: DefinitionType,
+    pub type_id: TypeId,
+}
+
+#[derive(Clone, Debug)]
+pub struct CheckedTrait {
+    pub name: String,
+    pub scope_id: ScopeId,
     pub type_id: TypeId,
 }
 
@@ -1514,6 +1528,7 @@ pub fn typecheck_namespace_predecl(
 
     let project_struct_len = project.structs.len();
     let project_enum_len = project.enums.len();
+    let project_trait_len = project.traits.len();
 
     for (struct_id, structure) in parsed_namespace.structs.iter().enumerate() {
         // Bring the struct names into scope for future typechecking
@@ -1544,6 +1559,18 @@ pub fn typecheck_namespace_predecl(
         }
     }
 
+    for (trait_id, trait_) in parsed_namespace.traits.iter().enumerate() {
+        // Bring the trait names into scope for future typechecking
+        let trait_id = trait_id + project_trait_len;
+        project.types.push(Type::Trait(trait_id));
+        let trait_type_id = project.types.len() - 1;
+        if let Err(err) =
+            project.add_type_to_scope(scope_id, trait_.name.clone(), trait_type_id, trait_.span)
+        {
+            error = error.or(Some(err));
+        }
+    }
+
     for (struct_id, structure) in parsed_namespace.structs.iter().enumerate() {
         // Typecheck the protype of the struct
         let struct_id = struct_id + project_struct_len;
@@ -1560,6 +1587,12 @@ pub fn typecheck_namespace_predecl(
         if let Some(err) = typecheck_enum_predecl(enum_, enum_id, scope_id, project) {
             error = error.or(Some(err));
         }
+    }
+
+    for (trait_id, trait_) in parsed_namespace.traits.iter().enumerate() {
+        // Typecheck the full trait, as it has no bodies that need a more careful predecl check
+        let trait_id = trait_id + project_trait_len;
+        error = error.or(typecheck_trait(trait_, trait_id, scope_id, project));
     }
 
     for (enum_id, enum_) in parsed_namespace.enums.iter().enumerate() {
@@ -2578,6 +2611,42 @@ fn typecheck_struct(
     }
 
     project.current_struct_type_id = None;
+    error
+}
+
+fn typecheck_trait(
+    trait_: &ParsedTrait,
+    trait_id: TraitId,
+    parent_scope_id: ScopeId,
+    project: &mut Project,
+) -> Option<JaktError> {
+    let mut error = None;
+
+    let trait_type_id = project.find_or_add_type_id(Type::Trait(trait_id));
+    let trait_scope_id = project.create_scope(parent_scope_id, false);
+
+    for function in &trait_.methods {
+        error = error.or(typecheck_function_predecl(
+            function,
+            trait_scope_id,
+            Some(trait_type_id),
+            project,
+        ));
+        if error.is_some() {
+            return error;
+        }
+        let function_id = project
+            .find_function_in_scope(trait_scope_id, &function.name)
+            .expect("internal error: function not added to scope");
+        let checked_function = &mut project.functions[function_id];
+        // Because we only use typecheck_predecl to check the function, a function without a return type will come out as "unknown type"
+        // because in general, the body can determine the type.
+        // However, here we know that no return type specification means the function returns nothing.
+        if checked_function.return_type_id == UNKNOWN_TYPE_ID {
+            checked_function.return_type_id = VOID_TYPE_ID;
+        }
+    }
+
     error
 }
 

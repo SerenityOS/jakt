@@ -119,6 +119,7 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
                         output.push('\n');
                     }
                 }
+                Type::Trait(..) => {}
                 _ => panic!("Unexpected type in dependency graph: {:?}", type_),
             }
         }
@@ -1752,6 +1753,7 @@ pub fn codegen_type_possibly_as_namespace(
 
             output
         }
+        Type::Trait(_) => String::new(),
         Type::Builtin => match type_id {
             compiler::USIZE_TYPE_ID => String::from("size_t"),
             compiler::BOOL_TYPE_ID => String::from("bool"),
@@ -3242,6 +3244,7 @@ fn extract_dependencies_from(
         Type::Builtin => {}
         Type::TypeVariable(_) => {}
         Type::RawPtr(_) => {}
+        Type::Trait(_) => {}
     }
 }
 
