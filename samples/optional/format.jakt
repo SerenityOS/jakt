@@ -1,0 +1,8 @@
+struct Foo {
+    x: i64?
+}
+
+function main() {
+    let y: i64? = None
+    println("{}, {}", y, Foo(x: 5))
+}

@@ -329,6 +329,17 @@ struct Formatter<NonnullRefPtr<T>> : Formatter<StringView> {
     }
 };
 
+template<typename T>
+struct Formatter<Optional<T>> : Formatter<StringView> {
+    ErrorOr<void> format(FormatBuilder& builder, Optional<T> const& value)
+    {
+        if (!value.has_value())
+            return Formatter<StringView>::format(builder, "None");
+        auto str = AK::String::formatted("{}", *value);
+        return Formatter<StringView>::format(builder, str);
+    }
+};
+
 }
 
 using AK::CaseInsensitiveStringTraits;
