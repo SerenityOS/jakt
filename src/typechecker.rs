@@ -5040,13 +5040,18 @@ pub fn typecheck_binary_operation(
     match op {
         BinaryOperator::NoneCoalescing => {
             // 1. LHS must be Optional<T>.
-            // 2. RHS must be T.
-            // 3. Resulting type is T.
+            // 2. RHS must be Optional<T> or T.
+            // 3. Resulting type is Optional<T> or T, respectively.
 
             match &project.types[lhs_type_id] {
                 Type::GenericInstance(struct_id, generic_parameters)
                     if *struct_id == project.get_optional_struct_id(span) =>
                 {
+                    // Success: LHS is T? and RHS is T?.
+                    if lhs_type_id == rhs_type_id {
+                        return (lhs_type_id, None);
+                    }
+
                     // Extract T from Optional<T>.
                     let inner_type_id = generic_parameters[0];
 

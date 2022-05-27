@@ -211,6 +211,14 @@ public:
         return callback();
     }
 
+    template<typename Callback>
+    [[nodiscard]] ALWAYS_INLINE Optional<T> value_or_lazy_evaluated_optional(Callback callback) const
+    {
+        if (m_has_value)
+            return value();
+        return callback();
+    }
+
     ALWAYS_INLINE T const& operator*() const { return value(); }
     ALWAYS_INLINE T& operator*() { return value(); }
 
