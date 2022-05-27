@@ -5420,10 +5420,14 @@ pub fn typecheck_call(
                 return_type_id = callee.return_type_id;
                 linkage = callee.linkage;
 
+                let scope_containing_callee = project.scopes[callee.function_scope_id]
+                    .parent
+                    .expect("Function should have a parent scope");
+
                 // Make sure we are allowed to access this method.
                 error = error.or(check_accessibility(
                     caller_scope_id,
-                    callee.function_scope_id,
+                    scope_containing_callee,
                     callee.clone(),
                     span,
                     project,
