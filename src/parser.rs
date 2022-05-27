@@ -1660,6 +1660,7 @@ pub fn parse_trait(tokens: &[Token], index: &mut usize) -> (ParsedTrait, Option<
                                 contents: TokenContents::RCurly,
                                 ..
                             } => {
+                                parsed_trait.span.end = tokens[*index].span.end;
                                 *index += 1;
                                 break;
                             }
