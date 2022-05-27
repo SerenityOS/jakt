@@ -1615,6 +1615,10 @@ pub fn parse_function(
                     )));
                 }
 
+                if function_name == "main" {
+                    throws = true
+                }
+
                 if let FunctionLinkage::External = linkage {
                     return (
                         ParsedFunction {
