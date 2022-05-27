@@ -76,6 +76,10 @@ pub fn is_floating(type_id: TypeId) -> bool {
     matches!(type_id, F32_TYPE_ID | F64_TYPE_ID)
 }
 
+pub fn is_numeric(type_id: TypeId) -> bool {
+    is_integer(type_id) || is_floating(type_id)
+}
+
 pub fn is_signed(type_id: TypeId) -> bool {
     match type_id {
         // c_char types can be both signed or unsigned values thus we have to check which variant
@@ -3357,36 +3361,91 @@ pub fn typecheck_statement(
             (CheckedStatement::Block(checked_block), err)
         }
         ParsedStatement::VarDecl(var_decl, init) => {
-            let (mut checked_type_id, typename_err) =
+            let (mut lhs_type_id, typename_err) =
                 typecheck_typename(&var_decl.parsed_type, scope_id, project);
             error = error.or(typename_err);
 
             let (mut checked_expression, err) =
-                typecheck_expression(init, scope_id, project, safety_mode, Some(checked_type_id));
+                typecheck_expression(init, scope_id, project, safety_mode, Some(lhs_type_id));
             error = error.or(err);
 
-            if checked_type_id == UNKNOWN_TYPE_ID
-                && checked_expression.type_id(scope_id, project) != UNKNOWN_TYPE_ID
-            {
-                checked_type_id = checked_expression.type_id(scope_id, project)
+            let rhs_type_id = checked_expression.type_id(scope_id, project);
+
+            if lhs_type_id == UNKNOWN_TYPE_ID && rhs_type_id != UNKNOWN_TYPE_ID {
+                lhs_type_id = rhs_type_id;
             }
 
             let err = try_promote_constant_expr_to_type(
-                checked_type_id,
+                lhs_type_id,
                 &mut checked_expression,
                 &init.span(),
             );
             error = error.or(err);
 
             let weakptr_struct_id = project.get_weakptr_struct_id(var_decl.span);
+            let optional_struct_id = project.get_optional_struct_id(var_decl.span);
 
-            match &project.types[checked_type_id] {
-                Type::GenericInstance(struct_id, _) if *struct_id == weakptr_struct_id => {
+            match &project.types[lhs_type_id] {
+                Type::GenericInstance(struct_id, type_args) if *struct_id == weakptr_struct_id => {
                     if !var_decl.mutable {
                         error = error.or(Some(JaktError::TypecheckError(
                             "Weak reference must be mutable".into(),
                             var_decl.span,
                         )));
+                    }
+                    if lhs_type_id != rhs_type_id
+                        && type_args[0] != rhs_type_id
+                        && rhs_type_id != UNKNOWN_TYPE_ID
+                    {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            format!(
+                                "Type mismatch: expected ‘{}’, but got ‘{}’",
+                                project.typename_for_type_id(lhs_type_id),
+                                project.typename_for_type_id(rhs_type_id),
+                            ),
+                            checked_expression.span(),
+                        )));
+                    }
+                }
+                Type::GenericInstance(struct_id, type_args) if *struct_id == optional_struct_id => {
+                    if lhs_type_id != rhs_type_id
+                        && type_args[0] != rhs_type_id
+                        && rhs_type_id != UNKNOWN_TYPE_ID
+                    {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            format!(
+                                "Type mismatch: expected ‘{}’, but got ‘{}’",
+                                project.typename_for_type_id(lhs_type_id),
+                                project.typename_for_type_id(rhs_type_id),
+                            ),
+                            checked_expression.span(),
+                        )));
+                    }
+                }
+                Type::Builtin => {
+                    let is_rhs_zero = match checked_expression.to_number_constant() {
+                        Some(c) => match c {
+                            NumberConstant::Signed(v) => v == 0,
+                            NumberConstant::Unsigned(v) => v == 0,
+                            NumberConstant::Floating(v) => v == 0.0,
+                        },
+                        None => false,
+                    };
+
+                    if !(is_numeric(lhs_type_id) && is_rhs_zero)
+                        && is_integer(lhs_type_id) ^ is_integer(rhs_type_id)
+                    {
+                        return (
+                            CheckedStatement::Garbage,
+                            Some(JaktError::TypecheckError(
+                                format!(
+                                    "Type mismatch: expected ‘{}’, but got ‘{}’",
+                                    project.typename_for_type_id(lhs_type_id),
+                                    project.typename_for_type_id(rhs_type_id),
+                                ),
+                                checked_expression.span(),
+                            )),
+                        );
                     }
                 }
                 _ => {}
@@ -3394,7 +3453,7 @@ pub fn typecheck_statement(
 
             let checked_var_decl = CheckedVarDecl {
                 name: var_decl.name.clone(),
-                type_id: checked_type_id,
+                type_id: lhs_type_id,
                 span: var_decl.span,
                 mutable: var_decl.mutable,
                 visibility: var_decl.visibility.clone(),
