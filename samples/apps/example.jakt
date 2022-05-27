@@ -1,5 +1,0 @@
-function main() {
-    let mutable val: String? = "mystr"
-    val ??= "mystr2"
-    println(val??"str3")
-}
