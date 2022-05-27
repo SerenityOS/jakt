@@ -22,6 +22,9 @@
     "expressions": {
       "patterns": [
         {
+          "include": "#comment"
+        },
+        {
           "include": "#strings"
         },
         {
