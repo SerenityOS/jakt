@@ -1,0 +1,11 @@
+function id<T>(z: T) => z
+
+function bar() {
+    let y: u8 = id(z: 188u8)
+}
+
+function foobar(x: u32) -> u32 {
+    return x
+}
+
+function main(args: [String]) { }
