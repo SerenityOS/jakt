@@ -7,6 +7,7 @@
 
 use crate::error::JaktError;
 
+use crate::compiler::Compiler;
 use crate::lexer::{Span, Token, TokenContents};
 use crate::typechecker::NumericConstant;
 
@@ -483,9 +484,44 @@ impl ParsedNamespace {
     }
 }
 
+fn parse_import(
+    tokens: &[Token],
+    index: &mut usize,
+    compiler: &mut Compiler,
+) -> (ParsedNamespace, Option<JaktError>) {
+    let mut error = None;
+    *index += 1;
+
+    if *index < tokens.len() {
+        if let Token {
+            contents: TokenContents::Name(module_name),
+            span,
+        } = &tokens[*index]
+        {
+            *index += 1;
+            let (mut namespace, err) = compiler.find_and_include_module(module_name, *span);
+            namespace.name = Some(module_name.clone());
+            return (namespace, err);
+        } else {
+            error = error.or(Some(JaktError::ParserError(
+                "Expected module name after import keyword".to_string(),
+                tokens[*index].span,
+            )));
+        }
+    } else {
+        error = error.or(Some(JaktError::ParserError(
+            "expected name after import keyword".to_string(),
+            tokens[*index - 1].span,
+        )));
+    }
+
+    (ParsedNamespace::new(), error)
+}
+
 pub fn parse_namespace(
     tokens: &[Token],
     index: &mut usize,
+    compiler: &mut Compiler,
 ) -> (ParsedNamespace, Option<JaktError>) {
     trace!("parse_namespace");
 
@@ -579,7 +615,7 @@ pub fn parse_namespace(
                         if let TokenContents::LCurly = &tokens[*index].contents {
                             *index += 1;
 
-                            let (mut namespace, err) = parse_namespace(tokens, index);
+                            let (mut namespace, err) = parse_namespace(tokens, index, compiler);
                             error = error.or(err);
 
                             *index += 1;
@@ -592,6 +628,11 @@ pub fn parse_namespace(
                             parsed_namespace.namespaces.push(namespace);
                         }
                     }
+                }
+                "import" => {
+                    let (namespace, err) = parse_import(tokens, index, compiler);
+                    error = error.or(err);
+                    parsed_namespace.namespaces.push(namespace);
                 }
                 "extern" => {
                     if *index + 1 < tokens.len() {

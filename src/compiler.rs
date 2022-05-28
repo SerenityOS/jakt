@@ -5,13 +5,13 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::{
     codegen::codegen,
     error::JaktError,
-    lexer::lex,
-    parser::parse_namespace,
+    lexer::{lex, Span},
+    parser::{parse_namespace, ParsedNamespace},
     typechecker::{typecheck_namespace, Project, Scope, Type},
 };
 
@@ -37,14 +37,54 @@ pub const USIZE_TYPE_ID: usize = 15;
 pub const STRING_TYPE_ID: usize = 16;
 
 pub struct Compiler {
+    // TODO: Store a path object somehow?
+    include_paths: Vec<PathBuf>,
     raw_files: Vec<(String, Vec<u8>)>,
 }
 
 impl Compiler {
     pub fn new() -> Self {
         Self {
+            include_paths: Vec::new(),
             raw_files: Vec::new(),
         }
+    }
+
+    fn include_file(&mut self, fname: &Path) -> (ParsedNamespace, Option<JaktError>) {
+        let contents = std::fs::read(fname).unwrap();
+        self.raw_files
+            .push((fname.to_string_lossy().to_string(), contents));
+
+        let (lexed, err) = lex(
+            self.raw_files.len() - 1,
+            &self.raw_files[self.raw_files.len() - 1].1,
+        );
+
+        if err.is_some() {
+            return (ParsedNamespace::new(), err);
+        }
+
+        parse_namespace(&lexed, &mut 0, self)
+    }
+
+    pub fn find_and_include_module(
+        &mut self,
+        module_name: &str,
+        span: Span,
+    ) -> (ParsedNamespace, Option<JaktError>) {
+        for path in &self.include_paths {
+            let fname = path.join(module_name).with_extension("jakt");
+            if fname.exists() {
+                return self.include_file(&fname);
+            }
+        }
+        return (
+            ParsedNamespace::new(),
+            Some(JaktError::ParserError(
+                format!("Module '{}' not found", module_name),
+                span,
+            )),
+        );
     }
 
     pub fn include_prelude(&mut self, project: &mut Project) -> Option<JaktError> {
@@ -62,7 +102,7 @@ impl Compiler {
             self.raw_files.len() - 1,
             &self.raw_files[self.raw_files.len() - 1].1,
         );
-        let (file, _) = parse_namespace(&lexed, &mut 0);
+        let (file, _) = parse_namespace(&lexed, &mut 0, self);
 
         // Scope ID 0 is the global project-level scope that all files can see
         typecheck_namespace(&file, 0, project)
@@ -76,21 +116,13 @@ impl Compiler {
             return Err(err);
         }
 
-        let contents = std::fs::read(fname)?;
+        // TODO: We also want to be able to accept include paths from CLI
+        let parent_dir = fname
+            .parent()
+            .expect("Cannot find parent directory of file");
+        self.include_paths.push(parent_dir.to_path_buf());
 
-        self.raw_files
-            .push((fname.to_string_lossy().to_string(), contents));
-
-        let (lexed, err) = lex(
-            self.raw_files.len() - 1,
-            &self.raw_files[self.raw_files.len() - 1].1,
-        );
-
-        if let Some(err) = err {
-            return Err(err);
-        }
-
-        let (file, err) = parse_namespace(&lexed, &mut 0);
+        let (file, err) = self.include_file(fname);
 
         if let Some(err) = err {
             return Err(err);
