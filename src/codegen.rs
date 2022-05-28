@@ -2813,7 +2813,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     Type::RawPtr(_) => {
                         output.push_str("->");
                     }
-                    Type::Struct(struct_id) => {
+                    Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
                         let structure = &project.structs[*struct_id];
 
                         if structure.definition_type == DefinitionType::Class {
