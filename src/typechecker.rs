@@ -225,7 +225,7 @@ impl Project {
     pub fn new() -> Self {
         // Top-level (project-global) scope has no parent scope
         // and is the parent scope of all file scopes
-        let project_global_scope = Scope::new(None);
+        let project_global_scope = Scope::new(None, false);
 
         Self {
             functions: Vec::new(),
@@ -261,8 +261,8 @@ impl Project {
         self.types.len() - 1
     }
 
-    pub fn create_scope(&mut self, parent_id: ScopeId) -> ScopeId {
-        self.scopes.push(Scope::new(Some(parent_id)));
+    pub fn create_scope(&mut self, parent_id: ScopeId, throws: bool) -> ScopeId {
+        self.scopes.push(Scope::new(Some(parent_id), throws));
 
         self.scopes.len() - 1
     }
@@ -1333,10 +1333,11 @@ pub struct Scope {
     pub parent: Option<ScopeId>,
     // Namespaces may also have children that are also namespaces
     pub children: Vec<ScopeId>,
+    pub throws: bool,
 }
 
 impl Scope {
-    pub fn new(parent: Option<ScopeId>) -> Self {
+    pub fn new(parent: Option<ScopeId>, throws: bool) -> Self {
         Self {
             namespace_name: None,
             vars: Vec::new(),
@@ -1346,6 +1347,7 @@ impl Scope {
             types: Vec::new(),
             parent,
             children: Vec::new(),
+            throws,
         }
     }
 
@@ -1503,7 +1505,7 @@ pub fn typecheck_namespace(
 
     for namespace in parsed_namespace.namespaces.iter() {
         // Do full typechecks of all the namespaces that are children of this namespace
-        let namespace_scope_id = project.create_scope(scope_id);
+        let namespace_scope_id = project.create_scope(scope_id, false);
         project.scopes[namespace_scope_id].namespace_name = namespace.name.clone();
         project.scopes[scope_id].children.push(namespace_scope_id);
         typecheck_namespace(namespace, namespace_scope_id, project);
@@ -1606,7 +1608,7 @@ fn typecheck_enum_predecl(
 ) -> Option<JaktError> {
     let mut error = None;
 
-    let enum_scope_id = project.create_scope(parent_scope_id);
+    let enum_scope_id = project.create_scope(parent_scope_id, false);
     let mut generic_parameters = Vec::new();
 
     for (generic_parameter, parameter_span) in &enum_.generic_parameters {
@@ -1894,7 +1896,8 @@ fn typecheck_enum(
                         .find_function_in_scope(enum_scope_id, name.as_str())
                         .is_none()
                     {
-                        let function_scope_id = project.create_scope(parent_scope_id);
+                        let function_scope_id =
+                            project.create_scope(parent_scope_id, enum_.is_recursive);
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
@@ -2041,7 +2044,8 @@ fn typecheck_enum(
                                 },
                             })
                             .collect();
-                        let function_scope_id = project.create_scope(parent_scope_id);
+                        let function_scope_id =
+                            project.create_scope(parent_scope_id, enum_.is_recursive);
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
@@ -2115,7 +2119,8 @@ fn typecheck_enum(
                                 definition_span: *span,
                             },
                         }];
-                        let function_scope_id = project.create_scope(parent_scope_id);
+                        let function_scope_id =
+                            project.create_scope(parent_scope_id, enum_.is_recursive);
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
@@ -2181,7 +2186,7 @@ fn typecheck_struct_predecl(
     let struct_type_id = project.find_or_add_type_id(Type::Struct(struct_id));
     project.current_struct_type_id = Some(struct_type_id);
 
-    let struct_scope_id = project.create_scope(parent_scope_id);
+    let struct_scope_id = project.create_scope(parent_scope_id, false);
 
     let mut generic_parameters = vec![];
 
@@ -2218,7 +2223,7 @@ fn typecheck_struct_predecl(
     project.structs[struct_id].generic_parameters = generic_parameters.clone();
 
     for function in &structure.methods {
-        let method_scope_id = project.create_scope(struct_scope_id);
+        let method_scope_id = project.create_scope(struct_scope_id, function.throws);
 
         let is_generic =
             !structure.generic_parameters.is_empty() || !function.generic_parameters.is_empty();
@@ -2266,7 +2271,7 @@ fn typecheck_struct_predecl(
 
         checked_function.generic_parameters = generic_parameters;
         let check_scope = if is_generic && !is_extern {
-            Some(project.create_scope(method_scope_id))
+            Some(project.create_scope(method_scope_id, function.throws))
         } else {
             None
         };
@@ -2465,7 +2470,10 @@ fn typecheck_struct(
             });
         }
 
-        let function_scope_id = project.create_scope(parent_scope_id);
+        let function_scope_id = project.create_scope(
+            parent_scope_id,
+            structure.definition_type == DefinitionType::Class,
+        );
 
         let checked_constructor = CheckedFunction {
             name: structure.name.clone(),
@@ -2519,7 +2527,7 @@ fn typecheck_function_predecl(
 ) -> Option<JaktError> {
     let mut error = None;
 
-    let function_scope_id = project.create_scope(parent_scope_id);
+    let function_scope_id = project.create_scope(parent_scope_id, function.throws);
 
     let is_generic = if let Some(type_id) = this_arg_type_id {
         if let Type::GenericInstance(_, _) = &project.types[type_id] {
@@ -2577,7 +2585,7 @@ fn typecheck_function_predecl(
     let check_scope = if !is_generic {
         None
     } else {
-        Some(project.create_scope(function_scope_id))
+        Some(project.create_scope(function_scope_id, function.throws))
     };
 
     let first = true;
@@ -2666,7 +2674,7 @@ fn typecheck_and_specialize_generic_function(
     // Now we can actually resolve it, let's gooooo
     let function_id = project.functions.len();
     let mut function = function.to_parsed_function();
-    let scope_id = project.create_scope(parent_scope_id);
+    let scope_id = project.create_scope(parent_scope_id, function.throws);
     let mut error = None;
 
     if function.generic_parameters.len() != generic_arguments.len() {
@@ -2953,7 +2961,8 @@ pub fn typecheck_block(
     let mut error = None;
     let mut checked_block = CheckedBlock::new();
 
-    let block_scope_id = project.create_scope(parent_scope_id);
+    let parent_throws = project.scopes[parent_scope_id].throws;
+    let block_scope_id = project.create_scope(parent_scope_id, parent_throws);
 
     for stmt in &block.stmts {
         let (checked_stmt, err) = typecheck_statement(stmt, block_scope_id, project, safety_mode);
@@ -2979,7 +2988,8 @@ pub fn typecheck_statement(
 
     match stmt {
         ParsedStatement::Try(stmt, error_name, error_span, catch_block) => {
-            let (checked_stmt, err) = typecheck_statement(stmt, scope_id, project, safety_mode);
+            let try_scope_id = project.create_scope(scope_id, true);
+            let (checked_stmt, err) = typecheck_statement(stmt, try_scope_id, project, safety_mode);
             error = error.or(err);
 
             let error_struct_id = project.get_error_struct_id(*error_span);
@@ -2991,7 +3001,7 @@ pub fn typecheck_statement(
                 definition_span: *error_span,
             };
 
-            let catch_scope_id = project.create_scope(scope_id);
+            let catch_scope_id = project.create_scope(scope_id, false);
 
             let err = project
                 .add_var_to_scope(catch_scope_id, error_decl, *error_span)
@@ -4576,7 +4586,8 @@ pub fn typecheck_expression(
                                     }
                                 };
 
-                                let new_scope_id = project.create_scope(scope_id);
+                                let parent_throws = project.scopes[scope_id].throws;
+                                let new_scope_id = project.create_scope(scope_id, parent_throws);
                                 for (var, span) in vars {
                                     let err =
                                         project.add_var_to_scope(new_scope_id, var, span).err();
