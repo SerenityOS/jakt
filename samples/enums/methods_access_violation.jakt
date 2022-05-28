@@ -7,5 +7,5 @@ enum Foo {
 
 function main() {
     let x = Foo::Bar()
-    x.test() // Should not compile, access voilation.
+    x.test() // Should not compile, access violation.
 }
