@@ -1685,18 +1685,20 @@ fn typecheck_enum(
                             next_constant_value = Some(next_constant_value? + 1);
 
                             // This has a value, so generate a "variable" for it.
-                            let err = project.add_var_to_scope(
-                                enum_scope_id,
-                                CheckedVariable {
-                                    name: name.clone(),
-                                    type_id: enum_type_id,
-                                    mutable: false,
-                                    visibility: Visibility::Public,
-                                    definition_span: *span,
-                                },
-                                *span,
-                            );
-                            error = error.or(err.err());
+                            let err = project
+                                .add_var_to_scope(
+                                    enum_scope_id,
+                                    CheckedVariable {
+                                        name: name.clone(),
+                                        type_id: enum_type_id,
+                                        mutable: false,
+                                        visibility: Visibility::Public,
+                                        definition_span: *span,
+                                    },
+                                    *span,
+                                )
+                                .err();
+                            error = error.or(err);
                         }
                     } else {
                         variants.push(CheckedEnumVariant::Untyped(name.clone(), *span));
@@ -1779,18 +1781,20 @@ fn typecheck_enum(
                     ));
 
                     // This has a value, so generate a "variable" for it.
-                    let err = project.add_var_to_scope(
-                        enum_scope_id,
-                        CheckedVariable {
-                            name: name.clone(),
-                            type_id: enum_type_id,
-                            mutable: false,
-                            visibility: Visibility::Public,
-                            definition_span: *span,
-                        },
-                        *span,
-                    );
-                    error = error.or(err.err());
+                    let err = project
+                        .add_var_to_scope(
+                            enum_scope_id,
+                            CheckedVariable {
+                                name: name.clone(),
+                                type_id: enum_type_id,
+                                mutable: false,
+                                visibility: Visibility::Public,
+                                definition_span: *span,
+                            },
+                            *span,
+                        )
+                        .err();
+                    error = error.or(err);
                 }
             }
             EnumVariant::StructLike(name, members, span) => {
@@ -2547,10 +2551,10 @@ fn typecheck_function(
     }
 
     for variable in param_vars.into_iter() {
-        if let Err(err) = project.add_var_to_scope(function_scope_id, variable, function.name_span)
-        {
-            error = error.or(Some(err));
-        }
+        let err = project
+            .add_var_to_scope(function_scope_id, variable, function.name_span)
+            .err();
+        error = error.or(err);
     }
 
     // Do this once to resolve concrete types (if any)
@@ -2685,10 +2689,10 @@ fn typecheck_method(
     }
 
     for variable in param_vars.into_iter() {
-        if let Err(err) = project.add_var_to_scope(function_scope_id, variable, function.name_span)
-        {
-            error = error.or(Some(err));
-        }
+        let err = project
+            .add_var_to_scope(function_scope_id, variable, function.name_span)
+            .err();
+        error = error.or(err);
     }
 
     // Set current function index before a block type check so that
@@ -2803,9 +2807,10 @@ pub fn typecheck_statement(
 
             let catch_scope_id = project.create_scope(scope_id);
 
-            if let Err(err) = project.add_var_to_scope(catch_scope_id, error_decl, *error_span) {
-                error = error.or(Some(err));
-            }
+            let err = project
+                .add_var_to_scope(catch_scope_id, error_decl, *error_span)
+                .err();
+            error = error.or(err);
 
             let (checked_catch_block, err) =
                 typecheck_block(catch_block, catch_scope_id, project, safety_mode);
@@ -3057,19 +3062,20 @@ pub fn typecheck_statement(
                 visibility: var_decl.visibility.clone(),
             };
 
-            if let Err(err) = project.add_var_to_scope(
-                scope_id,
-                CheckedVariable {
-                    name: checked_var_decl.name.clone(),
-                    type_id: checked_var_decl.type_id,
-                    mutable: checked_var_decl.mutable,
-                    visibility: checked_var_decl.visibility.clone(),
-                    definition_span: checked_var_decl.span,
-                },
-                checked_var_decl.span,
-            ) {
-                error = error.or(Some(err));
-            }
+            let err = project
+                .add_var_to_scope(
+                    scope_id,
+                    CheckedVariable {
+                        name: checked_var_decl.name.clone(),
+                        type_id: checked_var_decl.type_id,
+                        mutable: checked_var_decl.mutable,
+                        visibility: checked_var_decl.visibility.clone(),
+                        definition_span: checked_var_decl.span,
+                    },
+                    checked_var_decl.span,
+                )
+                .err();
+            error = error.or(err);
 
             (
                 CheckedStatement::VarDecl(checked_var_decl, checked_expression),
@@ -4361,11 +4367,9 @@ pub fn typecheck_expression(
 
                                 let new_scope_id = project.create_scope(scope_id);
                                 for (var, span) in vars {
-                                    if let Err(err) =
-                                        project.add_var_to_scope(new_scope_id, var, span)
-                                    {
-                                        error = error.or(Some(err));
-                                    }
+                                    let err =
+                                        project.add_var_to_scope(new_scope_id, var, span).err();
+                                    error = error.or(err);
                                 }
 
                                 match body {
