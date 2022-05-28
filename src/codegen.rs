@@ -153,7 +153,7 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
 
     output.push('\n');
 
-    for (_, function_id, _) in &scope.functions {
+    for (function_id, _) in &scope.functions {
         let function = &project.functions[*function_id];
         if function.linkage == FunctionLinkage::ImplicitEnumConstructor {
             continue;
@@ -169,7 +169,7 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
 
     output.push('\n');
 
-    for (_, function_id, _) in &scope.functions {
+    for (function_id, _) in &scope.functions {
         let function = &project.functions[*function_id];
         if function.linkage == FunctionLinkage::External
             || function.linkage == FunctionLinkage::ImplicitConstructor
@@ -195,7 +195,7 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
         }
 
         let scope = &project.scopes[structure.scope_id];
-        for (_, function_id, _) in &scope.functions {
+        for (function_id, _) in &scope.functions {
             let function = &project.functions[*function_id];
             if function.linkage != FunctionLinkage::ImplicitConstructor {
                 let function_output =
@@ -218,7 +218,7 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
         }
 
         let scope = &project.scopes[enum_.scope_id];
-        for (_, function_id, _) in &scope.functions {
+        for (function_id, _) in &scope.functions {
             let function = &project.functions[*function_id];
             if function.linkage != FunctionLinkage::ImplicitEnumConstructor {
                 let function_output =
@@ -462,7 +462,7 @@ fn codegen_nonrecursive_enum(
     output.push_str(&codegen_enum_debug_description_getter(enum_));
 
     let scope = &project.scopes[enum_.scope_id];
-    for (_, function_id, _) in &scope.functions {
+    for (function_id, _) in &scope.functions {
         let function = &project.functions[*function_id];
         if function.linkage != FunctionLinkage::ImplicitEnumConstructor {
             output.push_str(&codegen_indent(INDENT_SIZE));
@@ -899,7 +899,7 @@ fn codegen_recursive_enum(
     output.push_str(&codegen_enum_debug_description_getter(enum_));
 
     let scope = &project.scopes[enum_.scope_id];
-    for (_, function_id, _) in &scope.functions {
+    for (function_id, _) in &scope.functions {
         let function = &project.functions[*function_id];
         if function.linkage != FunctionLinkage::ImplicitEnumConstructor {
             output.push_str(&codegen_indent(INDENT_SIZE));
@@ -1179,7 +1179,7 @@ fn codegen_struct(
     }
 
     let scope = &project.scopes[structure.scope_id];
-    for (_, function_id, _) in &scope.functions {
+    for (function_id, _) in &scope.functions {
         let function = &project.functions[*function_id];
         if function.linkage == FunctionLinkage::ImplicitConstructor {
             let function_output = codegen_constructor(function, project);

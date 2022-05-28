@@ -286,3 +286,8 @@ fn test_match() -> Result<(), JaktError> {
 fn test_imports() -> Result<(), JaktError> {
     test_samples("samples/imports")
 }
+
+#[test]
+fn test_function_overloading() -> Result<(), JaktError> {
+    test_samples("tests/function_overloading")
+}

@@ -101,22 +101,7 @@ fn main() -> Result<(), JaktError> {
                 }
             }
             Err(err) => {
-                match &err {
-                    JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
-                    JaktError::ParserError(msg, span) => display_error(&compiler, msg, *span),
-                    JaktError::TypecheckError(msg, span) => display_error(&compiler, msg, *span),
-                    JaktError::ValidationError(msg, span) => display_error(&compiler, msg, *span),
-                    JaktError::TypecheckErrorWithHint(
-                        error_msg,
-                        error_span,
-                        hint_msg,
-                        hint_span,
-                    )
-                    | JaktError::ParserErrorWithHint(error_msg, error_span, hint_msg, hint_span) => {
-                        display_error(&compiler, error_msg, *error_span);
-                        display_hint(&compiler, hint_msg, *hint_span);
-                    }
-                }
+                display_any_error(&compiler, &err);
                 first_error = first_error.or(Some(err));
             }
         }
@@ -335,6 +320,29 @@ fn display_message_with_span(
     }
 
     println!("\u{001b}[0m{}", "-".repeat(width + 3));
+}
+
+fn display_any_error(compiler: &Compiler, err: &JaktError) {
+    match &err {
+        JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
+        JaktError::ParserError(msg, span) => display_error(&compiler, msg, *span),
+        JaktError::TypecheckError(msg, span) => display_error(&compiler, msg, *span),
+        JaktError::ValidationError(msg, span) => display_error(&compiler, msg, *span),
+        JaktError::TypecheckErrorWithHint(error_msg, error_span, hint_msg, hint_span)
+        | JaktError::ParserErrorWithHint(error_msg, error_span, hint_msg, hint_span) => {
+            display_error(&compiler, error_msg, *error_span);
+            display_hint(&compiler, hint_msg, *hint_span);
+        }
+        JaktError::TypecheckHint(hint_msg, hint_span) => {
+            display_hint(&compiler, hint_msg, *hint_span)
+        }
+        JaktError::TypecheckErrorWithSubErrors(error_msg, error_span, more_errors) => {
+            display_error(&compiler, error_msg, *error_span);
+            for error in more_errors {
+                display_any_error(&compiler, error);
+            }
+        }
+    }
 }
 
 fn display_error(compiler: &Compiler, msg: &str, span: Span) {

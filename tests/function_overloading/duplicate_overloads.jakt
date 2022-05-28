@@ -1,0 +1,11 @@
+function foo(anonymous i: i32) {
+    println("{}?", i)
+}
+
+function foo(anonymous i: i32) {
+    println("{}!", i)
+}
+
+function main() {
+    foo(10)
+}

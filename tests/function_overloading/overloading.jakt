@@ -1,0 +1,17 @@
+function foo(anonymous i: i32) {
+    println("{}", i)
+}
+
+function foo(anonymous b: bool) {
+    println("{}", b)
+}
+
+function foo(anonymous s: String) {
+    println("{}", s)
+}
+
+function main() {
+    foo(10)
+    foo(true)
+    foo("Yay")
+}

@@ -15,6 +15,8 @@ pub enum JaktError {
     ValidationError(String, Span),
     TypecheckError(String, Span),
     TypecheckErrorWithHint(String, Span, String, Span),
+    TypecheckHint(String, Span),
+    TypecheckErrorWithSubErrors(String, Span, Vec<JaktError>),
 }
 
 impl From<std::io::Error> for JaktError {

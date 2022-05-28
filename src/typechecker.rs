@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::parser::{MatchBody, MatchCase, ParsedVarDecl, Visibility};
 use crate::{
@@ -19,7 +19,7 @@ use crate::{
     parser::{
         BinaryOperator, DefinitionLinkage, DefinitionType, EnumVariant, FunctionLinkage,
         ParsedBlock, ParsedCall, ParsedEnum, ParsedExpression, ParsedFunction, ParsedNamespace,
-        ParsedStatement, ParsedStruct, ParsedType, TypeCast, UnaryOperator,
+        ParsedParameter, ParsedStatement, ParsedStruct, ParsedType, TypeCast, UnaryOperator,
     },
 };
 use std::os::raw::{c_char, c_int};
@@ -389,43 +389,99 @@ impl Project {
     pub fn add_function_to_scope(
         &mut self,
         scope_id: ScopeId,
-        name: String,
         function_id: FunctionId,
         span: Span,
     ) -> Result<(), JaktError> {
-        let scope = &mut self.scopes[scope_id];
+        let scope = &self.scopes[scope_id];
+        let function_identifying_information =
+            self.functions[function_id].identifying_information();
 
-        for (existing_function, _, definition_span) in &scope.functions {
-            if &name == existing_function {
+        println!(
+            "adding function to scope: {:?}\n",
+            function_identifying_information
+        );
+
+        for (existing_function_id, definition_span) in &scope.functions {
+            if FunctionIdentifyingInformation::eq(
+                &function_identifying_information,
+                &self.functions[*existing_function_id].identifying_information(),
+                self,
+            ) {
                 return Err(JaktError::TypecheckErrorWithHint(
-                    format!("redefinition of function {}", name),
+                    format!(
+                        "redefinition of function {}",
+                        self.functions[function_id].name
+                    ),
                     span,
-                    format!("function {} was first defined here", name),
+                    format!(
+                        "function {} was first defined here",
+                        self.functions[function_id].name
+                    ),
                     *definition_span,
                 ));
             }
         }
-        scope.functions.push((name, function_id, span));
+        let scope = &mut self.scopes[scope_id];
+        scope.functions.push((function_id, span));
 
         Ok(())
     }
 
-    pub fn find_function_in_scope(
+    pub fn find_functions_in_scope_by_name(
         &self,
         scope_id: ScopeId,
-        function_name: &str,
-    ) -> Option<FunctionId> {
+        name: &str,
+    ) -> Vec<FunctionId> {
+        let mut functions: Vec<FunctionId> = Vec::new();
         let mut scope_id = Some(scope_id);
 
         while let Some(current_id) = scope_id {
             let scope = &self.scopes[current_id];
             for s in &scope.functions {
-                if s.0 == function_name {
-                    return Some(s.1);
+                if self.functions[s.0].name == name {
+                    functions.push(s.0);
                 }
             }
             scope_id = scope.parent;
         }
+
+        return functions;
+    }
+
+    pub fn find_function_in_scope(
+        &self,
+        scope_id: ScopeId,
+        function_identifying_information: FunctionIdentifyingInformation,
+    ) -> Option<FunctionId> {
+        let mut scope_id = Some(scope_id);
+        println!("find_function_in_scope()");
+        println!("trying to find: {:?}", function_identifying_information);
+        println!(
+            "{:#?}",
+            BTreeMap::from(
+                self.types
+                    .iter()
+                    .enumerate()
+                    .map(|(type_id, type_)| (type_id, (self.typename_for_type_id(type_id), type_)))
+                    .collect::<BTreeMap::<TypeId, (String, &Type)>>()
+            )
+        );
+
+        while let Some(current_id) = scope_id {
+            let scope = &self.scopes[current_id];
+            for s in &scope.functions {
+                println!("{:?}", self.functions[s.0].identifying_information());
+                if FunctionIdentifyingInformation::eq(
+                    &self.functions[s.0].identifying_information(),
+                    &function_identifying_information,
+                    self,
+                ) {
+                    return Some(s.0);
+                }
+            }
+            scope_id = scope.parent;
+        }
+        println!("");
 
         None
     }
@@ -694,6 +750,152 @@ impl CheckedFunction {
         }
 
         false
+    }
+}
+
+impl CheckedFunction {
+    pub fn identifying_information(&self) -> FunctionIdentifyingInformation {
+        FunctionIdentifyingInformation {
+            name: self.name.clone(),
+            throws: self.throws,
+            return_type_id: self.return_type_id,
+            params: self
+                .params
+                .iter()
+                .map(|param| param.identifying_information())
+                .collect(),
+        }
+    }
+}
+
+impl CheckedParameter {
+    pub fn identifying_information(&self) -> ParameterIdentifyingInformation {
+        ParameterIdentifyingInformation {
+            requires_label: self.requires_label,
+            type_id: self.variable.type_id,
+            mutable: self.variable.mutable,
+        }
+    }
+}
+
+impl ParsedFunction {
+    pub fn identifying_information(
+        &self,
+        scope_id: ScopeId,
+        project: &mut Project,
+    ) -> FunctionIdentifyingInformation {
+        FunctionIdentifyingInformation {
+            name: self.name.clone(),
+            throws: self.throws,
+            return_type_id: match typecheck_typename(&self.return_type, scope_id, project) {
+                (type_id, None) => type_id,
+                (type_id, err) => {
+                    println!(
+                        "Internal error: Typecheck of return type {:?} in scope failed! - {:?}",
+                        self.return_type, err
+                    );
+                    type_id
+                }
+            },
+            params: self
+                .params
+                .iter()
+                .map(|param| param.identifying_information(scope_id, project))
+                .collect(),
+        }
+    }
+}
+
+impl ParsedParameter {
+    pub fn identifying_information(
+        &self,
+        scope_id: ScopeId,
+        project: &mut Project,
+    ) -> ParameterIdentifyingInformation {
+        ParameterIdentifyingInformation {
+            requires_label: self.requires_label,
+            type_id: match typecheck_typename(&self.variable.parsed_type, scope_id, project) {
+                (type_id, None) => type_id,
+                (type_id, err) => {
+                    println!(
+                        "Internal error: Typecheck of parameter type {:?} in scope failed! - {:?}",
+                        self.variable.parsed_type, err
+                    );
+                    type_id
+                }
+            },
+            mutable: self.variable.mutable,
+        }
+    }
+}
+
+trait EqInProject {
+    fn eq(self: &Self, other: &Self, project: &Project) -> bool;
+}
+
+#[derive(Debug, Clone)]
+pub struct ParameterIdentifyingInformation {
+    requires_label: bool,
+    type_id: TypeId,
+    mutable: bool,
+}
+
+impl EqInProject for ParameterIdentifyingInformation {
+    fn eq(self: &Self, other: &Self, project: &Project) -> bool {
+        return self.requires_label == other.requires_label
+            && (self.type_id == UNKNOWN_TYPE_ID
+                || other.type_id == UNKNOWN_TYPE_ID
+                || self.type_id == other.type_id
+                || match project.types[self.type_id] {
+                    Type::TypeVariable(_) => true,
+                    _ => false,
+                }
+                || match project.types[other.type_id] {
+                    Type::TypeVariable(_) => true,
+                    _ => false,
+                })
+            && self.mutable == other.mutable;
+    }
+}
+
+impl EqInProject for Vec<ParameterIdentifyingInformation> {
+    fn eq(self: &Self, other: &Self, project: &Project) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+        for idx in 0..self.len() {
+            if !ParameterIdentifyingInformation::eq(&self[idx], &other[idx], project) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct FunctionIdentifyingInformation {
+    name: String,
+    throws: bool,
+    return_type_id: TypeId,
+    params: Vec<ParameterIdentifyingInformation>,
+}
+
+impl EqInProject for FunctionIdentifyingInformation {
+    fn eq(self: &Self, other: &Self, project: &Project) -> bool {
+        return self.name == other.name
+            && self.throws == other.throws
+            && (self.return_type_id == UNKNOWN_TYPE_ID
+                || other.return_type_id == UNKNOWN_TYPE_ID
+                || self.return_type_id == other.return_type_id
+                || match project.types[self.return_type_id] {
+                    Type::TypeVariable(_) => true,
+                    _ => false,
+                }
+                || match project.types[other.return_type_id] {
+                    Type::TypeVariable(_) => true,
+                    _ => false,
+                })
+            && Vec::<ParameterIdentifyingInformation>::eq(&self.params, &other.params, project);
     }
 }
 
@@ -1141,7 +1343,7 @@ pub struct Scope {
     pub namespace_name: Option<String>,
     pub vars: Vec<CheckedVariable>,
     pub structs: Vec<(String, StructId, Span)>,
-    pub functions: Vec<(String, FunctionId, Span)>,
+    pub functions: Vec<(FunctionId, Span)>,
     pub enums: Vec<(String, EnumId, Span)>,
     pub types: Vec<(String, TypeId, Span)>,
     pub parent: Option<ScopeId>,
@@ -1578,12 +1780,9 @@ fn typecheck_enum_predecl(
             }
         }
 
-        if let Err(err) = project.add_function_to_scope(
-            enum_scope_id,
-            function.name.clone(),
-            project.functions.len() - 1,
-            enum_.span,
-        ) {
+        if let Err(err) =
+            project.add_function_to_scope(enum_scope_id, project.functions.len() - 1, enum_.span)
+        {
             error = error.or(Some(err));
         }
 
@@ -1702,42 +1901,44 @@ fn typecheck_enum(
                         variants.push(CheckedEnumVariant::Untyped(name.clone(), *span));
                     }
 
+                    let function_scope_id = project.create_scope(parent_scope_id);
+
+                    let checked_constructor = CheckedFunction {
+                        name: name.clone(),
+                        throws: enum_.is_recursive,
+                        return_type_id: enum_type_id,
+                        params: vec![],
+                        function_scope_id,
+                        // Enum variant constructors are always visible.
+                        visibility: Visibility::Public,
+                        generic_parameters: enum_
+                            .generic_parameters
+                            .iter()
+                            .map(|x| {
+                                FunctionGenericParameter::InferenceGuide(
+                                    project
+                                        .find_type_in_scope(enum_scope_id, x.0.as_str())
+                                        .unwrap(),
+                                )
+                            })
+                            .collect(),
+                        block: Some(CheckedBlock::new()),
+                        parsed_function: None,
+                        linkage: FunctionLinkage::ImplicitEnumConstructor,
+                        is_instantiated: true,
+                    };
+
                     if project
-                        .find_function_in_scope(enum_scope_id, name.as_str())
+                        .find_function_in_scope(
+                            enum_scope_id,
+                            checked_constructor.identifying_information(),
+                        )
                         .is_none()
                     {
-                        let function_scope_id = project.create_scope(parent_scope_id);
-
-                        let checked_constructor = CheckedFunction {
-                            name: name.clone(),
-                            throws: enum_.is_recursive,
-                            return_type_id: enum_type_id,
-                            params: vec![],
-                            function_scope_id,
-                            // Enum variant constructors are always visible.
-                            visibility: Visibility::Public,
-                            generic_parameters: enum_
-                                .generic_parameters
-                                .iter()
-                                .map(|x| {
-                                    FunctionGenericParameter::InferenceGuide(
-                                        project
-                                            .find_type_in_scope(enum_scope_id, x.0.as_str())
-                                            .unwrap(),
-                                    )
-                                })
-                                .collect(),
-                            block: Some(CheckedBlock::new()),
-                            parsed_function: None,
-                            linkage: FunctionLinkage::ImplicitEnumConstructor,
-                            is_instantiated: true,
-                        };
-
                         project.functions.push(checked_constructor);
 
                         if let Err(err) = project.add_function_to_scope(
                             enum_scope_id,
-                            name.clone(),
                             project.functions.len() - 1,
                             *span,
                         ) {
@@ -1833,55 +2034,57 @@ fn typecheck_enum(
                         *span,
                     ));
 
+                    // Generate a constructor
+                    let constructor_params = checked_members
+                        .iter()
+                        .map(|member| CheckedParameter {
+                            requires_label: true,
+                            variable: CheckedVariable {
+                                name: member.name.clone(),
+                                type_id: member.type_id,
+                                mutable: false,
+                                visibility: member.visibility.clone(),
+                                definition_span: *span,
+                            },
+                        })
+                        .collect();
+                    let function_scope_id = project.create_scope(parent_scope_id);
+
+                    let checked_constructor = CheckedFunction {
+                        name: name.clone(),
+                        throws: enum_.is_recursive,
+                        return_type_id: enum_type_id,
+                        params: constructor_params,
+                        visibility: Visibility::Public,
+                        function_scope_id,
+                        generic_parameters: enum_
+                            .generic_parameters
+                            .iter()
+                            .map(|x| {
+                                FunctionGenericParameter::InferenceGuide(
+                                    project
+                                        .find_type_in_scope(enum_scope_id, x.0.as_str())
+                                        .unwrap(),
+                                )
+                            })
+                            .collect(),
+                        block: Some(CheckedBlock::new()),
+                        parsed_function: None,
+                        linkage: FunctionLinkage::ImplicitEnumConstructor,
+                        is_instantiated: true,
+                    };
+
                     if project
-                        .find_function_in_scope(enum_scope_id, name.as_str())
+                        .find_function_in_scope(
+                            enum_scope_id,
+                            checked_constructor.identifying_information(),
+                        )
                         .is_none()
                     {
-                        // Generate a constructor
-                        let constructor_params = checked_members
-                            .iter()
-                            .map(|member| CheckedParameter {
-                                requires_label: true,
-                                variable: CheckedVariable {
-                                    name: member.name.clone(),
-                                    type_id: member.type_id,
-                                    mutable: false,
-                                    visibility: member.visibility.clone(),
-                                    definition_span: *span,
-                                },
-                            })
-                            .collect();
-                        let function_scope_id = project.create_scope(parent_scope_id);
-
-                        let checked_constructor = CheckedFunction {
-                            name: name.clone(),
-                            throws: enum_.is_recursive,
-                            return_type_id: enum_type_id,
-                            params: constructor_params,
-                            visibility: Visibility::Public,
-                            function_scope_id,
-                            generic_parameters: enum_
-                                .generic_parameters
-                                .iter()
-                                .map(|x| {
-                                    FunctionGenericParameter::InferenceGuide(
-                                        project
-                                            .find_type_in_scope(enum_scope_id, x.0.as_str())
-                                            .unwrap(),
-                                    )
-                                })
-                                .collect(),
-                            block: Some(CheckedBlock::new()),
-                            parsed_function: None,
-                            linkage: FunctionLinkage::ImplicitEnumConstructor,
-                            is_instantiated: true,
-                        };
-
                         project.functions.push(checked_constructor);
 
                         if let Err(err) = project.add_function_to_scope(
                             enum_scope_id,
-                            name.clone(),
                             project.functions.len() - 1,
                             *span,
                         ) {
@@ -1910,52 +2113,54 @@ fn typecheck_enum(
 
                     variants.push(CheckedEnumVariant::Typed(name.clone(), checked_type, *span));
 
+                    // Generate a constructor
+                    let constructor_params = vec![CheckedParameter {
+                        requires_label: false,
+                        variable: CheckedVariable {
+                            name: "value".to_string(),
+                            type_id: checked_type,
+                            mutable: false,
+                            visibility: Visibility::Public,
+                            definition_span: *span,
+                        },
+                    }];
+                    let function_scope_id = project.create_scope(parent_scope_id);
+
+                    let checked_constructor = CheckedFunction {
+                        name: name.clone(),
+                        throws: enum_.is_recursive,
+                        return_type_id: enum_type_id,
+                        params: constructor_params,
+                        visibility: Visibility::Public,
+                        function_scope_id,
+                        generic_parameters: enum_
+                            .generic_parameters
+                            .iter()
+                            .map(|x| {
+                                FunctionGenericParameter::InferenceGuide(
+                                    project
+                                        .find_type_in_scope(enum_scope_id, x.0.as_str())
+                                        .unwrap(),
+                                )
+                            })
+                            .collect(),
+                        block: Some(CheckedBlock::new()),
+                        parsed_function: None,
+                        linkage: FunctionLinkage::ImplicitEnumConstructor,
+                        is_instantiated: true,
+                    };
+
                     if project
-                        .find_function_in_scope(enum_scope_id, name.as_str())
+                        .find_function_in_scope(
+                            enum_scope_id,
+                            checked_constructor.identifying_information(),
+                        )
                         .is_none()
                     {
-                        // Generate a constructor
-                        let constructor_params = vec![CheckedParameter {
-                            requires_label: false,
-                            variable: CheckedVariable {
-                                name: "value".to_string(),
-                                type_id: checked_type,
-                                mutable: false,
-                                visibility: Visibility::Public,
-                                definition_span: *span,
-                            },
-                        }];
-                        let function_scope_id = project.create_scope(parent_scope_id);
-
-                        let checked_constructor = CheckedFunction {
-                            name: name.clone(),
-                            throws: enum_.is_recursive,
-                            return_type_id: enum_type_id,
-                            params: constructor_params,
-                            visibility: Visibility::Public,
-                            function_scope_id,
-                            generic_parameters: enum_
-                                .generic_parameters
-                                .iter()
-                                .map(|x| {
-                                    FunctionGenericParameter::InferenceGuide(
-                                        project
-                                            .find_type_in_scope(enum_scope_id, x.0.as_str())
-                                            .unwrap(),
-                                    )
-                                })
-                                .collect(),
-                            block: Some(CheckedBlock::new()),
-                            parsed_function: None,
-                            linkage: FunctionLinkage::ImplicitEnumConstructor,
-                            is_instantiated: true,
-                        };
-
                         project.functions.push(checked_constructor);
 
                         if let Err(err) = project.add_function_to_scope(
                             enum_scope_id,
-                            name.clone(),
                             project.functions.len() - 1,
                             *span,
                         ) {
@@ -2133,7 +2338,6 @@ fn typecheck_struct_predecl(
 
         if let Err(err) = project.add_function_to_scope(
             struct_scope_id,
-            function.name.clone(),
             project.functions.len() - 1,
             structure.span,
         ) {
@@ -2245,9 +2449,42 @@ fn typecheck_struct(
         });
     }
 
-    if let Some(constructor_id) =
-        project.find_function_in_scope(checked_struct_scope_id, &structure.name)
-    {
+    let mut constructor_params = Vec::new();
+    for field in &fields {
+        constructor_params.push(CheckedParameter {
+            requires_label: true,
+            variable: CheckedVariable {
+                name: field.name.clone(),
+                type_id: field.type_id,
+                mutable: field.mutable,
+                // This is the constructor parameter, not the field. It can be public.
+                visibility: Visibility::Public,
+                definition_span: field.span,
+            },
+        });
+    }
+
+    let function_scope_id = project.create_scope(parent_scope_id);
+
+    let checked_constructor = CheckedFunction {
+        name: structure.name.clone(),
+        throws: structure.definition_type == DefinitionType::Class,
+        return_type_id: struct_type_id,
+        params: constructor_params,
+        // The default constructor is public.
+        visibility: Visibility::Public,
+        function_scope_id,
+        generic_parameters: vec![],
+        block: Some(CheckedBlock::new()),
+        parsed_function: None,
+        linkage: FunctionLinkage::ImplicitConstructor,
+        is_instantiated: true,
+    };
+
+    if let Some(constructor_id) = project.find_function_in_scope(
+        checked_struct_scope_id,
+        checked_constructor.identifying_information(),
+    ) {
         if structure.definition_type == DefinitionType::Class
             && structure.definition_linkage == DefinitionLinkage::External
         {
@@ -2258,47 +2495,12 @@ fn typecheck_struct(
             project.functions[constructor_id].linkage = FunctionLinkage::ExternalClassConstructor;
         }
     } else if structure.definition_linkage != DefinitionLinkage::External {
-        // No constructor found, so let's make one
-
-        let mut constructor_params = Vec::new();
-        for field in &fields {
-            constructor_params.push(CheckedParameter {
-                requires_label: true,
-                variable: CheckedVariable {
-                    name: field.name.clone(),
-                    type_id: field.type_id,
-                    mutable: field.mutable,
-                    // This is the constructor parameter, not the field. It can be public.
-                    visibility: Visibility::Public,
-                    definition_span: field.span,
-                },
-            });
-        }
-
-        let function_scope_id = project.create_scope(parent_scope_id);
-
-        let checked_constructor = CheckedFunction {
-            name: structure.name.clone(),
-            throws: structure.definition_type == DefinitionType::Class,
-            return_type_id: struct_type_id,
-            params: constructor_params,
-            // The default constructor is public.
-            visibility: Visibility::Public,
-            function_scope_id,
-            generic_parameters: vec![],
-            block: Some(CheckedBlock::new()),
-            parsed_function: None,
-            linkage: FunctionLinkage::ImplicitConstructor,
-            is_instantiated: true,
-        };
-
         // Internal constructor
         project.functions.push(checked_constructor);
 
         // Add constructor to the struct's scope
         if let Err(err) = project.add_function_to_scope(
             checked_struct_scope_id,
-            structure.name.clone(),
             project.functions.len() - 1,
             structure.span,
         ) {
@@ -2450,12 +2652,7 @@ fn typecheck_function_predecl(
 
     project.current_function_index = previous_index;
 
-    match project.add_function_to_scope(
-        parent_scope_id,
-        function.name.clone(),
-        function_id,
-        function.name_span,
-    ) {
+    match project.add_function_to_scope(parent_scope_id, function_id, function.name_span) {
         Ok(_) => {}
         Err(err) => error = error.or(Some(err)),
     }
@@ -2530,8 +2727,10 @@ fn typecheck_function(
 
     let mut error = None;
 
+    let function_identifying_information =
+        function.identifying_information(parent_scope_id, project);
     let function_id = project
-        .find_function_in_scope(parent_scope_id, &function.name)
+        .find_function_in_scope(parent_scope_id, function_identifying_information)
         .expect("Internal error: missing previously defined function");
 
     if function.name == "main" {
@@ -2671,7 +2870,10 @@ fn typecheck_method(
     let structure_scope_id = scope_id;
     let structure_linkage = definition_linkage;
 
-    let method_id = project.find_function_in_scope(structure_scope_id, &function.name);
+    let function_identifying_information =
+        function.identifying_information(structure_scope_id, project);
+    let method_id =
+        project.find_function_in_scope(structure_scope_id, function_identifying_information);
 
     let method_id = method_id
         .expect("Internal error: we just pushed the checked function, but it's not present");
@@ -2873,8 +3075,8 @@ pub fn typecheck_statement(
                 Type::GenericInstance(struct_id, _) | Type::Struct(struct_id) => {
                     let struct_ = &project.structs[*struct_id];
                     let next_method_function_id =
-                        project.find_function_in_scope(struct_.scope_id, "next");
-                    if let Some(next_method_function_id) = next_method_function_id {
+                        project.find_functions_in_scope_by_name(struct_.scope_id, "next");
+                    if let [next_method_function_id] = next_method_function_id[..] {
                         let next_method_function = &project.functions[next_method_function_id];
                         // Check whether we need to make the iterator mutable
                         if next_method_function.is_mutating() {
@@ -2882,7 +3084,7 @@ pub fn typecheck_statement(
                         }
                     } else {
                         error = error.or(Some(JaktError::TypecheckError(
-                            "Iterator must have a .next() method".into(),
+                            "Iterator must have exactly one .next() method".into(),
                             range_expr.span(),
                         )));
                     }
@@ -3201,7 +3403,9 @@ pub fn try_promote_constant_expr_to_type(
     }
     if let Some(rhs_constant) = checked_rhs.to_number_constant() {
         if let (Some(new_constant), new_type_id) = rhs_constant.promote(lhs_type_id) {
+            println!("{:?}", checked_rhs);
             *checked_rhs = CheckedExpression::NumericConstant(new_constant, *span, new_type_id);
+            println!("{:?}", checked_rhs);
         } else {
             return Some(JaktError::TypecheckError(
                 "Integer promotion failed".to_string(),
@@ -5377,7 +5581,7 @@ pub fn typecheck_binary_operation(
         | BinaryOperator::BitwiseLeftShiftAssign
         | BinaryOperator::BitwiseRightShiftAssign => {
             // This branch can be the same as the above BinaryOp::Assign branch.
-            // unify_with_type uses check_types_for_compact which does the same
+            // unify_with_type uses check_types_for_compat which does the same
             // as below.
             let weakptr_struct_id = project.get_weakptr_struct_id(span);
 
@@ -5452,8 +5656,7 @@ pub fn resolve_call(
     span: &Span,
     scope_id: ScopeId,
     project: &mut Project,
-) -> (Option<FunctionId>, Option<JaktError>) {
-    let mut callee = None;
+) -> (Vec<FunctionId>, Option<JaktError>) {
     let mut error = None;
 
     let mut current_scope_id = scope_id;
@@ -5491,27 +5694,23 @@ pub fn resolve_call(
         )));
     }
 
-    // 1. Look for a function with this name.
-    if let Some(function_id) = project.find_function_in_scope(current_scope_id, &call.name) {
-        callee = Some(function_id);
-        return (callee, error);
+    // 1. Look for functions with this name.
+    let function_ids = project.find_functions_in_scope_by_name(current_scope_id, &call.name);
+    if function_ids.len() > 0 {
+        return (function_ids, error);
     }
 
     // 2. Look for a struct, class or enum constructor with this name.
     if let Some(struct_id) = project.find_struct_in_scope(current_scope_id, &call.name) {
         let structure = &project.structs[struct_id];
-        if let Some(function_id) = project.find_function_in_scope(structure.scope_id, &call.name) {
-            return (Some(function_id), error);
-        }
-        return (callee, error);
+        let function_ids = project.find_functions_in_scope_by_name(structure.scope_id, &call.name);
+        return (function_ids, error);
     }
 
     if let Some(enum_id) = project.find_enum_in_scope(current_scope_id, &call.name) {
         let enum_ = &project.enums[enum_id];
-        if let Some(function_id) = project.find_function_in_scope(enum_.scope_id, &call.name) {
-            return (Some(function_id), error);
-        }
-        return (callee, error);
+        let function_ids = project.find_functions_in_scope_by_name(enum_.scope_id, &call.name);
+        return (function_ids, error);
     }
 
     error = error.or(Some(JaktError::TypecheckError(
@@ -5519,7 +5718,7 @@ pub fn resolve_call(
         *span,
     )));
 
-    (callee, error)
+    (Vec::new(), error)
 }
 
 pub fn typecheck_call(
@@ -5547,6 +5746,9 @@ pub fn typecheck_call(
             generic_parameters: None,
         })
         .collect::<Vec<_>>();
+    // This will be 0 for functions or 1 for instance methods, because of the
+    // 'this' ptr
+    let arg_offset = if this_expr.is_some() { 1 } else { 0 };
 
     let callee_scope_id = match parent_id {
         Some(StructOrEnumId::Struct(struct_id)) => {
@@ -5591,7 +5793,7 @@ pub fn typecheck_call(
             }
         }
         _ => {
-            let (callee, err) = resolve_call(
+            let (unfiltered_callee_ids, err) = resolve_call(
                 call,
                 &mut resolved_namespaces,
                 span,
@@ -5600,80 +5802,25 @@ pub fn typecheck_call(
             );
             error = error.or(err);
 
-            if let Some(callee_id) = callee {
-                let callee = &project.functions[callee_id];
-                if !callee.is_instantiated {
-                    generic_checked_function_to_instantiate = Some(callee_id);
-                }
-                callee_throws = callee.throws;
-                return_type_id = callee.return_type_id;
-                linkage = callee.linkage;
+            let mut errors_per_callee_id: HashMap<FunctionId, Option<JaktError>> = HashMap::new();
+            for callee_id in &unfiltered_callee_ids {
+                let mut error = None;
+                println!(
+                    "{}, {}",
+                    unfiltered_callee_ids.len(),
+                    project.functions[*callee_id].name
+                );
 
-                let scope_containing_callee = project.scopes[callee.function_scope_id]
-                    .parent
-                    .expect("Function should have a parent scope");
-
-                // Make sure we are allowed to access this method.
-                error = error.or(check_accessibility(
-                    caller_scope_id,
-                    scope_containing_callee,
-                    callee.clone(),
-                    span,
-                    project,
-                ));
-
-                // If the user gave us explicit type arguments, let's use them in our substitutions
-                for (idx, type_arg) in call.type_args.iter().enumerate() {
-                    let (checked_type, err) =
-                        typecheck_typename(type_arg, caller_scope_id, project);
-                    error = error.or(err);
-
-                    let callee = &project.functions[callee_id];
-                    if callee.generic_parameters.len() <= idx {
-                        error = error.or(Some(JaktError::TypecheckError(
-                            "Trying to access generic parameter out of bounds".to_string(),
-                            *span,
-                        )));
-                        continue;
-                    }
-
-                    // Find the associated type variable for this parameter, we'll use it in substitution
-                    let typevar_type_id = match callee.generic_parameters[idx] {
-                        FunctionGenericParameter::InferenceGuide(typevar_type_id)
-                        | FunctionGenericParameter::Parameter(typevar_type_id) => typevar_type_id,
-                    };
-
-                    generic_substitutions.insert(typevar_type_id, checked_type);
-                }
-
-                // If this is a method, let's also add the types we know from our 'this' pointer
                 if let Some(this_expr) = this_expr {
-                    let type_id = this_expr.type_id(callee_scope_id, project);
-                    maybe_this_type_id = Some(type_id);
-                    let param_type = &project.types[type_id];
-
-                    if let Type::GenericInstance(struct_id, args) = param_type {
-                        let structure = &project.structs[*struct_id];
-
-                        let mut idx = 0;
-
-                        while idx < structure.generic_parameters.len() {
-                            generic_substitutions
-                                .insert(structure.generic_parameters[idx], args[idx]);
-                            idx += 1;
-                        }
-                    }
-
-                    let callee = &project.functions[callee_id];
                     // Make sure that our call doesn't have a 'this' pointer to a static callee
-                    if callee.is_static() {
+                    if project.functions[*callee_id].is_static() {
                         error = error.or(Some(JaktError::TypecheckError(
                             "Cannot call static method on an instance of an object".to_string(),
                             *span,
                         )));
                     }
 
-                    if callee.is_mutating() && !this_expr.is_mutable() {
+                    if project.functions[*callee_id].is_mutating() && !this_expr.is_mutable() {
                         error = error.or(Some(JaktError::TypecheckError(
                             "Cannot call mutating method on an immutable object instance"
                                 .to_string(),
@@ -5682,49 +5829,196 @@ pub fn typecheck_call(
                     }
                 }
 
-                // This will be 0 for functions or 1 for instance methods, because of the
-                // 'this' ptr
-                let arg_offset = if this_expr.is_some() { 1 } else { 0 };
-
-                // Check that we have the right number of arguments.
-                let callee = &project.functions[callee_id];
-                if callee.params.len() != (call.args.len() + arg_offset) {
+                if project.functions[*callee_id].params.len() != (call.args.len() + arg_offset) {
                     error = error.or(Some(JaktError::TypecheckError(
-                        "wrong number of arguments".to_string(),
+                        "Wrong number of arguments".to_string(),
                         *span,
                     )));
-                } else {
-                    let mut idx = 0;
+                }
 
-                    while idx < call.args.len() {
-                        let param = &project.functions[callee_id].params[idx + arg_offset];
-                        let type_hint = param.variable.type_id;
-                        let (mut checked_arg, err) = typecheck_expression(
-                            &call.args[idx].1,
-                            caller_scope_id,
-                            project,
-                            safety_mode,
-                            Some(type_hint),
-                        );
+                let mut idx = 0;
+                while idx < call.args.len() {
+                    let type_hint = project.functions[*callee_id].params[idx + arg_offset]
+                        .variable
+                        .type_id;
+                    let (mut checked_arg, err) = typecheck_expression(
+                        &call.args[idx].1,
+                        caller_scope_id,
+                        project,
+                        safety_mode,
+                        Some(type_hint),
+                    );
+                    error = error.or(err);
+
+                    let lhs_type_id = project.functions[*callee_id].params[idx + arg_offset]
+                        .variable
+                        .type_id;
+                    let err =
+                        try_promote_constant_expr_to_type(lhs_type_id, &mut checked_arg, span);
+                    error = error.or(err);
+
+                    let rhs_type_id = checked_arg.type_id(callee_scope_id, project);
+                    let err = check_types_for_compat(
+                        lhs_type_id,
+                        rhs_type_id,
+                        &mut generic_substitutions,
+                        call.args[idx].1.span(),
+                        project,
+                    );
+                    error = error.or(err);
+
+                    idx += 1;
+                }
+
+                errors_per_callee_id.insert(*callee_id, error);
+            }
+
+            let filtered_callee_ids: Vec<FunctionId> = unfiltered_callee_ids
+                .iter()
+                .filter(|callee_id| errors_per_callee_id[callee_id].is_none())
+                .cloned()
+                .collect();
+
+            match filtered_callee_ids[..] {
+                [] => {
+                    match unfiltered_callee_ids[..] {
+                        // If there was only one possible overload anyway, just report the error that that overload gave us
+                        [callee_id] => {
+                            error = error.or(errors_per_callee_id.remove(&callee_id).unwrap());
+                        }
+                        // Otherwise, report all the errors that all the overloads gave us
+                        _ => {
+                            error = error.or(Some(JaktError::TypecheckErrorWithSubErrors(
+                                "Could not find any possible function to call. The following errors occured on individual functions:".to_string(),
+                                *span,
+                                errors_per_callee_id
+                                    .into_values()
+                                    .map(|err| err.unwrap())
+                                    .collect(),
+                            )));
+                        }
+                    }
+                }
+                [callee_id] => {
+                    let callee = &project.functions[callee_id];
+                    if !callee.is_instantiated {
+                        generic_checked_function_to_instantiate = Some(callee_id);
+                    }
+                    callee_throws = callee.throws;
+                    return_type_id = callee.return_type_id;
+                    linkage = callee.linkage;
+
+                    let scope_containing_callee = project.scopes[callee.function_scope_id]
+                        .parent
+                        .expect("Function should have a parent scope");
+
+                    // Make sure we are allowed to access this method.
+                    error = error.or(check_accessibility(
+                        caller_scope_id,
+                        scope_containing_callee,
+                        callee.clone(),
+                        span,
+                        project,
+                    ));
+
+                    // If the user gave us explicit type arguments, let's use them in our substitutions
+                    for (idx, type_arg) in call.type_args.iter().enumerate() {
+                        let (checked_type, err) =
+                            typecheck_typename(type_arg, caller_scope_id, project);
                         error = error.or(err);
 
-                        // Borrowchecker workaround: since we need project to be mutable above, we
-                        // need to let go of the previous callee and then look it up again
-                        let (callee, _) = resolve_call(
-                            call,
-                            &mut resolved_namespaces,
-                            span,
-                            callee_scope_id,
-                            project,
-                        );
-                        let callee_id = callee
-                            .expect("internal error: previously resolved call is now unresolved");
+                        let callee = &project.functions[callee_id];
+                        if callee.generic_parameters.len() <= idx {
+                            error = error.or(Some(JaktError::TypecheckError(
+                                "Trying to access generic parameter out of bounds".to_string(),
+                                *span,
+                            )));
+                            continue;
+                        }
+
+                        // Find the associated type variable for this parameter, we'll use it in substitution
+                        let typevar_type_id = match callee.generic_parameters[idx] {
+                            FunctionGenericParameter::InferenceGuide(typevar_type_id)
+                            | FunctionGenericParameter::Parameter(typevar_type_id) => {
+                                typevar_type_id
+                            }
+                        };
+
+                        generic_substitutions.insert(typevar_type_id, checked_type);
+                    }
+
+                    // If this is a method, let's also add the types we know from our 'this' pointer
+                    if let Some(this_expr) = this_expr {
+                        let type_id = this_expr.type_id(callee_scope_id, project);
+                        maybe_this_type_id = Some(type_id);
+                        let param_type = &project.types[type_id];
+
+                        if let Type::GenericInstance(struct_id, args) = param_type {
+                            let structure = &project.structs[*struct_id];
+
+                            let mut idx = 0;
+
+                            while idx < structure.generic_parameters.len() {
+                                generic_substitutions
+                                    .insert(structure.generic_parameters[idx], args[idx]);
+                                idx += 1;
+                            }
+                        }
 
                         let callee = &project.functions[callee_id];
+                        // Make sure that our call doesn't have a 'this' pointer to a static callee
+                        if callee.is_static() {
+                            error = error.or(Some(JaktError::TypecheckError(
+                                "Cannot call static method on an instance of an object".to_string(),
+                                *span,
+                            )));
+                        }
 
-                        if let ParsedExpression::Var(var_name, _) = &call.args[idx].1 {
-                            if var_name != &callee.params[idx + arg_offset].variable.name
-                                && callee.params[idx + arg_offset].requires_label
+                        if callee.is_mutating() && !this_expr.is_mutable() {
+                            error = error.or(Some(JaktError::TypecheckError(
+                                "Cannot call mutating method on an immutable object instance"
+                                    .to_string(),
+                                *span,
+                            )));
+                        }
+                    }
+
+                    // Check that we have the right number of arguments.
+                    let callee = &project.functions[callee_id];
+                    if callee.params.len() != (call.args.len() + arg_offset) {
+                        error = error.or(Some(JaktError::TypecheckError(
+                            "Wrong number of arguments".to_string(),
+                            *span,
+                        )));
+                    } else {
+                        let mut idx = 0;
+
+                        while idx < call.args.len() {
+                            let param = &project.functions[callee_id].params[idx + arg_offset];
+                            let type_hint = param.variable.type_id;
+                            let (mut checked_arg, err) = typecheck_expression(
+                                &call.args[idx].1,
+                                caller_scope_id,
+                                project,
+                                safety_mode,
+                                Some(type_hint),
+                            );
+                            error = error.or(err);
+
+                            let callee = &project.functions[callee_id];
+
+                            if let ParsedExpression::Var(var_name, _) = &call.args[idx].1 {
+                                if var_name != &callee.params[idx + arg_offset].variable.name
+                                    && callee.params[idx + arg_offset].requires_label
+                                    && call.args[idx].0
+                                        != callee.params[idx + arg_offset].variable.name
+                                {
+                                    error = error.or(Some(JaktError::TypecheckError(
+                                        "Wrong parameter name in argument label".to_string(),
+                                        call.args[idx].1.span(),
+                                    )));
+                                }
+                            } else if callee.params[idx + arg_offset].requires_label
                                 && call.args[idx].0 != callee.params[idx + arg_offset].variable.name
                             {
                                 error = error.or(Some(JaktError::TypecheckError(
@@ -5732,84 +6026,96 @@ pub fn typecheck_call(
                                     call.args[idx].1.span(),
                                 )));
                             }
-                        } else if callee.params[idx + arg_offset].requires_label
-                            && call.args[idx].0 != callee.params[idx + arg_offset].variable.name
-                        {
-                            error = error.or(Some(JaktError::TypecheckError(
-                                "Wrong parameter name in argument label".to_string(),
+
+                            let lhs_type_id = callee.params[idx + arg_offset].variable.type_id;
+
+                            let err = try_promote_constant_expr_to_type(
+                                lhs_type_id,
+                                &mut checked_arg,
+                                span,
+                            );
+                            error = error.or(err);
+
+                            let lhs_type_id = callee.params[idx + arg_offset].variable.type_id;
+                            let rhs_type_id = checked_arg.type_id(callee_scope_id, project);
+
+                            if let Some(err) = check_types_for_compat(
+                                lhs_type_id,
+                                rhs_type_id,
+                                &mut generic_substitutions,
                                 call.args[idx].1.span(),
-                            )));
+                                project,
+                            ) {
+                                error = error.or(Some(err));
+                            }
+
+                            checked_args.push((call.args[idx].0.clone(), checked_arg));
+
+                            idx += 1;
                         }
-
-                        let lhs_type_id = callee.params[idx + arg_offset].variable.type_id;
-
-                        let err =
-                            try_promote_constant_expr_to_type(lhs_type_id, &mut checked_arg, span);
-                        error = error.or(err);
-
-                        let lhs_type_id = callee.params[idx + arg_offset].variable.type_id;
-                        let rhs_type_id = checked_arg.type_id(callee_scope_id, project);
-
-                        if let Some(err) = check_types_for_compat(
-                            lhs_type_id,
-                            rhs_type_id,
-                            &mut generic_substitutions,
-                            call.args[idx].1.span(),
-                            project,
-                        ) {
-                            error = error.or(Some(err));
-                        }
-
-                        checked_args.push((call.args[idx].0.clone(), checked_arg));
-
-                        idx += 1;
                     }
-                }
 
-                // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
-                // type variable. For the moment, we'll just checked to see if it's a type variable.
-                if let Some(type_hint) = type_hint {
-                    check_types_for_compat(
+                    // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
+                    // type variable. For the moment, we'll just checked to see if it's a type variable.
+                    if let Some(type_hint) = type_hint {
+                        check_types_for_compat(
+                            return_type_id,
+                            type_hint,
+                            &mut generic_substitutions,
+                            *span,
+                            project,
+                        );
+                    }
+                    return_type_id = substitute_typevars_in_type(
                         return_type_id,
-                        type_hint,
-                        &mut generic_substitutions,
-                        *span,
+                        &generic_substitutions,
                         project,
                     );
-                }
-                return_type_id =
-                    substitute_typevars_in_type(return_type_id, &generic_substitutions, project);
 
-                resolved_namespaces = resolved_namespaces
-                    .iter()
-                    .map(|n| ResolvedNamespace {
-                        name: n.name.clone(),
-                        generic_parameters: n.generic_parameters.as_ref().map(|p| {
-                            p.iter()
-                                .map(|type_id| {
-                                    substitute_typevars_in_type(
-                                        *type_id,
-                                        &generic_substitutions,
-                                        project,
-                                    )
-                                })
-                                .collect()
-                        }),
-                    })
-                    .collect();
+                    resolved_namespaces = resolved_namespaces
+                        .iter()
+                        .map(|n| ResolvedNamespace {
+                            name: n.name.clone(),
+                            generic_parameters: n.generic_parameters.as_ref().map(|p| {
+                                p.iter()
+                                    .map(|type_id| {
+                                        substitute_typevars_in_type(
+                                            *type_id,
+                                            &generic_substitutions,
+                                            project,
+                                        )
+                                    })
+                                    .collect()
+                            }),
+                        })
+                        .collect();
 
-                let callee = &project.functions[callee_id];
-                for generic_typevar in &callee.generic_parameters {
-                    if let FunctionGenericParameter::Parameter(id) = generic_typevar {
-                        if let Some(substitution) = generic_substitutions.get(id) {
-                            type_args.push(*substitution)
-                        } else {
-                            error = error.or(Some(JaktError::TypecheckError(
-                                "not all generic parameters have known types".into(),
-                                *span,
-                            )))
+                    let callee = &project.functions[callee_id];
+                    for generic_typevar in &callee.generic_parameters {
+                        if let FunctionGenericParameter::Parameter(id) = generic_typevar {
+                            if let Some(substitution) = generic_substitutions.get(id) {
+                                type_args.push(*substitution)
+                            } else {
+                                error = error.or(Some(JaktError::TypecheckError(
+                                    "not all generic parameters have known types".into(),
+                                    *span,
+                                )))
+                            }
                         }
                     }
+                }
+                _ => {
+                    error = error.or(Some(JaktError::TypecheckErrorWithSubErrors(
+                        "Found too many possible functions to call. The following functions are all possible candidates:".to_string(),
+                        *span,
+                        errors_per_callee_id
+                            .into_keys()
+                            .map(|callee_id| JaktError::TypecheckHint(
+                                project.functions[callee_id].name.clone(),
+                                project.functions[callee_id].parsed_function.as_ref().unwrap().name_span)
+                            )
+                            .collect(),
+                    )));
                 }
             }
         }
