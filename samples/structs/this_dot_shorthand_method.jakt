@@ -1,0 +1,14 @@
+struct Size {
+    width: i64
+    height: i64
+
+    function area(this) => .width * .height
+
+    function volume(this) => .area() * 10
+}
+
+
+function main() {
+    let s = Size(width: 5, height: 6)
+    println("{}", s.volume())
+}
