@@ -42,9 +42,9 @@ pub struct Compiler {
 }
 
 impl Compiler {
-    pub fn new() -> Self {
+    pub fn new(include_paths: Vec<PathBuf>) -> Self {
         Self {
-            include_paths: Vec::new(),
+            include_paths,
             raw_files: Vec::new(),
         }
     }
