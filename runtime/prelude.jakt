@@ -55,7 +55,7 @@ extern struct Dictionary<K, V> {
     function clear(mutable this)
     function size(this) -> usize
     function capacity(this) -> usize
-    function keys(this) -> [K]
+    function keys(this) throws -> [K]
     function hash(this) -> u32
     function Dictionary<A, B>() -> [A:B]
     function iterator(this) -> DictionaryIterator<K, V>
