@@ -1,0 +1,14 @@
+extern struct StringBuilder {
+    function append(mutable this, anonymous s: u8)
+    function to_string(mutable this) throws -> String
+    function StringBuilder() -> StringBuilder
+}
+
+namespace lexer {
+struct Lexer {
+}
+}
+
+function main(args: [String]) {
+    let mutable tokens: [Token] = []
+}
