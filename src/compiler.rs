@@ -12,7 +12,9 @@ use crate::{
     error::JaktError,
     lexer::{lex, Span},
     parser::{parse_namespace, ParsedNamespace},
-    typechecker::{typecheck_namespace, Project, Scope, Type},
+    typechecker::{
+        typecheck_namespace_declarations, typecheck_namespace_predecl, Project, Scope, Type,
+    },
 };
 
 pub type FileId = usize;
@@ -87,6 +89,7 @@ impl Compiler {
     }
 
     pub fn include_prelude(&mut self, project: &mut Project) -> Option<JaktError> {
+        let mut error = None;
         // First, let's make types for all the builtin types
         // This order *must* match the order of the constants the typechecker expects
         project.types.resize(STRING_TYPE_ID + 1, Type::Builtin);
@@ -104,7 +107,10 @@ impl Compiler {
         let (file, _) = parse_namespace(&lexed, &mut 0, self);
 
         // Scope ID 0 is the global project-level scope that all files can see
-        typecheck_namespace(&file, 0, project)
+        error = error.or(typecheck_namespace_predecl(&file, 0, project));
+        error = error.or(typecheck_namespace_declarations(&file, 0, project));
+
+        error
     }
 
     pub fn convert_to_cpp(&mut self, fname: &Path) -> Result<String, JaktError> {
@@ -132,8 +138,12 @@ impl Compiler {
 
         let file_scope_id = project.scopes.len() - 1;
 
-        let err = typecheck_namespace(&file, file_scope_id, &mut project);
+        let err = typecheck_namespace_predecl(&file, file_scope_id, &mut project);
+        if let Some(err) = err {
+            return Err(err);
+        }
 
+        let err = typecheck_namespace_declarations(&file, file_scope_id, &mut project);
         if let Some(err) = err {
             return Err(err);
         }

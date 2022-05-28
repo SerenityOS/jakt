@@ -477,7 +477,7 @@ impl Project {
         &self,
         scope_id: ScopeId,
         namespace_name: &str,
-    ) -> Option<StructId> {
+    ) -> Option<ScopeId> {
         let mut scope_id = Some(scope_id);
 
         while let Some(current_id) = scope_id {
@@ -1493,23 +1493,25 @@ fn check_accessibility(
     }
 }
 
-pub fn typecheck_namespace(
+pub fn typecheck_namespace_predecl(
     parsed_namespace: &ParsedNamespace,
     scope_id: ScopeId,
     project: &mut Project,
 ) -> Option<JaktError> {
     let mut error = None;
 
-    let project_struct_len = project.structs.len();
-    let project_enum_len = project.enums.len();
-
     for namespace in parsed_namespace.namespaces.iter() {
         // Do full typechecks of all the namespaces that are children of this namespace
-        let namespace_scope_id = project.create_scope(scope_id, false);
-        project.scopes[namespace_scope_id].namespace_name = namespace.name.clone();
-        project.scopes[scope_id].children.push(namespace_scope_id);
-        typecheck_namespace(namespace, namespace_scope_id, project);
+        if namespace.name.is_some() {
+            let namespace_scope_id = project.create_scope(scope_id, false);
+            project.scopes[namespace_scope_id].namespace_name = namespace.name.clone();
+            project.scopes[scope_id].children.push(namespace_scope_id);
+            typecheck_namespace_predecl(namespace, namespace_scope_id, project);
+        }
     }
+
+    let project_struct_len = project.structs.len();
+    let project_enum_len = project.enums.len();
 
     for (struct_id, structure) in parsed_namespace.structs.iter().enumerate() {
         // Bring the struct names into scope for future typechecking
@@ -1570,8 +1572,6 @@ pub fn typecheck_namespace(
         ));
     }
 
-    let project_function_len = project.functions.len();
-
     for function in &parsed_namespace.functions {
         // Ensure we know the function prototypes ahead of time, so that
         // and calls can find and resolve to them
@@ -1580,19 +1580,71 @@ pub fn typecheck_namespace(
         ));
     }
 
-    for (struct_id, structure) in parsed_namespace.structs.iter().enumerate() {
-        // Finish typechecking the full struct (including methods)
-        error = error.or(typecheck_struct(
-            structure,
-            struct_id + project_struct_len,
-            scope_id,
-            project,
-        ));
+    error
+}
+
+pub fn typecheck_namespace_declarations(
+    parsed_namespace: &ParsedNamespace,
+    scope_id: ScopeId,
+    project: &mut Project,
+) -> Option<JaktError> {
+    let mut error = None;
+
+    for namespace in parsed_namespace.namespaces.iter() {
+        if let Some(namespace_name) = &namespace.name {
+            // Finish typecheck of the named namespaces
+            let namespace_scope_id = project
+                .find_namespace_in_scope(scope_id, namespace_name)
+                .expect("internal error: can't find previously added namespace");
+
+            typecheck_namespace_declarations(namespace, namespace_scope_id, project);
+        } else {
+            // Create a typecheck the unnamed namespace (aka a block scope)
+            println!("created a namespace for empty scope");
+
+            let namespace_scope_id = project.create_scope(scope_id, false);
+            project.scopes[namespace_scope_id].namespace_name = namespace.name.clone();
+            project.scopes[scope_id].children.push(namespace_scope_id);
+            typecheck_namespace_predecl(namespace, namespace_scope_id, project);
+            error = error.or(typecheck_namespace_declarations(
+                parsed_namespace,
+                namespace_scope_id,
+                project,
+            ))
+        }
     }
 
-    for (i, function) in parsed_namespace.functions.iter().enumerate() {
-        // Typecheck the function bodies
-        project.current_function_index = Some(i + project_function_len);
+    // for (_, enum_) in parsed_namespace.enums.iter().enumerate() {
+    //     // Finish typechecking the full enum
+    //     let enum_id = project
+    //         .find_enum_in_scope(scope_id, &enum_.name)
+    //         .expect("internal error: can't find enum that has been previous added");
+
+    //     error = error.or(typecheck_enum(
+    //         enum_,
+    //         enum_id,
+    //         project.enums[enum_id].type_id,
+    //         project.enums[enum_id].scope_id,
+    //         scope_id,
+    //         project,
+    //     ));
+    // }
+
+    for (_, structure) in parsed_namespace.structs.iter().enumerate() {
+        // Finish typechecking the full struct (including methods)
+        let struct_id = project
+            .find_struct_in_scope(scope_id, &structure.name)
+            .expect("internal error: can't find struct that has been previous added");
+
+        error = error.or(typecheck_struct(structure, struct_id, scope_id, project));
+    }
+
+    for (_, function) in parsed_namespace.functions.iter().enumerate() {
+        // Typecheck the function bodies'
+        let function_id = project
+            .find_function_in_scope(scope_id, &function.name)
+            .expect("internal error: can't find function that has been previous added");
+        project.current_function_index = Some(function_id);
         error = error.or(typecheck_function(function, scope_id, project));
         project.current_function_index = None;
     }
