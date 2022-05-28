@@ -159,6 +159,46 @@ pub fn can_fit_number(type_id: TypeId, value: &NumberConstant) -> bool {
     }
 }
 
+// Uses optimal string alignment distance algorithm
+// (https://en.wikipedia.org/wiki/Damerau-Levenshtein_distance).
+fn number_of_edits_between(a: &str, b: &str) -> usize {
+    let a = a.as_bytes();
+    let b = b.as_bytes();
+
+    let mut d = Vec::with_capacity(a.len());
+    for _ in 0..a.len() {
+        d.push(vec![0; b.len()]);
+    }
+
+    // Set first element of each row to row_index.
+    for (row_index, row) in d.iter_mut().enumerate() {
+        row[0] = row_index;
+    }
+
+    // Set each column of first row to column_index
+    for (column_index, column) in d[0].iter_mut().enumerate() {
+        *column = column_index;
+    }
+
+    for i in 1..a.len() {
+        for j in 1..b.len() {
+            let cost = if a[i] == b[j] { 0 } else { 1 };
+            let min = std::cmp::min;
+            d[i][j] = min(
+                min(
+                    d[i - 1][j] + 1, // Deletion.
+                    d[i][j - 1] + 1, // Insertion.
+                ),
+                d[i - 1][j - 1] + cost, // Substitution.
+            );
+            if i > 1 && j > 1 && a[i] == b[j - 1] && a[i - 1] == b[j] {
+                d[i][j] = min(d[i][j], d[i - 2][j - 2] + 1); // Transposition.
+            }
+        }
+    }
+    d[a.len() - 1][b.len() - 1]
+}
+
 #[derive(Debug, Clone)]
 pub struct Project {
     pub functions: Vec<CheckedFunction>,
@@ -265,6 +305,20 @@ impl Project {
         None
     }
 
+    pub fn find_most_similar_var_name_in_scope(
+        &self,
+        scope_id: ScopeId,
+        var: &str,
+    ) -> Option<String> {
+        self.find_most_similar_item_name_in_scope(scope_id, var, |scope: &Scope| -> Vec<String> {
+            let mut items = Vec::with_capacity(scope.vars.len());
+            for item in &scope.vars {
+                items.push(item.name.to_string());
+            }
+            items
+        })
+    }
+
     pub fn add_struct_to_scope(
         &mut self,
         scope_id: ScopeId,
@@ -327,6 +381,63 @@ impl Project {
         None
     }
 
+    fn find_most_similar_item_name_in_scope<F>(
+        &self,
+        scope_id: ScopeId,
+        item_name: &str,
+        item_names_from_scope: F,
+    ) -> Option<String>
+    where
+        F: Fn(&Scope) -> Vec<String>,
+    {
+        let mut mistakes = None;
+        let mut most_similar_name = None;
+        let mut scope_id = Some(scope_id);
+        while let Some(current_id) = scope_id {
+            let scope = &self.scopes[current_id];
+            for item in item_names_from_scope(scope) {
+                let current_mistakes = number_of_edits_between(&item, item_name);
+                if let Some(mistakes) = &mut mistakes {
+                    if current_mistakes < *mistakes {
+                        *mistakes = current_mistakes;
+                        most_similar_name = Some(item);
+                    }
+                } else {
+                    mistakes = Some(current_mistakes);
+                    most_similar_name = Some(item);
+                }
+            }
+            scope_id = scope.parent;
+        }
+
+        if let Some(mistakes) = mistakes {
+            // Surely no one would misspell half the word.
+            if mistakes > item_name.len() / 2 {
+                return None;
+            }
+        }
+
+        most_similar_name
+    }
+
+    pub fn find_most_similar_struct_name_in_scope(
+        &self,
+        scope_id: ScopeId,
+        structure: &str,
+    ) -> Option<String> {
+        self.find_most_similar_item_name_in_scope(
+            scope_id,
+            structure,
+            |scope: &Scope| -> Vec<String> {
+                let mut items = Vec::with_capacity(scope.structs.len());
+                for item in &scope.structs {
+                    items.push(item.0.to_string());
+                }
+                items
+            },
+        )
+    }
+
     pub fn find_enum_in_scope(&self, scope_id: ScopeId, enum_name: &str) -> Option<EnumId> {
         let mut scope_id = Some(scope_id);
 
@@ -341,6 +452,24 @@ impl Project {
         }
 
         None
+    }
+
+    pub fn find_most_similar_enum_name_in_scope(
+        &self,
+        scope_id: ScopeId,
+        enum_name: &str,
+    ) -> Option<String> {
+        self.find_most_similar_item_name_in_scope(
+            scope_id,
+            enum_name,
+            |scope: &Scope| -> Vec<String> {
+                let mut items = Vec::with_capacity(scope.enums.len());
+                for item in &scope.enums {
+                    items.push(item.0.to_string());
+                }
+                items
+            },
+        )
     }
 
     // Find the namespace in the current scope, or one of its parents
@@ -365,6 +494,27 @@ impl Project {
         }
 
         None
+    }
+
+    pub fn find_most_similar_namespace_name_in_scope(
+        &self,
+        scope_id: ScopeId,
+        namespace_name: &str,
+    ) -> Option<String> {
+        self.find_most_similar_item_name_in_scope(
+            scope_id,
+            namespace_name,
+            |scope: &Scope| -> Vec<String> {
+                let mut items = Vec::new();
+                for child_scope_id in &scope.children {
+                    let child_scope = &self.scopes[*child_scope_id];
+                    if let Some(name) = &child_scope.namespace_name {
+                        items.push(name.to_string());
+                    }
+                }
+                items
+            },
+        )
     }
 
     // Find namespace in the current scope, but not any of its parents (strictly in the current scope)
@@ -430,6 +580,24 @@ impl Project {
         None
     }
 
+    pub fn find_most_similar_function_name_in_scope(
+        &self,
+        scope_id: ScopeId,
+        function_name: &str,
+    ) -> Option<String> {
+        self.find_most_similar_item_name_in_scope(
+            scope_id,
+            function_name,
+            |scope: &Scope| -> Vec<String> {
+                let mut items = Vec::with_capacity(scope.functions.len());
+                for item in &scope.functions {
+                    items.push(item.0.to_string());
+                }
+                items
+            },
+        )
+    }
+
     pub fn add_type_to_scope(
         &mut self,
         scope_id: ScopeId,
@@ -468,6 +636,24 @@ impl Project {
         }
 
         None
+    }
+
+    pub fn find_most_similar_type_name_in_scope(
+        &self,
+        scope_id: ScopeId,
+        type_name: &str,
+    ) -> Option<String> {
+        self.find_most_similar_item_name_in_scope(
+            scope_id,
+            type_name,
+            |scope: &Scope| -> Vec<String> {
+                let mut items = Vec::with_capacity(scope.types.len());
+                for item in &scope.types {
+                    items.push(item.0.to_string());
+                }
+                items
+            },
+        )
     }
 
     pub fn typename_for_type_id(&self, type_id: TypeId) -> String {
@@ -3521,6 +3707,27 @@ pub fn typecheck_expression(
                 let (_, err) = unify_with_type(var.type_id, type_hint, *span, project);
 
                 (CheckedExpression::Var(var, *span), err)
+            } else if let Some(most_similar_var) =
+                project.find_most_similar_var_name_in_scope(scope_id, v)
+            {
+                (
+                    CheckedExpression::Var(
+                        CheckedVariable {
+                            name: v.clone(),
+                            type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
+                            mutable: false,
+                            visibility: Visibility::Public,
+                            definition_span: *span,
+                        },
+                        *span,
+                    ),
+                    Some(JaktError::TypecheckErrorWithHint(
+                        format!("variable '{}' not found", v),
+                        *span,
+                        format!("Did you mean '{}'?", most_similar_var),
+                        *span,
+                    )),
+                )
             } else {
                 (
                     CheckedExpression::Var(
@@ -5485,6 +5692,25 @@ pub fn resolve_call(
             }
             continue;
         }
+
+        let similar_name =
+            project.find_most_similar_namespace_name_in_scope(current_scope_id, scope_name);
+        let similar_name = similar_name
+            .or(project.find_most_similar_struct_name_in_scope(current_scope_id, scope_name));
+        let similar_name = similar_name
+            .or(project.find_most_similar_enum_name_in_scope(current_scope_id, scope_name));
+        if let Some(similar_name) = similar_name {
+            error = error.or(Some(JaktError::TypecheckErrorWithHint(
+                format!(
+                    "Not a namespace, enum, class, or struct: ‘{}’",
+                    call.namespace.join("::")
+                ),
+                *span,
+                format!("Did you mean '{}'?", similar_name),
+                *span,
+            )));
+        }
+
         error = error.or(Some(JaktError::TypecheckError(
             format!(
                 "Not a namespace, enum, class, or struct: ‘{}’",
@@ -5515,6 +5741,21 @@ pub fn resolve_call(
             return (Some(function_id), error);
         }
         return (callee, error);
+    }
+
+    let similar_name =
+        project.find_most_similar_function_name_in_scope(current_scope_id, &call.name);
+    let similar_name = similar_name
+        .or(project.find_most_similar_struct_name_in_scope(current_scope_id, &call.name));
+    let similar_name =
+        similar_name.or(project.find_most_similar_enum_name_in_scope(current_scope_id, &call.name));
+    if let Some(similar_name) = similar_name {
+        error = error.or(Some(JaktError::TypecheckErrorWithHint(
+            format!("Call to unknown function: ‘{}’", &call.name),
+            *span,
+            format!("Did you mean '{}'?", similar_name),
+            *span,
+        )));
     }
 
     error = error.or(Some(JaktError::TypecheckError(
@@ -6257,10 +6498,26 @@ pub fn typecheck_typename(
                 let type_id = project.find_type_in_scope(scope_id, x);
                 match type_id {
                     Some(type_id) => (type_id, None),
-                    None => (
-                        UNKNOWN_TYPE_ID,
-                        Some(JaktError::TypecheckError("unknown type".to_string(), *span)),
-                    ),
+                    None => {
+                        if let Some(similar_name) =
+                            project.find_most_similar_type_name_in_scope(scope_id, x)
+                        {
+                            (
+                                UNKNOWN_TYPE_ID,
+                                Some(JaktError::TypecheckErrorWithHint(
+                                    "Unknown type".to_string(),
+                                    *span,
+                                    format!("Did you mean '{}'?", similar_name),
+                                    *span,
+                                )),
+                            )
+                        } else {
+                            (
+                                UNKNOWN_TYPE_ID,
+                                Some(JaktError::TypecheckError("Unknown type".to_string(), *span)),
+                            )
+                        }
+                    }
                 }
             }
         },
