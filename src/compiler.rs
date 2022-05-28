@@ -96,7 +96,7 @@ impl Compiler {
             return Err(err);
         }
 
-        let scope = Scope::new(Some(0));
+        let scope = Scope::new(Some(0), false);
         project.scopes.push(scope);
 
         let file_scope_id = project.scopes.len() - 1;
