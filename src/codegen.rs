@@ -1176,9 +1176,27 @@ fn codegen_struct(
 
     match structure.definition_type {
         DefinitionType::Class => {
+            let generic_parameter_string = if structure.generic_parameters.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "<{}>",
+                    structure
+                        .generic_parameters
+                        .iter()
+                        .map(|id| codegen_type(*id, project))
+                        .collect::<Vec<String>>()
+                        .join(",")
+                )
+            };
+
             output.push_str(&format!(
-                "class {} : public RefCounted<{}>, public Weakable<{}> {{\n",
-                structure.name, structure.name, structure.name
+                "class {} : public RefCounted<{}{}>, public Weakable<{}{}> {{\n",
+                structure.name,
+                structure.name,
+                generic_parameter_string,
+                structure.name,
+                generic_parameter_string
             ));
             // As we should test the visibility before codegen, we take a simple
             // approach to codegen
@@ -2662,11 +2680,36 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
 
                     output.push_str(&codegen_namespace_path(call, project));
                     match ty {
-                        Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
+                        Type::Struct(struct_id) => {
                             let structure = &project.structs[*struct_id];
 
                             if structure.definition_type == DefinitionType::Class {
                                 output.push_str(&call.name);
+                                output.push_str("::");
+                                output.push_str("create");
+                            } else {
+                                output.push_str(&call.name);
+                            }
+                        }
+                        Type::GenericInstance(struct_id, inner_type_ids) => {
+                            let structure = &project.structs[*struct_id];
+
+                            if structure.definition_type == DefinitionType::Class {
+                                output.push_str(&call.name);
+                                output.push('<');
+                                let mut first = true;
+                                for type_id in inner_type_ids {
+                                    if !first {
+                                        output.push_str(", ");
+                                    } else {
+                                        first = false;
+                                    }
+
+                                    output.push_str(&codegen_type(*type_id, project));
+                                }
+
+                                output.push('>');
+
                                 output.push_str("::");
                                 output.push_str("create");
                             } else {
