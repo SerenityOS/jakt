@@ -1,0 +1,3 @@
+function unmarked() {
+  throw Error::from_errno(0)
+}
