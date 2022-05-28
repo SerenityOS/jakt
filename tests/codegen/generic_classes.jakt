@@ -1,0 +1,18 @@
+
+class Meep<U, V> {
+    public a: U
+    public b: V
+}
+
+function main(args: [String]) {
+    let m = Meep(a: 5, b: 10)
+    let n = Meep(a: "Hello!", b: 100)
+
+    let access_m: i32 = m.a
+    let access_n: String = n.a
+    println("m: {} {}", access_m, m.b)
+    println("n: {} {}", access_n, n.b)
+
+    let u: i32 = Meep(a: 5, b: 100).a
+}
+
