@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include <AK/CheckedFormatString.h>
-
 #include <AK/AllOf.h>
 #include <AK/AnyOf.h>
 #include <AK/Error.h>
@@ -450,26 +448,26 @@ ErrorOr<void> vformat(StringBuilder&, StringView fmtstr, TypeErasedFormatParams&
 void vout(FILE*, StringView fmtstr, TypeErasedFormatParams&, bool newline = false);
 
 template<typename... Parameters>
-void out(FILE* file, CheckedFormatString<Parameters...>&& fmtstr, Parameters const&... parameters)
+void out(FILE* file, StringView&& fmtstr, Parameters const&... parameters)
 {
     VariadicFormatParams variadic_format_params { parameters... };
-    vout(file, fmtstr.view(), variadic_format_params);
+    vout(file, fmtstr, variadic_format_params);
 }
 
 template<typename... Parameters>
-void outln(FILE* file, CheckedFormatString<Parameters...>&& fmtstr, Parameters const&... parameters)
+void outln(FILE* file, StringView&& fmtstr, Parameters const&... parameters)
 {
     VariadicFormatParams variadic_format_params { parameters... };
-    vout(file, fmtstr.view(), variadic_format_params, true);
+    vout(file, fmtstr, variadic_format_params, true);
 }
 
 inline void outln(FILE* file) { fputc('\n', file); }
 
 template<typename... Parameters>
-void out(CheckedFormatString<Parameters...>&& fmtstr, Parameters const&... parameters) { out(stdout, move(fmtstr), parameters...); }
+void out(StringView&& fmtstr, Parameters const&... parameters) { out(stdout, move(fmtstr), parameters...); }
 
 template<typename... Parameters>
-void outln(CheckedFormatString<Parameters...>&& fmtstr, Parameters const&... parameters) { outln(stdout, move(fmtstr), parameters...); }
+void outln(StringView&& fmtstr, Parameters const&... parameters) { outln(stdout, move(fmtstr), parameters...); }
 
 inline void outln() { outln(stdout); }
 
@@ -480,13 +478,13 @@ inline void outln() { outln(stdout); }
         } while (0)
 
 template<typename... Parameters>
-void warn(CheckedFormatString<Parameters...>&& fmtstr, Parameters const&... parameters)
+void warn(StringView&& fmtstr, Parameters const&... parameters)
 {
     out(stderr, move(fmtstr), parameters...);
 }
 
 template<typename... Parameters>
-void warnln(CheckedFormatString<Parameters...>&& fmtstr, Parameters const&... parameters) { outln(stderr, move(fmtstr), parameters...); }
+void warnln(StringView&& fmtstr, Parameters const&... parameters) { outln(stderr, move(fmtstr), parameters...); }
 
 inline void warnln() { outln(stderr); }
 
@@ -501,10 +499,10 @@ inline void warnln() { outln(stderr); }
 void vdbgln(StringView fmtstr, TypeErasedFormatParams&);
 
 template<typename... Parameters>
-void dbgln(CheckedFormatString<Parameters...>&& fmtstr, Parameters const&... parameters)
+void dbgln(StringView&& fmtstr, Parameters const&... parameters)
 {
     VariadicFormatParams variadic_format_params { parameters... };
-    vdbgln(fmtstr.view(), variadic_format_params);
+    vdbgln(fmtstr, variadic_format_params);
 }
 
 inline void dbgln() { dbgln(""); }
@@ -515,7 +513,7 @@ void set_debug_enabled(bool);
 void vdmesgln(StringView fmtstr, TypeErasedFormatParams&);
 
 template<typename... Parameters>
-void dmesgln(CheckedFormatString<Parameters...>&& fmt, Parameters const&... parameters)
+void dmesgln(StringView&& fmt, Parameters const&... parameters)
 {
     VariadicFormatParams variadic_format_params { parameters... };
     vdmesgln(fmt.view(), variadic_format_params);
@@ -526,7 +524,7 @@ void v_critical_dmesgln(StringView fmtstr, TypeErasedFormatParams&);
 // be very careful to not cause any allocations here, since we could be in
 // a very unstable situation
 template<typename... Parameters>
-void critical_dmesgln(CheckedFormatString<Parameters...>&& fmt, Parameters const&... parameters)
+void critical_dmesgln(StringView&& fmt, Parameters const&... parameters)
 {
     VariadicFormatParams variadic_format_params { parameters... };
     v_critical_dmesgln(fmt.view(), variadic_format_params);
@@ -612,7 +610,6 @@ using AK::warnln;
 
 using AK::dbgln;
 
-using AK::CheckedFormatString;
 using AK::FormatIfSupported;
 using AK::FormatString;
 
