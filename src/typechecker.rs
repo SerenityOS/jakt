@@ -2669,6 +2669,15 @@ pub fn typecheck_statement(
                 )));
             }
 
+            let scope = &project.scopes[scope_id];
+            if !scope.throws {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "Throw statement needs to be in a try statement or a function marked as throws"
+                        .to_string(),
+                    expr.span(),
+                )));
+            }
+
             (CheckedStatement::Throw(checked_expr), error)
         }
         ParsedStatement::For((iterator_name, iterator_span), range_expr, block) => {
@@ -5434,6 +5443,14 @@ pub fn typecheck_call(
                 callee_throws = callee.throws;
                 return_type_id = callee.return_type_id;
                 linkage = callee.linkage;
+
+                let caller_scope = &project.scopes[caller_scope_id];
+                if callee.throws && !caller_scope.throws {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "Call to function that may throw needs to be in a try statement or a function marked as throws".to_string(),
+                        *span,
+                    )));
+                }
 
                 let scope_containing_callee = project.scopes[callee.function_scope_id]
                     .parent
