@@ -3621,8 +3621,12 @@ pub fn typecheck_expression(
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
             let type_id = checked_expr.type_id(scope_id, project);
 
+            let optional_type =
+                Type::GenericInstance(project.get_optional_struct_id(*span), vec![type_id]);
+            let optional_type_id = project.find_or_add_type_id(optional_type);
+
             (
-                CheckedExpression::OptionalSome(Box::new(checked_expr), *span, type_id),
+                CheckedExpression::OptionalSome(Box::new(checked_expr), *span, optional_type_id),
                 err,
             )
         }
