@@ -1694,6 +1694,12 @@ pub fn codegen_type_possibly_as_namespace(
             output
         }
         Type::GenericInstance(struct_id, inner_type_ids) => {
+            let is_class = project.structs[*struct_id].definition_type == DefinitionType::Class;
+
+            if is_class {
+                output.push_str("NonnullRefPtr<");
+            }
+
             output.push_str(&codegen_namespace_qualifier(
                 project.structs[*struct_id].scope_id,
                 project,
@@ -1712,6 +1718,9 @@ pub fn codegen_type_possibly_as_namespace(
             }
 
             output.push('>');
+            if is_class {
+                output.push('>');
+            }
             output
         }
         Type::GenericEnumInstance(enum_id, inner_type_ids) => {
@@ -3182,7 +3191,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     Type::RawPtr(_) => {
                         output.push_str("->");
                     }
-                    Type::Struct(struct_id) => {
+                    Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
                         let structure = &project.structs[*struct_id];
 
                         if structure.definition_type == DefinitionType::Class {
