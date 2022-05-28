@@ -2,7 +2,7 @@ enum Foo {
     Id(i32)
     Name(String)
 
-    private function name_impl(this) -> String? {
+    private function name_impl(this) throws -> String? {
         match this {
             Name(name) => {
                 return name
@@ -15,7 +15,7 @@ enum Foo {
         return None
     }
 
-    function name(this) {
+    function name(this) throws {
         return this.name_impl()
     }
 }
