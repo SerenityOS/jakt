@@ -6,11 +6,10 @@
 
 #pragma once
 
-#include <AK/LinearArray.h>
 #include <AK/Assertions.h>
+#include <AK/LinearArray.h>
 #include <AK/Span.h>
 #include <AK/Types.h>
-#include <AK/Vector.h>
 
 namespace AK {
 
@@ -45,10 +44,8 @@ constexpr void const* bitap_bitwise(void const* haystack, size_t haystack_length
 template<typename HaystackIterT>
 inline Optional<size_t> memmem(HaystackIterT const& haystack_begin, HaystackIterT const& haystack_end, Span<const u8> needle) requires(requires { (*haystack_begin).data(); (*haystack_begin).size(); })
 {
+    int table[needle.size()];
     auto prepare_kmp_partial_table = [&] {
-        Vector<int, 64> table;
-        table.resize(needle.size());
-
         size_t position = 1;
         int candidate = 0;
 
@@ -68,7 +65,7 @@ inline Optional<size_t> memmem(HaystackIterT const& haystack_begin, HaystackIter
         return table;
     };
 
-    auto table = prepare_kmp_partial_table();
+    prepare_kmp_partial_table();
     size_t total_haystack_index = 0;
     size_t current_haystack_index = 0;
     int needle_index = 0;

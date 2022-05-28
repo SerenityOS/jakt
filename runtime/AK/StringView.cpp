@@ -9,7 +9,6 @@
 #include <AK/Function.h>
 #include <AK/Memory.h>
 #include <AK/StringView.h>
-#include <AK/Vector.h>
 
 #ifndef KERNEL
 #    include <AK/String.h>

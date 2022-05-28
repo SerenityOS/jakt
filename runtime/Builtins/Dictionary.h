@@ -66,7 +66,15 @@ public:
     V& operator[](K const& key) { return m_storage->map.get(key).value(); }
     V const& operator[](K const& key) const { return m_storage->map.get(key).value(); }
 
-    Vector<K> keys() const { return m_storage->map.keys(); }
+    ErrorOr<Array<K>> keys() const
+    {
+        Array<K> keys;
+        TRY(keys.ensure_capacity(m_storage->map.size()));
+        for (auto& it : m_storage->map) {
+            MUST(keys.push(it.key));
+        }
+        return keys;
+    }
 
     ErrorOr<void> ensure_capacity(size_t capacity)
     {

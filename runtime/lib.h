@@ -46,7 +46,6 @@
 #include <AK/Types.h>
 #include <AK/UnicodeUtils.h>
 #include <AK/Variant.h>
-#include <AK/Vector.h>
 #include <AK/WeakPtr.h>
 #include <AK/Weakable.h>
 #include <AK/kmalloc.h>
