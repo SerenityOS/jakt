@@ -28,7 +28,7 @@ function main(args: [String]) {
         return 1
     }
 
-    let mutable file = fopen(args[1].characters(), "r".characters())
+    let mutable file = fopen(args[1].c_string(), "r".c_string())
     defer fclose(file)
 
     let table = make_lookup_table()
