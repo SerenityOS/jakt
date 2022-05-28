@@ -886,13 +886,15 @@ impl CheckedFunction {
 #[derive(Debug, Clone)]
 pub struct CheckedBlock {
     pub stmts: Vec<CheckedStatement>,
+    pub scope: ScopeId,
     pub definitely_returns: bool,
 }
 
 impl CheckedBlock {
-    pub fn new() -> Self {
+    pub fn new(scope: ScopeId) -> Self {
         Self {
             stmts: Vec::new(),
+            scope,
             definitely_returns: false,
         }
     }
@@ -1716,6 +1718,7 @@ fn typecheck_enum_predecl(
 
     for function in &enum_.methods {
         let method_scope_id = project.create_scope(enum_scope_id, function.throws);
+        let block_scope_id = project.create_scope(method_scope_id, function.throws);
 
         let is_generic =
             !enum_.generic_parameters.is_empty() || !function.generic_parameters.is_empty();
@@ -1728,7 +1731,7 @@ fn typecheck_enum_predecl(
             visibility: function.visibility.clone(),
             function_scope_id: method_scope_id,
             generic_parameters: vec![],
-            block: Some(CheckedBlock::new()),
+            block: Some(CheckedBlock::new(block_scope_id)),
             parsed_function: Some(function.clone()),
             linkage: function.linkage,
             is_instantiated: !is_generic,
@@ -1950,6 +1953,8 @@ fn typecheck_enum(
                     {
                         let function_scope_id =
                             project.create_scope(parent_scope_id, enum_.is_recursive);
+                        let block_scope_id =
+                            project.create_scope(function_scope_id, enum_.is_recursive);
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
@@ -1970,7 +1975,7 @@ fn typecheck_enum(
                                     )
                                 })
                                 .collect(),
-                            block: Some(CheckedBlock::new()),
+                            block: Some(CheckedBlock::new(block_scope_id)),
                             parsed_function: None,
                             linkage: FunctionLinkage::ImplicitEnumConstructor,
                             is_instantiated: true,
@@ -2096,8 +2101,11 @@ fn typecheck_enum(
                                 },
                             })
                             .collect();
+
                         let function_scope_id =
                             project.create_scope(parent_scope_id, enum_.is_recursive);
+                        let block_scope_id =
+                            project.create_scope(function_scope_id, enum_.is_recursive);
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
@@ -2117,7 +2125,7 @@ fn typecheck_enum(
                                     )
                                 })
                                 .collect(),
-                            block: Some(CheckedBlock::new()),
+                            block: Some(CheckedBlock::new(block_scope_id)),
                             parsed_function: None,
                             linkage: FunctionLinkage::ImplicitEnumConstructor,
                             is_instantiated: true,
@@ -2173,6 +2181,8 @@ fn typecheck_enum(
                         }];
                         let function_scope_id =
                             project.create_scope(parent_scope_id, enum_.is_recursive);
+                        let block_scope_id =
+                            project.create_scope(function_scope_id, enum_.is_recursive);
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
@@ -2192,7 +2202,7 @@ fn typecheck_enum(
                                     )
                                 })
                                 .collect(),
-                            block: Some(CheckedBlock::new()),
+                            block: Some(CheckedBlock::new(block_scope_id)),
                             parsed_function: None,
                             linkage: FunctionLinkage::ImplicitEnumConstructor,
                             is_instantiated: true,
@@ -2276,6 +2286,7 @@ fn typecheck_struct_predecl(
 
     for function in &structure.methods {
         let method_scope_id = project.create_scope(struct_scope_id, function.throws);
+        let block_scope_id = project.create_scope(method_scope_id, function.throws);
 
         let is_generic =
             !structure.generic_parameters.is_empty() || !function.generic_parameters.is_empty();
@@ -2288,7 +2299,7 @@ fn typecheck_struct_predecl(
             visibility: function.visibility.clone(),
             function_scope_id: method_scope_id,
             generic_parameters: vec![],
-            block: Some(CheckedBlock::new()),
+            block: Some(CheckedBlock::new(block_scope_id)),
             parsed_function: Some(function.clone()),
             linkage: function.linkage,
             is_instantiated: !is_generic || is_extern,
@@ -2522,10 +2533,9 @@ fn typecheck_struct(
             });
         }
 
-        let function_scope_id = project.create_scope(
-            parent_scope_id,
-            structure.definition_type == DefinitionType::Class,
-        );
+        let contructor_can_throw = structure.definition_type == DefinitionType::Class;
+        let function_scope_id = project.create_scope(parent_scope_id, contructor_can_throw);
+        let block_scope_id = project.create_scope(function_scope_id, contructor_can_throw);
 
         let checked_constructor = CheckedFunction {
             name: structure.name.clone(),
@@ -2536,7 +2546,7 @@ fn typecheck_struct(
             visibility: Visibility::Public,
             function_scope_id,
             generic_parameters: vec![],
-            block: Some(CheckedBlock::new()),
+            block: Some(CheckedBlock::new(block_scope_id)),
             parsed_function: None,
             linkage: FunctionLinkage::ImplicitConstructor,
             is_instantiated: true,
@@ -2580,6 +2590,7 @@ fn typecheck_function_predecl(
     let mut error = None;
 
     let function_scope_id = project.create_scope(parent_scope_id, function.throws);
+    let block_scope_id = project.create_scope(function_scope_id, function.throws);
 
     let is_generic = if let Some(type_id) = this_arg_type_id {
         if let Type::GenericInstance(_, _) = &project.types[type_id] {
@@ -2599,7 +2610,7 @@ fn typecheck_function_predecl(
         visibility: function.visibility.clone(),
         function_scope_id,
         generic_parameters: vec![],
-        block: Some(CheckedBlock::new()),
+        block: Some(CheckedBlock::new(block_scope_id)),
         parsed_function: Some(function.clone()),
         linkage: function.linkage,
         is_instantiated: !is_generic,
@@ -3011,10 +3022,10 @@ pub fn typecheck_block(
     safety_mode: SafetyMode,
 ) -> (CheckedBlock, Option<JaktError>) {
     let mut error = None;
-    let mut checked_block = CheckedBlock::new();
 
     let parent_throws = project.scopes[parent_scope_id].throws;
     let block_scope_id = project.create_scope(parent_scope_id, parent_throws);
+    let mut checked_block = CheckedBlock::new(block_scope_id);
 
     for stmt in &block.stmts {
         let (checked_stmt, err) = typecheck_statement(stmt, block_scope_id, project, safety_mode);
