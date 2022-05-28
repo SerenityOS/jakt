@@ -1664,7 +1664,7 @@ pub fn parse_function(
                                 variable: ParsedVariable {
                                     name: var_decl.name,
                                     parsed_type: var_decl.parsed_type,
-                                    mutable: var_decl.mutable,
+                                    mutable: var_decl.mutable || current_param_is_mutable,
                                     span: tokens[*index - 1].span,
                                 },
                             });

@@ -1,0 +1,9 @@
+function foo(anonymous i: u8) {
+    i = ~i
+    return i
+}
+
+function main() {
+    println("{}", foo(10))
+}
+
