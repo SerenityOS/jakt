@@ -20,6 +20,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
 
       - name: Setup Rust toolchain
         uses: actions-rs/toolchain@v1
@@ -34,6 +37,9 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
+
+      - name: Lint samples
+        run: python ./meta/lint_samples.py
 
       - name: Test Jakt
         uses: actions-rs/cargo@v1
