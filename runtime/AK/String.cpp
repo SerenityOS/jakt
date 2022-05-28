@@ -179,6 +179,14 @@ bool String::operator==(char const* c_string) const
     return view() == c_string;
 }
 
+String String::operator+(String const& other) const
+{
+    StringBuilder builder;
+    MUST(builder.try_append(*this));
+    MUST(builder.try_append(other));
+    return MUST(builder.to_string());
+}
+
 void StringStorage::operator delete(void* ptr)
 {
     free(ptr);

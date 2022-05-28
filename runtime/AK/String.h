@@ -173,6 +173,9 @@ public:
     bool operator==(char const* cstring) const;
     bool operator!=(char const* cstring) const { return !(*this == cstring); }
 
+    // FIXME: Return ErrorOr<String> when Jakt can automatically wrap String+String with TRY()
+    String operator+(String const&) const;
+
     [[nodiscard]] StringStorage& storage() { return *m_storage; }
     [[nodiscard]] StringStorage const& storage() const { return *m_storage; }
 
