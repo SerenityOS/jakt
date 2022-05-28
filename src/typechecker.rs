@@ -1663,7 +1663,7 @@ fn typecheck_enum_predecl(
     }
 
     for function in &enum_.methods {
-        let method_scope_id = project.create_scope(enum_scope_id);
+        let method_scope_id = project.create_scope(enum_scope_id, function.throws);
 
         let is_generic =
             !enum_.generic_parameters.is_empty() || !function.generic_parameters.is_empty();
@@ -1711,7 +1711,7 @@ fn typecheck_enum_predecl(
 
         checked_function.generic_parameters = generic_parameters;
         let check_scope = if is_generic {
-            Some(project.create_scope(method_scope_id))
+            Some(project.create_scope(method_scope_id, checked_function.throws))
         } else {
             None
         };
