@@ -1,0 +1,5 @@
+import foo
+
+function main() {
+    foo::bar()
+}
