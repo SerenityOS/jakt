@@ -5,9 +5,46 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-use std::{env::temp_dir, io::Write, process::Command};
+#[macro_use]
+extern crate lazy_static;
+
+use std::{env::temp_dir, ffi::OsString, fs::create_dir, io::Write, process::Command};
 
 use jakt::{Compiler, JaktError};
+
+static COMMON_ARGS: &[&str] = &[
+    "-I",
+    ".",
+    "-I",
+    "runtime",
+    "-std=c++20",
+    "-Wno-user-defined-literals",
+    "-DJAKT_CONTINUE_ON_PANIC",
+];
+
+lazy_static! {
+    static ref PCH_FILENAME: OsString = {
+        let mut pch_filename = temp_dir();
+        pch_filename.push(format!("Jakt-{}", uuid::Uuid::new_v4()));
+        create_dir(&pch_filename).expect("Failed to create temporary directory for PCH.");
+        pch_filename.push("lib.h.pch");
+
+        let status = Command::new("clang++")
+            .arg("-x")
+            .arg("c++-header")
+            .arg("runtime/lib.h")
+            .arg("-o")
+            .arg(&pch_filename)
+            .arg("-fpch-instantiate-templates")
+            .args(COMMON_ARGS)
+            .status()
+            .expect("Failed to launch compiler for PCH generation.");
+
+        assert!(status.success(), "PCH generation should succeed.");
+
+        pch_filename.into_os_string()
+    };
+}
 
 fn test_samples(path: &str) -> Result<(), JaktError> {
     for sample in std::fs::read_dir(path).expect("if this fails, the repo or harness is broken") {
@@ -82,25 +119,16 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
                         cpp_file.write_all(cpp_string.as_bytes())?;
                     }
 
-                    let pwd = std::env::current_dir()?;
-
-                    let mut runtime_dir = std::env::current_dir()?;
-                    runtime_dir.push("runtime");
-
                     let mut exe_name = temp_dir();
                     exe_name.push(format!("output{}", uuid));
 
                     let status = Command::new("clang++")
                         .arg(&cpp_filename)
-                        .arg("-I")
-                        .arg(pwd)
-                        .arg("-I")
-                        .arg(runtime_dir)
                         .arg("-o")
                         .arg(&exe_name)
-                        .arg("-std=c++20")
-                        .arg("-Wno-user-defined-literals")
-                        .arg("-DJAKT_CONTINUE_ON_PANIC")
+                        .arg("-include-pch")
+                        .arg(&*PCH_FILENAME)
+                        .args(COMMON_ARGS)
                         .output()?;
 
                     if !status.status.success() {
