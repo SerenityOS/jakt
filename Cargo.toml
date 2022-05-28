@@ -9,6 +9,7 @@ pico-args = { version = "0.4.2", features = ["combined-flags"] }
 
 [dev-dependencies]
 uuid = {version = "1.0.0", features=["v4"]}
+lazy_static = "1.4.0"
 
 [features]
 default = []
