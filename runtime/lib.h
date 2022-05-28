@@ -7,7 +7,6 @@
 #include <AK/BitCast.h>
 #include <AK/CharacterTypes.h>
 #include <AK/Checked.h>
-#include <AK/CheckedFormatString.h>
 #include <AK/Concepts.h>
 #include <AK/Debug.h>
 #include <AK/Error.h>

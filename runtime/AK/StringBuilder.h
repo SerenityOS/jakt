@@ -27,10 +27,10 @@ public:
     ErrorOr<void> try_append_code_point(u32);
     ErrorOr<void> try_append(char);
     template<typename... Parameters>
-    ErrorOr<void> try_appendff(CheckedFormatString<Parameters...>&& fmtstr, Parameters const&... parameters)
+    ErrorOr<void> try_appendff(StringView&& fmtstr, Parameters const&... parameters)
     {
         VariadicFormatParams variadic_format_params { parameters... };
-        return vformat(*this, fmtstr.view(), variadic_format_params);
+        return vformat(*this, fmtstr, variadic_format_params);
     }
     ErrorOr<void> try_append(char const*, size_t);
     ErrorOr<void> try_append_escaped_for_json(StringView);
@@ -44,10 +44,10 @@ public:
     void append_escaped_for_json(StringView);
 
     template<typename... Parameters>
-    void appendff(CheckedFormatString<Parameters...>&& fmtstr, Parameters const&... parameters)
+    void appendff(StringView&& fmtstr, Parameters const&... parameters)
     {
         VariadicFormatParams variadic_format_params { parameters... };
-        MUST(vformat(*this, fmtstr.view(), variadic_format_params));
+        MUST(vformat(*this, fmtstr, variadic_format_params));
     }
 
     [[nodiscard]] ErrorOr<String> to_string() const;
