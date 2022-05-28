@@ -304,13 +304,6 @@ public:
         return array;
     }
 
-    Array(Vector<T> const& ak_vector)
-    {
-        MUST(ensure_capacity(ak_vector.size()));
-        for (auto value : ak_vector)
-            MUST(push(move(value)));
-    }
-
     T* unsafe_data()
     {
         if (!m_storage)

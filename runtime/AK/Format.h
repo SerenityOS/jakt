@@ -328,52 +328,6 @@ struct Formatter<StringView> : StandardFormatter {
     ErrorOr<void> format(FormatBuilder&, StringView);
 };
 
-template<typename T, size_t inline_capacity>
-requires(HasFormatter<T>) struct Formatter<Vector<T, inline_capacity>> : StandardFormatter {
-
-    Formatter() = default;
-    explicit Formatter(StandardFormatter formatter)
-        : StandardFormatter(move(formatter))
-    {
-    }
-    ErrorOr<void> format(FormatBuilder& builder, Vector<T> value)
-    {
-        if (m_mode == Mode::Pointer) {
-            Formatter<FlatPtr> formatter { *this };
-            TRY(formatter.format(builder, reinterpret_cast<FlatPtr>(value.data())));
-            return {};
-        }
-
-        if (m_sign_mode != FormatBuilder::SignMode::Default)
-            VERIFY_NOT_REACHED();
-        if (m_alternative_form)
-            VERIFY_NOT_REACHED();
-        if (m_zero_pad)
-            VERIFY_NOT_REACHED();
-        if (m_mode != Mode::Default)
-            VERIFY_NOT_REACHED();
-        if (m_width.has_value() && m_precision.has_value())
-            VERIFY_NOT_REACHED();
-
-        m_width = m_width.value_or(0);
-        m_precision = m_precision.value_or(NumericLimits<size_t>::max());
-
-        Formatter<T> content_fmt;
-        TRY(builder.put_literal("[ "sv));
-        bool first = true;
-        for (auto& content : value) {
-            if (!first) {
-                TRY(builder.put_literal(", "sv));
-                content_fmt = Formatter<T> {};
-            }
-            first = false;
-            TRY(content_fmt.format(builder, content));
-        }
-        TRY(builder.put_literal(" ]"sv));
-        return {};
-    }
-};
-
 template<>
 struct Formatter<ReadonlyBytes> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, ReadonlyBytes value)

@@ -8,7 +8,6 @@
 
 #include <AK/HashTable.h>
 #include <AK/Optional.h>
-#include <AK/Vector.h>
 #include <initializer_list>
 
 namespace AK {
@@ -212,15 +211,6 @@ public:
         auto result = set(key, initialization_callback());
         VERIFY(result == HashSetResult::InsertedNewEntry);
         return find(key)->value;
-    }
-
-    [[nodiscard]] Vector<K> keys() const
-    {
-        Vector<K> list;
-        list.ensure_capacity(size());
-        for (auto& it : *this)
-            list.unchecked_append(it.key);
-        return list;
     }
 
     [[nodiscard]] u32 hash() const

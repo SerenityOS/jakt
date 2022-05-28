@@ -77,9 +77,6 @@ class RefPtr;
 template<typename T>
 class WeakPtr;
 
-template<typename T, size_t inline_capacity = 0>
-requires(!IsRvalueReference<T>) class Vector;
-
 template<typename T, typename ErrorType = Error>
 class [[nodiscard]] ErrorOr;
 
@@ -106,6 +103,3 @@ using AK::StringImpl;
 using AK::StringView;
 using AK::Time;
 using AK::Traits;
-using AK::Utf8CodePointIterator;
-using AK::Utf8View;
-using AK::Vector;
