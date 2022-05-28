@@ -37,7 +37,6 @@ pub const USIZE_TYPE_ID: usize = 15;
 pub const STRING_TYPE_ID: usize = 16;
 
 pub struct Compiler {
-    // TODO: Store a path object somehow?
     include_paths: Vec<PathBuf>,
     raw_files: Vec<(String, Vec<u8>)>,
 }

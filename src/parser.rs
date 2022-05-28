@@ -501,7 +501,37 @@ fn parse_import(
             *index += 1;
             let (mut namespace, err) = compiler.find_and_include_module(module_name, *span);
             namespace.name = Some(module_name.clone());
-            return (namespace, err);
+            error = error.or(err);
+
+            if *index < tokens.len() {
+                match &tokens[*index] {
+                    Token {
+                        contents: TokenContents::Name(name),
+                        ..
+                    } if name == "as" => {
+                        *index += 1;
+
+                        if *index < tokens.len() {
+                            if let Token {
+                                contents: TokenContents::Name(alias),
+                                ..
+                            } = &tokens[*index]
+                            {
+                                *index += 1;
+                                namespace.name = Some(alias.clone());
+                                return (namespace, error);
+                            }
+                        }
+                        error = error.or(Some(JaktError::ParserError(
+                            "Expected an identifier after 'as'".to_string(),
+                            *span,
+                        )));
+                    }
+                    _ => {}
+                }
+            }
+
+            return (namespace, error);
         } else {
             error = error.or(Some(JaktError::ParserError(
                 "Expected module name after import keyword".to_string(),

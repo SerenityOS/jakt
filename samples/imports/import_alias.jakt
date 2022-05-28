@@ -1,0 +1,5 @@
+import foo as baz
+
+function main() {
+    baz::bar()
+}
