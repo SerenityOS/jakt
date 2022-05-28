@@ -3016,6 +3016,7 @@ pub fn typecheck_statement(
         ParsedStatement::VarDecl(var_decl, init) => {
             let (mut checked_type_id, typename_err) =
                 typecheck_typename(&var_decl.parsed_type, scope_id, project);
+            error = error.or(typename_err);
 
             let (mut checked_expression, err) =
                 typecheck_expression(init, scope_id, project, safety_mode, Some(checked_type_id));
@@ -3025,8 +3026,6 @@ pub fn typecheck_statement(
                 && checked_expression.type_id(scope_id, project) != UNKNOWN_TYPE_ID
             {
                 checked_type_id = checked_expression.type_id(scope_id, project)
-            } else {
-                error = error.or(typename_err);
             }
 
             let err = try_promote_constant_expr_to_type(
