@@ -281,3 +281,8 @@ fn test_codegen() -> Result<(), JaktError> {
 fn test_match() -> Result<(), JaktError> {
     test_samples("samples/match")
 }
+
+#[test]
+fn test_imports() -> Result<(), JaktError> {
+    test_samples("samples/imports")
+}
