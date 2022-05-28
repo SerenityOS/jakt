@@ -60,7 +60,7 @@ pub enum ParsedType {
 }
 
 #[derive(Debug, Clone)]
-pub struct ParsedVarDecl {
+pub struct ParsedFieldDecl {
     pub name: String,
     pub parsed_type: ParsedType,
     pub mutable: bool,
@@ -68,23 +68,53 @@ pub struct ParsedVarDecl {
     pub visibility: Visibility,
 }
 
-impl ParsedVarDecl {
-    pub fn new(span: Span) -> Self {
-        Self {
-            name: String::new(),
-            parsed_type: ParsedType::Empty,
-            mutable: false,
-            span,
-            visibility: Visibility::Public,
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedName {
+    pub name: String,
+    pub mutable: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DeclPattern {
+    Name(ParsedName),
+    TupleDestruct(Vec<ParsedName>),
+    Empty,
+}
+
+impl DeclPattern {
+    pub fn name(name: &str, mutable: bool) -> Self {
+        Self::Name(ParsedName {
+            name: name.to_string(),
+            mutable,
+        })
+    }
+
+    pub fn tuple_destruct(inner: Vec<ParsedName>) -> Self {
+        Self::TupleDestruct(inner)
+    }
+
+    pub fn update_mutable(&mut self, mutable: bool) {
+        match self {
+            DeclPattern::Name(name) => name.mutable = name.mutable || mutable,
+            DeclPattern::TupleDestruct(inners) => inners
+                .iter_mut()
+                .for_each(|name| name.mutable = name.mutable || mutable),
+            DeclPattern::Empty => {}
         }
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct ParsedVarDecl {
+    pub pattern: DeclPattern,
+    pub parsed_type: ParsedType,
+    pub span: Span,
+    pub visibility: Visibility,
+}
+
 impl PartialEq for ParsedVarDecl {
     fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-            && self.parsed_type == other.parsed_type
-            && self.mutable == other.mutable
+        self.pattern == other.pattern && self.parsed_type == other.parsed_type
     }
 }
 
@@ -101,7 +131,7 @@ pub struct ParsedNamespace {
 pub struct ParsedStruct {
     pub name: String,
     pub generic_parameters: Vec<(String, Span)>,
-    pub fields: Vec<ParsedVarDecl>,
+    pub fields: Vec<ParsedFieldDecl>,
     pub methods: Vec<ParsedFunction>,
     pub span: Span,
     pub definition_linkage: DefinitionLinkage,
@@ -112,7 +142,7 @@ pub struct ParsedStruct {
 pub enum EnumVariant {
     Untyped(String, Span),
     WithValue(String, ParsedExpression, Span),
-    StructLike(String, Vec<ParsedVarDecl>, Span),
+    StructLike(String, Vec<ParsedVariable>, Span),
     Typed(String, ParsedType, Span),
 }
 
@@ -546,6 +576,48 @@ fn parse_import(
     }
 
     (ParsedNamespace::new(), error)
+}
+
+fn parse_name(tokens: &[Token], index: &mut usize) -> (String, Span, Option<JaktError>) {
+    if let Some(token) = tokens.get(*index) {
+        match &token.contents {
+            TokenContents::Name(name) => {
+                *index += 1;
+                (name.to_string(), token.span, None)
+            }
+            _ => (
+                String::new(),
+                tokens[*index - 1].span,
+                Some(JaktError::ParserError(
+                    "expecting name".to_string(),
+                    token.span,
+                )),
+            ),
+        }
+    } else {
+        (
+            String::new(),
+            tokens[*index - 1].span,
+            Some(JaktError::ParserError(
+                "expecting following name".to_string(),
+                tokens[*index - 1].span,
+            )),
+        )
+    }
+}
+
+fn parse_mutable(tokens: &[Token], index: &mut usize) -> bool {
+    if let Some(token) = tokens.get(*index) {
+        match &token.contents {
+            TokenContents::Name(value) if value == "mutable" => {
+                *index += 1;
+                true
+            }
+            _ => false,
+        }
+    } else {
+        false
+    }
 }
 
 pub fn parse_namespace(
@@ -1028,8 +1100,7 @@ pub fn parse_enum(
                         }
 
                         // Fields in struct-like enums are always public.
-                        let (decl, parse_error) =
-                            parse_variable_declaration(tokens, index, Visibility::Public);
+                        let (decl, parse_error) = parse_variable(tokens, index, false);
                         error = error.or(parse_error);
                         if decl.name == enum_.name
                             && decl.parsed_type == ParsedType::Empty
@@ -1439,21 +1510,25 @@ pub fn parse_struct(
                             });
                             last_visibility = None;
 
-                            let (mut var_decl, err) =
-                                parse_variable_declaration(tokens, index, visibility);
+                            let (parsed_var, err) = parse_variable(tokens, index, false);
                             error = error.or(err);
 
-                            // Ignore immutable flag for now
-                            var_decl.mutable = false;
-
-                            if var_decl.parsed_type == ParsedType::Empty {
+                            if parsed_var.parsed_type == ParsedType::Empty {
                                 trace!("ERROR: parameter missing type");
 
                                 error = error.or(Some(JaktError::ParserError(
                                     "parameter missing type".to_string(),
-                                    var_decl.span,
+                                    parsed_var.span,
                                 )))
                             }
+
+                            let var_decl = ParsedFieldDecl {
+                                name: parsed_var.name,
+                                parsed_type: parsed_var.parsed_type,
+                                mutable: false, // Ignore immutable flag for now
+                                span: parsed_var.span,
+                                visibility,
+                            };
 
                             fields.push(var_decl);
                         }
@@ -1645,27 +1720,23 @@ pub fn parse_function(
                         TokenContents::Name(..) => {
                             // Now lets parse a parameter
 
-                            let (var_decl, err) =
-                                parse_variable_declaration(tokens, index, Visibility::Public);
+                            let (parsed_variable, err) =
+                                parse_variable(tokens, index, current_param_is_mutable);
+                            current_param_is_mutable = false;
                             error = error.or(err);
 
-                            if var_decl.parsed_type == ParsedType::Empty {
+                            if parsed_variable.parsed_type == ParsedType::Empty {
                                 trace!("ERROR: parameter missing type");
 
                                 error = error.or(Some(JaktError::ParserError(
                                     "parameter missing type".to_string(),
-                                    var_decl.span,
+                                    parsed_variable.span,
                                 )))
                             }
 
                             params.push(ParsedParameter {
                                 requires_label: current_param_requires_label,
-                                variable: ParsedVariable {
-                                    name: var_decl.name,
-                                    parsed_type: var_decl.parsed_type,
-                                    mutable: var_decl.mutable,
-                                    span: tokens[*index - 1].span,
-                                },
+                                variable: parsed_variable,
                             });
                         }
                         _ => {
@@ -2060,24 +2131,10 @@ pub fn parse_statement(
         TokenContents::Name(name) if name == "let" => {
             trace!("parsing let");
 
-            let mutable = if *index + 1 < tokens.len() {
-                match &tokens[*index + 1].contents {
-                    TokenContents::Name(name) if name == "mutable" => {
-                        *index += 1;
-                        true
-                    }
-                    _ => false,
-                }
-            } else {
-                false
-            };
-
             *index += 1;
 
-            let (mut var_decl, err) = parse_variable_declaration(tokens, index, Visibility::Public);
+            let (var_decl, err) = parse_variable_declaration(tokens, index, Visibility::Public);
             error = error.or(err);
-
-            var_decl.mutable = mutable;
 
             // Hardwire an initialiser for now, but we may not want this long-term
             if *index < tokens.len() {
@@ -3839,105 +3896,140 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Op
     }
 }
 
+pub fn parse_variable(
+    tokens: &[Token],
+    index: &mut usize,
+    mutable: bool,
+) -> (ParsedVariable, Option<JaktError>) {
+    let mut error = None;
+    let (name, mut span, err) = parse_name(tokens, index);
+
+    error = error.or(err);
+
+    let (parsed_type, ty_mut) = if let Some(token) = tokens.get(*index) {
+        match &token.contents {
+            TokenContents::Colon => {
+                *index += 1;
+                let mutable = parse_mutable(tokens, index);
+                let (typename, err) = parse_typename(tokens, index);
+                error = error.or(err);
+                span.end = tokens[*index - 1].span.end;
+                (typename, mutable)
+            }
+            _ => (ParsedType::Empty, false),
+        }
+    } else {
+        (ParsedType::Empty, false)
+    };
+
+    (
+        ParsedVariable {
+            name,
+            parsed_type,
+            mutable: mutable || ty_mut,
+            span,
+        },
+        error,
+    )
+}
+
 pub fn parse_variable_declaration(
     tokens: &[Token],
     index: &mut usize,
     visibility: Visibility,
 ) -> (ParsedVarDecl, Option<JaktError>) {
     trace!(format!("parse_variable_declaration: {:?}", tokens[*index]));
-
     let mut error = None;
 
-    match &tokens[*index].contents {
-        TokenContents::Name(name) => {
-            let var_name = name.to_string();
+    let (mut pattern, mut span) = if let Some(token) = tokens.get(*index) {
+        match &token.contents {
+            TokenContents::Name(..) => {
+                let mutable = parse_mutable(tokens, index);
+                let (name, span, err) = parse_name(tokens, index);
+                error = error.or(err);
+                (DeclPattern::Name(ParsedName { name, mutable }), span)
+            }
+            TokenContents::LParen => {
+                *index += 1;
 
-            *index += 1;
-
-            if *index < tokens.len() {
-                match &tokens[*index].contents {
-                    TokenContents::Colon => {
+                let mut inner_pattern = vec![];
+                while *index < tokens.len() {
+                    if tokens[*index].contents == TokenContents::Comma {
                         *index += 1;
-                    }
-                    _ => {
-                        return (
-                            ParsedVarDecl {
-                                name: name.to_string(),
-                                parsed_type: ParsedType::Empty,
-                                mutable: false,
-                                span: tokens[*index - 1].span,
-                                visibility,
-                            },
-                            None,
-                        );
+                    } else if tokens[*index].contents == TokenContents::RParen {
+                        *index += 1;
+                        break;
+                    } else {
+                        let mutable = parse_mutable(tokens, index);
+                        let (name, _, err) = parse_name(tokens, index);
+                        error = error.or(err);
+
+                        inner_pattern.push(ParsedName { name, mutable })
                     }
                 }
-            } else {
-                return (
-                    ParsedVarDecl {
-                        name: name.to_string(),
-                        parsed_type: ParsedType::Empty,
-                        mutable: false,
-                        span: tokens[*index - 1].span,
-                        visibility,
-                    },
-                    None,
-                );
+
+                let mut span = token.span;
+                span.end = tokens[*index - 1].span.end;
+                (DeclPattern::TupleDestruct(inner_pattern), span)
             }
+            _ => {
+                error = error.or(Some(JaktError::ParserError(
+                    "expected name or '(' in variable declaration".to_string(),
+                    token.span,
+                )));
+                (DeclPattern::Empty, token.span)
+            }
+        }
+    } else {
+        return (
+            ParsedVarDecl {
+                pattern: DeclPattern::Empty,
+                parsed_type: ParsedType::Empty,
+                span: tokens[*index - 1].span,
+                visibility: Visibility::Private,
+            },
+            Some(JaktError::ParserError(
+                "empty variable declaration".to_string(),
+                tokens[*index - 1].span,
+            )),
+        );
+    };
 
-            if *index < tokens.len() {
-                let decl_span = tokens[*index - 1].span;
-                let mutable = *index + 1 < tokens.len()
-                    && match &tokens[*index].contents {
-                        TokenContents::Name(name) if name == "mutable" => {
-                            *index += 1;
-                            true
-                        }
-                        _ => false,
-                    };
-
-                let (var_type, err) = parse_typename(tokens, index);
+    let mut expect_type = false;
+    let (parsed_type, mutable) = if let Some(token) = tokens.get(*index) {
+        match &token.contents {
+            TokenContents::Colon => {
+                expect_type = true;
+                *index += 1;
+                let mutable = parse_mutable(tokens, index);
+                let (typename, err) = parse_typename(tokens, index);
                 error = error.or(err);
-
-                let result = ParsedVarDecl {
-                    name: var_name,
-                    parsed_type: var_type,
-                    mutable,
-                    span: decl_span,
-                    visibility,
-                };
-
-                (result, error)
-            } else {
-                trace!("ERROR: expected type");
-
-                (
-                    ParsedVarDecl {
-                        name: name.to_string(),
-                        parsed_type: ParsedType::Empty,
-                        mutable: false,
-                        span: tokens[*index - 2].span,
-                        visibility,
-                    },
-                    Some(JaktError::ParserError(
-                        "expected type".to_string(),
-                        tokens[*index].span,
-                    )),
-                )
+                span.end = tokens[*index - 1].span.end;
+                (typename, mutable)
             }
+            _ => (ParsedType::Empty, false),
         }
-        _ => {
-            trace!("ERROR: expected name");
+    } else {
+        (ParsedType::Empty, false)
+    };
 
-            (
-                ParsedVarDecl::new(tokens[*index].span),
-                Some(JaktError::ParserError(
-                    "expected name".to_string(),
-                    tokens[*index].span,
-                )),
-            )
-        }
+    pattern.update_mutable(mutable);
+
+    if expect_type && parsed_type == ParsedType::Empty {
+        error = error.or(Some(JaktError::ParserError(
+            "expected type".to_string(),
+            tokens[*index].span,
+        )));
     }
+
+    let result = ParsedVarDecl {
+        pattern,
+        parsed_type,
+        span,
+        visibility,
+    };
+
+    (result, error)
 }
 
 pub fn parse_shorthand_type(

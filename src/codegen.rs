@@ -20,6 +20,7 @@ use crate::{
     },
 };
 use std::collections::{HashMap, HashSet};
+use std::sync::atomic::AtomicUsize;
 
 const INDENT_SIZE: usize = 4;
 
@@ -1912,6 +1913,29 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str(&codegen_expr(indent, expr, project));
             output.push_str(";\n");
         }
+        CheckedStatement::TupleDestruct(var_decls, expr) => {
+            let temp = gen_temp_variable();
+            output.push_str("const ");
+            output.push_str(&format!(
+                "{} {} = ",
+                codegen_type(expr.type_id_or_type_var(), project),
+                temp
+            ));
+            output.push_str(&codegen_expr(indent, expr, project));
+            output.push_str(";\n");
+            for (idx, decl) in var_decls.iter().enumerate() {
+                output.push_str(&codegen_indent(indent));
+                if !decl.mutable {
+                    output.push_str("const ");
+                }
+                output.push_str(&codegen_type(decl.type_id, project));
+                output.push(' ');
+                output.push_str(&decl.name);
+                output.push_str(" = ");
+                output.push_str(&format!("{}.get<{}>()", temp, idx));
+                output.push_str(";\n");
+            }
+        }
         CheckedStatement::Block(checked_block) => {
             let block = codegen_block(indent, checked_block, project);
             output.push_str(&block);
@@ -3305,4 +3329,12 @@ fn postorder_traversal(
     }
 
     output.push(type_id);
+}
+
+fn gen_temp_variable() -> String {
+    static COUNTER: AtomicUsize = AtomicUsize::new(0);
+    format!(
+        "__temp{}",
+        COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst)
+    )
 }

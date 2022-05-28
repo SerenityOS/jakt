@@ -7,7 +7,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::parser::{MatchBody, MatchCase, ParsedVarDecl, Visibility};
+use crate::parser::{DeclPattern, MatchBody, MatchCase, ParsedVarDecl, Visibility};
 use crate::{
     compiler::{
         BOOL_TYPE_ID, CCHAR_TYPE_ID, CINT_TYPE_ID, F32_TYPE_ID, F64_TYPE_ID, I16_TYPE_ID,
@@ -923,6 +923,7 @@ pub enum CheckedStatement {
     Expression(CheckedExpression),
     Defer(Box<CheckedStatement>),
     VarDecl(CheckedVarDecl, CheckedExpression),
+    TupleDestruct(Vec<CheckedVariable>, CheckedExpression),
     If(
         CheckedExpression,
         CheckedBlock,
@@ -2072,7 +2073,7 @@ fn typecheck_enum(
                                 type_id: decl,
                                 mutable: member.mutable,
                                 span: member.span,
-                                visibility: member.visibility.clone(),
+                                visibility: Visibility::Public,
                             })
                         }
                     }
@@ -3173,9 +3174,8 @@ pub fn typecheck_statement(
                     // let (mutable) _magic = expr
                     ParsedStatement::VarDecl(
                         ParsedVarDecl {
-                            name: "_magic".to_string(),
+                            pattern: DeclPattern::name("_magic", iterable_should_be_mutable),
                             parsed_type: ParsedType::Empty,
-                            mutable: iterable_should_be_mutable,
                             span: *iterator_span,
                             visibility: Visibility::Public,
                         },
@@ -3187,9 +3187,11 @@ pub fn typecheck_statement(
                             // let x = _magic.next()
                             ParsedStatement::VarDecl(
                                 ParsedVarDecl {
-                                    name: "_magic_value".to_string(),
+                                    pattern: DeclPattern::name(
+                                        "_magic_value",
+                                        iterable_should_be_mutable,
+                                    ),
                                     parsed_type: ParsedType::Empty,
-                                    mutable: iterable_should_be_mutable,
                                     span: *iterator_span,
                                     visibility: Visibility::Public,
                                 },
@@ -3237,9 +3239,11 @@ pub fn typecheck_statement(
                             // let iterator_name = x!
                             ParsedStatement::VarDecl(
                                 ParsedVarDecl {
-                                    name: iterator_name.to_string(),
+                                    pattern: DeclPattern::name(
+                                        iterator_name.as_str(),
+                                        iterable_should_be_mutable,
+                                    ),
                                     parsed_type: ParsedType::Empty,
-                                    mutable: iterable_should_be_mutable,
                                     span: *iterator_span,
                                     visibility: Visibility::Public,
                                 },
@@ -3309,46 +3313,118 @@ pub fn typecheck_statement(
             error = error.or(err);
 
             let weakptr_struct_id = project.get_weakptr_struct_id(var_decl.span);
+            let tuple_struct_id = project.get_tuple_struct_id(var_decl.span);
 
-            match &project.types[checked_type_id] {
-                Type::GenericInstance(struct_id, _) if *struct_id == weakptr_struct_id => {
-                    if !var_decl.mutable {
-                        error = error.or(Some(JaktError::TypecheckError(
-                            "Weak reference must be mutable".into(),
-                            var_decl.span,
-                        )));
+            match &var_decl.pattern {
+                DeclPattern::Name(parsed_name) => {
+                    match &project.types[checked_type_id] {
+                        Type::GenericInstance(struct_id, _) if *struct_id == weakptr_struct_id => {
+                            if !parsed_name.mutable {
+                                error = error.or(Some(JaktError::TypecheckError(
+                                    "Weak reference must be mutable".into(),
+                                    var_decl.span,
+                                )));
+                            }
+                        }
+                        _ => {}
                     }
+
+                    let checked_var_decl = CheckedVarDecl {
+                        name: parsed_name.name.clone(),
+                        type_id: checked_type_id,
+                        span: var_decl.span,
+                        mutable: parsed_name.mutable,
+                        visibility: var_decl.visibility.clone(),
+                    };
+
+                    if let Err(err) = project.add_var_to_scope(
+                        scope_id,
+                        CheckedVariable {
+                            name: checked_var_decl.name.clone(),
+                            type_id: checked_var_decl.type_id,
+                            mutable: checked_var_decl.mutable,
+                            visibility: checked_var_decl.visibility.clone(),
+                            definition_span: checked_var_decl.span,
+                        },
+                        checked_var_decl.span,
+                    ) {
+                        error = error.or(Some(err));
+                    }
+
+                    (
+                        CheckedStatement::VarDecl(checked_var_decl, checked_expression),
+                        error,
+                    )
                 }
-                _ => {}
+                DeclPattern::TupleDestruct(inner_names) => {
+                    let mut decls = vec![];
+                    match &project.types[checked_type_id] {
+                        Type::GenericInstance(struct_id, inner)
+                            if *struct_id == tuple_struct_id =>
+                        {
+                            if inner_names.len() != inner.len() {
+                                return (
+                                    CheckedStatement::Garbage,
+                                    Some(JaktError::TypecheckError(
+                                        "unpacked tuples must match in size".to_string(),
+                                        init.span(),
+                                    )),
+                                );
+                            }
+
+                            for (idx, name) in inner_names.iter().enumerate() {
+                                match &project.types[inner[idx]] {
+                                    Type::GenericInstance(struct_id, _)
+                                        if *struct_id == weakptr_struct_id =>
+                                    {
+                                        if !name.mutable {
+                                            error = error.or(Some(JaktError::TypecheckError(
+                                                "Weak reference must be mutable".into(),
+                                                var_decl.span,
+                                            )));
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                                let variable = CheckedVariable {
+                                    name: name.name.clone(),
+                                    type_id: inner[idx],
+                                    mutable: name.mutable,
+                                    visibility: var_decl.visibility.clone(),
+                                    definition_span: var_decl.span, // keep track of the individual variables spans
+                                };
+
+                                decls.push(variable);
+                            }
+                        }
+
+                        _ => {
+                            return (
+                                CheckedStatement::Garbage,
+                                Some(JaktError::TypecheckError(
+                                    format!(
+                                        "cannot unpack {} into tuple",
+                                        project.typename_for_type_id(checked_type_id)
+                                    ),
+                                    init.span(),
+                                )),
+                            )
+                        }
+                    }
+                    for variable in &decls {
+                        if let Err(err) =
+                            project.add_var_to_scope(scope_id, variable.clone(), var_decl.span)
+                        {
+                            error = error.or(Some(err));
+                        }
+                    }
+                    (
+                        CheckedStatement::TupleDestruct(decls, checked_expression),
+                        error,
+                    )
+                }
+                DeclPattern::Empty => unreachable!(),
             }
-
-            let checked_var_decl = CheckedVarDecl {
-                name: var_decl.name.clone(),
-                type_id: checked_type_id,
-                span: var_decl.span,
-                mutable: var_decl.mutable,
-                visibility: var_decl.visibility.clone(),
-            };
-
-            let err = project
-                .add_var_to_scope(
-                    scope_id,
-                    CheckedVariable {
-                        name: checked_var_decl.name.clone(),
-                        type_id: checked_var_decl.type_id,
-                        mutable: checked_var_decl.mutable,
-                        visibility: checked_var_decl.visibility.clone(),
-                        definition_span: checked_var_decl.span,
-                    },
-                    checked_var_decl.span,
-                )
-                .err();
-            error = error.or(err);
-
-            (
-                CheckedStatement::VarDecl(checked_var_decl, checked_expression),
-                error,
-            )
         }
         ParsedStatement::If(cond, block, else_stmt) => {
             let (checked_cond, err) =
