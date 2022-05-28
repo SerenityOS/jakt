@@ -1,0 +1,6 @@
+function marked() throws {
+}
+
+function unmarked() {
+  marked()
+}
