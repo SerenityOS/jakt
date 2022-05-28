@@ -436,38 +436,37 @@ impl ParsedExpression {
     // other
     pub fn precedence(&self) -> u64 {
         match self {
-            ParsedExpression::Operator(BinaryOperator::Multiply, _)
-            | ParsedExpression::Operator(BinaryOperator::Modulo, _)
-            | ParsedExpression::Operator(BinaryOperator::Divide, _) => 100,
-            ParsedExpression::Operator(BinaryOperator::Add, _)
-            | ParsedExpression::Operator(BinaryOperator::Subtract, _) => 90,
-            ParsedExpression::Operator(BinaryOperator::BitwiseLeftShift, _)
-            | ParsedExpression::Operator(BinaryOperator::BitwiseRightShift, _)
-            | ParsedExpression::Operator(BinaryOperator::ArithmeticLeftShift, _)
-            | ParsedExpression::Operator(BinaryOperator::ArithmeticRightShift, _) => 85,
-            ParsedExpression::Operator(BinaryOperator::LessThan, _)
-            | ParsedExpression::Operator(BinaryOperator::LessThanOrEqual, _)
-            | ParsedExpression::Operator(BinaryOperator::GreaterThan, _)
-            | ParsedExpression::Operator(BinaryOperator::GreaterThanOrEqual, _)
-            | ParsedExpression::Operator(BinaryOperator::Equal, _)
-            | ParsedExpression::Operator(BinaryOperator::NotEqual, _) => 80,
-            ParsedExpression::Operator(BinaryOperator::BitwiseAnd, _) => 73,
-            ParsedExpression::Operator(BinaryOperator::BitwiseXor, _) => 72,
-            ParsedExpression::Operator(BinaryOperator::BitwiseOr, _) => 71,
-            ParsedExpression::Operator(BinaryOperator::LogicalAnd, _) => 70,
-            ParsedExpression::Operator(BinaryOperator::LogicalOr, _)
-            | ParsedExpression::Operator(BinaryOperator::NoneCoalescing, _) => 69,
-            ParsedExpression::Operator(BinaryOperator::Assign, _)
-            | ParsedExpression::Operator(BinaryOperator::BitwiseAndAssign, _)
-            | ParsedExpression::Operator(BinaryOperator::BitwiseOrAssign, _)
-            | ParsedExpression::Operator(BinaryOperator::BitwiseXorAssign, _)
-            | ParsedExpression::Operator(BinaryOperator::BitwiseLeftShiftAssign, _)
-            | ParsedExpression::Operator(BinaryOperator::BitwiseRightShiftAssign, _)
-            | ParsedExpression::Operator(BinaryOperator::AddAssign, _)
-            | ParsedExpression::Operator(BinaryOperator::SubtractAssign, _)
-            | ParsedExpression::Operator(BinaryOperator::MultiplyAssign, _)
-            | ParsedExpression::Operator(BinaryOperator::ModuloAssign, _)
-            | ParsedExpression::Operator(BinaryOperator::DivideAssign, _) => 50,
+            ParsedExpression::Operator(operator, _) => match operator {
+                BinaryOperator::Multiply | BinaryOperator::Modulo | BinaryOperator::Divide => 100,
+                BinaryOperator::Add | BinaryOperator::Subtract => 90,
+                BinaryOperator::BitwiseLeftShift
+                | BinaryOperator::BitwiseRightShift
+                | BinaryOperator::ArithmeticLeftShift
+                | BinaryOperator::ArithmeticRightShift => 85,
+                BinaryOperator::LessThan
+                | BinaryOperator::LessThanOrEqual
+                | BinaryOperator::GreaterThan
+                | BinaryOperator::GreaterThanOrEqual
+                | BinaryOperator::Equal
+                | BinaryOperator::NotEqual => 80,
+                BinaryOperator::BitwiseAnd => 73,
+                BinaryOperator::BitwiseXor => 72,
+                BinaryOperator::BitwiseOr => 71,
+                BinaryOperator::LogicalAnd => 70,
+                BinaryOperator::LogicalOr | BinaryOperator::NoneCoalescing => 69,
+                BinaryOperator::Assign
+                | BinaryOperator::BitwiseAndAssign
+                | BinaryOperator::BitwiseOrAssign
+                | BinaryOperator::BitwiseXorAssign
+                | BinaryOperator::BitwiseLeftShiftAssign
+                | BinaryOperator::BitwiseRightShiftAssign
+                | BinaryOperator::AddAssign
+                | BinaryOperator::SubtractAssign
+                | BinaryOperator::MultiplyAssign
+                | BinaryOperator::ModuloAssign
+                | BinaryOperator::DivideAssign
+                | BinaryOperator::NoneCoalescingAssign => 50,
+            },
             _ => 0,
         }
     }
