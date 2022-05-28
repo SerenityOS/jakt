@@ -2422,29 +2422,29 @@ fn typecheck_function_predecl(
         typecheck_typename(&function.return_type, function_scope_id, project);
     error = error.or(err);
 
-    let (block, _) = typecheck_block(
-        &function.block,
-        if !function.generic_parameters.is_empty() {
-            check_scope.expect("Generic function with generic parameters must have a check scope")
-        } else {
-            function_scope_id
-        },
-        project,
-        SafetyMode::Safe,
-    );
+    checked_function.return_type_id = function_return_type_id;
 
-    let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
-        if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
-            ret.type_id(function_scope_id, project)
-        } else {
-            VOID_TYPE_ID
-        }
-    } else {
-        resolve_type_var(function_return_type_id, parent_scope_id, project)
-    };
+    if !function.generic_parameters.is_empty() {
+        let (block, _) = typecheck_block(
+            &function.block,
+            check_scope.expect("Generic function with generic parameters must have a check scope"),
+            project,
+            SafetyMode::Safe,
+        );
 
-    checked_function.block = Some(block);
-    checked_function.return_type_id = return_type_id;
+        let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
+            if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
+                ret.type_id(function_scope_id, project)
+            } else {
+                VOID_TYPE_ID
+            }
+        } else {
+            resolve_type_var(function_return_type_id, parent_scope_id, project)
+        };
+
+        checked_function.block = Some(block);
+        checked_function.return_type_id = return_type_id;
+    }
 
     project.functions[function_id] = checked_function;
 
@@ -2574,15 +2574,11 @@ fn typecheck_function(
         typecheck_typename(&function.return_type, function_scope_id, project);
     error = error.or(err);
 
-    // If the return type is unknown, and the function ends with a return statement,
+    // If the return type is unknown, and the function starts with a return statement,
     // we infer the return type from its expression.
     let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
         if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
-            resolve_type_var(
-                ret.type_id(function_scope_id, project),
-                parent_scope_id,
-                project,
-            )
+            ret.type_id(function_scope_id, project)
         } else {
             VOID_TYPE_ID
         }
