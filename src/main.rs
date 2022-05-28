@@ -24,7 +24,7 @@ fn main() -> Result<(), JaktError> {
     };
     std::fs::create_dir_all(&binary_directory)?;
 
-    let mut compiler = Compiler::new();
+    let mut compiler = Compiler::new(arguments.include_paths);
 
     let mut first_error = None;
 
@@ -148,6 +148,8 @@ Options:
                                 Defaults to clang-format.
   -R,--runtime-path PATH        Path of the Jakt runtime headers.
                                 Defaults to $PWD/runtime.
+  -I,--include-path PATH        Add an include path for imported Jakt files.
+                                Can be specified multiple times.
 
 Arguments:
   FILES...                      List of files to compile. The outputs are
@@ -158,6 +160,7 @@ Arguments:
 struct JaktArguments {
     binary_directory: Option<PathBuf>,
     input_files: Vec<PathBuf>,
+    include_paths: Vec<PathBuf>,
     emit_source_only: bool,
     cxx_compiler_path: Option<PathBuf>,
     prettify_cpp_source: bool,
@@ -175,9 +178,15 @@ fn parse_arguments() -> JaktArguments {
     let emit_source_only = pico_arguments.contains(["-S", "--emit-cpp-source-only"]);
     let prettify_cpp_source = pico_arguments.contains(["-p", "--prettify-cpp-source"]);
 
+    let convert_to_pathbuf = |s: &str| -> Result<PathBuf, &'static str> { Ok(s.into()) };
+    let include_paths = pico_arguments
+        .values_from_fn(["-I", "--include-path"], convert_to_pathbuf)
+        .unwrap_or_default();
+
     let mut arguments = JaktArguments {
         binary_directory: None,
         input_files: Vec::new(),
+        include_paths,
         emit_source_only,
         cxx_compiler_path: None,
         prettify_cpp_source,

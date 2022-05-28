@@ -30,7 +30,7 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
                 if output_path.exists() || error_output_path.exists() || stderr_output_path.exists()
                 {
                     // We have an output to compare to, let's do it.
-                    let mut compiler = Compiler::new();
+                    let mut compiler = Compiler::new(Vec::new());
                     let cpp_string = compiler.convert_to_cpp(&path);
 
                     let cpp_string = match cpp_string {
