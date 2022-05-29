@@ -488,11 +488,11 @@ struct Lexer {
 function print_error(file_name: String, file_contents: [u8], error: JaktError) throws {
     match error {
         JaktError::Message(msg: message, span: span) => {
-            display_message_with_span(severity: MessageSeverity::Error(), file_name, file_contents, message, span)
+            display_message_with_span(severity: MessageSeverity::Error, file_name, file_contents, message, span)
         }
         JaktError::MessageWithHint(msg: message, span: span, hint: hint, hint_span: hint_span) => {
-            display_message_with_span(severity: MessageSeverity::Error(), file_name, file_contents, message, span)
-            display_message_with_span(severity: MessageSeverity::Hint(), file_name, file_contents, message: hint, span: hint_span)
+            display_message_with_span(severity: MessageSeverity::Error, file_name, file_contents, message, span)
+            display_message_with_span(severity: MessageSeverity::Hint, file_name, file_contents, message: hint, span: hint_span)
         }
     }
 }
@@ -798,7 +798,7 @@ class Parser {
                 Token::Name(name: name, span: span) => {
                     match name {
                         ("function") => {
-                            let function = .parse_function(FunctionLinkage::Internal(), Visibility::Public())
+                            let function = .parse_function(FunctionLinkage::Internal, Visibility::Public)
                             parsed_namespace.functions.push(function)
                         }
                         else => { }
@@ -824,7 +824,7 @@ class Parser {
             name: "",
             params: [],
             block: ParsedBlock(stmts: []),
-            return_type: ParsedType::Empty(),
+            return_type: ParsedType::Empty,
             throws: false,
         )
 
@@ -886,7 +886,7 @@ class Parser {
                                 requires_label: false,
                                 variable: ParsedVariable(
                                     name: "this",
-                                    parsed_type: ParsedType::Empty(),
+                                    parsed_type: ParsedType::Empty,
                                     is_mutable: current_param_is_mutable,
                                     span: .current().span(),
                                 ),
@@ -920,7 +920,7 @@ class Parser {
         }
 
         // Accept return type specification with '->'
-        let mutable return_type = ParsedType::Empty()
+        let mutable return_type = ParsedType::Empty
         let mutable return_type_span: JaktSpan? = None
 
         match .current() {
@@ -1014,7 +1014,7 @@ class Parser {
             }
             else => { }
         }
-        return ParsedType::Empty()
+        return ParsedType::Empty
     }
 
     function parse_block(mutable this) throws -> ParsedBlock {
@@ -1086,7 +1086,7 @@ class Parser {
             }
         }
 
-        return ParsedStatement::Garbage()
+        return ParsedStatement::Garbage
     }
 
     function parse_expression(mutable this) throws -> ParsedExpression {
