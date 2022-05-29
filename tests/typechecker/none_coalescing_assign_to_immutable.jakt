@@ -1,5 +1,5 @@
-/// Expect: Skip: Typechecks, but it shouldn't!
-/// - error: "Assignment between incompatible types (‘String?’ and ‘String’)"
+/// Expect:
+/// - error: "left-hand side of ??= must be a mutable variable"
 
 function main() {
     let i: String? = None
