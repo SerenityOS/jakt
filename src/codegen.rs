@@ -1363,7 +1363,7 @@ fn codegen_function_in_namespace(
     output.push(' ');
     let is_main = function.name == "main" && containing_struct.is_none();
     if is_main {
-        output.push_str("JaktInternal::main");
+        output.push_str("JaktMain::main");
     } else {
         let qualifier = containing_struct
             .map(|type_id| codegen_type_possibly_as_namespace(type_id, project, true));
