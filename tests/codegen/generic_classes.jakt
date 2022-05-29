@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "m: 5 10\nn: Hello! 100\n"
+
 
 class Meep<U, V> {
     public a: U
