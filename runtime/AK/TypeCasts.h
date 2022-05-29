@@ -15,7 +15,7 @@
 namespace AK {
 
 template<typename OutputType, typename InputType>
-ALWAYS_INLINE bool is(InputType& input)
+bool is(InputType& input)
 {
     if constexpr (requires { input.template fast_is<OutputType>(); }) {
         return input.template fast_is<OutputType>();
@@ -24,19 +24,19 @@ ALWAYS_INLINE bool is(InputType& input)
 }
 
 template<typename OutputType, typename InputType>
-ALWAYS_INLINE bool is(InputType* input)
+bool is(InputType* input)
 {
     return input && is<OutputType>(*input);
 }
 
 template<typename OutputType, typename InputType>
-ALWAYS_INLINE bool is(NonnullRefPtr<InputType> const& input)
+bool is(NonnullRefPtr<InputType> const& input)
 {
     return is<OutputType>(*input);
 }
 
 template<typename OutputType, typename InputType>
-ALWAYS_INLINE CopyConst<InputType, OutputType>* verify_cast(InputType* input)
+CopyConst<InputType, OutputType>* verify_cast(InputType* input)
 {
     static_assert(IsBaseOf<InputType, OutputType>);
     VERIFY(!input || is<OutputType>(*input));
@@ -44,7 +44,7 @@ ALWAYS_INLINE CopyConst<InputType, OutputType>* verify_cast(InputType* input)
 }
 
 template<typename OutputType, typename InputType>
-ALWAYS_INLINE CopyConst<InputType, OutputType>& verify_cast(InputType& input)
+CopyConst<InputType, OutputType>& verify_cast(InputType& input)
 {
     static_assert(IsBaseOf<InputType, OutputType>);
     VERIFY(is<OutputType>(input));

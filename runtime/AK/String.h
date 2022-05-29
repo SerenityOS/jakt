@@ -144,7 +144,7 @@ public:
     // Guaranteed to include null terminator.
     [[nodiscard]] char const* c_string() const { return m_storage->c_string(); }
 
-    [[nodiscard]] ALWAYS_INLINE char const& operator[](size_t i) const
+    [[nodiscard]] char const& operator[](size_t i) const
     {
         return (*m_storage)[i];
     }
