@@ -5528,6 +5528,34 @@ pub fn typecheck_binary_operation(
             // 2. RHS must be Optional<T> or T.
             // 3. Resulting type is Optional<T> or T, respectively.
 
+            // if an assignment, the LHS must be a mutable variable.
+            if matches!(op, BinaryOperator::NoneCoalescingAssign) {
+                match lhs {
+                    CheckedExpression::Var(variable, var_span) => {
+                        if !variable.mutable {
+                            return (
+                                UNKNOWN_TYPE_ID,
+                                Some(JaktError::TypecheckErrorWithHint(
+                                    "left-hand side of ??= must be a mutable variable".to_string(),
+                                    *var_span,
+                                    "This variable isn't marked as mutable".to_string(),
+                                    variable.definition_span,
+                                )),
+                            );
+                        }
+                    }
+                    _ => {
+                        return (
+                            UNKNOWN_TYPE_ID,
+                            Some(JaktError::TypecheckError(
+                                "left-hand side of ??= must be a variable".to_string(),
+                                span,
+                            )),
+                        );
+                    }
+                }
+            }
+
             match &project.types[lhs_type_id] {
                 Type::GenericInstance(struct_id, generic_parameters)
                     if *struct_id == project.get_optional_struct_id(span) =>
