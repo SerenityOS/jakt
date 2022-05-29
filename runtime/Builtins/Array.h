@@ -326,3 +326,4 @@ private:
 }
 
 using JaktInternal::Array;
+using JaktInternal::ArrayIterator;

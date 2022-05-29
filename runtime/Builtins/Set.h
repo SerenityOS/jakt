@@ -98,3 +98,4 @@ private:
 }
 
 using JaktInternal::Set;
+using JaktInternal::SetIterator;
