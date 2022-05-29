@@ -121,3 +121,4 @@ private:
 }
 
 using JaktInternal::Dictionary;
+using JaktInternal::DictionaryIterator;
