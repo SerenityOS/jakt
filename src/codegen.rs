@@ -1200,9 +1200,25 @@ fn codegen_struct(
 
     match structure.definition_type {
         DefinitionType::Class => {
+            let mut class_name_with_generics = String::new();
+            class_name_with_generics.push_str(&structure.name);
+            let mut first = true;
+            for generic_parameter in &structure.generic_parameters {
+                if !first {
+                    class_name_with_generics.push_str(", ");
+                } else {
+                    class_name_with_generics.push('<');
+                    first = false;
+                }
+                class_name_with_generics.push_str(&codegen_type(*generic_parameter, project))
+            }
+            if !structure.generic_parameters.is_empty() {
+                class_name_with_generics.push('>');
+            }
+
             output.push_str(&format!(
                 "class {} : public RefCounted<{}>, public Weakable<{}> {{\n",
-                structure.name, structure.name, structure.name
+                structure.name, class_name_with_generics, class_name_with_generics
             ));
             // As we should test the visibility before codegen, we take a simple
             // approach to codegen
@@ -1555,10 +1571,26 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
 
                 output.push_str("{}\n");
 
+                let mut class_name_with_generics = String::new();
+                class_name_with_generics.push_str(&structure.name);
+                let mut first = true;
+                for generic_parameter in &structure.generic_parameters {
+                    if !first {
+                        class_name_with_generics.push_str(", ");
+                    } else {
+                        class_name_with_generics.push('<');
+                        first = false;
+                    }
+                    class_name_with_generics.push_str(&codegen_type(*generic_parameter, project))
+                }
+                if !structure.generic_parameters.is_empty() {
+                    class_name_with_generics.push('>');
+                }
+
                 output.push_str("public:\n");
                 output.push_str(&format!(
                     "static ErrorOr<NonnullRefPtr<{}>> create",
-                    function.name
+                    class_name_with_generics
                 ));
 
                 output.push('(');
@@ -1577,7 +1609,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
                 }
                 output.push_str(&format!(
                     ") {{ auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) {} (",
-                    function.name
+                    class_name_with_generics
                 ));
 
                 let mut first = true;
@@ -1706,6 +1738,11 @@ pub fn codegen_type_possibly_as_namespace(
             output
         }
         Type::GenericInstance(struct_id, inner_type_ids) => {
+            let acquired_by_ref = !as_namespace
+                && project.structs[*struct_id].definition_type == DefinitionType::Class;
+            if acquired_by_ref {
+                output.push_str("NonnullRefPtr<");
+            }
             output.push_str(&codegen_namespace_qualifier(
                 project.structs[*struct_id].scope_id,
                 project,
@@ -1724,6 +1761,10 @@ pub fn codegen_type_possibly_as_namespace(
             }
 
             output.push('>');
+            if acquired_by_ref {
+                output.push('>');
+            }
+
             output
         }
         Type::GenericEnumInstance(enum_id, inner_type_ids) => {
@@ -2761,11 +2802,37 @@ fn codegen_expr(
 
                     output.push_str(&codegen_namespace_path(call, project));
                     match ty {
-                        Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
+                        Type::Struct(struct_id) => {
                             let structure = &project.structs[*struct_id];
 
                             if structure.definition_type == DefinitionType::Class {
                                 output.push_str(&call.name);
+                                output.push_str("::");
+                                output.push_str("create");
+                            } else {
+                                output.push_str(&call.name);
+                            }
+                        }
+                        Type::GenericInstance(struct_id, inner_type_ids) => {
+                            let structure = &project.structs[*struct_id];
+                            if structure.definition_type == DefinitionType::Class {
+                                output.push_str(&codegen_namespace_qualifier(
+                                    project.structs[*struct_id].scope_id,
+                                    project,
+                                ));
+                                output.push_str(&project.structs[*struct_id].name.clone());
+                                output.push('<');
+                                let mut first = true;
+                                for type_id in inner_type_ids {
+                                    if !first {
+                                        output.push_str(", ");
+                                    } else {
+                                        first = false;
+                                    }
+                                    output.push_str(&codegen_type(*type_id, project));
+                                }
+
+                                output.push('>');
                                 output.push_str("::");
                                 output.push_str("create");
                             } else {
