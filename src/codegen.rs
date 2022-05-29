@@ -161,7 +161,9 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
 
         let function_output = codegen_function_predecl(function, project);
 
-        if function.linkage != FunctionLinkage::ImplicitConstructor && function.name != "main" {
+        if function.linkage != FunctionLinkage::ImplicitConstructor
+            && function.mangled_name(project) != "main"
+        {
             output.push_str(&function_output);
             output.push('\n');
         }
@@ -1250,7 +1252,7 @@ fn codegen_function_predecl(function: &CheckedFunction, project: &Project) -> St
         output.push_str(">\n");
     }
 
-    if function.name == "main" {
+    if function.mangled_name(project) == "main" {
         output.push_str("ErrorOr<int>");
     } else {
         if function.is_static() && function.linkage != FunctionLinkage::External {
@@ -1268,7 +1270,7 @@ fn codegen_function_predecl(function: &CheckedFunction, project: &Project) -> St
         output.push_str(&return_type);
     }
     output.push(' ');
-    output.push_str(&function.name);
+    output.push_str(&function.mangled_name(project));
     output.push('(');
 
     let mut first = true;
@@ -1343,7 +1345,7 @@ fn codegen_function_in_namespace(
         output.push_str(">\n");
     }
 
-    if function.name == "main" {
+    if function.mangled_name(project) == "main" {
         output.push_str("ErrorOr<int>");
     } else {
         if function.is_static() && containing_struct.is_none() {
@@ -1361,7 +1363,7 @@ fn codegen_function_in_namespace(
         output.push_str(&return_type);
     }
     output.push(' ');
-    let is_main = function.name == "main" && containing_struct.is_none();
+    let is_main = function.mangled_name(project) == "main" && containing_struct.is_none();
     if is_main {
         output.push_str("JaktInternal::main");
     } else {
@@ -1373,7 +1375,7 @@ fn codegen_function_in_namespace(
                 output.push_str("::");
             }
         }
-        output.push_str(&function.name);
+        output.push_str(&function.mangled_name(project));
     }
     output.push('(');
 
@@ -1416,7 +1418,10 @@ fn codegen_function_in_namespace(
         output.push_str("using _JaktCurrentFunctionReturnType = ErrorOr<int>;\n");
     } else {
         if function.return_type_id == UNKNOWN_TYPE_ID {
-            panic!("Function type unknown at codegen time in {}", function.name);
+            panic!(
+                "Function type unknown at codegen time in {}",
+                function.mangled_name(project)
+            );
         }
         if function.throws {
             output.push_str(&format!(
@@ -1468,7 +1473,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
                 // First, generate a private constructor:
                 output.push_str("private:\n");
 
-                output.push_str(&format!("explicit {}(", function.name));
+                output.push_str(&format!("explicit {}(", function.mangled_name(project)));
                 let mut first = true;
                 for param in &function.params {
                     if !first {
@@ -1503,7 +1508,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
                 output.push_str("public:\n");
                 output.push_str(&format!(
                     "static ErrorOr<NonnullRefPtr<{}>> create",
-                    function.name
+                    function.mangled_name(project)
                 ));
 
                 output.push('(');
@@ -1522,7 +1527,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
                 }
                 output.push_str(&format!(
                     ") {{ auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) {} (",
-                    function.name
+                    function.mangled_name(project)
                 ));
 
                 let mut first = true;
@@ -1544,7 +1549,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
             } else {
                 let mut output = String::new();
 
-                output.push_str(&function.name);
+                output.push_str(&function.mangled_name(project));
                 output.push('(');
 
                 let mut first = true;
@@ -2592,7 +2597,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             if call.callee_throws {
                 output.push_str("TRY(");
             }
-            if call.name == "print" {
+            if call.mangled_name == "print" {
                 output.push_str("out(");
                 for (i, param) in call.args.iter().enumerate() {
                     output.push_str(&codegen_expr(indent, &param.1, project));
@@ -2601,7 +2606,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     }
                 }
                 output.push(')');
-            } else if call.name == "println" {
+            } else if call.mangled_name == "println" {
                 output.push_str("outln(");
                 for (i, param) in call.args.iter().enumerate() {
                     output.push_str(&codegen_expr(indent, &param.1, project));
@@ -2610,7 +2615,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     }
                 }
                 output.push(')');
-            } else if call.name == "eprintln" {
+            } else if call.mangled_name == "eprintln" {
                 output.push_str("warnln(");
                 for (i, param) in call.args.iter().enumerate() {
                     output.push_str(&codegen_expr(indent, &param.1, project));
@@ -2619,7 +2624,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     }
                 }
                 output.push(')');
-            } else if call.name == "format" {
+            } else if call.mangled_name == "format" {
                 output.push_str("TRY(String::formatted(");
                 for (i, param) in call.args.iter().enumerate() {
                     output.push_str(&codegen_expr(indent, &param.1, project));
@@ -2641,11 +2646,11 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                             let structure = &project.structs[*struct_id];
 
                             if structure.definition_type == DefinitionType::Class {
-                                output.push_str(&call.name);
+                                output.push_str(&call.mangled_name);
                                 output.push_str("::");
                                 output.push_str("create");
                             } else {
-                                output.push_str(&call.name);
+                                output.push_str(&call.mangled_name);
                             }
                         }
                         _ => {
@@ -2662,7 +2667,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                             if enum_.definition_type == DefinitionType::Struct {
                                 output.push_str("typename ");
                                 output.push_str(&codegen_namespace_path(call, project));
-                                output.push_str(&call.name);
+                                output.push_str(&call.mangled_name);
                             } else {
                                 output.push_str(&codegen_namespace_path(call, project));
                                 output.push_str("template create<");
@@ -2671,7 +2676,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                                     type_id, project, true,
                                 ));
                                 output.push_str("::");
-                                output.push_str(&call.name);
+                                output.push_str(&call.mangled_name);
                                 output.push('>');
                             }
                         }
@@ -2681,7 +2686,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     }
                 } else {
                     output.push_str(&codegen_namespace_path(call, project));
-                    output.push_str(&call.name);
+                    output.push_str(&call.mangled_name);
                 }
 
                 if !call.type_args.is_empty() {
@@ -2751,7 +2756,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 },
             }
 
-            output.push_str(&call.name);
+            output.push_str(&call.mangled_name);
             output.push('(');
             let mut first = true;
             for param in &call.args {
@@ -3145,7 +3150,7 @@ fn codegen_namespace_path(call: &CheckedCall, project: &Project) -> String {
     for (idx, namespace) in call.namespace.iter().enumerate() {
         // hack warning: this is to get around C++'s limitation that a constructor
         // can't be called like other static methods
-        if idx == call.namespace.len() - 1 && namespace.name == call.name {
+        if idx == call.namespace.len() - 1 && namespace.name == call.mangled_name {
             break;
         }
         output.push_str(namespace.name.as_str());

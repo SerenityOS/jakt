@@ -1,0 +1,20 @@
+function foo() -> i32 {
+    return 10
+}
+
+function foo() -> bool {
+    return true
+}
+
+function foo() -> String {
+    return "Yay"
+}
+
+function main() {
+    let i: i32 = foo()
+    let b: bool = foo()
+    let s: String = foo()
+    println("{}", i)
+    println("{}", b)
+    println("{}", s)
+}

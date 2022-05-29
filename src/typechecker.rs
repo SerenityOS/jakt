@@ -396,10 +396,12 @@ impl Project {
         let function_identifying_information =
             self.functions[function_id].identifying_information();
 
+        /*
         println!(
             "adding function to scope: {:?}\n",
             function_identifying_information
         );
+        */
 
         for (existing_function_id, definition_span) in &scope.functions {
             if FunctionIdentifyingInformation::eq(
@@ -454,6 +456,7 @@ impl Project {
         function_identifying_information: FunctionIdentifyingInformation,
     ) -> Option<FunctionId> {
         let mut scope_id = Some(scope_id);
+        /*
         println!("find_function_in_scope()");
         println!("trying to find: {:?}", function_identifying_information);
         println!(
@@ -466,11 +469,12 @@ impl Project {
                     .collect::<BTreeMap::<TypeId, (String, &Type)>>()
             )
         );
+        */
 
         while let Some(current_id) = scope_id {
             let scope = &self.scopes[current_id];
             for s in &scope.functions {
-                println!("{:?}", self.functions[s.0].identifying_information());
+                //println!("{:?}", self.functions[s.0].identifying_information());
                 if FunctionIdentifyingInformation::eq(
                     &self.functions[s.0].identifying_information(),
                     &function_identifying_information,
@@ -481,7 +485,7 @@ impl Project {
             }
             scope_id = scope.parent;
         }
-        println!("");
+        //println!("");
 
         None
     }
@@ -751,6 +755,10 @@ impl CheckedFunction {
 
         false
     }
+
+    pub fn mangled_name(&self, project: &Project) -> String {
+        return self.identifying_information().mangled_name(project);
+    }
 }
 
 impl CheckedFunction {
@@ -790,10 +798,12 @@ impl ParsedFunction {
             return_type_id: match typecheck_typename(&self.return_type, scope_id, project) {
                 (type_id, None) => type_id,
                 (type_id, err) => {
+                    /*
                     println!(
                         "Internal error: Typecheck of return type {:?} in scope failed! - {:?}",
                         self.return_type, err
                     );
+                    */
                     type_id
                 }
             },
@@ -817,10 +827,12 @@ impl ParsedParameter {
             type_id: match typecheck_typename(&self.variable.parsed_type, scope_id, project) {
                 (type_id, None) => type_id,
                 (type_id, err) => {
+                    /*
                     println!(
                         "Internal error: Typecheck of parameter type {:?} in scope failed! - {:?}",
                         self.variable.parsed_type, err
                     );
+                    */
                     type_id
                 }
             },
@@ -896,6 +908,20 @@ impl EqInProject for FunctionIdentifyingInformation {
                     _ => false,
                 })
             && Vec::<ParameterIdentifyingInformation>::eq(&self.params, &other.params, project);
+    }
+}
+
+impl FunctionIdentifyingInformation {
+    fn mangled_name(&self, project: &Project) -> String {
+        if self.name == "main" {
+            return "main".to_string();
+        } else {
+            let mut mangled_name = String::new();
+            mangled_name.push_str(&self.name);
+            mangled_name.push_str("_returns_");
+            mangled_name.push_str(&project.typename_for_type_id(self.return_type_id));
+            return mangled_name;
+        }
     }
 }
 
@@ -1330,7 +1356,7 @@ pub struct ResolvedNamespace {
 #[derive(Clone, Debug)]
 pub struct CheckedCall {
     pub namespace: Vec<ResolvedNamespace>,
-    pub name: String,
+    pub mangled_name: String,
     pub callee_throws: bool,
     pub args: Vec<(String, CheckedExpression)>,
     pub type_args: Vec<TypeId>,
@@ -3195,6 +3221,7 @@ pub fn typecheck_statement(
         ParsedStatement::Continue => (CheckedStatement::Continue, None),
         ParsedStatement::Break => (CheckedStatement::Break, None),
         ParsedStatement::Expression(expr) => {
+            println!("wut");
             let (checked_expr, err) =
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
 
@@ -3403,9 +3430,7 @@ pub fn try_promote_constant_expr_to_type(
     }
     if let Some(rhs_constant) = checked_rhs.to_number_constant() {
         if let (Some(new_constant), new_type_id) = rhs_constant.promote(lhs_type_id) {
-            println!("{:?}", checked_rhs);
             *checked_rhs = CheckedExpression::NumericConstant(new_constant, *span, new_type_id);
-            println!("{:?}", checked_rhs);
         } else {
             return Some(JaktError::TypecheckError(
                 "Integer promotion failed".to_string(),
@@ -5115,7 +5140,7 @@ pub fn typecheck_expression(
                             CheckedExpression::MethodCall(
                                 Box::new(checked_expr),
                                 CheckedCall {
-                                    name: call.name.to_string(),
+                                    mangled_name: String::new(),
                                     args: checked_args,
                                     type_id: UNKNOWN_TYPE_ID,
                                     callee_throws: false,
@@ -5738,6 +5763,7 @@ pub fn typecheck_call(
     let mut generic_substitutions = HashMap::new();
     let mut type_args = vec![];
     let mut callee_throws = false;
+    let mut mangled_name = String::new();
     let mut resolved_namespaces = call
         .namespace
         .iter()
@@ -5791,6 +5817,8 @@ pub fn typecheck_call(
 
                 checked_args.push((arg.0.clone(), checked_arg));
             }
+
+            mangled_name = call.name.clone();
         }
         _ => {
             let (unfiltered_callee_ids, err) = resolve_call(
@@ -5805,11 +5833,7 @@ pub fn typecheck_call(
             let mut errors_per_callee_id: HashMap<FunctionId, Option<JaktError>> = HashMap::new();
             for callee_id in &unfiltered_callee_ids {
                 let mut error = None;
-                println!(
-                    "{}, {}",
-                    unfiltered_callee_ids.len(),
-                    project.functions[*callee_id].name
-                );
+                println!("{}", project.functions[*callee_id].name);
 
                 if let Some(this_expr) = this_expr {
                     // Make sure that our call doesn't have a 'this' pointer to a static callee
@@ -5838,7 +5862,7 @@ pub fn typecheck_call(
 
                 let mut idx = 0;
                 while idx < call.args.len() {
-                    let type_hint = project.functions[*callee_id].params[idx + arg_offset]
+                    let param_type_hint = project.functions[*callee_id].params[idx + arg_offset]
                         .variable
                         .type_id;
                     let (mut checked_arg, err) = typecheck_expression(
@@ -5846,7 +5870,7 @@ pub fn typecheck_call(
                         caller_scope_id,
                         project,
                         safety_mode,
-                        Some(type_hint),
+                        Some(param_type_hint),
                     );
                     error = error.or(err);
 
@@ -5869,6 +5893,26 @@ pub fn typecheck_call(
 
                     idx += 1;
                 }
+
+                let return_type_id = project.functions[*callee_id].return_type_id;
+                println!("before");
+                println!(
+                    "return_type_id: {:?}, type_hint: {:?}",
+                    return_type_id, type_hint
+                );
+                if let Some(type_hint) = type_hint {
+                    println!("in");
+                    let err = check_types_for_compat(
+                        return_type_id,
+                        type_hint,
+                        &mut generic_substitutions,
+                        *span,
+                        project,
+                    );
+                    error = error.or(err);
+                }
+                println!("err: {:?}", error);
+                println!("");
 
                 errors_per_callee_id.insert(*callee_id, error);
             }
@@ -6058,13 +6102,14 @@ pub fn typecheck_call(
                     // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
                     // type variable. For the moment, we'll just checked to see if it's a type variable.
                     if let Some(type_hint) = type_hint {
-                        check_types_for_compat(
+                        let err = check_types_for_compat(
                             return_type_id,
                             type_hint,
                             &mut generic_substitutions,
                             *span,
                             project,
                         );
+                        error = error.or(err);
                     }
                     return_type_id = substitute_typevars_in_type(
                         return_type_id,
@@ -6103,6 +6148,9 @@ pub fn typecheck_call(
                             }
                         }
                     }
+
+                    mangled_name = project.functions[callee_id].mangled_name(project);
+                    println!("{}", mangled_name);
                 }
                 _ => {
                     error = error.or(Some(JaktError::TypecheckErrorWithSubErrors(
@@ -6140,7 +6188,7 @@ pub fn typecheck_call(
     (
         CheckedCall {
             namespace: resolved_namespaces,
-            name: call.name.clone(),
+            mangled_name: mangled_name,
             callee_throws,
             args: checked_args,
             type_args,
