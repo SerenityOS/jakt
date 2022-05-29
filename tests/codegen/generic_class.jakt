@@ -1,0 +1,13 @@
+/// Expect:
+/// - output: "Foo(a: 3.14, b: 0, c: c as string)"
+
+class Foo<A, B, C> {
+	a: A
+	b: B
+	c: C
+}
+
+function main() {
+	let foo = Foo(a: 3.14f64, b: 0i32, c: "c as string")
+	print("{}", foo)
+}
