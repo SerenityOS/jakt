@@ -7345,6 +7345,48 @@ pub fn typecheck_typename(
     let mut error = None;
 
     match unchecked_type {
+        ParsedType::NamespacedName(name, namespaces, generic_parameters, span) => {
+            let mut current_namespace_scope_id = scope_id;
+            for namespace in namespaces {
+                if let Some(namespace_scope_id) =
+                    project.find_namespace_in_scope(current_namespace_scope_id, namespace)
+                {
+                    current_namespace_scope_id = namespace_scope_id.0;
+                } else {
+                    return (
+                        UNKNOWN_TYPE_ID,
+                        Some(JaktError::TypecheckError(
+                            "Unknown namespace".to_string(),
+                            *span,
+                        )),
+                    );
+                }
+            }
+
+            let (generic_parameters, err) =
+                generic_parameters
+                    .iter()
+                    .fold((Vec::new(), error), |mut acc, x| {
+                        let (type_id, err) =
+                            typecheck_typename(x, current_namespace_scope_id, project);
+                        acc.0.push(type_id);
+                        acc.1 = acc.1.or(err);
+                        acc
+                    });
+
+            error = err;
+
+            let synthetic_typename = if generic_parameters.is_empty() {
+                ParsedType::Name(name.clone(), *span)
+            } else {
+                ParsedType::GenericResolvedType(name.clone(), generic_parameters, *span)
+            };
+            let (type_id, err) =
+                typecheck_typename(&synthetic_typename, current_namespace_scope_id, project);
+            error = error.or(err);
+
+            (type_id, error)
+        }
         ParsedType::Name(name, span) => match name.as_str() {
             "i8" => (I8_TYPE_ID, None),
             "i16" => (I16_TYPE_ID, None),
@@ -7475,17 +7517,9 @@ pub fn typecheck_typename(
 
             (type_id, error)
         }
-        ParsedType::GenericType(name, inner_types, span) => {
-            let mut checked_inner_types = vec![];
-
-            for inner_type in inner_types {
-                let (inner_type_id, err) = typecheck_typename(inner_type, scope_id, project);
-                error = error.or(err);
-
-                checked_inner_types.push(inner_type_id);
-            }
-
+        ParsedType::GenericResolvedType(name, checked_inner_types, span) => {
             let struct_id = project.find_struct_in_scope(scope_id, name);
+            let checked_inner_types = checked_inner_types.clone();
 
             if let Some(struct_id) = struct_id {
                 (
@@ -7513,6 +7547,21 @@ pub fn typecheck_typename(
                     )
                 }
             }
+        }
+        ParsedType::GenericType(name, inner_types, span) => {
+            let mut checked_inner_types = vec![];
+
+            for inner_type in inner_types {
+                let (inner_type_id, err) = typecheck_typename(inner_type, scope_id, project);
+                error = error.or(err);
+
+                checked_inner_types.push(inner_type_id);
+            }
+            typecheck_typename(
+                &ParsedType::GenericResolvedType(name.clone(), checked_inner_types, *span),
+                scope_id,
+                project,
+            )
         }
     }
 }
