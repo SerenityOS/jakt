@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "456\n"
+
 function foo() -> i32 {
     if false {
         return 123

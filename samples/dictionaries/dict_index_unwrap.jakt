@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Forced unwrap only works on Optional\n"
+
 function main() {
     let a = [1:2, 3:4]
     println("{}", a[1]!)

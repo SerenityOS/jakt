@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "187\n"
+
 function foo() -> i32 {
     for i in 1..10 {
         return 187

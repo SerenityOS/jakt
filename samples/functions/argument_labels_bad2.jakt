@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Wrong parameter name in argument label"
+
 function foo(a: bool, b: bool) {
 }
 

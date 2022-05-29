@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "true\nfalse\n"
+
 function main() {
     let set = {"a", "b"}
     println("{}", set.contains("b"))

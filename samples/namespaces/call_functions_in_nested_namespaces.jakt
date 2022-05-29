@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "PASS 1\nPASS 2\nPASS 3\nPASS 4\n"
+
 namespace Outer {
     namespace Inner {
         struct Struct {

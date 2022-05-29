@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "19\nfalse\ntrue\n"
+
 function main() {
     let x = "Well, hello friends"
 

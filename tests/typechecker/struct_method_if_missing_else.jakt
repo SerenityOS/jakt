@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Control reaches end of non-void function\n"
+
 struct Foo {
     value: i32,
 

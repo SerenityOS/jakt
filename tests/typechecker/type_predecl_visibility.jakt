@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "OK\n"
+
 struct Foo {
     function bar(mutable this, baz: mutable Bar) {
         println("OK")

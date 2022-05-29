@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "3 2 1 0\n"
+
 // This should not be typechecked here, but rather when it's fully instantiated and used.
 function foo<T>(anonymous x: T, anonymous y: T) -> T {
     return x + y

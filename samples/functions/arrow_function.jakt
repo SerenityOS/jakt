@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "50\nHello, friends!\n"
+
 function area(width: i64, height: i64) => width * height
 function greeting(name: String) throws -> String => format("Hello, {}!", name)
 function greet(name: String) throws {

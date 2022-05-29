@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Integer promotion failed"
+
 function main() {
     let mutable i: u8 = 0;
     i += 1000;

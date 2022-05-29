@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "PASS\n"
+
 class Class {
     function private_function(this) {
         println("PASS")

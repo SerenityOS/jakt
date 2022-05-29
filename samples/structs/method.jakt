@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "32\n"
+
 struct Rectangle {
     width: i64,
     height: i64,

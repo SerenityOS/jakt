@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "123\n"
+
 function main() {
     let mutable item = Dictionary<String, i64>();
 

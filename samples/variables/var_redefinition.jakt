@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "redefinition of variable x\n"
+
 function main() {
     let x = 10
     let x = 20

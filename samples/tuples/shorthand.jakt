@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "1 hello\n"
+
 function foo() -> (i64, String) {
     return (1, "hello")
 }

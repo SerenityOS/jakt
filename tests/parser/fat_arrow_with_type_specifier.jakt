@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Hello friends! The answer is 42\n"
+
 class S {
     public function get_answer() -> i32 => 42
 }

@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "if and else have identical blocks"
+
 function main() {
     if true {
         println("hello")

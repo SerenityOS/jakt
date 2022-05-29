@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Binary arithmetic operation between incompatible types (‘String’ and ‘i64’)\n"
+
 struct Foo<T> {
     a: T
 

@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "100\n"
+
 function main() {
     let item = Optional(100);
 

@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "cannot create a dictionary with values of type void\n"
+
 enum Bar {
     Value
 }

@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Integer literal 18446744073709551616 too large"
+
 function main() {
     let too_large_u64 = 18_446_744_073_709_551_616;
 }

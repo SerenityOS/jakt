@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "100\n100000000\n"
+
 function main() {
     println("{}", 100)
     println("{}", 100_000_000)

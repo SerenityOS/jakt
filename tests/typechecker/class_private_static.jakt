@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Can't access function ‘private_static_function’ from scope None, because it is marked private\n"
+
 class Foo {
     function private_static_function() {}
 }

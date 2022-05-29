@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "1003\n"
+
 function id<T>(anonymous x: T) -> T {
     return x;
 }

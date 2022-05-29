@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "OK\n"
+
 function main() {
     let i = 4
     if i == 5 or 6 > 7 {

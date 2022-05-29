@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "hello: 2\nwell: 1\nfriends: 3\n"
+
 function main() {
     let dictionary = ["well": 1, "hello": 2, "friends": 3]
     for item in dictionary.iterator() {

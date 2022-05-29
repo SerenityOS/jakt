@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: ""
+
 function id<T>(z: T) => z
 
 function bar() {

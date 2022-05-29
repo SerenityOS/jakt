@@ -1,8 +1,0 @@
-Panic: Overflow in checked addition '127 + 1'
-Panic: Overflow in checked addition '32767 + 1'
-Panic: Overflow in checked addition '2147483647 + 1'
-Panic: Overflow in checked addition '9223372036854775807 + 1'
-Panic: Overflow in checked addition '255 + 1'
-Panic: Overflow in checked addition '65535 + 1'
-Panic: Overflow in checked addition '4294967295 + 1'
-Panic: Overflow in checked addition '18446744073709551615 + 1'

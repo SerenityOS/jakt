@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "0: foo\n"
+
 function main() {
     let mutable dict = Dictionary<i32, String>()
     dict[0] = "foo"

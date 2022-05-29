@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "use 'ref enum' to make the enum recursive"
+
 enum Operation {
     Add
 }

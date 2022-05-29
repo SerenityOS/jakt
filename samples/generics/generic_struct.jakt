@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "100\n"
+
 struct Foo<T> {
     x: T
 }

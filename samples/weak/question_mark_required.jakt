@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "missing `?` after weak pointer type name\n"
+
 class Foo {
 
 }

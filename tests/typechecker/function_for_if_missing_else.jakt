@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Control reaches end of non-void function\n"
+
 function foo() -> i64 {
     for i in 1..10 {
         if i == 5 {

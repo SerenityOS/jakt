@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "one\n"
+
 function get_first(anonymous v: [String]) => v[0]
 
 function main() {

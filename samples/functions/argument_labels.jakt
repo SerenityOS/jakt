@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: ""
+
 function foo(a: bool, b: bool) {
 }
 

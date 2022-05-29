@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘struct Foo<i64>’, but got ‘struct Bar<i64>’\n"
+
 struct Foo<T> {
     x: T
 }

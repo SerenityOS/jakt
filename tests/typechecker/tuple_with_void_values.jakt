@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "cannot create a tuple that contains a value of type void\n"
+
 enum Bar {
     Value
 }

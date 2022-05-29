@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "dereference of raw pointer outside of unsafe block"
+
 function main() {
     let x = 10
     let y = &raw x

@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Can't access variable ‘muda_amount’ from scope None, because it is marked private\n"
+
 class GoodEncapsulation {
     muda_amount: u32
     public ora_amount: u32

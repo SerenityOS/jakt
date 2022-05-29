@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "weak_foo has_value? false\nweak_foo has_value? true\nweak_foo hello: friends\nweak_foo has_value? false\n"
+
 class Foo {
     public function hello(this) => "friends"
 }

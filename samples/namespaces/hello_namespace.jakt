@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Well, hello friends\n"
+
 namespace Greeters {
     function greet() {
         println("Well, hello friends")

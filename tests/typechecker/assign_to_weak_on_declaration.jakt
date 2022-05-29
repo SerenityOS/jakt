@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Foo\n"
+
 class Foo {
     public function call(this) => "Foo"
 }

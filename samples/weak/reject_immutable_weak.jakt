@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Weak reference must be mutable\n"
+
 class Foo {
 }
 

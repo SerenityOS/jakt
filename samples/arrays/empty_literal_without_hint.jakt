@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Cannot infer generic type for Array<T>\n"
+
 function main() {
     let x = []
 }

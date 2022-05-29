@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "7\n"
+
 function subtract(x: i64, y: i64) {
     println("{}", x - y)
 }

@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "5\n5\n5\n5\n5\n5\n5\n5\n5\n"
+
 function main() {
     let mutable a = 0uz
     a += 5 as! usize

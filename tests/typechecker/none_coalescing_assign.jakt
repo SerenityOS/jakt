@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "mayb\n"
+
 function main() {
     let mutable i: String? = None
     i ??= "mayb"

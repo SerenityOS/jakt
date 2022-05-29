@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Caught 1234\nCaught 6969\nCaught 5252\n"
+
 function notoss() throws -> i32 {
     if not true {
         throw Error::from_errno(123456)

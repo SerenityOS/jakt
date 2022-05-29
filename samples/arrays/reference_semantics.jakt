@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "foo\nbar\n"
+
 function change_value(vector: mutable [String]) {
     vector[1] = "bar"
 }

@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "PASS\n"
+
 class Foo {
     public function toss(this) throws {
         throw Error::from_errno(0)

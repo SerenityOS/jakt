@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "200\n2000\n200000\n125\n"
+
 struct Foo {
     x: u16
 }

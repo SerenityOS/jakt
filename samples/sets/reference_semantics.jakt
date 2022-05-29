@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "5\n"
+
 function foo(set: mutable {i64}) throws {
     set.add(4)
     set.add(5)

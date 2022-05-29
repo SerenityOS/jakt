@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "type 'String' does not match type 'i64' of previous values in dictionary\n"
+
 function main() {
     let x = [1: 1, 2: "2", 3: 3]
 }

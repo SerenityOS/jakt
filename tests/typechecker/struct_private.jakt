@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Can't access function ‘parts’ from scope None, because it is marked private\n"
+
 struct WeirdEncapsulation {
     private function parts(this) {}
 }

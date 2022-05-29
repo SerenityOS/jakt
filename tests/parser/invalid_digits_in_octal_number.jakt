@@ -1,2 +1,5 @@
+/// Expect:
+/// - error: "could not parse octal number"
+
 // Octal number must not contain any digits other than 0-7
 0o78

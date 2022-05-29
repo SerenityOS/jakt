@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "No error\n"
+
 function check(anonymous a: i64, anonymous b: i64) -> i64 {
     if a != b {
         println("Not equal!")

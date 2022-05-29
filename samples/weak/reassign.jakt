@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "1\n2\nfalse\n"
+
 class Foo {
     public x: i64
 }

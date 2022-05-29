@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Jane\n1100\n"
+
 class Person {
     public name: String
     public age: i64

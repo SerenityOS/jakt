@@ -1,3 +1,6 @@
+/// Expect:
+/// - stderr: "Panic: Division by zero in checked division '127 / 0'\nPanic: Division by zero in checked division '32767 / 0'\nPanic: Division by zero in checked division '2147483647 / 0'\nPanic: Division by zero in checked division '9223372036854775807 / 0'\nPanic: Division by zero in checked division '255 / 0'\nPanic: Division by zero in checked division '65535 / 0'\nPanic: Division by zero in checked division '4294967295 / 0'\nPanic: Division by zero in checked division '18446744073709551615 / 0'\n"
+
 function main() {
     {
         let a: i8 = 127

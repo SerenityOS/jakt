@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Success! we're fine and there's a 42 in our optional\n"
+
 enum BetterOptional<T> {
     Some(T)
     None

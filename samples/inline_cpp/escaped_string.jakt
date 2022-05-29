@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "\"test\"\n"
+
 function main() {
     unsafe {
         cpp {

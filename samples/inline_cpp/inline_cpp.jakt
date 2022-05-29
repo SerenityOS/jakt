@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "42\n"
+
 function main() {
     let mutable i: i32? = None
     unsafe {
