@@ -444,3 +444,8 @@ fn test_match() -> Result<(), JaktError> {
 fn test_imports() -> Result<(), JaktError> {
     test_samples("samples/imports")
 }
+
+#[test]
+fn test_selfhost() -> Result<(), JaktError> {
+    test_samples("selfhost")
+}

@@ -1,0 +1,1303 @@
+/// Expect:
+/// - output: ""
+
+extern struct StringBuilder {
+    function append(mutable this, anonymous s: u8)
+    function to_string(mutable this) throws -> String
+    function StringBuilder() -> StringBuilder
+}
+
+// FIXME: These should not need explicit "-> bool" return types.
+function is_ascii_alpha(anonymous c: u8) -> bool => (c >= b'a' and c <= b'z') or (c >= b'A' and c <= b'Z')
+function is_ascii_digit(anonymous c: u8) -> bool => (c >= b'0' and c <= b'9')
+function is_ascii_hexdigit(anonymous c: u8) -> bool => (c >= b'0' and c <= b'9') or (c >= b'a' and c <= b'f') or (c >= b'A' and c <= b'F')
+function is_ascii_alphanumeric(anonymous c: u8) -> bool => is_ascii_alpha(c) or is_ascii_digit(c)
+
+//FIXME: Would be nice to name this Span and not have conflict
+struct JaktSpan {
+    start: usize
+    end: usize
+}
+
+enum Token {
+    SingleQuotedString(quote: String, span: JaktSpan)
+    SingleQuotedByteString(quote: String, span: JaktSpan)
+    QuotedString(quote: String, span: JaktSpan)
+    Number(number: i64, span: JaktSpan)
+    Name(name: String, span: JaktSpan)
+    Semicolon(JaktSpan)
+    Colon(JaktSpan)
+    ColonColon(JaktSpan)
+    LParen(JaktSpan)
+    RParen(JaktSpan)
+    LCurly(JaktSpan)
+    RCurly(JaktSpan)
+    LSquare(JaktSpan)
+    RSquare(JaktSpan)
+    PercentSign(JaktSpan)
+    Plus(JaktSpan)
+    Minus(JaktSpan)
+    Equal(JaktSpan)
+    PlusEqual(JaktSpan)
+    PlusPlus(JaktSpan)
+    MinusEqual(JaktSpan)
+    MinusMinus(JaktSpan)
+    AsteriskEqual(JaktSpan)
+    ForwardSlashEqual(JaktSpan)
+    PercentSignEqual(JaktSpan)
+    NotEqual(JaktSpan)
+    DoubleEqual(JaktSpan)
+    GreaterThan(JaktSpan)
+    GreaterThanOrEqual(JaktSpan)
+    LessThan(JaktSpan)
+    LessThanOrEqual(JaktSpan)
+    LeftArithmeticShift(JaktSpan)
+    LeftShift(JaktSpan)
+    LeftShiftEqual(JaktSpan)
+    RightShift(JaktSpan)
+    RightArithmeticShift(JaktSpan)
+    RightShiftEqual(JaktSpan)
+    Asterisk(JaktSpan)
+    Ampersand(JaktSpan)
+    AmpersandEqual(JaktSpan)
+    Pipe(JaktSpan)
+    PipeEqual(JaktSpan)
+    Caret(JaktSpan)
+    CaretEqual(JaktSpan)
+    Dollar(JaktSpan)
+    Tilde(JaktSpan)
+    ForwardSlash(JaktSpan)
+    ExclamationPoint(JaktSpan)
+    QuestionMark(JaktSpan)
+    QuestionMarkQuestionMark(JaktSpan)
+    Comma(JaktSpan)
+    Dot(JaktSpan)
+    DotDot(JaktSpan)
+    Eol(JaktSpan)
+    Eof(JaktSpan)
+    FatArrow(JaktSpan)
+    Garbage(JaktSpan)
+
+    public function span(this) -> JaktSpan {
+        return match this {
+            SingleQuotedString(quote: quote, span: span) => span
+            SingleQuotedByteString(quote: quote, span: span) => span
+            QuotedString(quote: quote, span: span) => span
+            Number(number: i64, span: span) => span
+            Name(name: quote, span: span) => span
+            Semicolon(span: span) => span
+            Colon(span: span) => span
+            ColonColon(span: span) => span
+            LParen(span: span) => span
+            RParen(span: span) => span
+            LCurly(span: span) => span
+            RCurly(span: span) => span
+            LSquare(span: span) => span
+            RSquare(span: span) => span
+            PercentSign(span: span) => span
+            Plus(span: span) => span
+            Minus(span: span) => span
+            Equal(span: span) => span
+            PlusEqual(span: span) => span
+            PlusPlus(span: span) => span
+            MinusEqual(span: span) => span
+            MinusMinus(span: span) => span
+            AsteriskEqual(span: span) => span
+            ForwardSlashEqual(span: span) => span
+            PercentSignEqual(span: span) => span
+            NotEqual(span: span) => span
+            DoubleEqual(span: span) => span
+            GreaterThan(span: span) => span
+            GreaterThanOrEqual(span: span) => span
+            LessThan(span: span) => span
+            LessThanOrEqual(span: span) => span
+            LeftArithmeticShift(span: span) => span
+            LeftShift(span: span) => span
+            LeftShiftEqual(span: span) => span
+            RightShift(span: span) => span
+            RightArithmeticShift(span: span) => span
+            RightShiftEqual(span: span) => span
+            Asterisk(span: span) => span
+            Ampersand(span: span) => span
+            AmpersandEqual(span: span) => span
+            Pipe(span: span) => span
+            PipeEqual(span: span) => span
+            Caret(span: span) => span
+            CaretEqual(span: span) => span
+            Dollar(span: span) => span
+            Tilde(span: span) => span
+            ForwardSlash(span: span) => span
+            ExclamationPoint(span: span) => span
+            QuestionMark(span: span) => span
+            QuestionMarkQuestionMark(span: span) => span
+            Comma(span: span) => span
+            Dot(span: span) => span
+            DotDot(span: span) => span
+            Eol(span: span) => span
+            Eof(span: span) => span
+            FatArrow(span: span) => span
+            Garbage(span: span) => span
+        }
+    }
+}
+
+enum JaktError {
+    Message(msg: String, span: JaktSpan)
+    MessageWithHint(msg: String, span: JaktSpan, hint: String, hint_span: JaktSpan)
+}
+
+struct Lexer {
+    index: usize
+    input: [u8]
+    errors: [JaktError]
+
+    // Peek at next upcoming character
+    function peek(this) -> u8 {
+        if .eof() {
+            return 0
+        }
+        return .input[.index]
+    }
+
+    // Peek at upcoming characters, N steps ahead in the stream
+    // FIXME: This could be merged with peek() once we support default arguments
+    function peek_ahead(this, anonymous steps: usize) -> u8 {
+        if .index + steps >= .input.size() {
+            return 0
+        }
+        return .input[.index + steps]
+    }
+
+    function eof(this) -> bool {
+        return .index >= .input.size()
+    }
+
+    function substring(this, start: usize, length: usize) throws -> String {
+        let mutable builder = StringBuilder()
+        for i in start..length {
+            builder.append(.input[i])
+        }
+        return builder.to_string()
+    }
+
+    function lex_character_constant_or_name(mutable this) throws -> Token {
+        if .peek_ahead(1) != b'\'' {
+            return .lex_number_or_name()
+        }
+
+        let is_byte = .peek() == b'b'
+        if is_byte {
+            .index++
+        }
+
+        let start = .index
+        .index++
+
+        let mutable escaped = false;
+
+        while not .eof() and (escaped or .peek() != b'\'') {
+            if not escaped and .peek() == b'\\' {
+                escaped = true
+            } else {
+                escaped = false
+            }
+
+            .index++
+        }
+
+        if .eof() or .peek() != b'\'' {
+            .errors.push(JaktError::Message(msg: "expected single quote", span: JaktSpan(start, end: start)))
+        }
+
+        // Everything but the quotes
+        let mutable builder = StringBuilder()
+        builder.append(.input[start + 1])
+        let str = builder.to_string()
+
+        .index++
+
+        let end = .index
+
+        if is_byte {
+            return Token::SingleQuotedByteString(quote: str, span: JaktSpan(start, end))
+        }
+        return Token::SingleQuotedString(quote: str, span: JaktSpan(start, end))
+    }
+
+    function lex_number_or_name(mutable this) throws -> Token {
+        let start = .index
+
+        if .eof() {
+            .errors.push(JaktError::Message(msg: "unexpected eof", span: JaktSpan(start, end: start)))
+            return Token::Garbage(JaktSpan(start, end: start))
+        }
+        if is_ascii_digit(.peek()) {
+            let mutable total = 0i64
+
+            while is_ascii_digit(.peek()) {
+                let value = .input[.index]
+                ++.index
+                let digit: i64 = as_saturated(value - b'0')
+                total = total * 10 + digit
+            }
+            let end = .index
+            return Token::Number(number: total, span: JaktSpan(start, end))
+        } else if is_ascii_alpha(.peek()) or .peek() == b'_' {
+            let mutable string_builder = StringBuilder()
+
+            while is_ascii_alphanumeric(.peek()) or .peek() == b'_' {
+                let value = .input[.index]
+                ++.index
+                string_builder.append(value)
+            }
+            let end = .index
+            return Token::Name(name: string_builder.to_string(), span: JaktSpan(start, end))
+        }
+
+        let unknown_char = .input[.index]
+        let end = ++.index
+        .errors.push(JaktError::Message(msg: format("unknown character: {:c}", unknown_char), span: JaktSpan(start, end)))
+        return Token::Garbage(JaktSpan(start, end))
+    }
+
+    function lex_quoted_string(mutable this, delimiter: u8) throws -> Token {
+        let start = .index
+
+        ++.index
+
+        if .eof() {
+            .errors.push(JaktError::Message(msg: "unexpected eof", span: JaktSpan(start, end: start)))
+            return Token::Garbage(JaktSpan(start, end: start))
+        }
+
+        let mutable escaped = false
+        while not .eof() and (escaped or .peek() != delimiter) {
+            if not escaped and .peek() == b'\\' {
+                escaped = true
+            } else {
+                escaped = false
+            }
+            ++.index
+        }
+
+        let end = .index
+
+        let str = .substring(start: start + 1, length: .index)
+
+        .index++
+
+        if delimiter == b'\'' {
+            //FIXME: JaktError? can not be assigned 'None'
+            return Token::SingleQuotedString(quote: str, span: JaktSpan(start, end))
+        }
+
+        return Token::QuotedString(quote: str, span: JaktSpan(start, end))
+    }
+
+    function lex_plus(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b'=') => Token::PlusEqual(JaktSpan(start, end: ++.index))
+            (b'+') => Token::PlusPlus(JaktSpan(start, end: ++.index))
+            else => Token::Plus(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function lex_minus(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b'=') => Token::MinusEqual(JaktSpan(start, end: ++.index))
+            (b'-') => Token::MinusMinus(JaktSpan(start, end: ++.index))
+            else => Token::Minus(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function lex_asterisk(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b'=') => Token::AsteriskEqual(JaktSpan(start, end: ++.index))
+            else => Token::Asterisk(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function lex_forward_slash(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b'=') => Token::ForwardSlashEqual(JaktSpan(start, end: ++.index))
+            else => Token::ForwardSlash(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function lex_caret(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b'=') => Token::CaretEqual(JaktSpan(start, end: ++.index))
+            else => Token::Caret(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function lex_pipe(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b'=') => Token::PipeEqual(JaktSpan(start, end: ++.index))
+            else => Token::Pipe(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function lex_percent_sign(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b'=') => Token::PercentSignEqual(JaktSpan(start, end: ++.index))
+            else => Token::PercentSign(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function lex_exclamation_point(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b'=') => Token::NotEqual(JaktSpan(start, end: ++.index))
+            else => Token::ExclamationPoint(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function lex_ampersand(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b'=') => Token::AmpersandEqual(JaktSpan(start, end: ++.index))
+            else => Token::Ampersand(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function lex_less_than(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b'=') => Token::LessThanOrEqual(JaktSpan(start, end: ++.index))
+            (b'<') => Token::LeftShift(JaktSpan(start, end: ++.index))
+            else => Token::LessThan(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function lex_greater_than(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b'=') => Token::GreaterThanOrEqual(JaktSpan(start, end: ++.index))
+            (b'>') => Token::RightShift(JaktSpan(start, end: ++.index))
+            else => Token::GreaterThan(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function lex_dot(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b'.') => Token::DotDot(JaktSpan(start, end: ++.index))
+            else => Token::Dot(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function lex_colon(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b':') => Token::ColonColon(JaktSpan(start, end: ++.index))
+            else => Token::Colon(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function lex_question_mark(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b'?') => Token::QuestionMarkQuestionMark(JaktSpan(start, end: ++.index))
+            else => Token::QuestionMark(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function lex_equals(mutable this) -> Token {
+        let start = .index
+        ++.index
+        return match .peek() {
+            (b'=') => Token::DoubleEqual(JaktSpan(start, end: ++.index))
+            (b'>') => Token::FatArrow(JaktSpan(start, end: ++.index))
+            else => Token::Equal(JaktSpan(start: .index - 1, end: .index))
+        }
+    }
+
+    function next(mutable this) throws -> Token? {
+        if .eof() {
+            return None
+        }
+        if .index == .input.size() {
+            ++.index
+            return Token::Eof(JaktSpan(start: .index - 1, end: .index - 1))
+        }
+
+        while .peek() == b' ' {
+            ++.index
+        }
+
+        let start = .index
+
+        return match .input[.index] {
+            (b'(') => Token::LParen(JaktSpan(start, end: ++.index))
+            (b')') => Token::RParen(JaktSpan(start, end: ++.index))
+            (b'[') => Token::LSquare(JaktSpan(start, end: ++.index))
+            (b']') => Token::RSquare(JaktSpan(start, end: ++.index))
+            (b'{') => Token::LCurly(JaktSpan(start, end: ++.index))
+            (b'}') => Token::RCurly(JaktSpan(start, end: ++.index))
+            (b'<') => .lex_less_than()
+            (b'>') => .lex_greater_than()
+            (b'.') => .lex_dot()
+            (b',') => Token::Comma(JaktSpan(start, end: ++.index))
+            (b'~') => Token::Tilde(JaktSpan(start, end: ++.index))
+            (b';') => Token::Semicolon(JaktSpan(start, end: ++.index))
+            (b':') => .lex_colon()
+            (b'?') => .lex_question_mark()
+            (b'+') => .lex_plus()
+            (b'-') => .lex_minus()
+            (b'*') => .lex_asterisk()
+            (b'/') => .lex_forward_slash()
+            (b'^') => .lex_caret()
+            (b'|') => .lex_pipe()
+            (b'%') => .lex_percent_sign()
+            (b'!') => .lex_exclamation_point()
+            (b'&') => .lex_ampersand()
+            (b'$') => Token::Dollar(JaktSpan(start, end: ++.index))
+            (b'=') => .lex_equals()
+            (b'\n') => Token::Eol(JaktSpan(start, end: ++.index))
+            (b'\'') => .lex_quoted_string(delimiter: b'\'')
+            (b'\"') => .lex_quoted_string(delimiter: b'"')
+            (b'b') => .lex_character_constant_or_name()
+            (b'c') => .lex_character_constant_or_name()
+            else => .lex_number_or_name()
+        }
+    }
+}
+
+function print_error(file_name: String, file_contents: [u8], error: JaktError) throws {
+    match error {
+        JaktError::Message(msg: message, span: span) => {
+            display_message_with_span(severity: MessageSeverity::Error(), file_name, file_contents, message, span)
+        }
+        JaktError::MessageWithHint(msg: message, span: span, hint: hint, hint_span: hint_span) => {
+            display_message_with_span(severity: MessageSeverity::Error(), file_name, file_contents, message, span)
+            display_message_with_span(severity: MessageSeverity::Hint(), file_name, file_contents, message: hint, span: hint_span)
+        }
+    }
+}
+
+enum MessageSeverity {
+    Hint
+    Error
+}
+
+function severity_name(severity: MessageSeverity) throws -> String {
+    return match severity {
+        MessageSeverity::Hint => "Hint"
+        MessageSeverity::Error => "Error"
+    }
+}
+
+function ansi_color_code(severity: MessageSeverity) throws -> String {
+    return match severity {
+        MessageSeverity::Hint => "94"  // Bright Blue
+        MessageSeverity::Error => "31" // Red
+    }
+}
+
+function display_message_with_span(severity: MessageSeverity, file_name: String, file_contents: [u8], message: String, span: JaktSpan) throws {
+    println("{}: {}", severity_name(severity), message)
+
+    let line_spans = gather_line_spans(file_contents)
+
+    let mutable line_index = 1uz
+    let largest_line_number = line_spans.size()
+
+    let width = format("{}", largest_line_number).length()
+
+    while line_index < line_spans.size() {
+        if span.start >= line_spans[line_index].0 and span.start <= line_spans[line_index].1 {
+            let column_index = span.start - line_spans[line_index].0
+
+            println("----- \u001b[33m{}:{}:{}\u001b[0m", file_name, line_index + 1, column_index + 1)
+
+            if line_index > 0 {
+                print_source_line(severity, file_contents, file_span: line_spans[line_index - 1], error_span: span, line_number: line_index, largest_line_number)
+            }
+
+            print_source_line(severity, file_contents, file_span: line_spans[line_index], error_span: span, line_number: line_index + 1, largest_line_number)
+
+            for x in 0..(span.start - line_spans[line_index].0 + width + 4) {
+                print(" ")
+            }
+
+            println("\u001b[{}m^- {}\u001b[0m", ansi_color_code(severity), message)
+
+            while line_index < line_spans.size() and span.end > line_spans[line_index].0 {
+                ++line_index
+                if line_index >= line_spans.size() {
+                    break
+                }
+
+                print_source_line(severity, file_contents, file_span: line_spans[line_index], error_span: span, line_number: line_index + 1, largest_line_number)
+
+                break
+            }
+        } else {
+            ++line_index
+        }
+
+    }
+    println("\u001b[0m-----")
+}
+
+function print_source_line(severity: MessageSeverity, file_contents: [u8], file_span: (usize, usize), error_span: JaktSpan, line_number: usize, largest_line_number: usize) throws {
+    let mutable index = file_span.0
+
+    let width = format("{}", largest_line_number).length()
+
+    print(" {} | ", line_number)
+
+    while index <= file_span.1 {
+        let mutable c = b' '
+        if index < file_span.1 {
+            c = file_contents[index]
+        } else if error_span.start == error_span.end and index == error_span.start {
+            c = b'_'
+        }
+
+        if (index >= error_span.start and index < error_span.end) or (error_span.start == error_span.end and index == error_span.start) {
+            print("\u001b[{}m{:c}", ansi_color_code(severity), c)
+        } else {
+            print("\u001b[0m{:c}", c)
+        }
+
+        ++index
+    }
+    println("")
+}
+
+function gather_line_spans(file_contents: [u8]) throws -> [(usize, usize)] {
+    let mutable idx = 0uz
+    let mutable output: [(usize, usize)] = []
+
+    let mutable start = idx
+    while idx < file_contents.size() {
+        if file_contents[idx] == b'\n' {
+            output.push((start, idx))
+            start = idx + 1
+        }
+        idx += 1
+    }
+    if start < idx {
+        output.push((start, idx))
+    }
+
+    return output
+}
+
+// Compiler
+struct Project {
+    functions: [CheckedFunction]
+    scopes: [Scope]
+    types: [Type]
+}
+
+struct Scope {
+    functions: [String: (usize, JaktSpan)]
+}
+
+enum Type {
+    Builtin
+}
+
+// Parsed Types
+struct ParsedNamespace {
+    public name: String
+    public functions: [ParsedFunction]
+}
+
+struct ParsedFunction {
+    public name: String
+    public params: [ParsedParameter]
+    public block: ParsedBlock
+    public return_type: ParsedType
+    public throws: bool
+}
+
+struct ParsedParameter {
+    requires_label: bool
+    variable: ParsedVariable
+    is_mutable: bool
+    span: JaktSpan
+}
+
+struct ParsedBlock {
+    stmts: [ParsedStatement]
+}
+
+ref enum ParsedStatement {
+    Expression(ParsedExpression)
+    Defer(ParsedStatement)
+    UnsafeBlock(ParsedBlock)
+    VarDecl(var: ParsedVarDecl, init: ParsedExpression)
+    If(guard: ParsedExpression, then_block: ParsedBlock, else_block: ParsedBlock?)
+    Block(ParsedBlock)
+    Loop(ParsedBlock)
+    While(guard: ParsedExpression, block: ParsedBlock)
+    For(name: String, name_span: JaktSpan, range: ParsedExpression, block: ParsedBlock)
+    Break
+    Continue
+    Return(expr: ParsedExpression, span: JaktSpan)
+    Throw(ParsedExpression)
+    Garbage
+}
+
+ref enum ParsedExpression {
+    Boolean(val: bool, span: JaktSpan)
+    NumericConstant(val: i64, span: JaktSpan)
+    QuotedString(val: String, span: JaktSpan)
+    Call(call: ParsedCall, span: JaktSpan)
+    Var(name: String, span: JaktSpan)
+    OptionalNone(JaktSpan)
+    Garbage(JaktSpan)
+}
+
+struct ParsedVarDecl {
+    name: String
+    parsed_type: ParsedType
+    is_mutable: bool
+    span: JaktSpan
+}
+
+struct ParsedVariable {
+    name: String
+    parsed_type: ParsedType
+    is_mutable: bool
+    span: JaktSpan
+}
+
+struct ParsedCall {
+    name: String,
+    args: [(String, ParsedExpression)]
+}
+
+ref enum ParsedType {
+    Name(name: String, span: JaktSpan)
+    Array(inner: ParsedType, span: JaktSpan)
+    Dictionary(key: ParsedType, value: ParsedType, span: JaktSpan)
+    Set(inner: ParsedType, span: JaktSpan)
+    Optional(inner: ParsedType, span: JaktSpan)
+    RawPtr(inner: ParsedType, span: JaktSpan)
+    WeakPtr(inner: ParsedType, span: JaktSpan)
+    Empty
+}
+
+// Checked Types
+// FIXME: we want a unique type for return_type_id and others, like TypeId
+struct CheckedNamespace {
+    name: String
+    scope: usize
+}
+
+struct CheckedFunction {
+    name: String
+    return_type_id: usize
+    params: [CheckedParameter]
+    block: CheckedBlock
+}
+
+struct CheckedParameter {
+    requires_label: bool
+    variable: CheckedVariable
+}
+
+struct CheckedVariable {
+    name: String
+    var_type_id: usize
+    is_mutable: bool
+    definition_span: JaktSpan
+}
+
+struct CheckedVarDecl {
+    name: String
+    var_type_id: usize
+    is_mutable: bool
+    span: JaktSpan
+}
+
+struct CheckedBlock {
+    statements: [CheckedStatement]
+    definitely_returns: bool
+}
+
+ref enum CheckedStatement {
+    Expression(CheckedExpression)
+    Defer(CheckedStatement)
+    VarDecl(var: CheckedVarDecl, init: CheckedExpression)
+    If(guard: CheckedExpression, then_block: CheckedBlock, else_block: CheckedBlock?)
+    Block(CheckedBlock)
+    Loop(CheckedBlock)
+    While(guard: CheckedExpression, block: CheckedBlock)
+    Return(CheckedExpression)
+    Break
+    Continue
+    Throw(CheckedExpression)
+    Garbage
+}
+
+ref enum CheckedExpression {
+    Boolean(val: bool, span: JaktSpan)
+    QuotedString(val: String, span: JaktSpan)
+    Call(call: CheckedCall, span: JaktSpan, type: usize)
+}
+
+struct CheckedCall {
+    name: String,
+    args: [(String, CheckedExpression)]
+    return_type: usize
+}
+
+class Parser {
+    index: usize
+    tokens: [Token]
+    errors: [JaktError]
+
+    function peek(this, anonymous steps: usize) -> Token {
+        if .eof() or (steps + .index) >= .tokens.size()  {
+            return .tokens[.tokens.size() - 1]
+        }
+        return .tokens[.index + steps]
+    }
+
+    function current(this) -> Token {
+        return .peek(0)
+    }
+
+    function eof(this) -> bool {
+        return .index >= .tokens.size()
+    } 
+
+    public function parse_namespace(mutable this) throws -> ParsedNamespace {
+        let mutable parsed_namespace = ParsedNamespace(name: "", functions: [])
+
+        let mutable should_break = false
+        while not should_break and not .eof() {
+            match .current() {
+                Token::Name(name: name, span: span) => {
+                    match name {
+                        ("function") => {
+                            let function = .parse_function(FunctionLinkage::Internal(), Visibility::Public())
+                            parsed_namespace.functions.push(function)
+                        }
+                        else => { }
+                    }
+                }
+                Token::Eol => {
+                    // Ignore
+                    .index++
+                }
+                Token::RCurly => {
+                    should_break = true
+                }
+                else => {
+                }
+            }
+        }
+
+        return parsed_namespace
+    }
+
+    public function parse_function(mutable this, anonymous linkage: FunctionLinkage, anonymous visibility: Visibility) throws -> ParsedFunction {
+        let mutable parsed_function = ParsedFunction(
+            name: "",
+            params: [],
+            block: ParsedBlock(stmts: []),
+            return_type: ParsedType::Empty(),
+            throws: false,
+        )
+
+        .index++
+
+        if .index >= .tokens.size() {
+            .errors.push(JaktError::Message(msg: "Incomplete function definition", span: .current().span()))
+            return parsed_function
+        }
+
+        let function_name = match .current() {
+            Token::Name(name: name) => name
+            else => { return parsed_function }
+        }
+        parsed_function.name = function_name
+        let function_name_span = .current().span()
+
+        .index++
+
+        // FIXME: Check for generic
+
+        if .index >= .tokens.size() {
+            .errors.push(JaktError::Message(msg: "Incomplete function", span: .current().span()))
+        }
+
+        match .current() {
+            Token::LParen(span: span) => {
+                .index++
+            }
+            else => {
+                .errors.push(JaktError::Message(msg: "Expected '('", span: .current().span()))
+            }
+        }
+
+        let mutable params: [ParsedParameter] = []
+        let mutable current_param_requires_label = true
+        let mutable current_param_is_mutable = true
+        let mutable should_break = false
+
+        while not should_break and .index < .tokens.size() {
+            match .current() {
+                Token::RParen => {
+                    .index++
+                    should_break = true
+                }
+                Token::Comma => {
+                    .index++
+                    current_param_requires_label = true
+                }
+                Token::Name(name: name, span: span) => {
+                    if name == "anonymous" {
+                        current_param_requires_label = false
+                        .index++
+                    } else if name == "mutable" {
+                        current_param_is_mutable = true
+                        .index++
+                    } else if name == "this" {
+                        params.push(ParsedParameter(
+                                requires_label: false,
+                                variable: ParsedVariable(
+                                    name: "this",
+                                    parsed_type: ParsedType::Empty(),
+                                    is_mutable: current_param_is_mutable,
+                                    span: .current().span(),
+                                ),
+                                is_mutable: current_param_is_mutable,
+                                span: .current().span(),
+                        ))
+                        .index++
+                    } else {
+                        println("FIXME: Parse a parameter")
+                    }
+                }
+                else => {
+                    .errors.push(JaktError::Message(msg: "Expected parameter", span: .current().span()))
+                }
+            }
+        }
+
+        // NOTE: main() always throws
+        if function_name == "main" {
+            parsed_function.throws = true
+        } else {
+            match .current() {
+                Token::Name(name: name) => {
+                    if name == "throws" {
+                        parsed_function.throws = true
+                        .index++
+                    }
+                }
+                else => { }
+            }
+        }
+
+        // Accept return type specification with '->'
+        let mutable return_type = ParsedType::Empty()
+        let mutable return_type_span: JaktSpan? = None
+
+        match .current() {
+            Token::Minus => {
+                .index++
+                match .current() {
+                    Token::GreaterThan => {
+                        .index++
+                        let start = .current().span().start
+                        return_type = .parse_typename()
+                        return_type_span = JaktSpan(start, end: .index)
+                    }
+                    else => {
+                        .errors.push(JaktError::Message(msg: "Expected ->", span: .current().span()))
+                    }
+                }
+            }
+            else => { }
+        }
+
+        // FIXME: Accept an (optional) fat arrow ('=>')
+
+        parsed_function.block = .parse_block()
+
+        return parsed_function
+    }
+
+    function parse_typename(mutable this) throws -> ParsedType {
+        let mutable parsed_type = .parse_shorthand_type()
+
+        match .current() {
+            Token::Name(name: name) => {
+                if name == "raw" or name == "weak" {
+                    println("FIXME: raw/weak")
+                } else {
+                    let span = .current().span()
+                    .index++
+                    return ParsedType::Name(name, span)
+                }
+            }
+            else => {
+                .errors.push(JaktError::Message(msg: "Expected type name", span: .current().span()))
+            }
+        }
+
+        return parsed_type
+    }
+
+    function parse_shorthand_type(mutable this) throws -> ParsedType {
+        let start = .current().span().start
+        match .current() {
+            Token::LSquare => {
+                // [T] is shorthand for Array<T>
+                // [K:V] is shorthand for Dictionary<K, V>
+                .index++
+                let inner = .parse_typename()
+                match .current() {
+                    Token::RSquare => {
+                        let span = JaktSpan(start, end: .current().span().end)
+                        .index++
+                        return ParsedType::Array(inner, span)
+                    }
+                    Token::Colon => {
+                        let span = JaktSpan(start, end: .current().span().end)
+                        let value = .parse_typename()
+                        return ParsedType::Dictionary(key: inner, value, span)
+                    }
+                    else => {
+                        .errors.push(JaktError::Message(msg: "Expected shorthand type", span: .current().span()))
+                    }
+                }
+            }
+            Token::LCurly => {
+                // {T} is shorthand for Set<T>
+                let inner = .parse_typename()
+                .index++
+
+                match .current() {
+                    Token::RCurly => {
+                        let span = JaktSpan(start, end: .current().span().end)
+                        return ParsedType::Set(inner, span)
+                    }
+                    else => {
+                        .errors.push(JaktError::Message(msg: "Expected '}'", span: .current().span()))
+                    }
+                }
+            }
+            Token::LParen => {
+                // (A, B, C) is shorthand for Tuple<A, B, C>
+                println("FIXME: Implement tuple type shorthand")
+            }
+            else => { }
+        }
+        return ParsedType::Empty()
+    }
+
+    function parse_block(mutable this) throws -> ParsedBlock {
+        let start = .current().span().start
+        let mutable block = ParsedBlock(stmts: [])
+
+        if .eof() {
+            .errors.push(JaktError::Message(msg: "Incomplete block", span: JaktSpan(start, end: start)))
+            return block
+        }
+
+        .skip_newlines()
+
+        match .current() {
+            Token::LCurly => { .index++ }
+            else => { 
+                .errors.push(JaktError::Message(msg: "Expected '{'", span: JaktSpan(start, end: start)))
+            }
+        }
+
+        while not .eof() {
+            match .current() {
+                Token::RCurly => {
+                    .index++
+                    return block
+                }
+                Token::Semicolon => {
+                    .index++
+                }
+                Token::Eol => {
+                    .index++
+                }
+                else => {
+                    let stmt = .parse_statement()
+                    block.stmts.push(stmt)
+                }
+            }
+        }
+
+        .errors.push(JaktError::Message(msg: "Expected complete block", span: JaktSpan(start, end: .current().span().end)))
+        return block
+    }
+
+    function parse_statement(mutable this) throws -> ParsedStatement {
+        println("parse_statement: {}", .current())
+        let start = .current().span().start
+
+        match .current() {
+            Token::Name(name: name) => {
+                match name {
+                    ("return") => {
+                        .index++
+                        let expr = .parse_expression()
+                        let end = .tokens[.index - 1].span().end
+                        return ParsedStatement::Return(expr, span: JaktSpan(start, end))
+                    }
+                    else => {
+                        .errors.push(JaktError::Message(msg: "Unknown keyword", span: JaktSpan(start, end: start)))
+                    }
+                }
+            }
+            Token::LCurly => {
+                let block = .parse_block()
+                return ParsedStatement::Block(block)
+            }
+            else => {
+                let expr = .parse_expression()
+                return ParsedStatement::Expression(expr)
+            }
+        }
+
+        return ParsedStatement::Garbage()
+    }
+
+    function parse_expression(mutable this) throws -> ParsedExpression {
+        let mutable expr_stack: [ParsedExpression] = []
+        let mutable last_prec = 1000000
+
+        let lhs = .parse_operand()
+        expr_stack.push(lhs)
+
+        return expr_stack[0]
+    }
+
+    function parse_operand_base(mutable this) throws -> ParsedExpression {
+        let span = .current().span()
+        match .current() {
+            Token::Dot => {
+                .index++
+                return ParsedExpression::Var(name: "this", span)
+            }
+            Token::QuotedString(quote: quote, span: span) => {
+                .index++
+                return ParsedExpression::QuotedString(val: quote, span)
+            }
+            Token::Number(number: number, span: span) => {
+                .index++
+                return ParsedExpression::NumericConstant(val: number, span)
+            }
+            Token::Name(name: name) => {
+                if name == "true" {
+                    .index++
+                    return ParsedExpression::Boolean(val: true, span)
+                }
+                if name == "false" {
+                    .index++
+                    return ParsedExpression::Boolean(val: true, span)
+                }
+                // FIXME: "and"
+                // FIXME: "or"
+                // FIXME: "not"
+                // FIXME: "match"
+                match .peek(1) {
+                    Token::LParen => {
+                        // FIXME: "Some"
+                        let call = .parse_call()
+                        return ParsedExpression::Call(call, span)
+                    }
+                    Token::LessThan => {
+                        println("FIXME: parse_operand_base generics")
+                        .index++
+                        return ParsedExpression::Garbage(span)
+                    }
+                    else => {
+                        .index++
+                        match name {
+                            ("None") => {
+                                return ParsedExpression::OptionalNone(span)
+                            }
+                            else => {
+                                return ParsedExpression::Var(name, span)
+                            }
+                        }
+                    }
+                }
+
+                .index++
+                return ParsedExpression::Var(name, span)
+            }
+            Token::LParen => {
+                .index++
+
+                let expr = .parse_expression()
+                match .current() {
+                    Token::RParen => {
+                        .index++
+                    }
+                    Token::Comma => {
+                        println("FIXME: parse_operand_base tuple")
+                    }
+                    else => {
+                        .errors.push(JaktError::Message(msg: "Expected ')'", span: .current().span()))
+                    }
+                }
+            }
+            else => {
+                println("FIXME: parse_operand")
+            }
+        }
+        return ParsedExpression::Garbage(span)
+    }
+
+    function parse_operand(mutable this) throws -> ParsedExpression {
+        .skip_newlines()
+        let span = .current().span()
+        .skip_newlines()
+        let expr = .parse_operand_base()
+
+        // FIXME: postfix operators
+
+        return expr
+    }
+
+    function parse_call(mutable this) throws -> ParsedCall {
+        let mutable call = ParsedCall(
+            name: "",
+            args: [],
+        )
+
+        match .current() {
+            Token::Name(name: name) => {
+                call.name = name
+                .index++
+
+                match .current() {
+                    Token::LessThan => {
+                        println("FIXME: parse_call generics")
+                        .index++
+                    }
+                    else => { }
+                }
+
+                match .current() {
+                    Token::LParen => {
+                        .index++
+                    }
+                    else => {
+                        .errors.push(JaktError::Message(msg: "Expected '('", span: .current().span()))
+                    }
+                }
+
+                let mutable should_break = false
+                while not should_break and not .eof() {
+                    match .current() {
+                        Token::RParen => {
+                            .index++
+                            should_break = true
+                        }
+                        Token::Eol => {
+                            .index++
+                        }
+                        Token::Comma => {
+                            .index++
+                        }
+                        else => {
+                            // FIXME: Parse argument labels
+                            let param_name = ""
+
+                            let expr = .parse_expression()
+                            call.args.push((param_name, expr))
+                        }
+                    }
+                }
+            }
+            else => {
+                .errors.push(JaktError::Message(msg: "Expected function call", span: .current().span()))
+            }
+        }
+
+        return call
+    }
+
+    function skip_newlines(mutable this) {
+        loop { 
+            let newline = match .current() {
+                Token::Eol => true
+                else => false
+            }
+            if not newline {
+                break
+            }
+            .index++
+        }
+    }
+}
+
+enum FunctionLinkage {
+    Internal
+    External
+}
+
+enum Visibility {
+    Public
+    Private
+    Restricted(whitelist: [ParsedType], span: JaktSpan)
+}
+
+function main(args: [String]) {
+    if args.size() <= 1 {
+        eprintln("usage: jakt <path>")
+        return 1
+    }
+
+    let mutable file = File::open_for_reading(args[1])
+    let file_contents = file.read_all()
+
+    let mutable lexer = Lexer(index: 0, input: file_contents, errors: [])
+    let mutable tokens: [Token] = []
+
+    for token in lexer {
+        println("token: {}", token)
+        tokens.push(token)
+    }
+
+    if not lexer.errors.is_empty() {
+        for error in lexer.errors.iterator() {
+            print_error(file_name: args[1], file_contents, error)
+        }
+        return 1
+    }
+
+    let mutable parser = Parser(index: 0, tokens, errors: [])
+
+    let parsed_namespace = parser.parse_namespace()
+    println("{}", parsed_namespace)
+}
