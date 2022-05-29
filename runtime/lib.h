@@ -274,7 +274,7 @@ struct ExplicitValueOrReturn {
 })
 
 template<typename OutputType, typename InputType>
-inline Optional<OutputType> fallible_integer_cast(InputType input)
+ALWAYS_INLINE Optional<OutputType> fallible_integer_cast(InputType input)
 {
     if constexpr (IsEnum<InputType>) {
         return fallible_integer_cast<OutputType>(to_underlying(input));
@@ -290,7 +290,7 @@ template<typename... Ts>
 void compiletime_fail(Ts...) { }
 
 template<typename OutputType, typename InputType>
-inline constexpr OutputType infallible_integer_cast(InputType input)
+ALWAYS_INLINE constexpr OutputType infallible_integer_cast(InputType input)
 {
     if constexpr (IsEnum<InputType>) {
         return infallible_integer_cast<OutputType>(to_underlying(input));
@@ -307,7 +307,7 @@ inline constexpr OutputType infallible_integer_cast(InputType input)
 }
 
 template<typename OutputType, typename InputType>
-inline constexpr OutputType as_saturated(InputType input)
+ALWAYS_INLINE constexpr OutputType as_saturated(InputType input)
 {
     if constexpr (IsEnum<InputType>) {
         return as_saturated<OutputType>(to_underlying(input));
@@ -325,7 +325,7 @@ inline constexpr OutputType as_saturated(InputType input)
 }
 
 template<typename OutputType, typename InputType>
-inline constexpr OutputType as_truncated(InputType input)
+ALWAYS_INLINE constexpr OutputType as_truncated(InputType input)
 {
     if constexpr (IsEnum<InputType>) {
         return as_truncated<OutputType>(to_underlying(input));
@@ -349,7 +349,7 @@ template<typename T>
 using RemoveRefPtr = typename _RemoveRefPtr<RemoveCVReference<T>>::Type;
 
 template<typename T>
-inline decltype(auto) deref_if_ref_pointer(T&& value)
+ALWAYS_INLINE decltype(auto) deref_if_ref_pointer(T&& value)
 {
     if constexpr (IsSpecializationOf<RemoveCVReference<T>, NonnullRefPtr>)
         return static_cast<CopyConst<RemoveReference<T>, RemoveRefPtr<T>>&>(*value);

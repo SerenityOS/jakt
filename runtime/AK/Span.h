@@ -19,23 +19,23 @@ namespace Detail {
 template<typename T>
 class Span {
 public:
-    constexpr Span() = default;
+    ALWAYS_INLINE constexpr Span() = default;
 
-    constexpr Span(T* values, size_t size)
+    ALWAYS_INLINE constexpr Span(T* values, size_t size)
         : m_values(values)
         , m_size(size)
     {
     }
 
     template<size_t size>
-    constexpr Span(T (&values)[size])
+    ALWAYS_INLINE constexpr Span(T (&values)[size])
         : m_values(values)
         , m_size(size)
     {
     }
 
     template<size_t size>
-    constexpr Span(LinearArray<T, size>& array)
+    ALWAYS_INLINE constexpr Span(LinearArray<T, size>& array)
         : m_values(array.data())
         , m_size(size)
     {
@@ -43,7 +43,7 @@ public:
 
     template<size_t size>
     requires(IsConst<T>)
-        constexpr Span(LinearArray<T, size> const& array)
+        ALWAYS_INLINE constexpr Span(LinearArray<T, size> const& array)
         : m_values(array.data())
         , m_size(size)
     {
@@ -57,14 +57,14 @@ protected:
 template<>
 class Span<u8> {
 public:
-    constexpr Span() = default;
+    ALWAYS_INLINE constexpr Span() = default;
 
-    constexpr Span(u8* values, size_t size)
+    ALWAYS_INLINE constexpr Span(u8* values, size_t size)
         : m_values(values)
         , m_size(size)
     {
     }
-    Span(void* values, size_t size)
+    ALWAYS_INLINE Span(void* values, size_t size)
         : m_values(reinterpret_cast<u8*>(values))
         , m_size(size)
     {
@@ -78,19 +78,19 @@ protected:
 template<>
 class Span<u8 const> {
 public:
-    constexpr Span() = default;
+    ALWAYS_INLINE constexpr Span() = default;
 
-    constexpr Span(u8 const* values, size_t size)
+    ALWAYS_INLINE constexpr Span(u8 const* values, size_t size)
         : m_values(values)
         , m_size(size)
     {
     }
-    Span(void const* values, size_t size)
+    ALWAYS_INLINE Span(void const* values, size_t size)
         : m_values(reinterpret_cast<u8 const*>(values))
         , m_size(size)
     {
     }
-    Span(char const* values, size_t size)
+    ALWAYS_INLINE Span(char const* values, size_t size)
         : m_values(reinterpret_cast<u8 const*>(values))
         , m_size(size)
     {
@@ -110,11 +110,11 @@ public:
 
     constexpr Span() = default;
 
-    [[nodiscard]] constexpr T const* data() const { return this->m_values; }
-    [[nodiscard]] constexpr T* data() { return this->m_values; }
+    [[nodiscard]] ALWAYS_INLINE constexpr T const* data() const { return this->m_values; }
+    [[nodiscard]] ALWAYS_INLINE constexpr T* data() { return this->m_values; }
 
-    [[nodiscard]] constexpr T const* offset_pointer(size_t offset) const { return this->m_values + offset; }
-    [[nodiscard]] constexpr T* offset_pointer(size_t offset) { return this->m_values + offset; }
+    [[nodiscard]] ALWAYS_INLINE constexpr T const* offset_pointer(size_t offset) const { return this->m_values + offset; }
+    [[nodiscard]] ALWAYS_INLINE constexpr T* offset_pointer(size_t offset) { return this->m_values + offset; }
 
     using ConstIterator = SimpleIterator<Span const, T const>;
     using Iterator = SimpleIterator<Span, T>;
@@ -125,57 +125,57 @@ public:
     constexpr ConstIterator end() const { return ConstIterator::end(*this); }
     constexpr Iterator end() { return Iterator::end(*this); }
 
-    [[nodiscard]] constexpr size_t size() const { return this->m_size; }
-    [[nodiscard]] constexpr bool is_null() const { return this->m_values == nullptr; }
-    [[nodiscard]] constexpr bool is_empty() const { return this->m_size == 0; }
+    [[nodiscard]] ALWAYS_INLINE constexpr size_t size() const { return this->m_size; }
+    [[nodiscard]] ALWAYS_INLINE constexpr bool is_null() const { return this->m_values == nullptr; }
+    [[nodiscard]] ALWAYS_INLINE constexpr bool is_empty() const { return this->m_size == 0; }
 
-    [[nodiscard]] constexpr Span slice(size_t start, size_t length) const
+    [[nodiscard]] ALWAYS_INLINE constexpr Span slice(size_t start, size_t length) const
     {
         VERIFY(start + length <= size());
         return { this->m_values + start, length };
     }
-    [[nodiscard]] constexpr Span slice(size_t start) const
+    [[nodiscard]] ALWAYS_INLINE constexpr Span slice(size_t start) const
     {
         VERIFY(start <= size());
         return { this->m_values + start, size() - start };
     }
-    [[nodiscard]] constexpr Span slice_from_end(size_t count) const
+    [[nodiscard]] ALWAYS_INLINE constexpr Span slice_from_end(size_t count) const
     {
         VERIFY(count <= size());
         return { this->m_values + size() - count, count };
     }
 
-    [[nodiscard]] constexpr Span trim(size_t length) const
+    [[nodiscard]] ALWAYS_INLINE constexpr Span trim(size_t length) const
     {
         return { this->m_values, min(size(), length) };
     }
 
-    [[nodiscard]] constexpr T* offset(size_t start) const
+    [[nodiscard]] ALWAYS_INLINE constexpr T* offset(size_t start) const
     {
         VERIFY(start < this->m_size);
         return this->m_values + start;
     }
 
-    constexpr void overwrite(size_t offset, void const* data, size_t data_size)
+    ALWAYS_INLINE constexpr void overwrite(size_t offset, void const* data, size_t data_size)
     {
         // make sure we're not told to write past the end
         VERIFY(offset + data_size <= size());
         __builtin_memmove(this->data() + offset, data, data_size);
     }
 
-    constexpr size_t copy_to(Span<RemoveConst<T>> other) const
+    ALWAYS_INLINE constexpr size_t copy_to(Span<RemoveConst<T>> other) const
     {
         VERIFY(other.size() >= size());
         return TypedTransfer<RemoveConst<T>>::copy(other.data(), data(), size());
     }
 
-    constexpr size_t copy_trimmed_to(Span<RemoveConst<T>> other) const
+    ALWAYS_INLINE constexpr size_t copy_trimmed_to(Span<RemoveConst<T>> other) const
     {
         auto const count = min(size(), other.size());
         return TypedTransfer<RemoveConst<T>>::copy(other.data(), data(), count);
     }
 
-    constexpr size_t fill(T const& value)
+    ALWAYS_INLINE constexpr size_t fill(T const& value)
     {
         for (size_t idx = 0; idx < size(); ++idx)
             data()[idx] = value;
@@ -200,34 +200,34 @@ public:
         return TypedTransfer<T>::compare(data(), other.data(), other.size());
     }
 
-    [[nodiscard]] constexpr T const& at(size_t index) const
+    [[nodiscard]] ALWAYS_INLINE constexpr T const& at(size_t index) const
     {
         VERIFY(index < this->m_size);
         return this->m_values[index];
     }
 
-    [[nodiscard]] constexpr T& at(size_t index)
+    [[nodiscard]] ALWAYS_INLINE constexpr T& at(size_t index)
     {
         VERIFY(index < this->m_size);
         return this->m_values[index];
     }
 
-    [[nodiscard]] constexpr T const& last() const
+    [[nodiscard]] ALWAYS_INLINE constexpr T const& last() const
     {
         return this->at(this->size() - 1);
     }
 
-    [[nodiscard]] constexpr T& last()
+    [[nodiscard]] ALWAYS_INLINE constexpr T& last()
     {
         return this->at(this->size() - 1);
     }
 
-    [[nodiscard]] constexpr T const& operator[](size_t index) const
+    [[nodiscard]] ALWAYS_INLINE constexpr T const& operator[](size_t index) const
     {
         return at(index);
     }
 
-    [[nodiscard]] constexpr T& operator[](size_t index)
+    [[nodiscard]] ALWAYS_INLINE constexpr T& operator[](size_t index)
     {
         return at(index);
     }
@@ -240,7 +240,7 @@ public:
         return TypedTransfer<T>::compare(data(), other.data(), size());
     }
 
-    constexpr operator Span<T const>() const
+    ALWAYS_INLINE constexpr operator Span<T const>() const
     {
         return { data(), size() };
     }

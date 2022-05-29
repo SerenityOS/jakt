@@ -46,7 +46,7 @@ struct Variant;
 template<typename IndexType, IndexType InitialIndex, typename F, typename... Ts>
 struct Variant<IndexType, InitialIndex, F, Ts...> {
     static constexpr auto current_index = VariantIndexOf<F, IndexType, InitialIndex, F, Ts...> {}();
-    static void delete_(IndexType id, void* data)
+    ALWAYS_INLINE static void delete_(IndexType id, void* data)
     {
         if (id == current_index)
             bit_cast<F*>(data)->~F();
@@ -54,7 +54,7 @@ struct Variant<IndexType, InitialIndex, F, Ts...> {
             Variant<IndexType, InitialIndex + 1, Ts...>::delete_(id, data);
     }
 
-    static void move_(IndexType old_id, void* old_data, void* new_data)
+    ALWAYS_INLINE static void move_(IndexType old_id, void* old_data, void* new_data)
     {
         if (old_id == current_index)
             new (new_data) F(move(*bit_cast<F*>(old_data)));
@@ -62,7 +62,7 @@ struct Variant<IndexType, InitialIndex, F, Ts...> {
             Variant<IndexType, InitialIndex + 1, Ts...>::move_(old_id, old_data, new_data);
     }
 
-    static void copy_(IndexType old_id, void const* old_data, void* new_data)
+    ALWAYS_INLINE static void copy_(IndexType old_id, void const* old_data, void* new_data)
     {
         if (old_id == current_index)
             new (new_data) F(*bit_cast<F const*>(old_data));
@@ -73,9 +73,9 @@ struct Variant<IndexType, InitialIndex, F, Ts...> {
 
 template<typename IndexType, IndexType InitialIndex>
 struct Variant<IndexType, InitialIndex> {
-    static void delete_(IndexType, void*) { }
-    static void move_(IndexType, void*, void*) { }
-    static void copy_(IndexType, void const*, void*) { }
+    ALWAYS_INLINE static void delete_(IndexType, void*) { }
+    ALWAYS_INLINE static void move_(IndexType, void*, void*) { }
+    ALWAYS_INLINE static void copy_(IndexType, void const*, void*) { }
 };
 
 template<typename IndexType, typename... Ts>
@@ -97,7 +97,7 @@ struct VisitImpl {
     }
 
     template<typename Self, typename Visitor, IndexType CurrentIndex = 0>
-    static constexpr decltype(auto) visit(Self& self, IndexType id, void const* data, Visitor&& visitor) requires(CurrentIndex < sizeof...(Ts))
+    ALWAYS_INLINE static constexpr decltype(auto) visit(Self& self, IndexType id, void const* data, Visitor&& visitor) requires(CurrentIndex < sizeof...(Ts))
     {
         using T = typename TypeList<Ts...>::template Type<CurrentIndex>;
 
@@ -129,22 +129,22 @@ struct VariantConstructTag {
 
 template<typename T, typename Base>
 struct VariantConstructors {
-    VariantConstructors(T&& t) requires(requires { T(move(t)); })
+    ALWAYS_INLINE VariantConstructors(T&& t) requires(requires { T(move(t)); })
     {
         internal_cast().clear_without_destruction();
         internal_cast().set(move(t), VariantNoClearTag {});
     }
 
-    VariantConstructors(const T& t) requires(requires { T(t); })
+    ALWAYS_INLINE VariantConstructors(const T& t) requires(requires { T(t); })
     {
         internal_cast().clear_without_destruction();
         internal_cast().set(t, VariantNoClearTag {});
     }
 
-    VariantConstructors() = default;
+    ALWAYS_INLINE VariantConstructors() = default;
 
 private:
-    [[nodiscard]] Base& internal_cast()
+    [[nodiscard]] ALWAYS_INLINE Base& internal_cast()
     {
         // Warning: Internal type shenanigans - VariantsConstrutors<T, Base> <- Base
         //          Not the other way around, so be _really_ careful not to cause issues.
@@ -270,7 +270,7 @@ public:
     Variant& operator=(Variant&&) = default;
 #endif
 
-    Variant(Variant const& old)
+    ALWAYS_INLINE Variant(Variant const& old)
 #ifdef AK_HAS_CONDITIONALLY_TRIVIAL
         requires(!(IsTriviallyCopyConstructible<Ts> && ...))
 #endif
@@ -285,7 +285,7 @@ public:
     //       so if a variant containing an int is moved from, it will still contain that int
     //       and if a variant with a nontrivial move ctor is moved from, it may or may not be valid
     //       but it will still contain the "moved-from" state of the object it previously contained.
-    Variant(Variant&& old)
+    ALWAYS_INLINE Variant(Variant&& old)
 #ifdef AK_HAS_CONDITIONALLY_TRIVIAL
         requires(!(IsTriviallyMoveConstructible<Ts> && ...))
 #endif
@@ -295,7 +295,7 @@ public:
         Helper::move_(old.m_index, old.m_data, m_data);
     }
 
-    ~Variant()
+    ALWAYS_INLINE ~Variant()
 #ifdef AK_HAS_CONDITIONALLY_TRIVIAL
         requires(!(IsTriviallyDestructible<Ts> && ...))
 #endif
@@ -303,7 +303,7 @@ public:
         Helper::delete_(m_index, m_data);
     }
 
-    Variant& operator=(Variant const& other)
+    ALWAYS_INLINE Variant& operator=(Variant const& other)
 #ifdef AK_HAS_CONDITIONALLY_TRIVIAL
         requires(!(IsTriviallyCopyConstructible<Ts> && ...) || !(IsTriviallyDestructible<Ts> && ...))
 #endif
@@ -318,7 +318,7 @@ public:
         return *this;
     }
 
-    Variant& operator=(Variant&& other)
+    ALWAYS_INLINE Variant& operator=(Variant&& other)
 #ifdef AK_HAS_CONDITIONALLY_TRIVIAL
         requires(!(IsTriviallyMoveConstructible<Ts> && ...) || !(IsTriviallyDestructible<Ts> && ...))
 #endif
@@ -389,14 +389,14 @@ public:
     }
 
     template<typename... Fs>
-    decltype(auto) visit(Fs&&... functions)
+    ALWAYS_INLINE decltype(auto) visit(Fs&&... functions)
     {
         Visitor<Fs...> visitor { forward<Fs>(functions)... };
         return VisitHelper::visit(*this, m_index, m_data, move(visitor));
     }
 
     template<typename... Fs>
-    decltype(auto) visit(Fs&&... functions) const
+    ALWAYS_INLINE decltype(auto) visit(Fs&&... functions) const
     {
         Visitor<Fs...> visitor { forward<Fs>(functions)... };
         return VisitHelper::visit(*this, m_index, m_data, move(visitor));
@@ -441,7 +441,7 @@ private:
     {
     }
 
-    void clear_without_destruction()
+    ALWAYS_INLINE void clear_without_destruction()
     {
         __builtin_memset(m_data, 0, data_size);
         m_index = invalid_index;

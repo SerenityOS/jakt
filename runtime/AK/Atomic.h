@@ -178,12 +178,12 @@ public:
         return __atomic_compare_exchange(&m_value, &expected, &desired, false, order, order);
     }
 
-    operator T() const volatile noexcept
+    ALWAYS_INLINE operator T() const volatile noexcept
     {
         return load();
     }
 
-    T load(MemoryOrder order = DefaultMemoryOrder) const volatile noexcept
+    ALWAYS_INLINE T load(MemoryOrder order = DefaultMemoryOrder) const volatile noexcept
     {
         alignas(T) u8 buffer[sizeof(T)];
         T* ret = reinterpret_cast<T*>(buffer);
@@ -192,18 +192,18 @@ public:
     }
 
     // NOLINTNEXTLINE(misc-unconventional-assign-operator) We want operator= to exchange the value, so returning an object of type Atomic& here does not make sense
-    T operator=(T desired) volatile noexcept
+    ALWAYS_INLINE T operator=(T desired) volatile noexcept
     {
         store(desired);
         return desired;
     }
 
-    void store(T desired, MemoryOrder order = DefaultMemoryOrder) volatile noexcept
+    ALWAYS_INLINE void store(T desired, MemoryOrder order = DefaultMemoryOrder) volatile noexcept
     {
         __atomic_store(&m_value, &desired, order);
     }
 
-    bool is_lock_free() const volatile noexcept
+    ALWAYS_INLINE bool is_lock_free() const volatile noexcept
     {
         return __atomic_is_lock_free(sizeof(m_value), &m_value);
     }
@@ -242,99 +242,99 @@ public:
         return __atomic_compare_exchange_n(&m_value, &expected, desired, false, order, order);
     }
 
-    T operator++() volatile noexcept
+    ALWAYS_INLINE T operator++() volatile noexcept
     {
         return fetch_add(1) + 1;
     }
 
-    T operator++(int) volatile noexcept
+    ALWAYS_INLINE T operator++(int) volatile noexcept
     {
         return fetch_add(1);
     }
 
-    T operator+=(T val) volatile noexcept
+    ALWAYS_INLINE T operator+=(T val) volatile noexcept
     {
         return fetch_add(val) + val;
     }
 
-    T fetch_add(T val, MemoryOrder order = DefaultMemoryOrder) volatile noexcept
+    ALWAYS_INLINE T fetch_add(T val, MemoryOrder order = DefaultMemoryOrder) volatile noexcept
     {
         return __atomic_fetch_add(&m_value, val, order);
     }
 
-    T operator--() volatile noexcept
+    ALWAYS_INLINE T operator--() volatile noexcept
     {
         return fetch_sub(1) - 1;
     }
 
-    T operator--(int) volatile noexcept
+    ALWAYS_INLINE T operator--(int) volatile noexcept
     {
         return fetch_sub(1);
     }
 
-    T operator-=(T val) volatile noexcept
+    ALWAYS_INLINE T operator-=(T val) volatile noexcept
     {
         return fetch_sub(val) - val;
     }
 
-    T fetch_sub(T val, MemoryOrder order = DefaultMemoryOrder) volatile noexcept
+    ALWAYS_INLINE T fetch_sub(T val, MemoryOrder order = DefaultMemoryOrder) volatile noexcept
     {
         return __atomic_fetch_sub(&m_value, val, order);
     }
 
-    T operator&=(T val) volatile noexcept
+    ALWAYS_INLINE T operator&=(T val) volatile noexcept
     {
         return fetch_and(val) & val;
     }
 
-    T fetch_and(T val, MemoryOrder order = DefaultMemoryOrder) volatile noexcept
+    ALWAYS_INLINE T fetch_and(T val, MemoryOrder order = DefaultMemoryOrder) volatile noexcept
     {
         return __atomic_fetch_and(&m_value, val, order);
     }
 
-    T operator|=(T val) volatile noexcept
+    ALWAYS_INLINE T operator|=(T val) volatile noexcept
     {
         return fetch_or(val) | val;
     }
 
-    T fetch_or(T val, MemoryOrder order = DefaultMemoryOrder) volatile noexcept
+    ALWAYS_INLINE T fetch_or(T val, MemoryOrder order = DefaultMemoryOrder) volatile noexcept
     {
         return __atomic_fetch_or(&m_value, val, order);
     }
 
-    T operator^=(T val) volatile noexcept
+    ALWAYS_INLINE T operator^=(T val) volatile noexcept
     {
         return fetch_xor(val) ^ val;
     }
 
-    T fetch_xor(T val, MemoryOrder order = DefaultMemoryOrder) volatile noexcept
+    ALWAYS_INLINE T fetch_xor(T val, MemoryOrder order = DefaultMemoryOrder) volatile noexcept
     {
         return __atomic_fetch_xor(&m_value, val, order);
     }
 
-    operator T() const volatile noexcept
+    ALWAYS_INLINE operator T() const volatile noexcept
     {
         return load();
     }
 
-    T load(MemoryOrder order = DefaultMemoryOrder) const volatile noexcept
+    ALWAYS_INLINE T load(MemoryOrder order = DefaultMemoryOrder) const volatile noexcept
     {
         return __atomic_load_n(&m_value, order);
     }
 
     // NOLINTNEXTLINE(misc-unconventional-assign-operator) We want operator= to exchange the value, so returning an object of type Atomic& here does not make sense
-    T operator=(T desired) volatile noexcept
+    ALWAYS_INLINE T operator=(T desired) volatile noexcept
     {
         store(desired);
         return desired;
     }
 
-    void store(T desired, MemoryOrder order = DefaultMemoryOrder) volatile noexcept
+    ALWAYS_INLINE void store(T desired, MemoryOrder order = DefaultMemoryOrder) volatile noexcept
     {
         __atomic_store_n(&m_value, desired, order);
     }
 
-    bool is_lock_free() const volatile noexcept
+    ALWAYS_INLINE bool is_lock_free() const volatile noexcept
     {
         return __atomic_is_lock_free(sizeof(m_value), &m_value);
     }

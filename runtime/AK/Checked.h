@@ -156,19 +156,19 @@ public:
         return m_overflow;
     }
 
-    constexpr bool operator!() const
+    ALWAYS_INLINE constexpr bool operator!() const
     {
         VERIFY(!m_overflow);
         return !m_value;
     }
 
-    constexpr T value() const
+    ALWAYS_INLINE constexpr T value() const
     {
         VERIFY(!m_overflow);
         return m_value;
     }
 
-    constexpr T value_unchecked() const
+    ALWAYS_INLINE constexpr T value_unchecked() const
     {
         return m_value;
     }

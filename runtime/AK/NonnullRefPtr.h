@@ -23,14 +23,14 @@ template<typename T>
 class RefPtr;
 
 template<typename T>
-void ref_if_not_null(T* ptr)
+ALWAYS_INLINE void ref_if_not_null(T* ptr)
 {
     if (ptr)
         ptr->ref();
 }
 
 template<typename T>
-void unref_if_not_null(T* ptr)
+ALWAYS_INLINE void unref_if_not_null(T* ptr)
 {
     if (ptr)
         ptr->unref();
@@ -50,49 +50,49 @@ public:
 
     enum AdoptTag { Adopt };
 
-    NonnullRefPtr(T const& object)
+    ALWAYS_INLINE NonnullRefPtr(T const& object)
         : m_ptr(const_cast<T*>(&object))
     {
         m_ptr->ref();
     }
 
     template<typename U>
-    NonnullRefPtr(U const& object) requires(IsConvertible<U*, T*>)
+    ALWAYS_INLINE NonnullRefPtr(U const& object) requires(IsConvertible<U*, T*>)
         : m_ptr(const_cast<T*>(static_cast<T const*>(&object)))
     {
         m_ptr->ref();
     }
 
-    NonnullRefPtr(AdoptTag, T& object)
+    ALWAYS_INLINE NonnullRefPtr(AdoptTag, T& object)
         : m_ptr(&object)
     {
     }
 
-    NonnullRefPtr(NonnullRefPtr&& other)
+    ALWAYS_INLINE NonnullRefPtr(NonnullRefPtr&& other)
         : m_ptr(&other.leak_ref())
     {
     }
 
     template<typename U>
-    NonnullRefPtr(NonnullRefPtr<U>&& other) requires(IsConvertible<U*, T*>)
+    ALWAYS_INLINE NonnullRefPtr(NonnullRefPtr<U>&& other) requires(IsConvertible<U*, T*>)
         : m_ptr(static_cast<T*>(&other.leak_ref()))
     {
     }
 
-    NonnullRefPtr(NonnullRefPtr const& other)
+    ALWAYS_INLINE NonnullRefPtr(NonnullRefPtr const& other)
         : m_ptr(const_cast<T*>(other.ptr()))
     {
         m_ptr->ref();
     }
 
     template<typename U>
-    NonnullRefPtr(NonnullRefPtr<U> const& other) requires(IsConvertible<U*, T*>)
+    ALWAYS_INLINE NonnullRefPtr(NonnullRefPtr<U> const& other) requires(IsConvertible<U*, T*>)
         : m_ptr(const_cast<T*>(static_cast<T const*>(other.ptr())))
     {
         m_ptr->ref();
     }
 
-    ~NonnullRefPtr()
+    ALWAYS_INLINE ~NonnullRefPtr()
     {
         unref_if_not_null(m_ptr);
         m_ptr = nullptr;
@@ -123,7 +123,7 @@ public:
         return *this;
     }
 
-    NonnullRefPtr& operator=(NonnullRefPtr&& other)
+    ALWAYS_INLINE NonnullRefPtr& operator=(NonnullRefPtr&& other)
     {
         NonnullRefPtr tmp { move(other) };
         swap(tmp);
@@ -145,54 +145,54 @@ public:
         return *this;
     }
 
-    [[nodiscard]] T& leak_ref()
+    [[nodiscard]] ALWAYS_INLINE T& leak_ref()
     {
         T* ptr = exchange(m_ptr, nullptr);
         VERIFY(ptr);
         return *ptr;
     }
 
-    RETURNS_NONNULL T* ptr()
+    ALWAYS_INLINE RETURNS_NONNULL T* ptr()
     {
         return as_nonnull_ptr();
     }
-    RETURNS_NONNULL const T* ptr() const
-    {
-        return as_nonnull_ptr();
-    }
-
-    RETURNS_NONNULL T* operator->()
-    {
-        return as_nonnull_ptr();
-    }
-    RETURNS_NONNULL const T* operator->() const
+    ALWAYS_INLINE RETURNS_NONNULL const T* ptr() const
     {
         return as_nonnull_ptr();
     }
 
-    T& operator*()
+    ALWAYS_INLINE RETURNS_NONNULL T* operator->()
+    {
+        return as_nonnull_ptr();
+    }
+    ALWAYS_INLINE RETURNS_NONNULL const T* operator->() const
+    {
+        return as_nonnull_ptr();
+    }
+
+    ALWAYS_INLINE T& operator*()
     {
         return *as_nonnull_ptr();
     }
-    const T& operator*() const
+    ALWAYS_INLINE const T& operator*() const
     {
         return *as_nonnull_ptr();
     }
 
-    RETURNS_NONNULL operator T*()
+    ALWAYS_INLINE RETURNS_NONNULL operator T*()
     {
         return as_nonnull_ptr();
     }
-    RETURNS_NONNULL operator const T*() const
+    ALWAYS_INLINE RETURNS_NONNULL operator const T*() const
     {
         return as_nonnull_ptr();
     }
 
-    operator T&()
+    ALWAYS_INLINE operator T&()
     {
         return *as_nonnull_ptr();
     }
-    operator const T&() const
+    ALWAYS_INLINE operator const T&() const
     {
         return *as_nonnull_ptr();
     }
@@ -216,7 +216,7 @@ private:
     NonnullRefPtr() = delete;
     // clang-format on
 
-    RETURNS_NONNULL T* as_nonnull_ptr() const
+    ALWAYS_INLINE RETURNS_NONNULL T* as_nonnull_ptr() const
     {
         VERIFY(m_ptr);
         return m_ptr;
