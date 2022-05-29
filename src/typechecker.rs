@@ -5077,7 +5077,7 @@ pub fn typecheck_expression(
                 _ => {
                     error = error.or(Some(JaktError::TypecheckError(
                         format!(
-                            "member access on value of non-struct type {} is not allowed",
+                            "Member field access on value of non-struct type ‘{}’",
                             project.typename_for_type_id(checked_expr_type_id)
                         ),
                         *span,

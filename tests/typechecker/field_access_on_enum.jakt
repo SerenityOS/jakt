@@ -1,0 +1,12 @@
+/// Expect:
+/// - error: "Member field access on value of non-struct type ‘enum E’"
+
+enum E {
+    A
+    B
+}
+
+function main() {
+    let e = E::A()
+    e.x
+}
