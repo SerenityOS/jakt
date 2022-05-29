@@ -175,7 +175,7 @@ fn compiler_exists(path: &PathBuf) -> bool {
 }
 
 /// Make sure to keep these up-to-date if you're adding arguments.
-const USAGE: &str = "usage: jakt [-h,-S] [OPTIONS] [FILES...]";
+const USAGE: &str = "usage: jakt [-h,-p,-S] [OPTIONS] [FILES...]";
 
 // FIXME: Once format is stable as a const function, include USAGE in this string.
 const HELP: &str = "\
