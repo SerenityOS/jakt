@@ -1,4 +1,4 @@
-/// Exepct:
+/// Expect:
 /// - error: "match expression is not exhaustive, a value match must contain an irrefutable 'else' pattern"
 
 function main() {
