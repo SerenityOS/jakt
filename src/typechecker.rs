@@ -3757,6 +3757,7 @@ pub fn typecheck_expression(
                 None,
                 safety_mode,
                 type_hint,
+                false,
             );
             error = error.or(err);
 
@@ -3868,23 +3869,53 @@ pub fn typecheck_expression(
                             check_accessibility(scope_id, variable_scope_id, var, span, project),
                         )
                     } else {
-                        (
-                            CheckedExpression::NamespacedVar(
-                                checked_namespace,
-                                CheckedVariable {
-                                    name: v.clone(),
-                                    type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
-                                    mutable: false,
-                                    visibility: Visibility::Public,
-                                    definition_span: *span,
-                                },
-                                *span,
-                            ),
-                            Some(JaktError::TypecheckError(
-                                format!("variable '{}' not found", v),
-                                *span,
-                            )),
-                        )
+                        // Check if there's a constructor with this name.
+
+                        let implicit_constructor_call = ParsedCall {
+                            namespace: ns.clone(),
+                            name: v.clone(),
+                            args: Vec::new(),
+                            type_args: Vec::new(),
+                        };
+
+                        let (checked_call, err) = typecheck_call(
+                            &implicit_constructor_call,
+                            scope_id,
+                            span,
+                            project,
+                            None,
+                            None,
+                            safety_mode,
+                            type_hint,
+                            true,
+                        );
+                        error = error.or(err);
+
+                        let (type_id, err) =
+                            unify_with_type(checked_call.type_id, type_hint, *span, project);
+                        error = error.or(err);
+
+                        if error.is_none() {
+                            (CheckedExpression::Call(checked_call, *span, type_id), error)
+                        } else {
+                            (
+                                CheckedExpression::NamespacedVar(
+                                    checked_namespace,
+                                    CheckedVariable {
+                                        name: v.clone(),
+                                        type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
+                                        mutable: false,
+                                        visibility: Visibility::Public,
+                                        definition_span: *span,
+                                    },
+                                    *span,
+                                ),
+                                Some(JaktError::TypecheckError(
+                                    format!("variable '{}' not found", v),
+                                    *span,
+                                )),
+                            )
+                        }
                     }
                 }
                 None => (
@@ -5087,6 +5118,7 @@ pub fn typecheck_expression(
                             Some(StructOrEnumId::Struct(struct_id)),
                             safety_mode,
                             type_hint,
+                            false,
                         );
                         error = error.or(err);
 
@@ -5131,6 +5163,7 @@ pub fn typecheck_expression(
                             Some(id),
                             safety_mode,
                             type_hint,
+                            false,
                         );
                         error = error.or(err);
 
@@ -5164,6 +5197,7 @@ pub fn typecheck_expression(
                             Some(id),
                             safety_mode,
                             type_hint,
+                            false,
                         );
                         error = error.or(err);
 
@@ -5783,6 +5817,7 @@ pub fn resolve_call(
     span: &Span,
     scope_id: ScopeId,
     project: &mut Project,
+    must_be_enum_constructor: bool,
 ) -> (Option<FunctionId>, Option<JaktError>) {
     let mut callee = None;
     let mut error = None;
@@ -5843,7 +5878,19 @@ pub fn resolve_call(
 
     // 1. Look for a function with this name.
     if let Some(function_id) = project.find_function_in_scope(current_scope_id, &call.name) {
-        callee = Some(function_id);
+        if !must_be_enum_constructor
+            || project.functions[function_id].linkage == FunctionLinkage::ImplicitEnumConstructor
+        {
+            callee = Some(function_id);
+            return (callee, error);
+        }
+    }
+
+    if must_be_enum_constructor {
+        error = error.or(Some(JaktError::TypecheckError(
+            format!("No such enum constructor ‘{}’", &call.name),
+            *span,
+        )));
         return (callee, error);
     }
 
@@ -5896,6 +5943,7 @@ pub fn typecheck_call(
     parent_id: Option<StructOrEnumId>,
     safety_mode: SafetyMode,
     type_hint: Option<TypeId>,
+    must_be_enum_constructor: bool,
 ) -> (CheckedCall, Option<JaktError>) {
     let mut checked_args = Vec::new();
     let mut error = None;
@@ -5926,7 +5974,9 @@ pub fn typecheck_call(
     let mut maybe_this_type_id = None;
 
     match call.name.as_str() {
-        "print" | "println" | "eprintln" | "format" if parent_id.is_none() => {
+        "print" | "println" | "eprintln" | "format"
+            if !must_be_enum_constructor && parent_id.is_none() =>
+        {
             // FIXME: This is a hack since println() and eprintln() are hard-coded into codegen at the moment.
             for arg in &call.args {
                 let (checked_arg, err) =
@@ -5962,6 +6012,7 @@ pub fn typecheck_call(
                 span,
                 callee_scope_id,
                 project,
+                must_be_enum_constructor,
             );
             error = error.or(err);
 
@@ -6090,6 +6141,7 @@ pub fn typecheck_call(
                             span,
                             callee_scope_id,
                             project,
+                            false,
                         );
                         let callee_id = callee
                             .expect("internal error: previously resolved call is now unresolved");

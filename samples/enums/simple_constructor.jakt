@@ -1,0 +1,36 @@
+/// Expect:
+/// - output: "PASS\n"
+
+enum E {
+    A
+    B
+}
+
+function main() {
+    let e1 = E::A
+    let e2 = E::B
+    let e3 = E::A()
+    let e4 = E::B()
+
+    match e1 {
+        E::A => {
+            match e2 {
+                E::B => {
+                    match e3 {
+                        E::A => {
+                            match e4 {
+                                E::B => {
+                                    println("PASS")
+                                }
+                                else => {}
+                            }
+                        }
+                        else => {}
+                    }
+                }
+                else => {}
+            }
+        }
+        else => {}
+    }
+}
