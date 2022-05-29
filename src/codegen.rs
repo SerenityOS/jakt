@@ -2259,7 +2259,7 @@ fn codegen_enum_match(
                                         output.push_str(" const& ");
                                         output.push_str(arg.1.as_str());
                                         output.push_str(" = __jakt_match_value.");
-                                        output.push_str(arg.0.as_ref().unwrap());
+                                        output.push_str(arg.0.as_ref().unwrap_or(&arg.1));
                                         output.push_str(";\n");
                                     }
                                 }

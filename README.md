@@ -300,8 +300,8 @@ enum Foo {
 
 function look_at_foo(anonymous x: Foo) -> i32 {
     match x {
-        StructLikeThingy(field_a: a, field_b: b) => {
-            return a + b
+        StructLikeThingy(field_a: a, field_b) => {
+            return a + field_b
         }
     }
 }

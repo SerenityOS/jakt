@@ -1,0 +1,21 @@
+/// Expect:
+/// - output: "PASS\n"
+
+enum Foo {
+    Bar(
+        x: i32
+        y: i64
+    )
+}
+
+function main() {
+    let x = Foo::Bar(x: 0i32, y: 42)
+    match x {
+        Bar(y, x) => {
+            if y == 42 and x == 0i32 {
+                println("PASS")
+                return 0
+            }
+        }
+    }
+}

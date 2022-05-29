@@ -4575,14 +4575,19 @@ pub fn typecheck_expression(
                                                 let mut names_seen = HashMap::new();
                                                 for arg in args {
                                                     let name = &arg.0;
-                                                    if name.is_none() {
+                                                    if name.is_none()
+                                                        && !fields
+                                                            .iter()
+                                                            .any(|field| field.name == arg.1)
+                                                    {
                                                         error = error.or(Some(JaktError::TypecheckError(
                                                             format!("match case argument '{}' for struct-like enum variant cannot be anonymous", arg.1),
                                                             *arg_span,
                                                         )));
                                                         continue;
                                                     }
-                                                    let name = name.as_ref().unwrap().clone();
+                                                    let name =
+                                                        name.as_ref().unwrap_or(&arg.1).clone();
                                                     if names_seen.contains_key(&name) {
                                                         error = error.or(Some(JaktError::TypecheckError(
                                                             format!(
