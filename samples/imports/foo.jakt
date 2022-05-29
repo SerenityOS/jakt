@@ -1,3 +1,11 @@
 function bar() {
     println("PASS")
 }
+
+function baz() {
+    println("PASS AS baz")
+}
+
+function other() {
+    println("OTHER")
+}

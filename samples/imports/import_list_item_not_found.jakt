@@ -1,0 +1,5 @@
+from foo import {bat}
+
+function main() {
+    bat()
+}

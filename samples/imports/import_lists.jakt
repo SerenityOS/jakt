@@ -1,0 +1,5 @@
+from foo import {baz}
+
+function main() {
+    baz()
+}

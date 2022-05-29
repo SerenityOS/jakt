@@ -1,0 +1,10 @@
+from foo import {baz, other}
+
+function local() {
+    other()
+    baz()
+}
+
+function main() {
+    local()
+}

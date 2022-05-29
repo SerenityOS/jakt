@@ -89,12 +89,19 @@ impl PartialEq for ParsedVarDecl {
 }
 
 #[derive(Debug)]
+pub struct ImportedName {
+    pub name: String,
+    pub span: Span,
+}
+
+#[derive(Debug)]
 pub struct ParsedNamespace {
     pub name: Option<String>,
     pub functions: Vec<ParsedFunction>,
     pub structs: Vec<ParsedStruct>,
     pub enums: Vec<ParsedEnum>,
     pub namespaces: Vec<ParsedNamespace>,
+    pub import_list: Vec<ImportedName>,
 }
 
 #[derive(Debug)]
@@ -481,6 +488,7 @@ impl ParsedNamespace {
             structs: Vec::new(),
             enums: Vec::new(),
             namespaces: Vec::new(),
+            import_list: Vec::new(),
         }
     }
 }
@@ -549,13 +557,87 @@ fn parse_import(
     (ParsedNamespace::new(), error)
 }
 
+pub fn parse_imported_namespace(
+    tokens: &[Token],
+    index: &mut usize,
+    compiler: &mut Compiler,
+) -> (ParsedNamespace, Option<JaktError>) {
+    trace!("parse_imported_namespace");
+    let mut error = None;
+    let (mut namespace, err) = parse_import(tokens, index, compiler);
+    error = error.or(err);
+
+    if let Some(token) = tokens.get(*index) {
+        match &token.contents {
+            TokenContents::Name(kw) if kw == "import" => {
+                *index += 1;
+
+                if let Some(lcurly) = tokens.get(*index) {
+                    if TokenContents::LCurly == lcurly.contents {
+                        *index += 1;
+                        let mut valid = false;
+                        while *index < tokens.len() {
+                            if TokenContents::RCurly == tokens[*index].contents {
+                                *index += 1;
+                                valid = true;
+                                break;
+                            } else if TokenContents::Comma == tokens[*index].contents {
+                                *index += 1;
+                                continue;
+                            } else if let TokenContents::Name(name) = &tokens[*index].contents {
+                                *index += 1;
+                                namespace.import_list.push(ImportedName {
+                                    name: name.clone(),
+                                    span: tokens[*index - 1].span,
+                                });
+                            } else {
+                                trace!("parse_imported_namespace error 1");
+                                error = error
+                                    .or(Some(JaktError::ParserError("".to_string(), token.span)))
+                            }
+                        }
+
+                        if !valid {
+                            trace!("parse_imported_namespace validity error");
+                            error =
+                                error.or(Some(JaktError::ParserError("".to_string(), token.span)))
+                        }
+                    } else {
+                        trace!("parse_imported_namespace error 2");
+                        error = error.or(Some(JaktError::ParserError("".to_string(), token.span)))
+                    }
+                } else {
+                    trace!("parse_imported_namespace error 3");
+                    error = error.or(Some(JaktError::ParserError("".to_string(), token.span)))
+                }
+                (namespace, error)
+            }
+            _ => {
+                // error
+                trace!("parse_imported_namespace error 4");
+                (
+                    namespace,
+                    Some(JaktError::ParserError("".to_string(), token.span)),
+                )
+            }
+        }
+    } else {
+        // error
+        (
+            namespace,
+            Some(JaktError::ParserError(
+                "".to_string(),
+                tokens[*index - 1].span,
+            )),
+        )
+    }
+}
+
 pub fn parse_namespace(
     tokens: &[Token],
     index: &mut usize,
     compiler: &mut Compiler,
 ) -> (ParsedNamespace, Option<JaktError>) {
-    trace!("parse_namespace");
-
     let mut error = None;
 
     let mut parsed_namespace = ParsedNamespace::new();
@@ -662,6 +744,11 @@ pub fn parse_namespace(
                 }
                 "import" => {
                     let (namespace, err) = parse_import(tokens, index, compiler);
+                    error = error.or(err);
+                    parsed_namespace.namespaces.push(namespace);
+                }
+                "from" => {
+                    let (namespace, err) = parse_imported_namespace(tokens, index, compiler);
                     error = error.or(err);
                     parsed_namespace.namespaces.push(namespace);
                 }

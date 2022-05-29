@@ -760,6 +760,44 @@ impl Project {
         .unwrap()
     }
 
+    fn import_name_from_namespace(
+        &mut self,
+        name: &str,
+        from_namespace: ScopeId,
+        to_namespace: ScopeId,
+        span: Span,
+    ) -> Option<JaktError> {
+        // fix: importing a namespace isn't handled. Not clear how that would work right now.
+        let res = if let Some(id) = self.find_function_in_scope(from_namespace, name) {
+            self.add_function_to_scope(to_namespace, name.to_string(), id, span)
+        } else if let Some(id) = self.find_enum_in_scope(from_namespace, name) {
+            self.add_enum_to_scope(to_namespace, name.to_string(), id, span)
+        } else if let Some(id) = self.find_struct_in_scope(from_namespace, name) {
+            self.add_struct_to_scope(to_namespace, name.to_string(), id, span)
+        } else if let Some(var) = self.find_var_in_scope(from_namespace, name) {
+            self.add_var_to_scope(to_namespace, var, span)
+        } else if let Some(id) = self.find_type_in_scope(from_namespace, name) {
+            self.add_type_to_scope(to_namespace, name.to_string(), id, span)
+        } else {
+            Err(JaktError::ParserError(
+                format!(
+                    "unable to find {} in namespace {}",
+                    name,
+                    self.scopes[from_namespace]
+                        .namespace_name
+                        .as_deref()
+                        .expect("namespace scopes should always have a name")
+                ),
+                span,
+            ))
+        };
+
+        match res {
+            Ok(()) => None,
+            Err(err) => Some(err),
+        }
+    }
+
     pub fn get_array_struct_id(&self, span: Span) -> StructId {
         self.get_cached_struct_id(self.cached_array_struct_id, "Array", span)
     }
@@ -1598,6 +1636,16 @@ pub fn typecheck_namespace_declarations(
                 .expect("internal error: can't find previously added namespace");
 
             typecheck_namespace_declarations(namespace, namespace_scope_id, project);
+
+            for imported_name in namespace.import_list.iter() {
+                let err = project.import_name_from_namespace(
+                    imported_name.name.as_str(),
+                    namespace_scope_id,
+                    scope_id,
+                    imported_name.span,
+                );
+                error = error.or(err);
+            }
         } else {
             // Create a typecheck the unnamed namespace (aka a block scope)
             println!("created a namespace for empty scope");
