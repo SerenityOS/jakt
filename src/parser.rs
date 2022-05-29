@@ -2595,6 +2595,8 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
         });
     };
 
+    skip_newlines(tokens, index);
+
     if let Some(Token {
         contents: TokenContents::FatArrow,
         ..
@@ -2607,6 +2609,8 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
             tokens[*index].span,
         ));
     }
+
+    skip_newlines(tokens, index);
 
     if let Some(Token {
         contents: TokenContents::LCurly,

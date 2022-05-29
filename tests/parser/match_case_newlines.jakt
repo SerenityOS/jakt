@@ -1,0 +1,26 @@
+/// Expect:
+/// - output: "Correct!\n"
+
+enum Foo {
+    A
+    B
+    C
+}
+
+function main() {
+    let x = Foo::A()
+
+    match x {
+        A
+        =>
+        {
+            println("Correct!")
+        }
+        C =>
+        {
+        }
+        B
+        => {
+        }
+    }
+}
