@@ -1502,16 +1502,6 @@ pub fn typecheck_namespace_predecl(
 ) -> Option<JaktError> {
     let mut error = None;
 
-    for namespace in parsed_namespace.namespaces.iter() {
-        // Do full typechecks of all the namespaces that are children of this namespace
-        if namespace.name.is_some() {
-            let namespace_scope_id = project.create_scope(scope_id, false);
-            project.scopes[namespace_scope_id].namespace_name = namespace.name.clone();
-            project.scopes[scope_id].children.push(namespace_scope_id);
-            typecheck_namespace_predecl(namespace, namespace_scope_id, project);
-        }
-    }
-
     let project_struct_len = project.structs.len();
     let project_enum_len = project.enums.len();
 
@@ -1574,6 +1564,17 @@ pub fn typecheck_namespace_predecl(
         ));
     }
 
+    for namespace in parsed_namespace.namespaces.iter() {
+        // Do full typechecks of all the namespaces that are children of this namespace
+        if namespace.name.is_some() {
+            let namespace_scope_id = project.create_scope(scope_id, false);
+            project.scopes[namespace_scope_id].namespace_name = namespace.name.clone();
+            project.scopes[scope_id].children.push(namespace_scope_id);
+            let err = typecheck_namespace_predecl(namespace, namespace_scope_id, project);
+            error = error.or(err);
+        }
+    }
+
     for function in &parsed_namespace.functions {
         // Ensure we know the function prototypes ahead of time, so that
         // and calls can find and resolve to them
@@ -1599,10 +1600,10 @@ pub fn typecheck_namespace_declarations(
                 .find_namespace_in_scope(scope_id, namespace_name)
                 .expect("internal error: can't find previously added namespace");
 
-            typecheck_namespace_declarations(namespace, namespace_scope_id, project);
+            let err = typecheck_namespace_declarations(namespace, namespace_scope_id, project);
+            error = error.or(err);
         } else {
             // Create a typecheck the unnamed namespace (aka a block scope)
-            println!("created a namespace for empty scope");
 
             let namespace_scope_id = project.create_scope(scope_id, false);
             project.scopes[namespace_scope_id].namespace_name = namespace.name.clone();
@@ -6060,6 +6061,7 @@ pub fn typecheck_call(
 
                 // Check that we have the right number of arguments.
                 let callee = &project.functions[callee_id];
+
                 if callee.params.len() != (call.args.len() + arg_offset) {
                     error = error.or(Some(JaktError::TypecheckError(
                         "wrong number of arguments".to_string(),
@@ -6183,6 +6185,11 @@ pub fn typecheck_call(
                         }
                     }
                 }
+            } else {
+                error = error.or(Some(JaktError::TypecheckError(
+                    format!("Could not resolve call to {}", call.name),
+                    *span,
+                )))
             }
         }
     }
