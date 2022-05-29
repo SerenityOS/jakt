@@ -105,8 +105,6 @@ constexpr auto continue_on_panic = false;
 
 using OptionalNone = AK::NullOptional;
 
-ErrorOr<int> main(Array<String>);
-
 inline void panic(StringView message)
 {
     warnln("Panic: {}", message);
@@ -366,13 +364,18 @@ using JaktInternal::as_truncated;
 using JaktInternal::fallible_integer_cast;
 using JaktInternal::infallible_integer_cast;
 
+// We place main in a separate namespace to ensure it has access to the same identifiers as other functions
+namespace JaktMain {
+ErrorOr<int> main(Array<String>);
+}
+
 int main(int argc, char** argv)
 {
     Array<String> args;
     for (int i = 0; i < argc; ++i) {
         MUST(args.push(MUST(String::copy(StringView(argv[i])))));
     }
-    auto result = JaktInternal::main(move(args));
+    auto result = JaktMain::main(move(args));
     if (result.is_error()) {
         warnln("Runtime error: {}", result.error());
         return 1;
