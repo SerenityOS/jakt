@@ -116,9 +116,8 @@ fn main() -> Result<(), JaktError> {
                         let mut cxx_compiler = Command::new(cxx_compiler)
                             .args([
                                 "-std=c++2a",
-                                // This warning can happen for functions like fopen which Windows has deprecated but others not.
-                                // Specifically, it will happen if clang uses the MSVC runtime and/or linker.
-                                "-Wno-deprecated-declarations",
+                                // Disable CRT depreciation warnings for functions like fopen which Windows has deprecated.
+                                "-D_CRT_SECURE_NO_DEPRECATE=1",
                                 "-I",
                                 &runtime_path,
                                 &input_cpp,
