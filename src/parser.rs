@@ -2687,6 +2687,8 @@ pub fn parse_pattern_case(
         });
     };
 
+    skip_newlines(tokens, index);
+
     if let Some(Token {
         contents: TokenContents::FatArrow,
         ..
@@ -2699,6 +2701,8 @@ pub fn parse_pattern_case(
             tokens[*index].span,
         ));
     }
+
+    skip_newlines(tokens, index);
 
     if let Some(Token {
         contents: TokenContents::LCurly,
