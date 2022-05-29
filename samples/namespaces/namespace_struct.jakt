@@ -7,7 +7,7 @@ namespace Greeters {
         age: i64
 
         function greet(this) {
-            println("I am {} and my age is {}", name, age)
+            println("I am {} and my age is {}", .name, .age)
         }
     }
 }
