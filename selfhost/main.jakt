@@ -151,6 +151,10 @@ struct Lexer {
     input: [u8]
     errors: [JaktError]
 
+    function error(mutable this, anonymous message: String, anonymous span: JaktSpan) throws {
+        .errors.push(JaktError::Message(message, span))
+    }
+
     // Peek at next upcoming character
     function peek(this) -> u8 {
         if .eof() {
@@ -206,7 +210,7 @@ struct Lexer {
         }
 
         if .eof() or .peek() != b'\'' {
-            .errors.push(JaktError::Message(message: "expected single quote", span: JaktSpan(start, end: start)))
+            .error("expected single quote", JaktSpan(start, end: start))
         }
 
         // Everything but the quotes
@@ -228,7 +232,7 @@ struct Lexer {
         let start = .index
 
         if .eof() {
-            .errors.push(JaktError::Message(message: "unexpected eof", span: JaktSpan(start, end: start)))
+            .error("unexpected eof", JaktSpan(start, end: start))
             return Token::Garbage(JaktSpan(start, end: start))
         }
         if is_ascii_digit(.peek()) {
@@ -256,7 +260,7 @@ struct Lexer {
 
         let unknown_char = .input[.index]
         let end = ++.index
-        .errors.push(JaktError::Message(message: format("unknown character: {:c}", unknown_char), span: JaktSpan(start, end)))
+        .error(format("unknown character: {:c}", unknown_char), JaktSpan(start, end))
         return Token::Garbage(JaktSpan(start, end))
     }
 
@@ -266,7 +270,7 @@ struct Lexer {
         ++.index
 
         if .eof() {
-            .errors.push(JaktError::Message(message: "unexpected eof", span: JaktSpan(start, end: start)))
+            .error("unexpected eof", JaktSpan(start, end: start))
             return Token::Garbage(JaktSpan(start, end: start))
         }
 
@@ -774,6 +778,10 @@ class Parser {
     tokens: [Token]
     errors: [JaktError]
 
+    function error(mutable this, anonymous message: String, anonymous span: JaktSpan) throws {
+        .errors.push(JaktError::Message(message, span))
+    }
+
     function peek(this, anonymous steps: usize) -> Token {
         if .eof() or (steps + .index) >= .tokens.size()  {
             return .tokens[.tokens.size() - 1]
@@ -831,7 +839,7 @@ class Parser {
         .index++
 
         if .index >= .tokens.size() {
-            .errors.push(JaktError::Message(message: "Incomplete function definition", span: .current().span()))
+            .error("Incomplete function definition", .current().span())
             return parsed_function
         }
 
@@ -847,7 +855,7 @@ class Parser {
         // FIXME: Check for generic
 
         if .index >= .tokens.size() {
-            .errors.push(JaktError::Message(message: "Incomplete function", span: .current().span()))
+            .error("Incomplete function", .current().span())
         }
 
         match .current() {
@@ -855,7 +863,7 @@ class Parser {
                 .index++
             }
             else => {
-                .errors.push(JaktError::Message(message: "Expected '('", span: .current().span()))
+                .error("Expected '('", .current().span())
             }
         }
 
@@ -899,7 +907,7 @@ class Parser {
                     }
                 }
                 else => {
-                    .errors.push(JaktError::Message(message: "Expected parameter", span: .current().span()))
+                    .error("Expected parameter", .current().span())
                 }
             }
         }
@@ -934,7 +942,7 @@ class Parser {
                         return_type_span = JaktSpan(start, end: .index)
                     }
                     else => {
-                        .errors.push(JaktError::Message(message: "Expected ->", span: .current().span()))
+                        .error("Expected ->", .current().span())
                     }
                 }
             }
@@ -962,7 +970,7 @@ class Parser {
                 }
             }
             else => {
-                .errors.push(JaktError::Message(message: "Expected type name", span: .current().span()))
+                .error("Expected type name", .current().span())
             }
         }
 
@@ -989,7 +997,7 @@ class Parser {
                         return ParsedType::Dictionary(key: inner, value, span)
                     }
                     else => {
-                        .errors.push(JaktError::Message(message: "Expected shorthand type", span: .current().span()))
+                        .error("Expected shorthand type", .current().span())
                     }
                 }
             }
@@ -1004,7 +1012,7 @@ class Parser {
                         return ParsedType::Set(inner, span)
                     }
                     else => {
-                        .errors.push(JaktError::Message(message: "Expected '}'", span: .current().span()))
+                        .error("Expected '}'", .current().span())
                     }
                 }
             }
@@ -1022,7 +1030,7 @@ class Parser {
         let mutable block = ParsedBlock(stmts: [])
 
         if .eof() {
-            .errors.push(JaktError::Message(message: "Incomplete block", span: JaktSpan(start, end: start)))
+            .error("Incomplete block", JaktSpan(start, end: start))
             return block
         }
 
@@ -1031,7 +1039,7 @@ class Parser {
         match .current() {
             Token::LCurly => { .index++ }
             else => { 
-                .errors.push(JaktError::Message(message: "Expected '{'", span: JaktSpan(start, end: start)))
+                .error("Expected '{'", JaktSpan(start, end: start))
             }
         }
 
@@ -1054,7 +1062,7 @@ class Parser {
             }
         }
 
-        .errors.push(JaktError::Message(message: "Expected complete block", span: JaktSpan(start, end: .current().span().end)))
+        .error("Expected complete block", JaktSpan(start, end: .current().span().end))
         return block
     }
 
@@ -1072,7 +1080,7 @@ class Parser {
                         return ParsedStatement::Return(expr, span: JaktSpan(start, end))
                     }
                     else => {
-                        .errors.push(JaktError::Message(message: "Unknown keyword", span: JaktSpan(start, end: start)))
+                        .error("Unknown keyword", JaktSpan(start, end: start))
                     }
                 }
             }
@@ -1166,7 +1174,7 @@ class Parser {
                         println("FIXME: parse_operand_base tuple")
                     }
                     else => {
-                        .errors.push(JaktError::Message(message: "Expected ')'", span: .current().span()))
+                        .error("Expected ')'", .current().span())
                     }
                 }
             }
@@ -1212,7 +1220,7 @@ class Parser {
                         .index++
                     }
                     else => {
-                        .errors.push(JaktError::Message(message: "Expected '('", span: .current().span()))
+                        .error("Expected '('", .current().span())
                     }
                 }
 
@@ -1240,7 +1248,7 @@ class Parser {
                 }
             }
             else => {
-                .errors.push(JaktError::Message(message: "Expected function call", span: .current().span()))
+                .error("Expected function call", .current().span())
             }
         }
 
