@@ -479,7 +479,6 @@ impl Project {
         namespace_name: &str,
     ) -> Option<ScopeId> {
         let mut scope_id = Some(scope_id);
-
         while let Some(current_id) = scope_id {
             let scope = &self.scopes[current_id];
             for child_scope_id in &scope.children {
@@ -6561,6 +6560,21 @@ pub fn typecheck_typename(
     let mut error = None;
 
     match unchecked_type {
+        ParsedType::NamespacedName(name, namespaces, span) => {
+            let mut current_namespace_scope_id = scope_id;
+            for namespace in namespaces {
+                if let Some(namespace_scope_id) = project.find_namespace_in_scope(current_namespace_scope_id, namespace) {
+                    current_namespace_scope_id = namespace_scope_id;
+                } else {
+                    return (
+                        UNKNOWN_TYPE_ID,
+                        Some(JaktError::TypecheckError("Unknown namespace".to_string(), *span)),
+                    )
+                }
+            }
+            let type_id = project.find_type_in_scope(current_namespace_scope_id, name).expect("internal error: can't find variable inside namespace");
+            (type_id, error)
+        }
         ParsedType::Name(name, span) => match name.as_str() {
             "i8" => (I8_TYPE_ID, None),
             "i16" => (I16_TYPE_ID, None),

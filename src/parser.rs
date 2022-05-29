@@ -48,6 +48,7 @@ pub enum ExpressionKind {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParsedType {
     Name(String, Span),
+    NamespacedName(String, Vec<String>, Span),
     GenericType(String, Vec<ParsedType>, Span),
     Tuple(Vec<ParsedType>, Span),
     Array(Box<ParsedType>, Span),
@@ -4168,63 +4169,110 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Optio
 
         if *index < tokens.len() {
             let previous_index = *index;
-            if let TokenContents::LessThan = tokens[*index].contents {
-                // Generic type
-                *index += 1;
-                let mut inner_types = vec![];
+            match &tokens[*index].contents {
+                TokenContents::LessThan => {
+                    // Generic type
+                    *index += 1;
+                    let mut inner_types = vec![];
 
-                while *index < tokens.len() {
-                    match tokens[*index].contents {
-                        TokenContents::GreaterThan => {
-                            *index += 1;
-                            break;
-                        }
-                        TokenContents::Comma => {
-                            *index += 1;
-                        }
-                        TokenContents::Eol => {
-                            *index += 1;
-                        }
-                        _ => {
-                            let i = *index;
-                            let (inner_type, err) = parse_typename(tokens, index);
-                            if i == *index {
-                                // This is not a generic parameter, reset and leave.
-                                error = error.or(err);
+                    while *index < tokens.len() {
+                        match tokens[*index].contents {
+                            TokenContents::GreaterThan => {
+                                *index += 1;
                                 break;
                             }
-                            error = error.or(err);
-                            inner_types.push(inner_type);
+                            TokenContents::Comma => {
+                                *index += 1;
+                            }
+                            TokenContents::Eol => {
+                                *index += 1;
+                            }
+                            _ => {
+                                let i = *index;
+                                let (inner_type, err) = parse_typename(tokens, index);
+                                if i == *index {
+                                    // This is not a generic parameter, reset and leave.
+                                    error = error.or(err);
+                                    break;
+                                }
+                                error = error.or(err);
+                                inner_types.push(inner_type);
+                            }
                         }
                     }
-                }
 
-                if *index >= tokens.len() {
-                    unchecked_type = ParsedType::GenericType(
+                    if *index >= tokens.len() {
+                        unchecked_type = ParsedType::GenericType(
+                            typename,
+                            inner_types,
+                            Span {
+                                file_id: start.file_id,
+                                start: start.start,
+                                end: tokens[tokens.len() - 1].span.end,
+                            },
+                        )
+                    } else {
+                        unchecked_type = ParsedType::GenericType(
+                            typename,
+                            inner_types,
+                            Span {
+                                file_id: start.file_id,
+                                start: start.start,
+                                end: tokens[*index].span.end,
+                            },
+                        )
+                    }
+
+                    if error.is_some() {
+                        *index = previous_index;
+                    }
+                }
+                TokenContents::ColonColon => {
+                    //Type in namespace
+                    *index += 1;
+
+                    let mut namespace = vec!(typename.clone());
+
+                    while *index < tokens.len() {
+                        match &tokens[*index].contents {
+                            TokenContents::Name(name) => {
+                                match  &tokens[*index - 1].contents {
+                                    TokenContents::ColonColon => {
+                                        namespace.push(name.clone());
+                                        *index += 1;
+                                    }
+                                    _ => unreachable!()
+                                }
+                            }
+                            TokenContents::ColonColon => {
+                                match  &tokens[*index - 1].contents {
+                                    TokenContents::Name(_) => {
+                                        *index += 1;
+                                    }
+                                    _ => {
+                                        return (unchecked_type, Some(JaktError::ParserError("expected name after".to_string(), tokens[*index - 1].span)),)
+                                    }
+                                }
+                            }
+                            _ => break
+                        }
+                    }
+
+                    typename = namespace.pop().expect("internal error: namespace stack empty");
+                    unchecked_type = ParsedType::NamespacedName(
                         typename,
-                        inner_types,
+                        namespace,
                         Span {
                             file_id: start.file_id,
                             start: start.start,
                             end: tokens[tokens.len() - 1].span.end,
                         },
-                    )
-                } else {
-                    unchecked_type = ParsedType::GenericType(
-                        typename,
-                        inner_types,
-                        Span {
-                            file_id: start.file_id,
-                            start: start.start,
-                            end: tokens[*index].span.end,
-                        },
-                    )
-                }
+                    );
 
-                if error.is_some() {
-                    *index = previous_index;
+                    return (unchecked_type, error);
                 }
-            }
+                _ => ()
+            };
         }
     };
 
