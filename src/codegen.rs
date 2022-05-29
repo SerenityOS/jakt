@@ -37,6 +37,7 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
         deferred_output: String::new(),
     };
 
+    output.push_str(&codegen_namespace_predecl(project, scope, &mut context));
     output.push_str(&codegen_namespace(project, scope, &mut context));
 
     output.push_str(&context.deferred_output);
@@ -44,22 +45,17 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
     output
 }
 
-fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenContext) -> String {
+fn codegen_namespace_predecl(
+    project: &Project,
+    scope: &Scope,
+    context: &mut CodegenContext,
+) -> String {
     let mut output = String::new();
-
-    // Output the namespaces (and their children)
-    for child_scope_id in &scope.children {
-        // For now, require children of the current namespace to have names before being emitted
-        let child_scope = &project.scopes[*child_scope_id];
-        if let Some(name) = &child_scope.namespace_name {
-            context.namespace_stack.push(name.clone());
-            output.push_str(&format!("namespace {} {{\n", name));
-            output.push_str(&codegen_namespace(project, child_scope, context));
-            output.push_str("}\n");
-            context.namespace_stack.pop();
-        }
+    if let Some(name) = &scope.namespace_name {
+        output.push_str(&format!("namespace {} {{\n", name));
     }
 
+    // Visit the types.
     for (_, struct_id, _) in &scope.structs {
         let structure = &project.structs[*struct_id];
         let struct_output = codegen_struct_predecl(structure, project);
@@ -80,12 +76,44 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
         }
     }
 
-    output.push('\n');
+    // Visit the children.
+    for child in &scope.children {
+        output.push_str(&codegen_namespace_predecl(
+            project,
+            &project.scopes[*child],
+            context,
+        ));
+    }
+
+    // Visit the functions.
+    for (_, function_id, _) in &scope.functions {
+        let function = &project.functions[*function_id];
+        if function.linkage == FunctionLinkage::ImplicitEnumConstructor {
+            continue;
+        }
+
+        let function_output = codegen_function_predecl(function, project);
+
+        if function.linkage != FunctionLinkage::ImplicitConstructor && function.name != "main" {
+            output.push_str(&function_output);
+            output.push('\n');
+        }
+    }
+
+    if scope.namespace_name.is_some() {
+        output.push('}');
+    }
+
+    output
+}
+
+fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenContext) -> String {
+    let mut output = String::new();
 
     // Figure out the right order to output the structs
     // This is necessary as C++ requires a type to be defined before it's used as a value type,
     // we can ignore the generic types as they are only resolved when used by other non-generic code.
-    let type_dependency_graph = produce_type_dependency_graph(project, scope);
+    let type_dependency_graph = produce_codegen_dependency_graph(project, scope);
     let mut seen_types = HashSet::new();
     for type_id in type_dependency_graph.keys() {
         let mut traversal = Vec::new();
@@ -151,19 +179,16 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
         }
     }
 
-    output.push('\n');
-
-    for (_, function_id, _) in &scope.functions {
-        let function = &project.functions[*function_id];
-        if function.linkage == FunctionLinkage::ImplicitEnumConstructor {
-            continue;
-        }
-
-        let function_output = codegen_function_predecl(function, project);
-
-        if function.linkage != FunctionLinkage::ImplicitConstructor && function.name != "main" {
-            output.push_str(&function_output);
-            output.push('\n');
+    // Output the namespaces (and their children)
+    for child_scope_id in &scope.children {
+        // For now, require children of the current namespace to have names before being emitted
+        let child_scope = &project.scopes[*child_scope_id];
+        if let Some(name) = &child_scope.namespace_name {
+            context.namespace_stack.push(name.clone());
+            output.push_str(&format!("namespace {} {{\n", name));
+            output.push_str(&codegen_namespace(project, child_scope, context));
+            output.push_str("}\n");
+            context.namespace_stack.pop();
         }
     }
 
@@ -3245,7 +3270,10 @@ fn extract_dependencies_from(
     }
 }
 
-fn produce_type_dependency_graph(project: &Project, scope: &Scope) -> HashMap<TypeId, Vec<TypeId>> {
+fn produce_codegen_dependency_graph(
+    project: &Project,
+    scope: &Scope,
+) -> HashMap<TypeId, Vec<TypeId>> {
     let mut graph = HashMap::new();
 
     for (_, type_id, _) in &scope.types {

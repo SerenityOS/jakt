@@ -1,0 +1,36 @@
+/// Expect:
+/// - output: "PASS\n"
+
+enum Test {
+    X(i32)
+}
+
+namespace Foo {
+    function foo(anonymous x: i32) -> Test {
+        return Bar::bar(x)
+    }
+    function bar(anonymous x: i32) -> i32 {
+        return x + 1
+    }
+}
+
+namespace Bar {
+    function bar(anonymous x: i32) -> Test {
+        let y = Foo::bar(x)
+        return Test::X(y)
+    }
+    function foo(anonymous x: i32) -> Test {
+        return Foo::foo(x)
+    }
+}
+
+function main() {
+    let test = Bar::foo(41i32)
+    match test {
+        X(x) => {
+            if x == 42 {
+                print("PASS\n")
+            }
+        }
+    }
+}
