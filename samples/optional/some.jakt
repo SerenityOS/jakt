@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "5\n"
+
 function main() {
     let i = Some(5)
     println("{}", i ?? 0)

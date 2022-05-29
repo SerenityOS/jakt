@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "3\n"
+
 function do_pop<T>(anonymous arr: mutable [T]) -> Optional<T> {
   return arr.pop()
 }

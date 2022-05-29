@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "hello\nPASS\n"
+
 function main() {
     let mutable a: String? = None
     a = "hello"

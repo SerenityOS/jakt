@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "45\n"
+
 function main() {
     let mutable total = 0
 

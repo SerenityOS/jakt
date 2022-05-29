@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "30\n"
+
 struct Size {
     width: i64
     height: i64

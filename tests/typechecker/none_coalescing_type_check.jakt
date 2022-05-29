@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "None coalescing (??) with incompatible types (‘i64?’ and ‘String’)\n"
+
 function main() {
     let my_optional: i64? = 5
     let y = my_optional ?? "hello"

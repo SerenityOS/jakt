@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "128\n7\n131061\n21845\n"
+
 function main() {
     println("{}", 0b10000000)
     println("{}", 0b111)

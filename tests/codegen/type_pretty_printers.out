@@ -1,3 +1,0 @@
-Value::Bar(values: ["hello"])
-Rect(location: Point(x: 0, y: 0), size: Size(width: 15, height: 30))
-Foo::Baz(100)

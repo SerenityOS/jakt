@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Not a namespace, enum, class, or struct: ‘NS::Foo’\n"
+
 namespace NS {
     function foo() {}
 }

@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "2\nfalse\n"
+
 function main() {
     let dict = ["a": 1, "b": 2]
 

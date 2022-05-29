@@ -10,6 +10,7 @@ use crate::lexer::Span;
 #[derive(Debug)]
 pub enum JaktError {
     IOError(std::io::Error),
+    StringError(String),
     ParserError(String, Span),
     ParserErrorWithHint(String, Span, String, Span),
     ValidationError(String, Span),

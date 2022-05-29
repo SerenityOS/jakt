@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "all variants are covered, but an irrefutable pattern is also present"
+
 enum Foo {
     X
     Y

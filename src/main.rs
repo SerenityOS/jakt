@@ -103,6 +103,7 @@ fn main() -> Result<(), JaktError> {
             Err(err) => {
                 match &err {
                     JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
+                    JaktError::StringError(se) => println!("Error: {}", se),
                     JaktError::ParserError(msg, span) => display_error(&compiler, msg, *span),
                     JaktError::TypecheckError(msg, span) => display_error(&compiler, msg, *span),
                     JaktError::ValidationError(msg, span) => display_error(&compiler, msg, *span),

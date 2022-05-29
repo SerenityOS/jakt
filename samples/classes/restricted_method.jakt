@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "The secret is: Shhhh! Don't tell anyone!\nOpen sesame!\n"
+
 class Limited {
     restricted(A) function get_secret() => "Shhhh! Don't tell anyone!"
     restricted(A,B) function open_the_bank_vault() => "Open sesame!"

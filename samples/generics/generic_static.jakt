@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "1\n"
+
 struct Test {
     function test<T>(foo: T) -> T {
         return foo;

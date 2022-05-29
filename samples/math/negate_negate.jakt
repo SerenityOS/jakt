@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "3\n"
+
 function main() {
     println("{}", -(-3))
 }

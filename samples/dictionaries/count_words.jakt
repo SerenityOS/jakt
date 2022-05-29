@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "the: 2\n"
+
 function main() {
     let text = "midway upon the journey of our life I found myself within a forest dark for the straightforward pathway had been lost"
     let words = text.split(' ')

@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "20\n10\n"
+
 function main() {
     let x = 10
     {

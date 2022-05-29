@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: ""
+
 struct A<T> {
     field: B<T>
 }

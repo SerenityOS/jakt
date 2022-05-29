@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "bar\n"
+
 function main() {
     let result = "foo bar".split(' ')
 

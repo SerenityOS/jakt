@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "wrong number of arguments\n"
+
 function foo(a: i32, b: i32, c: i32) {
 }
 

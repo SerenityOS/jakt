@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Integer promotion failed\n"
+
 function main() {
     let i: u8 = 1000;
 }

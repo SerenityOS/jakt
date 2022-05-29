@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: ""
+
 ref enum Foo<T> {
     A(T?)
     B([T])

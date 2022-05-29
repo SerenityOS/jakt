@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "foo\nbar\nbaz\n"
+
 function main() {
     let words = ["foo", "bar", "baz"]
     for word in words.iterator() {

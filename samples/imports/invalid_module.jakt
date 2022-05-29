@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Module 'baz' not found"
+
 import baz
 
 function main() {}

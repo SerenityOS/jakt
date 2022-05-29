@@ -1,3 +1,6 @@
+/// Expect: Skip: Typechecks, but it shouldn't!
+/// - error: "Assignment between incompatible types (‘String?’ and ‘String’)"
+
 function main() {
     let i: String? = None
     i ??= "mayb"

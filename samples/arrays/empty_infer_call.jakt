@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "OK\n"
+
 function test(arr: [f64]) {
     println("OK")
 }

@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Granny Smith\n"
+
 enum Apple { GrannySmith }
 
 function apple_name(apple: Apple) {

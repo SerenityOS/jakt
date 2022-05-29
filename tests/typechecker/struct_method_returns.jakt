@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "1\n"
+
 struct Foo {
     value: i32,
 

@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "10 34 39\n"
+
 function main() {
     let x = b'\n'
     let y = b'\"'

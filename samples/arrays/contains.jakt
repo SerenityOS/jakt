@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "true\nfalse\n"
+
 function main() {
     let arr = ["Well", "Hello", "Friends", "!"]
     println("{}", arr.contains("Hello"))

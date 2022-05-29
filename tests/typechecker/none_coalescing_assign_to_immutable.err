@@ -1,7 +1,0 @@
-Error: Assignment between incompatible types (‘String?’ and ‘String’)
----- example.jakt:3:5
- 1 |     let i: String? = None 
- 2 |     i ??= "mayb" 
-         ^- Assignment between incompatible types (‘String?’ and ‘String’)
- 3 |     println(i ?? "hello") 
-----

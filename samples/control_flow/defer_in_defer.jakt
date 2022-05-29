@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "foo called with 1\nfoo called with 2\nfoo called with 3\nfoo called with 4\nfoo called with 5\n"
+
 function foo(anonymous n: i8) {
     println("foo called with {}", n)
 }

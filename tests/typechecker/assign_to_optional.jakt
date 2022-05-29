@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Foo\n"
+
 function main() {
     let foo: String? = "Foo"
     println("{}", foo!)

@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘String’, but got ‘i64’\n"
+
 function greet(msg: String, msg2: String) {
     println("{}", msg)
     println("{}", msg2)

@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Foo's name is anon:1 and bar's name is Test!\n"
+
 enum Foo {
     Id(i32)
     Name(String)

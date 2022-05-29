@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Value::Bar(values: [\"hello\"])\nRect(location: Point(x: 0, y: 0), size: Size(width: 15, height: 30))\nFoo::Baz(100)\n"
+
 class Size {
     width: i64
     height: i64

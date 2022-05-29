@@ -1,4 +1,0 @@
-weak_foo has_value? false
-weak_foo has_value? true
-weak_foo hello: friends
-weak_foo has_value? false

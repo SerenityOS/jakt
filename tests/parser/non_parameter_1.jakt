@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "expected parameter\n"
+
 function foo(= anonymous n: i32) {
     println("{}", n)
 }

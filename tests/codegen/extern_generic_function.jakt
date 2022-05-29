@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: ""
+
 // These generic extern functions shouldn't compile to anything.
 
 extern function do_thing_with_type<T>(anonymous input: T) -> T

@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Control reaches end of non-void function\n"
+
 function foo() -> i32 {
     if false {
         return 123

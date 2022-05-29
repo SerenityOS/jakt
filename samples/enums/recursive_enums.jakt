@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "result: 15\n"
+
 enum Operation {
     Add
 }

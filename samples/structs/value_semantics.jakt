@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "5\n5\n5\n"
+
 struct Foo {
     x: i64
 }

@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "index is not an integer"
+
 function main() {
     let x = [1, 2, 3]
     println("{}", x["bob"])

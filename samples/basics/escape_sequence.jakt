@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "hello\nworld"
+
 function main() {
     let str_c: c_char = '\n'
     print("hello{}", str_c)

@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: ""
+
 function main() {
     let a: i8 = 0;
     let b: i16 = 0;

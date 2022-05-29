@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Correct!\n"
+
 enum Foo {
     A
     B

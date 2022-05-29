@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "cannot create an array with values of type void\n"
+
 enum Bar {
     Value
 }

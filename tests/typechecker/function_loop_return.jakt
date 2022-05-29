@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "684\n"
+
 function foo() -> i32 {
     loop {
         return 684

@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "4\n"
+
 function main() {
     let vec = [1, 2, 3, 4]
 

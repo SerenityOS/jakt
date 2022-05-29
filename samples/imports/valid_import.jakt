@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "PASS\n"
+
 import foo
 
 function main() {

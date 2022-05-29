@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "2\n"
+
 class Foo {
     x: i64
 

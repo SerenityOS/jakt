@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Hello friends 123\n"
+
 function main() {
     let hello = "Hello"
     let friends = "friends"

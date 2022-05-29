@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Well, hello friends.\n"
+
 function greet(msg: String) {
     println("{}", msg)
 }

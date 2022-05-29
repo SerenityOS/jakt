@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "I am Jane and my age is 100\n"
+
 namespace Greeters {
     struct Person {
         name: String

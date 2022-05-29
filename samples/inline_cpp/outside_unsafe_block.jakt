@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Use of inline cpp block outside of unsafe block\n"
+
 function main() {
     cpp {}
 }

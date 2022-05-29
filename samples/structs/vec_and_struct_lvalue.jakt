@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Jane\nfoobar\n"
+
 struct Person {
     name: String
     age: i64

@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Can't access variable ‘age’ from scope None, because it is marked private\n"
+
 struct WeirdEncapsulation {
     private age: i32
 }

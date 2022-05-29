@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "call to unknown function\n"
+
 function main() {
     missing_function()
 }

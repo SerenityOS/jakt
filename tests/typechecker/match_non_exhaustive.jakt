@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "match expression is not exhaustive, missing variants are: X"
+
 enum Foo {
     X
     Y

@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "Compiled!\n"
+
 struct EmptyStruct {
 }
 

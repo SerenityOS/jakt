@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Cannot call mutating method on an immutable object instance"
+
 class Foo {
     public function bar(mutable this) {}
 }

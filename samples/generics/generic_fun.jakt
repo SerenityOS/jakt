@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "3\n"
+
 function id<T>(anonymous x: T) => x
 
 function main() {

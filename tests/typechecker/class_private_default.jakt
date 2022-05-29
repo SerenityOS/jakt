@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Can't access function ‘cant_touch’ from scope None, because it is marked private\n"
+
 class GoodEncapsulation {
     function cant_touch(this) {}
     public function oraoraora(this) {}

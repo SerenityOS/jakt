@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "Expected block of strings\n"
+
 function main() {
     unsafe {
         cpp {

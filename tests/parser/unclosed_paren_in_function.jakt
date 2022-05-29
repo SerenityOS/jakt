@@ -1,3 +1,6 @@
+/// Expect:
+/// - error: "expected complete block"
+
 // When the parser tries to parse an expression from "}" (for the second argument of the function),
 // it errors out and doesn't increment the token index.
 // But because the inner loop that repeatedly parses function parameter expressions never considered errors,

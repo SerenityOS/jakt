@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "false\ntrue\n3\n"
+
 function main() {
     let a: [i64]? = None
     let b: [i64]? = [1, 2, 3]

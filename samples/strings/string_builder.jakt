@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "abc123\n"
+
 extern struct StringBuilder {
     function StringBuilder() -> StringBuilder
     function append(mutable this, anonymous s: raw c_char)

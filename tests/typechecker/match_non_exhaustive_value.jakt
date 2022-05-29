@@ -1,3 +1,6 @@
+/// Exepct:
+/// - error: "match expression is not exhaustive, a value match must contain an irrefutable 'else' pattern"
+
 function main() {
     match 123 {
         (42) => 0
