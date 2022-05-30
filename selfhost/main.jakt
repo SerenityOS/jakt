@@ -7,6 +7,13 @@ extern struct StringBuilder {
     function StringBuilder() -> StringBuilder
 }
 
+extern function abort()
+
+function todo(anonymous message: String) {
+    eprintln("TODO: {}", message)
+    abort()
+}
+
 // FIXME: These should not need explicit "-> bool" return types.
 function is_ascii_alpha(anonymous c: u8) -> bool => (c >= b'a' and c <= b'z') or (c >= b'A' and c <= b'Z')
 function is_ascii_digit(anonymous c: u8) -> bool => (c >= b'0' and c <= b'9')
@@ -993,7 +1000,7 @@ struct Parser {
         match .current() {
             Token::Name(name) => {
                 if name == "raw" or name == "weak" {
-                    println("FIXME: raw/weak")
+                    todo("raw/weak")
                 } else {
                     let span = .current().span()
                     .index++
@@ -1109,7 +1116,7 @@ struct Parser {
             }
             Token::LParen => {
                 // (A, B, C) is shorthand for Tuple<A, B, C>
-                println("FIXME: Implement tuple type shorthand")
+                todo("Implement tuple type shorthand")
             }
             else => { }
         }
@@ -1234,7 +1241,7 @@ struct Parser {
                         return ParsedExpression::Call(call, span)
                     }
                     Token::LessThan => {
-                        println("FIXME: parse_operand_base generics")
+                        todo("parse_operand_base generics")
                         .index++
                         return ParsedExpression::Garbage(span)
                     }
@@ -1263,7 +1270,7 @@ struct Parser {
                         .index++
                     }
                     Token::Comma => {
-                        println("FIXME: parse_operand_base tuple")
+                        todo("parse_operand_base tuple")
                     }
                     else => {
                         .error("Expected ')'", .current().span())
@@ -1271,7 +1278,7 @@ struct Parser {
                 }
             }
             else => {
-                println("FIXME: parse_operand but {}", .current())
+                todo("parse_operand_base else")
             }
         }
         return ParsedExpression::Garbage(span)
@@ -1287,22 +1294,22 @@ struct Parser {
         // Check for postfix operators, while we're at it
         match .current() {
             Token::DotDot => {
-                println("FIXME: postfix DotDot")
+                todo("postfix DotDot")
             }
             Token::ExclamationPoint => {
-                println("FIXME: postfix ExclamationPoint")
+                todo("postfix ExclamationPoint")
             }
             Token::PlusPlus => {
-                println("FIXME: postfix PlusPlus")
+                todo("postfix PlusPlus")
             }
             Token::MinusMinus => {
-                println("FIXME: postfix MinusMinus")
+                todo("postfix MinusMinus")
             }
             Token::ColonColon => {
-                println("FIXME: postfix ColonColon")
+                todo("postfix ColonColon")
             }
             Token::Dot => {
-                println("FIXME: postfix Dot")
+                todo("postfix Dot")
             }
             Token::LSquare => {
                 // Indexing operation
@@ -1340,7 +1347,7 @@ struct Parser {
 
                 match .current() {
                     Token::LessThan => {
-                        println("FIXME: parse_call generics")
+                        todo("parse_call generics")
                         .index++
                     }
                     else => { }
