@@ -1,10 +1,10 @@
 extern struct FILE {}
 
-extern function fopen(anonymous str: raw c_char, anonymous mode: raw c_char) -> raw FILE
-extern function fgetc(anonymous file: mutable raw FILE) -> c_int
-extern function fclose(anonymous file: mutable raw FILE) -> c_int
-extern function feof(anonymous file: mutable raw FILE) -> c_int
-extern function putchar(anonymous ch: c_int) -> c_int
+extern function fopen(filename: raw c_char, mode: raw c_char) -> raw FILE
+extern function fgetc(file: mutable raw FILE) -> c_int
+extern function fclose(file: mutable raw FILE) -> c_int
+extern function feof(file: mutable raw FILE) -> c_int
+extern function putchar(character: c_int) -> c_int
 
 function main(args: [String]) {
     if args.size() <= 1 {
@@ -12,14 +12,12 @@ function main(args: [String]) {
         return 1
     }
 
-    let filename = args[1]
-
-    let mutable file = fopen(filename.c_string(), "r".c_string())
+    let mutable file = fopen(filename: args[1].c_string(), mode: "r".c_string())
     defer fclose(file)
 
-    let mutable c = fgetc(file)
+    let mutable character = fgetc(file)
     while feof(file) == 0 {
-        putchar(c)
-        c = fgetc(file)
+        putchar(character)
+        character = fgetc(file)
     }
 }
