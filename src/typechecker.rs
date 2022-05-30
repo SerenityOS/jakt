@@ -1665,6 +1665,15 @@ fn typecheck_enum_predecl(
     let enum_scope_id = project.create_scope(parent_scope_id, false);
     let mut generic_parameters = Vec::new();
 
+    if enum_.variants.is_empty() {
+        error = error.or(Some(JaktError::ParserErrorWithHint(
+            "Empty enums are not allowed".to_string(),
+            enum_.span,
+            "Add at least one enum variant".to_string(),
+            enum_.span,
+        )));
+    }
+
     for (generic_parameter, parameter_span) in &enum_.generic_parameters {
         project
             .types
