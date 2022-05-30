@@ -1818,6 +1818,28 @@ fn codegen_block(indent: usize, checked_block: &CheckedBlock, project: &Project)
     output
 }
 
+fn codegen_block_expr(
+    indent: usize,
+    checked_block: &CheckedBlock,
+    yeilding: &CheckedVariable,
+    project: &Project,
+) -> String {
+    let mut output = String::new();
+
+    output.push_str("({\n");
+    for stmt in &checked_block.stmts {
+        let stmt = codegen_statement(indent + INDENT_SIZE, stmt, project);
+        output.push_str(&stmt);
+    }
+    output.push_str(&codegen_indent(indent + 4));
+    output.push_str(&yeilding.name);
+    output.push_str(";\n");
+    output.push_str(&codegen_indent(indent));
+    output.push_str("})");
+
+    output
+}
+
 fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) -> String {
     let mut output = String::new();
 
@@ -2821,6 +2843,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     ));
                 }
             };
+        }
+        CheckedExpression::FromBlock(var, block, _) => {
+            output.push_str(&codegen_block_expr(indent, block, var, project));
         }
         CheckedExpression::UnaryOp(expr, op, _, type_id) => {
             output.push('(');

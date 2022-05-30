@@ -1,0 +1,12 @@
+/// Expect:
+/// - output: "102\n"
+
+function main() {
+    let x = y from {
+        let mutable y = 0;
+        while y < 100 {
+            y += 3;
+        }
+    }
+    println("{}", x)
+}

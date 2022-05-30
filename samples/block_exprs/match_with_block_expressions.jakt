@@ -1,0 +1,23 @@
+/// Expect:
+/// - output: "3\n"
+
+enum Op {
+    Add,
+    Sub
+}
+
+// (Obviously could do the expression directly here)
+function do_operation(op: Op, a: i32, b: i32) {
+    return match op {
+        Add => result from {
+            let result = a + b
+        }
+        Sub => result from {
+            let result = a - b
+        }
+    }
+}
+
+function main() {
+    println("{}", do_operation(op: Op::Add, a: 1, b: 2))
+}

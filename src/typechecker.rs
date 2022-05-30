@@ -1191,6 +1191,7 @@ pub enum CheckedExpression {
         TypeId,
         bool,
     ),
+    FromBlock(CheckedVariable, CheckedBlock, Span),
 
     Call(CheckedCall, Span, TypeId),
     MethodCall(Box<CheckedExpression>, CheckedCall, Span, TypeId),
@@ -1233,6 +1234,7 @@ impl CheckedExpression {
             CheckedExpression::OptionalSome(_, _, type_id) => *type_id,
             CheckedExpression::ForcedUnwrap(_, _, type_id) => *type_id,
             CheckedExpression::Match(_, _, _, type_id, _) => *type_id,
+            CheckedExpression::FromBlock(CheckedVariable { type_id, .. }, _, _) => *type_id,
             CheckedExpression::Garbage(_) => UNKNOWN_TYPE_ID,
         }
     }
@@ -1267,6 +1269,7 @@ impl CheckedExpression {
             CheckedExpression::OptionalSome(_, span, _) => *span,
             CheckedExpression::ForcedUnwrap(_, span, _) => *span,
             CheckedExpression::Match(_, _, span, _, _) => *span,
+            CheckedExpression::FromBlock(_, _, span) => *span,
             CheckedExpression::Garbage(span) => *span,
         }
     }
@@ -3042,6 +3045,51 @@ pub fn typecheck_block(
     (checked_block, error)
 }
 
+pub fn typecheck_var(
+    v: &str,
+    scope_id: ScopeId,
+    type_hint: Option<TypeId>,
+    span: Span,
+    project: &mut Project,
+) -> (CheckedVariable, Option<JaktError>) {
+    if let Some(var) = project.find_var_in_scope(scope_id, v) {
+        let (_, err) = unify_with_type(var.type_id, type_hint, span, project);
+
+        (var, err)
+    } else if let Some(most_similar_var) = project.find_most_similar_var_name_in_scope(scope_id, v)
+    {
+        (
+            CheckedVariable {
+                name: v.to_string(),
+                type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
+                mutable: false,
+                visibility: Visibility::Public,
+                definition_span: span,
+            },
+            Some(JaktError::TypecheckErrorWithHint(
+                format!("variable '{}' not found", v),
+                span,
+                format!("Did you mean '{}'?", most_similar_var),
+                span,
+            )),
+        )
+    } else {
+        (
+            CheckedVariable {
+                name: v.to_string(),
+                type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
+                mutable: false,
+                visibility: Visibility::Public,
+                definition_span: span,
+            },
+            Some(JaktError::TypecheckError(
+                format!("variable '{}' not found", v),
+                span,
+            )),
+        )
+    }
+}
+
 pub fn typecheck_statement(
     stmt: &ParsedStatement,
     scope_id: ScopeId,
@@ -3791,49 +3839,8 @@ pub fn typecheck_expression(
             (CheckedExpression::CharacterConstant(c.clone(), *span), err)
         }
         ParsedExpression::Var(v, span) => {
-            if let Some(var) = project.find_var_in_scope(scope_id, v) {
-                let (_, err) = unify_with_type(var.type_id, type_hint, *span, project);
-
-                (CheckedExpression::Var(var, *span), err)
-            } else if let Some(most_similar_var) =
-                project.find_most_similar_var_name_in_scope(scope_id, v)
-            {
-                (
-                    CheckedExpression::Var(
-                        CheckedVariable {
-                            name: v.clone(),
-                            type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
-                            mutable: false,
-                            visibility: Visibility::Public,
-                            definition_span: *span,
-                        },
-                        *span,
-                    ),
-                    Some(JaktError::TypecheckErrorWithHint(
-                        format!("variable '{}' not found", v),
-                        *span,
-                        format!("Did you mean '{}'?", most_similar_var),
-                        *span,
-                    )),
-                )
-            } else {
-                (
-                    CheckedExpression::Var(
-                        CheckedVariable {
-                            name: v.clone(),
-                            type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
-                            mutable: false,
-                            visibility: Visibility::Public,
-                            definition_span: *span,
-                        },
-                        *span,
-                    ),
-                    Some(JaktError::TypecheckError(
-                        format!("variable '{}' not found", v),
-                        *span,
-                    )),
-                )
-            }
+            let (var, err) = typecheck_var(v, scope_id, type_hint, *span, project);
+            (CheckedExpression::Var(var, *span), err)
         }
         ParsedExpression::NamespacedVar(v, ns, span) => {
             let scopes = ns.iter().fold(vec![Some(scope_id)], |mut scopes, ns| {
@@ -5026,6 +5033,13 @@ pub fn typecheck_expression(
                 ),
                 error,
             )
+        }
+        ParsedExpression::FromBlock(name, block, span) => {
+            let (block, err) = typecheck_block(block, scope_id, project, safety_mode);
+            error = error.or(err);
+            let (var, err) = typecheck_var(name, block.scope, type_hint, *span, project);
+            error = error.or(err);
+            (CheckedExpression::FromBlock(var, block, *span), error)
         }
         ParsedExpression::IndexedStruct(expr, name, span) => {
             let (checked_expr, err) =

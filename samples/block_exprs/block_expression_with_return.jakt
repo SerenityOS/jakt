@@ -1,0 +1,15 @@
+/// Expect:
+/// - output: "100\n"
+
+function mayFail() throws {
+    return 10;
+}
+
+function main() {
+    let x = y from {
+        // may return here
+        let mutable y = mayFail()
+        y *= 10
+    }
+    println("{}", x)
+}

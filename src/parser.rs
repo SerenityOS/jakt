@@ -290,6 +290,7 @@ pub enum ParsedExpression {
     Tuple(Vec<ParsedExpression>, Span),
     Range(Box<ParsedExpression>, Box<ParsedExpression>, Span),
     Match(Box<ParsedExpression>, Vec<MatchCase>, Span),
+    FromBlock(String, ParsedBlock, Span),
 
     IndexedTuple(Box<ParsedExpression>, usize, Span),
     IndexedStruct(Box<ParsedExpression>, String, Span),
@@ -337,6 +338,7 @@ impl ParsedExpression {
             ParsedExpression::OptionalSome(_, span) => *span,
             ParsedExpression::ForcedUnwrap(_, span) => *span,
             ParsedExpression::Match(_, _, span) => *span,
+            ParsedExpression::FromBlock(_, _, span) => *span,
             ParsedExpression::Garbage(span) => *span,
         }
     }
@@ -2824,6 +2826,12 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
                             ParsedExpression::Call(call, span)
                         }
+                    }
+                    TokenContents::Name(keyword) if keyword == "from" => {
+                        *index += 2;
+                        let (block, err) = parse_block(tokens, index);
+                        error = error.or(err);
+                        ParsedExpression::FromBlock(name.to_string(), block, span)
                     }
                     _ => {
                         *index += 1;
