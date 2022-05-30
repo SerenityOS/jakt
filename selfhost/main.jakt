@@ -309,8 +309,8 @@ struct Lexer {
         let start = .index
         ++.index
         return match .peek() {
-            (b'=') => Token::PlusEqual(JaktSpan(start, end: ++.index))
-            (b'+') => Token::PlusPlus(JaktSpan(start, end: ++.index))
+            b'=' => Token::PlusEqual(JaktSpan(start, end: ++.index))
+            b'+' => Token::PlusPlus(JaktSpan(start, end: ++.index))
             else => Token::Plus(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -319,8 +319,8 @@ struct Lexer {
         let start = .index
         ++.index
         return match .peek() {
-            (b'=') => Token::MinusEqual(JaktSpan(start, end: ++.index))
-            (b'-') => Token::MinusMinus(JaktSpan(start, end: ++.index))
+            b'=' => Token::MinusEqual(JaktSpan(start, end: ++.index))
+            b'-' => Token::MinusMinus(JaktSpan(start, end: ++.index))
             else => Token::Minus(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -329,7 +329,7 @@ struct Lexer {
         let start = .index
         ++.index
         return match .peek() {
-            (b'=') => Token::AsteriskEqual(JaktSpan(start, end: ++.index))
+            b'=' => Token::AsteriskEqual(JaktSpan(start, end: ++.index))
             else => Token::Asterisk(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -358,7 +358,7 @@ struct Lexer {
         let start = .index
         ++.index
         return match .peek() {
-            (b'=') => Token::CaretEqual(JaktSpan(start, end: ++.index))
+            b'=' => Token::CaretEqual(JaktSpan(start, end: ++.index))
             else => Token::Caret(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -367,7 +367,7 @@ struct Lexer {
         let start = .index
         ++.index
         return match .peek() {
-            (b'=') => Token::PipeEqual(JaktSpan(start, end: ++.index))
+            b'=' => Token::PipeEqual(JaktSpan(start, end: ++.index))
             else => Token::Pipe(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -376,7 +376,7 @@ struct Lexer {
         let start = .index
         ++.index
         return match .peek() {
-            (b'=') => Token::PercentSignEqual(JaktSpan(start, end: ++.index))
+            b'=' => Token::PercentSignEqual(JaktSpan(start, end: ++.index))
             else => Token::PercentSign(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -385,7 +385,7 @@ struct Lexer {
         let start = .index
         ++.index
         return match .peek() {
-            (b'=') => Token::NotEqual(JaktSpan(start, end: ++.index))
+            b'=' => Token::NotEqual(JaktSpan(start, end: ++.index))
             else => Token::ExclamationPoint(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -394,7 +394,7 @@ struct Lexer {
         let start = .index
         ++.index
         return match .peek() {
-            (b'=') => Token::AmpersandEqual(JaktSpan(start, end: ++.index))
+            b'=' => Token::AmpersandEqual(JaktSpan(start, end: ++.index))
             else => Token::Ampersand(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -403,8 +403,8 @@ struct Lexer {
         let start = .index
         ++.index
         return match .peek() {
-            (b'=') => Token::LessThanOrEqual(JaktSpan(start, end: ++.index))
-            (b'<') => Token::LeftShift(JaktSpan(start, end: ++.index))
+            b'=' => Token::LessThanOrEqual(JaktSpan(start, end: ++.index))
+            b'<' => Token::LeftShift(JaktSpan(start, end: ++.index))
             else => Token::LessThan(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -413,8 +413,8 @@ struct Lexer {
         let start = .index
         ++.index
         return match .peek() {
-            (b'=') => Token::GreaterThanOrEqual(JaktSpan(start, end: ++.index))
-            (b'>') => Token::RightShift(JaktSpan(start, end: ++.index))
+            b'=' => Token::GreaterThanOrEqual(JaktSpan(start, end: ++.index))
+            b'>' => Token::RightShift(JaktSpan(start, end: ++.index))
             else => Token::GreaterThan(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -423,7 +423,7 @@ struct Lexer {
         let start = .index
         ++.index
         return match .peek() {
-            (b'.') => Token::DotDot(JaktSpan(start, end: ++.index))
+            b'.' => Token::DotDot(JaktSpan(start, end: ++.index))
             else => Token::Dot(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -432,7 +432,7 @@ struct Lexer {
         let start = .index
         ++.index
         return match .peek() {
-            (b':') => Token::ColonColon(JaktSpan(start, end: ++.index))
+            b':' => Token::ColonColon(JaktSpan(start, end: ++.index))
             else => Token::Colon(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -441,7 +441,7 @@ struct Lexer {
         let start = .index
         ++.index
         return match .peek() {
-            (b'?') => Token::QuestionMarkQuestionMark(JaktSpan(start, end: ++.index))
+            b'?' => Token::QuestionMarkQuestionMark(JaktSpan(start, end: ++.index))
             else => Token::QuestionMark(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -450,8 +450,8 @@ struct Lexer {
         let start = .index
         ++.index
         return match .peek() {
-            (b'=') => Token::DoubleEqual(JaktSpan(start, end: ++.index))
-            (b'>') => Token::FatArrow(JaktSpan(start, end: ++.index))
+            b'=' => Token::DoubleEqual(JaktSpan(start, end: ++.index))
+            b'>' => Token::FatArrow(JaktSpan(start, end: ++.index))
             else => Token::Equal(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -472,36 +472,36 @@ struct Lexer {
         let start = .index
 
         return match .input[.index] {
-            (b'(') => Token::LParen(JaktSpan(start, end: ++.index))
-            (b')') => Token::RParen(JaktSpan(start, end: ++.index))
-            (b'[') => Token::LSquare(JaktSpan(start, end: ++.index))
-            (b']') => Token::RSquare(JaktSpan(start, end: ++.index))
-            (b'{') => Token::LCurly(JaktSpan(start, end: ++.index))
-            (b'}') => Token::RCurly(JaktSpan(start, end: ++.index))
-            (b'<') => .lex_less_than()
-            (b'>') => .lex_greater_than()
-            (b'.') => .lex_dot()
-            (b',') => Token::Comma(JaktSpan(start, end: ++.index))
-            (b'~') => Token::Tilde(JaktSpan(start, end: ++.index))
-            (b';') => Token::Semicolon(JaktSpan(start, end: ++.index))
-            (b':') => .lex_colon()
-            (b'?') => .lex_question_mark()
-            (b'+') => .lex_plus()
-            (b'-') => .lex_minus()
-            (b'*') => .lex_asterisk()
-            (b'/') => .lex_forward_slash()
-            (b'^') => .lex_caret()
-            (b'|') => .lex_pipe()
-            (b'%') => .lex_percent_sign()
-            (b'!') => .lex_exclamation_point()
-            (b'&') => .lex_ampersand()
-            (b'$') => Token::Dollar(JaktSpan(start, end: ++.index))
-            (b'=') => .lex_equals()
-            (b'\n') => Token::Eol(JaktSpan(start, end: ++.index))
-            (b'\'') => .lex_quoted_string(delimiter: b'\'')
-            (b'\"') => .lex_quoted_string(delimiter: b'"')
-            (b'b') => .lex_character_constant_or_name()
-            (b'c') => .lex_character_constant_or_name()
+            b'(' => Token::LParen(JaktSpan(start, end: ++.index))
+            b')' => Token::RParen(JaktSpan(start, end: ++.index))
+            b'[' => Token::LSquare(JaktSpan(start, end: ++.index))
+            b']' => Token::RSquare(JaktSpan(start, end: ++.index))
+            b'{' => Token::LCurly(JaktSpan(start, end: ++.index))
+            b'}' => Token::RCurly(JaktSpan(start, end: ++.index))
+            b'<' => .lex_less_than()
+            b'>' => .lex_greater_than()
+            b'.' => .lex_dot()
+            b',' => Token::Comma(JaktSpan(start, end: ++.index))
+            b'~' => Token::Tilde(JaktSpan(start, end: ++.index))
+            b';' => Token::Semicolon(JaktSpan(start, end: ++.index))
+            b':' => .lex_colon()
+            b'?' => .lex_question_mark()
+            b'+' => .lex_plus()
+            b'-' => .lex_minus()
+            b'*' => .lex_asterisk()
+            b'/' => .lex_forward_slash()
+            b'^' => .lex_caret()
+            b'|' => .lex_pipe()
+            b'%' => .lex_percent_sign()
+            b'!' => .lex_exclamation_point()
+            b'&' => .lex_ampersand()
+            b'$' => Token::Dollar(JaktSpan(start, end: ++.index))
+            b'=' => .lex_equals()
+            b'\n' => Token::Eol(JaktSpan(start, end: ++.index))
+            b'\'' => .lex_quoted_string(delimiter: b'\'')
+            b'\"' => .lex_quoted_string(delimiter: b'"')
+            b'b' => .lex_character_constant_or_name()
+            b'c' => .lex_character_constant_or_name()
             else => .lex_number_or_name()
         }
     }
@@ -824,7 +824,7 @@ struct Parser {
             match .current() {
                 Token::Name(name, span) => {
                     match name {
-                        ("function") => {
+                        "function" => {
                             let function = .parse_function(FunctionLinkage::Internal, Visibility::Public)
                             parsed_namespace.functions.push(function)
                         }
@@ -1171,7 +1171,7 @@ struct Parser {
         match .current() {
             Token::Name(name) => {
                 match name {
-                    ("return") => {
+                    "return" => {
                         .index++
                         let expr = .parse_expression()
                         let end = .tokens[.index - 1].span().end
@@ -1248,7 +1248,7 @@ struct Parser {
                     else => {
                         .index++
                         match name {
-                            ("None") => {
+                            "None" => {
                                 return ParsedExpression::OptionalNone(span)
                             }
                             else => {
