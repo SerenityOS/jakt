@@ -1,0 +1,8 @@
+/// Expect:
+/// - error: "Empty enums are not allowed"
+
+enum Foo {
+    function oops(mutable this) { }
+}
+
+function main() { }
