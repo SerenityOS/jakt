@@ -1091,7 +1091,8 @@ struct Parser {
                         return ParsedStatement::Return(expr, span: JaktSpan(start, end))
                     }
                     else => {
-                        .error("Unknown keyword", JaktSpan(start, end: start))
+                        let expr = .parse_expression()
+                        return ParsedStatement::Expression(expr)
                     }
                 }
             }
