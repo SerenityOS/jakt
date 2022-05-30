@@ -80,43 +80,23 @@ struct Variant<IndexType, InitialIndex> {
 
 template<typename IndexType, typename... Ts>
 struct VisitImpl {
-    template<typename RT, typename T, size_t I, typename Fn>
-    static constexpr bool has_explicitly_named_overload()
-    {
-        // If we're not allowed to make a member function pointer and call it directly (without explicitly resolving it),
-        // we have a templated function on our hands (or a function overload set).
-        // in such cases, we don't have an explicitly named overload, and we would have to select it.
-        return requires { (declval<Fn>().*(&Fn::operator()))(declval<T>()); };
-    }
-
-    template<typename ReturnType, typename T, typename Visitor, auto... Is>
-    static constexpr bool should_invoke_const_overload(IndexSequence<Is...>)
-    {
-        // Scan over all the different visitor functions, if none of them are suitable for calling with `T const&`, avoid calling that first.
-        return ((has_explicitly_named_overload<ReturnType, T, Is, typename Visitor::Types::template Type<Is>>()) || ...);
-    }
-
     template<typename Self, typename Visitor, IndexType CurrentIndex = 0>
     ALWAYS_INLINE static constexpr decltype(auto) visit(Self& self, IndexType id, void const* data, Visitor&& visitor) requires(CurrentIndex < sizeof...(Ts))
     {
-        using T = typename TypeList<Ts...>::template Type<CurrentIndex>;
+        return visit_impl<Self, Visitor, CurrentIndex, Ts...>(self, id, data, forward<Visitor>(visitor));
+    }
 
-        if (id == CurrentIndex) {
-            // Check if Visitor::operator() is an explicitly typed function (as opposed to a templated function)
-            // if so, try to call that with `T const&` first before copying the Variant's const-ness.
-            // This emulates normal C++ call semantics where templated functions are considered last, after all non-templated overloads
-            // are checked and found to be unusable.
-            using ReturnType = decltype(visitor(*bit_cast<T*>(data)));
-            if constexpr (should_invoke_const_overload<ReturnType, T, Visitor>(MakeIndexSequence<Visitor::Types::size>()))
-                return visitor(*bit_cast<AddConst<T>*>(data));
-
-            return visitor(*bit_cast<CopyConst<Self, T>*>(data));
-        }
-
-        if constexpr ((CurrentIndex + 1) < sizeof...(Ts))
-            return visit<Self, Visitor, CurrentIndex + 1>(self, id, data, forward<Visitor>(visitor));
-        else
+    template<typename Self, typename Visitor, IndexType CurrentIndex, typename CurrentType, typename... Rest>
+    ALWAYS_INLINE static constexpr decltype(auto) visit_impl(Self& self, IndexType id, void const* data, Visitor&& visitor) requires(CurrentIndex < sizeof...(Ts))
+    {
+        switch (id) {
+        case CurrentIndex:
+            return visitor(*bit_cast<CopyConst<Self, CurrentType>*>(data));
+        default:
+            if constexpr (CurrentIndex + 1 < sizeof...(Ts))
+                return visit_impl<Self, Visitor, CurrentIndex + 1, Rest...>(self, id, data, forward<Visitor>(visitor));
             VERIFY_NOT_REACHED();
+        }
     }
 };
 
@@ -152,62 +132,6 @@ private:
     }
 };
 
-// Type list deduplication
-// Since this is a big template mess, each template is commented with how and why it works.
-struct ParameterPackTag {
-};
-
-// Pack<Ts...> is just a way to pass around the type parameter pack Ts
-template<typename... Ts>
-struct ParameterPack : ParameterPackTag {
-};
-
-// Blank<T> is a unique replacement for T, if T is a duplicate type.
-template<typename T>
-struct Blank {
-};
-
-template<typename A, typename P>
-inline constexpr bool IsTypeInPack = false;
-
-// IsTypeInPack<T, Pack<Ts...>> will just return whether 'T' exists in 'Ts'.
-template<typename T, typename... Ts>
-inline constexpr bool IsTypeInPack<T, ParameterPack<Ts...>> = (IsSame<T, Ts> || ...);
-
-// Replaces T with Blank<T> if it exists in Qs.
-template<typename T, typename... Qs>
-using BlankIfDuplicate = Conditional<(IsTypeInPack<T, Qs> || ...), Blank<T>, T>;
-
-template<unsigned I, typename...>
-struct InheritFromUniqueEntries;
-
-// InheritFromUniqueEntries will inherit from both Qs and Ts, but only scan entries going *forwards*
-// that is to say, if it's scanning from index I in Qs, it won't scan for duplicates for entries before I
-// as that has already been checked before.
-// This makes sure that the search is linear in time (like the 'merge' step of merge sort).
-template<unsigned I, typename... Ts, unsigned... Js, typename... Qs>
-struct InheritFromUniqueEntries<I, ParameterPack<Ts...>, IndexSequence<Js...>, Qs...>
-    : public BlankIfDuplicate<Ts, Conditional<Js <= I, ParameterPack<>, Qs>...>... {
-
-    using BlankIfDuplicate<Ts, Conditional<Js <= I, ParameterPack<>, Qs>...>::BlankIfDuplicate...;
-};
-
-template<typename...>
-struct InheritFromPacks;
-
-// InheritFromPacks will attempt to 'merge' the pack 'Ps' with *itself*, but skip the duplicate entries
-// (via InheritFromUniqueEntries).
-template<unsigned... Is, typename... Ps>
-struct InheritFromPacks<IndexSequence<Is...>, Ps...>
-    : public InheritFromUniqueEntries<Is, Ps, IndexSequence<Is...>, Ps...>... {
-
-    using InheritFromUniqueEntries<Is, Ps, IndexSequence<Is...>, Ps...>::InheritFromUniqueEntries...;
-};
-
-// Just a nice wrapper around InheritFromPacks, which will wrap any parameter packs in ParameterPack (unless it already is one).
-template<typename... Ps>
-using MergeAndDeduplicatePacks = InheritFromPacks<MakeIndexSequence<sizeof...(Ps)>, Conditional<IsBaseOf<ParameterPackTag, Ps>, Ps, ParameterPack<Ps>>...>;
-
 }
 
 namespace AK {
@@ -217,7 +141,7 @@ struct Empty {
 
 template<typename... Ts>
 struct Variant
-    : public Detail::MergeAndDeduplicatePacks<Detail::VariantConstructors<Ts, Variant<Ts...>>...> {
+    : public Detail::VariantConstructors<Ts, Variant<Ts...>>... {
 private:
     using IndexType = Conditional<sizeof...(Ts) < 255, u8, size_t>; // Note: size+1 reserved for internal value checks
     static constexpr IndexType invalid_index = sizeof...(Ts);
@@ -230,18 +154,6 @@ public:
     static constexpr bool can_contain()
     {
         return index_of<T>() != invalid_index;
-    }
-
-    template<typename... NewTs>
-    Variant(Variant<NewTs...>&& old) requires((can_contain<NewTs>() && ...))
-        : Variant(move(old).template downcast<Ts...>())
-    {
-    }
-
-    template<typename... NewTs>
-    Variant(Variant<NewTs...> const& old) requires((can_contain<NewTs>() && ...))
-        : Variant(old.template downcast<Ts...>())
-    {
     }
 
     template<typename... NewTs>
@@ -274,7 +186,7 @@ public:
 #ifdef AK_HAS_CONDITIONALLY_TRIVIAL
         requires(!(IsTriviallyCopyConstructible<Ts> && ...))
 #endif
-        : Detail::MergeAndDeduplicatePacks<Detail::VariantConstructors<Ts, Variant<Ts...>>...>()
+        : Detail::VariantConstructors<Ts, Variant<Ts...>>()...
         , m_data {}
         , m_index(old.m_index)
     {
@@ -289,7 +201,7 @@ public:
 #ifdef AK_HAS_CONDITIONALLY_TRIVIAL
         requires(!(IsTriviallyMoveConstructible<Ts> && ...))
 #endif
-        : Detail::MergeAndDeduplicatePacks<Detail::VariantConstructors<Ts, Variant<Ts...>>...>()
+        : Detail::VariantConstructors<Ts, Variant<Ts...>>()...
         , m_index(old.m_index)
     {
         Helper::move_(old.m_index, old.m_data, m_data);
@@ -333,7 +245,7 @@ public:
         return *this;
     }
 
-    using Detail::MergeAndDeduplicatePacks<Detail::VariantConstructors<Ts, Variant<Ts...>>...>::MergeAndDeduplicatePacks;
+    using Detail::VariantConstructors<Ts, Variant<Ts...>>::VariantConstructors...;
 
     template<typename T, typename StrippedT = RemoveCVReference<T>>
     void set(T&& t) requires(can_contain<StrippedT>() && requires { StrippedT(forward<T>(t)); })
@@ -402,30 +314,6 @@ public:
         return VisitHelper::visit(*this, m_index, m_data, move(visitor));
     }
 
-    template<typename... NewTs>
-    Variant<NewTs...> downcast() &&
-    {
-        Variant<NewTs...> instance { Variant<NewTs...>::invalid_index, Detail::VariantConstructTag {} };
-        visit([&](auto& value) {
-            if constexpr (Variant<NewTs...>::template can_contain<RemoveCVReference<decltype(value)>>())
-                instance.set(move(value), Detail::VariantNoClearTag {});
-        });
-        VERIFY(instance.m_index != instance.invalid_index);
-        return instance;
-    }
-
-    template<typename... NewTs>
-    Variant<NewTs...> downcast() const&
-    {
-        Variant<NewTs...> instance { Variant<NewTs...>::invalid_index, Detail::VariantConstructTag {} };
-        visit([&](auto const& value) {
-            if constexpr (Variant<NewTs...>::template can_contain<RemoveCVReference<decltype(value)>>())
-                instance.set(value, Detail::VariantNoClearTag {});
-        });
-        VERIFY(instance.m_index != instance.invalid_index);
-        return instance;
-    }
-
 private:
     static constexpr auto data_size = Detail::integer_sequence_generate_LinearArray<size_t>(0, IntegerSequence<size_t, sizeof(Ts)...>()).max();
     static constexpr auto data_alignment = Detail::integer_sequence_generate_LinearArray<size_t>(0, IntegerSequence<size_t, alignof(Ts)...>()).max();
@@ -436,7 +324,7 @@ private:
     friend struct Detail::VariantConstructors;
 
     explicit Variant(IndexType index, Detail::VariantConstructTag)
-        : Detail::MergeAndDeduplicatePacks<Detail::VariantConstructors<Ts, Variant<Ts...>>...>()
+        : Detail::VariantConstructors<Ts, Variant<Ts...>>()...
         , m_index(index)
     {
     }
