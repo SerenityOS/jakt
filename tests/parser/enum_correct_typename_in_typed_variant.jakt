@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: ""
 
-ref enum Foo<T> {
+boxed enum Foo<T> {
     A(T?)
     B([T])
     C([T:T])

@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "use 'ref enum' to make the enum recursive"
+/// - error: "use 'boxed enum' to make the enum recursive"
 
 enum Operation {
     Add

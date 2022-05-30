@@ -19,7 +19,7 @@ enum MyEnum {
     A(MyRecursiveEnum)
 }
 
-ref enum MyRecursiveEnum {
+boxed enum MyRecursiveEnum {
     A(MyRecursiveEnum)
     B
 }
