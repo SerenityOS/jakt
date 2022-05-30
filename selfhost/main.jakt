@@ -327,13 +327,24 @@ struct Lexer {
         }
     }
 
-    function lex_forward_slash(mutable this) -> Token {
+    function lex_forward_slash(mutable this) throws -> Token {
         let start = .index
         ++.index
-        return match .peek() {
-            (b'=') => Token::ForwardSlashEqual(JaktSpan(start, end: ++.index))
-            else => Token::ForwardSlash(JaktSpan(start: .index - 1, end: .index))
+        if .peek() == b'=' {
+            return Token::ForwardSlashEqual(JaktSpan(start, end: ++.index))
         }
+        if .peek() != b'/' {
+            return Token::ForwardSlash(JaktSpan(start, end: .index))
+        }
+        // We're in a comment, swallow to end of line.
+        while not .eof() {
+            let c = .peek()
+            .index++
+            if c == b'\n' {
+                break
+            }
+        }
+        return .next() ?? Token::Eof(JaktSpan(start: .index, end: .index))
     }
 
     function lex_caret(mutable this) -> Token {
