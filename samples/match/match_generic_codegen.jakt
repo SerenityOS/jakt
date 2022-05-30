@@ -24,7 +24,7 @@ enum X {
     C
 }
 
-ref enum Y {
+recursive enum Y {
     A(i64)
     B
     C

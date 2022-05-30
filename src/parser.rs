@@ -578,7 +578,7 @@ pub fn parse_namespace(
 
                     parsed_namespace.functions.push(fun);
                 }
-                "ref" => {
+                "recursive" => {
                     *index += 1;
 
                     if let Some(Token {
@@ -1036,7 +1036,7 @@ pub fn parse_enum(
                             && !is_recursive
                         {
                             error = error.or(Some(JaktError::ParserError(
-                                "use 'ref enum' to make the enum recursive".into(),
+                                "use 'recursive enum' to make the enum recursive".into(),
                                 tokens[*index - 1].span,
                             )));
                         } else {
@@ -1045,7 +1045,7 @@ pub fn parse_enum(
                                     if decl_name == &enum_.name && !is_recursive =>
                                 {
                                     error = error.or(Some(JaktError::ParserError(
-                                        "use 'ref enum' to make the enum recursive".into(),
+                                        "use 'recursive enum' to make the enum recursive".into(),
                                         tokens[*index - 1].span,
                                     )));
                                 }

@@ -651,7 +651,7 @@ struct ParsedBlock {
     stmts: [ParsedStatement]
 }
 
-ref enum ParsedStatement {
+recursive enum ParsedStatement {
     Expression(ParsedExpression)
     Defer(ParsedStatement)
     UnsafeBlock(ParsedBlock)
@@ -668,7 +668,7 @@ ref enum ParsedStatement {
     Garbage
 }
 
-ref enum ParsedExpression {
+recursive enum ParsedExpression {
     Boolean(val: bool, span: JaktSpan)
     NumericConstant(val: i64, span: JaktSpan)
     QuotedString(val: String, span: JaktSpan)
@@ -697,7 +697,7 @@ struct ParsedCall {
     args: [(String, ParsedExpression)]
 }
 
-ref enum ParsedType {
+recursive enum ParsedType {
     Name(name: String, span: JaktSpan)
     Array(inner: ParsedType, span: JaktSpan)
     Dictionary(key: ParsedType, value: ParsedType, span: JaktSpan)
@@ -746,7 +746,7 @@ struct CheckedBlock {
     definitely_returns: bool
 }
 
-ref enum CheckedStatement {
+recursive enum CheckedStatement {
     Expression(CheckedExpression)
     Defer(CheckedStatement)
     VarDecl(var: CheckedVarDecl, init: CheckedExpression)
@@ -761,7 +761,7 @@ ref enum CheckedStatement {
     Garbage
 }
 
-ref enum CheckedExpression {
+recursive enum CheckedExpression {
     Boolean(val: bool, span: JaktSpan)
     QuotedString(val: String, span: JaktSpan)
     Call(call: CheckedCall, span: JaktSpan, type: usize)
