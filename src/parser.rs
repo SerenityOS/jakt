@@ -220,7 +220,7 @@ pub enum ParsedStatement {
     For((String, Span), ParsedExpression, ParsedBlock),
     Break,
     Continue,
-    Return(ParsedExpression, Span),
+    Return(Option<ParsedExpression>, Span),
     Throw(ParsedExpression),
     Try(Box<ParsedStatement>, String, Span, ParsedBlock),
     InlineCpp(ParsedBlock, Span),
@@ -1776,7 +1776,9 @@ pub fn parse_function(
                 let (block, err) = match fat_arrow_expr {
                     Some(expr) => {
                         let mut block = ParsedBlock::new();
-                        block.stmts.push(ParsedStatement::Return(expr, name_span));
+                        block
+                            .stmts
+                            .push(ParsedStatement::Return(Some(expr), name_span));
                         (block, None)
                     }
                     None => parse_block(tokens, index),
@@ -2040,22 +2042,52 @@ pub fn parse_statement(
             trace!("parsing return");
 
             *index += 1;
-
-            let (expr, err) =
-                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
-            error = error.or(err);
-
-            (
-                ParsedStatement::Return(
-                    expr,
-                    Span {
-                        file_id: start.file_id,
-                        start: start.start,
-                        end: tokens[(*index - 1)].span.end,
-                    },
-                ),
-                error,
-            )
+            if *index < tokens.len() {
+                let tok = &tokens[*index].contents;
+                match tok {
+                    TokenContents::Eol => {
+                        *index += 1;
+                        (
+                            ParsedStatement::Return(
+                                None,
+                                Span {
+                                    file_id: start.file_id,
+                                    start: start.start,
+                                    end: tokens[(*index - 1)].span.end,
+                                },
+                            ),
+                            error,
+                        )
+                    }
+                    _ => {
+                        let (expr, err) = parse_expression(
+                            tokens,
+                            index,
+                            ExpressionKind::ExpressionWithoutAssignment,
+                        );
+                        error = error.or(err);
+                        (
+                            ParsedStatement::Return(
+                                Some(expr),
+                                Span {
+                                    file_id: start.file_id,
+                                    start: start.start,
+                                    end: tokens[(*index - 1)].span.end,
+                                },
+                            ),
+                            error,
+                        )
+                    }
+                }
+            } else {
+                (
+                    ParsedStatement::Garbage,
+                    Some(JaktError::ParserError(
+                        "expected Eol or expression after return".to_string(),
+                        tokens[*index].span,
+                    )),
+                )
+            }
         }
         TokenContents::Name(name) if name == "let" => {
             trace!("parsing let");

@@ -931,7 +931,7 @@ pub enum CheckedStatement {
     Block(CheckedBlock),
     Loop(CheckedBlock),
     While(CheckedExpression, CheckedBlock),
-    Return(CheckedExpression),
+    Return(Option<CheckedExpression>),
     Break,
     Continue,
     Throw(CheckedExpression),
@@ -1846,7 +1846,7 @@ fn typecheck_enum_predecl(
             );
 
             let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
-                if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
+                if let Some(CheckedStatement::Return(Some(ret))) = block.stmts.last() {
                     ret.type_id(method_scope_id, project)
                 } else {
                     VOID_TYPE_ID
@@ -2415,7 +2415,7 @@ fn typecheck_struct_predecl(
                 );
 
                 let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
-                    if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
+                    if let Some(CheckedStatement::Return(Some(ret))) = block.stmts.last() {
                         ret.type_id(method_scope_id, project)
                     } else {
                         VOID_TYPE_ID
@@ -2695,7 +2695,7 @@ fn typecheck_function_predecl(
         );
 
         let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
-            if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
+            if let Some(CheckedStatement::Return(Some(ret))) = block.stmts.last() {
                 ret.type_id(function_scope_id, project)
             } else {
                 VOID_TYPE_ID
@@ -2839,7 +2839,7 @@ fn typecheck_function(
     // If the return type is unknown, and the function starts with a return statement,
     // we infer the return type from its expression.
     let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
-        if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
+        if let Some(CheckedStatement::Return(Some(ret))) = block.stmts.last() {
             ret.type_id(function_scope_id, project)
         } else {
             VOID_TYPE_ID
@@ -2972,7 +2972,7 @@ fn typecheck_method(
     // If the return type is unknown, and the function starts with a return statement,
     // we infer the return type from its expression.
     let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
-        if let Some(CheckedStatement::Return(ret)) = block.stmts.first() {
+        if let Some(CheckedStatement::Return(Some(ret))) = block.stmts.first() {
             ret.type_id(function_scope_id, project)
         } else {
             VOID_TYPE_ID
@@ -3406,25 +3406,29 @@ pub fn typecheck_statement(
             (CheckedStatement::While(checked_cond, checked_block), error)
         }
         ParsedStatement::Return(expr, span) => {
-            let (output, err) = typecheck_expression(
-                expr,
-                scope_id,
-                project,
-                safety_mode,
-                project
-                    .current_function_index
-                    .map(|i| project.functions[i].return_type_id),
-            );
-            error = error.or(err);
-
+            let checked_return_statement = match expr {
+                Some(e) => {
+                    let (output, err) = typecheck_expression(
+                        e,
+                        scope_id,
+                        project,
+                        safety_mode,
+                        project
+                            .current_function_index
+                            .map(|i| project.functions[i].return_type_id),
+                    );
+                    error = error.or(err);
+                    CheckedStatement::Return(Some(output))
+                }
+                None => CheckedStatement::Return(None),
+            };
             if project.inside_defer {
                 error = error.or(Some(JaktError::TypecheckError(
                     "‘return’ is not allowed inside ‘defer’".to_string(),
                     *span,
                 )));
             }
-
-            (CheckedStatement::Return(output), error)
+            (checked_return_statement, error)
         }
         ParsedStatement::Block(block) => {
             let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);

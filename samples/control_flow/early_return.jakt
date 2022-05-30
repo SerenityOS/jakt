@@ -1,0 +1,17 @@
+/// Expect:
+/// - output: "1\n2\n3\n4\n5\n"
+
+function f(){
+    let mutable i = 1;
+    while i <= 10{
+        if i > 5 {
+            return
+        }
+        println("{}", i)
+        i = i+1;
+    }
+}
+
+function main() {
+    f()
+}

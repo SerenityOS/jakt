@@ -1865,12 +1865,15 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str(&codegen_statement(indent, statement, project));
             output.push_str("});\n");
         }
-        CheckedStatement::Return(expr) => {
-            let expr = codegen_expr(indent, expr, project);
-            output.push_str("return (");
-            output.push_str(&expr);
-            output.push_str(");\n")
-        }
+        CheckedStatement::Return(expr) => match expr {
+            Some(e) => {
+                let expr = codegen_expr(indent, e, project);
+                output.push_str("return (");
+                output.push_str(&expr);
+                output.push_str(");\n")
+            }
+            None => output.push_str("return;\n"),
+        },
         CheckedStatement::If(cond, block, else_stmt) => {
             let expr = codegen_expr(indent, cond, project);
             output.push_str("if (");
