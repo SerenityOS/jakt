@@ -74,10 +74,6 @@ public:
         VERIFY(!is_error());
         return release_value();
     }
-
-private:
-    // 'downcast' is fishy in this context. Let's hide it by making it private.
-    using Variant<T, ErrorType>::downcast;
 };
 
 // Partial specialization for void value type
