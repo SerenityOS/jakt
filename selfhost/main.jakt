@@ -685,6 +685,7 @@ ref enum ParsedExpression {
     QuotedString(val: String, span: JaktSpan)
     Call(call: ParsedCall, span: JaktSpan)
     Var(name: String, span: JaktSpan)
+    IndexedExpression(base: ParsedExpression, index: ParsedExpression, span: JaktSpan)
     OptionalNone(JaktSpan)
     Garbage(JaktSpan)
 }
@@ -902,19 +903,30 @@ struct Parser {
                         .index++
                     } else if name == "this" {
                         params.push(ParsedParameter(
-                                requires_label: false,
-                                variable: ParsedVariable(
-                                    name: "this",
-                                    parsed_type: ParsedType::Empty,
-                                    is_mutable: current_param_is_mutable,
-                                    span: .current().span(),
-                                ),
+                            requires_label: false,
+                            variable: ParsedVariable(
+                                name: "this",
+                                parsed_type: ParsedType::Empty,
                                 is_mutable: current_param_is_mutable,
                                 span: .current().span(),
+                            ),
+                            is_mutable: current_param_is_mutable,
+                            span: .current().span(),
                         ))
                         .index++
                     } else {
-                        println("FIXME: Parse a parameter")
+                        let var_decl = .parse_variable_declaration()
+                        params.push(ParsedParameter(
+                            requires_label: current_param_requires_label,
+                            variable: ParsedVariable(
+                                name: var_decl.name,
+                                parsed_type: var_decl.parsed_type,
+                                is_mutable: var_decl.is_mutable,
+                                span: .tokens[.index - 1].span(),
+                            ),
+                            is_mutable: current_param_is_mutable,
+                            span: .tokens[.index - 1].span(),
+                        ))
                     }
                 }
                 else => {
@@ -963,12 +975,20 @@ struct Parser {
         // FIXME: Accept an (optional) fat arrow ('=>')
 
         parsed_function.block = .parse_block()
+        parsed_function.params = params
 
         return parsed_function
     }
 
     function parse_typename(mutable this) throws -> ParsedType {
         let mutable parsed_type = .parse_shorthand_type()
+
+        match parsed_type {
+            ParsedType::Empty => { }
+            else => {
+                return parsed_type
+            }
+        }
 
         match .current() {
             Token::Name(name) => {
@@ -988,6 +1008,57 @@ struct Parser {
         return parsed_type
     }
 
+    function parse_variable_declaration(mutable this) throws -> ParsedVarDecl {
+        match .current() {
+            Token::Name(name) => {
+                let var_name = name
+                .index++
+                match .current() {
+                    Token::Colon => {
+                        .index++
+                    }
+                    else => {
+                        return ParsedVarDecl(
+                            name: var_name,
+                            parsed_type: ParsedType::Empty,
+                            is_mutable: false,
+                            span: .tokens[.index - 1].span(),
+                        )
+                    }
+                }
+
+                let decl_span = .tokens[.index - 1].span()
+
+                // We have "name:" so far.
+                let mutable is_mutable = false
+                match .current() {
+                    Token::Name(name) => {
+                        if name == "mutable" {
+                            .index++
+                            is_mutable = true
+                        }
+                    }
+                    else => { }
+                }
+
+                let var_type = .parse_typename()
+                return ParsedVarDecl(
+                    name: var_name,
+                    parsed_type: var_type,
+                    is_mutable,
+                    span: decl_span,
+                )
+            }
+            else => { }
+        }
+        return ParsedVarDecl(
+            name: "",
+            parsed_type: ParsedType::Empty,
+            is_mutable: false,
+            span: .current().span(),
+        )
+    }
+
     function parse_shorthand_type(mutable this) throws -> ParsedType {
         let start = .current().span().start
         match .current() {
@@ -1003,8 +1074,17 @@ struct Parser {
                         return ParsedType::Array(inner, span)
                     }
                     Token::Colon => {
-                        let span = JaktSpan(start, end: .current().span().end)
+                        .index++
                         let value = .parse_typename()
+                        match .current() {
+                            Token::RSquare => {
+                                .index++
+                            }
+                            else => {
+                                .error("Expected ']'", .current().span())
+                            }
+                        }
+                        let span = JaktSpan(start, end: .current().span().end)
                         return ParsedType::Dictionary(key: inner, value, span)
                     }
                     else => {
@@ -1191,7 +1271,7 @@ struct Parser {
                 }
             }
             else => {
-                println("FIXME: parse_operand")
+                println("FIXME: parse_operand but {}", .current())
             }
         }
         return ParsedExpression::Garbage(span)
@@ -1200,10 +1280,49 @@ struct Parser {
     function parse_operand(mutable this) throws -> ParsedExpression {
         .skip_newlines()
         let span = .current().span()
+        let start = .current().span().start
         .skip_newlines()
-        let expr = .parse_operand_base()
+        let mutable expr = .parse_operand_base()
 
-        // FIXME: postfix operators
+        // Check for postfix operators, while we're at it
+        match .current() {
+            Token::DotDot => {
+                println("FIXME: postfix DotDot")
+            }
+            Token::ExclamationPoint => {
+                println("FIXME: postfix ExclamationPoint")
+            }
+            Token::PlusPlus => {
+                println("FIXME: postfix PlusPlus")
+            }
+            Token::MinusMinus => {
+                println("FIXME: postfix MinusMinus")
+            }
+            Token::ColonColon => {
+                println("FIXME: postfix ColonColon")
+            }
+            Token::Dot => {
+                println("FIXME: postfix Dot")
+            }
+            Token::LSquare => {
+                // Indexing operation
+                .index++
+                let index_expr = .parse_expression()
+                match .current() {
+                    Token::RSquare => {
+                        .index++
+                    }
+                    else => {
+                        .error("Expected ']'", .current().span())
+                    }
+                }
+                return ParsedExpression::IndexedExpression(
+                    base: expr,
+                    index: index_expr,
+                    span: JaktSpan(start, end: .current().span().end))
+            }
+            else => { }
+        }
 
         return expr
     }
