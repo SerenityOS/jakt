@@ -5,7 +5,7 @@ enum Operation {
     Add
 }
 
-ref enum AST {
+boxed enum AST {
     Int(i64)
     BinaryOperation(lhs: AST, op: Operation, rhs: AST)
 }

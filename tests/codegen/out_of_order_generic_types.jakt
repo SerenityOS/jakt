@@ -18,7 +18,7 @@ enum MyEnum<T> {
     A(MyRecursiveEnum<T>)
 }
 
-ref enum MyRecursiveEnum<T> {
+boxed enum MyRecursiveEnum<T> {
     A(MyRecursiveEnum<T>)
     B
 }
