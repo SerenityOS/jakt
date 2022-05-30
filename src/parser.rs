@@ -2400,6 +2400,41 @@ pub fn parse_expression(
     (output, error)
 }
 
+pub fn parse_literal(tokens: &[Token], index: &mut usize) -> Option<ParsedExpression> {
+    match tokens.get(*index) {
+        Some(Token {
+            contents:
+                TokenContents::Number(..)
+                | TokenContents::SingleQuotedString(..)
+                | TokenContents::SingleQuotedByteString(..)
+                | TokenContents::QuotedString(..),
+            ..
+        }) => {
+            let (expr, err) = parse_operand(tokens, index);
+            if err.is_none() {
+                Some(expr)
+            } else {
+                None
+            }
+        }
+        Some(Token {
+            contents: TokenContents::Name(name),
+            ..
+        }) if name == "true" => {
+            *index += 1;
+            Some(ParsedExpression::Boolean(true, tokens[*index].span))
+        }
+        Some(Token {
+            contents: TokenContents::Name(name),
+            ..
+        }) if name == "false" => {
+            *index += 1;
+            Some(ParsedExpression::Boolean(false, tokens[*index].span))
+        }
+        _ => None,
+    }
+}
+
 pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Option<JaktError>) {
     // case:
     // 'else' '=>' (expression | block)
@@ -2408,6 +2443,15 @@ pub fn parse_pattern_case(tokens: &[Token], index: &mut usize) -> (MatchCase, Op
 
     let mut error = None;
     let make_case: Box<dyn FnOnce(MatchBody) -> MatchCase> = loop {
+        if let Some(expr) = parse_literal(tokens, index) {
+            let span = expr.span();
+            break Box::new(move |x| MatchCase::Expression {
+                matched_expression: expr,
+                body: x,
+                marker_span: span,
+            });
+        }
+
         if matches!(
             tokens.get(*index),
             Some(Token{

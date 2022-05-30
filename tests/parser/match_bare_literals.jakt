@@ -1,0 +1,34 @@
+/// Expect:
+/// - output: "1\n1\n1\n1\n1\n"
+
+function main() {
+    println("{}", match true {
+        true => 1
+        false => 0
+        else => 2
+    })
+
+    println("{}", match 5 {
+        1 => 0
+        5 => 1
+        else => 2
+    })
+
+    println("{}", match "foo" {
+        "bar" => 5
+        "foo" => 1
+        else => 2
+    })
+
+    println("{}", match b'x' {
+        b'a' => 5
+        b'x' => 1
+        else => 2
+    })
+
+    println("{}", match 'x' {
+        'a' => 5
+        'x' => 1
+        else => 2
+    })
+}
