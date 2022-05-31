@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "PASS\n"
+
+function main() {
+    println("{}", match "test" {
+        "test" => {
+            yield "PASS"
+        }
+        else => "FAIL"
+    })
+}

@@ -26,6 +26,23 @@ const INDENT_SIZE: usize = 4;
 struct CodegenContext {
     namespace_stack: Vec<String>,
     deferred_output: String,
+    fresh_var_counter: usize,
+    fresh_label_counter: usize,
+    entered_yieldable_blocks: Vec<(String, String)>, // label, variable name
+}
+
+impl CodegenContext {
+    fn fresh_var(&mut self) -> String {
+        let id = self.fresh_var_counter;
+        self.fresh_var_counter += 1;
+        format!("__jakt_var_{}", id)
+    }
+
+    fn fresh_label(&mut self) -> String {
+        let id = self.fresh_label_counter;
+        self.fresh_label_counter += 1;
+        format!("__jakt_label_{}", id)
+    }
 }
 
 pub fn codegen(project: &Project, scope: &Scope) -> String {
@@ -35,6 +52,9 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
     let mut context = CodegenContext {
         namespace_stack: Vec::new(),
         deferred_output: String::new(),
+        fresh_var_counter: 0,
+        fresh_label_counter: 0,
+        entered_yieldable_blocks: vec![],
     };
 
     output.push_str(&codegen_namespace_predecl(project, scope, &mut context));
@@ -202,7 +222,7 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
         {
             continue;
         } else {
-            let function_output = codegen_function(function, project);
+            let function_output = codegen_function(function, project, context);
 
             output.push_str(&function_output);
             output.push('\n');
@@ -223,8 +243,12 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
         for (_, function_id, _) in &scope.functions {
             let function = &project.functions[*function_id];
             if function.linkage != FunctionLinkage::ImplicitConstructor {
-                let function_output =
-                    codegen_function_in_namespace(function, Some(structure.type_id), project);
+                let function_output = codegen_function_in_namespace(
+                    function,
+                    Some(structure.type_id),
+                    project,
+                    context,
+                );
 
                 output.push_str(&function_output);
                 output.push('\n');
@@ -247,7 +271,7 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
             let function = &project.functions[*function_id];
             if function.linkage != FunctionLinkage::ImplicitEnumConstructor {
                 let function_output =
-                    codegen_function_in_namespace(function, Some(enum_.type_id), project);
+                    codegen_function_in_namespace(function, Some(enum_.type_id), project, context);
 
                 output.push_str(&function_output);
                 output.push('\n');
@@ -300,7 +324,7 @@ fn codegen_nonrecursive_enum(
                         output.push_str("    ");
                         output.push_str(name);
                         output.push_str(" = ");
-                        output.push_str(&codegen_expr(0, value, project));
+                        output.push_str(&codegen_expr(0, value, project, context));
                         output.push_str(",\n");
                     }
                     _ => unreachable!(),
@@ -494,7 +518,7 @@ fn codegen_nonrecursive_enum(
             let method_output = if enum_.generic_parameters.is_empty() {
                 codegen_function_predecl(function, project)
             } else {
-                codegen_function(function, project)
+                codegen_function(function, project, context)
             };
             output.push_str(&method_output);
             output.push('\n');
@@ -712,7 +736,7 @@ fn codegen_recursive_enum(
                         output.push_str("    ");
                         output.push_str(name);
                         output.push_str(" = ");
-                        output.push_str(&codegen_expr(0, value, project));
+                        output.push_str(&codegen_expr(0, value, project, context));
                         output.push_str(",\n");
                     }
                     _ => unreachable!(),
@@ -931,7 +955,7 @@ fn codegen_recursive_enum(
             let method_output = if enum_.generic_parameters.is_empty() {
                 codegen_function_predecl(function, project)
             } else {
-                codegen_function(function, project)
+                codegen_function(function, project, context)
             };
             output.push_str(&method_output);
             output.push('\n');
@@ -1217,7 +1241,7 @@ fn codegen_struct(
             let method_output = if structure.generic_parameters.is_empty() {
                 codegen_function_predecl(function, project)
             } else {
-                codegen_function(function, project)
+                codegen_function(function, project, context)
             };
             output.push_str(&method_output);
         }
@@ -1325,14 +1349,19 @@ fn codegen_function_predecl(function: &CheckedFunction, project: &Project) -> St
     output
 }
 
-fn codegen_function(function: &CheckedFunction, project: &Project) -> String {
-    codegen_function_in_namespace(function, None, project)
+fn codegen_function(
+    function: &CheckedFunction,
+    project: &Project,
+    context: &mut CodegenContext,
+) -> String {
+    codegen_function_in_namespace(function, None, project, context)
 }
 
 fn codegen_function_in_namespace(
     function: &CheckedFunction,
     containing_struct: Option<TypeId>,
     project: &Project,
+    context: &mut CodegenContext,
 ) -> String {
     // Extern generics need to be in the header anyways, so we can't codegen for them.
     if [
@@ -1463,6 +1492,7 @@ fn codegen_function_in_namespace(
             .as_ref()
             .expect("Function being generated must be checked"),
         project,
+        context,
     );
     output.push_str(&block);
 
@@ -1800,14 +1830,35 @@ pub fn codegen_type_possibly_as_namespace(
     }
 }
 
-fn codegen_block(indent: usize, checked_block: &CheckedBlock, project: &Project) -> String {
+fn codegen_block(
+    indent: usize,
+    checked_block: &CheckedBlock,
+    project: &Project,
+    context: &mut CodegenContext,
+) -> String {
     let mut output = String::new();
+
+    if let Some(yielded_type) = &checked_block.yielded_type {
+        let type_ = codegen_type(*yielded_type, project);
+        let fresh_var = context.fresh_var();
+        let fresh_label = context.fresh_label();
+        context
+            .entered_yieldable_blocks
+            .push((fresh_var, fresh_label));
+
+        let (fresh_var, _) = context.entered_yieldable_blocks.last().unwrap();
+        output.push_str("({ Optional<");
+        output.push_str(&type_);
+        output.push_str("> ");
+        output.push_str(fresh_var);
+        output.push_str("; ");
+    }
 
     output.push_str(&codegen_indent(indent));
     output.push_str("{\n");
 
     for stmt in &checked_block.stmts {
-        let stmt = codegen_statement(indent + INDENT_SIZE, stmt, project);
+        let stmt = codegen_statement(indent + INDENT_SIZE, stmt, project, context);
 
         output.push_str(&stmt);
     }
@@ -1815,10 +1866,24 @@ fn codegen_block(indent: usize, checked_block: &CheckedBlock, project: &Project)
     output.push_str(&codegen_indent(indent));
     output.push_str("}\n");
 
+    if checked_block.yielded_type.is_some() {
+        let (block_var, block_label) = context.entered_yieldable_blocks.pop().unwrap();
+
+        output.push_str(&block_label);
+        output.push_str(":; ");
+        output.push_str(&block_var);
+        output.push_str(".release_value(); })");
+    }
+
     output
 }
 
-fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) -> String {
+fn codegen_statement(
+    indent: usize,
+    stmt: &CheckedStatement,
+    project: &Project,
+    context: &mut CodegenContext,
+) -> String {
     let mut output = String::new();
 
     output.push_str(&codegen_indent(indent));
@@ -1827,7 +1892,7 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
         CheckedStatement::Try(stmt, error_name, catch_block) => {
             output.push('{');
             output.push_str("auto _jakt_try_result = [&]() -> ErrorOr<void> {");
-            output.push_str(&codegen_statement(indent, stmt, project));
+            output.push_str(&codegen_statement(indent, stmt, project, context));
             output.push(';');
             output.push_str("return {};");
             output.push_str("}();");
@@ -1837,13 +1902,13 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
                 output.push_str(error_name);
                 output.push_str(" = _jakt_try_result.release_error();");
             }
-            output.push_str(&codegen_block(indent, catch_block, project));
+            output.push_str(&codegen_block(indent, catch_block, project, context));
             output.push('}');
             output.push('}');
         }
         CheckedStatement::Throw(expr) => {
             output.push_str("return ");
-            output.push_str(&codegen_expr(indent, expr, project));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push(';');
         }
         CheckedStatement::Continue => {
@@ -1853,7 +1918,7 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str("break;");
         }
         CheckedStatement::Expression(expr) => {
-            let expr = codegen_expr(indent, expr, project);
+            let expr = codegen_expr(indent, expr, project, context);
             output.push_str(&expr);
             output.push_str(";\n");
         }
@@ -1862,43 +1927,57 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push_str("#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n");
             output.push_str("ScopeGuard __SCOPE_GUARD_NAME ([&] \n");
             output.push_str("#undef __SCOPE_GUARD_NAME\n{");
-            output.push_str(&codegen_statement(indent, statement, project));
+            output.push_str(&codegen_statement(indent, statement, project, context));
             output.push_str("});\n");
         }
         CheckedStatement::Return(expr) => {
-            let expr = codegen_expr(indent, expr, project);
+            let expr = codegen_expr(indent, expr, project, context);
             output.push_str("return (");
             output.push_str(&expr);
             output.push_str(");\n")
         }
+        CheckedStatement::Yield(expr) => {
+            // yield expr -> block_var = expr; goto block_end;
+            let expr = codegen_expr(indent, expr, project, context);
+            let (block_var_name, block_end_label) = context
+                .entered_yieldable_blocks
+                .last()
+                .expect("Must be in a block to yield");
+            output.push_str(block_var_name);
+            output.push_str(" = ");
+            output.push_str(&expr);
+            output.push_str("; goto ");
+            output.push_str(block_end_label);
+            output.push_str(";\n");
+        }
         CheckedStatement::If(cond, block, else_stmt) => {
-            let expr = codegen_expr(indent, cond, project);
+            let expr = codegen_expr(indent, cond, project, context);
             output.push_str("if (");
             output.push_str(&expr);
             output.push_str(") ");
 
-            let block = codegen_block(indent, block, project);
+            let block = codegen_block(indent, block, project, context);
             output.push_str(&block);
 
             if let Some(else_stmt) = else_stmt {
                 output.push_str(" else ");
-                let else_string = codegen_statement(indent, else_stmt, project);
+                let else_string = codegen_statement(indent, else_stmt, project, context);
                 output.push_str(&else_string);
             }
         }
         CheckedStatement::Loop(block) => {
             output.push_str("for (;;) {");
-            let block = codegen_block(indent, block, project);
+            let block = codegen_block(indent, block, project, context);
             output.push_str(&block);
             output.push('}');
         }
         CheckedStatement::While(cond, block) => {
-            let expr = codegen_expr(indent, cond, project);
+            let expr = codegen_expr(indent, cond, project, context);
             output.push_str("while (");
             output.push_str(&expr);
             output.push_str(") ");
 
-            let block = codegen_block(indent, block, project);
+            let block = codegen_block(indent, block, project, context);
             output.push_str(&block);
         }
         CheckedStatement::VarDecl(var_decl, expr) => {
@@ -1909,12 +1988,14 @@ fn codegen_statement(indent: usize, stmt: &CheckedStatement, project: &Project) 
             output.push(' ');
             output.push_str(&var_decl.name);
             output.push_str(" = ");
-            output.push_str(&codegen_expr(indent, expr, project));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push_str(";\n");
         }
         CheckedStatement::Block(checked_block) => {
-            let block = codegen_block(indent, checked_block, project);
+            let block = codegen_block(indent, checked_block, project, context);
+            output.push('{');
             output.push_str(&block);
+            output.push('}');
         }
         CheckedStatement::InlineCpp(strings) => {
             for string in strings {
@@ -1938,6 +2019,7 @@ fn codegen_checked_binary_op(
     type_id: TypeId,
     op: &BinaryOperator,
     project: &Project,
+    context: &mut CodegenContext,
 ) -> String {
     let mut output = String::new();
 
@@ -1958,9 +2040,9 @@ fn codegen_checked_binary_op(
     output.push('<');
     output.push_str(&codegen_type(type_id, project));
     output.push_str(">(");
-    output.push_str(&codegen_expr(indent, lhs, project));
+    output.push_str(&codegen_expr(indent, lhs, project, context));
     output.push_str(", ");
-    output.push_str(&codegen_expr(indent, rhs, project));
+    output.push_str(&codegen_expr(indent, rhs, project, context));
     output.push(')');
 
     output
@@ -1973,12 +2055,13 @@ fn codegen_checked_binary_op_assign(
     type_id: TypeId,
     op: &BinaryOperator,
     project: &Project,
+    context: &mut CodegenContext,
 ) -> String {
     let mut output = String::new();
 
     output.push('{');
     output.push_str("auto& _jakt_ref = ");
-    output.push_str(&codegen_expr(indent, lhs, project));
+    output.push_str(&codegen_expr(indent, lhs, project, context));
     output.push(';');
     output.push_str("_jakt_ref = JaktInternal::");
 
@@ -1997,7 +2080,7 @@ fn codegen_checked_binary_op_assign(
     output.push('<');
     output.push_str(&codegen_type(type_id, project));
     output.push_str(">(_jakt_ref, ");
-    output.push_str(&codegen_expr(indent, rhs, project));
+    output.push_str(&codegen_expr(indent, rhs, project, context));
     output.push_str(");");
     output.push('}');
 
@@ -2009,22 +2092,23 @@ fn codegen_match_body(
     body: &CheckedMatchBody,
     project: &Project,
     return_type_id: TypeId,
+    context: &mut CodegenContext,
 ) -> String {
     let mut output = String::new();
     match body {
         CheckedMatchBody::Expression(expr) => {
             if expr.type_id_or_type_var() == VOID_TYPE_ID {
                 output.push_str("   return (");
-                output.push_str(&codegen_expr(indent + 1, expr, project));
+                output.push_str(&codegen_expr(indent + 1, expr, project, context));
                 output.push_str("), JaktInternal::ExplicitValue<void>();\n");
             } else {
                 output.push_str("   return JaktInternal::ExplicitValue(");
-                output.push_str(&codegen_expr(indent + 1, expr, project));
+                output.push_str(&codegen_expr(indent + 1, expr, project, context));
                 output.push_str(");\n");
             }
         }
         CheckedMatchBody::Block(block) => {
-            output.push_str(&codegen_block(indent, block, project));
+            output.push_str(&codegen_block(indent, block, project, context));
 
             if return_type_id == VOID_TYPE_ID {
                 output.push_str("return JaktInternal::ExplicitValue<void>();\n");
@@ -2042,6 +2126,7 @@ fn codegen_enum_match(
     match_values_are_all_constant: bool,
     indent: usize,
     project: &Project,
+    context: &mut CodegenContext,
 ) -> String {
     let mut output = String::new();
     let needs_deref = enum_.definition_type == DefinitionType::Class
@@ -2059,7 +2144,7 @@ fn codegen_enum_match(
                 if needs_deref {
                     output.push('*');
                 }
-                output.push_str(&codegen_expr(indent, expr, project));
+                output.push_str(&codegen_expr(indent, expr, project, context));
                 output.push_str(") {\n");
             } else {
                 output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(([&]() -> JaktInternal::ExplicitValueOrReturn<");
@@ -2071,7 +2156,7 @@ fn codegen_enum_match(
                 if needs_deref {
                     output.push('*');
                 }
-                output.push_str(&codegen_expr(indent, expr, project));
+                output.push_str(&codegen_expr(indent, expr, project, context));
                 output.push_str(";\n");
             }
             let mut first = true;
@@ -2111,6 +2196,7 @@ fn codegen_enum_match(
                             body,
                             project,
                             *return_type_id,
+                            context,
                         ));
                         if match_values_are_all_constant {
                             output.push_str("break;\n");
@@ -2132,6 +2218,7 @@ fn codegen_enum_match(
                             body,
                             project,
                             *return_type_id,
+                            context,
                         ));
                         if match_values_are_all_constant {
                             output.push_str("break;\n");
@@ -2148,7 +2235,7 @@ fn codegen_enum_match(
                             }
                             output.push_str("if (__jakt_enum_value == ");
                         }
-                        output.push_str(&codegen_expr(indent, expression, project));
+                        output.push_str(&codegen_expr(indent, expression, project, context));
                         if match_values_are_all_constant {
                             output.push_str(":\n");
                         } else {
@@ -2160,6 +2247,7 @@ fn codegen_enum_match(
                             body,
                             project,
                             *return_type_id,
+                            context,
                         ));
                         if match_values_are_all_constant {
                             output.push_str("break;\n");
@@ -2177,7 +2265,7 @@ fn codegen_enum_match(
         }
         None => {
             output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN((");
-            output.push_str(&codegen_expr(indent, expr, project));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push(')');
             if needs_deref {
                 output.push_str("->");
@@ -2297,6 +2385,7 @@ fn codegen_enum_match(
                             body,
                             project,
                             *return_type_id,
+                            context,
                         ));
                     }
                     CheckedMatchCase::CatchAll { body } => {
@@ -2314,6 +2403,7 @@ fn codegen_enum_match(
                             body,
                             project,
                             *return_type_id,
+                            context,
                         ));
                     }
                     _ => {
@@ -2337,6 +2427,7 @@ fn codegen_generic_match(
     match_values_are_all_constant: bool,
     indent: usize,
     project: &Project,
+    context: &mut CodegenContext,
 ) -> String {
     let mut output = String::new();
 
@@ -2355,7 +2446,7 @@ fn codegen_generic_match(
         output.push_str("_JaktCurrentFunctionReturnType");
         output.push_str("> { \n");
         output.push_str("switch (");
-        output.push_str(&codegen_expr(indent, expr, project));
+        output.push_str(&codegen_expr(indent, expr, project, context));
         output.push_str(") {\n");
     } else {
         output.push_str(
@@ -2370,7 +2461,7 @@ fn codegen_generic_match(
         } else {
             output.push_str("auto __jakt_enum_value = (");
         }
-        output.push_str(&codegen_expr(indent, expr, project));
+        output.push_str(&codegen_expr(indent, expr, project, context));
         output.push_str(");\n");
     }
     let mut first = true;
@@ -2418,6 +2509,7 @@ fn codegen_generic_match(
                     body,
                     project,
                     *return_type_id,
+                    context,
                 ));
 
                 output.push_str("}\n");
@@ -2436,6 +2528,7 @@ fn codegen_generic_match(
                     body,
                     project,
                     *return_type_id,
+                    context,
                 ));
                 if match_values_are_all_constant {
                     output.push_str("break;\n");
@@ -2452,7 +2545,7 @@ fn codegen_generic_match(
                     }
                     output.push_str("if (__jakt_enum_value == ");
                 }
-                output.push_str(&codegen_expr(indent, expression, project));
+                output.push_str(&codegen_expr(indent, expression, project, context));
                 if match_values_are_all_constant {
                     output.push_str(":\n");
                 } else {
@@ -2464,6 +2557,7 @@ fn codegen_generic_match(
                     body,
                     project,
                     *return_type_id,
+                    context,
                 ));
                 if match_values_are_all_constant {
                     output.push_str("break;\n");
@@ -2485,7 +2579,12 @@ fn codegen_generic_match(
     output
 }
 
-fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> String {
+fn codegen_expr(
+    indent: usize,
+    expr: &CheckedExpression,
+    project: &Project,
+    context: &mut CodegenContext,
+) -> String {
     let mut output = String::new();
 
     match expr {
@@ -2502,11 +2601,11 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             output.push_str("static_cast<");
             output.push_str(&codegen_type(index_type, project));
             output.push_str(">(");
-            output.push_str(&codegen_expr(indent, start_expr, project));
+            output.push_str(&codegen_expr(indent, start_expr, project, context));
             output.push_str("),static_cast<");
             output.push_str(&codegen_type(index_type, project));
             output.push_str(">(");
-            output.push_str(&codegen_expr(indent, end_expr, project));
+            output.push_str(&codegen_expr(indent, end_expr, project, context));
             output.push_str(")})");
         }
         CheckedExpression::OptionalNone(_, _) => {
@@ -2514,12 +2613,12 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
         }
         CheckedExpression::OptionalSome(expr, _, _) => {
             output.push('(');
-            output.push_str(&codegen_expr(indent, expr, project));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push(')');
         }
         CheckedExpression::ForcedUnwrap(expr, _, _) => {
             output.push('(');
-            output.push_str(&codegen_expr(indent, expr, project));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push_str(".value())");
         }
         CheckedExpression::QuotedString(qs, _) => {
@@ -2620,7 +2719,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             if call.name == "print" {
                 output.push_str("out(");
                 for (i, param) in call.args.iter().enumerate() {
-                    output.push_str(&codegen_expr(indent, &param.1, project));
+                    output.push_str(&codegen_expr(indent, &param.1, project, context));
                     if i != call.args.len() - 1 {
                         output.push(',');
                     }
@@ -2629,7 +2728,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             } else if call.name == "println" {
                 output.push_str("outln(");
                 for (i, param) in call.args.iter().enumerate() {
-                    output.push_str(&codegen_expr(indent, &param.1, project));
+                    output.push_str(&codegen_expr(indent, &param.1, project, context));
                     if i != call.args.len() - 1 {
                         output.push(',');
                     }
@@ -2638,7 +2737,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             } else if call.name == "eprintln" {
                 output.push_str("warnln(");
                 for (i, param) in call.args.iter().enumerate() {
-                    output.push_str(&codegen_expr(indent, &param.1, project));
+                    output.push_str(&codegen_expr(indent, &param.1, project, context));
                     if i != call.args.len() - 1 {
                         output.push(',');
                     }
@@ -2647,7 +2746,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             } else if call.name == "format" {
                 output.push_str("TRY(String::formatted(");
                 for (i, param) in call.args.iter().enumerate() {
-                    output.push_str(&codegen_expr(indent, &param.1, project));
+                    output.push_str(&codegen_expr(indent, &param.1, project, context));
                     if i != call.args.len() - 1 {
                         output.push(',');
                     }
@@ -2734,7 +2833,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                         first = false;
                     }
 
-                    output.push_str(&codegen_expr(indent, &param.1, project));
+                    output.push_str(&codegen_expr(indent, &param.1, project, context));
                 }
                 output.push(')');
             }
@@ -2750,7 +2849,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             output.push('(');
 
             output.push('(');
-            output.push_str(&codegen_expr(indent, expr, project));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push(')');
 
             match &**expr {
@@ -2786,7 +2885,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     first = false;
                 }
 
-                output.push_str(&codegen_expr(indent, &param.1, project));
+                output.push_str(&codegen_expr(indent, &param.1, project, context));
             }
             output.push_str("))");
 
@@ -2808,6 +2907,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                         match_values_are_all_constant,
                         indent,
                         project,
+                        context,
                     ));
                 }
                 _ => {
@@ -2818,6 +2918,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                         match_values_are_all_constant,
                         indent,
                         project,
+                        context,
                     ));
                 }
             };
@@ -2874,7 +2975,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 }
                 _ => {}
             }
-            output.push_str(&codegen_expr(indent, expr, project));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             match op {
                 CheckedUnaryOperator::PostIncrement => {
                     output.push_str("++");
@@ -2897,7 +2998,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     let rhs_type = &project.types[rhs.type_id_or_type_var()];
                     let optional_struct_id = project.cached_optional_struct_id.unwrap();
 
-                    output.push_str(&codegen_expr(indent, lhs, project));
+                    output.push_str(&codegen_expr(indent, lhs, project, context));
 
                     match rhs_type {
                         Type::GenericInstance(struct_id, _) if *struct_id == optional_struct_id => {
@@ -2907,20 +3008,20 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                             output.push_str(".value_or_lazy_evaluated([&] { return ");
                         }
                     }
-                    output.push_str(&codegen_expr(indent, rhs, project));
+                    output.push_str(&codegen_expr(indent, rhs, project, context));
                     output.push_str("; })");
                 }
                 BinaryOperator::NoneCoalescingAssign => {
-                    output.push_str(&codegen_expr(indent, lhs, project));
+                    output.push_str(&codegen_expr(indent, lhs, project, context));
                     output.push_str(".lazy_emplace([&] { return ");
-                    output.push_str(&codegen_expr(indent, rhs, project));
+                    output.push_str(&codegen_expr(indent, rhs, project, context));
                     output.push_str("; })");
                 }
                 BinaryOperator::ArithmeticRightShift => {
                     output.push_str("JaktInternal::arithmetic_shift_right(");
-                    output.push_str(&codegen_expr(indent, lhs, project));
+                    output.push_str(&codegen_expr(indent, lhs, project, context));
                     output.push_str(", ");
-                    output.push_str(&codegen_expr(indent, rhs, project));
+                    output.push_str(&codegen_expr(indent, rhs, project, context));
                     output.push(')');
                 }
                 BinaryOperator::Add
@@ -2937,6 +3038,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                         expr.type_id_or_type_var(),
                         op,
                         project,
+                        context,
                     ))
                 }
                 BinaryOperator::AddAssign
@@ -2953,23 +3055,24 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                         expr.type_id_or_type_var(),
                         op,
                         project,
+                        context,
                     ))
                 }
                 _ => {
                     if *op == BinaryOperator::Assign {
                         if let CheckedExpression::IndexedDictionary(expr, index, ..) = lhs.as_ref()
                         {
-                            output.push_str(&codegen_expr(0, expr, project));
+                            output.push_str(&codegen_expr(0, expr, project, context));
                             output.push_str(".set(");
-                            output.push_str(&codegen_expr(0, index, project));
+                            output.push_str(&codegen_expr(0, index, project, context));
                             output.push_str(", ");
-                            output.push_str(&codegen_expr(0, rhs, project));
+                            output.push_str(&codegen_expr(0, rhs, project, context));
                             output.push_str("))");
                             return output;
                         }
                     }
 
-                    output.push_str(&codegen_expr(indent, lhs, project));
+                    output.push_str(&codegen_expr(indent, lhs, project, context));
                     match op {
                         BinaryOperator::Add => output.push_str(" + "),
                         BinaryOperator::Subtract => output.push_str(" - "),
@@ -3003,7 +3106,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                         BinaryOperator::BitwiseRightShift => output.push_str(" >> "),
                         _ => {}
                     }
-                    output.push_str(&codegen_expr(indent, rhs, project));
+                    output.push_str(&codegen_expr(indent, rhs, project, context));
                 }
             }
             output.push(')');
@@ -3018,9 +3121,14 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 output.push_str("(TRY(Array<");
                 output.push_str(&codegen_type(value_type_id, project));
                 output.push_str(">::filled(");
-                output.push_str(&codegen_expr(indent, fill_size_expr, project));
+                output.push_str(&codegen_expr(indent, fill_size_expr, project, context));
                 output.push_str(", ");
-                output.push_str(&codegen_expr(indent, vals.first().unwrap(), project));
+                output.push_str(&codegen_expr(
+                    indent,
+                    vals.first().unwrap(),
+                    project,
+                    context,
+                ));
                 output.push_str(")))");
             } else {
                 // (Array({1, 2, 3}))
@@ -3035,7 +3143,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                         first = false;
                     }
 
-                    output.push_str(&codegen_expr(indent, val, project))
+                    output.push_str(&codegen_expr(indent, val, project, context))
                 }
                 output.push_str("}))");
             }
@@ -3061,9 +3169,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 }
 
                 output.push('{');
-                output.push_str(&codegen_expr(indent, key, project));
+                output.push_str(&codegen_expr(indent, key, project, context));
                 output.push_str(", ");
-                output.push_str(&codegen_expr(indent, value, project));
+                output.push_str(&codegen_expr(indent, value, project, context));
                 output.push('}');
             }
             output.push_str("})))");
@@ -3086,7 +3194,7 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                 } else {
                     first = false;
                 }
-                output.push_str(&codegen_expr(indent, value, project));
+                output.push_str(&codegen_expr(indent, value, project, context));
             }
             output.push_str("})))");
         }
@@ -3101,34 +3209,34 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
                     first = false;
                 }
 
-                output.push_str(&codegen_expr(indent, val, project))
+                output.push_str(&codegen_expr(indent, val, project, context))
             }
             output.push_str("})");
         }
         CheckedExpression::IndexedExpression(expr, idx, _, _) => {
             output.push_str("((");
-            output.push_str(&codegen_expr(indent, expr, project));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push_str(")[");
-            output.push_str(&codegen_expr(indent, idx, project));
+            output.push_str(&codegen_expr(indent, idx, project, context));
             output.push_str("])");
         }
         CheckedExpression::IndexedDictionary(expr, idx, _, _) => {
             output.push_str("((");
-            output.push_str(&codegen_expr(indent, expr, project));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push_str(")[");
-            output.push_str(&codegen_expr(indent, idx, project));
+            output.push_str(&codegen_expr(indent, idx, project, context));
             output.push_str("])");
         }
         CheckedExpression::IndexedTuple(expr, idx, _, _) => {
             // x.get<1>()
             output.push_str("((");
-            output.push_str(&codegen_expr(indent, expr, project));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push_str(&format!(").get<{}>())", idx));
         }
         CheckedExpression::IndexedStruct(expr, name, _, _) => {
             // x.foo or x->foo
             output.push_str("((");
-            output.push_str(&codegen_expr(indent, expr, project));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push(')');
 
             match &**expr {
@@ -3155,6 +3263,9 @@ fn codegen_expr(indent: usize, expr: &CheckedExpression, project: &Project) -> S
             }
 
             output.push_str(&format!("{})", name));
+        }
+        CheckedExpression::Block(block, _, _) => {
+            output.push_str(&codegen_block(indent, block, project, context));
         }
         CheckedExpression::Garbage(_) => {
             // Incorrect parse/typecheck
