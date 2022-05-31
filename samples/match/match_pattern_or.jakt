@@ -1,0 +1,23 @@
+/// Expect:
+/// - output: "PASS\nPASS\n"
+
+enum Foo {
+    Bar
+    Baz
+    Bat
+}
+
+function main() {
+    println("{}", match "foo" {
+        "foo" | "bar" | "baz" => {
+            yield "PASS"
+        }
+        else => "FAIL"
+    })
+
+    let p = Foo::Bar
+    println("{}", match p {
+        Bar => "PASS"
+        Baz | else => "FAIL"
+    })
+}
