@@ -1,2 +1,4 @@
 node_modules
 *.vsix
+client/out
+server/out
