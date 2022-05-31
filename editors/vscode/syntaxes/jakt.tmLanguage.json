@@ -187,6 +187,9 @@
           "patterns": [
             {
               "include": "#enum-field"
+            },
+            {
+              "include": "$self"
             }
           ]
         },
