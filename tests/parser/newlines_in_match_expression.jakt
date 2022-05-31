@@ -1,0 +1,12 @@
+/// Expect:
+/// - output: "PASS\n"
+
+function main() {
+    let i = 0
+    match i + 1 {
+        (
+        1
+        ) => println("PASS")
+        else => println("FAIL")
+    }
+}

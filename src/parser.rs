@@ -2779,9 +2779,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
     let span = tokens[*index].span;
 
-    while *index < tokens.len() && tokens[*index].contents == TokenContents::Eol {
-        *index += 1;
-    }
+    skip_newlines(tokens, index);
 
     let mut expr = match &tokens[*index].contents {
         TokenContents::Dot => ParsedExpression::Var("this".to_string(), tokens[*index].span),
@@ -2895,6 +2893,8 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
             let (mut expr, err) =
                 parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
             error = error.or(err);
+
+            skip_newlines(tokens, index);
 
             match &tokens[*index].contents {
                 TokenContents::RParen => {
