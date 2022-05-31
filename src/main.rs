@@ -9,13 +9,13 @@ use std::{io, io::Write, path::PathBuf, process::exit, process::Command};
 
 use pico_args::Arguments;
 
-use jakt::{Compiler, JaktError, Span};
+use jakt::{Compiler, JaktError, Project, Span};
 
 fn main() -> Result<(), JaktError> {
     let arguments = parse_arguments();
 
-    let binary_directory = match arguments.binary_directory {
-        Some(dir) => dir,
+    let binary_directory = match &arguments.binary_directory {
+        Some(dir) => dir.clone(),
         None => {
             let mut dir = std::env::current_dir().expect("Current directory unusable!");
             dir.push("build");
@@ -24,103 +24,154 @@ fn main() -> Result<(), JaktError> {
     };
     std::fs::create_dir_all(&binary_directory)?;
 
-    let mut compiler = Compiler::new(arguments.include_paths);
+    let mut compiler = Compiler::new(arguments.include_paths.clone());
 
     let mut first_error = None;
 
-    for file in arguments.input_files {
-        match compiler.convert_to_cpp(&file) {
-            Ok(str) => {
-                let mut out_filepath = binary_directory.clone();
-                out_filepath.push(file.file_name().unwrap());
-                out_filepath.set_extension("cpp");
-                let mut out_file = std::fs::File::create(out_filepath.clone())?;
-                out_file.write_all(str.as_bytes())?;
-
-                let path_as_string =
-                    |path: &PathBuf| path.clone().into_os_string().into_string().unwrap();
-
-                if arguments.prettify_cpp_source {
-                    let cpp_source = path_as_string(&out_filepath);
-                    let default_clang_format_path = PathBuf::from("clang-format");
-                    let clang_format_output = Command::new(
-                        arguments
-                            .clang_format_path
-                            .as_ref()
-                            .unwrap_or(&default_clang_format_path),
-                    )
-                    .args(["-i", &cpp_source])
-                    .output()?;
-                    io::stderr().write_all(&clang_format_output.stderr)?;
-                }
-
-                if !arguments.emit_source_only {
-                    let input_cpp = path_as_string(&out_filepath);
-
-                    let output_executable;
-                    #[cfg(target_os = "windows")]
-                    {
-                        output_executable = path_as_string(&out_filepath.with_extension("exe"));
+    if arguments.check_only {
+        let mut project = Project::new();
+        for file in &arguments.input_files {
+            match compiler.check_project(file, &mut project) {
+                (_, Some(err)) => {
+                    match &err {
+                        JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
+                        JaktError::StringError(se) => println!("Error: {}", se),
+                        JaktError::ParserError(msg, span) => {
+                            display_error(&arguments, &compiler, msg, *span)
+                        }
+                        JaktError::TypecheckError(msg, span) => {
+                            display_error(&arguments, &compiler, msg, *span)
+                        }
+                        JaktError::ValidationError(msg, span) => {
+                            display_error(&arguments, &compiler, msg, *span)
+                        }
+                        JaktError::TypecheckErrorWithHint(
+                            error_msg,
+                            error_span,
+                            hint_msg,
+                            hint_span,
+                        )
+                        | JaktError::ParserErrorWithHint(
+                            error_msg,
+                            error_span,
+                            hint_msg,
+                            hint_span,
+                        ) => {
+                            display_error(&arguments, &compiler, error_msg, *error_span);
+                            display_hint(&arguments, &compiler, hint_msg, *hint_span);
+                        }
                     }
-                    #[cfg(not(target_os = "windows"))]
-                    {
-                        output_executable = path_as_string(&out_filepath.with_extension(""));
-                    }
-
-                    let runtime_path = if let Some(ref runtime_path) = arguments.runtime_path {
-                        path_as_string(runtime_path)
-                    } else {
-                        String::from("runtime")
-                    };
-                    let default_cxx_compiler_path = PathBuf::from("clang++");
-                    let clang_output = Command::new(
-                        arguments
-                            .cxx_compiler_path
-                            .as_ref()
-                            .unwrap_or(&default_cxx_compiler_path),
-                    )
-                    .args([
-                        "-fcolor-diagnostics",
-                        "-std=c++20",
-                        // Don't complain about unsupported -W flags below.
-                        "-Wno-unknown-warning-option",
-                        // Sometimes our generated C++ has a lot of harmless parentheses.
-                        "-Wno-parentheses-equality",
-                        // These warnings if enabled create loads of unnecessary noise:
-                        "-Wno-unqualified-std-cast-call",
-                        "-Wno-user-defined-literals",
-                        // This warning can happen for functions like fopen which Windows has deprecated but others not.
-                        // Specifically, it will happen if clang uses the MSVC runtime and/or linker.
-                        "-Wno-deprecated-declarations",
-                        "-I",
-                        &runtime_path,
-                        &input_cpp,
-                        "-o",
-                        &output_executable,
-                    ])
-                    .output()?;
-                    io::stderr().write_all(&clang_output.stderr)?;
+                    first_error = first_error.or(Some(err));
                 }
+                (_, None) => {}
             }
-            Err(err) => {
-                match &err {
-                    JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
-                    JaktError::StringError(se) => println!("Error: {}", se),
-                    JaktError::ParserError(msg, span) => display_error(&compiler, msg, *span),
-                    JaktError::TypecheckError(msg, span) => display_error(&compiler, msg, *span),
-                    JaktError::ValidationError(msg, span) => display_error(&compiler, msg, *span),
-                    JaktError::TypecheckErrorWithHint(
-                        error_msg,
-                        error_span,
-                        hint_msg,
-                        hint_span,
-                    )
-                    | JaktError::ParserErrorWithHint(error_msg, error_span, hint_msg, hint_span) => {
-                        display_error(&compiler, error_msg, *error_span);
-                        display_hint(&compiler, hint_msg, *hint_span);
+        }
+    } else {
+        for file in &arguments.input_files {
+            match compiler.convert_to_cpp(file) {
+                Ok(str) => {
+                    let mut out_filepath = binary_directory.clone();
+                    out_filepath.push(file.file_name().unwrap());
+                    out_filepath.set_extension("cpp");
+                    let mut out_file = std::fs::File::create(out_filepath.clone())?;
+                    out_file.write_all(str.as_bytes())?;
+
+                    let path_as_string =
+                        |path: &PathBuf| path.clone().into_os_string().into_string().unwrap();
+
+                    if arguments.prettify_cpp_source {
+                        let cpp_source = path_as_string(&out_filepath);
+                        let default_clang_format_path = PathBuf::from("clang-format");
+                        let clang_format_output = Command::new(
+                            arguments
+                                .clang_format_path
+                                .as_ref()
+                                .unwrap_or(&default_clang_format_path),
+                        )
+                        .args(["-i", &cpp_source])
+                        .output()?;
+                        io::stderr().write_all(&clang_format_output.stderr)?;
+                    }
+
+                    if !arguments.emit_source_only {
+                        let input_cpp = path_as_string(&out_filepath);
+
+                        let output_executable;
+                        #[cfg(target_os = "windows")]
+                        {
+                            output_executable = path_as_string(&out_filepath.with_extension("exe"));
+                        }
+                        #[cfg(not(target_os = "windows"))]
+                        {
+                            output_executable = path_as_string(&out_filepath.with_extension(""));
+                        }
+
+                        let runtime_path = if let Some(ref runtime_path) = arguments.runtime_path {
+                            path_as_string(runtime_path)
+                        } else {
+                            String::from("runtime")
+                        };
+                        let default_cxx_compiler_path = PathBuf::from("clang++");
+                        let clang_output = Command::new(
+                            arguments
+                                .cxx_compiler_path
+                                .as_ref()
+                                .unwrap_or(&default_cxx_compiler_path),
+                        )
+                        .args([
+                            "-fcolor-diagnostics",
+                            "-std=c++20",
+                            // Don't complain about unsupported -W flags below.
+                            "-Wno-unknown-warning-option",
+                            // Sometimes our generated C++ has a lot of harmless parentheses.
+                            "-Wno-parentheses-equality",
+                            // These warnings if enabled create loads of unnecessary noise:
+                            "-Wno-unqualified-std-cast-call",
+                            "-Wno-user-defined-literals",
+                            // This warning can happen for functions like fopen which Windows has deprecated but others not.
+                            // Specifically, it will happen if clang uses the MSVC runtime and/or linker.
+                            "-Wno-deprecated-declarations",
+                            "-I",
+                            &runtime_path,
+                            &input_cpp,
+                            "-o",
+                            &output_executable,
+                        ])
+                        .output()?;
+                        io::stderr().write_all(&clang_output.stderr)?;
                     }
                 }
-                first_error = first_error.or(Some(err));
+                Err(err) => {
+                    match &err {
+                        JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
+                        JaktError::StringError(se) => println!("Error: {}", se),
+                        JaktError::ParserError(msg, span) => {
+                            display_error(&arguments, &compiler, msg, *span)
+                        }
+                        JaktError::TypecheckError(msg, span) => {
+                            display_error(&arguments, &compiler, msg, *span)
+                        }
+                        JaktError::ValidationError(msg, span) => {
+                            display_error(&arguments, &compiler, msg, *span)
+                        }
+                        JaktError::TypecheckErrorWithHint(
+                            error_msg,
+                            error_span,
+                            hint_msg,
+                            hint_span,
+                        )
+                        | JaktError::ParserErrorWithHint(
+                            error_msg,
+                            error_span,
+                            hint_msg,
+                            hint_span,
+                        ) => {
+                            display_error(&arguments, &compiler, error_msg, *error_span);
+                            display_hint(&arguments, &compiler, hint_msg, *hint_span);
+                        }
+                    }
+                    first_error = first_error.or(Some(err));
+                }
             }
         }
     }
@@ -141,6 +192,8 @@ Flags:
   -h,--help                     Print this help and exit.
   -p,--prettify-cpp-source      Run emitted C++ source through clang-format.
   -S,--emit-cpp-source-only     Only emit the generated C++ source, do not compile.
+  -c,--check-only               Only check the code for errors
+  -j,--json-errors              Emit machine-readable (JSON) errors
 
 Options:
   -o,--binary-dir PATH          Output directory for compiled files.
@@ -165,6 +218,8 @@ struct JaktArguments {
     input_files: Vec<PathBuf>,
     include_paths: Vec<PathBuf>,
     emit_source_only: bool,
+    check_only: bool,
+    json_errors: bool,
     cxx_compiler_path: Option<PathBuf>,
     prettify_cpp_source: bool,
     clang_format_path: Option<PathBuf>,
@@ -181,6 +236,9 @@ fn parse_arguments() -> JaktArguments {
     let emit_source_only = pico_arguments.contains(["-S", "--emit-cpp-source-only"]);
     let prettify_cpp_source = pico_arguments.contains(["-p", "--prettify-cpp-source"]);
 
+    let check_only = pico_arguments.contains(["-c", "--check-only"]);
+    let json_errors = pico_arguments.contains(["-j", "--json-errors"]);
+
     let convert_to_pathbuf = |s: &str| -> Result<PathBuf, &'static str> { Ok(s.into()) };
     let include_paths = pico_arguments
         .values_from_fn(["-I", "--include-path"], convert_to_pathbuf)
@@ -191,6 +249,8 @@ fn parse_arguments() -> JaktArguments {
         input_files: Vec::new(),
         include_paths,
         emit_source_only,
+        check_only,
+        json_errors,
         cxx_compiler_path: None,
         prettify_cpp_source,
         clang_format_path: None,
@@ -247,6 +307,7 @@ fn parse_arguments() -> JaktArguments {
     arguments
 }
 
+#[derive(Debug)]
 enum MessageSeverity {
     Hint,
     Error,
@@ -349,12 +410,27 @@ fn display_message_with_span(
     println!("\u{001b}[0m{}", "-".repeat(width + 3));
 }
 
-fn display_error(compiler: &Compiler, msg: &str, span: Span) {
-    display_message_with_span(MessageSeverity::Error, compiler, msg, span)
+fn display_message_with_span_json(severity: MessageSeverity, msg: &str, span: Span) {
+    println!(
+        "{{\"message\": \"{}\", \"severity\": \"{:?}\", \"span\": {{\"start\": {}, \"end\": {}}}}}",
+        msg, severity, span.start, span.end
+    );
 }
 
-fn display_hint(compiler: &Compiler, msg: &str, span: Span) {
-    display_message_with_span(MessageSeverity::Hint, compiler, msg, span)
+fn display_error(arguments: &JaktArguments, compiler: &Compiler, msg: &str, span: Span) {
+    if arguments.json_errors {
+        display_message_with_span_json(MessageSeverity::Error, msg, span)
+    } else {
+        display_message_with_span(MessageSeverity::Error, compiler, msg, span)
+    }
+}
+
+fn display_hint(arguments: &JaktArguments, compiler: &Compiler, msg: &str, span: Span) {
+    if arguments.json_errors {
+        display_message_with_span_json(MessageSeverity::Hint, msg, span)
+    } else {
+        display_message_with_span(MessageSeverity::Hint, compiler, msg, span)
+    }
 }
 
 fn print_source_line(

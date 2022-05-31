@@ -13,7 +13,8 @@ use crate::{
     lexer::{lex, Span},
     parser::{parse_namespace, ParsedNamespace},
     typechecker::{
-        typecheck_namespace_declarations, typecheck_namespace_predecl, Project, Scope, Type,
+        typecheck_namespace_declarations, typecheck_namespace_predecl, Project, Scope, ScopeId,
+        Type,
     },
 };
 
@@ -113,12 +114,14 @@ impl Compiler {
         error
     }
 
-    pub fn convert_to_cpp(&mut self, fname: &Path) -> Result<String, JaktError> {
-        let mut project = Project::new();
-
-        let err = self.include_prelude(&mut project);
+    pub fn check_project(
+        &mut self,
+        fname: &Path,
+        project: &mut Project,
+    ) -> (ScopeId, Option<JaktError>) {
+        let err = self.include_prelude(project);
         if let Some(err) = err {
-            return Err(err);
+            return (0, Some(err));
         }
 
         // TODO: We also want to be able to accept include paths from CLI
@@ -130,7 +133,7 @@ impl Compiler {
         let (file, err) = self.include_file(fname);
 
         if let Some(err) = err {
-            return Err(err);
+            return (0, Some(err));
         }
 
         let scope = Scope::new(Some(0), false);
@@ -138,12 +141,22 @@ impl Compiler {
 
         let file_scope_id = project.scopes.len() - 1;
 
-        let err = typecheck_namespace_predecl(&file, file_scope_id, &mut project);
+        let err = typecheck_namespace_predecl(&file, file_scope_id, project);
         if let Some(err) = err {
-            return Err(err);
+            return (file_scope_id, Some(err));
         }
 
-        let err = typecheck_namespace_declarations(&file, file_scope_id, &mut project);
+        let err = typecheck_namespace_declarations(&file, file_scope_id, project);
+        if let Some(err) = err {
+            return (file_scope_id, Some(err));
+        }
+        (file_scope_id, None)
+    }
+
+    pub fn convert_to_cpp(&mut self, fname: &Path) -> Result<String, JaktError> {
+        let mut project = Project::new();
+
+        let (file_scope_id, err) = self.check_project(fname, &mut project);
         if let Some(err) = err {
             return Err(err);
         }
