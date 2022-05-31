@@ -1,0 +1,9 @@
+/// Expect:
+/// - output: "-1\n2\n"
+
+function main() {
+    let array: [c_int] = [-1 as! c_int, 2 as! c_int]
+
+    println("{}", array[0])
+    println("{}", array[1])
+}

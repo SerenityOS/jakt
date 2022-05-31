@@ -5394,7 +5394,8 @@ pub fn typecheck_unary_operation(
                 | crate::compiler::U32_TYPE_ID
                 | crate::compiler::U64_TYPE_ID
                 | crate::compiler::F32_TYPE_ID
-                | crate::compiler::F64_TYPE_ID => {
+                | crate::compiler::F64_TYPE_ID
+                | crate::compiler::CINT_TYPE_ID => {
                     // FIXME: This at least allows us to check out-of-bounds constants at compile time.
                     //        We should expand it to check any compile-time known value.
                     if let CheckedExpression::NumericConstant(ref number, span, type_id) = expr {
