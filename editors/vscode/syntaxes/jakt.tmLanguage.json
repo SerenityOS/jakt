@@ -192,7 +192,7 @@
         },
         {
           "name": "meta.type.enum.jakt",
-          "match": "(?:\\b(ref)\\s+)?\\b(enum)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(?:(:)\\s*((?:[ui](?:8|16|32|64))|usize))?",
+          "match": "(?:\\b(boxed)\\s+)?\\b(enum)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(?:(:)\\s*((?:[ui](?:8|16|32|64))|usize))?",
           "captures": {
             "1": {
               "name": "storage.modifier.pointer.jakt"
