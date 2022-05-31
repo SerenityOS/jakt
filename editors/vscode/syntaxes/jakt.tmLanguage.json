@@ -717,7 +717,7 @@
         },
         {
           "name": "keyword.control.jakt",
-          "match": "\\b(return|throw|continue|break)\\b"
+          "match": "\\b(return|throw|continue|break|yield)\\b"
         },
         {
           "name": "meta.control.match.jakt",

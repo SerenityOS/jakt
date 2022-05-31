@@ -22,6 +22,7 @@ let s:jakt_syntax_keywords = {
     \ ,                   "break"
     \ ,                   "continue"
     \ ,                   "throw"
+    \ ,                   "yield"
     \ ,                  ]
     \ , 'jaktBoolean' :["true"
     \ ,                 "false"
