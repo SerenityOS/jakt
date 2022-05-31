@@ -1,0 +1,6 @@
+/// Expect:
+/// - error: "yield can only be used inside a block"
+
+function main() {
+    try yield 1 catch {}
+}
