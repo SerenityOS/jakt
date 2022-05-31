@@ -1,0 +1,159 @@
+enum Stream : c_int {
+    STDIN  = 0,
+    STDOUT = 1,
+    STDERR = 2
+}
+
+struct Pipe {
+    reading_end: c_int
+    writing_end: c_int
+
+    function close(this) throws {
+        System::close(fd: .reading_end)
+        System::close(fd: .writing_end)
+    }
+}
+
+class System {
+    public function syscall_error_number() -> c_int {
+        unsafe { 
+            cpp {
+                "return errno;"
+            }
+        }
+        // Unreachable code
+        return -1
+    }
+
+    public function pipe() throws -> Pipe {
+        let mutable pipe_ret : c_int = 0;
+        let mutable fds : [c_int] = [0 as! c_int, 0 as! c_int]
+
+        unsafe {
+            cpp {
+                "pipe_ret = ::pipe(fds.unsafe_data());"
+            }
+        }
+
+        if pipe_ret == 0 {
+            return Pipe(reading_end: fds[0], writing_end: fds[1])
+        } else {
+            throw Error::from_errno(syscall_error_number() as! i32)
+        }
+
+        // Unreachable code
+        return Pipe(reading_end: 0, writing_end: 1)
+    }
+
+    public function dup2(replace: c_int, with: c_int) throws -> c_int {
+        let mutable dup2_ret : c_int = 0;
+
+        unsafe {
+            cpp {
+                "dup2_ret = ::dup2(with, replace);"
+            }
+        }
+
+        if dup2_ret >= 0 {
+            return dup2_ret
+        } else {
+            throw Error::from_errno(syscall_error_number() as! i32)
+        }
+
+        // Unreachable code
+        return -1
+    }
+
+    public function fork() throws -> c_int {
+        let mutable fork_ret : c_int = 0;
+
+        unsafe {
+            cpp {
+                "fork_ret = ::fork();"
+            }
+        }
+
+        if fork_ret >= 0 {
+            return fork_ret
+        } else {
+            throw Error::from_errno(syscall_error_number() as! i32)
+        }
+
+        // Unreachable code
+        return -1
+    }
+
+    public function read(fd: c_int, count: usize) throws -> String {
+        let mutable read_ret : c_int = 0;
+        let mutable buffer : String = String::repeated(character: 0x00, count: count);
+        unsafe {
+            cpp {
+                "read_ret = ::read(fd, const_cast<char*>(buffer.c_string()), count);"
+            }
+        }
+
+        if read_ret >= 0 {
+            return buffer
+        } else {
+            throw Error::from_errno(syscall_error_number() as! i32)
+        }
+
+        // Unreachable code
+        return ""
+    }
+
+    public function close(fd: c_int) throws {
+        let mutable close_ret : c_int = 0;
+
+        unsafe {
+            cpp {
+                "close_ret = ::close(fd);"
+            }
+        }
+
+        if not (close_ret >= 0) {
+            throw Error::from_errno(syscall_error_number() as! i32)
+        }
+    }
+
+    public function getpid() -> c_int {
+        unsafe {
+            cpp {
+                "return ::getpid();"
+            }
+        }
+        return 0;
+    }
+
+    public function exit(exit_code: u8) {
+        let c_exit = exit_code as! c_int 
+        unsafe {
+            cpp {
+                "::_exit(c_exit);";
+            }
+        }
+    }
+}
+
+function main() {
+    let pipe = System::pipe()
+    let pid = System::fork()
+
+    if pid == 0 {
+        println("Hello from the child! My pid is {}", System::getpid())
+
+        System::dup2(replace: Stream::STDOUT as! c_int, with: pipe.writing_end)
+        pipe.close()
+
+        println("This is very important!")
+
+        System::exit(exit_code: 0)
+        println("After exit!")
+    } else {
+        println("Hello from the parent! My pid is {}", System::getpid())
+
+        let from_child = System::read(fd: pipe.reading_end, count: 50);
+        pipe.close()
+        println("Child says: [{}]", from_child)
+    }
+}
