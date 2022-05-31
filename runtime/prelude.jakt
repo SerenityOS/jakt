@@ -10,6 +10,7 @@ extern struct String {
     function repeated(character: c_char, count: usize) throws -> String
     function is_empty(this) -> bool
     function length(this) -> usize
+    function byte_at(this, anonymous index: usize) -> u8
 }
 
 extern struct ArrayIterator<T> {

@@ -149,6 +149,11 @@ public:
         return (*m_storage)[i];
     }
 
+    u8 byte_at(size_t i) const
+    {
+        return (*m_storage)[i];
+    }
+
     [[nodiscard]] bool starts_with(StringView, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
     [[nodiscard]] bool ends_with(StringView, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
     [[nodiscard]] bool starts_with(char) const;
