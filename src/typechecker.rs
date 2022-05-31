@@ -888,6 +888,7 @@ pub struct CheckedBlock {
     pub stmts: Vec<CheckedStatement>,
     pub scope: ScopeId,
     pub definitely_returns: bool,
+    pub yielded_type: Option<TypeId>, // Set if the block yields.
 }
 
 impl CheckedBlock {
@@ -896,6 +897,7 @@ impl CheckedBlock {
             stmts: Vec::new(),
             scope,
             definitely_returns: false,
+            yielded_type: None,
         }
     }
 }
@@ -932,6 +934,7 @@ pub enum CheckedStatement {
     Loop(CheckedBlock),
     While(CheckedExpression, CheckedBlock),
     Return(CheckedExpression),
+    Yield(CheckedExpression),
     Break,
     Continue,
     Throw(CheckedExpression),
@@ -1202,6 +1205,8 @@ pub enum CheckedExpression {
     OptionalSome(Box<CheckedExpression>, Span, TypeId),
     ForcedUnwrap(Box<CheckedExpression>, Span, TypeId),
 
+    Block(Box<CheckedBlock>, Span, TypeId),
+
     // Parsing error
     Garbage(Span),
 }
@@ -1233,6 +1238,7 @@ impl CheckedExpression {
             CheckedExpression::OptionalSome(_, _, type_id) => *type_id,
             CheckedExpression::ForcedUnwrap(_, _, type_id) => *type_id,
             CheckedExpression::Match(_, _, _, type_id, _) => *type_id,
+            CheckedExpression::Block(_, _, type_id) => *type_id,
             CheckedExpression::Garbage(_) => UNKNOWN_TYPE_ID,
         }
     }
@@ -1267,6 +1273,7 @@ impl CheckedExpression {
             CheckedExpression::OptionalSome(_, span, _) => *span,
             CheckedExpression::ForcedUnwrap(_, span, _) => *span,
             CheckedExpression::Match(_, _, span, _, _) => *span,
+            CheckedExpression::Block(_, span, _) => *span,
             CheckedExpression::Garbage(span) => *span,
         }
     }
@@ -3036,6 +3043,7 @@ pub fn typecheck_block(
     let parent_throws = project.scopes[parent_scope_id].throws;
     let block_scope_id = project.create_scope(parent_scope_id, parent_throws);
     let mut checked_block = CheckedBlock::new(block_scope_id);
+    let mut generic_inferences = HashMap::new();
 
     for stmt in &block.stmts {
         let (checked_stmt, err) = typecheck_statement(stmt, block_scope_id, project, safety_mode);
@@ -3045,10 +3053,46 @@ pub fn typecheck_block(
             checked_block.definitely_returns = true;
         }
 
+        if let (ParsedStatement::Yield(_, span), CheckedStatement::Yield(expr)) =
+            (stmt, &checked_stmt)
+        {
+            let type_ = expr.type_id(block_scope_id, project);
+            if let Some(yielded_type) = checked_block.yielded_type {
+                let err = check_types_for_compat(
+                    yielded_type,
+                    type_,
+                    &mut generic_inferences,
+                    *span,
+                    project,
+                );
+                error = error.or(err);
+            } else {
+                checked_block.yielded_type = Some(type_);
+            }
+        }
+
         checked_block.stmts.push(checked_stmt);
     }
 
+    if let Some(type_id) = checked_block.yielded_type {
+        checked_block.yielded_type = Some(substitute_typevars_in_type(
+            type_id,
+            &generic_inferences,
+            project,
+        ));
+    }
+
     (checked_block, error)
+}
+
+fn find_yield_span_in_block(block: &ParsedBlock) -> Option<Span> {
+    for stmt in &block.stmts {
+        if let ParsedStatement::Yield(_, span) = stmt {
+            return Some(*span);
+        }
+    }
+
+    None
 }
 
 pub fn typecheck_statement(
@@ -3121,6 +3165,12 @@ pub fn typecheck_statement(
             (CheckedStatement::Throw(checked_expr), error)
         }
         ParsedStatement::For((iterator_name, iterator_span), range_expr, block) => {
+            if let Some(span) = find_yield_span_in_block(block) {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "a 'for' loop block is not allowed to yield values".to_string(),
+                    span,
+                )))
+            }
             // Translate `for x in expr { body }` to
             // block {
             //     let (mutable) _magic = expr
@@ -3281,11 +3331,21 @@ pub fn typecheck_statement(
 
             (CheckedStatement::Expression(checked_expr), err)
         }
-        ParsedStatement::Defer(statement) => {
+        ParsedStatement::Defer(statement, span) => {
             let was_inside_defer = project.inside_defer;
             project.inside_defer = true;
-            let (checked_statement, err) =
+            let (checked_statement, mut err) =
                 typecheck_statement(statement, scope_id, project, safety_mode);
+
+            if let CheckedStatement::Block(block) = &checked_statement {
+                if block.yielded_type.is_some() {
+                    err = err.or(Some(JaktError::TypecheckError(
+                        "‘yield’ inside ‘defer’ is meaningless".to_string(),
+                        *span,
+                    )));
+                }
+            }
+
             project.inside_defer = was_inside_defer;
 
             (CheckedStatement::Defer(Box::new(checked_statement)), err)
@@ -3374,6 +3434,13 @@ pub fn typecheck_statement(
 
             let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
             error = error.or(err);
+            if checked_block.yielded_type.is_some() {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "an 'if' block is not allowed to yield values".to_string(),
+                    find_yield_span_in_block(block)
+                        .expect("must have a yield if the block yields values"),
+                )))
+            }
 
             let else_output;
             if let Some(else_stmt) = else_stmt {
@@ -3394,6 +3461,13 @@ pub fn typecheck_statement(
         ParsedStatement::Loop(block) => {
             let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
             error = error.or(err);
+            if checked_block.yielded_type.is_some() {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "a 'loop' block is not allowed to yield values".to_string(),
+                    find_yield_span_in_block(block)
+                        .expect("must have a yield if the block yields values"),
+                )))
+            }
 
             (CheckedStatement::Loop(checked_block), error)
         }
@@ -3411,6 +3485,14 @@ pub fn typecheck_statement(
 
             let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
             error = error.or(err);
+
+            if checked_block.yielded_type.is_some() {
+                error = error.or(Some(JaktError::TypecheckError(
+                    "a 'while' block is not allowed to yield values".to_string(),
+                    find_yield_span_in_block(block)
+                        .expect("must have a yield if the block yields values"),
+                )))
+            }
 
             (CheckedStatement::While(checked_cond, checked_block), error)
         }
@@ -3435,8 +3517,22 @@ pub fn typecheck_statement(
 
             (CheckedStatement::Return(output), error)
         }
+        ParsedStatement::Yield(expr, _) => {
+            let (output, err) = typecheck_expression(expr, scope_id, project, safety_mode, None);
+            error = error.or(err);
+
+            (CheckedStatement::Yield(output), error)
+        }
         ParsedStatement::Block(block) => {
-            let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
+            let (checked_block, mut err) = typecheck_block(block, scope_id, project, safety_mode);
+            if checked_block.yielded_type.is_some() {
+                err = err.or(Some(JaktError::TypecheckError(
+                    "A block used as a statement cannot yield values, as the value cannot be observed in any way".to_string(),
+                    find_yield_span_in_block(block).expect("must have a yield if the block yields values"),
+
+                )))
+            }
+
             (CheckedStatement::Block(checked_block), err)
         }
         ParsedStatement::InlineCpp(block, span) => {
@@ -3511,10 +3607,11 @@ pub fn typecheck_match_body(
             let (checked_block, err) = typecheck_block(block, scope_id, project, safety_mode);
             error = error.or(err);
             if !checked_block.definitely_returns {
+                let block_type_id = checked_block.yielded_type.unwrap_or(VOID_TYPE_ID);
                 match final_result_type {
                     Some(type_id) => {
                         if let Some(err) = check_types_for_compat(
-                            VOID_TYPE_ID,
+                            block_type_id,
                             *type_id,
                             generic_parameters,
                             span,
@@ -3524,11 +3621,19 @@ pub fn typecheck_match_body(
                         }
                     }
                     None => {
-                        *final_result_type = Some(VOID_TYPE_ID);
+                        *final_result_type = Some(block_type_id);
                     }
                 }
             }
-            CheckedMatchBody::Block(checked_block)
+            if let Some(type_id) = checked_block.yielded_type {
+                CheckedMatchBody::Expression(CheckedExpression::Block(
+                    Box::new(checked_block),
+                    span,
+                    type_id,
+                ))
+            } else {
+                CheckedMatchBody::Block(checked_block)
+            }
         }
         MatchBody::Expression(expr) => {
             let (body, err) =
@@ -4434,7 +4539,7 @@ pub fn typecheck_expression(
                                     safety_mode,
                                     &mut generic_parameters,
                                     &mut final_result_type,
-                                    *span,
+                                    *marker_span,
                                 );
                                 error = error.or(err);
 
@@ -4476,7 +4581,7 @@ pub fn typecheck_expression(
                                     safety_mode,
                                     &mut generic_parameters,
                                     &mut final_result_type,
-                                    *span,
+                                    *marker_span,
                                 );
                                 error = error.or(err);
 
@@ -4490,7 +4595,7 @@ pub fn typecheck_expression(
                                 variant_arguments: args,
                                 arguments_span: arg_span,
                                 body,
-                                ..
+                                marker_span,
                             } => {
                                 let mut name = name.clone();
                                 if name.len() == 1 {
@@ -4712,82 +4817,24 @@ pub fn typecheck_expression(
                                     error = error.or(err);
                                 }
 
-                                match body {
-                                    MatchBody::Expression(expr) => {
-                                        let (body, err) = typecheck_expression(
-                                            expr,
-                                            new_scope_id,
-                                            project,
-                                            safety_mode,
-                                            final_result_type,
-                                        );
-                                        let span = *span;
-                                        error = error.or(err);
-                                        match final_result_type {
-                                            Some(type_id) => {
-                                                if let Some(err) = check_types_for_compat(
-                                                    body.type_id(scope_id, project),
-                                                    type_id,
-                                                    &mut generic_parameters,
-                                                    span,
-                                                    project,
-                                                ) {
-                                                    error = error.or(Some(err));
-                                                }
-                                            }
-                                            None => {
-                                                final_result_type =
-                                                    Some(body.type_id(scope_id, project));
-                                            }
-                                        }
-
-                                        checked_cases.push(CheckedMatchCase::EnumVariant {
-                                            variant_name: name[1].0.clone(),
-                                            variant_arguments: (*args).clone(),
-                                            subject_type_id,
-                                            variant_index,
-                                            scope_id: new_scope_id,
-                                            body: CheckedMatchBody::Expression(body),
-                                        });
-                                    }
-                                    MatchBody::Block(block) => {
-                                        let (body, err) = typecheck_block(
-                                            block,
-                                            new_scope_id,
-                                            project,
-                                            safety_mode,
-                                        );
-                                        let span = *span;
-                                        error = error.or(err);
-                                        if !body.definitely_returns {
-                                            match final_result_type {
-                                                Some(type_id) => {
-                                                    if let Some(err) = check_types_for_compat(
-                                                        VOID_TYPE_ID,
-                                                        type_id,
-                                                        &mut generic_parameters,
-                                                        span,
-                                                        project,
-                                                    ) {
-                                                        error = error.or(Some(err));
-                                                    }
-                                                }
-                                                None => {
-                                                    final_result_type = Some(VOID_TYPE_ID);
-                                                }
-                                            }
-                                        }
-
-                                        checked_cases.push(CheckedMatchCase::EnumVariant {
-                                            variant_name: name[1].0.clone(),
-                                            variant_arguments: (*args).clone(),
-                                            subject_type_id,
-                                            variant_index,
-                                            scope_id: new_scope_id,
-                                            body: CheckedMatchBody::Block(body),
-                                        });
-                                    }
-                                }
+                                let (checked_body, err) = typecheck_match_body(
+                                    body,
+                                    new_scope_id,
+                                    project,
+                                    safety_mode,
+                                    &mut generic_parameters,
+                                    &mut final_result_type,
+                                    *marker_span,
+                                );
+                                error = error.or(err);
+                                checked_cases.push(CheckedMatchCase::EnumVariant {
+                                    variant_name: name[1].0.clone(),
+                                    variant_arguments: (*args).clone(),
+                                    subject_type_id,
+                                    variant_index,
+                                    scope_id: new_scope_id,
+                                    body: checked_body,
+                                });
                             }
                         }
                     }
@@ -4894,62 +4941,16 @@ pub fn typecheck_expression(
                                     seen_catch_all = true;
                                 }
 
-                                let body = match body {
-                                    MatchBody::Block(block) => {
-                                        let span = *span;
-                                        let (checked_block, err) =
-                                            typecheck_block(block, scope_id, project, safety_mode);
-                                        error = error.or(err);
-                                        if !checked_block.definitely_returns {
-                                            match final_result_type {
-                                                Some(type_id) => {
-                                                    if let Some(err) = check_types_for_compat(
-                                                        VOID_TYPE_ID,
-                                                        type_id,
-                                                        &mut generic_parameters,
-                                                        span,
-                                                        project,
-                                                    ) {
-                                                        error = error.or(Some(err));
-                                                    }
-                                                }
-                                                None => {
-                                                    final_result_type = Some(VOID_TYPE_ID);
-                                                }
-                                            }
-                                        }
-                                        CheckedMatchBody::Block(checked_block)
-                                    }
-                                    MatchBody::Expression(expr) => {
-                                        let (body, err) = typecheck_expression(
-                                            expr,
-                                            scope_id,
-                                            project,
-                                            safety_mode,
-                                            final_result_type,
-                                        );
-                                        error = error.or(err);
-                                        let span = expr.span();
-                                        match final_result_type {
-                                            Some(type_id) => {
-                                                if let Some(err) = check_types_for_compat(
-                                                    body.type_id(scope_id, project),
-                                                    type_id,
-                                                    &mut generic_parameters,
-                                                    span,
-                                                    project,
-                                                ) {
-                                                    error = error.or(Some(err));
-                                                }
-                                            }
-                                            None => {
-                                                final_result_type =
-                                                    Some(body.type_id(scope_id, project));
-                                            }
-                                        }
-                                        CheckedMatchBody::Expression(body)
-                                    }
-                                };
+                                let (body, err) = typecheck_match_body(
+                                    body,
+                                    scope_id,
+                                    project,
+                                    safety_mode,
+                                    &mut generic_parameters,
+                                    &mut final_result_type,
+                                    *marker_span,
+                                );
+                                error = error.or(err);
                                 checked_cases.push(CheckedMatchCase::CatchAll { body });
                             }
                             MatchCase::Expression {

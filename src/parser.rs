@@ -210,7 +210,7 @@ impl ParsedFunction {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParsedStatement {
     Expression(ParsedExpression),
-    Defer(Box<ParsedStatement>),
+    Defer(Box<ParsedStatement>, Span),
     UnsafeBlock(ParsedBlock),
     VarDecl(ParsedVarDecl, ParsedExpression),
     If(ParsedExpression, ParsedBlock, Option<Box<ParsedStatement>>),
@@ -221,6 +221,7 @@ pub enum ParsedStatement {
     Break,
     Continue,
     Return(ParsedExpression, Span),
+    Yield(ParsedExpression, Span),
     Throw(ParsedExpression),
     Try(Box<ParsedStatement>, String, Span, ParsedBlock),
     InlineCpp(ParsedBlock, Span),
@@ -1913,12 +1914,13 @@ pub fn parse_statement(
         TokenContents::Name(name) if name == "defer" => {
             trace!("parsing defer");
 
+            let span = tokens[*index].span;
             *index += 1;
 
             let (statement, err) = parse_statement(tokens, index);
             error = error.or(err);
 
-            (ParsedStatement::Defer(Box::new(statement)), error)
+            (ParsedStatement::Defer(Box::new(statement), span), error)
         }
         TokenContents::Name(name) if name == "unsafe" => {
             trace!("parsing unsafe");
@@ -2047,6 +2049,27 @@ pub fn parse_statement(
 
             (
                 ParsedStatement::Return(
+                    expr,
+                    Span {
+                        file_id: start.file_id,
+                        start: start.start,
+                        end: tokens[(*index - 1)].span.end,
+                    },
+                ),
+                error,
+            )
+        }
+        TokenContents::Name(name) if name == "yield" => {
+            trace!("parsing yield");
+
+            *index += 1;
+
+            let (expr, err) =
+                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+            error = error.or(err);
+
+            (
+                ParsedStatement::Yield(
                     expr,
                     Span {
                         file_id: start.file_id,

@@ -1,0 +1,16 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘i64’, but got ‘String’"
+
+function main() {
+    match 123 {
+        1 => {
+            yield "foo"
+        }
+        2 => {
+            yield "bar"
+        }
+        else => {
+            yield 123
+        }
+    }
+}

@@ -1,0 +1,8 @@
+/// Expect:
+/// - error: "A block used as a statement cannot yield values, as the value cannot be observed in any way"
+
+function main() {
+    defer {
+        yield "foo"
+    }
+}

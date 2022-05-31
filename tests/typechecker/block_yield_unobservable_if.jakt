@@ -1,0 +1,8 @@
+/// Expect:
+/// - error: "an 'if' block is not allowed to yield values"
+
+function main() {
+    if true {
+        yield "foo"
+    }
+}
