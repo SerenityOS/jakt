@@ -18,6 +18,7 @@ import {
 } from 'vscode-languageserver/node';
 
 import {
+	Position,
 	TextDocument
 } from 'vscode-languageserver-textdocument';
 
@@ -32,7 +33,6 @@ let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
 
-const stripAnsi = require('strip-ansi');
 const fs = require('fs');
 const tmp = require('tmp');
 
@@ -143,6 +143,30 @@ documents.onDidChangeContent(change => {
 	validateTextDocument(change.document);
 });
 
+
+function convertSpan(index: number, text: String): Position {
+	let line = 0
+	let character = 0
+
+	let i = 0
+	while (i < text.length) {
+		if (i == index) {
+			return { line, character }
+		}
+
+		if (text[i] == '\n') {
+			line++
+			character = 0
+		} else {
+			character++
+		}
+
+		i++
+	}
+
+	return { line, character }
+}
+
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	// In this simple example we get the settings for every validate run.
 	const settings = await getDocumentSettings(textDocument.uri);
@@ -156,9 +180,9 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 		console.log(error)
 	}
 
-	let stdout;
+	let stdout: String;
 	try {
-		let output = await exec("jakt -S " + tmpFile.name);
+		let output = await exec("jakt -c -j " + tmpFile.name);
 		console.log(output);
 		stdout = output.stdout;
 	} catch (e: any) {
@@ -169,30 +193,37 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
 	const diagnostics: Diagnostic[] = [];
 
-	stdout = stripAnsi(stdout);
+	let lines = stdout.split('\n');
+	for (const line of lines) {
+		console.log(line)
+		try {
+			let obj = JSON.parse(line)
 
-	console.log(stdout);
+			let severity;
+			if (obj.severity == "Warning") {
+				severity = DiagnosticSeverity.Warning
+			} else {
+				severity = DiagnosticSeverity.Error
+			}
 
-	const pattern = /\bError: (.*)(\n)-* (.*):(.*):(.*)/g;
+			let position_start = convertSpan(obj.span.start, text);
+			let position_end = convertSpan(obj.span.end, text);
 
-	let problems = 0;
-	let m: RegExpExecArray | null;
+			const diagnostic: Diagnostic = {
+				severity,
+				range: {
+					start: position_start,
+					end: position_end
+				},
+				message: obj.message,
+				source: textDocument.uri
+			};
 
-	while ((m = pattern.exec(stdout)) && problems < settings.maxNumberOfProblems) {
-		console.log("FOUND ERROR")
-		problems++;
+			console.log(diagnostic)
 
-		const diagnostic: Diagnostic = {
-			severity: DiagnosticSeverity.Warning,
-			range: {
-				start: { line: parseInt(m[4]) - 1, character: parseInt(m[5]) - 1 },
-				end: { line: parseInt(m[4]) - 1, character: parseInt(m[5]) }
-			},
-			message: `${m[0]}`,
-			source: textDocument.uri
-		};
+			diagnostics.push(diagnostic);
+		} catch { }
 
-		diagnostics.push(diagnostic);
 	}
 
 	// Send the computed diagnostics to VSCode.
