@@ -1200,9 +1200,27 @@ fn codegen_struct(
 
     match structure.definition_type {
         DefinitionType::Class => {
+            let generic_parameter_string = if structure.generic_parameters.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "<{}>",
+                    structure
+                        .generic_parameters
+                        .iter()
+                        .map(|id| codegen_type(*id, project))
+                        .collect::<Vec<String>>()
+                        .join(",")
+                )
+            };
+
             output.push_str(&format!(
-                "class {} : public RefCounted<{}>, public Weakable<{}> {{\n",
-                structure.name, structure.name, structure.name
+                "class {} : public RefCounted<{}{}>, public Weakable<{}{}> {{\n",
+                structure.name,
+                structure.name,
+                generic_parameter_string,
+                structure.name,
+                generic_parameter_string
             ));
             // As we should test the visibility before codegen, we take a simple
             // approach to codegen
@@ -1706,6 +1724,12 @@ pub fn codegen_type_possibly_as_namespace(
             output
         }
         Type::GenericInstance(struct_id, inner_type_ids) => {
+            let is_class = project.structs[*struct_id].definition_type == DefinitionType::Class;
+
+            if is_class {
+                output.push_str("NonnullRefPtr<");
+            }
+
             output.push_str(&codegen_namespace_qualifier(
                 project.structs[*struct_id].scope_id,
                 project,
@@ -1724,6 +1748,9 @@ pub fn codegen_type_possibly_as_namespace(
             }
 
             output.push('>');
+            if is_class {
+                output.push('>');
+            }
             output
         }
         Type::GenericEnumInstance(enum_id, inner_type_ids) => {
@@ -2761,11 +2788,36 @@ fn codegen_expr(
 
                     output.push_str(&codegen_namespace_path(call, project));
                     match ty {
-                        Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
+                        Type::Struct(struct_id) => {
                             let structure = &project.structs[*struct_id];
 
                             if structure.definition_type == DefinitionType::Class {
                                 output.push_str(&call.name);
+                                output.push_str("::");
+                                output.push_str("create");
+                            } else {
+                                output.push_str(&call.name);
+                            }
+                        }
+                        Type::GenericInstance(struct_id, inner_type_ids) => {
+                            let structure = &project.structs[*struct_id];
+
+                            if structure.definition_type == DefinitionType::Class {
+                                output.push_str(&call.name);
+                                output.push('<');
+                                let mut first = true;
+                                for type_id in inner_type_ids {
+                                    if !first {
+                                        output.push_str(", ");
+                                    } else {
+                                        first = false;
+                                    }
+
+                                    output.push_str(&codegen_type(*type_id, project));
+                                }
+
+                                output.push('>');
+
                                 output.push_str("::");
                                 output.push_str("create");
                             } else {
@@ -2860,7 +2912,7 @@ fn codegen_expr(
                     Type::RawPtr(_) => {
                         output.push_str("->");
                     }
-                    Type::Struct(struct_id) => {
+                    Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
                         let structure = &project.structs[*struct_id];
 
                         if structure.definition_type == DefinitionType::Class {
@@ -3247,7 +3299,7 @@ fn codegen_expr(
                     Type::RawPtr(_) => {
                         output.push_str("->");
                     }
-                    Type::Struct(struct_id) => {
+                    Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
                         let structure = &project.structs[*struct_id];
 
                         if structure.definition_type == DefinitionType::Class {
