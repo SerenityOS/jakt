@@ -84,6 +84,8 @@ fn main() -> Result<(), JaktError> {
                         "-std=c++20",
                         // Don't complain about unsupported -W flags below.
                         "-Wno-unknown-warning-option",
+                        // Sometimes our generated C++ has a lot of harmless parentheses.
+                        "-Wno-parentheses-equality",
                         // These warnings if enabled create loads of unnecessary noise:
                         "-Wno-unqualified-std-cast-call",
                         "-Wno-user-defined-literals",
