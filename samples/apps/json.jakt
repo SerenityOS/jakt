@@ -1,0 +1,271 @@
+// FIXME: Syntax highlighting should understand inline comments in enum
+
+extern struct StringBuilder {
+    // FIXME: AK::StringBuilder::append() actually takes a c_char, not a u8, but nobody complains
+    function append(mutable this, anonymous c: u8)
+    function to_string(this) throws -> String
+    function StringBuilder() -> StringBuilder
+}
+
+extern function abort()
+
+enum JsonValue {
+    Null
+    Bool(bool)
+    Number(i64)
+    // FIXME: This variant should be called String
+    JsonString(String)
+    // FIXME: This variant should be called Array
+    JsonArray([JsonValue])
+    Object([String:JsonValue])
+}
+
+function is_whitespace(anonymous c: u8) -> bool {
+    return match c {
+        b'\t' | b'\n' | b'\r' | b' ' => true
+        else => false
+    }
+}
+
+class JsonParser {
+    input: String
+    index: usize
+
+    function eof(this) -> bool {
+        return .index >= .input.length()
+    }
+
+    public function parse(mutable this) throws -> JsonValue {
+        // FIXME: AK::JsonParser ignores trailing whitespace for some reason.
+        let value = .parse_helper()
+        if not .eof() {
+            // FIXME: "Didn't consume all input"
+            throw Error::from_errno(9000)
+        }
+        return value
+    }
+
+    function skip_whitespace(mutable this) {
+        while not .eof() {
+            if not is_whitespace(.input.byte_at(.index)) {
+                break
+            }
+            .index++
+        }
+    }
+
+    function consume_and_unescape_string(mutable this) throws -> String {
+        if not .consume_specific(b'"') {
+            // FIXME: "Expected '"'
+            throw Error::from_errno(9007)
+        }
+
+        let mutable builder = StringBuilder()
+
+        loop {
+            let mutable ch = 0u8
+            let mutable peek_index = .index
+            while peek_index < .input.length() {
+                ch = .input.byte_at(peek_index)
+                if ch == b'"' or ch == b'\\' {
+                    break
+                }
+                // FIXME: This is is_ascii_c0_control()
+                if ch < 0x20 {
+                    // FIXME: "Error while parsing string"
+                    throw Error::from_errno(9008)
+                }
+                peek_index++
+            }
+
+            while peek_index != .index {
+                builder.append(.input.byte_at(.index))
+                .index++
+            }
+
+            if .eof() {
+                break
+            }
+
+            if ch == b'"' {
+                break
+            }
+
+            if ch != b'\\' {
+                builder.append(.consume())
+                continue
+            }
+
+            .ignore()
+
+            match .peek() {
+                b'"' | b'/' | b'\\' | b'n' | b'r' | b't' | b'b' | b'f' => {
+                    let ch = .consume()
+                    builder.append(match ch {
+                        b'n' => b'\n'
+                        b'r' => b'\r'
+                        b't' => b'\t'
+                        b'b' => b'\b'
+                        b'f' => b'\f'
+                        else => ch
+                    })
+                }
+                b'u' => {
+                    eprintln("FIXME: Implement unicode literals")
+                    abort()
+                }
+                else => {
+                    // FIXME: "Error while parsing string"
+                    throw Error::from_errno(9009)
+                }
+            }
+        }
+
+        if not .consume_specific(b'"') {
+            // FIXME: "Expected '"'"
+            throw Error::from_errno(9010)
+        }
+
+        return builder.to_string()
+    }
+
+    function ignore(mutable this) {
+        .index++
+    }
+
+    function peek(this) -> u8 {
+        if .eof() {
+            return 0
+        }
+        return .input.byte_at(.index)
+    }
+
+    function consume(mutable this) -> u8 {
+        let ch = .peek()
+        .index++
+        return ch
+    }
+
+    function consume_specific(mutable this, anonymous expected: u8) -> bool {
+        if .peek() != expected {
+            return false
+        }
+        .index++
+        return true
+    }
+
+    function parse_helper(mutable this) throws -> JsonValue {
+        .skip_whitespace()
+        return match .peek() {
+            b'{' => .parse_object()
+            b'[' => .parse_array()
+            b'"' => .parse_string()
+            b'-' => .parse_number()
+            b'0' | b'1' | b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' => .parse_number()
+            b'f' => .parse_false()
+            b't' => .parse_true()
+            b'n' => .parse_null()
+            else => .parse_failure(error_message: "Unexpected character")
+        }
+    }
+
+    function parse_failure(this, error_message: String) throws -> JsonValue {
+        throw Error::from_errno(9001)
+        // FIXME: The compiler should notice that we can't get here and allow omitting the return.
+        return JsonValue::Null
+    }
+
+    function parse_array(mutable this) throws -> JsonValue {
+        return JsonValue::Null
+    }
+
+    function parse_object(mutable this) throws -> JsonValue {
+        if not .consume_specific(b'{') {
+            // FIXME: "Expected '{'"
+            throw Error::from_errno(9002)
+        }
+
+        let mutable values: [String:JsonValue] = [:]
+
+        loop {
+            .skip_whitespace()
+            if .peek() == b'}' {
+                break
+            }
+            .skip_whitespace()
+            let key = .consume_and_unescape_string()
+            .skip_whitespace()
+            if not .consume_specific(b':') {
+                // FIXME: "Expected ':'"
+                throw Error::from_errno(9003)
+            }
+            .skip_whitespace()
+            let value = .parse_helper()
+            // FIXME: This should say `values[key] = value`, but the compiler doesn't wrap it in TRY()
+            values.set(key, value)
+            .skip_whitespace()
+            if .peek() == b'}' {
+                break
+            }
+            if not .consume_specific(b',') {
+                // FIXME: "Expected ','"
+                throw Error::from_errno(9004)
+            }
+            .skip_whitespace()
+            if .peek() == b'}' {
+                // FIXME: "Unexpected '}'"
+                throw Error::from_errno(9005)
+            }
+        }
+        if not .consume_specific(b'}') {
+            // FIXME: "Expected '}'"
+            throw Error::from_errno(9006)
+        }
+        return JsonValue::Object(values)
+    }
+
+    function parse_number(mutable this) throws -> JsonValue {
+        let is_negative = .consume_specific(b'-')
+
+        let mutable value = 0
+
+        while not .eof() {
+            let ch = .peek()
+            if not (ch >= b'0' and ch <= b'9') {
+                break
+            }
+            value *= 10
+            value += (ch - b'0') as! i64
+            .index++
+        }
+
+        return JsonValue::Number(value)
+    }
+
+    function parse_string(mutable this) throws -> JsonValue {
+        return JsonValue::Null
+    }
+
+    function parse_false(mutable this) throws -> JsonValue {
+        return JsonValue::Null
+    }
+
+    function parse_true(mutable this) throws -> JsonValue {
+        return JsonValue::Null
+    }
+
+    function parse_null(mutable this) throws -> JsonValue {
+        return JsonValue::Null
+    }
+}
+
+function parse_json(input: String) throws -> JsonValue {
+    let mutable parser = JsonParser(input, index: 0)
+    return parser.parse()
+}
+
+function main() {
+    let input = "{\"foo\": 123\n,\"bar\":    456\n}"
+    let value = parse_json(input)
+    println("{}", value)
+}
