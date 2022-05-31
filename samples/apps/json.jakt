@@ -1,5 +1,3 @@
-// FIXME: Syntax highlighting should understand inline comments in enum
-
 extern struct StringBuilder {
     // FIXME: AK::StringBuilder::append() actually takes a c_char, not a u8, but nobody complains
     function append(mutable this, anonymous c: u8)
