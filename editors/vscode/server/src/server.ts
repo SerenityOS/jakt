@@ -158,7 +158,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
 	let stdout;
 	try {
-		let output = await exec("jakt " + tmpFile.name);
+		let output = await exec("jakt -S " + tmpFile.name);
 		console.log(output);
 		stdout = output.stdout;
 	} catch (e: any) {
