@@ -274,6 +274,7 @@ function main() {
 - [x] Enums as names for values of an underlying type
 - [x] `match` expressions
 - [x] Enum scope inference in `match` arms
+- [x] Yielding values from match blocks
 - [ ] Nested `match` patterns
 - [ ] Traits as `match` patterns
 - [ ] Support for interop with the `?`, `??` and `!` operators
@@ -286,7 +287,11 @@ enum MyOptional<T> {
 
 function value_or_default<T>(anonymous x: MyOptional<T>, default: T) -> T {
     return match x {
-        Some(value) => value
+        Some(value) => {
+            let stuff = maybe_do_stuff_with(value)
+            let more_stuff = stuff.do_some_more_processing()
+            yield more_stuff
+        }
         None => default
     }
 }
