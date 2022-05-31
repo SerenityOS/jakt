@@ -686,6 +686,14 @@ boxed enum ParsedStatement {
     Garbage
 }
 
+enum BinaryOperator {
+    Add
+    Subtract
+    Multiply
+    Divide
+    Garbage
+}
+
 boxed enum ParsedExpression {
     Boolean(val: bool, span: JaktSpan)
     NumericConstant(val: i64, span: JaktSpan)
@@ -693,8 +701,39 @@ boxed enum ParsedExpression {
     Call(call: ParsedCall, span: JaktSpan)
     Var(name: String, span: JaktSpan)
     IndexedExpression(base: ParsedExpression, index: ParsedExpression, span: JaktSpan)
+    BinaryOp(lhs: ParsedExpression, op: ParsedExpression, rhs: ParsedExpression, span: JaktSpan)
+    Operator(op: BinaryOperator, span: JaktSpan)
     OptionalNone(JaktSpan)
     Garbage(JaktSpan)
+
+    function is_garbage(this) -> bool {
+        return match this {
+            Garbage(span) => true
+            else => false
+        }
+    }
+
+    function span(this) -> JaktSpan {
+        return match this {
+            Boolean(val, span) => span
+            NumericConstant(val, span) => span
+            QuotedString(val, span) => span
+            Call(call, span) => span
+            Var(name, span) => span
+            IndexedExpression(base, index, span) => span
+            BinaryOp(lhs, op, rhs, span) => span
+            Operator(op, span) => span
+            OptionalNone(span) => span
+            Garbage(span) => span
+        }
+    }
+
+    function as_operator(this) -> BinaryOperator {
+        return match this {
+            Operator(op, span) => op
+            else => BinaryOperator::Garbage
+        }
+    }
 }
 
 struct ParsedVarDecl {
@@ -1203,6 +1242,34 @@ struct Parser {
         let lhs = .parse_operand()
         expr_stack.push(lhs)
 
+        while not .eof() {
+            // TODO: Check if the next token is eol, if so stop
+
+            let op = .parse_operator()
+
+            if op.is_garbage() {
+                break
+            }
+
+            let rhs = .parse_operand()
+
+            expr_stack.push(op)
+            expr_stack.push(rhs)
+        }
+
+        while expr_stack.size() > 1 {
+            let rhs = expr_stack.pop()!
+            let op = expr_stack.pop()!
+            let lhs = expr_stack.pop()!
+
+            let start = lhs.span().start
+            let end = rhs.span().end
+
+            let span = JaktSpan(start, end)
+
+            expr_stack.push(ParsedExpression::BinaryOp(lhs, op, rhs, span))
+        }
+
         return expr_stack[0]
     }
 
@@ -1278,7 +1345,6 @@ struct Parser {
                 }
             }
             else => {
-                todo("parse_operand_base else")
             }
         }
         return ParsedExpression::Garbage(span)
@@ -1332,6 +1398,35 @@ struct Parser {
         }
 
         return expr
+    }
+
+    function unknown_operator(mutable this, span: JaktSpan) throws -> BinaryOperator {
+        //.error("unknown operator", span)
+
+        return BinaryOperator::Garbage
+    }
+
+    function parse_operator(mutable this) throws -> ParsedExpression {
+        let span = .current().span()
+        return match .current() {
+            Plus => {
+                .index++
+                yield ParsedExpression::Operator(op: BinaryOperator::Add, span)
+            }
+            Minus => {
+                .index++
+                yield ParsedExpression::Operator(op: BinaryOperator::Subtract, span)
+            }
+            Asterisk => {
+                .index++
+                yield ParsedExpression::Operator(op: BinaryOperator::Multiply, span)
+            }
+            ForwardSlash => {
+                .index++
+                yield ParsedExpression::Operator(op: BinaryOperator::Divide, span)
+            }
+            else => ParsedExpression::Garbage(span)
+        }
     }
 
     function parse_call(mutable this) throws -> ParsedCall {

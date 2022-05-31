@@ -2869,6 +2869,14 @@ fn codegen_expr(
                             output.push('.');
                         }
                     }
+                    Type::Enum(enum_id) => {
+                        let enumeration = &project.enums[*enum_id];
+                        if enumeration.definition_type == DefinitionType::Class {
+                            output.push_str("->")
+                        } else {
+                            output.push('.');
+                        }
+                    }
                     _ => {
                         output.push('.');
                     }

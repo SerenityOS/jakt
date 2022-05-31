@@ -852,7 +852,7 @@
               "name": "constant.character.escape.jakt",
               "match": "\\\\."
             }
-          ]    
+          ]
         },
         {
           "name": "string.quoted.single.jakt",
@@ -873,7 +873,7 @@
               "name": "constant.character.escape.jakt",
               "match": "\\\\."
             }
-          ]    
+          ]
         }
       ]
     }
