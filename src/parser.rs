@@ -1825,6 +1825,12 @@ pub fn parse_function(
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub enum InsideBlock {
+    No,
+    Yes,
+}
+
 pub fn parse_block(tokens: &[Token], index: &mut usize) -> (ParsedBlock, Option<JaktError>) {
     trace!(format!("parse_block: {:?}", tokens[*index]));
 
@@ -1868,7 +1874,7 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (ParsedBlock, Option<
                 *index += 1;
             }
             _ => {
-                let (stmt, err) = parse_statement(tokens, index);
+                let (stmt, err) = parse_statement(tokens, index, InsideBlock::Yes);
                 error = error.or(err);
 
                 block.stmts.push(stmt);
@@ -1893,6 +1899,7 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (ParsedBlock, Option<
 pub fn parse_statement(
     tokens: &[Token],
     index: &mut usize,
+    inside_block: InsideBlock,
 ) -> (ParsedStatement, Option<JaktError>) {
     trace!(format!("parse_statement: {:?}", tokens[*index]));
 
@@ -1917,7 +1924,7 @@ pub fn parse_statement(
             let span = tokens[*index].span;
             *index += 1;
 
-            let (statement, err) = parse_statement(tokens, index);
+            let (statement, err) = parse_statement(tokens, index, InsideBlock::No);
             error = error.or(err);
 
             (ParsedStatement::Defer(Box::new(statement), span), error)
@@ -1972,7 +1979,7 @@ pub fn parse_statement(
 
             *index += 1;
 
-            let (stmt, err) = parse_statement(tokens, index);
+            let (stmt, err) = parse_statement(tokens, index, InsideBlock::No);
             error = error.or(err);
 
             let mut error_name = String::new();
@@ -2068,17 +2075,20 @@ pub fn parse_statement(
                 parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
             error = error.or(err);
 
-            (
-                ParsedStatement::Yield(
-                    expr,
-                    Span {
-                        file_id: start.file_id,
-                        start: start.start,
-                        end: tokens[(*index - 1)].span.end,
-                    },
-                ),
-                error,
-            )
+            let span = Span {
+                file_id: start.file_id,
+                start: start.start,
+                end: tokens[(*index - 1)].span.end,
+            };
+
+            if inside_block == InsideBlock::No {
+                error = error.or(Some(JaktError::ParserError(
+                    "yield can only be used inside a block".to_string(),
+                    span,
+                )));
+            }
+
+            (ParsedStatement::Yield(expr, span), error)
         }
         TokenContents::Name(name) if name == "let" => {
             trace!("parsing let");
