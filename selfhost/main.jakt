@@ -509,10 +509,10 @@ struct Lexer {
 
 function print_error(file_name: String, file_contents: [u8], error: JaktError) throws {
     match error {
-        JaktError::Message(message, span) => {
+        Message(message, span) => {
             display_message_with_span(severity: MessageSeverity::Error, file_name, file_contents, message, span)
         }
-        JaktError::MessageWithHint(message, span, hint, hint_span) => {
+        MessageWithHint(message, span, hint, hint_span) => {
             display_message_with_span(severity: MessageSeverity::Error, file_name, file_contents, message, span)
             display_message_with_span(severity: MessageSeverity::Hint, file_name, file_contents, message: hint, span: hint_span)
         }
@@ -822,7 +822,7 @@ struct Parser {
         let mutable should_break = false
         while not should_break and not .eof() {
             match .current() {
-                Token::Name(name, span) => {
+                Name(name, span) => {
                     match name {
                         "function" => {
                             let function = .parse_function(FunctionLinkage::Internal, Visibility::Public)
@@ -831,11 +831,11 @@ struct Parser {
                         else => { }
                     }
                 }
-                Token::Eol => {
+                Eol => {
                     // Ignore
                     .index++
                 }
-                Token::RCurly => {
+                RCurly => {
                     should_break = true
                 }
                 else => {
@@ -863,7 +863,7 @@ struct Parser {
         }
 
         let function_name = match .current() {
-            Token::Name(name) => name
+            Name(name) => name
             else => { return parsed_function }
         }
         parsed_function.name = function_name
@@ -878,7 +878,7 @@ struct Parser {
         }
 
         match .current() {
-            Token::LParen(span) => {
+            LParen(span) => {
                 .index++
             }
             else => {
@@ -893,15 +893,15 @@ struct Parser {
 
         while not should_break and .index < .tokens.size() {
             match .current() {
-                Token::RParen => {
+                RParen => {
                     .index++
                     should_break = true
                 }
-                Token::Comma => {
+                Comma => {
                     .index++
                     current_param_requires_label = true
                 }
-                Token::Name(name, span) => {
+                Name(name, span) => {
                     if name == "anonymous" {
                         current_param_requires_label = false
                         .index++
@@ -947,7 +947,7 @@ struct Parser {
             parsed_function.throws = true
         } else {
             match .current() {
-                Token::Name(name) => {
+                Name(name) => {
                     if name == "throws" {
                         parsed_function.throws = true
                         .index++
@@ -962,10 +962,10 @@ struct Parser {
         let mutable return_type_span: JaktSpan? = None
 
         match .current() {
-            Token::Minus => {
+            Minus => {
                 .index++
                 match .current() {
-                    Token::GreaterThan => {
+                    GreaterThan => {
                         .index++
                         let start = .current().span().start
                         return_type = .parse_typename()
@@ -991,14 +991,14 @@ struct Parser {
         let mutable parsed_type = .parse_shorthand_type()
 
         match parsed_type {
-            ParsedType::Empty => { }
+            Empty => { }
             else => {
                 return parsed_type
             }
         }
 
         match .current() {
-            Token::Name(name) => {
+            Name(name) => {
                 if name == "raw" or name == "weak" {
                     todo("raw/weak")
                 } else {
@@ -1017,11 +1017,11 @@ struct Parser {
 
     function parse_variable_declaration(mutable this) throws -> ParsedVarDecl {
         match .current() {
-            Token::Name(name) => {
+            Name(name) => {
                 let var_name = name
                 .index++
                 match .current() {
-                    Token::Colon => {
+                    Colon => {
                         .index++
                     }
                     else => {
@@ -1039,7 +1039,7 @@ struct Parser {
                 // We have "name:" so far.
                 let mutable is_mutable = false
                 match .current() {
-                    Token::Name(name) => {
+                    Name(name) => {
                         if name == "mutable" {
                             .index++
                             is_mutable = true
@@ -1069,22 +1069,22 @@ struct Parser {
     function parse_shorthand_type(mutable this) throws -> ParsedType {
         let start = .current().span().start
         match .current() {
-            Token::LSquare => {
+            LSquare => {
                 // [T] is shorthand for Array<T>
                 // [K:V] is shorthand for Dictionary<K, V>
                 .index++
                 let inner = .parse_typename()
                 match .current() {
-                    Token::RSquare => {
+                    RSquare => {
                         let span = JaktSpan(start, end: .current().span().end)
                         .index++
                         return ParsedType::Array(inner, span)
                     }
-                    Token::Colon => {
+                    Colon => {
                         .index++
                         let value = .parse_typename()
                         match .current() {
-                            Token::RSquare => {
+                            RSquare => {
                                 .index++
                             }
                             else => {
@@ -1099,13 +1099,13 @@ struct Parser {
                     }
                 }
             }
-            Token::LCurly => {
+            LCurly => {
                 // {T} is shorthand for Set<T>
                 let inner = .parse_typename()
                 .index++
 
                 match .current() {
-                    Token::RCurly => {
+                    RCurly => {
                         let span = JaktSpan(start, end: .current().span().end)
                         return ParsedType::Set(inner, span)
                     }
@@ -1114,7 +1114,7 @@ struct Parser {
                     }
                 }
             }
-            Token::LParen => {
+            LParen => {
                 // (A, B, C) is shorthand for Tuple<A, B, C>
                 todo("Implement tuple type shorthand")
             }
@@ -1135,7 +1135,7 @@ struct Parser {
         .skip_newlines()
 
         match .current() {
-            Token::LCurly => { .index++ }
+            LCurly => { .index++ }
             else => { 
                 .error("Expected '{'", JaktSpan(start, end: start))
             }
@@ -1143,14 +1143,14 @@ struct Parser {
 
         while not .eof() {
             match .current() {
-                Token::RCurly => {
+                RCurly => {
                     .index++
                     return block
                 }
-                Token::Semicolon => {
+                Semicolon => {
                     .index++
                 }
-                Token::Eol => {
+                Eol => {
                     .index++
                 }
                 else => {
@@ -1169,7 +1169,7 @@ struct Parser {
         let start = .current().span().start
 
         match .current() {
-            Token::Name(name) => {
+            Name(name) => {
                 match name {
                     "return" => {
                         .index++
@@ -1183,7 +1183,7 @@ struct Parser {
                     }
                 }
             }
-            Token::LCurly => {
+            LCurly => {
                 let block = .parse_block()
                 return ParsedStatement::Block(block)
             }
@@ -1209,19 +1209,19 @@ struct Parser {
     function parse_operand_base(mutable this) throws -> ParsedExpression {
         let span = .current().span()
         match .current() {
-            Token::Dot => {
+            Dot => {
                 .index++
                 return ParsedExpression::Var(name: "this", span)
             }
-            Token::QuotedString(quote, span) => {
+            QuotedString(quote, span) => {
                 .index++
                 return ParsedExpression::QuotedString(val: quote, span)
             }
-            Token::Number(number, span) => {
+            Number(number, span) => {
                 .index++
                 return ParsedExpression::NumericConstant(val: number, span)
             }
-            Token::Name(name) => {
+            Name(name) => {
                 if name == "true" {
                     .index++
                     return ParsedExpression::Boolean(val: true, span)
@@ -1235,12 +1235,12 @@ struct Parser {
                 // FIXME: "not"
                 // FIXME: "match"
                 match .peek(1) {
-                    Token::LParen => {
+                    LParen => {
                         // FIXME: "Some"
                         let call = .parse_call()
                         return ParsedExpression::Call(call, span)
                     }
-                    Token::LessThan => {
+                    LessThan => {
                         todo("parse_operand_base generics")
                         .index++
                         return ParsedExpression::Garbage(span)
@@ -1261,15 +1261,15 @@ struct Parser {
                 .index++
                 return ParsedExpression::Var(name, span)
             }
-            Token::LParen => {
+            LParen => {
                 .index++
 
                 let expr = .parse_expression()
                 match .current() {
-                    Token::RParen => {
+                    RParen => {
                         .index++
                     }
-                    Token::Comma => {
+                    Comma => {
                         todo("parse_operand_base tuple")
                     }
                     else => {
@@ -1293,30 +1293,30 @@ struct Parser {
 
         // Check for postfix operators, while we're at it
         match .current() {
-            Token::DotDot => {
+            DotDot => {
                 todo("postfix DotDot")
             }
-            Token::ExclamationPoint => {
+            ExclamationPoint => {
                 todo("postfix ExclamationPoint")
             }
-            Token::PlusPlus => {
+            PlusPlus => {
                 todo("postfix PlusPlus")
             }
-            Token::MinusMinus => {
+            MinusMinus => {
                 todo("postfix MinusMinus")
             }
-            Token::ColonColon => {
+            ColonColon => {
                 todo("postfix ColonColon")
             }
-            Token::Dot => {
+            Dot => {
                 todo("postfix Dot")
             }
-            Token::LSquare => {
+            LSquare => {
                 // Indexing operation
                 .index++
                 let index_expr = .parse_expression()
                 match .current() {
-                    Token::RSquare => {
+                RSquare => {
                         .index++
                     }
                     else => {
@@ -1341,12 +1341,12 @@ struct Parser {
         )
 
         match .current() {
-            Token::Name(name) => {
+            Name(name) => {
                 call.name = name
                 .index++
 
                 match .current() {
-                    Token::LessThan => {
+                    LessThan => {
                         todo("parse_call generics")
                         .index++
                     }
@@ -1354,7 +1354,7 @@ struct Parser {
                 }
 
                 match .current() {
-                    Token::LParen => {
+                    LParen => {
                         .index++
                     }
                     else => {
@@ -1365,14 +1365,14 @@ struct Parser {
                 let mutable should_break = false
                 while not should_break and not .eof() {
                     match .current() {
-                        Token::RParen => {
+                        RParen => {
                             .index++
                             should_break = true
                         }
-                        Token::Eol => {
+                        Eol => {
                             .index++
                         }
-                        Token::Comma => {
+                        Comma => {
                             .index++
                         }
                         else => {
@@ -1396,7 +1396,7 @@ struct Parser {
     function skip_newlines(mutable this) {
         loop { 
             let newline = match .current() {
-                Token::Eol => true
+                Eol => true
                 else => false
             }
             if not newline {
