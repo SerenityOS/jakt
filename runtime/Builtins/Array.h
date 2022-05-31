@@ -67,17 +67,27 @@ public:
         return {};
     }
 
+    void shrink(size_t size)
+    {
+        if (size == m_size) {
+            return;
+        }
+        VERIFY(size < this->size());
+        for (size_t i = size; i < m_size; ++i) {
+            m_elements[i].~T();
+        }
+        m_size = size;
+    }
+
     ErrorOr<void> resize(size_t size)
     {
+        if (size <= m_size) {
+            shrink(size);
+            return {};
+        }
         TRY(ensure_capacity(size));
-        if (size > m_size) {
-            for (size_t i = m_size; i < size; ++i) {
-                new (&m_elements[i]) T();
-            }
-        } else {
-            for (size_t i = size; i < m_size; ++i) {
-                m_elements[i].~T();
-            }
+        for (size_t i = m_size; i < size; ++i) {
+            new (&m_elements[i]) T();
         }
         m_size = size;
         return {};
@@ -276,6 +286,12 @@ public:
         return { *m_storage, offset, size };
     }
 
+    void shrink(size_t size)
+    {
+        auto* storage = MUST(ensure_storage());
+        storage->shrink(size);
+    }
+
     ErrorOr<void> resize(size_t size)
     {
         if (size != this->size()) {
@@ -290,7 +306,7 @@ public:
         if (is_empty())
             return {};
         auto value = move(at(size() - 1));
-        static_cast<void>(resize(size() - 1));
+        shrink(size() - 1);
         return value;
     }
 
