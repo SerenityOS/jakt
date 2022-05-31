@@ -24,3 +24,4 @@ mod typechecker;
 pub use compiler::Compiler;
 pub use error::JaktError;
 pub use lexer::Span;
+pub use typechecker::Project;
