@@ -6,7 +6,7 @@
 	"version": "0.0.2",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-extension-samples"
+		"url": "https://github.com/SerenityOS/jakt/tree/main/editors/vscode"
 	},
 	"publisher": "JT",
 	"categories": [],
@@ -19,7 +19,7 @@
 	"activationEvents": [
 		"onLanguage:jakt"
 	],
-	"main": "./client/out/extension",
+	"main": "out/client/src/extension.js",
 	"contributes": {
 		"languages": [
 			{
@@ -42,34 +42,17 @@
 		],
 		"configuration": {
 			"type": "object",
-			"title": "Example configuration",
-			"properties": {
-				"languageServerExample.maxNumberOfProblems": {
-					"scope": "resource",
-					"type": "number",
-					"default": 100,
-					"description": "Controls the maximum number of problems produced by the server."
-				},
-				"languageServerExample.trace.server": {
-					"scope": "window",
-					"type": "string",
-					"enum": [
-						"off",
-						"messages",
-						"verbose"
-					],
-					"default": "off",
-					"description": "Traces the communication between VS Code and the language server."
-				}
-			}
+			"title": "Jakt",
+			"properties": {}
 		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
-		"compile": "tsc -b",
-		"watch": "tsc -b -w",
+		"esbuild-base": "esbuild server/src/server.ts client/src/extension.ts --bundle --outdir=out --external:vscode --format=cjs --platform=node",
+		"esbuild": "npm run esbuild-base -- --sourcemap --minify",
+		"compile": "npm run esbuild",
+		"watch": "npm run esbuild-base -- --sourcemap --watch",
 		"lint": "eslint ./client/src ./server/src --ext .ts,.tsx",
-		"postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
 		"test": "sh ./scripts/e2e.sh"
 	},
 	"devDependencies": {
@@ -77,6 +60,7 @@
 		"@types/node": "^16.11.7",
 		"@typescript-eslint/eslint-plugin": "^5.19.0",
 		"@typescript-eslint/parser": "^5.19.0",
+		"esbuild": "^0.14.42",
 		"eslint": "^8.13.0",
 		"mocha": "^9.2.1",
 		"typescript": "^4.7.2"
