@@ -116,6 +116,7 @@ enum Token {
     Throws(JaktSpan)
     True(JaktSpan)
     Try(JaktSpan)
+    Unsafe(JaktSpan)
     Weak(JaktSpan)
     While(JaktSpan)
     Yield(JaktSpan)
@@ -212,6 +213,7 @@ enum Token {
             Throws(span) => span
             True(span) => span
             Try(span) => span
+            Unsafe(span) => span
             Weak(span) => span
             While(span) => span
             Yield(span) => span
@@ -369,6 +371,7 @@ struct Lexer {
                 "throws" => Token::Throws(span)
                 "true" => Token::True(span)
                 "try" => Token::Try(span)
+                "unsafe" => Token::Unsafe(span)
                 "weak" => Token::Weak(span)
                 "while" => Token::While(span)
                 "yield" => Token::Yield(span)
@@ -1317,6 +1320,10 @@ struct Parser {
             Defer => {
                 .index++
                 yield ParsedStatement::Defer(.parse_statement())
+            }
+            Unsafe => {
+                .index++
+                yield ParsedStatement::UnsafeBlock(.parse_block())
             }
             Return => {
                 .index++
