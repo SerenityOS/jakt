@@ -1325,6 +1325,14 @@ struct Parser {
                 .index++
                 yield ParsedStatement::UnsafeBlock(.parse_block())
             }
+            Break => {
+                .index++
+                yield ParsedStatement::Break
+            }
+            Continue => {
+                .index++
+                yield ParsedStatement::Continue
+            }
             Return => {
                 .index++
                 let expr = .parse_expression()
