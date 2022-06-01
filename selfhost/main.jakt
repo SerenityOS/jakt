@@ -818,6 +818,8 @@ enum BinaryOperator {
     Subtract
     Multiply
     Divide
+    LogicalAnd
+    LogicalOr
     Garbage
 }
 
@@ -1630,6 +1632,14 @@ struct Parser {
             ForwardSlash => {
                 .index++
                 yield ParsedExpression::Operator(op: BinaryOperator::Divide, span)
+            }
+            And => {
+                .index++
+                yield ParsedExpression::Operator(op: BinaryOperator::LogicalAnd, span)
+            }
+            Or => {
+                .index++
+                yield ParsedExpression::Operator(op: BinaryOperator::LogicalOr, span)
             }
             else => ParsedExpression::Garbage(span)
         }
