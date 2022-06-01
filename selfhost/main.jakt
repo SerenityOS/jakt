@@ -1481,6 +1481,13 @@ struct Parser {
                 .index++
                 return ParsedExpression::Boolean(val: true, span)
             }
+            Not => {
+                let start = .current().span().start
+                .index++
+                let expr = .parse_operand()
+                let span = JaktSpan(start, end: expr.span().end)
+                return ParsedExpression::UnaryOp(expr, op: UnaryOperator::LogicalNot, span)
+            }
             Identifier(name) => {
                 match .peek(1) {
                     LParen => {
