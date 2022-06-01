@@ -813,6 +813,19 @@ enum BinaryOperator {
     Garbage
 }
 
+enum UnaryOperator {
+    PreIncrement
+    PostIncrement
+    PreDecrement
+    PostDecrement
+    Negate
+    Dereference
+    RawAddress
+    LogicalNot
+    BitwiseNot
+    Is(ParsedType)
+}
+
 boxed enum ParsedExpression {
     Boolean(val: bool, span: JaktSpan)
     NumericConstant(val: i64, span: JaktSpan)
@@ -820,6 +833,7 @@ boxed enum ParsedExpression {
     Call(call: ParsedCall, span: JaktSpan)
     Var(name: String, span: JaktSpan)
     IndexedExpression(base: ParsedExpression, index: ParsedExpression, span: JaktSpan)
+    UnaryOp(expr: ParsedExpression, op: UnaryOperator, span: JaktSpan)
     BinaryOp(lhs: ParsedExpression, op: ParsedExpression, rhs: ParsedExpression, span: JaktSpan)
     Operator(op: BinaryOperator, span: JaktSpan)
     OptionalNone(JaktSpan)
@@ -840,6 +854,7 @@ boxed enum ParsedExpression {
             Call(call, span) => span
             Var(name, span) => span
             IndexedExpression(base, index, span) => span
+            UnaryOp(expr, op, span) => span
             BinaryOp(lhs, op, rhs, span) => span
             Operator(op, span) => span
             OptionalNone(span) => span
@@ -1515,46 +1530,60 @@ struct Parser {
         let mutable expr = .parse_operand_base()
 
         // Check for postfix operators, while we're at it
-        match .current() {
+        return match .current() {
             DotDot => {
                 todo("postfix DotDot")
+                yield ParsedExpression::Garbage(span)
             }
             ExclamationPoint => {
                 todo("postfix ExclamationPoint")
+                yield ParsedExpression::Garbage(span)
             }
             PlusPlus => {
-                todo("postfix PlusPlus")
+                let end = .current().span().end
+                .index++
+                yield ParsedExpression::UnaryOp(
+                    expr,
+                    op: UnaryOperator::PostIncrement,
+                    span: JaktSpan(start, end),
+                )
             }
             MinusMinus => {
-                todo("postfix MinusMinus")
+                let end = .current().span().end
+                .index++
+                yield ParsedExpression::UnaryOp(
+                    expr,
+                    op: UnaryOperator::PostDecrement,
+                    span: JaktSpan(start, end),
+                )
             }
             ColonColon => {
                 todo("postfix ColonColon")
+                yield ParsedExpression::Garbage(span)
             }
             Dot => {
                 todo("postfix Dot")
+                yield ParsedExpression::Garbage(span)
             }
             LSquare => {
                 // Indexing operation
                 .index++
                 let index_expr = .parse_expression()
                 match .current() {
-                RSquare => {
+                    RSquare => {
                         .index++
                     }
                     else => {
                         .error("Expected ']'", .current().span())
                     }
                 }
-                return ParsedExpression::IndexedExpression(
+                yield ParsedExpression::IndexedExpression(
                     base: expr,
                     index: index_expr,
                     span: JaktSpan(start, end: .current().span().end))
             }
-            else => { }
+            else => expr
         }
-
-        return expr
     }
 
     function unknown_operator(mutable this, span: JaktSpan) throws -> BinaryOperator {
