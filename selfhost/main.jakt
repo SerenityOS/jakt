@@ -1337,6 +1337,12 @@ struct Parser {
                 .index++
                 yield ParsedStatement::Loop(.parse_block())
             }
+            While => {
+                .index++
+                let guard = .parse_expression()
+                let block = .parse_block()
+                yield ParsedStatement::While(guard, block)
+            }
             Return => {
                 .index++
                 let expr = .parse_expression()
