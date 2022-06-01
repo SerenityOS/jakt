@@ -1367,6 +1367,31 @@ struct Parser {
                 let end = .tokens[.index - 1].span().end
                 yield ParsedStatement::Return(expr, span: JaktSpan(start, end))
             }
+            Let => {
+                .index++
+                let is_mutable = match .current() {
+                    Mutable => {
+                        .index++
+                        yield true
+                    }
+                    else => false
+                }
+                let mutable var = .parse_variable_declaration()
+                var.is_mutable = is_mutable
+
+                let init = match .current() {
+                    Equal => {
+                        .index++
+                        yield .parse_expression()
+                    }
+                    else => {
+                        .error("Expected initializer", .current().span())
+                        yield ParsedExpression::Garbage(.current().span())
+                    }
+                }
+
+                yield ParsedStatement::VarDecl(var, init)
+            }
             LCurly => ParsedStatement::Block(.parse_block())
             else => ParsedStatement::Expression(.parse_expression())
         }
