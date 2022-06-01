@@ -653,6 +653,7 @@ struct ParsedNamespace {
 struct ParsedFunction {
     public name: String
     public params: [ParsedParameter]
+    public generic_parameters: [[String:JaktSpan]]
     public block: ParsedBlock
     public return_type: ParsedType
     public throws: bool
@@ -889,6 +890,7 @@ struct Parser {
         let mutable parsed_function = ParsedFunction(
             name: "",
             params: [],
+            generic_parameters: [],
             block: ParsedBlock(stmts: []),
             return_type: ParsedType::Empty,
             throws: false,
@@ -910,7 +912,7 @@ struct Parser {
 
         .index++
 
-        // FIXME: Check for generic
+        parsed_function.generic_parameters = .parse_generic_parameters()
 
         if .index >= .tokens.size() {
             .error("Incomplete function", .current().span())
@@ -1499,6 +1501,52 @@ struct Parser {
             }
             .index++
         }
+    }
+
+    function parse_generic_parameters(mutable this) throws -> [[String:JaktSpan]] {
+        if (match .current() {
+            LessThan => false
+            else => true
+        }) {
+            return []
+        }
+        .index++
+        let mutable generic_parameters: [[String:JaktSpan]] = []
+        .skip_newlines()
+        while(match .current() {
+            GreaterThan => false
+            Garbage => false
+            else => true
+        }) {
+            match .current() {
+                Token::Name(name, span) => {
+                    generic_parameters.push([name : span])
+                    .index++
+                    match .current() {
+                        Comma | Eol => {
+                            .index++
+                        }
+                        else => {}
+                    }
+                }
+                else => {
+                    .error("expected generic parameter name", .current().span())
+                    return generic_parameters
+                }
+            }
+        }
+
+        if (match .current() {
+            GreaterThan => true
+            else => false
+        }) {
+            .index++
+        } else {
+            .error("expected `>` to end the generic parameters", .current().span())
+            return generic_parameters
+        }
+
+        return generic_parameters
     }
 }
 
