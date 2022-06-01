@@ -92,6 +92,7 @@ enum Token {
     Catch(JaktSpan)
     Class(JaktSpan)
     Continue(JaktSpan)
+    Cpp(JaktSpan)
     Defer(JaktSpan)
     Enum(JaktSpan)
     Extern(JaktSpan)
@@ -134,6 +135,7 @@ enum Token {
             Semicolon(span) => span
             Colon(span) => span
             ColonColon(span) => span
+            Cpp(span) => span
             LParen(span) => span
             RParen(span) => span
             LCurly(span) => span
@@ -347,6 +349,7 @@ struct Lexer {
                 "catch" => Token::Catch(span)
                 "class" => Token::Class(span)
                 "continue" => Token::Continue(span)
+                "cpp" => Token::Cpp(span)
                 "defer" => Token::Defer(span)
                 "enum" => Token::Enum(span)
                 "extern" => Token::Extern(span)
@@ -798,6 +801,7 @@ boxed enum ParsedStatement {
     Return(expr: ParsedExpression, span: JaktSpan)
     Throw(ParsedExpression)
     Yield(ParsedExpression)
+    InlineCpp(block: ParsedBlock, span: JaktSpan)
     Garbage
 }
 
@@ -1318,6 +1322,11 @@ struct Parser {
         let start = .current().span().start
 
         return match .current() {
+            Cpp => {
+                .index++
+                let end = .tokens[.index - 1].span().end
+                yield ParsedStatement::InlineCpp(block: .parse_block(), span: JaktSpan(start, end))
+            }
             Defer => {
                 .index++
                 yield ParsedStatement::Defer(.parse_statement())
