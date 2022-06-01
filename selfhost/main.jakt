@@ -101,6 +101,7 @@ enum Token {
     Function(JaktSpan)
     If(JaktSpan)
     In(JaktSpan)
+    Is(JaktSpan)
     Let(JaktSpan)
     Loop(JaktSpan)
     Match(JaktSpan)
@@ -199,6 +200,7 @@ enum Token {
             Function(span) => span
             If(span) => span
             In(span) => span
+            Is(span) => span
             Let(span) => span
             Loop(span) => span
             Match(span) => span
@@ -358,6 +360,7 @@ struct Lexer {
                 "function" => Token::Function(span)
                 "if" => Token::If(span)
                 "in" => Token::In(span)
+                "is" => Token::Is(span)
                 "let" => Token::Let(span)
                 "loop" => Token::Loop(span)
                 "match" => Token::Match(span)
@@ -1556,6 +1559,12 @@ struct Parser {
                     op: UnaryOperator::PostDecrement,
                     span: JaktSpan(start, end),
                 )
+            }
+            Is => {
+                .index++
+                let parsed_type = .parse_typename()
+                let span = JaktSpan(start, end: .current().span().end)
+                yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::Is(parsed_type), span)
             }
             ColonColon => {
                 todo("postfix ColonColon")
