@@ -43,7 +43,25 @@
 		"configuration": {
 			"type": "object",
 			"title": "Jakt",
-			"properties": {}
+			"properties": {
+				"jaktLanguageServer.maxNumberOfProblems": {
+					"scope": "resource",
+					"type": "number",
+					"default": 100,
+					"description": "Controls the maximum number of problems produced by the server."
+				},
+				"jaktLanguageServer.trace.server": {
+					"scope": "window",
+					"type": "string",
+					"enum": [
+						"off",
+						"messages",
+						"verbose"
+					],
+					"default": "off",
+					"description": "Traces the communication between VS Code and the language server."
+				}
+			}
 		}
 	},
 	"scripts": {
