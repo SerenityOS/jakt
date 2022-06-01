@@ -1333,6 +1333,10 @@ struct Parser {
                 .index++
                 yield ParsedStatement::Continue
             }
+            Loop => {
+                .index++
+                yield ParsedStatement::Loop(.parse_block())
+            }
             Return => {
                 .index++
                 let expr = .parse_expression()
