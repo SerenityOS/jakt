@@ -1,0 +1,4 @@
+/// Expect:
+/// - error: "expected ']' to close the array\n"
+
+enum foo : i32 { b=[ }

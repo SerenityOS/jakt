@@ -1,0 +1,4 @@
+/// Expect:
+/// - error: "expected variant name\n"
+boxed enum bar {
+

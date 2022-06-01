@@ -1,0 +1,4 @@
+/// Expect:
+/// - error: "incomplete struct\n"
+
+struct Incomplete {
