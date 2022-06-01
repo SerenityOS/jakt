@@ -28,23 +28,43 @@ fn main() -> Result<(), JaktError> {
 
     let mut first_error = None;
 
+    if arguments.json_errors {
+        print!("[");
+    }
+
     if arguments.check_only {
         let mut project = Project::new();
         for file in &arguments.input_files {
             match compiler.check_project(file, &mut project) {
                 (_, Some(err)) => {
+                    let is_first_error = first_error.is_none();
                     match &err {
                         JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
                         JaktError::StringError(se) => println!("Error: {}", se),
-                        JaktError::ParserError(msg, span) => {
-                            display_error(&arguments, &compiler, msg, *span)
-                        }
-                        JaktError::TypecheckError(msg, span) => {
-                            display_error(&arguments, &compiler, msg, *span)
-                        }
-                        JaktError::ValidationError(msg, span) => {
-                            display_error(&arguments, &compiler, msg, *span)
-                        }
+                        JaktError::ParserError(msg, span) => display_message(
+                            MessageSeverity::Error,
+                            &arguments,
+                            &compiler,
+                            msg,
+                            *span,
+                            is_first_error,
+                        ),
+                        JaktError::TypecheckError(msg, span) => display_message(
+                            MessageSeverity::Error,
+                            &arguments,
+                            &compiler,
+                            msg,
+                            *span,
+                            is_first_error,
+                        ),
+                        JaktError::ValidationError(msg, span) => display_message(
+                            MessageSeverity::Error,
+                            &arguments,
+                            &compiler,
+                            msg,
+                            *span,
+                            is_first_error,
+                        ),
                         JaktError::TypecheckErrorWithHint(
                             error_msg,
                             error_span,
@@ -57,8 +77,22 @@ fn main() -> Result<(), JaktError> {
                             hint_msg,
                             hint_span,
                         ) => {
-                            display_error(&arguments, &compiler, error_msg, *error_span);
-                            display_hint(&arguments, &compiler, hint_msg, *hint_span);
+                            display_message(
+                                MessageSeverity::Error,
+                                &arguments,
+                                &compiler,
+                                error_msg,
+                                *error_span,
+                                is_first_error,
+                            );
+                            display_message(
+                                MessageSeverity::Hint,
+                                &arguments,
+                                &compiler,
+                                hint_msg,
+                                *hint_span,
+                                false,
+                            );
                         }
                     }
                     first_error = first_error.or(Some(err));
@@ -142,18 +176,34 @@ fn main() -> Result<(), JaktError> {
                     }
                 }
                 Err(err) => {
+                    let is_first_error = first_error.is_none();
                     match &err {
                         JaktError::IOError(ioe) => println!("IO Error: {}", ioe),
                         JaktError::StringError(se) => println!("Error: {}", se),
-                        JaktError::ParserError(msg, span) => {
-                            display_error(&arguments, &compiler, msg, *span)
-                        }
-                        JaktError::TypecheckError(msg, span) => {
-                            display_error(&arguments, &compiler, msg, *span)
-                        }
-                        JaktError::ValidationError(msg, span) => {
-                            display_error(&arguments, &compiler, msg, *span)
-                        }
+                        JaktError::ParserError(msg, span) => display_message(
+                            MessageSeverity::Error,
+                            &arguments,
+                            &compiler,
+                            msg,
+                            *span,
+                            is_first_error,
+                        ),
+                        JaktError::TypecheckError(msg, span) => display_message(
+                            MessageSeverity::Error,
+                            &arguments,
+                            &compiler,
+                            msg,
+                            *span,
+                            is_first_error,
+                        ),
+                        JaktError::ValidationError(msg, span) => display_message(
+                            MessageSeverity::Error,
+                            &arguments,
+                            &compiler,
+                            msg,
+                            *span,
+                            is_first_error,
+                        ),
                         JaktError::TypecheckErrorWithHint(
                             error_msg,
                             error_span,
@@ -166,14 +216,32 @@ fn main() -> Result<(), JaktError> {
                             hint_msg,
                             hint_span,
                         ) => {
-                            display_error(&arguments, &compiler, error_msg, *error_span);
-                            display_hint(&arguments, &compiler, hint_msg, *hint_span);
+                            display_message(
+                                MessageSeverity::Error,
+                                &arguments,
+                                &compiler,
+                                error_msg,
+                                *error_span,
+                                is_first_error,
+                            );
+                            display_message(
+                                MessageSeverity::Hint,
+                                &arguments,
+                                &compiler,
+                                hint_msg,
+                                *hint_span,
+                                false,
+                            );
                         }
                     }
                     first_error = first_error.or(Some(err));
                 }
             }
         }
+    }
+
+    if arguments.json_errors {
+        println!("]");
     }
 
     if first_error.is_some() {
@@ -410,26 +478,35 @@ fn display_message_with_span(
     println!("\u{001b}[0m{}", "-".repeat(width + 3));
 }
 
-fn display_message_with_span_json(severity: MessageSeverity, msg: &str, span: Span) {
-    println!(
-        "{{\"message\": \"{}\", \"severity\": \"{:?}\", \"span\": {{\"start\": {}, \"end\": {}}}}}",
-        msg, severity, span.start, span.end
+fn display_message_with_span_json(
+    severity: MessageSeverity,
+    msg: &str,
+    span: Span,
+    error_seperator: String,
+) {
+    print!(
+        "{}{{\"message\": \"{}\", \"severity\": \"{:?}\", \"span\": {{\"start\": {}, \"end\": {}}}}}",
+        error_seperator, msg, severity, span.start, span.end
     );
 }
 
-fn display_error(arguments: &JaktArguments, compiler: &Compiler, msg: &str, span: Span) {
+fn display_message(
+    severity: MessageSeverity,
+    arguments: &JaktArguments,
+    compiler: &Compiler,
+    msg: &str,
+    span: Span,
+    is_first_error: bool,
+) {
     if arguments.json_errors {
-        display_message_with_span_json(MessageSeverity::Error, msg, span)
+        let seperator: String = if is_first_error {
+            "".to_string()
+        } else {
+            ", ".to_string()
+        };
+        display_message_with_span_json(severity, msg, span, seperator)
     } else {
-        display_message_with_span(MessageSeverity::Error, compiler, msg, span)
-    }
-}
-
-fn display_hint(arguments: &JaktArguments, compiler: &Compiler, msg: &str, span: Span) {
-    if arguments.json_errors {
-        display_message_with_span_json(MessageSeverity::Hint, msg, span)
-    } else {
-        display_message_with_span(MessageSeverity::Hint, compiler, msg, span)
+        display_message_with_span(severity, compiler, msg, span)
     }
 }
 
