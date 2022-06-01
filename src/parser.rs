@@ -2741,7 +2741,7 @@ pub fn parse_patterns(tokens: &[Token], index: &mut usize) -> (Vec<MatchCase>, O
     while !matches!(
         tokens.get(*index),
         Some(Token {
-            contents: TokenContents::RCurly,
+            contents: TokenContents::RCurly | TokenContents::Eof,
             ..
         })
     ) {
