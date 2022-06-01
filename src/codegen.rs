@@ -2305,23 +2305,24 @@ fn codegen_enum_match(
             output.push_str("}()))");
         }
         None => {
-            output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN((");
+            output.push_str("JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(([&]() -> JaktInternal::ExplicitValueOrReturn<");
+            output.push_str(&codegen_type(*return_type_id, project));
+            output.push_str(", ");
+            output.push_str("_JaktCurrentFunctionReturnType");
+            output.push_str(">{\n");
+
+            output.push_str("auto&& __jakt_match_variant_maybe_deref = ");
             output.push_str(&codegen_expr(indent, expr, project, context));
-            output.push(')');
+            output.push(';');
+
+            output.push_str("auto&& __jakt_match_variant = ");
             if needs_deref {
-                output.push_str("->");
-            } else {
-                output.push('.');
+                output.push('*');
             }
-            output.push_str("visit(");
-            let mut first = true;
+            output.push_str("__jakt_match_variant_maybe_deref;");
+            output.push_str("\nswitch(__jakt_match_variant.index()) {\n");
+            let mut has_default = false;
             for case in cases {
-                if !first {
-                    output.push_str(", ");
-                } else {
-                    first = false;
-                }
-                output.push_str("[&] (");
                 match case {
                     CheckedMatchCase::EnumVariant {
                         variant_name: _,
@@ -2339,25 +2340,18 @@ fn codegen_enum_match(
 
                         let enum_ = &project.enums[*enum_id];
                         let variant = &enum_.variants[*variant_index];
+                        output.push_str(&format!("case {}: {{\n", variant_index));
                         match variant {
                             CheckedEnumVariant::Typed(name, _, _) => {
-                                output.push_str("typename ");
-                                output.push_str(&codegen_type_possibly_as_namespace(
-                                    *subject_type_id,
-                                    project,
-                                    true,
+                                output.push_str(&format!(
+                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
+                                    &codegen_type_possibly_as_namespace(
+                                        *subject_type_id,
+                                        project,
+                                        true,
+                                    ),
+                                    name
                                 ));
-                                output.push_str("::");
-                                output.push_str(name);
-                                output.push_str(
-                                            " const& __jakt_match_value) -> JaktInternal::ExplicitValueOrReturn<",
-                                        );
-                                output.push_str(&codegen_type(*return_type_id, project));
-                                output.push_str(", ");
-                                output.push_str("_JaktCurrentFunctionReturnType");
-                                output.push('>');
-                                output.push_str(" {\n");
-                                output.push_str("   ");
                                 if !args.is_empty() {
                                     let var = project
                                         .find_var_in_scope(*scope_id, args[0].1.as_str())
@@ -2369,41 +2363,26 @@ fn codegen_enum_match(
                                 }
                             }
                             CheckedEnumVariant::Untyped(name, _) => {
-                                output.push_str("typename ");
-                                output.push_str(&codegen_type_possibly_as_namespace(
-                                    *subject_type_id,
-                                    project,
-                                    true,
+                                output.push_str(&format!(
+                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
+                                    &codegen_type_possibly_as_namespace(
+                                        *subject_type_id,
+                                        project,
+                                        true,
+                                    ),
+                                    name
                                 ));
-                                output.push_str("::");
-                                output.push_str(name);
-                                output.push_str(
-                                            " const& __jakt_match_value) -> JaktInternal::ExplicitValueOrReturn<",
-                                        );
-                                output.push_str(&codegen_type(*return_type_id, project));
-                                output.push_str(", ");
-                                output.push_str("_JaktCurrentFunctionReturnType");
-                                output.push('>');
-                                output.push_str(" {\n");
                             }
                             CheckedEnumVariant::StructLike(name, _, _) => {
-                                output.push_str("typename ");
-                                output.push_str(&codegen_type_possibly_as_namespace(
-                                    *subject_type_id,
-                                    project,
-                                    true,
+                                output.push_str(&format!(
+                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
+                                    &codegen_type_possibly_as_namespace(
+                                        *subject_type_id,
+                                        project,
+                                        true,
+                                    ),
+                                    name
                                 ));
-                                output.push_str("::");
-                                output.push_str(name);
-                                output.push_str(
-                                            " const& __jakt_match_value) -> JaktInternal::ExplicitValueOrReturn<",
-                                        );
-                                output.push_str(&codegen_type(*return_type_id, project));
-                                output.push_str(", ");
-                                output.push_str("_JaktCurrentFunctionReturnType");
-                                output.push('>');
-                                output.push_str(" {\n");
-
                                 if !args.is_empty() {
                                     for arg in args {
                                         let var =
@@ -2428,17 +2407,12 @@ fn codegen_enum_match(
                             *return_type_id,
                             context,
                         ));
+
+                        output.push_str("};/*case end*/\n"); // case end
                     }
                     CheckedMatchCase::CatchAll { body } => {
-                        output.push_str(
-                                            "auto const& __jakt_match_value) -> JaktInternal::ExplicitValueOrReturn<",
-                                        );
-                        output.push_str(&codegen_type(*return_type_id, project));
-                        output.push_str(", ");
-                        output.push_str("_JaktCurrentFunctionReturnType");
-                        output.push('>');
-                        output.push_str(" {\n");
-
+                        has_default = true;
+                        output.push_str("default: {\n");
                         output.push_str(&codegen_match_body(
                             indent + 1,
                             body,
@@ -2446,13 +2420,21 @@ fn codegen_enum_match(
                             *return_type_id,
                             context,
                         ));
+                        output.push_str("};/*case end*/\n"); // case end
                     }
                     _ => {
                         panic!("Matching enum subject with non-enum value");
                     }
                 }
-                output.push_str("}\n");
             }
+            if !has_default {
+                if enum_.variants.len() != cases.len() {
+                    panic!("Inexhaustive match statement");
+                }
+                output.push_str("default: VERIFY_NOT_REACHED();");
+            }
+            output.push_str("}/*switch end*/\n");
+            output.push_str("}()\n");
             output.push(')');
             output.push(')');
         }

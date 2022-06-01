@@ -156,6 +156,8 @@ public:
         return index_of<T>() != invalid_index;
     }
 
+    IndexType index() const { return m_index; }
+
     template<typename... NewTs>
     friend struct Variant;
 
