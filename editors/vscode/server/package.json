@@ -1,6 +1,6 @@
 {
-	"name": "lsp-sample-server",
-	"description": "Example implementation of a language server in node.",
+	"name": "jakt-lsp-server",
+	"description": "Implementation of a jakt language server in node.",
 	"version": "1.0.0",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
@@ -9,12 +9,15 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-extension-samples"
+		"url": "https://github.com/SerenityOS/jakt/tree/main/editors/vscode"
 	},
 	"dependencies": {
+		"tmp": "^0.2.1",
 		"vscode-languageserver": "^7.0.0",
-		"vscode-languageserver-textdocument": "^1.0.4",
-		"tmp": "^0.2.1"
+		"vscode-languageserver-textdocument": "^1.0.4"
 	},
-	"scripts": {}
+	"scripts": {},
+	"devDependencies": {
+		"@types/tmp": "^0.2.3"
+	}
 }

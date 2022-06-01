@@ -33,13 +33,14 @@ let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
 
-const fs = require('fs');
-const tmp = require('tmp');
+import fs = require('fs');
+import tmp = require('tmp');
 
-const util = require('node:util');
+import util = require('node:util');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const exec = util.promisify(require('node:child_process').exec);
 
-let tmpFile = tmp.fileSync();
+const tmpFile = tmp.fileSync();
 
 connection.onInitialize((params: InitializeParams) => {
 	const capabilities = params.capabilities;
@@ -61,9 +62,9 @@ connection.onInitialize((params: InitializeParams) => {
 	const result: InitializeResult = {
 		capabilities: {
 			textDocumentSync: TextDocumentSyncKind.Incremental,
-			// Tell the client that this server supports code completion.
+			// Tell the client that this server doesn't support code completion. (yet)
 			completionProvider: {
-				resolveProvider: true
+				resolveProvider: false
 			}
 		}
 	};
@@ -125,7 +126,7 @@ function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
 	if (!result) {
 		result = connection.workspace.getConfiguration({
 			scopeUri: resource,
-			section: 'languageServerExample'
+			section: 'jaktLanguageServer'
 		});
 		documentSettings.set(resource, result);
 	}
@@ -144,30 +145,35 @@ documents.onDidChangeContent(change => {
 });
 
 
-function convertSpan(index: number, text: String): Position {
-	let line = 0
-	let character = 0
+function convertSpan(index: number, text: string): Position {
+	let line = 0;
+	let character = 0;
 
-	let i = 0
+	let i = 0;
 	while (i < text.length) {
 		if (i == index) {
-			return { line, character }
+			return { line, character };
 		}
 
 		if (text[i] == '\n') {
-			line++
-			character = 0
+			line++;
+			character = 0;
 		} else {
-			character++
+			character++;
 		}
 
-		i++
+		i++;
 	}
 
-	return { line, character }
+	return { line, character };
 }
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+	if (!hasDiagnosticRelatedInformationCapability) {
+		console.error('Trying to validate a document with no diagnostic capability');
+		return;
+	}
+	
 	// In this simple example we get the settings for every validate run.
 	const settings = await getDocumentSettings(textDocument.uri);
 
@@ -177,37 +183,41 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	try {
 		fs.writeFileSync(tmpFile.name, text);
 	} catch (error) {
-		console.log(error)
+		console.log(error);
 	}
 
-	let stdout: String;
+	let stdout: string;
 	try {
-		let output = await exec("jakt -c -j " + tmpFile.name);
+		const output = await exec("jakt -c -j " + tmpFile.name);
 		console.log(output);
 		stdout = output.stdout;
 	} catch (e: any) {
-		console.log("compile failed: ")
-		console.log(e)
-		stdout = e.stdout
+		stdout = e.stdout;
+		if(e.signal != null) {
+			console.log("compile failed: ");
+			console.log(e);
+		}
 	}
 
 	const diagnostics: Diagnostic[] = [];
 
-	let lines = stdout.split('\n');
+	const lines = stdout.split('\n').filter(l => l.length > 0);
 	for (const line of lines) {
-		console.log(line)
+		console.log(line);
 		try {
-			let obj = JSON.parse(line)
+			const obj = JSON.parse(line);
 
-			let severity;
-			if (obj.severity == "Warning") {
-				severity = DiagnosticSeverity.Warning
-			} else {
-				severity = DiagnosticSeverity.Error
+			let severity : DiagnosticSeverity = DiagnosticSeverity.Error;
+
+			switch(obj.severity) {
+				case "Information": severity = DiagnosticSeverity.Information; break;
+				case "Hint": severity = DiagnosticSeverity.Hint; break;
+				case "Warning": severity = DiagnosticSeverity.Warning; break;
+				case "Error": severity = DiagnosticSeverity.Error; break;
 			}
-
-			let position_start = convertSpan(obj.span.start, text);
-			let position_end = convertSpan(obj.span.end, text);
+			
+			const position_start = convertSpan(obj.span.start, text);
+			const position_end = convertSpan(obj.span.end, text);
 
 			const diagnostic: Diagnostic = {
 				severity,
@@ -219,10 +229,12 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 				source: textDocument.uri
 			};
 
-			console.log(diagnostic)
+			console.log(diagnostic);
 
 			diagnostics.push(diagnostic);
-		} catch { }
+		} catch (e) {
+			console.error(e);
+		}
 
 	}
 
