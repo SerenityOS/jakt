@@ -83,6 +83,44 @@ enum Token {
     Eol(JaktSpan)
     Eof(JaktSpan)
     FatArrow(JaktSpan)
+
+    // Keywords
+    And(JaktSpan)
+    Anonymous(JaktSpan)
+    Boxed(JaktSpan)
+    Break(JaktSpan)
+    Catch(JaktSpan)
+    Class(JaktSpan)
+    Continue(JaktSpan)
+    Defer(JaktSpan)
+    Enum(JaktSpan)
+    Extern(JaktSpan)
+    False(JaktSpan)
+    For(JaktSpan)
+    Function(JaktSpan)
+    If(JaktSpan)
+    In(JaktSpan)
+    Let(JaktSpan)
+    Loop(JaktSpan)
+    Match(JaktSpan)
+    Mutable(JaktSpan)
+    Not(JaktSpan)
+    Or(JaktSpan)
+    Private(JaktSpan)
+    Public(JaktSpan)
+    Raw(JaktSpan)
+    Return(JaktSpan)
+    Struct(JaktSpan)
+    This(JaktSpan)
+    Throw(JaktSpan)
+    Throws(JaktSpan)
+    True(JaktSpan)
+    Try(JaktSpan)
+    Weak(JaktSpan)
+    While(JaktSpan)
+    Yield(JaktSpan)
+
+    // Catch-all for failed parses
     Garbage(JaktSpan)
 
     public function span(this) -> JaktSpan {
@@ -143,6 +181,40 @@ enum Token {
             Eol(span) => span
             Eof(span) => span
             FatArrow(span) => span
+            And(span) => span
+            Anonymous(span) => span
+            Boxed(span) => span
+            Break(span) => span
+            Catch(span) => span
+            Class(span) => span
+            Continue(span) => span
+            Defer(span) => span
+            Enum(span) => span
+            Extern(span) => span
+            False(span) => span
+            For(span) => span
+            Function(span) => span
+            If(span) => span
+            In(span) => span
+            Let(span) => span
+            Loop(span) => span
+            Match(span) => span
+            Mutable(span) => span
+            Not(span) => span
+            Or(span) => span
+            Private(span) => span
+            Public(span) => span
+            Raw(span) => span
+            Return(span) => span
+            Struct(span) => span
+            This(span) => span
+            Throw(span) => span
+            Throws(span) => span
+            True(span) => span
+            Try(span) => span
+            Weak(span) => span
+            While(span) => span
+            Yield(span) => span
             Garbage(span) => span
         }
     }
@@ -262,7 +334,46 @@ struct Lexer {
                 string_builder.append(value)
             }
             let end = .index
-            return Token::Name(name: string_builder.to_string(), span: JaktSpan(start, end))
+            let span = JaktSpan(start, end)
+
+            let name = string_builder.to_string()
+            return match name {
+                "and" => Token::And(span)
+                "anonymous" => Token::Anonymous(span)
+                "boxed" => Token::Boxed(span)
+                "break" => Token::Break(span)
+                "catch" => Token::Catch(span)
+                "class" => Token::Class(span)
+                "continue" => Token::Continue(span)
+                "defer" => Token::Defer(span)
+                "enum" => Token::Enum(span)
+                "extern" => Token::Extern(span)
+                "false" => Token::False(span)
+                "for" => Token::For(span)
+                "function" => Token::Function(span)
+                "if" => Token::If(span)
+                "in" => Token::In(span)
+                "let" => Token::Let(span)
+                "loop" => Token::Loop(span)
+                "match" => Token::Match(span)
+                "mutable" => Token::Mutable(span)
+                "not" => Token::Not(span)
+                "or" => Token::Or(span)
+                "private" => Token::Private(span)
+                "public" => Token::Public(span)
+                "raw" => Token::Raw(span)
+                "return" => Token::Return(span)
+                "struct" => Token::Struct(span)
+                "this" => Token::This(span)
+                "throw" => Token::Throw(span)
+                "throws" => Token::Throws(span)
+                "true" => Token::True(span)
+                "try" => Token::Try(span)
+                "weak" => Token::Weak(span)
+                "while" => Token::While(span)
+                "yield" => Token::Yield(span)
+                else => Token::Name(name, span)
+            }
         }
 
         let unknown_char = .input[.index]
@@ -862,14 +973,9 @@ struct Parser {
         let mutable should_break = false
         while not should_break and not .eof() {
             match .current() {
-                Name(name, span) => {
-                    match name {
-                        "function" => {
-                            let function = .parse_function(FunctionLinkage::Internal, Visibility::Public)
-                            parsed_namespace.functions.push(function)
-                        }
-                        else => { }
-                    }
+                Function => {
+                    let function = .parse_function(FunctionLinkage::Internal, Visibility::Public)
+                    parsed_namespace.functions.push(function)
                 }
                 Eol => {
                     // Ignore
@@ -942,40 +1048,41 @@ struct Parser {
                     .index++
                     current_param_requires_label = true
                 }
-                Name(name, span) => {
-                    if name == "anonymous" {
-                        current_param_requires_label = false
-                        .index++
-                    } else if name == "mutable" {
-                        current_param_is_mutable = true
-                        .index++
-                    } else if name == "this" {
-                        params.push(ParsedParameter(
-                            requires_label: false,
-                            variable: ParsedVariable(
-                                name: "this",
-                                parsed_type: ParsedType::Empty,
-                                is_mutable: current_param_is_mutable,
-                                span: .current().span(),
-                            ),
+                Anonymous => {
+                    current_param_requires_label = false
+                    .index++
+                }
+                Mutable => {
+                    current_param_is_mutable = true
+                    .index++
+                }
+                This => {
+                    params.push(ParsedParameter(
+                        requires_label: false,
+                        variable: ParsedVariable(
+                            name: "this",
+                            parsed_type: ParsedType::Empty,
                             is_mutable: current_param_is_mutable,
                             span: .current().span(),
-                        ))
-                        .index++
-                    } else {
-                        let var_decl = .parse_variable_declaration()
-                        params.push(ParsedParameter(
-                            requires_label: current_param_requires_label,
-                            variable: ParsedVariable(
-                                name: var_decl.name,
-                                parsed_type: var_decl.parsed_type,
-                                is_mutable: var_decl.is_mutable,
-                                span: .tokens[.index - 1].span(),
-                            ),
-                            is_mutable: current_param_is_mutable,
+                        ),
+                        is_mutable: current_param_is_mutable,
+                        span: .current().span(),
+                    ))
+                    .index++
+                }
+                Name(name, span) => {
+                    let var_decl = .parse_variable_declaration()
+                    params.push(ParsedParameter(
+                        requires_label: current_param_requires_label,
+                        variable: ParsedVariable(
+                            name: var_decl.name,
+                            parsed_type: var_decl.parsed_type,
+                            is_mutable: var_decl.is_mutable,
                             span: .tokens[.index - 1].span(),
-                        ))
-                    }
+                        ),
+                        is_mutable: current_param_is_mutable,
+                        span: .tokens[.index - 1].span(),
+                    ))
                 }
                 else => {
                     .error("Expected parameter", .current().span())
@@ -988,11 +1095,9 @@ struct Parser {
             parsed_function.throws = true
         } else {
             match .current() {
-                Name(name) => {
-                    if name == "throws" {
-                        parsed_function.throws = true
-                        .index++
-                    }
+                Throws => {
+                    parsed_function.throws = true
+                    .index++
                 }
                 else => { }
             }
@@ -1039,14 +1144,16 @@ struct Parser {
         }
 
         match .current() {
+            Raw => {
+                todo("raw")
+            }
+            Weak => {
+                todo("weak")
+            }
             Name(name) => {
-                if name == "raw" or name == "weak" {
-                    todo("raw/weak")
-                } else {
-                    let span = .current().span()
-                    .index++
-                    return ParsedType::Name(name, span)
-                }
+                let span = .current().span()
+                .index++
+                return ParsedType::Name(name, span)
             }
             else => {
                 .error("Expected type name", .current().span())
@@ -1080,11 +1187,9 @@ struct Parser {
                 // We have "name:" so far.
                 let mutable is_mutable = false
                 match .current() {
-                    Name(name) => {
-                        if name == "mutable" {
-                            .index++
-                            is_mutable = true
-                        }
+                    Mutable => {
+                        .index++
+                        is_mutable = true
                     }
                     else => { }
                 }
@@ -1210,19 +1315,15 @@ struct Parser {
         let start = .current().span().start
 
         match .current() {
+            Return => {
+                .index++
+                let expr = .parse_expression()
+                let end = .tokens[.index - 1].span().end
+                return ParsedStatement::Return(expr, span: JaktSpan(start, end))
+            }
             Name(name) => {
-                match name {
-                    "return" => {
-                        .index++
-                        let expr = .parse_expression()
-                        let end = .tokens[.index - 1].span().end
-                        return ParsedStatement::Return(expr, span: JaktSpan(start, end))
-                    }
-                    else => {
-                        let expr = .parse_expression()
-                        return ParsedStatement::Expression(expr)
-                    }
-                }
+                let expr = .parse_expression()
+                return ParsedStatement::Expression(expr)
             }
             LCurly => {
                 let block = .parse_block()
@@ -1290,19 +1391,15 @@ struct Parser {
                 .index++
                 return ParsedExpression::NumericConstant(val: number, span)
             }
+            True => {
+                .index++
+                return ParsedExpression::Boolean(val: true, span)
+            }
+            False => {
+                .index++
+                return ParsedExpression::Boolean(val: true, span)
+            }
             Name(name) => {
-                if name == "true" {
-                    .index++
-                    return ParsedExpression::Boolean(val: true, span)
-                }
-                if name == "false" {
-                    .index++
-                    return ParsedExpression::Boolean(val: true, span)
-                }
-                // FIXME: "and"
-                // FIXME: "or"
-                // FIXME: "not"
-                // FIXME: "match"
                 match .peek(1) {
                     LParen => {
                         // FIXME: "Some"
@@ -1346,8 +1443,7 @@ struct Parser {
                     }
                 }
             }
-            else => {
-            }
+            else => { }
         }
         return ParsedExpression::Garbage(span)
     }
