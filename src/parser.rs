@@ -2749,9 +2749,15 @@ pub fn parse_patterns(tokens: &[Token], index: &mut usize) -> (Vec<MatchCase>, O
             ..
         })
     ) {
+        let pattern_start_index = *index;
         let (patterns, err) = parse_pattern_case(tokens, index);
         error = error.or(err);
         cases.extend(patterns);
+
+        if pattern_start_index == *index {
+            // Parser didn't advance, bail.
+            break;
+        }
 
         if let TokenContents::Eol | TokenContents::Comma = tokens[*index].contents {
             *index += 1;

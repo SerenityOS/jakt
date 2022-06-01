@@ -1,0 +1,20 @@
+/// Expect:
+/// - error: "expected complete block"
+struct Parser {
+    function parse_call_parameter_name(mutable this) throws -> String {
+        match .current() {
+            Name(name) => {
+                match .peek(1) {
+                    Colon => {}
+        match .peek(1) {
+            Colon => {
+                .index += 2
+            }
+        }
+    }
+}
+
+
+function main(args: [String]) {
+
+}
