@@ -1462,7 +1462,6 @@ struct Parser {
         let span = .current().span()
         match .current() {
             Dot => {
-                .index++
                 return ParsedExpression::Var(name: "this", span)
             }
             QuotedString(quote, span) => {
