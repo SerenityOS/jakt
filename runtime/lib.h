@@ -218,33 +218,56 @@ struct ExplicitValue<void> {
     }
 };
 
+struct LoopBreak { };
+struct LoopContinue { };
+
 template<typename Value, typename Return>
-struct ExplicitValueOrReturn {
+struct ExplicitValueOrControlFlow {
     template<typename U>
-    ExplicitValueOrReturn(ExplicitValue<U>&& v)
+    ExplicitValueOrControlFlow(ExplicitValue<U>&& v)
         : value(ExplicitValue<Value> { move(v.value) })
     {
     }
 
-    ExplicitValueOrReturn(ExplicitValue<void>&&)
+    ExplicitValueOrControlFlow(ExplicitValue<void>&&)
         : value(ExplicitValue<void> {})
     {
     }
 
     template<typename U>
-    ExplicitValueOrReturn(U&& v) requires(!IsVoid<Return>)
+    ExplicitValueOrControlFlow(U&& v) requires(!IsVoid<Return>)
         : value(Return { forward<U>(v) })
     {
     }
 
-    ExplicitValueOrReturn(void) requires(IsVoid<Return>)
+    ExplicitValueOrControlFlow(void) requires(IsVoid<Return>)
         : value(Empty {})
+    {
+    }
+
+    ExplicitValueOrControlFlow(LoopContinue)
+        : value(LoopContinue {})
+    {
+    }
+
+    ExplicitValueOrControlFlow(LoopBreak)
+        : value(LoopBreak {})
     {
     }
 
     bool is_return() const
     {
         return value.template has<Conditional<IsVoid<Return>, Empty, Return>>();
+    }
+
+    bool is_loop_break() const
+    {
+        return value.template has<LoopBreak>();
+    }
+
+    bool is_loop_continue() const
+    {
+        return value.template has<LoopContinue>();
     }
 
     Return release_return()
@@ -263,14 +286,26 @@ struct ExplicitValueOrReturn {
             return move(value).template get<ExplicitValue<Value>>().value;
     }
 
-    Variant<Conditional<IsVoid<Return>, Empty, Return>, ExplicitValue<Value>> value;
+    Variant<Conditional<IsVoid<Return>, Empty, Return>, ExplicitValue<Value>, LoopContinue, LoopBreak> value;
 };
 
-#define JAKT_RESOLVE_EXPLICIT_VALUE_OR_RETURN(x) ({ \
+#define JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(x) ({ \
     auto&& _jakt_value = x;                         \
     if (_jakt_value.is_return())                    \
         return _jakt_value.release_return();        \
     _jakt_value.release_value();                    \
+})
+
+// XXX: `break` might not work if codegen is inside a switch block.
+#define JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(x) ({ \
+    auto&& _jakt_value = x; \
+    if (_jakt_value.is_return()) \
+        return _jakt_value.release_return(); \
+    else if (_jakt_value.is_loop_break()) \
+        break; \
+    else if (_jakt_value.is_loop_continue()) \
+        continue; \
+    _jakt_value.release_value(); \
 })
 
 template<typename OutputType, typename InputType>
