@@ -201,23 +201,21 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
 	const diagnostics: Diagnostic[] = [];
 
-	const lines = stdout.split('\n').filter(l => l.length > 0);
-	for (const line of lines) {
-		console.log(line);
+	const errors = JSON.parse(stdout);
+	for (const error of errors) {
 		try {
-			const obj = JSON.parse(line);
 
 			let severity : DiagnosticSeverity = DiagnosticSeverity.Error;
 
-			switch(obj.severity) {
+			switch(error.severity) {
 				case "Information": severity = DiagnosticSeverity.Information; break;
 				case "Hint": severity = DiagnosticSeverity.Hint; break;
 				case "Warning": severity = DiagnosticSeverity.Warning; break;
 				case "Error": severity = DiagnosticSeverity.Error; break;
 			}
 			
-			const position_start = convertSpan(obj.span.start, text);
-			const position_end = convertSpan(obj.span.end, text);
+			const position_start = convertSpan(error.span.start, text);
+			const position_end = convertSpan(error.span.end, text);
 
 			const diagnostic: Diagnostic = {
 				severity,
@@ -225,7 +223,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 					start: position_start,
 					end: position_end
 				},
-				message: obj.message,
+				message: error.message,
 				source: textDocument.uri
 			};
 
