@@ -1,0 +1,12 @@
+/// Expect:
+/// - output: "1 hello 3 4\n"
+
+function foo() -> (f64, i64) {
+    return (3.0, 4)
+}
+
+function main() {
+    let (x, y) = (1, "hello")
+    let (z, mutable w) = foo()
+    println("{} {} {} {}", x, y, z, w)
+}

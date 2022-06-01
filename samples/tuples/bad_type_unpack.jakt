@@ -1,0 +1,10 @@
+/// Expect:
+/// - error: "cannot unpack i64 into tuple"
+
+function foo() -> i64 {
+    return 1
+}
+
+function main() {
+    let (a, b) = foo()
+}

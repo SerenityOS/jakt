@@ -1,0 +1,10 @@
+/// Expect:
+/// - error: "unpacked tuples must match in size"
+
+function foo() -> (f64, String, i64) {
+    return (1.0, "hello", 2)
+}
+
+function main() {
+    let (x, y) = foo()
+}
