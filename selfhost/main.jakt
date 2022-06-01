@@ -1314,6 +1314,10 @@ struct Parser {
         let start = .current().span().start
 
         return match .current() {
+            Defer => {
+                .index++
+                yield ParsedStatement::Defer(.parse_statement())
+            }
             Return => {
                 .index++
                 let expr = .parse_expression()
