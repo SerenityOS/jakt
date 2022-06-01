@@ -409,7 +409,6 @@ struct Lexer {
         .index++
 
         if delimiter == b'\'' {
-            //FIXME: JaktError? can not be assigned 'None'
             return Token::SingleQuotedString(quote: str, span: JaktSpan(start, end))
         }
 
