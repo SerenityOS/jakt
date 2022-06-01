@@ -94,6 +94,7 @@ enum Token {
     Continue(JaktSpan)
     Cpp(JaktSpan)
     Defer(JaktSpan)
+    Else(JaktSpan)
     Enum(JaktSpan)
     Extern(JaktSpan)
     False(JaktSpan)
@@ -193,6 +194,7 @@ enum Token {
             Class(span) => span
             Continue(span) => span
             Defer(span) => span
+            Else(span) => span
             Enum(span) => span
             Extern(span) => span
             False(span) => span
@@ -353,6 +355,7 @@ struct Lexer {
                 "continue" => Token::Continue(span)
                 "cpp" => Token::Cpp(span)
                 "defer" => Token::Defer(span)
+                "else" => Token::Else(span)
                 "enum" => Token::Enum(span)
                 "extern" => Token::Extern(span)
                 "false" => Token::False(span)
@@ -799,7 +802,7 @@ boxed enum ParsedStatement {
     Defer(ParsedStatement)
     UnsafeBlock(ParsedBlock)
     VarDecl(var: ParsedVarDecl, init: ParsedExpression)
-    If(guard: ParsedExpression, then_block: ParsedBlock, else_block: ParsedBlock?)
+    If(condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?)
     Block(ParsedBlock)
     Loop(ParsedBlock)
     While(guard: ParsedExpression, block: ParsedBlock)
@@ -1417,9 +1420,53 @@ struct Parser {
 
                 yield ParsedStatement::VarDecl(var, init)
             }
+            If => .parse_if_statement()
             LCurly => ParsedStatement::Block(.parse_block())
             else => ParsedStatement::Expression(.parse_expression())
         }
+    }
+
+    function parse_if_statement(mutable this) throws -> ParsedStatement {
+        // FIXME: This would look nicer as `if not .current() is If`
+        //        Or perhaps even `if .current() isnt If` :yakthonk:
+        if match .current() {
+            If => false
+            else => true
+        } {
+            .error("Expected ‘if’ statement", .current().span())
+            return ParsedStatement::Garbage
+        }
+
+        let start_span = .current().span()
+        .index++
+
+        let condition = .parse_expression()
+        let then_block = .parse_block()
+
+        let mutable else_statement: ParsedStatement? = None
+
+        // FIXME: This would look nicer as `if .current() is Else`
+        if match .current() {
+            Else => true
+            else => false
+        } {
+            .index++
+            match .current() {
+                If => {
+                    // This is an `else if`
+                    else_statement = .parse_if_statement()
+                }
+                LCurly => {
+                    // FIXME: Lint: check that ‘if’ and ‘else’ blocks are not the same.
+                    else_statement = ParsedStatement::Block(.parse_block())
+                }
+                else => {
+                    .error("‘else’ missing ‘if’ or block", .tokens[.index - 1].span())
+                }
+            }
+        }
+
+        return ParsedStatement::If(condition, then_block, else_statement)
     }
 
     function parse_expression(mutable this) throws -> ParsedExpression {
