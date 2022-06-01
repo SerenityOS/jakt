@@ -1313,28 +1313,16 @@ struct Parser {
         println("parse_statement: {}", .current())
         let start = .current().span().start
 
-        match .current() {
+        return match .current() {
             Return => {
                 .index++
                 let expr = .parse_expression()
                 let end = .tokens[.index - 1].span().end
-                return ParsedStatement::Return(expr, span: JaktSpan(start, end))
+                yield ParsedStatement::Return(expr, span: JaktSpan(start, end))
             }
-            Identifier(name) => {
-                let expr = .parse_expression()
-                return ParsedStatement::Expression(expr)
-            }
-            LCurly => {
-                let block = .parse_block()
-                return ParsedStatement::Block(block)
-            }
-            else => {
-                let expr = .parse_expression()
-                return ParsedStatement::Expression(expr)
-            }
+            LCurly => ParsedStatement::Block(.parse_block())
+            else => ParsedStatement::Expression(.parse_expression())
         }
-
-        return ParsedStatement::Garbage
     }
 
     function parse_expression(mutable this) throws -> ParsedExpression {
