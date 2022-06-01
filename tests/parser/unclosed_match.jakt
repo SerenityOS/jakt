@@ -1,0 +1,5 @@
+/// Expect:
+/// - error: "expected complete block"
+
+function main() {
+    match x {
