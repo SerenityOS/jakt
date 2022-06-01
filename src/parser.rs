@@ -2930,6 +2930,9 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
                     while *index < tokens.len() {
                         match &tokens[*index].contents {
+                            TokenContents::Eol => {
+                                *index += 1;
+                            }
                             TokenContents::RParen => {
                                 *index += 1;
                                 break;
