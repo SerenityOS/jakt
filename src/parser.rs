@@ -3844,10 +3844,11 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Op
     }
 
     let mut fill_size_expr = None;
+    let mut expr_invalidation: Option<(Span, JaktError)> = None;
 
     while *index < tokens.len() {
         match &tokens[*index].contents {
-            TokenContents::RSquare => {
+            TokenContents::RSquare | TokenContents::Eof => {
                 *index += 1;
                 break;
             }
@@ -3901,13 +3902,25 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Op
             _ => {
                 let (expr, err) =
                     parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
-
-                if err.is_some() {
-                    // bail out with no expression and an error
-                    return (ParsedExpression::OptionalNone(tokens[*index].span), err);
-                }
-
                 error = error.or(err);
+
+                if let Some(err) = error.take() {
+                    // bail out with an invalid expression
+                    let expr_invalidated_span = tokens[*index].span;
+                    // get to our closing ']' if it exists and bail out of the loop.
+                    let mut depth = 1usize;
+                    while depth != 0 && *index != tokens.len() {
+                        match tokens[*index].contents {
+                            TokenContents::RSquare => depth -= 1,
+                            TokenContents::LSquare => depth += 1,
+                            TokenContents::Eof => break,
+                            _ => (),
+                        }
+                        *index += 1;
+                    }
+                    expr_invalidation = Some((expr_invalidated_span, err));
+                    break;
+                }
 
                 if *index < tokens.len() {
                     if tokens[*index].contents == TokenContents::Colon {
@@ -3949,7 +3962,23 @@ pub fn parse_array(tokens: &[Token], index: &mut usize) -> (ParsedExpression, Op
 
     let end = *index - 1;
 
-    if is_dictionary {
+    if end >= tokens.len() || tokens[end].contents != TokenContents::RSquare {
+        // We want to override other parse errors when we can't find the ']'.
+        error = Some(JaktError::ParserErrorWithHint(
+            "expected ']' to close the array".to_string(),
+            tokens[end].span,
+            "array started here".to_string(),
+            tokens[start].span,
+        ));
+    }
+
+    trace!(format!(
+        "parse_array: error = {:?}, index = {}",
+        &error, *index
+    ));
+    if let Some((span, err)) = expr_invalidation {
+        (ParsedExpression::OptionalNone(span), error.or(Some(err)))
+    } else if is_dictionary {
         (
             ParsedExpression::Dictionary(
                 dict_output,

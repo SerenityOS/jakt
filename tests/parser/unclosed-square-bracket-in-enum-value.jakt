@@ -1,2 +1,2 @@
 
-enum foo { b=[ }
+enum foo : i32 { b=[ }
