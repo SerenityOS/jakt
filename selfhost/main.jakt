@@ -31,7 +31,7 @@ enum Token {
     SingleQuotedByteString(quote: String, span: JaktSpan)
     QuotedString(quote: String, span: JaktSpan)
     Number(number: i64, span: JaktSpan)
-    Name(name: String, span: JaktSpan)
+    Identifier(name: String, span: JaktSpan)
     Semicolon(JaktSpan)
     Colon(JaktSpan)
     ColonColon(JaktSpan)
@@ -129,7 +129,7 @@ enum Token {
             SingleQuotedByteString(quote, span) => span
             QuotedString(quote, span) => span
             Number(number, span) => span
-            Name(name, span) => span
+            Identifier(name, span) => span
             Semicolon(span) => span
             Colon(span) => span
             ColonColon(span) => span
@@ -372,7 +372,7 @@ struct Lexer {
                 "weak" => Token::Weak(span)
                 "while" => Token::While(span)
                 "yield" => Token::Yield(span)
-                else => Token::Name(name, span)
+                else => Token::Identifier(name, span)
             }
         }
 
@@ -1009,7 +1009,7 @@ struct Parser {
         }
 
         let function_name = match .current() {
-            Name(name) => name
+            Identifier(name) => name
             else => { return parsed_function }
         }
         parsed_function.name = function_name
@@ -1069,7 +1069,7 @@ struct Parser {
                     ))
                     .index++
                 }
-                Name(name, span) => {
+                Identifier(name, span) => {
                     let var_decl = .parse_variable_declaration()
                     params.push(ParsedParameter(
                         requires_label: current_param_requires_label,
@@ -1149,7 +1149,7 @@ struct Parser {
             Weak => {
                 todo("weak")
             }
-            Name(name) => {
+            Identifier(name) => {
                 let span = .current().span()
                 .index++
                 return ParsedType::Name(name, span)
@@ -1164,7 +1164,7 @@ struct Parser {
 
     function parse_variable_declaration(mutable this) throws -> ParsedVarDecl {
         match .current() {
-            Name(name) => {
+            Identifier(name) => {
                 let var_name = name
                 .index++
                 match .current() {
@@ -1320,7 +1320,7 @@ struct Parser {
                 let end = .tokens[.index - 1].span().end
                 return ParsedStatement::Return(expr, span: JaktSpan(start, end))
             }
-            Name(name) => {
+            Identifier(name) => {
                 let expr = .parse_expression()
                 return ParsedStatement::Expression(expr)
             }
@@ -1398,7 +1398,7 @@ struct Parser {
                 .index++
                 return ParsedExpression::Boolean(val: true, span)
             }
-            Name(name) => {
+            Identifier(name) => {
                 match .peek(1) {
                     LParen => {
                         // FIXME: "Some"
@@ -1533,7 +1533,7 @@ struct Parser {
         )
 
         match .current() {
-            Name(name) => {
+            Identifier(name) => {
                 call.name = name
                 .index++
 
@@ -1613,7 +1613,7 @@ struct Parser {
             else => true
         }) {
             match .current() {
-                Token::Name(name, span) => {
+                Identifier(name, span) => {
                     generic_parameters.push([name : span])
                     .index++
                     match .current() {
@@ -1655,7 +1655,7 @@ struct Parser {
             }
         }
         return match .current() {
-            Name(name) => {
+            Identifier(name) => {
                 .index += 2
                 yield name
             }
