@@ -1473,8 +1473,7 @@ struct Parser {
                             .index++
                         }
                         else => {
-                            // FIXME: Parse argument labels
-                            let param_name = ""
+                            let param_name = .parse_argument_label()
 
                             let expr = .parse_expression()
                             call.args.push((param_name, expr))
@@ -1547,6 +1546,26 @@ struct Parser {
         }
 
         return generic_parameters
+    }
+
+    function parse_argument_label(mutable this) throws -> String {
+        // FIXME: Tidy this up once we can match on tuples:
+        //        match (.current(), .peek(1)) {
+        //            (Name(name), Colon) => ...
+        //        }
+        match .peek(1) {
+            Colon => { }
+            else => {
+                return ""
+            }
+        }
+        return match .current() {
+            Name(name) => {
+                .index += 2
+                yield name
+            }
+            else => ""
+        }
     }
 }
 
