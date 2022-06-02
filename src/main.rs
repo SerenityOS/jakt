@@ -9,7 +9,10 @@ use std::{io, io::Write, path::PathBuf, process::exit, process::Command};
 
 use pico_args::Arguments;
 
-use jakt::{find_definition_in_project, Compiler, JaktError, Project, Span};
+use jakt::{
+    find_definition_in_project, find_dot_completions_in_project, find_typename_in_project,
+    Compiler, JaktError, Project, Span,
+};
 
 fn main() -> Result<(), JaktError> {
     let arguments = parse_arguments();
@@ -39,6 +42,38 @@ fn main() -> Result<(), JaktError> {
         let result = find_definition_in_project(&project, Span::new(1, index, index));
 
         println!("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
+    } else if let Some(index) = arguments.hover_index {
+        let mut project = Project::new();
+
+        for file in &arguments.input_files {
+            compiler.check_project(file, &mut project);
+        }
+
+        // FIXME: use file_id: 1 for now
+        let result = find_typename_in_project(&project, Span::new(1, index, index));
+
+        println!("{{\"hover\": \"{}\"}}", result.unwrap_or_default());
+    } else if let Some(index) = arguments.completions_index {
+        let mut project = Project::new();
+
+        for file in &arguments.input_files {
+            compiler.check_project(file, &mut project);
+        }
+
+        // FIXME: use file_id: 1 for now
+        let result = find_dot_completions_in_project(&project, Span::new(1, index, index));
+
+        print!("{{\"completions\": [");
+        let mut first = true;
+        for completion in result {
+            if !first {
+                print!(", ")
+            } else {
+                first = false;
+            }
+            print!("\"{}\"", completion)
+        }
+        println!("]}}");
     } else if arguments.check_only {
         let mut project = Project::new();
         for file in &arguments.input_files {
@@ -218,6 +253,8 @@ Options:
   -I,--include-path PATH        Add an include path for imported Jakt files.
                                 Can be specified multiple times.
   -g,--goto-def INDEX           Return the span for the definition at index.
+  -v,--hover INDEX              Return the type of element at index.
+  -m,--completions INDEX        Return dot completions at index.
 
 Arguments:
   FILES...                      List of files to compile. The outputs are
@@ -233,6 +270,8 @@ struct JaktArguments {
     check_only: bool,
     json_errors: bool,
     goto_def_index: Option<usize>,
+    hover_index: Option<usize>,
+    completions_index: Option<usize>,
     cxx_compiler_path: Option<PathBuf>,
     prettify_cpp_source: bool,
     clang_format_path: Option<PathBuf>,
@@ -265,6 +304,8 @@ fn parse_arguments() -> JaktArguments {
         check_only,
         json_errors,
         goto_def_index: None,
+        hover_index: None,
+        completions_index: None,
         cxx_compiler_path: None,
         prettify_cpp_source,
         clang_format_path: None,
@@ -295,6 +336,18 @@ fn parse_arguments() -> JaktArguments {
     if let Ok(Some(index)) = get_path_arg(["-g", "--goto-def"]) {
         if let Ok(val) = index.to_string_lossy().parse::<usize>() {
             arguments.goto_def_index = Some(val);
+        }
+    }
+
+    if let Ok(Some(index)) = get_path_arg(["-v", "--hover"]) {
+        if let Ok(val) = index.to_string_lossy().parse::<usize>() {
+            arguments.hover_index = Some(val);
+        }
+    }
+
+    if let Ok(Some(index)) = get_path_arg(["-m", "--completions"]) {
+        if let Ok(val) = index.to_string_lossy().parse::<usize>() {
+            arguments.completions_index = Some(val);
         }
     }
 

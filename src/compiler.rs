@@ -119,10 +119,10 @@ impl Compiler {
         fname: &Path,
         project: &mut Project,
     ) -> (ScopeId, Option<JaktError>) {
+        let mut error = None;
+
         let err = self.include_prelude(project);
-        if let Some(err) = err {
-            return (0, Some(err));
-        }
+        error = error.or(err);
 
         // TODO: We also want to be able to accept include paths from CLI
         let parent_dir = fname
@@ -131,10 +131,7 @@ impl Compiler {
         self.include_paths.push(parent_dir.to_path_buf());
 
         let (file, err) = self.include_file(fname);
-
-        if let Some(err) = err {
-            return (0, Some(err));
-        }
+        error = error.or(err);
 
         let scope = Scope::new(Some(0), false);
         project.scopes.push(scope);
@@ -146,15 +143,12 @@ impl Compiler {
             .insert(fname.to_string_lossy().to_string(), file_scope_id);
 
         let err = typecheck_namespace_predecl(&file, file_scope_id, project);
-        if let Some(err) = err {
-            return (file_scope_id, Some(err));
-        }
+        error = error.or(err);
 
         let err = typecheck_namespace_declarations(&file, file_scope_id, project);
-        if let Some(err) = err {
-            return (file_scope_id, Some(err));
-        }
-        (file_scope_id, None)
+        error = error.or(err);
+
+        (file_scope_id, error)
     }
 
     pub fn convert_to_cpp(&mut self, fname: &Path) -> Result<String, JaktError> {
