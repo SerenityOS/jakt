@@ -1023,6 +1023,8 @@ struct Parser {
                     should_break = true
                 }
                 else => {
+                    .error("Unrecognized token in namespace (probably not implemented yet)", .current().span())
+                    should_break = true
                 }
             }
         }
