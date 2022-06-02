@@ -65,16 +65,18 @@ pub struct ParsedVarDecl {
     pub parsed_type: ParsedType,
     pub mutable: bool,
     pub span: Span,
+    pub inlay_position: Option<usize>,
     pub visibility: Visibility,
 }
 
 impl ParsedVarDecl {
-    pub fn new(span: Span) -> Self {
+    pub fn new(span: Span, inlay_position: Option<usize>) -> Self {
         Self {
             name: String::new(),
             parsed_type: ParsedType::Empty,
             mutable: false,
             span,
+            inlay_position,
             visibility: Visibility::Public,
         }
     }
@@ -4043,6 +4045,7 @@ pub fn parse_variable_declaration(
                                 parsed_type: ParsedType::Empty,
                                 mutable: false,
                                 span: name_span,
+                                inlay_position: Some(name_span.end),
                                 visibility,
                             },
                             None,
@@ -4056,6 +4059,7 @@ pub fn parse_variable_declaration(
                         parsed_type: ParsedType::Empty,
                         mutable: false,
                         span: name_span,
+                        inlay_position: Some(name_span.end),
                         visibility,
                     },
                     None,
@@ -4080,6 +4084,7 @@ pub fn parse_variable_declaration(
                     parsed_type: var_type,
                     mutable,
                     span: name_span,
+                    inlay_position: None,
                     visibility,
                 };
 
@@ -4093,6 +4098,7 @@ pub fn parse_variable_declaration(
                         parsed_type: ParsedType::Empty,
                         mutable: false,
                         span: tokens[*index - 2].span,
+                        inlay_position: None,
                         visibility,
                     },
                     Some(JaktError::ParserError(
@@ -4106,7 +4112,7 @@ pub fn parse_variable_declaration(
             trace!("ERROR: expected name");
 
             (
-                ParsedVarDecl::new(tokens[*index].span),
+                ParsedVarDecl::new(tokens[*index].span, None),
                 Some(JaktError::ParserError(
                     "expected name".to_string(),
                     tokens[*index].span,

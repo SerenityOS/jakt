@@ -76,6 +76,7 @@ fn main() -> Result<(), JaktError> {
         println!("]}}");
     } else if arguments.check_only {
         let mut project = Project::new();
+        project.dump_type_hints = arguments.type_hints;
         for file in &arguments.input_files {
             match compiler.check_project(file, &mut project) {
                 (_, Some(err)) => {
@@ -240,6 +241,7 @@ Flags:
   -S,--emit-cpp-source-only     Only emit the generated C++ source, do not compile.
   -c,--check-only               Only check the code for errors
   -j,--json-errors              Emit machine-readable (JSON) errors
+  -H,--type-hints               Emit machine-readable type hints (for IDE integration)
 
 Options:
   -o,--binary-dir PATH          Output directory for compiled files.
@@ -268,6 +270,7 @@ struct JaktArguments {
     include_paths: Vec<PathBuf>,
     emit_source_only: bool,
     check_only: bool,
+    type_hints: bool,
     json_errors: bool,
     goto_def_index: Option<usize>,
     hover_index: Option<usize>,
@@ -289,6 +292,7 @@ fn parse_arguments() -> JaktArguments {
     let prettify_cpp_source = pico_arguments.contains(["-p", "--prettify-cpp-source"]);
 
     let check_only = pico_arguments.contains(["-c", "--check-only"]);
+    let type_hints = pico_arguments.contains(["-H", "--type-hints"]);
     let json_errors = pico_arguments.contains(["-j", "--json-errors"]);
 
     let convert_to_pathbuf = |s: &str| -> Result<PathBuf, &'static str> { Ok(s.into()) };
@@ -302,6 +306,7 @@ fn parse_arguments() -> JaktArguments {
         include_paths,
         emit_source_only,
         check_only,
+        type_hints,
         json_errors,
         goto_def_index: None,
         hover_index: None,
@@ -485,7 +490,7 @@ fn display_message_with_span(
 
 fn display_message_with_span_json(severity: MessageSeverity, msg: &str, span: Span) {
     println!(
-        "{{\"message\": \"{}\", \"severity\": \"{:?}\", \"span\": {{\"start\": {}, \"end\": {}}}}}",
+        "{{\"type\": \"diagnostic\", \"message\": \"{}\", \"severity\": \"{:?}\", \"span\": {{\"start\": {}, \"end\": {}}}}}",
         msg, severity, span.start, span.end
     );
 }

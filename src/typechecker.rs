@@ -225,6 +225,8 @@ pub struct Project {
     pub cached_set_struct_id: Option<StructId>,
     pub cached_tuple_struct_id: Option<StructId>,
     pub cached_weakptr_struct_id: Option<StructId>,
+
+    pub dump_type_hints: bool,
 }
 
 impl Project {
@@ -254,6 +256,8 @@ impl Project {
             cached_set_struct_id: None,
             cached_tuple_struct_id: None,
             cached_weakptr_struct_id: None,
+
+            dump_type_hints: false,
         }
     }
 
@@ -3255,6 +3259,7 @@ pub fn typecheck_statement(
                             parsed_type: ParsedType::Empty,
                             mutable: iterable_should_be_mutable,
                             span: *iterator_span,
+                            inlay_position: None,
                             visibility: Visibility::Public,
                         },
                         range_expr.clone(),
@@ -3269,6 +3274,7 @@ pub fn typecheck_statement(
                                     parsed_type: ParsedType::Empty,
                                     mutable: iterable_should_be_mutable,
                                     span: *iterator_span,
+                                    inlay_position: None,
                                     visibility: Visibility::Public,
                                 },
                                 ParsedExpression::MethodCall(
@@ -3319,6 +3325,7 @@ pub fn typecheck_statement(
                                     parsed_type: ParsedType::Empty,
                                     mutable: iterable_should_be_mutable,
                                     span: *iterator_span,
+                                    inlay_position: Some((*iterator_span).end),
                                     visibility: Visibility::Public,
                                 },
                                 ParsedExpression::ForcedUnwrap(
@@ -3472,6 +3479,16 @@ pub fn typecheck_statement(
                 mutable: var_decl.mutable,
                 visibility: var_decl.visibility.clone(),
             };
+
+            if project.dump_type_hints {
+                if let Some(inlay_position) = var_decl.inlay_position {
+                    println!(
+                        "{{\"type\": \"hint\", \"position\": {}, \"typename\": \"{}\" }}",
+                        inlay_position,
+                        project.typename_for_type_id(lhs_type_id)
+                    );
+                }
+            }
 
             let err = project
                 .add_var_to_scope(
