@@ -15,13 +15,15 @@ import {
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
 	InitializeResult,
-	MarkedString
+	Location,
 } from 'vscode-languageserver/node';
 
 import {
-	Position,
 	TextDocument
 } from 'vscode-languageserver-textdocument';
+
+import { Position, InlayHint, InlayHintParams, InlayHintLabelPart, InlayHintKind } from 'vscode-languageserver-protocol';
+
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -68,6 +70,9 @@ connection.onInitialize((params: InitializeParams) => {
 			completionProvider: {
 				resolveProvider: false,
 				triggerCharacters: ['.']
+			},
+			inlayHintProvider: {
+				resolveProvider: false
 			},
 			definitionProvider: true,
 			hoverProvider: true,
@@ -295,7 +300,9 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	// The validator creates diagnostics for all uppercase words length 2 and more
 	const text = textDocument.getText();
 
-	const stdout = await runCompiler(text, "-c -j");
+	(textDocument as any).jaktInlayHints = [];
+
+	const stdout = await runCompiler(text, "-c -H -j");
 
 	const diagnostics: Diagnostic[] = [];
 
@@ -305,31 +312,39 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 		try {
 			const obj = JSON.parse(line);
 
-			let severity: DiagnosticSeverity = DiagnosticSeverity.Error;
+			if (obj.type == "diagnostic") {
+				let severity: DiagnosticSeverity = DiagnosticSeverity.Error;
 
-			switch (obj.severity) {
-				case "Information": severity = DiagnosticSeverity.Information; break;
-				case "Hint": severity = DiagnosticSeverity.Hint; break;
-				case "Warning": severity = DiagnosticSeverity.Warning; break;
-				case "Error": severity = DiagnosticSeverity.Error; break;
+				switch (obj.severity) {
+					case "Information": severity = DiagnosticSeverity.Information; break;
+					case "Hint": severity = DiagnosticSeverity.Hint; break;
+					case "Warning": severity = DiagnosticSeverity.Warning; break;
+					case "Error": severity = DiagnosticSeverity.Error; break;
+				}
+
+				const position_start = convertSpan(obj.span.start, text);
+				const position_end = convertSpan(obj.span.end, text);
+
+				const diagnostic: Diagnostic = {
+					severity,
+					range: {
+						start: position_start,
+						end: position_end
+					},
+					message: obj.message,
+					source: textDocument.uri
+				};
+
+				console.log(diagnostic);
+
+				diagnostics.push(diagnostic);
+			} else if (obj.type == "hint") {
+				const position = convertSpan(obj.position, text);
+				const hint_string = ": " + obj.typename;
+				const hint = InlayHint.create(position, [InlayHintLabelPart.create(hint_string)], InlayHintKind.Type);
+				
+				(textDocument as any).jaktInlayHints.push(hint);
 			}
-
-			const position_start = convertSpan(obj.span.start, text);
-			const position_end = convertSpan(obj.span.end, text);
-
-			const diagnostic: Diagnostic = {
-				severity,
-				range: {
-					start: position_start,
-					end: position_end
-				},
-				message: obj.message,
-				source: textDocument.uri
-			};
-
-			console.log(diagnostic);
-
-			diagnostics.push(diagnostic);
 		} catch (e) {
 			console.error(e);
 		}
@@ -405,6 +420,11 @@ connection.onCompletionResolve(
 		return item;
 	}
 );
+
+connection.languages.inlayHint.on((params: InlayHintParams) => {
+	const document = documents.get(params.textDocument.uri);	
+	return (document as any).jaktInlayHints;
+});
 
 // Make the text document manager listen on the connection
 // for open, change and close text document events
