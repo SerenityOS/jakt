@@ -10,8 +10,8 @@ use std::{io, io::Write, path::PathBuf, process::exit, process::Command};
 use pico_args::Arguments;
 
 use jakt::{
-    find_definition_in_project, find_dot_completions_in_project, find_typename_in_project,
-    Compiler, JaktError, Project, Span,
+    find_definition_in_project, find_dot_completions_in_project, find_type_definition_in_project,
+    find_typename_in_project, Compiler, JaktError, Project, Span,
 };
 
 fn main() -> Result<(), JaktError> {
@@ -40,6 +40,17 @@ fn main() -> Result<(), JaktError> {
 
         // FIXME: use file_id: 1 for now
         let result = find_definition_in_project(&project, Span::new(1, index, index));
+
+        println!("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
+    } else if let Some(index) = arguments.goto_type_def_index {
+        let mut project = Project::new();
+
+        for file in &arguments.input_files {
+            compiler.check_project(file, &mut project);
+        }
+
+        // FIXME: use file_id: 1 for now
+        let result = find_type_definition_in_project(&project, Span::new(1, index, index));
 
         println!("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
     } else if let Some(index) = arguments.hover_index {
@@ -255,6 +266,7 @@ Options:
   -I,--include-path PATH        Add an include path for imported Jakt files.
                                 Can be specified multiple times.
   -g,--goto-def INDEX           Return the span for the definition at index.
+  -t,--goto-type-def INDEX      Return the span for the type definition at index.
   -v,--hover INDEX              Return the type of element at index.
   -m,--completions INDEX        Return dot completions at index.
 
@@ -273,6 +285,7 @@ struct JaktArguments {
     type_hints: bool,
     json_errors: bool,
     goto_def_index: Option<usize>,
+    goto_type_def_index: Option<usize>,
     hover_index: Option<usize>,
     completions_index: Option<usize>,
     cxx_compiler_path: Option<PathBuf>,
@@ -309,6 +322,7 @@ fn parse_arguments() -> JaktArguments {
         type_hints,
         json_errors,
         goto_def_index: None,
+        goto_type_def_index: None,
         hover_index: None,
         completions_index: None,
         cxx_compiler_path: None,
@@ -341,6 +355,12 @@ fn parse_arguments() -> JaktArguments {
     if let Ok(Some(index)) = get_path_arg(["-g", "--goto-def"]) {
         if let Ok(val) = index.to_string_lossy().parse::<usize>() {
             arguments.goto_def_index = Some(val);
+        }
+    }
+
+    if let Ok(Some(index)) = get_path_arg(["-t", "--goto-type-def"]) {
+        if let Ok(val) = index.to_string_lossy().parse::<usize>() {
+            arguments.goto_type_def_index = Some(val);
         }
     }
 

@@ -25,7 +25,8 @@ mod typechecker;
 pub use compiler::Compiler;
 pub use error::JaktError;
 pub use ide::{
-    find_definition_in_project, find_dot_completions_in_project, find_typename_in_project,
+    find_definition_in_project, find_dot_completions_in_project, find_type_definition_in_project,
+    find_typename_in_project,
 };
 pub use lexer::Span;
 pub use typechecker::Project;

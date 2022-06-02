@@ -14,6 +14,52 @@ pub fn find_definition_in_project(project: &Project, span: Span) -> Span {
     }
 }
 
+fn find_type_definition_for_type_id(project: &Project, type_id: TypeId, span: Span) -> Span {
+    let array_struct_id = project.cached_array_struct_id.unwrap();
+    let dictionary_struct_id = project.cached_dictionary_struct_id.unwrap();
+    let optional_struct_id = project.cached_optional_struct_id.unwrap();
+    let range_struct_id = project.cached_range_struct_id.unwrap();
+    let set_struct_id = project.cached_set_struct_id.unwrap();
+    let tuple_struct_id = project.cached_tuple_struct_id.unwrap();
+    let weak_ptr_struct_id = project.cached_weakptr_struct_id.unwrap();
+
+    match &project.types[type_id] {
+        Type::Builtin => span,
+        Type::GenericInstance(struct_id, params) => {
+            if [
+                array_struct_id,
+                optional_struct_id,
+                range_struct_id,
+                set_struct_id,
+                tuple_struct_id,
+                weak_ptr_struct_id,
+            ]
+            .contains(struct_id)
+            {
+                find_type_definition_for_type_id(project, params[0], span)
+            } else if struct_id == &dictionary_struct_id {
+                find_type_definition_for_type_id(project, params[1], span)
+            } else {
+                project.structs[*struct_id].name_span
+            }
+        }
+        Type::Struct(struct_id) => project.structs[*struct_id].name_span,
+        Type::GenericEnumInstance(enum_id, _) | Type::Enum(enum_id) => project.enums[*enum_id].span,
+        Type::RawPtr(type_id) => find_type_definition_for_type_id(project, *type_id, span),
+        Type::TypeVariable(_) => span,
+    }
+}
+
+pub fn find_type_definition_in_project(project: &Project, span: Span) -> Span {
+    match find_span_in_project(project, span) {
+        Some(Usage::Variable(span, type_id)) => {
+            find_type_definition_for_type_id(project, type_id, span)
+        }
+        Some(Usage::Call(function_id)) => project.functions[function_id].name_span,
+        None => span,
+    }
+}
+
 pub fn find_typename_in_project(project: &Project, span: Span) -> Option<String> {
     match find_span_in_project(project, span) {
         Some(Usage::Variable(_, type_id)) => Some(project.typename_for_type_id(type_id)),
