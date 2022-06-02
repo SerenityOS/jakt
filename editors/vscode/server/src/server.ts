@@ -14,7 +14,8 @@ import {
 	CompletionItemKind,
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
-	InitializeResult
+	InitializeResult,
+	Location
 } from 'vscode-languageserver/node';
 
 import {
@@ -65,7 +66,8 @@ connection.onInitialize((params: InitializeParams) => {
 			// Tell the client that this server doesn't support code completion. (yet)
 			completionProvider: {
 				resolveProvider: false
-			}
+			},
+			definitionProvider: true
 		}
 	};
 	if (hasWorkspaceFolderCapability) {
@@ -87,6 +89,31 @@ connection.onInitialized(() => {
 		connection.workspace.onDidChangeWorkspaceFolders(_event => {
 			connection.console.log('Workspace folder change event received.');
 		});
+	}
+});
+
+connection.onDefinition(async (request) => {
+
+	const document = documents.get(request.textDocument.uri);
+
+	let text = document?.getText();
+
+	if (typeof text == "string") {
+		console.log("request: ");
+		console.log(request);
+		console.log("index: " + convertPosition(request.position, text));
+		let stdout = await runCompiler(text, "-g " + convertPosition(request.position, text));
+		console.log("got: ", stdout);
+
+		const lines = stdout.split('\n').filter(l => l.length > 0);
+		for (const line of lines) {
+
+			const obj = JSON.parse(line);
+			console.log("going to definition");
+			console.log(obj);
+
+			return { uri: request.textDocument.uri, range: { start: convertSpan(obj.start, text), end: convertSpan(obj.end, text) } };
+		}
 	}
 });
 
@@ -168,18 +195,30 @@ function convertSpan(index: number, text: string): Position {
 	return { line, character };
 }
 
-async function validateTextDocument(textDocument: TextDocument): Promise<void> {
-	if (!hasDiagnosticRelatedInformationCapability) {
-		console.error('Trying to validate a document with no diagnostic capability');
-		return;
+function convertPosition(position: Position, text: string): number {
+	let line = 0;
+	let character = 0;
+
+	let i = 0;
+	while (i < text.length) {
+		if (line == position.line && character == position.character) {
+			return i;
+		}
+
+		if (text[i] == '\n') {
+			line++;
+			character = 0;
+		} else {
+			character++;
+		}
+
+		i++;
 	}
-	
-	// In this simple example we get the settings for every validate run.
-	const settings = await getDocumentSettings(textDocument.uri);
 
-	// The validator creates diagnostics for all uppercase words length 2 and more
-	const text = textDocument.getText();
+	return i
+}
 
+async function runCompiler(text: string, flags: string): Promise<string> {
 	try {
 		fs.writeFileSync(tmpFile.name, text);
 	} catch (error) {
@@ -188,16 +227,33 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
 	let stdout: string;
 	try {
-		const output = await exec("jakt -c -j " + tmpFile.name);
+		const output = await exec("jakt " + flags + " " + tmpFile.name);
 		console.log(output);
 		stdout = output.stdout;
 	} catch (e: any) {
 		stdout = e.stdout;
-		if(e.signal != null) {
+		if (e.signal != null) {
 			console.log("compile failed: ");
 			console.log(e);
 		}
 	}
+
+	return stdout
+}
+
+async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+	if (!hasDiagnosticRelatedInformationCapability) {
+		console.error('Trying to validate a document with no diagnostic capability');
+		return;
+	}
+
+	// // In this simple example we get the settings for every validate run.
+	// const settings = await getDocumentSettings(textDocument.uri);
+
+	// The validator creates diagnostics for all uppercase words length 2 and more
+	const text = textDocument.getText();
+
+	let stdout = await runCompiler(text, "-c -j");
 
 	const diagnostics: Diagnostic[] = [];
 
@@ -207,15 +263,15 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 		try {
 			const obj = JSON.parse(line);
 
-			let severity : DiagnosticSeverity = DiagnosticSeverity.Error;
+			let severity: DiagnosticSeverity = DiagnosticSeverity.Error;
 
-			switch(obj.severity) {
+			switch (obj.severity) {
 				case "Information": severity = DiagnosticSeverity.Information; break;
 				case "Hint": severity = DiagnosticSeverity.Hint; break;
 				case "Warning": severity = DiagnosticSeverity.Warning; break;
 				case "Error": severity = DiagnosticSeverity.Error; break;
 			}
-			
+
 			const position_start = convertSpan(obj.span.start, text);
 			const position_end = convertSpan(obj.span.end, text);
 
