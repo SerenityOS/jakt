@@ -4991,18 +4991,16 @@ pub fn typecheck_expression(
                                     }
                                 }
 
-                                checked_cases.push(CheckedMatchCase::EnumVariant {
-                                    variant_name: variant_name
-                                        .last()
-                                        .expect("Must have at least one enum variant name here")
-                                        .0
-                                        .clone(),
-                                    subject_type_id,
-                                    variant_arguments: variant_arguments.clone(),
-                                    variant_index: 0,
-                                    scope_id,
-                                    body,
-                                });
+                                if !variant_name.is_empty() {
+                                    checked_cases.push(CheckedMatchCase::EnumVariant {
+                                        variant_name: variant_name.last().unwrap().0.clone(),
+                                        subject_type_id,
+                                        variant_arguments: variant_arguments.clone(),
+                                        variant_index: 0,
+                                        scope_id,
+                                        body,
+                                    });
+                                }
                             }
                             MatchCase::CatchAll { body, marker_span } => {
                                 if seen_catch_all {
