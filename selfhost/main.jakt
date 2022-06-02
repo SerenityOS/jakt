@@ -25,6 +25,7 @@ struct JaktSpan {
     start: usize
     end: usize
 }
+function empty_span() -> JaktSpan => JaktSpan(start: 0, end: 0)
 
 enum Token {
     SingleQuotedString(quote: String, span: JaktSpan)
@@ -781,12 +782,13 @@ struct ParsedNamespace {
 }
 
 struct ParsedFunction {
-    public name: String
-    public params: [ParsedParameter]
-    public generic_parameters: [[String:JaktSpan]]
-    public block: ParsedBlock
-    public return_type: ParsedType
-    public throws: bool
+    name: String
+    name_span: JaktSpan
+    params: [ParsedParameter]
+    generic_parameters: [[String:JaktSpan]]
+    block: ParsedBlock
+    return_type: ParsedType
+    throws: bool
 }
 
 struct ParsedParameter {
@@ -1035,6 +1037,7 @@ struct Parser {
     public function parse_function(mutable this, anonymous linkage: FunctionLinkage, anonymous visibility: Visibility) throws -> ParsedFunction {
         let mutable parsed_function = ParsedFunction(
             name: "",
+            name_span: empty_span(),
             params: [],
             generic_parameters: [],
             block: ParsedBlock(stmts: []),
@@ -1054,7 +1057,7 @@ struct Parser {
             else => { return parsed_function }
         }
         parsed_function.name = function_name
-        let function_name_span = .current().span()
+        parsed_function.name_span = .current().span()
 
         .index++
 
