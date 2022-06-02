@@ -2572,7 +2572,7 @@ fn typecheck_struct(
 
         let checked_constructor = CheckedFunction {
             name: structure.name.clone(),
-            name_span: structure.span,
+            name_span: structure.name_span,
             throws: structure.definition_type == DefinitionType::Class,
             return_type_id: struct_type_id,
             params: constructor_params,

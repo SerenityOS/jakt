@@ -1,7 +1,7 @@
 use crate::{
     typechecker::{
         CheckedBlock, CheckedExpression, CheckedFunction, CheckedMatchBody, CheckedMatchCase,
-        CheckedStatement, FunctionId, Scope, TypeId,
+        CheckedStatement, FunctionId, Scope, Type, TypeId,
     },
     Project, Span,
 };
@@ -197,9 +197,22 @@ pub fn find_span_in_expression(
                 return Some(usage);
             }
         }
-        CheckedExpression::IndexedStruct(expr, _, _, _) => {
+        CheckedExpression::IndexedStruct(expr, field_name, index_span, type_id) => {
             if let Some(usage) = find_span_in_expression(project, expr, span) {
                 return Some(usage);
+            }
+
+            if index_span.contains(span) {
+                let type_id = expr.type_id_or_type_var();
+                if let Type::Struct(struct_id) = &project.types[type_id] {
+                    let structure = &project.structs[*struct_id];
+
+                    for field in &structure.fields {
+                        if &field.name == field_name {
+                            return Some(Usage::Variable(field.span, type_id));
+                        }
+                    }
+                }
             }
         }
         CheckedExpression::IndexedDictionary(key, value, _, _) => {
@@ -271,6 +284,11 @@ pub fn find_span_in_expression(
             }
         }
         CheckedExpression::ForcedUnwrap(expr, _, _) => {
+            if let Some(usage) = find_span_in_expression(project, expr, span) {
+                return Some(usage);
+            }
+        }
+        CheckedExpression::UnaryOp(expr, _, _, _) => {
             if let Some(usage) = find_span_in_expression(project, expr, span) {
                 return Some(usage);
             }
