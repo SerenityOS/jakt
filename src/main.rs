@@ -9,7 +9,7 @@ use std::{io, io::Write, path::PathBuf, process::exit, process::Command};
 
 use pico_args::Arguments;
 
-use jakt::{Compiler, JaktError, Project, Span};
+use jakt::{find_definition_in_project, Compiler, JaktError, Project, Span};
 
 fn main() -> Result<(), JaktError> {
     let arguments = parse_arguments();
@@ -28,7 +28,18 @@ fn main() -> Result<(), JaktError> {
 
     let mut first_error = None;
 
-    if arguments.check_only {
+    if let Some(index) = arguments.goto_def_index {
+        let mut project = Project::new();
+
+        for file in &arguments.input_files {
+            compiler.check_project(file, &mut project);
+        }
+
+        // FIXME: use file_id: 1 for now
+        let result = find_definition_in_project(&project, Span::new(1, index, index));
+
+        println!("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
+    } else if arguments.check_only {
         let mut project = Project::new();
         for file in &arguments.input_files {
             match compiler.check_project(file, &mut project) {
@@ -206,6 +217,7 @@ Options:
                                 Defaults to $PWD/runtime.
   -I,--include-path PATH        Add an include path for imported Jakt files.
                                 Can be specified multiple times.
+  -g,--goto-def INDEX           Return the span for the definition at index.
 
 Arguments:
   FILES...                      List of files to compile. The outputs are
@@ -220,6 +232,7 @@ struct JaktArguments {
     emit_source_only: bool,
     check_only: bool,
     json_errors: bool,
+    goto_def_index: Option<usize>,
     cxx_compiler_path: Option<PathBuf>,
     prettify_cpp_source: bool,
     clang_format_path: Option<PathBuf>,
@@ -251,6 +264,7 @@ fn parse_arguments() -> JaktArguments {
         emit_source_only,
         check_only,
         json_errors,
+        goto_def_index: None,
         cxx_compiler_path: None,
         prettify_cpp_source,
         clang_format_path: None,
@@ -276,6 +290,12 @@ fn parse_arguments() -> JaktArguments {
 
     if let Ok(runtime_path) = get_path_arg(["-R", "--runtime-path"]) {
         arguments.runtime_path = runtime_path;
+    }
+
+    if let Ok(Some(index)) = get_path_arg(["-g", "--goto-def"]) {
+        if let Ok(val) = index.to_string_lossy().parse::<usize>() {
+            arguments.goto_def_index = Some(val);
+        }
     }
 
     while let Ok(filename) = pico_arguments.free_from_str::<PathBuf>() {

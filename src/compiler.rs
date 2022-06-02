@@ -141,6 +141,10 @@ impl Compiler {
 
         let file_scope_id = project.scopes.len() - 1;
 
+        project
+            .file_ids
+            .insert(fname.to_string_lossy().to_string(), file_scope_id);
+
         let err = typecheck_namespace_predecl(&file, file_scope_id, project);
         if let Some(err) = err {
             return (file_scope_id, Some(err));

@@ -211,6 +211,8 @@ pub struct Project {
     pub scopes: Vec<Scope>,
     pub types: Vec<Type>,
 
+    pub file_ids: HashMap<String, ScopeId>,
+
     pub current_function_index: Option<usize>,
     pub current_struct_type_id: Option<TypeId>,
     pub inside_defer: bool,
@@ -237,6 +239,9 @@ impl Project {
             enums: Vec::new(),
             scopes: vec![project_global_scope],
             types: Vec::new(),
+
+            file_ids: HashMap::new(),
+
             current_function_index: None,
             current_struct_type_id: None,
             inside_defer: false,
@@ -850,6 +855,7 @@ pub enum FunctionGenericParameter {
 #[derive(Debug, Clone)]
 pub struct CheckedFunction {
     pub name: String,
+    pub name_span: Span,
     pub visibility: Visibility,
     pub throws: bool,
     pub return_type_id: TypeId,
@@ -1328,6 +1334,7 @@ pub struct ResolvedNamespace {
 pub struct CheckedCall {
     pub namespace: Vec<ResolvedNamespace>,
     pub name: String,
+    pub function_id: Option<FunctionId>,
     pub callee_throws: bool,
     pub args: Vec<(String, CheckedExpression)>,
     pub type_args: Vec<TypeId>,
@@ -1746,6 +1753,7 @@ fn typecheck_enum_predecl(
 
         let mut checked_function = CheckedFunction {
             name: function.name.clone(),
+            name_span: function.name_span,
             params: vec![],
             throws: function.throws,
             return_type_id: UNKNOWN_TYPE_ID,
@@ -1979,6 +1987,7 @@ fn typecheck_enum(
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
+                            name_span: *span,
                             throws: enum_.is_recursive,
                             return_type_id: enum_type_id,
                             params: vec![],
@@ -2130,6 +2139,7 @@ fn typecheck_enum(
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
+                            name_span: *span,
                             throws: enum_.is_recursive,
                             return_type_id: enum_type_id,
                             params: constructor_params,
@@ -2207,6 +2217,7 @@ fn typecheck_enum(
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
+                            name_span: *span,
                             throws: enum_.is_recursive,
                             return_type_id: enum_type_id,
                             params: constructor_params,
@@ -2314,6 +2325,7 @@ fn typecheck_struct_predecl(
 
         let mut checked_function = CheckedFunction {
             name: function.name.clone(),
+            name_span: function.name_span,
             params: vec![],
             throws: function.throws,
             return_type_id: UNKNOWN_TYPE_ID,
@@ -2560,6 +2572,7 @@ fn typecheck_struct(
 
         let checked_constructor = CheckedFunction {
             name: structure.name.clone(),
+            name_span: structure.span,
             throws: structure.definition_type == DefinitionType::Class,
             return_type_id: struct_type_id,
             params: constructor_params,
@@ -2625,6 +2638,7 @@ fn typecheck_function_predecl(
 
     let mut checked_function = CheckedFunction {
         name: function.name.clone(),
+        name_span: function.name_span,
         params: vec![],
         throws: function.throws,
         return_type_id: UNKNOWN_TYPE_ID,
@@ -5319,6 +5333,7 @@ pub fn typecheck_expression(
                                 CheckedCall {
                                     name: call.name.to_string(),
                                     args: checked_args,
+                                    function_id: None,
                                     type_id: UNKNOWN_TYPE_ID,
                                     callee_throws: false,
                                     linkage: FunctionLinkage::Internal,
@@ -6042,6 +6057,7 @@ pub fn typecheck_call(
 
     let mut generic_checked_function_to_instantiate = None;
     let mut maybe_this_type_id = None;
+    let mut function_id = None;
 
     match call.name.as_str() {
         "print" | "println" | "eprintln" | "format"
@@ -6085,6 +6101,8 @@ pub fn typecheck_call(
                 must_be_enum_constructor,
             );
             error = error.or(err);
+
+            function_id = callee;
 
             if let Some(callee_id) = callee {
                 let callee = &project.functions[callee_id];
@@ -6296,7 +6314,7 @@ pub fn typecheck_call(
 
                 let callee = &project.functions[callee_id];
                 for generic_typevar in &callee.generic_parameters {
-                    if let FunctionGenericParameter::Parameter(id) = generic_typevar {
+                    if let FunctionGenericParameter::Parameter(id) = &generic_typevar {
                         if let Some(substitution) = generic_substitutions.get(id) {
                             type_args.push(*substitution)
                         } else {
@@ -6336,6 +6354,7 @@ pub fn typecheck_call(
         CheckedCall {
             namespace: resolved_namespaces,
             name: call.name.clone(),
+            function_id,
             callee_throws,
             args: checked_args,
             type_args,
