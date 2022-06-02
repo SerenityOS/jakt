@@ -1,7 +1,7 @@
 use crate::{
     typechecker::{
         CheckedBlock, CheckedExpression, CheckedFunction, CheckedMatchBody, CheckedMatchCase,
-        CheckedStatement, FunctionId, Scope, Type, TypeId,
+        CheckedStatement, FunctionGenericParameter, FunctionId, Scope, Type, TypeId,
     },
     Project, Span,
 };
@@ -17,9 +17,7 @@ pub fn find_definition_in_project(project: &Project, span: Span) -> Span {
 pub fn find_typename_in_project(project: &Project, span: Span) -> Option<String> {
     match find_span_in_project(project, span) {
         Some(Usage::Variable(_, type_id)) => Some(project.typename_for_type_id(type_id)),
-        Some(Usage::Call(function_id)) => {
-            Some(format!("function {}", project.functions[function_id].name))
-        }
+        Some(Usage::Call(function_id)) => Some(get_function_signature(project, function_id)),
         None => None,
     }
 }
@@ -403,6 +401,77 @@ pub fn find_span_in_expression(
     }
 
     None
+}
+
+pub fn get_function_signature(project: &Project, function_id: FunctionId) -> String {
+    let function = &project.functions[function_id];
+
+    let mut generic_parameters = String::new();
+    let mut is_first_param = true;
+
+    if !function.generic_parameters.is_empty() {
+        generic_parameters.push('<');
+
+        for parameter in &function.generic_parameters {
+            let generic_type = match parameter {
+                FunctionGenericParameter::InferenceGuide(type_id) => {
+                    project.typename_for_type_id(*type_id)
+                }
+                FunctionGenericParameter::Parameter(type_id) => {
+                    project.typename_for_type_id(*type_id)
+                }
+            };
+            let seperator = if is_first_param { "" } else { ", " };
+            generic_parameters.push_str(&format!("{}{}", seperator, generic_type));
+            is_first_param = false;
+        }
+
+        generic_parameters.push('>');
+    }
+
+    let mut parameters = String::new();
+    is_first_param = true;
+
+    for param in &function.params {
+        let anonymous = if !param.requires_label {
+            "anonymous "
+        } else {
+            ""
+        };
+        let mutable = if param.variable.mutable {
+            "mutable "
+        } else {
+            ""
+        };
+
+        let mut variable_type = project.typename_for_type_id(param.variable.type_id);
+        if variable_type != "void" {
+            variable_type.insert_str(0, ": ");
+        } else {
+            variable_type.clear();
+        }
+
+        let seperator = if is_first_param { "" } else { ", " };
+        parameters.push_str(&format!(
+            "{}{}{}{}{}",
+            seperator, anonymous, mutable, param.variable.name, variable_type
+        ));
+        is_first_param = false;
+    }
+
+    let throws = if function.throws { " throws" } else { "" };
+
+    let mut returns = project.typename_for_type_id(function.return_type_id);
+    if returns != "void" {
+        returns.insert_str(0, " -> ");
+    } else {
+        returns.clear();
+    }
+
+    format!(
+        "function {}{}({}){}{}",
+        function.name, generic_parameters, parameters, throws, returns
+    )
 }
 
 pub enum Usage {
