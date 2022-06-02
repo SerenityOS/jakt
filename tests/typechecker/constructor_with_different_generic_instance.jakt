@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Type mismatch: expected ‘class B’, but got ‘struct Array<unknown>’"
+/// - error: "Type mismatch: expected ‘B’, but got ‘Array<unknown>’"
 
 class B {
 }

@@ -694,18 +694,10 @@ impl Project {
                 crate::compiler::BOOL_TYPE_ID => "bool".to_string(),
                 _ => "unknown".to_string(),
             },
-            Type::Enum(enum_id) => {
-                format!("enum {}", self.enums[*enum_id].name)
-            }
-            Type::Struct(struct_id) => {
-                if self.structs[*struct_id].definition_type == DefinitionType::Class {
-                    format!("class {}", self.structs[*struct_id].name)
-                } else {
-                    format!("struct {}", self.structs[*struct_id].name)
-                }
-            }
+            Type::Enum(enum_id) => self.enums[*enum_id].name.clone(),
+            Type::Struct(struct_id) => self.structs[*struct_id].name.clone(),
             Type::GenericEnumInstance(enum_id, type_args) => {
-                let mut output = format!("enum {}", self.enums[*enum_id].name);
+                let mut output = self.enums[*enum_id].name.clone();
 
                 output.push('<');
                 let mut first = true;
@@ -728,12 +720,7 @@ impl Project {
                 format!("weak {}?", self.typename_for_type_id(type_args[0]))
             }
             Type::GenericInstance(struct_id, type_args) => {
-                let mut output =
-                    if self.structs[*struct_id].definition_type == DefinitionType::Class {
-                        format!("class {}", self.structs[*struct_id].name)
-                    } else {
-                        format!("struct {}", self.structs[*struct_id].name)
-                    };
+                let mut output = self.structs[*struct_id].name.clone();
 
                 output.push('<');
                 let mut first = true;
