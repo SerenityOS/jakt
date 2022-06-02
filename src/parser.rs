@@ -3460,7 +3460,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
 
                     let end;
                     if *index < tokens.len() {
-                        end = *index;
+                        end = tokens[*index].span;
                         match &tokens[*index].contents {
                             TokenContents::RSquare => {
                                 *index += 1;
@@ -3473,7 +3473,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                             }
                         }
                     } else {
-                        end = *index - 1;
+                        end = tokens[*index - 1].span;
                         error = error.or(Some(JaktError::ParserError(
                             "expected ']'".to_string(),
                             tokens[*index - 1].span,
@@ -3486,7 +3486,7 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                         Span {
                             file_id: span.file_id,
                             start: span.start,
-                            end,
+                            end: end.end,
                         },
                     );
                 }

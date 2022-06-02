@@ -38,6 +38,7 @@ import fs = require('fs');
 import tmp = require('tmp');
 
 import util = require('node:util');
+import { TextEncoder } from 'node:util';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const exec = util.promisify(require('node:child_process').exec);
 
@@ -202,6 +203,7 @@ documents.onDidChangeContent(change => {
 
 
 function convertSpan(index: number, text: string): Position {
+	let buffer = new TextEncoder().encode(text);
 	let line = 0;
 	let character = 0;
 
@@ -211,7 +213,7 @@ function convertSpan(index: number, text: string): Position {
 			return { line, character };
 		}
 
-		if (text[i] == '\n') {
+		if (buffer.at(i) == 0x0A) {
 			line++;
 			character = 0;
 		} else {
@@ -227,6 +229,7 @@ function convertSpan(index: number, text: string): Position {
 function convertPosition(position: Position, text: string): number {
 	let line = 0;
 	let character = 0;
+	let buffer = new TextEncoder().encode(text);
 
 	let i = 0;
 	while (i < text.length) {
@@ -234,7 +237,7 @@ function convertPosition(position: Position, text: string): number {
 			return i;
 		}
 
-		if (text[i] == '\n') {
+		if (buffer.at(i) == 0x0A) {
 			line++;
 			character = 0;
 		} else {

@@ -86,9 +86,11 @@ pub fn find_span_in_project(project: &Project, span: Span) -> Option<Usage> {
     // at hand.
 
     for scope_id in project.file_ids.values() {
-        let scope = &project.scopes[*scope_id];
+        if *scope_id != 0 {
+            let scope = &project.scopes[*scope_id];
 
-        return find_span_in_scope(project, scope, span);
+            return find_span_in_scope(project, scope, span);
+        }
     }
 
     None
