@@ -22,6 +22,10 @@ impl Span {
             end,
         }
     }
+
+    pub fn contains(self, span: Span) -> bool {
+        self.file_id == span.file_id && span.start >= self.start && span.end <= self.end
+    }
 }
 
 #[derive(Debug, PartialEq)]

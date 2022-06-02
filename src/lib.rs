@@ -17,11 +17,13 @@ extern crate core;
 mod codegen;
 mod compiler;
 mod error;
+mod ide;
 mod lexer;
 mod parser;
 mod typechecker;
 
 pub use compiler::Compiler;
 pub use error::JaktError;
+pub use ide::find_definition_in_project;
 pub use lexer::Span;
 pub use typechecker::Project;
