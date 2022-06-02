@@ -65,9 +65,11 @@ connection.onInitialize((params: InitializeParams) => {
 			textDocumentSync: TextDocumentSyncKind.Incremental,
 			// Tell the client that this server doesn't support code completion. (yet)
 			completionProvider: {
-				resolveProvider: false
+				resolveProvider: false,
+				triggerCharacters: ['.']
 			},
-			definitionProvider: true
+			definitionProvider: true,
+			hoverProvider: true,
 		}
 	};
 	if (hasWorkspaceFolderCapability) {
@@ -93,7 +95,6 @@ connection.onInitialized(() => {
 });
 
 connection.onDefinition(async (request) => {
-
 	const document = documents.get(request.textDocument.uri);
 
 	let text = document?.getText();
@@ -115,6 +116,34 @@ connection.onDefinition(async (request) => {
 			return { uri: request.textDocument.uri, range: { start: convertSpan(obj.start, text), end: convertSpan(obj.end, text) } };
 		}
 	}
+});
+
+connection.onHover(async (request) => {
+	const document = documents.get(request.textDocument.uri);
+
+	let text = document?.getText();
+
+	if (typeof text == "string") {
+		console.log("request: ");
+		console.log(request);
+		console.log("index: " + convertPosition(request.position, text));
+		let stdout = await runCompiler(text, "-v " + convertPosition(request.position, text));
+		console.log("got: ", stdout);
+
+		const lines = stdout.split('\n').filter(l => l.length > 0);
+		for (const line of lines) {
+
+			const obj = JSON.parse(line);
+			console.log("hovering");
+			console.log(obj);
+
+			if (obj.hover != "") {
+				return { contents: obj.hover };
+			}
+		}
+	}
+
+	return null;
 });
 
 // The example settings
@@ -305,22 +334,45 @@ connection.onDidChangeWatchedFiles(_change => {
 
 // This handler provides the initial list of the completion items.
 connection.onCompletion(
-	(_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
+	async (request: TextDocumentPositionParams): Promise<CompletionItem[]> => {
 		// The pass parameter contains the position of the text document in
 		// which code complete got requested. For the example we ignore this
 		// info and always provide the same completion items.
-		return [
-			{
-				label: 'TypeScript',
-				kind: CompletionItemKind.Text,
-				data: 1
-			},
-			{
-				label: 'JavaScript',
-				kind: CompletionItemKind.Text,
-				data: 2
+
+		const document = documents.get(request.textDocument.uri);
+
+		let text = document?.getText();
+
+		if (typeof text == "string") {
+			console.log("completion request: ");
+			console.log(request);
+			let index = convertPosition(request.position, text) - 1;
+			console.log("index: " + index);
+			let stdout = await runCompiler(text, "-m " + index);
+			console.log("got: ", stdout);
+
+			const lines = stdout.split('\n').filter(l => l.length > 0);
+			for (const line of lines) {
+
+				const obj = JSON.parse(line);
+				console.log("completions");
+				console.log(obj);
+
+				let output = []
+				let index = 1
+				for (const completion of obj.completions) {
+					output.push({
+						label: completion,
+						kind: CompletionItemKind.Field,
+						data: index
+					});
+					index++;
+				}
+				return output;
 			}
-		];
+		}
+
+		return [];
 	}
 );
 
