@@ -8,9 +8,75 @@ use crate::{
 
 pub fn find_definition_in_project(project: &Project, span: Span) -> Span {
     match find_span_in_project(project, span) {
-        Some(Usage::Variable(span, type_id)) => span,
+        Some(Usage::Variable(span, _)) => span,
         Some(Usage::Call(function_id)) => project.functions[function_id].name_span,
         None => span,
+    }
+}
+
+pub fn find_typename_in_project(project: &Project, span: Span) -> Option<String> {
+    match find_span_in_project(project, span) {
+        Some(Usage::Variable(_, type_id)) => Some(project.typename_for_type_id(type_id)),
+        Some(Usage::Call(function_id)) => {
+            Some(format!("function {}", project.functions[function_id].name))
+        }
+        None => None,
+    }
+}
+
+fn completions_for_type_id(project: &Project, type_id: TypeId) -> Vec<String> {
+    let mut output = vec![];
+    let ty = &project.types[type_id];
+
+    match ty {
+        Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
+            let structure = &project.structs[*struct_id];
+
+            for field in &structure.fields {
+                output.push(field.name.clone())
+            }
+
+            let scope = &project.scopes[structure.scope_id];
+
+            for (_, function_id, _) in &scope.functions {
+                let function = &project.functions[*function_id];
+
+                if let Some(param) = function.params.first() {
+                    if param.variable.name == "this" {
+                        let mut full_call = function.name.clone();
+                        let mut first = true;
+                        full_call.push('(');
+                        for param in function.params.iter().skip(1) {
+                            if !first {
+                                full_call.push_str(", ");
+                            } else {
+                                first = false;
+                            }
+                            full_call.push_str(&param.variable.name);
+                        }
+                        full_call.push(')');
+
+                        output.push(full_call)
+                    }
+                } else {
+                    output.push(format!("{}()", function.name.clone()));
+                }
+            }
+        }
+        _ => {}
+    }
+
+    output
+}
+
+pub fn find_dot_completions_in_project(project: &Project, span: Span) -> Vec<String> {
+    match find_span_in_project(project, span) {
+        Some(Usage::Variable(_, type_id)) => completions_for_type_id(project, type_id),
+        Some(Usage::Call(function_id)) => {
+            let result_type_id = project.functions[function_id].return_type_id;
+            completions_for_type_id(project, result_type_id)
+        }
+        None => vec![],
     }
 }
 
@@ -19,7 +85,7 @@ pub fn find_span_in_project(project: &Project, span: Span) -> Option<Usage> {
     // of a filepath, let's just assume we are going to look at the file
     // at hand.
 
-    for (file_name, scope_id) in &project.file_ids {
+    for scope_id in project.file_ids.values() {
         let scope = &project.scopes[*scope_id];
 
         return find_span_in_scope(project, scope, span);
@@ -122,7 +188,15 @@ pub fn find_span_in_statement(
                 find_span_in_block(project, block, span)
             }
         }
-        CheckedStatement::VarDecl(_, expr) => find_span_in_expression(project, expr, span),
+        CheckedStatement::VarDecl(var_decl, expr) => {
+            if let Some(usage) = find_span_in_expression(project, expr, span) {
+                Some(usage)
+            } else if var_decl.span.contains(span) {
+                Some(Usage::Variable(var_decl.span, var_decl.type_id))
+            } else {
+                None
+            }
+        }
         CheckedStatement::While(expr, block) => {
             if let Some(usage) = find_span_in_expression(project, expr, span) {
                 Some(usage)
@@ -197,7 +271,7 @@ pub fn find_span_in_expression(
                 return Some(usage);
             }
         }
-        CheckedExpression::IndexedStruct(expr, field_name, index_span, type_id) => {
+        CheckedExpression::IndexedStruct(expr, field_name, index_span, _) => {
             if let Some(usage) = find_span_in_expression(project, expr, span) {
                 return Some(usage);
             }
@@ -209,7 +283,7 @@ pub fn find_span_in_expression(
 
                     for field in &structure.fields {
                         if &field.name == field_name {
-                            return Some(Usage::Variable(field.span, type_id));
+                            return Some(Usage::Variable(field.span, field.type_id));
                         }
                     }
                 }
