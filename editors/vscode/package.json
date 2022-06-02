@@ -69,6 +69,7 @@
 		"esbuild-base": "esbuild server/src/server.ts client/src/extension.ts --bundle --outdir=out --external:vscode --format=cjs --platform=node",
 		"esbuild": "npm run esbuild-base -- --sourcemap --minify",
 		"compile": "npm run esbuild",
+		"install": "cd server; npm install; cd ../client; npm install; cd ..; code --install-extension connor4312.esbuild-problem-matchers",
 		"watch": "npm run esbuild-base -- --sourcemap --watch",
 		"lint": "eslint ./client/src ./server/src --ext .ts,.tsx",
 		"test": "sh ./scripts/e2e.sh"
@@ -83,5 +84,9 @@
 		"eslint": "^8.13.0",
 		"mocha": "^9.2.1",
 		"typescript": "^4.7.2"
+	},
+	"dependencies": {
+		"jakt-lsp-server": "file:server",
+		"lsp-sample-client": "file:client"
 	}
 }
