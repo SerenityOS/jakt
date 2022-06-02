@@ -671,7 +671,12 @@ impl Project {
 
     pub fn typename_for_type_id(&self, type_id: TypeId) -> String {
         // NOTE: Can't use get_*_struct_id here since it needs a Span.
+        let array_struct_id = self.cached_array_struct_id.unwrap();
+        let dictionary_struct_id = self.cached_dictionary_struct_id.unwrap();
         let optional_struct_id = self.cached_optional_struct_id.unwrap();
+        let range_struct_id = self.cached_range_struct_id.unwrap();
+        let set_struct_id = self.cached_set_struct_id.unwrap();
+        let tuple_struct_id = self.cached_tuple_struct_id.unwrap();
         let weak_ptr_struct_id = self.cached_weakptr_struct_id.unwrap();
 
         match &self.types[type_id] {
@@ -710,6 +715,41 @@ impl Project {
                     output.push_str(&self.typename_for_type_id(*arg))
                 }
                 output.push('>');
+
+                output
+            }
+            Type::GenericInstance(struct_id, type_args) if *struct_id == array_struct_id => {
+                format!("[{}]", self.typename_for_type_id(type_args[0]))
+            }
+            Type::GenericInstance(struct_id, type_args) if *struct_id == dictionary_struct_id => {
+                format!(
+                    "[{}:{}]",
+                    self.typename_for_type_id(type_args[0]),
+                    self.typename_for_type_id(type_args[1])
+                )
+            }
+            Type::GenericInstance(struct_id, type_args) if *struct_id == set_struct_id => {
+                format!("{{{}}}", self.typename_for_type_id(type_args[0]))
+            }
+            Type::GenericInstance(struct_id, type_args) if *struct_id == range_struct_id => {
+                format!(
+                    "{}..{}",
+                    self.typename_for_type_id(type_args[0]),
+                    self.typename_for_type_id(type_args[0])
+                )
+            }
+            Type::GenericInstance(struct_id, type_args) if *struct_id == tuple_struct_id => {
+                let mut output = "(".to_string();
+                let mut first = true;
+                for arg in type_args {
+                    if !first {
+                        output.push_str(", ");
+                    } else {
+                        first = false;
+                    }
+                    output.push_str(&self.typename_for_type_id(*arg))
+                }
+                output.push(')');
 
                 output
             }
