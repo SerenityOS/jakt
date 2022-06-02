@@ -4505,7 +4505,7 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (ParsedCall, Option<Ja
                     )),
                 );
             }
-
+            let mut next_parameter = true;
             while *index < tokens.len() {
                 match &tokens[*index].contents {
                     TokenContents::RParen => {
@@ -4518,8 +4518,15 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (ParsedCall, Option<Ja
                     TokenContents::Comma => {
                         // Treat comma as whitespace? Might require them in the future
                         *index += 1;
+                        next_parameter = true;
                     }
                     _ => {
+                        if !next_parameter {
+                            error = error.or(Some(JaktError::ParserError(
+                                "Invalid syntax".to_string(),
+                                tokens[*index].span,
+                            )));
+                        }
                         let (param_name, err) = parse_call_parameter_name(tokens, index);
                         error = error.or(err);
 
@@ -4540,10 +4547,10 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (ParsedCall, Option<Ja
                         }
 
                         call.args.push((param_name, expr));
+                        next_parameter = false;
                     }
                 }
             }
-
             if *index >= tokens.len() {
                 trace!("ERROR: incomplete call");
 
