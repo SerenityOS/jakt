@@ -1900,7 +1900,7 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (ParsedBlock, Option<
 
     trace!("ERROR: expected complete block");
     (
-        ParsedBlock::new(),
+        block,
         Some(JaktError::ParserError(
             "expected complete block".to_string(),
             Span {
