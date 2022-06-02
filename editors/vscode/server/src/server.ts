@@ -15,7 +15,8 @@ import {
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
 	InitializeResult,
-	Location
+	Location,
+	MarkedString
 } from 'vscode-languageserver/node';
 
 import {
@@ -98,13 +99,13 @@ connection.onInitialized(() => {
 connection.onDefinition(async (request) => {
 	const document = documents.get(request.textDocument.uri);
 
-	let text = document?.getText();
+	const text = document?.getText();
 
 	if (typeof text == "string") {
 		console.log("request: ");
 		console.log(request);
 		console.log("index: " + convertPosition(request.position, text));
-		let stdout = await runCompiler(text, "-g " + convertPosition(request.position, text));
+		const stdout = await runCompiler(text, "-g " + convertPosition(request.position, text));
 		console.log("got: ", stdout);
 
 		const lines = stdout.split('\n').filter(l => l.length > 0);
@@ -122,13 +123,13 @@ connection.onDefinition(async (request) => {
 connection.onHover(async (request) => {
 	const document = documents.get(request.textDocument.uri);
 
-	let text = document?.getText();
+	const text = document?.getText();
 
 	if (typeof text == "string") {
 		console.log("request: ");
 		console.log(request);
 		console.log("index: " + convertPosition(request.position, text));
-		let stdout = await runCompiler(text, "-v " + convertPosition(request.position, text));
+		const stdout = await runCompiler(text, "-v " + convertPosition(request.position, text));
 		console.log("got: ", stdout);
 
 		const lines = stdout.split('\n').filter(l => l.length > 0);
@@ -138,8 +139,15 @@ connection.onHover(async (request) => {
 			console.log("hovering");
 			console.log(obj);
 
+			// FIXME: Figure out how to import `vscode` package in server.ts without
+			// getting runtime import errors to remove this deprication warning.
+			const contents : MarkedString=  {
+				value: `${obj.hover}`,
+				language: 'jakt'
+			};
+
 			if (obj.hover != "") {
-				return { contents: obj.hover };
+				return {contents};
 			}
 		}
 	}
@@ -203,7 +211,7 @@ documents.onDidChangeContent(change => {
 
 
 function convertSpan(index: number, text: string): Position {
-	let buffer = new TextEncoder().encode(text);
+	const buffer = new TextEncoder().encode(text);
 	let line = 0;
 	let character = 0;
 
@@ -229,7 +237,7 @@ function convertSpan(index: number, text: string): Position {
 function convertPosition(position: Position, text: string): number {
 	let line = 0;
 	let character = 0;
-	let buffer = new TextEncoder().encode(text);
+	const buffer = new TextEncoder().encode(text);
 
 	let i = 0;
 	while (i < text.length) {
@@ -247,7 +255,7 @@ function convertPosition(position: Position, text: string): number {
 		i++;
 	}
 
-	return i
+	return i;
 }
 
 async function runCompiler(text: string, flags: string): Promise<string> {
@@ -270,7 +278,7 @@ async function runCompiler(text: string, flags: string): Promise<string> {
 		}
 	}
 
-	return stdout
+	return stdout;
 }
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
@@ -285,7 +293,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	// The validator creates diagnostics for all uppercase words length 2 and more
 	const text = textDocument.getText();
 
-	let stdout = await runCompiler(text, "-c -j");
+	const stdout = await runCompiler(text, "-c -j");
 
 	const diagnostics: Diagnostic[] = [];
 
@@ -344,14 +352,14 @@ connection.onCompletion(
 
 		const document = documents.get(request.textDocument.uri);
 
-		let text = document?.getText();
+		const text = document?.getText();
 
 		if (typeof text == "string") {
 			console.log("completion request: ");
 			console.log(request);
-			let index = convertPosition(request.position, text) - 1;
+			const index = convertPosition(request.position, text) - 1;
 			console.log("index: " + index);
-			let stdout = await runCompiler(text, "-m " + index);
+			const stdout = await runCompiler(text, "-m " + index);
 			console.log("got: ", stdout);
 
 			const lines = stdout.split('\n').filter(l => l.length > 0);
@@ -361,13 +369,14 @@ connection.onCompletion(
 				console.log("completions");
 				console.log(obj);
 
-				let output = []
-				let index = 1
+				const output = [];
+				let index = 1;
 				for (const completion of obj.completions) {
 					output.push({
 						label: completion,
 						kind: completion.includes('(') ? CompletionItemKind.Function : CompletionItemKind.Field,
-						data: index
+						data: index,
+
 					});
 					index++;
 				}

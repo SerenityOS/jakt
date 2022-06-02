@@ -12,6 +12,7 @@
 		"url": "https://github.com/SerenityOS/jakt/tree/main/editors/vscode"
 	},
 	"dependencies": {
+		"@types/vscode": "^1.67.0",
 		"tmp": "^0.2.1",
 		"vscode-languageserver": "^7.0.0",
 		"vscode-languageserver-textdocument": "^1.0.4"
