@@ -15,7 +15,6 @@ import {
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
 	InitializeResult,
-	Location,
 	MarkedString
 } from 'vscode-languageserver/node';
 
@@ -90,6 +89,7 @@ connection.onInitialized(() => {
 		connection.client.register(DidChangeConfigurationNotification.type, undefined);
 	}
 	if (hasWorkspaceFolderCapability) {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		connection.workspace.onDidChangeWorkspaceFolders(_event => {
 			connection.console.log('Workspace folder change event received.');
 		});
@@ -141,13 +141,13 @@ connection.onHover(async (request) => {
 
 			// FIXME: Figure out how to import `vscode` package in server.ts without
 			// getting runtime import errors to remove this deprication warning.
-			const contents : MarkedString=  {
-				value: `${obj.hover}`,
+			const contents: MarkedString = {
+				value: obj.hover,
 				language: 'jakt'
 			};
 
 			if (obj.hover != "") {
-				return {contents};
+				return { contents };
 			}
 		}
 	}
@@ -183,6 +183,7 @@ connection.onDidChangeConfiguration(change => {
 	documents.all().forEach(validateTextDocument);
 });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
 	if (!hasConfigurationCapability) {
 		return Promise.resolve(globalSettings);
@@ -270,6 +271,7 @@ async function runCompiler(text: string, flags: string): Promise<string> {
 		const output = await exec("jakt " + flags + " " + tmpFile.name);
 		console.log(output);
 		stdout = output.stdout;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	} catch (e: any) {
 		stdout = e.stdout;
 		if (e.signal != null) {
@@ -338,6 +340,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 connection.onDidChangeWatchedFiles(_change => {
 	// Monitored files have change in VSCode
 	connection.console.log('We received an file change event');
