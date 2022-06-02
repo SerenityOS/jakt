@@ -836,6 +836,7 @@ impl Project {
 #[derive(Clone, Debug)]
 pub struct CheckedStruct {
     pub name: String,
+    pub name_span: Span,
     pub generic_parameters: Vec<TypeId>,
     pub fields: Vec<CheckedVarDecl>,
     pub scope_id: ScopeId,
@@ -2319,6 +2320,7 @@ fn typecheck_struct_predecl(
 
     project.structs.push(CheckedStruct {
         name: structure.name.clone(),
+        name_span: structure.name_span,
         generic_parameters: vec![],
         fields: Vec::new(),
         scope_id: struct_scope_id,
