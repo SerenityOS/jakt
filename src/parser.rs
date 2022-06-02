@@ -100,6 +100,7 @@ pub struct ParsedNamespace {
 #[derive(Debug)]
 pub struct ParsedStruct {
     pub name: String,
+    pub name_span: Span,
     pub generic_parameters: Vec<(String, Span)>,
     pub fields: Vec<ParsedVarDecl>,
     pub methods: Vec<ParsedFunction>,
@@ -1262,9 +1263,11 @@ pub fn parse_struct(
         match &tokens[*index] {
             Token {
                 contents: TokenContents::Name(struct_name),
-                ..
+                span,
             } => {
                 *index += 1;
+
+                let name_span = *span;
 
                 // Check for generic
                 let (params, parse_error) = parse_generic_parameters(tokens, index);
@@ -1498,6 +1501,7 @@ pub fn parse_struct(
                 (
                     ParsedStruct {
                         name: struct_name.clone(),
+                        name_span,
                         generic_parameters,
                         fields,
                         methods,
@@ -1519,6 +1523,7 @@ pub fn parse_struct(
                 (
                     ParsedStruct {
                         name: String::new(),
+                        name_span: tokens[*index].span,
                         generic_parameters,
                         fields: Vec::new(),
                         methods: Vec::new(),
@@ -1541,6 +1546,7 @@ pub fn parse_struct(
         (
             ParsedStruct {
                 name: String::new(),
+                name_span: tokens[*index].span,
                 generic_parameters,
                 fields: Vec::new(),
                 methods: Vec::new(),
@@ -4018,6 +4024,7 @@ pub fn parse_variable_declaration(
     match &tokens[*index].contents {
         TokenContents::Name(name) => {
             let var_name = name.to_string();
+            let name_span = tokens[*index].span;
 
             *index += 1;
 
@@ -4032,7 +4039,7 @@ pub fn parse_variable_declaration(
                                 name: name.to_string(),
                                 parsed_type: ParsedType::Empty,
                                 mutable: false,
-                                span: tokens[*index - 1].span,
+                                span: name_span,
                                 visibility,
                             },
                             None,
@@ -4045,7 +4052,7 @@ pub fn parse_variable_declaration(
                         name: name.to_string(),
                         parsed_type: ParsedType::Empty,
                         mutable: false,
-                        span: tokens[*index - 1].span,
+                        span: name_span,
                         visibility,
                     },
                     None,
@@ -4053,7 +4060,6 @@ pub fn parse_variable_declaration(
             }
 
             if *index < tokens.len() {
-                let decl_span = tokens[*index - 1].span;
                 let mutable = *index + 1 < tokens.len()
                     && match &tokens[*index].contents {
                         TokenContents::Name(name) if name == "mutable" => {
@@ -4070,7 +4076,7 @@ pub fn parse_variable_declaration(
                     name: var_name,
                     parsed_type: var_type,
                     mutable,
-                    span: decl_span,
+                    span: name_span,
                     visibility,
                 };
 
