@@ -2889,7 +2889,10 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                             let (call, err) = parse_call(tokens, index);
                             error = error.or(err);
 
-                            ParsedExpression::Call(call, span)
+                            ParsedExpression::Call(
+                                call,
+                                Span::new(span.file_id, span.start, tokens[*index - 1].span.end),
+                            )
                         }
                     },
                     TokenContents::LessThan => {
@@ -3391,14 +3394,14 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                                 if tokens[*index].contents == TokenContents::LParen {
                                     *index -= 1;
 
+                                    let (method, err) = parse_call(tokens, index);
+                                    error = error.or(err);
+
                                     let span = Span {
                                         file_id: expr.span().file_id,
                                         start: expr.span().start,
                                         end: tokens[*index].span.end,
                                     };
-
-                                    let (method, err) = parse_call(tokens, index);
-                                    error = error.or(err);
 
                                     expr =
                                         ParsedExpression::MethodCall(Box::new(expr), method, span)
