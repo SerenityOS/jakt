@@ -28,7 +28,40 @@ fn completions_for_type_id(project: &Project, type_id: TypeId) -> Vec<String> {
     let mut output = vec![];
     let ty = &project.types[type_id];
 
+    let add_function = |function_id: FunctionId, output: &mut Vec<String>| {
+        let function = &project.functions[function_id];
+
+        if let Some(param) = function.params.first() {
+            if param.variable.name == "this" {
+                let mut full_call = function.name.clone();
+                let mut first = true;
+                full_call.push('(');
+                for param in function.params.iter().skip(1) {
+                    if !first {
+                        full_call.push_str(", ");
+                    } else {
+                        first = false;
+                    }
+                    full_call.push_str(&param.variable.name);
+                }
+                full_call.push(')');
+
+                output.push(full_call)
+            }
+        } else {
+            output.push(format!("{}()", function.name.clone()));
+        }
+    };
+
     match ty {
+        Type::Enum(enum_id) => {
+            let enum_ = &project.enums[*enum_id];
+
+            let scope = &project.scopes[enum_.scope_id];
+            for (_, function_id, _) in &scope.functions {
+                add_function(*function_id, &mut output);
+            }
+        }
         Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
             let structure = &project.structs[*struct_id];
 
@@ -37,30 +70,8 @@ fn completions_for_type_id(project: &Project, type_id: TypeId) -> Vec<String> {
             }
 
             let scope = &project.scopes[structure.scope_id];
-
             for (_, function_id, _) in &scope.functions {
-                let function = &project.functions[*function_id];
-
-                if let Some(param) = function.params.first() {
-                    if param.variable.name == "this" {
-                        let mut full_call = function.name.clone();
-                        let mut first = true;
-                        full_call.push('(');
-                        for param in function.params.iter().skip(1) {
-                            if !first {
-                                full_call.push_str(", ");
-                            } else {
-                                first = false;
-                            }
-                            full_call.push_str(&param.variable.name);
-                        }
-                        full_call.push(')');
-
-                        output.push(full_call)
-                    }
-                } else {
-                    output.push(format!("{}()", function.name.clone()));
-                }
+                add_function(*function_id, &mut output);
             }
         }
         _ => {}
