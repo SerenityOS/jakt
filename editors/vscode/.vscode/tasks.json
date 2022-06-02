@@ -9,9 +9,9 @@
 				"panel": "dedicated",
 				"reveal": "never"
 			},
-			"problemMatcher": [
-				"$tsc"
-			]
+			// Install this extension if you have an error
+			// https://marketplace.visualstudio.com/items?itemName=connor4312.esbuild-problem-matchers
+			"problemMatcher": "$esbuild"
 		},
 		{
 			"type": "npm",
@@ -25,9 +25,7 @@
 				"panel": "dedicated",
 				"reveal": "never"
 			},
-			"problemMatcher": [
-				"$tsc-watch"
-			]
+			"problemMatcher":  "$esbuild-watch"
 		}
 	]
 }
