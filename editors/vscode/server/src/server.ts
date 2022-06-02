@@ -75,6 +75,7 @@ connection.onInitialize((params: InitializeParams) => {
 				resolveProvider: false
 			},
 			definitionProvider: true,
+			typeDefinitionProvider: true,
 			hoverProvider: true,
 		}
 	};
@@ -125,6 +126,30 @@ connection.onDefinition(async (request) => {
 	}
 });
 
+connection.onTypeDefinition(async (request) => {
+	const document = documents.get(request.textDocument.uri);
+
+	const text = document?.getText();
+
+	if (typeof text == "string") {
+		console.log("request: ");
+		console.log(request);
+		console.log("index: " + convertPosition(request.position, text));
+		const stdout = await runCompiler(text, "-t " + convertPosition(request.position, text));
+		console.log("got: ", stdout);
+
+		const lines = stdout.split('\n').filter(l => l.length > 0);
+		for (const line of lines) {
+
+			const obj = JSON.parse(line);
+			console.log("going to type definition");
+			console.log(obj);
+
+			return { uri: request.textDocument.uri, range: { start: convertSpan(obj.start, text), end: convertSpan(obj.end, text) } };
+		}
+	}
+});
+
 connection.onHover(async (request) => {
 	const document = documents.get(request.textDocument.uri);
 
@@ -146,7 +171,7 @@ connection.onHover(async (request) => {
 
 			// FIXME: Figure out how to import `vscode` package in server.ts without
 			// getting runtime import errors to remove this deprication warning.
-			const contents: MarkedString = {
+			const contents = {
 				value: obj.hover,
 				language: 'jakt'
 			};
@@ -342,7 +367,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 				const position = convertSpan(obj.position, text);
 				const hint_string = ": " + obj.typename;
 				const hint = InlayHint.create(position, [InlayHintLabelPart.create(hint_string)], InlayHintKind.Type);
-				
+
 				(textDocument as any).jaktInlayHints.push(hint);
 			}
 		} catch (e) {
@@ -422,7 +447,7 @@ connection.onCompletionResolve(
 );
 
 connection.languages.inlayHint.on((params: InlayHintParams) => {
-	const document = documents.get(params.textDocument.uri);	
+	const document = documents.get(params.textDocument.uri);
 	return (document as any).jaktInlayHints;
 });
 
