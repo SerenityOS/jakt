@@ -252,7 +252,7 @@ pub enum MatchBody {
 pub enum MatchCase {
     EnumVariant {
         variant_name: Vec<(String, Span)>,
-        variant_arguments: Vec<(Option<String>, String)>,
+        variant_arguments: Vec<(Option<String>, String, Span)>,
         arguments_span: Span,
         body: MatchBody,
         marker_span: Span,
@@ -2615,8 +2615,9 @@ pub fn parse_pattern_case(
                                 ..
                             }) = tokens.get(*index)
                             {
+                                let span = tokens[*index].span;
                                 *index += 1;
-                                arguments.push((Some(name.clone()), binding.clone()));
+                                arguments.push((Some(name.clone()), binding.clone(), span));
                             } else {
                                 error = Some(JaktError::ParserError(
                                     "expected pattern argument name".to_string(),
@@ -2638,8 +2639,9 @@ pub fn parse_pattern_case(
                                 ..
                             }) = tokens.get(*index)
                             {
+                                let span = tokens[*index].span;
                                 *index += 1;
-                                arguments.push((None, binding.clone()));
+                                arguments.push((None, binding.clone(), span));
                             } else {
                                 error = Some(JaktError::ParserError(
                                     "expected pattern argument name".to_string(),
@@ -2661,8 +2663,9 @@ pub fn parse_pattern_case(
                         ..
                     }) = tokens.get(*index)
                     {
+                        let span = tokens[*index].span;
                         *index += 1;
-                        arguments.push((None, binding.clone()));
+                        arguments.push((None, binding.clone(), span));
                     } else {
                         error = Some(JaktError::ParserError(
                             "expected pattern argument name".to_string(),

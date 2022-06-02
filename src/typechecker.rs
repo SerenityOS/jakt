@@ -1182,7 +1182,7 @@ pub enum CheckedMatchBody {
 pub enum CheckedMatchCase {
     EnumVariant {
         variant_name: String,
-        variant_arguments: Vec<(Option<String>, String)>,
+        variant_arguments: Vec<(Option<String>, String, Span)>,
         subject_type_id: TypeId,
         variant_index: usize,
         scope_id: ScopeId,
@@ -4800,6 +4800,13 @@ pub fn typecheck_expression(
                                                         &generic_parameters,
                                                         project,
                                                     );
+                                                    if project.dump_type_hints {
+                                                        println!(
+                                                            "{{\"type\": \"hint\", \"position\": {}, \"typename\": \"{}\" }}",
+                                                            args[0].2.end,
+                                                            project.typename_for_type_id(type_id)
+                                                        );
+                                                    }
                                                     vars.push((
                                                         CheckedVariable {
                                                             name: args[0].1.clone(),
@@ -4863,25 +4870,37 @@ pub fn typecheck_expression(
                                                     }
 
                                                     names_seen.insert(name.clone(), ());
-                                                    let field_type = fields
+                                                    let field_data = fields
                                                         .iter()
                                                         .find(|f| f.name == name)
-                                                        .map(|f| f.type_id);
+                                                        .map(|f| (f.type_id, f.span));
 
-                                                    let field_type =
-                                                        if let Some(field_type) = field_type {
-                                                            Some(substitute_typevars_in_type(
-                                                                field_type,
-                                                                &generic_parameters,
-                                                                project,
+                                                    let field_data =
+                                                        if let Some((field_data, field_span)) =
+                                                            field_data
+                                                        {
+                                                            Some((
+                                                                substitute_typevars_in_type(
+                                                                    field_data,
+                                                                    &generic_parameters,
+                                                                    project,
+                                                                ),
+                                                                field_span,
                                                             ))
                                                         } else {
-                                                            field_type
+                                                            field_data
                                                         };
 
-                                                    match field_type {
-                                                        Some(type_id) => {
-                                                            let span = *span;
+                                                    match field_data {
+                                                        Some((type_id, span)) => {
+                                                            if project.dump_type_hints {
+                                                                println!(
+                                                                    "{{\"type\": \"hint\", \"position\": {}, \"typename\": \"{}\" }}",
+                                                                    arg.2.end,
+                                                                    project.typename_for_type_id(type_id)
+                                                                );
+                                                            }
+
                                                             vars.push((
                                                                 CheckedVariable {
                                                                     name: arg.1.clone(),
