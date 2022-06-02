@@ -363,7 +363,7 @@ connection.onCompletion(
 				for (const completion of obj.completions) {
 					output.push({
 						label: completion,
-						kind: CompletionItemKind.Field,
+						kind: completion.includes('(') ? CompletionItemKind.Function : CompletionItemKind.Field,
 						data: index
 					});
 					index++;
