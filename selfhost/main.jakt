@@ -115,6 +115,7 @@ enum Token {
     Public(JaktSpan)
     Raw(JaktSpan)
     Return(JaktSpan)
+    Restricted(JaktSpan)
     Struct(JaktSpan)
     This(JaktSpan)
     Throw(JaktSpan)
@@ -215,6 +216,7 @@ enum Token {
             Private(span) => span
             Public(span) => span
             Raw(span) => span
+            Restricted(span) => span
             Return(span) => span
             Struct(span) => span
             This(span) => span
@@ -377,6 +379,7 @@ struct Lexer {
                 "public" => Token::Public(span)
                 "raw" => Token::Raw(span)
                 "return" => Token::Return(span)
+                "restricted" => Token::Restricted(span)
                 "struct" => Token::Struct(span)
                 "this" => Token::This(span)
                 "throw" => Token::Throw(span)
@@ -1187,8 +1190,8 @@ struct Parser {
                     if last_visibility.has_value() {
                         .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
                     }
-                    todo("Implement restricted() visibility modifier")
-                    .index++
+                    last_visibility = .parse_restricted_visibility_modifier()
+                    last_visibility_span = span
                 }
                 Identifier => {
                     // Parse a field
@@ -2063,6 +2066,68 @@ struct Parser {
             }
             else => ""
         }
+    }
+
+    function parse_restricted_visibility_modifier(mutable this) throws -> Visibility {
+        let mutable restricted_span = .current().span()
+        
+        .index++
+
+        match .current() {
+            LParen => {
+                .index++
+            }
+            else => {
+                .error("Expected ‘(’", .current().span())
+            }
+        }
+
+        let mutable whitelist: [ParsedType] = []
+        let mutable should_break = false
+        let mutable expect_comma = false
+
+        while not should_break and .index < .tokens.size() {
+            match .current() {
+                RParen => {
+                    should_break = true
+                }
+                Comma(span) => {
+                    if expect_comma {
+                        expect_comma = false
+                    } else {
+                        .error("Unexpected comma", span)
+                    }
+                    .index++
+                }
+                else => {
+                    if expect_comma {
+                        .error("Expected comma", .current().span())
+                    }
+
+                    .skip_newlines()
+                    let parsed_type = .parse_typename()
+                    whitelist.push(parsed_type)
+                    expect_comma = true
+                }
+            }
+        }
+
+        restricted_span.end = .current().span().end
+
+        if whitelist.is_empty() {
+            .error("Type list cannot be empty", restricted_span)
+        }
+
+        match .current() {
+            RParen => {
+                .index++
+            }
+            else => {
+                .error("Expected ‘)’", .current().span())
+            }
+        }
+
+        return Visibility::Restricted(whitelist, span: restricted_span)
     }
 }
 
