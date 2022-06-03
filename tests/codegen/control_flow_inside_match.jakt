@@ -1,7 +1,7 @@
 /// Expect:
-/// - out: "42\n"
+/// - out: "OK\n"
 
-function main() {
+function test_continue() -> i64 {
   let mutable x: i64 = 10
   loop {
     match x {
@@ -10,10 +10,32 @@ function main() {
         continue
       }
       else => {
-        println("{}", x)
-        return 0
+        return x
       }
     }
   }
 }
-// Submitted by https://github.com/SerenityOS/jakt/issues/402.
+
+function test_break() -> i64 {
+  let mutable x: i64 = 10
+  loop {
+    match x {
+      42 => {
+        break
+      }
+      else => { x = 42 }
+    }
+  }
+  return x
+}
+
+function main() {
+  let res_continue = test_continue()
+  let res_break = test_break()
+  if res_continue == res_break && res_continue == 42 {
+    println("OK")
+  } else {
+    println("continue({}) != break({})", res_continue, res_break)
+  }
+}
+// Fixes https://github.com/SerenityOS/jakt/issues/402.
