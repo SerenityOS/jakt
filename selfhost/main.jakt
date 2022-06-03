@@ -775,10 +775,31 @@ enum Type {
     Builtin
 }
 
+enum DefinitionLinkage {
+    Internal
+    External
+}
+
+enum DefinitionType {
+    Class
+    Struct
+}
+
 // Parsed Types
 struct ParsedNamespace {
-    public name: String
-    public functions: [ParsedFunction]
+    name: String
+    functions: [ParsedFunction]
+    structs: [ParsedStruct]
+}
+
+struct ParsedStruct {
+    name: String
+    name_span: JaktSpan
+    generic_parameters: [[String:JaktSpan]]
+    fields: [ParsedVarDecl]
+    methods: [ParsedFunction]
+    definition_linkage: DefinitionLinkage
+    definition_type: DefinitionType
 }
 
 struct ParsedFunction {
@@ -1008,7 +1029,7 @@ struct Parser {
     } 
 
     public function parse_namespace(mutable this) throws -> ParsedNamespace {
-        let mutable parsed_namespace = ParsedNamespace(name: "", functions: [])
+        let mutable parsed_namespace = ParsedNamespace(name: "", functions: [], structs: [])
 
         let mutable should_break = false
         while not should_break and not .eof() {
@@ -1016,6 +1037,14 @@ struct Parser {
                 Function => {
                     let function = .parse_function(FunctionLinkage::Internal, Visibility::Public)
                     parsed_namespace.functions.push(function)
+                }
+                Struct => {
+                    let parsed_struct = .parse_struct(DefinitionLinkage::Internal, DefinitionType::Struct)
+                    parsed_namespace.structs.push(parsed_struct)
+                }
+                Class => {
+                    let parsed_struct = .parse_struct(DefinitionLinkage::Internal, DefinitionType::Class)
+                    parsed_namespace.structs.push(parsed_struct)
                 }
                 Eol => {
                     // Ignore
@@ -1032,6 +1061,134 @@ struct Parser {
         }
 
         return parsed_namespace
+    }
+
+    public function parse_struct(mutable this, anonymous definition_linkage: DefinitionLinkage, anonymous definition_type: DefinitionType) throws -> ParsedStruct {
+        let mutable parsed_struct = ParsedStruct(
+            name: "",
+            name_span: empty_span(),
+            generic_parameters: [],
+            fields: [],
+            methods: [],
+            definition_linkage,
+            definition_type,
+        )
+
+        let definition_type_name = match definition_type {
+            Struct => "struct"
+            Class => "class"
+        }
+
+        .index++
+
+        // Struct name
+        if .index >= .tokens.size() {
+            .error(format("Incomplete {} definition", definition_type_name), .current().span())
+            return parsed_struct
+        }
+
+        let struct_name = match .current() {
+            Identifier(name) => name
+            else => {
+                .error(format("Invalid {} name", definition_type_name), .current().span())
+                return parsed_struct
+            }
+        }
+        parsed_struct.name = struct_name
+        parsed_struct.name_span = .current().span()
+
+        .index++
+
+        if .index >= .tokens.size() {
+            .error(format("Incomplete {} definition", definition_type_name), .current().span())
+            return parsed_struct
+        }
+
+        // Generic parameters
+        parsed_struct.generic_parameters = .parse_generic_parameters()
+
+        if .index >= .tokens.size() {
+            .error(format("Incomplete {} definition", definition_type_name), .current().span())
+            return parsed_struct
+        }
+
+        // Struct body
+        match .current() {
+            LCurly(span) => {
+                .index++
+            }
+            else => {
+                .error("Expected ‘{’", .current().span())
+            }
+        }
+
+        let mutable fields: [ParsedVarDecl] = []
+        let mutable methods: [ParsedFunction] = []
+
+        // This gets reset after each loop. If someone doesn't consume it, we error out.
+        let mutable last_visibility: Visibility? = None
+        let mutable should_break = false
+        while not should_break and .index < .tokens.size() {
+            let token = .current()
+            match token {
+                Eof => {
+                    should_break = true
+                }
+                RCurly => {
+                    if last_visibility.has_value() {
+                        .error("Expected function or parameter after visibility modifier", token.span())
+                    }
+                    should_break = true
+                }
+                Comma | Eol => {
+                    // Treat comma as whitespace? Might require them in the future
+                    .index++
+                }
+                Function => {
+                    todo("Implement struct method parsing")
+                    should_break = true
+                }
+                Public => {
+                    // FIXME: Reject multiple visibility modifiers
+                    last_visibility = Visibility::Public
+                    .index++
+                }
+                Private => {
+                    // FIXME: Reject multiple visibility modifiers
+                    last_visibility = Visibility::Private
+                    .index++
+                }
+                Restricted => {
+                    // FIXME: Reject multiple visibility modifiers
+                    todo("Implement restricted() visibility modifier")
+                    .index++
+                }
+                Identifier => {
+                    todo("Implement struct parameter parsing")
+                    should_break = true
+                }
+                else => {
+                    .error(format("Invalid struct member, did not expect a {} here", token), token.span())
+                }
+            }
+        }
+
+        if .index == .tokens.size() {
+            .error("Incomplete struct", .tokens[.index - 1].span())
+        }
+        match .current() {
+            Token::RCurly(span) => {
+                .index++
+            }
+            else => {
+                .error("Incomplete struct", .tokens[.index - 1].span())
+            }
+        }
+
+        parsed_struct.fields = fields
+        parsed_struct.methods = methods
+
+        return parsed_struct
     }
 
     public function parse_function(mutable this, anonymous linkage: FunctionLinkage, anonymous visibility: Visibility) throws -> ParsedFunction {
