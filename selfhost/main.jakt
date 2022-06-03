@@ -1503,21 +1503,35 @@ struct Parser {
             }
         }
 
-        match .current() {
+        let start_span = .current().span()
+
+        parsed_type = match .current() {
             Raw => {
                 todo("raw")
+                yield ParsedType::Empty
             }
             Weak => {
                 todo("weak")
+                yield ParsedType::Empty
             }
             Identifier(name) => {
                 let span = .current().span()
                 .index++
-                return ParsedType::Name(name, span)
+                yield ParsedType::Name(name, span)
             }
             else => {
                 .error("Expected type name", .current().span())
+                yield ParsedType::Empty
             }
+        }
+
+        if match .current() {
+            QuestionMark => true
+            else => false
+        } {
+            .index++
+            let span = JaktSpan(start: start_span.start, end: .current().span().end)
+            parsed_type = ParsedType::Optional(inner: parsed_type, span)
         }
 
         return parsed_type
