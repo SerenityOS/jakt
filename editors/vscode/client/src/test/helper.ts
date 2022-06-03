@@ -16,6 +16,7 @@ export let platformEol: string;
  */
 export async function activate(docUri: vscode.Uri) {
 	// The extensionId is `publisher.name` from package.json
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const ext = vscode.extensions.getExtension('vscode-samples.lsp-sample')!;
 	await ext.activate();
 	try {
