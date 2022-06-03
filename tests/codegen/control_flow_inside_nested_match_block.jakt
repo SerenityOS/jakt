@@ -1,26 +1,52 @@
 /// Expect:
-/// - output: "1\n"
-enum Foo {
-    Bar
-    Baz
+/// - output: "OK\n"
+
+function test_continue() -> bool {
+    let mutable break_out = false
+    while not break_out {
+        match 10 {
+            10 => {
+                match 15 {
+                    16 => { }
+                    else => { 
+                        break_out = true
+                        continue
+                    }
+                }
+            }
+            else => {}
+        }
+        println("test_continue: must be unreachable")
+        return false
+    }
+    return true
 }
 
-function foop(foo: mutable Foo) -> i64 {
+
+function test_break() -> bool {
     loop {
-        match foo {
-            Bar => {match 42 {
-                42 => { 
-                    foo = Foo::Baz
-                    continue 
+        match 10 {
+            10 => {
+                match 15 {
+                    15 => { break }
+                    else => {}
                 }
-                else  => { return 0 }
-            }}
-            else => { return 1 }
+            }
+            else => {}
         }
+        println("test_break: must be unreachable")
+        return false
     }
-    return 3
+    return true
 }
+
+
 
 function main() {
-    println("{}", foop(foo: Foo::Bar))
+    if test_break() and test_continue() {
+        println("OK")
+    } else {
+        println("Something happened. Check above log and codegen code.")
+    }
+
 }
