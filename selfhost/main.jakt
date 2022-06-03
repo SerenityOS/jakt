@@ -817,6 +817,7 @@ struct ParsedFunction {
     generic_parameters: [[String:JaktSpan]]
     block: ParsedBlock
     return_type: ParsedType
+    return_type_span: JaktSpan
     throws: bool
 }
 
@@ -1331,6 +1332,7 @@ struct Parser {
             generic_parameters: [],
             block: ParsedBlock(stmts: []),
             return_type: ParsedType::Empty,
+            return_type_span: JaktSpan(start: 0, end: 0)
             throws: false,
         )
 
@@ -1435,16 +1437,12 @@ struct Parser {
             }
         }
 
-        // Accept return type specification with '->'
-        let mutable return_type = ParsedType::Empty
-        let mutable return_type_span: JaktSpan? = None
-
         match .current() {
             Arrow => {
                 .index++
                 let start = .current().span().start
-                return_type = .parse_typename()
-                return_type_span = JaktSpan(start, end: .index)
+                parsed_function.return_type = .parse_typename()
+                parsed_function.return_type_span = JaktSpan(start, end: .index)
             }
             else => {}
         }
