@@ -796,8 +796,8 @@ struct ParsedStruct {
     name: String
     name_span: JaktSpan
     generic_parameters: [[String:JaktSpan]]
-    fields: [ParsedVarDecl]
-    methods: [ParsedFunction]
+    fields: [ParsedField]
+    methods: [ParsedMethod]
     definition_linkage: DefinitionLinkage
     definition_type: DefinitionType
 }
@@ -914,6 +914,18 @@ struct ParsedVarDecl {
     parsed_type: ParsedType
     is_mutable: bool
     span: JaktSpan
+}
+
+struct ParsedField {
+    // FIXME: It would be nice to extend the ParsedVarDecl struct instead.
+    var_decl: ParsedVarDecl
+    visibility: Visibility
+}
+
+struct ParsedMethod {
+    // FIXME: It would be nice to extend the ParsedVarDecl struct instead.
+    parsed_function: ParsedFunction
+    visibility: Visibility
 }
 
 struct ParsedVariable {
@@ -1039,7 +1051,7 @@ struct Parser {
         while not should_break and not .eof() {
             match .current() {
                 Function => {
-                    let function = .parse_function(FunctionLinkage::Internal, Visibility::Public)
+                    let function = .parse_function(FunctionLinkage::Internal)
                     parsed_namespace.functions.push(function)
                 }
                 Struct => {
@@ -1131,8 +1143,8 @@ struct Parser {
             }
         }
 
-        let mutable fields: [ParsedVarDecl] = []
-        let mutable methods: [ParsedFunction] = []
+        let mutable fields: [ParsedField] = []
+        let mutable methods: [ParsedMethod] = []
 
         // This gets reset after each loop. If someone doesn't consume it, we error out.
         let mutable last_visibility: Visibility? = None
@@ -1184,14 +1196,7 @@ struct Parser {
                     last_visibility = None
                     last_visibility_span = None
 
-                    let field = .parse_variable_declaration()
-
-                    match field.parsed_type {
-                        Empty => {
-                            .error("Field missing type", field.span)
-                        }
-                        else => {}
-                    }
+                    let field = .parse_field(visibility)
 
                     fields.push(field)
                 }
@@ -1199,17 +1204,15 @@ struct Parser {
                     // Parse a method
 
                     let function_linkage = match definition_linkage {
-                        DefinitionLinkage::Internal => FunctionLinkage::Internal
-                        DefinitionLinkage::External => FunctionLinkage::External
+                        Internal => FunctionLinkage::Internal
+                        External => FunctionLinkage::External
                     }
 
                     let visibility = last_visibility ?? default_visibility
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_function(function_linkage, visibility)
-
-                    // TODO: The bootstrap compiler sets parsed_method.must_instantiate here if the linkage is External.
+                    let parsed_method = .parse_method(function_linkage, visibility)
 
                     methods.push(parsed_method)
                 }
@@ -1237,7 +1240,7 @@ struct Parser {
         return parsed_struct
     }
 
-    public function parse_function(mutable this, anonymous linkage: FunctionLinkage, anonymous visibility: Visibility) throws -> ParsedFunction {
+    public function parse_function(mutable this, anonymous linkage: FunctionLinkage) throws -> ParsedFunction {
         let mutable parsed_function = ParsedFunction(
             name: "",
             name_span: empty_span(),
@@ -1371,6 +1374,34 @@ struct Parser {
         parsed_function.params = params
 
         return parsed_function
+    }
+
+    function parse_field(mutable this, anonymous visibility: Visibility) throws -> ParsedField {
+        let parsed_variable_declaration = .parse_variable_declaration()
+
+        match parsed_variable_declaration.parsed_type {
+            Empty => {
+                .error("Field missing type", parsed_variable_declaration.span)
+            }
+            else => {}
+        }
+
+        return ParsedField(
+            var_decl: parsed_variable_declaration,
+            visibility,
+        )
+    }
+
+    function parse_method(mutable this, anonymous linkage: FunctionLinkage, anonymous visibility: Visibility) throws -> ParsedMethod {
+        let parsed_function = .parse_function(linkage)
+
+        // TODO: The bootstrap compiler sets parsed_function.must_instantiate here if the linkage is External.
+        //       Do we still need to do that?
+
+        return ParsedMethod(
+            parsed_function,
+            visibility,
+        )
     }
 
     function parse_typename(mutable this) throws -> ParsedType {
