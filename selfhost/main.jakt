@@ -1366,17 +1366,25 @@ struct Parser {
                 return_type = .parse_typename()
                 return_type_span = JaktSpan(start, end: .index)
             }
-            else => {
-                .error("Expected ->", .current().span())
-            }
+            else => {}
         }
 
-        // FIXME: Accept an (optional) fat arrow ('=>')
-
-        parsed_function.block = .parse_block()
+        parsed_function.block = match .current() {
+            FatArrow => .parse_fat_arrow()
+            else => .parse_block()
+        }
+        
         parsed_function.params = params
 
         return parsed_function
+    }
+
+    function parse_fat_arrow(mutable this) throws -> ParsedBlock {
+        .index++
+        let start = .current().span().start
+        let expr = .parse_expression()
+        let return_statement = ParsedStatement::Return(expr, span: JaktSpan(start, end: .index))
+        return ParsedBlock(stmts: [return_statement])
     }
 
     function parse_field(mutable this, anonymous visibility: Visibility) throws -> ParsedField {
