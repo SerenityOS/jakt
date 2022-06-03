@@ -126,8 +126,13 @@ connection.onDefinition(async (request) => {
 			// console.log(obj);
 
 			console.timeEnd('onDefinition');
-			return { uri: request.textDocument.uri, range: { start: convertSpan(obj.start, text, lineBreaks), end: convertSpan(obj.end, text, lineBreaks) } };
-		}
+			return {
+				uri: request.textDocument.uri,
+				range: {
+					start: convertSpan(obj.start, lineBreaks),
+					end:   convertSpan(obj.end,   lineBreaks) 
+				} 
+			};		}
 	}
 	console.timeEnd('onDefinition');
 });
@@ -154,7 +159,13 @@ connection.onTypeDefinition(async (request) => {
 			// console.log(obj);
 
 			console.timeEnd('onTypeDefinition');
-			return { uri: request.textDocument.uri, range: { start: convertSpan(obj.start, text, lineBreaks), end: convertSpan(obj.end, text, lineBreaks) } };
+			return {
+				uri: request.textDocument.uri,
+				range: {
+					start: convertSpan(obj.start, lineBreaks),
+					end:   convertSpan(obj.end,   lineBreaks) 
+				} 
+			};
 		}
 	}
 	console.timeEnd('onTypeDefinition');
@@ -276,34 +287,42 @@ function throttle(fn: (...args: any[]) => void, delay: number) {
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
 documents.onDidChangeContent((
-() => {
-	const throttledValidateTextDocument = throttle(validateTextDocument, 500);
-	return (change) => {
-		throttledValidateTextDocument(change.document);
-	};
-}
+	() => {
+		const throttledValidateTextDocument = throttle(validateTextDocument, 500);
+		return (change) => {
+			throttledValidateTextDocument(change.document);
+		};
+	}
 )());
 
+function lowerBoundBinarySearch(arr: number[], num: number): number {
+	let low = 0;
+	let mid = 0;
+	let high = arr.length - 1;
 
-function convertSpan(utf8_offset: number, utf16_text: string, lineBreaks: Array<number>): Position {
-	let line = undefined;
-	for (let n = 0; n < lineBreaks.length; ++n) {
-		if (utf8_offset > lineBreaks[n]) {
-			continue;
+	if(num >= arr[high]) return high;
+
+	while (low < high) {
+		// Bitshift to avoid floating point division
+		mid = (low + high) >> 1;
+
+		if(arr[mid] < num) {
+			low = mid + 1;
+		} else {
+			high = mid;
 		}
-		line = n;
-		break;
-	}
-	line ??= 0;
-
-	let i = line == 0 ? 0 : (lineBreaks[line - 1] + 1);
-	let character = 0;
-	while (i < utf8_offset) {
-		character++;
-		i++;
 	}
 
-	return { line, character };
+	return low - 1;
+}
+
+function convertSpan(utf8_offset: number, lineBreaks: Array<number>): Position {
+	const lineBreakIndex = lowerBoundBinarySearch(lineBreaks, utf8_offset);
+
+	const start_of_line_offset = lineBreakIndex == -1 ? 0 : (lineBreaks[lineBreakIndex] + 1);
+	const character = utf8_offset - start_of_line_offset;
+
+	return { line: lineBreakIndex + 1, character };
 }
 
 function convertPosition(position: Position, text: string): number {
@@ -404,8 +423,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 					case "Error": severity = DiagnosticSeverity.Error; break;
 				}
 
-				const position_start = convertSpan(obj.span.start, text, lineBreaks);
-				const position_end = convertSpan(obj.span.end, text, lineBreaks);
+				const position_start = convertSpan(obj.span.start, lineBreaks);
+				const position_end   = convertSpan(obj.span.end,   lineBreaks);
 
 				const diagnostic: Diagnostic = {
 					severity,
@@ -421,7 +440,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
 				diagnostics.push(diagnostic);
 			} else if (obj.type == "hint") {
-				const position = convertSpan(obj.position, text, lineBreaks);
+				const position = convertSpan(obj.position, lineBreaks);
 				const hint_string = ": " + obj.typename;
 				const hint = InlayHint.create(position, [InlayHintLabelPart.create(hint_string)], InlayHintKind.Type);
 
