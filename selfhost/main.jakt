@@ -1079,6 +1079,11 @@ struct Parser {
             Class => "class"
         }
 
+        let default_visibility = match definition_type {
+            Struct => Visibility::Public
+            Class => Visibility::Private
+        }
+
         .index++
 
         // Struct name
@@ -1164,8 +1169,20 @@ struct Parser {
                     .index++
                 }
                 Identifier => {
-                    todo("Implement struct parameter parsing")
-                    should_break = true
+                    // Parse a field
+                    let visibility = last_visibility ?? default_visibility
+                    last_visibility = None
+
+                    let field = .parse_variable_declaration()
+
+                    match field.parsed_type {
+                        Empty => {
+                            .error("Field missing type", field.span)
+                        }
+                        else => {}
+                    }
+
+                    fields.push(field)
                 }
                 else => {
                     .error(format("Invalid struct member, did not expect a {} here", token), token.span())
