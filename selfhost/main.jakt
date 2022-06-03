@@ -835,7 +835,7 @@ boxed enum ParsedStatement {
     Block(ParsedBlock)
     Loop(ParsedBlock)
     While(guard: ParsedExpression, block: ParsedBlock)
-    For(name: String, name_span: JaktSpan, range: ParsedExpression, block: ParsedBlock)
+    For(iterator_name: String, name_span: JaktSpan, range: ParsedExpression, block: ParsedBlock)
     Break
     Continue
     Return(expr: ParsedExpression, span: JaktSpan)
@@ -1668,8 +1668,39 @@ struct Parser {
                 yield ParsedStatement::VarDecl(var, init)
             }
             If => .parse_if_statement()
+            For => .parse_for_statement()
             LCurly => ParsedStatement::Block(.parse_block())
             else => ParsedStatement::Expression(.parse_expression())
+        }
+    }
+
+    function parse_for_statement(mutable this) throws -> ParsedStatement {
+        .index++
+
+        return match .current() {
+            Identifier(name) => {
+                let iterator_name = name
+                let name_span = .current().span()
+                .index++
+                match .current() {
+                    In => {
+                        .index++
+                    }
+                    else => {
+                        .error("Expected ‘in’", .current().span())
+                        return ParsedStatement::Garbage
+                    }
+                }
+
+                let range = .parse_expression()
+                let block = .parse_block();
+
+                yield ParsedStatement::For(iterator_name, name_span, range, block)
+            }
+            else => {
+                .error("Expected iterator name", .current().span())
+                yield ParsedStatement::Garbage
+            }
         }
     }
 
