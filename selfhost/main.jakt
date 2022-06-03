@@ -83,6 +83,7 @@ enum Token {
     Eol(JaktSpan)
     Eof(JaktSpan)
     FatArrow(JaktSpan)
+    Arrow(JaktSpan)
 
     // Keywords
     And(JaktSpan)
@@ -152,6 +153,7 @@ enum Token {
             PlusPlus(span) => span
             MinusEqual(span) => span
             MinusMinus(span) => span
+            Arrow(span) => span
             AsteriskEqual(span) => span
             ForwardSlashEqual(span) => span
             PercentSignEqual(span) => span
@@ -443,6 +445,7 @@ struct Lexer {
         return match .peek() {
             b'=' => Token::MinusEqual(JaktSpan(start, end: ++.index))
             b'-' => Token::MinusMinus(JaktSpan(start, end: ++.index))
+            b'>' => Token::Arrow(JaktSpan(start, end: ++.index))
             else => Token::Minus(JaktSpan(start: .index - 1, end: .index))
         }
     }
@@ -1143,21 +1146,15 @@ struct Parser {
         let mutable return_type_span: JaktSpan? = None
 
         match .current() {
-            Minus => {
+            Arrow => {
                 .index++
-                match .current() {
-                    GreaterThan => {
-                        .index++
-                        let start = .current().span().start
-                        return_type = .parse_typename()
-                        return_type_span = JaktSpan(start, end: .index)
-                    }
-                    else => {
-                        .error("Expected ->", .current().span())
-                    }
-                }
+                let start = .current().span().start
+                return_type = .parse_typename()
+                return_type_span = JaktSpan(start, end: .index)
             }
-            else => { }
+            else => {
+                .error("Expected ->", .current().span())
+            }
         }
 
         // FIXME: Accept an (optional) fat arrow ('=>')
