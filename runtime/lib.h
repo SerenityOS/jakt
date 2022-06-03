@@ -308,6 +308,17 @@ struct ExplicitValueOrControlFlow {
     _jakt_value.release_value(); \
 })
 
+#define JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(x) ({ \
+    auto&& _jakt_value = x; \
+    if (_jakt_value.is_return()) \
+      return _jakt_value.release_return(); \
+    else if (_jakt_value.is_loop_break()) \
+      return JaktInternal::LoopBreak{}; \
+    else if (_jakt_value.is_loop_continue()) \
+      return JaktInternal::LoopContinue{}; \
+    _jakt_value.release_value(); \
+})
+
 template<typename OutputType, typename InputType>
 ALWAYS_INLINE Optional<OutputType> fallible_integer_cast(InputType input)
 {

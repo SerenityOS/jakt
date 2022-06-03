@@ -1,0 +1,26 @@
+/// Expect:
+/// - output: "1\n"
+enum Foo {
+    Bar
+    Baz
+}
+
+function foop(foo: mutable Foo) -> i64 {
+    loop {
+        match foo {
+            Bar => {match 42 {
+                42 => { 
+                    foo = Foo::Baz
+                    continue 
+                }
+                else  => { return 0 }
+            }}
+            else => { return 1 }
+        }
+    }
+    return 3
+}
+
+function main() {
+    println("{}", foop(foo: Foo::Bar))
+}
