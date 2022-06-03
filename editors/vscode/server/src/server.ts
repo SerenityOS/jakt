@@ -15,12 +15,15 @@ import {
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
 	InitializeResult,
-	Location,
 } from 'vscode-languageserver/node';
 
 import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
+
+interface JaktTextDocument extends TextDocument {
+	jaktInlayHints?: InlayHint[];
+}
 
 import { Position, InlayHint, InlayHintParams, InlayHintLabelPart, InlayHintKind } from 'vscode-languageserver-protocol';
 
@@ -258,9 +261,11 @@ documents.onDidClose(e => {
 	documentSettings.delete(e.document.uri);
 });
 
-function throttle(fn: (...args: any[]) => void, delay: number) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function throttle(fn: (...args: any) => void, delay: number) {
 	let shouldWait = false;
-	let waitingArgs: any[] | null;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let waitingArgs: any | null;
 	const timeoutFunc = () => {
 		if (waitingArgs == null) {
 			shouldWait = false;
@@ -271,7 +276,8 @@ function throttle(fn: (...args: any[]) => void, delay: number) {
 		}
 	};
 
-	return (...args: any[]) => {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	return (...args: any) => {
 		if (shouldWait) {
 			waitingArgs = args;
 			return;
@@ -386,7 +392,7 @@ function findLineBreaks(utf16_text: string): Array<number> {
 	return lineBreaks;
 }
 
-async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+async function validateTextDocument(textDocument: JaktTextDocument): Promise<void> {
 	console.time('validateTextDocument');
 	if (!hasDiagnosticRelatedInformationCapability) {
 		console.error('Trying to validate a document with no diagnostic capability');
@@ -401,7 +407,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
 	const lineBreaks = findLineBreaks(text);
 
-	(textDocument as any).jaktInlayHints = [];
+	textDocument.jaktInlayHints = [];
 
 	const stdout = await runCompiler(text, "-c -H -j");
 
@@ -444,7 +450,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 				const hint_string = ": " + obj.typename;
 				const hint = InlayHint.create(position, [InlayHintLabelPart.create(hint_string)], InlayHintKind.Type);
 
-				(textDocument as any).jaktInlayHints.push(hint);
+				textDocument.jaktInlayHints.push(hint);
 			}
 		} catch (e) {
 			console.error(e);
@@ -527,8 +533,8 @@ connection.onCompletionResolve(
 );
 
 connection.languages.inlayHint.on((params: InlayHintParams) => {
-	const document = documents.get(params.textDocument.uri);
-	return (document as any).jaktInlayHints;
+	const document = documents.get(params.textDocument.uri) as JaktTextDocument;
+	return document.jaktInlayHints;
 });
 
 // Make the text document manager listen on the connection
