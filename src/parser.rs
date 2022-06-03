@@ -4523,7 +4523,7 @@ pub fn parse_call(tokens: &[Token], index: &mut usize) -> (ParsedCall, Option<Ja
                     _ => {
                         if !next_parameter {
                             error = error.or(Some(JaktError::ParserError(
-                                "Invalid syntax".to_string(),
+                                "Invalid syntax: Expected ',' after function parameter".to_string(),
                                 tokens[*index].span,
                             )));
                         }
