@@ -1155,10 +1155,6 @@ struct Parser {
                     // Treat comma as whitespace? Might require them in the future
                     .index++
                 }
-                Function => {
-                    todo("Implement struct method parsing")
-                    should_break = true
-                }
                 Public(span) => {
                     if last_visibility.has_value() {
                         .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
@@ -1198,6 +1194,24 @@ struct Parser {
                     }
 
                     fields.push(field)
+                }
+                Function => {
+                    // Parse a method
+
+                    let function_linkage = match definition_linkage {
+                        DefinitionLinkage::Internal => FunctionLinkage::Internal
+                        DefinitionLinkage::External => FunctionLinkage::External
+                    }
+
+                    let visibility = last_visibility ?? default_visibility
+                    last_visibility = None
+                    last_visibility_span = None
+
+                    let parsed_method = .parse_function(function_linkage, visibility)
+
+                    // TODO: The bootstrap compiler sets parsed_method.must_instantiate here if the linkage is External.
+
+                    methods.push(parsed_method)
                 }
                 else => {
                     .error(format("Invalid struct member, did not expect a {} here", token), token.span())
