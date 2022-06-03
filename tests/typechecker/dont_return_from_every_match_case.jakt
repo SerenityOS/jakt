@@ -1,0 +1,19 @@
+/// Expect:
+/// - error: "Control reaches end of non-void function\n"
+
+enum Foo {
+    Bar
+    Baz
+}
+
+function test(foo: Foo) -> i64 {
+    match foo {
+        Bar => { return 1 }
+        Baz => { yield 2 }
+    }
+}
+
+function main() {
+    let foo = Foo::Bar
+    println("{}", test(foo))
+}
