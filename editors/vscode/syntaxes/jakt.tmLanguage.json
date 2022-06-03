@@ -711,7 +711,7 @@
       "patterns": [
         {
           "name": "meta.control.jakt",
-          "match": "\\b(if|else|while|for|loop|try|catch|cpp|unsafe|defer|match)(?=.*?(?:\\{|$))",
+          "match": "\\b(if|else|while|for|loop|try|catch|cpp|unsafe|defer|match)\\b(?=.*?(?:\\{|$))",
           "captures": {
             "1": {
               "name": "keyword.control.block.jakt"
