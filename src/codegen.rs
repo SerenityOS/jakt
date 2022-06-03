@@ -72,6 +72,13 @@ impl ControlFlowState {
             ..self
         }
     }
+    const fn enter_loop(self) -> Self {
+        Self {
+            allowed_exits: AllowedControlExits::AtLoop,
+            passes_through_match: false,
+            match_nest_level: 0,
+        }
+    }
     const fn enter_match(self) -> Self {
         Self {
             allowed_exits: self.allowed_exits.allow_return(),
@@ -2112,7 +2119,7 @@ fn codegen_statement(
         CheckedStatement::Loop(block) => {
             output.push_str("for (;;) {");
             let last_control_flow = context.control_flow_state;
-            context.control_flow_state.allowed_exits = AllowedControlExits::AtLoop;
+            context.control_flow_state = last_control_flow.enter_loop();
             let block = codegen_block(indent, block, project, context);
             context.control_flow_state = last_control_flow;
             output.push_str(&block);
@@ -2126,7 +2133,7 @@ fn codegen_statement(
 
             {
                 let last_control_flow = context.control_flow_state;
-                context.control_flow_state.allowed_exits = AllowedControlExits::AtLoop;
+                context.control_flow_state = last_control_flow.enter_loop();
                 let block = codegen_block(indent, block, project, context);
                 context.control_flow_state = last_control_flow;
                 output.push_str(&block);
