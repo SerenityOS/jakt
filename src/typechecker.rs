@@ -1174,6 +1174,7 @@ pub enum CheckedUnaryOperator {
     BitwiseNot,
     TypeCast(CheckedTypeCast),
     Is(TypeId),
+    IsEnumVariant(String),
 }
 
 #[derive(Debug, Clone)]
@@ -3931,8 +3932,40 @@ pub fn typecheck_expression(
                 UnaryOperator::BitwiseNot => CheckedUnaryOperator::BitwiseNot,
                 UnaryOperator::Is(unchecked_type) => {
                     let (type_id, err) = typecheck_typename(unchecked_type, scope_id, project);
-                    error = error.or(err);
-                    CheckedUnaryOperator::Is(type_id)
+                    loop {
+                        if type_id == UNKNOWN_TYPE_ID && err.is_some() {
+                            // Let's assume it's an enum variant
+                            if let ParsedType::Name(name, _) = unchecked_type {
+                                let type_id = checked_expr.type_id(scope_id, project);
+                                if let Type::Enum(enum_id) = &project.types[type_id] {
+                                    let enum_ = &project.enums[*enum_id];
+                                    let exists =
+                                        enum_.variants.iter().any(|variant| match variant {
+                                            CheckedEnumVariant::StructLike(var_name, _, _)
+                                            | CheckedEnumVariant::Typed(var_name, _, _)
+                                            | CheckedEnumVariant::Untyped(var_name, _) => {
+                                                name == var_name
+                                            }
+                                            _ => false,
+                                        });
+                                    if !exists {
+                                        error = error.or(Some(JaktError::TypecheckError(
+                                            format!(
+                                                "Enum variant {} does not exist on {}",
+                                                name,
+                                                project.typename_for_type_id(type_id)
+                                            ),
+                                            *span,
+                                        )));
+                                    }
+                                    break CheckedUnaryOperator::IsEnumVariant(name.clone());
+                                }
+                            }
+                        }
+
+                        error = error.or(err);
+                        break CheckedUnaryOperator::Is(type_id);
+                    }
                 }
                 UnaryOperator::TypeCast(cast) => {
                     let (type_id, err) =
@@ -5482,6 +5515,15 @@ pub fn typecheck_unary_operation(
             CheckedExpression::UnaryOp(
                 Box::new(expr),
                 CheckedUnaryOperator::Is(*type_id),
+                span,
+                BOOL_TYPE_ID,
+            ),
+            None,
+        ),
+        CheckedUnaryOperator::IsEnumVariant(name) => (
+            CheckedExpression::UnaryOp(
+                Box::new(expr),
+                CheckedUnaryOperator::IsEnumVariant(name.clone()),
                 span,
                 BOOL_TYPE_ID,
             ),
