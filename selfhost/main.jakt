@@ -883,13 +883,6 @@ boxed enum ParsedExpression {
     JaktDictionary(values: [(ParsedExpression, ParsedExpression)], span: JaktSpan)
     Garbage(JaktSpan)
 
-    function is_garbage(this) -> bool {
-        return match this {
-            Garbage(span) => true
-            else => false
-        }
-    }
-
     function span(this) -> JaktSpan {
         return match this {
             Boolean(val, span) => span
@@ -1709,12 +1702,7 @@ struct Parser {
     }
 
     function parse_if_statement(mutable this) throws -> ParsedStatement {
-        // FIXME: This would look nicer as `if not .current() is If`
-        //        Or perhaps even `if .current() isnt If` :yakthonk:
-        if match .current() {
-            If => false
-            else => true
-        } {
+        if not .current() is If {
             .error("Expected ‘if’ statement", .current().span())
             return ParsedStatement::Garbage
         }
@@ -1727,11 +1715,7 @@ struct Parser {
 
         let mutable else_statement: ParsedStatement? = None
 
-        // FIXME: This would look nicer as `if .current() is Else`
-        if match .current() {
-            Else => true
-            else => false
-        } {
+        if .current() is Else {
             .index++
             match .current() {
                 If => {
@@ -1763,7 +1747,7 @@ struct Parser {
 
             let op = .parse_operator()
 
-            if op.is_garbage() {
+            if op is Garbage {
                 break
             }
 
@@ -2037,11 +2021,7 @@ struct Parser {
 
     function skip_newlines(mutable this) {
         loop { 
-            let newline = match .current() {
-                Eol => true
-                else => false
-            }
-            if not newline {
+            if not .current() is Eol {
                 break
             }
             .index++
@@ -2049,20 +2029,13 @@ struct Parser {
     }
 
     function parse_generic_parameters(mutable this) throws -> [[String:JaktSpan]] {
-        if (match .current() {
-            LessThan => false
-            else => true
-        }) {
+        if not .current() is LessThan {
             return []
         }
         .index++
         let mutable generic_parameters: [[String:JaktSpan]] = []
         .skip_newlines()
-        while(match .current() {
-            GreaterThan => false
-            Garbage => false
-            else => true
-        }) {
+        while not .current() is GreaterThan and not .current() is Garbage {
             match .current() {
                 Identifier(name, span) => {
                     generic_parameters.push([name : span])
@@ -2081,10 +2054,7 @@ struct Parser {
             }
         }
 
-        if (match .current() {
-            GreaterThan => true
-            else => false
-        }) {
+        if .current() is GreaterThan {
             .index++
         } else {
             .error("expected `>` to end the generic parameters", .current().span())
@@ -2180,10 +2150,7 @@ struct Parser {
         let mutable is_dictionary = false
         let start = .current().span().start
 
-        if not match .current() {
-            LSquare => true
-            else => false
-        } {
+        if not .current() is LSquare {
             .error("Expected ‘[’", .current().span());
             return ParsedExpression::Garbage(.current().span())
         }
@@ -2215,11 +2182,7 @@ struct Parser {
                 Colon => {
                     .index++
                     if dict_output.is_empty() {
-                        // FIXME: `if .current() is RSquare {`
-                        if match .current() {
-                            RSquare => true
-                            else => false
-                        } {
+                        if .current() is RSquare {
                             .index++
                             is_dictionary = true
                             should_break = true
@@ -2232,11 +2195,7 @@ struct Parser {
                 }
                 else => {
                     let expr = .parse_expression()
-                    // FIXME: `if .current() is Colon {`
-                    if match .current() {
-                        Colon => true
-                        else => false
-                    } {
+                    if .current() is Colon {
                         if not output.is_empty() {
                             .error("Mixing dictionary and array values", .current().span())
                         }
@@ -2258,10 +2217,7 @@ struct Parser {
         }
 
         let end = .index - 1
-        if end >= .tokens.size() or not match .tokens[end] {
-            RSquare => true
-            else => false
-        } {
+        if end >= .tokens.size() or not .tokens[end] is RSquare {
             .error("Expected ‘]’ to close the array", .tokens[end].span())
         }
 
