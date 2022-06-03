@@ -1,0 +1,12 @@
+/// Expect:
+/// - error: "Enum variant Buzzzzz does not exist on Foo"
+
+enum Foo {
+    Bar
+    Baz
+}
+
+function main() {
+    let foo = Foo::Bar;
+    println("{}", foo is Buzzzzz);
+}

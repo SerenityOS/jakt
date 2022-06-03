@@ -3043,6 +3043,26 @@ fn codegen_expr(
                 CheckedUnaryOperator::TypeCast(_) | CheckedUnaryOperator::Is(_) => {
                     output.push(')');
                 }
+                CheckedUnaryOperator::IsEnumVariant(name) => {
+                    output.push(')');
+                    let type_id = expr.type_id_or_type_var();
+                    let is_boxed = if let Type::Enum(enum_id) = &project.types[type_id] {
+                        project.enums[*enum_id].definition_type == DefinitionType::Class
+                    } else {
+                        false
+                    };
+
+                    if is_boxed {
+                        output.push_str("->");
+                    } else {
+                        output.push('.');
+                    }
+                    output.push_str("has<");
+                    output.push_str(&codegen_type_possibly_as_namespace(type_id, project, true));
+                    output.push_str("::");
+                    output.push_str(name);
+                    output.push_str(">(");
+                }
                 _ => {}
             }
             output.push(')');

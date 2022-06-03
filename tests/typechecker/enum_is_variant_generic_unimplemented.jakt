@@ -1,0 +1,15 @@
+/// Expect: Unimplemented behaviour:
+/// - error: "Unknown type"
+
+enum Foo<T> {
+    Bar
+    Baz
+}
+
+function main() {
+    let foo = Foo::Bar<i32>();
+    // Note: This should be accepted, but we currently cannot represent `Foo<i32>::Bar`,
+    //       so we can't keep the `i32` around until the codegen stage to generate either
+    //       `foo.has<Foo<i32>::Bar>()` or `foo.has<Foo_Details::Bar<i32>>()`.
+    println("{}", foo is Bar);
+}
