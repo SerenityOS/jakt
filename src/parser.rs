@@ -59,6 +59,23 @@ pub enum ParsedType {
     Empty,
 }
 
+impl ParsedType {
+    pub fn span(&self) -> Option<Span> {
+        match self {
+            ParsedType::Name(_, span) => Some(*span),
+            ParsedType::GenericType(_, _, span) => Some(*span),
+            ParsedType::Tuple(_, span) => Some(*span),
+            ParsedType::Array(_, span) => Some(*span),
+            ParsedType::Dictionary(_, _, span) => Some(*span),
+            ParsedType::Set(_, span) => Some(*span),
+            ParsedType::Optional(_, span) => Some(*span),
+            ParsedType::RawPtr(_, span) => Some(*span),
+            ParsedType::WeakPtr(_, span) => Some(*span),
+            ParsedType::Empty => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ParsedVarDecl {
     pub name: String,
@@ -122,9 +139,9 @@ pub enum EnumVariant {
 #[derive(Debug)]
 pub struct ParsedEnum {
     pub name: String,
+    pub name_span: Span,
     pub generic_parameters: Vec<(String, Span)>,
     pub variants: Vec<EnumVariant>,
-    pub span: Span,
     pub is_recursive: bool,
     pub definition_linkage: DefinitionLinkage,
     pub underlying_type: ParsedType,
@@ -800,15 +817,15 @@ pub fn parse_enum(
     let start_index = *index;
     let mut enum_ = ParsedEnum {
         name: "".to_string(),
-        definition_linkage,
-        generic_parameters: vec![],
-        variants: Vec::new(),
-        is_recursive,
-        span: Span {
+        name_span: Span {
             file_id: tokens[start_index].span.file_id,
             start: tokens[start_index].span.start,
             end: tokens[*index].span.end,
         },
+        definition_linkage,
+        generic_parameters: vec![],
+        variants: Vec::new(),
+        is_recursive,
         underlying_type: ParsedType::Empty,
         methods: Vec::new(),
     };
@@ -818,12 +835,13 @@ pub fn parse_enum(
     skip_newlines(tokens, index);
     if let Some(Token {
         contents: TokenContents::Name(name),
-        ..
+        span: name_span,
     }) = tokens.get(*index)
     {
         trace!(format!("enum name: {}", name));
         *index += 1;
         enum_.name = name.to_string();
+        enum_.name_span = *name_span;
         // Following the name can either be a `:` to denote the underlying type, a `<` to denote generic parameters, or nothing.
         skip_newlines(tokens, index);
         match tokens.get(*index) {
@@ -1728,17 +1746,12 @@ pub fn parse_function(
                             tokens[*index - 1].span,
                         )));
                     }
-                    let start = *index;
-                    let file_id = tokens[*index].span.file_id;
                     *index += 1;
                     let (ret_type, err) = parse_typename(tokens, index);
                     return_type = ret_type;
                     error = error.or(err);
-                    Some(Span {
-                        file_id,
-                        start,
-                        end: tokens[*index - 1].span.end,
-                    })
+
+                    return_type.span()
                 } else {
                     None
                 };
