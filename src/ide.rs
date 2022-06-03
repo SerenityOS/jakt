@@ -1,7 +1,8 @@
 use crate::{
     typechecker::{
-        CheckedBlock, CheckedExpression, CheckedFunction, CheckedMatchBody, CheckedMatchCase,
-        CheckedStatement, FunctionGenericParameter, FunctionId, Scope, Type, TypeId,
+        CheckedBlock, CheckedEnum, CheckedEnumVariant, CheckedExpression, CheckedFunction,
+        CheckedMatchBody, CheckedMatchCase, CheckedStatement, CheckedStruct,
+        FunctionGenericParameter, FunctionId, Scope, Type, TypeId,
     },
     Project, Span,
 };
@@ -10,6 +11,7 @@ pub fn find_definition_in_project(project: &Project, span: Span) -> Span {
     match find_span_in_project(project, span) {
         Some(Usage::Variable(span, _)) => span,
         Some(Usage::Call(function_id)) => project.functions[function_id].name_span,
+        Some(Usage::Typename(type_id)) => find_type_definition_for_type_id(project, type_id, span),
         None => span,
     }
 }
@@ -56,6 +58,7 @@ pub fn find_type_definition_in_project(project: &Project, span: Span) -> Span {
             find_type_definition_for_type_id(project, type_id, span)
         }
         Some(Usage::Call(function_id)) => project.functions[function_id].name_span,
+        Some(Usage::Typename(type_id)) => find_type_definition_for_type_id(project, type_id, span),
         None => span,
     }
 }
@@ -64,6 +67,7 @@ pub fn find_typename_in_project(project: &Project, span: Span) -> Option<String>
     match find_span_in_project(project, span) {
         Some(Usage::Variable(_, type_id)) => Some(project.typename_for_type_id(type_id)),
         Some(Usage::Call(function_id)) => Some(get_function_signature(project, function_id)),
+        Some(Usage::Typename(type_id)) => Some(project.typename_for_type_id(type_id)),
         None => None,
     }
 }
@@ -131,6 +135,7 @@ pub fn find_dot_completions_in_project(project: &Project, span: Span) -> Vec<Str
             let result_type_id = project.functions[function_id].return_type_id;
             completions_for_type_id(project, result_type_id)
         }
+        Some(Usage::Typename(_)) => vec![],
         None => vec![],
     }
 }
@@ -152,6 +157,14 @@ pub fn find_span_in_project(project: &Project, span: Span) -> Option<Usage> {
 }
 
 pub fn find_span_in_scope(project: &Project, scope: &Scope, span: Span) -> Option<Usage> {
+    for var in &scope.vars {
+        if let Some(type_span) = var.type_span {
+            if type_span.contains(span) {
+                return Some(Usage::Typename(var.type_id));
+            }
+        }
+    }
+
     for (_, function_id, _) in &scope.functions {
         let function = &project.functions[*function_id];
 
@@ -163,9 +176,7 @@ pub fn find_span_in_scope(project: &Project, scope: &Scope, span: Span) -> Optio
     for (_, struct_id, _) in &scope.structs {
         let checked_struct = &project.structs[*struct_id];
 
-        let scope = &project.scopes[checked_struct.scope_id];
-
-        if let Some(usage) = find_span_in_scope(project, scope, span) {
+        if let Some(usage) = find_span_in_struct(project, checked_struct, span) {
             return Some(usage);
         }
     }
@@ -173,9 +184,7 @@ pub fn find_span_in_scope(project: &Project, scope: &Scope, span: Span) -> Optio
     for (_, enum_id, _) in &scope.enums {
         let checked_enum = &project.enums[*enum_id];
 
-        let scope = &project.scopes[checked_enum.scope_id];
-
-        if let Some(usage) = find_span_in_scope(project, scope, span) {
+        if let Some(usage) = find_span_in_enum(project, checked_enum, span) {
             return Some(usage);
         }
     }
@@ -191,11 +200,86 @@ pub fn find_span_in_scope(project: &Project, scope: &Scope, span: Span) -> Optio
     None
 }
 
+pub fn find_span_in_enum(
+    project: &Project,
+    checked_enum: &CheckedEnum,
+    span: Span,
+) -> Option<Usage> {
+    let scope = &project.scopes[checked_enum.scope_id];
+
+    for variant in &checked_enum.variants {
+        match variant {
+            CheckedEnumVariant::StructLike(_, fields, _) => {
+                for field in fields {
+                    if let Some(type_span) = field.type_span {
+                        if type_span.contains(span) {
+                            return Some(Usage::Typename(field.type_id));
+                        }
+                    }
+                }
+            }
+            CheckedEnumVariant::Typed(_, type_id, variant_span) => {
+                if variant_span.contains(span) {
+                    return Some(Usage::Typename(*type_id));
+                }
+            }
+            CheckedEnumVariant::Untyped(_, _) => {}
+            CheckedEnumVariant::WithValue(_, expr, _) => {
+                if let Some(usage) = find_span_in_expression(project, expr, span) {
+                    return Some(usage);
+                }
+            }
+        }
+    }
+
+    if let Some(usage) = find_span_in_scope(project, scope, span) {
+        return Some(usage);
+    }
+
+    None
+}
+
+pub fn find_span_in_struct(
+    project: &Project,
+    checked_struct: &CheckedStruct,
+    span: Span,
+) -> Option<Usage> {
+    let scope = &project.scopes[checked_struct.scope_id];
+
+    for field in &checked_struct.fields {
+        if let Some(type_span) = field.type_span {
+            if type_span.contains(span) {
+                return Some(Usage::Typename(field.type_id));
+            }
+        }
+    }
+
+    if let Some(usage) = find_span_in_scope(project, scope, span) {
+        return Some(usage);
+    }
+
+    None
+}
+
 pub fn find_span_in_function(
     project: &Project,
     function: &CheckedFunction,
     span: Span,
 ) -> Option<Usage> {
+    if let Some(return_type_span) = function.return_type_span {
+        if return_type_span.contains(span) {
+            return Some(Usage::Typename(function.return_type_id));
+        }
+    }
+
+    for param in &function.params {
+        if let Some(param_type_span) = param.variable.type_span {
+            if param_type_span.contains(span) {
+                return Some(Usage::Typename(param.variable.type_id));
+            }
+        }
+    }
+
     if let Some(block) = &function.block {
         return find_span_in_block(project, block, span);
     }
@@ -247,8 +331,14 @@ pub fn find_span_in_statement(
         }
         CheckedStatement::VarDecl(var_decl, expr) => {
             if let Some(usage) = find_span_in_expression(project, expr, span) {
-                Some(usage)
-            } else if var_decl.span.contains(span) {
+                return Some(usage);
+            } else if let Some(type_span) = var_decl.type_span {
+                if type_span.contains(span) {
+                    return Some(Usage::Typename(var_decl.type_id));
+                }
+            }
+
+            if var_decl.span.contains(span) {
                 Some(Usage::Variable(var_decl.span, var_decl.type_id))
             } else {
                 None
@@ -523,4 +613,5 @@ pub fn get_function_signature(project: &Project, function_id: FunctionId) -> Str
 pub enum Usage {
     Variable(Span, TypeId),
     Call(FunctionId),
+    Typename(TypeId),
 }

@@ -891,6 +891,7 @@ pub struct CheckedFunction {
     pub visibility: Visibility,
     pub throws: bool,
     pub return_type_id: TypeId,
+    pub return_type_span: Option<Span>,
     pub params: Vec<CheckedParameter>,
     pub generic_parameters: Vec<FunctionGenericParameter>,
     pub function_scope_id: ScopeId,
@@ -948,6 +949,7 @@ impl CheckedBlock {
 pub struct CheckedVarDecl {
     pub name: String,
     pub type_id: TypeId,
+    pub type_span: Option<Span>,
     pub mutable: bool,
     pub span: Span,
     pub visibility: Visibility,
@@ -957,6 +959,7 @@ pub struct CheckedVarDecl {
 pub struct CheckedVariable {
     pub name: String,
     pub type_id: TypeId,
+    pub type_span: Option<Span>,
     pub mutable: bool,
     pub visibility: Visibility,
     pub definition_span: Span,
@@ -1578,7 +1581,7 @@ pub fn typecheck_namespace_predecl(
 
         let enum_type_id = project.types.len() - 1;
         if let Err(err) =
-            project.add_type_to_scope(scope_id, enum_.name.clone(), enum_type_id, enum_.span)
+            project.add_type_to_scope(scope_id, enum_.name.clone(), enum_type_id, enum_.name_span)
         {
             error = error.or(Some(err));
         }
@@ -1719,9 +1722,9 @@ fn typecheck_enum_predecl(
     if enum_.variants.is_empty() {
         error = error.or(Some(JaktError::ParserErrorWithHint(
             "Empty enums are not allowed".to_string(),
-            enum_.span,
+            enum_.name_span,
             "Add at least one enum variant".to_string(),
-            enum_.span,
+            enum_.name_span,
         )));
     }
 
@@ -1767,11 +1770,16 @@ fn typecheck_enum_predecl(
             DefinitionType::Struct
         },
         underlying_type_id,
-        span: enum_.span,
+        span: enum_.name_span,
         type_id: enum_type_id,
     });
 
-    match project.add_enum_to_scope(parent_scope_id, enum_.name.clone(), enum_id, enum_.span) {
+    match project.add_enum_to_scope(
+        parent_scope_id,
+        enum_.name.clone(),
+        enum_id,
+        enum_.name_span,
+    ) {
         Ok(_) => {}
         Err(err) => error = error.or(Some(err)),
     }
@@ -1789,6 +1797,7 @@ fn typecheck_enum_predecl(
             params: vec![],
             throws: function.throws,
             return_type_id: UNKNOWN_TYPE_ID,
+            return_type_span: None,
             visibility: function.visibility.clone(),
             function_scope_id: method_scope_id,
             generic_parameters: vec![],
@@ -1837,6 +1846,7 @@ fn typecheck_enum_predecl(
                 let checked_variable = CheckedVariable {
                     name: param.variable.name.clone(),
                     type_id: enum_type_id,
+                    type_span: Some(param.variable.span),
                     mutable: param.variable.mutable,
                     visibility: Visibility::Public,
                     definition_span: param.variable.span,
@@ -1862,6 +1872,7 @@ fn typecheck_enum_predecl(
                 let checked_variable = CheckedVariable {
                     name: param.variable.name.clone(),
                     type_id: param_type,
+                    type_span: param.variable.parsed_type.span(),
                     mutable: param.variable.mutable,
                     visibility: Visibility::Public,
                     definition_span: param.variable.span,
@@ -1886,7 +1897,7 @@ fn typecheck_enum_predecl(
             enum_scope_id,
             function.name.clone(),
             project.functions.len() - 1,
-            enum_.span,
+            enum_.name_span,
         ) {
             error = error.or(Some(err));
         }
@@ -1995,6 +2006,7 @@ fn typecheck_enum(
                                     CheckedVariable {
                                         name: name.clone(),
                                         type_id: enum_type_id,
+                                        type_span: Some(*span),
                                         mutable: false,
                                         visibility: Visibility::Public,
                                         definition_span: *span,
@@ -2022,6 +2034,7 @@ fn typecheck_enum(
                             name_span: *span,
                             throws: enum_.is_recursive,
                             return_type_id: enum_type_id,
+                            return_type_span: None,
                             params: vec![],
                             function_scope_id,
                             // Enum variant constructors are always visible.
@@ -2095,6 +2108,7 @@ fn typecheck_enum(
                             CheckedVariable {
                                 name: name.clone(),
                                 type_id: enum_type_id,
+                                type_span: Some(*span),
                                 mutable: false,
                                 visibility: Visibility::Public,
                                 definition_span: *span,
@@ -2132,6 +2146,7 @@ fn typecheck_enum(
                             checked_members.push(CheckedVarDecl {
                                 name: member.name.clone(),
                                 type_id: decl,
+                                type_span: member.parsed_type.span(),
                                 mutable: member.mutable,
                                 span: member.span,
                                 visibility: member.visibility.clone(),
@@ -2157,6 +2172,7 @@ fn typecheck_enum(
                                 variable: CheckedVariable {
                                     name: member.name.clone(),
                                     type_id: member.type_id,
+                                    type_span: Some(*span),
                                     mutable: false,
                                     visibility: member.visibility.clone(),
                                     definition_span: *span,
@@ -2174,6 +2190,7 @@ fn typecheck_enum(
                             name_span: *span,
                             throws: enum_.is_recursive,
                             return_type_id: enum_type_id,
+                            return_type_span: None,
                             params: constructor_params,
                             visibility: Visibility::Public,
                             function_scope_id,
@@ -2237,6 +2254,7 @@ fn typecheck_enum(
                             variable: CheckedVariable {
                                 name: "value".to_string(),
                                 type_id: checked_type,
+                                type_span: Some(*span),
                                 mutable: false,
                                 visibility: Visibility::Public,
                                 definition_span: *span,
@@ -2252,6 +2270,7 @@ fn typecheck_enum(
                             name_span: *span,
                             throws: enum_.is_recursive,
                             return_type_id: enum_type_id,
+                            return_type_span: None,
                             params: constructor_params,
                             visibility: Visibility::Public,
                             function_scope_id,
@@ -2362,6 +2381,7 @@ fn typecheck_struct_predecl(
             params: vec![],
             throws: function.throws,
             return_type_id: UNKNOWN_TYPE_ID,
+            return_type_span: function.return_type_span,
             visibility: function.visibility.clone(),
             function_scope_id: method_scope_id,
             generic_parameters: vec![],
@@ -2410,6 +2430,7 @@ fn typecheck_struct_predecl(
                 let checked_variable = CheckedVariable {
                     name: param.variable.name.clone(),
                     type_id: struct_type_id,
+                    type_span: Some(param.variable.span),
                     mutable: param.variable.mutable,
                     visibility: Visibility::Public,
                     definition_span: param.variable.span,
@@ -2435,6 +2456,7 @@ fn typecheck_struct_predecl(
                 let checked_variable = CheckedVariable {
                     name: param.variable.name.clone(),
                     type_id: param_type,
+                    type_span: param.variable.parsed_type.span(),
                     mutable: param.variable.mutable,
                     visibility: Visibility::Public,
                     definition_span: param.variable.span,
@@ -2563,6 +2585,7 @@ fn typecheck_struct(
         fields.push(CheckedVarDecl {
             name: unchecked_member.name.clone(),
             type_id: checked_member_type,
+            type_span: unchecked_member.parsed_type.span(),
             mutable: unchecked_member.mutable,
             span: unchecked_member.span,
             visibility: unchecked_member.visibility.clone(),
@@ -2591,6 +2614,7 @@ fn typecheck_struct(
                 variable: CheckedVariable {
                     name: field.name.clone(),
                     type_id: field.type_id,
+                    type_span: None,
                     mutable: field.mutable,
                     // This is the constructor parameter, not the field. It can be public.
                     visibility: Visibility::Public,
@@ -2608,6 +2632,7 @@ fn typecheck_struct(
             name_span: structure.name_span,
             throws: structure.definition_type == DefinitionType::Class,
             return_type_id: struct_type_id,
+            return_type_span: None,
             params: constructor_params,
             // The default constructor is public.
             visibility: Visibility::Public,
@@ -2675,6 +2700,7 @@ fn typecheck_function_predecl(
         params: vec![],
         throws: function.throws,
         return_type_id: UNKNOWN_TYPE_ID,
+        return_type_span: function.return_type_span,
         visibility: function.visibility.clone(),
         function_scope_id,
         generic_parameters: vec![],
@@ -2732,6 +2758,7 @@ fn typecheck_function_predecl(
         let checked_variable = CheckedVariable {
             name: param.variable.name.clone(),
             type_id: param_type,
+            type_span: param.variable.parsed_type.span(),
             mutable: param.variable.mutable,
             visibility: Visibility::Public,
             definition_span: param.variable.span,
@@ -3165,6 +3192,7 @@ pub fn typecheck_statement(
                 name: error_name.clone(),
                 mutable: false,
                 type_id: project.find_or_add_type_id(Type::Struct(error_struct_id)),
+                type_span: None,
                 visibility: Visibility::Public,
                 definition_span: *error_span,
             };
@@ -3504,6 +3532,7 @@ pub fn typecheck_statement(
             let checked_var_decl = CheckedVarDecl {
                 name: var_decl.name.clone(),
                 type_id: lhs_type_id,
+                type_span: var_decl.parsed_type.span(),
                 span: var_decl.span,
                 mutable: var_decl.mutable,
                 visibility: var_decl.visibility.clone(),
@@ -3525,6 +3554,7 @@ pub fn typecheck_statement(
                     CheckedVariable {
                         name: checked_var_decl.name.clone(),
                         type_id: checked_var_decl.type_id,
+                        type_span: None,
                         mutable: checked_var_decl.mutable,
                         visibility: checked_var_decl.visibility.clone(),
                         definition_span: checked_var_decl.span,
@@ -4036,6 +4066,7 @@ pub fn typecheck_expression(
                         CheckedVariable {
                             name: v.clone(),
                             type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
+                            type_span: None,
                             mutable: false,
                             visibility: Visibility::Public,
                             definition_span: *span,
@@ -4055,6 +4086,7 @@ pub fn typecheck_expression(
                         CheckedVariable {
                             name: v.clone(),
                             type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
+                            type_span: None,
                             mutable: false,
                             visibility: Visibility::Public,
                             definition_span: *span,
@@ -4137,6 +4169,7 @@ pub fn typecheck_expression(
                                     CheckedVariable {
                                         name: v.clone(),
                                         type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
+                                        type_span: None,
                                         mutable: false,
                                         visibility: Visibility::Public,
                                         definition_span: *span,
@@ -4157,6 +4190,7 @@ pub fn typecheck_expression(
                         CheckedVariable {
                             name: v.clone(),
                             type_id: type_hint.unwrap_or(UNKNOWN_TYPE_ID),
+                            type_span: None,
                             mutable: false,
                             visibility: Visibility::Public,
                             definition_span: *span,
@@ -4813,6 +4847,7 @@ pub fn typecheck_expression(
                                                         CheckedVariable {
                                                             name: args[0].1.clone(),
                                                             type_id,
+                                                            type_span: None,
                                                             mutable: false,
                                                             visibility: Visibility::Public,
                                                             definition_span: span,
@@ -4907,6 +4942,7 @@ pub fn typecheck_expression(
                                                                 CheckedVariable {
                                                                     name: arg.1.clone(),
                                                                     type_id,
+                                                                    type_span: None,
                                                                     mutable: false,
                                                                     visibility: Visibility::Public,
                                                                     definition_span: span,
