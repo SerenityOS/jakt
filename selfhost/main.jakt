@@ -1511,8 +1511,18 @@ struct Parser {
                 yield ParsedType::Empty
             }
             Weak => {
-                todo("weak")
-                yield ParsedType::Empty
+                .index++
+                let inner = .parse_typename()
+                let span = JaktSpan(start: start_span.start, end: .current().span().end)
+                yield match inner {
+                    Optional(inner) => {
+                        yield ParsedType::WeakPtr(inner, span)
+                    }
+                    else => {
+                        .error("missing `?` after weak pointer type name", span)
+                        yield ParsedType::WeakPtr(inner, span)
+                    }
+                }
             }
             Identifier(name) => {
                 let span = .current().span()
