@@ -1013,6 +1013,10 @@ struct Parser {
         .errors.push(JaktError::Message(message, span))
     }
 
+    function error_with_hint(mutable this, anonymous message: String, anonymous span: JaktSpan, anonymous hint: String, anonymous hint_span: JaktSpan) throws {
+        .errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
+    }
+
     function peek(this, anonymous steps: usize) -> Token {
         if .eof() or (steps + .index) >= .tokens.size()  {
             return .tokens[.tokens.size() - 1]
@@ -1132,6 +1136,8 @@ struct Parser {
 
         // This gets reset after each loop. If someone doesn't consume it, we error out.
         let mutable last_visibility: Visibility? = None
+        let mutable last_visibility_span: JaktSpan? = None
+
         let mutable should_break = false
         while not should_break and .index < .tokens.size() {
             let token = .current()
@@ -1153,18 +1159,26 @@ struct Parser {
                     todo("Implement struct method parsing")
                     should_break = true
                 }
-                Public => {
-                    // FIXME: Reject multiple visibility modifiers
+                Public(span) => {
+                    if last_visibility.has_value() {
+                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                    }
                     last_visibility = Visibility::Public
+                    last_visibility_span = span
                     .index++
                 }
-                Private => {
-                    // FIXME: Reject multiple visibility modifiers
+                Private(span) => {
+                    if last_visibility.has_value() {
+                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                    }
                     last_visibility = Visibility::Private
+                    last_visibility_span = span
                     .index++
                 }
-                Restricted => {
-                    // FIXME: Reject multiple visibility modifiers
+                Restricted(span) => {
+                    if last_visibility.has_value() {
+                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                    }
                     todo("Implement restricted() visibility modifier")
                     .index++
                 }
@@ -1172,6 +1186,7 @@ struct Parser {
                     // Parse a field
                     let visibility = last_visibility ?? default_visibility
                     last_visibility = None
+                    last_visibility_span = None
 
                     let field = .parse_variable_declaration()
 
