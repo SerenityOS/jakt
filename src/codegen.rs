@@ -40,15 +40,10 @@ impl AllowedControlExits {
     const fn are_loop_exits_allowed(&self) -> bool {
         matches!(self, Self::AtLoop)
     }
-    fn choose_control_flow_macro(&self) -> &str {
-        assert!(
-            self.is_return_allowed(),
-            "at least return should be allowed in this context"
-        );
-        if self.are_loop_exits_allowed() {
-            "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP"
-        } else {
-            "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY"
+    const fn allow_return(self) -> Self {
+        match self {
+            Self::Nothing | Self::JustReturn => Self::JustReturn,
+            Self::AtLoop => Self::AtLoop,
         }
     }
 }
@@ -59,6 +54,53 @@ struct ControlFlowState {
     /// Whether `break` and `continue` should use `return ExplicitValueOrControlFlow` instead of
     /// C++'s `break`/`continue`.
     pub passes_through_match: bool,
+    match_nest_level: usize,
+}
+
+impl ControlFlowState {
+    const fn no_control_flow() -> Self {
+        Self {
+            allowed_exits: AllowedControlExits::Nothing,
+            passes_through_match: false,
+            match_nest_level: 0,
+        }
+    }
+    const fn enter_function(self) -> Self {
+        Self {
+            allowed_exits: AllowedControlExits::JustReturn,
+            passes_through_match: false,
+            ..self
+        }
+    }
+    const fn enter_match(self) -> Self {
+        Self {
+            allowed_exits: self.allowed_exits.allow_return(),
+            passes_through_match: true,
+            match_nest_level: if self.passes_through_match {
+                self.match_nest_level + 1
+            } else {
+                self.match_nest_level
+            },
+        }
+    }
+    fn is_match_nested(&self) -> bool {
+        self.match_nest_level != 0
+    }
+    fn choose_control_flow_macro(&self) -> &str {
+        assert!(
+            self.allowed_exits.is_return_allowed(),
+            "at least return should be allowed in this context"
+        );
+        if self.allowed_exits.are_loop_exits_allowed() {
+            if self.is_match_nested() {
+                "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH"
+            } else {
+                "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP"
+            }
+        } else {
+            "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY"
+        }
+    }
 }
 
 struct CodegenContext {
@@ -94,10 +136,7 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
         fresh_var_counter: 0,
         fresh_label_counter: 0,
         entered_yieldable_blocks: vec![],
-        control_flow_state: ControlFlowState {
-            allowed_exits: AllowedControlExits::Nothing,
-            passes_through_match: false,
-        },
+        control_flow_state: ControlFlowState::no_control_flow(),
     };
 
     output.push_str(&codegen_namespace_predecl(project, scope, &mut context));
@@ -1545,10 +1584,7 @@ fn codegen_function_in_namespace(
     }
 
     let last_control_flow = context.control_flow_state;
-    context.control_flow_state = ControlFlowState {
-        allowed_exits: AllowedControlExits::JustReturn,
-        passes_through_match: false,
-    };
+    context.control_flow_state = last_control_flow.enter_function();
     let block = codegen_block(
         INDENT_SIZE,
         function
@@ -2247,17 +2283,8 @@ fn codegen_enum_match(
     let mut output = String::new();
     let needs_deref = enum_.definition_type == DefinitionType::Class
         || matches!(expr, CheckedExpression::Var(CheckedVariable{name,..}, ..) if name == "this");
-    let used_macro = context
-        .control_flow_state
-        .allowed_exits
-        .choose_control_flow_macro();
+    let used_macro = context.control_flow_state.choose_control_flow_macro();
     output.push_str(used_macro);
-    let last_control_flow = context.control_flow_state;
-    let control_flow_inside_match = ControlFlowState {
-        allowed_exits: AllowedControlExits::JustReturn,
-        passes_through_match: true,
-    };
-    context.control_flow_state = control_flow_inside_match;
     match enum_.underlying_type_id {
         Some(_) => {
             if match_values_are_all_constant {
@@ -2526,8 +2553,6 @@ fn codegen_enum_match(
         }
     }
 
-    context.control_flow_state = last_control_flow;
-
     output
 }
 
@@ -2546,17 +2571,7 @@ fn codegen_generic_match(
         .iter()
         .any(|c| matches!(c, CheckedMatchCase::EnumVariant { .. }));
     let match_values_are_all_constant = match_values_are_all_constant && !is_generic_enum;
-    output.push_str(
-        context
-            .control_flow_state
-            .allowed_exits
-            .choose_control_flow_macro(),
-    );
-    let last_control_flow = context.control_flow_state;
-    context.control_flow_state = ControlFlowState {
-        allowed_exits: AllowedControlExits::JustReturn,
-        passes_through_match: true,
-    };
+    output.push_str(context.control_flow_state.choose_control_flow_macro());
     if match_values_are_all_constant && !is_generic_enum {
         // Use a switch statement instead of if-else chains
         output.push_str("(([&]() -> JaktInternal::ExplicitValueOrControlFlow<");
@@ -2692,7 +2707,6 @@ fn codegen_generic_match(
         output.push_str("return JaktInternal::ExplicitValue<void>();\n");
     }
     output.push_str("}()))");
-    context.control_flow_state = last_control_flow;
 
     output
 }
@@ -3048,6 +3062,8 @@ fn codegen_expr(
         CheckedExpression::Match(expr, cases, _, return_type_id, match_values_are_all_constant) => {
             let match_values_are_all_constant = *match_values_are_all_constant;
             let expr_type = &project.types[expr.type_id_or_type_var()];
+            let last_control_flow = context.control_flow_state;
+            context.control_flow_state = last_control_flow.enter_match();
             match expr_type {
                 Type::GenericEnumInstance(id, _) | Type::Enum(id) => {
                     let enum_ = &project.enums[*id];
@@ -3074,6 +3090,7 @@ fn codegen_expr(
                     ));
                 }
             };
+            context.control_flow_state = last_control_flow;
         }
         CheckedExpression::UnaryOp(expr, op, _, type_id) => {
             output.push('(');
