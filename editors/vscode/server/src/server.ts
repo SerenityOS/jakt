@@ -86,6 +86,8 @@ connection.onInitialize((params: InitializeParams) => {
 			}
 		};
 	}
+
+	console.log('Jakt language server initialized');
 	return result;
 });
 
@@ -103,71 +105,78 @@ connection.onInitialized(() => {
 });
 
 connection.onDefinition(async (request) => {
+	console.time('onDefinition');
 	const document = documents.get(request.textDocument.uri);
 
 	const text = document?.getText();
 
 	if (typeof text == "string") {
-		console.log("request: ");
-		console.log(request);
-		console.log("index: " + convertPosition(request.position, text));
+		// console.log("request: ");
+		// console.log(request);
+		// console.log("index: " + convertPosition(request.position, text));
 		const stdout = await runCompiler(text, "-g " + convertPosition(request.position, text));
-		console.log("got: ", stdout);
+		// console.log("got: ", stdout);
 
 		const lines = stdout.split('\n').filter(l => l.length > 0);
 		for (const line of lines) {
 
 			const obj = JSON.parse(line);
-			console.log("going to definition");
-			console.log(obj);
+			// console.log("going to definition");
+			// console.log(obj);
 
+			console.timeEnd('onDefinition');
 			return { uri: request.textDocument.uri, range: { start: convertSpan(obj.start, text), end: convertSpan(obj.end, text) } };
 		}
 	}
+	console.timeEnd('onDefinition');
 });
 
 connection.onTypeDefinition(async (request) => {
+	console.time('onTypeDefinition');
 	const document = documents.get(request.textDocument.uri);
 
 	const text = document?.getText();
 
 	if (typeof text == "string") {
-		console.log("request: ");
-		console.log(request);
-		console.log("index: " + convertPosition(request.position, text));
+		// console.log("request: ");
+		// console.log(request);
+		// console.log("index: " + convertPosition(request.position, text));
 		const stdout = await runCompiler(text, "-t " + convertPosition(request.position, text));
-		console.log("got: ", stdout);
+		// console.log("got: ", stdout);
 
 		const lines = stdout.split('\n').filter(l => l.length > 0);
 		for (const line of lines) {
 
 			const obj = JSON.parse(line);
-			console.log("going to type definition");
-			console.log(obj);
+			// console.log("going to type definition");
+			// console.log(obj);
 
+			console.timeEnd('onTypeDefinition');
 			return { uri: request.textDocument.uri, range: { start: convertSpan(obj.start, text), end: convertSpan(obj.end, text) } };
 		}
 	}
+	console.timeEnd('onTypeDefinition');
 });
 
 connection.onHover(async (request) => {
+	console.time('onHover');
 	const document = documents.get(request.textDocument.uri);
 
 	const text = document?.getText();
 
 	if (typeof text == "string") {
-		console.log("request: ");
-		console.log(request);
-		console.log("index: " + convertPosition(request.position, text));
+		// console.log("request: ");
+		// console.log(request);
+		// console.log("index: " + convertPosition(request.position, text));
 		const stdout = await runCompiler(text, "-v " + convertPosition(request.position, text));
-		console.log("got: ", stdout);
+		// console.log("got: ", stdout);
 
 		const lines = stdout.split('\n').filter(l => l.length > 0);
 		for (const line of lines) {
 
 			const obj = JSON.parse(line);
-			console.log("hovering");
-			console.log(obj);
+			// console.log("hovering");
+			// console.log(obj);
 
 			// FIXME: Figure out how to import `vscode` package in server.ts without
 			// getting runtime import errors to remove this deprication warning.
@@ -177,11 +186,13 @@ connection.onHover(async (request) => {
 			};
 
 			if (obj.hover != "") {
+				console.timeEnd('onHover');
 				return { contents };
 			}
 		}
 	}
 
+	console.timeEnd('onHover');
 	return null;
 });
 
@@ -234,11 +245,42 @@ documents.onDidClose(e => {
 	documentSettings.delete(e.document.uri);
 });
 
+function throttle(fn: (...args: any[]) => void, delay: number) {
+	let shouldWait = false;
+	let waitingArgs: any[] | null;
+	const timeoutFunc = () => {
+		if (waitingArgs == null) {
+			shouldWait = false;
+		} else {
+			fn(...waitingArgs);
+			waitingArgs = null;
+			setTimeout(timeoutFunc, delay);
+		}
+	};
+
+	return (...args: any[]) => {
+		if (shouldWait) {
+			waitingArgs = args;
+			return;
+		}
+
+		fn(...args);
+		shouldWait = true;
+
+		setTimeout(timeoutFunc, delay);
+	};
+}
+
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
-documents.onDidChangeContent(change => {
-	validateTextDocument(change.document);
-});
+documents.onDidChangeContent((
+() => {
+	const throttledValidateTextDocument = throttle(validateTextDocument, 500);
+	return (change) => {
+		throttledValidateTextDocument(change.document);
+	};
+}
+)());
 
 
 function convertSpan(index: number, text: string): Position {
@@ -299,7 +341,7 @@ async function runCompiler(text: string, flags: string): Promise<string> {
 	let stdout: string;
 	try {
 		const output = await exec("jakt " + flags + " " + tmpFile.name);
-		console.log(output);
+		// console.log(output);
 		stdout = output.stdout;
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	} catch (e: any) {
@@ -314,6 +356,7 @@ async function runCompiler(text: string, flags: string): Promise<string> {
 }
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+	console.time('validateTextDocument');
 	if (!hasDiagnosticRelatedInformationCapability) {
 		console.error('Trying to validate a document with no diagnostic capability');
 		return;
@@ -333,7 +376,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
 	const lines = stdout.split('\n').filter(l => l.length > 0);
 	for (const line of lines) {
-		console.log(line);
+		// console.log(line);
 		try {
 			const obj = JSON.parse(line);
 
@@ -360,7 +403,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 					source: textDocument.uri
 				};
 
-				console.log(diagnostic);
+				// console.log(diagnostic);
 
 				diagnostics.push(diagnostic);
 			} else if (obj.type == "hint") {
@@ -378,6 +421,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
 	// Send the computed diagnostics to VSCode.
 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+	console.timeEnd('validateTextDocument');
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -389,6 +433,7 @@ connection.onDidChangeWatchedFiles(_change => {
 // This handler provides the initial list of the completion items.
 connection.onCompletion(
 	async (request: TextDocumentPositionParams): Promise<CompletionItem[]> => {
+		console.time('onCompletion');
 		// The pass parameter contains the position of the text document in
 		// which code complete got requested. For the example we ignore this
 		// info and always provide the same completion items.
@@ -398,19 +443,19 @@ connection.onCompletion(
 		const text = document?.getText();
 
 		if (typeof text == "string") {
-			console.log("completion request: ");
-			console.log(request);
+			// console.log("completion request: ");
+			// console.log(request);
 			const index = convertPosition(request.position, text) - 1;
-			console.log("index: " + index);
+			// console.log("index: " + index);
 			const stdout = await runCompiler(text, "-m " + index);
-			console.log("got: ", stdout);
+			// console.log("got: ", stdout);
 
 			const lines = stdout.split('\n').filter(l => l.length > 0);
 			for (const line of lines) {
 
 				const obj = JSON.parse(line);
-				console.log("completions");
-				console.log(obj);
+				// console.log("completions");
+				// console.log(obj);
 
 				const output = [];
 				let index = 1;
@@ -423,10 +468,12 @@ connection.onCompletion(
 					});
 					index++;
 				}
+				console.timeEnd('onCompletion');
 				return output;
 			}
 		}
 
+		console.timeEnd('onCompletion');
 		return [];
 	}
 );
