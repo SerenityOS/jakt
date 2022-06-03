@@ -111,6 +111,7 @@ connection.onDefinition(async (request) => {
 	const text = document?.getText();
 
 	if (typeof text == "string") {
+		const lineBreaks = findLineBreaks(text);
 		// console.log("request: ");
 		// console.log(request);
 		// console.log("index: " + convertPosition(request.position, text));
@@ -125,7 +126,7 @@ connection.onDefinition(async (request) => {
 			// console.log(obj);
 
 			console.timeEnd('onDefinition');
-			return { uri: request.textDocument.uri, range: { start: convertSpan(obj.start, text), end: convertSpan(obj.end, text) } };
+			return { uri: request.textDocument.uri, range: { start: convertSpan(obj.start, text, lineBreaks), end: convertSpan(obj.end, text, lineBreaks) } };
 		}
 	}
 	console.timeEnd('onDefinition');
@@ -138,6 +139,7 @@ connection.onTypeDefinition(async (request) => {
 	const text = document?.getText();
 
 	if (typeof text == "string") {
+		const lineBreaks = findLineBreaks(text);
 		// console.log("request: ");
 		// console.log(request);
 		// console.log("index: " + convertPosition(request.position, text));
@@ -152,7 +154,7 @@ connection.onTypeDefinition(async (request) => {
 			// console.log(obj);
 
 			console.timeEnd('onTypeDefinition');
-			return { uri: request.textDocument.uri, range: { start: convertSpan(obj.start, text), end: convertSpan(obj.end, text) } };
+			return { uri: request.textDocument.uri, range: { start: convertSpan(obj.start, text, lineBreaks), end: convertSpan(obj.end, text, lineBreaks) } };
 		}
 	}
 	console.timeEnd('onTypeDefinition');
@@ -283,24 +285,21 @@ documents.onDidChangeContent((
 )());
 
 
-function convertSpan(index: number, text: string): Position {
-	const buffer = new TextEncoder().encode(text);
-	let line = 0;
+function convertSpan(utf8_offset: number, utf16_text: string, lineBreaks: Array<number>): Position {
+	let line = undefined;
+	for (let n = 0; n < lineBreaks.length; ++n) {
+		if (utf8_offset > lineBreaks[n]) {
+			continue;
+		}
+		line = n;
+		break;
+	}
+	line ??= 0;
+
+	let i = line == 0 ? 0 : (lineBreaks[line - 1] + 1);
 	let character = 0;
-
-	let i = 0;
-	while (i < text.length) {
-		if (i == index) {
-			return { line, character };
-		}
-
-		if (buffer.at(i) == 0x0A) {
-			line++;
-			character = 0;
-		} else {
-			character++;
-		}
-
+	while (i < utf8_offset) {
+		character++;
 		i++;
 	}
 
@@ -355,6 +354,19 @@ async function runCompiler(text: string, flags: string): Promise<string> {
 	return stdout;
 }
 
+function findLineBreaks(utf16_text: string): Array<number> {
+	const utf8_text = new TextEncoder().encode(utf16_text);
+	const lineBreaks: Array<number> = [];
+
+	for (let i = 0; i < utf8_text.length; ++i) {
+		if (utf8_text[i] == 0x0a) {
+			lineBreaks.push(i);
+		}
+	}
+
+	return lineBreaks;
+}
+
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	console.time('validateTextDocument');
 	if (!hasDiagnosticRelatedInformationCapability) {
@@ -367,6 +379,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
 	// The validator creates diagnostics for all uppercase words length 2 and more
 	const text = textDocument.getText();
+
+	const lineBreaks = findLineBreaks(text);
 
 	(textDocument as any).jaktInlayHints = [];
 
@@ -390,8 +404,8 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 					case "Error": severity = DiagnosticSeverity.Error; break;
 				}
 
-				const position_start = convertSpan(obj.span.start, text);
-				const position_end = convertSpan(obj.span.end, text);
+				const position_start = convertSpan(obj.span.start, text, lineBreaks);
+				const position_end = convertSpan(obj.span.end, text, lineBreaks);
 
 				const diagnostic: Diagnostic = {
 					severity,
@@ -407,7 +421,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
 				diagnostics.push(diagnostic);
 			} else if (obj.type == "hint") {
-				const position = convertSpan(obj.position, text);
+				const position = convertSpan(obj.position, text, lineBreaks);
 				const hint_string = ": " + obj.typename;
 				const hint = InlayHint.create(position, [InlayHintLabelPart.create(hint_string)], InlayHintKind.Type);
 
