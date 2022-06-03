@@ -69,7 +69,8 @@
 		"esbuild-base": "esbuild server/src/server.ts client/src/extension.ts --bundle --outdir=out --external:vscode --format=cjs --platform=node",
 		"esbuild": "npm run esbuild-base -- --sourcemap --minify",
 		"compile": "npm run esbuild",
-		"install": "cd server; npm install; cd ../client; npm install; cd ..; code --install-extension connor4312.esbuild-problem-matchers",
+		"install-code-dep": "code --install-extension connor4312.esbuild-problem-matchers && code --install-extension dbaeumer.vscode-eslint",
+		"install": "cd server; npm install; cd ../client; npm install; cd ..; npm run install-code-dep",
 		"watch": "npm run esbuild-base -- --sourcemap --watch",
 		"lint": "npx eslint ./client/src ./server/src --ext .ts,.tsx",
 		"test": "sh ./scripts/e2e.sh"
