@@ -879,6 +879,8 @@ boxed enum ParsedExpression {
     BinaryOp(lhs: ParsedExpression, op: ParsedExpression, rhs: ParsedExpression, span: JaktSpan)
     Operator(op: BinaryOperator, span: JaktSpan)
     OptionalNone(JaktSpan)
+    JaktArray(values: [ParsedExpression], fill_size: ParsedExpression?, span: JaktSpan)
+    JaktDictionary(values: [(ParsedExpression, ParsedExpression)], span: JaktSpan)
     Garbage(JaktSpan)
 
     function is_garbage(this) -> bool {
@@ -900,6 +902,8 @@ boxed enum ParsedExpression {
             BinaryOp(lhs, op, rhs, span) => span
             Operator(op, span) => span
             OptionalNone(span) => span
+            JaktArray(values, fill_size, span) => span
+            JaktDictionary(values, span) => span
             Garbage(span) => span
         }
     }
@@ -1858,6 +1862,9 @@ struct Parser {
                     }
                 }
             }
+            LSquare => {
+                return .parse_array_or_dictionary_literal()
+            }
             else => { }
         }
         return ParsedExpression::Garbage(span)
@@ -2167,6 +2174,102 @@ struct Parser {
         }
 
         return Visibility::Restricted(whitelist, span: restricted_span)
+    }
+
+    function parse_array_or_dictionary_literal(mutable this) throws -> ParsedExpression {
+        let mutable is_dictionary = false
+        let start = .current().span().start
+
+        if not match .current() {
+            LSquare => true
+            else => false
+        } {
+            .error("Expected ‘[’", .current().span());
+            return ParsedExpression::Garbage(.current().span())
+        }
+        .index++
+
+        let mutable fill_size_expr: ParsedExpression? = None
+        let mutable output: [ParsedExpression] = []
+        let mutable dict_output: [(ParsedExpression, ParsedExpression)] = []
+
+        let mutable should_break = false
+        while not should_break {
+            match .current() {
+                RSquare | Eof => {
+                    .index++
+                    should_break = true
+                }
+                Comma | Eol => {
+                    .index++
+                }
+                Semicolon => {
+                    if output.size() == 1 {
+                        .index++
+                        fill_size_expr = .parse_expression();
+                    } else {
+                        .error("Can't fill array with more than one expression", .current().span())
+                        .index++
+                    }
+                }
+                Colon => {
+                    .index++
+                    if dict_output.is_empty() {
+                        // FIXME: `if .current() is RSquare {`
+                        if match .current() {
+                            RSquare => true
+                            else => false
+                        } {
+                            .index++
+                            is_dictionary = true
+                            should_break = true
+                        } else {
+                            .error("Expected ‘]’", .current().span())
+                        }
+                    } else {
+                        .error("Missing key in dictionary literal", .current().span())
+                    }
+                }
+                else => {
+                    let expr = .parse_expression()
+                    // FIXME: `if .current() is Colon {`
+                    if match .current() {
+                        Colon => true
+                        else => false
+                    } {
+                        if not output.is_empty() {
+                            .error("Mixing dictionary and array values", .current().span())
+                        }
+
+                        is_dictionary = true
+                        .index++
+
+                        if .eof() {
+                            .error("Key missing value in dictionary", .current().span())
+                            return ParsedExpression::Garbage(.current().span())
+                        }
+                        let value = .parse_expression()
+                        dict_output.push((expr, value))
+                    } else if not is_dictionary {
+                        output.push(expr)
+                    }
+                }
+            }
+        }
+
+        let end = .index - 1
+        if end >= .tokens.size() or not match .tokens[end] {
+            RSquare => true
+            else => false
+        } {
+            .error("Expected ‘]’ to close the array", .tokens[end].span())
+        }
+
+        if is_dictionary {
+            return ParsedExpression::JaktDictionary(values: dict_output, span: JaktSpan(start, end: .tokens[end].span().end))
+        } else {
+            return ParsedExpression::JaktArray(values: output, fill_size: fill_size_expr, span: JaktSpan(start, end: .tokens[end].span().end))
+        }
     }
 }
 
