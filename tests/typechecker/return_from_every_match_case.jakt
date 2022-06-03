@@ -1,0 +1,18 @@
+/// Expect:
+/// - output: "1\n"
+enum Foo {
+    Bar
+    Baz
+}
+
+function test(foo: Foo) -> i64 {
+    match foo {
+        Bar => { return 1 }
+        Baz => { return 2 }
+    }
+}
+
+function main() {
+    let foo = Foo::Bar
+    println("{}", test(foo))
+}

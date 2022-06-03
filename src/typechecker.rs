@@ -1358,6 +1358,25 @@ impl CheckedExpression {
             _ => false,
         }
     }
+
+    pub fn definitely_returns(&self) -> bool {
+        if let CheckedExpression::Match(_, match_cases, _, _, _) = self {
+            // If each case is a block that definitely returns, the whole match expression definitely returns.
+            for case in match_cases {
+                match case {
+                    CheckedMatchCase::EnumVariant { body, .. }
+                    | CheckedMatchCase::Expression { body, .. }
+                    | CheckedMatchCase::CatchAll { body } => match body {
+                        CheckedMatchBody::Block(block) if block.definitely_returns => continue,
+                        _ => return false,
+                    },
+                }
+            }
+            return true;
+        }
+
+        false
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -3107,6 +3126,9 @@ pub fn statement_definitely_returns(stmt: &CheckedStatement) -> bool {
         CheckedStatement::Block(block) => block.definitely_returns,
         CheckedStatement::Loop(block) => block.definitely_returns,
         CheckedStatement::While(_, block) => block.definitely_returns,
+        CheckedStatement::Expression(match_expr @ CheckedExpression::Match(..)) => {
+            match_expr.definitely_returns()
+        }
         _ => false,
     }
 }
