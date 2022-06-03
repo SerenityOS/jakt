@@ -23,8 +23,8 @@ use std::collections::{HashMap, HashSet};
 
 const INDENT_SIZE: usize = 4;
 
-#[derive(Clone, Copy)]
-enum ControlExitFlags {
+#[derive(Debug, Clone, Copy)]
+enum AllowedControlExits {
     /// No control exit statements allowed
     Nothing,
     /// Only `return` allowed
@@ -33,7 +33,7 @@ enum ControlExitFlags {
     AtLoop,
 }
 
-impl ControlExitFlags {
+impl AllowedControlExits {
     const fn is_return_allowed(&self) -> bool {
         !matches!(self, Self::Nothing)
     }
@@ -53,10 +53,12 @@ impl ControlExitFlags {
     }
 }
 
-impl Default for ControlExitFlags {
-    fn default() -> Self {
-        Self::Nothing
-    }
+#[derive(Debug, Clone, Copy)]
+struct ControlFlowState {
+    pub allowed_exits: AllowedControlExits,
+    /// Whether `break` and `continue` should use `return ExplicitValueOrControlFlow` instead of
+    /// C++'s `break`/`continue`.
+    pub passes_through_match: bool,
 }
 
 struct CodegenContext {
@@ -65,6 +67,7 @@ struct CodegenContext {
     fresh_var_counter: usize,
     fresh_label_counter: usize,
     entered_yieldable_blocks: Vec<(String, String)>, // label, variable name
+    pub control_flow_state: ControlFlowState,
 }
 
 impl CodegenContext {
@@ -91,6 +94,10 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
         fresh_var_counter: 0,
         fresh_label_counter: 0,
         entered_yieldable_blocks: vec![],
+        control_flow_state: ControlFlowState {
+            allowed_exits: AllowedControlExits::Nothing,
+            passes_through_match: false,
+        },
     };
 
     output.push_str(&codegen_namespace_predecl(project, scope, &mut context));
@@ -360,14 +367,7 @@ fn codegen_nonrecursive_enum(
                         output.push_str("    ");
                         output.push_str(name);
                         output.push_str(" = ");
-                        output.push_str(&codegen_expr(
-                            0,
-                            value,
-                            project,
-                            context,
-                            true,
-                            ControlExitFlags::Nothing,
-                        ));
+                        output.push_str(&codegen_expr(0, value, project, context));
                         output.push_str(",\n");
                     }
                     _ => unreachable!(),
@@ -779,14 +779,7 @@ fn codegen_recursive_enum(
                         output.push_str("    ");
                         output.push_str(name);
                         output.push_str(" = ");
-                        output.push_str(&codegen_expr(
-                            0,
-                            value,
-                            project,
-                            context,
-                            true,
-                            ControlExitFlags::Nothing,
-                        ));
+                        output.push_str(&codegen_expr(0, value, project, context));
                         output.push_str(",\n");
                     }
                     _ => unreachable!(),
@@ -1551,6 +1544,11 @@ fn codegen_function_in_namespace(
         }
     }
 
+    let last_control_flow = context.control_flow_state;
+    context.control_flow_state = ControlFlowState {
+        allowed_exits: AllowedControlExits::JustReturn,
+        passes_through_match: false,
+    };
     let block = codegen_block(
         INDENT_SIZE,
         function
@@ -1559,9 +1557,8 @@ fn codegen_function_in_namespace(
             .expect("Function being generated must be checked"),
         project,
         context,
-        false,
-        ControlExitFlags::JustReturn,
     );
+    context.control_flow_state = last_control_flow;
     output.push_str(&block);
 
     if is_main {
@@ -1928,8 +1925,6 @@ fn codegen_block(
     checked_block: &CheckedBlock,
     project: &Project,
     context: &mut CodegenContext,
-    control_flow_runs_through_match: bool,
-    control_exit_flags: ControlExitFlags,
 ) -> String {
     let mut output = String::new();
 
@@ -1953,14 +1948,7 @@ fn codegen_block(
     output.push_str("{\n");
 
     for stmt in &checked_block.stmts {
-        let stmt = codegen_statement(
-            indent + INDENT_SIZE,
-            stmt,
-            project,
-            context,
-            control_flow_runs_through_match,
-            control_exit_flags,
-        );
+        let stmt = codegen_statement(indent + INDENT_SIZE, stmt, project, context);
 
         output.push_str(&stmt);
     }
@@ -1985,9 +1973,6 @@ fn codegen_statement(
     stmt: &CheckedStatement,
     project: &Project,
     context: &mut CodegenContext,
-    control_flow_runs_through_match: bool, // whether `ExplicitValueOrControlFlow` should be
-    // returned when getting a `continue`/`break`
-    control_exit_flags: ControlExitFlags,
 ) -> String {
     let mut output = String::new();
 
@@ -1997,69 +1982,46 @@ fn codegen_statement(
         CheckedStatement::Try(stmt, error_name, catch_block) => {
             output.push('{');
             output.push_str("auto _jakt_try_result = [&]() -> ErrorOr<void> {");
-            output.push_str(&codegen_statement(
-                indent,
-                stmt,
-                project,
-                context,
-                false,
-                control_exit_flags,
-            ));
-            output.push(';');
-            output.push_str("return {};");
-            output.push_str("}();");
-            output.push_str("if (_jakt_try_result.is_error()) {");
-            if !error_name.is_empty() {
-                output.push_str("auto ");
-                output.push_str(error_name);
-                output.push_str(" = _jakt_try_result.release_error();");
+            {
+                let last_control_flow = context.control_flow_state;
+                context.control_flow_state.passes_through_match = false;
+                output.push_str(&codegen_statement(indent, stmt, project, context));
+                output.push(';');
+                output.push_str("return {};");
+                output.push_str("}();");
+                output.push_str("if (_jakt_try_result.is_error()) {");
+                if !error_name.is_empty() {
+                    output.push_str("auto ");
+                    output.push_str(error_name);
+                    output.push_str(" = _jakt_try_result.release_error();");
+                }
+                output.push_str(&codegen_block(indent, catch_block, project, context));
+                context.control_flow_state = last_control_flow;
             }
-            output.push_str(&codegen_block(
-                indent,
-                catch_block,
-                project,
-                context,
-                false,
-                control_exit_flags,
-            ));
             output.push('}');
             output.push('}');
         }
         CheckedStatement::Throw(expr) => {
             output.push_str("return ");
-            output.push_str(&codegen_expr(
-                indent,
-                expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push(';');
         }
         CheckedStatement::Continue => {
-            output.push_str(if control_flow_runs_through_match {
+            output.push_str(if context.control_flow_state.passes_through_match {
                 "return JaktInternal::LoopContinue{};"
             } else {
                 "continue;"
             });
         }
         CheckedStatement::Break => {
-            output.push_str(if control_flow_runs_through_match {
+            output.push_str(if context.control_flow_state.passes_through_match {
                 "return JaktInternal::LoopBreak{};"
             } else {
                 "break;"
             });
         }
         CheckedStatement::Expression(expr) => {
-            let expr = codegen_expr(
-                indent,
-                expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            );
+            let expr = codegen_expr(indent, expr, project, context);
             output.push_str(&expr);
             output.push_str(";\n");
         }
@@ -2068,39 +2030,23 @@ fn codegen_statement(
             output.push_str("#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n");
             output.push_str("ScopeGuard __SCOPE_GUARD_NAME ([&] \n");
             output.push_str("#undef __SCOPE_GUARD_NAME\n{");
-            output.push_str(&codegen_statement(
-                indent,
-                statement,
-                project,
-                context,
-                false,
-                control_exit_flags,
-            ));
-            output.push_str("});\n");
+            {
+                let last_control_flow = context.control_flow_state;
+                context.control_flow_state.passes_through_match = false;
+                output.push_str(&codegen_statement(indent, statement, project, context));
+                output.push_str("});\n");
+                context.control_flow_state = last_control_flow;
+            }
         }
         CheckedStatement::Return(expr) => {
-            let expr = codegen_expr(
-                indent,
-                expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            );
+            let expr = codegen_expr(indent, expr, project, context);
             output.push_str("return (");
             output.push_str(&expr);
             output.push_str(");\n")
         }
         CheckedStatement::Yield(expr) => {
             // yield expr -> block_var = expr; goto block_end;
-            let expr = codegen_expr(
-                indent,
-                expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            );
+            let expr = codegen_expr(indent, expr, project, context);
             let (block_var_name, block_end_label) = context
                 .entered_yieldable_blocks
                 .last()
@@ -2113,76 +2059,42 @@ fn codegen_statement(
             output.push_str(";\n");
         }
         CheckedStatement::If(cond, block, else_stmt) => {
-            let expr = codegen_expr(
-                indent,
-                cond,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            );
+            let expr = codegen_expr(indent, cond, project, context);
             output.push_str("if (");
             output.push_str(&expr);
             output.push_str(") ");
 
-            let block = codegen_block(
-                indent,
-                block,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            );
+            let block = codegen_block(indent, block, project, context);
             output.push_str(&block);
 
             if let Some(else_stmt) = else_stmt {
                 output.push_str(" else ");
-                let else_string = codegen_statement(
-                    indent,
-                    else_stmt,
-                    project,
-                    context,
-                    false,
-                    control_exit_flags,
-                );
+                let else_string = codegen_statement(indent, else_stmt, project, context);
                 output.push_str(&else_string);
             }
         }
         CheckedStatement::Loop(block) => {
             output.push_str("for (;;) {");
-            let block = codegen_block(
-                indent,
-                block,
-                project,
-                context,
-                control_flow_runs_through_match,
-                ControlExitFlags::AtLoop,
-            );
+            let last_control_flow = context.control_flow_state;
+            context.control_flow_state.allowed_exits = AllowedControlExits::AtLoop;
+            let block = codegen_block(indent, block, project, context);
+            context.control_flow_state = last_control_flow;
             output.push_str(&block);
             output.push('}');
         }
         CheckedStatement::While(cond, block) => {
-            let expr = codegen_expr(
-                indent,
-                cond,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            );
+            let expr = codegen_expr(indent, cond, project, context);
             output.push_str("while (");
             output.push_str(&expr);
             output.push_str(") ");
 
-            let block = codegen_block(
-                indent,
-                block,
-                project,
-                context,
-                control_flow_runs_through_match,
-                ControlExitFlags::AtLoop,
-            );
-            output.push_str(&block);
+            {
+                let last_control_flow = context.control_flow_state;
+                context.control_flow_state.allowed_exits = AllowedControlExits::AtLoop;
+                let block = codegen_block(indent, block, project, context);
+                context.control_flow_state = last_control_flow;
+                output.push_str(&block);
+            }
         }
         CheckedStatement::VarDecl(var_decl, expr) => {
             if !var_decl.mutable {
@@ -2192,25 +2104,11 @@ fn codegen_statement(
             output.push(' ');
             output.push_str(&var_decl.name);
             output.push_str(" = ");
-            output.push_str(&codegen_expr(
-                indent,
-                expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push_str(";\n");
         }
         CheckedStatement::Block(checked_block) => {
-            let block = codegen_block(
-                indent,
-                checked_block,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            );
+            let block = codegen_block(indent, checked_block, project, context);
             output.push('{');
             output.push_str(&block);
             output.push('}');
@@ -2238,8 +2136,6 @@ fn codegen_checked_binary_op(
     op: &BinaryOperator,
     project: &Project,
     context: &mut CodegenContext,
-    control_flow_runs_through_match: bool,
-    control_exit_flags: ControlExitFlags,
 ) -> String {
     let mut output = String::new();
 
@@ -2260,23 +2156,9 @@ fn codegen_checked_binary_op(
     output.push('<');
     output.push_str(&codegen_type(type_id, project));
     output.push_str(">(");
-    output.push_str(&codegen_expr(
-        indent,
-        lhs,
-        project,
-        context,
-        control_flow_runs_through_match,
-        control_exit_flags,
-    ));
+    output.push_str(&codegen_expr(indent, lhs, project, context));
     output.push_str(", ");
-    output.push_str(&codegen_expr(
-        indent,
-        rhs,
-        project,
-        context,
-        control_flow_runs_through_match,
-        control_exit_flags,
-    ));
+    output.push_str(&codegen_expr(indent, rhs, project, context));
     output.push(')');
 
     output
@@ -2290,21 +2172,12 @@ fn codegen_checked_binary_op_assign(
     op: &BinaryOperator,
     project: &Project,
     context: &mut CodegenContext,
-    control_flow_runs_through_match: bool,
-    control_exit_flags: ControlExitFlags,
 ) -> String {
     let mut output = String::new();
 
     output.push('{');
     output.push_str("auto& _jakt_ref = ");
-    output.push_str(&codegen_expr(
-        indent,
-        lhs,
-        project,
-        context,
-        control_flow_runs_through_match,
-        control_exit_flags,
-    ));
+    output.push_str(&codegen_expr(indent, lhs, project, context));
     output.push(';');
     output.push_str("_jakt_ref = JaktInternal::");
 
@@ -2323,14 +2196,7 @@ fn codegen_checked_binary_op_assign(
     output.push('<');
     output.push_str(&codegen_type(type_id, project));
     output.push_str(">(_jakt_ref, ");
-    output.push_str(&codegen_expr(
-        indent,
-        rhs,
-        project,
-        context,
-        control_flow_runs_through_match,
-        control_exit_flags,
-    ));
+    output.push_str(&codegen_expr(indent, rhs, project, context));
     output.push_str(");");
     output.push('}');
 
@@ -2349,37 +2215,16 @@ fn codegen_match_body(
         CheckedMatchBody::Expression(expr) => {
             if expr.type_id_or_type_var() == VOID_TYPE_ID {
                 output.push_str("   return (");
-                output.push_str(&codegen_expr(
-                    indent + 1,
-                    expr,
-                    project,
-                    context,
-                    true,
-                    ControlExitFlags::JustReturn,
-                ));
+                output.push_str(&codegen_expr(indent + 1, expr, project, context));
                 output.push_str("), JaktInternal::ExplicitValue<void>();\n");
             } else {
                 output.push_str("   return JaktInternal::ExplicitValue(");
-                output.push_str(&codegen_expr(
-                    indent + 1,
-                    expr,
-                    project,
-                    context,
-                    true,
-                    ControlExitFlags::JustReturn,
-                ));
+                output.push_str(&codegen_expr(indent + 1, expr, project, context));
                 output.push_str(");\n");
             }
         }
         CheckedMatchBody::Block(block) => {
-            output.push_str(&codegen_block(
-                indent,
-                block,
-                project,
-                context,
-                true,
-                ControlExitFlags::JustReturn,
-            ));
+            output.push_str(&codegen_block(indent, block, project, context));
 
             if return_type_id == VOID_TYPE_ID {
                 output.push_str("return JaktInternal::ExplicitValue<void>();\n");
@@ -2398,13 +2243,21 @@ fn codegen_enum_match(
     indent: usize,
     project: &Project,
     context: &mut CodegenContext,
-    control_exit_flags: ControlExitFlags,
 ) -> String {
     let mut output = String::new();
     let needs_deref = enum_.definition_type == DefinitionType::Class
         || matches!(expr, CheckedExpression::Var(CheckedVariable{name,..}, ..) if name == "this");
-    let used_macro = control_exit_flags.choose_control_flow_macro();
+    let used_macro = context
+        .control_flow_state
+        .allowed_exits
+        .choose_control_flow_macro();
     output.push_str(used_macro);
+    let last_control_flow = context.control_flow_state;
+    let control_flow_inside_match = ControlFlowState {
+        allowed_exits: AllowedControlExits::JustReturn,
+        passes_through_match: true,
+    };
+    context.control_flow_state = control_flow_inside_match;
     match enum_.underlying_type_id {
         Some(_) => {
             if match_values_are_all_constant {
@@ -2418,14 +2271,7 @@ fn codegen_enum_match(
                 if needs_deref {
                     output.push('*');
                 }
-                output.push_str(&codegen_expr(
-                    indent,
-                    expr,
-                    project,
-                    context,
-                    true,
-                    control_exit_flags,
-                ));
+                output.push_str(&codegen_expr(indent, expr, project, context));
                 output.push_str(") {\n");
             } else {
                 output.push_str("(([&]() -> JaktInternal::ExplicitValueOrControlFlow<");
@@ -2437,14 +2283,7 @@ fn codegen_enum_match(
                 if needs_deref {
                     output.push('*');
                 }
-                output.push_str(&codegen_expr(
-                    indent,
-                    expr,
-                    project,
-                    context,
-                    true,
-                    ControlExitFlags::JustReturn,
-                ));
+                output.push_str(&codegen_expr(indent, expr, project, context));
                 output.push_str(";\n");
             }
             let mut first = true;
@@ -2523,14 +2362,7 @@ fn codegen_enum_match(
                             }
                             output.push_str("if (__jakt_enum_value == ");
                         }
-                        output.push_str(&codegen_expr(
-                            indent,
-                            expression,
-                            project,
-                            context,
-                            true,
-                            control_exit_flags,
-                        ));
+                        output.push_str(&codegen_expr(indent, expression, project, context));
                         if match_values_are_all_constant {
                             output.push_str(":\n");
                         } else {
@@ -2566,14 +2398,7 @@ fn codegen_enum_match(
             output.push_str(">{\n");
 
             output.push_str("auto&& __jakt_match_variant_maybe_deref = ");
-            output.push_str(&codegen_expr(
-                indent,
-                expr,
-                project,
-                context,
-                true,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push(';');
 
             output.push_str("auto&& __jakt_match_variant = ");
@@ -2701,6 +2526,8 @@ fn codegen_enum_match(
         }
     }
 
+    context.control_flow_state = last_control_flow;
+
     output
 }
 
@@ -2712,7 +2539,6 @@ fn codegen_generic_match(
     indent: usize,
     project: &Project,
     context: &mut CodegenContext,
-    control_exit_flags: ControlExitFlags,
 ) -> String {
     let mut output = String::new();
 
@@ -2720,7 +2546,17 @@ fn codegen_generic_match(
         .iter()
         .any(|c| matches!(c, CheckedMatchCase::EnumVariant { .. }));
     let match_values_are_all_constant = match_values_are_all_constant && !is_generic_enum;
-    output.push_str(control_exit_flags.choose_control_flow_macro());
+    output.push_str(
+        context
+            .control_flow_state
+            .allowed_exits
+            .choose_control_flow_macro(),
+    );
+    let last_control_flow = context.control_flow_state;
+    context.control_flow_state = ControlFlowState {
+        allowed_exits: AllowedControlExits::JustReturn,
+        passes_through_match: true,
+    };
     if match_values_are_all_constant && !is_generic_enum {
         // Use a switch statement instead of if-else chains
         output.push_str("(([&]() -> JaktInternal::ExplicitValueOrControlFlow<");
@@ -2729,14 +2565,7 @@ fn codegen_generic_match(
         output.push_str("_JaktCurrentFunctionReturnType");
         output.push_str("> { \n");
         output.push_str("switch (");
-        output.push_str(&codegen_expr(
-            indent,
-            expr,
-            project,
-            context,
-            true,
-            ControlExitFlags::JustReturn,
-        ));
+        output.push_str(&codegen_expr(indent, expr, project, context));
         output.push_str(") {\n");
     } else {
         output.push_str("(([&]() -> JaktInternal::ExplicitValueOrControlFlow<");
@@ -2749,14 +2578,7 @@ fn codegen_generic_match(
         } else {
             output.push_str("auto __jakt_enum_value = (");
         }
-        output.push_str(&codegen_expr(
-            indent,
-            expr,
-            project,
-            context,
-            true,
-            ControlExitFlags::JustReturn,
-        ));
+        output.push_str(&codegen_expr(indent, expr, project, context));
         output.push_str(");\n");
     }
     let mut first = true;
@@ -2840,14 +2662,7 @@ fn codegen_generic_match(
                     }
                     output.push_str("if (__jakt_enum_value == ");
                 }
-                output.push_str(&codegen_expr(
-                    indent,
-                    expression,
-                    project,
-                    context,
-                    true,
-                    ControlExitFlags::JustReturn,
-                ));
+                output.push_str(&codegen_expr(indent, expression, project, context));
                 if match_values_are_all_constant {
                     output.push_str(":\n");
                 } else {
@@ -2877,6 +2692,7 @@ fn codegen_generic_match(
         output.push_str("return JaktInternal::ExplicitValue<void>();\n");
     }
     output.push_str("}()))");
+    context.control_flow_state = last_control_flow;
 
     output
 }
@@ -2886,8 +2702,6 @@ fn codegen_expr(
     expr: &CheckedExpression,
     project: &Project,
     context: &mut CodegenContext,
-    control_flow_runs_through_match: bool,
-    control_exit_flags: ControlExitFlags,
 ) -> String {
     let mut output = String::new();
 
@@ -2905,25 +2719,11 @@ fn codegen_expr(
             output.push_str("static_cast<");
             output.push_str(&codegen_type(index_type, project));
             output.push_str(">(");
-            output.push_str(&codegen_expr(
-                indent,
-                start_expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, start_expr, project, context));
             output.push_str("),static_cast<");
             output.push_str(&codegen_type(index_type, project));
             output.push_str(">(");
-            output.push_str(&codegen_expr(
-                indent,
-                end_expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, end_expr, project, context));
             output.push_str(")})");
         }
         CheckedExpression::OptionalNone(_, _) => {
@@ -2931,26 +2731,12 @@ fn codegen_expr(
         }
         CheckedExpression::OptionalSome(expr, _, _) => {
             output.push('(');
-            output.push_str(&codegen_expr(
-                indent,
-                expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push(')');
         }
         CheckedExpression::ForcedUnwrap(expr, _, _) => {
             output.push('(');
-            output.push_str(&codegen_expr(
-                indent,
-                expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push_str(".value())");
         }
         CheckedExpression::QuotedString(qs, _) => {
@@ -3051,14 +2837,7 @@ fn codegen_expr(
             if call.name == "print" {
                 output.push_str("out(");
                 for (i, param) in call.args.iter().enumerate() {
-                    output.push_str(&codegen_expr(
-                        indent,
-                        &param.1,
-                        project,
-                        context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
-                    ));
+                    output.push_str(&codegen_expr(indent, &param.1, project, context));
                     if i != call.args.len() - 1 {
                         output.push(',');
                     }
@@ -3067,14 +2846,7 @@ fn codegen_expr(
             } else if call.name == "println" {
                 output.push_str("outln(");
                 for (i, param) in call.args.iter().enumerate() {
-                    output.push_str(&codegen_expr(
-                        indent,
-                        &param.1,
-                        project,
-                        context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
-                    ));
+                    output.push_str(&codegen_expr(indent, &param.1, project, context));
                     if i != call.args.len() - 1 {
                         output.push(',');
                     }
@@ -3083,14 +2855,7 @@ fn codegen_expr(
             } else if call.name == "eprintln" {
                 output.push_str("warnln(");
                 for (i, param) in call.args.iter().enumerate() {
-                    output.push_str(&codegen_expr(
-                        indent,
-                        &param.1,
-                        project,
-                        context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
-                    ));
+                    output.push_str(&codegen_expr(indent, &param.1, project, context));
                     if i != call.args.len() - 1 {
                         output.push(',');
                     }
@@ -3099,14 +2864,7 @@ fn codegen_expr(
             } else if call.name == "format" {
                 output.push_str("TRY(String::formatted(");
                 for (i, param) in call.args.iter().enumerate() {
-                    output.push_str(&codegen_expr(
-                        indent,
-                        &param.1,
-                        project,
-                        context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
-                    ));
+                    output.push_str(&codegen_expr(indent, &param.1, project, context));
                     if i != call.args.len() - 1 {
                         output.push(',');
                     }
@@ -3219,14 +2977,7 @@ fn codegen_expr(
                         first = false;
                     }
 
-                    output.push_str(&codegen_expr(
-                        indent,
-                        &param.1,
-                        project,
-                        context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
-                    ));
+                    output.push_str(&codegen_expr(indent, &param.1, project, context));
                 }
                 output.push(')');
             }
@@ -3242,14 +2993,7 @@ fn codegen_expr(
             output.push('(');
 
             output.push('(');
-            output.push_str(&codegen_expr(
-                indent,
-                expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push(')');
 
             match &**expr {
@@ -3293,14 +3037,7 @@ fn codegen_expr(
                     first = false;
                 }
 
-                output.push_str(&codegen_expr(
-                    indent,
-                    &param.1,
-                    project,
-                    context,
-                    control_flow_runs_through_match,
-                    control_exit_flags,
-                ));
+                output.push_str(&codegen_expr(indent, &param.1, project, context));
             }
             output.push_str("))");
 
@@ -3323,7 +3060,6 @@ fn codegen_expr(
                         indent,
                         project,
                         context,
-                        control_exit_flags,
                     ));
                 }
                 _ => {
@@ -3335,7 +3071,6 @@ fn codegen_expr(
                         indent,
                         project,
                         context,
-                        control_exit_flags,
                     ));
                 }
             };
@@ -3392,14 +3127,7 @@ fn codegen_expr(
                 }
                 _ => {}
             }
-            output.push_str(&codegen_expr(
-                indent,
-                expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             match op {
                 CheckedUnaryOperator::PostIncrement => {
                     output.push_str("++");
@@ -3422,14 +3150,7 @@ fn codegen_expr(
                     let rhs_type = &project.types[rhs.type_id_or_type_var()];
                     let optional_struct_id = project.cached_optional_struct_id.unwrap();
 
-                    output.push_str(&codegen_expr(
-                        indent,
-                        lhs,
-                        project,
-                        context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
-                    ));
+                    output.push_str(&codegen_expr(indent, lhs, project, context));
 
                     match rhs_type {
                         Type::GenericInstance(struct_id, _) if *struct_id == optional_struct_id => {
@@ -3439,55 +3160,20 @@ fn codegen_expr(
                             output.push_str(".value_or_lazy_evaluated([&] { return ");
                         }
                     }
-                    output.push_str(&codegen_expr(
-                        indent,
-                        rhs,
-                        project,
-                        context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
-                    ));
+                    output.push_str(&codegen_expr(indent, rhs, project, context));
                     output.push_str("; })");
                 }
                 BinaryOperator::NoneCoalescingAssign => {
-                    output.push_str(&codegen_expr(
-                        indent,
-                        lhs,
-                        project,
-                        context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
-                    ));
+                    output.push_str(&codegen_expr(indent, lhs, project, context));
                     output.push_str(".lazy_emplace([&] { return ");
-                    output.push_str(&codegen_expr(
-                        indent,
-                        rhs,
-                        project,
-                        context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
-                    ));
+                    output.push_str(&codegen_expr(indent, rhs, project, context));
                     output.push_str("; })");
                 }
                 BinaryOperator::ArithmeticRightShift => {
                     output.push_str("JaktInternal::arithmetic_shift_right(");
-                    output.push_str(&codegen_expr(
-                        indent,
-                        lhs,
-                        project,
-                        context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
-                    ));
+                    output.push_str(&codegen_expr(indent, lhs, project, context));
                     output.push_str(", ");
-                    output.push_str(&codegen_expr(
-                        indent,
-                        rhs,
-                        project,
-                        context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
-                    ));
+                    output.push_str(&codegen_expr(indent, rhs, project, context));
                     output.push(')');
                 }
                 BinaryOperator::Add
@@ -3505,8 +3191,6 @@ fn codegen_expr(
                         op,
                         project,
                         context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
                     ))
                 }
                 BinaryOperator::AddAssign
@@ -3524,53 +3208,23 @@ fn codegen_expr(
                         op,
                         project,
                         context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
                     ))
                 }
                 _ => {
                     if *op == BinaryOperator::Assign {
                         if let CheckedExpression::IndexedDictionary(expr, index, ..) = lhs.as_ref()
                         {
-                            output.push_str(&codegen_expr(
-                                0,
-                                expr,
-                                project,
-                                context,
-                                control_flow_runs_through_match,
-                                control_exit_flags,
-                            ));
+                            output.push_str(&codegen_expr(0, expr, project, context));
                             output.push_str(".set(");
-                            output.push_str(&codegen_expr(
-                                0,
-                                index,
-                                project,
-                                context,
-                                control_flow_runs_through_match,
-                                control_exit_flags,
-                            ));
+                            output.push_str(&codegen_expr(0, index, project, context));
                             output.push_str(", ");
-                            output.push_str(&codegen_expr(
-                                0,
-                                rhs,
-                                project,
-                                context,
-                                control_flow_runs_through_match,
-                                control_exit_flags,
-                            ));
+                            output.push_str(&codegen_expr(0, rhs, project, context));
                             output.push_str("))");
                             return output;
                         }
                     }
 
-                    output.push_str(&codegen_expr(
-                        indent,
-                        lhs,
-                        project,
-                        context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
-                    ));
+                    output.push_str(&codegen_expr(indent, lhs, project, context));
                     match op {
                         BinaryOperator::Add => output.push_str(" + "),
                         BinaryOperator::Subtract => output.push_str(" - "),
@@ -3604,14 +3258,7 @@ fn codegen_expr(
                         BinaryOperator::BitwiseRightShift => output.push_str(" >> "),
                         _ => {}
                     }
-                    output.push_str(&codegen_expr(
-                        indent,
-                        rhs,
-                        project,
-                        context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
-                    ));
+                    output.push_str(&codegen_expr(indent, rhs, project, context));
                 }
             }
             output.push(')');
@@ -3626,22 +3273,13 @@ fn codegen_expr(
                 output.push_str("(TRY(Array<");
                 output.push_str(&codegen_type(value_type_id, project));
                 output.push_str(">::filled(");
-                output.push_str(&codegen_expr(
-                    indent,
-                    fill_size_expr,
-                    project,
-                    context,
-                    control_flow_runs_through_match,
-                    control_exit_flags,
-                ));
+                output.push_str(&codegen_expr(indent, fill_size_expr, project, context));
                 output.push_str(", ");
                 output.push_str(&codegen_expr(
                     indent,
                     vals.first().unwrap(),
                     project,
                     context,
-                    control_flow_runs_through_match,
-                    control_exit_flags,
                 ));
                 output.push_str(")))");
             } else {
@@ -3657,14 +3295,7 @@ fn codegen_expr(
                         first = false;
                     }
 
-                    output.push_str(&codegen_expr(
-                        indent,
-                        val,
-                        project,
-                        context,
-                        control_flow_runs_through_match,
-                        control_exit_flags,
-                    ))
+                    output.push_str(&codegen_expr(indent, val, project, context))
                 }
                 output.push_str("}))");
             }
@@ -3690,23 +3321,9 @@ fn codegen_expr(
                 }
 
                 output.push('{');
-                output.push_str(&codegen_expr(
-                    indent,
-                    key,
-                    project,
-                    context,
-                    control_flow_runs_through_match,
-                    control_exit_flags,
-                ));
+                output.push_str(&codegen_expr(indent, key, project, context));
                 output.push_str(", ");
-                output.push_str(&codegen_expr(
-                    indent,
-                    value,
-                    project,
-                    context,
-                    control_flow_runs_through_match,
-                    control_exit_flags,
-                ));
+                output.push_str(&codegen_expr(indent, value, project, context));
                 output.push('}');
             }
             output.push_str("})))");
@@ -3729,14 +3346,7 @@ fn codegen_expr(
                 } else {
                     first = false;
                 }
-                output.push_str(&codegen_expr(
-                    indent,
-                    value,
-                    project,
-                    context,
-                    control_flow_runs_through_match,
-                    control_exit_flags,
-                ));
+                output.push_str(&codegen_expr(indent, value, project, context));
             }
             output.push_str("})))");
         }
@@ -3751,83 +3361,34 @@ fn codegen_expr(
                     first = false;
                 }
 
-                output.push_str(&codegen_expr(
-                    indent,
-                    val,
-                    project,
-                    context,
-                    control_flow_runs_through_match,
-                    control_exit_flags,
-                ))
+                output.push_str(&codegen_expr(indent, val, project, context))
             }
             output.push_str("})");
         }
         CheckedExpression::IndexedExpression(expr, idx, _, _) => {
             output.push_str("((");
-            output.push_str(&codegen_expr(
-                indent,
-                expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push_str(")[");
-            output.push_str(&codegen_expr(
-                indent,
-                idx,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, idx, project, context));
             output.push_str("])");
         }
         CheckedExpression::IndexedDictionary(expr, idx, _, _) => {
             output.push_str("((");
-            output.push_str(&codegen_expr(
-                indent,
-                expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push_str(")[");
-            output.push_str(&codegen_expr(
-                indent,
-                idx,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, idx, project, context));
             output.push_str("])");
         }
         CheckedExpression::IndexedTuple(expr, idx, _, _) => {
             // x.get<1>()
             output.push_str("((");
-            output.push_str(&codegen_expr(
-                indent,
-                expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push_str(&format!(").get<{}>())", idx));
         }
         CheckedExpression::IndexedStruct(expr, name, _, _) => {
             // x.foo or x->foo
             output.push_str("((");
-            output.push_str(&codegen_expr(
-                indent,
-                expr,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_expr(indent, expr, project, context));
             output.push(')');
 
             match &**expr {
@@ -3856,14 +3417,7 @@ fn codegen_expr(
             output.push_str(&format!("{})", name));
         }
         CheckedExpression::Block(block, _, _) => {
-            output.push_str(&codegen_block(
-                indent,
-                block,
-                project,
-                context,
-                control_flow_runs_through_match,
-                control_exit_flags,
-            ));
+            output.push_str(&codegen_block(indent, block, project, context));
         }
         CheckedExpression::Garbage(_) => {
             // Incorrect parse/typecheck
