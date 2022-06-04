@@ -6229,6 +6229,7 @@ pub fn typecheck_call(
                 }
 
                 if call.name == "format" {
+                    callee_throws = true; // `format` always throws
                     return_type_id = STRING_TYPE_ID;
                 } else {
                     return_type_id = VOID_TYPE_ID;
@@ -6258,14 +6259,6 @@ pub fn typecheck_call(
                 callee_throws = callee.throws;
                 return_type_id = callee.return_type_id;
                 linkage = callee.linkage;
-
-                let caller_scope = &project.scopes[caller_scope_id];
-                if callee.throws && !caller_scope.throws {
-                    error = error.or(Some(JaktError::TypecheckError(
-                        "Call to function that may throw needs to be in a try statement or a function marked as throws".to_string(),
-                        *span,
-                    )));
-                }
 
                 let scope_containing_callee = project.scopes[callee.function_scope_id]
                     .parent
@@ -6478,6 +6471,15 @@ pub fn typecheck_call(
                 )))
             }
         }
+    }
+
+    if callee_throws && !project.scopes[caller_scope_id].throws {
+        error = error.or(
+            Some(JaktError::TypecheckError(
+                "Call to function that may throw needs to be in a try statement or a function marked as throws".to_string(),
+                *span,
+            ))
+        );
     }
 
     if let Some(function_id) = generic_checked_function_to_instantiate {
