@@ -1835,7 +1835,7 @@ struct Parser {
             }
             False => {
                 .index++
-                return ParsedExpression::Boolean(val: true, span)
+                return ParsedExpression::Boolean(val: false, span)
             }
             Not => {
                 let start = .current().span()
