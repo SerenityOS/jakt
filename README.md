@@ -73,7 +73,7 @@ rect.set_size(width: 640, height: 480)
 
 There are two exceptions to this:
 
-- [x] If the parameter in the function declaration is declared as `anonymous`, omitting the argument label is allowed.
+- [x] If the parameter in the function declaration is declared as `anon`, omitting the argument label is allowed.
 - [x] When passing a variable with the same name as the parameter.
 
 ## Structures and classes
@@ -168,7 +168,7 @@ x.func()
 class Foo {
     x: i64
 
-    function set(mutable this, anonymous x: i64) {
+    function set(mutable this, anon x: i64) {
         this.x = x
     }
 }
@@ -285,7 +285,7 @@ enum MyOptional<T> {
     None
 }
 
-function value_or_default<T>(anonymous x: MyOptional<T>, default: T) -> T {
+function value_or_default<T>(anon x: MyOptional<T>, default: T) -> T {
     return match x {
         Some(value) => {
             let stuff = maybe_do_stuff_with(value)
@@ -303,7 +303,7 @@ enum Foo {
     )
 }
 
-function look_at_foo(anonymous x: Foo) -> i32 {
+function look_at_foo(anon x: Foo) -> i32 {
     match x {
         StructLikeThingy(field_a: a, field_b) => {
             return a + field_b
@@ -335,7 +335,7 @@ function do_nothing_in_particular() => match AlertDescription::CloseNotify {
 **Jakt** supports both generic structures and generic functions.
 
 ```jakt
-function id<T>(anonymous x: T) -> T {
+function id<T>(anon x: T) -> T {
     return x
 }
 

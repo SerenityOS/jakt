@@ -569,11 +569,7 @@ pub fn get_function_signature(project: &Project, function_id: FunctionId) -> Str
     is_first_param = true;
 
     for param in &function.params {
-        let anonymous = if !param.requires_label {
-            "anonymous "
-        } else {
-            ""
-        };
+        let anon = if !param.requires_label { "anon " } else { "" };
         let mutable = if param.variable.mutable {
             "mutable "
         } else {
@@ -590,7 +586,7 @@ pub fn get_function_signature(project: &Project, function_id: FunctionId) -> Str
         let seperator = if is_first_param { "" } else { ", " };
         parameters.push_str(&format!(
             "{}{}{}{}{}",
-            seperator, anonymous, mutable, param.variable.name, variable_type
+            seperator, anon, mutable, param.variable.name, variable_type
         ));
         is_first_param = false;
     }

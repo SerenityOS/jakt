@@ -4,7 +4,7 @@
 struct Foo<T> {
     a: T
 
-    function test<U>(this, anonymous x: U) -> T {
+    function test<U>(this, anon x: U) -> T {
         return this.a + x
     }
 }

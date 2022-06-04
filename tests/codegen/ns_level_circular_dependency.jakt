@@ -6,20 +6,20 @@ enum Test {
 }
 
 namespace Foo {
-    function foo(anonymous x: i32) -> Test {
+    function foo(anon x: i32) -> Test {
         return Bar::bar(x)
     }
-    function bar(anonymous x: i32) -> i32 {
+    function bar(anon x: i32) -> i32 {
         return x + 1
     }
 }
 
 namespace Bar {
-    function bar(anonymous x: i32) -> Test {
+    function bar(anon x: i32) -> Test {
         let y = Foo::bar(x)
         return Test::X(y)
     }
-    function foo(anonymous x: i32) -> Test {
+    function foo(anon x: i32) -> Test {
         return Foo::foo(x)
     }
 }

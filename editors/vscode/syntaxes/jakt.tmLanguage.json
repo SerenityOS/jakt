@@ -482,8 +482,8 @@
     "argument-list": {
       "patterns": [
         {
-          "name": "storage.modifier.anonymous.argument.jakt",
-          "match": "\\banonymous\\b"
+          "name": "storage.modifier.anon.argument.jakt",
+          "match": "\\banon\\b"
         },
         {
           "include": "#this"

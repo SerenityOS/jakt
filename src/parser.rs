@@ -1659,7 +1659,7 @@ pub fn parse_function(
                             current_param_requires_label = true;
                         }
 
-                        TokenContents::Name(name) if name == "anonymous" => {
+                        TokenContents::Name(name) if name == "anon" => {
                             current_param_requires_label = false;
                             *index += 1;
                         }

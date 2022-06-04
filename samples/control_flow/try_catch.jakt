@@ -8,7 +8,7 @@ function notoss() throws -> i32 {
     return 5
 }
 
-function toss(anonymous value: i32) throws {
+function toss(anon value: i32) throws {
     throw Error::from_errno(value)
 }
 

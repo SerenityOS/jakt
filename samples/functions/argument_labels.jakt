@@ -4,10 +4,10 @@
 function foo(a: bool, b: bool) {
 }
 
-function bar(anonymous a: bool, b: bool) {
+function bar(anon a: bool, b: bool) {
 }
 
-function baz(anonymous a: bool, anonymous b: bool) {
+function baz(anon a: bool, anon b: bool) {
 }
 
 function qux(a: bool) {

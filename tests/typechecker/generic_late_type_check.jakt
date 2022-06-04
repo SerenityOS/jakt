@@ -2,12 +2,12 @@
 /// - output: "3 2 1 0\n"
 
 // This should not be typechecked here, but rather when it's fully instantiated and used.
-function foo<T>(anonymous x: T, anonymous y: T) -> T {
+function foo<T>(anon x: T, anon y: T) -> T {
     return x + y
 }
 
 // Make sure type inference kinda works
-function bar<T>(anonymous x: T) {
+function bar<T>(anon x: T) {
     return x + 1
 }
 
@@ -15,7 +15,7 @@ function bar<T>(anonymous x: T) {
 struct Test {
     a: i32
 }
-function baz<T>(anonymous x: T) -> i32 {
+function baz<T>(anon x: T) -> i32 {
     return x.a
 }
 

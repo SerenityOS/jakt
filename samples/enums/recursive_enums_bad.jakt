@@ -10,7 +10,7 @@ enum AST {
     BinaryOperation(lhs: AST, op: Operation, rhs: AST)
 }
 
-function eval(anonymous ast: AST) -> i64 {
+function eval(anon ast: AST) -> i64 {
     match ast {
         AST::Int(i) => {
             return i

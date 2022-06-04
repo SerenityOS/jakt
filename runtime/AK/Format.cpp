@@ -95,7 +95,7 @@ ErrorOr<void> vformat_impl(TypeErasedFormatParams& params, FormatBuilder& builde
     return {};
 }
 
-} // namespace AK::{anonymous}
+} // namespace AK::{anon}
 
 FormatParser::FormatParser(StringView input)
     : GenericLexer(input)

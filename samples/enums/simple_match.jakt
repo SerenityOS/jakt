@@ -26,14 +26,14 @@ function make_result(okay: bool) -> BetterResult<i64, String> {
     return BetterResult::TheWorldIsBurning("666")
 }
 
-function better_optional_from<T>(anonymous optional: T?) -> BetterOptional<T> {
+function better_optional_from<T>(anon optional: T?) -> BetterOptional<T> {
     if optional.has_value() {
         return BetterOptional::Some(optional!)
     }
     return BetterOptional::None()
 }
 
-function to_objectively_better_optional<T>(anonymous optional: BetterOptional<T>) -> ObjectivelyBetterOptional<T> {
+function to_objectively_better_optional<T>(anon optional: BetterOptional<T>) -> ObjectivelyBetterOptional<T> {
     return match optional {
         BetterOptional::Some(value) => ObjectivelyBetterOptional::Some(value: value, joke_metadata: "I'm a joke")
         BetterOptional::None => ObjectivelyBetterOptional::None()

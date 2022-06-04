@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "No error\n"
 
-function check(anonymous a: i64, anonymous b: i64) -> i64 {
+function check(anon a: i64, anon b: i64) -> i64 {
     if a != b {
         println("Not equal!")
         println("{}", a)
