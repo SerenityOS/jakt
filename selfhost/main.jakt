@@ -1379,7 +1379,7 @@ struct Parser {
     }
 
     function parse_typename(mutable this) throws -> ParsedType {
-        let mutable parsed_type = .parse_shorthand_type()
+        let mutable parsed_type = .parse_type_shorthand()
 
         if not parsed_type is Empty {
             return parsed_type
@@ -1474,69 +1474,69 @@ struct Parser {
         )
     }
 
-    function parse_shorthand_type(mutable this) throws -> ParsedType {
+    function parse_type_shorthand(mutable this) throws -> ParsedType => match .current() {
+        LSquare => .parse_type_shorthand_array_or_dictionary()
+        LCurly => .parse_type_shorthand_set()
+        LParen => .parse_type_shorthand_tuple()
+        else => ParsedType::Empty
+    }
+
+    function parse_type_shorthand_array_or_dictionary(mutable this) throws -> ParsedType {
+        // [T] is shorthand for Array<T>
+        // [K:V] is shorthand for Dictionary<K, V>
         let start = .current().span().start
-        match .current() {
-            LSquare => {
-                // [T] is shorthand for Array<T>
-                // [K:V] is shorthand for Dictionary<K, V>
-                .index++
-                let inner = .parse_typename()
-                match .current() {
-                    RSquare => {
-                        let span = JaktSpan(start, end: .current().span().end)
-                        .index++
-                        return ParsedType::JaktArray(inner, span)
-                    }
-                    Colon => {
-                        .index++
-                        let value = .parse_typename()
-                        if .current() is RSquare {
-                            .index++
-                        } else {
-                            .error("Expected ']'", .current().span())
-                        }
-                        let span = JaktSpan(start, end: .current().span().end)
-                        return ParsedType::Dictionary(key: inner, value, span)
-                    }
-                    else => {
-                        .error("Expected shorthand type", .current().span())
-                    }
-                }
-            }
-            LCurly => {
-                // {T} is shorthand for Set<T>
-                let inner = .parse_typename()
-                .index++
-
-                if .current() is RCurly {
-                    let span = JaktSpan(start, end: .current().span().end)
-                    return ParsedType::Set(inner, span)
-                } else {
-                    .error("Expected '}'", .current().span())
-                }
-            }
-            LParen => {
-                // (A, B, C) is shorthand for Tuple<A, B, C>
-                .index++
-                let mutable types: [ParsedType] = []
-
-                while not .eof() {
-                    if .current() is RParen {
-                        let span = JaktSpan(start, end: .current().span().end)
-                        .index++
-                        return ParsedType::JaktTuple(types, span)
-                    }
-                    if .current() is Comma {
-                        .index++
-                    }
-                    types.push(.parse_typename())
-                }
-
-                .error("Expected ‘)’", .current().span())
-            }
-            else => { }
+        .index++
+        let inner = .parse_typename()
+        if .current() is RSquare {
+            let span = JaktSpan(start, end: .current().span().end)
+            .index++
+            return ParsedType::JaktArray(inner, span)
         }
+        if .current() is Colon {
+            .index++
+            let value = .parse_typename()
+            if .current() is RSquare {
+                .index++
+            } else {
+                .error("Expected ']'", .current().span())
+            }
+            let span = JaktSpan(start, end: .current().span().end)
+            return ParsedType::Dictionary(key: inner, value, span)
+        }
+        .error("Expected shorthand type", .current().span())
+        return ParsedType::Empty
+    }
+
+    function parse_type_shorthand_set(mutable this) throws -> ParsedType {
+        // {T} is shorthand for Set<T>
+        let start = .current().span().start
+        let inner = .parse_typename()
+        .index++
+        if .current() is RCurly {
+            let span = JaktSpan(start, end: .current().span().end)
+            return ParsedType::Set(inner, span)
+        }
+        .error("Expected '}'", .current().span())
+        return ParsedType::Empty
+    }
+
+    function parse_type_shorthand_tuple(mutable this) throws -> ParsedType {
+        // (A, B, C) is shorthand for Tuple<A, B, C>
+        let start = .current().span().start
+        .index++
+        let mutable types: [ParsedType] = []
+        while not .eof() {
+            if .current() is RParen {
+                let span = JaktSpan(start, end: .current().span().end)
+                .index++
+                return ParsedType::JaktTuple(types, span)
+            }
+            if .current() is Comma {
+                .index++
+            }
+            types.push(.parse_typename())
+        }
+        .error("Expected ‘)’", .current().span())
         return ParsedType::Empty
     }
 
