@@ -1111,15 +1111,15 @@ struct Parser {
         .errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
     }
 
+    function eof(this) => .index >= .tokens.size()
+
+    function eol(this) => .eof() or .tokens[.index] is Eol
+
     function peek(this, anonymous steps: usize) -> Token {
         if .eof() or (steps + .index) >= .tokens.size()  {
             return .tokens[.tokens.size() - 1]
         }
         return .tokens[.index + steps]
-    }
-
-    function current(this) -> Token {
-        return .peek(0)
     }
 
     function previous(this) -> Token {
@@ -1129,17 +1129,14 @@ struct Parser {
         return .tokens[.index - 1]
     }
 
-    function eof(this) -> bool {
-        return .index >= .tokens.size()
+    function current(this) -> Token {
+        return .peek(0)
     }
-
-    function eol(this) => .eof() or .tokens[.index] is Eol
 
     public function parse_namespace(mutable this) throws -> ParsedNamespace {
         let mutable parsed_namespace = ParsedNamespace(name: "", functions: [], structs: [])
 
-        let mutable should_break = false
-        while not should_break and not .eof() {
+        while not .eof() {
             match .current() {
                 Function => {
                     let function = .parse_function(FunctionLinkage::Internal)
@@ -1158,11 +1155,11 @@ struct Parser {
                     .index++
                 }
                 RCurly => {
-                    should_break = true
+                    break
                 }
                 else => {
                     .error("Unrecognized token in namespace (probably not implemented yet)", .current().span())
-                    should_break = true
+                    break
                 }
             }
         }
@@ -1194,7 +1191,7 @@ struct Parser {
         .index++
 
         // Struct name
-        if .index >= .tokens.size() {
+        if .eof() {
             .error(format("Incomplete {} definition", definition_type_name), .current().span())
             return parsed_struct
         }
@@ -1211,7 +1208,7 @@ struct Parser {
 
         .index++
 
-        if .index >= .tokens.size() {
+        if .eof() {
             .error(format("Incomplete {} definition", definition_type_name), .current().span())
             return parsed_struct
         }
@@ -1219,7 +1216,7 @@ struct Parser {
         // Generic parameters
         parsed_struct.generic_parameters = .parse_generic_parameters()
 
-        if .index >= .tokens.size() {
+        if .eof() {
             .error(format("Incomplete {} definition", definition_type_name), .current().span())
             return parsed_struct
         }
@@ -1238,18 +1235,17 @@ struct Parser {
         let mutable last_visibility: Visibility? = None
         let mutable last_visibility_span: JaktSpan? = None
 
-        let mutable should_break = false
-        while not should_break and .index < .tokens.size() {
+        while not .eof() {
             let token = .current()
             match token {
                 Eof => {
-                    should_break = true
+                    break
                 }
                 RCurly => {
                     if last_visibility.has_value() {
                         .error("Expected function or parameter after visibility modifier", token.span())
                     }
-                    should_break = true
+                    break
                 }
                 Comma | Eol => {
                     // Treat comma as whitespace? Might require them in the future
@@ -1339,7 +1335,7 @@ struct Parser {
 
         .index++
 
-        if .index >= .tokens.size() {
+        if .eof() {
             .error("Incomplete function definition", .current().span())
             return parsed_function
         }
@@ -1355,7 +1351,7 @@ struct Parser {
 
         parsed_function.generic_parameters = .parse_generic_parameters()
 
-        if .index >= .tokens.size() {
+        if .eof() {
             .error("Incomplete function", .current().span())
         }
 
@@ -1368,25 +1364,24 @@ struct Parser {
         let mutable params: [ParsedParameter] = []
         let mutable current_param_requires_label = true
         let mutable current_param_is_mutable = true
-        let mutable should_break = false
 
-        while not should_break and .index < .tokens.size() {
+        while not .eof() {
             match .current() {
                 RParen => {
                     .index++
-                    should_break = true
+                    break
                 }
                 Comma => {
                     .index++
                     current_param_requires_label = true
                 }
                 Anonymous => {
-                    current_param_requires_label = false
                     .index++
+                    current_param_requires_label = false
                 }
                 Mutable => {
-                    current_param_is_mutable = true
                     .index++
+                    current_param_is_mutable = true
                 }
                 This => {
                     params.push(ParsedParameter(
@@ -1437,9 +1432,10 @@ struct Parser {
             parsed_function.return_type_span = JaktSpan(start, end: .index)
         }
 
-        parsed_function.block = match .current() {
-            FatArrow => .parse_fat_arrow()
-            else => .parse_block()
+        if .current() is FatArrow {
+            parsed_function.block = .parse_fat_arrow()
+        } else {
+            parsed_function.block = .parse_block()
         }
         
         parsed_function.params = params
@@ -1486,11 +1482,8 @@ struct Parser {
     function parse_typename(mutable this) throws -> ParsedType {
         let mutable parsed_type = .parse_shorthand_type()
 
-        match parsed_type {
-            Empty => { }
-            else => {
-                return parsed_type
-            }
+        if not parsed_type is Empty {
+            return parsed_type
         }
 
         let start_span = .current().span()
@@ -2094,12 +2087,11 @@ struct Parser {
                     .error("Expected '('", .current().span())
                 }
 
-                let mutable should_break = false
-                while not should_break and not .eof() {
+                while  not .eof() {
                     match .current() {
                         RParen => {
                             .index++
-                            should_break = true
+                            break
                         }
                         Eol => {
                             .index++
@@ -2198,13 +2190,12 @@ struct Parser {
         }
 
         let mutable whitelist: [ParsedType] = []
-        let mutable should_break = false
         let mutable expect_comma = false
 
-        while not should_break and .index < .tokens.size() {
+        while .index < .tokens.size() {
             match .current() {
                 RParen => {
-                    should_break = true
+                    break
                 }
                 Comma(span) => {
                     if expect_comma {
@@ -2256,12 +2247,11 @@ struct Parser {
         let mutable output: [ParsedExpression] = []
         let mutable dict_output: [(ParsedExpression, ParsedExpression)] = []
 
-        let mutable should_break = false
-        while not should_break {
+        loop {
             match .current() {
                 RSquare | Eof => {
                     .index++
-                    should_break = true
+                    break
                 }
                 Comma | Eol => {
                     .index++
@@ -2281,7 +2271,7 @@ struct Parser {
                         if .current() is RSquare {
                             .index++
                             is_dictionary = true
-                            should_break = true
+                            break
                         } else {
                             .error("Expected ‘]’", .current().span())
                         }
