@@ -1,5 +1,5 @@
 extern struct StringBuilder {
-    // FIXME: AK::StringBuilder::append() actually takes a c_char, not a u8, but nobody complains
+    // FIXME: Jakt::StringBuilder::append() actually takes a c_char, not a u8, but nobody complains
     function append(mut this, anon c: u8)
     function to_string(this) throws -> String
     function StringBuilder() -> StringBuilder
@@ -34,7 +34,7 @@ class JsonParser {
     }
 
     public function parse(mut this) throws -> JsonValue {
-        // FIXME: AK::JsonParser ignores trailing whitespace for some reason.
+        // FIXME: Jakt::JsonParser ignores trailing whitespace for some reason.
         let value = .parse_helper()
         if not .eof() {
             // FIXME: "Didn't consume all input"

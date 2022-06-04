@@ -6,12 +6,13 @@
 
 #pragma once
 
-#include <AK/HashMap.h>
-#include <AK/NonnullRefPtr.h>
-#include <AK/RefCounted.h>
-#include <AK/Tuple.h>
+#include <Jakt/HashMap.h>
+#include <Jakt/NonnullRefPtr.h>
+#include <Jakt/RefCounted.h>
+#include <Jakt/Tuple.h>
 
 namespace JaktInternal {
+using namespace Jakt;
 
 template<typename K, typename V>
 struct DictionaryStorage : public RefCounted<DictionaryStorage<K, V>> {
@@ -120,5 +121,7 @@ private:
 
 }
 
+namespace Jakt {
 using JaktInternal::Dictionary;
 using JaktInternal::DictionaryIterator;
+}

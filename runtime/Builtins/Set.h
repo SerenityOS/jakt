@@ -6,10 +6,11 @@
 
 #pragma once
 
-#include <AK/HashTable.h>
+#include <Jakt/HashTable.h>
 #include <initializer_list>
 
 namespace JaktInternal {
+using namespace Jakt;
 
 template<typename T>
 struct SetStorage : public RefCounted<SetStorage<T>> {
@@ -51,8 +52,8 @@ public:
     bool remove(T const& value) { return m_storage->table.remove(value); }
     bool contains(T const& value) const { return m_storage->table.contains(value); }
 
-    ErrorOr<AK::HashSetResult> add(T const& value) { return m_storage->table.set(value); }
-    ErrorOr<AK::HashSetResult> add(T&& value) { return m_storage->table.set(move(value)); }
+    ErrorOr<Jakt::HashSetResult> add(T const& value) { return m_storage->table.set(value); }
+    ErrorOr<Jakt::HashSetResult> add(T&& value) { return m_storage->table.set(move(value)); }
     ErrorOr<void> ensure_capacity(size_t capacity) { return m_storage->table.try_ensure_capacity(capacity); }
 
     bool is_empty() const { return m_storage->table.is_empty(); }
@@ -97,5 +98,7 @@ private:
 
 }
 
+namespace Jakt {
 using JaktInternal::Set;
 using JaktInternal::SetIterator;
+}
