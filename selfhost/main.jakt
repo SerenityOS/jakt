@@ -887,6 +887,7 @@ boxed enum ParsedExpression {
     JaktArray(values: [ParsedExpression], fill_size: ParsedExpression?, span: JaktSpan)
     JaktDictionary(values: [(ParsedExpression, ParsedExpression)], span: JaktSpan)
     Range(from: ParsedExpression, to: ParsedExpression, span: JaktSpan)
+    ForcedUnwrap(expr: ParsedExpression, span: JaktSpan)
     Garbage(JaktSpan)
 
     function span(this) -> JaktSpan {
@@ -904,6 +905,7 @@ boxed enum ParsedExpression {
             JaktArray(values, fill_size, span) => span
             JaktDictionary(values, span) => span
             Range(from, to, span) => span
+            ForcedUnwrap(expr, span) => span
             Garbage(span) => span
         }
     }
@@ -1894,8 +1896,9 @@ struct Parser {
                 yield ParsedExpression::Range(from: expr, to, span: JaktSpan(start, end: to.span().end))
             }
             ExclamationPoint => {
-                todo("postfix ExclamationPoint")
-                yield ParsedExpression::Garbage(span)
+                let end = .current().span().end
+                .index++
+                yield ParsedExpression::ForcedUnwrap(expr, span: JaktSpan(start, end))
             }
             PlusPlus => {
                 let end = .current().span().end
