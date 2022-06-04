@@ -197,6 +197,14 @@ fn main() -> Result<(), JaktError> {
                         ])
                         .output()?;
                         io::stderr().write_all(&clang_output.stderr)?;
+                        if !clang_output.status.success() {
+                            std::process::exit(
+                                clang_output
+                                    .status
+                                    .code()
+                                    .expect("Process exited with no code"),
+                            );
+                        }
                     }
                 }
                 Err(err) => {
