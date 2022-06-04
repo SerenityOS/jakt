@@ -2989,6 +2989,9 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                             TokenContents::Comma => {
                                 *index += 1;
                             }
+                            TokenContents::Eof => {
+                                break;
+                            }
                             _ => {
                                 let (expr, err) = parse_expression(
                                     tokens,
@@ -3197,7 +3200,8 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
                 "unsupported expression".to_string(),
                 tokens[*index].span,
             )));
-
+            // NOTE: We always advance the cursor, to prevent infinite loops.
+            *index += 1;
             ParsedExpression::Garbage(span)
         }
     };

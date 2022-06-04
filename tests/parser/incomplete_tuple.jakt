@@ -1,0 +1,6 @@
+/// Expect:
+/// - error: "expected complete block"
+
+function p() {
+    let x = (A,
+}
