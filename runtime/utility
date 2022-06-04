@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 2022, Ali Mohammad Pur <mpfard@serenityos.org>
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
+#pragma once
+
+// Replaement for STL's <utility> to avoid pulling in STL headers (which are otherwise unused in Jakt/AK)
+#pragma GCC system_header
+#define JAKT_UTILITY_WAS_INCLUDED
+
+#include <Jakt/StdLibExtraDetails.h>
+
+// HACK: clang-format does not format this correctly because of the requires clause above.
+// Disabling formatting for that doesn't help either.
+//
+// clang-format off
+#ifndef AK_DONT_REPLACE_STD
+namespace std { // NOLINT(cert-dcl58-cpp) Names in std to aid tools
+
+// NOTE: These are in the "std" namespace since some compilers and static analyzers rely on it.
+
+template<typename T>
+constexpr T&& forward(::Jakt::Detail::RemoveReference<T>& param)
+{
+    return static_cast<T&&>(param);
+}
+
+template<typename T>
+constexpr T&& forward(::Jakt::Detail::RemoveReference<T>&& param) noexcept
+{
+    static_assert(!::Jakt::IsLvalueReference<T>, "Can't forward an rvalue as an lvalue.");
+    return static_cast<T&&>(param);
+}
+
+template<typename T>
+constexpr T&& move(T& arg)
+{
+    return static_cast<T&&>(arg);
+}
+
+}
+#endif
+// clang-format on

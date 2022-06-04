@@ -29,14 +29,6 @@ inline void kfree_sized(void* ptr, size_t)
 
 #ifndef __serenity__
 #    include <Jakt/Types.h>
-
-#    ifndef AK_OS_MACOS
-extern "C" {
-inline size_t malloc_good_size(size_t size) { return size; }
-}
-#    else
-#        include <malloc/malloc.h>
-#    endif
 #endif
 
 namespace Jakt {

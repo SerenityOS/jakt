@@ -475,7 +475,7 @@ private:
         }
 
         new_capacity = max(new_capacity, static_cast<size_t>(4));
-        new_capacity = kmalloc_good_size(new_capacity * sizeof(BucketType)) / sizeof(BucketType);
+        new_capacity = new_capacity * sizeof(BucketType) / sizeof(BucketType);
 
         auto* old_buckets = m_buckets;
         auto old_capacity = m_capacity;
