@@ -2653,6 +2653,16 @@ fn typecheck_struct_predecl(
 
     let struct_scope_id = project.create_scope(parent_scope_id, false);
 
+    match project.add_struct_to_scope(
+        parent_scope_id,
+        structure.name.clone(),
+        struct_id,
+        structure.span,
+    ) {
+        Ok(_) => {}
+        Err(err) => error = error.or(Some(err)),
+    }
+
     let mut generic_parameters = vec![];
 
     let is_extern = structure.definition_linkage == DefinitionLinkage::External;
@@ -2729,6 +2739,12 @@ fn typecheck_struct_predecl(
 
         let mut generic_parameters = vec![];
 
+        let check_scope = if is_generic {
+            Some(project.create_scope(method_scope_id, function.throws))
+        } else {
+            None
+        };
+
         for (generic_parameter, parameter_span) in &function.generic_parameters {
             project
                 .current_module_mut()
@@ -2740,25 +2756,17 @@ fn typecheck_struct_predecl(
             );
 
             generic_parameters.push(FunctionGenericParameter::Parameter(type_var_type_id));
-
-            if !function.must_instantiate || is_extern {
-                if let Err(err) = project.add_type_to_scope(
-                    method_scope_id,
-                    generic_parameter.to_string(),
-                    type_var_type_id,
-                    *parameter_span,
-                ) {
-                    error = error.or(Some(err));
-                }
+            if let Err(err) = project.add_type_to_scope(
+                method_scope_id,
+                generic_parameter.to_string(),
+                type_var_type_id,
+                *parameter_span,
+            ) {
+                error = error.or(Some(err));
             }
         }
 
         checked_function.generic_parameters = generic_parameters;
-        let check_scope = if is_generic && !is_extern {
-            Some(project.create_scope(method_scope_id, function.throws))
-        } else {
-            None
-        };
 
         for param in &function.params {
             if param.variable.name == "this" {
@@ -2824,34 +2832,32 @@ fn typecheck_struct_predecl(
             error = error.or(Some(err));
         }
 
-        if !is_extern {
-            let (function_return_type_id, err) =
-                typecheck_typename(&function.return_type, method_scope_id, project);
-            error = error.or(err);
+        let (function_return_type_id, err) =
+            typecheck_typename(&function.return_type, method_scope_id, project);
+        error = error.or(err);
 
-            checked_function.return_type_id = function_return_type_id;
-            if is_generic {
-                let (block, _) = typecheck_block(
-                    &function.block,
-                    check_scope
-                        .expect("Generic method with generic parameters must have a check scope"),
-                    project,
-                    SafetyMode::Safe,
-                );
+        checked_function.return_type_id = function_return_type_id;
+        if is_generic {
+            let (block, _) = typecheck_block(
+                &function.block,
+                check_scope
+                    .expect("Generic method with generic parameters must have a check scope"),
+                project,
+                SafetyMode::Safe,
+            );
 
-                let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
-                    if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
-                        ret.type_id(method_scope_id, project)
-                    } else {
-                        VOID_TYPE_ID
-                    }
+            let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
+                if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
+                    ret.type_id(method_scope_id, project)
                 } else {
-                    resolve_type_var(function_return_type_id, parent_scope_id, project)
-                };
+                    VOID_TYPE_ID
+                }
+            } else {
+                resolve_type_var(function_return_type_id, parent_scope_id, project)
+            };
 
-                checked_function.block = Some(block);
-                checked_function.return_type_id = return_type_id;
-            }
+            checked_function.block = Some(block);
+            checked_function.return_type_id = return_type_id;
         }
 
         project.current_module_mut().functions[function_id.1] = checked_function;
