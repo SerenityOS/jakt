@@ -85,6 +85,7 @@ enum Token {
     ExclamationPoint(JaktSpan)
     QuestionMark(JaktSpan)
     QuestionMarkQuestionMark(JaktSpan)
+    QuestionMarkQuestionMarkEqual(JaktSpan)
     Comma(JaktSpan)
     Dot(JaktSpan)
     DotDot(JaktSpan)
@@ -190,6 +191,7 @@ enum Token {
         ExclamationPoint(span) => span
         QuestionMark(span) => span
         QuestionMarkQuestionMark(span) => span
+        QuestionMarkQuestionMarkEqual(span) => span
         Comma(span) => span
         Dot(span) => span
         DotDot(span) => span
@@ -563,7 +565,13 @@ struct Lexer {
     function lex_question_mark(mutable this) -> Token {
         let start = .index++
         return match .peek() {
-            b'?' => Token::QuestionMarkQuestionMark(JaktSpan(start, end: ++.index))
+            b'?' => {
+                .index++
+                yield match .peek() {
+                    b'=' => Token::QuestionMarkQuestionMarkEqual(JaktSpan(start, end: ++.index))
+                    else => Token::QuestionMarkQuestionMark(JaktSpan(start, end: .index))
+                }
+            }
             else => Token::QuestionMark(JaktSpan(start: .index - 1, end: .index))
         }
     }
