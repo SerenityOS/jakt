@@ -1563,15 +1563,11 @@ struct Parser {
                     .index++
                     return block
                 }
-                Semicolon => {
-                    .index++
-                }
-                Eol => {
+                Semicolon | Eol => {
                     .index++
                 }
                 else => {
-                    let stmt = .parse_statement()
-                    block.stmts.push(stmt)
+                    block.stmts.push(.parse_statement(inside_block: true))
                 }
             }
         }
@@ -1580,7 +1576,7 @@ struct Parser {
         return block
     }
 
-    function parse_statement(mutable this) throws -> ParsedStatement {
+    function parse_statement(mutable this, inside_block: bool) throws -> ParsedStatement {
         println("parse_statement: {}", .current())
         let start = .current().span().start
 
@@ -1592,7 +1588,7 @@ struct Parser {
             }
             Defer => {
                 .index++
-                yield ParsedStatement::Defer(.parse_statement())
+                yield ParsedStatement::Defer(.parse_statement(inside_block: false))
             }
             Unsafe => {
                 .index++
@@ -1622,7 +1618,11 @@ struct Parser {
             }
             Yield => {
                 .index++
-                yield ParsedStatement::Yield(.parse_expression())
+                let expr = .parse_expression()
+                if not inside_block {
+                    .error("‘yield’ can only be used inside a block", span: JaktSpan(start, end: expr.span().end))
+                }
+                yield ParsedStatement::Yield(expr)
             }
             Return => {
                 .index++
@@ -1666,7 +1666,7 @@ struct Parser {
     function parse_try_statement(mutable this) throws -> ParsedStatement {
         .index++
 
-        let stmt = .parse_statement()
+        let stmt = .parse_statement(inside_block: false)
 
         let mutable error_name = ""
         let mutable error_span = .current().span()
