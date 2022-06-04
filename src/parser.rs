@@ -1509,6 +1509,7 @@ pub fn parse_struct(
                     || !matches!(tokens[*index].contents, TokenContents::RCurly)
                 {
                     trace!("ERROR: incomplete struct");
+                    *index -= 1;
 
                     error = error.or(Some(JaktError::ParserError(
                         "incomplete struct".to_string(),
@@ -2748,7 +2749,7 @@ pub fn parse_pattern_case(
 
     skip_newlines(tokens, index);
 
-    if let Some(Token {
+    let (result, err) = if let Some(Token {
         contents: TokenContents::LCurly,
         ..
     }) = tokens.get(*index)
@@ -2761,7 +2762,10 @@ pub fn parse_pattern_case(
             parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
         error = error.or(err);
         (make_cases(MatchBody::Expression(expr)), error)
-    }
+    };
+    skip_newlines(tokens, index);
+
+    (result, err)
 }
 
 pub fn parse_patterns(tokens: &[Token], index: &mut usize) -> (Vec<MatchCase>, Option<JaktError>) {
