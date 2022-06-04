@@ -477,6 +477,21 @@
           ]
         },
         {
+          "name": "meta.function.return-throws.jakt",
+          "begin": "(?<=\\)\\s*)(throws)",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.type.throws.jakt"
+            }
+          },
+          "end": "(?=\\{|$)",
+          "patterns": [
+            {
+              "include": "#types"
+            }
+          ]
+        },
+        {
           "name": "meta.function.body.jakt",
           "begin": "(?<=function.*?)(\\{)",
           "beginCaptures": {
