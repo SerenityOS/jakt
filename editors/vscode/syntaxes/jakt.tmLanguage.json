@@ -243,37 +243,16 @@
     "enum-field": {
       "patterns": [
         {
-          "name": "meta.field.enum.jakt",
-          "begin": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(\\{)",
-          "beginCaptures": {
+          "name": "meta.field.assigned.enum.jakt",
+          "match": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(=)",
+          "captures": {
             "1": {
               "name": "variable.field.enum.jakt"
             },
             "2": {
-              "name": "punctuation.begin.brace.jakt"
+              "name": "keyword.operator.assignment.jakt"
             }
           },
-          "end": "(\\})",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.end.brace.jakt"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#field"
-            }
-          ]
-        },
-        {
-          "name": "meta.field.assigned.enum.jakt",
-          "begin": "(=)",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.equals.jakt"
-            }
-          },
-          "end": "$",
           "patterns": [
             {
               "include": "#number"
@@ -285,7 +264,7 @@
         },
         {
           "name": "meta.field.enum.jakt",
-          "match": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*$",
+          "match": "(?<!\\)\\s*)(?<!\\=\\s*)\\b((?:\\w|_)(?:\\w|_|[0-9])*)(?:\\s*$|\\s*\\(|\\,)",
           "captures": {
             "1": {
               "name": "variable.field.enum.jakt"
