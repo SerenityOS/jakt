@@ -1,0 +1,6 @@
+/// Expect:
+/// - error: "expected type name"
+
+enum Foo {
+    Incomplete(name: 
+}

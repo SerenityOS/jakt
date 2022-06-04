@@ -1087,6 +1087,14 @@ pub fn parse_enum(
                         }
                     }
                     *index += 1;
+                    if *index >= tokens.len() {
+                        error = error.or(Some(JaktError::ParserError(
+                            "Unexpected EOF".to_string(),
+                            tokens.last().unwrap().span,
+                        )));
+                        break;
+                    }
+
                     if let Some(type_) = parsed_type {
                         // We have a simple value (non-struct) case
                         enum_.variants.push(EnumVariant::Typed(
@@ -1175,10 +1183,10 @@ pub fn parse_enum(
             }
         }
 
-        if tokens.len() == *index || matches!(tokens[*index].contents, TokenContents::Eof) {
+        if *index >= tokens.len() || matches!(tokens[*index].contents, TokenContents::Eof) {
             error = error.or(Some(JaktError::ParserError(
                 "expected `}` to end the enum body".to_string(),
-                tokens[*index].span,
+                tokens.last().unwrap().span,
             )));
         } else {
             *index += 1;
@@ -4131,12 +4139,11 @@ pub fn parse_variable_declaration(
         _ => {
             trace!("ERROR: expected name");
 
+            let span = tokens[*index].span;
+            *index += 1;
             (
-                ParsedVarDecl::new(tokens[*index].span, None),
-                Some(JaktError::ParserError(
-                    "expected name".to_string(),
-                    tokens[*index].span,
-                )),
+                ParsedVarDecl::new(span, None),
+                Some(JaktError::ParserError("expected name".to_string(), span)),
             )
         }
     }
