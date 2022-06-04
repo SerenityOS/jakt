@@ -1765,7 +1765,7 @@ fn typecheck_enum_predecl(
         variants: Vec::new(),
         scope_id: enum_scope_id,
         definition_linkage: enum_.definition_linkage,
-        definition_type: if enum_.is_recursive {
+        definition_type: if enum_.is_boxed {
             DefinitionType::Class
         } else {
             DefinitionType::Struct
@@ -2026,14 +2026,14 @@ fn typecheck_enum(
                         .is_none()
                     {
                         let function_scope_id =
-                            project.create_scope(parent_scope_id, enum_.is_recursive);
+                            project.create_scope(parent_scope_id, enum_.is_boxed);
                         let block_scope_id =
-                            project.create_scope(function_scope_id, enum_.is_recursive);
+                            project.create_scope(function_scope_id, enum_.is_boxed);
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
                             name_span: *span,
-                            throws: enum_.is_recursive,
+                            throws: enum_.is_boxed,
                             return_type_id: enum_type_id,
                             return_type_span: None,
                             params: vec![],
@@ -2182,14 +2182,14 @@ fn typecheck_enum(
                             .collect();
 
                         let function_scope_id =
-                            project.create_scope(parent_scope_id, enum_.is_recursive);
+                            project.create_scope(parent_scope_id, enum_.is_boxed);
                         let block_scope_id =
-                            project.create_scope(function_scope_id, enum_.is_recursive);
+                            project.create_scope(function_scope_id, enum_.is_boxed);
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
                             name_span: *span,
-                            throws: enum_.is_recursive,
+                            throws: enum_.is_boxed,
                             return_type_id: enum_type_id,
                             return_type_span: None,
                             params: constructor_params,
@@ -2262,14 +2262,14 @@ fn typecheck_enum(
                             },
                         }];
                         let function_scope_id =
-                            project.create_scope(parent_scope_id, enum_.is_recursive);
+                            project.create_scope(parent_scope_id, enum_.is_boxed);
                         let block_scope_id =
-                            project.create_scope(function_scope_id, enum_.is_recursive);
+                            project.create_scope(function_scope_id, enum_.is_boxed);
 
                         let checked_constructor = CheckedFunction {
                             name: name.clone(),
                             name_span: *span,
-                            throws: enum_.is_recursive,
+                            throws: enum_.is_boxed,
                             return_type_id: enum_type_id,
                             return_type_span: None,
                             params: constructor_params,
