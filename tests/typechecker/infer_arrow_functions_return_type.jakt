@@ -1,0 +1,10 @@
+/// Expected:
+/// - output: "OK\n"
+
+function foop() => true
+
+function main() {
+    if foop() {
+        println("OK")
+    }
+}

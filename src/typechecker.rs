@@ -1729,8 +1729,8 @@ pub fn typecheck_namespace_imports(
                         error = error.or(err);
 
                         let current_module = project.current_module_index;
-                        let module =
-                            Module::new(ModuleId(num_modules), import.module_name.name.clone());
+                        let module_id = ModuleId(num_modules);
+                        let module = Module::new(module_id, import.module_name.name.clone());
                         compiler.loaded_files[file_id].module_id = module.id;
                         let scope = Scope::new(Some(PRELUDE_SCOPE_ID), false);
                         let file_scope_id = ScopeId(module.id, 0);
@@ -1738,8 +1738,13 @@ pub fn typecheck_namespace_imports(
                         project.current_module_index = num_modules;
                         project.current_module_mut().scopes.push(scope);
 
-                        let err =
-                            typecheck_module(&parsed_namespace, file_scope_id, project, compiler);
+                        let err = typecheck_module(
+                            &parsed_namespace,
+                            module_id,
+                            file_scope_id,
+                            project,
+                            compiler,
+                        );
                         error = error.or(err);
 
                         project.current_module_index = current_module;
@@ -1780,6 +1785,7 @@ pub fn typecheck_namespace_imports(
 
 pub fn typecheck_module(
     parsed_namespace: &ParsedNamespace,
+    module_id: ModuleId,
     scope_id: ScopeId,
     project: &mut Project,
     compiler: &mut Compiler,
@@ -1793,6 +1799,8 @@ pub fn typecheck_module(
     if err.is_some() {
         return err;
     }
+
+    infer_arrow_functions_return_type(module_id, project);
 
     let err = typecheck_namespace_declarations(parsed_namespace, scope_id, project);
     if err.is_some() {
@@ -3204,6 +3212,37 @@ fn typecheck_and_specialize_generic_function(
     function.function_scope_id = scope_id;
 
     error
+}
+
+fn infer_arrow_functions_return_type(module_id: ModuleId, project: &mut Project) {
+    for function_index in 0..project.get_module(module_id).functions.len() {
+        if project.get_module(module_id).functions[function_index].return_type_id != UNKNOWN_TYPE_ID
+        {
+            continue; // already figured out the type
+        }
+        let check_scope = project.create_scope(
+            project.get_module(module_id).functions[function_index].function_scope_id,
+            project.get_module(module_id).functions[function_index].throws,
+        );
+        let (block, _) = typecheck_block(
+            &project.get_module(module_id).functions[function_index]
+                .to_parsed_function()
+                .block,
+            check_scope,
+            project,
+            SafetyMode::Safe,
+        );
+        let inferred_return_type = if let Some(CheckedStatement::Return(expr)) = block.stmts.last()
+        {
+            expr.type_id(check_scope, project)
+        } else {
+            VOID_TYPE_ID
+        };
+
+        project.get_module_mut(module_id).functions[function_index].block = Some(block);
+        project.get_module_mut(module_id).functions[function_index].return_type_id =
+            inferred_return_type;
+    }
 }
 
 fn typecheck_function(

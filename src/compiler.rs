@@ -201,7 +201,13 @@ impl Compiler {
         let scope = Scope::new(Some(PRELUDE_SCOPE_ID), false);
         project.current_module_mut().scopes.push(scope);
 
-        let err = typecheck_module(&parsed_namespace, file_scope_id, project, self);
+        let err = typecheck_module(
+            &parsed_namespace,
+            project.current_module().id,
+            file_scope_id,
+            project,
+            self,
+        );
         error = error.or(err);
 
         (file_scope_id, error)
