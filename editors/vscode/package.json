@@ -20,6 +20,7 @@
 		"onLanguage:jakt"
 	],
 	"main": "out/client/src/extension.js",
+	"icon": "images/extensionIcon.png",
 	"contributes": {
 		"languages": [
 			{
@@ -30,7 +31,11 @@
 				"extensions": [
 					".jakt"
 				],
-				"configuration": "./language-configuration.json"
+				"configuration": "./language-configuration.json",
+				"icon": {
+					"dark": "images/jaktIcon.png",
+					"light": "images/jaktIcon.png"
+				}
 			}
 		],
 		"grammars": [
