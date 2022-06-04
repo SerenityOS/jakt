@@ -1135,9 +1135,6 @@ struct Parser {
         while not .eof() {
             let token = .current()
             match token {
-                Eof => {
-                    break
-                }
                 RCurly => {
                     if last_visibility.has_value() {
                         .error("Expected function or parameter after visibility modifier", token.span())
@@ -1351,11 +1348,8 @@ struct Parser {
     function parse_field(mutable this, anonymous visibility: Visibility) throws -> ParsedField {
         let parsed_variable_declaration = .parse_variable_declaration()
 
-        match parsed_variable_declaration.parsed_type {
-            Empty => {
-                .error("Field missing type", parsed_variable_declaration.span)
-            }
-            else => {}
+        if parsed_variable_declaration.parsed_type is Empty {
+            .error("Field missing type", parsed_variable_declaration.span)
         }
 
         return ParsedField(
@@ -1708,11 +1702,7 @@ struct Parser {
         let lhs = .parse_operand()
         expr_stack.push(lhs)
 
-        while not .eof() {
-            if .eol() {
-                break
-            }
-
+        while not .eol() {
             let parsed_operator = .parse_operator()
 
             if parsed_operator is Garbage {
@@ -1990,10 +1980,7 @@ struct Parser {
                             .index++
                             break
                         }
-                        Eol => {
-                            .index++
-                        }
-                        Comma => {
+                        Eol | Comma => {
                             .index++
                         }
                         else => {
@@ -2014,10 +2001,7 @@ struct Parser {
     }
 
     function skip_newlines(mutable this) {
-        loop { 
-            if not .current() is Eol {
-                break
-            }
+        while .current() is Eol {
             .index++
         }
     }
@@ -2034,11 +2018,8 @@ struct Parser {
                 Identifier(name, span) => {
                     generic_parameters.push([name : span])
                     .index++
-                    match .current() {
-                        Comma | Eol => {
-                            .index++
-                        }
-                        else => {}
+                    if .current() is Comma or .current() is Eol {
+                        .index++
                     }
                 }
                 else => {
@@ -2144,9 +2125,9 @@ struct Parser {
         let mutable output: [ParsedExpression] = []
         let mutable dict_output: [(ParsedExpression, ParsedExpression)] = []
 
-        loop {
+        while not .eof() {
             match .current() {
-                RSquare | Eof => {
+                RSquare => {
                     .index++
                     break
                 }
