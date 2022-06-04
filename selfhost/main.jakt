@@ -1218,13 +1218,10 @@ struct Parser {
         }
 
         // Struct body
-        match .current() {
-            LCurly(span) => {
-                .index++
-            }
-            else => {
-                .error("Expected ‘{’", .current().span())
-            }
+        if .current() is LCurly {
+            .index++
+        } else {
+            .error("Expected ‘{’", .current().span())
         }
 
         let mutable fields: [ParsedField] = []
@@ -1309,13 +1306,10 @@ struct Parser {
         if .index == .tokens.size() {
             .error("Incomplete struct", .tokens[.index - 1].span())
         }
-        match .current() {
-            Token::RCurly(span) => {
-                .index++
-            }
-            else => {
-                .error("Incomplete struct", .tokens[.index - 1].span())
-            }
+        if .current() is RCurly {
+            .index++
+        } else {
+            .error("Incomplete struct", .tokens[.index - 1].span())
         }
 
         parsed_struct.fields = fields
@@ -1358,13 +1352,10 @@ struct Parser {
             .error("Incomplete function", .current().span())
         }
 
-        match .current() {
-            LParen(span) => {
-                .index++
-            }
-            else => {
-                .error("Expected '('", .current().span())
-            }
+        if .current() is LParen {
+            .index++
+        } else {
+            .error("Expected '('", .current().span())
         }
 
         let mutable params: [ParsedParameter] = []
@@ -1427,24 +1418,16 @@ struct Parser {
         // NOTE: main() always throws
         if function_name == "main" {
             parsed_function.throws = true
-        } else {
-            match .current() {
-                Throws => {
-                    parsed_function.throws = true
-                    .index++
-                }
-                else => { }
-            }
+        } else if .current() is Throws {
+            parsed_function.throws = true
+            .index++
         }
 
-        match .current() {
-            Arrow => {
-                .index++
-                let start = .current().span().start
-                parsed_function.return_type = .parse_typename()
-                parsed_function.return_type_span = JaktSpan(start, end: .index)
-            }
-            else => {}
+        if .current() is Arrow {
+            .index++
+            let start = .current().span().start
+            parsed_function.return_type = .parse_typename()
+            parsed_function.return_type_span = JaktSpan(start, end: .index)
         }
 
         parsed_function.block = match .current() {
@@ -1535,10 +1518,7 @@ struct Parser {
             }
         }
 
-        if match .current() {
-            QuestionMark => true
-            else => false
-        } {
+        if .current() is QuestionMark {
             .index++
             let span = JaktSpan(start: start_span.start, end: .current().span().end)
             parsed_type = ParsedType::Optional(inner: parsed_type, span)
@@ -1552,30 +1532,24 @@ struct Parser {
             Identifier(name) => {
                 let var_name = name
                 .index++
-                match .current() {
-                    Colon => {
-                        .index++
-                    }
-                    else => {
-                        return ParsedVarDecl(
-                            name: var_name,
-                            parsed_type: ParsedType::Empty,
-                            is_mutable: false,
-                            span: .tokens[.index - 1].span(),
-                        )
-                    }
+                if .current() is Colon {
+                    .index++
+                } else {
+                    return ParsedVarDecl(
+                        name: var_name,
+                        parsed_type: ParsedType::Empty,
+                        is_mutable: false,
+                        span: .tokens[.index - 1].span(),
+                    )
                 }
 
                 let decl_span = .tokens[.index - 1].span()
 
                 // We have "name:" so far.
                 let mutable is_mutable = false
-                match .current() {
-                    Mutable => {
-                        .index++
-                        is_mutable = true
-                    }
-                    else => { }
+                if .current() is Mutable {
+                    .index++
+                    is_mutable = true
                 }
 
                 let var_type = .parse_typename()
@@ -1613,13 +1587,10 @@ struct Parser {
                     Colon => {
                         .index++
                         let value = .parse_typename()
-                        match .current() {
-                            RSquare => {
-                                .index++
-                            }
-                            else => {
-                                .error("Expected ']'", .current().span())
-                            }
+                        if .current() is RSquare {
+                            .index++
+                        } else {
+                            .error("Expected ']'", .current().span())
                         }
                         let span = JaktSpan(start, end: .current().span().end)
                         return ParsedType::Dictionary(key: inner, value, span)
@@ -1634,14 +1605,11 @@ struct Parser {
                 let inner = .parse_typename()
                 .index++
 
-                match .current() {
-                    RCurly => {
-                        let span = JaktSpan(start, end: .current().span().end)
-                        return ParsedType::Set(inner, span)
-                    }
-                    else => {
-                        .error("Expected '}'", .current().span())
-                    }
+                if .current() is RCurly {
+                    let span = JaktSpan(start, end: .current().span().end)
+                    return ParsedType::Set(inner, span)
+                } else {
+                    .error("Expected '}'", .current().span())
                 }
             }
             LParen => {
@@ -1664,11 +1632,10 @@ struct Parser {
 
         .skip_newlines()
 
-        match .current() {
-            LCurly => { .index++ }
-            else => { 
-                .error("Expected '{'", JaktSpan(start, end: start))
-            }
+        if .current() is LCurly {
+            .index++
+        } else { 
+            .error("Expected '{'", JaktSpan(start, end: start))
         }
 
         while not .eof() {
@@ -1784,14 +1751,11 @@ struct Parser {
                 let iterator_name = name
                 let name_span = .current().span()
                 .index++
-                match .current() {
-                    In => {
-                        .index++
-                    }
-                    else => {
-                        .error("Expected ‘in’", .current().span())
-                        return ParsedStatement::Garbage
-                    }
+                if .current() is In {
+                    .index++
+                } else {
+                    .error("Expected ‘in’", .current().span())
+                    return ParsedStatement::Garbage
                 }
 
                 let range = .parse_expression()
@@ -2051,13 +2015,10 @@ struct Parser {
                 // Indexing operation
                 .index++
                 let index_expr = .parse_expression()
-                match .current() {
-                    RSquare => {
-                        .index++
-                    }
-                    else => {
-                        .error("Expected ']'", .current().span())
-                    }
+                if .current() is RSquare {
+                    .index++
+                } else {
+                    .error("Expected ']'", .current().span())
                 }
                 yield ParsedExpression::IndexedExpression(
                     base: expr,
@@ -2116,21 +2077,14 @@ struct Parser {
                 call.name = name
                 .index++
 
-                match .current() {
-                    LessThan => {
-                        todo("parse_call generics")
-                        .index++
-                    }
-                    else => { }
+                if .current() is LessThan {
+                    todo("parse_call generics")
                 }
 
-                match .current() {
-                    LParen => {
-                        .index++
-                    }
-                    else => {
-                        .error("Expected '('", .current().span())
-                    }
+                if .current() is LParen {
+                    .index++
+                } else {
+                    .error("Expected '('", .current().span())
                 }
 
                 let mutable should_break = false
@@ -2213,11 +2167,8 @@ struct Parser {
         //        match (.current(), .peek(1)) {
         //            (Name(name), Colon) => ...
         //        }
-        match .peek(1) {
-            Colon => { }
-            else => {
-                return ""
-            }
+        if not .peek(1) is Colon {
+            return ""
         }
         return match .current() {
             Identifier(name) => {
@@ -2233,13 +2184,10 @@ struct Parser {
         
         .index++
 
-        match .current() {
-            LParen => {
-                .index++
-            }
-            else => {
-                .error("Expected ‘(’", .current().span())
-            }
+        if .current() is LParen {
+            .index++
+        } else {
+            .error("Expected ‘(’", .current().span())
         }
 
         let mutable whitelist: [ParsedType] = []
@@ -2278,13 +2226,10 @@ struct Parser {
             .error("Type list cannot be empty", restricted_span)
         }
 
-        match .current() {
-            RParen => {
-                .index++
-            }
-            else => {
-                .error("Expected ‘)’", .current().span())
-            }
+        if .current() is RParen {
+            .index++
+        } else {
+            .error("Expected ‘)’", .current().span())
         }
 
         return Visibility::Restricted(whitelist, span: restricted_span)
