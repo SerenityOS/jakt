@@ -878,6 +878,9 @@ boxed enum ParsedExpression {
     NumericConstant(val: i64, span: JaktSpan)
     QuotedString(val: String, span: JaktSpan)
     Call(call: ParsedCall, span: JaktSpan)
+    MethodCall(expr: ParsedExpression, call: ParsedCall, span: JaktSpan)
+    IndexedTuple(expr: ParsedExpression, index: usize, span: JaktSpan)
+    IndexedStruct(expr: ParsedExpression, field: String, span: JaktSpan)
     Var(name: String, span: JaktSpan)
     IndexedExpression(base: ParsedExpression, index: ParsedExpression, span: JaktSpan)
     UnaryOp(expr: ParsedExpression, op: UnaryOperator, span: JaktSpan)
@@ -907,6 +910,9 @@ boxed enum ParsedExpression {
             Range(from, to, span) => span
             ForcedUnwrap(expr, span) => span
             Garbage(span) => span
+            MethodCall(expr, call, span) => span
+            IndexedTuple(expr, index, span) => span
+            IndexedStruct(expr, field, span) => span
         }
     }
 
@@ -1929,8 +1935,33 @@ struct Parser {
                 yield ParsedExpression::Garbage(span)
             }
             Dot => {
-                todo("postfix Dot")
-                yield ParsedExpression::Garbage(span)
+                .index++
+                yield match .current() {
+                    Number(number) => {
+                        // Indexing into a tuple
+                        .index++
+                        // FIXME: Proper numeric constants.
+                        yield ParsedExpression::IndexedTuple(expr, index: number as! usize, span: JaktSpan(start, end: .previous().span().end))
+                    }
+                    Identifier(name) => {
+                        // Struct field access or method call
+                        .index++
+                        yield match .current() {
+                            LParen => {
+                                // NOTE: We step backwards since parse_call() expects to start at the callee identifier.
+                                .index--
+                                let call = .parse_call()
+                                yield ParsedExpression::MethodCall(expr, call, span: JaktSpan(start, end: .previous().span().end))
+                            }
+                            else => ParsedExpression::IndexedStruct(expr, field: name, span: JaktSpan(start, end: .current().span().end))
+                        }
+                    }
+                    else => {
+                        .error("Unsupported dot operation", .current().span())
+                        .index++
+                        yield expr
+                    }
+                }
             }
             LSquare => {
                 // Indexing operation
