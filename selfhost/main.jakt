@@ -993,8 +993,9 @@ struct ParsedCall {
 
 boxed enum ParsedType {
     Name(name: String, span: JaktSpan)
-    Array(inner: ParsedType, span: JaktSpan)
+    JaktArray(inner: ParsedType, span: JaktSpan)
     Dictionary(key: ParsedType, value: ParsedType, span: JaktSpan)
+    JaktTuple(types: [ParsedType], span: JaktSpan)
     Set(inner: ParsedType, span: JaktSpan)
     Optional(inner: ParsedType, span: JaktSpan)
     RawPtr(inner: ParsedType, span: JaktSpan)
@@ -1485,7 +1486,7 @@ struct Parser {
                     RSquare => {
                         let span = JaktSpan(start, end: .current().span().end)
                         .index++
-                        return ParsedType::Array(inner, span)
+                        return ParsedType::JaktArray(inner, span)
                     }
                     Colon => {
                         .index++
@@ -1517,7 +1518,22 @@ struct Parser {
             }
             LParen => {
                 // (A, B, C) is shorthand for Tuple<A, B, C>
-                todo("Implement tuple type shorthand")
+                .index++
+                let mutable types: [ParsedType] = []
+
+                while not .eof() {
+                    if .current() is RParen {
+                        let span = JaktSpan(start, end: .current().span().end)
+                        .index++
+                        return ParsedType::JaktTuple(types, span)
+                    }
+                    if .current() is Comma {
+                        .index++
+                    }
+                    types.push(.parse_typename())
+                }
+
+                .error("Expected ‘)’", .current().span())
             }
             else => { }
         }
