@@ -4787,6 +4787,11 @@ pub fn typecheck_expression(
                                 if name.len() == 1 {
                                     name.insert(0, (enum_name.clone(), name[0].1));
                                 }
+
+                                if name.is_empty() {
+                                    continue;
+                                }
+
                                 if name[0].0 != enum_name {
                                     error = error.or(Some(JaktError::TypecheckError(
                                         format!(
