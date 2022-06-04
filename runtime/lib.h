@@ -115,6 +115,11 @@ inline void panic(StringView message)
     VERIFY_NOT_REACHED();
 }
 
+inline void abort()
+{
+    ::abort();
+}
+
 template<typename T>
 inline constexpr T checked_add(T value, T other)
 {
@@ -408,6 +413,7 @@ ALWAYS_INLINE decltype(auto) deref_if_ref_pointer(T&& value)
 }
 
 namespace Jakt {
+using JaktInternal::abort;
 using JaktInternal::as_saturated;
 using JaktInternal::as_truncated;
 using JaktInternal::fallible_integer_cast;
