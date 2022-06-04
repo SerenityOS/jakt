@@ -1,6 +1,6 @@
 extern struct String {
-    function number(anonymous number: i64) throws -> String
-    function split(this, anonymous c: c_char) throws -> [String]
+    function number(anon number: i64) throws -> String
+    function split(this, anon c: c_char) throws -> [String]
     function c_string(this) -> raw c_char
     function to_int(this) -> i32?
     function to_uint(this) -> u32?
@@ -10,7 +10,7 @@ extern struct String {
     function repeated(character: c_char, count: usize) throws -> String
     function is_empty(this) -> bool
     function length(this) -> usize
-    function byte_at(this, anonymous index: usize) -> u8
+    function byte_at(this, anon index: usize) -> u8
 }
 
 extern struct ArrayIterator<T> {
@@ -19,13 +19,13 @@ extern struct ArrayIterator<T> {
 
 extern struct Array<T> {
     function is_empty(this) -> bool
-    function contains(this, anonymous value: T) -> bool
+    function contains(this, anon value: T) -> bool
     function size(this) -> usize
     function capacity(this) -> usize
-    function ensure_capacity(this, anonymous capacity: usize) throws
-    function add_capacity(this, anonymous capacity: usize) throws
-    function resize(mutable this, anonymous size: usize) throws
-    function push(mutable this, anonymous value: T) throws
+    function ensure_capacity(this, anon capacity: usize) throws
+    function add_capacity(this, anon capacity: usize) throws
+    function resize(mutable this, anon size: usize) throws
+    function push(mutable this, anon value: T) throws
     function pop(mutable this) -> T?
     function iterator(this) -> ArrayIterator<T>
 }
@@ -33,8 +33,8 @@ extern struct Array<T> {
 extern struct Optional<T> {
     function has_value(this) -> bool
     function value(this) -> T
-    function value_or(this, anonymous x: T) -> T
-    function Optional<S>(anonymous x: S) -> Optional<S>
+    function value_or(this, anon x: T) -> T
+    function Optional<S>(anon x: S) -> Optional<S>
 }
 
 extern struct WeakPtr<T> {
@@ -48,11 +48,11 @@ extern struct DictionaryIterator<K, V> {
 
 extern struct Dictionary<K, V> {
     function is_empty(this) -> bool
-    function get(this, anonymous key: K) -> V?
-    function contains(this, anonymous key: K) -> bool
+    function get(this, anon key: K) -> V?
+    function contains(this, anon key: K) -> bool
     function set(mutable this, key: K, value: V) throws
-    function remove(mutable this, anonymous key: K) -> bool
-    function ensure_capacity(mutable this, anonymous capacity: usize) throws
+    function remove(mutable this, anon key: K) -> bool
+    function ensure_capacity(mutable this, anon capacity: usize) throws
     function clear(mutable this)
     function size(this) -> usize
     function capacity(this) -> usize
@@ -68,10 +68,10 @@ extern struct SetIterator<T> {
 
 extern struct Set<V> {
     function is_empty(this) -> bool
-    function contains(this, anonymous value: V) -> bool
-    function add(mutable this, anonymous value: V) throws
-    function remove(mutable this, anonymous value: V) -> bool
-    function ensure_capacity(mutable this, anonymous capacity: usize) throws
+    function contains(this, anon value: V) -> bool
+    function add(mutable this, anon value: V) throws
+    function remove(mutable this, anon value: V) -> bool
+    function ensure_capacity(mutable this, anon capacity: usize) throws
     function clear(mutable this)
     function size(this) -> usize
     function capacity(this) -> usize
@@ -88,18 +88,18 @@ extern struct Range<T> {
 
 extern struct Error {
     function code(this) -> i32
-    function from_errno(anonymous errno: i32) -> Error
+    function from_errno(anon errno: i32) -> Error
 }
 
 extern class File {
-    public function open_for_reading(anonymous path: String) throws -> File
-    public function open_for_writing(anonymous path: String) throws -> File
+    public function open_for_reading(anon path: String) throws -> File
+    public function open_for_writing(anon path: String) throws -> File
 
-    public function read(mutable this, anonymous buffer: [u8]) throws -> usize
-    public function write(mutable this, anonymous data: [u8]) throws -> usize
+    public function read(mutable this, anon buffer: [u8]) throws -> usize
+    public function write(mutable this, anon data: [u8]) throws -> usize
 
     public function read_all(mutable this) throws -> [u8]
 }
 
-extern function as_saturated<U, T>(anonymous input: T) -> U
-extern function as_truncated<U, T>(anonymous input: T) -> U
+extern function as_saturated<U, T>(anon input: T) -> U
+extern function as_truncated<U, T>(anon input: T) -> U

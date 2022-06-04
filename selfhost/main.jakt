@@ -2,28 +2,28 @@
 /// - output: ""
 
 extern struct StringBuilder {
-    function append(mutable this, anonymous s: u8)
+    function append(mutable this, anon s: u8)
     function to_string(mutable this) throws -> String
     function StringBuilder() -> StringBuilder
 }
 
 extern function abort()
 
-function todo(anonymous message: String) {
+function todo(anon message: String) {
     eprintln("TODO: {}", message)
     abort()
 }
 
-function panic(anonymous message: String) -> void {
+function panic(anon message: String) -> void {
     eprintln("internal error: {}", message)
     abort()
 }
 
 // FIXME: These should not need explicit "-> bool" return types.
-function is_ascii_alpha(anonymous c: u8) -> bool => (c >= b'a' and c <= b'z') or (c >= b'A' and c <= b'Z')
-function is_ascii_digit(anonymous c: u8) -> bool => (c >= b'0' and c <= b'9')
-function is_ascii_hexdigit(anonymous c: u8) -> bool => (c >= b'0' and c <= b'9') or (c >= b'a' and c <= b'f') or (c >= b'A' and c <= b'F')
-function is_ascii_alphanumeric(anonymous c: u8) -> bool => is_ascii_alpha(c) or is_ascii_digit(c)
+function is_ascii_alpha(anon c: u8) -> bool => (c >= b'a' and c <= b'z') or (c >= b'A' and c <= b'Z')
+function is_ascii_digit(anon c: u8) -> bool => (c >= b'0' and c <= b'9')
+function is_ascii_hexdigit(anon c: u8) -> bool => (c >= b'0' and c <= b'9') or (c >= b'a' and c <= b'f') or (c >= b'A' and c <= b'F')
+function is_ascii_alphanumeric(anon c: u8) -> bool => is_ascii_alpha(c) or is_ascii_digit(c)
 
 //FIXME: Would be nice to name this Span and not have conflict
 struct JaktSpan {
@@ -31,7 +31,7 @@ struct JaktSpan {
     end: usize
 }
 
-function merge_spans(anonymous start: JaktSpan, anonymous end: JaktSpan) -> JaktSpan => JaktSpan(start: start.start, end: end.end)
+function merge_spans(anon start: JaktSpan, anon end: JaktSpan) -> JaktSpan => JaktSpan(start: start.start, end: end.end)
 function empty_span() -> JaktSpan => JaktSpan(start: 0, end: 0)
 
 enum Token {
@@ -95,7 +95,7 @@ enum Token {
 
     // Keywords
     And(JaktSpan)
-    Anonymous(JaktSpan)
+    anon(JaktSpan)
     Boxed(JaktSpan)
     Break(JaktSpan)
     Catch(JaktSpan)
@@ -197,7 +197,7 @@ enum Token {
         Eof(span) => span
         FatArrow(span) => span
         And(span) => span
-        Anonymous(span) => span
+        anon(span) => span
         Boxed(span) => span
         Break(span) => span
         Catch(span) => span
@@ -239,7 +239,7 @@ enum Token {
 
     function from_keyword_or_identifier(string: String, span: JaktSpan) => match string {
         "and" => Token::And(span)
-        "anonymous" => Token::Anonymous(span)
+        "anon" => Token::anon(span)
         "boxed" => Token::Boxed(span)
         "break" => Token::Break(span)
         "catch" => Token::Catch(span)
@@ -291,7 +291,7 @@ struct Lexer {
     input: [u8]
     errors: [JaktError]
 
-    function error(mutable this, anonymous message: String, anonymous span: JaktSpan) throws {
+    function error(mutable this, anon message: String, anon span: JaktSpan) throws {
         .errors.push(JaktError::Message(message, span))
     }
 
@@ -305,7 +305,7 @@ struct Lexer {
 
     // Peek at upcoming characters, N steps ahead in the stream
     // FIXME: This could be merged with peek() once we support default arguments
-    function peek_ahead(this, anonymous steps: usize) -> u8 {
+    function peek_ahead(this, anon steps: usize) -> u8 {
         if .index + steps >= .input.size() {
             return 0
         }
@@ -660,7 +660,7 @@ function ansi_color_code(severity: MessageSeverity) throws => match severity {
     Error => "31" // Red
 }
 
-function display_message_with_span(anonymous severity: MessageSeverity, file_name: String, file_contents: [u8], message: String, span: JaktSpan) throws {
+function display_message_with_span(anon severity: MessageSeverity, file_name: String, file_contents: [u8], message: String, span: JaktSpan) throws {
     println("{}: {}", severity_name(severity), message)
 
     let line_spans = gather_line_spans(file_contents)
@@ -1012,11 +1012,11 @@ struct Parser {
     tokens: [Token]
     errors: [JaktError]
 
-    function error(mutable this, anonymous message: String, anonymous span: JaktSpan) throws {
+    function error(mutable this, anon message: String, anon span: JaktSpan) throws {
         .errors.push(JaktError::Message(message, span))
     }
 
-    function error_with_hint(mutable this, anonymous message: String, anonymous span: JaktSpan, anonymous hint: String, anonymous hint_span: JaktSpan) throws {
+    function error_with_hint(mutable this, anon message: String, anon span: JaktSpan, anon hint: String, anon hint_span: JaktSpan) throws {
         .errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
     }
 
@@ -1024,7 +1024,7 @@ struct Parser {
 
     function eol(this) => .eof() or .tokens[.index] is Eol
 
-    function peek(this, anonymous steps: usize) -> Token {
+    function peek(this, anon steps: usize) -> Token {
         if .eof() or (steps + .index) >= .tokens.size()  {
             return .tokens[.tokens.size() - 1]
         }
@@ -1076,7 +1076,7 @@ struct Parser {
         return parsed_namespace
     }
 
-    public function parse_struct(mutable this, anonymous definition_linkage: DefinitionLinkage, anonymous definition_type: DefinitionType) throws -> ParsedStruct {
+    public function parse_struct(mutable this, anon definition_linkage: DefinitionLinkage, anon definition_type: DefinitionType) throws -> ParsedStruct {
         let mutable parsed_struct = ParsedStruct(
             name: "",
             name_span: empty_span(),
@@ -1227,7 +1227,7 @@ struct Parser {
         return parsed_struct
     }
 
-    public function parse_function(mutable this, anonymous linkage: FunctionLinkage) throws -> ParsedFunction {
+    public function parse_function(mutable this, anon linkage: FunctionLinkage) throws -> ParsedFunction {
         let mutable parsed_function = ParsedFunction(
             name: "",
             name_span: empty_span(),
@@ -1281,7 +1281,7 @@ struct Parser {
                     .index++
                     current_param_requires_label = true
                 }
-                Anonymous => {
+                anon => {
                     .index++
                     current_param_requires_label = false
                 }
@@ -1357,7 +1357,7 @@ struct Parser {
         return ParsedBlock(stmts: [return_statement])
     }
 
-    function parse_field(mutable this, anonymous visibility: Visibility) throws -> ParsedField {
+    function parse_field(mutable this, anon visibility: Visibility) throws -> ParsedField {
         let parsed_variable_declaration = .parse_variable_declaration()
 
         if parsed_variable_declaration.parsed_type is Empty {
@@ -1370,7 +1370,7 @@ struct Parser {
         )
     }
 
-    function parse_method(mutable this, anonymous linkage: FunctionLinkage, anonymous visibility: Visibility) throws -> ParsedMethod {
+    function parse_method(mutable this, anon linkage: FunctionLinkage, anon visibility: Visibility) throws -> ParsedMethod {
         let parsed_function = .parse_function(linkage)
 
         // TODO: The bootstrap compiler sets parsed_function.must_instantiate here if the linkage is External.
@@ -2309,8 +2309,8 @@ struct Typechecker {
     variables: [CheckedVarDecl]
     structures: [CheckedStruct]
 
-    function get_function(this, anonymous id: FunctionId) -> CheckedFunction => .functions[id.id]
-    function get_variable(this, anonymous id: VarId) -> CheckedVarDecl => .variables[id.id]
+    function get_function(this, anon id: FunctionId) -> CheckedFunction => .functions[id.id]
+    function get_variable(this, anon id: VarId) -> CheckedVarDecl => .variables[id.id]
 
 
 }

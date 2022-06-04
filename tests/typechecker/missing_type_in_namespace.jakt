@@ -2,7 +2,7 @@
 /// - error: "Unknown type"
 
 extern struct StringBuilder {
-    function append(mutable this, anonymous s: u8)
+    function append(mutable this, anon s: u8)
     function to_string(mutable this) throws -> String
     function StringBuilder() -> StringBuilder
 }

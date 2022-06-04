@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "13\n"
 
-function id<T>(anonymous x: T) => x
+function id<T>(anon x: T) => x
 
 function main() {
     println("{}", id(3) + 10)

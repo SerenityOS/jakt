@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "1\n"
 
-function dump<T>(anonymous v: [T]) { return v[0] }
+function dump<T>(anon v: [T]) { return v[0] }
 
 function main() {
     println("{}", dump([1, 2, 3]))

@@ -1,6 +1,6 @@
 extern struct StringBuilder {
     // FIXME: AK::StringBuilder::append() actually takes a c_char, not a u8, but nobody complains
-    function append(mutable this, anonymous c: u8)
+    function append(mutable this, anon c: u8)
     function to_string(this) throws -> String
     function StringBuilder() -> StringBuilder
 }
@@ -18,7 +18,7 @@ enum JsonValue {
     Object([String:JsonValue])
 }
 
-function is_whitespace(anonymous c: u8) -> bool {
+function is_whitespace(anon c: u8) -> bool {
     return match c {
         b'\t' | b'\n' | b'\r' | b' ' => true
         else => false
@@ -144,7 +144,7 @@ class JsonParser {
         return ch
     }
 
-    function consume_specific(mutable this, anonymous expected: u8) -> bool {
+    function consume_specific(mutable this, anon expected: u8) -> bool {
         if .peek() != expected {
             return false
         }

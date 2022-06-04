@@ -4948,7 +4948,7 @@ pub fn typecheck_expression(
                                                             .any(|field| field.name == arg.1)
                                                     {
                                                         error = error.or(Some(JaktError::TypecheckError(
-                                                            format!("match case argument '{}' for struct-like enum variant cannot be anonymous", arg.1),
+                                                            format!("match case argument '{}' for struct-like enum variant cannot be anon", arg.1),
                                                             *arg_span,
                                                         )));
                                                         continue;
