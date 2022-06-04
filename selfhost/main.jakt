@@ -814,6 +814,7 @@ boxed enum ParsedStatement {
     Throw(ParsedExpression)
     Yield(ParsedExpression)
     InlineCpp(block: ParsedBlock, span: JaktSpan)
+    Try(stmt: ParsedStatement, error_name: String, error_span: JaktSpan, catch_block: ParsedBlock)
     Garbage
 }
 
@@ -1629,9 +1630,36 @@ struct Parser {
             }
             If => .parse_if_statement()
             For => .parse_for_statement()
+            Try => .parse_try_statement()
             LCurly => ParsedStatement::Block(.parse_block())
             else => ParsedStatement::Expression(.parse_expression())
         }
+    }
+
+    function parse_try_statement(mutable this) throws -> ParsedStatement {
+        .index++
+
+        let stmt = .parse_statement()
+
+        let mutable error_name = ""
+        let mutable error_span = .current().span()
+
+        if .current() is Catch {
+            .index++
+            match .current() {
+                Identifier(name) => {
+                    error_span = .current().span()
+                    error_name = name
+                    .index++
+                }
+                else => { }
+            }
+        } else {
+            .error("Expected ‘catch’", .current().span())
+        }
+
+        let catch_block = .parse_block()
+        return ParsedStatement::Try(stmt, error_name, error_span, catch_block)
     }
 
     function parse_for_statement(mutable this) throws -> ParsedStatement {
