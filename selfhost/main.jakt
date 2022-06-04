@@ -1388,17 +1388,22 @@ struct Parser {
 
         parsed_type = match .current() {
             Raw => {
-                todo("raw")
-                yield ParsedType::Empty
+                .index++
+                let inner = .parse_typename()
+                let span = JaktSpan(start: start_span.start, end: .current().span().end)
+                // NOTE: We rewrite `raw T?` from `RawPtr<Optional<T>>` to `Optional<RawPtr<T>>`
+                yield match inner {
+                    Optional(inner) => ParsedType::Optional(inner: ParsedType::RawPtr(inner, span), span)
+                    else => ParsedType::RawPtr(inner, span)
+                }
             }
             Weak => {
                 .index++
                 let inner = .parse_typename()
                 let span = JaktSpan(start: start_span.start, end: .current().span().end)
+                // NOTE: We rewrite `weak T?` from `WeakPtr<Optional<T>>` to `WeakPtr<T>`
                 yield match inner {
-                    Optional(inner) => {
-                        yield ParsedType::WeakPtr(inner, span)
-                    }
+                    Optional(inner) => ParsedType::WeakPtr(inner, span)
                     else => {
                         .error("missing `?` after weak pointer type name", span)
                         yield ParsedType::WeakPtr(inner, span)
