@@ -1,0 +1,85 @@
+function main() {
+    let set = {1, 2, 3}
+
+    println("{}", set.contains(1))
+    println("{}", set.contains(5))
+}
+
+enum MyOptional<T> {
+    Some(T)
+    None
+}
+
+function value_or_default<T>(anonymous x: MyOptional<T>, default: T) -> T {
+    return match x {
+        Some(value) => {
+            let stuff = maybe_do_stuff_with(value)
+            let more_stuff = stuff.do_some_more_processing()
+            yield more_stuff
+        }
+        None => default
+    }
+}
+
+enum Foo {
+    StructLikeThingy (
+        field_a: i32
+        field_b: i32
+    )
+}
+
+function look_at_foo(anonymous x: Foo) -> i32 {
+    match x {
+        StructLikeThingy(field_a: a, field_b) => {
+            return a + field_b
+        }
+    }
+}
+
+enum AlertDescription: i8 {
+    CloseNotify = 0
+    UnexpectedMessage = 10
+    BadRecordMAC = 20
+    // etc
+}
+
+// Use in match:
+function do_nothing_in_particular() => match AlertDescription::CloseNotify {
+    CloseNotify => { ... }
+    UnexpectedMessage => { ... }
+    BadRecordMAC => { ... }
+}
+
+namespace Greeters {
+    function greet() {
+        println("Well, hello friends")
+    }
+}
+
+function task_that_might_fail() throws -> usize {
+    if problem {
+        throw Error::from_errno(EPROBLEM)
+    }
+    ...
+    return result
+}
+
+
+function task_that_cannot_fail() -> usize {
+    ...
+    return result
+}
+
+try {
+    task_that_might_fail()
+} catch error {
+    println("Caught error: {}", error)
+}
+
+let mutable x = 0
+unsafe {
+    cpp {
+        "x = (i64)&x;"
+    }
+}
+println("{}", x)
