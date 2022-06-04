@@ -14,6 +14,11 @@ function todo(anonymous message: String) {
     abort()
 }
 
+function panic(anonymous message: String) -> void {
+    eprintln("internal error: {}", message)
+    abort()
+}
+
 // FIXME: These should not need explicit "-> bool" return types.
 function is_ascii_alpha(anonymous c: u8) -> bool => (c >= b'a' and c <= b'z') or (c >= b'A' and c <= b'Z')
 function is_ascii_digit(anonymous c: u8) -> bool => (c >= b'0' and c <= b'9')
@@ -850,8 +855,40 @@ enum BinaryOperator {
     Subtract
     Multiply
     Divide
+    Modulo
+    LessThan
+    LessThanOrEqual
+    GreaterThan
+    GreaterThanOrEqual
+    Equal
+    NotEqual
+
+    BitwiseAnd
+    BitwiseXor
+    BitwiseOr
+    BitwiseLeftShift
+    BitwiseRightShift
+    ArithmeticLeftShift
+    ArithmeticRightShift
+
     LogicalAnd
     LogicalOr
+
+    NoneCoalescing
+
+    Assign
+    BitwiseAndAssign
+    BitwiseOrAssign
+    BitwiseXorAssign
+    BitwiseLeftShiftAssign
+    BitwiseRightShiftAssign
+    AddAssign
+    SubtractAssign
+    MultiplyAssign
+    ModuloAssign
+    DividieAssign
+    NoneCoalescingAssign
+
     Garbage
 }
 
@@ -876,7 +913,7 @@ boxed enum ParsedExpression {
     Var(name: String, span: JaktSpan)
     IndexedExpression(base: ParsedExpression, index: ParsedExpression, span: JaktSpan)
     UnaryOp(expr: ParsedExpression, op: UnaryOperator, span: JaktSpan)
-    BinaryOp(lhs: ParsedExpression, op: ParsedExpression, rhs: ParsedExpression, span: JaktSpan)
+    BinaryOp(lhs: ParsedExpression, op: BinaryOperator, rhs: ParsedExpression, span: JaktSpan)
     Operator(op: BinaryOperator, span: JaktSpan)
     OptionalNone(JaktSpan)
     JaktArray(values: [ParsedExpression], fill_size: ParsedExpression?, span: JaktSpan)
@@ -901,10 +938,54 @@ boxed enum ParsedExpression {
         }
     }
 
-    function as_operator(this) -> BinaryOperator {
+    function precedence(this) -> i64 {
         return match this {
-            Operator(op, span) => op
-            else => BinaryOperator::Garbage
+            Operator(op, span) => {
+                yield match op {
+                    Multiply
+                    | Modulo
+                    | Divide => 100
+
+                    Add
+                    | Subtract => 90
+
+                    BitwiseLeftShift
+                    | BitwiseRightShift
+                    | ArithmeticLeftShift
+                    | ArithmeticRightShift => 85
+
+                    LessThan
+                    | LessThanOrEqual
+                    | GreaterThan
+                    | GreaterThanOrEqual
+                    | Equal
+                    | NotEqual => 80
+
+                    BitwiseAnd => 73
+                    BitwiseXor => 72
+                    BitwiseOr => 71
+                    LogicalAnd => 70
+
+                    LogicalOr
+                    | NoneCoalescing => 69
+
+                    Assign
+                    | BitwiseAndAssign
+                    | BitwiseOrAssign
+                    | BitwiseXorAssign
+                    | BitwiseLeftShiftAssign
+                    | BitwiseRightShiftAssign
+                    | AddAssign
+                    | SubtractAssign
+                    | MultiplyAssign
+                    | ModuloAssign
+                    | DividieAssign
+                    | NoneCoalescingAssign => 50
+
+                    else => 0
+                }
+            }
+            else => 0
         }
     }
 }
@@ -1042,7 +1123,9 @@ struct Parser {
 
     function eof(this) -> bool {
         return .index >= .tokens.size()
-    } 
+    }
+
+    function eol(this) => .eof() or .tokens[.index] is Eol
 
     public function parse_namespace(mutable this) throws -> ParsedNamespace {
         let mutable parsed_namespace = ParsedNamespace(name: "", functions: [], structs: [])
@@ -1737,29 +1820,61 @@ struct Parser {
 
     function parse_expression(mutable this) throws -> ParsedExpression {
         let mutable expr_stack: [ParsedExpression] = []
-        let mutable last_prec = 1000000
+        let mutable last_precedence = 1000000
 
         let lhs = .parse_operand()
         expr_stack.push(lhs)
 
         while not .eof() {
-            // TODO: Check if the next token is eol, if so stop
-
-            let op = .parse_operator()
-
-            if op is Garbage {
+            if .eol() {
                 break
             }
 
+            let parsed_operator = .parse_operator()
+
+            if parsed_operator is Garbage {
+                break
+            }
+
+            let precedence = parsed_operator.precedence();
+
+            .skip_newlines()
+
             let rhs = .parse_operand()
 
-            expr_stack.push(op)
+            while precedence <= last_precedence and expr_stack.size() > 1 {
+                let rhs = expr_stack.pop()!
+                let op = expr_stack.pop()!
+
+                last_precedence = parsed_operator.precedence()
+
+                if last_precedence < precedence {
+                    expr_stack.push(op)
+                    expr_stack.push(rhs)
+                    break
+                }
+
+                let lhs = expr_stack.pop()!
+
+                match parsed_operator {
+                    Operator(op, span) => {
+                        let new_span = JaktSpan(start: lhs.span().start, end: rhs.span().end)
+
+                        expr_stack.push(ParsedExpression::BinaryOp(lhs, op, rhs, span: new_span))
+                    }
+                    else => panic("operator is not an operator")
+                }
+            }
+
+            expr_stack.push(parsed_operator)
             expr_stack.push(rhs)
+
+            last_precedence = precedence
         }
 
         while expr_stack.size() > 1 {
             let rhs = expr_stack.pop()!
-            let op = expr_stack.pop()!
+            let parsed_operator = expr_stack.pop()!
             let lhs = expr_stack.pop()!
 
             let start = lhs.span().start
@@ -1767,7 +1882,14 @@ struct Parser {
 
             let span = JaktSpan(start, end)
 
-            expr_stack.push(ParsedExpression::BinaryOp(lhs, op, rhs, span))
+            match parsed_operator {
+                Operator(op, span) => {
+                    let new_span = JaktSpan(start: lhs.span().start, end: rhs.span().end)
+
+                    expr_stack.push(ParsedExpression::BinaryOp(lhs, op, rhs, span: new_span))
+                }
+                else => panic("operator is not an operator")
+            }
         }
 
         return expr_stack[0]
