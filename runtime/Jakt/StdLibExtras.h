@@ -6,9 +6,14 @@
 
 #pragma once
 
-#include <Jakt/StdLibExtraDetails.h>
-
 #include <Jakt/Assertions.h>
+#include <utility>
+
+#ifndef JAKT_UTILITY_WAS_INCLUDED
+#error "Jakt's <utility> header was not correctly included!"
+#endif
+
+#define AK_DONT_REPLACE_STD
 
 namespace Jakt {
 
@@ -24,44 +29,10 @@ constexpr bool is_power_of_two(T value) requires(IsIntegral<T>)
     return value && !((value) & (value - 1));
 }
 
-}
-
-// HACK: clang-format does not format this correctly because of the requires clause above.
-// Disabling formatting for that doesn't help either.
-//
-// clang-format off
-#ifndef AK_DONT_REPLACE_STD
-namespace std { // NOLINT(cert-dcl58-cpp) Names in std to aid tools
-
-// NOTE: These are in the "std" namespace since some compilers and static analyzers rely on it.
-
-template<typename T>
-constexpr T&& forward(::Jakt::Detail::RemoveReference<T>& param)
-{
-    return static_cast<T&&>(param);
-}
-
-template<typename T>
-constexpr T&& forward(::Jakt::Detail::RemoveReference<T>&& param) noexcept
-{
-    static_assert(!::Jakt::IsLvalueReference<T>, "Can't forward an rvalue as an lvalue.");
-    return static_cast<T&&>(param);
-}
-
-template<typename T>
-constexpr T&& move(T& arg)
-{
-    return static_cast<T&&>(arg);
-}
-
-}
-#else
-#include <utility>
-#endif
-// clang-format on
-
 using std::forward;
 using std::move;
+
+}
 
 namespace Jakt::Detail {
 template<typename T>

@@ -479,11 +479,11 @@ inline void outln() { outln(stdout); }
 template<typename... Parameters>
 void warn(StringView&& fmtstr, Parameters const&... parameters)
 {
-    out(stderr, move(fmtstr), parameters...);
+    out(stderr, std::move(fmtstr), parameters...);
 }
 
 template<typename... Parameters>
-void warnln(StringView&& fmtstr, Parameters const&... parameters) { outln(stderr, move(fmtstr), parameters...); }
+void warnln(StringView&& fmtstr, Parameters const&... parameters) { outln(stderr, std::move(fmtstr), parameters...); }
 
 inline void warnln() { outln(stderr); }
 
