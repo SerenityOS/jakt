@@ -1,9 +1,15 @@
 {
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "jakt",
+  "fileTypes": [
+    "jakt"
+  ],
   "patterns": [
     {
       "include": "#function"
+    },
+    {
+      "include": "#namespace"
     },
     {
       "include": "#struct"
@@ -107,6 +113,42 @@
       "patterns": [
         {
           "include": "#types"
+        }
+      ]
+    },
+    "namespace": {
+      "patterns": [
+        {
+          "name": "meta.namespace.jakt",
+          "match": "\\b(namespace)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
+          "captures": {
+            "1": {
+              "name": "keyword.namespace.jakt"
+            },
+            "2": {
+              "name": "entity.name.namespace.jakt"
+            }
+          }
+        },
+        {
+          "name": "meta.block.namespace.jakt",
+          "begin": "(?<=(?:namespace).*?)(\\{)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.begin.brace.jakt"
+            }
+          },
+          "end": "(\\})",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.end.brace.jakt"
+            }
+          },
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ]
         }
       ]
     },
