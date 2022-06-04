@@ -2883,7 +2883,7 @@ fn codegen_expr(
                 }
                 output.push(')');
             } else if call.name == "format" {
-                output.push_str("TRY(String::formatted(");
+                output.push_str("(String::formatted(");
                 for (i, param) in call.args.iter().enumerate() {
                     output.push_str(&codegen_expr(indent, &param.1, project, context));
                     if i != call.args.len() - 1 {
