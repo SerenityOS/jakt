@@ -142,7 +142,7 @@ pub struct ParsedEnum {
     pub name_span: Span,
     pub generic_parameters: Vec<(String, Span)>,
     pub variants: Vec<EnumVariant>,
-    pub is_recursive: bool,
+    pub is_boxed: bool,
     pub definition_linkage: DefinitionLinkage,
     pub underlying_type: ParsedType,
     pub methods: Vec<ParsedFunction>,
@@ -809,7 +809,7 @@ pub fn parse_enum(
     tokens: &[Token],
     index: &mut usize,
     definition_linkage: DefinitionLinkage,
-    is_recursive: bool,
+    is_boxed: bool,
 ) -> (ParsedEnum, Option<JaktError>) {
     trace!(format!("parse_enum({:?})", tokens[*index]));
 
@@ -825,7 +825,7 @@ pub fn parse_enum(
         definition_linkage,
         generic_parameters: vec![],
         variants: Vec::new(),
-        is_recursive,
+        is_boxed,
         underlying_type: ParsedType::Empty,
         methods: Vec::new(),
     };
@@ -1055,7 +1055,7 @@ pub fn parse_enum(
                         error = error.or(parse_error);
                         if decl.name == enum_.name
                             && decl.parsed_type == ParsedType::Empty
-                            && !is_recursive
+                            && !is_boxed
                         {
                             error = error.or(Some(JaktError::ParserError(
                                 "use 'boxed enum' to make the enum recursive".into(),
@@ -1064,7 +1064,7 @@ pub fn parse_enum(
                         } else {
                             match &decl.parsed_type {
                                 ParsedType::Name(decl_name, _)
-                                    if decl_name == &enum_.name && !is_recursive =>
+                                    if decl_name == &enum_.name && !is_boxed =>
                                 {
                                     error = error.or(Some(JaktError::ParserError(
                                         "use 'boxed enum' to make the enum recursive".into(),
