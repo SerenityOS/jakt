@@ -852,7 +852,7 @@ enum BinaryOperator {
     SubtractAssign
     MultiplyAssign
     ModuloAssign
-    DividieAssign
+    DivideAssign
     NoneCoalescingAssign
 
     Garbage
@@ -951,7 +951,7 @@ boxed enum ParsedExpression {
             | SubtractAssign
             | MultiplyAssign
             | ModuloAssign
-            | DividieAssign
+            | DivideAssign
             | NoneCoalescingAssign => 50
 
             else => 0
