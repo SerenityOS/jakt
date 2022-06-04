@@ -7,8 +7,6 @@ extern struct StringBuilder {
     function StringBuilder() -> StringBuilder
 }
 
-extern function abort()
-
 function todo(anon message: String) {
     eprintln("TODO: {}", message)
     abort()
