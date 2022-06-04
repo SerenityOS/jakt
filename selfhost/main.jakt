@@ -30,6 +30,8 @@ struct JaktSpan {
     start: usize
     end: usize
 }
+
+function merge_spans(anonymous start: JaktSpan, anonymous end: JaktSpan) -> JaktSpan => JaktSpan(start: start.start, end: end.end)
 function empty_span() -> JaktSpan => JaktSpan(start: 0, end: 0)
 
 enum Token {
@@ -1329,9 +1331,9 @@ struct Parser {
 
         if .current() is Arrow {
             .index++
-            let start = .current().span().start
+            let start = .current().span()
             parsed_function.return_type = .parse_typename()
-            parsed_function.return_type_span = JaktSpan(start, end: .index)
+            parsed_function.return_type_span = merge_spans(start, .previous().span())
         }
 
         if .current() is FatArrow {
@@ -1347,9 +1349,9 @@ struct Parser {
 
     function parse_fat_arrow(mutable this) throws -> ParsedBlock {
         .index++
-        let start = .current().span().start
+        let start = .current().span()
         let expr = .parse_expression()
-        let return_statement = ParsedStatement::Return(expr, span: JaktSpan(start, end: .index))
+        let return_statement = ParsedStatement::Return(expr, span: merge_spans(start, .current().span()))
         return ParsedBlock(stmts: [return_statement])
     }
 
@@ -1385,13 +1387,13 @@ struct Parser {
             return parsed_type
         }
 
-        let start_span = .current().span()
+        let start = .current().span()
 
         parsed_type = match .current() {
             Raw => {
                 .index++
                 let inner = .parse_typename()
-                let span = JaktSpan(start: start_span.start, end: .current().span().end)
+                let span = merge_spans(start, .current().span())
                 // NOTE: We rewrite `raw T?` from `RawPtr<Optional<T>>` to `Optional<RawPtr<T>>`
                 yield match inner {
                     Optional(inner) => ParsedType::Optional(inner: ParsedType::RawPtr(inner, span), span)
@@ -1401,7 +1403,7 @@ struct Parser {
             Weak => {
                 .index++
                 let inner = .parse_typename()
-                let span = JaktSpan(start: start_span.start, end: .current().span().end)
+                let span = merge_spans(start, .current().span())
                 // NOTE: We rewrite `weak T?` from `WeakPtr<Optional<T>>` to `WeakPtr<T>`
                 yield match inner {
                     Optional(inner) => ParsedType::WeakPtr(inner, span)
@@ -1424,7 +1426,7 @@ struct Parser {
 
         if .current() is QuestionMark {
             .index++
-            let span = JaktSpan(start: start_span.start, end: .current().span().end)
+            let span = merge_spans(start, .current().span())
             parsed_type = ParsedType::Optional(inner: parsed_type, span)
         }
 
@@ -1484,13 +1486,12 @@ struct Parser {
     function parse_type_shorthand_array_or_dictionary(mutable this) throws -> ParsedType {
         // [T] is shorthand for Array<T>
         // [K:V] is shorthand for Dictionary<K, V>
-        let start = .current().span().start
+        let start = .current().span()
         .index++
         let inner = .parse_typename()
         if .current() is RSquare {
-            let span = JaktSpan(start, end: .current().span().end)
             .index++
-            return ParsedType::JaktArray(inner, span)
+            return ParsedType::JaktArray(inner, span: merge_spans(start, .previous().span()))
         }
         if .current() is Colon {
             .index++
@@ -1500,8 +1501,7 @@ struct Parser {
             } else {
                 .error("Expected ']'", .current().span())
             }
-            let span = JaktSpan(start, end: .current().span().end)
-            return ParsedType::Dictionary(key: inner, value, span)
+            return ParsedType::Dictionary(key: inner, value, span: merge_spans(start, .current().span()))
         }
         .error("Expected shorthand type", .current().span())
         return ParsedType::Empty
@@ -1509,12 +1509,11 @@ struct Parser {
 
     function parse_type_shorthand_set(mutable this) throws -> ParsedType {
         // {T} is shorthand for Set<T>
-        let start = .current().span().start
+        let start = .current().span()
         let inner = .parse_typename()
         .index++
         if .current() is RCurly {
-            let span = JaktSpan(start, end: .current().span().end)
-            return ParsedType::Set(inner, span)
+            return ParsedType::Set(inner, span: merge_spans(start, .current().span()))
         }
         .error("Expected '}'", .current().span())
         return ParsedType::Empty
@@ -1522,14 +1521,13 @@ struct Parser {
 
     function parse_type_shorthand_tuple(mutable this) throws -> ParsedType {
         // (A, B, C) is shorthand for Tuple<A, B, C>
-        let start = .current().span().start
+        let start = .current().span()
         .index++
         let mutable types: [ParsedType] = []
         while not .eof() {
             if .current() is RParen {
-                let span = JaktSpan(start, end: .current().span().end)
                 .index++
-                return ParsedType::JaktTuple(types, span)
+                return ParsedType::JaktTuple(types, span: merge_spans(start, .previous().span()))
             }
             if .current() is Comma {
                 .index++
@@ -1541,11 +1539,11 @@ struct Parser {
     }
 
     function parse_block(mutable this) throws -> ParsedBlock {
-        let start = .current().span().start
+        let start = .current().span()
         let mutable block = ParsedBlock(stmts: [])
 
         if .eof() {
-            .error("Incomplete block", JaktSpan(start, end: start))
+            .error("Incomplete block", start)
             return block
         }
 
@@ -1554,7 +1552,7 @@ struct Parser {
         if .current() is LCurly {
             .index++
         } else { 
-            .error("Expected '{'", JaktSpan(start, end: start))
+            .error("Expected '{'", start)
         }
 
         while not .eof() {
@@ -1572,19 +1570,18 @@ struct Parser {
             }
         }
 
-        .error("Expected complete block", JaktSpan(start, end: .current().span().end))
+        .error("Expected complete block", merge_spans(start, .current().span()))
         return block
     }
 
     function parse_statement(mutable this, inside_block: bool) throws -> ParsedStatement {
         println("parse_statement: {}", .current())
-        let start = .current().span().start
+        let start = .current().span()
 
         return match .current() {
             Cpp => {
                 .index++
-                let end = .previous().span().end
-                yield ParsedStatement::InlineCpp(block: .parse_block(), span: JaktSpan(start, end))
+                yield ParsedStatement::InlineCpp(block: .parse_block(), span: merge_spans(start, .previous().span()))
             }
             Defer => {
                 .index++
@@ -1620,15 +1617,14 @@ struct Parser {
                 .index++
                 let expr = .parse_expression()
                 if not inside_block {
-                    .error("‘yield’ can only be used inside a block", span: JaktSpan(start, end: expr.span().end))
+                    .error("‘yield’ can only be used inside a block", span: merge_spans(start, end: expr.span()))
                 }
                 yield ParsedStatement::Yield(expr)
             }
             Return => {
                 .index++
                 let expr = .parse_expression()
-                let end = .previous().span().end
-                yield ParsedStatement::Return(expr, span: JaktSpan(start, end))
+                yield ParsedStatement::Return(expr, span: merge_spans(start, .previous().span()))
             }
             Let => {
                 .index++
@@ -1786,7 +1782,7 @@ struct Parser {
 
                 match parsed_operator {
                     Operator(op, span) => {
-                        let new_span = JaktSpan(start: lhs.span().start, end: rhs.span().end)
+                        let new_span = merge_spans(lhs.span(), rhs.span())
 
                         expr_stack.push(ParsedExpression::BinaryOp(lhs, op, rhs, span: new_span))
                     }
@@ -1805,15 +1801,9 @@ struct Parser {
             let parsed_operator = expr_stack.pop()!
             let lhs = expr_stack.pop()!
 
-            let start = lhs.span().start
-            let end = rhs.span().end
-
-            let span = JaktSpan(start, end)
-
             match parsed_operator {
                 Operator(op, span) => {
-                    let new_span = JaktSpan(start: lhs.span().start, end: rhs.span().end)
-
+                    let new_span = merge_spans(lhs.span(), rhs.span())
                     expr_stack.push(ParsedExpression::BinaryOp(lhs, op, rhs, span: new_span))
                 }
                 else => panic("operator is not an operator")
@@ -1846,10 +1836,10 @@ struct Parser {
                 return ParsedExpression::Boolean(val: true, span)
             }
             Not => {
-                let start = .current().span().start
+                let start = .current().span()
                 .index++
                 let expr = .parse_operand()
-                let span = JaktSpan(start, end: expr.span().end)
+                let span = merge_spans(start, expr.span())
                 return ParsedExpression::UnaryOp(expr, op: UnaryOperator::LogicalNot, span)
             }
             Identifier(name) => {
@@ -1907,7 +1897,7 @@ struct Parser {
     function parse_operand(mutable this) throws -> ParsedExpression {
         .skip_newlines()
         let span = .current().span()
-        let start = .current().span().start
+        let start = .current().span()
         .skip_newlines()
         let mutable expr = .parse_operand_base()
 
@@ -1916,35 +1906,32 @@ struct Parser {
             DotDot => {
                 .index++
                 let to = .parse_expression()
-                yield ParsedExpression::Range(from: expr, to, span: JaktSpan(start, end: to.span().end))
+                yield ParsedExpression::Range(from: expr, to, span: merge_spans(start, to.span()))
             }
             ExclamationPoint => {
-                let end = .current().span().end
                 .index++
-                yield ParsedExpression::ForcedUnwrap(expr, span: JaktSpan(start, end))
+                yield ParsedExpression::ForcedUnwrap(expr, span: merge_spans(start, .previous().span()))
             }
             PlusPlus => {
-                let end = .current().span().end
                 .index++
                 yield ParsedExpression::UnaryOp(
                     expr,
                     op: UnaryOperator::PostIncrement,
-                    span: JaktSpan(start, end),
+                    span: merge_spans(start, .previous().span()),
                 )
             }
             MinusMinus => {
-                let end = .current().span().end
                 .index++
                 yield ParsedExpression::UnaryOp(
                     expr,
                     op: UnaryOperator::PostDecrement,
-                    span: JaktSpan(start, end),
+                    span: merge_spans(start, .previous().span()),
                 )
             }
             Is => {
                 .index++
                 let parsed_type = .parse_typename()
-                let span = JaktSpan(start, end: .current().span().end)
+                let span = merge_spans(start, .current().span())
                 yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::Is(parsed_type), span)
             }
             ColonColon => {
@@ -1958,7 +1945,7 @@ struct Parser {
                         // Indexing into a tuple
                         .index++
                         // FIXME: Proper numeric constants.
-                        yield ParsedExpression::IndexedTuple(expr, index: number as! usize, span: JaktSpan(start, end: .previous().span().end))
+                        yield ParsedExpression::IndexedTuple(expr, index: number as! usize, span: merge_spans(start, end: .previous().span()))
                     }
                     Identifier(name) => {
                         // Struct field access or method call
@@ -1968,9 +1955,9 @@ struct Parser {
                                 // NOTE: We step backwards since parse_call() expects to start at the callee identifier.
                                 .index--
                                 let call = .parse_call()
-                                yield ParsedExpression::MethodCall(expr, call, span: JaktSpan(start, end: .previous().span().end))
+                                yield ParsedExpression::MethodCall(expr, call, span: merge_spans(start, end: .previous().span()))
                             }
-                            else => ParsedExpression::IndexedStruct(expr, field: name, span: JaktSpan(start, end: .current().span().end))
+                            else => ParsedExpression::IndexedStruct(expr, field: name, span: merge_spans(start, end: .current().span()))
                         }
                     }
                     else => {
@@ -1992,7 +1979,7 @@ struct Parser {
                 yield ParsedExpression::IndexedExpression(
                     base: expr,
                     index: index_expr,
-                    span: JaktSpan(start, end: .current().span().end))
+                    span: merge_spans(start, .current().span()))
             }
             else => expr
         }
@@ -2195,7 +2182,7 @@ struct Parser {
 
     function parse_array_or_dictionary_literal(mutable this) throws -> ParsedExpression {
         let mutable is_dictionary = false
-        let start = .current().span().start
+        let start = .current().span()
 
         if not .current() is LSquare {
             .error("Expected ‘[’", .current().span());
@@ -2268,9 +2255,9 @@ struct Parser {
         }
 
         if is_dictionary {
-            return ParsedExpression::JaktDictionary(values: dict_output, span: JaktSpan(start, end: .tokens[end].span().end))
+            return ParsedExpression::JaktDictionary(values: dict_output, span: merge_spans(start, .tokens[end].span()))
         } else {
-            return ParsedExpression::JaktArray(values: output, fill_size: fill_size_expr, span: JaktSpan(start, end: .tokens[end].span().end))
+            return ParsedExpression::JaktArray(values: output, fill_size: fill_size_expr, span: merge_spans(start, .tokens[end].span()))
         }
     }
 }
