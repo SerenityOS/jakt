@@ -6996,6 +6996,14 @@ fn substitute_typevars_in_type_helper(
                 return project.find_or_add_type_id(Type::GenericEnumInstance(enum_id, new_args));
             }
         }
+        Type::RawPtr(type_id) => {
+            let type_ = Type::RawPtr(substitute_typevars_in_type(
+                *type_id,
+                generic_inferences,
+                project,
+            ));
+            return project.find_or_add_type_id(type_);
+        }
         _ => {}
     }
 
@@ -7267,6 +7275,39 @@ pub fn check_types_for_compat(
                 _ => {
                     if rhs_type_id != lhs_type_id {
                         // They're the same type, might be okay to just leave now
+                        error = error.or(Some(JaktError::TypecheckError(
+                            format!(
+                                "Type mismatch: expected ‘{}’, but got ‘{}’",
+                                project.typename_for_type_id(lhs_type_id),
+                                project.typename_for_type_id(rhs_type_id),
+                            ),
+                            span,
+                        )))
+                    }
+                }
+            }
+        }
+        Type::RawPtr(lhs_type_id) => {
+            let lhs_type_id = *lhs_type_id;
+            if rhs_type_id == lhs_type_id {
+                // They're the same type, might be okay to just leave now
+                return None;
+            }
+
+            let rhs_type = project.get_type(rhs_type_id);
+            match rhs_type {
+                Type::RawPtr(rhs_type_id) => {
+                    let rhs_type_id = *rhs_type_id;
+                    error = error.or(check_types_for_compat(
+                        lhs_type_id,
+                        rhs_type_id,
+                        generic_inferences,
+                        span,
+                        project,
+                    ));
+                }
+                _ => {
+                    if rhs_type_id != lhs_type_id {
                         error = error.or(Some(JaktError::TypecheckError(
                             format!(
                                 "Type mismatch: expected ‘{}’, but got ‘{}’",
