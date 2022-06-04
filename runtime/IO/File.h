@@ -6,12 +6,13 @@
 
 #pragma once
 
-#include <AK/Error.h>
-#include <AK/RefCounted.h>
-#include <AK/String.h>
+#include <Jakt/Error.h>
+#include <Jakt/RefCounted.h>
+#include <Jakt/String.h>
 #include <Builtins/Array.h>
 #include <stdio.h>
 
+namespace JaktInternal {
 class File final : public RefCounted<File> {
 public:
     static ErrorOr<NonnullRefPtr<File>> open_for_reading(String path);
@@ -29,3 +30,8 @@ private:
 
     FILE* m_stdio_file { nullptr };
 };
+}
+
+namespace Jakt {
+using JaktInternal::File;
+}

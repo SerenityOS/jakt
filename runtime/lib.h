@@ -1,61 +1,61 @@
 #pragma once
 
-#include <AK/AllOf.h>
-#include <AK/Assertions.h>
-#include <AK/Atomic.h>
-#include <AK/BitCast.h>
-#include <AK/CharacterTypes.h>
-#include <AK/Checked.h>
-#include <AK/Concepts.h>
-#include <AK/Debug.h>
-#include <AK/Error.h>
-#include <AK/Find.h>
-#include <AK/Format.h>
-#include <AK/Forward.h>
-#include <AK/Function.h>
-#include <AK/GenericLexer.h>
-#include <AK/HashFunctions.h>
-#include <AK/HashTable.h>
-#include <AK/Iterator.h>
-#include <AK/LinearArray.h>
-#include <AK/Memory.h>
-#include <AK/Noncopyable.h>
-#include <AK/NonnullRefPtr.h>
-#include <AK/NumericLimits.h>
-#include <AK/Optional.h>
-#include <AK/Platform.h>
-#include <AK/RefCounted.h>
-#include <AK/RefPtr.h>
-#include <AK/ScopeGuard.h>
-#include <AK/Span.h>
-#include <AK/StdLibExtraDetails.h>
-#include <AK/StdLibExtras.h>
-#include <AK/String.h>
-#include <AK/StringBuilder.h>
-#include <AK/StringHash.h>
-#include <AK/StringUtils.h>
-#include <AK/StringView.h>
-#include <AK/Traits.h>
-#include <AK/Try.h>
-#include <AK/Tuple.h>
-#include <AK/TypeCasts.h>
-#include <AK/TypeList.h>
-#include <AK/TypedTransfer.h>
-#include <AK/Types.h>
-#include <AK/UnicodeUtils.h>
-#include <AK/Variant.h>
-#include <AK/WeakPtr.h>
-#include <AK/Weakable.h>
-#include <AK/kmalloc.h>
-#include <AK/kstdio.h>
+#include <Jakt/AllOf.h>
+#include <Jakt/Assertions.h>
+#include <Jakt/Atomic.h>
+#include <Jakt/BitCast.h>
+#include <Jakt/CharacterTypes.h>
+#include <Jakt/Checked.h>
+#include <Jakt/Concepts.h>
+#include <Jakt/Debug.h>
+#include <Jakt/Error.h>
+#include <Jakt/Find.h>
+#include <Jakt/Format.h>
+#include <Jakt/Forward.h>
+#include <Jakt/Function.h>
+#include <Jakt/GenericLexer.h>
+#include <Jakt/HashFunctions.h>
+#include <Jakt/HashTable.h>
+#include <Jakt/Iterator.h>
+#include <Jakt/LinearArray.h>
+#include <Jakt/Memory.h>
+#include <Jakt/Noncopyable.h>
+#include <Jakt/NonnullRefPtr.h>
+#include <Jakt/NumericLimits.h>
+#include <Jakt/Optional.h>
+#include <Jakt/Platform.h>
+#include <Jakt/RefCounted.h>
+#include <Jakt/RefPtr.h>
+#include <Jakt/ScopeGuard.h>
+#include <Jakt/Span.h>
+#include <Jakt/StdLibExtraDetails.h>
+#include <Jakt/StdLibExtras.h>
+#include <Jakt/String.h>
+#include <Jakt/StringBuilder.h>
+#include <Jakt/StringHash.h>
+#include <Jakt/StringUtils.h>
+#include <Jakt/StringView.h>
+#include <Jakt/Traits.h>
+#include <Jakt/Try.h>
+#include <Jakt/Tuple.h>
+#include <Jakt/TypeCasts.h>
+#include <Jakt/TypeList.h>
+#include <Jakt/TypedTransfer.h>
+#include <Jakt/Types.h>
+#include <Jakt/UnicodeUtils.h>
+#include <Jakt/Variant.h>
+#include <Jakt/WeakPtr.h>
+#include <Jakt/Weakable.h>
+#include <Jakt/kmalloc.h>
+#include <Jakt/kstdio.h>
 
-#include <AK/Format.cpp>
-#include <AK/GenericLexer.cpp>
-#include <AK/String.cpp>
-#include <AK/StringBuilder.cpp>
-#include <AK/StringUtils.cpp>
-#include <AK/StringView.cpp>
-#include <AK/kmalloc.cpp>
+#include <Jakt/Format.cpp>
+#include <Jakt/GenericLexer.cpp>
+#include <Jakt/String.cpp>
+#include <Jakt/StringBuilder.cpp>
+#include <Jakt/StringUtils.cpp>
+#include <Jakt/StringView.cpp>
+#include <Jakt/kmalloc.cpp>
 
 namespace JaktInternal {
 template<typename T>
@@ -73,6 +73,7 @@ class Set;
 using f32 = float;
 using f64 = double;
 
+namespace JaktInternal {
 template<typename T>
 struct Range {
     using IndexType = T;
@@ -94,6 +95,7 @@ struct Range {
         return current++;
     }
 };
+}
 
 namespace JaktInternal {
 
@@ -103,7 +105,7 @@ constexpr auto continue_on_panic = true;
 constexpr auto continue_on_panic = false;
 #endif
 
-using OptionalNone = AK::NullOptional;
+using OptionalNone = Jakt::NullOptional;
 
 inline void panic(StringView message)
 {
@@ -326,7 +328,7 @@ ALWAYS_INLINE Optional<OutputType> fallible_integer_cast(InputType input)
         return fallible_integer_cast<OutputType>(to_underlying(input));
     } else {
         static_assert(IsIntegral<InputType>);
-        if (!AK::is_within_range<OutputType>(input))
+        if (!Jakt::is_within_range<OutputType>(input))
             return {};
         return static_cast<OutputType>(input);
     }
@@ -343,10 +345,10 @@ ALWAYS_INLINE constexpr OutputType infallible_integer_cast(InputType input)
     } else {
         static_assert(IsIntegral<InputType>);
         if (is_constant_evaluated()) {
-            if (!AK::is_within_range<OutputType>(input))
+            if (!Jakt::is_within_range<OutputType>(input))
                 compiletime_fail("Integer cast out of range");
         } else {
-            VERIFY(AK::is_within_range<OutputType>(input));
+            VERIFY(Jakt::is_within_range<OutputType>(input));
         }
         return static_cast<OutputType>(input);
     }
@@ -359,7 +361,7 @@ ALWAYS_INLINE constexpr OutputType as_saturated(InputType input)
         return as_saturated<OutputType>(to_underlying(input));
     } else {
         static_assert(IsIntegral<InputType>);
-        if (!AK::is_within_range<OutputType>(input)) {
+        if (!Jakt::is_within_range<OutputType>(input)) {
             if constexpr (IsSigned<InputType>) {
                 if (input < 0)
                     return NumericLimits<OutputType>::min();
@@ -405,23 +407,26 @@ ALWAYS_INLINE decltype(auto) deref_if_ref_pointer(T&& value)
 
 }
 
+namespace Jakt {
 using JaktInternal::as_saturated;
 using JaktInternal::as_truncated;
 using JaktInternal::fallible_integer_cast;
 using JaktInternal::infallible_integer_cast;
+using JaktInternal::Range;
+}
 
 // We place main in a separate namespace to ensure it has access to the same identifiers as other functions
-namespace JaktMain {
+namespace Jakt {
 ErrorOr<int> main(Array<String>);
 }
 
 int main(int argc, char** argv)
 {
-    Array<String> args;
+    Jakt::Array<Jakt::String> args;
     for (int i = 0; i < argc; ++i) {
-        MUST(args.push(MUST(String::copy(StringView(argv[i])))));
+        MUST(args.push(MUST(Jakt::String::copy(Jakt::StringView(argv[i])))));
     }
-    auto result = JaktMain::main(move(args));
+    auto result = Jakt::main(move(args));
     if (result.is_error()) {
         warnln("Runtime error: {}", result.error());
         return 1;

@@ -7,6 +7,8 @@
 #include <IO/File.h>
 #include <errno.h>
 
+namespace JaktInternal {
+
 File::File()
 {
 }
@@ -78,4 +80,5 @@ ErrorOr<size_t> File::write(Array<u8> data)
         return Error::from_errno(error);
     }
     return nwritten;
+}
 }

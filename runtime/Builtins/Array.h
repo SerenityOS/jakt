@@ -1,12 +1,13 @@
 #pragma once
 
-#include <AK/Checked.h>
-#include <AK/Error.h>
-#include <AK/RefCounted.h>
+#include <Jakt/Checked.h>
+#include <Jakt/Error.h>
+#include <Jakt/RefCounted.h>
 #include <initializer_list>
 #include <stdlib.h>
 
 namespace JaktInternal {
+using namespace Jakt;
 
 template<typename T>
 class ArrayStorage : public RefCounted<ArrayStorage<T>> {
@@ -351,5 +352,7 @@ private:
 
 }
 
+namespace Jakt {
 using JaktInternal::Array;
 using JaktInternal::ArrayIterator;
+}
