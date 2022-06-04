@@ -749,21 +749,6 @@ function gather_line_spans(file_contents: [u8]) throws -> [(usize, usize)] {
     return output
 }
 
-// Compiler
-struct Project {
-    functions: [CheckedFunction]
-    scopes: [Scope]
-    types: [Type]
-}
-
-struct Scope {
-    functions: [String: (usize, JaktSpan)]
-}
-
-enum Type {
-    Builtin
-}
-
 enum DefinitionLinkage {
     Internal
     External
@@ -1008,71 +993,6 @@ boxed enum ParsedType {
     RawPtr(inner: ParsedType, span: JaktSpan)
     WeakPtr(inner: ParsedType, span: JaktSpan)
     Empty
-}
-
-// Checked Types
-// FIXME: we want a unique type for return_type_id and others, like TypeId
-struct CheckedNamespace {
-    name: String
-    scope: usize
-}
-
-struct CheckedFunction {
-    name: String
-    return_type_id: usize
-    params: [CheckedParameter]
-    block: CheckedBlock
-}
-
-struct CheckedParameter {
-    requires_label: bool
-    variable: CheckedVariable
-}
-
-struct CheckedVariable {
-    name: String
-    var_type_id: usize
-    is_mutable: bool
-    definition_span: JaktSpan
-}
-
-struct CheckedVarDecl {
-    name: String
-    var_type_id: usize
-    is_mutable: bool
-    span: JaktSpan
-}
-
-struct CheckedBlock {
-    statements: [CheckedStatement]
-    definitely_returns: bool
-}
-
-boxed enum CheckedStatement {
-    Expression(CheckedExpression)
-    Defer(CheckedStatement)
-    VarDecl(var: CheckedVarDecl, init: CheckedExpression)
-    If(guard: CheckedExpression, then_block: CheckedBlock, else_block: CheckedBlock?)
-    Block(CheckedBlock)
-    Loop(CheckedBlock)
-    While(guard: CheckedExpression, block: CheckedBlock)
-    Return(CheckedExpression)
-    Break
-    Continue
-    Throw(CheckedExpression)
-    Garbage
-}
-
-boxed enum CheckedExpression {
-    Boolean(val: bool, span: JaktSpan)
-    QuotedString(val: String, span: JaktSpan)
-    Call(call: CheckedCall, span: JaktSpan, type: usize)
-}
-
-struct CheckedCall {
-    name: String,
-    args: [(String, CheckedExpression)]
-    return_type: usize
 }
 
 struct Parser {
@@ -2302,6 +2222,199 @@ enum Visibility {
     Private
     Restricted(whitelist: [ParsedType], span: JaktSpan)
 }
+
+// Checked Types
+struct VarId {
+    id: usize
+}
+
+struct FunctionId {
+    id: usize
+}
+
+struct StructId {
+    id: usize
+}
+
+struct EnumId {
+    id: usize
+}
+
+struct TypeId {
+    id: usize
+}
+
+struct InferenceId {
+    id: usize
+}
+
+struct ScopeId {
+    id: usize
+}
+
+struct Typechecker {
+    functions: [CheckedFunction]
+    variables: [CheckedVarDecl]
+    structures: [CheckedStruct]
+
+    function get_function(this, anonymous id: FunctionId) -> CheckedFunction => .functions[id.id]
+    function get_variable(this, anonymous id: VarId) -> CheckedVarDecl => .variables[id.id]
+
+
+}
+
+struct Scope {
+    namespace_name: String?
+    vars: [String: VarId]
+    structs: [String: StructId]
+    functions: [String: FunctionId]
+    enums: [String: EnumId]
+    types: [String: TypeId]
+    parent: ScopeId
+    children: [ScopeId]
+    throws: bool
+}
+
+struct CheckedNamespace {
+    name: String
+    scope: ScopeId
+}
+
+struct CheckedFunction {
+    name: String
+    return_type_id: TypeId
+    params: [CheckedParameter]
+    block: CheckedBlock
+}
+
+struct CheckedParameter {
+    requires_label: bool
+    variable: CheckedVariable
+}
+
+struct CheckedVariable {
+    var_id: VarId
+    definition_span: JaktSpan
+}
+
+struct CheckedVarDecl {
+    name: String
+    var_type_id: TypeId
+    is_mutable: bool
+    span: JaktSpan
+}
+
+struct CheckedBlock {
+    statements: [CheckedStatement]
+    definitely_returns: bool
+}
+
+struct CheckedStruct {
+    name: String
+    name_span: JaktSpan
+    generic_parameters: [TypeId]
+    fields: [VarId]
+    scope_id: ScopeId
+    definition_linkage: DefinitionLinkage
+    definition_type: DefinitionType
+    type_id: TypeId
+}
+
+struct CheckedEnum {
+    name: String
+    name_span: JaktSpan
+    generic_parameters: [TypeId]
+    variants: [CheckedEnumVariant]
+    scope_id: ScopeId
+    definition_linkage: DefinitionLinkage
+    definition_type: DefinitionType
+    underlying_type_id: TypeId
+    type_id: TypeId
+}
+
+enum CheckedEnumVariant {
+    Untyped(name: String, span: JaktSpan)
+    Typed(name: String, type_id: TypeId, span: JaktSpan)
+    WithValue(name: String, expr: CheckedExpression, span: JaktSpan)
+    StructLike(name: String, fields: [VarId], span: JaktSpan)
+}
+
+boxed enum CheckedStatement {
+    Expression(CheckedExpression)
+    Defer(CheckedStatement)
+    VarDecl(var_id: VarId, init: CheckedExpression)
+    If(guard: CheckedExpression, then_block: CheckedBlock, else_block: CheckedBlock?)
+    Block(CheckedBlock)
+    Loop(CheckedBlock)
+    While(guard: CheckedExpression, block: CheckedBlock)
+    Return(CheckedExpression)
+    Break
+    Continue
+    Throw(CheckedExpression)
+    Garbage
+}
+
+enum CheckedNumericConstant {
+    I8(i8)
+    I16(i16)
+    I32(i32)
+    I64(i64)
+    U8(u8)
+    U16(u16)
+    U32(u32)
+    U64(u64)
+    USize(u64)
+    F32(f32)
+    F64(f64)
+}
+
+enum CheckedTypeCast {
+    Fallible(TypeId)
+    Infallible(TypeId)
+}
+
+enum CheckedUnaryOperator {
+    PreIncrement
+    PostIncrement
+    PreDecrement
+    PostDecrement
+    Negate
+    Dereference
+    RawAddress
+    LogicalNot
+    BitwiseNot
+    TypeCast(CheckedTypeCast)
+    Is(TypeId)
+    IsEnumVariant(String)
+}
+
+boxed enum CheckedExpression {
+    Boolean(val: bool, span: JaktSpan)
+    Numeric(val: CheckedNumericConstant, span: JaktSpan, type_id: TypeId)
+    QuotedString(val: String, span: JaktSpan)
+    ByteConstant(val: String, span: JaktSpan)
+    CharacterConstant(val: String, span: JaktSpan)
+    UnaryOp(expr: CheckedExpression, op: CheckedUnaryOperator, span: JaktSpan, type_id: TypeId)
+    BinaryOp(lhs: CheckedExpression, op: BinaryOperator, rhs: CheckedExpression, span: JaktSpan, type_id: TypeId)
+    JaktTuple(vals: [CheckedExpression], span: JaktSpan, type_id: TypeId)
+    Range(from: CheckedExpression, to: CheckedExpression, span: JaktSpan, type_id: TypeId)
+    JaktArray(vals: [CheckedExpression], repeat: CheckedExpression?, span: JaktSpan, type_id: TypeId)
+    JaktDictionary(vals: [(CheckedExpression, CheckedExpression)], span: JaktSpan, type_id: TypeId)
+    JaktSet(vals: [CheckedExpression], span: JaktSpan, type_id: TypeId)
+    IndexedExpression(expr: CheckedExpression, index: CheckedExpression, span: JaktSpan, type_id: TypeId)
+    IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, span: JaktSpan, type_id: TypeId)
+    IndexedTuple(expr: CheckedExpression, index: usize, span: JaktSpan, type_id: TypeId)
+    IndexedStruct(expr: CheckedExpression, index: String, span: JaktSpan, type_id: TypeId)
+    Call(call: CheckedCall, span: JaktSpan, type: usize)
+}
+
+struct CheckedCall {
+    name: String,
+    args: [(String, CheckedExpression)]
+    return_type: usize
+}
+
+
 
 function main(args: [String]) {
     if args.size() <= 1 {
