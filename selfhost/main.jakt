@@ -439,8 +439,7 @@ struct Lexer {
     }
 
     function lex_plus(mutable this) -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         return match .peek() {
             b'=' => Token::PlusEqual(JaktSpan(start, end: ++.index))
             b'+' => Token::PlusPlus(JaktSpan(start, end: ++.index))
@@ -449,8 +448,7 @@ struct Lexer {
     }
 
     function lex_minus(mutable this) -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         return match .peek() {
             b'=' => Token::MinusEqual(JaktSpan(start, end: ++.index))
             b'-' => Token::MinusMinus(JaktSpan(start, end: ++.index))
@@ -460,8 +458,7 @@ struct Lexer {
     }
 
     function lex_asterisk(mutable this) -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         return match .peek() {
             b'=' => Token::AsteriskEqual(JaktSpan(start, end: ++.index))
             else => Token::Asterisk(JaktSpan(start: .index - 1, end: .index))
@@ -469,8 +466,7 @@ struct Lexer {
     }
 
     function lex_forward_slash(mutable this) throws -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         if .peek() == b'=' {
             return Token::ForwardSlashEqual(JaktSpan(start, end: ++.index))
         }
@@ -489,8 +485,7 @@ struct Lexer {
     }
 
     function lex_caret(mutable this) -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         return match .peek() {
             b'=' => Token::CaretEqual(JaktSpan(start, end: ++.index))
             else => Token::Caret(JaktSpan(start: .index - 1, end: .index))
@@ -498,8 +493,7 @@ struct Lexer {
     }
 
     function lex_pipe(mutable this) -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         return match .peek() {
             b'=' => Token::PipeEqual(JaktSpan(start, end: ++.index))
             else => Token::Pipe(JaktSpan(start: .index - 1, end: .index))
@@ -507,8 +501,7 @@ struct Lexer {
     }
 
     function lex_percent_sign(mutable this) -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         return match .peek() {
             b'=' => Token::PercentSignEqual(JaktSpan(start, end: ++.index))
             else => Token::PercentSign(JaktSpan(start: .index - 1, end: .index))
@@ -516,8 +509,7 @@ struct Lexer {
     }
 
     function lex_exclamation_point(mutable this) -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         return match .peek() {
             b'=' => Token::NotEqual(JaktSpan(start, end: ++.index))
             else => Token::ExclamationPoint(JaktSpan(start: .index - 1, end: .index))
@@ -525,8 +517,7 @@ struct Lexer {
     }
 
     function lex_ampersand(mutable this) -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         return match .peek() {
             b'=' => Token::AmpersandEqual(JaktSpan(start, end: ++.index))
             else => Token::Ampersand(JaktSpan(start: .index - 1, end: .index))
@@ -534,8 +525,7 @@ struct Lexer {
     }
 
     function lex_less_than(mutable this) -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         return match .peek() {
             b'=' => Token::LessThanOrEqual(JaktSpan(start, end: ++.index))
             b'<' => Token::LeftShift(JaktSpan(start, end: ++.index))
@@ -544,8 +534,7 @@ struct Lexer {
     }
 
     function lex_greater_than(mutable this) -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         return match .peek() {
             b'=' => Token::GreaterThanOrEqual(JaktSpan(start, end: ++.index))
             b'>' => Token::RightShift(JaktSpan(start, end: ++.index))
@@ -554,8 +543,7 @@ struct Lexer {
     }
 
     function lex_dot(mutable this) -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         return match .peek() {
             b'.' => Token::DotDot(JaktSpan(start, end: ++.index))
             else => Token::Dot(JaktSpan(start: .index - 1, end: .index))
@@ -563,8 +551,7 @@ struct Lexer {
     }
 
     function lex_colon(mutable this) -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         return match .peek() {
             b':' => Token::ColonColon(JaktSpan(start, end: ++.index))
             else => Token::Colon(JaktSpan(start: .index - 1, end: .index))
@@ -572,8 +559,7 @@ struct Lexer {
     }
 
     function lex_question_mark(mutable this) -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         return match .peek() {
             b'?' => Token::QuestionMarkQuestionMark(JaktSpan(start, end: ++.index))
             else => Token::QuestionMark(JaktSpan(start: .index - 1, end: .index))
@@ -581,8 +567,7 @@ struct Lexer {
     }
 
     function lex_equals(mutable this) -> Token {
-        let start = .index
-        ++.index
+        let start = .index++
         return match .peek() {
             b'=' => Token::DoubleEqual(JaktSpan(start, end: ++.index))
             b'>' => Token::FatArrow(JaktSpan(start, end: ++.index))
@@ -649,11 +634,11 @@ struct Lexer {
 function print_error(file_name: String, file_contents: [u8], error: JaktError) throws {
     match error {
         Message(message, span) => {
-            display_message_with_span(severity: MessageSeverity::Error, file_name, file_contents, message, span)
+            display_message_with_span(MessageSeverity::Error, file_name, file_contents, message, span)
         }
         MessageWithHint(message, span, hint, hint_span) => {
-            display_message_with_span(severity: MessageSeverity::Error, file_name, file_contents, message, span)
-            display_message_with_span(severity: MessageSeverity::Hint, file_name, file_contents, message: hint, span: hint_span)
+            display_message_with_span(MessageSeverity::Error, file_name, file_contents, message, span)
+            display_message_with_span(MessageSeverity::Hint, file_name, file_contents, message: hint, span: hint_span)
         }
     }
 }
@@ -663,21 +648,17 @@ enum MessageSeverity {
     Error
 }
 
-function severity_name(severity: MessageSeverity) throws -> String {
-    return match severity {
-        MessageSeverity::Hint => "Hint"
-        MessageSeverity::Error => "Error"
-    }
+function severity_name(severity: MessageSeverity) throws => match severity {
+    Hint => "Hint"
+    Error => "Error"
 }
 
-function ansi_color_code(severity: MessageSeverity) throws -> String {
-    return match severity {
-        MessageSeverity::Hint => "94"  // Bright Blue
-        MessageSeverity::Error => "31" // Red
-    }
+function ansi_color_code(severity: MessageSeverity) throws => match severity {
+    Hint => "94"  // Bright Blue
+    Error => "31" // Red
 }
 
-function display_message_with_span(severity: MessageSeverity, file_name: String, file_contents: [u8], message: String, span: JaktSpan) throws {
+function display_message_with_span(anonymous severity: MessageSeverity, file_name: String, file_contents: [u8], message: String, span: JaktSpan) throws {
     println("{}: {}", severity_name(severity), message)
 
     let line_spans = gather_line_spans(file_contents)
@@ -939,55 +920,51 @@ boxed enum ParsedExpression {
         }
     }
 
-    function precedence(this) -> i64 {
-        return match this {
-            Operator(op, span) => {
-                yield match op {
-                    Multiply
-                    | Modulo
-                    | Divide => 100
+    function precedence(this) => match this {
+        Operator(op, span) => match op {
+            Multiply
+            | Modulo
+            | Divide => 100
 
-                    Add
-                    | Subtract => 90
+            Add
+            | Subtract => 90
 
-                    BitwiseLeftShift
-                    | BitwiseRightShift
-                    | ArithmeticLeftShift
-                    | ArithmeticRightShift => 85
+            BitwiseLeftShift
+            | BitwiseRightShift
+            | ArithmeticLeftShift
+            | ArithmeticRightShift => 85
 
-                    LessThan
-                    | LessThanOrEqual
-                    | GreaterThan
-                    | GreaterThanOrEqual
-                    | Equal
-                    | NotEqual => 80
+            LessThan
+            | LessThanOrEqual
+            | GreaterThan
+            | GreaterThanOrEqual
+            | Equal
+            | NotEqual => 80
 
-                    BitwiseAnd => 73
-                    BitwiseXor => 72
-                    BitwiseOr => 71
-                    LogicalAnd => 70
+            BitwiseAnd => 73
+            BitwiseXor => 72
+            BitwiseOr => 71
+            LogicalAnd => 70
 
-                    LogicalOr
-                    | NoneCoalescing => 69
+            LogicalOr
+            | NoneCoalescing => 69
 
-                    Assign
-                    | BitwiseAndAssign
-                    | BitwiseOrAssign
-                    | BitwiseXorAssign
-                    | BitwiseLeftShiftAssign
-                    | BitwiseRightShiftAssign
-                    | AddAssign
-                    | SubtractAssign
-                    | MultiplyAssign
-                    | ModuloAssign
-                    | DividieAssign
-                    | NoneCoalescingAssign => 50
+            Assign
+            | BitwiseAndAssign
+            | BitwiseOrAssign
+            | BitwiseXorAssign
+            | BitwiseLeftShiftAssign
+            | BitwiseRightShiftAssign
+            | AddAssign
+            | SubtractAssign
+            | MultiplyAssign
+            | ModuloAssign
+            | DividieAssign
+            | NoneCoalescingAssign => 50
 
-                    else => 0
-                }
-            }
             else => 0
         }
+        else => 0
     }
 }
 
