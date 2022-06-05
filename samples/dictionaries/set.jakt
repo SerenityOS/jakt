@@ -2,7 +2,7 @@
 /// - output: "3\n"
 
 function main() {
-    let mutable dict = ["a": 1, "b": 2]
+    mut dict = ["a": 1, "b": 2]
 
     dict.set(key: "c", value: 3);
 

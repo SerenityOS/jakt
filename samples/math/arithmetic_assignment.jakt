@@ -2,15 +2,15 @@
 /// - output: "133\n113\n1230\n12\n3\n"
 
 function main() {
-    let mutable a = 123
+    mut a = 123
     a += 10
-    let mutable b = 123
+    mut b = 123
     b -= 10
-    let mutable c = 123
+    mut c = 123
     c *= 10
-    let mutable d = 123
+    mut d = 123
     d /= 10
-    let mutable e = 123
+    mut e = 123
     e %= 10
 
     println("{}", a)

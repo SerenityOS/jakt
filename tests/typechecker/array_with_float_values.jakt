@@ -6,6 +6,6 @@ class A {
 }
 
 function main() {
-    let mutable a2 = A(elements: [0f64, 1f64, 2f64])
+    mut a2 = A(elements: [0f64, 1f64, 2f64])
     println("{}", a2.elements[1])
 }

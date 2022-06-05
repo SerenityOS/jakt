@@ -163,18 +163,18 @@ let x = Foo()
 x.func()
 ```
 
-**Mutating member functions** require an object to be called, and may modify the object. The first parameter is `mutable this`.
+**Mutating member functions** require an object to be called, and may modify the object. The first parameter is `mut this`.
 ```jakt
 class Foo {
     x: i64
 
-    function set(mutable this, anon x: i64) {
+    function set(mut this, anon x: i64) {
         this.x = x
     }
 }
 
-// Foo::set() can only be called on a mutable Foo:
-let mutable foo = Foo(x: 3)
+// Foo::set() can only be called on a mut Foo:
+mut foo = Foo(x: 3)
 foo.set(9)
 ```
 
@@ -483,7 +483,7 @@ try task_that_might_fail() catch error {
 For better interoperability with existing C++ code, as well as situations where the capabilities of **Jakt** within `unsafe` blocks are not powerful enough, the possibility of embedding inline C++ code into the program exists in the form of `cpp` blocks:
 
 ```jakt
-let mutable x = 0
+mut x = 0
 unsafe {
     cpp {
         "x = (i64)&x;"

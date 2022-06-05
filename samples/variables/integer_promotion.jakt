@@ -6,16 +6,16 @@ struct Foo {
 }
 
 function main() {
-    let mutable a: u8 = 100
+    mut a: u8 = 100
     a += 100
 
-    let mutable b: u16 = 1000
+    mut b: u16 = 1000
     b += 1000
 
-    let mutable c: u32 = 100000
+    mut c: u32 = 100000
     c += 100000
 
-    let mutable f = Foo(x: 123)
+    mut f = Foo(x: 123)
     f.x += 2
 
     println("{}", a)

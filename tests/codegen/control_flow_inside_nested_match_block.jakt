@@ -2,7 +2,7 @@
 /// - output: "OK\n"
 
 function test_continue() -> bool {
-    let mutable break_out = false
+    mut break_out = false
     while not break_out {
         match 10 {
             10 => {

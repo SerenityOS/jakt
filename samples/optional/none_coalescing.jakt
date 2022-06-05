@@ -10,7 +10,7 @@ function main() {
 
 
     // The right hand side is lazily evaluated.
-    let mutable zero = 0
+    mut zero = 0
     let z: i64? = 69
     let q = z ?? ++zero
 

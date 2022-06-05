@@ -2,7 +2,7 @@
 /// - output: "42\n"
 
 function main() {
-    let mutable i: i32? = None
+    mut i: i32? = None
     unsafe {
         cpp {
             "i = 32;"

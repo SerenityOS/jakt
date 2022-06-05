@@ -12,21 +12,21 @@ function check(anon a: i64, anon b: i64) -> i64 {
 }
 
 function main() {
-    let mutable errors = 0
+    mut errors = 0
 
-    let mutable a = 1
+    mut a = 1
     a <<= 5
     errors += check(a, 1 << 5)
 
-    let mutable b = 0x8000
+    mut b = 0x8000
     b >>= 5
     errors += check(b, 0x8000 >> 5)
 
-    let mutable c = 0xffc0c0
+    mut c = 0xffc0c0
     c &= 0x777777
     errors += check(c, 0xffc0c0 & 0x777777)
 
-    let mutable d = 0xffc0c0
+    mut d = 0xffc0c0
     d ^= 0x777777
     errors += check(d, 0xffc0c0 ^ 0x777777)
 

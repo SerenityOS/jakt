@@ -7,7 +7,7 @@ class Foo {
 
 function main() {
 
-   let mutable foo: weak Foo = None
+   mut foo: weak Foo = None
 
    println("Oh no!")
 

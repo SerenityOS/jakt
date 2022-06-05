@@ -3,12 +3,12 @@
 
 extern struct StringBuilder {
     function StringBuilder() -> StringBuilder
-    function append(mutable this, anon s: raw c_char)
-    function to_string(mutable this) throws -> String
+    function append(mut this, anon s: raw c_char)
+    function to_string(mut this) throws -> String
 }
 
 function main() {
-    let mutable s = StringBuilder()
+    mut s = StringBuilder()
 
     s.append("abc".c_string());
     s.append("123".c_string());

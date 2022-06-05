@@ -14,7 +14,7 @@ extern struct String {
 }
 
 extern struct ArrayIterator<T> {
-    function next(mutable this) -> T?
+    function next(mut this) -> T?
 }
 
 extern struct Array<T> {
@@ -24,9 +24,9 @@ extern struct Array<T> {
     function capacity(this) -> usize
     function ensure_capacity(this, anon capacity: usize) throws
     function add_capacity(this, anon capacity: usize) throws
-    function resize(mutable this, anon size: usize) throws
-    function push(mutable this, anon value: T) throws
-    function pop(mutable this) -> T?
+    function resize(mut this, anon size: usize) throws
+    function push(mut this, anon value: T) throws
+    function pop(mut this) -> T?
     function iterator(this) -> ArrayIterator<T>
 }
 
@@ -39,21 +39,21 @@ extern struct Optional<T> {
 
 extern struct WeakPtr<T> {
     function has_value(this) -> bool
-    function clear(mutable this)
+    function clear(mut this)
 }
 
 extern struct DictionaryIterator<K, V> {
-    function next(mutable this) -> (K, V)?
+    function next(mut this) -> (K, V)?
 }
 
 extern struct Dictionary<K, V> {
     function is_empty(this) -> bool
     function get(this, anon key: K) -> V?
     function contains(this, anon key: K) -> bool
-    function set(mutable this, key: K, value: V) throws
-    function remove(mutable this, anon key: K) -> bool
-    function ensure_capacity(mutable this, anon capacity: usize) throws
-    function clear(mutable this)
+    function set(mut this, key: K, value: V) throws
+    function remove(mut this, anon key: K) -> bool
+    function ensure_capacity(mut this, anon capacity: usize) throws
+    function clear(mut this)
     function size(this) -> usize
     function capacity(this) -> usize
     function keys(this) throws -> [K]
@@ -63,16 +63,16 @@ extern struct Dictionary<K, V> {
 }
 
 extern struct SetIterator<T> {
-    function next(mutable this) -> T?
+    function next(mut this) -> T?
 }
 
 extern struct Set<V> {
     function is_empty(this) -> bool
     function contains(this, anon value: V) -> bool
-    function add(mutable this, anon value: V) throws
-    function remove(mutable this, anon value: V) -> bool
-    function ensure_capacity(mutable this, anon capacity: usize) throws
-    function clear(mutable this)
+    function add(mut this, anon value: V) throws
+    function remove(mut this, anon value: V) -> bool
+    function ensure_capacity(mut this, anon capacity: usize) throws
+    function clear(mut this)
     function size(this) -> usize
     function capacity(this) -> usize
     function hash(this) -> u32
@@ -83,7 +83,7 @@ extern struct Set<V> {
 extern struct Tuple {}
 
 extern struct Range<T> {
-    function next(mutable this) -> T?
+    function next(mut this) -> T?
 }
 
 extern struct Error {
@@ -95,10 +95,10 @@ extern class File {
     public function open_for_reading(anon path: String) throws -> File
     public function open_for_writing(anon path: String) throws -> File
 
-    public function read(mutable this, anon buffer: [u8]) throws -> usize
-    public function write(mutable this, anon data: [u8]) throws -> usize
+    public function read(mut this, anon buffer: [u8]) throws -> usize
+    public function write(mut this, anon data: [u8]) throws -> usize
 
-    public function read_all(mutable this) throws -> [u8]
+    public function read_all(mut this) throws -> [u8]
 }
 
 extern function as_saturated<U, T>(anon input: T) -> U

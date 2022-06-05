@@ -7,7 +7,7 @@ function make_v() -> [String] {
 
 function main() {
     let v: [String] = make_v()
-    let mutable i = 0
+    mut i = 0
     while i < 2 {
         println("{}", v[i])
         ++i

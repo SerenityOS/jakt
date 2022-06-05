@@ -5,6 +5,6 @@ class Foo {
 }
 
 function main() {
-    let mutable x: Foo? = None
+    mut x: Foo? = None
     x = 5
 }

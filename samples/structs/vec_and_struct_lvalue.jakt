@@ -7,7 +7,7 @@ struct Person {
 }
 
 function main() {
-    let mutable arr = [
+    mut arr = [
         Person(name: "Jane", age: 100), 
         Person(name: "Björn", age: 200)
     ]

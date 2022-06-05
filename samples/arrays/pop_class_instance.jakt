@@ -6,7 +6,7 @@ class C {
 }
 
 function main() {
-    let mutable a: [C] = []
+    mut a: [C] = []
     a.push(C(message: "PASS"))
     println("{}", a.pop()!.message)
 }

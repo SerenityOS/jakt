@@ -1,12 +1,12 @@
 /// Expect:
 /// - output: "PASS\n"
 
-function change_value(dictionary: mutable [String:String]) throws {
+function change_value(dictionary: mut [String:String]) throws {
     dictionary.set(key: "foo", value: "PASS")
 }
 
 function main() {
-    let mutable dictionary = ["foo": "FAIL", "bar": ":^)"]
+    mut dictionary = ["foo": "FAIL", "bar": ":^)"]
     change_value(dictionary)
 
     println("{}", dictionary["foo"]);

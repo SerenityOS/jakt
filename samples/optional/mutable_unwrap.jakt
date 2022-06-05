@@ -4,7 +4,7 @@
 class Foo {
     x: i64
 
-    public function set(mutable this, value: i64) {
+    public function set(mut this, value: i64) {
         this.x = value
     }
 
@@ -14,8 +14,8 @@ class Foo {
 }
 
 function main() {
-    let mutable foo = Foo(x: 1)
-    let mutable opt_foo: Foo? = foo
+    mut foo = Foo(x: 1)
+    mut opt_foo: Foo? = foo
 
     opt_foo!.set(value: 2)
 

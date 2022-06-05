@@ -4,8 +4,8 @@ function main(args: [String]) {
         return 1
     }
 
-    let mutable file = File::open_for_reading(args[1])
-    let mutable array: [u8] = [0u8]
+    mut file = File::open_for_reading(args[1])
+    mut array: [u8] = [0u8]
 
     while file.read(array) != 0 {
         for idx in 0..array.size() {

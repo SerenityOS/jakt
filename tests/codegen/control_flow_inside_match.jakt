@@ -2,7 +2,7 @@
 /// - out: "OK\n"
 
 function test_continue() -> i64 {
-  let mutable x: i64 = 10
+  mut x: i64 = 10
   loop {
     match x {
       10 => {
@@ -17,7 +17,7 @@ function test_continue() -> i64 {
 }
 
 function test_break() -> i64 {
-  let mutable x: i64 = 10
+  mut x: i64 = 10
   loop {
     match x {
       42 => {

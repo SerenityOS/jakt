@@ -4,7 +4,7 @@
 struct Countdown {
     from: i64
 
-    function next(mutable this) -> i64? {
+    function next(mut this) -> i64? {
         if this.from == -1 {
             return None
         }
