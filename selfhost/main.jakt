@@ -912,6 +912,7 @@ boxed enum ParsedExpression {
     UnaryOp(expr: ParsedExpression, op: UnaryOperator, span: JaktSpan)
     BinaryOp(lhs: ParsedExpression, op: BinaryOperator, rhs: ParsedExpression, span: JaktSpan)
     Operator(op: BinaryOperator, span: JaktSpan)
+    OptionalSome(expr: ParsedExpression, span: JaktSpan)
     OptionalNone(JaktSpan)
     JaktArray(values: [ParsedExpression], fill_size: ParsedExpression?, span: JaktSpan)
     JaktDictionary(values: [(ParsedExpression, ParsedExpression)], span: JaktSpan)
@@ -929,6 +930,7 @@ boxed enum ParsedExpression {
         UnaryOp(expr, op, span) => span
         BinaryOp(lhs, op, rhs, span) => span
         Operator(op, span) => span
+        OptionalSome(expr, span) => span
         OptionalNone(span) => span
         JaktArray(values, fill_size, span) => span
         JaktDictionary(values, span) => span
@@ -1895,9 +1897,19 @@ struct Parser {
             Identifier(name) => {
                 match .peek(1) {
                     LParen => {
-                        // FIXME: "Some"
-                        let call = .parse_call()
-                        return ParsedExpression::Call(call, span)
+                        match name {
+                            "Some" => {
+                                .index++
+                                println("{}", .current())
+                                let expr = .parse_expression(allow_assignments: false)
+                                return ParsedExpression::OptionalSome(expr, span)
+                            }
+                            else => {
+                                let call = .parse_call()
+                                return ParsedExpression::Call(call, span)
+                            }
+                        }
+                       
                     }
                     LessThan => {
                         todo("parse_operand_base generics")
@@ -1935,6 +1947,8 @@ struct Parser {
                         .error("Expected ')'", .current().span())
                     }
                 }
+
+                return expr
             }
             LSquare => {
                 return .parse_array_or_dictionary_literal()
