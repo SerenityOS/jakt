@@ -867,6 +867,23 @@ enum BinaryOperator {
     NoneCoalescingAssign
 
     Garbage
+
+    function is_assignment(this) => match this {
+        Assign
+        | BitwiseAndAssign
+        | BitwiseOrAssign
+        | BitwiseXorAssign
+        | BitwiseLeftShiftAssign
+        | BitwiseRightShiftAssign
+        | AddAssign
+        | SubtractAssign
+        | MultiplyAssign
+        | ModuloAssign
+        | DivideAssign
+        | NoneCoalescingAssign => true
+
+        else => false
+    }
 }
 
 enum UnaryOperator {
@@ -1359,7 +1376,7 @@ struct Parser {
     function parse_fat_arrow(mutable this) throws -> ParsedBlock {
         .index++
         let start = .current().span()
-        let expr = .parse_expression()
+        let expr = .parse_expression(allow_assignments: false)
         let return_statement = ParsedStatement::Return(expr, span: merge_spans(start, .current().span()))
         return ParsedBlock(stmts: [return_statement])
     }
@@ -1614,17 +1631,17 @@ struct Parser {
             }
             Throw => {
                 .index++
-                yield ParsedStatement::Throw(.parse_expression())
+                yield ParsedStatement::Throw(.parse_expression(allow_assignments: false))
             }
             While => {
                 .index++
-                let guard = .parse_expression()
+                let guard = .parse_expression(allow_assignments: false)
                 let block = .parse_block()
                 yield ParsedStatement::While(guard, block)
             }
             Yield => {
                 .index++
-                let expr = .parse_expression()
+                let expr = .parse_expression(allow_assignments: false)
                 if not inside_block {
                     .error("‘yield’ can only be used inside a block", span: merge_spans(start, end: expr.span()))
                 }
@@ -1632,7 +1649,7 @@ struct Parser {
             }
             Return => {
                 .index++
-                let expr = .parse_expression()
+                let expr = .parse_expression(allow_assignments: false)
                 yield ParsedStatement::Return(expr, span: merge_spans(start, .previous().span()))
             }
             Let => {
@@ -1650,7 +1667,7 @@ struct Parser {
                 let init = match .current() {
                     Equal => {
                         .index++
-                        yield .parse_expression()
+                        yield .parse_expression(allow_assignments: false)
                     }
                     else => {
                         .error("Expected initializer", .current().span())
@@ -1664,10 +1681,7 @@ struct Parser {
             For => .parse_for_statement()
             Try => .parse_try_statement()
             LCurly => ParsedStatement::Block(.parse_block())
-            else => {
-                .index++
-                yield ParsedStatement::Expression(.parse_expression())
-            }
+            else => ParsedStatement::Expression(.parse_expression(allow_assignments: true))
         }
     }
 
@@ -1712,7 +1726,7 @@ struct Parser {
                     return ParsedStatement::Garbage
                 }
 
-                let range = .parse_expression()
+                let range = .parse_expression(allow_assignments: false)
                 let block = .parse_block();
 
                 yield ParsedStatement::For(iterator_name, name_span, range, block)
@@ -1733,7 +1747,7 @@ struct Parser {
         let start_span = .current().span()
         .index++
 
-        let condition = .parse_expression()
+        let condition = .parse_expression(allow_assignments: false)
         let then_block = .parse_block()
 
         let mutable else_statement: ParsedStatement? = None
@@ -1758,7 +1772,7 @@ struct Parser {
         return ParsedStatement::If(condition, then_block, else_statement)
     }
 
-    function parse_expression(mutable this) throws -> ParsedExpression {
+    function parse_expression(mutable this, allow_assignments: bool) throws -> ParsedExpression {
         let mutable expr_stack: [ParsedExpression] = []
         let mutable last_precedence = 1000000
 
@@ -1766,7 +1780,7 @@ struct Parser {
         expr_stack.push(lhs)
 
         while not .eol() {
-            let parsed_operator = .parse_operator()
+            let parsed_operator = .parse_operator(allow_assignments);
 
             if parsed_operator is Garbage {
                 break
@@ -1885,7 +1899,7 @@ struct Parser {
             LParen => {
                 .index++
 
-                let expr = .parse_expression()
+                let expr = .parse_expression(allow_assignments: false)
                 match .current() {
                     RParen => {
                         .index++
@@ -1917,7 +1931,7 @@ struct Parser {
         return match .current() {
             DotDot => {
                 .index++
-                let to = .parse_expression()
+                let to = .parse_expression(allow_assignments: false)
                 yield ParsedExpression::Range(from: expr, to, span: merge_spans(start, to.span()))
             }
             ExclamationPoint => {
@@ -1982,7 +1996,7 @@ struct Parser {
             LSquare => {
                 // Indexing operation
                 .index++
-                let index_expr = .parse_expression()
+                let index_expr = .parse_expression(allow_assignments: false)
                 if .current() is RSquare {
                     .index++
                 } else {
@@ -1997,41 +2011,53 @@ struct Parser {
         }
     }
 
-    function unknown_operator(mutable this, span: JaktSpan) throws -> BinaryOperator {
-        //.error("unknown operator", span)
-
-        return BinaryOperator::Garbage
-    }
-
-    function parse_operator(mutable this) throws -> ParsedExpression {
+    function parse_operator(mutable this, allow_assignments: bool) throws -> ParsedExpression {
         let span = .current().span()
-        return match .current() {
-            Plus => {
-                .index++
-                yield ParsedExpression::Operator(op: BinaryOperator::Add, span)
-            }
-            Minus => {
-                .index++
-                yield ParsedExpression::Operator(op: BinaryOperator::Subtract, span)
-            }
-            Asterisk => {
-                .index++
-                yield ParsedExpression::Operator(op: BinaryOperator::Multiply, span)
-            }
-            ForwardSlash => {
-                .index++
-                yield ParsedExpression::Operator(op: BinaryOperator::Divide, span)
-            }
-            And => {
-                .index++
-                yield ParsedExpression::Operator(op: BinaryOperator::LogicalAnd, span)
-            }
-            Or => {
-                .index++
-                yield ParsedExpression::Operator(op: BinaryOperator::LogicalOr, span)
-            }
-            else => ParsedExpression::Garbage(span)
+        let op = match .current() {
+            QuestionMarkQuestionMark => BinaryOperator::NoneCoalescing
+            Plus => BinaryOperator::Add
+            Minus => BinaryOperator::Subtract
+            Asterisk => BinaryOperator::Multiply
+            ForwardSlash => BinaryOperator::Divide
+            PercentSign => BinaryOperator::Modulo
+            And => BinaryOperator::LogicalAnd
+            Or => BinaryOperator::LogicalOr
+            DoubleEqual => BinaryOperator::Equal
+            NotEqual => BinaryOperator::NotEqual
+            LessThan => BinaryOperator::LessThan
+            LessThanOrEqual => BinaryOperator::LessThanOrEqual
+            GreaterThan => BinaryOperator::GreaterThan
+            GreaterThanOrEqual => BinaryOperator::GreaterThanOrEqual
+            Ampersand => BinaryOperator::BitwiseAnd
+            Pipe => BinaryOperator::BitwiseOr
+            Caret => BinaryOperator::BitwiseXor
+            LeftShift => BinaryOperator::BitwiseLeftShift
+            RightShift => BinaryOperator::BitwiseRightShift
+            LeftArithmeticShift => BinaryOperator::ArithmeticLeftShift
+            RightArithmeticShift => BinaryOperator::ArithmeticRightShift
+            Equal => BinaryOperator::Assign
+            LeftShiftEqual => BinaryOperator::BitwiseLeftShiftAssign
+            RightShiftEqual => BinaryOperator::BitwiseRightShiftAssign
+            AmpersandEqual => BinaryOperator::BitwiseAndAssign
+            PipeEqual => BinaryOperator::BitwiseOrAssign
+            CaretEqual => BinaryOperator::BitwiseXorAssign
+            PlusEqual => BinaryOperator::AddAssign
+            MinusEqual => BinaryOperator::SubtractAssign
+            AsteriskEqual => BinaryOperator::MultiplyAssign
+            ForwardSlashEqual => BinaryOperator::DivideAssign
+            PercentSignEqual => BinaryOperator::ModuloAssign
+            QuestionMarkQuestionMarkEqual => BinaryOperator::NoneCoalescingAssign
+            else => BinaryOperator::Garbage
         }
+
+        .index++
+
+        if not allow_assignments and op.is_assignment() {
+            .error("Assignment is not allowed in this position", span)
+            return ParsedExpression::Operator(op, span)
+        }
+
+        return ParsedExpression::Operator(op, span)
     }
 
     function parse_call(mutable this) throws -> ParsedCall {
@@ -2067,7 +2093,7 @@ struct Parser {
                         else => {
                             let param_name = .parse_argument_label()
 
-                            let expr = .parse_expression()
+                            let expr = .parse_expression(allow_assignments: false)
                             call.args.push((param_name, expr))
                         }
                     }
@@ -2218,7 +2244,7 @@ struct Parser {
                 Semicolon => {
                     if output.size() == 1 {
                         .index++
-                        fill_size_expr = .parse_expression();
+                        fill_size_expr = .parse_expression(allow_assignments: false);
                     } else {
                         .error("Can't fill array with more than one expression", .current().span())
                         .index++
@@ -2239,7 +2265,7 @@ struct Parser {
                     }
                 }
                 else => {
-                    let expr = .parse_expression()
+                    let expr = .parse_expression(allow_assignments: false)
                     if .current() is Colon {
                         if not output.is_empty() {
                             .error("Mixing dictionary and array values", .current().span())
@@ -2252,7 +2278,7 @@ struct Parser {
                             .error("Key missing value in dictionary", .current().span())
                             return ParsedExpression::Garbage(.current().span())
                         }
-                        let value = .parse_expression()
+                        let value = .parse_expression(allow_assignments: false)
                         dict_output.push((expr, value))
                     } else if not is_dictionary {
                         output.push(expr)
