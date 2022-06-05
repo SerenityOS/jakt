@@ -133,7 +133,7 @@ impl CodegenContext {
     }
 }
 
-pub fn codegen(project: &Project, scope: &Scope) -> String {
+pub fn codegen(project: &Project) -> String {
     let mut output = String::new();
 
     output.push_str("#include <lib.h>\n");
@@ -145,11 +145,24 @@ pub fn codegen(project: &Project, scope: &Scope) -> String {
         entered_yieldable_blocks: vec![],
         control_flow_state: ControlFlowState::no_control_flow(),
     };
+    // skip(1) because module 0 is always prelude
+    for (idx, module) in project.modules.iter().enumerate().rev() {
+        let scope_id = ScopeId(module.id, 0);
+        let scope = project.get_scope(scope_id);
 
-    output.push_str(&codegen_namespace_predecl(project, scope, &mut context));
-    output.push_str(&codegen_namespace(project, scope, &mut context));
+        if idx != 0 {
+            output.push_str(format!("namespace {} {{\n", module.name).as_str());
+        }
 
-    output.push_str(&context.deferred_output);
+        output.push_str(&codegen_namespace_predecl(project, scope, &mut context));
+        output.push_str(&codegen_namespace(project, scope, &mut context));
+
+        if idx != 0 {
+            output.push('}');
+        }
+
+        output.push_str(&context.deferred_output);
+    }
 
     output
 }
@@ -166,7 +179,7 @@ fn codegen_namespace_predecl(
 
     // Visit the types.
     for (_, struct_id, _) in &scope.structs {
-        let structure = &project.structs[*struct_id];
+        let structure = project.get_struct(*struct_id);
         let struct_output = codegen_struct_predecl(structure, project);
 
         if !struct_output.is_empty() {
@@ -176,7 +189,7 @@ fn codegen_namespace_predecl(
     }
 
     for (_, enum_id, _) in &scope.enums {
-        let enum_ = &project.enums[*enum_id];
+        let enum_ = project.get_enum(*enum_id);
         let enum_output = codegen_enum_predecl(enum_, project);
 
         if !enum_output.is_empty() {
@@ -189,14 +202,14 @@ fn codegen_namespace_predecl(
     for child in &scope.children {
         output.push_str(&codegen_namespace_predecl(
             project,
-            &project.scopes[*child],
+            project.get_scope(*child),
             context,
         ));
     }
 
     // Visit the functions.
     for (_, function_id, _) in &scope.functions {
-        let function = &project.functions[*function_id];
+        let function = project.get_function(*function_id);
         if function.linkage == FunctionLinkage::ImplicitEnumConstructor {
             continue;
         }
@@ -235,11 +248,11 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
         );
 
         for type_id in traversal {
-            let type_ = &project.types[type_id];
+            let type_ = project.get_type(type_id);
             seen_types.insert(type_id);
             match type_ {
                 Type::Enum(enum_id) => {
-                    let enum_ = &project.enums[*enum_id];
+                    let enum_ = project.get_enum(*enum_id);
                     let enum_output = codegen_enum(enum_, project, context);
 
                     if !enum_output.is_empty() {
@@ -248,7 +261,7 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
                     }
                 }
                 Type::Struct(struct_id) => {
-                    let structure = &project.structs[*struct_id];
+                    let structure = project.get_struct(*struct_id);
                     let struct_output = codegen_struct(structure, project, context);
 
                     if !struct_output.is_empty() {
@@ -262,7 +275,7 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
     }
 
     for (_, struct_id, _) in &scope.structs {
-        let structure = &project.structs[*struct_id];
+        let structure = project.get_struct(*struct_id);
         if seen_types.contains(&structure.type_id) {
             continue;
         }
@@ -277,7 +290,7 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
     output.push('\n');
 
     for (_, enum_id, _) in &scope.enums {
-        let enum_ = &project.enums[*enum_id];
+        let enum_ = project.get_enum(*enum_id);
         if seen_types.contains(&enum_.type_id) {
             continue;
         }
@@ -291,7 +304,7 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
     // Output the namespaces (and their children)
     for child_scope_id in &scope.children {
         // For now, require children of the current namespace to have names before being emitted
-        let child_scope = &project.scopes[*child_scope_id];
+        let child_scope = project.get_scope(*child_scope_id);
         if let Some(name) = &child_scope.namespace_name {
             context.namespace_stack.push(name.clone());
             output.push_str(&format!("namespace {} {{\n", name));
@@ -304,7 +317,7 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
     output.push('\n');
 
     for (_, function_id, _) in &scope.functions {
-        let function = &project.functions[*function_id];
+        let function = project.get_function(*function_id);
         if function.linkage == FunctionLinkage::External
             || function.linkage == FunctionLinkage::ImplicitConstructor
             || function.linkage == FunctionLinkage::ImplicitEnumConstructor
@@ -320,7 +333,7 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
 
     for (_, struct_id, _) in &scope.structs {
         let struct_id = *struct_id;
-        let structure = &project.structs[struct_id];
+        let structure = project.get_struct(struct_id);
         if structure.definition_linkage == DefinitionLinkage::External {
             continue;
         }
@@ -328,9 +341,9 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
             continue;
         }
 
-        let scope = &project.scopes[structure.scope_id];
+        let scope = &project.get_scope(structure.scope_id);
         for (_, function_id, _) in &scope.functions {
-            let function = &project.functions[*function_id];
+            let function = project.get_function(*function_id);
             if function.linkage != FunctionLinkage::ImplicitConstructor {
                 let function_output = codegen_function_in_namespace(
                     function,
@@ -347,7 +360,7 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
 
     for (_, enum_id, _) in &scope.enums {
         let enum_id = *enum_id;
-        let enum_ = &project.enums[enum_id];
+        let enum_ = project.get_enum(enum_id);
         if enum_.definition_linkage == DefinitionLinkage::External {
             continue;
         }
@@ -355,9 +368,9 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
             continue;
         }
 
-        let scope = &project.scopes[enum_.scope_id];
+        let scope = &project.get_scope(enum_.scope_id);
         for (_, function_id, _) in &scope.functions {
-            let function = &project.functions[*function_id];
+            let function = project.get_function(*function_id);
             if function.linkage != FunctionLinkage::ImplicitEnumConstructor {
                 let function_output =
                     codegen_function_in_namespace(function, Some(enum_.type_id), project, context);
@@ -431,7 +444,7 @@ fn codegen_nonrecursive_enum(
     let generic_parameter_names = enum_
         .generic_parameters
         .iter()
-        .map(|p| match &project.types[*p] {
+        .map(|p| match &project.get_type(*p) {
             Type::TypeVariable(name) => name.clone(),
             _ => unreachable!(),
         })
@@ -599,9 +612,9 @@ fn codegen_nonrecursive_enum(
 
     output.push_str(&codegen_enum_debug_description_getter(enum_));
 
-    let scope = &project.scopes[enum_.scope_id];
+    let scope = &project.get_scope(enum_.scope_id);
     for (_, function_id, _) in &scope.functions {
-        let function = &project.functions[*function_id];
+        let function = &project.get_function(*function_id);
         if function.linkage != FunctionLinkage::ImplicitEnumConstructor {
             output.push_str(&codegen_indent(INDENT_SIZE));
             let method_output = if enum_.generic_parameters.is_empty() {
@@ -647,7 +660,7 @@ fn codegen_nonrecursive_enum_predecl(enum_: &CheckedEnum, project: &Project) -> 
     let generic_parameter_names = enum_
         .generic_parameters
         .iter()
-        .map(|p| match &project.types[*p] {
+        .map(|p| match &project.get_type(*p) {
             Type::TypeVariable(name) => name.clone(),
             _ => unreachable!(),
         })
@@ -734,7 +747,7 @@ fn codegen_recursive_enum_predecl(enum_: &CheckedEnum, project: &Project) -> Str
     let generic_parameter_names = enum_
         .generic_parameters
         .iter()
-        .map(|p| match &project.types[*p] {
+        .map(|p| match &project.get_type(*p) {
             Type::TypeVariable(name) => name.clone(),
             _ => unreachable!(),
         })
@@ -843,7 +856,7 @@ fn codegen_recursive_enum(
     let generic_parameter_names = enum_
         .generic_parameters
         .iter()
-        .map(|p| match &project.types[*p] {
+        .map(|p| match project.get_type(*p) {
             Type::TypeVariable(name) => name.clone(),
             _ => unreachable!(),
         })
@@ -1036,9 +1049,9 @@ fn codegen_recursive_enum(
 
     output.push_str(&codegen_enum_debug_description_getter(enum_));
 
-    let scope = &project.scopes[enum_.scope_id];
+    let scope = project.get_scope(enum_.scope_id);
     for (_, function_id, _) in &scope.functions {
-        let function = &project.functions[*function_id];
+        let function = project.get_function(*function_id);
         if function.linkage != FunctionLinkage::ImplicitEnumConstructor {
             output.push_str(&codegen_indent(INDENT_SIZE));
             let method_output = if enum_.generic_parameters.is_empty() {
@@ -1178,9 +1191,9 @@ fn codegen_debug_description_getter(structure: &CheckedStruct, project: &Project
 
         output.push_str("\", ");
 
-        match project.types[field.type_id] {
+        match project.get_type(field.type_id) {
             Type::Struct(struct_id)
-                if project.structs[struct_id].definition_type == DefinitionType::Class =>
+                if project.get_struct(*struct_id).definition_type == DefinitionType::Class =>
             {
                 output.push('*');
             }
@@ -1267,7 +1280,7 @@ fn codegen_struct(
     let generic_parameter_names = structure
         .generic_parameters
         .iter()
-        .map(|p| match &project.types[*p] {
+        .map(|p| match project.get_type(*p) {
             Type::TypeVariable(name) => name.clone(),
             _ => unreachable!(),
         })
@@ -1332,9 +1345,9 @@ fn codegen_struct(
         output.push_str(";\n");
     }
 
-    let scope = &project.scopes[structure.scope_id];
+    let scope = &project.get_scope(structure.scope_id);
     for (_, function_id, _) in &scope.functions {
-        let function = &project.functions[*function_id];
+        let function = &project.get_function(*function_id);
         if function.linkage == FunctionLinkage::ImplicitConstructor {
             let function_output = codegen_constructor(function, project);
 
@@ -1619,11 +1632,11 @@ fn codegen_function_in_namespace(
 
 fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String {
     let type_id = function.return_type_id;
-    let type_ = &project.types[type_id];
+    let type_ = &project.get_type(type_id);
 
     match type_ {
         Type::Struct(struct_id) => {
-            let structure = &project.structs[*struct_id];
+            let structure = &project.get_struct(*struct_id);
 
             if structure.definition_type == DefinitionType::Class {
                 let mut output = String::new();
@@ -1770,10 +1783,10 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
 }
 
 fn codegen_struct_type(type_id: TypeId, project: &Project) -> String {
-    let type_ = &project.types[type_id];
+    let type_ = &project.get_type(type_id);
 
     match type_ {
-        Type::Struct(struct_id) => project.structs[*struct_id].name.clone(),
+        Type::Struct(struct_id) => project.get_struct(*struct_id).name.clone(),
         _ => panic!("codegen_struct_type on non-struct"),
     }
 }
@@ -1781,15 +1794,16 @@ fn codegen_struct_type(type_id: TypeId, project: &Project) -> String {
 pub fn codegen_namespace_qualifier(scope_id: ScopeId, project: &Project) -> String {
     let mut output = String::new();
 
-    let mut current_scope_id = project.scopes[scope_id].parent;
+    let mut current_scope_id = project.get_scope(scope_id).parent;
 
     while let Some(current) = current_scope_id {
         // Walk backward, prepending the parents with names to the current output
-        if let Some(namespace_name) = &project.scopes[current].namespace_name {
+        if let Some(namespace_name) = &project.get_scope(current).namespace_name {
+            println!("{}", namespace_name);
             output.insert_str(0, &format!("{}::", namespace_name));
         }
 
-        current_scope_id = project.scopes[current].parent;
+        current_scope_id = project.get_scope(current).parent;
     }
 
     output
@@ -1805,11 +1819,9 @@ pub fn codegen_type_possibly_as_namespace(
     as_namespace: bool,
 ) -> String {
     let mut output = String::new();
-    let ty = &project.types[type_id];
+    let ty = &project.get_type(type_id);
 
-    let weakptr_struct_id = project
-        .find_struct_in_scope(0, "WeakPtr")
-        .expect("internal error: can't find builtin WeakPtr type");
+    let weakptr_struct_id = project.find_struct_in_prelude("WeakPtr");
 
     match ty {
         Type::RawPtr(type_id) => {
@@ -1817,13 +1829,13 @@ pub fn codegen_type_possibly_as_namespace(
         }
         Type::GenericInstance(struct_id, inner_type_ids) if *struct_id == weakptr_struct_id => {
             let inner_type_id = inner_type_ids[0];
-            if let Type::Struct(struct_id) = project.types[inner_type_id] {
+            if let Type::Struct(struct_id) = project.get_type(inner_type_id) {
                 output.push_str("WeakPtr<");
                 output.push_str(&codegen_namespace_qualifier(
-                    project.structs[struct_id].scope_id,
+                    project.get_struct(*struct_id).scope_id,
                     project,
                 ));
-                output.push_str(&project.structs[struct_id].name);
+                output.push_str(&project.get_struct(*struct_id).name);
                 output.push('>');
             }
 
@@ -1831,15 +1843,15 @@ pub fn codegen_type_possibly_as_namespace(
         }
         Type::GenericInstance(struct_id, inner_type_ids) => {
             let acquired_by_ref = !as_namespace
-                && project.structs[*struct_id].definition_type == DefinitionType::Class;
+                && project.get_struct(*struct_id).definition_type == DefinitionType::Class;
             if acquired_by_ref {
                 output.push_str("NonnullRefPtr<");
             }
             output.push_str(&codegen_namespace_qualifier(
-                project.structs[*struct_id].scope_id,
+                project.get_struct(*struct_id).scope_id,
                 project,
             ));
-            output.push_str(&project.structs[*struct_id].name.clone());
+            output.push_str(&project.get_struct(*struct_id).name.clone());
             output.push('<');
             let mut first = true;
             for type_id in inner_type_ids {
@@ -1861,24 +1873,25 @@ pub fn codegen_type_possibly_as_namespace(
         }
         Type::GenericEnumInstance(enum_id, inner_type_ids) => {
             let mut close_tag = false;
-            if !as_namespace && project.enums[*enum_id].definition_type == DefinitionType::Class {
+            if !as_namespace && project.get_enum(*enum_id).definition_type == DefinitionType::Class
+            {
                 output.push_str("NonnullRefPtr<");
                 let qualifier =
-                    codegen_namespace_qualifier(project.enums[*enum_id].scope_id, project);
+                    codegen_namespace_qualifier(project.get_enum(*enum_id).scope_id, project);
                 if !qualifier.is_empty() {
                     output.push_str("typename ");
                     output.push_str(&qualifier);
                 }
-                output.push_str(&project.enums[*enum_id].name);
+                output.push_str(&project.get_enum(*enum_id).name);
                 close_tag = true;
             } else {
                 let qualifier =
-                    codegen_namespace_qualifier(project.enums[*enum_id].scope_id, project);
+                    codegen_namespace_qualifier(project.get_enum(*enum_id).scope_id, project);
                 if !qualifier.is_empty() {
                     output.push_str("typename ");
                     output.push_str(&qualifier);
                 }
-                output.push_str(&project.enums[*enum_id].name);
+                output.push_str(&project.get_enum(*enum_id).name);
             }
             output.push('<');
             let mut first = true;
@@ -1898,44 +1911,46 @@ pub fn codegen_type_possibly_as_namespace(
             output
         }
         Type::Struct(struct_id) => {
-            if !as_namespace && project.structs[*struct_id].definition_type == DefinitionType::Class
+            if !as_namespace
+                && project.get_struct(*struct_id).definition_type == DefinitionType::Class
             {
                 output.push_str("NonnullRefPtr<");
                 output.push_str(&codegen_namespace_qualifier(
-                    project.structs[*struct_id].scope_id,
+                    project.get_struct(*struct_id).scope_id,
                     project,
                 ));
-                output.push_str(&project.structs[*struct_id].name);
+                output.push_str(&project.get_struct(*struct_id).name);
                 output.push('>');
             } else {
                 output.push_str(&codegen_namespace_qualifier(
-                    project.structs[*struct_id].scope_id,
+                    project.get_struct(*struct_id).scope_id,
                     project,
                 ));
-                output.push_str(&project.structs[*struct_id].name);
+                output.push_str(&project.get_struct(*struct_id).name);
             }
 
             output
         }
         Type::Enum(enum_id) => {
-            if !as_namespace && project.enums[*enum_id].definition_type == DefinitionType::Class {
+            if !as_namespace && project.get_enum(*enum_id).definition_type == DefinitionType::Class
+            {
                 output.push_str("NonnullRefPtr<");
                 let qualifier =
-                    codegen_namespace_qualifier(project.enums[*enum_id].scope_id, project);
+                    codegen_namespace_qualifier(project.get_enum(*enum_id).scope_id, project);
                 if !qualifier.is_empty() {
                     output.push_str("typename ");
                     output.push_str(&qualifier);
                 }
-                output.push_str(&project.enums[*enum_id].name);
+                output.push_str(&project.get_enum(*enum_id).name);
                 output.push('>');
             } else {
                 let qualifier =
-                    codegen_namespace_qualifier(project.enums[*enum_id].scope_id, project);
+                    codegen_namespace_qualifier(project.get_enum(*enum_id).scope_id, project);
                 if !qualifier.is_empty() {
                     output.push_str("typename ");
                     output.push_str(&qualifier);
                 }
-                output.push_str(&project.enums[*enum_id].name);
+                output.push_str(&project.get_enum(*enum_id).name);
             }
 
             output
@@ -2452,13 +2467,13 @@ fn codegen_enum_match(
                         scope_id,
                         body,
                     } => {
-                        let type_ = &project.types[*subject_type_id];
+                        let type_ = &project.get_type(*subject_type_id);
                         let enum_id = match type_ {
                             Type::GenericEnumInstance(id, _) | Type::Enum(id) => id,
                             _ => panic!("Expected enum type"),
                         };
 
-                        let enum_ = &project.enums[*enum_id];
+                        let enum_ = &project.get_enum(*enum_id);
                         let variant = &enum_.variants[*variant_index];
                         output.push_str(&format!("case {}: {{\n", variant_index));
                         match variant {
@@ -2728,7 +2743,7 @@ fn codegen_expr(
 
     match expr {
         CheckedExpression::Range(start_expr, end_expr, _, type_id) => {
-            let ty = &project.types[*type_id];
+            let ty = &project.get_type(*type_id);
             let index_type = match ty {
                 Type::GenericInstance(_, v) => v[0],
                 _ => panic!("Interal error: range expression doesn't have Range type"),
@@ -2896,12 +2911,12 @@ fn codegen_expr(
                     || call.linkage == FunctionLinkage::ExternalClassConstructor
                 {
                     let type_id = call.type_id;
-                    let ty = &project.types[type_id];
+                    let ty = &project.get_type(type_id);
 
                     output.push_str(&codegen_namespace_path(call, project));
                     match ty {
                         Type::Struct(struct_id) => {
-                            let structure = &project.structs[*struct_id];
+                            let structure = project.get_struct(*struct_id);
 
                             if structure.definition_type == DefinitionType::Class {
                                 output.push_str(&call.name);
@@ -2912,13 +2927,13 @@ fn codegen_expr(
                             }
                         }
                         Type::GenericInstance(struct_id, inner_type_ids) => {
-                            let structure = &project.structs[*struct_id];
+                            let structure = project.get_struct(*struct_id);
                             if structure.definition_type == DefinitionType::Class {
                                 output.push_str(&codegen_namespace_qualifier(
-                                    project.structs[*struct_id].scope_id,
+                                    structure.scope_id,
                                     project,
                                 ));
-                                output.push_str(&project.structs[*struct_id].name.clone());
+                                output.push_str(&project.get_struct(*struct_id).name.clone());
                                 output.push('<');
                                 let mut first = true;
                                 for type_id in inner_type_ids {
@@ -2943,10 +2958,10 @@ fn codegen_expr(
                     }
                 } else if call.linkage == FunctionLinkage::ImplicitEnumConstructor {
                     let type_id = call.type_id;
-                    let type_ = &project.types[type_id];
+                    let type_ = &project.get_type(type_id);
                     match type_ {
                         Type::Enum(enum_id) | Type::GenericEnumInstance(enum_id, _) => {
-                            let enum_ = &project.enums[*enum_id];
+                            let enum_ = &project.get_enum(*enum_id);
 
                             if enum_.definition_type == DefinitionType::Struct {
                                 output.push_str("typename ");
@@ -3021,12 +3036,12 @@ fn codegen_expr(
                 CheckedExpression::Var(CheckedVariable { name, .. }, _) if name == "this" => {
                     output.push_str("->");
                 }
-                x => match &project.types[x.type_id_or_type_var()] {
+                x => match project.get_type(x.type_id_or_type_var()) {
                     Type::RawPtr(_) => {
                         output.push_str("->");
                     }
                     Type::Struct(struct_id) => {
-                        let structure = &project.structs[*struct_id];
+                        let structure = &project.get_struct(*struct_id);
 
                         if structure.definition_type == DefinitionType::Class {
                             output.push_str("->");
@@ -3035,7 +3050,7 @@ fn codegen_expr(
                         }
                     }
                     Type::Enum(enum_id) => {
-                        let enumeration = &project.enums[*enum_id];
+                        let enumeration = &project.get_enum(*enum_id);
                         if enumeration.definition_type == DefinitionType::Class {
                             output.push_str("->")
                         } else {
@@ -3068,12 +3083,12 @@ fn codegen_expr(
         }
         CheckedExpression::Match(expr, cases, _, return_type_id, match_values_are_all_constant) => {
             let match_values_are_all_constant = *match_values_are_all_constant;
-            let expr_type = &project.types[expr.type_id_or_type_var()];
+            let expr_type = &project.get_type(expr.type_id_or_type_var());
             let last_control_flow = context.control_flow_state;
             context.control_flow_state = last_control_flow.enter_match();
             match expr_type {
                 Type::GenericEnumInstance(id, _) | Type::Enum(id) => {
-                    let enum_ = &project.enums[*id];
+                    let enum_ = project.get_enum(*id);
                     output.push_str(&codegen_enum_match(
                         enum_,
                         expr,
@@ -3165,8 +3180,8 @@ fn codegen_expr(
                 CheckedUnaryOperator::IsEnumVariant(name) => {
                     output.push(')');
                     let type_id = expr.type_id_or_type_var();
-                    let is_boxed = if let Type::Enum(enum_id) = &project.types[type_id] {
-                        project.enums[*enum_id].definition_type == DefinitionType::Class
+                    let is_boxed = if let Type::Enum(enum_id) = project.get_type(type_id) {
+                        project.get_enum(*enum_id).definition_type == DefinitionType::Class
                     } else {
                         false
                     };
@@ -3191,7 +3206,7 @@ fn codegen_expr(
 
             match op {
                 BinaryOperator::NoneCoalescing => {
-                    let rhs_type = &project.types[rhs.type_id_or_type_var()];
+                    let rhs_type = &project.get_type(rhs.type_id_or_type_var());
                     let optional_struct_id = project.cached_optional_struct_id.unwrap();
 
                     output.push_str(&codegen_expr(indent, lhs, project, context));
@@ -3308,7 +3323,7 @@ fn codegen_expr(
             output.push(')');
         }
         CheckedExpression::Array(vals, fill_size_expr, _, type_id) => {
-            let value_type_id = match &project.types[*type_id] {
+            let value_type_id = match &project.get_type(*type_id) {
                 Type::GenericInstance(_, v) => v[0],
                 _ => panic!("Internal error: Array doesn't have inner type"),
             };
@@ -3346,7 +3361,7 @@ fn codegen_expr(
         }
         CheckedExpression::Dictionary(vals, _, type_id) => {
             // (Dictionary({1, 2, 3}))
-            let (key_type_id, value_type_id) = match &project.types[*type_id] {
+            let (key_type_id, value_type_id) = match &project.get_type(*type_id) {
                 Type::GenericInstance(_, v) => (v[0], v[1]),
                 _ => panic!("Internal error: Dictionary doesn't have inner type"),
             };
@@ -3374,7 +3389,7 @@ fn codegen_expr(
         }
         CheckedExpression::Set(values, _, type_id) => {
             // (Set({1, 2, 3}))
-            let value_type_id = match &project.types[*type_id] {
+            let value_type_id = match &project.get_type(*type_id) {
                 Type::GenericInstance(_, v) => v[0],
                 _ => panic!("Internal error: Set doesn't have inner type"),
             };
@@ -3439,12 +3454,12 @@ fn codegen_expr(
                 CheckedExpression::Var(CheckedVariable { name, .. }, _) if name == "this" => {
                     output.push_str("->");
                 }
-                x => match &project.types[x.type_id_or_type_var()] {
+                x => match project.get_type(x.type_id_or_type_var()) {
                     Type::RawPtr(_) => {
                         output.push_str("->");
                     }
                     Type::Struct(struct_id) => {
-                        let structure = &project.structs[*struct_id];
+                        let structure = &project.get_struct(*struct_id);
 
                         if structure.definition_type == DefinitionType::Class {
                             output.push_str("->");
@@ -3515,10 +3530,10 @@ fn extract_dependencies_from(
         return;
     }
 
-    let type_ = &project.types[type_id];
+    let type_ = &project.get_type(type_id);
     match type_ {
         Type::GenericInstance(struct_id, _) | Type::Struct(struct_id) => {
-            let struct_ = &project.structs[*struct_id];
+            let struct_ = &project.get_struct(*struct_id);
             if struct_.definition_linkage == DefinitionLinkage::External {
                 // This type is defined somewhere else,
                 // so we can skip marking it as a dependency.
@@ -3538,7 +3553,7 @@ fn extract_dependencies_from(
             }
         }
         Type::GenericEnumInstance(enum_id, _) | Type::Enum(enum_id) => {
-            let enum_ = &project.enums[*enum_id];
+            let enum_ = &project.get_enum(*enum_id);
             if enum_.definition_linkage == DefinitionLinkage::External {
                 // This type is defined somewhere else,
                 // so we can skip marking it as a dependency.

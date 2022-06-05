@@ -1,0 +1,6 @@
+import b
+
+function use_cool_things() {
+    b::something_cool()
+    b::something_else_cool()
+}

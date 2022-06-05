@@ -2,7 +2,7 @@ use crate::{
     typechecker::{
         CheckedBlock, CheckedEnum, CheckedEnumVariant, CheckedExpression, CheckedFunction,
         CheckedMatchBody, CheckedMatchCase, CheckedStatement, CheckedStruct,
-        FunctionGenericParameter, FunctionId, Scope, Type, TypeId,
+        FunctionGenericParameter, FunctionId, ModuleId, Scope, ScopeId, Type, TypeId,
     },
     Project, Span,
 };
@@ -10,7 +10,7 @@ use crate::{
 pub fn find_definition_in_project(project: &Project, span: Span) -> Span {
     match find_span_in_project(project, span) {
         Some(Usage::Variable(span, _)) => span,
-        Some(Usage::Call(function_id)) => project.functions[function_id].name_span,
+        Some(Usage::Call(function_id)) => project.get_function(function_id).name_span,
         Some(Usage::Typename(type_id)) => find_type_definition_for_type_id(project, type_id, span),
         None => span,
     }
@@ -25,7 +25,7 @@ fn find_type_definition_for_type_id(project: &Project, type_id: TypeId, span: Sp
     let tuple_struct_id = project.cached_tuple_struct_id.unwrap();
     let weak_ptr_struct_id = project.cached_weakptr_struct_id.unwrap();
 
-    match &project.types[type_id] {
+    match project.get_type(type_id) {
         Type::Builtin => span,
         Type::GenericInstance(struct_id, params) => {
             if [
@@ -42,11 +42,13 @@ fn find_type_definition_for_type_id(project: &Project, type_id: TypeId, span: Sp
             } else if struct_id == &dictionary_struct_id {
                 find_type_definition_for_type_id(project, params[1], span)
             } else {
-                project.structs[*struct_id].name_span
+                project.get_struct(*struct_id).name_span
             }
         }
-        Type::Struct(struct_id) => project.structs[*struct_id].name_span,
-        Type::GenericEnumInstance(enum_id, _) | Type::Enum(enum_id) => project.enums[*enum_id].span,
+        Type::Struct(struct_id) => project.get_struct(*struct_id).name_span,
+        Type::GenericEnumInstance(enum_id, _) | Type::Enum(enum_id) => {
+            project.get_enum(*enum_id).span
+        }
         Type::RawPtr(type_id) => find_type_definition_for_type_id(project, *type_id, span),
         Type::TypeVariable(_) => span,
     }
@@ -57,7 +59,7 @@ pub fn find_type_definition_in_project(project: &Project, span: Span) -> Span {
         Some(Usage::Variable(span, type_id)) => {
             find_type_definition_for_type_id(project, type_id, span)
         }
-        Some(Usage::Call(function_id)) => project.functions[function_id].name_span,
+        Some(Usage::Call(function_id)) => project.get_function(function_id).name_span,
         Some(Usage::Typename(type_id)) => find_type_definition_for_type_id(project, type_id, span),
         None => span,
     }
@@ -74,10 +76,10 @@ pub fn find_typename_in_project(project: &Project, span: Span) -> Option<String>
 
 fn completions_for_type_id(project: &Project, type_id: TypeId) -> Vec<String> {
     let mut output = vec![];
-    let ty = &project.types[type_id];
+    let ty = project.get_type(type_id);
 
     let add_function = |function_id: FunctionId, output: &mut Vec<String>| {
-        let function = &project.functions[function_id];
+        let function = project.get_function(function_id);
 
         if let Some(param) = function.params.first() {
             if param.variable.name == "this" {
@@ -103,21 +105,21 @@ fn completions_for_type_id(project: &Project, type_id: TypeId) -> Vec<String> {
 
     match ty {
         Type::Enum(enum_id) => {
-            let enum_ = &project.enums[*enum_id];
+            let enum_ = project.get_enum(*enum_id);
 
-            let scope = &project.scopes[enum_.scope_id];
+            let scope = project.get_scope(enum_.scope_id);
             for (_, function_id, _) in &scope.functions {
                 add_function(*function_id, &mut output);
             }
         }
         Type::Struct(struct_id) | Type::GenericInstance(struct_id, _) => {
-            let structure = &project.structs[*struct_id];
+            let structure = project.get_struct(*struct_id);
 
             for field in &structure.fields {
                 output.push(field.name.clone())
             }
 
-            let scope = &project.scopes[structure.scope_id];
+            let scope = project.get_scope(structure.scope_id);
             for (_, function_id, _) in &scope.functions {
                 add_function(*function_id, &mut output);
             }
@@ -132,7 +134,7 @@ pub fn find_dot_completions_in_project(project: &Project, span: Span) -> Vec<Str
     match find_span_in_project(project, span) {
         Some(Usage::Variable(_, type_id)) => completions_for_type_id(project, type_id),
         Some(Usage::Call(function_id)) => {
-            let result_type_id = project.functions[function_id].return_type_id;
+            let result_type_id = project.get_function(function_id).return_type_id;
             completions_for_type_id(project, result_type_id)
         }
         Some(Usage::Typename(_)) => vec![],
@@ -145,9 +147,9 @@ pub fn find_span_in_project(project: &Project, span: Span) -> Option<Usage> {
     // of a filepath, let's just assume we are going to look at the file
     // at hand.
 
-    for scope_id in project.file_ids.values() {
-        if *scope_id != 0 {
-            let scope = &project.scopes[*scope_id];
+    for module in project.modules.iter() {
+        if module.id != ModuleId(0) {
+            let scope = project.get_scope(ScopeId(module.id, 0));
 
             return find_span_in_scope(project, scope, span);
         }
@@ -166,7 +168,7 @@ pub fn find_span_in_scope(project: &Project, scope: &Scope, span: Span) -> Optio
     }
 
     for (_, function_id, _) in &scope.functions {
-        let function = &project.functions[*function_id];
+        let function = project.get_function(*function_id);
 
         if let Some(usage) = find_span_in_function(project, function, span) {
             return Some(usage);
@@ -174,7 +176,7 @@ pub fn find_span_in_scope(project: &Project, scope: &Scope, span: Span) -> Optio
     }
 
     for (_, struct_id, _) in &scope.structs {
-        let checked_struct = &project.structs[*struct_id];
+        let checked_struct = project.get_struct(*struct_id);
 
         if let Some(usage) = find_span_in_struct(project, checked_struct, span) {
             return Some(usage);
@@ -182,7 +184,7 @@ pub fn find_span_in_scope(project: &Project, scope: &Scope, span: Span) -> Optio
     }
 
     for (_, enum_id, _) in &scope.enums {
-        let checked_enum = &project.enums[*enum_id];
+        let checked_enum = project.get_enum(*enum_id);
 
         if let Some(usage) = find_span_in_enum(project, checked_enum, span) {
             return Some(usage);
@@ -190,7 +192,7 @@ pub fn find_span_in_scope(project: &Project, scope: &Scope, span: Span) -> Optio
     }
 
     for child in &scope.children {
-        let scope = &project.scopes[*child];
+        let scope = project.get_scope(*child);
 
         if let Some(usage) = find_span_in_scope(project, scope, span) {
             return Some(usage);
@@ -205,7 +207,7 @@ pub fn find_span_in_enum(
     checked_enum: &CheckedEnum,
     span: Span,
 ) -> Option<Usage> {
-    let scope = &project.scopes[checked_enum.scope_id];
+    let scope = project.get_scope(checked_enum.scope_id);
 
     for variant in &checked_enum.variants {
         match variant {
@@ -244,7 +246,7 @@ pub fn find_span_in_struct(
     checked_struct: &CheckedStruct,
     span: Span,
 ) -> Option<Usage> {
-    let scope = &project.scopes[checked_struct.scope_id];
+    let scope = project.get_scope(checked_struct.scope_id);
 
     for field in &checked_struct.fields {
         if let Some(type_span) = field.type_span {
@@ -425,8 +427,8 @@ pub fn find_span_in_expression(
 
             if index_span.contains(span) {
                 let type_id = expr.type_id_or_type_var();
-                if let Type::Struct(struct_id) = &project.types[type_id] {
-                    let structure = &project.structs[*struct_id];
+                if let Type::Struct(struct_id) = project.get_type(type_id) {
+                    let structure = project.get_struct(*struct_id);
 
                     for field in &structure.fields {
                         if &field.name == field_name {
@@ -540,7 +542,7 @@ pub fn find_span_in_expression(
 }
 
 pub fn get_function_signature(project: &Project, function_id: FunctionId) -> String {
-    let function = &project.functions[function_id];
+    let function = project.get_function(function_id);
 
     let mut generic_parameters = String::new();
     let mut is_first_param = true;

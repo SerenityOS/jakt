@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "something_cool\nsomething_else_cool\nnot_cool\n"
+
+import a
+import b
+
+function main() {
+    a::use_cool_things()
+    b::not_cool()
+}
