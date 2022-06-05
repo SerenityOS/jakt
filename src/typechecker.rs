@@ -1852,6 +1852,18 @@ pub fn typecheck_namespace_predecl(
         ) {
             error = error.or(Some(err));
         }
+
+        // Add a placeholder entry, this will be replaced later.
+        project.current_module_mut().structs.push(CheckedStruct {
+            name: structure.name.clone(),
+            name_span: structure.name_span,
+            generic_parameters: vec![],
+            fields: vec![],
+            scope_id: ScopeId(ModuleId(0), 0),
+            definition_linkage: structure.definition_linkage,
+            definition_type: structure.definition_type,
+            type_id: struct_type_id,
+        });
     }
 
     for (enum_id, enum_) in parsed_namespace.enums.iter().enumerate() {
@@ -1864,6 +1876,37 @@ pub fn typecheck_namespace_predecl(
             project.add_type_to_scope(scope_id, enum_.name.clone(), enum_type_id, enum_.name_span)
         {
             error = error.or(Some(err));
+        }
+
+        // Add a placeholder entry, this will be replaced later.
+        project.current_module_mut().enums.push(CheckedEnum {
+            definition_linkage: enum_.definition_linkage,
+            definition_type: if enum_.is_boxed {
+                DefinitionType::Class
+            } else {
+                DefinitionType::Struct
+            },
+            generic_parameters: vec![],
+            name: enum_.name.clone(),
+            scope_id: ScopeId(ModuleId(0), 0),
+            span: enum_.name_span,
+            type_id: enum_type_id,
+            underlying_type_id: None,
+            variants: vec![],
+        })
+    }
+
+    for namespace in parsed_namespace.namespaces.iter() {
+        // Find all predeclarations in namespaces that are children of this namespace
+        if namespace.name.is_some() {
+            let namespace_scope_id = project.create_scope(scope_id, false);
+            project.get_scope_mut(namespace_scope_id).namespace_name = namespace.name.clone();
+            project
+                .get_scope_mut(scope_id)
+                .children
+                .push(namespace_scope_id);
+            let err = typecheck_namespace_predecl(namespace, namespace_scope_id, project);
+            error = error.or(err);
         }
     }
 
@@ -1896,20 +1939,6 @@ pub fn typecheck_namespace_predecl(
             scope_id,
             project,
         ));
-    }
-
-    for namespace in parsed_namespace.namespaces.iter() {
-        // Find all predeclarations in namespaces that are children of this namespace
-        if namespace.name.is_some() {
-            let namespace_scope_id = project.create_scope(scope_id, false);
-            project.get_scope_mut(namespace_scope_id).namespace_name = namespace.name.clone();
-            project
-                .get_scope_mut(scope_id)
-                .children
-                .push(namespace_scope_id);
-            let err = typecheck_namespace_predecl(namespace, namespace_scope_id, project);
-            error = error.or(err);
-        }
     }
 
     for function in &parsed_namespace.functions {
@@ -2050,7 +2079,7 @@ fn typecheck_enum_predecl(
         .find_type_in_scope(parent_scope_id, &enum_.name)
         .expect("Enum must exist before predeclaration");
 
-    project.current_module_mut().enums.push(CheckedEnum {
+    project.current_module_mut().enums[enum_id.1] = CheckedEnum {
         name: enum_.name.clone(),
         generic_parameters,
         variants: Vec::new(),
@@ -2064,7 +2093,7 @@ fn typecheck_enum_predecl(
         underlying_type_id,
         span: enum_.name_span,
         type_id: enum_type_id,
-    });
+    };
 
     match project.add_enum_to_scope(
         parent_scope_id,
@@ -2667,7 +2696,7 @@ fn typecheck_struct_predecl(
 
     let is_extern = structure.definition_linkage == DefinitionLinkage::External;
 
-    project.current_module_mut().structs.push(CheckedStruct {
+    project.current_module_mut().structs[struct_id.1] = CheckedStruct {
         name: structure.name.clone(),
         name_span: structure.name_span,
         generic_parameters: vec![],
@@ -2676,7 +2705,7 @@ fn typecheck_struct_predecl(
         definition_linkage: structure.definition_linkage,
         definition_type: structure.definition_type,
         type_id: struct_type_id,
-    });
+    };
 
     for (generic_parameter, parameter_span) in &structure.generic_parameters {
         project
@@ -2865,16 +2894,6 @@ fn typecheck_struct_predecl(
     }
 
     project.current_module_mut().structs[struct_id.1].generic_parameters = generic_parameters;
-
-    match project.add_struct_to_scope(
-        parent_scope_id,
-        structure.name.clone(),
-        struct_id,
-        structure.span,
-    ) {
-        Ok(_) => {}
-        Err(err) => error = error.or(Some(err)),
-    }
 
     if project.checking_prelude {
         // Cache various well-known struct IDs as they're used internally in
