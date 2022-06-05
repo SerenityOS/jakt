@@ -95,7 +95,7 @@ enum Token {
 
     // Keywords
     And(JaktSpan)
-    anon(JaktSpan)
+    Anon(JaktSpan)
     Boxed(JaktSpan)
     Break(JaktSpan)
     Catch(JaktSpan)
@@ -197,7 +197,7 @@ enum Token {
         Eof(span) => span
         FatArrow(span) => span
         And(span) => span
-        anon(span) => span
+        Anon(span) => span
         Boxed(span) => span
         Break(span) => span
         Catch(span) => span
@@ -239,7 +239,7 @@ enum Token {
 
     function from_keyword_or_identifier(string: String, span: JaktSpan) => match string {
         "and" => Token::And(span)
-        "anon" => Token::anon(span)
+        "anon" => Token::Anon(span)
         "boxed" => Token::Boxed(span)
         "break" => Token::Break(span)
         "catch" => Token::Catch(span)
@@ -1281,7 +1281,7 @@ struct Parser {
                     .index++
                     current_param_requires_label = true
                 }
-                anon => {
+                Anon => {
                     .index++
                     current_param_requires_label = false
                 }
