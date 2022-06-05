@@ -46,7 +46,7 @@
              (jakt-keyword '("function" "extern"))
              (jakt-exception '("throws"))
              (jakt-macro '("defer" "unsafe" "throw" "try" "catch" "cpp")) 
-             (jakt-var-decls '("mutable" "let" "anonymous" "raw")) 
+             (jakt-var-decls '("mutable" "let" "anon" "raw"))
              (jakt-types '("i8" "i16" "i32" "i16" "i32" "i64" "u8" "u16" "u32"
                            "u64" "f32" "f64" "bool" "c_int" "c_char" "usize"
                            "String" "void"))
