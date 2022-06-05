@@ -155,7 +155,7 @@ pub fn find_span_in_project(project: &Project, span: Span) -> Option<Usage> {
     // of a filepath, let's just assume we are going to look at the file
     // at hand.
 
-    for module in project.modules.iter() {
+    for module in project.modules.iter().skip(1) {
         let scope = project.get_scope(ScopeId(module.id, 0));
 
         return find_span_in_scope(project, scope, span);

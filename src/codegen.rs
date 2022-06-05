@@ -16,7 +16,7 @@
 use crate::compiler::{UNKNOWN_TYPE_ID, VOID_TYPE_ID};
 use crate::typechecker::{
     CheckedCall, CheckedEnum, CheckedEnumVariant, CheckedMatchBody, CheckedMatchCase,
-    FunctionGenericParameter, ScopeId,
+    FunctionGenericParameter, ModuleId, ScopeId,
 };
 use crate::{
     compiler,
@@ -154,23 +154,25 @@ pub fn codegen(project: &Project) -> String {
         control_flow_state: ControlFlowState::no_control_flow(),
     };
     // skip(1) because module 0 is always prelude
-    for (idx, module) in project.modules.iter().enumerate().rev() {
+    for module in project.modules.iter().skip(1).rev() {
         let scope_id = ScopeId(module.id, 0);
         let scope = project.get_scope(scope_id);
 
-        if idx != 0 {
+        // The namespace for prelude or <main> should not be outputted
+
+        if !module.is_root() {
             output.push_str(format!("namespace {} {{\n", module.name).as_str());
         }
 
         output.push_str(&codegen_namespace_predecl(project, scope, &mut context));
         output.push_str(&codegen_namespace(project, scope, &mut context));
 
-        if idx != 0 {
-            output.push('}');
+        if !module.is_root() {
+            output.push_str("}\n");
         }
-
-        output.push_str(&context.deferred_output);
     }
+
+    output.push_str(&context.deferred_output);
 
     output
 }
@@ -620,7 +622,7 @@ fn codegen_nonrecursive_enum(
 
     output.push_str(&codegen_enum_debug_description_getter(enum_));
 
-    let scope = &project.get_scope(enum_.scope_id);
+    let scope = project.get_scope(enum_.scope_id);
     for (_, function_id, _) in &scope.functions {
         let function = &project.get_function(*function_id);
         if function.linkage != FunctionLinkage::ImplicitEnumConstructor {
@@ -637,8 +639,16 @@ fn codegen_nonrecursive_enum(
 
     output.push_str("};\n");
 
+    let module = project.get_module(enum_.scope_id.0);
+
+    let name = if module.is_root() {
+        enum_.name.clone()
+    } else {
+        format!("{}::{}", module.name, enum_.name)
+    };
+
     context.deferred_output.push_str(&codegen_ak_formatter(
-        &enum_.name,
+        &name,
         &generic_parameter_names,
         context,
     ));
@@ -1074,8 +1084,16 @@ fn codegen_recursive_enum(
 
     output.push_str("};\n");
 
+    let module = project.get_module(enum_.scope_id.0);
+
+    let name = if module.is_root() {
+        enum_.name.clone()
+    } else {
+        format!("{}::{}", module.name, enum_.name)
+    };
+
     context.deferred_output.push_str(&codegen_ak_formatter(
-        &enum_.name,
+        &name,
         &generic_parameter_names,
         context,
     ));
@@ -1241,6 +1259,7 @@ fn codegen_ak_formatter(
         qualified_name.push_str(namespace);
         qualified_name.push_str("::");
     }
+
     qualified_name.push_str(name);
     if !generic_parameter_names.is_empty() {
         qualified_name.push('<');
@@ -1381,8 +1400,16 @@ fn codegen_struct(
 
     output.push_str("};");
 
+    let module = project.get_module(structure.scope_id.0);
+
+    let name = if module.is_root() {
+        structure.name.clone()
+    } else {
+        format!("{}::{}", module.name, structure.name)
+    };
+
     context.deferred_output.push_str(&codegen_ak_formatter(
-        &structure.name,
+        &name,
         &generic_parameter_names,
         context,
     ));
@@ -1834,6 +1861,13 @@ pub fn codegen_type_possibly_as_namespace(
     let ty = &project.get_type(type_id);
 
     let weakptr_struct_id = project.find_struct_in_prelude("WeakPtr");
+
+    // hack to get fully qualified name
+    let type_module = project.get_module(type_id.0);
+    if !(type_module.is_root() || type_module.id == ModuleId(0)) {
+        output.push_str(type_module.name.as_str());
+        output.push_str("::");
+    }
 
     match ty {
         Type::RawPtr(type_id) => {
