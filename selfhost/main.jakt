@@ -2047,7 +2047,9 @@ struct Parser {
             ForwardSlashEqual => BinaryOperator::DivideAssign
             PercentSignEqual => BinaryOperator::ModuloAssign
             QuestionMarkQuestionMarkEqual => BinaryOperator::NoneCoalescingAssign
-            else => BinaryOperator::Garbage
+            else => {
+                return ParsedExpression::Garbage(span)
+            }
         }
 
         .index++
