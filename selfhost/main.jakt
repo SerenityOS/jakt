@@ -1344,7 +1344,7 @@ struct Parser {
 
         mut params: [ParsedParameter] = []
         mut current_param_requires_label = true
-        mut current_param_is_mutable = true
+        mut current_param_is_mutable = false
 
         while not .eof() {
             match .current() {
@@ -1379,7 +1379,7 @@ struct Parser {
                     .index++
                 }
                 Identifier(name, span) => {
-                    let var_decl = .parse_variable_declaration()
+                    let var_decl = .parse_variable_declaration(is_mutable: current_param_is_mutable)
                     params.push(ParsedParameter(
                         requires_label: current_param_requires_label,
                         variable: ParsedVariable(
@@ -1437,7 +1437,7 @@ struct Parser {
     }
 
     function parse_field(mut this, anon visibility: Visibility) throws -> ParsedField {
-        let parsed_variable_declaration = .parse_variable_declaration()
+        let parsed_variable_declaration = .parse_variable_declaration(is_mutable: true)
 
         if parsed_variable_declaration.parsed_type is Empty {
             .error("Field missing type", parsed_variable_declaration.span)
@@ -1514,7 +1514,7 @@ struct Parser {
         return parsed_type
     }
 
-    function parse_variable_declaration(mut this) throws -> ParsedVarDecl {
+    function parse_variable_declaration(mut this, is_mutable: bool) throws -> ParsedVarDecl {
         match .current() {
             Identifier(name) => {
                 let var_name = name
@@ -1525,19 +1525,12 @@ struct Parser {
                     return ParsedVarDecl(
                         name: var_name,
                         parsed_type: ParsedType::Empty,
-                        is_mutable: false,
+                        is_mutable,
                         span: .previous().span(),
                     )
                 }
 
                 let decl_span = .previous().span()
-
-                // We have "name:" so far.
-                mut is_mutable = false
-                if .current() is Mut {
-                    .index++
-                    is_mutable = true
-                }
 
                 let var_type = .parse_typename()
                 return ParsedVarDecl(
@@ -1707,17 +1700,10 @@ struct Parser {
                 let expr = .parse_expression(allow_assignments: false)
                 yield ParsedStatement::Return(expr, span: merge_spans(start, .previous().span()))
             }
-            Let => {
+            Let | Mut => {
+                let is_mutable = .current() is Mut
                 .index++
-                let is_mutable = match .current() {
-                    Mut => {
-                        .index++
-                        yield true
-                    }
-                    else => false
-                }
-                mut var = .parse_variable_declaration()
-                var.is_mutable = is_mutable
+                let var = .parse_variable_declaration(is_mutable)
 
                 let init = match .current() {
                     Equal => {
