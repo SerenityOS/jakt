@@ -7375,7 +7375,7 @@ pub fn typecheck_typename(
                     return (
                         UNKNOWN_TYPE_ID,
                         Some(JaktError::TypecheckError(
-                            "Unknown namespace".to_string(),
+                            format!("Unknown namespace '{}'", namespace),
                             *span,
                         )),
                     );
