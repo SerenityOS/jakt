@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "Foo(name: \"Bar\")\n"
+
+struct Foo {
+    name: String
+}
+
+function main() {
+    println("{}", Foo(name: "Bar"))
+}
