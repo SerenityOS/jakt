@@ -148,22 +148,18 @@ impl Compiler {
         error
     }
 
-    pub fn parse_file(&self, file_id: FileId) -> Result<ParsedNamespace, JaktError> {
+    pub fn parse_file(&self, file_id: FileId) -> (ParsedNamespace, Option<JaktError>) {
+        let mut error = None;
+
         let info = &self.loaded_files[file_id];
 
         let (lexed, err) = lex(file_id, info.content.as_bytes());
-
-        if let Some(err) = err {
-            return Err(err);
-        }
+        error = error.or(err);
 
         let (namespace, err) = parse_namespace(&lexed, &mut 0);
+        error = error.or(err);
 
-        if let Some(err) = err {
-            return Err(err);
-        }
-
-        Ok(namespace)
+        (namespace, error)
     }
 
     pub fn check_project(
@@ -191,10 +187,8 @@ impl Compiler {
             Err(e) => return (file_scope_id, Some(e)),
         };
 
-        let parsed_namespace = match self.parse_file(file_id) {
-            Ok(namespace) => namespace,
-            Err(e) => return (file_scope_id, Some(e)),
-        };
+        let (parsed_namespace, err) = self.parse_file(file_id);
+        error = error.or(err);
 
         let scope = Scope::new(Some(PRELUDE_SCOPE_ID), false);
         project.current_module_mut().scopes.push(scope);
