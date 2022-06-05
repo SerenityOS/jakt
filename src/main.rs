@@ -388,7 +388,7 @@ fn parse_arguments() -> JaktArguments {
         if !filename.exists() {
             eprintln!(
                 "jakt: error: file '{}' not found or inaccessible",
-                filename.to_string_lossy()
+                filename.display()
             );
             exit(1);
         }
@@ -459,7 +459,7 @@ fn display_message_with_span(
             println!(
                 "{} \u{001b}[33m{}:{}:{}\u{001b}[0m",
                 "-".repeat(width + 3),
-                file_name,
+                file_name.display(),
                 line_index + 1,
                 column_index + 1
             );

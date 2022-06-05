@@ -7,7 +7,7 @@
 
 use crate::{compiler::FileId, error::JaktError, typechecker::NumericConstant};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Span {
     pub file_id: FileId,
     pub start: usize,

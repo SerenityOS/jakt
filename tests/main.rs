@@ -446,6 +446,11 @@ fn test_imports() -> Result<(), JaktError> {
 }
 
 #[test]
+fn test_modules() -> Result<(), JaktError> {
+    test_samples("samples/modules")
+}
+
+#[test]
 fn test_selfhost() -> Result<(), JaktError> {
     test_samples("selfhost")
 }

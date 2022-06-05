@@ -1,0 +1,11 @@
+function something_cool() {
+    println("something_cool")
+}
+
+function something_else_cool() {
+    println("something_else_cool")
+}
+
+function not_cool() {
+    println("not_cool")
+}

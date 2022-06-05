@@ -7,7 +7,6 @@
 
 use crate::error::JaktError;
 
-use crate::compiler::Compiler;
 use crate::lexer::{Span, Token, TokenContents};
 use crate::typechecker::NumericConstant;
 
@@ -107,13 +106,29 @@ impl PartialEq for ParsedVarDecl {
     }
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct ImportName {
+    pub name: String,
+    pub span: Span,
+}
+
+#[derive(Debug, Default)]
+pub struct ParsedImport {
+    pub module_name: ImportName,
+    pub alias_name: Option<String>,
+    pub import_list: Vec<ImportName>,
+}
+
 #[derive(Debug)]
 pub struct ParsedNamespace {
     pub name: Option<String>,
     pub functions: Vec<ParsedFunction>,
     pub structs: Vec<ParsedStruct>,
     pub enums: Vec<ParsedEnum>,
+    /// inline namespaces
     pub namespaces: Vec<ParsedNamespace>,
+    /// other files
+    pub imports: Vec<ParsedImport>,
 }
 
 #[derive(Debug)]
@@ -501,78 +516,133 @@ impl ParsedNamespace {
             structs: Vec::new(),
             enums: Vec::new(),
             namespaces: Vec::new(),
+            imports: Vec::new(),
         }
     }
 }
 
-fn parse_import(
-    tokens: &[Token],
-    index: &mut usize,
-    compiler: &mut Compiler,
-) -> (ParsedNamespace, Option<JaktError>) {
+fn parse_import(tokens: &[Token], index: &mut usize) -> (ParsedImport, Option<JaktError>) {
     let mut error = None;
     *index += 1;
 
-    if *index < tokens.len() {
-        if let Token {
-            contents: TokenContents::Name(module_name),
-            span,
-        } = &tokens[*index]
-        {
-            *index += 1;
-            let (mut namespace, err) = compiler.find_and_include_module(module_name, *span);
-            namespace.name = Some(module_name.clone());
-            error = error.or(err);
-
-            if *index < tokens.len() {
-                match &tokens[*index] {
-                    Token {
-                        contents: TokenContents::Name(name),
-                        ..
-                    } if name == "as" => {
-                        *index += 1;
-
-                        if *index < tokens.len() {
-                            if let Token {
-                                contents: TokenContents::Name(alias),
-                                ..
-                            } = &tokens[*index]
-                            {
-                                *index += 1;
-                                namespace.name = Some(alias.clone());
-                                return (namespace, error);
-                            }
-                        }
-                        error = error.or(Some(JaktError::ParserError(
-                            "Expected an identifier after 'as'".to_string(),
-                            *span,
-                        )));
-                    }
-                    _ => {}
-                }
+    let module_name = if let Some(token) = tokens.get(*index) {
+        *index += 1;
+        if let TokenContents::Name(name) = &token.contents {
+            ImportName {
+                name: name.clone(),
+                span: token.span,
             }
-
-            return (namespace, error);
         } else {
             error = error.or(Some(JaktError::ParserError(
                 "Expected module name after import keyword".to_string(),
                 tokens[*index].span,
             )));
+            ImportName::default()
         }
     } else {
         error = error.or(Some(JaktError::ParserError(
             "expected name after import keyword".to_string(),
             tokens[*index - 1].span,
         )));
+        ImportName::default()
+    };
+
+    let mut alias_name = None;
+
+    // aliasing is affectively useless in the current implementation.
+    if let Some(as_token) = tokens.get(*index) {
+        match &as_token.contents {
+            TokenContents::Name(value) if value == "as" => {
+                *index += 1;
+                if let Some(with_token) = tokens.get(*index) {
+                    match &with_token.contents {
+                        TokenContents::Name(value) => {
+                            *index += 1;
+                            alias_name = Some(value.clone());
+                        }
+                        _ => {
+                            error = error.or(Some(JaktError::ParserError(
+                                "expected name".to_string(),
+                                tokens[*index].span,
+                            )));
+                        }
+                    }
+                } else {
+                    error = error.or(Some(JaktError::ParserError(
+                        "expected token".to_string(),
+                        tokens[*index - 1].span,
+                    )));
+                }
+            }
+            _ => {}
+        }
     }
 
-    (ParsedNamespace::new(), error)
+    let mut import_list = vec![];
+    if let Some(with_token) = tokens.get(*index) {
+        match &with_token.contents {
+            TokenContents::Name(value) if value == "with" => {
+                *index += 1;
+
+                while *index < tokens.len() {
+                    if let Some(token) = tokens.get(*index) {
+                        *index += 1;
+                        match &token.contents {
+                            TokenContents::Name(name) => {
+                                import_list.push(ImportName {
+                                    name: name.clone(),
+                                    span: token.span,
+                                });
+                            }
+                            _ => {
+                                error = error.or(Some(JaktError::ParserError(
+                                    "expected name".to_string(),
+                                    tokens[*index - 1].span,
+                                )));
+                            }
+                        }
+                    }
+
+                    if let TokenContents::Comma = &tokens[*index].contents {
+                        *index += 1;
+                    } else {
+                        break;
+                    }
+                }
+
+                (
+                    ParsedImport {
+                        module_name,
+                        alias_name,
+                        import_list,
+                    },
+                    error,
+                )
+            }
+            _ => (
+                ParsedImport {
+                    module_name,
+                    alias_name,
+                    import_list,
+                },
+                error,
+            ),
+        }
+    } else {
+        (
+            ParsedImport {
+                module_name,
+                alias_name,
+                import_list,
+            },
+            error,
+        )
+    }
 }
 
 pub fn parse_namespace(
     tokens: &[Token],
     index: &mut usize,
-    compiler: &mut Compiler,
 ) -> (ParsedNamespace, Option<JaktError>) {
     trace!("parse_namespace");
 
@@ -666,7 +736,7 @@ pub fn parse_namespace(
                         if let TokenContents::LCurly = &tokens[*index].contents {
                             *index += 1;
 
-                            let (mut namespace, err) = parse_namespace(tokens, index, compiler);
+                            let (mut namespace, err) = parse_namespace(tokens, index);
                             error = error.or(err);
 
                             *index += 1;
@@ -681,9 +751,9 @@ pub fn parse_namespace(
                     }
                 }
                 "import" => {
-                    let (namespace, err) = parse_import(tokens, index, compiler);
+                    let (import, err) = parse_import(tokens, index);
                     error = error.or(err);
-                    parsed_namespace.namespaces.push(namespace);
+                    parsed_namespace.imports.push(import);
                 }
                 "extern" => {
                     if *index + 1 < tokens.len() {

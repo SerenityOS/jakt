@@ -7,28 +7,48 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::parser::{MatchBody, MatchCase, ParsedVarDecl, Visibility};
+use crate::compiler::{PRELUDE_SCOPE_ID, STRING_TYPE_ID};
+use crate::parser::{BinaryOperator, MatchBody, MatchCase, ParsedVarDecl, Visibility};
+use crate::Compiler;
 use crate::{
     compiler::{
         BOOL_TYPE_ID, CCHAR_TYPE_ID, CINT_TYPE_ID, F32_TYPE_ID, F64_TYPE_ID, I16_TYPE_ID,
-        I32_TYPE_ID, I64_TYPE_ID, I8_TYPE_ID, STRING_TYPE_ID, U16_TYPE_ID, U32_TYPE_ID,
-        U64_TYPE_ID, U8_TYPE_ID, UNKNOWN_TYPE_ID, USIZE_TYPE_ID, VOID_TYPE_ID,
+        I32_TYPE_ID, I64_TYPE_ID, I8_TYPE_ID, U16_TYPE_ID, U32_TYPE_ID, U64_TYPE_ID, U8_TYPE_ID,
+        UNKNOWN_TYPE_ID, USIZE_TYPE_ID, VOID_TYPE_ID,
     },
     error::JaktError,
     lexer::Span,
     parser::{
-        BinaryOperator, DefinitionLinkage, DefinitionType, EnumVariant, FunctionLinkage,
-        ParsedBlock, ParsedCall, ParsedEnum, ParsedExpression, ParsedFunction, ParsedNamespace,
-        ParsedStatement, ParsedStruct, ParsedType, TypeCast, UnaryOperator,
+        DefinitionLinkage, DefinitionType, EnumVariant, FunctionLinkage, ParsedBlock, ParsedCall,
+        ParsedEnum, ParsedExpression, ParsedFunction, ParsedNamespace, ParsedStatement,
+        ParsedStruct, ParsedType, TypeCast, UnaryOperator,
     },
 };
 use std::os::raw::{c_char, c_int};
 
-pub type StructId = usize;
-pub type EnumId = usize;
-pub type FunctionId = usize;
-pub type ScopeId = usize;
-pub type TypeId = usize;
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ModuleId(pub usize);
+
+impl ModuleId {
+    pub fn invalid() -> Self {
+        Self(usize::MAX)
+    }
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct StructId(pub ModuleId, pub usize);
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct EnumId(pub ModuleId, pub usize);
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct FunctionId(pub ModuleId, pub usize);
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ScopeId(pub ModuleId, pub usize); // remove ModuleId if it is not needed.
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TypeId(pub ModuleId, pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum StructOrEnumId {
@@ -121,7 +141,7 @@ pub fn get_bits(type_id: TypeId) -> u32 {
         CCHAR_TYPE_ID => c_char::BITS,
         CINT_TYPE_ID => c_int::BITS,
         USIZE_TYPE_ID => usize::BITS,
-        _ => panic!("get_bits not supported for type {}", type_id),
+        _ => panic!("get_bits not supported for type {}", type_id.1),
     }
 }
 
@@ -205,18 +225,14 @@ fn number_of_edits_between(a: &str, b: &str) -> usize {
 
 #[derive(Debug, Clone)]
 pub struct Project {
-    pub functions: Vec<CheckedFunction>,
-    pub structs: Vec<CheckedStruct>,
-    pub enums: Vec<CheckedEnum>,
-    pub scopes: Vec<Scope>,
-    pub types: Vec<Type>,
-
-    pub file_ids: HashMap<String, ScopeId>,
-
-    pub current_function_index: Option<usize>,
+    pub modules: Vec<Module>,
+    pub current_module_index: usize,
+    pub current_function_index: Option<FunctionId>,
     pub current_struct_type_id: Option<TypeId>,
+
     pub inside_defer: bool,
 
+    pub checking_prelude: bool,
     pub cached_array_struct_id: Option<StructId>,
     pub cached_dictionary_struct_id: Option<StructId>,
     pub cached_error_struct_id: Option<StructId>,
@@ -229,25 +245,44 @@ pub struct Project {
     pub dump_type_hints: bool,
 }
 
+#[derive(Debug, Clone)]
+pub struct Module {
+    pub id: ModuleId,
+    pub name: String,
+    pub functions: Vec<CheckedFunction>,
+    pub structs: Vec<CheckedStruct>,
+    pub enums: Vec<CheckedEnum>,
+    pub scopes: Vec<Scope>,
+    pub types: Vec<Type>,
+}
+
+impl Module {
+    pub fn new(id: ModuleId, name: String) -> Self {
+        Self {
+            id,
+            name,
+            functions: vec![],
+            structs: vec![],
+            enums: vec![],
+            scopes: vec![],
+            types: vec![],
+        }
+    }
+}
+
 impl Project {
     pub fn new() -> Self {
         // Top-level (project-global) scope has no parent scope
         // and is the parent scope of all file scopes
-        let project_global_scope = Scope::new(None, false);
 
         Self {
-            functions: Vec::new(),
-            structs: Vec::new(),
-            enums: Vec::new(),
-            scopes: vec![project_global_scope],
-            types: Vec::new(),
-
-            file_ids: HashMap::new(),
-
+            modules: vec![],
+            current_module_index: 0,
             current_function_index: None,
             current_struct_type_id: None,
             inside_defer: false,
 
+            checking_prelude: false,
             cached_array_struct_id: None,
             cached_dictionary_struct_id: None,
             cached_error_struct_id: None,
@@ -261,23 +296,62 @@ impl Project {
         }
     }
 
+    pub fn current_module(&self) -> &Module {
+        &self.modules[self.current_module_index]
+    }
+
+    pub fn current_module_mut(&mut self) -> &mut Module {
+        &mut self.modules[self.current_module_index]
+    }
+
     pub fn find_or_add_type_id(&mut self, type_: Type) -> TypeId {
-        for (idx, t) in self.types.iter().enumerate() {
+        let module = self.current_module();
+        let module_id = module.id;
+        for (idx, t) in module.types.iter().enumerate() {
             if t == &type_ {
-                return idx;
+                return TypeId(module_id, idx);
             }
         }
 
         // in the future, we may want to group related types (like instantiations of the same generic)
-        self.types.push(type_);
+        self.current_module_mut().types.push(type_);
 
-        self.types.len() - 1
+        TypeId(module_id, self.current_module().types.len() - 1)
+    }
+
+    pub fn find_type_in_prelude(&self, tyname: &'static str) -> TypeId {
+        match self
+            .get_scope(PRELUDE_SCOPE_ID)
+            .types
+            .iter()
+            .find(|(name, _, _)| name.as_str() == tyname)
+        {
+            Some((_, id, _)) => *id,
+            None => panic!("internal eror: {} buildin definition not found", tyname),
+        }
+    }
+
+    pub fn find_struct_in_prelude(&self, tyname: &'static str) -> StructId {
+        match self
+            .get_scope(PRELUDE_SCOPE_ID)
+            .structs
+            .iter()
+            .find(|(name, _, _)| name.as_str() == tyname)
+        {
+            Some((_, id, _)) => *id,
+            None => panic!("internal eror: {} buildin definition not found", tyname),
+        }
     }
 
     pub fn create_scope(&mut self, parent_id: ScopeId, throws: bool) -> ScopeId {
-        self.scopes.push(Scope::new(Some(parent_id), throws));
+        self.current_module_mut()
+            .scopes
+            .push(Scope::new(Some(parent_id), throws));
 
-        self.scopes.len() - 1
+        ScopeId(
+            ModuleId(self.current_module_index),
+            self.current_module().scopes.len() - 1,
+        )
     }
 
     pub fn add_var_to_scope(
@@ -286,7 +360,7 @@ impl Project {
         var: CheckedVariable,
         span: Span,
     ) -> Result<(), JaktError> {
-        let scope = &mut self.scopes[scope_id];
+        let scope = self.get_scope_mut(scope_id);
         for existing_var in &scope.vars {
             if var.name == existing_var.name {
                 return Err(JaktError::TypecheckErrorWithHint(
@@ -306,7 +380,7 @@ impl Project {
         let mut scope_id = Some(scope_id);
 
         while let Some(current_id) = scope_id {
-            let scope = &self.scopes[current_id];
+            let scope = self.get_scope(current_id);
             for v in &scope.vars {
                 if v.name == var {
                     return Some(v.clone());
@@ -339,7 +413,7 @@ impl Project {
         struct_id: StructId,
         span: Span,
     ) -> Result<(), JaktError> {
-        let scope = &mut self.scopes[scope_id];
+        let scope = self.get_scope_mut(scope_id);
         for (existing_struct, _, definition_span) in &scope.structs {
             if &name == existing_struct {
                 return Err(JaktError::TypecheckErrorWithHint(
@@ -362,7 +436,7 @@ impl Project {
         enum_id: EnumId,
         span: Span,
     ) -> Result<(), JaktError> {
-        let scope = &mut self.scopes[scope_id];
+        let scope = self.get_scope_mut(scope_id);
         for (existing_enum, _, definition_span) in &scope.enums {
             if &name == existing_enum {
                 return Err(JaktError::TypecheckErrorWithHint(
@@ -382,7 +456,7 @@ impl Project {
         let mut scope_id = Some(scope_id);
 
         while let Some(current_id) = scope_id {
-            let scope = &self.scopes[current_id];
+            let scope = self.get_scope(current_id);
             for s in &scope.structs {
                 if s.0 == structure {
                     return Some(s.1);
@@ -407,7 +481,7 @@ impl Project {
         let mut most_similar_name = None;
         let mut scope_id = Some(scope_id);
         while let Some(current_id) = scope_id {
-            let scope = &self.scopes[current_id];
+            let scope = self.get_scope(current_id);
             for item in item_names_from_scope(scope) {
                 let current_mistakes = number_of_edits_between(&item, item_name);
                 if let Some(mistakes) = &mut mistakes {
@@ -455,7 +529,7 @@ impl Project {
         let mut scope_id = Some(scope_id);
 
         while let Some(current_id) = scope_id {
-            let scope = &self.scopes[current_id];
+            let scope = self.get_scope(current_id);
             for e in &scope.enums {
                 if e.0 == enum_name {
                     return Some(e.1);
@@ -486,24 +560,35 @@ impl Project {
     }
 
     // Find the namespace in the current scope, or one of its parents
+    // and whether the found import was an import
     pub fn find_namespace_in_scope(
         &self,
-        scope_id: ScopeId,
+        current_scope_id: ScopeId,
         namespace_name: &str,
-    ) -> Option<ScopeId> {
-        let mut scope_id = Some(scope_id);
+    ) -> Option<(ScopeId, bool)> {
+        let mut scope_id = Some(current_scope_id);
 
         while let Some(current_id) = scope_id {
-            let scope = &self.scopes[current_id];
+            let scope = self.get_scope(current_id);
             for child_scope_id in &scope.children {
-                let child_scope = &self.scopes[*child_scope_id];
+                let child_scope = self.get_scope(*child_scope_id);
                 if let Some(name) = &child_scope.namespace_name {
                     if name == namespace_name {
-                        return Some(*child_scope_id);
+                        return Some((*child_scope_id, false));
                     }
                 }
             }
             scope_id = scope.parent;
+        }
+
+        // if we do not find it then check imports
+        let module_id = current_scope_id.0;
+        // ScopeId(_, 0) will always be the top level scope for a module.
+        // the imports should always be there.
+        for (name, id, _) in self.get_scope(ScopeId(module_id, 0)).imports.iter() {
+            if name == namespace_name {
+                return Some((ScopeId(*id, 0), true));
+            }
         }
 
         None
@@ -520,7 +605,7 @@ impl Project {
             |scope: &Scope| -> Vec<String> {
                 let mut items = Vec::new();
                 for child_scope_id in &scope.children {
-                    let child_scope = &self.scopes[*child_scope_id];
+                    let child_scope = self.get_scope(*child_scope_id);
                     if let Some(name) = &child_scope.namespace_name {
                         items.push(name.to_string());
                     }
@@ -536,12 +621,13 @@ impl Project {
         scope_id: ScopeId,
         namespace_name: &str,
     ) -> Option<StructId> {
-        let scope = &self.scopes[scope_id];
+        let scope = self.get_scope(scope_id);
         for child_scope_id in &scope.children {
-            let child_scope = &self.scopes[*child_scope_id];
+            let child_scope = self.get_scope(*child_scope_id);
             if let Some(name) = &child_scope.namespace_name {
                 if name == namespace_name {
-                    return Some(*child_scope_id);
+                    todo!()
+                    // return None
                 }
             }
         }
@@ -556,7 +642,7 @@ impl Project {
         function_id: FunctionId,
         span: Span,
     ) -> Result<(), JaktError> {
-        let scope = &mut self.scopes[scope_id];
+        let scope = self.get_scope_mut(scope_id);
 
         for (existing_function, _, definition_span) in &scope.functions {
             if &name == existing_function {
@@ -581,7 +667,7 @@ impl Project {
         let mut scope_id = Some(scope_id);
 
         while let Some(current_id) = scope_id {
-            let scope = &self.scopes[current_id];
+            let scope = self.get_scope(current_id);
             for s in &scope.functions {
                 if s.0 == function_name {
                     return Some(s.1);
@@ -618,7 +704,7 @@ impl Project {
         type_id: TypeId,
         span: Span,
     ) -> Result<(), JaktError> {
-        let scope = &mut self.scopes[scope_id];
+        let scope = self.get_scope_mut(scope_id);
 
         for (existing_type, _, definition_span) in &scope.types {
             if &type_name == existing_type {
@@ -639,7 +725,7 @@ impl Project {
         let mut scope_id = Some(scope_id);
 
         while let Some(current_id) = scope_id {
-            let scope = &self.scopes[current_id];
+            let scope = self.get_scope(current_id);
             for s in &scope.types {
                 if s.0 == type_name {
                     return Some(s.1);
@@ -679,7 +765,7 @@ impl Project {
         let tuple_struct_id = self.cached_tuple_struct_id.unwrap();
         let weak_ptr_struct_id = self.cached_weakptr_struct_id.unwrap();
 
-        match &self.types[type_id] {
+        match self.get_type(type_id) {
             Type::Builtin => match type_id {
                 crate::compiler::VOID_TYPE_ID => "void".to_string(),
                 crate::compiler::I8_TYPE_ID => "i8".to_string(),
@@ -699,10 +785,10 @@ impl Project {
                 crate::compiler::BOOL_TYPE_ID => "bool".to_string(),
                 _ => "unknown".to_string(),
             },
-            Type::Enum(enum_id) => self.enums[*enum_id].name.clone(),
-            Type::Struct(struct_id) => self.structs[*struct_id].name.clone(),
+            Type::Enum(enum_id) => self.get_enum(*enum_id).name.clone(),
+            Type::Struct(struct_id) => self.get_struct(*struct_id).name.clone(),
             Type::GenericEnumInstance(enum_id, type_args) => {
-                let mut output = self.enums[*enum_id].name.clone();
+                let mut output = format!("enum {}", self.get_enum(*enum_id).name);
 
                 output.push('<');
                 let mut first = true;
@@ -760,8 +846,8 @@ impl Project {
                 format!("weak {}?", self.typename_for_type_id(type_args[0]))
             }
             Type::GenericInstance(struct_id, type_args) => {
-                let mut output = self.structs[*struct_id].name.clone();
-
+                let structure = self.get_struct(*struct_id);
+                let mut output = structure.name.clone();
                 output.push('<');
                 let mut first = true;
                 for arg in type_args {
@@ -798,6 +884,50 @@ impl Project {
             )),
         }
         .unwrap()
+    }
+
+    pub fn get_module(&self, module_id: ModuleId) -> &Module {
+        &self.modules[module_id.0]
+    }
+
+    pub fn get_module_mut(&mut self, module_id: ModuleId) -> &mut Module {
+        &mut self.modules[module_id.0]
+    }
+
+    pub fn get_scope(&self, scope_id: ScopeId) -> &Scope {
+        &self.get_module(scope_id.0).scopes[scope_id.1]
+    }
+
+    pub fn get_scope_mut(&mut self, scope_id: ScopeId) -> &mut Scope {
+        &mut self.get_module_mut(scope_id.0).scopes[scope_id.1]
+    }
+
+    pub fn get_type(&self, type_id: TypeId) -> &Type {
+        &self.get_module(type_id.0).types[type_id.1]
+    }
+
+    pub fn get_struct(&self, struct_id: StructId) -> &CheckedStruct {
+        &self.get_module(struct_id.0).structs[struct_id.1]
+    }
+
+    pub fn get_struct_mut(&mut self, struct_id: StructId) -> &mut CheckedStruct {
+        &mut self.get_module_mut(struct_id.0).structs[struct_id.1]
+    }
+
+    pub fn get_enum(&self, enum_id: EnumId) -> &CheckedEnum {
+        &self.get_module(enum_id.0).enums[enum_id.1]
+    }
+
+    pub fn get_enum_mut(&mut self, enum_id: EnumId) -> &mut CheckedEnum {
+        &mut self.get_module_mut(enum_id.0).enums[enum_id.1]
+    }
+
+    pub fn get_function(&self, function_id: FunctionId) -> &CheckedFunction {
+        &self.get_module(function_id.0).functions[function_id.1]
+    }
+
+    pub fn get_function_mut(&mut self, function_id: FunctionId) -> &mut CheckedFunction {
+        &mut self.get_module_mut(function_id.0).functions[function_id.1]
     }
 
     pub fn get_array_struct_id(&self, span: Span) -> StructId {
@@ -1126,7 +1256,7 @@ impl NumericConstant {
 fn resolve_type_var(type_var: TypeId, scope_id: ScopeId, project: &Project) -> TypeId {
     let mut type_id = type_var;
     loop {
-        if let Type::TypeVariable(type_name) = &project.types[type_id] {
+        if let Type::TypeVariable(type_name) = &project.get_type(type_id) {
             match project.find_type_in_scope(scope_id, type_name) {
                 Some(id) => {
                     if type_id == id {
@@ -1405,6 +1535,8 @@ pub struct Scope {
     pub functions: Vec<(String, FunctionId, Span)>,
     pub enums: Vec<(String, EnumId, Span)>,
     pub types: Vec<(String, TypeId, Span)>,
+    // should only be populated in module/file scopes.
+    pub imports: Vec<(String, ModuleId, Span)>,
     pub parent: Option<ScopeId>,
     // Namespaces may also have children that are also namespaces
     pub children: Vec<ScopeId>,
@@ -1420,6 +1552,7 @@ impl Scope {
             functions: Vec::new(),
             enums: Vec::new(),
             types: Vec::new(),
+            imports: Vec::new(),
             parent,
             children: Vec::new(),
             throws,
@@ -1431,12 +1564,12 @@ impl Scope {
         if own == other {
             true
         } else {
-            let mut own_scope = &project.scopes[own];
+            let mut own_scope = project.get_scope(own);
             while let Some(parent) = own_scope.parent {
                 if parent == other {
                     return true;
                 }
-                own_scope = &project.scopes[parent];
+                own_scope = project.get_scope(parent);
             }
             false
         }
@@ -1505,7 +1638,7 @@ fn check_accessibility(
                     "Can't access {} ‘{}’ from scope {:?}, because it is marked private",
                     member.kind(),
                     member.name(),
-                    project.scopes[own_scope].namespace_name,
+                    project.get_scope(own_scope).namespace_name,
                 ),
                 *span,
             ))
@@ -1514,7 +1647,7 @@ fn check_accessibility(
             return match project.current_struct_type_id {
                 Some(own_type_id) => {
                     // Only structs/classes can be listed in `restricted()`.
-                    if let Type::Struct(struct_id) = project.types[own_type_id] {
+                    if let Type::Struct(struct_id) = project.get_type(own_type_id).clone() {
                         for whitelisted_type in whitelisted_types {
                             let (type_id, err) =
                                 typecheck_typename(whitelisted_type, member_scope, project);
@@ -1531,7 +1664,7 @@ fn check_accessibility(
                                 "Can't access {} ‘{}’ from ‘{}’, because ‘{2}’ is not in the restricted whitelist",
                                 member.kind(),
                                 member.name(),
-                                project.structs[struct_id].name,
+                                project.get_struct(struct_id).name,
                             ),
                             *span,
                             "Whitelist declared here".to_string(),
@@ -1543,7 +1676,7 @@ fn check_accessibility(
                                 "Can't access {} ‘{}’ from scope ‘{:?}’, because it is not in the restricted whitelist",
                                 member.kind(),
                                 member.name(),
-                                project.scopes[own_scope].namespace_name,
+                                project.get_scope(own_scope).namespace_name,
                             ),
                             *span,
                             "Whitelist declared here".to_string(),
@@ -1556,7 +1689,7 @@ fn check_accessibility(
                         "Can't access {} ‘{}’ from scope ‘{:?}’, because it is marked restricted",
                         member.kind(),
                         member.name(),
-                        project.scopes[own_scope].namespace_name,
+                        project.get_scope(own_scope).namespace_name,
                     ),
                     *span,
                     "Whitelist declared here".to_string(),
@@ -1568,6 +1701,108 @@ fn check_accessibility(
     }
 }
 
+pub fn typecheck_namespace_imports(
+    parsed_namespace: &ParsedNamespace,
+    scope_id: ScopeId,
+    project: &mut Project,
+    compiler: &mut Compiler,
+) -> Option<JaktError> {
+    for import in parsed_namespace.imports.iter() {
+        let num_modules = project.modules.len();
+        match compiler.search_for_path(import.module_name.name.as_str()) {
+            Some(p) => match compiler.find_or_load_file(p) {
+                Ok(file_id) => {
+                    // if the mnodule has not been loaded yet, parse and typecheck it.
+                    if compiler.loaded_files[file_id].module_id == ModuleId::invalid() {
+                        // make this a helper function
+                        match compiler.parse_file(file_id) {
+                            Ok(parsed_namespace) => {
+                                let current_module = project.current_module_index;
+                                let module = Module::new(
+                                    ModuleId(num_modules),
+                                    import.module_name.name.clone(),
+                                );
+                                compiler.loaded_files[file_id].module_id = module.id;
+                                let scope = Scope::new(Some(PRELUDE_SCOPE_ID), false);
+                                project.current_module_mut().scopes.push(scope);
+                                project.current_module_index = module.id.0;
+                                project.modules.push(module);
+
+                                let file_scope_id = ScopeId(project.current_module().id, 0);
+
+                                let err = typecheck_module(
+                                    &parsed_namespace,
+                                    file_scope_id,
+                                    project,
+                                    compiler,
+                                );
+                                if err.is_some() {
+                                    return err;
+                                }
+
+                                project.current_module_index = current_module;
+                            }
+                            Err(e) => return Some(e),
+                        }
+                    }
+
+                    let imported_module_id = compiler.loaded_files[file_id].module_id;
+
+                    if import.import_list.is_empty() {
+                        // import the modules as it's own namespace
+                        let scope = project.get_scope_mut(scope_id);
+                        scope.imports.push((
+                            import
+                                .alias_name
+                                .as_deref()
+                                .unwrap_or(import.module_name.name.as_str())
+                                .to_string(),
+                            imported_module_id,
+                            import.module_name.span,
+                        ));
+                    } else {
+                        // importing each name individually
+                        panic!("module import lists are not supported");
+                    }
+                }
+                Err(e) => return Some(e),
+            },
+            None => {
+                return Some(JaktError::TypecheckError(
+                    format!("Module '{}' not found", import.module_name.name),
+                    import.module_name.span,
+                ))
+            }
+        }
+    }
+
+    None
+}
+
+pub fn typecheck_module(
+    parsed_namespace: &ParsedNamespace,
+    scope_id: ScopeId,
+    project: &mut Project,
+    compiler: &mut Compiler,
+) -> Option<JaktError> {
+    let err = typecheck_namespace_imports(parsed_namespace, scope_id, project, compiler);
+    if err.is_some() {
+        return err;
+    }
+
+    let err = typecheck_namespace_predecl(parsed_namespace, scope_id, project);
+    if err.is_some() {
+        return err;
+    }
+
+    let err = typecheck_namespace_declarations(parsed_namespace, scope_id, project);
+    if err.is_some() {
+        return err;
+    }
+
+    None
+}
+
 pub fn typecheck_namespace_predecl(
     parsed_namespace: &ParsedNamespace,
     scope_id: ScopeId,
@@ -1575,15 +1810,19 @@ pub fn typecheck_namespace_predecl(
 ) -> Option<JaktError> {
     let mut error = None;
 
-    let project_struct_len = project.structs.len();
-    let project_enum_len = project.enums.len();
+    let project_struct_len = project.current_module().structs.len();
+    let project_enum_len = project.current_module().enums.len();
+    let module_id = project.current_module().id;
 
     for (struct_id, structure) in parsed_namespace.structs.iter().enumerate() {
         // Bring the struct names into scope for future typechecking
-        let struct_id = struct_id + project_struct_len;
-        project.types.push(Type::Struct(struct_id));
+        let struct_id = StructId(module_id, struct_id + project_struct_len);
+        project
+            .current_module_mut()
+            .types
+            .push(Type::Struct(struct_id));
 
-        let struct_type_id = project.types.len() - 1;
+        let struct_type_id = TypeId(module_id, project.current_module().types.len() - 1);
         if let Err(err) = project.add_type_to_scope(
             scope_id,
             structure.name.clone(),
@@ -1596,10 +1835,10 @@ pub fn typecheck_namespace_predecl(
 
     for (enum_id, enum_) in parsed_namespace.enums.iter().enumerate() {
         // Bring the enum names into scope for future typechecking
-        let enum_id = enum_id + project_enum_len;
-        project.types.push(Type::Enum(enum_id));
+        let enum_id = EnumId(module_id, enum_id + project_enum_len);
+        project.current_module_mut().types.push(Type::Enum(enum_id));
 
-        let enum_type_id = project.types.len() - 1;
+        let enum_type_id = TypeId(module_id, project.current_module_mut().types.len() - 1);
         if let Err(err) =
             project.add_type_to_scope(scope_id, enum_.name.clone(), enum_type_id, enum_.name_span)
         {
@@ -1609,7 +1848,7 @@ pub fn typecheck_namespace_predecl(
 
     for (struct_id, structure) in parsed_namespace.structs.iter().enumerate() {
         // Typecheck the protype of the struct
-        let struct_id = struct_id + project_struct_len;
+        let struct_id = StructId(module_id, struct_id + project_struct_len);
 
         if let Some(err) = typecheck_struct_predecl(structure, struct_id, scope_id, project) {
             error = error.or(Some(err));
@@ -1618,7 +1857,7 @@ pub fn typecheck_namespace_predecl(
 
     for (enum_id, enum_) in parsed_namespace.enums.iter().enumerate() {
         // Typecheck the protype of the enum
-        let enum_id = enum_id + project_enum_len;
+        let enum_id = EnumId(module_id, enum_id + project_enum_len);
 
         if let Some(err) = typecheck_enum_predecl(enum_, enum_id, scope_id, project) {
             error = error.or(Some(err));
@@ -1626,12 +1865,13 @@ pub fn typecheck_namespace_predecl(
     }
 
     for (enum_id, enum_) in parsed_namespace.enums.iter().enumerate() {
+        let enum_id = EnumId(module_id, enum_id + project_enum_len);
         // Finish typechecking the full enum
         error = error.or(typecheck_enum(
             enum_,
-            enum_id + project_enum_len,
+            enum_id,
             project.find_type_in_scope(scope_id, &enum_.name).unwrap(),
-            project.enums[enum_id + project_enum_len].scope_id,
+            project.get_enum(enum_id).scope_id,
             scope_id,
             project,
         ));
@@ -1641,8 +1881,11 @@ pub fn typecheck_namespace_predecl(
         // Do full typechecks of all the namespaces that are children of this namespace
         if namespace.name.is_some() {
             let namespace_scope_id = project.create_scope(scope_id, false);
-            project.scopes[namespace_scope_id].namespace_name = namespace.name.clone();
-            project.scopes[scope_id].children.push(namespace_scope_id);
+            project.get_scope_mut(namespace_scope_id).namespace_name = namespace.name.clone();
+            project
+                .get_scope_mut(scope_id)
+                .children
+                .push(namespace_scope_id);
             let err = typecheck_namespace_predecl(namespace, namespace_scope_id, project);
             error = error.or(err);
         }
@@ -1669,7 +1912,7 @@ pub fn typecheck_namespace_declarations(
     for namespace in parsed_namespace.namespaces.iter() {
         if let Some(namespace_name) = &namespace.name {
             // Finish typecheck of the named namespaces
-            let namespace_scope_id = project
+            let (namespace_scope_id, _) = project
                 .find_namespace_in_scope(scope_id, namespace_name)
                 .expect("internal error: can't find previously added namespace");
 
@@ -1679,8 +1922,11 @@ pub fn typecheck_namespace_declarations(
             // Create a typecheck the unnamed namespace (aka a block scope)
 
             let namespace_scope_id = project.create_scope(scope_id, false);
-            project.scopes[namespace_scope_id].namespace_name = namespace.name.clone();
-            project.scopes[scope_id].children.push(namespace_scope_id);
+            project.get_scope_mut(namespace_scope_id).namespace_name = namespace.name.clone();
+            project
+                .get_scope_mut(scope_id)
+                .children
+                .push(namespace_scope_id);
             typecheck_namespace_predecl(namespace, namespace_scope_id, project);
             error = error.or(typecheck_namespace_declarations(
                 parsed_namespace,
@@ -1738,6 +1984,7 @@ fn typecheck_enum_predecl(
 
     let enum_scope_id = project.create_scope(parent_scope_id, false);
     let mut generic_parameters = Vec::new();
+    let module_id = project.current_module().id;
 
     if enum_.variants.is_empty() {
         error = error.or(Some(JaktError::ParserErrorWithHint(
@@ -1750,9 +1997,13 @@ fn typecheck_enum_predecl(
 
     for (generic_parameter, parameter_span) in &enum_.generic_parameters {
         project
+            .current_module_mut()
             .types
             .push(Type::TypeVariable(generic_parameter.to_string()));
-        let parameter_type_id = project.types.len() - 1;
+        let parameter_type_id = TypeId(
+            ModuleId(project.current_module_index),
+            project.current_module().types.len() - 1,
+        );
         if let Err(err) = project.add_type_to_scope(
             enum_scope_id,
             generic_parameter.to_string(),
@@ -1778,7 +2029,7 @@ fn typecheck_enum_predecl(
         .find_type_in_scope(parent_scope_id, &enum_.name)
         .expect("Enum must exist before predeclaration");
 
-    project.enums.push(CheckedEnum {
+    project.current_module_mut().enums.push(CheckedEnum {
         name: enum_.name.clone(),
         generic_parameters,
         variants: Vec::new(),
@@ -1827,8 +2078,14 @@ fn typecheck_enum_predecl(
             is_instantiated: !is_generic,
         };
 
-        project.functions.push(checked_function.clone());
-        let function_id = project.functions.len() - 1;
+        project
+            .current_module_mut()
+            .functions
+            .push(checked_function.clone());
+        let function_id = FunctionId(
+            ModuleId(project.current_module_index),
+            project.current_module().functions.len() - 1,
+        );
         let previous_index = project.current_function_index;
         project.current_function_index = Some(function_id);
 
@@ -1836,9 +2093,10 @@ fn typecheck_enum_predecl(
 
         for (generic_parameter, parameter_span) in &function.generic_parameters {
             project
+                .current_module_mut()
                 .types
                 .push(Type::TypeVariable(generic_parameter.to_string()));
-            let type_var_type_id = project.types.len() - 1;
+            let type_var_type_id = TypeId(module_id, project.current_module().types.len() - 1);
 
             generic_parameters.push(FunctionGenericParameter::Parameter(type_var_type_id));
 
@@ -1916,7 +2174,10 @@ fn typecheck_enum_predecl(
         if let Err(err) = project.add_function_to_scope(
             enum_scope_id,
             function.name.clone(),
-            project.functions.len() - 1,
+            FunctionId(
+                project.current_module().id,
+                project.current_module().functions.len() - 1,
+            ),
             enum_.name_span,
         ) {
             error = error.or(Some(err));
@@ -1950,7 +2211,7 @@ fn typecheck_enum_predecl(
             checked_function.return_type_id = return_type_id;
         }
 
-        project.functions[function_id] = checked_function;
+        project.current_module_mut().functions[function_id.1] = checked_function;
         project.current_function_index = previous_index;
     }
 
@@ -1984,7 +2245,7 @@ fn typecheck_enum(
             typecheck_expression(&expression, enum_scope_id, project, SafetyMode::Safe, None)
         };
 
-    let underlying_type_id = project.enums[enum_id].underlying_type_id;
+    let underlying_type_id = project.get_enum(enum_id).underlying_type_id;
 
     for variant in &enum_.variants {
         match &variant {
@@ -2076,12 +2337,18 @@ fn typecheck_enum(
                             is_instantiated: true,
                         };
 
-                        project.functions.push(checked_constructor);
+                        project
+                            .current_module_mut()
+                            .functions
+                            .push(checked_constructor);
 
                         if let Err(err) = project.add_function_to_scope(
                             enum_scope_id,
                             name.clone(),
-                            project.functions.len() - 1,
+                            FunctionId(
+                                project.current_module().id,
+                                project.current_module().functions.len() - 1,
+                            ),
                             *span,
                         ) {
                             error = error.or(Some(err));
@@ -2231,12 +2498,18 @@ fn typecheck_enum(
                             is_instantiated: true,
                         };
 
-                        project.functions.push(checked_constructor);
+                        project
+                            .current_module_mut()
+                            .functions
+                            .push(checked_constructor);
 
                         if let Err(err) = project.add_function_to_scope(
                             enum_scope_id,
                             name.clone(),
-                            project.functions.len() - 1,
+                            FunctionId(
+                                project.current_module().id,
+                                project.current_module().functions.len() - 1,
+                            ),
                             *span,
                         ) {
                             error = error.or(Some(err));
@@ -2311,12 +2584,18 @@ fn typecheck_enum(
                             is_instantiated: true,
                         };
 
-                        project.functions.push(checked_constructor);
+                        project
+                            .current_module_mut()
+                            .functions
+                            .push(checked_constructor);
 
                         if let Err(err) = project.add_function_to_scope(
                             enum_scope_id,
                             name.clone(),
-                            project.functions.len() - 1,
+                            FunctionId(
+                                project.current_module().id,
+                                project.current_module().functions.len() - 1,
+                            ),
                             *span,
                         ) {
                             error = error.or(Some(err));
@@ -2327,7 +2606,7 @@ fn typecheck_enum(
         }
     }
 
-    project.enums[enum_id].variants = variants;
+    project.current_module_mut().enums[enum_id.1].variants = variants;
 
     for function in &enum_.methods {
         error = error.or(typecheck_method(
@@ -2357,7 +2636,7 @@ fn typecheck_struct_predecl(
 
     let is_extern = structure.definition_linkage == DefinitionLinkage::External;
 
-    project.structs.push(CheckedStruct {
+    project.current_module_mut().structs.push(CheckedStruct {
         name: structure.name.clone(),
         name_span: structure.name_span,
         generic_parameters: vec![],
@@ -2370,9 +2649,13 @@ fn typecheck_struct_predecl(
 
     for (generic_parameter, parameter_span) in &structure.generic_parameters {
         project
+            .current_module_mut()
             .types
             .push(Type::TypeVariable(generic_parameter.to_string()));
-        let parameter_type_id = project.types.len() - 1;
+        let parameter_type_id = TypeId(
+            project.current_module().id,
+            project.current_module().types.len() - 1,
+        );
 
         generic_parameters.push(parameter_type_id);
 
@@ -2386,7 +2669,8 @@ fn typecheck_struct_predecl(
         }
     }
 
-    project.structs[struct_id].generic_parameters = generic_parameters.clone();
+    project.current_module_mut().structs[struct_id.1].generic_parameters =
+        generic_parameters.clone();
 
     for function in &structure.methods {
         let method_scope_id = project.create_scope(struct_scope_id, function.throws);
@@ -2411,8 +2695,14 @@ fn typecheck_struct_predecl(
             is_instantiated: !is_generic || is_extern,
         };
 
-        project.functions.push(checked_function.clone());
-        let function_id = project.functions.len() - 1;
+        project
+            .current_module_mut()
+            .functions
+            .push(checked_function.clone());
+        let function_id = FunctionId(
+            project.current_module().id,
+            project.current_module().functions.len() - 1,
+        );
         let previous_index = project.current_function_index;
         project.current_function_index = Some(function_id);
 
@@ -2420,9 +2710,13 @@ fn typecheck_struct_predecl(
 
         for (generic_parameter, parameter_span) in &function.generic_parameters {
             project
+                .current_module_mut()
                 .types
                 .push(Type::TypeVariable(generic_parameter.to_string()));
-            let type_var_type_id = project.types.len() - 1;
+            let type_var_type_id = TypeId(
+                project.current_module().id,
+                project.current_module().types.len() - 1,
+            );
 
             generic_parameters.push(FunctionGenericParameter::Parameter(type_var_type_id));
 
@@ -2500,7 +2794,10 @@ fn typecheck_struct_predecl(
         if let Err(err) = project.add_function_to_scope(
             struct_scope_id,
             function.name.clone(),
-            project.functions.len() - 1,
+            FunctionId(
+                project.current_module().id,
+                project.current_module().functions.len() - 1,
+            ),
             structure.span,
         ) {
             error = error.or(Some(err));
@@ -2536,11 +2833,11 @@ fn typecheck_struct_predecl(
             }
         }
 
-        project.functions[function_id] = checked_function;
+        project.current_module_mut().functions[function_id.1] = checked_function;
         project.current_function_index = previous_index;
     }
 
-    project.structs[struct_id].generic_parameters = generic_parameters;
+    project.current_module_mut().structs[struct_id.1].generic_parameters = generic_parameters;
 
     match project.add_struct_to_scope(
         parent_scope_id,
@@ -2552,7 +2849,7 @@ fn typecheck_struct_predecl(
         Err(err) => error = error.or(Some(err)),
     }
 
-    if parent_scope_id == 0 {
+    if project.checking_prelude {
         // Cache various well-known struct IDs as they're used internally in
         // other Jakt code.
         if project.cached_array_struct_id == None && structure.name == "Array" {
@@ -2589,9 +2886,10 @@ fn typecheck_struct(
 
     let mut fields = Vec::new();
 
-    let checked_struct = &mut project.structs[struct_id];
+    let checked_struct = project.get_struct_mut(struct_id);
     let checked_struct_scope_id = checked_struct.scope_id;
     let struct_type_id = project.find_or_add_type_id(Type::Struct(struct_id));
+    let module_id = project.current_module().id;
     project.current_struct_type_id = Some(struct_type_id);
 
     for unchecked_member in &structure.fields {
@@ -2622,7 +2920,8 @@ fn typecheck_struct(
             //      constructor to External, but we actually want to call the
             //      class' ::create function, just like we do with a
             //      ImplicitConstructor class.
-            project.functions[constructor_id].linkage = FunctionLinkage::ExternalClassConstructor;
+            project.get_function_mut(constructor_id).linkage =
+                FunctionLinkage::ExternalClassConstructor;
         }
     } else if structure.definition_linkage != DefinitionLinkage::External {
         // No constructor found, so let's make one
@@ -2665,20 +2964,23 @@ fn typecheck_struct(
         };
 
         // Internal constructor
-        project.functions.push(checked_constructor);
+        project
+            .current_module_mut()
+            .functions
+            .push(checked_constructor);
 
         // Add constructor to the struct's scope
         if let Err(err) = project.add_function_to_scope(
             checked_struct_scope_id,
             structure.name.clone(),
-            project.functions.len() - 1,
+            FunctionId(module_id, project.current_module().functions.len() - 1),
             structure.span,
         ) {
             error = error.or(Some(err));
         }
     }
 
-    let checked_struct = &mut project.structs[struct_id];
+    let checked_struct = &mut project.get_struct_mut(struct_id);
     checked_struct.fields = fields;
 
     for function in &structure.methods {
@@ -2703,9 +3005,10 @@ fn typecheck_function_predecl(
 
     let function_scope_id = project.create_scope(parent_scope_id, function.throws);
     let block_scope_id = project.create_scope(function_scope_id, function.throws);
+    let module_id = project.current_module().id;
 
     let is_generic = if let Some(type_id) = this_arg_type_id {
-        if let Type::GenericInstance(_, _) = &project.types[type_id] {
+        if let Type::GenericInstance(_, _) = project.get_type(type_id) {
             true
         } else {
             !function.generic_parameters.is_empty()
@@ -2729,8 +3032,11 @@ fn typecheck_function_predecl(
         linkage: function.linkage,
         is_instantiated: !is_generic,
     };
-    project.functions.push(checked_function.clone());
-    let function_id = project.functions.len() - 1;
+    project
+        .current_module_mut()
+        .functions
+        .push(checked_function.clone());
+    let function_id = FunctionId(module_id, project.current_module_mut().functions.len() - 1);
     let checked_function_scope_id = checked_function.function_scope_id;
 
     let previous_index = project.current_function_index;
@@ -2740,9 +3046,13 @@ fn typecheck_function_predecl(
 
     for (generic_parameter, parameter_span) in &function.generic_parameters {
         project
+            .current_module_mut()
             .types
             .push(Type::TypeVariable(generic_parameter.to_string()));
-        let type_var_type_id = project.types.len() - 1;
+        let type_var_type_id = TypeId(
+            project.current_module().id,
+            project.current_module().types.len() - 1,
+        );
 
         generic_parameters.push(FunctionGenericParameter::Parameter(type_var_type_id));
 
@@ -2822,7 +3132,7 @@ fn typecheck_function_predecl(
         checked_function.return_type_id = return_type_id;
     }
 
-    project.functions[function_id] = checked_function;
+    *project.get_function_mut(function_id) = checked_function;
 
     project.current_function_index = previous_index;
 
@@ -2847,10 +3157,11 @@ fn typecheck_and_specialize_generic_function(
     generic_substitutions: &HashMap<TypeId, TypeId>,
     project: &mut Project,
 ) -> Option<JaktError> {
-    let function = &project.functions[function_id];
+    let function = project.get_function(function_id);
+    let module_id = project.current_module().id;
 
     // Now we can actually resolve it, let's gooooo
-    let function_id = project.functions.len();
+    let function_id = FunctionId(module_id, project.current_module().functions.len());
     let mut function = function.to_parsed_function();
     let scope_id = project.create_scope(parent_scope_id, function.throws);
     let mut error = None;
@@ -2869,7 +3180,7 @@ fn typecheck_and_specialize_generic_function(
 
     let span = function.name_span;
     for (k, v) in generic_substitutions {
-        if let Type::TypeVariable(name) = &project.types[*k] {
+        if let Type::TypeVariable(name) = &project.get_type(*k) {
             let name_copy = name.clone();
             if let Err(err) = project.add_type_to_scope(scope_id, name_copy, *v, span) {
                 error = error.or(Some(err));
@@ -2889,8 +3200,9 @@ fn typecheck_and_specialize_generic_function(
 
     project.current_function_index = None;
 
-    project.functions[function_id].is_instantiated = true;
-    project.functions[function_id].function_scope_id = scope_id;
+    let function = project.get_function_mut(function_id);
+    function.is_instantiated = true;
+    function.function_scope_id = scope_id;
 
     error
 }
@@ -2913,7 +3225,7 @@ fn typecheck_function(
     if function.name == "main" {
         error = typecheck_jakt_main(function);
     }
-    let checked_function = &mut project.functions[function_id];
+    let checked_function = project.get_function_mut(function_id);
     let function_scope_id = checked_function.function_scope_id;
     let function_linkage = checked_function.linkage;
 
@@ -2934,7 +3246,7 @@ fn typecheck_function(
         typecheck_typename(&function.return_type, function_scope_id, project);
     error = error.or(err);
 
-    let checked_function = &mut project.functions[function_id];
+    let checked_function = project.get_function_mut(function_id);
     checked_function.return_type_id = function_return_type_id;
 
     let (block, err) = typecheck_block(
@@ -2973,7 +3285,7 @@ fn typecheck_function(
         )));
     }
 
-    let checked_function = &mut project.functions[function_id];
+    let checked_function = project.get_function_mut(function_id);
 
     checked_function.block = Some(block);
     checked_function.return_type_id = return_type_id;
@@ -3023,14 +3335,14 @@ fn typecheck_method(
 
     let (parent_generic_parameters, scope_id, definition_linkage) = match parent_id {
         StructOrEnumId::Struct(struct_id) => {
-            let structure = &mut project.structs[struct_id];
+            let structure = project.get_struct_mut(struct_id);
             let parent_generic_parameters = &structure.generic_parameters;
             let scope_id = structure.scope_id;
             let definition_linkage = structure.definition_linkage;
             (parent_generic_parameters, scope_id, definition_linkage)
         }
         StructOrEnumId::Enum(enum_id) => {
-            let enum_ = &mut project.enums[enum_id];
+            let enum_ = project.get_enum_mut(enum_id);
             let parent_generic_parameters = &enum_.generic_parameters;
             let scope_id = enum_.scope_id;
             let definition_linkage = enum_.definition_linkage;
@@ -3052,7 +3364,7 @@ fn typecheck_method(
     let method_id = method_id
         .expect("Internal error: we just pushed the checked function, but it's not present");
 
-    let checked_function = &mut project.functions[method_id];
+    let checked_function = project.get_function(method_id);
     let function_scope_id = checked_function.function_scope_id;
 
     let mut param_vars = Vec::new();
@@ -3106,7 +3418,7 @@ fn typecheck_method(
         )));
     }
 
-    let checked_function = &mut project.functions[method_id];
+    let checked_function = project.get_function_mut(method_id);
 
     checked_function.block = Some(block);
     checked_function.return_type_id = return_type_id;
@@ -3141,7 +3453,7 @@ pub fn typecheck_block(
 ) -> (CheckedBlock, Option<JaktError>) {
     let mut error = None;
 
-    let parent_throws = project.scopes[parent_scope_id].throws;
+    let parent_throws = project.get_scope(parent_scope_id).throws;
     let block_scope_id = project.create_scope(parent_scope_id, parent_throws);
     let mut checked_block = CheckedBlock::new(block_scope_id);
     let mut generic_inferences = HashMap::new();
@@ -3244,9 +3556,7 @@ pub fn typecheck_statement(
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
             error = error.or(err);
 
-            let error_struct_type_id = project
-                .find_type_in_scope(0, "Error")
-                .expect("internal error: Error builtin definition not found");
+            let error_struct_type_id = project.find_type_in_prelude("Error");
 
             if checked_expr.type_id(scope_id, project) != error_struct_type_id {
                 error = error.or(Some(JaktError::TypecheckError(
@@ -3255,7 +3565,7 @@ pub fn typecheck_statement(
                 )));
             }
 
-            let scope = &project.scopes[scope_id];
+            let scope = project.get_scope(scope_id);
             if !scope.throws {
                 error = error.or(Some(JaktError::TypecheckError(
                     "Throw statement needs to be in a try statement or a function marked as throws"
@@ -3294,7 +3604,7 @@ pub fn typecheck_statement(
                 typecheck_expression(range_expr, scope_id, project, safety_mode, None);
             error = error.or(err);
 
-            let iterable_type = &project.types[iterable_expr.type_id(scope_id, project)];
+            let iterable_type = project.get_type(iterable_expr.type_id(scope_id, project));
             let mut iterable_should_be_mutable = false;
             // Requirement 1: Iterator must have a .next() method
             //                This currently limits it to structs and classes.
@@ -3306,11 +3616,11 @@ pub fn typecheck_statement(
                     iterable_should_be_mutable = true;
                 }
                 Type::GenericInstance(struct_id, _) | Type::Struct(struct_id) => {
-                    let struct_ = &project.structs[*struct_id];
+                    let struct_ = project.get_struct(*struct_id);
                     let next_method_function_id =
                         project.find_function_in_scope(struct_.scope_id, "next");
                     if let Some(next_method_function_id) = next_method_function_id {
-                        let next_method_function = &project.functions[next_method_function_id];
+                        let next_method_function = project.get_function(next_method_function_id);
                         // Check whether we need to make the iterator mutable
                         if next_method_function.is_mutating() {
                             iterable_should_be_mutable = true;
@@ -3486,7 +3796,7 @@ pub fn typecheck_statement(
             let weakptr_struct_id = project.get_weakptr_struct_id(var_decl.span);
             let optional_struct_id = project.get_optional_struct_id(var_decl.span);
 
-            match &project.types[lhs_type_id] {
+            match project.get_type(lhs_type_id) {
                 Type::GenericInstance(struct_id, type_args) if *struct_id == weakptr_struct_id => {
                     if !var_decl.mutable {
                         error = error.or(Some(JaktError::TypecheckError(
@@ -3676,7 +3986,7 @@ pub fn typecheck_statement(
                 safety_mode,
                 project
                     .current_function_index
-                    .map(|i| project.functions[i].return_type_id),
+                    .map(|i| project.get_function(i).return_type_id),
             );
             error = error.or(err);
 
@@ -3959,8 +4269,8 @@ pub fn typecheck_expression(
                             // Let's assume it's an enum variant
                             if let ParsedType::Name(name, _) = unchecked_type {
                                 let type_id = checked_expr.type_id(scope_id, project);
-                                if let Type::Enum(enum_id) = &project.types[type_id] {
-                                    let enum_ = &project.enums[*enum_id];
+                                if let Type::Enum(enum_id) = project.get_type(type_id) {
+                                    let enum_ = project.get_enum(*enum_id);
                                     let exists =
                                         enum_.variants.iter().any(|variant| match variant {
                                             CheckedEnumVariant::StructLike(var_name, _, _)
@@ -4035,7 +4345,7 @@ pub fn typecheck_expression(
             let (checked_expr, err) =
                 typecheck_expression(expr, scope_id, project, safety_mode, None);
 
-            let type_ = &project.types[checked_expr.type_id(scope_id, project)];
+            let type_ = project.get_type(checked_expr.type_id(scope_id, project));
 
             let optional_struct_id = project.get_optional_struct_id(*span);
             let weakptr_struct_id = project.get_weakptr_struct_id(*span);
@@ -4164,10 +4474,10 @@ pub fn typecheck_expression(
                         .or_else(||
                             project
                                 .find_enum_in_scope(scope_id, ns)
-                                .map(|id| project.enums[id].scope_id)
+                                .map(|id| (project.get_enum(id).scope_id, false))
                         ));
 
-                scopes.push(scope);
+                scopes.push(scope.map(|(scope, _)| scope));
                 scopes
             });
 
@@ -4268,7 +4578,7 @@ pub fn typecheck_expression(
             let mut inner_hint = None;
             if let Some(hint) = type_hint {
                 if let Type::GenericInstance(hint_struct_id, hint_inner_types) =
-                    &project.types[hint]
+                    project.get_type(hint)
                 {
                     if hint_struct_id == &array_struct_id {
                         inner_hint = Some(hint_inner_types[0]);
@@ -4357,7 +4667,7 @@ pub fn typecheck_expression(
             let mut inner_hint = None;
             if let Some(hint) = type_hint {
                 if let Type::GenericInstance(hint_struct_id, hint_inner_types) =
-                    &project.types[hint]
+                    project.get_type(hint)
                 {
                     if hint_struct_id == &set_struct_id {
                         inner_hint = Some(hint_inner_types[0]);
@@ -4429,7 +4739,7 @@ pub fn typecheck_expression(
             let mut value_hint = None;
             if let Some(hint) = type_hint {
                 if let Type::GenericInstance(hint_struct_id, hint_inner_types) =
-                    &project.types[hint]
+                    project.get_type(hint)
                 {
                     if hint_struct_id == &dictionary_struct_id {
                         key_hint = Some(hint_inner_types[0]);
@@ -4580,7 +4890,7 @@ pub fn typecheck_expression(
             let array_struct_id = project.get_array_struct_id(*span);
             let dict_struct_id = project.get_dictionary_struct_id(*span);
 
-            let type_ = &project.types[checked_expr.type_id(scope_id, project)];
+            let type_ = project.get_type(checked_expr.type_id(scope_id, project));
 
             match type_ {
                 Type::GenericInstance(parent_struct_id, inner_type_ids)
@@ -4662,7 +4972,7 @@ pub fn typecheck_expression(
             let mut type_id = UNKNOWN_TYPE_ID;
 
             let tuple_struct_id = project.get_tuple_struct_id(*span);
-            let checked_expr_type_id = &project.types[checked_expr.type_id(scope_id, project)];
+            let checked_expr_type_id = project.get_type(checked_expr.type_id(scope_id, project));
             match checked_expr_type_id {
                 Type::GenericInstance(parent_struct_id, inner_type_ids)
                     if parent_struct_id == &tuple_struct_id =>
@@ -4699,11 +5009,11 @@ pub fn typecheck_expression(
             error = error.or(err);
 
             let mut checked_cases = Vec::new();
-            let type_ = &project.types[checked_expr.type_id(scope_id, project)];
+            let type_ = project.get_type(checked_expr.type_id(scope_id, project));
             let subject_type_id = checked_expr.type_id(scope_id, project);
             let mut generic_parameters = match type_ {
                 Type::GenericEnumInstance(enum_id, inner_type_ids) => {
-                    let enum_ = &project.enums[*enum_id];
+                    let enum_ = project.get_enum(*enum_id);
                     enum_
                         .generic_parameters
                         .iter()
@@ -4720,7 +5030,7 @@ pub fn typecheck_expression(
 
             match type_ {
                 Type::Enum(enum_id) | Type::GenericEnumInstance(enum_id, _) => {
-                    let enum_ = &project.enums[*enum_id];
+                    let enum_ = project.get_enum(*enum_id);
                     let enum_name = enum_.name.clone();
                     let enum_id = *enum_id;
                     let mut seen_catch_all = false;
@@ -4827,7 +5137,7 @@ pub fn typecheck_expression(
 
                                 let variant_index: usize;
                                 let mut vars = Vec::new();
-                                let enum_ = &project.enums[enum_id];
+                                let enum_ = project.get_enum(enum_id);
                                 let constructor_name = &name[1].0;
                                 let variant = (*enum_).variants.iter().find(|v| match v {
                                     CheckedEnumVariant::WithValue(name, _, _)
@@ -5022,7 +5332,7 @@ pub fn typecheck_expression(
                                         }
 
                                         // Look these up again to appease the borrow checker
-                                        let enum_ = &project.enums[enum_id];
+                                        let enum_ = project.get_enum(enum_id);
                                         let variant = (*enum_)
                                             .variants
                                             .iter()
@@ -5043,7 +5353,7 @@ pub fn typecheck_expression(
                                     }
                                 };
 
-                                let parent_throws = project.scopes[scope_id].throws;
+                                let parent_throws = project.get_scope(scope_id).throws;
                                 let new_scope_id = project.create_scope(scope_id, parent_throws);
                                 for (var, span) in vars {
                                     let err =
@@ -5074,7 +5384,7 @@ pub fn typecheck_expression(
                     }
 
                     // Check if all the variants are matched
-                    let enum_ = &project.enums[enum_id];
+                    let enum_ = project.get_enum(enum_id);
                     let missing_variants = enum_
                         .variants
                         .iter()
@@ -5277,10 +5587,10 @@ pub fn typecheck_expression(
             let type_id = UNKNOWN_TYPE_ID;
 
             let checked_expr_type_id = checked_expr.type_id(scope_id, project);
-            let checked_expr_type = &project.types[checked_expr_type_id];
+            let checked_expr_type = project.get_type(checked_expr_type_id);
             match checked_expr_type {
                 Type::GenericInstance(struct_id, _) | Type::Struct(struct_id) => {
-                    let structure = &project.structs[*struct_id];
+                    let structure = project.get_struct(*struct_id);
 
                     for member in &structure.fields {
                         if &member.name == name {
@@ -5291,7 +5601,7 @@ pub fn typecheck_expression(
                             let (unified_type, _) =
                                 unify_with_type(resolved_type_id, type_hint, *span, project);
 
-                            let structure = &project.structs[struct_id];
+                            let structure = project.get_struct(struct_id);
                             return (
                                 CheckedExpression::IndexedStruct(
                                     Box::new(checked_expr),
@@ -5347,55 +5657,39 @@ pub fn typecheck_expression(
 
             if checked_expr.type_id(scope_id, project) == STRING_TYPE_ID {
                 // Special-case the built-in so we don't accidentally find the user's definition
-                let string_struct = project.find_struct_in_scope(0, "String");
+                let string_struct = project.find_struct_in_prelude("String");
 
-                match string_struct {
-                    Some(struct_id) => {
-                        let (checked_call, err) = typecheck_call(
-                            call,
-                            scope_id,
-                            span,
-                            project,
-                            Some(&checked_expr),
-                            Some(StructOrEnumId::Struct(struct_id)),
-                            safety_mode,
-                            type_hint,
-                            false,
-                        );
-                        error = error.or(err);
+                let (checked_call, err) = typecheck_call(
+                    call,
+                    scope_id,
+                    span,
+                    project,
+                    Some(&checked_expr),
+                    Some(StructOrEnumId::Struct(string_struct)),
+                    safety_mode,
+                    type_hint,
+                    false,
+                );
+                error = error.or(err);
 
-                        let (type_id, err) =
-                            unify_with_type(checked_call.type_id, type_hint, *span, project);
-                        error = error.or(err);
+                let (type_id, err) =
+                    unify_with_type(checked_call.type_id, type_hint, *span, project);
+                error = error.or(err);
 
-                        (
-                            CheckedExpression::MethodCall(
-                                Box::new(checked_expr),
-                                checked_call,
-                                *span,
-                                type_id,
-                            ),
-                            error,
-                        )
-                    }
-                    _ => {
-                        error = error.or(Some(JaktError::TypecheckError(
-                            "no methods available on value".to_string(),
-                            expr.span(),
-                        )));
-
-                        (CheckedExpression::Garbage(*span), error)
-                    }
-                }
+                (
+                    CheckedExpression::MethodCall(
+                        Box::new(checked_expr),
+                        checked_call,
+                        *span,
+                        type_id,
+                    ),
+                    error,
+                )
             } else {
-                let checked_expr_type = &project.types[checked_expr.type_id(scope_id, project)];
+                let checked_expr_type = project.get_type(checked_expr.type_id(scope_id, project));
                 match checked_expr_type {
-                    Type::Struct(id) | Type::Enum(id) => {
-                        let id = match checked_expr_type {
-                            Type::Struct(_) => StructOrEnumId::Struct(*id),
-                            Type::Enum(_) => StructOrEnumId::Enum(*id),
-                            _ => unreachable!(),
-                        };
+                    Type::Struct(id) => {
+                        let id = StructOrEnumId::Struct(*id);
                         let (checked_call, err) = typecheck_call(
                             call,
                             scope_id,
@@ -5423,13 +5717,67 @@ pub fn typecheck_expression(
                             error,
                         )
                     }
-                    Type::GenericInstance(id, _) | Type::GenericEnumInstance(id, _) => {
+                    Type::Enum(id) => {
+                        let id = StructOrEnumId::Enum(*id);
+                        let (checked_call, err) = typecheck_call(
+                            call,
+                            scope_id,
+                            span,
+                            project,
+                            Some(&checked_expr),
+                            Some(id),
+                            safety_mode,
+                            type_hint,
+                            false,
+                        );
+                        error = error.or(err);
+
+                        let (type_id, err) =
+                            unify_with_type(checked_call.type_id, type_hint, *span, project);
+                        error = error.or(err);
+
+                        (
+                            CheckedExpression::MethodCall(
+                                Box::new(checked_expr),
+                                checked_call,
+                                *span,
+                                type_id,
+                            ),
+                            error,
+                        )
+                    }
+                    Type::GenericInstance(id, _) => {
+                        let id = StructOrEnumId::Struct(*id);
+                        let (checked_call, err) = typecheck_call(
+                            call,
+                            scope_id,
+                            span,
+                            project,
+                            Some(&checked_expr),
+                            Some(id),
+                            safety_mode,
+                            type_hint,
+                            false,
+                        );
+                        error = error.or(err);
+
+                        let (type_id, err) =
+                            unify_with_type(checked_call.type_id, type_hint, *span, project);
+                        error = error.or(err);
+
+                        (
+                            CheckedExpression::MethodCall(
+                                Box::new(checked_expr),
+                                checked_call,
+                                *span,
+                                type_id,
+                            ),
+                            error,
+                        )
+                    }
+                    Type::GenericEnumInstance(id, _) => {
                         // ignore the inner types for now, but we'll need them in the future
-                        let id = match checked_expr_type {
-                            Type::GenericInstance(..) => StructOrEnumId::Struct(*id),
-                            Type::GenericEnumInstance(..) => StructOrEnumId::Enum(*id),
-                            _ => unreachable!(),
-                        };
+                        let id = StructOrEnumId::Enum(*id);
                         let (checked_call, err) = typecheck_call(
                             call,
                             scope_id,
@@ -5461,7 +5809,8 @@ pub fn typecheck_expression(
                         error = error.or(Some(JaktError::TypecheckError(
                             format!(
                                 "no methods available on value (type: {})",
-                                checked_expr.type_id(scope_id, project)
+                                project
+                                    .typename_for_type_id(checked_expr.type_id(scope_id, project))
                             ),
                             expr.span(),
                         )));
@@ -5535,7 +5884,7 @@ pub fn typecheck_unary_operation(
     safety_mode: SafetyMode,
 ) -> (CheckedExpression, Option<JaktError>) {
     let expr_type_id = expr.type_id(scope_id, project);
-    let expr_type = &project.types[expr_type_id];
+    let expr_type = project.get_type(expr_type_id);
 
     match &op {
         CheckedUnaryOperator::Is(type_id) => (
@@ -5660,7 +6009,7 @@ pub fn typecheck_unary_operation(
                                         format!(
                                             "Literal {:?} too small for unsigned integer type {}",
                                             number.number_constant().unwrap(),
-                                            type_id
+                                            project.typename_for_type_id(type_id)
                                         ),
                                         span,
                                     )),
@@ -5849,7 +6198,7 @@ pub fn typecheck_binary_operation(
                 }
             }
 
-            match &project.types[lhs_type_id] {
+            match project.get_type(lhs_type_id) {
                 Type::GenericInstance(struct_id, generic_parameters)
                     if *struct_id == project.get_optional_struct_id(span) =>
                 {
@@ -5953,10 +6302,8 @@ pub fn typecheck_binary_operation(
 
             if let CheckedExpression::OptionalNone(_, _) = rhs {
                 // if the right expression is None then the left expression must be an optional
-                let lhs_type = &project.types[lhs_type_id];
-                let optional_struct_id = project
-                    .find_struct_in_scope(0, "Optional")
-                    .expect("internal error: can't find builtin Optional type");
+                let lhs_type = project.get_type(lhs_type_id);
+                let optional_struct_id = project.find_struct_in_prelude("Optional");
 
                 if let Type::GenericInstance(struct_id, _) = lhs_type {
                     if *struct_id == optional_struct_id {
@@ -5999,11 +6346,12 @@ pub fn typecheck_binary_operation(
             // as below.
             let weakptr_struct_id = project.get_weakptr_struct_id(span);
 
-            if let Type::GenericInstance(struct_id, inner_type_ids) = &project.types[lhs_type_id] {
+            if let Type::GenericInstance(struct_id, inner_type_ids) = project.get_type(lhs_type_id)
+            {
                 if *struct_id == weakptr_struct_id {
                     let inner_type_id = inner_type_ids[0];
-                    if let Type::Struct(lhs_struct_id) = project.types[inner_type_id] {
-                        match project.types[rhs_type_id] {
+                    if let Type::Struct(lhs_struct_id) = project.get_type(inner_type_id) {
+                        match project.get_type(rhs_type_id) {
                             Type::Struct(rhs_struct_id) if lhs_struct_id == rhs_struct_id => {
                                 return (lhs_type_id, None);
                             }
@@ -6078,13 +6426,18 @@ pub fn resolve_call(
     let mut current_scope_id = scope_id;
 
     // Resolve namespaces from left to right.
-    for scope_name in &call.namespace {
-        if let Some(scope_id) = project.find_namespace_in_scope(current_scope_id, scope_name) {
+    for (idx, scope_name) in call.namespace.iter().enumerate() {
+        if let Some((scope_id, is_import)) =
+            project.find_namespace_in_scope(current_scope_id, scope_name)
+        {
+            if is_import {
+                namespaces[idx].name = project.get_module(scope_id.0).name.clone();
+            }
             current_scope_id = scope_id;
             continue;
         }
         if let Some(struct_id) = project.find_struct_in_scope(current_scope_id, scope_name) {
-            let structure = &project.structs[struct_id];
+            let structure = project.get_struct(struct_id);
             current_scope_id = structure.scope_id;
             if !structure.generic_parameters.is_empty() {
                 // FIXME: This doesn't look right.
@@ -6093,7 +6446,7 @@ pub fn resolve_call(
             continue;
         }
         if let Some(enum_id) = project.find_enum_in_scope(current_scope_id, scope_name) {
-            let enum_ = &project.enums[enum_id];
+            let enum_ = project.get_enum(enum_id);
             current_scope_id = enum_.scope_id;
             if !enum_.generic_parameters.is_empty() {
                 // FIXME: This doesn't look right.
@@ -6132,7 +6485,7 @@ pub fn resolve_call(
     // 1. Look for a function with this name.
     if let Some(function_id) = project.find_function_in_scope(current_scope_id, &call.name) {
         if !must_be_enum_constructor
-            || project.functions[function_id].linkage == FunctionLinkage::ImplicitEnumConstructor
+            || project.get_function(function_id).linkage == FunctionLinkage::ImplicitEnumConstructor
         {
             callee = Some(function_id);
             return (callee, error);
@@ -6149,7 +6502,7 @@ pub fn resolve_call(
 
     // 2. Look for a struct, class or enum constructor with this name.
     if let Some(struct_id) = project.find_struct_in_scope(current_scope_id, &call.name) {
-        let structure = &project.structs[struct_id];
+        let structure = project.get_struct(struct_id);
         if let Some(function_id) = project.find_function_in_scope(structure.scope_id, &call.name) {
             return (Some(function_id), error);
         }
@@ -6157,7 +6510,7 @@ pub fn resolve_call(
     }
 
     if let Some(enum_id) = project.find_enum_in_scope(current_scope_id, &call.name) {
-        let enum_ = &project.enums[enum_id];
+        let enum_ = project.get_enum(enum_id);
         if let Some(function_id) = project.find_function_in_scope(enum_.scope_id, &call.name) {
             return (Some(function_id), error);
         }
@@ -6217,9 +6570,9 @@ pub fn typecheck_call(
     let callee_scope_id = match parent_id {
         Some(StructOrEnumId::Struct(struct_id)) => {
             // We are a method, so let's look up the scope id for our struct
-            project.structs[struct_id].scope_id
+            project.get_struct(struct_id).scope_id
         }
-        Some(StructOrEnumId::Enum(enum_id)) => project.enums[enum_id].scope_id,
+        Some(StructOrEnumId::Enum(enum_id)) => project.get_enum(enum_id).scope_id,
         _ => caller_scope_id,
     };
 
@@ -6274,7 +6627,7 @@ pub fn typecheck_call(
             function_id = callee;
 
             if let Some(callee_id) = callee {
-                let callee = &project.functions[callee_id];
+                let callee = project.get_function(callee_id);
                 if !callee.is_instantiated {
                     generic_checked_function_to_instantiate = Some(callee_id);
                 }
@@ -6282,7 +6635,8 @@ pub fn typecheck_call(
                 return_type_id = callee.return_type_id;
                 linkage = callee.linkage;
 
-                let scope_containing_callee = project.scopes[callee.function_scope_id]
+                let scope_containing_callee = project
+                    .get_scope(callee.function_scope_id)
                     .parent
                     .expect("Function should have a parent scope");
 
@@ -6301,7 +6655,7 @@ pub fn typecheck_call(
                         typecheck_typename(type_arg, caller_scope_id, project);
                     error = error.or(err);
 
-                    let callee = &project.functions[callee_id];
+                    let callee = project.get_function(callee_id);
                     if callee.generic_parameters.len() <= idx {
                         error = error.or(Some(JaktError::TypecheckError(
                             "Trying to access generic parameter out of bounds".to_string(),
@@ -6323,10 +6677,10 @@ pub fn typecheck_call(
                 if let Some(this_expr) = this_expr {
                     let type_id = this_expr.type_id(callee_scope_id, project);
                     maybe_this_type_id = Some(type_id);
-                    let param_type = &project.types[type_id];
+                    let param_type = project.get_type(type_id);
 
                     if let Type::GenericInstance(struct_id, args) = param_type {
-                        let structure = &project.structs[*struct_id];
+                        let structure = project.get_struct(*struct_id);
 
                         let mut idx = 0;
 
@@ -6337,7 +6691,7 @@ pub fn typecheck_call(
                         }
                     }
 
-                    let callee = &project.functions[callee_id];
+                    let callee = project.get_function(callee_id);
                     // Make sure that our call doesn't have a 'this' pointer to a static callee
                     if callee.is_static() {
                         error = error.or(Some(JaktError::TypecheckError(
@@ -6360,7 +6714,7 @@ pub fn typecheck_call(
                 let arg_offset = if this_expr.is_some() { 1 } else { 0 };
 
                 // Check that we have the right number of arguments.
-                let callee = &project.functions[callee_id];
+                let callee = project.get_function(callee_id);
 
                 if callee.params.len() != (call.args.len() + arg_offset) {
                     error = error.or(Some(JaktError::TypecheckError(
@@ -6371,7 +6725,7 @@ pub fn typecheck_call(
                     let mut idx = 0;
 
                     while idx < call.args.len() {
-                        let param = &project.functions[callee_id].params[idx + arg_offset];
+                        let param = &project.get_function(callee_id).params[idx + arg_offset];
                         let type_hint = param.variable.type_id;
                         let (mut checked_arg, err) = typecheck_expression(
                             &call.args[idx].1,
@@ -6395,7 +6749,7 @@ pub fn typecheck_call(
                         let callee_id = callee
                             .expect("internal error: previously resolved call is now unresolved");
 
-                        let callee = &project.functions[callee_id];
+                        let callee = project.get_function(callee_id);
 
                         if let ParsedExpression::Var(var_name, _) = &call.args[idx].1 {
                             if var_name != &callee.params[idx + arg_offset].variable.name
@@ -6473,9 +6827,9 @@ pub fn typecheck_call(
                     })
                     .collect();
 
-                let callee = &project.functions[callee_id];
+                let callee = project.get_function(callee_id);
                 for generic_typevar in &callee.generic_parameters {
-                    if let FunctionGenericParameter::Parameter(id) = &generic_typevar {
+                    if let FunctionGenericParameter::Parameter(id) = generic_typevar {
                         if let Some(substitution) = generic_substitutions.get(id) {
                             type_args.push(*substitution)
                         } else {
@@ -6495,7 +6849,7 @@ pub fn typecheck_call(
         }
     }
 
-    if callee_throws && !project.scopes[caller_scope_id].throws {
+    if callee_throws && !project.get_scope(caller_scope_id).throws {
         error = error.or(
             Some(JaktError::TypecheckError(
                 "Call to function that may throw needs to be in a try statement or a function marked as throws".to_string(),
@@ -6560,7 +6914,7 @@ fn substitute_typevars_in_type_helper(
     generic_inferences: &HashMap<TypeId, TypeId>,
     project: &mut Project,
 ) -> TypeId {
-    let type_ = &project.types[type_id];
+    let type_ = project.get_type(type_id);
     match type_ {
         Type::TypeVariable(_) => {
             if let Some(replacement) = generic_inferences.get(&type_id) {
@@ -6589,7 +6943,7 @@ fn substitute_typevars_in_type_helper(
         }
         Type::Struct(struct_id) => {
             let struct_id = *struct_id;
-            let structure = &project.structs[struct_id];
+            let structure = project.get_struct(struct_id);
 
             if !structure.generic_parameters.is_empty() {
                 let mut new_args = structure.generic_parameters.clone();
@@ -6603,7 +6957,7 @@ fn substitute_typevars_in_type_helper(
         }
         Type::Enum(enum_id) => {
             let enum_id = *enum_id;
-            let enum_ = &project.enums[enum_id];
+            let enum_ = project.get_enum(enum_id);
 
             if !enum_.generic_parameters.is_empty() {
                 let mut new_args = enum_.generic_parameters.clone();
@@ -6629,7 +6983,7 @@ pub fn check_types_for_compat(
     project: &Project,
 ) -> Option<JaktError> {
     let mut error = None;
-    let lhs_type = &project.types[lhs_type_id];
+    let lhs_type = project.get_type(lhs_type_id);
 
     let optional_struct_id = project.get_optional_struct_id(span);
     let weak_ptr_struct_id = project.get_weakptr_struct_id(span);
@@ -6669,14 +7023,14 @@ pub fn check_types_for_compat(
         }
         Type::GenericEnumInstance(lhs_enum_id, lhs_args) => {
             let lhs_args = lhs_args.clone();
-            let rhs_type = &project.types[rhs_type_id];
+            let rhs_type = project.get_type(rhs_type_id);
             match rhs_type {
                 Type::GenericEnumInstance(rhs_enum_id, rhs_args) => {
                     let rhs_args = rhs_args.clone();
                     if lhs_enum_id == rhs_enum_id {
                         // Same enum, so check the generic arguments
 
-                        let lhs_enum = &project.enums[*lhs_enum_id];
+                        let lhs_enum = project.get_enum(*lhs_enum_id);
                         if rhs_args.len() != lhs_args.len() {
                             return Some(JaktError::TypecheckError(
                                 format!(
@@ -6723,14 +7077,14 @@ pub fn check_types_for_compat(
         }
         Type::GenericInstance(lhs_struct_id, lhs_args) => {
             let lhs_args = lhs_args.clone();
-            let rhs_type = &project.types[rhs_type_id];
+            let rhs_type = project.get_type(rhs_type_id);
             match rhs_type {
                 Type::GenericInstance(rhs_struct_id, rhs_args) => {
                     if lhs_struct_id == rhs_struct_id {
                         let rhs_args = rhs_args.clone();
                         // Same struct, perhaps this is an instantiation of it
 
-                        let lhs_struct = &project.structs[*lhs_struct_id];
+                        let lhs_struct = project.get_struct(*lhs_struct_id);
                         if rhs_args.len() != lhs_args.len() {
                             return Some(JaktError::TypecheckError(
                                 format!(
@@ -6790,12 +7144,12 @@ pub fn check_types_for_compat(
                 return None;
             }
 
-            let rhs_type = &project.types[rhs_type_id];
+            let rhs_type = project.get_type(rhs_type_id);
             match rhs_type {
                 Type::GenericEnumInstance(rhs_enum_id, rhs_args) => {
                     let rhs_args = rhs_args.clone();
                     if lhs_enum_id == rhs_enum_id {
-                        let lhs_enum = &project.enums[*lhs_enum_id];
+                        let lhs_enum = &project.get_enum(*lhs_enum_id);
                         if rhs_args.len() != lhs_enum.generic_parameters.len() {
                             return Some(JaktError::TypecheckError(
                                 format!(
@@ -6848,13 +7202,13 @@ pub fn check_types_for_compat(
                 return None;
             }
 
-            let rhs_type = &project.types[rhs_type_id];
+            let rhs_type = project.get_type(rhs_type_id);
             match rhs_type {
                 Type::GenericInstance(rhs_struct_id, args) if lhs_struct_id == rhs_struct_id => {
                     let args = args.clone();
                     // Same struct, perhaps this is an instantiation of it
 
-                    let lhs_struct = &project.structs[*lhs_struct_id];
+                    let lhs_struct = project.get_struct(*lhs_struct_id);
                     if args.len() != lhs_struct.generic_parameters.len() {
                         return Some(JaktError::TypecheckError(
                             format!(
