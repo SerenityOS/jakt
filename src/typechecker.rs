@@ -1707,6 +1707,8 @@ pub fn typecheck_namespace_imports(
     project: &mut Project,
     compiler: &mut Compiler,
 ) -> Option<JaktError> {
+    let mut error = None;
+
     for import in parsed_namespace.imports.iter() {
         let num_modules = project.modules.len();
         match compiler.search_for_path(import.module_name.name.as_str()) {
@@ -1715,34 +1717,24 @@ pub fn typecheck_namespace_imports(
                     // if the mnodule has not been loaded yet, parse and typecheck it.
                     if compiler.loaded_files[file_id].module_id == ModuleId::invalid() {
                         // make this a helper function
-                        match compiler.parse_file(file_id) {
-                            Ok(parsed_namespace) => {
-                                let current_module = project.current_module_index;
-                                let module = Module::new(
-                                    ModuleId(num_modules),
-                                    import.module_name.name.clone(),
-                                );
-                                compiler.loaded_files[file_id].module_id = module.id;
-                                let scope = Scope::new(Some(PRELUDE_SCOPE_ID), false);
-                                let file_scope_id = ScopeId(module.id, 0);
-                                project.modules.push(module);
-                                project.current_module_index = num_modules;
-                                project.current_module_mut().scopes.push(scope);
+                        let (parsed_namespace, err) = compiler.parse_file(file_id);
+                        error = error.or(err);
 
-                                let err = typecheck_module(
-                                    &parsed_namespace,
-                                    file_scope_id,
-                                    project,
-                                    compiler,
-                                );
-                                if err.is_some() {
-                                    return err;
-                                }
+                        let current_module = project.current_module_index;
+                        let module =
+                            Module::new(ModuleId(num_modules), import.module_name.name.clone());
+                        compiler.loaded_files[file_id].module_id = module.id;
+                        let scope = Scope::new(Some(PRELUDE_SCOPE_ID), false);
+                        let file_scope_id = ScopeId(module.id, 0);
+                        project.modules.push(module);
+                        project.current_module_index = num_modules;
+                        project.current_module_mut().scopes.push(scope);
 
-                                project.current_module_index = current_module;
-                            }
-                            Err(e) => return Some(e),
-                        }
+                        let err =
+                            typecheck_module(&parsed_namespace, file_scope_id, project, compiler);
+                        error = error.or(err);
+
+                        project.current_module_index = current_module;
                     }
 
                     let imported_module_id = compiler.loaded_files[file_id].module_id;
@@ -1764,7 +1756,7 @@ pub fn typecheck_namespace_imports(
                         panic!("module import lists are not supported");
                     }
                 }
-                Err(e) => return Some(e),
+                Err(err) => error = error.or(Some(err)),
             },
             None => {
                 return Some(JaktError::TypecheckError(

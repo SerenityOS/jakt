@@ -2,7 +2,7 @@ use crate::{
     typechecker::{
         CheckedBlock, CheckedEnum, CheckedEnumVariant, CheckedExpression, CheckedFunction,
         CheckedMatchBody, CheckedMatchCase, CheckedStatement, CheckedStruct,
-        FunctionGenericParameter, FunctionId, ModuleId, Scope, ScopeId, Type, TypeId,
+        FunctionGenericParameter, FunctionId, Scope, ScopeId, Type, TypeId,
     },
     Project, Span,
 };
@@ -148,11 +148,9 @@ pub fn find_span_in_project(project: &Project, span: Span) -> Option<Usage> {
     // at hand.
 
     for module in project.modules.iter() {
-        if module.id != ModuleId(0) {
-            let scope = project.get_scope(ScopeId(module.id, 0));
+        let scope = project.get_scope(ScopeId(module.id, 0));
 
-            return find_span_in_scope(project, scope, span);
-        }
+        return find_span_in_scope(project, scope, span);
     }
 
     None
