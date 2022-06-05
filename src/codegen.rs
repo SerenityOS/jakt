@@ -1171,7 +1171,11 @@ fn codegen_debug_description_getter(structure: &CheckedStruct, project: &Project
 
         output.push_str("builder.appendff(\"");
         output.push_str(&field.name);
-        output.push_str(": {}");
+        if field.type_id == crate::compiler::STRING_TYPE_ID {
+            output.push_str(": \\\"{}\\\"");
+        } else {
+            output.push_str(": {}");
+        }
         if i != structure.fields.len() - 1 {
             output.push_str(", ");
         }
