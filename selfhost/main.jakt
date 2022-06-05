@@ -1083,6 +1083,26 @@ struct Parser {
                     let parsed_struct = .parse_struct(DefinitionLinkage::Internal, DefinitionType::Class)
                     parsed_namespace.structs.push(parsed_struct)
                 }
+                Extern => {
+                    .index++
+                    match .current() {
+                        Function => {
+                            let parsed_function = .parse_function(FunctionLinkage::External)
+                            parsed_namespace.functions.push(parsed_function)
+                        }
+                        Struct => {
+                            let parsed_struct = .parse_struct(DefinitionLinkage::External, DefinitionType::Struct)
+                            parsed_namespace.structs.push(parsed_struct)
+                        }
+                        Class => {
+                            let parsed_struct = .parse_struct(DefinitionLinkage::External, DefinitionType::Class)
+                            parsed_namespace.structs.push(parsed_struct)
+                        }
+                        else => {
+                            .error("Unexpected keyword", .current().span())
+                        }
+                    }
+                }
                 Eol => {
                     // Ignore
                     .index++
@@ -1347,6 +1367,8 @@ struct Parser {
             }
         }
 
+        parsed_function.params = params
+
         // NOTE: main() always throws
         if function_name == "main" {
             parsed_function.throws = true
@@ -1362,13 +1384,15 @@ struct Parser {
             parsed_function.return_type_span = merge_spans(start, .previous().span())
         }
 
+        if linkage is External {
+            return parsed_function
+        }
+
         if .current() is FatArrow {
             parsed_function.block = .parse_fat_arrow()
         } else {
             parsed_function.block = .parse_block()
         }
-        
-        parsed_function.params = params
 
         return parsed_function
     }
