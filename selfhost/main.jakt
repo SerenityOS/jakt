@@ -586,14 +586,13 @@ struct Lexer {
     }
 
     function next(mutable this) throws -> Token? {
-        if .eof() {
-            return None
-        }
         if .index == .input.size() {
             ++.index
             return Token::Eof(JaktSpan(start: .index - 1, end: .index - 1))
         }
-
+        if .eof() {
+            return None
+        }
         loop {
             let ch = .peek()
             if ch == b' ' or ch == b'\t' or ch == b'\r' {
@@ -1028,7 +1027,7 @@ struct Parser {
         .errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
     }
 
-    function eof(this) => .index >= .tokens.size()
+    function eof(this) => .index >= .tokens.size() - 1
 
     function eol(this) => .eof() or .tokens[.index] is Eol
 
