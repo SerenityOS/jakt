@@ -899,6 +899,33 @@ enum UnaryOperator {
     Is(ParsedType)
 }
 
+struct EnumVariantPatternArgument {
+    name: String?
+    binding: String
+    span: JaktSpan
+}
+
+enum ParsedMatchPattern {
+    EnumVariant(
+        variant_name: [(String, JaktSpan)]
+        variant_arguments: [EnumVariantPatternArgument]
+        arguments_span: JaktSpan
+    )
+    Expression(ParsedExpression)
+    CatchAll
+}
+
+struct ParsedMatchCase {
+    patterns: [ParsedMatchPattern]
+    marker_span: JaktSpan
+    body: ParsedMatchBody
+}
+
+enum ParsedMatchBody {
+    Expression(ParsedExpression)
+    Block(ParsedBlock)
+}
+
 boxed enum ParsedExpression {
     Boolean(val: bool, span: JaktSpan)
     NumericConstant(val: i64, span: JaktSpan)
@@ -918,6 +945,7 @@ boxed enum ParsedExpression {
     JaktDictionary(values: [(ParsedExpression, ParsedExpression)], span: JaktSpan)
     Range(from: ParsedExpression, to: ParsedExpression, span: JaktSpan)
     ForcedUnwrap(expr: ParsedExpression, span: JaktSpan)
+    Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: JaktSpan)
     Garbage(JaktSpan)
 
     function span(this) => match this {
@@ -938,6 +966,7 @@ boxed enum ParsedExpression {
         ForcedUnwrap(expr, span) => span
         Garbage(span) => span
         MethodCall(expr, call, span) => span
+        Match(expr, cases, span) => span
         IndexedTuple(expr, index, span) => span
         IndexedStruct(expr, field, span) => span
     }
@@ -1953,6 +1982,9 @@ struct Parser {
             LSquare => {
                 return .parse_array_or_dictionary_literal()
             }
+            Match => {
+                return .parse_match_expression()
+            }
             else => { }
         }
         return ParsedExpression::Garbage(span)
@@ -2098,6 +2130,176 @@ struct Parser {
         }
 
         return ParsedExpression::Operator(op, span)
+    }
+
+    function parse_match_expression(mut this) throws -> ParsedExpression {
+        mut start = .current().span()
+        .index++
+
+        let expr = .parse_expression(allow_assignments: false)
+        let cases = .parse_match_cases()
+
+        return ParsedExpression::Match(expr, cases, span: merge_spans(start, .previous().span()))
+    }
+
+    function parse_match_cases(mut this) throws -> [ParsedMatchCase] {
+        mut cases: [ParsedMatchCase] = []
+
+        .skip_newlines()
+
+        if not .current() is LCurly {
+            .error("Expected ‘{’", .current().span())
+            return cases
+        }
+
+        .index++
+        .skip_newlines()
+
+        while not .eof() and not .current() is RCurly {
+            let pattern_start_index = .index
+            let patterns = .parse_match_patterns()
+
+            let marker_span = .current().span()
+            if .current() is FatArrow {
+                .index++
+            } else {
+                .error("Expected ‘=>’", .current().span())
+            }
+
+            let body = match .current() {
+                LCurly => ParsedMatchBody::Block(.parse_block())
+                else => ParsedMatchBody::Expression(.parse_expression(allow_assignments: false))
+            }
+
+            cases.push(ParsedMatchCase(patterns, marker_span, body))
+
+            if .index == pattern_start_index {
+                // Parser didn't advance, bail.
+                break
+            }
+
+            if .current() is Eol or .current() is Comma {
+                .index++
+            }
+        }
+
+        .skip_newlines()
+
+        if not .current() is RCurly {
+            .error("Expected ‘}’", .current().span())
+        }
+
+        .index++
+        return cases
+    }
+
+    function parse_match_patterns(mut this) throws -> [ParsedMatchPattern] {
+        mut patterns: [ParsedMatchPattern] = []
+        .skip_newlines()
+        while not .eof() {
+            let pattern = .parse_match_pattern()
+            patterns.push(pattern)
+            .skip_newlines()
+            if .current() is Pipe {
+                .index++
+                continue
+            }
+            break
+        }
+        return patterns
+    }
+
+    function parse_match_pattern(mut this) throws -> ParsedMatchPattern => match .current() {
+        True
+        | False
+        | Number
+        | QuotedString
+        | SingleQuotedString
+        | SingleQuotedByteString
+        | LParen => ParsedMatchPattern::Expression(.parse_expression(allow_assignments: false))
+
+        Else => {
+            .index++
+            yield ParsedMatchPattern::CatchAll
+        }
+
+        Identifier(name) => {
+            let pattern_start_index = .index
+            mut variant_name: [(String, JaktSpan)] = []
+
+            while .current() is Identifier {
+                .index++
+                variant_name.push((name, .current().span()))
+                if .current() is ColonColon {
+                    .index++
+                } else {
+                    break
+                }
+            }
+
+            mut variant_arguments: [EnumVariantPatternArgument] = []
+            mut has_parens = false
+            let arguments_start = .current().span()
+
+            if .current() is LParen {
+                has_parens = true
+                .index++
+
+                while not .eof() {
+                    match .current() {
+                        Identifier(name) => {
+                            let arg_name = name
+                            if .peek(1) is Colon {
+                                .index++
+                                match .current() {
+                                    Identifier(name) => {
+                                        let arg_binding = name
+                                        let span = .current().span()
+                                        .index++
+                                        variant_arguments.push(EnumVariantPatternArgument(
+                                            name: Some(arg_name)
+                                            binding: arg_binding
+                                            span))
+                                    }
+                                    else => {
+                                        .error("Expected binding after ‘:’", .current().span())
+                                    }
+                                }
+                            } else {
+                                // FIXME: Hack since compiler doesn't recognize `None` in tuple.
+                                let none: String? = None
+                                variant_arguments.push(EnumVariantPatternArgument(
+                                            name: none
+                                            binding: arg_name
+                                            span: .current().span()))
+                            }
+                        }
+                        RParen => {
+                            .index++
+                            break
+                        }
+                        else => {
+                            .error("Expected pattern argument name", .current().span())
+                            break
+                        }
+                    }
+                }
+            }
+
+            let arguments_end = .previous().span()
+            let arguments_span = merge_spans(arguments_start, arguments_end)
+
+            yield ParsedMatchPattern::EnumVariant(
+                variant_name
+                variant_arguments
+                arguments_span
+            )
+        }
+
+        else => {
+            .error("Expected pattern or ‘else’", .current().span())
+            yield ParsedMatchPattern::CatchAll
+        }
     }
 
     function parse_call(mut this) throws -> ParsedCall {
