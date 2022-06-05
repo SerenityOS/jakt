@@ -262,6 +262,8 @@ pub struct Module {
     pub enums: Vec<CheckedEnum>,
     pub scopes: Vec<Scope>,
     pub types: Vec<Type>,
+
+    pub is_root: bool,
 }
 
 impl Module {
@@ -274,7 +276,12 @@ impl Module {
             enums: vec![],
             scopes: vec![],
             types: vec![],
+            is_root: false,
         }
+    }
+
+    pub fn is_root(&self) -> bool {
+        self.is_root
     }
 }
 
@@ -304,6 +311,16 @@ impl Project {
         }
     }
 
+    pub fn add_module(&mut self, module_name: String) -> ModuleId {
+        let id = ModuleId(self.modules.len());
+        self.modules.push(Module::new(id, module_name));
+        id
+    }
+
+    pub fn set_current_module_root(&mut self) {
+        self.current_module_mut().is_root = true;
+    }
+
     pub fn current_module(&self) -> &Module {
         &self.modules[self.current_module_index]
     }
@@ -315,9 +332,16 @@ impl Project {
     pub fn find_or_add_type_id(&mut self, type_: Type) -> TypeId {
         let module = self.current_module();
         let module_id = module.id;
+
         for (idx, t) in module.types.iter().enumerate() {
             if t == &type_ {
                 return TypeId(module_id, idx);
+            }
+        }
+
+        for (idx, t) in self.get_module(ModuleId(0)).types.iter().enumerate() {
+            if t == &type_ {
+                return TypeId(ModuleId(0), idx);
             }
         }
 
@@ -1718,7 +1742,6 @@ pub fn typecheck_namespace_imports(
     let mut error = None;
 
     for import in parsed_namespace.imports.iter() {
-        let num_modules = project.modules.len();
         match compiler.search_for_path(import.module_name.name.as_str()) {
             Some(p) => match compiler.find_or_load_file(p) {
                 Ok(file_id) => {
@@ -1729,14 +1752,13 @@ pub fn typecheck_namespace_imports(
                         error = error.or(err);
 
                         let current_module = project.current_module_index;
-                        let module =
-                            Module::new(ModuleId(num_modules), import.module_name.name.clone());
-                        compiler.loaded_files[file_id].module_id = module.id;
                         let scope = Scope::new(Some(PRELUDE_SCOPE_ID), false);
-                        let file_scope_id = ScopeId(module.id, 0);
-                        project.modules.push(module);
-                        project.current_module_index = num_modules;
+                        let module_id = project.add_module(import.module_name.name.clone());
+                        compiler.loaded_files[file_id].module_id = module_id;
+                        project.current_module_index = module_id.0;
                         project.current_module_mut().scopes.push(scope);
+
+                        let file_scope_id = ScopeId(module_id, 0);
 
                         let err =
                             typecheck_module(&parsed_namespace, file_scope_id, project, compiler);

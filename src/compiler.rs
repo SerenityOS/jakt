@@ -187,21 +187,38 @@ impl Compiler {
             .expect("Cannot find parent directory of file");
         self.include_paths.push(parent_dir.to_path_buf());
 
-        // should always be 0
-        let file_scope_id = ScopeId(project.current_module().id, 0);
-
         let file_id = match self.find_or_load_file(fname) {
             Ok(file_id) => file_id,
-            Err(e) => return (file_scope_id, Some(e)),
+            Err(e) => return (ScopeId(ModuleId(project.current_module_index), 0), Some(e)),
         };
 
         let (parsed_namespace, err) = self.parse_file(file_id);
         error = error.or(err);
 
         let scope = Scope::new(Some(PRELUDE_SCOPE_ID), false);
+
+        let module_name = fname
+            .file_stem()
+            .expect("expected a filename for input file")
+            .to_ascii_lowercase()
+            .to_str()
+            .expect("filename should be valid utf-8")
+            .to_string();
+
+        let module_id = project.add_module(module_name);
+
+        // should always be 0
+        let file_scope_id = ScopeId(module_id, 0);
+        project.current_module_index = module_id.0;
+
+        assert_eq!(module_id.0, 1);
+
         project.current_module_mut().scopes.push(scope);
+        // setting the input module as root, meaning this should have main.
+        project.set_current_module_root();
 
         let err = typecheck_module(&parsed_namespace, file_scope_id, project, self);
+
         error = error.or(err);
 
         (file_scope_id, error)
