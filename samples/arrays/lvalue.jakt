@@ -2,7 +2,7 @@
 /// - output: "55\n"
 
 function main() {
-    let mutable x = [1, 2, 3]
+    mut x = [1, 2, 3]
     x[1] = 55
 
     println("{}", x[1])

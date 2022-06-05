@@ -2,7 +2,7 @@
 /// - output: "101\n"
 
 function main() {
-    let mutable x: i64 = 100
+    mut x: i64 = 100
     x = x + 1
     println("{}", x)
 }

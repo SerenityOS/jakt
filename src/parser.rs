@@ -1742,7 +1742,7 @@ pub fn parse_function(
                             *index += 1;
                         }
 
-                        TokenContents::Name(name) if name == "mutable" => {
+                        TokenContents::Name(name) if name == "mut" => {
                             current_param_is_mutable = true;
                             *index += 1;
                         }
@@ -2014,6 +2014,61 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (ParsedBlock, Option<
     )
 }
 
+pub fn parse_let_or_mut(
+    tokens: &[Token],
+    index: &mut usize,
+    mutable: bool,
+) -> (ParsedStatement, Option<JaktError>) {
+    let mut error = None;
+
+    *index += 1;
+
+    let (mut var_decl, err) = parse_variable_declaration(tokens, index, Visibility::Public);
+    error = error.or(err);
+
+    var_decl.mutable = mutable;
+
+    if *index >= tokens.len() {
+        return (
+            ParsedStatement::Garbage,
+            Some(JaktError::ParserError(
+                "expected initializer".to_string(),
+                tokens[*index].span,
+            )),
+        );
+    }
+
+    // Hardwire an initialiser for now, but we may not want this long-term
+    match &tokens[*index].contents {
+        TokenContents::Equal => {
+            *index += 1;
+
+            if *index < tokens.len() {
+                let (expr, err) =
+                    parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+                error = error.or(err);
+
+                (ParsedStatement::VarDecl(var_decl, expr), error)
+            } else {
+                (
+                    ParsedStatement::Garbage,
+                    Some(JaktError::ParserError(
+                        "expected initializer".to_string(),
+                        tokens[*index - 1].span,
+                    )),
+                )
+            }
+        }
+        _ => (
+            ParsedStatement::Garbage,
+            Some(JaktError::ParserError(
+                "expected initializer".to_string(),
+                tokens[*index].span,
+            )),
+        ),
+    }
+}
+
 pub fn parse_statement(
     tokens: &[Token],
     index: &mut usize,
@@ -2208,70 +2263,13 @@ pub fn parse_statement(
 
             (ParsedStatement::Yield(expr, span), error)
         }
+        TokenContents::Name(name) if name == "mut" => {
+            trace!("parsing mut");
+            parse_let_or_mut(tokens, index, true)
+        }
         TokenContents::Name(name) if name == "let" => {
             trace!("parsing let");
-
-            let mutable = if *index + 1 < tokens.len() {
-                match &tokens[*index + 1].contents {
-                    TokenContents::Name(name) if name == "mutable" => {
-                        *index += 1;
-                        true
-                    }
-                    _ => false,
-                }
-            } else {
-                false
-            };
-
-            *index += 1;
-
-            let (mut var_decl, err) = parse_variable_declaration(tokens, index, Visibility::Public);
-            error = error.or(err);
-
-            var_decl.mutable = mutable;
-
-            // Hardwire an initialiser for now, but we may not want this long-term
-            if *index < tokens.len() {
-                match &tokens[*index].contents {
-                    TokenContents::Equal => {
-                        *index += 1;
-
-                        if *index < tokens.len() {
-                            let (expr, err) = parse_expression(
-                                tokens,
-                                index,
-                                ExpressionKind::ExpressionWithoutAssignment,
-                            );
-                            error = error.or(err);
-
-                            (ParsedStatement::VarDecl(var_decl, expr), error)
-                        } else {
-                            (
-                                ParsedStatement::Garbage,
-                                Some(JaktError::ParserError(
-                                    "expected initializer".to_string(),
-                                    tokens[*index - 1].span,
-                                )),
-                            )
-                        }
-                    }
-                    _ => (
-                        ParsedStatement::Garbage,
-                        Some(JaktError::ParserError(
-                            "expected initializer".to_string(),
-                            tokens[*index].span,
-                        )),
-                    ),
-                }
-            } else {
-                (
-                    ParsedStatement::Garbage,
-                    Some(JaktError::ParserError(
-                        "expected initializer".to_string(),
-                        tokens[*index].span,
-                    )),
-                )
-            }
+            parse_let_or_mut(tokens, index, false)
         }
         TokenContents::Name(name) if name == "cpp" => {
             trace!("parsing inline cpp block");
@@ -4179,7 +4177,7 @@ pub fn parse_variable_declaration(
             if *index < tokens.len() {
                 let mutable = *index + 1 < tokens.len()
                     && match &tokens[*index].contents {
-                        TokenContents::Name(name) if name == "mutable" => {
+                        TokenContents::Name(name) if name == "mut" => {
                             *index += 1;
                             true
                         }

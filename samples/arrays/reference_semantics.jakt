@@ -1,15 +1,15 @@
 /// Expect:
 /// - output: "foo\nbar\n"
 
-function change_value(vector: mutable [String]) {
+function change_value(vector: mut [String]) {
     vector[1] = "bar"
 }
 
 function main() {
-    let mutable v = ["foo", "foo"]
+    mut v = ["foo", "foo"]
     change_value(vector: v)
 
-    let mutable i = 0
+    mut i = 0
     while i < v.size() as! i64 {
         println("{}", v[i])
         ++i

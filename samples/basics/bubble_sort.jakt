@@ -1,10 +1,10 @@
 /// Expect:
 /// - output: "1\n2\n8\n9\n13\n22\n25\n50\n"
 
-function bubble_sort(values: mutable [i64]) {
-    let mutable i = 0
+function bubble_sort(values: mut [i64]) {
+    mut i = 0
     while i < values.size() as! i64 - 1 {
-        let mutable j = 0
+        mut j = 0
         while j < (values.size() as! i64) - i - 1 {
             if values[j] > values[j + 1] {
                 let tmp = values[j]
@@ -18,9 +18,9 @@ function bubble_sort(values: mutable [i64]) {
 }
 
 function main() {
-    let mutable v = [25, 13, 8, 1, 9, 22, 50, 2]
+    mut v = [25, 13, 8, 1, 9, 22, 50, 2]
     bubble_sort(values: v)
-    let mutable i = 0
+    mut i = 0
     while i < v.size() as! i64 {
         println("{}", v[i])
         ++i

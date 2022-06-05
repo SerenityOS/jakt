@@ -2,10 +2,10 @@
 /// - output: "2 2\n"
 
 function main() {
-    let mutable set1: {String} = {}
+    mut set1: {String} = {}
     set1.add("hello")
     set1.add("World")
-    let mutable set2: {i64} = {}
+    mut set2: {i64} = {}
     set2.add(1)
     set2.add(2)
     println("{} {}", set1.size(), set2.size())

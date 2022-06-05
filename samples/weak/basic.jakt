@@ -6,7 +6,7 @@ class Foo {
 }
 
 function main() {
-    let mutable weak_foo: weak Foo? = None
+    mut weak_foo: weak Foo? = None
 
     println("weak_foo has_value? {}", weak_foo.has_value())
 

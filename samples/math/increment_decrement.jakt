@@ -2,7 +2,7 @@
 /// - output: "11\n11\n12\n11\n11\n10\n"
 
 function main() {
-    let mutable x = 10
+    mut x = 10
 
     println("{}", ++x)
     println("{}", x++)

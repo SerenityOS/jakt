@@ -2,7 +2,7 @@
 /// - output: "20\n"
 
 function main() {
-    let mutable dict: [String: [i64: i64]] = [:]
+    mut dict: [String: [i64: i64]] = [:]
     dict.set(key: "a", value: [10: 20])
     println("{}", dict.get("a")!.get(10)!)
 }

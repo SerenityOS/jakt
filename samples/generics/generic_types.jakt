@@ -1,12 +1,12 @@
 /// Expect:
 /// - output: "3\n"
 
-function do_pop<T>(anon arr: mutable [T]) -> Optional<T> {
+function do_pop<T>(anon arr: mut [T]) -> Optional<T> {
   return arr.pop()
 }
 
 function main() {
-  let mutable arr = [1, 2, 3];
+  mut arr = [1, 2, 3];
 
   println("{}", do_pop(arr)!)
 }

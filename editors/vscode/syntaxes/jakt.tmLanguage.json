@@ -89,18 +89,15 @@
     "variable-declaration": {
       "name": "meta.variable.definition.jakt",
       "comment": "FIXME: The identifier matching is identical to the lexer but more characters may be allowed in the future.",
-      "begin": "\\b(let)(\\s+mutable)?\\s+((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)?",
+      "begin": "\\b(let|mut)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)?",
       "beginCaptures": {
         "1": {
           "name": "keyword.let.jakt"
         },
         "2": {
-          "name": "storage.modifier.mutable.jakt"
-        },
-        "3": {
           "name": "variable.other.jakt"
         },
-        "4": {
+        "3": {
           "name": "punctuation.colon.jakt"
         }
       },
@@ -339,8 +336,8 @@
     "types": {
       "patterns": [
         {
-          "name": "storage.modifier.mutable.jakt",
-          "match": "\\bmutable\\b"
+          "name": "storage.modifier.mut.jakt",
+          "match": "\\bmut\\b"
         },
         {
           "name": "storage.modifier.pointer.jakt",
@@ -531,10 +528,10 @@
           "include": "#this"
         },
         {
-          "match": "\\b(mutable)\\s+(this)\\b",
+          "match": "\\b(mut)\\s+(this)\\b",
           "captures": {
             "1": {
-              "name": "storage.modifier.mutable.argument.jakt"
+              "name": "storage.modifier.mut.argument.jakt"
             },
             "2": {
               "name": "variable.language.this.jakt"

@@ -13,7 +13,7 @@ namespace Outer {
 }
 
 function main() {
-    let mutable s = Outer::Inner::Struct()
+    mut s = Outer::Inner::Struct()
     s.method()
     Outer::Inner::Struct::static_function()
     Outer::Inner::free_function_in_inner_namespace()

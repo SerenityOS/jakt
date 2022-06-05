@@ -2,7 +2,7 @@
 /// - output: "b b\n63\n"
 
 function main() {
-    let mutable b = b'b'
+    mut b = b'b'
     println("{:c} {:c}", b, b'b')
     ++b 
     println("{:x}", b)

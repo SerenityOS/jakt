@@ -4,7 +4,7 @@
 function main() {
     let v = [85; 3]
     println("{}", v.size())
-    let mutable i = 0
+    mut i = 0
     while i < v.size() as! i64 {
         println("{}", v[i++])
     }

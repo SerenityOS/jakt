@@ -76,7 +76,7 @@ try {
     println("Caught error: {}", error)
 }
 
-let mutable x = 0
+mut x = 0
 unsafe {
     cpp {
         "x = (i64)&x;"

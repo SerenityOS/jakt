@@ -9,5 +9,5 @@ class A {
 }
 
 function main() {
-    let mutable a = A(b: [])
+    mut a = A(b: [])
 }

@@ -5,7 +5,7 @@ struct Rectangle {
     width: i64,
     height: i64,
 
-    function grow(mutable this) {
+    function grow(mut this) {
         this.width *= 2;
         this.height *= 2;
     }
@@ -14,7 +14,7 @@ struct Rectangle {
 }
 
 function main() {
-    let mutable rect = Rectangle(width: 4, height: 8)
+    mut rect = Rectangle(width: 4, height: 8)
 
     rect.grow()
 

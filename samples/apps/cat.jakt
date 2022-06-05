@@ -1,9 +1,9 @@
 extern struct FILE {}
 
 extern function fopen(anon str: raw c_char, anon mode: raw c_char) -> raw FILE
-extern function fgetc(anon file: mutable raw FILE) -> c_int
-extern function fclose(anon file: mutable raw FILE) -> c_int
-extern function feof(anon file: mutable raw FILE) -> c_int
+extern function fgetc(anon file: mut raw FILE) -> c_int
+extern function fclose(anon file: mut raw FILE) -> c_int
+extern function feof(anon file: mut raw FILE) -> c_int
 extern function putchar(anon ch: c_int) -> c_int
 
 function main(args: [String]) {
@@ -14,10 +14,10 @@ function main(args: [String]) {
 
     let filename = args[1]
 
-    let mutable file = fopen(filename.c_string(), "r".c_string())
+    mut file = fopen(filename.c_string(), "r".c_string())
     defer fclose(file)
 
-    let mutable c = fgetc(file)
+    mut c = fgetc(file)
     while feof(file) == 0 {
         putchar(c)
         c = fgetc(file)

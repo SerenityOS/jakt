@@ -1,15 +1,15 @@
 extern struct FILE {}
 
 extern function fopen(anon str: raw c_char, anon mode: raw c_char) -> raw FILE
-extern function fgetc(anon file: mutable raw FILE) -> c_int
-extern function fclose(anon file: mutable raw FILE) -> c_int
-extern function feof(anon file: mutable raw FILE) -> c_int
+extern function fgetc(anon file: mut raw FILE) -> c_int
+extern function fclose(anon file: mut raw FILE) -> c_int
+extern function feof(anon file: mut raw FILE) -> c_int
 extern function putchar(anon ch: c_int) -> c_int
 
 function make_lookup_table() throws -> [u32] {
-    let mutable data = [0u32; 256]
+    mut data = [0u32; 256]
     for i in 0..data.size() {
-        let mutable value = i as! u32
+        mut value = i as! u32
         for j in 0..8 {
             if (value & 1) != 0 {
                 value = 0xedb88320u32 ^ (value >> 1)
@@ -28,13 +28,13 @@ function main(args: [String]) {
         return 1
     }
 
-    let mutable file = fopen(args[1].c_string(), "r".c_string())
+    mut file = fopen(args[1].c_string(), "r".c_string())
     defer fclose(file)
 
     let table = make_lookup_table()
     
-    let mutable state = 0xffffffffu32
-    let mutable c = fgetc(file)
+    mut state = 0xffffffffu32
+    mut c = fgetc(file)
     while feof(file) == 0 {
         state = table[(state ^ c) & 0xff] ^ (state >> 8);
         c = fgetc(file)

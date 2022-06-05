@@ -6,7 +6,7 @@ function test(i : i32) -> i32 {
 }
 
 class TestClass {
-    function init(mutable this) {}
+    function init(mut this) {}
 }
 
 function main() {

@@ -2,15 +2,15 @@
 /// - output: "5\n5\n5\n5\n5\n5\n5\n5\n5\n"
 
 function main() {
-    let mutable a = 0uz
+    mut a = 0uz
     a += 5 as! usize
     println("{}", a)
 
     {
-        let mutable i = 0u8
-        let mutable j = 0u16
-        let mutable k = 0u32
-        let mutable l = 0u64
+        mut i = 0u8
+        mut j = 0u16
+        mut k = 0u32
+        mut l = 0u64
 
         i += 5 as! u8
         j += 5 as! u16
@@ -23,10 +23,10 @@ function main() {
         println("{}", l)
     }
     {
-        let mutable i = 0i8
-        let mutable j = 0i16
-        let mutable k = 0i32
-        let mutable l = 0i64
+        mut i = 0i8
+        mut j = 0i16
+        mut k = 0i32
+        mut l = 0i64
 
         i += 5 as! i8
         j += 5 as! i16

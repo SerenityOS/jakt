@@ -2,7 +2,7 @@
 /// - output: "mayb\n"
 
 function main() {
-    let mutable i: String? = None
+    mut i: String? = None
     i ??= "mayb"
     println(i ?? "hello")
 }

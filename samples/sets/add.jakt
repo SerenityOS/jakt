@@ -2,7 +2,7 @@
 /// - output: "3\n3\n"
 
 function main() {
-    let mutable set = {"b", "c"}
+    mut set = {"b", "c"}
     set.add("a")
     println("{}", set.size())
 

@@ -1,13 +1,13 @@
 /// Expect:
 /// - output: "5\n"
 
-function foo(set: mutable {i64}) throws {
+function foo(set: mut {i64}) throws {
     set.add(4)
     set.add(5)
 }
 
 function main() {
-    let mutable set = {1, 2, 3}
+    mut set = {1, 2, 3}
     foo(set)
     println("{}", set.size());
 }

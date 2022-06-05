@@ -1,6 +1,6 @@
 extern struct StringBuilder {
     // FIXME: AK::StringBuilder::append() actually takes a c_char, not a u8, but nobody complains
-    function append(mutable this, anon c: u8)
+    function append(mut this, anon c: u8)
     function to_string(this) throws -> String
     function StringBuilder() -> StringBuilder
 }
@@ -33,7 +33,7 @@ class JsonParser {
         return .index >= .input.length()
     }
 
-    public function parse(mutable this) throws -> JsonValue {
+    public function parse(mut this) throws -> JsonValue {
         // FIXME: AK::JsonParser ignores trailing whitespace for some reason.
         let value = .parse_helper()
         if not .eof() {
@@ -43,7 +43,7 @@ class JsonParser {
         return value
     }
 
-    function skip_whitespace(mutable this) {
+    function skip_whitespace(mut this) {
         while not .eof() {
             if not is_whitespace(.input.byte_at(.index)) {
                 break
@@ -52,17 +52,17 @@ class JsonParser {
         }
     }
 
-    function consume_and_unescape_string(mutable this) throws -> String {
+    function consume_and_unescape_string(mut this) throws -> String {
         if not .consume_specific(b'"') {
             // FIXME: "Expected '"'
             throw Error::from_errno(9007)
         }
 
-        let mutable builder = StringBuilder()
+        mut builder = StringBuilder()
 
         loop {
-            let mutable ch = 0u8
-            let mutable peek_index = .index
+            mut ch = 0u8
+            mut peek_index = .index
             while peek_index < .input.length() {
                 ch = .input.byte_at(peek_index)
                 if ch == b'"' or ch == b'\\' {
@@ -127,7 +127,7 @@ class JsonParser {
         return builder.to_string()
     }
 
-    function ignore(mutable this) {
+    function ignore(mut this) {
         .index++
     }
 
@@ -138,13 +138,13 @@ class JsonParser {
         return .input.byte_at(.index)
     }
 
-    function consume(mutable this) -> u8 {
+    function consume(mut this) -> u8 {
         let ch = .peek()
         .index++
         return ch
     }
 
-    function consume_specific(mutable this, anon expected: u8) -> bool {
+    function consume_specific(mut this, anon expected: u8) -> bool {
         if .peek() != expected {
             return false
         }
@@ -152,7 +152,7 @@ class JsonParser {
         return true
     }
 
-    function parse_helper(mutable this) throws -> JsonValue {
+    function parse_helper(mut this) throws -> JsonValue {
         .skip_whitespace()
         return match .peek() {
             b'{' => .parse_object()
@@ -173,17 +173,17 @@ class JsonParser {
         return JsonValue::Null
     }
 
-    function parse_array(mutable this) throws -> JsonValue {
+    function parse_array(mut this) throws -> JsonValue {
         return JsonValue::Null
     }
 
-    function parse_object(mutable this) throws -> JsonValue {
+    function parse_object(mut this) throws -> JsonValue {
         if not .consume_specific(b'{') {
             // FIXME: "Expected '{'"
             throw Error::from_errno(9002)
         }
 
-        let mutable values: [String:JsonValue] = [:]
+        mut values: [String:JsonValue] = [:]
 
         loop {
             .skip_whitespace()
@@ -222,10 +222,10 @@ class JsonParser {
         return JsonValue::Object(values)
     }
 
-    function parse_number(mutable this) throws -> JsonValue {
+    function parse_number(mut this) throws -> JsonValue {
         let is_negative = .consume_specific(b'-')
 
-        let mutable value = 0
+        mut value = 0
 
         while not .eof() {
             let ch = .peek()
@@ -240,25 +240,25 @@ class JsonParser {
         return JsonValue::Number(value)
     }
 
-    function parse_string(mutable this) throws -> JsonValue {
+    function parse_string(mut this) throws -> JsonValue {
         return JsonValue::Null
     }
 
-    function parse_false(mutable this) throws -> JsonValue {
+    function parse_false(mut this) throws -> JsonValue {
         return JsonValue::Null
     }
 
-    function parse_true(mutable this) throws -> JsonValue {
+    function parse_true(mut this) throws -> JsonValue {
         return JsonValue::Null
     }
 
-    function parse_null(mutable this) throws -> JsonValue {
+    function parse_null(mut this) throws -> JsonValue {
         return JsonValue::Null
     }
 }
 
 function parse_json(input: String) throws -> JsonValue {
-    let mutable parser = JsonParser(input, index: 0)
+    mut parser = JsonParser(input, index: 0)
     return parser.parse()
 }
 

@@ -2,7 +2,7 @@
 /// - output: "1\n3\n5\n7\n9\n"
 
 function main() {
-    let mutable i = 0
+    mut i = 0
     while i < 10 {
         i++
         if i % 2 == 0 {

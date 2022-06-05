@@ -2,7 +2,7 @@
 /// - output: "3\n"
 
 function main() {
-    let mutable v = [1, 2, 3]
+    mut v = [1, 2, 3]
 
     let last = v.pop()
 

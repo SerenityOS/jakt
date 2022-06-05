@@ -39,7 +39,7 @@ function main() {
     }
     {
         // FIXME: The max value as a literal (18_446_744_073_709_551_615) fails to parse with 'could not parse int'
-        let mutable a: u64 = 9_223_372_036_854_775_807
+        mut a: u64 = 9_223_372_036_854_775_807
         a *= 2
         a += 1
         let b: u64 = 1

@@ -2,7 +2,7 @@
 /// - output: "5\n"
 
 function get_unique(nums: [i64]) throws -> {i64} {
-    let mutable set = {nums[0]}
+    mut set = {nums[0]}
     for i in 1..nums.size() {
         set.add(nums[i])
     }

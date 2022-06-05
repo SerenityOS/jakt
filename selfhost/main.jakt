@@ -2,8 +2,8 @@
 /// - output: ""
 
 extern struct StringBuilder {
-    function append(mutable this, anon s: u8)
-    function to_string(mutable this) throws -> String
+    function append(mut this, anon s: u8)
+    function to_string(mut this) throws -> String
     function StringBuilder() -> StringBuilder
 }
 
@@ -116,7 +116,7 @@ enum Token {
     Let(JaktSpan)
     Loop(JaktSpan)
     Match(JaktSpan)
-    Mutable(JaktSpan)
+    Mut(JaktSpan)
     Not(JaktSpan)
     Or(JaktSpan)
     Private(JaktSpan)
@@ -218,7 +218,7 @@ enum Token {
         Let(span) => span
         Loop(span) => span
         Match(span) => span
-        Mutable(span) => span
+        Mut(span) => span
         Not(span) => span
         Or(span) => span
         Private(span) => span
@@ -261,7 +261,7 @@ enum Token {
         "let" => Token::Let(span)
         "loop" => Token::Loop(span)
         "match" => Token::Match(span)
-        "mutable" => Token::Mutable(span)
+        "mut" => Token::Mut(span)
         "not" => Token::Not(span)
         "or" => Token::Or(span)
         "private" => Token::Private(span)
@@ -293,7 +293,7 @@ struct Lexer {
     input: [u8]
     errors: [JaktError]
 
-    function error(mutable this, anon message: String, anon span: JaktSpan) throws {
+    function error(mut this, anon message: String, anon span: JaktSpan) throws {
         .errors.push(JaktError::Message(message, span))
     }
 
@@ -319,14 +319,14 @@ struct Lexer {
     }
 
     function substring(this, start: usize, length: usize) throws -> String {
-        let mutable builder = StringBuilder()
+        mut builder = StringBuilder()
         for i in start..length {
             builder.append(.input[i])
         }
         return builder.to_string()
     }
 
-    function lex_character_constant_or_name(mutable this) throws -> Token {
+    function lex_character_constant_or_name(mut this) throws -> Token {
         if .peek_ahead(1) != b'\'' {
             return .lex_number_or_name()
         }
@@ -339,7 +339,7 @@ struct Lexer {
         let start = .index
         .index++
 
-        let mutable escaped = false;
+        mut escaped = false;
 
         while not .eof() and (escaped or .peek() != b'\'') {
             if not escaped and .peek() == b'\\' {
@@ -356,7 +356,7 @@ struct Lexer {
         }
 
         // Everything but the quotes
-        let mutable builder = StringBuilder()
+        mut builder = StringBuilder()
         builder.append(.input[start + 1])
         let str = builder.to_string()
 
@@ -370,7 +370,7 @@ struct Lexer {
         return Token::SingleQuotedString(quote: str, span: JaktSpan(start, end))
     }
 
-    function lex_number_or_name(mutable this) throws -> Token {
+    function lex_number_or_name(mut this) throws -> Token {
         let start = .index
 
         if .eof() {
@@ -378,7 +378,7 @@ struct Lexer {
             return Token::Garbage(JaktSpan(start, end: start))
         }
         if is_ascii_digit(.peek()) {
-            let mutable total = 0i64
+            mut total = 0i64
 
             while is_ascii_digit(.peek()) {
                 let value = .input[.index]
@@ -389,7 +389,7 @@ struct Lexer {
             let end = .index
             return Token::Number(number: total, span: JaktSpan(start, end))
         } else if is_ascii_alpha(.peek()) or .peek() == b'_' {
-            let mutable string_builder = StringBuilder()
+            mut string_builder = StringBuilder()
 
             while is_ascii_alphanumeric(.peek()) or .peek() == b'_' {
                 let value = .input[.index]
@@ -409,7 +409,7 @@ struct Lexer {
         return Token::Garbage(JaktSpan(start, end))
     }
 
-    function lex_quoted_string(mutable this, delimiter: u8) throws -> Token {
+    function lex_quoted_string(mut this, delimiter: u8) throws -> Token {
         let start = .index
 
         ++.index
@@ -419,7 +419,7 @@ struct Lexer {
             return Token::Garbage(JaktSpan(start, end: start))
         }
 
-        let mutable escaped = false
+        mut escaped = false
         while not .eof() and (escaped or .peek() != delimiter) {
             if not escaped and .peek() == b'\\' {
                 escaped = true
@@ -442,7 +442,7 @@ struct Lexer {
         return Token::QuotedString(quote: str, span: JaktSpan(start, end))
     }
 
-    function lex_plus(mutable this) -> Token {
+    function lex_plus(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::PlusEqual(JaktSpan(start, end: ++.index))
@@ -451,7 +451,7 @@ struct Lexer {
         }
     }
 
-    function lex_minus(mutable this) -> Token {
+    function lex_minus(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::MinusEqual(JaktSpan(start, end: ++.index))
@@ -461,7 +461,7 @@ struct Lexer {
         }
     }
 
-    function lex_asterisk(mutable this) -> Token {
+    function lex_asterisk(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::AsteriskEqual(JaktSpan(start, end: ++.index))
@@ -469,7 +469,7 @@ struct Lexer {
         }
     }
 
-    function lex_forward_slash(mutable this) throws -> Token {
+    function lex_forward_slash(mut this) throws -> Token {
         let start = .index++
         if .peek() == b'=' {
             return Token::ForwardSlashEqual(JaktSpan(start, end: ++.index))
@@ -488,7 +488,7 @@ struct Lexer {
         return .next() ?? Token::Eof(JaktSpan(start: .index, end: .index))
     }
 
-    function lex_caret(mutable this) -> Token {
+    function lex_caret(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::CaretEqual(JaktSpan(start, end: ++.index))
@@ -496,7 +496,7 @@ struct Lexer {
         }
     }
 
-    function lex_pipe(mutable this) -> Token {
+    function lex_pipe(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::PipeEqual(JaktSpan(start, end: ++.index))
@@ -504,7 +504,7 @@ struct Lexer {
         }
     }
 
-    function lex_percent_sign(mutable this) -> Token {
+    function lex_percent_sign(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::PercentSignEqual(JaktSpan(start, end: ++.index))
@@ -512,7 +512,7 @@ struct Lexer {
         }
     }
 
-    function lex_exclamation_point(mutable this) -> Token {
+    function lex_exclamation_point(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::NotEqual(JaktSpan(start, end: ++.index))
@@ -520,7 +520,7 @@ struct Lexer {
         }
     }
 
-    function lex_ampersand(mutable this) -> Token {
+    function lex_ampersand(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::AmpersandEqual(JaktSpan(start, end: ++.index))
@@ -528,7 +528,7 @@ struct Lexer {
         }
     }
 
-    function lex_less_than(mutable this) -> Token {
+    function lex_less_than(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::LessThanOrEqual(JaktSpan(start, end: ++.index))
@@ -537,7 +537,7 @@ struct Lexer {
         }
     }
 
-    function lex_greater_than(mutable this) -> Token {
+    function lex_greater_than(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::GreaterThanOrEqual(JaktSpan(start, end: ++.index))
@@ -546,7 +546,7 @@ struct Lexer {
         }
     }
 
-    function lex_dot(mutable this) -> Token {
+    function lex_dot(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'.' => Token::DotDot(JaktSpan(start, end: ++.index))
@@ -554,7 +554,7 @@ struct Lexer {
         }
     }
 
-    function lex_colon(mutable this) -> Token {
+    function lex_colon(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b':' => Token::ColonColon(JaktSpan(start, end: ++.index))
@@ -562,7 +562,7 @@ struct Lexer {
         }
     }
 
-    function lex_question_mark(mutable this) -> Token {
+    function lex_question_mark(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'?' => {
@@ -576,7 +576,7 @@ struct Lexer {
         }
     }
 
-    function lex_equals(mutable this) -> Token {
+    function lex_equals(mut this) -> Token {
         let start = .index++
         return match .peek() {
             b'=' => Token::DoubleEqual(JaktSpan(start, end: ++.index))
@@ -585,7 +585,7 @@ struct Lexer {
         }
     }
 
-    function next(mutable this) throws -> Token? {
+    function next(mut this) throws -> Token? {
         if .index == .input.size() {
             ++.index
             return Token::Eof(JaktSpan(start: .index - 1, end: .index - 1))
@@ -672,7 +672,7 @@ function display_message_with_span(anon severity: MessageSeverity, file_name: St
 
     let line_spans = gather_line_spans(file_contents)
 
-    let mutable line_index = 1uz
+    mut line_index = 1uz
     let largest_line_number = line_spans.size()
 
     let width = format("{}", largest_line_number).length()
@@ -714,14 +714,14 @@ function display_message_with_span(anon severity: MessageSeverity, file_name: St
 }
 
 function print_source_line(severity: MessageSeverity, file_contents: [u8], file_span: (usize, usize), error_span: JaktSpan, line_number: usize, largest_line_number: usize) throws {
-    let mutable index = file_span.0
+    mut index = file_span.0
 
     let width = format("{}", largest_line_number).length()
 
     print(" {} | ", line_number)
 
     while index <= file_span.1 {
-        let mutable c = b' '
+        mut c = b' '
         if index < file_span.1 {
             c = file_contents[index]
         } else if error_span.start == error_span.end and index == error_span.start {
@@ -740,10 +740,10 @@ function print_source_line(severity: MessageSeverity, file_contents: [u8], file_
 }
 
 function gather_line_spans(file_contents: [u8]) throws -> [(usize, usize)] {
-    let mutable idx = 0uz
-    let mutable output: [(usize, usize)] = []
+    mut idx = 0uz
+    mut output: [(usize, usize)] = []
 
-    let mutable start = idx
+    mut start = idx
     while idx < file_contents.size() {
         if file_contents[idx] == b'\n' {
             output.push((start, idx))
@@ -1036,11 +1036,11 @@ struct Parser {
     tokens: [Token]
     errors: [JaktError]
 
-    function error(mutable this, anon message: String, anon span: JaktSpan) throws {
+    function error(mut this, anon message: String, anon span: JaktSpan) throws {
         .errors.push(JaktError::Message(message, span))
     }
 
-    function error_with_hint(mutable this, anon message: String, anon span: JaktSpan, anon hint: String, anon hint_span: JaktSpan) throws {
+    function error_with_hint(mut this, anon message: String, anon span: JaktSpan, anon hint: String, anon hint_span: JaktSpan) throws {
         .errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
     }
 
@@ -1066,8 +1066,8 @@ struct Parser {
         return .peek(0)
     }
 
-    public function parse_namespace(mutable this) throws -> ParsedNamespace {
-        let mutable parsed_namespace = ParsedNamespace(name: "", functions: [], structs: [])
+    public function parse_namespace(mut this) throws -> ParsedNamespace {
+        mut parsed_namespace = ParsedNamespace(name: "", functions: [], structs: [])
 
         while not .eof() {
             match .current() {
@@ -1120,8 +1120,8 @@ struct Parser {
         return parsed_namespace
     }
 
-    public function parse_struct(mutable this, anon definition_linkage: DefinitionLinkage, anon definition_type: DefinitionType) throws -> ParsedStruct {
-        let mutable parsed_struct = ParsedStruct(
+    public function parse_struct(mut this, anon definition_linkage: DefinitionLinkage, anon definition_type: DefinitionType) throws -> ParsedStruct {
+        mut parsed_struct = ParsedStruct(
             name: "",
             name_span: empty_span(),
             generic_parameters: [],
@@ -1181,12 +1181,12 @@ struct Parser {
             .error("Expected ‘{’", .current().span())
         }
 
-        let mutable fields: [ParsedField] = []
-        let mutable methods: [ParsedMethod] = []
+        mut fields: [ParsedField] = []
+        mut methods: [ParsedMethod] = []
 
         // This gets reset after each loop. If someone doesn't consume it, we error out.
-        let mutable last_visibility: Visibility? = None
-        let mutable last_visibility_span: JaktSpan? = None
+        mut last_visibility: Visibility? = None
+        mut last_visibility_span: JaktSpan? = None
 
         while not .eof() {
             let token = .current()
@@ -1271,8 +1271,8 @@ struct Parser {
         return parsed_struct
     }
 
-    public function parse_function(mutable this, anon linkage: FunctionLinkage) throws -> ParsedFunction {
-        let mutable parsed_function = ParsedFunction(
+    public function parse_function(mut this, anon linkage: FunctionLinkage) throws -> ParsedFunction {
+        mut parsed_function = ParsedFunction(
             name: "",
             name_span: empty_span(),
             params: [],
@@ -1311,9 +1311,9 @@ struct Parser {
             .error("Expected '('", .current().span())
         }
 
-        let mutable params: [ParsedParameter] = []
-        let mutable current_param_requires_label = true
-        let mutable current_param_is_mutable = true
+        mut params: [ParsedParameter] = []
+        mut current_param_requires_label = true
+        mut current_param_is_mutable = true
 
         while not .eof() {
             match .current() {
@@ -1329,7 +1329,7 @@ struct Parser {
                     .index++
                     current_param_requires_label = false
                 }
-                Mutable => {
+                Mut => {
                     .index++
                     current_param_is_mutable = true
                 }
@@ -1397,7 +1397,7 @@ struct Parser {
         return parsed_function
     }
 
-    function parse_fat_arrow(mutable this) throws -> ParsedBlock {
+    function parse_fat_arrow(mut this) throws -> ParsedBlock {
         .index++
         let start = .current().span()
         let expr = .parse_expression(allow_assignments: false)
@@ -1405,7 +1405,7 @@ struct Parser {
         return ParsedBlock(stmts: [return_statement])
     }
 
-    function parse_field(mutable this, anon visibility: Visibility) throws -> ParsedField {
+    function parse_field(mut this, anon visibility: Visibility) throws -> ParsedField {
         let parsed_variable_declaration = .parse_variable_declaration()
 
         if parsed_variable_declaration.parsed_type is Empty {
@@ -1418,7 +1418,7 @@ struct Parser {
         )
     }
 
-    function parse_method(mutable this, anon linkage: FunctionLinkage, anon visibility: Visibility) throws -> ParsedMethod {
+    function parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility) throws -> ParsedMethod {
         let parsed_function = .parse_function(linkage)
 
         // TODO: The bootstrap compiler sets parsed_function.must_instantiate here if the linkage is External.
@@ -1430,8 +1430,8 @@ struct Parser {
         )
     }
 
-    function parse_typename(mutable this) throws -> ParsedType {
-        let mutable parsed_type = .parse_type_shorthand()
+    function parse_typename(mut this) throws -> ParsedType {
+        mut parsed_type = .parse_type_shorthand()
 
         if not parsed_type is Empty {
             return parsed_type
@@ -1483,7 +1483,7 @@ struct Parser {
         return parsed_type
     }
 
-    function parse_variable_declaration(mutable this) throws -> ParsedVarDecl {
+    function parse_variable_declaration(mut this) throws -> ParsedVarDecl {
         match .current() {
             Identifier(name) => {
                 let var_name = name
@@ -1502,8 +1502,8 @@ struct Parser {
                 let decl_span = .previous().span()
 
                 // We have "name:" so far.
-                let mutable is_mutable = false
-                if .current() is Mutable {
+                mut is_mutable = false
+                if .current() is Mut {
                     .index++
                     is_mutable = true
                 }
@@ -1526,14 +1526,14 @@ struct Parser {
         )
     }
 
-    function parse_type_shorthand(mutable this) throws -> ParsedType => match .current() {
+    function parse_type_shorthand(mut this) throws -> ParsedType => match .current() {
         LSquare => .parse_type_shorthand_array_or_dictionary()
         LCurly => .parse_type_shorthand_set()
         LParen => .parse_type_shorthand_tuple()
         else => ParsedType::Empty
     }
 
-    function parse_type_shorthand_array_or_dictionary(mutable this) throws -> ParsedType {
+    function parse_type_shorthand_array_or_dictionary(mut this) throws -> ParsedType {
         // [T] is shorthand for Array<T>
         // [K:V] is shorthand for Dictionary<K, V>
         let start = .current().span()
@@ -1557,7 +1557,7 @@ struct Parser {
         return ParsedType::Empty
     }
 
-    function parse_type_shorthand_set(mutable this) throws -> ParsedType {
+    function parse_type_shorthand_set(mut this) throws -> ParsedType {
         // {T} is shorthand for Set<T>
         let start = .current().span()
         let inner = .parse_typename()
@@ -1569,11 +1569,11 @@ struct Parser {
         return ParsedType::Empty
     }
 
-    function parse_type_shorthand_tuple(mutable this) throws -> ParsedType {
+    function parse_type_shorthand_tuple(mut this) throws -> ParsedType {
         // (A, B, C) is shorthand for Tuple<A, B, C>
         let start = .current().span()
         .index++
-        let mutable types: [ParsedType] = []
+        mut types: [ParsedType] = []
         while not .eof() {
             if .current() is RParen {
                 .index++
@@ -1588,9 +1588,9 @@ struct Parser {
         return ParsedType::Empty
     }
 
-    function parse_block(mutable this) throws -> ParsedBlock {
+    function parse_block(mut this) throws -> ParsedBlock {
         let start = .current().span()
-        let mutable block = ParsedBlock(stmts: [])
+        mut block = ParsedBlock(stmts: [])
 
         if .eof() {
             .error("Incomplete block", start)
@@ -1624,7 +1624,7 @@ struct Parser {
         return block
     }
 
-    function parse_statement(mutable this, inside_block: bool) throws -> ParsedStatement {
+    function parse_statement(mut this, inside_block: bool) throws -> ParsedStatement {
         println("parse_statement: {}", .current())
         let start = .current().span()
 
@@ -1679,13 +1679,13 @@ struct Parser {
             Let => {
                 .index++
                 let is_mutable = match .current() {
-                    Mutable => {
+                    Mut => {
                         .index++
                         yield true
                     }
                     else => false
                 }
-                let mutable var = .parse_variable_declaration()
+                mut var = .parse_variable_declaration()
                 var.is_mutable = is_mutable
 
                 let init = match .current() {
@@ -1709,13 +1709,13 @@ struct Parser {
         }
     }
 
-    function parse_try_statement(mutable this) throws -> ParsedStatement {
+    function parse_try_statement(mut this) throws -> ParsedStatement {
         .index++
 
         let stmt = .parse_statement(inside_block: false)
 
-        let mutable error_name = ""
-        let mutable error_span = .current().span()
+        mut error_name = ""
+        mut error_span = .current().span()
 
         if .current() is Catch {
             .index++
@@ -1735,7 +1735,7 @@ struct Parser {
         return ParsedStatement::Try(stmt, error_name, error_span, catch_block)
     }
 
-    function parse_for_statement(mutable this) throws -> ParsedStatement {
+    function parse_for_statement(mut this) throws -> ParsedStatement {
         .index++
 
         return match .current() {
@@ -1762,7 +1762,7 @@ struct Parser {
         }
     }
 
-    function parse_if_statement(mutable this) throws -> ParsedStatement {
+    function parse_if_statement(mut this) throws -> ParsedStatement {
         if not .current() is If {
             .error("Expected ‘if’ statement", .current().span())
             return ParsedStatement::Garbage
@@ -1774,7 +1774,7 @@ struct Parser {
         let condition = .parse_expression(allow_assignments: false)
         let then_block = .parse_block()
 
-        let mutable else_statement: ParsedStatement? = None
+        mut else_statement: ParsedStatement? = None
 
         if .current() is Else {
             .index++
@@ -1796,9 +1796,9 @@ struct Parser {
         return ParsedStatement::If(condition, then_block, else_statement)
     }
 
-    function parse_expression(mutable this, allow_assignments: bool) throws -> ParsedExpression {
-        let mutable expr_stack: [ParsedExpression] = []
-        let mutable last_precedence = 1000000
+    function parse_expression(mut this, allow_assignments: bool) throws -> ParsedExpression {
+        mut expr_stack: [ParsedExpression] = []
+        mut last_precedence = 1000000
 
         let lhs = .parse_operand()
         expr_stack.push(lhs)
@@ -1863,7 +1863,7 @@ struct Parser {
         return expr_stack[0]
     }
 
-    function parse_operand_base(mutable this) throws -> ParsedExpression {
+    function parse_operand_base(mut this) throws -> ParsedExpression {
         let span = .current().span()
         match .current() {
             Dot => {
@@ -1944,12 +1944,12 @@ struct Parser {
         return ParsedExpression::Garbage(span)
     }
 
-    function parse_operand(mutable this) throws -> ParsedExpression {
+    function parse_operand(mut this) throws -> ParsedExpression {
         .skip_newlines()
         let span = .current().span()
         let start = .current().span()
         .skip_newlines()
-        let mutable expr = .parse_operand_base()
+        mut expr = .parse_operand_base()
 
         // Check for postfix operators, while we're at it
         return match .current() {
@@ -2035,7 +2035,7 @@ struct Parser {
         }
     }
 
-    function parse_operator(mutable this, allow_assignments: bool) throws -> ParsedExpression {
+    function parse_operator(mut this, allow_assignments: bool) throws -> ParsedExpression {
         let span = .current().span()
         let op = match .current() {
             QuestionMarkQuestionMark => BinaryOperator::NoneCoalescing
@@ -2086,8 +2086,8 @@ struct Parser {
         return ParsedExpression::Operator(op, span)
     }
 
-    function parse_call(mutable this) throws -> ParsedCall {
-        let mutable call = ParsedCall(
+    function parse_call(mut this) throws -> ParsedCall {
+        mut call = ParsedCall(
             name: "",
             args: [],
         )
@@ -2133,18 +2133,18 @@ struct Parser {
         return call
     }
 
-    function skip_newlines(mutable this) {
+    function skip_newlines(mut this) {
         while .current() is Eol {
             .index++
         }
     }
 
-    function parse_generic_parameters(mutable this) throws -> [[String:JaktSpan]] {
+    function parse_generic_parameters(mut this) throws -> [[String:JaktSpan]] {
         if not .current() is LessThan {
             return []
         }
         .index++
-        let mutable generic_parameters: [[String:JaktSpan]] = []
+        mut generic_parameters: [[String:JaktSpan]] = []
         .skip_newlines()
         while not .current() is GreaterThan and not .current() is Garbage {
             match .current() {
@@ -2172,7 +2172,7 @@ struct Parser {
         return generic_parameters
     }
 
-    function parse_argument_label(mutable this) throws -> String {
+    function parse_argument_label(mut this) throws -> String {
         // FIXME: Tidy this up once we can match on tuples:
         //        match (.current(), .peek(1)) {
         //            (Name(name), Colon) => ...
@@ -2189,8 +2189,8 @@ struct Parser {
         }
     }
 
-    function parse_restricted_visibility_modifier(mutable this) throws -> Visibility {
-        let mutable restricted_span = .current().span()
+    function parse_restricted_visibility_modifier(mut this) throws -> Visibility {
+        mut restricted_span = .current().span()
         
         .index++
 
@@ -2200,8 +2200,8 @@ struct Parser {
             .error("Expected ‘(’", .current().span())
         }
 
-        let mutable whitelist: [ParsedType] = []
-        let mutable expect_comma = false
+        mut whitelist: [ParsedType] = []
+        mut expect_comma = false
 
         while .index < .tokens.size() {
             match .current() {
@@ -2244,8 +2244,8 @@ struct Parser {
         return Visibility::Restricted(whitelist, span: restricted_span)
     }
 
-    function parse_array_or_dictionary_literal(mutable this) throws -> ParsedExpression {
-        let mutable is_dictionary = false
+    function parse_array_or_dictionary_literal(mut this) throws -> ParsedExpression {
+        mut is_dictionary = false
         let start = .current().span()
 
         if not .current() is LSquare {
@@ -2254,9 +2254,9 @@ struct Parser {
         }
         .index++
 
-        let mutable fill_size_expr: ParsedExpression? = None
-        let mutable output: [ParsedExpression] = []
-        let mutable dict_output: [(ParsedExpression, ParsedExpression)] = []
+        mut fill_size_expr: ParsedExpression? = None
+        mut output: [ParsedExpression] = []
+        mut dict_output: [(ParsedExpression, ParsedExpression)] = []
 
         while not .eof() {
             match .current() {
@@ -2536,18 +2536,18 @@ function main(args: [String]) {
         return 1
     }
 
-    let mutable file = File::open_for_reading(args[1])
+    mut file = File::open_for_reading(args[1])
     let file_contents = file.read_all()
 
-    let mutable lexer = Lexer(index: 0, input: file_contents, errors: [])
-    let mutable tokens: [Token] = []
+    mut lexer = Lexer(index: 0, input: file_contents, errors: [])
+    mut tokens: [Token] = []
 
     for token in lexer {
         println("token: {}", token)
         tokens.push(token)
     }
 
-    let mutable parser = Parser(index: 0, tokens, errors: [])
+    mut parser = Parser(index: 0, tokens, errors: [])
 
     let parsed_namespace = parser.parse_namespace()
 

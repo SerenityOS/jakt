@@ -2,7 +2,7 @@
 /// - output: "OK\n"
 
 struct Foo {
-    function bar(mutable this, baz: mutable Bar) {
+    function bar(mut this, baz: mut Bar) {
         println("OK")
     }
 }
@@ -10,7 +10,7 @@ struct Foo {
 class Bar {}
 
 function main() {
-    let mutable foo = Foo()
+    mut foo = Foo()
     let baz = Bar()
     foo.bar(baz)
 }

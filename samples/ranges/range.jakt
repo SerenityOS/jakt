@@ -2,7 +2,7 @@
 /// - output: "45\n"
 
 function main() {
-    let mutable total = 0
+    mut total = 0
 
     for x in 1..10 {
         total += x

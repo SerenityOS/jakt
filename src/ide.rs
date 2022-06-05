@@ -578,11 +578,7 @@ pub fn get_function_signature(project: &Project, function_id: FunctionId) -> Str
 
     for param in &function.params {
         let anon = if !param.requires_label { "anon " } else { "" };
-        let mutable = if param.variable.mutable {
-            "mutable "
-        } else {
-            ""
-        };
+        let mutable = if param.variable.mutable { "mut " } else { "" };
 
         let mut variable_type = project.typename_for_type_id(param.variable.type_id);
         if variable_type != "void" {

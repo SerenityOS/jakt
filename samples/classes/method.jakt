@@ -5,13 +5,13 @@ class Person {
     public name: String
     public age: i64
 
-    public function birthday(mutable this) {
+    public function birthday(mut this) {
         ++this.age
     }
 }
 
 function main() {
-    let mutable p = Person(name: "Bob", age: 1000)
+    mut p = Person(name: "Bob", age: 1000)
 
     p.birthday()
 

@@ -2,7 +2,7 @@
 /// - output: "hello\nPASS\n"
 
 function main() {
-    let mutable a: String? = None
+    mut a: String? = None
     a = "hello"
     println("{}", a!)
     a = None

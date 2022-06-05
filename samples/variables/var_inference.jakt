@@ -2,6 +2,6 @@
 /// - output: "100\n"
 
 function main() {
-    let mutable x = 100
+    mut x = 100
     println("{}", x)
 }

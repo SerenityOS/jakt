@@ -3,47 +3,47 @@
 
 function main() {
     {
-        let mutable x = 0i8
+        mut x = 0i8
         x++
     }
     {
-        let mutable x = 0i16
+        mut x = 0i16
         x++
     }
     {
-        let mutable x = 0i32
+        mut x = 0i32
         x++
     }
     {
-        let mutable x = 0i64
+        mut x = 0i64
         x++
     }
     {
-        let mutable x = 0u8
+        mut x = 0u8
         x++
     }
     {
-        let mutable x = 0u16
+        mut x = 0u16
         x++
     }
     {
-        let mutable x = 0u32
+        mut x = 0u32
         x++
     }
     {
-        let mutable x = 0u64
+        mut x = 0u64
         x++
     }
     {
-        let mutable x = 0uz
+        mut x = 0uz
         x++
     }
     {
-        let mutable x: c_int = 0
+        mut x: c_int = 0
         x++
     }
     {
-        let mutable x: c_char = 0
+        mut x: c_char = 0
         x++
     }
 }
