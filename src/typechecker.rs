@@ -1724,11 +1724,10 @@ pub fn typecheck_namespace_imports(
                                 );
                                 compiler.loaded_files[file_id].module_id = module.id;
                                 let scope = Scope::new(Some(PRELUDE_SCOPE_ID), false);
-                                project.current_module_mut().scopes.push(scope);
-                                project.current_module_index = module.id.0;
+                                let file_scope_id = ScopeId(module.id, 0);
                                 project.modules.push(module);
-
-                                let file_scope_id = ScopeId(project.current_module().id, 0);
+                                project.current_module_index = num_modules;
+                                project.current_module_mut().scopes.push(scope);
 
                                 let err = typecheck_module(
                                     &parsed_namespace,
