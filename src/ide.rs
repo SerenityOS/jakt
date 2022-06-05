@@ -1,3 +1,11 @@
+/*
+ * !!! DEPRECATION WARNING !!!
+ * We're not doing any more feature development in the rust-based compiler at this point.
+ * It'll be limited to bug fixes and necessities only.
+ *
+ * New features should go into the self-hosted compiler.
+ */
+
 use crate::{
     typechecker::{
         CheckedBlock, CheckedEnum, CheckedEnumVariant, CheckedExpression, CheckedFunction,
