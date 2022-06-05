@@ -49,7 +49,7 @@
              (jakt-var-decls '("mutable" "let" "anonymous" "raw")) 
              (jakt-types '("i8" "i16" "i32" "i16" "i32" "i64" "u8" "u16" "u32"
                            "u64" "f32" "f64" "bool" "c_int" "c_char" "usize"
-                           "String"))
+                           "String" "void"))
              (jakt-builtin-fn '("print" "println")) 
              (jakt-operators '("not" "and" "or" "as" "in")) 
              (jakt-structure '("struct" "class" "enum" "namespace")) 
