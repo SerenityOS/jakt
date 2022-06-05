@@ -1877,7 +1877,7 @@ pub fn typecheck_namespace_predecl(
     }
 
     for namespace in parsed_namespace.namespaces.iter() {
-        // Do full typechecks of all the namespaces that are children of this namespace
+        // Find all predeclarations in namespaces that are children of this namespace
         if namespace.name.is_some() {
             let namespace_scope_id = project.create_scope(scope_id, false);
             project.get_scope_mut(namespace_scope_id).namespace_name = namespace.name.clone();
