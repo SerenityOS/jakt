@@ -1657,7 +1657,10 @@ struct Parser {
             For => .parse_for_statement()
             Try => .parse_try_statement()
             LCurly => ParsedStatement::Block(.parse_block())
-            else => ParsedStatement::Expression(.parse_expression())
+            else => {
+                .index++
+                yield ParsedStatement::Expression(.parse_expression())
+            }
         }
     }
 
