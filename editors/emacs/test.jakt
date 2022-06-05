@@ -10,7 +10,7 @@ enum MyOptional<T> {
     None
 }
 
-function value_or_default<T>(anonymous x: MyOptional<T>, default: T) -> T {
+function value_or_default<T>(anon x: MyOptional<T>, default: T) -> T {
     return match x {
         Some(value) => {
             let stuff = maybe_do_stuff_with(value)
@@ -28,7 +28,7 @@ enum Foo {
     )
 }
 
-function look_at_foo(anonymous x: Foo) -> i32 {
+function look_at_foo(anon x: Foo) -> i32 {
     match x {
         StructLikeThingy(field_a: a, field_b) => {
             return a + field_b
