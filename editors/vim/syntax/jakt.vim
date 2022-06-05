@@ -64,6 +64,7 @@ let s:jakt_syntax_keywords = {
     \ ,              "c_int"
     \ ,              "c_char"
     \ ,              "usize"
+    \ ,              "void"
     \ ,             ]
     \ , 'jaktConstant' :["this"
     \ ,                 ]
