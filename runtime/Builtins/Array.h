@@ -39,12 +39,22 @@ public:
         return {};
     }
 
-    ErrorOr<void> add_capacity(size_t capacity)
+    ErrorOr<void> add_capacity(size_t additional_capacity_needed)
     {
-        if (Checked<size_t>::addition_would_overflow(m_capacity, capacity)) {
+        size_t available_space = m_capacity - m_size;
+
+        // If we already have enough space, don't do anything.
+        if (additional_capacity_needed < available_space)
+            return {};
+
+        // Grow the existing capacity by *at least* 25%.
+        Checked<size_t> new_capacity = m_capacity;
+        new_capacity += max(m_capacity / 4, additional_capacity_needed);
+
+        if (new_capacity.has_overflow())
             return Error::from_errno(EOVERFLOW);
-        }
-        TRY(ensure_capacity(m_capacity + capacity));
+
+        TRY(ensure_capacity(new_capacity.value()));
         return {};
     }
 
@@ -107,7 +117,7 @@ public:
 
     ErrorOr<void> push(T value)
     {
-        TRY(ensure_capacity(m_size + 1));
+        TRY(add_capacity(1));
         new (&m_elements[m_size]) T(move(value));
         ++m_size;
         return {};
