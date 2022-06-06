@@ -27,8 +27,7 @@ use crate::{
         Project, Scope, Type, TypeId,
     },
 };
-use std::cmp::Ordering;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, LinkedList};
 
 const INDENT_SIZE: usize = 4;
 
@@ -142,6 +141,46 @@ impl CodegenContext {
     }
 }
 
+fn topological_sort_modules<'a>(
+    project: &'a Project,
+    modules: &'a Vec<&'a Module>,
+) -> Vec<&'a Module> {
+    let mut in_degrees = HashMap::new();
+    for module in modules {
+        for imported_module in module.imports.iter() {
+            *in_degrees.entry(imported_module).or_insert(0) += 1;
+        }
+        if !in_degrees.contains_key(&module.id) {
+            in_degrees.insert(&module.id, 0);
+        }
+    }
+
+    let mut stack = LinkedList::new();
+    for module in modules {
+        if in_degrees[&module.id] == 0 {
+            stack.push_back(*module);
+        }
+    }
+
+    let mut sorted_modules = Vec::new();
+    while !stack.is_empty() {
+        let module = stack.pop_front().unwrap();
+        sorted_modules.push(module);
+        for imported_module in &module.imports {
+            let module_in_degrees = in_degrees.get_mut(imported_module).unwrap();
+            *module_in_degrees -= 1;
+            if *module_in_degrees == 0 {
+                stack.push_front(project.get_module(*imported_module));
+            }
+        }
+    }
+
+    if sorted_modules.len() == modules.len() {
+        return sorted_modules;
+    }
+    panic!("Cyclic module imports")
+}
+
 pub fn codegen(project: &Project) -> String {
     let mut output = String::new();
 
@@ -157,41 +196,11 @@ pub fn codegen(project: &Project) -> String {
 
     output.push_str("namespace Jakt {\n");
 
-    let module_to_scope = |module: &Module| {
-        let scope_id = ScopeId(module.id, 0);
-        project.get_scope(scope_id)
-    };
-
     // skip(1) because module 0 is always prelude
-    let mut sorted_modules: Vec<&Module> = project.modules.iter().skip(1).collect();
-    sorted_modules.sort_by(|a, b| {
-        let scope_a = module_to_scope(a);
-        let scope_b = module_to_scope(b);
+    let modules: Vec<&Module> = project.modules.iter().skip(1).collect();
+    let sorted_modules = topological_sort_modules(project, &modules);
 
-        if a.is_root() {
-            return Ordering::Greater;
-        }
-        if b.is_root() {
-            return Ordering::Less;
-        }
-        if scope_a
-            .imports
-            .iter()
-            .any(|(_, module_id, _)| *module_id == a.id)
-        {
-            Ordering::Greater
-        } else if scope_b
-            .imports
-            .iter()
-            .any(|(_, module_id, _)| *module_id == b.id)
-        {
-            Ordering::Less
-        } else {
-            Ordering::Equal
-        }
-    });
-
-    for module in &sorted_modules {
+    for module in sorted_modules.iter().rev() {
         let scope_id = ScopeId(module.id, 0);
         let scope = project.get_scope(scope_id);
 
@@ -210,7 +219,7 @@ pub fn codegen(project: &Project) -> String {
             output.push_str("}\n");
         }
     }
-    for module in &sorted_modules {
+    for module in sorted_modules.iter().rev() {
         let scope_id = ScopeId(module.id, 0);
         let scope = project.get_scope(scope_id);
 

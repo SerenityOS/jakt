@@ -262,6 +262,7 @@ pub struct Module {
     pub enums: Vec<CheckedEnum>,
     pub scopes: Vec<Scope>,
     pub types: Vec<Type>,
+    pub imports: Vec<ModuleId>,
 
     pub is_root: bool,
 }
@@ -276,6 +277,7 @@ impl Module {
             enums: vec![],
             scopes: vec![],
             types: vec![],
+            imports: vec![],
             is_root: false,
         }
     }
@@ -617,7 +619,7 @@ impl Project {
         let module_id = current_scope_id.0;
         // ScopeId(_, 0) will always be the top level scope for a module.
         // the imports should always be there.
-        for (name, id, _) in self.get_scope(ScopeId(module_id, 0)).imports.iter() {
+        for (name, id, _) in &self.get_scope(ScopeId(module_id, 0)).imports {
             if name == namespace_name {
                 return Some((ScopeId(*id, 0), true));
             }
@@ -1741,7 +1743,7 @@ pub fn typecheck_namespace_imports(
 ) -> Option<JaktError> {
     let mut error = None;
 
-    for import in parsed_namespace.imports.iter() {
+    for import in &parsed_namespace.imports {
         match compiler.search_for_path(import.module_name.name.as_str()) {
             Some(p) => match compiler.find_or_load_file(p) {
                 Ok(file_id) => {
@@ -1768,6 +1770,10 @@ pub fn typecheck_namespace_imports(
                     }
 
                     let imported_module_id = compiler.loaded_files[file_id].module_id;
+                    project
+                        .current_module_mut()
+                        .imports
+                        .push(imported_module_id);
 
                     if import.import_list.is_empty() {
                         // import the modules as it's own namespace
