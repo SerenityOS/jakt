@@ -93,12 +93,12 @@ pub struct ParsedVarDecl {
     pub parsed_type: ParsedType,
     pub mutable: bool,
     pub span: Span,
-    pub inlay_position: Option<usize>,
+    pub inlay_position: Option<Span>,
     pub visibility: Visibility,
 }
 
 impl ParsedVarDecl {
-    pub fn new(span: Span, inlay_position: Option<usize>) -> Self {
+    pub fn new(span: Span, inlay_position: Option<Span>) -> Self {
         Self {
             name: String::new(),
             parsed_type: ParsedType::Empty,
@@ -4157,7 +4157,7 @@ pub fn parse_variable_declaration(
                                 parsed_type: ParsedType::Empty,
                                 mutable: false,
                                 span: name_span,
-                                inlay_position: Some(name_span.end),
+                                inlay_position: Some(name_span),
                                 visibility,
                             },
                             None,
@@ -4171,7 +4171,7 @@ pub fn parse_variable_declaration(
                         parsed_type: ParsedType::Empty,
                         mutable: false,
                         span: name_span,
-                        inlay_position: Some(name_span.end),
+                        inlay_position: Some(name_span),
                         visibility,
                     },
                     None,

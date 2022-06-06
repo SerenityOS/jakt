@@ -526,8 +526,8 @@ fn display_message_with_span(
 
 fn display_message_with_span_json(severity: MessageSeverity, msg: &str, span: Span) {
     println!(
-        "{{\"type\": \"diagnostic\", \"message\": \"{}\", \"severity\": \"{:?}\", \"span\": {{\"start\": {}, \"end\": {}}}}}",
-        msg, severity, span.start, span.end
+        "{{\"type\": \"diagnostic\", \"message\": \"{}\", \"severity\": \"{:?}\", \"file_id\": {}, \"span\": {{\"start\": {}, \"end\": {}}}}}",
+        msg, severity, span.file_id, span.start, span.end
     );
 }
 
