@@ -1,9 +1,8 @@
-import lexer with JaktSpan, Token, JaktError, empty_span, merge_spans, Lexer, print_error
-
 /// Expect:
 /// - output: ""
 
-extern function abort()
+import lexer with JaktSpan, Token, JaktError, empty_span, merge_spans, Lexer, print_error
+
 extern struct StringBuilder {
     function append(mut this, anon s: u8)
     function to_string(mut this) throws -> String

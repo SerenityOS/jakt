@@ -1797,9 +1797,11 @@ pub fn typecheck_namespace_imports(
                                     id,
                                     imported_name.span,
                                 ) {
-                                    return Some(e);
+                                    error = error.or(Some(e));
                                 }
-                            } else if let Some(id) = project
+                            }
+
+                            if let Some(id) = project
                                 .find_enum_in_scope(import_scope_id, imported_name.name.as_str())
                             {
                                 if let Err(e) = project.add_enum_to_scope(
@@ -1808,9 +1810,11 @@ pub fn typecheck_namespace_imports(
                                     id,
                                     imported_name.span,
                                 ) {
-                                    return Some(e);
+                                    error = error.or(Some(e));
                                 }
-                            } else if let Some(id) = project
+                            }
+
+                            if let Some(id) = project
                                 .find_type_in_scope(import_scope_id, imported_name.name.as_str())
                             {
                                 if let Err(e) = project.add_type_to_scope(
@@ -1819,9 +1823,11 @@ pub fn typecheck_namespace_imports(
                                     id,
                                     imported_name.span,
                                 ) {
-                                    return Some(e);
+                                    error = error.or(Some(e));
                                 }
-                            } else if let Some(id) = project
+                            }
+
+                            if let Some(id) = project
                                 .find_struct_in_scope(import_scope_id, imported_name.name.as_str())
                             {
                                 if let Err(e) = project.add_struct_to_scope(
@@ -1830,7 +1836,7 @@ pub fn typecheck_namespace_imports(
                                     id,
                                     imported_name.span,
                                 ) {
-                                    return Some(e);
+                                    error = error.or(Some(e));
                                 }
                             }
                         }
