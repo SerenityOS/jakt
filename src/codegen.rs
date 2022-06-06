@@ -219,6 +219,7 @@ pub fn codegen(project: &Project) -> String {
             output.push_str("}\n");
         }
     }
+
     for module in sorted_modules.iter().rev() {
         let scope_id = ScopeId(module.id, 0);
         let scope = project.get_scope(scope_id);
@@ -229,12 +230,6 @@ pub fn codegen(project: &Project) -> String {
             output.push_str(format!("namespace {} {{\n", module.name).as_str());
         }
 
-        output.push_str(&codegen_namespace_predecl(
-            project,
-            scope,
-            module,
-            &mut context,
-        ));
         output.push_str(&codegen_namespace(project, scope, module, &mut context));
 
         if !module.is_root() {
