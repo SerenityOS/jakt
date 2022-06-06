@@ -225,6 +225,7 @@ enum Token {
     Loop(JaktSpan)
     Match(JaktSpan)
     Mut(JaktSpan)
+    Namespace(JaktSpan)
     Not(JaktSpan)
     Or(JaktSpan)
     Private(JaktSpan)
@@ -327,6 +328,7 @@ enum Token {
         Loop(span) => span
         Match(span) => span
         Mut(span) => span
+        Namespace(span) => span
         Not(span) => span
         Or(span) => span
         Private(span) => span
@@ -370,6 +372,7 @@ enum Token {
         "loop" => Token::Loop(span)
         "match" => Token::Match(span)
         "mut" => Token::Mut(span)
+        "namespace" => Token::Namespace(span)
         "not" => Token::Not(span)
         "or" => Token::Or(span)
         "private" => Token::Private(span)
