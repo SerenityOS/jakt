@@ -398,6 +398,17 @@ struct Lexer {
     input: [u8]
     errors: [JaktError]
 
+    function lex(input: [u8], errors: [JaktError]) throws -> [Token] {
+        mut lexer = Lexer(index: 0, input, errors)
+        mut tokens: [Token] = []
+
+        for token in lexer {
+            tokens.push(token)
+        }
+
+        return tokens
+    }
+
     function error(mut this, anon message: String, anon span: Span) throws {
         .errors.push(JaktError::Message(message, span))
     }
