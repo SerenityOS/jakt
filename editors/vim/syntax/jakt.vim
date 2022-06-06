@@ -44,7 +44,7 @@ let s:jakt_syntax_keywords = {
     \ ,                      "as"
     \ ,                      "in"
     \ ,                     ]
-    \ , 'jaktVarDecl' :["mutable"
+    \ , 'jaktVarDecl' :["mut"
     \ ,                 "let"
     \ ,                 "anon"
     \ ,                 "raw"
