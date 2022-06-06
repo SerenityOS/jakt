@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: ""
 
-import lexer with JaktSpan, Token, JaktError, empty_span, merge_spans, Lexer, print_error
+import lexer with Span, Token, JaktError, empty_span, merge_spans, Lexer, print_error
 
 extern struct StringBuilder {
     function append(mut this, anon s: u8)
@@ -32,7 +32,7 @@ enum DefinitionType {
 // Parsed Types
 struct ParsedNamespace {
     name: String?
-    name_span: JaktSpan?
+    name_span: Span?
     functions: [ParsedFunction]
     structs: [ParsedStruct]
     namespaces: [ParsedNamespace]
@@ -40,8 +40,8 @@ struct ParsedNamespace {
 
 struct ParsedStruct {
     name: String
-    name_span: JaktSpan
-    generic_parameters: [[String:JaktSpan]]
+    name_span: Span
+    generic_parameters: [[String:Span]]
     fields: [ParsedField]
     methods: [ParsedMethod]
     definition_linkage: DefinitionLinkage
@@ -50,12 +50,12 @@ struct ParsedStruct {
 
 struct ParsedFunction {
     name: String
-    name_span: JaktSpan
+    name_span: Span
     params: [ParsedParameter]
-    generic_parameters: [[String:JaktSpan]]
+    generic_parameters: [[String:Span]]
     block: ParsedBlock
     return_type: ParsedType
-    return_type_span: JaktSpan
+    return_type_span: Span
     throws: bool
 }
 
@@ -63,7 +63,7 @@ struct ParsedParameter {
     requires_label: bool
     variable: ParsedVariable
     is_mutable: bool
-    span: JaktSpan
+    span: Span
 }
 
 struct ParsedBlock {
@@ -79,14 +79,14 @@ boxed enum ParsedStatement {
     Block(ParsedBlock)
     Loop(ParsedBlock)
     While(guard: ParsedExpression, block: ParsedBlock)
-    For(iterator_name: String, name_span: JaktSpan, range: ParsedExpression, block: ParsedBlock)
+    For(iterator_name: String, name_span: Span, range: ParsedExpression, block: ParsedBlock)
     Break
     Continue
-    Return(expr: ParsedExpression, span: JaktSpan)
+    Return(expr: ParsedExpression, span: Span)
     Throw(ParsedExpression)
     Yield(ParsedExpression)
-    InlineCpp(block: ParsedBlock, span: JaktSpan)
-    Try(stmt: ParsedStatement, error_name: String, error_span: JaktSpan, catch_block: ParsedBlock)
+    InlineCpp(block: ParsedBlock, span: Span)
+    Try(stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock)
     Garbage
 }
 
@@ -165,14 +165,14 @@ enum UnaryOperator {
 struct EnumVariantPatternArgument {
     name: String?
     binding: String
-    span: JaktSpan
+    span: Span
 }
 
 enum ParsedMatchPattern {
     EnumVariant(
-        variant_name: [(String, JaktSpan)]
+        variant_name: [(String, Span)]
         variant_arguments: [EnumVariantPatternArgument]
-        arguments_span: JaktSpan
+        arguments_span: Span
     )
     Expression(ParsedExpression)
     CatchAll
@@ -180,7 +180,7 @@ enum ParsedMatchPattern {
 
 struct ParsedMatchCase {
     patterns: [ParsedMatchPattern]
-    marker_span: JaktSpan
+    marker_span: Span
     body: ParsedMatchBody
 }
 
@@ -190,28 +190,28 @@ enum ParsedMatchBody {
 }
 
 boxed enum ParsedExpression {
-    Boolean(val: bool, span: JaktSpan)
-    NumericConstant(val: i64, span: JaktSpan)
-    QuotedString(val: String, span: JaktSpan)
-    SingleQuotedString(val: String, span: JaktSpan)
-    SingleQuotedByteString(val: String, span: JaktSpan)
-    Call(call: ParsedCall, span: JaktSpan)
-    MethodCall(expr: ParsedExpression, call: ParsedCall, span: JaktSpan)
-    IndexedTuple(expr: ParsedExpression, index: usize, span: JaktSpan)
-    IndexedStruct(expr: ParsedExpression, field: String, span: JaktSpan)
-    Var(name: String, span: JaktSpan)
-    IndexedExpression(base: ParsedExpression, index: ParsedExpression, span: JaktSpan)
-    UnaryOp(expr: ParsedExpression, op: UnaryOperator, span: JaktSpan)
-    BinaryOp(lhs: ParsedExpression, op: BinaryOperator, rhs: ParsedExpression, span: JaktSpan)
-    Operator(op: BinaryOperator, span: JaktSpan)
-    OptionalSome(expr: ParsedExpression, span: JaktSpan)
-    OptionalNone(JaktSpan)
-    JaktArray(values: [ParsedExpression], fill_size: ParsedExpression?, span: JaktSpan)
-    JaktDictionary(values: [(ParsedExpression, ParsedExpression)], span: JaktSpan)
-    Range(from: ParsedExpression, to: ParsedExpression, span: JaktSpan)
-    ForcedUnwrap(expr: ParsedExpression, span: JaktSpan)
-    Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: JaktSpan)
-    Garbage(JaktSpan)
+    Boolean(val: bool, span: Span)
+    NumericConstant(val: i64, span: Span)
+    QuotedString(val: String, span: Span)
+    SingleQuotedString(val: String, span: Span)
+    SingleQuotedByteString(val: String, span: Span)
+    Call(call: ParsedCall, span: Span)
+    MethodCall(expr: ParsedExpression, call: ParsedCall, span: Span)
+    IndexedTuple(expr: ParsedExpression, index: usize, span: Span)
+    IndexedStruct(expr: ParsedExpression, field: String, span: Span)
+    Var(name: String, span: Span)
+    IndexedExpression(base: ParsedExpression, index: ParsedExpression, span: Span)
+    UnaryOp(expr: ParsedExpression, op: UnaryOperator, span: Span)
+    BinaryOp(lhs: ParsedExpression, op: BinaryOperator, rhs: ParsedExpression, span: Span)
+    Operator(op: BinaryOperator, span: Span)
+    OptionalSome(expr: ParsedExpression, span: Span)
+    OptionalNone(Span)
+    JaktArray(values: [ParsedExpression], fill_size: ParsedExpression?, span: Span)
+    JaktDictionary(values: [(ParsedExpression, ParsedExpression)], span: Span)
+    Range(from: ParsedExpression, to: ParsedExpression, span: Span)
+    ForcedUnwrap(expr: ParsedExpression, span: Span)
+    Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: Span)
+    Garbage(Span)
 
     function span(this) => match this {
         Boolean(val, span) => span
@@ -290,7 +290,7 @@ struct ParsedVarDecl {
     name: String
     parsed_type: ParsedType
     is_mutable: bool
-    span: JaktSpan
+    span: Span
 }
 
 struct ParsedField {
@@ -309,7 +309,7 @@ struct ParsedVariable {
     name: String
     parsed_type: ParsedType
     is_mutable: bool
-    span: JaktSpan
+    span: Span
 }
 
 struct ParsedCall {
@@ -318,14 +318,14 @@ struct ParsedCall {
 }
 
 boxed enum ParsedType {
-    Name(name: String, span: JaktSpan)
-    JaktArray(inner: ParsedType, span: JaktSpan)
-    Dictionary(key: ParsedType, value: ParsedType, span: JaktSpan)
-    JaktTuple(types: [ParsedType], span: JaktSpan)
-    Set(inner: ParsedType, span: JaktSpan)
-    Optional(inner: ParsedType, span: JaktSpan)
-    RawPtr(inner: ParsedType, span: JaktSpan)
-    WeakPtr(inner: ParsedType, span: JaktSpan)
+    Name(name: String, span: Span)
+    JaktArray(inner: ParsedType, span: Span)
+    Dictionary(key: ParsedType, value: ParsedType, span: Span)
+    JaktTuple(types: [ParsedType], span: Span)
+    Set(inner: ParsedType, span: Span)
+    Optional(inner: ParsedType, span: Span)
+    RawPtr(inner: ParsedType, span: Span)
+    WeakPtr(inner: ParsedType, span: Span)
     Empty
 }
 
@@ -334,11 +334,11 @@ struct Parser {
     tokens: [Token]
     errors: [JaktError]
 
-    function error(mut this, anon message: String, anon span: JaktSpan) throws {
+    function error(mut this, anon message: String, anon span: Span) throws {
         .errors.push(JaktError::Message(message, span))
     }
 
-    function error_with_hint(mut this, anon message: String, anon span: JaktSpan, anon hint: String, anon hint_span: JaktSpan) throws {
+    function error_with_hint(mut this, anon message: String, anon span: Span, anon hint: String, anon hint_span: Span) throws {
         .errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
     }
 
@@ -355,7 +355,7 @@ struct Parser {
 
     function previous(this) -> Token {
         if .index == 0 or .index > .tokens.size() {
-            return Token::Eof(JaktSpan(start: 0, end: 0))
+            return Token::Eof(Span(start: 0, end: 0))
         }
         return .tokens[.index - 1]
     }
@@ -367,7 +367,7 @@ struct Parser {
     public function parse_namespace(mut this) throws -> ParsedNamespace {
         //FIXME: The constructor should just be able to accept None directly and infer its type
         let none_string: String? = None
-        let none_span: JaktSpan? = None
+        let none_span: Span? = None
         mut parsed_namespace = ParsedNamespace(name: none_string name_span: none_span, functions: [], structs: [], namespaces: [])
 
         while not .eof() {
@@ -386,14 +386,14 @@ struct Parser {
                 }
                 Namespace => {
                     .index++
-                    let name: (String, JaktSpan)? = match .current() {
+                    let name: (String, Span)? = match .current() {
                         Identifier(name, span) => {
                             .index++
                             yield Some((name, span))
                         }
                         else => {
                             //FIXME: We should just be able to write `yield None` and have the compiler infer its type
-                            let tuple_none: (String, JaktSpan)? = None
+                            let tuple_none: (String, Span)? = None
                             yield tuple_none
                         }
                     }
@@ -517,7 +517,7 @@ struct Parser {
 
         // This gets reset after each loop. If someone doesn't consume it, we error out.
         mut last_visibility: Visibility? = None
-        mut last_visibility_span: JaktSpan? = None
+        mut last_visibility_span: Span? = None
 
         while not .eof() {
             let token = .current()
@@ -610,7 +610,7 @@ struct Parser {
             generic_parameters: [],
             block: ParsedBlock(stmts: []),
             return_type: ParsedType::Empty,
-            return_type_span: JaktSpan(start: 0, end: 0)
+            return_type_span: Span(start: 0, end: 0)
             throws: false,
         )
 
@@ -1519,7 +1519,7 @@ struct Parser {
 
         Identifier(name) => {
             let pattern_start_index = .index
-            mut variant_name: [(String, JaktSpan)] = []
+            mut variant_name: [(String, Span)] = []
 
             while .current() is Identifier {
                 .index++
@@ -1649,12 +1649,12 @@ struct Parser {
         }
     }
 
-    function parse_generic_parameters(mut this) throws -> [[String:JaktSpan]] {
+    function parse_generic_parameters(mut this) throws -> [[String:Span]] {
         if not .current() is LessThan {
             return []
         }
         .index++
-        mut generic_parameters: [[String:JaktSpan]] = []
+        mut generic_parameters: [[String:Span]] = []
         .skip_newlines()
         while not .current() is GreaterThan and not .current() is Garbage {
             match .current() {
@@ -1844,7 +1844,7 @@ enum FunctionLinkage {
 enum Visibility {
     Public
     Private
-    Restricted(whitelist: [ParsedType], span: JaktSpan)
+    Restricted(whitelist: [ParsedType], span: Span)
 }
 
 // Checked Types
@@ -1946,14 +1946,14 @@ struct CheckedParameter {
 
 struct CheckedVariable {
     var_id: VarId
-    definition_span: JaktSpan
+    definition_span: Span
 }
 
 struct CheckedVarDecl {
     name: String
     var_type_id: TypeId
     is_mutable: bool
-    span: JaktSpan
+    span: Span
 }
 
 struct CheckedBlock {
@@ -1963,7 +1963,7 @@ struct CheckedBlock {
 
 struct CheckedStruct {
     name: String
-    name_span: JaktSpan
+    name_span: Span
     generic_parameters: [TypeId]
     fields: [VarId]
     scope_id: ScopeId
@@ -1974,7 +1974,7 @@ struct CheckedStruct {
 
 struct CheckedEnum {
     name: String
-    name_span: JaktSpan
+    name_span: Span
     generic_parameters: [TypeId]
     variants: [CheckedEnumVariant]
     scope_id: ScopeId
@@ -1985,10 +1985,10 @@ struct CheckedEnum {
 }
 
 enum CheckedEnumVariant {
-    Untyped(name: String, span: JaktSpan)
-    Typed(name: String, type_id: TypeId, span: JaktSpan)
-    WithValue(name: String, expr: CheckedExpression, span: JaktSpan)
-    StructLike(name: String, fields: [VarId], span: JaktSpan)
+    Untyped(name: String, span: Span)
+    Typed(name: String, type_id: TypeId, span: Span)
+    WithValue(name: String, expr: CheckedExpression, span: Span)
+    StructLike(name: String, fields: [VarId], span: Span)
 }
 
 boxed enum CheckedStatement {
@@ -2041,23 +2041,23 @@ enum CheckedUnaryOperator {
 }
 
 boxed enum CheckedExpression {
-    Boolean(val: bool, span: JaktSpan)
-    NumericConstant(val: CheckedNumericConstant, span: JaktSpan, type_id: TypeId)
-    QuotedString(val: String, span: JaktSpan)
-    ByteConstant(val: String, span: JaktSpan)
-    CharacterConstant(val: String, span: JaktSpan)
-    UnaryOp(expr: CheckedExpression, op: CheckedUnaryOperator, span: JaktSpan, type_id: TypeId)
-    BinaryOp(lhs: CheckedExpression, op: BinaryOperator, rhs: CheckedExpression, span: JaktSpan, type_id: TypeId)
-    JaktTuple(vals: [CheckedExpression], span: JaktSpan, type_id: TypeId)
-    Range(from: CheckedExpression, to: CheckedExpression, span: JaktSpan, type_id: TypeId)
-    JaktArray(vals: [CheckedExpression], repeat: CheckedExpression?, span: JaktSpan, type_id: TypeId)
-    JaktDictionary(vals: [(CheckedExpression, CheckedExpression)], span: JaktSpan, type_id: TypeId)
-    JaktSet(vals: [CheckedExpression], span: JaktSpan, type_id: TypeId)
-    IndexedExpression(expr: CheckedExpression, index: CheckedExpression, span: JaktSpan, type_id: TypeId)
-    IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, span: JaktSpan, type_id: TypeId)
-    IndexedTuple(expr: CheckedExpression, index: usize, span: JaktSpan, type_id: TypeId)
-    IndexedStruct(expr: CheckedExpression, index: String, span: JaktSpan, type_id: TypeId)
-    Call(call: CheckedCall, span: JaktSpan, type_id: TypeId)
+    Boolean(val: bool, span: Span)
+    NumericConstant(val: CheckedNumericConstant, span: Span, type_id: TypeId)
+    QuotedString(val: String, span: Span)
+    ByteConstant(val: String, span: Span)
+    CharacterConstant(val: String, span: Span)
+    UnaryOp(expr: CheckedExpression, op: CheckedUnaryOperator, span: Span, type_id: TypeId)
+    BinaryOp(lhs: CheckedExpression, op: BinaryOperator, rhs: CheckedExpression, span: Span, type_id: TypeId)
+    JaktTuple(vals: [CheckedExpression], span: Span, type_id: TypeId)
+    Range(from: CheckedExpression, to: CheckedExpression, span: Span, type_id: TypeId)
+    JaktArray(vals: [CheckedExpression], repeat: CheckedExpression?, span: Span, type_id: TypeId)
+    JaktDictionary(vals: [(CheckedExpression, CheckedExpression)], span: Span, type_id: TypeId)
+    JaktSet(vals: [CheckedExpression], span: Span, type_id: TypeId)
+    IndexedExpression(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
+    IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
+    IndexedTuple(expr: CheckedExpression, index: usize, span: Span, type_id: TypeId)
+    IndexedStruct(expr: CheckedExpression, index: String, span: Span, type_id: TypeId)
+    Call(call: CheckedCall, span: Span, type_id: TypeId)
 }
 
 // FIXME: not a method because of https://github.com/SerenityOS/jakt/issues/527
@@ -2082,7 +2082,7 @@ function expression_type(anon expr: CheckedExpression) -> TypeId => match expr {
 }
 
 // FIXME: not a method because of https://github.com/SerenityOS/jakt/issues/527
-function expression_span(anon expr: CheckedExpression) -> JaktSpan => match expr {
+function expression_span(anon expr: CheckedExpression) -> Span => match expr {
     Boolean(val, span) => span
     NumericConstant(val, span, type_id) => span
     QuotedString(val, span) => span
@@ -2122,11 +2122,11 @@ struct Typechecker {
     function get_function(this, anon id: FunctionId) -> CheckedFunction => .functions[id.id]
     function get_variable(this, anon id: VarId) -> CheckedVarDecl => .variables[id.id]
 
-    function error(mut this, anon message: String, anon span: JaktSpan) throws {
+    function error(mut this, anon message: String, anon span: Span) throws {
         .errors.push(JaktError::Message(message, span))
     }
 
-    function error_with_hint(mut this, anon message: String, anon span: JaktSpan, anon hint: String, anon hint_span: JaktSpan) throws {
+    function error_with_hint(mut this, anon message: String, anon span: Span, anon hint: String, anon hint_span: Span) throws {
         .errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
     }
 
@@ -2154,11 +2154,11 @@ struct Typechecker {
         } else => {
             panic("not complete")
 
-            yield CheckedExpression::Boolean(val: false, span: JaktSpan(start: 0, end: 0))
+            yield CheckedExpression::Boolean(val: false, span: Span(start: 0, end: 0))
         }
     }
 
-    function typecheck_call(mut this, call: ParsedCall, scope_id: ScopeId, span: JaktSpan) throws -> CheckedExpression {
+    function typecheck_call(mut this, call: ParsedCall, scope_id: ScopeId, span: Span) throws -> CheckedExpression {
         mut args: [(String, CheckedExpression)] = []
         mut return_type = TypeId(id: BuiltinType::Void as! usize)
 
