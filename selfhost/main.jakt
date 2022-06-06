@@ -930,6 +930,8 @@ boxed enum ParsedExpression {
     Boolean(val: bool, span: JaktSpan)
     NumericConstant(val: i64, span: JaktSpan)
     QuotedString(val: String, span: JaktSpan)
+    SingleQuotedString(val: String, span: JaktSpan)
+    SingleQuotedByteString(val: String, span: JaktSpan)
     Call(call: ParsedCall, span: JaktSpan)
     MethodCall(expr: ParsedExpression, call: ParsedCall, span: JaktSpan)
     IndexedTuple(expr: ParsedExpression, index: usize, span: JaktSpan)
@@ -952,6 +954,8 @@ boxed enum ParsedExpression {
         Boolean(val, span) => span
         NumericConstant(val, span) => span
         QuotedString(val, span) => span
+        SingleQuotedString(val, span) => span
+        SingleQuotedByteString(val, span) => span
         Call(call, span) => span
         Var(name, span) => span
         IndexedExpression(base, index, span) => span
@@ -1889,6 +1893,14 @@ struct Parser {
             QuotedString(quote, span) => {
                 .index++
                 return ParsedExpression::QuotedString(val: quote, span)
+            }
+            SingleQuotedString(quote, span) => {
+                .index++
+                return ParsedExpression::SingleQuotedString(val: quote, span)
+            }
+            SingleQuotedByteString(quote, span) => {
+                .index++
+                return ParsedExpression::SingleQuotedByteString(val: quote, span)
             }
             Number(number, span) => {
                 .index++
