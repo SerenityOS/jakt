@@ -6,21 +6,25 @@
 
 #pragma once
 
+#include <Builtins/Array.h>
+#include <Builtins/Dictionary.h>
+#include <Builtins/Set.h>
 #include <Jakt/Format.h>
 #include <Jakt/Forward.h>
 #include <Jakt/String.h>
 #include <Jakt/StringView.h>
 #include <Jakt/Tuple.h>
-#include <Builtins/Array.h>
-#include <Builtins/Dictionary.h>
-#include <Builtins/Set.h>
 #include <stdarg.h>
 
 namespace Jakt {
 
 class StringBuilder {
 public:
-    explicit StringBuilder();
+    static ErrorOr<StringBuilder> create()
+    {
+        auto array = TRY(Array<u8>::create_empty());
+        return StringBuilder { move(array) };
+    }
     ~StringBuilder() = default;
 
     ErrorOr<void> try_append(StringView);
@@ -72,6 +76,8 @@ public:
     }
 
 private:
+    explicit StringBuilder(Array<u8> buffer);
+
     ErrorOr<void> will_append(size_t);
     u8* data() { return m_buffer.unsafe_data(); }
     u8 const* data() const { return const_cast<StringBuilder*>(this)->m_buffer.unsafe_data(); }
@@ -97,7 +103,7 @@ template<typename T>
 struct Formatter<JaktInternal::Array<T>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Array<T> const& value)
     {
-        StringBuilder string_builder;
+        auto string_builder = TRY(StringBuilder::create());
         string_builder.append("[");
         for (size_t i = 0; i < value.size(); ++i) {
             append_value(string_builder, value[i]);
@@ -113,7 +119,7 @@ template<typename T>
 struct Formatter<JaktInternal::Set<T>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Set<T> const& set)
     {
-        StringBuilder string_builder;
+        auto string_builder = TRY(StringBuilder::create());
         string_builder.append("{");
         auto iter = set.iterator();
 
@@ -131,7 +137,7 @@ template<typename K, typename V>
 struct Formatter<JaktInternal::Dictionary<K, V>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Dictionary<K, V> const& dict)
     {
-        StringBuilder string_builder;
+        auto string_builder = TRY(StringBuilder::create());
         string_builder.append("[");
         auto iter = dict.iterator();
 
@@ -152,7 +158,7 @@ template<typename... Ts>
 struct Formatter<Jakt::Tuple<Ts...>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, Jakt::Tuple<Ts...> const& tuple)
     {
-        StringBuilder string_builder;
+        auto string_builder = TRY(StringBuilder::create());
         string_builder.append("(");
         if constexpr (sizeof...(Ts) > 0) {
             tuple.apply_as_args([&](auto first, auto... args) {

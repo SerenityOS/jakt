@@ -428,7 +428,7 @@ ErrorOr<int> main(Array<String>);
 
 int main(int argc, char** argv)
 {
-    Jakt::Array<Jakt::String> args;
+    auto args = MUST(Jakt::Array<Jakt::String>::create_empty());
     for (int i = 0; i < argc; ++i) {
         MUST(args.push(MUST(Jakt::String::copy(Jakt::StringView(argv[i])))));
     }

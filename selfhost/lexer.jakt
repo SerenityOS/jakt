@@ -1,7 +1,7 @@
 extern struct StringBuilder {
     function append(mut this, anon s: u8)
     function to_string(mut this) throws -> String
-    function StringBuilder() -> StringBuilder
+    function create() throws -> StringBuilder
 }
 
 // FIXME: These should not need explicit "-> bool" return types.
@@ -424,7 +424,7 @@ struct Lexer {
     }
 
     function substring(this, start: usize, length: usize) throws -> String {
-        mut builder = StringBuilder()
+        mut builder = StringBuilder::create()
         for i in start..length {
             builder.append(.input[i])
         }
@@ -461,7 +461,7 @@ struct Lexer {
         }
 
         // Everything but the quotes
-        mut builder = StringBuilder()
+        mut builder = StringBuilder::create()
         builder.append(.input[start + 1])
         let str = builder.to_string()
 
@@ -494,7 +494,7 @@ struct Lexer {
             let end = .index
             return Token::Number(number: total, span: Span(start, end))
         } else if is_ascii_alpha(.peek()) or .peek() == b'_' {
-            mut string_builder = StringBuilder()
+            mut string_builder = StringBuilder::create()
 
             while is_ascii_alphanumeric(.peek()) or .peek() == b'_' {
                 let value = .input[.index]

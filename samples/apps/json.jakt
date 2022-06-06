@@ -2,7 +2,7 @@ extern struct StringBuilder {
     // FIXME: Jakt::StringBuilder::append() actually takes a c_char, not a u8, but nobody complains
     function append(mut this, anon c: u8)
     function to_string(this) throws -> String
-    function StringBuilder() -> StringBuilder
+    function create() throws -> StringBuilder
 }
 
 extern function abort()
@@ -58,7 +58,7 @@ class JsonParser {
             throw Error::from_errno(9007)
         }
 
-        mut builder = StringBuilder()
+        mut builder = StringBuilder::create()
 
         loop {
             mut ch = 0u8

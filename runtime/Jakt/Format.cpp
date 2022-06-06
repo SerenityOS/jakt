@@ -366,7 +366,7 @@ ErrorOr<void> FormatBuilder::put_f64(
     char fill,
     SignMode sign_mode)
 {
-    StringBuilder string_builder;
+    auto string_builder = TRY(StringBuilder::create());
     FormatBuilder format_builder { string_builder };
 
     if (__builtin_isnan(value) || __builtin_isinf(value)) {
@@ -433,7 +433,7 @@ ErrorOr<void> FormatBuilder::put_f80(
     char fill,
     SignMode sign_mode)
 {
-    StringBuilder string_builder;
+    auto string_builder = TRY(StringBuilder::create());
     FormatBuilder format_builder { string_builder };
 
     if (__builtin_isnan(value) || __builtin_isinf(value)) {
@@ -625,7 +625,7 @@ ErrorOr<void> Formatter<StringView>::format(FormatBuilder& builder, StringView v
 
 ErrorOr<void> Formatter<FormatString>::vformat(FormatBuilder& builder, StringView fmtstr, TypeErasedFormatParams& params)
 {
-    StringBuilder string_builder;
+    auto string_builder = TRY(StringBuilder::create());
     TRY(Jakt::vformat(string_builder, fmtstr, params));
     TRY(Formatter<StringView>::format(builder, string_builder.string_view()));
     return {};
@@ -711,7 +711,7 @@ ErrorOr<void> Formatter<wchar_t>::format(FormatBuilder& builder, wchar_t value)
         Formatter<u32> formatter { *this };
         return formatter.format(builder, static_cast<u32>(value));
     } else {
-        StringBuilder codepoint;
+        auto codepoint = TRY(StringBuilder::create());
         codepoint.append_code_point(value);
 
         Formatter<StringView> formatter { *this };
@@ -787,7 +787,7 @@ ErrorOr<void> Formatter<float>::format(FormatBuilder& builder, float value)
 #ifndef KERNEL
 void vout(FILE* file, StringView fmtstr, TypeErasedFormatParams& params, bool newline)
 {
-    StringBuilder builder;
+    auto builder = MUST(StringBuilder::create());
     MUST(vformat(builder, fmtstr, params));
 
     if (newline)
@@ -814,7 +814,7 @@ void vdbgln(StringView fmtstr, TypeErasedFormatParams& params)
     if (!is_debug_enabled)
         return;
 
-    StringBuilder builder;
+    auto builder = MUST(StringBuilder::create());
 
 #ifdef __serenity__
 #    ifdef KERNEL
@@ -867,7 +867,7 @@ void vdbgln(StringView fmtstr, TypeErasedFormatParams& params)
 #ifdef KERNEL
 void vdmesgln(StringView fmtstr, TypeErasedFormatParams& params)
 {
-    StringBuilder builder;
+    auto builder = MUST(StringBuilder::create());
 
 #    ifdef __serenity__
     struct timespec ts = {};
@@ -897,7 +897,7 @@ void v_critical_dmesgln(StringView fmtstr, TypeErasedFormatParams& params)
     // FIXME: Try to avoid memory allocations further to prevent faulting
     // at OOM conditions.
 
-    StringBuilder builder;
+    auto builder = MUST(StringBuilder::create());
 #    ifdef __serenity__
     if (Kernel::Processor::is_initialized() && Kernel::Thread::current()) {
         auto& thread = *Kernel::Thread::current();

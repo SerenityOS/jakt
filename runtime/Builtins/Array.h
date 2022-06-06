@@ -210,8 +210,9 @@ private:
 
 template<typename T>
 class Array {
+    using Storage = ArrayStorage<T>;
+
 public:
-    Array() = default;
     Array(Array const&) = default;
     Array(Array&&) = default;
     Array& operator=(Array const&) = default;
@@ -223,41 +224,44 @@ public:
         return ArrayIterator<T> { *m_storage };
     }
 
-    Array(std::initializer_list<T> list) requires(!IsLvalueReference<T>)
+    static ErrorOr<Array> create_empty()
     {
-        // FIXME: Should not MUST()
-        MUST(ensure_capacity(list.size()));
-        for (auto& item : list)
-            MUST(push(item));
+        auto storage = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Storage));
+        return Array { move(storage) };
     }
 
-    bool is_empty() const { return !m_storage || m_storage->is_empty(); }
-    size_t size() const { return m_storage ? m_storage->size() : 0; }
-    size_t capacity() const { return m_storage ? m_storage->capacity() : 0; }
+    static ErrorOr<Array> create_with(std::initializer_list<T> list) requires(!IsLvalueReference<T>)
+    {
+        auto array = TRY(create_empty());
+        TRY(array.ensure_capacity(list.size()));
+        for (auto& item : list)
+            TRY(array.push(item));
+        return array;
+    }
+
+    bool is_empty() const { return m_storage->is_empty(); }
+    size_t size() const { return m_storage->size(); }
+    size_t capacity() const { return m_storage->capacity(); }
 
     ErrorOr<void> push(T value)
     {
-        auto* storage = TRY(ensure_storage());
-        TRY(storage->push(move(value)));
+        TRY(m_storage->push(move(value)));
         return {};
     }
 
     ErrorOr<void> push_values(T const* values, size_t count)
     {
-        auto* storage = TRY(ensure_storage());
-        TRY(storage->push_values(values, count));
+        TRY(m_storage->push_values(values, count));
         return {};
     }
 
     T const& at(size_t index) const
     {
-        VERIFY(m_storage);
         return m_storage->at(index);
     }
 
     T& at(size_t index)
     {
-        VERIFY(m_storage);
         return m_storage->at(index);
     }
 
@@ -271,43 +275,36 @@ public:
 
     ErrorOr<void> ensure_capacity(size_t capacity)
     {
-        auto* storage = TRY(ensure_storage());
-        TRY(storage->ensure_capacity(capacity));
+        TRY(m_storage->ensure_capacity(capacity));
         return {};
     }
 
     ErrorOr<void> add_capacity(size_t capacity)
     {
-        auto* storage = TRY(ensure_storage());
-        TRY(storage->add_capacity(capacity));
+        TRY(m_storage->add_capacity(capacity));
         return {};
     }
 
     ErrorOr<void> add_size(size_t size)
     {
-        auto* storage = TRY(ensure_storage());
-        TRY(storage->add_size(size));
+        TRY(m_storage->add_size(size));
         return {};
     }
 
     ArraySlice<T> slice(size_t offset, size_t size)
     {
-        if (!m_storage)
-            return {};
         return { *m_storage, offset, size };
     }
 
     void shrink(size_t size)
     {
-        auto* storage = MUST(ensure_storage());
-        storage->shrink(size);
+        m_storage->shrink(size);
     }
 
     ErrorOr<void> resize(size_t size)
     {
         if (size != this->size()) {
-            auto* storage = TRY(ensure_storage());
-            TRY(storage->resize(size));
+            TRY(m_storage->resize(size));
         }
         return {};
     }
@@ -323,7 +320,7 @@ public:
 
     static ErrorOr<Array> filled(size_t size, T value)
     {
-        Array array;
+        auto array = TRY(create_empty());
         TRY(array.ensure_capacity(size));
         for (size_t i = 0; i < size; ++i) {
             TRY(array.push(value));
@@ -333,21 +330,16 @@ public:
 
     T* unsafe_data()
     {
-        if (!m_storage)
-            return nullptr;
         return m_storage->unsafe_data();
     }
 
 private:
-    ErrorOr<ArrayStorage<T>*> ensure_storage()
+    explicit Array(NonnullRefPtr<Storage> storage)
+        : m_storage(storage)
     {
-        if (!m_storage) {
-            m_storage = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) ArrayStorage<T>));
-        }
-        return m_storage.ptr();
     }
 
-    RefPtr<ArrayStorage<T>> m_storage;
+    NonnullRefPtr<Storage> m_storage;
 };
 
 }
