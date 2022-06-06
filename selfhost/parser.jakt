@@ -16,6 +16,16 @@ enum DefinitionType {
     Struct
 }
 
+struct ImportName {
+    name: String
+    span: Span
+}
+
+struct ParsedImport {
+    module_name: ImportName
+    import_list: [ImportName]
+}
+
 struct ParsedNamespace {
     name: String?
     name_span: Span?
@@ -23,6 +33,7 @@ struct ParsedNamespace {
     structs: [ParsedStruct]
     namespaces: [ParsedNamespace]
     enums: [ParsedEnum]
+    imports: [ParsedImport]
 }
 
 struct ParsedStruct {
@@ -387,10 +398,14 @@ struct Parser {
             structs: []
             namespaces: []
             enums: []
+            imports: []
         )
 
         while not .eof() {
             match .current() {
+                Import => {
+                    parsed_namespace.imports.push(.parse_import())
+                }
                 Function => {
                     let function = .parse_function(FunctionLinkage::Internal)
                     parsed_namespace.functions.push(function)
@@ -477,6 +492,55 @@ struct Parser {
         }
 
         return parsed_namespace
+    }
+
+    function parse_import(mut this) throws -> ParsedImport {
+        mut parsed_import = ParsedImport(
+            module_name: ImportName(name: "", span: .current().span())
+            import_list: []
+        )
+
+        .index++
+        parsed_import.module_name = match .current() {
+            Identifier(name, span) => ImportName(name, span)
+            else => {
+                .error("Expected module name", .current().span())
+                return parsed_import
+            }
+        }
+
+        .index++
+
+        if .eol() {
+            return parsed_import
+        }
+
+        // FIXME: Parse module alias
+
+        if .current() is LCurly {
+            .index++
+        } else {
+            .error("Expected ‘{’", .current().span())
+        }
+
+        while not .eol() {
+            match .current() {
+                Identifier(name, span) => {
+                    parsed_import.import_list.push(ImportName(name, span))
+                    .index++
+                }
+                RCurly => {
+                    .index++
+                    break
+                }
+                else => {
+                    .error("Expected import symbol", .current().span())
+                    .index++
+                }
+            }
+        }
+
+        return parsed_import
     }
 
     function parse_enum(mut this, anon definition_linkage: DefinitionLinkage, is_boxed: bool) throws -> ParsedEnum {
