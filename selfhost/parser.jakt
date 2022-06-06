@@ -3,8 +3,8 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-import lexer with Token, Span, merge_spans, empty_span, JaktError
-import utility with panic, todo
+import lexer { JaktError, Span, Token, empty_span, merge_spans }
+import utility { panic, todo }
 
 enum DefinitionLinkage {
     Internal

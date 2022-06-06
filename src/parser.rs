@@ -591,65 +591,46 @@ fn parse_import(tokens: &[Token], index: &mut usize) -> (ParsedImport, Option<Ja
     }
 
     let mut import_list = vec![];
-    if let Some(with_token) = tokens.get(*index) {
-        match &with_token.contents {
-            TokenContents::Name(value) if value == "with" => {
-                *index += 1;
+    if let Some(Token {
+        contents: TokenContents::LCurly,
+        ..
+    }) = tokens.get(*index)
+    {
+        *index += 1;
 
-                while *index < tokens.len() {
-                    if let Some(token) = tokens.get(*index) {
-                        *index += 1;
-                        match &token.contents {
-                            TokenContents::Name(name) => {
-                                import_list.push(ImportName {
-                                    name: name.clone(),
-                                    span: token.span,
-                                });
-                            }
-                            _ => {
-                                error = error.or(Some(JaktError::ParserError(
-                                    "expected name".to_string(),
-                                    tokens[*index - 1].span,
-                                )));
-                            }
-                        }
-                    }
-
-                    if let TokenContents::Comma = &tokens[*index].contents {
-                        *index += 1;
-                    } else {
-                        break;
-                    }
+        while *index < tokens.len() {
+            match &tokens[*index].contents {
+                TokenContents::Name(name) => {
+                    import_list.push(ImportName {
+                        name: name.clone(),
+                        span: tokens[*index].span,
+                    });
+                    *index += 1;
                 }
-
-                (
-                    ParsedImport {
-                        module_name,
-                        alias_name,
-                        import_list,
-                    },
-                    error,
-                )
+                TokenContents::Comma => {
+                    *index += 1;
+                }
+                TokenContents::RCurly => {
+                    *index += 1;
+                    break;
+                }
+                _ => {
+                    error = error.or(Some(JaktError::ParserError(
+                        "Expected name or ‘}’".to_string(),
+                        tokens[*index - 1].span,
+                    )));
+                }
             }
-            _ => (
-                ParsedImport {
-                    module_name,
-                    alias_name,
-                    import_list,
-                },
-                error,
-            ),
         }
-    } else {
-        (
-            ParsedImport {
-                module_name,
-                alias_name,
-                import_list,
-            },
-            error,
-        )
     }
+    (
+        ParsedImport {
+            module_name,
+            alias_name,
+            import_list,
+        },
+        error,
+    )
 }
 
 pub fn parse_namespace(
