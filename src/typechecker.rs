@@ -3817,7 +3817,7 @@ pub fn typecheck_statement(
                                     parsed_type: ParsedType::Empty,
                                     mutable: iterable_should_be_mutable,
                                     span: *iterator_span,
-                                    inlay_position: Some((*iterator_span).end),
+                                    inlay_position: Some(*iterator_span),
                                     visibility: Visibility::Public,
                                 },
                                 ParsedExpression::ForcedUnwrap(
@@ -3976,8 +3976,9 @@ pub fn typecheck_statement(
             if project.dump_type_hints {
                 if let Some(inlay_position) = var_decl.inlay_position {
                     println!(
-                        "{{\"type\": \"hint\", \"position\": {}, \"typename\": \"{}\" }}",
-                        inlay_position,
+                        "{{\"type\": \"hint\", \"file_id\": {}, \"position\": {}, \"typename\": \"{}\" }}",
+                        inlay_position.file_id,
+                        inlay_position.end,
                         project.typename_for_type_id(lhs_type_id)
                     );
                 }
@@ -5310,7 +5311,8 @@ pub fn typecheck_expression(
                                                     );
                                                     if project.dump_type_hints {
                                                         println!(
-                                                            "{{\"type\": \"hint\", \"position\": {}, \"typename\": \"{}\" }}",
+                                                            "{{\"type\": \"hint\", \"file_id\": {}, \"position\": {}, \"typename\": \"{}\" }}",
+                                                            args[0].2.file_id,
                                                             args[0].2.end,
                                                             project.typename_for_type_id(type_id)
                                                         );
@@ -5404,7 +5406,8 @@ pub fn typecheck_expression(
                                                         Some((type_id, span)) => {
                                                             if project.dump_type_hints {
                                                                 println!(
-                                                                    "{{\"type\": \"hint\", \"position\": {}, \"typename\": \"{}\" }}",
+                                                                    "{{\"type\": \"hint\", \"file_id\": {}, \"position\": {}, \"typename\": \"{}\" }}",
+                                                                    arg.2.file_id,
                                                                     arg.2.end,
                                                                     project.typename_for_type_id(type_id)
                                                                 );
