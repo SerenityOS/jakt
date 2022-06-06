@@ -31,9 +31,11 @@ enum DefinitionType {
 
 // Parsed Types
 struct ParsedNamespace {
-    name: String
+    name: String?
+    name_span: JaktSpan?
     functions: [ParsedFunction]
     structs: [ParsedStruct]
+    namespaces: [ParsedNamespace]
 }
 
 struct ParsedStruct {
@@ -363,7 +365,10 @@ struct Parser {
     }
 
     public function parse_namespace(mut this) throws -> ParsedNamespace {
-        mut parsed_namespace = ParsedNamespace(name: "", functions: [], structs: [])
+        //FIXME: The constructor should just be able to accept None directly and infer its type
+        let none_string: String? = None
+        let none_span: JaktSpan? = None
+        mut parsed_namespace = ParsedNamespace(name: none_string name_span: none_span, functions: [], structs: [], namespaces: [])
 
         while not .eof() {
             match .current() {
@@ -378,6 +383,36 @@ struct Parser {
                 Class => {
                     let parsed_struct = .parse_struct(DefinitionLinkage::Internal, DefinitionType::Class)
                     parsed_namespace.structs.push(parsed_struct)
+                }
+                Namespace => {
+                    .index++
+                    let name: (String, JaktSpan)? = match .current() {
+                        Identifier(name, span) => {
+                            .index++
+                            yield Some((name, span))
+                        }
+                        else => {
+                            //FIXME: We should just be able to write `yield None` and have the compiler infer its type
+                            let tuple_none: (String, JaktSpan)? = None
+                            yield tuple_none
+                        }
+                    }
+                    if .current() is LCurly {
+                        .index++
+                    } else {
+                        .error("Expected ‘{’", .current().span())
+                    }
+                    mut namespace_ = .parse_namespace()
+                    if .current() is RCurly {
+                        .index++
+                    } else {
+                        .error("Incomplete namespace", .previous().span())
+                    }
+                    if name.has_value() {
+                        namespace_.name = name!.0
+                        namespace_.name_span = name!.1
+                    }
+                    parsed_namespace.namespaces.push(namespace_)
                 }
                 Extern => {
                     .index++
