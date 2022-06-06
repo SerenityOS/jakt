@@ -1,0 +1,7 @@
+/// Expect:
+/// - error: "expected name, found keyword"
+import cpp
+
+function main() {
+    println("What")
+}

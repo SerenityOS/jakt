@@ -1,0 +1,7 @@
+/// Expect:
+/// - error: "expected name, found keyword"
+import A as throws
+
+function main() {
+    println("What")
+}

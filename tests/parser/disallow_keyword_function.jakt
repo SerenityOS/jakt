@@ -1,0 +1,10 @@
+/// Expect:
+/// - error: "expected name, found keyword"
+
+function function() {
+    println("What")
+}
+
+function main() {
+    function()
+}

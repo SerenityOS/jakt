@@ -540,9 +540,17 @@ fn parse_import(tokens: &[Token], index: &mut usize) -> (ParsedImport, Option<Ja
     let module_name = if let Some(token) = tokens.get(*index) {
         *index += 1;
         if let TokenContents::Name(name) = &token.contents {
-            ImportName {
-                name: name.clone(),
-                span: token.span,
+            if is_keyword(name) {
+                error = error.or(Some(JaktError::ParserError(
+                    "expected name, found keyword".to_string(),
+                    tokens[*index - 1].span,
+                )));
+                ImportName::default()
+            } else {
+                ImportName {
+                    name: name.clone(),
+                    span: token.span,
+                }
             }
         } else {
             error = error.or(Some(JaktError::ParserError(
@@ -569,6 +577,12 @@ fn parse_import(tokens: &[Token], index: &mut usize) -> (ParsedImport, Option<Ja
                 if let Some(with_token) = tokens.get(*index) {
                     match &with_token.contents {
                         TokenContents::Name(value) => {
+                            if is_keyword(value) {
+                                error = error.or(Some(JaktError::ParserError(
+                                    "expected name, found keyword".to_string(),
+                                    tokens[*index].span,
+                                )));
+                            }
                             *index += 1;
                             alias_name = Some(value.clone());
                         }
@@ -649,6 +663,20 @@ fn parse_import(tokens: &[Token], index: &mut usize) -> (ParsedImport, Option<Ja
             },
             error,
         )
+    }
+}
+
+fn is_keyword(name: &str) -> bool {
+    match name {
+        "if" | "else" | "match" | "while" | "for" | "loop" | "return" | "break" | "continue"
+        | "throw" | "yield" | "true" | "false" | "function" | "extern" | "throws" | "defer"
+        | "unsafe" | "try" | "catch" | "cpp" | "not" | "and" | "or" | "as" | "in" | "mut"
+        | "let" | "anon" | "raw" | "i8" | "u8" | "i16" | "u16" | "i32" | "u32" | "i64" | "u64"
+        | "f32" | "f64" | "bool" | "c_int" | "c_char" | "usize" | "void" | "this" | "struct"
+        | "class" | "enum" | "namespace" | "public" | "private" | "is" | "restricted" | "weak" => {
+            true
+        }
+        _ => false,
     }
 }
 
@@ -741,6 +769,12 @@ pub fn parse_namespace(
                         // Then the LCurly and RCurly, then we parse the contents inside
                         let mut name = None;
                         if let TokenContents::Name(namespace_name) = &tokens[*index].contents {
+                            if is_keyword(namespace_name) {
+                                error = error.or(Some(JaktError::ParserError(
+                                    "expected name, found keyword".to_string(),
+                                    tokens[*index].span,
+                                )));
+                            }
                             *index += 1;
                             name = Some(namespace_name.clone())
                         }
@@ -924,6 +958,14 @@ pub fn parse_enum(
         *index += 1;
         enum_.name = name.to_string();
         enum_.name_span = *name_span;
+
+        if is_keyword(name) {
+            error = error.or(Some(JaktError::ParserError(
+                "expected name, found keyword".to_string(),
+                tokens[*index].span,
+            )));
+        }
+
         // Following the name can either be a `:` to denote the underlying type, a `<` to denote generic parameters, or nothing.
         skip_newlines(tokens, index);
         match tokens.get(*index) {
@@ -1375,6 +1417,13 @@ pub fn parse_struct(
                 contents: TokenContents::Name(struct_name),
                 span,
             } => {
+                if is_keyword(struct_name) {
+                    error = error.or(Some(JaktError::ParserError(
+                        "expected name, found keyword".to_string(),
+                        tokens[*index].span,
+                    )));
+                }
+
                 *index += 1;
 
                 let name_span = *span;
@@ -1690,6 +1739,13 @@ pub fn parse_function(
                 contents: TokenContents::Name(function_name),
                 ..
             } => {
+                if is_keyword(function_name) {
+                    error = error.or(Some(JaktError::ParserError(
+                        "expected name, found keyword".to_string(),
+                        tokens[*index].span,
+                    )));
+                }
+
                 let name_span = tokens[*index].span;
 
                 *index += 1;
@@ -4140,6 +4196,13 @@ pub fn parse_variable_declaration(
 
     match &tokens[*index].contents {
         TokenContents::Name(name) => {
+            if is_keyword(name) {
+                error = error.or(Some(JaktError::ParserError(
+                    "expected name, found keyword".to_string(),
+                    tokens[*index].span,
+                )));
+            }
+
             let var_name = name.to_string();
             let name_span = tokens[*index].span;
 
@@ -4160,7 +4223,7 @@ pub fn parse_variable_declaration(
                                 inlay_position: Some(name_span),
                                 visibility,
                             },
-                            None,
+                            error,
                         );
                     }
                 }
@@ -4174,7 +4237,7 @@ pub fn parse_variable_declaration(
                         inlay_position: Some(name_span),
                         visibility,
                     },
-                    None,
+                    error,
                 );
             }
 

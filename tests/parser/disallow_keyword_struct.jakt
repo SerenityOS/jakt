@@ -1,0 +1,8 @@
+/// Expect:
+/// - error: "expected name, found keyword"
+
+struct unsafe {}
+
+function main() {
+    let x = unsafe()
+}

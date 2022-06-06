@@ -1,0 +1,11 @@
+/// Expect:
+/// - error: "expected name, found keyword"
+
+struct A {
+    defer: String
+}
+
+function main() {
+    let x = A(defer: "What")
+    println("{}", x.defer)
+}

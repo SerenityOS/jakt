@@ -1,0 +1,12 @@
+/// Expect:
+/// - error: "expected name, found keyword"
+
+namespace namespace {
+    function what() {
+        println("What")
+    }
+}
+
+function main() {
+    namespace::what()
+}

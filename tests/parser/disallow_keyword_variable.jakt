@@ -1,0 +1,7 @@
+/// Expect:
+/// - error: "expected name, found keyword"
+
+function main() {
+    let i32 = "What"
+    println("{}", i32)
+}
