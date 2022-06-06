@@ -1,6 +1,6 @@
-import lexer with Span, JaktError
-import parser with ParsedExpression, ParsedCall, BinaryOperator, DefinitionLinkage, DefinitionType
-import utility with panic, todo
+import lexer { JaktError, Span }
+import parser { BinaryOperator, DefinitionLinkage, DefinitionType, ParsedExpression, ParsedCall }
+import utility { panic, todo }
 
 struct ModuleId {
     id: usize

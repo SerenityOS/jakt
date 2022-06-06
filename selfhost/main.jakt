@@ -6,9 +6,9 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-import lexer with Span, Token, JaktError, empty_span, merge_spans, Lexer, print_error
-import parser with Parser, ParsedCall, ParsedExpression, BinaryOperator, DefinitionLinkage, DefinitionType
-import utility with panic, todo
+import lexer { JaktError, Lexer, Span, Token, empty_span, merge_spans, print_error }
+import parser { BinaryOperator, DefinitionLinkage, DefinitionType, ParsedCall, ParsedExpression, Parser }
+import utility { panic, todo }
 
 function main(args: [String]) {
     if args.size() <= 1 {
