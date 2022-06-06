@@ -3141,7 +3141,8 @@ fn codegen_expr(
                             || type_module.id == ModuleId(0)
                             || project.get_function(function_id).linkage
                                 == FunctionLinkage::External
-                            || !call.namespace.is_empty())
+                            || (!call.namespace.is_empty()
+                                && (call.namespace[0].name == type_module.name.as_str())))
                         {
                             output.push_str(type_module.name.as_str());
                             output.push_str("::");
