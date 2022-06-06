@@ -11,8 +11,8 @@ function is_ascii_hexdigit(anon c: u8) -> bool => (c >= b'0' and c <= b'9') or (
 function is_ascii_alphanumeric(anon c: u8) -> bool => is_ascii_alpha(c) or is_ascii_digit(c)
 
 enum JaktError {
-    Message(message: String, span: JaktSpan)
-    MessageWithHint(message: String, span: JaktSpan, hint: String, hint_span: JaktSpan)
+    Message(message: String, span: Span)
+    MessageWithHint(message: String, span: Span, hint: String, hint_span: Span)
 }
 
 function print_error(file_name: String, file_contents: [u8], error: JaktError) throws {
@@ -42,7 +42,7 @@ function ansi_color_code(severity: MessageSeverity) throws => match severity {
     Error => "31" // Red
 }
 
-function display_message_with_span(anon severity: MessageSeverity, file_name: String, file_contents: [u8], message: String, span: JaktSpan) throws {
+function display_message_with_span(anon severity: MessageSeverity, file_name: String, file_contents: [u8], message: String, span: Span) throws {
     println("{}: {}", severity_name(severity), message)
 
     let line_spans = gather_line_spans(file_contents)
@@ -88,7 +88,7 @@ function display_message_with_span(anon severity: MessageSeverity, file_name: St
     println("\u001b[0m-----")
 }
 
-function print_source_line(severity: MessageSeverity, file_contents: [u8], file_span: (usize, usize), error_span: JaktSpan, line_number: usize, largest_line_number: usize) throws {
+function print_source_line(severity: MessageSeverity, file_contents: [u8], file_span: (usize, usize), error_span: Span, line_number: usize, largest_line_number: usize) throws {
     mut index = file_span.0
 
     let width = format("{}", largest_line_number).length()
@@ -133,119 +133,118 @@ function gather_line_spans(file_contents: [u8]) throws -> [(usize, usize)] {
     return output
 }
 
-//FIXME: Would be nice to name this Span and not have conflict
-struct JaktSpan {
+struct Span {
     start: usize
     end: usize
 }
 
-function merge_spans(anon start: JaktSpan, anon end: JaktSpan) -> JaktSpan => JaktSpan(start: start.start, end: end.end)
-function empty_span() -> JaktSpan => JaktSpan(start: 0, end: 0)
+function merge_spans(anon start: Span, anon end: Span) -> Span => Span(start: start.start, end: end.end)
+function empty_span() -> Span => Span(start: 0, end: 0)
 
 enum Token {
-    SingleQuotedString(quote: String, span: JaktSpan)
-    SingleQuotedByteString(quote: String, span: JaktSpan)
-    QuotedString(quote: String, span: JaktSpan)
-    Number(number: i64, span: JaktSpan)
-    Identifier(name: String, span: JaktSpan)
-    Semicolon(JaktSpan)
-    Colon(JaktSpan)
-    ColonColon(JaktSpan)
-    LParen(JaktSpan)
-    RParen(JaktSpan)
-    LCurly(JaktSpan)
-    RCurly(JaktSpan)
-    LSquare(JaktSpan)
-    RSquare(JaktSpan)
-    PercentSign(JaktSpan)
-    Plus(JaktSpan)
-    Minus(JaktSpan)
-    Equal(JaktSpan)
-    PlusEqual(JaktSpan)
-    PlusPlus(JaktSpan)
-    MinusEqual(JaktSpan)
-    MinusMinus(JaktSpan)
-    AsteriskEqual(JaktSpan)
-    ForwardSlashEqual(JaktSpan)
-    PercentSignEqual(JaktSpan)
-    NotEqual(JaktSpan)
-    DoubleEqual(JaktSpan)
-    GreaterThan(JaktSpan)
-    GreaterThanOrEqual(JaktSpan)
-    LessThan(JaktSpan)
-    LessThanOrEqual(JaktSpan)
-    LeftArithmeticShift(JaktSpan)
-    LeftShift(JaktSpan)
-    LeftShiftEqual(JaktSpan)
-    RightShift(JaktSpan)
-    RightArithmeticShift(JaktSpan)
-    RightShiftEqual(JaktSpan)
-    Asterisk(JaktSpan)
-    Ampersand(JaktSpan)
-    AmpersandEqual(JaktSpan)
-    Pipe(JaktSpan)
-    PipeEqual(JaktSpan)
-    Caret(JaktSpan)
-    CaretEqual(JaktSpan)
-    Dollar(JaktSpan)
-    Tilde(JaktSpan)
-    ForwardSlash(JaktSpan)
-    ExclamationPoint(JaktSpan)
-    QuestionMark(JaktSpan)
-    QuestionMarkQuestionMark(JaktSpan)
-    QuestionMarkQuestionMarkEqual(JaktSpan)
-    Comma(JaktSpan)
-    Dot(JaktSpan)
-    DotDot(JaktSpan)
-    Eol(JaktSpan)
-    Eof(JaktSpan)
-    FatArrow(JaktSpan)
-    Arrow(JaktSpan)
+    SingleQuotedString(quote: String, span: Span)
+    SingleQuotedByteString(quote: String, span: Span)
+    QuotedString(quote: String, span: Span)
+    Number(number: i64, span: Span)
+    Identifier(name: String, span: Span)
+    Semicolon(Span)
+    Colon(Span)
+    ColonColon(Span)
+    LParen(Span)
+    RParen(Span)
+    LCurly(Span)
+    RCurly(Span)
+    LSquare(Span)
+    RSquare(Span)
+    PercentSign(Span)
+    Plus(Span)
+    Minus(Span)
+    Equal(Span)
+    PlusEqual(Span)
+    PlusPlus(Span)
+    MinusEqual(Span)
+    MinusMinus(Span)
+    AsteriskEqual(Span)
+    ForwardSlashEqual(Span)
+    PercentSignEqual(Span)
+    NotEqual(Span)
+    DoubleEqual(Span)
+    GreaterThan(Span)
+    GreaterThanOrEqual(Span)
+    LessThan(Span)
+    LessThanOrEqual(Span)
+    LeftArithmeticShift(Span)
+    LeftShift(Span)
+    LeftShiftEqual(Span)
+    RightShift(Span)
+    RightArithmeticShift(Span)
+    RightShiftEqual(Span)
+    Asterisk(Span)
+    Ampersand(Span)
+    AmpersandEqual(Span)
+    Pipe(Span)
+    PipeEqual(Span)
+    Caret(Span)
+    CaretEqual(Span)
+    Dollar(Span)
+    Tilde(Span)
+    ForwardSlash(Span)
+    ExclamationPoint(Span)
+    QuestionMark(Span)
+    QuestionMarkQuestionMark(Span)
+    QuestionMarkQuestionMarkEqual(Span)
+    Comma(Span)
+    Dot(Span)
+    DotDot(Span)
+    Eol(Span)
+    Eof(Span)
+    FatArrow(Span)
+    Arrow(Span)
 
     // Keywords
-    And(JaktSpan)
-    Anon(JaktSpan)
-    Boxed(JaktSpan)
-    Break(JaktSpan)
-    Catch(JaktSpan)
-    Class(JaktSpan)
-    Continue(JaktSpan)
-    Cpp(JaktSpan)
-    Defer(JaktSpan)
-    Else(JaktSpan)
-    Enum(JaktSpan)
-    Extern(JaktSpan)
-    False(JaktSpan)
-    For(JaktSpan)
-    Function(JaktSpan)
-    If(JaktSpan)
-    In(JaktSpan)
-    Is(JaktSpan)
-    Let(JaktSpan)
-    Loop(JaktSpan)
-    Match(JaktSpan)
-    Mut(JaktSpan)
-    Namespace(JaktSpan)
-    Not(JaktSpan)
-    Or(JaktSpan)
-    Private(JaktSpan)
-    Public(JaktSpan)
-    Raw(JaktSpan)
-    Return(JaktSpan)
-    Restricted(JaktSpan)
-    Struct(JaktSpan)
-    This(JaktSpan)
-    Throw(JaktSpan)
-    Throws(JaktSpan)
-    True(JaktSpan)
-    Try(JaktSpan)
-    Unsafe(JaktSpan)
-    Weak(JaktSpan)
-    While(JaktSpan)
-    Yield(JaktSpan)
+    And(Span)
+    Anon(Span)
+    Boxed(Span)
+    Break(Span)
+    Catch(Span)
+    Class(Span)
+    Continue(Span)
+    Cpp(Span)
+    Defer(Span)
+    Else(Span)
+    Enum(Span)
+    Extern(Span)
+    False(Span)
+    For(Span)
+    Function(Span)
+    If(Span)
+    In(Span)
+    Is(Span)
+    Let(Span)
+    Loop(Span)
+    Match(Span)
+    Mut(Span)
+    Namespace(Span)
+    Not(Span)
+    Or(Span)
+    Private(Span)
+    Public(Span)
+    Raw(Span)
+    Return(Span)
+    Restricted(Span)
+    Struct(Span)
+    This(Span)
+    Throw(Span)
+    Throws(Span)
+    True(Span)
+    Try(Span)
+    Unsafe(Span)
+    Weak(Span)
+    While(Span)
+    Yield(Span)
 
     // Catch-all for failed parses
-    Garbage(JaktSpan)
+    Garbage(Span)
 
     public function span(this) => match this {
         SingleQuotedString(quote, span) => span
@@ -349,7 +348,7 @@ enum Token {
         Garbage(span) => span
     }
 
-    function from_keyword_or_identifier(string: String, span: JaktSpan) => match string {
+    function from_keyword_or_identifier(string: String, span: Span) => match string {
         "and" => Token::And(span)
         "anon" => Token::Anon(span)
         "boxed" => Token::Boxed(span)
@@ -399,7 +398,7 @@ struct Lexer {
     input: [u8]
     errors: [JaktError]
 
-    function error(mut this, anon message: String, anon span: JaktSpan) throws {
+    function error(mut this, anon message: String, anon span: Span) throws {
         .errors.push(JaktError::Message(message, span))
     }
 
@@ -458,7 +457,7 @@ struct Lexer {
         }
 
         if .eof() or .peek() != b'\'' {
-            .error("expected single quote", JaktSpan(start, end: start))
+            .error("expected single quote", Span(start, end: start))
         }
 
         // Everything but the quotes
@@ -471,17 +470,17 @@ struct Lexer {
         let end = .index
 
         if is_byte {
-            return Token::SingleQuotedByteString(quote: str, span: JaktSpan(start, end))
+            return Token::SingleQuotedByteString(quote: str, span: Span(start, end))
         }
-        return Token::SingleQuotedString(quote: str, span: JaktSpan(start, end))
+        return Token::SingleQuotedString(quote: str, span: Span(start, end))
     }
 
     function lex_number_or_name(mut this) throws -> Token {
         let start = .index
 
         if .eof() {
-            .error("unexpected eof", JaktSpan(start, end: start))
-            return Token::Garbage(JaktSpan(start, end: start))
+            .error("unexpected eof", Span(start, end: start))
+            return Token::Garbage(Span(start, end: start))
         }
         if is_ascii_digit(.peek()) {
             mut total = 0i64
@@ -493,7 +492,7 @@ struct Lexer {
                 total = total * 10 + digit
             }
             let end = .index
-            return Token::Number(number: total, span: JaktSpan(start, end))
+            return Token::Number(number: total, span: Span(start, end))
         } else if is_ascii_alpha(.peek()) or .peek() == b'_' {
             mut string_builder = StringBuilder()
 
@@ -503,7 +502,7 @@ struct Lexer {
                 string_builder.append(value)
             }
             let end = .index
-            let span = JaktSpan(start, end)
+            let span = Span(start, end)
             let string = string_builder.to_string()
 
             return Token::from_keyword_or_identifier(string, span)
@@ -511,8 +510,8 @@ struct Lexer {
 
         let unknown_char = .input[.index]
         let end = ++.index
-        .error(format("unknown character: {:c}", unknown_char), JaktSpan(start, end))
-        return Token::Garbage(JaktSpan(start, end))
+        .error(format("unknown character: {:c}", unknown_char), Span(start, end))
+        return Token::Garbage(Span(start, end))
     }
 
     function lex_quoted_string(mut this, delimiter: u8) throws -> Token {
@@ -521,8 +520,8 @@ struct Lexer {
         ++.index
 
         if .eof() {
-            .error("unexpected eof", JaktSpan(start, end: start))
-            return Token::Garbage(JaktSpan(start, end: start))
+            .error("unexpected eof", Span(start, end: start))
+            return Token::Garbage(Span(start, end: start))
         }
 
         mut escaped = false
@@ -542,46 +541,46 @@ struct Lexer {
         .index++
 
         if delimiter == b'\'' {
-            return Token::SingleQuotedString(quote: str, span: JaktSpan(start, end))
+            return Token::SingleQuotedString(quote: str, span: Span(start, end))
         }
 
-        return Token::QuotedString(quote: str, span: JaktSpan(start, end))
+        return Token::QuotedString(quote: str, span: Span(start, end))
     }
 
     function lex_plus(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::PlusEqual(JaktSpan(start, end: ++.index))
-            b'+' => Token::PlusPlus(JaktSpan(start, end: ++.index))
-            else => Token::Plus(JaktSpan(start: .index - 1, end: .index))
+            b'=' => Token::PlusEqual(Span(start, end: ++.index))
+            b'+' => Token::PlusPlus(Span(start, end: ++.index))
+            else => Token::Plus(Span(start: .index - 1, end: .index))
         }
     }
 
     function lex_minus(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::MinusEqual(JaktSpan(start, end: ++.index))
-            b'-' => Token::MinusMinus(JaktSpan(start, end: ++.index))
-            b'>' => Token::Arrow(JaktSpan(start, end: ++.index))
-            else => Token::Minus(JaktSpan(start: .index - 1, end: .index))
+            b'=' => Token::MinusEqual(Span(start, end: ++.index))
+            b'-' => Token::MinusMinus(Span(start, end: ++.index))
+            b'>' => Token::Arrow(Span(start, end: ++.index))
+            else => Token::Minus(Span(start: .index - 1, end: .index))
         }
     }
 
     function lex_asterisk(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::AsteriskEqual(JaktSpan(start, end: ++.index))
-            else => Token::Asterisk(JaktSpan(start: .index - 1, end: .index))
+            b'=' => Token::AsteriskEqual(Span(start, end: ++.index))
+            else => Token::Asterisk(Span(start: .index - 1, end: .index))
         }
     }
 
     function lex_forward_slash(mut this) throws -> Token {
         let start = .index++
         if .peek() == b'=' {
-            return Token::ForwardSlashEqual(JaktSpan(start, end: ++.index))
+            return Token::ForwardSlashEqual(Span(start, end: ++.index))
         }
         if .peek() != b'/' {
-            return Token::ForwardSlash(JaktSpan(start, end: .index))
+            return Token::ForwardSlash(Span(start, end: .index))
         }
         // We're in a comment, swallow to end of line.
         while not .eof() {
@@ -591,80 +590,80 @@ struct Lexer {
                 break
             }
         }
-        return .next() ?? Token::Eof(JaktSpan(start: .index, end: .index))
+        return .next() ?? Token::Eof(Span(start: .index, end: .index))
     }
 
     function lex_caret(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::CaretEqual(JaktSpan(start, end: ++.index))
-            else => Token::Caret(JaktSpan(start: .index - 1, end: .index))
+            b'=' => Token::CaretEqual(Span(start, end: ++.index))
+            else => Token::Caret(Span(start: .index - 1, end: .index))
         }
     }
 
     function lex_pipe(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::PipeEqual(JaktSpan(start, end: ++.index))
-            else => Token::Pipe(JaktSpan(start: .index - 1, end: .index))
+            b'=' => Token::PipeEqual(Span(start, end: ++.index))
+            else => Token::Pipe(Span(start: .index - 1, end: .index))
         }
     }
 
     function lex_percent_sign(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::PercentSignEqual(JaktSpan(start, end: ++.index))
-            else => Token::PercentSign(JaktSpan(start: .index - 1, end: .index))
+            b'=' => Token::PercentSignEqual(Span(start, end: ++.index))
+            else => Token::PercentSign(Span(start: .index - 1, end: .index))
         }
     }
 
     function lex_exclamation_point(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::NotEqual(JaktSpan(start, end: ++.index))
-            else => Token::ExclamationPoint(JaktSpan(start: .index - 1, end: .index))
+            b'=' => Token::NotEqual(Span(start, end: ++.index))
+            else => Token::ExclamationPoint(Span(start: .index - 1, end: .index))
         }
     }
 
     function lex_ampersand(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::AmpersandEqual(JaktSpan(start, end: ++.index))
-            else => Token::Ampersand(JaktSpan(start: .index - 1, end: .index))
+            b'=' => Token::AmpersandEqual(Span(start, end: ++.index))
+            else => Token::Ampersand(Span(start: .index - 1, end: .index))
         }
     }
 
     function lex_less_than(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::LessThanOrEqual(JaktSpan(start, end: ++.index))
-            b'<' => Token::LeftShift(JaktSpan(start, end: ++.index))
-            else => Token::LessThan(JaktSpan(start: .index - 1, end: .index))
+            b'=' => Token::LessThanOrEqual(Span(start, end: ++.index))
+            b'<' => Token::LeftShift(Span(start, end: ++.index))
+            else => Token::LessThan(Span(start: .index - 1, end: .index))
         }
     }
 
     function lex_greater_than(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::GreaterThanOrEqual(JaktSpan(start, end: ++.index))
-            b'>' => Token::RightShift(JaktSpan(start, end: ++.index))
-            else => Token::GreaterThan(JaktSpan(start: .index - 1, end: .index))
+            b'=' => Token::GreaterThanOrEqual(Span(start, end: ++.index))
+            b'>' => Token::RightShift(Span(start, end: ++.index))
+            else => Token::GreaterThan(Span(start: .index - 1, end: .index))
         }
     }
 
     function lex_dot(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'.' => Token::DotDot(JaktSpan(start, end: ++.index))
-            else => Token::Dot(JaktSpan(start: .index - 1, end: .index))
+            b'.' => Token::DotDot(Span(start, end: ++.index))
+            else => Token::Dot(Span(start: .index - 1, end: .index))
         }
     }
 
     function lex_colon(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b':' => Token::ColonColon(JaktSpan(start, end: ++.index))
-            else => Token::Colon(JaktSpan(start: .index - 1, end: .index))
+            b':' => Token::ColonColon(Span(start, end: ++.index))
+            else => Token::Colon(Span(start: .index - 1, end: .index))
         }
     }
 
@@ -674,27 +673,27 @@ struct Lexer {
             b'?' => {
                 .index++
                 yield match .peek() {
-                    b'=' => Token::QuestionMarkQuestionMarkEqual(JaktSpan(start, end: ++.index))
-                    else => Token::QuestionMarkQuestionMark(JaktSpan(start, end: .index))
+                    b'=' => Token::QuestionMarkQuestionMarkEqual(Span(start, end: ++.index))
+                    else => Token::QuestionMarkQuestionMark(Span(start, end: .index))
                 }
             }
-            else => Token::QuestionMark(JaktSpan(start: .index - 1, end: .index))
+            else => Token::QuestionMark(Span(start: .index - 1, end: .index))
         }
     }
 
     function lex_equals(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::DoubleEqual(JaktSpan(start, end: ++.index))
-            b'>' => Token::FatArrow(JaktSpan(start, end: ++.index))
-            else => Token::Equal(JaktSpan(start: .index - 1, end: .index))
+            b'=' => Token::DoubleEqual(Span(start, end: ++.index))
+            b'>' => Token::FatArrow(Span(start, end: ++.index))
+            else => Token::Equal(Span(start: .index - 1, end: .index))
         }
     }
 
     function next(mut this) throws -> Token? {
         if .index == .input.size() {
             ++.index
-            return Token::Eof(JaktSpan(start: .index - 1, end: .index - 1))
+            return Token::Eof(Span(start: .index - 1, end: .index - 1))
         }
         if .eof() {
             return None
@@ -711,18 +710,18 @@ struct Lexer {
         let start = .index
 
         return match .input[.index] {
-            b'(' => Token::LParen(JaktSpan(start, end: ++.index))
-            b')' => Token::RParen(JaktSpan(start, end: ++.index))
-            b'[' => Token::LSquare(JaktSpan(start, end: ++.index))
-            b']' => Token::RSquare(JaktSpan(start, end: ++.index))
-            b'{' => Token::LCurly(JaktSpan(start, end: ++.index))
-            b'}' => Token::RCurly(JaktSpan(start, end: ++.index))
+            b'(' => Token::LParen(Span(start, end: ++.index))
+            b')' => Token::RParen(Span(start, end: ++.index))
+            b'[' => Token::LSquare(Span(start, end: ++.index))
+            b']' => Token::RSquare(Span(start, end: ++.index))
+            b'{' => Token::LCurly(Span(start, end: ++.index))
+            b'}' => Token::RCurly(Span(start, end: ++.index))
             b'<' => .lex_less_than()
             b'>' => .lex_greater_than()
             b'.' => .lex_dot()
-            b',' => Token::Comma(JaktSpan(start, end: ++.index))
-            b'~' => Token::Tilde(JaktSpan(start, end: ++.index))
-            b';' => Token::Semicolon(JaktSpan(start, end: ++.index))
+            b',' => Token::Comma(Span(start, end: ++.index))
+            b'~' => Token::Tilde(Span(start, end: ++.index))
+            b';' => Token::Semicolon(Span(start, end: ++.index))
             b':' => .lex_colon()
             b'?' => .lex_question_mark()
             b'+' => .lex_plus()
@@ -734,9 +733,9 @@ struct Lexer {
             b'%' => .lex_percent_sign()
             b'!' => .lex_exclamation_point()
             b'&' => .lex_ampersand()
-            b'$' => Token::Dollar(JaktSpan(start, end: ++.index))
+            b'$' => Token::Dollar(Span(start, end: ++.index))
             b'=' => .lex_equals()
-            b'\n' => Token::Eol(JaktSpan(start, end: ++.index))
+            b'\n' => Token::Eol(Span(start, end: ++.index))
             b'\'' => .lex_quoted_string(delimiter: b'\'')
             b'\"' => .lex_quoted_string(delimiter: b'"')
             b'b' => .lex_character_constant_or_name()
