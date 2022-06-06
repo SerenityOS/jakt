@@ -36,6 +36,7 @@ struct ParsedNamespace {
     functions: [ParsedFunction]
     structs: [ParsedStruct]
     namespaces: [ParsedNamespace]
+    enums: [ParsedEnum]
 }
 
 struct ParsedStruct {
@@ -46,6 +47,24 @@ struct ParsedStruct {
     methods: [ParsedMethod]
     definition_linkage: DefinitionLinkage
     definition_type: DefinitionType
+}
+
+struct ParsedEnum {
+    definition_linkage: DefinitionLinkage,
+    generic_parameters: [[String:Span]],
+    is_boxed: bool,
+    methods: [ParsedFunction],
+    name_span: Span,
+    name: String,
+    underlying_type: ParsedType,
+    variants: [EnumVariant],
+}
+
+enum EnumVariant {
+    Untyped(name: String, span: Span)
+    WithValue(name: String, value: ParsedExpression, span: Span)
+    StructLike(name: String, params: [ParsedVarDecl], span: Span)
+    Typed(name: String, inner_type: ParsedType, span: Span)
 }
 
 struct ParsedFunction {
@@ -368,7 +387,14 @@ struct Parser {
         //FIXME: The constructor should just be able to accept None directly and infer its type
         let none_string: String? = None
         let none_span: Span? = None
-        mut parsed_namespace = ParsedNamespace(name: none_string name_span: none_span, functions: [], structs: [], namespaces: [])
+        mut parsed_namespace = ParsedNamespace(
+            name: none_string
+            name_span: none_span
+            functions: []
+            structs: []
+            namespaces: []
+            enums: []
+        )
 
         while not .eof() {
             match .current() {
@@ -383,6 +409,16 @@ struct Parser {
                 Class => {
                     let parsed_struct = .parse_struct(DefinitionLinkage::Internal, DefinitionType::Class)
                     parsed_namespace.structs.push(parsed_struct)
+                }
+                Enum => {
+                    let parsed_enum = .parse_enum(DefinitionLinkage::Internal, is_boxed: false)
+                    parsed_namespace.enums.push(parsed_enum)
+                }
+                Boxed => {
+                    .index++
+                    println("in boxed: {}", .current())
+                    let parsed_enum = .parse_enum(DefinitionLinkage::Internal, is_boxed: true)
+                    parsed_namespace.enums.push(parsed_enum)
                 }
                 Namespace => {
                     .index++
@@ -449,6 +485,116 @@ struct Parser {
         }
 
         return parsed_namespace
+    }
+
+    function parse_enum(mut this, anon definition_linkage: DefinitionLinkage, is_boxed: bool) throws -> ParsedEnum {
+        mut enumeration = ParsedEnum(
+            definition_linkage,
+            generic_parameters: [],
+            is_boxed,
+            methods: [],
+            name_span: empty_span(),
+            name: "",
+            underlying_type: ParsedType::Empty,
+            variants: [],
+        )
+        .index++
+
+        match .current() {
+            Token::Identifier(name, span) => {
+                enumeration.name = name
+                enumeration.name_span = span
+                .index++
+            }
+            else => {
+                .error("Expected identifier for enum", .current().span())
+            }
+        }
+
+
+        if .current() is Colon {
+            .index++
+            enumeration.underlying_type = .parse_typename()
+        }
+
+        if .current() is LessThan {
+            enumeration.generic_parameters = .parse_generic_parameters()
+        }
+
+        if not .current() is LCurly {
+            .error("Expected `{` to start the enum body", .current().span())
+        }
+        
+        .index++
+
+        while not .eof() {
+            match .current() {
+                Identifier(name, span) => {
+                    if .peek(1) is LParen {
+                        .index += 2
+
+                        mut var_decls: [ParsedVarDecl] = []
+                        mut is_structlike = false
+
+                        while not .eof() {
+                            if .peek(1) is Colon {
+                                is_structlike = true
+                                var_decls.push(.parse_variable_declaration(is_mutable: false))
+                                continue
+                            }
+
+                            match .current() {
+                                RParen => {
+                                    .index++
+                                    break
+                                }
+                                Comma | Eol => {
+                                    .index++
+                                }
+                                else => {
+                                    is_structlike = false
+                                    let inner_type = .parse_typename()
+                                    enumeration.variants.push(EnumVariant::Typed(name, inner_type, span))
+                                }
+                            }
+                        }
+
+                        if is_structlike {
+                            enumeration.variants.push(EnumVariant::StructLike(name, params: var_decls, span))
+                        }
+                    } else {
+                        if .peek(1) is Equal {
+                            .index += 2
+                            let expr = .parse_expression(allow_assignments: false)
+                            enumeration.variants.push(EnumVariant::WithValue(name, value: expr, span))
+                        } else {
+                            .index++
+                            match enumeration.underlying_type {
+                                ParsedType::Empty => {
+                                    enumeration.variants.push(EnumVariant::Untyped(name, span))
+                                }
+                                else => {
+                                    enumeration.variants.push(EnumVariant::Typed(name, inner_type: enumeration.underlying_type, span))
+                                }
+                            }
+                        }
+                    }
+                }
+                RCurly => {
+                    .index++
+                    break
+                }
+                Comma | Eol => {
+                    .index++
+                }
+                else => {
+                    .error("Expected identifier or the end of enum block", .current().span())
+                    .index++
+                }
+            }
+        }
+    
+        return enumeration
     }
 
     public function parse_struct(mut this, anon definition_linkage: DefinitionLinkage, anon definition_type: DefinitionType) throws -> ParsedStruct {
