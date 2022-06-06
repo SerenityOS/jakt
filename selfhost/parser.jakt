@@ -1400,6 +1400,14 @@ struct Parser {
 
                 return expr
             }
+            PlusPlus => {
+                let start = .current().span()
+                .index++
+
+                let expr = .parse_operand()
+                let span = merge_spans(start, expr.span())
+                return ParsedExpression::UnaryOp(expr, op: UnaryOperator::PreIncrement, span)
+            }
             LSquare => {
                 return .parse_array_or_dictionary_literal()
             }
