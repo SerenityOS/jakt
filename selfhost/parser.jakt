@@ -34,7 +34,7 @@ struct ParsedEnum {
     definition_linkage: DefinitionLinkage,
     generic_parameters: [[String:Span]],
     is_boxed: bool,
-    methods: [ParsedFunction],
+    methods: [ParsedMethod],
     name_span: Span,
     name: String,
     underlying_type: ParsedType,
@@ -319,6 +319,7 @@ struct ParsedCall {
 
 boxed enum ParsedType {
     Name(name: String, span: Span)
+    GenericType(name: String, generic_parameters: [(String, Span)], span: Span), // FIXME: tuple should be dictionary
     JaktArray(inner: ParsedType, span: Span)
     Dictionary(key: ParsedType, value: ParsedType, span: Span)
     JaktTuple(types: [ParsedType], span: Span)
@@ -397,7 +398,6 @@ struct Parser {
                 }
                 Boxed => {
                     .index++
-                    println("in boxed: {}", .current())
                     let parsed_enum = .parse_enum(DefinitionLinkage::Internal, is_boxed: true)
                     parsed_namespace.enums.push(parsed_enum)
                 }
@@ -507,7 +507,13 @@ struct Parser {
         }
         
         .index++
+        .skip_newlines()
+        if .eof() {
+            .error("Expected variant name", .previous().span())
+        }
 
+        mut last_visibility: Visibility? = None
+        mut last_visibility_span: Span? = None
         while not .eof() {
             match .current() {
                 Identifier(name, span) => {
@@ -520,7 +526,16 @@ struct Parser {
                         while not .eof() {
                             if .peek(1) is Colon {
                                 is_structlike = true
-                                var_decls.push(.parse_variable_declaration(is_mutable: false))
+                                let var_decl = .parse_variable_declaration(is_mutable: false)
+                                match var_decl.parsed_type {
+                                    Name(name) => {
+                                        if name == enumeration.name {
+                                            .error("use 'boxed enum' to make the enum recursive", var_decl.span)
+                                        }
+                                    }
+                                    else => {}
+                                }
+                                var_decls.push(var_decl)
                                 continue
                             }
 
@@ -531,6 +546,9 @@ struct Parser {
                                 }
                                 Comma | Eol => {
                                     .index++
+                                }
+                                RCurly => {
+                                    break
                                 }
                                 else => {
                                     is_structlike = false
@@ -568,11 +586,45 @@ struct Parser {
                 Comma | Eol => {
                     .index++
                 }
+                Private(span) => {
+                    if last_visibility.has_value() {
+                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                    }
+                    last_visibility = Visibility::Private
+                    last_visibility_span = span
+                    .index++
+                }
+                Public(span) => {
+                    if last_visibility.has_value() {
+                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                    }
+                    last_visibility = Visibility::Public
+                    last_visibility_span = span
+                    .index++
+                }
+                Function => {
+                    let function_linkage = match definition_linkage {
+                        Internal => FunctionLinkage::Internal
+                        External => FunctionLinkage::External
+                    }
+
+                    let visibility = last_visibility ?? Visibility::Public
+                    last_visibility = None
+                    last_visibility_span = None
+
+                    let parsed_method = .parse_method(function_linkage, visibility)
+
+                    enumeration.methods.push(parsed_method)
+                }
                 else => {
                     .error("Expected identifier or the end of enum block", .current().span())
                     .index++
                 }
             }
+        }
+
+        if enumeration.variants.is_empty() {
+            .error("Empty enums are not allowed", enumeration.name_span)
         }
     
         return enumeration
@@ -924,7 +976,20 @@ struct Parser {
             Identifier(name) => {
                 let span = .current().span()
                 .index++
-                yield ParsedType::Name(name, span)
+                mut parsed_type =  ParsedType::Name(name, span)
+                if .current() is LessThan {
+                    mut parsed_generics = .parse_generic_parameters()
+                    // FIXME: clean this up when ParsedType::GenericType can have [[String:Span]] generic parameters
+                    mut generic_parameters: [(String, Span)] = []
+                    for dict in parsed_generics.iterator() {
+                        for generic in dict.iterator() { 
+                            generic_parameters.push(generic)
+                        }
+                    }
+
+                    parsed_type = ParsedType::GenericType(name, generic_parameters, span)
+                }
+                yield parsed_type
             }
             else => {
                 .error("Expected type name", .current().span())
@@ -953,11 +1018,11 @@ struct Parser {
                         name: var_name,
                         parsed_type: ParsedType::Empty,
                         is_mutable,
-                        span: .previous().span(),
+                        span: .current().span(),
                     )
                 }
 
-                let decl_span = .previous().span()
+                let decl_span = .current().span()
 
                 let var_type = .parse_typename()
                 return ParsedVarDecl(
@@ -1011,9 +1076,12 @@ struct Parser {
     function parse_type_shorthand_set(mut this) throws -> ParsedType {
         // {T} is shorthand for Set<T>
         let start = .current().span()
+        if .current() is LCurly {
+            .index++
+        }
         let inner = .parse_typename()
-        .index++
         if .current() is RCurly {
+            .index++
             return ParsedType::Set(inner, span: merge_spans(start, .current().span()))
         }
         .error("Expected '}'", .current().span())
@@ -1937,6 +2005,10 @@ struct Parser {
                 }
                 else => {
                     let expr = .parse_expression(allow_assignments: false)
+                    if expr is Garbage {
+                        break
+                    }
+
                     if .current() is Colon {
                         if not output.is_empty() {
                             .error("Mixing dictionary and array values", .current().span())
