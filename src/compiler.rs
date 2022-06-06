@@ -186,6 +186,7 @@ impl Compiler {
             .parent()
             .expect("Cannot find parent directory of file");
         self.include_paths.push(parent_dir.to_path_buf());
+        self.include_paths.push(std::env::current_dir().unwrap());
 
         let file_id = match self.find_or_load_file(fname) {
             Ok(file_id) => file_id,

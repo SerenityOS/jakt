@@ -1783,7 +1783,57 @@ pub fn typecheck_namespace_imports(
                         ));
                     } else {
                         // importing each name individually
-                        panic!("module import lists are not supported");
+                        // TODO: Don't clone the module if we don't need to
+                        let import_scope_id = ScopeId(imported_module_id, 0);
+
+                        for imported_name in &import.import_list {
+                            if let Some(id) = project.find_function_in_scope(
+                                import_scope_id,
+                                imported_name.name.as_str(),
+                            ) {
+                                if let Err(e) = project.add_function_to_scope(
+                                    scope_id,
+                                    imported_name.name.clone(),
+                                    id,
+                                    imported_name.span,
+                                ) {
+                                    return Some(e);
+                                }
+                            } else if let Some(id) = project
+                                .find_enum_in_scope(import_scope_id, imported_name.name.as_str())
+                            {
+                                if let Err(e) = project.add_enum_to_scope(
+                                    scope_id,
+                                    imported_name.name.clone(),
+                                    id,
+                                    imported_name.span,
+                                ) {
+                                    return Some(e);
+                                }
+                            } else if let Some(id) = project
+                                .find_type_in_scope(import_scope_id, imported_name.name.as_str())
+                            {
+                                if let Err(e) = project.add_type_to_scope(
+                                    scope_id,
+                                    imported_name.name.clone(),
+                                    id,
+                                    imported_name.span,
+                                ) {
+                                    return Some(e);
+                                }
+                            } else if let Some(id) = project
+                                .find_struct_in_scope(import_scope_id, imported_name.name.as_str())
+                            {
+                                if let Err(e) = project.add_struct_to_scope(
+                                    scope_id,
+                                    imported_name.name.clone(),
+                                    id,
+                                    imported_name.span,
+                                ) {
+                                    return Some(e);
+                                }
+                            }
+                        }
                     }
                 }
                 Err(err) => error = error.or(Some(err)),
