@@ -14,27 +14,19 @@ function main(args: [String]) {
     mut file = File::open_for_reading(args[1])
     let file_contents = file.read_all()
 
-    mut lexer = Lexer(index: 0, input: file_contents, errors: [])
-    mut tokens: [Token] = []
+    mut errors: [JaktError] = []
 
-    for token in lexer {
-        println("token: {}", token)
-        tokens.push(token)
-    }
+    let tokens = Lexer::lex(input: file_contents, errors)
 
-    mut parser = Parser(index: 0, tokens, errors: [])
+    mut parser = Parser(index: 0, tokens, errors)
 
     let parsed_namespace = parser.parse_namespace()
 
-    for error in lexer.errors.iterator() {
+    for error in errors.iterator() {
         print_error(file_name: args[1], file_contents, error)
     }
 
-    for error in parser.errors.iterator() {
-        print_error(file_name: args[1], file_contents, error)
-    }
-
-    if not lexer.errors.is_empty() or not parser.errors.is_empty() {
+    if not errors.is_empty() {
         return 1
     }
 
