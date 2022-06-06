@@ -773,6 +773,9 @@ struct Parser {
         mut last_visibility: Visibility? = None
         mut last_visibility_span: Span? = None
 
+        // Have we already found an error?
+        mut error = false;
+
         while not .eof() {
             let token = .current()
             match token {
@@ -836,18 +839,24 @@ struct Parser {
                     methods.push(parsed_method)
                 }
                 else => {
-                    .error(format("Invalid struct member, did not expect a {} here", token), token.span())
+                    // TODO: Find a better way of only reporting the first error.
+                    //       Also, should we report every error when running as the "language server"?
+                    if not error {
+                        .error(format("Invalid {} member, did not expect a {} here", definition_type_name, token), token.span())
+                        error = true
+                    }
+                    .index++
                 }
             }
         }
 
         if .index == .tokens.size() {
-            .error("Incomplete struct", .previous().span())
+            .error(format("Incomplete {}", definition_type_name), .previous().span())
         }
         if .current() is RCurly {
             .index++
         } else {
-            .error("Incomplete struct", .previous().span())
+            .error(format("Incomplete {}", definition_type_name), .previous().span())
         }
 
         parsed_struct.fields = fields
@@ -900,6 +909,9 @@ struct Parser {
         mut current_param_requires_label = true
         mut current_param_is_mutable = false
 
+        // Have we already found an error?
+        mut error = false
+
         while not .eof() {
             match .current() {
                 RParen => {
@@ -947,7 +959,13 @@ struct Parser {
                     ))
                 }
                 else => {
-                    .error("Expected parameter", .current().span())
+                    // TODO: Find a better way of only reporting the first error.
+                    //       Also, should we report every error when running as the "language server"?
+                    if not error {
+                        .error("Expected parameter", .current().span())
+                        error = true
+                    }
+                    .index++
                 }
             }
         }
@@ -1557,8 +1575,9 @@ struct Parser {
             Match => {
                 return .parse_match_expression()
             }
-            else => { }
+            else => { .index++ }
         }
+        .error("Unsupported expression", span)
         return ParsedExpression::Garbage(span)
     }
 
