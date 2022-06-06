@@ -419,6 +419,10 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
 		try {
 			const obj = JSON.parse(line);
 
+			// HACK: Ignore everything that isn't about file ID #1 here, since that's always the current editing buffer.
+			if (obj.file_id != 1) {
+				continue;
+			}
 			if (obj.type == "diagnostic") {
 				let severity: DiagnosticSeverity = DiagnosticSeverity.Error;
 
