@@ -18,7 +18,8 @@ inline ErrorOr<void> StringBuilder::will_append(size_t size)
     return {};
 }
 
-StringBuilder::StringBuilder()
+StringBuilder::StringBuilder(Array<u8> buffer)
+    : m_buffer(buffer)
 {
 }
 

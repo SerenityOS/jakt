@@ -21,7 +21,7 @@ ErrorOr<String> String::copy(StringView view)
 
 ErrorOr<String> String::vformatted(StringView fmtstr, TypeErasedFormatParams& params)
 {
-    StringBuilder builder;
+    auto builder = TRY(StringBuilder::create());
     TRY(vformat(builder, fmtstr, params));
     return builder.to_string();
 }
@@ -62,7 +62,7 @@ ErrorOr<Array<String>> String::split(char separator, bool keep_empty) const
 
 ErrorOr<Array<String>> String::split_limit(char separator, size_t limit, bool keep_empty) const
 {
-    auto v = Array<String>();
+    auto v = TRY(Array<String>::create_empty());
     if (is_empty())
         return v;
 

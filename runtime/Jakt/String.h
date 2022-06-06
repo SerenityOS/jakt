@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <Builtins/Array.h>
 #include <Jakt/Format.h>
 #include <Jakt/Forward.h>
 #include <Jakt/NonnullRefPtr.h>
@@ -15,7 +16,6 @@
 #include <Jakt/Traits.h>
 #include <Jakt/Types.h>
 #include <Jakt/kmalloc.h>
-#include <Builtins/Array.h>
 
 namespace Jakt {
 

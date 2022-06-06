@@ -4,7 +4,7 @@
 extern struct StringBuilder {
     function append(mut this, anon s: u8)
     function to_string(mut this) throws -> String
-    function StringBuilder() -> StringBuilder
+    function create() throws -> StringBuilder
 }
 
 namespace lexer {

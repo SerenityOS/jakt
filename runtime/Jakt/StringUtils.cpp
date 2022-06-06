@@ -324,7 +324,7 @@ Optional<size_t> find_last(StringView haystack, char needle)
 
 ErrorOr<JaktInternal::Array<size_t>> find_all(StringView haystack, StringView needle)
 {
-    JaktInternal::Array<size_t> positions;
+    auto positions = TRY(JaktInternal::Array<size_t>::create_empty());
     size_t current_position = 0;
     while (current_position <= haystack.length()) {
         auto maybe_position = Jakt::memmem_optional(

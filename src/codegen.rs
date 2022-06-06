@@ -1269,7 +1269,7 @@ fn codegen_enum_debug_description_getter(enum_: &CheckedEnum) -> String {
     let mut output = String::new();
     output.push_str("ErrorOr<String> debug_description() const { ");
 
-    output.push_str("StringBuilder builder;");
+    output.push_str("auto builder = TRY(StringBuilder::create());");
 
     output.push_str("this->visit(");
 
@@ -1330,7 +1330,7 @@ fn codegen_debug_description_getter(structure: &CheckedStruct, project: &Project
     let mut output = String::new();
     output.push_str("ErrorOr<String> debug_description() const { ");
 
-    output.push_str("StringBuilder builder;");
+    output.push_str("auto builder = MUST(StringBuilder::create());");
 
     output.push_str(&format!("builder.append(\"{}(\");", structure.name));
 
@@ -3571,9 +3571,9 @@ fn codegen_expr(
                 output.push_str(")))");
             } else {
                 // (Array({1, 2, 3}))
-                output.push_str("(Array<");
+                output.push_str("(TRY(Array<");
                 output.push_str(&codegen_type(value_type_id, project));
-                output.push_str(">({");
+                output.push_str(">::create_with({");
                 let mut first = true;
                 for val in vals {
                     if !first {
@@ -3584,7 +3584,7 @@ fn codegen_expr(
 
                     output.push_str(&codegen_expr(indent, val, project, context))
                 }
-                output.push_str("}))");
+                output.push_str("})))");
             }
         }
         CheckedExpression::Dictionary(vals, _, type_id) => {

@@ -42,7 +42,7 @@ ErrorOr<NonnullRefPtr<File>> File::open_for_writing(String path)
 
 ErrorOr<Array<u8>> File::read_all()
 {
-    Array<u8> entire_file;
+    auto entire_file = TRY(Array<u8>::create_empty());
 
     while (true) {
         u8 buffer[4096];

@@ -2,13 +2,13 @@
 /// - output: "abc123\n"
 
 extern struct StringBuilder {
-    function StringBuilder() -> StringBuilder
+    function create() throws -> StringBuilder
     function append(mut this, anon s: raw c_char)
     function to_string(mut this) throws -> String
 }
 
 function main() {
-    mut s = StringBuilder()
+    mut s = StringBuilder::create()
 
     s.append("abc".c_string());
     s.append("123".c_string());
