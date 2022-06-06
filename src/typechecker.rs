@@ -7493,7 +7493,7 @@ pub fn typecheck_typename(
                             (
                                 UNKNOWN_TYPE_ID,
                                 Some(JaktError::TypecheckErrorWithHint(
-                                    "Unknown type".to_string(),
+                                    format!("Unknown type ‘{}’", x),
                                     *span,
                                     format!("Did you mean '{}'?", similar_name),
                                     *span,
@@ -7502,7 +7502,10 @@ pub fn typecheck_typename(
                         } else {
                             (
                                 UNKNOWN_TYPE_ID,
-                                Some(JaktError::TypecheckError("Unknown type".to_string(), *span)),
+                                Some(JaktError::TypecheckError(
+                                    format!("Unknown type ‘{}’", x),
+                                    *span,
+                                )),
                             )
                         }
                     }
