@@ -224,6 +224,7 @@ enum Token {
     For(Span)
     Function(Span)
     If(Span)
+    Import(Span)
     In(Span)
     Is(Span)
     Let(Span)
@@ -328,6 +329,7 @@ enum Token {
         For(span) => span
         Function(span) => span
         If(span) => span
+        Import(span) => span
         In(span) => span
         Is(span) => span
         Let(span) => span
@@ -373,6 +375,7 @@ enum Token {
         "for" => Token::For(span)
         "function" => Token::Function(span)
         "if" => Token::If(span)
+        "import" => Token::Import(span)
         "in" => Token::In(span)
         "is" => Token::Is(span)
         "let" => Token::Let(span)
