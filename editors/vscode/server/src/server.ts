@@ -41,6 +41,7 @@ let hasDiagnosticRelatedInformationCapability = false;
 
 import fs = require('fs');
 import tmp = require('tmp');
+import path = require('path');
 
 import util = require('node:util');
 import { TextEncoder } from 'node:util';
@@ -48,6 +49,13 @@ import { TextEncoder } from 'node:util';
 const exec = util.promisify(require('node:child_process').exec);
 
 const tmpFile = tmp.fileSync();
+
+function includeFlagForPath(file_path: string): string {
+	const protocol_end = file_path.indexOf("://");
+	if (protocol_end == -1) return " -I " + file_path;
+	// Not protocol.length + 3, include the last '/'
+	return " -I " + path.dirname(file_path.slice(protocol_end + 2));
+}
 
 connection.onInitialize((params: InitializeParams) => {
 	const capabilities = params.capabilities;
@@ -118,7 +126,7 @@ connection.onDefinition(async (request) => {
 		// console.log("request: ");
 		// console.log(request);
 		// console.log("index: " + convertPosition(request.position, text));
-		const stdout = await runCompiler(text, "-g " + convertPosition(request.position, text));
+		const stdout = await runCompiler(text, "-g " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri));
 		// console.log("got: ", stdout);
 
 		const lines = stdout.split('\n').filter(l => l.length > 0);
@@ -151,7 +159,7 @@ connection.onTypeDefinition(async (request) => {
 		// console.log("request: ");
 		// console.log(request);
 		// console.log("index: " + convertPosition(request.position, text));
-		const stdout = await runCompiler(text, "-t " + convertPosition(request.position, text));
+		const stdout = await runCompiler(text, "-t " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri));
 		// console.log("got: ", stdout);
 
 		const lines = stdout.split('\n').filter(l => l.length > 0);
@@ -184,7 +192,7 @@ connection.onHover(async (request) => {
 		// console.log("request: ");
 		// console.log(request);
 		// console.log("index: " + convertPosition(request.position, text));
-		const stdout = await runCompiler(text, "-v " + convertPosition(request.position, text));
+		const stdout = await runCompiler(text, "-v " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri));
 		// console.log("got: ", stdout);
 
 		const lines = stdout.split('\n').filter(l => l.length > 0);
@@ -409,7 +417,7 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
 
 	textDocument.jaktInlayHints = [];
 
-	const stdout = await runCompiler(text, "-c -H -j");
+	const stdout = await runCompiler(text, "-c -H -j" + includeFlagForPath(textDocument.uri));
 
 	const diagnostics: Diagnostic[] = [];
 
@@ -490,7 +498,7 @@ connection.onCompletion(
 			// console.log(request);
 			const index = convertPosition(request.position, text) - 1;
 			// console.log("index: " + index);
-			const stdout = await runCompiler(text, "-m " + index);
+			const stdout = await runCompiler(text, "-m " + index + includeFlagForPath(request.textDocument.uri));
 			// console.log("got: ", stdout);
 
 			const lines = stdout.split('\n').filter(l => l.length > 0);
