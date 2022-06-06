@@ -2,31 +2,46 @@ import lexer with Span, JaktError
 import parser with ParsedExpression, ParsedCall, BinaryOperator, DefinitionLinkage, DefinitionType
 import utility with panic, todo
 
+struct ModuleId {
+    id: usize
+}
+
 struct VarId {
+    module: ModuleId
     id: usize
 }
 
 struct FunctionId {
+    module: ModuleId
     id: usize
 }
 
 struct StructId {
+    module: ModuleId
     id: usize
 }
 
 struct EnumId {
+    module: ModuleId
     id: usize
 }
 
 struct TypeId {
+    module: ModuleId
     id: usize
+
+    function equal(this, anon rhs: TypeId) -> bool {
+        return this.module.id == rhs.module.id and this.id == rhs.id
+    }
 }
 
 struct InferenceId {
+    module: ModuleId
     id: usize
 }
 
 struct ScopeId {
+    module: ModuleId
     id: usize
 }
 
@@ -41,9 +56,13 @@ enum BuiltinType: usize {
     I16 = 7
     I32 = 8
     I64 = 9
-    String = 10
-    CChar = 11
-    CString = 12
+    F32 = 10
+    F64 = 11
+    Usize = 12
+    String = 13
+    CChar = 14
+    CString = 15
+    CInt = 16
 }
 
 boxed enum Type {
@@ -57,12 +76,16 @@ boxed enum Type {
     I16
     I32
     I64
+    F32
+    F64
+    Usize
     JaktString
     CChar
+    CInt
     CString
     TypeVariable(String)
-    GenericInstance(orig: StructId, params: [TypeId])
-    GenericEnumInstance(orig: EnumId, params: [TypeId])
+    GenericInstance(id: StructId, args: [TypeId])
+    GenericEnumInstance(id: EnumId, args: [TypeId])
     Struct(StructId)
     Enum(EnumId)
     Inference(InferenceId)
@@ -79,6 +102,20 @@ struct Scope {
     parent: ScopeId
     children: [ScopeId]
     throws: bool
+}
+
+struct Module {
+    id: ModuleId
+    name: String
+    functions: [CheckedFunction]
+    structures: [CheckedStruct]
+    enums: [CheckedEnum]
+    scopes: [Scope]
+    types: [Type]
+    variables: [CheckedVarDecl]
+    imports: [ModuleId]
+
+    is_root: bool
 }
 
 struct CheckedNamespace {
@@ -216,11 +253,11 @@ boxed enum CheckedExpression {
 
 // FIXME: not a method because of https://github.com/SerenityOS/jakt/issues/527
 function expression_type(anon expr: CheckedExpression) -> TypeId => match expr {
-    Boolean(val, span) => TypeId(id: BuiltinType::Bool as! usize)
+    Boolean(val, span) => builtin(BuiltinType::Bool)
     NumericConstant(val, span, type_id) => type_id
-    QuotedString(val, span) => TypeId(id: BuiltinType::String as! usize)
-    ByteConstant(val, span) => TypeId(id: BuiltinType::U8 as! usize)
-    CharacterConstant(val, span) => TypeId(id: BuiltinType::CChar as! usize)
+    QuotedString(val, span) => builtin(BuiltinType::String)
+    ByteConstant(val, span) => builtin(BuiltinType::U8)
+    CharacterConstant(val, span) => builtin(BuiltinType::CChar)
     UnaryOp(expr, op, span, type_id) => type_id
     BinaryOp(lhs, op, rhs, span, type_id) => type_id
     JaktTuple(vals, span, type_id) => type_id
@@ -262,19 +299,22 @@ struct CheckedCall {
     return_type: TypeId
 }
 
-struct Typechecker {
-    functions: [CheckedFunction]
-    variables: [CheckedVarDecl]
-    structures: [CheckedStruct]
-    enums: [CheckedEnum]
-    scopes: [Scope]
-    inferences: [TypeId]
-    types: [Type]
 
+function builtin(anon builtin: BuiltinType) -> TypeId {
+    return TypeId(module: ModuleId(id: 0), id: builtin as! usize)
+}
+
+struct Typechecker {
+    modules: [Module]
+    inferences: [TypeId]
+    current_module: ModuleId
     errors: [JaktError]
 
-    function get_function(this, anon id: FunctionId) -> CheckedFunction => .functions[id.id]
-    function get_variable(this, anon id: VarId) -> CheckedVarDecl => .variables[id.id]
+    function get_function(this, anon id: FunctionId) -> CheckedFunction => .modules[id.module.id].functions[id.id]
+    function get_variable(this, anon id: VarId) -> CheckedVarDecl => .modules[id.module.id].variables[id.id]
+    function get_type(this, anon id: TypeId) -> Type => .modules[id.module.id].types[id.id]
+    function get_enum(this, anon id: EnumId) -> CheckedEnum => .modules[id.module.id].enums[id.id]
+    function get_struct(this, anon id: EnumId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
 
     function error(mut this, anon message: String, anon span: Span) throws {
         .errors.push(JaktError::Message(message, span))
@@ -284,11 +324,113 @@ struct Typechecker {
         .errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
     }
 
+    function is_integer(this, anon type_id: TypeId) -> bool {
+        let type = .get_type(type_id)
+
+        return match type {
+            I8 | I16 | I32 | I64 | U8 | U16 | U32 | U64 | Usize | CInt | CChar => true
+            else => false
+        }
+    }
+
+    function try_to_promote_constant_expr_to_type(mut this, lhs_type: TypeId, checked_rhs: mut CheckedExpression, span: Span) throws {
+        if not .is_integer(lhs_type) {
+            // TODO
+        }
+    }
+
+    function typename(this, anon type_id: TypeId) throws -> String {
+        let type = .get_type(type_id)
+
+        return match type {
+            Void => "void"
+            I8 => "i8"
+            I16 => "i16"
+            I32 => "i32"
+            I64 => "i64"
+            U8 => "u8"
+            U16 => "u16"
+            U32 => "u32"
+            U64 => "u64"
+            F32 => "f32"
+            F64 => "f64"
+            Usize => "usize"
+            CChar => "c_char"
+            CInt => "c_int"
+            Bool => "bool"
+            else => match type {
+                Enum(id) => .get_enum(id).name
+                Struct(id) => .get_struct(id).name
+                GenericEnumInstance(id, args) => {
+                    mut output = format("enum {}", .get_enum(id).name)
+
+                    output += "<"
+                    mut first = true
+                    for arg in args.iterator() {
+                        if not first {
+                            output += ", "
+                        } else {
+                            first = false
+                        }
+
+                        output += .typename(arg)
+                    }
+
+                    output += ">"
+
+                    yield output
+                }
+                else => "TODO"
+            }
+        }
+    }
+
+    function unify(mut this, lhs: TypeId, lhs_span: Span, rhs: TypeId, rhs_span: Span) throws {
+        // FIXME: Add more unification logic
+        if lhs.id != rhs.id {
+            .error("types incompatible ", rhs_span)
+        }
+    }
+
+    function typecheck_binary_operation(mut this, checked_lhs: CheckedExpression, op: BinaryOperator, checked_rhs: CheckedExpression, scope_id: ScopeId, span: Span) throws -> TypeId {
+        let lhs_type_id = expression_type(checked_lhs)
+        let rhs_type_id = expression_type(checked_rhs)
+
+        let lhs_span = expression_span(checked_lhs)
+        let rhs_span = expression_span(checked_rhs)
+
+        mut type_id = expression_type(checked_lhs)
+
+        match op {
+            LessThan | LessThanOrEqual | GreaterThan | GreaterThanOrEqual | Equal | NotEqual => {
+                if not lhs_type_id.equal(rhs_type_id) {
+                    .error(format("Binary comparison between incompatible types ({} vs {})", .typename(lhs_type_id), .typename(rhs_type_id)), span)
+                }
+
+                type_id = builtin(BuiltinType::Bool)
+            }
+            LogicalAnd | LogicalOr => {
+                if not lhs_type_id.equal(builtin(BuiltinType::Bool)) {
+                    .error("left side of logical binary operation is not a boolean", lhs_span)
+                }
+
+                if not rhs_type_id.equal(builtin(BuiltinType::Bool)) {
+                    .error("right side of logical binary operation is not a boolean", rhs_span)
+                }
+
+                type_id = builtin(BuiltinType::Bool)
+            }
+            else => {}
+        }
+
+        return type_id
+    }
+
     function typecheck_expression(mut this, anon expr: ParsedExpression, scope_id: ScopeId) throws -> CheckedExpression => match expr {
         Boolean(val, span) => CheckedExpression::Boolean(val, span)
         NumericConstant(val, span) => {
             // FIXME: better constant support
-            yield CheckedExpression::NumericConstant(val: CheckedNumericConstant::I64(val), span, type_id: TypeId(id: BuiltinType::I64 as! usize))
+            yield CheckedExpression::NumericConstant(val: CheckedNumericConstant::I64(val), span, type_id: builtin(BuiltinType::I64))
         }
         QuotedString(val, span) => CheckedExpression::QuotedString(val, span)
         Call(call, span) => .typecheck_call(call, scope_id, span)
@@ -299,13 +441,26 @@ struct Typechecker {
             let from_type = expression_type(checked_from)
             let to_type = expression_type(checked_to)
 
-            // FIXME: add unification
-            if from_type.id != to_type.id {
-                .error("type mismatch with 'from' of range'", expression_span(checked_to))
-            }
+            let from_span = expression_span(checked_from)
+            let to_span = expression_span(checked_to)
+
+            .unify(lhs: from_type, lhs_span: from_span, rhs: to_type, rhs_span: from_span)
 
             yield CheckedExpression::Range(from: checked_from, to: checked_to, span, type_id: from_type)
-        } else => {
+        }
+        BinaryOp(lhs, op, rhs, span) => {
+            let checked_lhs = .typecheck_expression(lhs, scope_id)
+            mut checked_rhs = .typecheck_expression(rhs, scope_id)
+
+            let lhs_type = expression_type(checked_lhs)
+
+            .try_to_promote_constant_expr_to_type(lhs_type, checked_rhs, span)
+
+            let output_type = .typecheck_binary_operation(checked_lhs, op, checked_rhs, scope_id, span)
+
+            yield CheckedExpression::BinaryOp(lhs: checked_lhs, op, rhs: checked_rhs, span, type_id: output_type)
+        }
+        else => {
             panic("not complete")
 
             yield CheckedExpression::Boolean(val: false, span: Span(start: 0, end: 0))
@@ -314,7 +469,7 @@ struct Typechecker {
 
     function typecheck_call(mut this, call: ParsedCall, scope_id: ScopeId, span: Span) throws -> CheckedExpression {
         mut args: [(String, CheckedExpression)] = []
-        mut return_type = TypeId(id: BuiltinType::Void as! usize)
+        mut return_type = builtin(BuiltinType::Void)
 
         match call.name {
             "print" | "println" | "eprintln" | "format" => {
