@@ -154,6 +154,11 @@ enum BinaryOperator {
     }
 }
 
+enum TypeCast {
+    Fallible(ParsedType)
+    Infallible(ParsedType)
+}
+
 enum UnaryOperator {
     PreIncrement
     PostIncrement
@@ -164,6 +169,7 @@ enum UnaryOperator {
     RawAddress
     LogicalNot
     BitwiseNot
+    TypeCast(TypeCast)
     Is(ParsedType)
 }
 
@@ -1524,6 +1530,30 @@ struct Parser {
                     expr,
                     op: UnaryOperator::PostDecrement,
                     span: merge_spans(start, .previous().span()),
+                )
+            }
+            As => {
+                .index++
+                let cast_span = merge_spans(.previous().span(), .current().span())
+                let cast = match .current() {
+                    ExclamationPoint => {
+                        .index++
+                        yield TypeCast::Infallible(.parse_typename())
+                    }
+                    QuestionMark => {
+                        .index++
+                        yield TypeCast::Fallible(.parse_typename())
+                    }
+                    else => {
+                        .error("Invalid cast syntax", cast_span)
+                        yield TypeCast::Fallible(ParsedType::Empty)
+                    }
+                }
+                let span = merge_spans(start, merge_spans(cast_span, .current().span()))
+                yield ParsedExpression::UnaryOp(
+                    expr,
+                    op: UnaryOperator::TypeCast(cast),
+                    span
                 )
             }
             Is => {

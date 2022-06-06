@@ -209,6 +209,7 @@ enum Token {
     // Keywords
     And(Span)
     Anon(Span)
+    As(Span)
     Boxed(Span)
     Break(Span)
     Catch(Span)
@@ -313,6 +314,7 @@ enum Token {
         FatArrow(span) => span
         And(span) => span
         Anon(span) => span
+        As(span) => span
         Boxed(span) => span
         Break(span) => span
         Catch(span) => span
@@ -356,6 +358,7 @@ enum Token {
     function from_keyword_or_identifier(string: String, span: Span) => match string {
         "and" => Token::And(span)
         "anon" => Token::Anon(span)
+        "as" => Token::As(span)
         "boxed" => Token::Boxed(span)
         "break" => Token::Break(span)
         "catch" => Token::Catch(span)
