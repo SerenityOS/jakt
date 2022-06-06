@@ -27,6 +27,7 @@ use crate::{
         Project, Scope, Type, TypeId,
     },
 };
+use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 
 const INDENT_SIZE: usize = 4;
@@ -155,8 +156,61 @@ pub fn codegen(project: &Project) -> String {
     };
 
     output.push_str("namespace Jakt {\n");
+
+    let module_to_scope = |module: &Module| {
+        let scope_id = ScopeId(module.id, 0);
+        project.get_scope(scope_id)
+    };
+
     // skip(1) because module 0 is always prelude
-    for module in project.modules.iter().skip(1).rev() {
+    let mut sorted_modules: Vec<&Module> = project.modules.iter().skip(1).collect();
+    sorted_modules.sort_by(|a, b| {
+        let scope_a = module_to_scope(a);
+        let scope_b = module_to_scope(b);
+
+        if a.is_root() {
+            return Ordering::Greater;
+        }
+        if b.is_root() {
+            return Ordering::Less;
+        }
+        if scope_a
+            .imports
+            .iter()
+            .any(|(_, module_id, _)| *module_id == a.id)
+        {
+            Ordering::Greater
+        } else if scope_b
+            .imports
+            .iter()
+            .any(|(_, module_id, _)| *module_id == b.id)
+        {
+            Ordering::Less
+        } else {
+            Ordering::Equal
+        }
+    });
+
+    for module in &sorted_modules {
+        let scope_id = ScopeId(module.id, 0);
+        let scope = project.get_scope(scope_id);
+
+        if !module.is_root() {
+            output.push_str(format!("namespace {} {{\n", module.name).as_str());
+        }
+
+        output.push_str(&codegen_namespace_predecl(
+            project,
+            scope,
+            module,
+            &mut context,
+        ));
+
+        if !module.is_root() {
+            output.push_str("}\n");
+        }
+    }
+    for module in &sorted_modules {
         let scope_id = ScopeId(module.id, 0);
         let scope = project.get_scope(scope_id);
 
