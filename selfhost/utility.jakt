@@ -1,0 +1,9 @@
+function panic(anon message: String) -> void {
+    eprintln("internal error: {}", message)
+    abort()
+}
+
+function todo(anon message: String) {
+    eprintln("TODO: {}", message)
+    abort()
+}
