@@ -1371,7 +1371,10 @@ struct Parser {
                     index: index_expr,
                     span: merge_spans(start, .current().span()))
             }
-            else => expr
+            else => {
+                .index++
+                return expr
+            }
         }
     }
 
