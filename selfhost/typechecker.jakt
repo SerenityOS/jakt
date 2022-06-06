@@ -1,0 +1,334 @@
+import lexer with Span, JaktError
+import parser with ParsedExpression, ParsedCall, BinaryOperator, DefinitionLinkage, DefinitionType
+import utility with panic, todo
+
+struct VarId {
+    id: usize
+}
+
+struct FunctionId {
+    id: usize
+}
+
+struct StructId {
+    id: usize
+}
+
+struct EnumId {
+    id: usize
+}
+
+struct TypeId {
+    id: usize
+}
+
+struct InferenceId {
+    id: usize
+}
+
+struct ScopeId {
+    id: usize
+}
+
+enum BuiltinType: usize {
+    Void = 0
+    Bool = 1
+    U8 = 2
+    U16 = 3
+    U32 = 4
+    U64 = 5
+    I8 = 6
+    I16 = 7
+    I32 = 8
+    I64 = 9
+    String = 10
+    CChar = 11
+    CString = 12
+}
+
+boxed enum Type {
+    Void
+    Bool
+    U8
+    U16
+    U32
+    U64
+    I8
+    I16
+    I32
+    I64
+    JaktString
+    CChar
+    CString
+    TypeVariable(String)
+    GenericInstance(orig: StructId, params: [TypeId])
+    GenericEnumInstance(orig: EnumId, params: [TypeId])
+    Struct(StructId)
+    Enum(EnumId)
+    Inference(InferenceId)
+    RawPtr(TypeId)
+}
+
+struct Scope {
+    namespace_name: String?
+    vars: [String: VarId]
+    structs: [String: StructId]
+    functions: [String: FunctionId]
+    enums: [String: EnumId]
+    types: [String: TypeId]
+    parent: ScopeId
+    children: [ScopeId]
+    throws: bool
+}
+
+struct CheckedNamespace {
+    name: String
+    scope: ScopeId
+}
+
+struct CheckedFunction {
+    name: String
+    return_type_id: TypeId
+    params: [CheckedParameter]
+    block: CheckedBlock
+}
+
+struct CheckedParameter {
+    requires_label: bool
+    variable: CheckedVariable
+}
+
+struct CheckedVariable {
+    var_id: VarId
+    definition_span: Span
+}
+
+struct CheckedVarDecl {
+    name: String
+    var_type_id: TypeId
+    is_mutable: bool
+    span: Span
+}
+
+struct CheckedBlock {
+    statements: [CheckedStatement]
+    definitely_returns: bool
+}
+
+struct CheckedStruct {
+    name: String
+    name_span: Span
+    generic_parameters: [TypeId]
+    fields: [VarId]
+    scope_id: ScopeId
+    definition_linkage: DefinitionLinkage
+    definition_type: DefinitionType
+    type_id: TypeId
+}
+
+struct CheckedEnum {
+    name: String
+    name_span: Span
+    generic_parameters: [TypeId]
+    variants: [CheckedEnumVariant]
+    scope_id: ScopeId
+    definition_linkage: DefinitionLinkage
+    definition_type: DefinitionType
+    underlying_type_id: TypeId
+    type_id: TypeId
+}
+
+enum CheckedEnumVariant {
+    Untyped(name: String, span: Span)
+    Typed(name: String, type_id: TypeId, span: Span)
+    WithValue(name: String, expr: CheckedExpression, span: Span)
+    StructLike(name: String, fields: [VarId], span: Span)
+}
+
+boxed enum CheckedStatement {
+    Expression(CheckedExpression)
+    Defer(CheckedStatement)
+    VarDecl(var_id: VarId, init: CheckedExpression)
+    If(guard: CheckedExpression, then_block: CheckedBlock, else_block: CheckedBlock?)
+    Block(CheckedBlock)
+    Loop(CheckedBlock)
+    While(guard: CheckedExpression, block: CheckedBlock)
+    Return(CheckedExpression)
+    Break
+    Continue
+    Throw(CheckedExpression)
+    Garbage
+}
+
+enum CheckedNumericConstant {
+    I8(i8)
+    I16(i16)
+    I32(i32)
+    I64(i64)
+    U8(u8)
+    U16(u16)
+    U32(u32)
+    U64(u64)
+    USize(u64)
+    F32(f32)
+    F64(f64)
+}
+
+enum CheckedTypeCast {
+    Fallible(TypeId)
+    Infallible(TypeId)
+}
+
+enum CheckedUnaryOperator {
+    PreIncrement
+    PostIncrement
+    PreDecrement
+    PostDecrement
+    Negate
+    Dereference
+    RawAddress
+    LogicalNot
+    BitwiseNot
+    TypeCast(CheckedTypeCast)
+    Is(TypeId)
+    IsEnumVariant(String)
+}
+
+boxed enum CheckedExpression {
+    Boolean(val: bool, span: Span)
+    NumericConstant(val: CheckedNumericConstant, span: Span, type_id: TypeId)
+    QuotedString(val: String, span: Span)
+    ByteConstant(val: String, span: Span)
+    CharacterConstant(val: String, span: Span)
+    UnaryOp(expr: CheckedExpression, op: CheckedUnaryOperator, span: Span, type_id: TypeId)
+    BinaryOp(lhs: CheckedExpression, op: BinaryOperator, rhs: CheckedExpression, span: Span, type_id: TypeId)
+    JaktTuple(vals: [CheckedExpression], span: Span, type_id: TypeId)
+    Range(from: CheckedExpression, to: CheckedExpression, span: Span, type_id: TypeId)
+    JaktArray(vals: [CheckedExpression], repeat: CheckedExpression?, span: Span, type_id: TypeId)
+    JaktDictionary(vals: [(CheckedExpression, CheckedExpression)], span: Span, type_id: TypeId)
+    JaktSet(vals: [CheckedExpression], span: Span, type_id: TypeId)
+    IndexedExpression(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
+    IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
+    IndexedTuple(expr: CheckedExpression, index: usize, span: Span, type_id: TypeId)
+    IndexedStruct(expr: CheckedExpression, index: String, span: Span, type_id: TypeId)
+    Call(call: CheckedCall, span: Span, type_id: TypeId)
+}
+
+// FIXME: not a method because of https://github.com/SerenityOS/jakt/issues/527
+function expression_type(anon expr: CheckedExpression) -> TypeId => match expr {
+    Boolean(val, span) => TypeId(id: BuiltinType::Bool as! usize)
+    NumericConstant(val, span, type_id) => type_id
+    QuotedString(val, span) => TypeId(id: BuiltinType::String as! usize)
+    ByteConstant(val, span) => TypeId(id: BuiltinType::U8 as! usize)
+    CharacterConstant(val, span) => TypeId(id: BuiltinType::CChar as! usize)
+    UnaryOp(expr, op, span, type_id) => type_id
+    BinaryOp(lhs, op, rhs, span, type_id) => type_id
+    JaktTuple(vals, span, type_id) => type_id
+    Range(from, to, span, type_id) => type_id
+    JaktArray(vals, repeat, span, type_id) => type_id
+    JaktDictionary(vals, span, type_id) => type_id
+    JaktSet(vals, span, type_id) => type_id
+    IndexedExpression(expr, index, span, type_id) => type_id
+    IndexedDictionary(expr, index, span, type_id) => type_id
+    IndexedTuple(expr, index, span, type_id) => type_id
+    IndexedStruct(expr, index, span, type_id) => type_id
+    Call(call, span, type_id) => type_id
+}
+
+// FIXME: not a method because of https://github.com/SerenityOS/jakt/issues/527
+function expression_span(anon expr: CheckedExpression) -> Span => match expr {
+    Boolean(val, span) => span
+    NumericConstant(val, span, type_id) => span
+    QuotedString(val, span) => span
+    ByteConstant(val, span) => span
+    CharacterConstant(val, span) => span
+    UnaryOp(expr, op, span, type_id) => span
+    BinaryOp(lhs, op, rhs, span, type_id) => span
+    JaktTuple(vals, span, type_id) => span
+    Range(from, to, span, type_id) => span
+    JaktArray(vals, repeat, span, type_id) => span
+    JaktDictionary(vals, span, type_id) => span
+    JaktSet(vals, span, type_id) => span
+    IndexedExpression(expr, index, span, type_id) => span
+    IndexedDictionary(expr, index, span, type_id) => span
+    IndexedTuple(expr, index, span, type_id) => span
+    IndexedStruct(expr, index, span, type_id) => span
+    Call(call, span, type_id) => span
+}
+
+struct CheckedCall {
+    name: String,
+    args: [(String, CheckedExpression)]
+    return_type: TypeId
+}
+
+struct Typechecker {
+    functions: [CheckedFunction]
+    variables: [CheckedVarDecl]
+    structures: [CheckedStruct]
+    enums: [CheckedEnum]
+    scopes: [Scope]
+    inferences: [TypeId]
+    types: [Type]
+
+    errors: [JaktError]
+
+    function get_function(this, anon id: FunctionId) -> CheckedFunction => .functions[id.id]
+    function get_variable(this, anon id: VarId) -> CheckedVarDecl => .variables[id.id]
+
+    function error(mut this, anon message: String, anon span: Span) throws {
+        .errors.push(JaktError::Message(message, span))
+    }
+
+    function error_with_hint(mut this, anon message: String, anon span: Span, anon hint: String, anon hint_span: Span) throws {
+        .errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
+    }
+
+    function typecheck_expression(mut this, anon expr: ParsedExpression, scope_id: ScopeId) throws -> CheckedExpression => match expr {
+        Boolean(val, span) => CheckedExpression::Boolean(val, span)
+        NumericConstant(val, span) => {
+            // FIXME: better constant support
+            yield CheckedExpression::NumericConstant(val: CheckedNumericConstant::I64(val), span, type_id: TypeId(id: BuiltinType::I64 as! usize))
+        }
+        QuotedString(val, span) => CheckedExpression::QuotedString(val, span)
+        Call(call, span) => .typecheck_call(call, scope_id, span)
+        Range(from, to, span) => {
+            let checked_from = .typecheck_expression(from, scope_id)
+            let checked_to = .typecheck_expression(to, scope_id)
+
+            let from_type = expression_type(checked_from)
+            let to_type = expression_type(checked_to)
+
+            // FIXME: add unification
+            if from_type.id != to_type.id {
+                .error("type mismatch with 'from' of range'", expression_span(checked_to))
+            }
+
+            yield CheckedExpression::Range(from: checked_from, to: checked_to, span, type_id: from_type)
+        } else => {
+            panic("not complete")
+
+            yield CheckedExpression::Boolean(val: false, span: Span(start: 0, end: 0))
+        }
+    }
+
+    function typecheck_call(mut this, call: ParsedCall, scope_id: ScopeId, span: Span) throws -> CheckedExpression {
+        mut args: [(String, CheckedExpression)] = []
+        mut return_type = TypeId(id: BuiltinType::Void as! usize)
+
+        match call.name {
+            "print" | "println" | "eprintln" | "format" => {
+                for arg in call.args.iterator() {
+                    let checked_arg = .typecheck_expression(expr: arg.1, scope_id)
+
+                    args.push((call.name, checked_arg))
+                }
+            }
+            else => {
+
+            }
+        }
+
+        return CheckedExpression::Call(call: CheckedCall(name: call.name, args, return_type), span, type_id: return_type)
+    }
+}
