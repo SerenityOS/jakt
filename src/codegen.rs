@@ -16,7 +16,7 @@
 use crate::compiler::{UNKNOWN_TYPE_ID, VOID_TYPE_ID};
 use crate::typechecker::{
     CheckedCall, CheckedEnum, CheckedEnumVariant, CheckedMatchBody, CheckedMatchCase,
-    FunctionGenericParameter, ModuleId, ScopeId,
+    FunctionGenericParameter, Module, ModuleId, ScopeId,
 };
 use crate::{
     compiler,
@@ -166,8 +166,13 @@ pub fn codegen(project: &Project) -> String {
             output.push_str(format!("namespace {} {{\n", module.name).as_str());
         }
 
-        output.push_str(&codegen_namespace_predecl(project, scope, &mut context));
-        output.push_str(&codegen_namespace(project, scope, &mut context));
+        output.push_str(&codegen_namespace_predecl(
+            project,
+            scope,
+            module,
+            &mut context,
+        ));
+        output.push_str(&codegen_namespace(project, scope, module, &mut context));
 
         if !module.is_root() {
             output.push_str("}\n");
@@ -183,6 +188,7 @@ pub fn codegen(project: &Project) -> String {
 fn codegen_namespace_predecl(
     project: &Project,
     scope: &Scope,
+    current_module: &Module,
     context: &mut CodegenContext,
 ) -> String {
     let mut output = String::new();
@@ -192,6 +198,10 @@ fn codegen_namespace_predecl(
 
     // Visit the types.
     for (_, struct_id, _) in &scope.structs {
+        if struct_id.0 != current_module.id {
+            // Skip over imports from other modules
+            continue;
+        }
         let structure = project.get_struct(*struct_id);
         let struct_output = codegen_struct_predecl(structure, project);
 
@@ -202,6 +212,10 @@ fn codegen_namespace_predecl(
     }
 
     for (_, enum_id, _) in &scope.enums {
+        if enum_id.0 != current_module.id {
+            // Skip over imports from other modules
+            continue;
+        }
         let enum_ = project.get_enum(*enum_id);
         let enum_output = codegen_enum_predecl(enum_, project);
 
@@ -216,12 +230,17 @@ fn codegen_namespace_predecl(
         output.push_str(&codegen_namespace_predecl(
             project,
             project.get_scope(*child),
+            current_module,
             context,
         ));
     }
 
     // Visit the functions.
     for (_, function_id, _) in &scope.functions {
+        if function_id.0 != current_module.id {
+            // Skip over imports from other modules
+            continue;
+        }
         let function = project.get_function(*function_id);
         if function.linkage == FunctionLinkage::ImplicitEnumConstructor {
             continue;
@@ -242,7 +261,12 @@ fn codegen_namespace_predecl(
     output
 }
 
-fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenContext) -> String {
+fn codegen_namespace(
+    project: &Project,
+    scope: &Scope,
+    current_module: &Module,
+    context: &mut CodegenContext,
+) -> String {
     let mut output = String::new();
 
     // Figure out the right order to output the structs
@@ -265,6 +289,11 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
             seen_types.insert(type_id);
             match type_ {
                 Type::Enum(enum_id) => {
+                    if enum_id.0 != current_module.id {
+                        // Skip over imports from other modules
+                        continue;
+                    }
+
                     let enum_ = project.get_enum(*enum_id);
                     let enum_output = codegen_enum(enum_, project, context);
 
@@ -274,6 +303,11 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
                     }
                 }
                 Type::Struct(struct_id) => {
+                    if struct_id.0 != current_module.id {
+                        // Skip over imports from other modules
+                        continue;
+                    }
+
                     let structure = project.get_struct(*struct_id);
                     let struct_output = codegen_struct(structure, project, context);
 
@@ -288,6 +322,10 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
     }
 
     for (_, struct_id, _) in &scope.structs {
+        if struct_id.0 != current_module.id {
+            // Skip over imports from other modules
+            continue;
+        }
         let structure = project.get_struct(*struct_id);
         if seen_types.contains(&structure.type_id) {
             continue;
@@ -303,6 +341,11 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
     output.push('\n');
 
     for (_, enum_id, _) in &scope.enums {
+        if enum_id.0 != current_module.id {
+            // Skip over imports from other modules
+            continue;
+        }
+
         let enum_ = project.get_enum(*enum_id);
         if seen_types.contains(&enum_.type_id) {
             continue;
@@ -321,7 +364,12 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
         if let Some(name) = &child_scope.namespace_name {
             context.namespace_stack.push(name.clone());
             output.push_str(&format!("namespace {} {{\n", name));
-            output.push_str(&codegen_namespace(project, child_scope, context));
+            output.push_str(&codegen_namespace(
+                project,
+                child_scope,
+                current_module,
+                context,
+            ));
             output.push_str("}\n");
             context.namespace_stack.pop();
         }
@@ -330,6 +378,11 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
     output.push('\n');
 
     for (_, function_id, _) in &scope.functions {
+        if function_id.0 != current_module.id {
+            // Skip over imports from other modules
+            continue;
+        }
+
         let function = project.get_function(*function_id);
         if function.linkage == FunctionLinkage::External
             || function.linkage == FunctionLinkage::ImplicitConstructor
@@ -345,6 +398,11 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
     }
 
     for (_, struct_id, _) in &scope.structs {
+        if struct_id.0 != current_module.id {
+            // Skip over imports from other modules
+            continue;
+        }
+
         let struct_id = *struct_id;
         let structure = project.get_struct(struct_id);
         if structure.definition_linkage == DefinitionLinkage::External {
@@ -372,6 +430,11 @@ fn codegen_namespace(project: &Project, scope: &Scope, context: &mut CodegenCont
     }
 
     for (_, enum_id, _) in &scope.enums {
+        if enum_id.0 != current_module.id {
+            // Skip over imports from other modules
+            continue;
+        }
+
         let enum_id = *enum_id;
         let enum_ = project.get_enum(enum_id);
         if enum_.definition_linkage == DefinitionLinkage::External {
@@ -1862,11 +1925,6 @@ pub fn codegen_type_possibly_as_namespace(
     let weakptr_struct_id = project.find_struct_in_prelude("WeakPtr");
 
     // hack to get fully qualified name
-    let type_module = project.get_module(type_id.0);
-    if !(type_module.is_root() || type_module.id == ModuleId(0)) {
-        output.push_str(type_module.name.as_str());
-        output.push_str("::");
-    }
 
     match ty {
         Type::RawPtr(type_id) => {
@@ -1887,6 +1945,12 @@ pub fn codegen_type_possibly_as_namespace(
             output
         }
         Type::GenericInstance(struct_id, inner_type_ids) => {
+            let type_module = project.get_module(struct_id.0);
+            if !(type_module.is_root() || type_module.id == ModuleId(0)) {
+                output.push_str(type_module.name.as_str());
+                output.push_str("::");
+            }
+
             let acquired_by_ref = !as_namespace
                 && project.get_struct(*struct_id).definition_type == DefinitionType::Class;
             if acquired_by_ref {
@@ -1960,6 +2024,11 @@ pub fn codegen_type_possibly_as_namespace(
                 && project.get_struct(*struct_id).definition_type == DefinitionType::Class
             {
                 output.push_str("NonnullRefPtr<");
+                let type_module = project.get_module(struct_id.0);
+                if !(type_module.is_root() || type_module.id == ModuleId(0)) {
+                    output.push_str(type_module.name.as_str());
+                    output.push_str("::");
+                }
                 output.push_str(&codegen_namespace_qualifier(
                     project.get_struct(*struct_id).scope_id,
                     project,
@@ -1967,6 +2036,15 @@ pub fn codegen_type_possibly_as_namespace(
                 output.push_str(&project.get_struct(*struct_id).name);
                 output.push('>');
             } else {
+                let type_module = project.get_module(struct_id.0);
+                if !(type_module.is_root()
+                    || type_module.id == ModuleId(0)
+                    || project.get_struct(*struct_id).definition_linkage
+                        == DefinitionLinkage::External)
+                {
+                    output.push_str(type_module.name.as_str());
+                    output.push_str("::");
+                }
                 output.push_str(&codegen_namespace_qualifier(
                     project.get_struct(*struct_id).scope_id,
                     project,
@@ -1980,6 +2058,11 @@ pub fn codegen_type_possibly_as_namespace(
             if !as_namespace && project.get_enum(*enum_id).definition_type == DefinitionType::Class
             {
                 output.push_str("NonnullRefPtr<");
+                let type_module = project.get_module(enum_id.0);
+                if !(type_module.is_root() || type_module.id == ModuleId(0)) {
+                    output.push_str(type_module.name.as_str());
+                    output.push_str("::");
+                }
                 let qualifier =
                     codegen_namespace_qualifier(project.get_enum(*enum_id).scope_id, project);
                 if !qualifier.is_empty() {
@@ -1989,6 +2072,11 @@ pub fn codegen_type_possibly_as_namespace(
                 output.push_str(&project.get_enum(*enum_id).name);
                 output.push('>');
             } else {
+                let type_module = project.get_module(enum_id.0);
+                if !(type_module.is_root() || type_module.id == ModuleId(0)) {
+                    output.push_str(type_module.name.as_str());
+                    output.push_str("::");
+                }
                 let qualifier =
                     codegen_namespace_qualifier(project.get_enum(*enum_id).scope_id, project);
                 if !qualifier.is_empty() {
@@ -2958,6 +3046,14 @@ fn codegen_expr(
                     let type_id = call.type_id;
                     let ty = &project.get_type(type_id);
 
+                    if let Some(function_id) = call.function_id {
+                        let type_module = project.get_module(function_id.0);
+                        if !(type_module.is_root() || type_module.id == ModuleId(0)) {
+                            output.push_str(type_module.name.as_str());
+                            output.push_str("::");
+                        }
+                    }
+
                     output.push_str(&codegen_namespace_path(call, project));
                     match ty {
                         Type::Struct(struct_id) => {
@@ -3010,9 +3106,19 @@ fn codegen_expr(
 
                             if enum_.definition_type == DefinitionType::Struct {
                                 output.push_str("typename ");
+                                let type_module = project.get_module(enum_id.0);
+                                if !(type_module.is_root() || type_module.id == ModuleId(0)) {
+                                    output.push_str(type_module.name.as_str());
+                                    output.push_str("::");
+                                }
                                 output.push_str(&codegen_namespace_path(call, project));
                                 output.push_str(&call.name);
                             } else {
+                                let type_module = project.get_module(enum_id.0);
+                                if !(type_module.is_root() || type_module.id == ModuleId(0)) {
+                                    output.push_str(type_module.name.as_str());
+                                    output.push_str("::");
+                                }
                                 output.push_str(&codegen_namespace_path(call, project));
                                 output.push_str("template create<");
                                 output.push_str("typename ");
@@ -3029,6 +3135,19 @@ fn codegen_expr(
                         }
                     }
                 } else {
+                    if let Some(function_id) = call.function_id {
+                        let type_module = project.get_module(function_id.0);
+                        if !(type_module.is_root()
+                            || type_module.id == ModuleId(0)
+                            || project.get_function(function_id).linkage
+                                == FunctionLinkage::External
+                            || !call.namespace.is_empty())
+                        {
+                            output.push_str(type_module.name.as_str());
+                            output.push_str("::");
+                        }
+                    }
+
                     output.push_str(&codegen_namespace_path(call, project));
                     output.push_str(&call.name);
                 }
