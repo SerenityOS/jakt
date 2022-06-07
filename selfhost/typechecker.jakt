@@ -465,6 +465,31 @@ struct Typechecker {
         }
     }
 
+    function find_or_add_type_id(mut this, anon type: Type) throws -> TypeId {
+        let module = .modules[.current_module.id]
+        let module_id = module.id
+
+        mut idx = 0uz
+        for item in module.types.iterator() {
+            if item == type {
+                return TypeId(module: module_id, id: idx)
+            }
+            ++idx
+        }
+
+        idx = 0uz
+        for item in .modules[0].types.iterator() {
+            if item == type {
+                return TypeId(module: .modules[0].id, id: idx)
+            }
+            ++idx
+        }
+
+        .modules[.current_module.id].types.push(type)
+
+        return TypeId(module: module_id, id: .modules[.current_module.id].types.size() - 1)
+    }
+
     function typecheck_binary_operation(mut this, checked_lhs: CheckedExpression, op: BinaryOperator, checked_rhs: CheckedExpression, scope_id: ScopeId, span: Span) throws -> TypeId {
         let lhs_type_id = .expression_type(checked_lhs)
         let rhs_type_id = .expression_type(checked_rhs)
@@ -676,6 +701,15 @@ struct Typechecker {
             let output_type = .typecheck_binary_operation(checked_lhs, op, checked_rhs, scope_id, span)
 
             yield CheckedExpression::BinaryOp(lhs: checked_lhs, op, rhs: checked_rhs, span, type_id: output_type)
+        }
+        OptionalNone(span) => CheckedExpression::OptionalNone(span, type_id: .new_inference())
+        OptionalSome(expr, span) => {
+            let checked_expr = .typecheck_expression(expr, scope_id)
+            let type_id = .expression_type(checked_expr)
+            let optional_struct_id = .find_struct_in_prelude("Optional")
+            let optional_type = Type::GenericInstance(id: optional_struct_id, args: [type_id])
+            let optional_type_id = .find_or_add_type_id(optional_type)
+            yield CheckedExpression::OptionalSome(expr: checked_expr, span, type_id: optional_type_id)
         }
         else => {
             panic("not complete")
