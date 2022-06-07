@@ -20,6 +20,7 @@ static COMMON_ARGS: &[&str] = &[
     "runtime",
     "-std=c++20",
     "-Wno-user-defined-literals",
+    "-Wno-unqualified-std-cast-call",
     "-DJAKT_CONTINUE_ON_PANIC",
 ];
 
@@ -453,4 +454,9 @@ fn test_modules() -> Result<(), JaktError> {
 #[test]
 fn test_selfhost() -> Result<(), JaktError> {
     test_samples("selfhost")
+}
+
+#[test]
+fn test_apps() -> Result<(), JaktError> {
+    test_samples("samples/apps")
 }
