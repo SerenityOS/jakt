@@ -1473,109 +1473,108 @@ struct Parser {
         return expr_stack[0]
     }
 
-    function parse_operand_base(mut this) throws -> ParsedExpression {
-        let span = .current().span()
-        match .current() {
-            Dot => {
-                return ParsedExpression::Var(name: "this", span)
-            }
-            QuotedString(quote, span) => {
-                .index++
-                return ParsedExpression::QuotedString(val: quote, span)
-            }
-            SingleQuotedString(quote, span) => {
-                .index++
-                return ParsedExpression::SingleQuotedString(val: quote, span)
-            }
-            SingleQuotedByteString(quote, span) => {
-                .index++
-                return ParsedExpression::SingleQuotedByteString(val: quote, span)
-            }
-            Number(number, span) => {
-                .index++
-                return ParsedExpression::NumericConstant(val: number, span)
-            }
-            True => {
-                .index++
-                return ParsedExpression::Boolean(val: true, span)
-            }
-            False => {
-                .index++
-                return ParsedExpression::Boolean(val: false, span)
-            }
-            Not => {
-                let start = .current().span()
-                .index++
-                let expr = .parse_operand()
-                let span = merge_spans(start, expr.span())
-                return ParsedExpression::UnaryOp(expr, op: UnaryOperator::LogicalNot, span)
-            }
-            Identifier(name) => {
-                if .peek(1) is LParen {
-                    if name == "Some" {
-                        .index++
-                        let expr = .parse_expression(allow_assignments: false)
-                        return ParsedExpression::OptionalSome(expr, span)
-                    }
-                    let call = .parse_call()
-                    return ParsedExpression::Call(call: call!, span)
-                }
-                if .peek(1) is LessThan {
-                    // We *try* to see if it's a generic, but the parse errors, we back up and try something else
-                    let call = .parse_call()
-                    if not call.has_value() {
-                        return match name {
-                            "None" => ParsedExpression::OptionalNone(span)
-                            else => ParsedExpression::Var(name, span)
-                        }
-                    }
-                    return ParsedExpression::Call(call: call!, span)
-                }
-                .index++
-                if name == "None" {
-                    return ParsedExpression::OptionalNone(span)
-                }
-                return ParsedExpression::Var(name, span)
-            }
-            LParen => {
-                .index++
-
-                let expr = .parse_expression(allow_assignments: false)
-                match .current() {
-                    RParen => {
-                        .index++
-                    }
-                    Comma => {
-                        todo("parse_operand_base tuple")
-                    }
-                    else => {
-                        .error("Expected ')'", .current().span())
-                    }
-                }
-
-                return expr
-            }
-            PlusPlus => {
-                let start = .current().span()
-                .index++
-
-                let expr = .parse_operand()
-                let span = merge_spans(start, expr.span())
-                return ParsedExpression::UnaryOp(expr, op: UnaryOperator::PreIncrement, span)
-            }
-            LSquare => {
-                return .parse_array_or_dictionary_literal()
-            }
-            Match => {
-                return .parse_match_expression()
-            }
-            else => {
-                .index++
-            }
+    function parse_operand_base(mut this) throws => match .current() {
+        Dot(span) => {
+            yield ParsedExpression::Var(name: "this", span)
         }
-        .error("Unsupported expression", span)
-        return ParsedExpression::Garbage(span)
+        QuotedString(quote, span) => {
+            .index++
+            yield ParsedExpression::QuotedString(val: quote, span)
+        }
+        SingleQuotedString(quote, span) => {
+            .index++
+            yield ParsedExpression::SingleQuotedString(val: quote, span)
+        }
+        SingleQuotedByteString(quote, span) => {
+            .index++
+            yield ParsedExpression::SingleQuotedByteString(val: quote, span)
+        }
+        Number(number, span) => {
+            .index++
+            yield ParsedExpression::NumericConstant(val: number, span)
+        }
+        True(span) => {
+            .index++
+            yield ParsedExpression::Boolean(val: true, span)
+        }
+        False(span) => {
+            .index++
+            yield ParsedExpression::Boolean(val: false, span)
+        }
+        Not(span) => {
+            let start = .current().span()
+            .index++
+            let expr = .parse_operand()
+            let span = merge_spans(start, expr.span())
+            yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::LogicalNot, span)
+        }
+        Identifier(name, span) => {
+            if .peek(1) is LParen {
+                if name == "Some" {
+                    .index++
+                    let expr = .parse_expression(allow_assignments: false)
+                    return ParsedExpression::OptionalSome(expr, span)
+                }
+                let call = .parse_call()
+                return ParsedExpression::Call(call: call!, span)
+            }
+            if .peek(1) is LessThan {
+                // We *try* to see if it's a generic, but the parse errors, we back up and try something else
+                let call = .parse_call()
+                if not call.has_value() {
+                    return match name {
+                        "None" => ParsedExpression::OptionalNone(span)
+                        else => ParsedExpression::Var(name, span)
+                    }
+                }
+                return ParsedExpression::Call(call: call!, span)
+            }
+            .index++
+            if name == "None" {
+                return ParsedExpression::OptionalNone(span)
+            }
+            yield ParsedExpression::Var(name, span)
+        }
+        LParen(span) => {
+            .index++
+
+            let expr = .parse_expression(allow_assignments: false)
+            match .current() {
+                RParen => {
+                    .index++
+                }
+                Comma => {
+                    todo("parse_operand_base tuple")
+                }
+                else => {
+                    .error("Expected ')'", .current().span())
+                }
+            }
+
+            yield expr
+        }
+        PlusPlus(span) => {
+            let start = .current().span()
+            .index++
+
+            let expr = .parse_operand()
+            let span = merge_spans(start, expr.span())
+            yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::PreIncrement, span)
+        }
+        LSquare => {
+            yield .parse_array_or_dictionary_literal()
+        }
+        Match => {
+            yield .parse_match_expression()
+        }
+        else => {
+            let span = .current().span()
+            .index++
+            .error("Unsupported expression", span)
+            yield ParsedExpression::Garbage(span)
+        }
     }
+    
 
     function parse_operand(mut this) throws -> ParsedExpression {
         .skip_newlines()
