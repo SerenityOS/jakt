@@ -529,6 +529,9 @@ struct Parser {
                     parsed_import.import_list.push(ImportName(name, span))
                     .index++
                 }
+                Comma => {
+                    .index++
+                }
                 RCurly => {
                     .index++
                     break
