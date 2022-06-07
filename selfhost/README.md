@@ -7,7 +7,7 @@ Currently completion percentages (estimated):
 
 - Lexer (99%)
 - Error reporting (95%)
-- Parsing (30%)
-- Typechecking (0%)
+- Parsing (75%)
+- Typechecking (10%)
 - Codegen (0%)
 
