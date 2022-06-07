@@ -2595,7 +2595,7 @@ fn codegen_enum_match(
                             output.push('}');
                         }
                     }
-                    CheckedMatchCase::CatchAll { body } => {
+                    CheckedMatchCase::CatchAll { body, .. } => {
                         if match_values_are_all_constant {
                             output.push_str("default:\n");
                         } else if this_is_the_first_case {
@@ -2617,7 +2617,9 @@ fn codegen_enum_match(
                             output.push('}');
                         }
                     }
-                    CheckedMatchCase::Expression { expression, body } => {
+                    CheckedMatchCase::Expression {
+                        expression, body, ..
+                    } => {
                         if match_values_are_all_constant {
                             output.push_str("case ");
                         } else {
@@ -2681,6 +2683,7 @@ fn codegen_enum_match(
                         variant_index,
                         scope_id,
                         body,
+                        ..
                     } => {
                         let type_ = &project.get_type(*subject_type_id);
                         let enum_id = match type_ {
@@ -2760,7 +2763,7 @@ fn codegen_enum_match(
 
                         output.push_str("};/*case end*/\n"); // case end
                     }
-                    CheckedMatchCase::CatchAll { body } => {
+                    CheckedMatchCase::CatchAll { body, .. } => {
                         has_default = true;
                         output.push_str("default: {\n");
                         output.push_str(&codegen_match_body(
@@ -2883,7 +2886,7 @@ fn codegen_generic_match(
 
                 output.push_str("}\n");
             }
-            CheckedMatchCase::CatchAll { body } => {
+            CheckedMatchCase::CatchAll { body, .. } => {
                 if match_values_are_all_constant {
                     output.push_str("default:\n");
                 } else if this_is_the_first_case {
@@ -2905,7 +2908,9 @@ fn codegen_generic_match(
                     output.push('}');
                 }
             }
-            CheckedMatchCase::Expression { expression, body } => {
+            CheckedMatchCase::Expression {
+                expression, body, ..
+            } => {
                 if match_values_are_all_constant {
                     output.push_str("case ");
                 } else {
