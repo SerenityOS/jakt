@@ -1219,7 +1219,6 @@ struct Parser {
     }
 
     function parse_statement(mut this, inside_block: bool) throws -> ParsedStatement {
-        println("parse_statement: {}", .current())
         let start = .current().span()
 
         return match .current() {
@@ -1493,7 +1492,6 @@ struct Parser {
                         match name {
                             "Some" => {
                                 .index++
-                                println("{}", .current())
                                 let expr = .parse_expression(allow_assignments: false)
                                 return ParsedExpression::OptionalSome(expr, span)
                             }
