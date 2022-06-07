@@ -233,6 +233,7 @@ boxed enum ParsedExpression {
     Range(from: ParsedExpression, to: ParsedExpression, span: Span)
     ForcedUnwrap(expr: ParsedExpression, span: Span)
     Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: Span)
+    NamespacedVar(name: String, namespace_: [String], span: Span)
     Garbage(Span)
 
     function span(this) => match this {
@@ -258,6 +259,7 @@ boxed enum ParsedExpression {
         Match(expr, cases, span) => span
         IndexedTuple(expr, index, span) => span
         IndexedStruct(expr, field, span) => span
+        NamespacedVar(name, namespace_, span) => span
     }
 
     function precedence(this) => match this {
@@ -335,7 +337,8 @@ struct ParsedVariable {
 }
 
 struct ParsedCall {
-    name: String,
+    namespace_: [String]
+    name: String
     args: [(String, ParsedExpression)]
 }
 
@@ -1632,10 +1635,7 @@ struct Parser {
             let span = merge_spans(start, .current().span())
             yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::Is(parsed_type), span)
         }
-        ColonColon => {
-            todo("postfix ColonColon")
-            yield ParsedExpression::Garbage(.current().span())
-        }
+        ColonColon => .parse_postfix_colon_colon(start, expr)
         Dot => {
             .index++
             yield match .current() {
@@ -1680,6 +1680,60 @@ struct Parser {
                 span: merge_spans(start, .current().span()))
         }
         else => expr
+    }
+
+    function parse_postfix_colon_colon(mut this, start: Span, expr: ParsedExpression) throws -> ParsedExpression {
+        .index++
+        mut namespace_: [String] = []
+        match expr {
+            Var(name) => {
+                namespace_.push(name)
+            }
+            else => {
+                .error("Expected namespace", expr.span())
+            }
+        }
+        if .eof() {
+            .error("Incomplete static method call", .current().span())
+        }
+        while not .eof() {
+            let current_name = match .current() {
+                Identifier(name) => name
+                else => {
+                    .error("Unsupported static method call", .current().span())
+                    return expr
+                }
+            }
+            .index++
+            if .current() is LParen {
+                .index--
+                mut call = .parse_call()
+                call.namespace_ = namespace_
+                return ParsedExpression::Call(call, span: merge_spans(expr.span(), .current().span()))
+            }
+            if .current() is ColonColon {
+                match .previous() {
+                    Identifier(name) => {
+                        namespace_.push(name)
+                    }
+                    else => {
+                        .error("Expected namespace", expr.span())
+                    }
+                }
+                .index++
+                continue
+            }
+            if .current() is LessThan {
+                todo("ColonColon generic")
+            }
+            return ParsedExpression::NamespacedVar(
+                name: current_name,
+                namespace_,
+                span: merge_spans(start, .current().span())
+            )
+        }
+        // FIXME: This is not reachable, so a return should not be required.
+        return ParsedExpression::Garbage(.current().span())
     }
 
     function parse_operator(mut this, allow_assignments: bool) throws -> ParsedExpression {
@@ -1905,8 +1959,9 @@ struct Parser {
 
     function parse_call(mut this) throws -> ParsedCall {
         mut call = ParsedCall(
-            name: "",
-            args: [],
+            namespace_: []
+            name: ""
+            args: []
         )
 
         match .current() {
