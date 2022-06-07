@@ -421,6 +421,10 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
 
 	const diagnostics: Diagnostic[] = [];
 
+	// FIXME: We use this to deduplicate type hints given by the compiler.
+	//        It'd be nicer if it didn't give duplicate hints in the first place.
+	const seenTypeHintPositions = new Set();
+
 	const lines = stdout.split('\n').filter(l => l.length > 0);
 	for (const line of lines) {
 		// console.log(line);
@@ -458,11 +462,14 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
 
 				diagnostics.push(diagnostic);
 			} else if (obj.type == "hint") {
-				const position = convertSpan(obj.position, lineBreaks);
-				const hint_string = ": " + obj.typename;
-				const hint = InlayHint.create(position, [InlayHintLabelPart.create(hint_string)], InlayHintKind.Type);
+				if (!seenTypeHintPositions.has(obj.position)) {
+					seenTypeHintPositions.add(obj.position);
+					const position = convertSpan(obj.position, lineBreaks);
+					const hint_string = ": " + obj.typename;
+					const hint = InlayHint.create(position, [InlayHintLabelPart.create(hint_string)], InlayHintKind.Type);
 
-				textDocument.jaktInlayHints.push(hint);
+					textDocument.jaktInlayHints.push(hint);
+				}
 			}
 		} catch (e) {
 			console.error(e);
