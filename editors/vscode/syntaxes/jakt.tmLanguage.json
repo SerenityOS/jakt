@@ -756,6 +756,14 @@
           "match": "\\b(return|throw|continue|break|yield)\\b"
         },
         {
+          "name": "keyword.control.other.jakt",
+          "match": "\\b(as)\\b\\s"
+        },
+        {
+          "name": "keyword.control.other.jakt",
+          "match": "\\b(import)\\b"
+        },
+        {
           "name": "meta.control.match.jakt",
           "begin": "(?<=match.*?)(\\{)",
           "beginCaptures": {
