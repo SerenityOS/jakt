@@ -6,6 +6,8 @@
  * New features should go into the self-hosted compiler.
  */
 
+use std::collections::HashSet;
+
 use crate::{
     typechecker::{
         CheckedBlock, CheckedEnum, CheckedEnumVariant, CheckedExpression, CheckedFunction,
@@ -20,6 +22,7 @@ pub fn find_definition_in_project(project: &Project, span: Span) -> Span {
         Some(Usage::Variable(span, _)) => span,
         Some(Usage::Call(function_id)) => project.get_function(function_id).name_span,
         Some(Usage::Typename(type_id)) => find_type_definition_for_type_id(project, type_id, span),
+        Some(Usage::NameSet(_)) => span,
         None => span,
     }
 }
@@ -69,6 +72,7 @@ pub fn find_type_definition_in_project(project: &Project, span: Span) -> Span {
         }
         Some(Usage::Call(function_id)) => project.get_function(function_id).name_span,
         Some(Usage::Typename(type_id)) => find_type_definition_for_type_id(project, type_id, span),
+        Some(Usage::NameSet(_)) => span,
         None => span,
     }
 }
@@ -78,6 +82,7 @@ pub fn find_typename_in_project(project: &Project, span: Span) -> Option<String>
         Some(Usage::Variable(_, type_id)) => Some(project.typename_for_type_id(type_id)),
         Some(Usage::Call(function_id)) => Some(get_function_signature(project, function_id)),
         Some(Usage::Typename(type_id)) => Some(project.typename_for_type_id(type_id)),
+        Some(Usage::NameSet(names)) => Some(names.join(" | ")),
         None => None,
     }
 }
@@ -145,6 +150,7 @@ pub fn find_dot_completions_in_project(project: &Project, span: Span) -> Vec<Str
             let result_type_id = project.get_function(function_id).return_type_id;
             completions_for_type_id(project, result_type_id)
         }
+        Some(Usage::NameSet(_)) => vec![],
         Some(Usage::Typename(_)) => vec![],
         None => vec![],
     }
@@ -464,6 +470,7 @@ pub fn find_span_in_expression(
                         variant_index: _,
                         scope_id: _,
                         body,
+                        ..
                     } => match body {
                         CheckedMatchBody::Block(block) => {
                             if let Some(usage) = find_span_in_block(project, block, span) {
@@ -476,7 +483,9 @@ pub fn find_span_in_expression(
                             }
                         }
                     },
-                    CheckedMatchCase::Expression { expression, body } => {
+                    CheckedMatchCase::Expression {
+                        expression, body, ..
+                    } => {
                         if let Some(usage) = find_span_in_expression(project, expression, span) {
                             return Some(usage);
                         }
@@ -494,18 +503,69 @@ pub fn find_span_in_expression(
                             }
                         }
                     }
-                    CheckedMatchCase::CatchAll { body } => match body {
-                        CheckedMatchBody::Block(block) => {
-                            if let Some(usage) = find_span_in_block(project, block, span) {
-                                return Some(usage);
+                    CheckedMatchCase::CatchAll { body, marker_span } => {
+                        if marker_span.contains(span) {
+                            let all_cases = match project.get_type(expr.type_id_or_type_var()) {
+                                Type::Enum(enum_id) | Type::GenericEnumInstance(enum_id, _) => {
+                                    let enum_ = project.get_enum(*enum_id);
+                                    Some(
+                                        enum_
+                                            .variants
+                                            .iter()
+                                            .map(|v| match v {
+                                                CheckedEnumVariant::StructLike(name, _, _)
+                                                | CheckedEnumVariant::Typed(name, _, _)
+                                                | CheckedEnumVariant::WithValue(name, _, _)
+                                                | CheckedEnumVariant::Untyped(name, _) => name,
+                                            })
+                                            .collect::<HashSet<_>>(),
+                                    )
+                                }
+                                _ => None,
+                            };
+
+                            if all_cases.is_none() {
+                                return Some(Usage::NameSet(vec!["else (expression)".to_string()]));
+                            }
+
+                            let all_cases = all_cases.unwrap();
+
+                            let covered_cases = cases
+                                .iter()
+                                .flat_map(|x| match x {
+                                    CheckedMatchCase::CatchAll { .. } => None,
+                                    CheckedMatchCase::EnumVariant { variant_name, .. } => {
+                                        Some(variant_name)
+                                    }
+                                    CheckedMatchCase::Expression { .. } => None,
+                                })
+                                .collect::<std::collections::HashSet<_>>();
+
+                            let remaining = covered_cases
+                                .symmetric_difference(&all_cases)
+                                .map(|x| (*x).clone())
+                                .collect::<Vec<_>>();
+
+                            if remaining.is_empty() {
+                                return None;
+                            }
+
+                            return Some(Usage::NameSet(remaining));
+                        }
+
+                        match body {
+                            CheckedMatchBody::Block(block) => {
+                                if let Some(usage) = find_span_in_block(project, block, span) {
+                                    return Some(usage);
+                                }
+                            }
+                            CheckedMatchBody::Expression(expr) => {
+                                if let Some(usage) = find_span_in_expression(project, expr, span) {
+                                    return Some(usage);
+                                }
                             }
                         }
-                        CheckedMatchBody::Expression(expr) => {
-                            if let Some(usage) = find_span_in_expression(project, expr, span) {
-                                return Some(usage);
-                            }
-                        }
-                    },
+                    }
                 }
             }
 
@@ -615,4 +675,5 @@ pub enum Usage {
     Variable(Span, TypeId),
     Call(FunctionId),
     Typename(TypeId),
+    NameSet(Vec<String>),
 }

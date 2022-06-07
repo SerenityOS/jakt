@@ -1356,13 +1356,16 @@ pub enum CheckedMatchCase {
         variant_index: usize,
         scope_id: ScopeId,
         body: CheckedMatchBody,
+        marker_span: Span,
     },
     Expression {
         expression: Box<CheckedExpression>,
         body: CheckedMatchBody,
+        marker_span: Span,
     },
     CatchAll {
         body: CheckedMatchBody,
+        marker_span: Span,
     },
 }
 
@@ -1530,7 +1533,7 @@ impl CheckedExpression {
                 match case {
                     CheckedMatchCase::EnumVariant { body, .. }
                     | CheckedMatchCase::Expression { body, .. }
-                    | CheckedMatchCase::CatchAll { body } => match body {
+                    | CheckedMatchCase::CatchAll { body, .. } => match body {
                         CheckedMatchBody::Block(block) if block.definitely_returns => continue,
                         _ => return false,
                     },
@@ -5174,7 +5177,10 @@ pub fn typecheck_expression(
                                 );
                                 error = error.or(err);
 
-                                checked_cases.push(CheckedMatchCase::CatchAll { body });
+                                checked_cases.push(CheckedMatchCase::CatchAll {
+                                    body,
+                                    marker_span: *marker_span,
+                                });
                             }
                             MatchCase::Expression {
                                 matched_expression,
@@ -5219,6 +5225,7 @@ pub fn typecheck_expression(
                                 checked_cases.push(CheckedMatchCase::Expression {
                                     body,
                                     expression: Box::new(checked_expr),
+                                    marker_span: *marker_span,
                                 });
                             }
                             MatchCase::EnumVariant {
@@ -5493,6 +5500,7 @@ pub fn typecheck_expression(
                                     variant_index,
                                     scope_id: new_scope_id,
                                     body: checked_body,
+                                    marker_span: *marker_span,
                                 });
                             }
                         }
@@ -5585,6 +5593,7 @@ pub fn typecheck_expression(
                                         variant_index: 0,
                                         scope_id,
                                         body,
+                                        marker_span: *marker_span,
                                     });
                                 }
                             }
@@ -5608,7 +5617,10 @@ pub fn typecheck_expression(
                                     *marker_span,
                                 );
                                 error = error.or(err);
-                                checked_cases.push(CheckedMatchCase::CatchAll { body });
+                                checked_cases.push(CheckedMatchCase::CatchAll {
+                                    body,
+                                    marker_span: *marker_span,
+                                });
                             }
                             MatchCase::Expression {
                                 matched_expression,
@@ -5661,6 +5673,7 @@ pub fn typecheck_expression(
                                 checked_cases.push(CheckedMatchCase::Expression {
                                     body,
                                     expression: Box::new(checked_expr),
+                                    marker_span: *marker_span,
                                 });
                             }
                         }
