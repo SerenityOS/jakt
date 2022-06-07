@@ -1,10 +1,5 @@
-extern struct FILE {}
-
-extern function fopen(anon str: raw c_char, anon mode: raw c_char) -> raw FILE
-extern function fgetc(anon file: mut raw FILE) -> c_int
-extern function fclose(anon file: mut raw FILE) -> c_int
-extern function feof(anon file: mut raw FILE) -> c_int
-extern function putchar(anon ch: c_int) -> c_int
+/// Expect:
+/// - stderr: "usage: cat <path>\n"
 
 function main(args: [String]) {
     if args.size() <= 1 {

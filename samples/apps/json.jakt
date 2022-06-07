@@ -1,11 +1,12 @@
+/// Expect:
+/// - output: "JsonValue::Object([\"foo\": JsonValue::Number(123), \"bar\": JsonValue::Number(456)])\n"
+
 extern struct StringBuilder {
     // FIXME: Jakt::StringBuilder::append() actually takes a c_char, not a u8, but nobody complains
     function append(mut this, anon c: u8)
     function to_string(this) throws -> String
     function create() throws -> StringBuilder
 }
-
-extern function abort()
 
 enum JsonValue {
     Null

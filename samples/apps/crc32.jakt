@@ -1,10 +1,5 @@
-extern struct FILE {}
-
-extern function fopen(anon str: raw c_char, anon mode: raw c_char) -> raw FILE
-extern function fgetc(anon file: mut raw FILE) -> c_int
-extern function fclose(anon file: mut raw FILE) -> c_int
-extern function feof(anon file: mut raw FILE) -> c_int
-extern function putchar(anon ch: c_int) -> c_int
+/// Expect:
+/// - stderr: "usage: crc32 <path>\n"
 
 function make_lookup_table() throws -> [u32] {
     mut data = [0u32; 256]
@@ -32,7 +27,7 @@ function main(args: [String]) {
     defer fclose(file)
 
     let table = make_lookup_table()
-    
+
     mut state = 0xffffffffu32
     mut c = fgetc(file)
     while feof(file) == 0 {
