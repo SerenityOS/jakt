@@ -142,9 +142,9 @@ struct CheckedVariable {
 
 struct CheckedVarDecl {
     name: String
-    var_type_id: TypeId
     is_mutable: bool
     span: Span
+    type_id: TypeId
 }
 
 struct CheckedBlock {
@@ -249,48 +249,14 @@ boxed enum CheckedExpression {
     IndexedTuple(expr: CheckedExpression, index: usize, span: Span, type_id: TypeId)
     IndexedStruct(expr: CheckedExpression, index: String, span: Span, type_id: TypeId)
     Call(call: CheckedCall, span: Span, type_id: TypeId)
-}
-
-// FIXME: not a method because of https://github.com/SerenityOS/jakt/issues/527
-function expression_type(anon expr: CheckedExpression) -> TypeId => match expr {
-    Boolean(val, span) => builtin(BuiltinType::Bool)
-    NumericConstant(val, span, type_id) => type_id
-    QuotedString(val, span) => builtin(BuiltinType::String)
-    ByteConstant(val, span) => builtin(BuiltinType::U8)
-    CharacterConstant(val, span) => builtin(BuiltinType::CChar)
-    UnaryOp(expr, op, span, type_id) => type_id
-    BinaryOp(lhs, op, rhs, span, type_id) => type_id
-    JaktTuple(vals, span, type_id) => type_id
-    Range(from, to, span, type_id) => type_id
-    JaktArray(vals, repeat, span, type_id) => type_id
-    JaktDictionary(vals, span, type_id) => type_id
-    JaktSet(vals, span, type_id) => type_id
-    IndexedExpression(expr, index, span, type_id) => type_id
-    IndexedDictionary(expr, index, span, type_id) => type_id
-    IndexedTuple(expr, index, span, type_id) => type_id
-    IndexedStruct(expr, index, span, type_id) => type_id
-    Call(call, span, type_id) => type_id
-}
-
-// FIXME: not a method because of https://github.com/SerenityOS/jakt/issues/527
-function expression_span(anon expr: CheckedExpression) -> Span => match expr {
-    Boolean(val, span) => span
-    NumericConstant(val, span, type_id) => span
-    QuotedString(val, span) => span
-    ByteConstant(val, span) => span
-    CharacterConstant(val, span) => span
-    UnaryOp(expr, op, span, type_id) => span
-    BinaryOp(lhs, op, rhs, span, type_id) => span
-    JaktTuple(vals, span, type_id) => span
-    Range(from, to, span, type_id) => span
-    JaktArray(vals, repeat, span, type_id) => span
-    JaktDictionary(vals, span, type_id) => span
-    JaktSet(vals, span, type_id) => span
-    IndexedExpression(expr, index, span, type_id) => span
-    IndexedDictionary(expr, index, span, type_id) => span
-    IndexedTuple(expr, index, span, type_id) => span
-    IndexedStruct(expr, index, span, type_id) => span
-    Call(call, span, type_id) => span
+    MethodCall(expr: CheckedExpression, call: CheckedCall, span: Span, type_id: TypeId)
+    NamespacedVar(namespace: [CheckedNamespace], var: CheckedVariable, span: Span)
+    Var(var: CheckedVariable, span: Span)
+    OptionalNone(span: Span, type_id: TypeId)
+    OptionalSome(expr: CheckedExpression, span: Span, type_id: TypeId)
+    ForcedUnwrap(expr: CheckedExpression, span: Span, type_id: TypeId)
+    Block(block: CheckedBlock, span: Span, type_id: TypeId)
+    Garbage(Span)
 }
 
 struct CheckedCall {
@@ -315,6 +281,7 @@ struct Typechecker {
     function get_type(this, anon id: TypeId) -> Type => .modules[id.module.id].types[id.id]
     function get_enum(this, anon id: EnumId) -> CheckedEnum => .modules[id.module.id].enums[id.id]
     function get_struct(this, anon id: EnumId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
+    function get_scope(this, anon id: ScopeId) -> Scope => .modules[id.module.id].scopes[id.id]
 
     function error(mut this, anon message: String, anon span: Span) throws {
         .errors.push(JaktError::Message(message, span))
@@ -331,6 +298,17 @@ struct Typechecker {
             I8 | I16 | I32 | I64 | U8 | U16 | U32 | U64 | Usize | CInt | CChar => true
             else => false
         }
+    }
+
+    function find_struct_in_prelude(this, anon name: String) throws -> StructId {
+        // start at the prelude scope id
+        for entry in .get_scope(ScopeId(module: ModuleId(id: 0), id: 0)).structs.iterator() {
+            if entry.0 == name {
+                return entry.1
+            }
+        }
+        panic(format("internal error: {} builtin definition not found" name))
+        return StructId(module: ModuleId(id: 0), id: 0)
     }
 
     function try_to_promote_constant_expr_to_type(mut this, lhs_type: TypeId, checked_rhs: mut CheckedExpression, span: Span) throws {
@@ -385,21 +363,91 @@ struct Typechecker {
         }
     }
 
-    function unify(mut this, lhs: TypeId, lhs_span: Span, rhs: TypeId, rhs_span: Span) throws {
+    function expression_type(this, anon expr: CheckedExpression) -> TypeId => match expr {
+        Boolean(val, span) => builtin(BuiltinType::Bool)
+        NumericConstant(val, span, type_id) => type_id
+        QuotedString(val, span) => builtin(BuiltinType::String)
+        ByteConstant(val, span) => builtin(BuiltinType::U8)
+        CharacterConstant(val, span) => builtin(BuiltinType::CChar)
+        UnaryOp(expr, op, span, type_id) => type_id
+        BinaryOp(lhs, op, rhs, span, type_id) => type_id
+        JaktTuple(vals, span, type_id) => type_id
+        Range(from, to, span, type_id) => type_id
+        JaktArray(vals, repeat, span, type_id) => type_id
+        JaktDictionary(vals, span, type_id) => type_id
+        JaktSet(vals, span, type_id) => type_id
+        IndexedExpression(expr, index, span, type_id) => type_id
+        IndexedDictionary(expr, index, span, type_id) => type_id
+        IndexedTuple(expr, index, span, type_id) => type_id
+        IndexedStruct(expr, index, span, type_id) => type_id
+        Call(call, span, type_id) => type_id
+        MethodCall(expr, call, span, type_id) => type_id
+        NamespacedVar(namespace, var, span) => .get_variable(var.var_id).type_id
+        Var(var, span) => .get_variable(var.var_id).type_id
+        OptionalNone(span, type_id) => type_id
+        OptionalSome(expr, span, type_id) => type_id
+        ForcedUnwrap(expr, span, type_id) => type_id
+        Block(block, span, type_id) => type_id
+        Garbage(span) => builtin(BuiltinType::Void)
+    }
+
+    // FIXME: not a method of expression because of https://github.com/SerenityOS/jakt/issues/527
+    function expression_span(this, anon expr: CheckedExpression) -> Span => match expr {
+        Boolean(val, span) => span
+        NumericConstant(val, span, type_id) => span
+        QuotedString(val, span) => span
+        ByteConstant(val, span) => span
+        CharacterConstant(val, span) => span
+        UnaryOp(expr, op, span, type_id) => span
+        BinaryOp(lhs, op, rhs, span, type_id) => span
+        JaktTuple(vals, span, type_id) => span
+        Range(from, to, span, type_id) => span
+        JaktArray(vals, repeat, span, type_id) => span
+        JaktDictionary(vals, span, type_id) => span
+        JaktSet(vals, span, type_id) => span
+        IndexedExpression(expr, index, span, type_id) => span
+        IndexedDictionary(expr, index, span, type_id) => span
+        IndexedTuple(expr, index, span, type_id) => span
+        IndexedStruct(expr, index, span, type_id) => span
+        Call(call, span, type_id) => span
+        MethodCall(expr, call, span, type_id) => span
+        NamespacedVar(namespace, var, span) => span
+        Var(var, span) => span
+        OptionalNone(span, type_id) => span
+        OptionalSome(expr, span, type_id) => span
+        ForcedUnwrap(expr, span, type_id) => span
+        Block(block, span, type_id) => span
+        Garbage(span) => span
+    }
+
+    function expression_is_mutable(this, anon expr: CheckedExpression) -> bool => match expr {
+        Var(var) => .get_variable(var.id).is_mutable
+        IndexedStruct(expr, index, span, type_id) => .expression_is_mutable(expr)
+        IndexedExpression(expr, index, span, type_id) => .expression_is_mutable(expr)
+        IndexedTuple(expr, index, span, type_id) => .expression_is_mutable(expr)
+        IndexedDictionary(expr, index, span, type_id) => .expression_is_mutable(expr)
+        ForcedUnwrap(expr, span, type_id) => .expression_is_mutable(expr)
+        else => false
+    }
+
+    function unify(mut this, lhs: TypeId, lhs_span: Span, rhs: TypeId, rhs_span: Span) throws -> (TypeId, bool) {
         // FIXME: Add more unification logic
         if lhs.id != rhs.id {
             .error("types incompatible ", rhs_span)
+            return (lhs, true)
+        } else {
+            return (lhs, false)
         }
     }
 
     function typecheck_binary_operation(mut this, checked_lhs: CheckedExpression, op: BinaryOperator, checked_rhs: CheckedExpression, scope_id: ScopeId, span: Span) throws -> TypeId {
-        let lhs_type_id = expression_type(checked_lhs)
-        let rhs_type_id = expression_type(checked_rhs)
+        let lhs_type_id = .expression_type(checked_lhs)
+        let rhs_type_id = .expression_type(checked_rhs)
 
-        let lhs_span = expression_span(checked_lhs)
-        let rhs_span = expression_span(checked_rhs)
+        let lhs_span = .expression_span(checked_lhs)
+        let rhs_span = .expression_span(checked_rhs)
 
-        mut type_id = expression_type(checked_lhs)
+        mut type_id = .expression_type(checked_lhs)
 
         match op {
             LessThan | LessThanOrEqual | GreaterThan | GreaterThanOrEqual | Equal | NotEqual => {
@@ -420,6 +468,34 @@ struct Typechecker {
 
                 type_id = builtin(BuiltinType::Bool)
             }
+            Assign => {
+                if not .expression_is_mutable(checked_lhs) {
+                    .error("assignment to immutable variable", span)
+                    return lhs_type_id
+                }
+                match checked_rhs {
+                    OptionalNone(span, type_id) => {
+                        let lhs_type = .get_type(lhs_type_id)
+                        let optional_struct_id = .find_struct_in_prelude("Optional")
+
+                        match lhs_type {
+                            GenericInstance(id, args) => {
+                                if id == optional_struct_id {
+                                    return lhs_type_id
+                                }
+                            }
+                            else => {}
+                        }
+                    }
+                    else => {}
+                }
+
+                let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
+                if result.1 {
+                    .error(format("Assignment between incompatible types (‘{}’ and ‘{}’)", .typename(lhs_type_id), .typename(rhs_type_id)), span)
+                }
+                return result.0
+            }
             else => {}
         }
 
@@ -438,11 +514,11 @@ struct Typechecker {
             let checked_from = .typecheck_expression(from, scope_id)
             let checked_to = .typecheck_expression(to, scope_id)
 
-            let from_type = expression_type(checked_from)
-            let to_type = expression_type(checked_to)
+            let from_type = .expression_type(checked_from)
+            let to_type = .expression_type(checked_to)
 
-            let from_span = expression_span(checked_from)
-            let to_span = expression_span(checked_to)
+            let from_span = .expression_span(checked_from)
+            let to_span = .expression_span(checked_to)
 
             .unify(lhs: from_type, lhs_span: from_span, rhs: to_type, rhs_span: from_span)
 
@@ -452,7 +528,7 @@ struct Typechecker {
             let checked_lhs = .typecheck_expression(lhs, scope_id)
             mut checked_rhs = .typecheck_expression(rhs, scope_id)
 
-            let lhs_type = expression_type(checked_lhs)
+            let lhs_type = .expression_type(checked_lhs)
 
             .try_to_promote_constant_expr_to_type(lhs_type, checked_rhs, span)
 
