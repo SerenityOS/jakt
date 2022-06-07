@@ -15,7 +15,7 @@ color magenta "[A-Z][A-Z_0-9]+"
 color magenta "[A-Z][A-Za-z0-9]+"
 
 # Strings
-color green "".*""
+color green ""(\\.|[^"])*""
 
 # Comments
 color blue "//.*"
