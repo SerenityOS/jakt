@@ -19,6 +19,10 @@ struct FunctionId {
 struct StructId {
     module: ModuleId
     id: usize
+
+    function equals(this, anon rhs: StructId) -> bool {
+        return this.module.id == rhs.module.id and this.id == rhs.id
+    }
 }
 
 struct EnumId {
@@ -30,13 +34,12 @@ struct TypeId {
     module: ModuleId
     id: usize
 
-    function equal(this, anon rhs: TypeId) -> bool {
+    function equals(this, anon rhs: TypeId) -> bool {
         return this.module.id == rhs.module.id and this.id == rhs.id
     }
 }
 
 struct InferenceId {
-    module: ModuleId
     id: usize
 }
 
@@ -116,6 +119,14 @@ struct Module {
     imports: [ModuleId]
 
     is_root: bool
+
+    function new_type_variable(mut this) throws -> TypeId {
+        let new_id = .types.size()
+
+        .types.push(Type::TypeVariable(format("T{}", new_id)))
+
+        return TypeId(module: .id, id: new_id)
+    }
 }
 
 struct CheckedNamespace {
@@ -300,6 +311,20 @@ struct Typechecker {
         }
     }
 
+    function new_inference(mut this) throws -> TypeId {
+        let new_type_var = .modules[.current_module.id].new_type_variable()
+
+        .inferences.push(new_type_var)
+
+        let inference_id = .inferences.size() - 1
+
+        .modules[.current_module.id].types.push(Type::Inference(InferenceId(id: inference_id)))
+
+        let new_type_id = .modules[.current_module.id].types.size() - 1
+
+        return TypeId(module: .current_module, id: new_type_id)
+    }
+
     function find_struct_in_prelude(this, anon name: String) throws -> StructId {
         // start at the prelude scope id
         for entry in .get_scope(ScopeId(module: ModuleId(id: 0), id: 0)).structs.iterator() {
@@ -450,19 +475,86 @@ struct Typechecker {
         mut type_id = .expression_type(checked_lhs)
 
         match op {
+            NoneCoalescing | NoneCoalescingAssign => {
+                // 1. LHS must be Optional<T>.
+                // 2. RHS must be Optional<T> or T.
+                // 3. Resulting type is Optional<T> or T, respectively.
+
+                // if an assignment, the LHS must be a mutable variable.
+                if op is NoneCoalescingAssign {
+                    match checked_lhs {
+                        Var(var, span) => {
+                            if not .get_variable(id: var.id).is_mutable {
+                                .error_with_hint(message: "left-hand side of ??= must be a mutable variable", span, hint: "This variable isn't marked as mutable", hint_span: var.definition_span)
+                                return .new_inference()
+                            }
+                        }
+                        else => {
+                            .error(message: "left-hand side of ??= must be a mutable variable", span)
+                            return .new_inference()
+                        }
+                    }
+                }
+
+                match .get_type(lhs_type_id) {
+                    GenericInstance(id, args) => {
+                        let optional_struct_id = .find_struct_in_prelude("Optional")
+
+                        if id == optional_struct_id {
+                            // Success: LHS is T? and RHS is T?.
+                            if lhs_type_id.equals(rhs_type_id) {
+                                return lhs_type_id
+                            }
+
+                            // Extract T from Optional<T>.
+                            let inner_type_id = args[0]
+
+                            if inner_type_id.equals(rhs_type_id) {
+                                // Success: LHS is T? and RHS is T.
+                                return inner_type_id
+                            }
+                        } else {
+                            .error_with_hint(format(
+                                "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
+                                .typename(lhs_type_id),
+                                .typename(rhs_type_id),
+                            ), span,
+                            "Left side of ?? must be an Optional but isn't",
+                            lhs_span)
+                        }
+                    }
+                    else => {
+                        .error_with_hint(format(
+                            "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
+                            .typename(lhs_type_id),
+                            .typename(rhs_type_id),
+                        ), span,
+                        "Left side of ?? must be an Optional but isn't",
+                        lhs_span)
+                    }
+                }
+
+                .error(format(
+                    "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
+                    .typename(lhs_type_id),
+                    .typename(rhs_type_id),
+                ), span)
+
+                return lhs_type_id
+            }
             LessThan | LessThanOrEqual | GreaterThan | GreaterThanOrEqual | Equal | NotEqual => {
-                if not lhs_type_id.equal(rhs_type_id) {
+                if not lhs_type_id.equals(rhs_type_id) {
                     .error(format("Binary comparison between incompatible types ({} vs {})", .typename(lhs_type_id), .typename(rhs_type_id)), span)
                 }
 
                 type_id = builtin(BuiltinType::Bool)
             }
             LogicalAnd | LogicalOr => {
-                if not lhs_type_id.equal(builtin(BuiltinType::Bool)) {
+                if not lhs_type_id.equals(builtin(BuiltinType::Bool)) {
                     .error("left side of logical binary operation is not a boolean", lhs_span)
                 }
 
-                if not rhs_type_id.equal(builtin(BuiltinType::Bool)) {
+                if not rhs_type_id.equals(builtin(BuiltinType::Bool)) {
                     .error("right side of logical binary operation is not a boolean", rhs_span)
                 }
 
@@ -495,6 +587,55 @@ struct Typechecker {
                     .error(format("Assignment between incompatible types (‘{}’ and ‘{}’)", .typename(lhs_type_id), .typename(rhs_type_id)), span)
                 }
                 return result.0
+            }
+            AddAssign | SubtractAssign | MultiplyAssign | DivideAssign | ModuloAssign | BitwiseAndAssign | BitwiseOrAssign | BitwiseXorAssign | BitwiseLeftShiftAssign | BitwiseRightShiftAssign => {
+                let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
+
+                match .get_type(lhs_type_id) {
+                    GenericInstance(id, args) => {
+                        if id == weak_ptr_struct_id {
+                            let inner_type_id = args[0]
+                            match .get_type(inner_type_id) {
+                                Type::Struct(struct_id: lhs_struct_id) => {
+                                    match .get_type(rhs_type_id) {
+                                        Type::Struct(struct_id: rhs_struct_id) => {
+                                            if lhs_struct_id.equals(rhs_struct_id) {
+                                                return lhs_type_id
+                                            }
+                                        }
+                                        else => {}
+                                    }
+                                }
+                                else => {}
+                            }
+                        }
+
+                        if not lhs_type_id.equals(rhs_type_id) {
+                            .error(format(
+                                "Assignment between incompatible types (‘{}’ and ‘{}’)",
+                                .typename(lhs_type_id),
+                                .typename(rhs_type_id),
+                            ), span)
+                        }
+
+                        if not .expression_is_mutable(checked_lhs) {
+                            .error("Assignment to immutbale variable", span)
+                        }
+                    }
+                    else => {}
+                }
+            }
+            Add | Subtract | Multiply | Divide | Modulo => {
+                if not lhs_type_id.equals(rhs_type_id) {
+                    .error(format(
+                        "Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)",
+                        .typename(lhs_type_id),
+                        .typename(rhs_type_id),
+                    ),
+                    span)
+                }
+
+                type_id = lhs_type_id
             }
             else => {}
         }
