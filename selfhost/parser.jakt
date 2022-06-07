@@ -1882,13 +1882,18 @@ struct Parser {
             let pattern_start_index = .index
             mut variant_name: [(String, Span)] = []
 
-            while .current() is Identifier {
-                .index++
-                variant_name.push((name, .current().span()))
-                if .current() is ColonColon {
-                    .index++
-                } else {
-                    break
+            while not .eof() {
+                match .current() {
+                    Identifier(name) => {
+                        .index++
+                        variant_name.push((name, .current().span()))
+                    }
+                    ColonColon => {
+                        .index++
+                    }
+                    else => {
+                        break
+                    }
                 }
             }
 
@@ -1905,7 +1910,7 @@ struct Parser {
                         Identifier(name) => {
                             let arg_name = name
                             if .peek(1) is Colon {
-                                .index++
+                                .index += 2
                                 match .current() {
                                     Identifier(name) => {
                                         let arg_binding = name
@@ -1927,7 +1932,11 @@ struct Parser {
                                             name: none
                                             binding: arg_name
                                             span: .current().span()))
+                                .index++
                             }
+                        }
+                        Comma => {
+                            .index++
                         }
                         RParen => {
                             .index++
