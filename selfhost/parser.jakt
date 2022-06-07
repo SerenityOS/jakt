@@ -1518,12 +1518,18 @@ struct Parser {
                         return ParsedExpression::OptionalSome(expr, span)
                     }
                     let call = .parse_call()
-                    return ParsedExpression::Call(call, span)
+                    return ParsedExpression::Call(call: call!, span)
                 }
                 if .peek(1) is LessThan {
-                    todo("parse_operand_base generics")
-                    .index++
-                    return ParsedExpression::Garbage(span)
+                    // We *try* to see if it's a generic, but the parse errors, we back up and try something else
+                    let call = .parse_call()
+                    if not call.has_value() {
+                        return match name {
+                            "None" => ParsedExpression::OptionalNone(span)
+                            else => ParsedExpression::Var(name, span)
+                        }
+                    }
+                    return ParsedExpression::Call(call: call!, span)
                 }
                 .index++
                 if name == "None" {
@@ -1653,7 +1659,7 @@ struct Parser {
                             // NOTE: We step backwards since parse_call() expects to start at the callee identifier.
                             .index--
                             let call = .parse_call()
-                            yield ParsedExpression::MethodCall(expr, call, span: merge_spans(start, end: .previous().span()))
+                            yield ParsedExpression::MethodCall(expr, call: call!, span: merge_spans(start, end: .previous().span()))
                         }
                         else => ParsedExpression::IndexedStruct(expr, field: name, span: merge_spans(start, end: .current().span()))
                     }
@@ -1708,8 +1714,8 @@ struct Parser {
             if .current() is LParen {
                 .index--
                 mut call = .parse_call()
-                call.namespace_ = namespace_
-                return ParsedExpression::Call(call, span: merge_spans(expr.span(), .current().span()))
+                call!.namespace_ = namespace_
+                return ParsedExpression::Call(call: call!, span: merge_spans(expr.span(), .current().span()))
             }
             if .current() is ColonColon {
                 match .previous() {
@@ -1966,7 +1972,7 @@ struct Parser {
         }
     }
 
-    function parse_call(mut this) throws -> ParsedCall {
+    function parse_call(mut this) throws -> ParsedCall? {
         mut call = ParsedCall(
             namespace_: []
             name: ""
