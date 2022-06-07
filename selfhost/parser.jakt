@@ -531,6 +531,9 @@ struct Parser {
                 Identifier(name, span) => {
                     parsed_import.import_list.push(ImportName(name, span))
                     .index++
+                    if .current() is Comma {
+                      .index++
+                    }
                 }
                 Comma => {
                     .index++
