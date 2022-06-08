@@ -1,0 +1,177 @@
+// Copyright (c) 2022, JT <jt@serenityos.org>
+// Copyright (c) 2022, Andreas Kling <kling@serenityos.org>
+//
+// SPDX-License-Identifier: BSD-2-Clause
+
+import typechecker { CheckedBlock, CheckedExpression, CheckedStatement }
+import utility { panic, todo }
+
+enum AllowedControlExits {
+    /// No control exit statements allowed
+    Nothing
+    /// Only `return` allowed
+    JustReturn
+    /// `continue`/`break` allowed: `return` is also allowed in this context
+    AtLoop
+
+    function is_return_allowed(this) => not this is Nothing
+    function are_loop_exits_allowed(this) => this is AtLoop
+
+    function allow_return(this) => match this {
+        Nothing | JustReturn => AllowedControlExits::JustReturn
+        AtLoop => AllowedControlExits::AtLoop
+    }
+}
+
+struct ControlFlowState {
+    allowed_exits: AllowedControlExits
+    /// Whether `break` and `continue` should use `return ExplicitValueOrControlFlow` instead of
+    /// C++'s `break`/`continue`.
+    passes_through_match: bool
+    match_nest_level: usize
+
+    function no_control_flow() -> ControlFlowState {
+        return ControlFlowState(
+            allowed_exits: AllowedControlExits::Nothing
+            passes_through_match: false
+            match_nest_level: 0
+        )
+    }
+    function enter_function(this) -> ControlFlowState {
+        return ControlFlowState(
+            allowed_exits: AllowedControlExits::JustReturn
+            passes_through_match: false
+            match_nest_level: .match_nest_level
+        )
+    }
+    function enter_loop(this) -> ControlFlowState {
+        return ControlFlowState(
+            allowed_exits: AllowedControlExits::AtLoop
+            passes_through_match: false
+            match_nest_level: 0
+        )
+    }
+    function enter_match(this) -> ControlFlowState {
+        mut level = .match_nest_level
+        if .passes_through_match {
+            level = .match_nest_level + 1
+        }
+        return ControlFlowState(
+            allowed_exits: .allowed_exits.allow_return()
+            passes_through_match: true
+            match_nest_level: level
+        )
+    }
+    function is_match_nested(this) => .match_nest_level != 0
+    function choose_control_flow_macro(this) -> String {
+        if .allowed_exits.are_loop_exits_allowed() {
+            if .is_match_nested() {
+                return "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH"
+            }
+            return "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP"
+        }
+        return "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY"
+    }
+}
+
+struct CodeGenerator {
+
+    control_flow_state: ControlFlowState
+    entered_yieldable_blocks: [(String, String)] // label, variable name
+
+    function codegen_expression(mut this, expression: CheckedExpression) throws -> String {
+        return ""
+    }
+
+    function codegen_block(mut this, block: CheckedBlock) throws -> String {
+        mut output = ""
+
+        // FIXME: yielded_type
+
+        output += "{"
+
+        for statement in block.statements.iterator() {
+            output += .codegen_statement(statement)
+        }
+
+        output += "}"
+
+        // FIXME: yielded_type
+
+        return output
+    }
+
+    function codegen_statement(mut this, statement: CheckedStatement) throws -> String {
+        match statement {
+            Throw(expression) => {
+                return "return " + .codegen_expression(expression) + ";"
+            }   
+            Continue => {
+                if .control_flow_state.passes_through_match {
+                    return "return JaktInternal::LoopContinue{};"
+                }
+                return "continue;"
+            }
+            Break => {
+                if .control_flow_state.passes_through_match {
+                    return "return JaktInternal::LoopBreak{};"
+                }
+                return "break;"
+            }
+            Expression(expression) => {
+                return .codegen_expression(expression) + ";\n"
+            }
+            Defer(statement) => {
+                // NOTE: We let the preprocessor generate a unique name for the RAII helper.
+                mut output = ""
+                output += "#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n"
+                output += "ScopeGuard __SCOPE_GUARD_NAME ([&] \n"
+                output += "#undef __SCOPE_GUARD_NAME\n{"
+                {
+                    let last_control_flow = .control_flow_state
+                    .control_flow_state.passes_through_match = false
+                    output += .codegen_statement(statement)
+                    output += "});\n"
+                    .control_flow_state = last_control_flow
+                }
+            }
+            Return(expression) => {
+                return "return (" + .codegen_expression(expression) + ");\n"
+            }
+            Loop(block) => {
+                mut output = ""
+                output += "for (;;) {"
+                let last_control_flow = .control_flow_state
+                .control_flow_state = last_control_flow.enter_loop()
+                let block = .codegen_block(block)
+                .control_flow_state = last_control_flow
+                output += block
+                output += "}"
+            }
+            While(guard, block) => {
+                mut output = ""
+                output += "while ("
+                output += .codegen_expression(expression: guard)
+                output += ") "
+                {
+                    let last_control_flow = .control_flow_state
+                    .control_flow_state = last_control_flow.enter_loop()
+                    let code = .codegen_block(block)
+                    .control_flow_state = last_control_flow
+                    output += code
+                }
+            }
+            Block(block) => {
+                return "{" + .codegen_block(block) + "}"
+            }
+            Garbage => {
+                panic("Garbage statement in codegen")
+            }
+            else => {
+                eprintln("Missing statement codegen for {}", statement)
+                todo("codegen_statement")
+            }
+        }
+        return ""
+    }
+}
