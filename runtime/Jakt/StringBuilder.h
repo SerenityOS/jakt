@@ -60,6 +60,10 @@ public:
         }
     }
 
+    // FIXME: These only exist because we don't support function overloading in Jakt yet.
+    ErrorOr<void> append_string(String const& string) { return append(string.view()); }
+    ErrorOr<void> append_c_string(char const* string) { return append(string); }
+
 private:
     explicit StringBuilder(Array<u8> buffer);
 
