@@ -286,11 +286,12 @@ function builtin(anon builtin: BuiltinType) -> TypeId {
 class CheckedProgram {
     public modules: [Module]
 
+    public function get_module(this, anon id: ModuleId) -> Module => .modules[id.id]
     public function get_function(this, anon id: FunctionId) -> CheckedFunction => .modules[id.module.id].functions[id.id]
     public function get_variable(this, anon id: VarId) -> CheckedVarDecl => .modules[id.module.id].variables[id.id]
     public function get_type(this, anon id: TypeId) -> Type => .modules[id.module.id].types[id.id]
     public function get_enum(this, anon id: EnumId) -> CheckedEnum => .modules[id.module.id].enums[id.id]
-    public function get_struct(this, anon id: EnumId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
+    public function get_struct(this, anon id: StructId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
     public function get_scope(this, anon id: ScopeId) -> Scope => .modules[id.module.id].scopes[id.id]
 }
 
@@ -304,7 +305,7 @@ struct Typechecker {
     function get_variable(this, anon id: VarId) => .program.get_variable(id)
     function get_type(this, anon id: TypeId) => .program.get_type(id)
     function get_enum(this, anon id: EnumId) => .program.get_enum(id)
-    function get_struct(this, anon id: EnumId) => .program.get_struct(id)
+    function get_struct(this, anon id: StructId) => .program.get_struct(id)
     function get_scope(this, anon id: ScopeId) => .program.get_scope(id)
 
     function error(mut this, anon message: String, anon span: Span) throws {
