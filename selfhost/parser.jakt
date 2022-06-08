@@ -418,8 +418,8 @@ struct Parser {
                     parsed_namespace.imports.push(.parse_import())
                 }
                 Function => {
-                    let function = .parse_function(FunctionLinkage::Internal)
-                    parsed_namespace.functions.push(function)
+                    let parsed_function = .parse_function(FunctionLinkage::Internal)
+                    parsed_namespace.functions.push(parsed_function)
                 }
                 Struct => {
                     let parsed_struct = .parse_struct(DefinitionLinkage::Internal, DefinitionType::Struct)
