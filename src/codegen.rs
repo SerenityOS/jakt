@@ -1266,7 +1266,7 @@ fn codegen_enum_debug_description_getter(enum_: &CheckedEnum) -> String {
 
     output.push_str("auto builder = TRY(StringBuilder::create());");
 
-    output.push_str("this->visit(");
+    output.push_str("TRY(this->visit(");
 
     for (i, variant) in enum_.variants.iter().enumerate() {
         let name = match variant {
@@ -1275,46 +1275,55 @@ fn codegen_enum_debug_description_getter(enum_: &CheckedEnum) -> String {
             CheckedEnumVariant::WithValue(name, ..) => name,
             CheckedEnumVariant::StructLike(name, ..) => name,
         };
-        output.push_str(&format!("[&]([[maybe_unused]] {} const& that) {{\n", name));
-        output.push_str(&format!("builder.append(\"{}::{}\");", enum_.name, name));
+        output.push_str(&format!(
+            "[&]([[maybe_unused]] {} const& that) -> ErrorOr<void> {{\n",
+            name
+        ));
+        output.push_str(&format!(
+            "TRY(builder.append(\"{}::{}\"));",
+            enum_.name, name
+        ));
         match variant {
             CheckedEnumVariant::StructLike(_, fields, ..) => {
-                output.push_str("builder.append(\"(\");");
+                output.push_str("TRY(builder.append(\"(\"));");
                 for (j, field) in fields.iter().enumerate() {
-                    output.push_str(&format!("builder.append(\"{}: \");", field.name));
+                    output.push_str(&format!("TRY(builder.append(\"{}: \"));", field.name));
                     if field.type_id == crate::compiler::STRING_TYPE_ID {
-                        output.push_str("builder.append(\"\\\"\");");
+                        output.push_str("TRY(builder.append(\"\\\"\"));");
                     }
-                    output.push_str(&format!("builder.appendff(\"{{}}\", that.{});", field.name));
+                    output.push_str(&format!(
+                        "TRY(builder.appendff(\"{{}}\", that.{}));",
+                        field.name
+                    ));
                     if field.type_id == crate::compiler::STRING_TYPE_ID {
-                        output.push_str("builder.append(\"\\\"\");");
+                        output.push_str("TRY(builder.append(\"\\\"\"));");
                     }
                     if j != fields.len() - 1 {
-                        output.push_str("builder.append(\", \");");
+                        output.push_str("TRY(builder.append(\", \"));");
                     }
                 }
-                output.push_str("builder.append(\")\");");
+                output.push_str("TRY(builder.append(\")\"));");
             }
             CheckedEnumVariant::Typed(_, type_id, ..) => {
-                output.push_str("builder.append(\"(\");");
+                output.push_str("TRY(builder.append(\"(\"));");
                 if *type_id == crate::compiler::STRING_TYPE_ID {
-                    output.push_str("builder.append(\"\\\"\");");
+                    output.push_str("TRY(builder.append(\"\\\"\"));");
                 }
-                output.push_str("builder.appendff(\"{}\", that.value);");
+                output.push_str("TRY(builder.appendff(\"{}\", that.value));");
                 if *type_id == crate::compiler::STRING_TYPE_ID {
-                    output.push_str("builder.append(\"\\\"\");");
+                    output.push_str("TRY(builder.append(\"\\\"\"));");
                 }
-                output.push_str("builder.append(\")\");");
+                output.push_str("TRY(builder.append(\")\"));");
             }
             _ => {}
         }
-        output.push('}');
+        output.push_str("return {}; }");
         if i != enum_.variants.len() - 1 {
             output.push(',');
         }
     }
 
-    output.push_str(");");
+    output.push_str("));");
     output.push_str("return builder.to_string();");
     output.push_str(" }");
 
@@ -1327,12 +1336,12 @@ fn codegen_debug_description_getter(structure: &CheckedStruct, project: &Project
 
     output.push_str("auto builder = MUST(StringBuilder::create());");
 
-    output.push_str(&format!("builder.append(\"{}(\");", structure.name));
+    output.push_str(&format!("TRY(builder.append(\"{}(\"));", structure.name));
 
     for (i, field) in structure.fields.iter().enumerate() {
         output.push_str(&codegen_indent(INDENT_SIZE));
 
-        output.push_str("builder.appendff(\"");
+        output.push_str("TRY(builder.appendff(\"");
         output.push_str(&field.name);
         if field.type_id == crate::compiler::STRING_TYPE_ID {
             output.push_str(": \\\"{}\\\"");
@@ -1355,10 +1364,10 @@ fn codegen_debug_description_getter(structure: &CheckedStruct, project: &Project
         }
 
         output.push_str(&field.name);
-        output.push_str(");\n");
+        output.push_str("));\n");
     }
 
-    output.push_str("builder.append(\")\");");
+    output.push_str("TRY(builder.append(\")\"));");
     output.push_str("return builder.to_string();");
     output.push_str(" }");
 
