@@ -230,6 +230,7 @@ boxed enum ParsedExpression {
     OptionalNone(Span)
     JaktArray(values: [ParsedExpression], fill_size: ParsedExpression?, span: Span)
     JaktDictionary(values: [(ParsedExpression, ParsedExpression)], span: Span)
+    JaktTuple(values: [ParsedExpression], span: Span)
     Range(from: ParsedExpression, to: ParsedExpression, span: Span)
     ForcedUnwrap(expr: ParsedExpression, span: Span)
     Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: Span)
@@ -252,6 +253,7 @@ boxed enum ParsedExpression {
         OptionalNone(span) => span
         JaktArray(values, fill_size, span) => span
         JaktDictionary(values, span) => span
+        JaktTuple(values, span) => span
         Range(from, to, span) => span
         ForcedUnwrap(expr, span) => span
         Garbage(span) => span
@@ -1537,15 +1539,49 @@ struct Parser {
             yield ParsedExpression::Var(name, span)
         }
         LParen(span) => {
+            let start_span = .current().span()
             .index++
+            
+            mut expr = .parse_expression(allow_assignments: false)
 
-            let expr = .parse_expression(allow_assignments: false)
+            .skip_newlines()
+
             match .current() {
                 RParen => {
                     .index++
                 }
                 Comma => {
-                    todo("parse_operand_base tuple")
+                    // We have a tuple
+                    .index++
+
+                    mut tuple_exprs: [ParsedExpression] = [expr]
+                    mut end_span = start_span
+
+                    while not .eof() {
+                        match .current() {
+                            Eol | Comma => {
+                                .index++
+                            }
+                            RParen => {
+                                .index++
+                                break
+                            }
+                            else => {
+                                let expr = .parse_expression(allow_assignments: false)
+                                end_span = expr.span()
+                                tuple_exprs.push(expr)
+                            }
+                        }
+                    }
+
+                    if .eof() {
+                        .error("Expected ')'", .current().span());
+                    }
+
+                    expr = ParsedExpression::JaktTuple(
+                        values: tuple_exprs,
+                        span: merge_spans(start_span, end_span)
+                    )
                 }
                 else => {
                     .error("Expected ')'", .current().span())
