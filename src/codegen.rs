@@ -13,6 +13,9 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
+use holyhashmap::HolyHashMap;
+use linked_hash_set::LinkedHashSet;
+
 use crate::compiler::{UNKNOWN_TYPE_ID, VOID_TYPE_ID};
 use crate::typechecker::{
     CheckedCall, CheckedEnum, CheckedEnumVariant, CheckedMatchBody, CheckedMatchCase,
@@ -1967,7 +1970,6 @@ pub fn codegen_namespace_qualifier(scope_id: ScopeId, project: &Project) -> Stri
     while let Some(current) = current_scope_id {
         // Walk backward, prepending the parents with names to the current output
         if let Some(namespace_name) = &project.get_scope(current).namespace_name {
-            println!("{}", namespace_name);
             output.insert_str(0, &format!("{}::", namespace_name));
         }
 
@@ -3751,8 +3753,8 @@ fn codegen_indent(indent: usize) -> String {
 fn extract_dependencies_from(
     project: &Project,
     type_id: TypeId,
-    deps: &mut HashSet<TypeId>,
-    graph: &HashMap<TypeId, Vec<TypeId>>,
+    deps: &mut LinkedHashSet<TypeId>,
+    graph: &HolyHashMap<TypeId, Vec<TypeId>>,
     top_level: bool,
 ) {
     if let Some(existing_deps) = graph.get(&type_id) {
@@ -3827,11 +3829,11 @@ fn extract_dependencies_from(
 fn produce_codegen_dependency_graph(
     project: &Project,
     scope: &Scope,
-) -> HashMap<TypeId, Vec<TypeId>> {
-    let mut graph = HashMap::new();
+) -> HolyHashMap<TypeId, Vec<TypeId>> {
+    let mut graph = HolyHashMap::new();
 
     for (_, type_id, _) in &scope.types {
-        let mut deps = HashSet::new();
+        let mut deps = LinkedHashSet::new();
         extract_dependencies_from(project, *type_id, &mut deps, &graph, true);
         graph.insert(*type_id, deps.into_iter().collect());
     }
@@ -3843,7 +3845,7 @@ fn postorder_traversal(
     project: &Project,
     type_id: TypeId,
     visited: &mut HashSet<TypeId>,
-    graph: &HashMap<TypeId, Vec<TypeId>>,
+    graph: &HolyHashMap<TypeId, Vec<TypeId>>,
     output: &mut Vec<TypeId>,
 ) {
     if visited.contains(&type_id) {

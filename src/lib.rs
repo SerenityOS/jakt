@@ -21,6 +21,8 @@
 #![allow(clippy::never_loop)]
 
 extern crate core;
+extern crate holyhashmap;
+extern crate linked_hash_set;
 
 mod codegen;
 mod compiler;

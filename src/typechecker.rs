@@ -13,7 +13,8 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-use std::collections::{HashMap, HashSet};
+use holyhashmap::HolyHashMap;
+use std::collections::HashSet;
 
 use crate::compiler::{PRELUDE_SCOPE_ID, STRING_TYPE_ID};
 use crate::parser::{BinaryOperator, MatchBody, MatchCase, ParsedVarDecl, Visibility};
@@ -3262,7 +3263,7 @@ fn typecheck_and_specialize_generic_function(
     generic_arguments: Vec<TypeId>,
     parent_scope_id: ScopeId,
     this_type_id: Option<TypeId>,
-    generic_substitutions: &HashMap<TypeId, TypeId>,
+    generic_substitutions: &HolyHashMap<TypeId, TypeId>,
     project: &mut Project,
 ) -> Option<JaktError> {
     let function = project.get_function(function_id);
@@ -3564,7 +3565,7 @@ pub fn typecheck_block(
     let parent_throws = project.get_scope(parent_scope_id).throws;
     let block_scope_id = project.create_scope(parent_scope_id, parent_throws);
     let mut checked_block = CheckedBlock::new(block_scope_id);
-    let mut generic_inferences = HashMap::new();
+    let mut generic_inferences = HolyHashMap::new();
 
     for stmt in &block.stmts {
         let (checked_stmt, err) = typecheck_statement(stmt, block_scope_id, project, safety_mode);
@@ -4188,7 +4189,7 @@ pub fn typecheck_match_body(
     scope_id: ScopeId,
     project: &mut Project,
     safety_mode: SafetyMode,
-    generic_parameters: &mut HashMap<TypeId, TypeId>,
+    generic_parameters: &mut HolyHashMap<TypeId, TypeId>,
     final_result_type: &mut Option<TypeId>,
     span: Span,
 ) -> (CheckedMatchBody, Option<JaktError>) {
@@ -5127,12 +5128,12 @@ pub fn typecheck_expression(
                         .generic_parameters
                         .iter()
                         .zip(inner_type_ids.iter())
-                        .fold(HashMap::new(), |mut acc, (param, type_id)| {
+                        .fold(HolyHashMap::new(), |mut acc, (param, type_id)| {
                             acc.insert(*param, *type_id);
                             acc
                         })
                 }
-                _ => HashMap::new(),
+                _ => HolyHashMap::new(),
             };
             let mut final_result_type: Option<TypeId> = None;
             let mut all_variants_are_constants = true;
@@ -5359,7 +5360,7 @@ pub fn typecheck_expression(
                                                 let variant_name = variant_name.clone();
                                                 let fields = fields.clone();
 
-                                                let mut names_seen = HashMap::new();
+                                                let mut names_seen = HolyHashMap::new();
                                                 for arg in args {
                                                     let name = &arg.0;
                                                     if name.is_none()
@@ -6248,7 +6249,7 @@ fn unify_with_type(
             return (found_type, None);
         }
 
-        let mut generic_interface = HashMap::new();
+        let mut generic_interface = HolyHashMap::new();
         let err = check_types_for_compat(hint, found_type, &mut generic_interface, span, project);
         if err.is_some() {
             return (found_type, err);
@@ -6666,7 +6667,7 @@ pub fn typecheck_call(
     let mut error = None;
     let mut return_type_id = UNKNOWN_TYPE_ID;
     let mut linkage = FunctionLinkage::Internal;
-    let mut generic_substitutions = HashMap::new();
+    let mut generic_substitutions = HolyHashMap::new();
     let mut type_args = vec![];
     let mut callee_throws = false;
     let mut resolved_namespaces = call
@@ -7002,7 +7003,7 @@ pub fn typecheck_call(
 
 pub fn substitute_typevars_in_type(
     type_id: TypeId,
-    generic_inferences: &HashMap<TypeId, TypeId>,
+    generic_inferences: &HolyHashMap<TypeId, TypeId>,
     project: &mut Project,
 ) -> TypeId {
     let mut result = substitute_typevars_in_type_helper(type_id, generic_inferences, project);
@@ -7022,7 +7023,7 @@ pub fn substitute_typevars_in_type(
 
 fn substitute_typevars_in_type_helper(
     type_id: TypeId,
-    generic_inferences: &HashMap<TypeId, TypeId>,
+    generic_inferences: &HolyHashMap<TypeId, TypeId>,
     project: &mut Project,
 ) -> TypeId {
     let type_ = project.get_type(type_id);
@@ -7097,7 +7098,7 @@ fn substitute_typevars_in_type_helper(
 pub fn check_types_for_compat(
     lhs_type_id: TypeId,
     rhs_type_id: TypeId,
-    generic_inferences: &mut HashMap<TypeId, TypeId>,
+    generic_inferences: &mut HolyHashMap<TypeId, TypeId>,
     span: Span,
     project: &Project,
 ) -> Option<JaktError> {
