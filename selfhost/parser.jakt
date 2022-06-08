@@ -1809,107 +1809,115 @@ struct Parser {
         return .parse_operand_postfix_operator(start, expr)
     }
 
-    function parse_operand_postfix_operator(mut this, start: Span, expr: ParsedExpression) throws -> ParsedExpression => match .current() {
-        DotDot => {
-            .index++
-            let to = .parse_expression(allow_assignments: false)
-            yield ParsedExpression::Range(from: expr, to, span: merge_spans(start, to.span()))
-        }
-        ExclamationPoint => {
-            .index++
-            yield ParsedExpression::ForcedUnwrap(expr, span: merge_spans(start, .previous().span()))
-        }
-        PlusPlus => {
-            .index++
-            yield ParsedExpression::UnaryOp(
-                expr,
-                op: UnaryOperator::PostIncrement,
-                span: merge_spans(start, .previous().span()),
-            )
-        }
-        MinusMinus => {
-            .index++
-            yield ParsedExpression::UnaryOp(
-                expr,
-                op: UnaryOperator::PostDecrement,
-                span: merge_spans(start, .previous().span()),
-            )
-        }
-        As => {
-            .index++
-            let cast_span = merge_spans(.previous().span(), .current().span())
-            let cast = match .current() {
+    function parse_operand_postfix_operator(mut this, start: Span, expr: ParsedExpression) throws -> ParsedExpression {
+        mut result = expr
+        loop {
+            result = match .current() {
+                DotDot => {
+                    .index++
+                    let to = .parse_expression(allow_assignments: false)
+                    yield ParsedExpression::Range(from: result, to, span: merge_spans(start, to.span()))
+                }
                 ExclamationPoint => {
                     .index++
-                    yield TypeCast::Infallible(.parse_typename())
+                    yield ParsedExpression::ForcedUnwrap(result, span: merge_spans(start, .previous().span()))
                 }
-                QuestionMark => {
+                PlusPlus => {
                     .index++
-                    yield TypeCast::Fallible(.parse_typename())
+                    yield ParsedExpression::UnaryOp(
+                        result,
+                        op: UnaryOperator::PostIncrement,
+                        span: merge_spans(start, .previous().span()),
+                    )
                 }
-                else => {
-                    .error("Invalid cast syntax", cast_span)
-                    yield TypeCast::Fallible(ParsedType::Empty)
-                }
-            }
-            let span = merge_spans(start, merge_spans(cast_span, .current().span()))
-            yield ParsedExpression::UnaryOp(
-                expr,
-                op: UnaryOperator::TypeCast(cast),
-                span
-            )
-        }
-        Is => {
-            .index++
-            let parsed_type = .parse_typename()
-            let span = merge_spans(start, .current().span())
-            yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::Is(parsed_type), span)
-        }
-        ColonColon => .parse_postfix_colon_colon(start, expr)
-        Dot => {
-            .index++
-            yield match .current() {
-                Number(number) => {
-                    // Indexing into a tuple
+                MinusMinus => {
                     .index++
-                    // FIXME: Proper numeric constants.
-                    yield ParsedExpression::IndexedTuple(expr, index: number as! usize, span: merge_spans(start, end: .previous().span()))
+                    yield ParsedExpression::UnaryOp(
+                        result,
+                        op: UnaryOperator::PostDecrement,
+                        span: merge_spans(start, .previous().span()),
+                    )
                 }
-                Identifier(name) => {
-                    // Struct field access or method call
+                As => {
+                    .index++
+                    let cast_span = merge_spans(.previous().span(), .current().span())
+                    let cast = match .current() {
+                        ExclamationPoint => {
+                            .index++
+                            yield TypeCast::Infallible(.parse_typename())
+                        }
+                        QuestionMark => {
+                            .index++
+                            yield TypeCast::Fallible(.parse_typename())
+                        }
+                        else => {
+                            .error("Invalid cast syntax", cast_span)
+                            yield TypeCast::Fallible(ParsedType::Empty)
+                        }
+                    }
+                    let span = merge_spans(start, merge_spans(cast_span, .current().span()))
+                    yield ParsedExpression::UnaryOp(
+                        result,
+                        op: UnaryOperator::TypeCast(cast),
+                        span
+                    )
+                }
+                Is => {
+                    .index++
+                    let parsed_type = .parse_typename()
+                    let span = merge_spans(start, .current().span())
+                    yield ParsedExpression::UnaryOp(result, op: UnaryOperator::Is(parsed_type), span)
+                }
+                ColonColon => .parse_postfix_colon_colon(start, result)
+                Dot => {
                     .index++
                     yield match .current() {
-                        LParen => {
-                            // NOTE: We step backwards since parse_call() expects to start at the callee identifier.
-                            .index--
-                            let call = .parse_call()
-                            yield ParsedExpression::MethodCall(expr, call: call!, span: merge_spans(start, end: .previous().span()))
+                        Number(number) => {
+                            // Indexing into a tuple
+                            .index++
+                            // FIXME: Proper numeric constants.
+                            yield ParsedExpression::IndexedTuple(result, index: number as! usize, span: merge_spans(start, end: .previous().span()))
                         }
-                        else => ParsedExpression::IndexedStruct(expr, field: name, span: merge_spans(start, end: .current().span()))
+                        Identifier(name) => {
+                            // Struct field access or method call
+                            .index++
+                            yield match .current() {
+                                LParen => {
+                                    // NOTE: We step backwards since parse_call() expects to start at the callee identifier.
+                                    .index--
+                                    let call = .parse_call()
+                                    yield ParsedExpression::MethodCall(result, call: call!, span: merge_spans(start, end: .previous().span()))
+                                }
+                                else => ParsedExpression::IndexedStruct(result, field: name, span: merge_spans(start, end: .current().span()))
+                            }
+                        }
+                        else => {
+                            .error("Unsupported dot operation", .current().span())
+                            .index++
+                            yield result
+                        }
                     }
                 }
-                else => {
-                    .error("Unsupported dot operation", .current().span())
+                LSquare => {
+                    // Indexing operation
                     .index++
-                    yield expr
+                    let index_expr = .parse_expression(allow_assignments: false)
+                    if .current() is RSquare {
+                        .index++
+                    } else {
+                        .error("Expected ']'", .current().span())
+                    }
+                    yield ParsedExpression::IndexedExpression(
+                        base: result,
+                        index: index_expr,
+                        span: merge_spans(start, .current().span()))
+                }
+                else => {
+                    break
                 }
             }
         }
-        LSquare => {
-            // Indexing operation
-            .index++
-            let index_expr = .parse_expression(allow_assignments: false)
-            if .current() is RSquare {
-                .index++
-            } else {
-                .error("Expected ']'", .current().span())
-            }
-            yield ParsedExpression::IndexedExpression(
-                base: expr,
-                index: index_expr,
-                span: merge_spans(start, .current().span()))
-        }
-        else => expr
+        return result
     }
 
     function parse_postfix_colon_colon(mut this, start: Span, expr: ParsedExpression) throws -> ParsedExpression {
