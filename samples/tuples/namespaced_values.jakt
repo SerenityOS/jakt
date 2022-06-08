@@ -1,0 +1,16 @@
+/// Expect:
+/// - output: "Trogdor burninated 1337 peasants\n"
+
+namespace Kingdom {
+    namespace Dragons {
+        function most_majestic() => "Trogdor"
+    }
+
+    function peasant_population() => 1337
+}
+
+function main() {
+    let x = (Kingdom::Dragons::most_majestic(), Kingdom::peasant_population())
+
+    println("{} burninated {} peasants", x.0, x.1)
+}

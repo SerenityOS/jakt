@@ -1,0 +1,12 @@
+/// Expect:
+/// - output: "1\n"
+
+struct Test {
+    function test<T>(foo: T) -> T {
+        return foo;
+    }
+}
+
+function main() {
+    println("{}", Test::test<i64>(foo: 1));
+}
