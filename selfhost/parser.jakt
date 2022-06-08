@@ -3,8 +3,12 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-import lexer { JaktError, Span, Token, empty_span, merge_spans }
-import utility { panic, todo }
+import error { JaktError }
+import lexer { Token }
+import utility { panic, todo, Span }
+
+function merge_spans(anon start: Span, anon end: Span) -> Span => Span(start: start.start, end: end.end)
+function empty_span() -> Span => Span(start: 0, end: 0)
 
 enum DefinitionLinkage {
     Internal

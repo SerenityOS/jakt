@@ -6,9 +6,10 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-import lexer { JaktError, Lexer, Span, Token, empty_span, merge_spans, print_error }
+import error { JaktError, print_error }
+import lexer { Lexer, Token }
 import parser { BinaryOperator, DefinitionLinkage, DefinitionType, ParsedCall, ParsedExpression, Parser }
-import utility { panic, todo }
+import utility { panic, todo, Span }
 
 function usage() {
     eprintln("usage: jakt [-l] [-p] <path>")

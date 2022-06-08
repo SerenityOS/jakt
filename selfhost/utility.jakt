@@ -12,3 +12,8 @@ function todo(anon message: String) {
     eprintln("TODO: {}", message)
     abort()
 }
+
+struct Span {
+    start: usize
+    end: usize
+}
