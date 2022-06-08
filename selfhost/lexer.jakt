@@ -6,12 +6,6 @@
 import error { JaktError }
 import utility { Span }
 
-extern struct StringBuilder {
-    function append(mut this, anon s: u8) throws
-    function to_string(mut this) throws -> String
-    function create() throws -> StringBuilder
-}
-
 // FIXME: These should not need explicit "-> bool" return types.
 function is_ascii_alpha(anon c: u8) -> bool => (c >= b'a' and c <= b'z') or (c >= b'A' and c <= b'Z')
 function is_ascii_digit(anon c: u8) -> bool => (c >= b'0' and c <= b'9')

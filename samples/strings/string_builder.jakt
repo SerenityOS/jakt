@@ -1,17 +1,11 @@
 /// Expect:
 /// - output: "abc123\n"
 
-extern struct StringBuilder {
-    function create() throws -> StringBuilder
-    function append(mut this, anon s: raw c_char)
-    function to_string(mut this) throws -> String
-}
-
 function main() {
     mut s = StringBuilder::create()
 
-    s.append("abc".c_string());
-    s.append("123".c_string());
+    s.append_c_string("abc".c_string());
+    s.append_c_string("123".c_string());
 
     println("{}", s.to_string())
 }
