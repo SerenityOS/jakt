@@ -17,6 +17,7 @@ function is_ascii_alpha(anon c: u8) -> bool => (c >= b'a' and c <= b'z') or (c >
 function is_ascii_digit(anon c: u8) -> bool => (c >= b'0' and c <= b'9')
 function is_ascii_hexdigit(anon c: u8) -> bool => (c >= b'0' and c <= b'9') or (c >= b'a' and c <= b'f') or (c >= b'A' and c <= b'F')
 function is_ascii_alphanumeric(anon c: u8) -> bool => is_ascii_alpha(c) or is_ascii_digit(c)
+function is_ascii_whitespace(anon c: u8) -> bool => (c == b' ' or c == b'\t' or c == b'\r')
 
 enum Token {
     SingleQuotedString(quote: String, span: Span)
@@ -592,13 +593,8 @@ struct Lexer {
         if .eof() {
             return None
         }
-        loop {
-            let ch = .peek()
-            if ch == b' ' or ch == b'\t' or ch == b'\r' {
-                .index++
-            } else {
-                break
-            }
+        while is_ascii_whitespace(.peek()) {
+            .index++
         }
 
         let start = .index
