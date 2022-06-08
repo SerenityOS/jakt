@@ -282,18 +282,30 @@ function builtin(anon builtin: BuiltinType) -> TypeId {
     return TypeId(module: ModuleId(id: 0), id: builtin as! usize)
 }
 
+// This is the "result" object produced by type-checking.
+class CheckedProgram {
+    public modules: [Module]
+
+    public function get_function(this, anon id: FunctionId) -> CheckedFunction => .modules[id.module.id].functions[id.id]
+    public function get_variable(this, anon id: VarId) -> CheckedVarDecl => .modules[id.module.id].variables[id.id]
+    public function get_type(this, anon id: TypeId) -> Type => .modules[id.module.id].types[id.id]
+    public function get_enum(this, anon id: EnumId) -> CheckedEnum => .modules[id.module.id].enums[id.id]
+    public function get_struct(this, anon id: EnumId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
+    public function get_scope(this, anon id: ScopeId) -> Scope => .modules[id.module.id].scopes[id.id]
+}
+
 struct Typechecker {
-    modules: [Module]
+    program: CheckedProgram
     inferences: [TypeId]
     current_module: ModuleId
     errors: [JaktError]
 
-    function get_function(this, anon id: FunctionId) -> CheckedFunction => .modules[id.module.id].functions[id.id]
-    function get_variable(this, anon id: VarId) -> CheckedVarDecl => .modules[id.module.id].variables[id.id]
-    function get_type(this, anon id: TypeId) -> Type => .modules[id.module.id].types[id.id]
-    function get_enum(this, anon id: EnumId) -> CheckedEnum => .modules[id.module.id].enums[id.id]
-    function get_struct(this, anon id: EnumId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
-    function get_scope(this, anon id: ScopeId) -> Scope => .modules[id.module.id].scopes[id.id]
+    function get_function(this, anon id: FunctionId) => .program.get_function(id)
+    function get_variable(this, anon id: VarId) => .program.get_variable(id)
+    function get_type(this, anon id: TypeId) => .program.get_type(id)
+    function get_enum(this, anon id: EnumId) => .program.get_enum(id)
+    function get_struct(this, anon id: EnumId) => .program.get_struct(id)
+    function get_scope(this, anon id: ScopeId) => .program.get_scope(id)
 
     function error(mut this, anon message: String, anon span: Span) throws {
         .errors.push(JaktError::Message(message, span))
@@ -313,15 +325,15 @@ struct Typechecker {
     }
 
     function new_inference(mut this) throws -> TypeId {
-        let new_type_var = .modules[.current_module.id].new_type_variable()
+        let new_type_var = .program.modules[.current_module.id].new_type_variable()
 
         .inferences.push(new_type_var)
 
         let inference_id = .inferences.size() - 1
 
-        .modules[.current_module.id].types.push(Type::Inference(InferenceId(id: inference_id)))
+        .program.modules[.current_module.id].types.push(Type::Inference(InferenceId(id: inference_id)))
 
-        let new_type_id = .modules[.current_module.id].types.size() - 1
+        let new_type_id = .program.modules[.current_module.id].types.size() - 1
 
         return TypeId(module: .current_module, id: new_type_id)
     }
@@ -467,7 +479,7 @@ struct Typechecker {
     }
 
     function find_or_add_type_id(mut this, anon type: Type) throws -> TypeId {
-        let module = .modules[.current_module.id]
+        let module = .program.modules[.current_module.id]
         let module_id = module.id
 
         mut idx = 0uz
@@ -479,16 +491,16 @@ struct Typechecker {
         }
 
         idx = 0uz
-        for item in .modules[0].types.iterator() {
+        for item in .program.modules[0].types.iterator() {
             if item == type {
-                return TypeId(module: .modules[0].id, id: idx)
+                return TypeId(module: .program.modules[0].id, id: idx)
             }
             ++idx
         }
 
-        .modules[.current_module.id].types.push(type)
+        .program.modules[.current_module.id].types.push(type)
 
-        return TypeId(module: module_id, id: .modules[.current_module.id].types.size() - 1)
+        return TypeId(module: module_id, id: .program.modules[.current_module.id].types.size() - 1)
     }
 
     function find_type_in_scope(this, scope_id: ScopeId, name: String) -> TypeId? {
