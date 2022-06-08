@@ -15,11 +15,6 @@ enum DefinitionLinkage {
     External
 }
 
-enum DefinitionType {
-    Class
-    Struct
-}
-
 struct ImportName {
     name: String
     span: Span
@@ -34,38 +29,34 @@ struct ParsedNamespace {
     name: String?
     name_span: Span?
     functions: [ParsedFunction]
-    structs: [ParsedStruct]
+    records: [ParsedRecord]
     namespaces: [ParsedNamespace]
-    enums: [ParsedEnum]
     imports: [ParsedImport]
 }
-
-struct ParsedStruct {
+struct ValueEnumVariant {
+  name: String
+  span: Span
+  value: ParsedExpression?
+}
+struct SumEnumVariant {
+  name: String
+  span: Span
+  params: [ParsedVarDecl]?
+}
+enum RecordType {
+    Struct(fields: [ParsedField])
+    Class(fields: [ParsedField], super_class: ParsedType?)
+    ValueEnum(underlying_type: ParsedType, variants: [ValueEnumVariant])
+    SumEnum(is_boxed: bool, variants: [SumEnumVariant])
+    Garbage
+}
+struct ParsedRecord {
     name: String
     name_span: Span
     generic_parameters: [[String:Span]]
-    fields: [ParsedField]
-    methods: [ParsedMethod]
     definition_linkage: DefinitionLinkage
-    definition_type: DefinitionType
-}
-
-struct ParsedEnum {
-    definition_linkage: DefinitionLinkage,
-    generic_parameters: [[String:Span]],
-    is_boxed: bool,
-    methods: [ParsedMethod],
-    name_span: Span,
-    name: String,
-    underlying_type: ParsedType,
-    variants: [EnumVariant],
-}
-
-enum EnumVariant {
-    Untyped(name: String, span: Span)
-    WithValue(name: String, value: ParsedExpression, span: Span)
-    StructLike(name: String, params: [ParsedVarDecl], span: Span)
-    Typed(name: String, inner_type: ParsedType, span: Span)
+    methods: [ParsedMethod]
+    record_type: RecordType
 }
 
 struct ParsedFunction {
@@ -406,9 +397,8 @@ struct Parser {
             name: none_string
             name_span: none_span
             functions: []
-            structs: []
+            records: []
             namespaces: []
-            enums: []
             imports: []
         )
 
@@ -421,22 +411,9 @@ struct Parser {
                     let parsed_function = .parse_function(FunctionLinkage::Internal)
                     parsed_namespace.functions.push(parsed_function)
                 }
-                Struct => {
-                    let parsed_struct = .parse_struct(DefinitionLinkage::Internal, DefinitionType::Struct)
-                    parsed_namespace.structs.push(parsed_struct)
-                }
-                Class => {
-                    let parsed_struct = .parse_struct(DefinitionLinkage::Internal, DefinitionType::Class)
-                    parsed_namespace.structs.push(parsed_struct)
-                }
-                Enum => {
-                    let parsed_enum = .parse_enum(DefinitionLinkage::Internal, is_boxed: false)
-                    parsed_namespace.enums.push(parsed_enum)
-                }
-                Boxed => {
-                    .index++
-                    let parsed_enum = .parse_enum(DefinitionLinkage::Internal, is_boxed: true)
-                    parsed_namespace.enums.push(parsed_enum)
+                Struct | Class | Enum | Boxed => {
+                    let parsed_record = .parse_record(DefinitionLinkage::Internal)
+                    parsed_namespace.records.push(parsed_record)
                 }
                 Namespace => {
                     .index++
@@ -476,12 +453,12 @@ struct Parser {
                             parsed_namespace.functions.push(parsed_function)
                         }
                         Struct => {
-                            let parsed_struct = .parse_struct(DefinitionLinkage::External, DefinitionType::Struct)
-                            parsed_namespace.structs.push(parsed_struct)
+                            let parsed_struct = .parse_struct(DefinitionLinkage::External)
+                            parsed_namespace.records.push(parsed_struct)
                         }
                         Class => {
-                            let parsed_struct = .parse_struct(DefinitionLinkage::External, DefinitionType::Class)
-                            parsed_namespace.structs.push(parsed_struct)
+                            let parsed_class = .parse_class(DefinitionLinkage::External)
+                            parsed_namespace.records.push(parsed_class)
                         }
                         else => {
                             .error("Unexpected keyword", .current().span())
@@ -503,6 +480,27 @@ struct Parser {
         }
 
         return parsed_namespace
+    }
+
+    function parse_record(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord => match .current() {
+        Struct => .parse_struct(definition_linkage)
+        Class => .parse_class(definition_linkage)
+        Enum => .parse_enum(definition_linkage, is_boxed: false)
+        Boxed => {
+            .index++
+            yield .parse_enum(definition_linkage, is_boxed: true)
+        }
+        else => {
+            .error("Expected `struct`, `class`, `enum`, or `boxed`", .current().span())
+            yield ParsedRecord(
+                name: "",
+                name_span: empty_span(),
+                generic_parameters: [],
+                definition_linkage,
+                methods: [],
+                record_type: RecordType::Garbage
+            )
+        }
     }
 
     function parse_import(mut this) throws -> ParsedImport {
@@ -557,48 +555,21 @@ struct Parser {
         return parsed_import
     }
 
-    function parse_enum(mut this, anon definition_linkage: DefinitionLinkage, is_boxed: bool) throws -> ParsedEnum {
-        mut enumeration = ParsedEnum(
-            definition_linkage,
-            generic_parameters: [],
-            is_boxed,
-            methods: [],
-            name_span: empty_span(),
-            name: "",
-            underlying_type: ParsedType::Empty,
-            variants: [],
-        )
-        .index++
+    function parse_value_enum_body(mut this, partial_enum: ParsedRecord, definition_linkage: DefinitionLinkage) throws -> ([ValueEnumVariant], [ParsedMethod]) {
+        mut methods: [ParsedMethod] = []
+        mut variants: [ValueEnumVariant] = []
 
-        match .current() {
-            Token::Identifier(name, span) => {
-                enumeration.name = name
-                enumeration.name_span = span
-                .index++
-            }
-            else => {
-                .error("Expected identifier for enum", .current().span())
-            }
-        }
-
-
-        if .current() is Colon {
+        if .current() is LCurly {
             .index++
-            enumeration.underlying_type = .parse_typename()
-        }
-
-        if .current() is LessThan {
-            enumeration.generic_parameters = .parse_generic_parameters()
-        }
-
-        if not .current() is LCurly {
+        } else {
             .error("Expected `{` to start the enum body", .current().span())
         }
-        
-        .index++
+
         .skip_newlines()
+
         if .eof() {
-            .error("Expected variant name", .previous().span())
+            .error("Incomplete enum definition, expected variant name", .previous().span())
+            return (variants, methods)
         }
 
         mut last_visibility: Visibility? = None
@@ -606,66 +577,14 @@ struct Parser {
         while not .eof() {
             match .current() {
                 Identifier(name, span) => {
-                    if .peek(1) is LParen {
+                    if .peek(1) is Equal {
                         .index += 2
-
-                        mut var_decls: [ParsedVarDecl] = []
-                        mut is_structlike = false
-
-                        while not .eof() {
-                            if .peek(1) is Colon {
-                                is_structlike = true
-                                let var_decl = .parse_variable_declaration(is_mutable: false)
-                                match var_decl.parsed_type {
-                                    Name(name) => {
-                                        if name == enumeration.name {
-                                            .error("use 'boxed enum' to make the enum recursive", var_decl.span)
-                                        }
-                                    }
-                                    else => {}
-                                }
-                                var_decls.push(var_decl)
-                                continue
-                            }
-
-                            match .current() {
-                                RParen => {
-                                    .index++
-                                    break
-                                }
-                                Comma | Eol => {
-                                    .index++
-                                }
-                                RCurly => {
-                                    break
-                                }
-                                else => {
-                                    is_structlike = false
-                                    let inner_type = .parse_typename()
-                                    enumeration.variants.push(EnumVariant::Typed(name, inner_type, span))
-                                }
-                            }
-                        }
-
-                        if is_structlike {
-                            enumeration.variants.push(EnumVariant::StructLike(name, params: var_decls, span))
-                        }
+                        let expr = .parse_expression(allow_assignments: false)
+                        variants.push(ValueEnumVariant(name, span, value: expr))
                     } else {
-                        if .peek(1) is Equal {
-                            .index += 2
-                            let expr = .parse_expression(allow_assignments: false)
-                            enumeration.variants.push(EnumVariant::WithValue(name, value: expr, span))
-                        } else {
-                            .index++
-                            match enumeration.underlying_type {
-                                ParsedType::Empty => {
-                                    enumeration.variants.push(EnumVariant::Untyped(name, span))
-                                }
-                                else => {
-                                    enumeration.variants.push(EnumVariant::Typed(name, inner_type: enumeration.underlying_type, span))
-                                }
-                            }
-                        }
+                        .index++
+                        let none_expr: ParsedExpression? = None
+                        variants.push(ValueEnumVariant(name, span, value: none_expr))
                     }
                 }
                 RCurly => {
@@ -703,7 +622,7 @@ struct Parser {
 
                     let parsed_method = .parse_method(function_linkage, visibility)
 
-                    enumeration.methods.push(parsed_method)
+                    methods.push(parsed_method)
                 }
                 else => {
                     .error("Expected identifier or the end of enum block", .current().span())
@@ -712,68 +631,215 @@ struct Parser {
             }
         }
 
-        if enumeration.variants.is_empty() {
-            .error("Empty enums are not allowed", enumeration.name_span)
+        if .eof() {
+            .error("Invalid enum definition, expected `}`", .current().span())
+            return (variants, methods)
         }
-    
-        return enumeration
+
+        if variants.is_empty() {
+            .error("Empty enums are not allowed", partial_enum.name_span)
+        }
+        return (variants, methods)
     }
 
-    public function parse_struct(mut this, anon definition_linkage: DefinitionLinkage, anon definition_type: DefinitionType) throws -> ParsedStruct {
-        mut parsed_struct = ParsedStruct(
+    function parse_sum_enum_body(mut this, partial_enum: ParsedRecord, definition_linkage: DefinitionLinkage is_boxed: bool) throws -> ([SumEnumVariant], [ParsedMethod]) {
+        mut methods: [ParsedMethod] = []
+        mut variants: [SumEnumVariant] = []
+
+        if .current() is LCurly {
+            .index++
+        } else {
+            .error("Expected `{` to start the enum body", .current().span())
+        }
+
+        .skip_newlines()
+
+        if .eof() {
+            .error("Incomplete enum definition, expected variant name", .previous().span())
+            return (variants, methods)
+        }
+
+        mut last_visibility: Visibility? = None
+        mut last_visibility_span: Span? = None
+        while not .eof() {
+            match .current() {
+                Identifier(name, span) => {
+                    if .peek(1) is LParen {
+                        .index += 2
+
+                        mut var_decls: [ParsedVarDecl] = []
+
+                        while not .eof() {
+                            if .peek(1) is Colon {
+                                let var_decl = .parse_variable_declaration(is_mutable: false)
+                                match var_decl.parsed_type {
+                                    Name(name) => {
+                                        if name == partial_enum.name and not is_boxed{
+                                            .error("use 'boxed enum' to make the enum recursive", var_decl.span)
+                                        }
+                                    }
+                                    else => {}
+                                }
+                                var_decls.push(var_decl)
+                                continue
+                            }
+
+                            match .current() {
+                                RParen => {
+                                    .index++
+                                    break
+                                }
+                                Comma | Eol => {
+                                    .index++
+                                }
+                                else => {
+                                    .error("Incomplete enum variant defintion, expected `,` or `)`", .current().span())
+                                    break;
+                                }
+                            }
+                        }
+                        variants.push(SumEnumVariant(name, span, params: var_decls))
+                    } else {
+                        let none_decls: [ParsedVarDecl]? = None
+                        variants.push(SumEnumVariant(name, span, params: none_decls))
+                    }
+                }
+                RCurly => {
+                    .index++
+                    break
+                }
+                Comma | Eol => {
+                    .index++
+                }
+                Private(span) => {
+                    if last_visibility.has_value() {
+                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                    }
+                    last_visibility = Visibility::Private
+                    last_visibility_span = span
+                    .index++
+                }
+                Public(span) => {
+                    if last_visibility.has_value() {
+                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                    }
+                    last_visibility = Visibility::Public
+                    last_visibility_span = span
+                    .index++
+                }
+                Function => {
+                    let function_linkage = match definition_linkage {
+                        Internal => FunctionLinkage::Internal
+                        External => FunctionLinkage::External
+                    }
+
+                    let visibility = last_visibility ?? Visibility::Public
+                    last_visibility = None
+                    last_visibility_span = None
+
+                    let parsed_method = .parse_method(function_linkage, visibility)
+
+                    methods.push(parsed_method)
+                }
+                else => {
+                    .error("Expected identifier or the end of enum block", .current().span())
+                    .index++
+                }
+            }
+        }
+
+        if .eof() {
+            .error("Invalid enum definition, expected `}`", .current().span())
+            return (variants, methods)
+        }
+
+        if variants.is_empty() {
+            .error("Empty enums are not allowed", partial_enum.name_span)
+        }
+        return (variants, methods)
+    }
+
+    function parse_enum(mut this, anon definition_linkage: DefinitionLinkage, is_boxed: bool) throws -> ParsedRecord {
+        mut parsed_enum = ParsedRecord(
             name: "",
             name_span: empty_span(),
             generic_parameters: [],
-            fields: [],
-            methods: [],
             definition_linkage,
-            definition_type,
+            methods: [],
+            record_type: RecordType::Garbage
         )
-
-        let definition_type_name = match definition_type {
-            Struct => "struct"
-            Class => "class"
+        mut underlying_type: ParsedType? = None
+        if .current() is Enum {
+            .index++
+        } else {
+            .error("expected `enum` keyword", .current().span())
+            return parsed_enum
         }
 
-        let default_visibility = match definition_type {
-            Struct => Visibility::Public
-            Class => Visibility::Private
-        }
-
-        .index++
-
-        // Struct name
         if .eof() {
-            .error(format("Incomplete {} definition", definition_type_name), .current().span())
-            return parsed_struct
+            .error("Incomplete enum definition, expected name", .current().span())
+            return parsed_enum
         }
 
-        let struct_name = match .current() {
-            Identifier(name) => name
+        match .current() {
+            Token::Identifier(name, span) => {
+                parsed_enum.name = name
+                parsed_enum.name_span = span
+                .index++
+            }
             else => {
-                .error(format("Invalid {} name", definition_type_name), .current().span())
-                return parsed_struct
+                .error("Incomplete enum definition, expected name", .current().span())
             }
         }
-        parsed_struct.name = struct_name
-        parsed_struct.name_span = .current().span()
-
-        .index++
 
         if .eof() {
-            .error(format("Incomplete {} definition", definition_type_name), .current().span())
-            return parsed_struct
+            .error("Incomplete enum definition, expected generic parameters or underlying type or body", .current().span())
+            return parsed_enum
         }
 
-        // Generic parameters
-        parsed_struct.generic_parameters = .parse_generic_parameters()
+
+        if .current() is LessThan {
+            parsed_enum.generic_parameters = .parse_generic_parameters()
+        }
 
         if .eof() {
-            .error(format("Incomplete {} definition", definition_type_name), .current().span())
-            return parsed_struct
+            .error("Incomplete enum definition, expected underlying type or body", .current(). span())
+            return parsed_enum
         }
 
-        // Struct body
+        if .current() is Colon {
+            if is_boxed {
+                .error("Invalid enum definition: Value enums must not have an underlying type", .current().span())
+            }
+            .index++
+            underlying_type = .parse_typename()
+        }
+
+        if .eof() {
+            .error("Incomplete enum definition, expected body", .current().span())
+            return parsed_enum
+        }
+
+        if underlying_type.has_value() {
+            let variants_methods = .parse_value_enum_body(partial_enum: parsed_enum, definition_linkage)
+            parsed_enum.methods = variants_methods.1
+            parsed_enum.record_type = RecordType::ValueEnum(
+                underlying_type: underlying_type!
+                variants: variants_methods.0
+            )
+        } else {
+            let variants_methods = .parse_sum_enum_body(partial_enum: parsed_enum, definition_linkage, is_boxed)
+            parsed_enum.methods = variants_methods.1
+            parsed_enum.record_type = RecordType::SumEnum(
+                is_boxed: is_boxed,
+                variants: variants_methods.0
+            )
+        }
+
+        return parsed_enum
+    }
+
+    public function parse_struct_class_body(mut this, definition_linkage: DefinitionLinkage default_visibility: Visibility) throws -> ([ParsedField],[ParsedMethod]) {
         if .current() is LCurly {
             .index++
         } else {
@@ -797,6 +863,7 @@ struct Parser {
                     if last_visibility.has_value() {
                         .error("Expected function or parameter after visibility modifier", token.span())
                     }
+                    .index++
                     break
                 }
                 Comma | Eol => {
@@ -856,27 +923,143 @@ struct Parser {
                     // TODO: Find a better way of only reporting the first error.
                     //       Also, should we report every error when running as the "language server"?
                     if not error {
-                        .error(format("Invalid {} member, did not expect a {} here", definition_type_name, token), token.span())
+                        .error(format("Invalid member, did not expect a {} here", token), token.span())
                         error = true
                     }
                     .index++
                 }
             }
         }
+        return (fields, methods)
+    }
 
-        if .index == .tokens.size() {
-            .error(format("Incomplete {}", definition_type_name), .previous().span())
-        }
-        if .current() is RCurly {
+    public function parse_struct(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord{
+        mut parsed_struct = ParsedRecord(
+            name: "",
+            name_span: empty_span(),
+            generic_parameters: [],
+            definition_linkage,
+            methods: [],
+            record_type: RecordType::Garbage
+        )
+        if .current() is Struct {
             .index++
         } else {
-            .error(format("Incomplete {}", definition_type_name), .previous().span())
+            .error("expected `struct` keyword", .current().span())
+            return parsed_struct
+        }
+        // Struct name
+        if .eof() {
+            .error("Incomplete struct definition, expected name", .current().span())
+            return parsed_struct
         }
 
-        parsed_struct.fields = fields
-        parsed_struct.methods = methods
+        match .current() {
+            Identifier(name, span) => {
+                .index++
+                parsed_struct.name = name
+                parsed_struct.name_span = span
+            }
+            else => {
+                .error("Incomplete struct definition, expected name", .current().span())
+            }
+        }
+
+        if .eof() {
+            .error("Incomplete struct definition, expected generic parameters or body", .current().span())
+            return parsed_struct
+        }
+
+        // Generic parameters
+        parsed_struct.generic_parameters = .parse_generic_parameters()
+
+        if .eof() {
+            .error("Incomplete struct definition, expected body", .current().span())
+            return parsed_struct
+        }
+
+	let fields_methods = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Public)
+
+	if .eof() {
+	    .error("Incomplete struct definition, expected `}`", .current().span())
+	    return parsed_struct
+	}
+
+        parsed_struct.methods = fields_methods.1
+        parsed_struct.record_type = RecordType::Struct(fields: fields_methods.0)
 
         return parsed_struct
+    }
+
+    public function parse_class(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord {
+        mut parsed_class = ParsedRecord(
+            name: "",
+            name_span: empty_span(),
+            generic_parameters: [],
+            definition_linkage,
+            methods: [],
+            record_type: RecordType::Garbage
+        )
+        mut super_class: ParsedType? = None
+        if .current() is Class {
+            .index++
+        } else {
+            .error("expected `class` keyword", .current().span())
+            return parsed_class
+        }
+        // Class name
+        if .eof() {
+            .error("Incomplete class definition, expected name", .current().span())
+            return parsed_class
+        }
+
+        match .current() {
+            Identifier(name, span) => {
+                .index++
+                parsed_class.name = name
+                parsed_class.name_span = span
+            }
+            else => {
+                .error("Incomplete class definition, expected name", .current().span())
+            }
+        }
+
+        if .eof() {
+            .error("Incomplete class definition, expected generic parameters or super class or body", .current().span())
+            return parsed_class
+        }
+
+        // Generic parameters
+        parsed_class.generic_parameters = .parse_generic_parameters()
+
+
+        if .eof() {
+            .error("Incomplete class definition, expected super class or body", .current().span())
+            return parsed_class
+        }
+
+        // Super class
+        if .current() is Colon {
+            .index++
+            super_class = .parse_typename()
+        }
+
+        if .eof() {
+            .error("Incomplete class definition, expected body", .current().span())
+            return parsed_class
+        }
+
+	let fields_methods = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Private)
+
+	if .eof() {
+	    .error("Incomplete struct definition, expected `}`", .current().span())
+	    return parsed_class
+	}
+
+        parsed_class.methods = fields_methods.1
+        parsed_class.record_type = RecordType::Class(fields: fields_methods.0, super_class)
+
+        return parsed_class
     }
 
     public function parse_function(mut this, anon linkage: FunctionLinkage) throws -> ParsedFunction {
