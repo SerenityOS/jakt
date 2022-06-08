@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-import typechecker { CheckedBlock, CheckedExpression, CheckedProgram, CheckedStatement, ModuleId, ScopeId, StructId, Type, TypeId }
+import typechecker { BuiltinType, CheckedBlock, CheckedExpression, CheckedFunction, CheckedProgram, CheckedStatement, ModuleId, ScopeId, StructId, Type, TypeId }
 import utility { panic, todo }
 
 enum AllowedControlExits {
@@ -288,7 +288,7 @@ struct CodeGenerator {
             output += "::"
         }
         let struct_ = .program.get_struct(id)
-        let acquired_by_ref = not as_namespace and struct_.definition_type is Class
+        let acquired_by_ref = not as_namespace and struct_.record_type is Class
         if acquired_by_ref {
             output += "NonnullRefPtr<"
         }
@@ -322,6 +322,104 @@ struct CodeGenerator {
             }
             current_scope_id = .program.get_scope(current_scope_id!).parent
         }
+        return output
+    }
+
+    function codegen_function(mut this, function_: CheckedFunction) throws -> String {
+        let none: TypeId? = None
+        return .codegen_function_in_namespace(function_, containing_struct: none)
+    }
+
+    function codegen_function_in_namespace(mut this, function_: CheckedFunction, containing_struct: TypeId?) throws -> String {
+        mut output = ""
+
+        let is_main = function_.name == "main" and not containing_struct.has_value()
+
+        if is_main {
+            output += "ErrorOr<int>"
+        } else {
+            if function_.is_static() and not containing_struct.has_value() {
+                output += "static "
+            }
+            output += match function_.throws_ {
+                true => format("ErrorOr<{}>", .codegen_type(function_.return_type_id))
+                else => .codegen_type(function_.return_type_id)
+            }
+        }
+
+        output += " "
+
+        if is_main {
+            output += "main"
+        } else {
+            let qualifier = match containing_struct.has_value() {
+                true => .codegen_type_possibly_as_namespace(type_id: containing_struct!, as_namespace: true)
+                else => ""
+            }
+            if not qualifier.is_empty() {
+                output += qualifier
+                output += "::"
+            }
+            output += function_.name
+        }
+
+        output += "("
+
+        if is_main and function_.params.is_empty() {
+            output += "Array<String>"
+        }
+
+        mut first = true
+        for param in function_.params.iterator() {
+            let variable = .program.get_variable(param.variable.var_id)
+            if variable.name == "this" {
+                continue
+            }
+            if not first {
+                output += ","
+            } else {
+                first = false
+            }
+            if not variable.is_mutable {
+                output += "const "
+            }
+            output += .codegen_type(variable.type_id)
+            output += " "
+            output += variable.name
+        }
+
+        output += ")"
+
+        if not function_.is_static() and not function_.is_mutating() {
+            output += " const"
+        }
+
+        output += "{"
+
+        if is_main {
+            output += "using _JaktCurrentFunctionReturnType = ErrorOr<int>;"
+        } else {
+            if function_.throws_ {
+                output += format("using _JaktCurrentFunctionReturnType = ErrorOr<{}>;", .codegen_type(function_.return_type_id))
+            } else {
+                output += format("using _JaktCurrentFunctionReturnType = {};", .codegen_type(function_.return_type_id))
+            }
+        }
+
+        let last_control_flow = .control_flow_state
+        .control_flow_state = last_control_flow.enter_function()
+        let block = .codegen_block(block: function_.block)
+        .control_flow_state = last_control_flow
+        output += block
+
+        if is_main {
+            output += "return 0;"
+        } else if function_.throws_ and function_.return_type_id.id == BuiltinType::Void as! usize {
+            output += "return {};"
+        }
+
+        output += "}"
+
         return output
     }
 }

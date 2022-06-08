@@ -1,5 +1,5 @@
 import error { JaktError }
-import parser { BinaryOperator, DefinitionLinkage, DefinitionType, ParsedExpression, ParsedCall, ParsedType }
+import parser { BinaryOperator, DefinitionLinkage, RecordType, ParsedExpression, ParsedCall, ParsedType }
 import utility { panic, todo, Span }
 
 struct ModuleId {
@@ -140,6 +140,13 @@ struct CheckedFunction {
     return_type_id: TypeId
     params: [CheckedParameter]
     block: CheckedBlock
+    throws_: bool
+
+    // FIXME: This should return false if the first parameter is "this" or "mut this"
+    function is_static(this) => true
+
+    // FIXME: This should return true if the first parameter is "mut this"
+    function is_mutating(this) => true
 }
 
 struct CheckedParameter {
@@ -171,7 +178,7 @@ struct CheckedStruct {
     fields: [VarId]
     scope_id: ScopeId
     definition_linkage: DefinitionLinkage
-    definition_type: DefinitionType
+    record_type: RecordType
     type_id: TypeId
 }
 
@@ -182,7 +189,7 @@ struct CheckedEnum {
     variants: [CheckedEnumVariant]
     scope_id: ScopeId
     definition_linkage: DefinitionLinkage
-    definition_type: DefinitionType
+    record_type: RecordType
     underlying_type_id: TypeId
     type_id: TypeId
 }
