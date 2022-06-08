@@ -3,7 +3,8 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-import typechecker { BuiltinType, CheckedBlock, CheckedExpression, CheckedFunction, CheckedProgram, CheckedStatement, ModuleId, ScopeId, StructId, Type, TypeId }
+import parser { FunctionLinkage }
+import typechecker { BuiltinType, CheckedBlock, CheckedCall, CheckedExpression, CheckedFunction, CheckedProgram, CheckedStatement, ModuleId, ScopeId, StructId, Type, TypeId }
 import utility { panic, todo }
 
 enum AllowedControlExits {
@@ -117,6 +118,7 @@ struct CodeGenerator {
         IndexedDictionary(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
         IndexedTuple(expr, index) => format("(({}).get<{}>())", .codegen_expression(expr), index)
         Block(block) => .codegen_block(block)
+        Call(call) => .codegen_call(call)
         Boolean(val) => match val {
             true => "true"
             else => "false"
@@ -155,6 +157,37 @@ struct CodeGenerator {
             todo("codegen_expression else")
             yield ""
         }
+    }
+
+    function codegen_call(mut this, call: CheckedCall) throws -> String {
+        mut output = ""
+        if call.callee_throws {
+            output += "TRY("
+        }
+        match call.name {
+            "print" | "println" | "eprintln" | "format" => {
+                
+            }
+            else => {
+                if call.function_id.has_value() {
+                    let type_module = .program.get_module(call.function_id!.module)
+                    if type_module.is_root or type_module.id == ModuleId(id: 0) or .program.get_function(call.function_id!).linkage == FunctionLinkage::External or (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name)
+                    {
+                        output += type_module.name
+                        output += "::"
+                    }
+                }
+
+                output += .codegen_namespace_path(call)
+                output += call.name
+            }
+        }
+        return output
+    }
+
+    function codegen_namespace_path(this, call: CheckedCall) throws -> String {
+        // FIXME: Implement
+        return ""
     }
 
     function codegen_block(mut this, block: CheckedBlock) throws -> String {
