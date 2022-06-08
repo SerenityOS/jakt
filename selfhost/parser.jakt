@@ -342,6 +342,7 @@ struct ParsedCall {
     namespace_: [String]
     name: String
     args: [(String, ParsedExpression)]
+    type_args: [ParsedType]
 }
 
 boxed enum ParsedType {
@@ -2013,6 +2014,7 @@ struct Parser {
             namespace_: []
             name: ""
             args: []
+            type_args: []
         )
 
         match .current() {
@@ -2020,8 +2022,38 @@ struct Parser {
                 call.name = name
                 .index++
 
+                // This is to allow the lookahead. Without it, we may see something like
+                // foo < Bar, and think the start of a generic call when it actually isn't.
+                let index_reset = .index
+
                 if .current() is LessThan {
-                    todo("parse_call generics")
+                    // Generic type
+                    .index++
+                    mut inner_types: [ParsedType] = []
+
+                    while not .eof() {
+                        match .current() {
+                            GreaterThan => {
+                                .index++
+                                break
+                            }
+                            Comma | Eol => {
+                                .index++
+                            }
+                            else => {
+                                let index_before = .index
+                                let inner_type = .parse_typename()
+                                if index_before == .index {
+                                    // Can't parse further, this is not a generic call.
+                                    .index = index_reset;
+                                    break
+                                }
+                                inner_types.push(inner_type)
+                            }
+                        }
+                    }
+
+                    call.type_args = inner_types
                 }
 
                 if .current() is LParen {
