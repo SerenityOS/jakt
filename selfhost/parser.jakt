@@ -1820,12 +1820,12 @@ struct Parser {
                 }
                 ExclamationPoint => {
                     .index++
-                    yield ParsedExpression::ForcedUnwrap(result, span: merge_spans(start, .previous().span()))
+                    yield ParsedExpression::ForcedUnwrap(expr: result, span: merge_spans(start, .previous().span()))
                 }
                 PlusPlus => {
                     .index++
                     yield ParsedExpression::UnaryOp(
-                        result,
+                        expr: result,
                         op: UnaryOperator::PostIncrement,
                         span: merge_spans(start, .previous().span()),
                     )
@@ -1833,7 +1833,7 @@ struct Parser {
                 MinusMinus => {
                     .index++
                     yield ParsedExpression::UnaryOp(
-                        result,
+                        expr: result,
                         op: UnaryOperator::PostDecrement,
                         span: merge_spans(start, .previous().span()),
                     )
@@ -1857,7 +1857,7 @@ struct Parser {
                     }
                     let span = merge_spans(start, merge_spans(cast_span, .current().span()))
                     yield ParsedExpression::UnaryOp(
-                        result,
+                        expr: result,
                         op: UnaryOperator::TypeCast(cast),
                         span
                     )
@@ -1866,9 +1866,9 @@ struct Parser {
                     .index++
                     let parsed_type = .parse_typename()
                     let span = merge_spans(start, .current().span())
-                    yield ParsedExpression::UnaryOp(result, op: UnaryOperator::Is(parsed_type), span)
+                    yield ParsedExpression::UnaryOp(expr: result, op: UnaryOperator::Is(parsed_type), span)
                 }
-                ColonColon => .parse_postfix_colon_colon(start, result)
+                ColonColon => .parse_postfix_colon_colon(start, expr: result)
                 Dot => {
                     .index++
                     yield match .current() {
@@ -1876,7 +1876,7 @@ struct Parser {
                             // Indexing into a tuple
                             .index++
                             // FIXME: Proper numeric constants.
-                            yield ParsedExpression::IndexedTuple(result, index: number as! usize, span: merge_spans(start, end: .previous().span()))
+                            yield ParsedExpression::IndexedTuple(expr: result, index: number as! usize, span: merge_spans(start, end: .previous().span()))
                         }
                         Identifier(name) => {
                             // Struct field access or method call
@@ -1886,9 +1886,9 @@ struct Parser {
                                     // NOTE: We step backwards since parse_call() expects to start at the callee identifier.
                                     .index--
                                     let call = .parse_call()
-                                    yield ParsedExpression::MethodCall(result, call: call!, span: merge_spans(start, end: .previous().span()))
+                                    yield ParsedExpression::MethodCall(expr: result, call: call!, span: merge_spans(start, end: .previous().span()))
                                 }
-                                else => ParsedExpression::IndexedStruct(result, field: name, span: merge_spans(start, end: .current().span()))
+                                else => ParsedExpression::IndexedStruct(expr: result, field: name, span: merge_spans(start, end: .current().span()))
                             }
                         }
                         else => {
@@ -1914,6 +1914,8 @@ struct Parser {
                 }
                 else => {
                     break
+                    // FIXME: This is unreachable.
+                    yield result
                 }
             }
         }
