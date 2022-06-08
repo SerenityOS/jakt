@@ -1767,7 +1767,15 @@ struct Parser {
                 continue
             }
             if .current() is LessThan {
-                todo("ColonColon generic")
+                // Generic function arguments
+                .index--
+                let maybe_call = .parse_call()
+                if maybe_call.has_value() {
+                    mut call = maybe_call!
+                    call.namespace_ = namespace_
+                    return ParsedExpression::Call(call, span: merge_spans(expr.span(), .current().span()))
+                }
+                return ParsedExpression::Garbage(.current().span())
             }
             return ParsedExpression::NamespacedVar(
                 name: current_name,
