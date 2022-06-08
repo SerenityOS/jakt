@@ -23,7 +23,7 @@ StringBuilder::StringBuilder(Array<u8> buffer)
 {
 }
 
-ErrorOr<void> StringBuilder::try_append(StringView string)
+ErrorOr<void> StringBuilder::append(StringView string)
 {
     if (string.is_empty())
         return {};
@@ -32,33 +32,17 @@ ErrorOr<void> StringBuilder::try_append(StringView string)
     return {};
 }
 
-ErrorOr<void> StringBuilder::try_append(char ch)
+ErrorOr<void> StringBuilder::append(char ch)
 {
     TRY(will_append(1));
     TRY(m_buffer.push(ch));
     return {};
 }
 
-void StringBuilder::append(StringView string)
+ErrorOr<void> StringBuilder::append(char const* characters, size_t length)
 {
-    MUST(try_append(string));
+    return append(StringView { characters, length });
 }
-
-ErrorOr<void> StringBuilder::try_append(char const* characters, size_t length)
-{
-    return try_append(StringView { characters, length });
-}
-
-void StringBuilder::append(char const* characters, size_t length)
-{
-    MUST(try_append(characters, length));
-}
-
-void StringBuilder::append(char ch)
-{
-    MUST(try_append(ch));
-}
-
 ErrorOr<String> StringBuilder::to_string() const
 {
     if (is_empty())
@@ -76,59 +60,48 @@ void StringBuilder::clear()
     static_cast<void>(m_buffer.resize(0));
 }
 
-ErrorOr<void> StringBuilder::try_append_code_point(u32 code_point)
+ErrorOr<void> StringBuilder::append_code_point(u32 code_point)
 {
-    auto nwritten = Jakt::UnicodeUtils::code_point_to_utf8(code_point, [this](char c) { append(c); });
+    ErrorOr<void> error_from_code_point = {};
+    auto nwritten = Jakt::UnicodeUtils::code_point_to_utf8(code_point, [this, &error_from_code_point](char c) {
+        auto maybe_error = append(c);
+        if (maybe_error.is_error())
+            error_from_code_point = maybe_error;
+    });
+    if (error_from_code_point.is_error())
+        return error_from_code_point.release_error();
     if (nwritten < 0) {
-        TRY(try_append(0xef));
-        TRY(try_append(0xbf));
-        TRY(try_append(0xbd));
+        TRY(append(0xef));
+        TRY(append(0xbf));
+        TRY(append(0xbd));
     }
     return {};
 }
 
-void StringBuilder::append_code_point(u32 code_point)
-{
-    MUST(try_append_code_point(code_point));
-}
-
-void StringBuilder::append_as_lowercase(char ch)
-{
-    if (ch >= 'A' && ch <= 'Z')
-        append(ch + 0x20);
-    else
-        append(ch);
-}
-
-void StringBuilder::append_escaped_for_json(StringView string)
-{
-    MUST(try_append_escaped_for_json(string));
-}
-
-ErrorOr<void> StringBuilder::try_append_escaped_for_json(StringView string)
+ErrorOr<void> StringBuilder::append_escaped_for_json(StringView string)
 {
     for (auto ch : string) {
         switch (ch) {
         case '\b':
-            TRY(try_append("\\b"));
+            TRY(append("\\b"));
             break;
         case '\n':
-            TRY(try_append("\\n"));
+            TRY(append("\\n"));
             break;
         case '\t':
-            TRY(try_append("\\t"));
+            TRY(append("\\t"));
             break;
         case '\"':
-            TRY(try_append("\\\""));
+            TRY(append("\\\""));
             break;
         case '\\':
-            TRY(try_append("\\\\"));
+            TRY(append("\\\\"));
             break;
         default:
             if (ch >= 0 && ch <= 0x1f)
-                TRY(try_appendff("\\u{:04x}", ch));
+                TRY(appendff("\\u{:04x}", ch));
             else
-                TRY(try_append(ch));
+                TRY(append(ch));
         }
     }
     return {};

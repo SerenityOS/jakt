@@ -27,32 +27,17 @@ public:
     }
     ~StringBuilder() = default;
 
-    ErrorOr<void> try_append(StringView);
-    ErrorOr<void> try_append_code_point(u32);
-    ErrorOr<void> try_append(char);
+    ErrorOr<void> append(StringView);
+    ErrorOr<void> append_code_point(u32);
+    ErrorOr<void> append(char);
     template<typename... Parameters>
-    ErrorOr<void> try_appendff(StringView&& fmtstr, Parameters const&... parameters)
+    ErrorOr<void> appendff(StringView&& fmtstr, Parameters const&... parameters)
     {
         VariadicFormatParams variadic_format_params { parameters... };
         return vformat(*this, fmtstr, variadic_format_params);
     }
-    ErrorOr<void> try_append(char const*, size_t);
-    ErrorOr<void> try_append_escaped_for_json(StringView);
-
-    void append(StringView);
-    void append(char);
-    void append_code_point(u32);
-    void append(char const*, size_t);
-
-    void append_as_lowercase(char);
-    void append_escaped_for_json(StringView);
-
-    template<typename... Parameters>
-    void appendff(StringView&& fmtstr, Parameters const&... parameters)
-    {
-        VariadicFormatParams variadic_format_params { parameters... };
-        MUST(vformat(*this, fmtstr, variadic_format_params));
-    }
+    ErrorOr<void> append(char const*, size_t);
+    ErrorOr<void> append_escaped_for_json(StringView);
 
     [[nodiscard]] ErrorOr<String> to_string() const;
 
@@ -63,7 +48,7 @@ public:
     [[nodiscard]] bool is_empty() const { return m_buffer.is_empty(); }
 
     template<class SeparatorType, class CollectionType>
-    void join(SeparatorType const& separator, CollectionType const& collection, StringView fmtstr = "{}"sv)
+    ErrorOr<void> join(SeparatorType const& separator, CollectionType const& collection, StringView fmtstr = "{}"sv)
     {
         bool first = true;
         for (auto& item : collection) {
@@ -90,13 +75,14 @@ private:
 namespace Jakt {
 
 template<typename T>
-void append_value(StringBuilder& string_builder, T const& value)
+ErrorOr<void> append_value(StringBuilder& string_builder, T const& value)
 {
     if constexpr (IsSame<String, T>)
-        string_builder.append("\"");
-    string_builder.appendff("{}", value);
+        TRY(string_builder.append("\""));
+    TRY(string_builder.appendff("{}", value));
     if constexpr (IsSame<String, T>)
-        string_builder.append("\"");
+        TRY(string_builder.append("\""));
+    return {};
 }
 
 template<typename T>
@@ -104,13 +90,13 @@ struct Formatter<JaktInternal::Array<T>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Array<T> const& value)
     {
         auto string_builder = TRY(StringBuilder::create());
-        string_builder.append("[");
+        TRY(string_builder.append("["));
         for (size_t i = 0; i < value.size(); ++i) {
-            append_value(string_builder, value[i]);
+            TRY(append_value(string_builder, value[i]));
             if (i != value.size() - 1)
-                string_builder.append(", ");
+                TRY(string_builder.append(", "));
         }
-        string_builder.append("]");
+        TRY(string_builder.append("]"));
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
@@ -120,15 +106,15 @@ struct Formatter<JaktInternal::Set<T>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Set<T> const& set)
     {
         auto string_builder = TRY(StringBuilder::create());
-        string_builder.append("{");
+        TRY(string_builder.append("{"));
         auto iter = set.iterator();
 
         for (size_t i = 0; i < set.size(); ++i) {
-            append_value(string_builder, iter.next().value());
+            TRY(append_value(string_builder, iter.next().value()));
             if (i != set.size() - 1)
-                string_builder.append(", ");
+                TRY(string_builder.append(", "));
         }
-        string_builder.append("}");
+        TRY(string_builder.append("}"));
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
@@ -138,18 +124,18 @@ struct Formatter<JaktInternal::Dictionary<K, V>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Dictionary<K, V> const& dict)
     {
         auto string_builder = TRY(StringBuilder::create());
-        string_builder.append("[");
+        TRY(string_builder.append("["));
         auto iter = dict.iterator();
 
         for (size_t i = 0; i < dict.size(); ++i) {
             auto item = iter.next().value();
-            append_value(string_builder, item.template get<0>());
-            string_builder.append(": ");
-            append_value(string_builder, item.template get<1>());
+            TRY(append_value(string_builder, item.template get<0>()));
+            TRY(string_builder.append(": "));
+            TRY(append_value(string_builder, item.template get<1>()));
             if (i != dict.size() - 1)
-                string_builder.append(", ");
+                TRY(string_builder.append(", "));
         }
-        string_builder.append("]");
+        TRY(string_builder.append("]"));
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
@@ -159,15 +145,28 @@ struct Formatter<Jakt::Tuple<Ts...>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, Jakt::Tuple<Ts...> const& tuple)
     {
         auto string_builder = TRY(StringBuilder::create());
-        string_builder.append("(");
+        TRY(string_builder.append("("));
         if constexpr (sizeof...(Ts) > 0) {
-            tuple.apply_as_args([&](auto first, auto... args) {
-                append_value(string_builder, first);
-                ((string_builder.append(", "), append_value(string_builder, args)), ...);
-            });
+            TRY(tuple.apply_as_args([&](auto first, auto... args) {
+                ErrorOr<void> append_error = {};
+
+                auto append_helper = [&](StringBuilder& string_builder, StringView value) {
+                    if (!append_error.is_error())
+                        append_error = string_builder.append(value);
+                };
+                auto append_value_helper = [&](StringBuilder& string_builder, auto const& value) {
+                    if (!append_error.is_error())
+                        append_error = append_value(string_builder, value);
+                };
+
+                append_value_helper(string_builder, first);
+                ((append_helper(string_builder, ", "), append_value_helper(string_builder, args)), ...);
+
+                return append_error;
+            }));
         }
 
-        string_builder.append(")");
+        TRY(string_builder.append(")"));
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };

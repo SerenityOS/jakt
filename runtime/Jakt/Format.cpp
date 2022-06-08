@@ -190,13 +190,13 @@ bool FormatParser::consume_replacement_field(size_t& index)
 ErrorOr<void> FormatBuilder::put_padding(char fill, size_t amount)
 {
     for (size_t i = 0; i < amount; ++i)
-        TRY(m_builder.try_append(fill));
+        TRY(m_builder.append(fill));
     return {};
 }
 ErrorOr<void> FormatBuilder::put_literal(StringView value)
 {
     for (size_t i = 0; i < value.length(); ++i) {
-        TRY(m_builder.try_append(value[i]));
+        TRY(m_builder.append(value[i]));
         if (value[i] == '{' || value[i] == '}')
             ++i;
     }
@@ -217,18 +217,18 @@ ErrorOr<void> FormatBuilder::put_string(
         value = value.substring_view(0, used_by_string);
 
     if (align == Align::Left || align == Align::Default) {
-        TRY(m_builder.try_append(value));
+        TRY(m_builder.append(value));
         TRY(put_padding(fill, used_by_padding));
     } else if (align == Align::Center) {
         auto const used_by_left_padding = used_by_padding / 2;
         auto const used_by_right_padding = ceil_div<size_t, size_t>(used_by_padding, 2);
 
         TRY(put_padding(fill, used_by_left_padding));
-        TRY(m_builder.try_append(value));
+        TRY(m_builder.append(value));
         TRY(put_padding(fill, used_by_right_padding));
     } else if (align == Align::Right) {
         TRY(put_padding(fill, used_by_padding));
-        TRY(m_builder.try_append(value));
+        TRY(m_builder.append(value));
     }
     return {};
 }
@@ -276,25 +276,25 @@ ErrorOr<void> FormatBuilder::put_u64(
 
     auto const put_prefix = [&]() -> ErrorOr<void> {
         if (is_negative)
-            TRY(m_builder.try_append('-'));
+            TRY(m_builder.append('-'));
         else if (sign_mode == SignMode::Always)
-            TRY(m_builder.try_append('+'));
+            TRY(m_builder.append('+'));
         else if (sign_mode == SignMode::Reserved)
-            TRY(m_builder.try_append(' '));
+            TRY(m_builder.append(' '));
 
         if (prefix) {
             if (base == 2) {
                 if (upper_case)
-                    TRY(m_builder.try_append("0B"));
+                    TRY(m_builder.append("0B"));
                 else
-                    TRY(m_builder.try_append("0b"));
+                    TRY(m_builder.append("0b"));
             } else if (base == 8) {
-                TRY(m_builder.try_append("0"));
+                TRY(m_builder.append("0"));
             } else if (base == 16) {
                 if (upper_case)
-                    TRY(m_builder.try_append("0X"));
+                    TRY(m_builder.append("0X"));
                 else
-                    TRY(m_builder.try_append("0x"));
+                    TRY(m_builder.append("0x"));
             }
         }
         return {};
@@ -302,7 +302,7 @@ ErrorOr<void> FormatBuilder::put_u64(
 
     auto const put_digits = [&]() -> ErrorOr<void> {
         for (size_t i = 0; i < used_by_digits; ++i)
-            TRY(m_builder.try_append(buffer[i]));
+            TRY(m_builder.append(buffer[i]));
         return {};
     };
 
@@ -371,16 +371,16 @@ ErrorOr<void> FormatBuilder::put_f64(
 
     if (__builtin_isnan(value) || __builtin_isinf(value)) {
         if (value < 0.0)
-            TRY(string_builder.try_append('-'));
+            TRY(string_builder.append('-'));
         else if (sign_mode == SignMode::Always)
-            TRY(string_builder.try_append('+'));
+            TRY(string_builder.append('+'));
         else if (sign_mode == SignMode::Reserved)
-            TRY(string_builder.try_append(' '));
+            TRY(string_builder.append(' '));
 
         if (__builtin_isnan(value))
-            TRY(string_builder.try_append(upper_case ? "NAN"sv : "nan"sv));
+            TRY(string_builder.append(upper_case ? "NAN"sv : "nan"sv));
         else
-            TRY(string_builder.try_append(upper_case ? "INF"sv : "inf"sv));
+            TRY(string_builder.append(upper_case ? "INF"sv : "inf"sv));
         TRY(put_string(string_builder.string_view(), align, min_width, NumericLimits<size_t>::max(), fill));
         return {};
     }
@@ -410,7 +410,7 @@ ErrorOr<void> FormatBuilder::put_f64(
         }
 
         if (zero_pad || visible_precision > 0)
-            TRY(string_builder.try_append('.'));
+            TRY(string_builder.append('.'));
 
         if (visible_precision > 0)
             TRY(format_builder.put_u64(static_cast<u64>(value), base, false, upper_case, true, Align::Right, visible_precision));
@@ -438,16 +438,16 @@ ErrorOr<void> FormatBuilder::put_f80(
 
     if (__builtin_isnan(value) || __builtin_isinf(value)) {
         if (value < 0.0l)
-            TRY(string_builder.try_append('-'));
+            TRY(string_builder.append('-'));
         else if (sign_mode == SignMode::Always)
-            TRY(string_builder.try_append('+'));
+            TRY(string_builder.append('+'));
         else if (sign_mode == SignMode::Reserved)
-            TRY(string_builder.try_append(' '));
+            TRY(string_builder.append(' '));
 
         if (__builtin_isnan(value))
-            TRY(string_builder.try_append(upper_case ? "NAN"sv : "nan"sv));
+            TRY(string_builder.append(upper_case ? "NAN"sv : "nan"sv));
         else
-            TRY(string_builder.try_append(upper_case ? "INF"sv : "inf"sv));
+            TRY(string_builder.append(upper_case ? "INF"sv : "inf"sv));
         TRY(put_string(string_builder.string_view(), align, min_width, NumericLimits<size_t>::max(), fill));
         return {};
     }
@@ -477,7 +477,7 @@ ErrorOr<void> FormatBuilder::put_f80(
         }
 
         if (visible_precision > 0) {
-            string_builder.append('.');
+            TRY(string_builder.append('.'));
             TRY(format_builder.put_u64(static_cast<u64>(value), base, false, upper_case, true, Align::Right, visible_precision));
         }
     }
@@ -494,7 +494,7 @@ ErrorOr<void> FormatBuilder::put_hexdump(ReadonlyBytes bytes, size_t width, char
         TRY(put_padding(fill, 4));
         for (size_t j = i - width; j < i; ++j) {
             auto ch = bytes[j];
-            TRY(m_builder.try_append(ch >= 32 && ch <= 127 ? ch : '.')); // silly hack
+            TRY(m_builder.append(ch >= 32 && ch <= 127 ? ch : '.')); // silly hack
         }
         return {};
     };
@@ -712,7 +712,7 @@ ErrorOr<void> Formatter<wchar_t>::format(FormatBuilder& builder, wchar_t value)
         return formatter.format(builder, static_cast<u32>(value));
     } else {
         auto codepoint = TRY(StringBuilder::create());
-        codepoint.append_code_point(value);
+        TRY(codepoint.append_code_point(value));
 
         Formatter<StringView> formatter { *this };
         return formatter.format(builder, codepoint.string_view());
@@ -791,7 +791,7 @@ void vout(FILE* file, StringView fmtstr, TypeErasedFormatParams& params, bool ne
     MUST(vformat(builder, fmtstr, params));
 
     if (newline)
-        builder.append('\n');
+        MUST(builder.append('\n'));
 
     auto const string = builder.string_view();
     auto const retval = ::fwrite(string.characters_without_null_termination(), 1, string.length(), file);
@@ -849,7 +849,7 @@ void vdbgln(StringView fmtstr, TypeErasedFormatParams& params)
 #endif
 
     MUST(vformat(builder, fmtstr, params));
-    builder.append('\n');
+    MUST(builder.append('\n'));
 
     auto const string = builder.string_view();
 
