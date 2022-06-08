@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-import typechecker { CheckedBlock, CheckedExpression, CheckedProgram, CheckedStatement, ScopeId, StructId, Type, TypeId }
+import typechecker { CheckedBlock, CheckedExpression, CheckedProgram, CheckedStatement, ModuleId, ScopeId, StructId, Type, TypeId }
 import utility { panic, todo }
 
 enum AllowedControlExits {
@@ -80,8 +80,81 @@ struct CodeGenerator {
     control_flow_state: ControlFlowState
     entered_yieldable_blocks: [(String, String)] // label, variable name
 
-    function codegen_expression(mut this, expression: CheckedExpression) throws -> String {
-        return ""
+    function codegen_expression(mut this, anon expression: CheckedExpression) throws -> String => match expression {
+        Range(from, to, type_id) => {
+            mut output = ""
+            let type = .program.get_type(type_id)
+            let index_type = match type {
+                GenericInstance(id, args) => args[0]
+                else => {
+                    panic("Internal error: range expression doesn't have Range type")
+                    // FIXME: panic() should be "noreturn" and this can be removed
+                    yield TypeId(module: ModuleId(id: 0), id: 0)
+                }
+            }
+            output += "("
+            output += .codegen_type(type_id)
+            output += "{"
+            output += "static_cast<"
+            output += .codegen_type(index_type)
+            output += ">("
+            output += .codegen_expression(from)
+            output += "),static_cast<"
+            output += .codegen_type(index_type)
+            output += ">("
+            output += .codegen_expression(to)
+            output += ")})"
+            yield output
+        }
+        OptionalNone => "JaktInternal::OptionalNone()"
+        OptionalSome(expr, type_id) => "(" + .codegen_expression(expr) + ")"
+        ForcedUnwrap(expr, type_id) => "(" + .codegen_expression(expr) + ".value())"
+        QuotedString(val) => "String(\"" + val + "\")"
+        ByteConstant(val) => "'" + val + "'"
+        CharacterConstant(val) => "'" + val + "'"
+        Var(var) => .program.get_variable(var.var_id).name
+        IndexedExpression(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
+        IndexedDictionary(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
+        IndexedTuple(expr, index) => format("(({}).get<{}>())", .codegen_expression(expr), index)
+        Block(block) => .codegen_block(block)
+        Boolean(val) => match val {
+            true => "true"
+            else => "false"
+        }
+        UnaryOp(expr, op, type_id) => {
+            mut output = "("
+            output += match op {
+                PreIncrement => "++"
+                PreDecrement => "--"
+                Negate => "-"
+                Dereference => "*"
+                RawAddress => "&"
+                LogicalNot => "!"
+                BitwiseNot => "~"
+                Is | TypeCast => {
+                    todo("codegen Is and TypeCast")
+                    yield ""
+                }
+                else => ""
+            }
+            output += .codegen_expression(expr)
+            output += match op {
+                PostIncrement => "++"
+                PostDecrement => "--"
+                TypeCast | Is => ")"
+                IsEnumVariant => {
+                    todo("codegen IsEnumVariant")
+                    yield ""
+                }
+                else => ""
+            }
+            output += ")"
+            yield output
+        }
+        else => {
+            todo("codegen_expression else")
+            yield ""
+        }
     }
 
     function codegen_block(mut this, block: CheckedBlock) throws -> String {
