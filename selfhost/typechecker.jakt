@@ -1,5 +1,5 @@
 import lexer { JaktError, Span }
-import parser { BinaryOperator, DefinitionLinkage, DefinitionType, ParsedExpression, ParsedCall }
+import parser { BinaryOperator, DefinitionLinkage, DefinitionType, ParsedExpression, ParsedCall, ParsedType }
 import utility { panic, todo }
 
 struct ModuleId {
@@ -102,7 +102,8 @@ struct Scope {
     functions: [String: FunctionId]
     enums: [String: EnumId]
     types: [String: TypeId]
-    parent: ScopeId
+    imports: [String: (ModuleId, Span)]
+    parent: ScopeId?
     children: [ScopeId]
     throws: bool
 }
@@ -261,7 +262,7 @@ boxed enum CheckedExpression {
     IndexedStruct(expr: CheckedExpression, index: String, span: Span, type_id: TypeId)
     Call(call: CheckedCall, span: Span, type_id: TypeId)
     MethodCall(expr: CheckedExpression, call: CheckedCall, span: Span, type_id: TypeId)
-    NamespacedVar(namespace: [CheckedNamespace], var: CheckedVariable, span: Span)
+    NamespacedVar(namespaces: [CheckedNamespace], var: CheckedVariable, span: Span)
     Var(var: CheckedVariable, span: Span)
     OptionalNone(span: Span, type_id: TypeId)
     OptionalSome(expr: CheckedExpression, span: Span, type_id: TypeId)
@@ -488,6 +489,201 @@ struct Typechecker {
         .modules[.current_module.id].types.push(type)
 
         return TypeId(module: module_id, id: .modules[.current_module.id].types.size() - 1)
+    }
+
+    function find_type_in_scope(this, scope_id: ScopeId, name: String) -> TypeId? {
+        mut current = scope_id
+
+        loop {
+            let scope = .get_scope(current)
+
+            for type in scope.types.iterator() {
+                if type.0 == name {
+                    return type.1
+                }
+            }
+
+            if scope.parent.has_value() {
+                current = scope.parent.value()
+            } else {
+                break
+            }
+        }
+
+        return None
+    }
+
+    function find_namespace_in_scope(this, scope_id: ScopeId, name: String) -> ScopeId? {
+        mut current = scope_id;
+
+        loop {
+            let scope = .get_scope(current)
+
+            for child in scope.children.iterator() {
+                let child_scope = .get_scope(child)
+                if child_scope.namespace_name.has_value() {
+                    if name == child_scope.namespace_name.value() {
+                        return current
+                    }
+                }
+            }
+
+            if scope.parent.has_value() {
+                current = scope.parent.value()
+            } else {
+                break
+            }
+        }
+
+        // if we do not find it then check imports
+        let module_id = current.module
+
+        for imp in .get_scope(ScopeId(module: module_id, id: 0)).imports.iterator() {
+            if name == imp.0 {
+                let value = imp.1
+                return ScopeId(module: value.0, id: 0)
+            }
+        }
+
+        return None
+    }
+
+    function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId) throws -> TypeId => match parsed_type {
+        NamespacedName(name, namespaces, params, span) => {
+            mut current_namespace_scope_id = scope_id
+
+            for ns in namespaces.iterator() {
+                let result = .find_namespace_in_scope(scope_id: current_namespace_scope_id, name: ns)
+
+                if result.has_value() {
+                    current_namespace_scope_id = result.value()
+                } else {
+                    .error(format("Unknown namespace: '{}'", ns), span)
+                    return .new_inference()
+                }
+            }
+
+            mut generic_args: [TypeId] = []
+
+            for param in params.iterator() {
+                let checked_arg = .typecheck_typename(parsed_type: param, scope_id)
+
+                generic_args.push(checked_arg)
+            }
+
+            // TODO: add synthetic typename and generic support
+
+            return .typecheck_typename(parsed_type, scope_id)
+        }
+        Name(name, span) => {
+            return match name {
+                "i8" => builtin(BuiltinType::I8)
+                "i16" => builtin(BuiltinType::I16)
+                "i32" => builtin(BuiltinType::I32)
+                "i64" => builtin(BuiltinType::I64)
+                "u8" => builtin(BuiltinType::U8)
+                "u16" => builtin(BuiltinType::U16)
+                "u32" => builtin(BuiltinType::U32)
+                "u64" => builtin(BuiltinType::U64)
+                "f32" => builtin(BuiltinType::F32)
+                "f64" => builtin(BuiltinType::F64)
+                "c_char" => builtin(BuiltinType::CChar)
+                "c_int" => builtin(BuiltinType::CInt)
+                "usize" => builtin(BuiltinType::Usize)
+                "String" => builtin(BuiltinType::String)
+                "bool" => builtin(BuiltinType::Bool)
+                "void" => builtin(BuiltinType::Void)
+                else => {
+                    let type_id = .find_type_in_scope(scope_id, name)
+
+                    if type_id.has_value() {
+                        return type_id.value()
+                    } else {
+                        .error(format("Unknown type ‘{}’", name), span)
+                        return .new_inference()
+                    }
+                }
+            }
+        }
+        Empty => {
+            return .new_inference()
+        }
+        JaktTuple(types, span) => {
+            mut checked_types: [TypeId] = []
+            for parsed_type in types.iterator() {
+                checked_types.push(.typecheck_typename(parsed_type, scope_id))
+            }
+            let tuple_struct_id = .find_struct_in_prelude("Tuple")
+
+            let type_id = .find_or_add_type_id(Type::GenericInstance(id: tuple_struct_id, args: checked_types))
+
+            return type_id
+        }
+        JaktArray(inner, span) => {
+            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+
+            let array_struct_id = .find_struct_in_prelude("Array")
+
+            let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
+
+            return type_id
+        }
+        Dictionary(key, value, span) => {
+            let key_type_id = .typecheck_typename(parsed_type: key, scope_id)
+            let value_type_id = .typecheck_typename(parsed_type: value, scope_id)
+
+            let dict_struct_id = .find_struct_in_prelude("Dictionary")
+
+            let type_id = .find_or_add_type_id(Type::GenericInstance(id: dict_struct_id, args: [key_type_id, value_type_id]))
+
+            return type_id
+        }
+        Set(inner, span) => {
+            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+
+            let set_struct_id = .find_struct_in_prelude("Set")
+
+            let type_id = .find_or_add_type_id(Type::GenericInstance(id: set_struct_id, args: [inner_type_id]))
+
+            return type_id
+        }
+        Optional(inner, span) => {
+            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+
+            let optional_struct_id = .find_struct_in_prelude("Optional")
+
+            let type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [inner_type_id]))
+
+            return type_id
+        }
+        WeakPtr(inner, span) => {
+            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+
+            let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
+
+            let type_id = .find_or_add_type_id(Type::GenericInstance(id: weakptr_struct_id, args: [inner_type_id]))
+
+            return type_id
+        }
+        RawPtr(inner, span) => {
+            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+
+            let type_id = .find_or_add_type_id(Type::RawPtr(id: inner_type_id))
+
+            return type_id
+        }
+        GenericType(name, generic_parameters, span) => {
+            mut checked_inner_types: [TypeId] = []
+
+            for inner_type in generic_parameters.iterator() {
+                let inner_type_id = .typecheck_typename(parsed_type, scope_id)
+                checked_inner_types.push(inner_type_id)
+            }
+            // FIXME: add support for "GenericResolvedType", though the Rust version
+            // puts this in the parser even though it should be in the typechecker
+            // as the parser doesn't have a concept of type ids
+            return .new_inference()
+        }
     }
 
     function typecheck_binary_operation(mut this, checked_lhs: CheckedExpression, op: BinaryOperator, checked_rhs: CheckedExpression, scope_id: ScopeId, span: Span) throws -> TypeId {

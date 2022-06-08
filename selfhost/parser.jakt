@@ -344,6 +344,7 @@ struct ParsedCall {
 
 boxed enum ParsedType {
     Name(name: String, span: Span)
+    NamespacedName(name: String, namespaces: [String], params: [ParsedType], span: Span)
     GenericType(name: String, generic_parameters: [(String, Span)], span: Span), // FIXME: tuple should be dictionary
     JaktArray(inner: ParsedType, span: Span)
     Dictionary(key: ParsedType, value: ParsedType, span: Span)
