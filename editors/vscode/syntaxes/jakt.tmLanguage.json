@@ -492,7 +492,7 @@
         },
         {
           "name": "meta.function.generic-arguments.jakt",
-          "begin": "(?<=function.*?)(<)",
+          "begin": "(?<=function\\s+(\\w)*?)(<)",
           "beginCaptures": {
             "1": {
               "name": "punctuation.begin.angle-bracket.jakt"
