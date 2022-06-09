@@ -73,7 +73,6 @@ struct ParsedFunction {
 struct ParsedParameter {
     requires_label: bool
     variable: ParsedVariable
-    is_mutable: bool
     span: Span
 }
 
@@ -1136,7 +1135,6 @@ struct Parser {
                             is_mutable: current_param_is_mutable,
                             span: .current().span(),
                         ),
-                        is_mutable: current_param_is_mutable,
                         span: .current().span(),
                     ))
                     .index++
@@ -1151,7 +1149,6 @@ struct Parser {
                             is_mutable: var_decl.is_mutable,
                             span: .previous().span(),
                         ),
-                        is_mutable: current_param_is_mutable,
                         span: .previous().span(),
                     ))
                 }
