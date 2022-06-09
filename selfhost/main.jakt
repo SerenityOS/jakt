@@ -13,14 +13,17 @@ import parser { BinaryOperator, DefinitionLinkage, DefinitionType, ParsedCall, P
 import typechecker { Typechecker }
 import utility { panic, todo, Span }
 
-function usage() {
-    eprintln("usage: jakt [-l] [-p] <path>")
-    return 1
+function usage() -> String {
+    return "usage: jakt [-h] [OPTIONS] <path>"
+}
+
+function help() -> String {
+    return "Flags:\n  -h\t\tPrint this help and exit.\nOptions:\n  -l\t\tPrint debug info for the lexer.\n  -p\t\tPrint debug info for the parser."
 }
 
 function main(args: [String]) {
     if args.size() <= 1 {
-        return usage()
+        eprintln("{}", usage())
     }
     mut lexer_debug = false
     mut parser_debug = false
@@ -35,7 +38,8 @@ function main(args: [String]) {
             "-l" => {
                 if lexer_debug {
                     eprintln("you can only have the -l option once")
-                    return usage()
+                    eprintln("{}", usage())
+                    return 1
                 } else {
                     lexer_debug = true
                 }
@@ -43,15 +47,22 @@ function main(args: [String]) {
             "-p" => {
                 if parser_debug {
                     eprintln("you can only have the -p option once")
-                    return usage()
+                    eprintln("{}", usage())
+                    return 1
                 } else {
                     parser_debug = true
                 }
             }
+            "-h" => {
+                println("{}\n", usage())
+                println("{}", help())
+                return 0
+            }
             else => {
                 if file_name.has_value() {
                     eprintln("you can only pass one file")
-                    return usage()
+                    eprintln("{}", usage())
+                    return 1
                 } else {
                     file_name = arg
                 }
@@ -60,7 +71,7 @@ function main(args: [String]) {
     }
     if not file_name.has_value() {
         eprintln("you must pass a source file")
-        return usage()
+        eprintln("{}", usage())
     }
 
     mut file = File::open_for_reading(file_name!)
