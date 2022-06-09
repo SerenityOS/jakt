@@ -428,19 +428,19 @@ struct Typechecker {
                 GenericEnumInstance(id, args) => {
                     mut output = format("enum {}", .get_enum(id).name)
 
-                    // output += "<"
-                    // mut first = true
-                    // for arg in args.iterator() {
-                    //     if not first {
-                    //         output += ", "
-                    //     } else {
-                    //         first = false
-                    //     }
+                    output += "<"
+                    mut first = true
+                    for arg in args.iterator() {
+                        if not first {
+                            output += ", "
+                        } else {
+                            first = false
+                        }
 
-                    //     output += .type_name(arg)
-                    // }
+                        output += .type_name(arg)
+                    }
 
-                    // output += ">"
+                    output += ">"
 
                     yield output
                 }
