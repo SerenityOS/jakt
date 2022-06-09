@@ -577,6 +577,7 @@ fn parse_import(tokens: &[Token], index: &mut usize) -> (ParsedImport, Option<Ja
                                 "expected name".to_string(),
                                 tokens[*index].span,
                             )));
+                            *index += 1;
                         }
                     }
                 } else {
@@ -607,6 +608,9 @@ fn parse_import(tokens: &[Token], index: &mut usize) -> (ParsedImport, Option<Ja
                     });
                     *index += 1;
                 }
+                TokenContents::Eol => {
+                    *index += 1;
+                }
                 TokenContents::Comma => {
                     *index += 1;
                 }
@@ -619,6 +623,7 @@ fn parse_import(tokens: &[Token], index: &mut usize) -> (ParsedImport, Option<Ja
                         "Expected name or ‘}’".to_string(),
                         tokens[*index - 1].span,
                     )));
+                    *index += 1;
                 }
             }
         }
@@ -1381,6 +1386,7 @@ pub fn parse_struct(
                                 "expected '{'".to_string(),
                                 tokens[*index].span,
                             )));
+                            *index += 1;
                         }
                     }
                 } else {
@@ -1564,6 +1570,7 @@ pub fn parse_struct(
                                 "expected field".to_string(),
                                 tokens[*index].span,
                             )));
+                            *index += 1;
                             break;
                         }
                     }
