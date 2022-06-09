@@ -189,6 +189,8 @@ fn main() -> Result<(), JaktError> {
                             "-std=c++20",
                             // Don't complain about unsupported -W flags below.
                             "-Wno-unknown-warning-option",
+                            // Don't complain about accidental trigraphs (e.g "??=")
+                            "-Wno-trigraphs",
                             // Sometimes our generated C++ has a lot of harmless parentheses.
                             "-Wno-parentheses-equality",
                             // These warnings if enabled create loads of unnecessary noise:
