@@ -1286,7 +1286,9 @@ fn codegen_enum_debug_description_getter(enum_: &CheckedEnum) -> String {
         match variant {
             CheckedEnumVariant::StructLike(_, fields, ..) => {
                 output.push_str("TRY(builder.append(\"(\"));");
+                output.push_str("JaktInternal::_pretty_print_level++;");
                 for (j, field) in fields.iter().enumerate() {
+                    output.push_str(codegen_pretty_print_indent());
                     output.push_str(&format!("TRY(builder.append(\"{}: \"));", field.name));
                     if field.type_id == crate::compiler::STRING_TYPE_ID {
                         output.push_str("TRY(builder.append(\"\\\"\"));");
@@ -1302,6 +1304,7 @@ fn codegen_enum_debug_description_getter(enum_: &CheckedEnum) -> String {
                         output.push_str("TRY(builder.append(\", \"));");
                     }
                 }
+                output.push_str("JaktInternal::_pretty_print_level--;");
                 output.push_str("TRY(builder.append(\")\"));");
             }
             CheckedEnumVariant::Typed(_, type_id, ..) => {
@@ -1330,6 +1333,10 @@ fn codegen_enum_debug_description_getter(enum_: &CheckedEnum) -> String {
     output
 }
 
+fn codegen_pretty_print_indent() -> &'static str {
+    "TRY(JaktInternal::_output_pretty_indent(builder));"
+}
+
 fn codegen_debug_description_getter(structure: &CheckedStruct, project: &Project) -> String {
     let mut output = String::new();
     output.push_str("ErrorOr<String> debug_description() const { ");
@@ -1338,15 +1345,17 @@ fn codegen_debug_description_getter(structure: &CheckedStruct, project: &Project
 
     output.push_str(&format!("TRY(builder.append(\"{}(\"));", structure.name));
 
+    output.push_str("JaktInternal::_pretty_print_level++;\n");
     for (i, field) in structure.fields.iter().enumerate() {
-        output.push_str(&codegen_indent(INDENT_SIZE));
-
-        output.push_str("TRY(builder.appendff(\"");
+        output.push_str(codegen_pretty_print_indent());
+        output.push_str("TRY(builder.append(\"");
         output.push_str(&field.name);
+        output.push_str(": \"));");
+        output.push_str("TRY(builder.appendff(\"");
         if field.type_id == crate::compiler::STRING_TYPE_ID {
-            output.push_str(": \\\"{}\\\"");
+            output.push_str("\\\"{}\\\"");
         } else {
-            output.push_str(": {}");
+            output.push_str("{}");
         }
         if i != structure.fields.len() - 1 {
             output.push_str(", ");
@@ -1362,10 +1371,10 @@ fn codegen_debug_description_getter(structure: &CheckedStruct, project: &Project
             }
             _ => {}
         }
-
         output.push_str(&field.name);
         output.push_str("));\n");
     }
+    output.push_str("JaktInternal::_pretty_print_level--;\n");
 
     output.push_str("TRY(builder.append(\")\"));");
     output.push_str("return builder.to_string();");
@@ -1414,6 +1423,7 @@ fn codegen_ak_formatter(
         qualified_name,
     ));
     output.push_str("{ ");
+    output.push_str("if (m_alternative_form) { JaktInternal::_pretty_print_enabled = true; }");
     output.push_str(
         "return Formatter<StringView>::format(builder, MUST(value.debug_description())); }",
     );

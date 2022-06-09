@@ -48,6 +48,7 @@
 #include <Jakt/Weakable.h>
 #include <Jakt/kmalloc.h>
 #include <Jakt/kstdio.h>
+#include <Jakt/PrettyPrint.h>
 
 #include <Jakt/Format.cpp>
 #include <Jakt/GenericLexer.cpp>
