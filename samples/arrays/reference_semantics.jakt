@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "foo\nbar\n"
 
-function change_value(vector: mut [String]) {
+function change_value(mut vector: [String]) {
     vector[1] = "bar"
 }
 

@@ -17,7 +17,7 @@ function usage() {
     return 1
 }
 
-function pretty_print_new_line(anon string_builder: mut StringBuilder, anon level: i64) throws {
+function pretty_print_new_line(anon mut string_builder: StringBuilder, anon level: i64) throws {
     string_builder.append(b'\n')
     for indent in 0..level {
         string_builder.append_string("  ")

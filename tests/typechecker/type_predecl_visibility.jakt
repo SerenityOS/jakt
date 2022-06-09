@@ -2,7 +2,7 @@
 /// - output: "OK\n"
 
 struct Foo {
-    function bar(mut this, baz: mut Bar) {
+    function bar(mut this, mut baz: Bar) {
         println("OK")
     }
 }

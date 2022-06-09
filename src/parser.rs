@@ -1774,7 +1774,7 @@ pub fn parse_function(
                                 variable: ParsedVariable {
                                     name: var_decl.name,
                                     parsed_type: var_decl.parsed_type,
-                                    mutable: var_decl.mutable,
+                                    mutable: current_param_is_mutable,
                                     span: tokens[*index - 1].span,
                                 },
                             });
@@ -4167,22 +4167,13 @@ pub fn parse_variable_declaration(
             }
 
             if *index < tokens.len() {
-                let mutable = *index + 1 < tokens.len()
-                    && match &tokens[*index].contents {
-                        TokenContents::Name(name) if name == "mut" => {
-                            *index += 1;
-                            true
-                        }
-                        _ => false,
-                    };
-
                 let (var_type, err) = parse_typename(tokens, index);
                 error = error.or(err);
 
                 let result = ParsedVarDecl {
                     name: var_name,
                     parsed_type: var_type,
-                    mutable,
+                    mutable: false,
                     span: name_span,
                     inlay_position: None,
                     visibility,

@@ -397,7 +397,7 @@ struct Typechecker {
         return StructId(module: ModuleId(id: 0), id: 0)
     }
 
-    function try_to_promote_constant_expr_to_type(mut this, lhs_type: TypeId, checked_rhs: mut CheckedExpression, span: Span) throws {
+    function try_to_promote_constant_expr_to_type(mut this, lhs_type: TypeId, mut checked_rhs: CheckedExpression, span: Span) throws {
         if not .is_integer(lhs_type) {
             // TODO
         }

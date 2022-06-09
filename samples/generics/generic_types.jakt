@@ -1,7 +1,7 @@
 /// Expect:
 /// - output: "3\n"
 
-function do_pop<T>(anon arr: mut [T]) -> Optional<T> {
+function do_pop<T>(anon mut arr: [T]) -> Optional<T> {
   return arr.pop()
 }
 
