@@ -403,6 +403,10 @@ struct Lexer {
         // Everything but the quotes
         mut builder = StringBuilder::create()
         builder.append(.input[start + 1])
+        if .input[start + 1] == b'\\' {
+            builder.append(.input[start + 2])
+            .index++
+        }
         let str = builder.to_string()
 
         .index++
