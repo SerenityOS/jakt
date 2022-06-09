@@ -27,7 +27,7 @@ use crate::{
         Project, Scope, Type, TypeId,
     },
 };
-use std::collections::{HashMap, HashSet, LinkedList};
+use std::collections::{BTreeMap, BTreeSet, LinkedList};
 
 const INDENT_SIZE: usize = 4;
 
@@ -145,7 +145,7 @@ fn topological_sort_modules<'a>(
     project: &'a Project,
     modules: &'a Vec<&'a Module>,
 ) -> Vec<&'a Module> {
-    let mut in_degrees = HashMap::new();
+    let mut in_degrees = BTreeMap::new();
     for module in modules {
         for imported_module in module.imports.iter() {
             *in_degrees.entry(imported_module).or_insert(0) += 1;
@@ -331,7 +331,7 @@ fn codegen_namespace(
     // This is necessary as C++ requires a type to be defined before it's used as a value type,
     // we can ignore the generic types as they are only resolved when used by other non-generic code.
     let type_dependency_graph = produce_codegen_dependency_graph(project, scope);
-    let mut seen_types = HashSet::new();
+    let mut seen_types = BTreeSet::new();
     for type_id in type_dependency_graph.keys() {
         let mut traversal = Vec::new();
         postorder_traversal(
@@ -3751,8 +3751,8 @@ fn codegen_indent(indent: usize) -> String {
 fn extract_dependencies_from(
     project: &Project,
     type_id: TypeId,
-    deps: &mut HashSet<TypeId>,
-    graph: &HashMap<TypeId, Vec<TypeId>>,
+    deps: &mut BTreeSet<TypeId>,
+    graph: &BTreeMap<TypeId, Vec<TypeId>>,
     top_level: bool,
 ) {
     if let Some(existing_deps) = graph.get(&type_id) {
@@ -3827,11 +3827,11 @@ fn extract_dependencies_from(
 fn produce_codegen_dependency_graph(
     project: &Project,
     scope: &Scope,
-) -> HashMap<TypeId, Vec<TypeId>> {
-    let mut graph = HashMap::new();
+) -> BTreeMap<TypeId, Vec<TypeId>> {
+    let mut graph = BTreeMap::new();
 
     for (_, type_id, _) in &scope.types {
-        let mut deps = HashSet::new();
+        let mut deps = BTreeSet::new();
         extract_dependencies_from(project, *type_id, &mut deps, &graph, true);
         graph.insert(*type_id, deps.into_iter().collect());
     }
@@ -3842,8 +3842,8 @@ fn produce_codegen_dependency_graph(
 fn postorder_traversal(
     project: &Project,
     type_id: TypeId,
-    visited: &mut HashSet<TypeId>,
-    graph: &HashMap<TypeId, Vec<TypeId>>,
+    visited: &mut BTreeSet<TypeId>,
+    graph: &BTreeMap<TypeId, Vec<TypeId>>,
     output: &mut Vec<TypeId>,
 ) {
     if visited.contains(&type_id) {
