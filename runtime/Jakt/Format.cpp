@@ -9,6 +9,7 @@
 #include <Jakt/GenericLexer.h>
 #include <Jakt/StringBuilder.h>
 #include <Jakt/kstdio.h>
+#include <Jakt/PrettyPrint.h>
 
 #if defined(__serenity__) && !defined(KERNEL)
 #    include <serenity.h>
@@ -607,8 +608,6 @@ void StandardFormatter::parse(TypeErasedFormatParams& params, FormatParser& pars
 ErrorOr<void> Formatter<StringView>::format(FormatBuilder& builder, StringView value)
 {
     if (m_sign_mode != FormatBuilder::SignMode::Default)
-        VERIFY_NOT_REACHED();
-    if (m_alternative_form)
         VERIFY_NOT_REACHED();
     if (m_zero_pad)
         VERIFY_NOT_REACHED();

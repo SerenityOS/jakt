@@ -9,102 +9,11 @@
 import error { JaktError, print_error }
 import lexer { Lexer, Token }
 import parser { BinaryOperator, DefinitionLinkage, DefinitionType, ParsedCall, ParsedExpression, ParsedNamespace, Parser }
-import typechecker
 import utility { panic, todo, Span }
 
 function usage() {
     eprintln("usage: jakt [-l] [-p] <path>")
     return 1
-}
-
-function pretty_print_new_line(anon mut string_builder: StringBuilder, anon level: i64) throws {
-    string_builder.append(b'\n')
-    for indent in 0..level {
-        string_builder.append_string("  ")
-    }
-}
-
-function pretty_print_namespace(anon namespace_: ParsedNamespace) throws {
-    let dump_string = format("{}", namespace_)
-    mut indent_level = 0
-    mut string_builder = StringBuilder::create()
-
-    println("Parsed namespace:\n")
-
-    mut skip_spaces = false
-
-    mut i = 0uz
-    while i < dump_string.length() {
-        let c = dump_string.byte_at(i)
-        match c {
-            b'(' => {
-                string_builder.append(c)
-
-                // Keep empty `()` on a single line.
-                if i + 1 < dump_string.length() and dump_string.byte_at(i + 1) == b')' {
-                    i++
-                    string_builder.append(dump_string.byte_at(i))
-                } else {
-                    indent_level++
-                    pretty_print_new_line(string_builder, indent_level)
-                }
-            }
-            b'[' => {
-                string_builder.append(c)
-
-                // Keep empty `[]` on a single line.
-                if i + 1 < dump_string.length() and dump_string.byte_at(i + 1) == b']' {
-                    i++
-                    string_builder.append(dump_string.byte_at(i))
-                } else {
-                    indent_level++
-                    pretty_print_new_line(string_builder, indent_level)
-                }
-            }
-            b')' | b']' => {
-                indent_level--
-                pretty_print_new_line(string_builder, indent_level)
-
-                string_builder.append(c)
-            }
-            b',' => {
-                string_builder.append(c)
-                pretty_print_new_line(string_builder, indent_level)
-                while i + 1 < dump_string.length() and dump_string.byte_at(i + 1) == b' ' {
-                    i++
-                }
-            }
-            b'"' => {
-                string_builder.append(c)
-                i++
-                mut ended_string = false
-                while i < dump_string.length() and not ended_string {
-                    let c = dump_string.byte_at(i)
-                    match c {
-                        b'\\' => {
-                            string_builder.append(c)
-                            i++
-                            string_builder.append(dump_string.byte_at(i))
-                        }
-                        b'"' => {
-                            string_builder.append(c)
-                            break
-                        }
-                        else => {
-                            string_builder.append(c)
-                        }
-                    }
-
-                    i++
-                }
-            }
-            else => {
-                string_builder.append(c)
-            }
-        }
-        i++
-    }
-    println("{}", string_builder.to_string())
 }
 
 function main(args: [String]) {
@@ -170,7 +79,7 @@ function main(args: [String]) {
     let parsed_namespace = parser.parse_namespace()
 
     if parser_debug {
-        pretty_print_namespace(parsed_namespace)
+        println("{:#}", parsed_namespace);
     }
 
     for error in errors.iterator() {
