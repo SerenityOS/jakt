@@ -763,6 +763,9 @@ struct Typechecker {
                 return .new_inference()
             }
         }
+        // FIXME: This is unreachable but the generated C++ causes a warning.
+        panic("should be unreachable")
+        return .new_inference()
     }
 
     function typecheck_binary_operation(mut this, checked_lhs: CheckedExpression, op: BinaryOperator, checked_rhs: CheckedExpression, scope_id: ScopeId, span: Span) throws -> TypeId {
