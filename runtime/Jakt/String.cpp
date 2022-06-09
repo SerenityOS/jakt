@@ -19,6 +19,23 @@ ErrorOr<String> String::copy(StringView view)
     return String { storage };
 }
 
+String& String::operator+=(String const& other)
+{
+    auto builder = MUST(StringBuilder::create());
+    MUST(builder.append(*this));
+    MUST(builder.append(other));
+    *this = MUST(builder.to_string());
+    return *this;
+}
+
+String operator+(String const& a, String const& b)
+{
+    auto builder = MUST(StringBuilder::create());
+    MUST(builder.append(a));
+    MUST(builder.append(b));
+    return MUST(builder.to_string());
+}
+
 ErrorOr<String> String::vformatted(StringView fmtstr, TypeErasedFormatParams& params)
 {
     auto builder = TRY(StringBuilder::create());
