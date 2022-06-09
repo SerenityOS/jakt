@@ -192,6 +192,9 @@ public:
         return formatted("{}", value);
     }
 
+    // FIXME: This should be implemented in a way that propagates errors.
+    String& operator+=(String const&);
+
 private:
     String(NonnullRefPtr<StringStorage> storage)
         : m_storage(move(storage))
@@ -200,6 +203,9 @@ private:
 
     NonnullRefPtr<StringStorage> m_storage;
 };
+
+String operator+(String const&, String const&);
+
 template<>
 struct Formatter<StringStorage> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, StringStorage const& value)
