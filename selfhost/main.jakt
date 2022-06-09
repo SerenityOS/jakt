@@ -9,6 +9,7 @@
 import error { JaktError, print_error }
 import lexer { Lexer, Token }
 import parser { BinaryOperator, DefinitionLinkage, DefinitionType, ParsedCall, ParsedExpression, ParsedNamespace, Parser }
+import typechecker
 import utility { panic, todo, Span }
 
 function usage() {
