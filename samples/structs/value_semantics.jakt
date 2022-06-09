@@ -5,7 +5,7 @@ struct Foo {
     x: i64
 }
 
-function set_x(foo: mut Foo, x: i64) {
+function set_x(mut foo: Foo, x: i64) {
     foo.x = x
 }
 
