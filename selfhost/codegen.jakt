@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-import parser { FunctionLinkage }
+import parser { BinaryOperator, FunctionLinkage }
 import typechecker { BuiltinType, CheckedBlock, CheckedCall, CheckedExpression, CheckedFunction, CheckedProgram, CheckedStatement, ModuleId, ScopeId, StructId, Type, TypeId }
 import utility { panic, todo }
 
@@ -153,10 +153,113 @@ struct CodeGenerator {
             output += ")"
             yield output
         }
+        BinaryOp(lhs, rhs, op, type_id) => .codegen_binary_expression(expression, type_id, lhs, rhs, op)
         else => {
             todo("codegen_expression else")
             yield ""
         }
+    }
+
+    function codegen_binary_expression(mut this, expression: CheckedExpression, type_id: TypeId, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator) throws -> String {
+        if op is NoneCoalescing {
+            todo(format("codegen {}", op))
+            return ""
+        }
+
+        if op is NoneCoalescingAssign {
+            mut output = .codegen_expression(lhs)
+            output += ".lazy_emplace([&] { return "
+            output += .codegen_expression(rhs)
+            output += "; })"
+            return output
+        }
+
+        if op is ArithmeticRightShift {
+            mut output = "(JaktInternal::arithmetic_shift_right("
+            output += .codegen_expression(lhs)
+            output += ","
+            output += .codegen_expression(rhs)
+            output += ")"
+            return output
+        }
+
+        if op is Assign and lhs is IndexedDictionary {
+            match lhs {
+                IndexedDictionary(expr, index) => {
+                    mut output = .codegen_expression(expr)
+                    output += ".set("
+                    output += .codegen_expression(index)
+                    output += ", "
+                    output += .codegen_expression(rhs)
+                    output += "))"
+                }
+                else => {
+                    // FIXME: unreachable
+                }
+            }
+        }
+
+        if .program.is_integer(type_id) {
+            // Integer arithmetic is checked by default.
+            match op {
+                Add | Subtract | Multiply | Divide | Modulo => {
+                    return "(" + .codegen_checked_binary_op(lhs, rhs, op, type_id) + ")"
+                }
+                AddAssign | SubtractAssign | MultiplyAssign | DivideAssign | ModuloAssign => {
+                    return "(" + .codegen_checked_binary_op_assignment(lhs, rhs, op, type_id) + ")"
+                }
+                else => { }
+            }
+        }
+
+        mut output = "("
+
+        output += .codegen_expression(lhs)
+        output += match op {
+            Add => " + "
+            Subtract => " - "
+            Multiply => " * "
+            Modulo => " % "
+            Divide => " / "
+            Assign => " = "
+            AddAssign => " += "
+            SubtractAssign => " -= "
+            MultiplyAssign => " *= "
+            ModuloAssign => " %= "
+            DivideAssign => " /= "
+            BitwiseAndAssign => " &= "
+            BitwiseOrAssign => " |= "
+            BitwiseXorAssign => " ^= "
+            BitwiseLeftShiftAssign => " <<= "
+            BitwiseRightShiftAssign => " >>= "
+            Equal => " == "
+            NotEqual => " != "
+            LessThan => " < "
+            LessThanOrEqual => " <= "
+            GreaterThan => " > "
+            GreaterThanOrEqual => " >= "
+            LogicalAnd => " && "
+            LogicalOr => " || "
+            BitwiseAnd => " & "
+            BitwiseOr => " | "
+            BitwiseXor => " ^ "
+            ArithmeticLeftShift => " << "
+            BitwiseLeftShift => " << "
+            BitwiseRightShift => " >> "
+            else => {
+                todo(format("codegen_binary_expression {}", op))
+                yield ""
+            }
+        }
+        output += .codegen_expression(rhs)
+
+        output += ")"
+        return output
+    }
+
+    function codegen_checked_binary_op(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
+        todo("codegen_checked_binary_op")
+        return ""
     }
 
     function codegen_call(mut this, call: CheckedCall) throws -> String {

@@ -321,6 +321,15 @@ class CheckedProgram {
     public function get_enum(this, anon id: EnumId) -> CheckedEnum => .modules[id.module.id].enums[id.id]
     public function get_struct(this, anon id: StructId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
     public function get_scope(this, anon id: ScopeId) -> Scope => .modules[id.module.id].scopes[id.id]
+
+    public function is_integer(this, anon type_id: TypeId) -> bool {
+        let type = .get_type(type_id)
+
+        return match type {
+            I8 | I16 | I32 | I64 | U8 | U16 | U32 | U64 | Usize | CInt | CChar => true
+            else => false
+        }
+    }
 }
 
 struct Typechecker {
@@ -344,14 +353,7 @@ struct Typechecker {
         .errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
     }
 
-    function is_integer(this, anon type_id: TypeId) -> bool {
-        let type = .get_type(type_id)
-
-        return match type {
-            I8 | I16 | I32 | I64 | U8 | U16 | U32 | U64 | Usize | CInt | CChar => true
-            else => false
-        }
-    }
+    function is_integer(this, anon type_id: TypeId) => .program.is_integer(type_id)
 
     function create_scope(mut this, parent_id: ScopeId, can_throw: bool) throws -> ScopeId {
         let scope = Scope(
