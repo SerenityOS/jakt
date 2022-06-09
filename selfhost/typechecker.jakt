@@ -1,5 +1,7 @@
 import error { JaktError }
-import parser { BinaryOperator, DefinitionLinkage, FunctionLinkage, RecordType, ParsedExpression, ParsedCall, ParsedType }
+import parser { BinaryOperator, DefinitionLinkage, FunctionLinkage,
+                DefinitionType, ParsedExpression, ParsedCall,
+                ParsedType, ParsedNamespace, RecordType }
 import utility { panic, todo, Span }
 
 struct ModuleId {
@@ -93,6 +95,16 @@ boxed enum Type {
     Enum(EnumId)
     Inference(InferenceId)
     RawPtr(TypeId)
+
+    function equals(this, anon rhs: Type) -> bool {
+        if this is Void and rhs is Void {
+            return true
+        } else if this is Bool and rhs is Bool {
+            return true
+        } else {
+            return false
+        }
+    }
 }
 
 struct Scope {
@@ -105,7 +117,7 @@ struct Scope {
     imports: [String: (ModuleId, Span)]
     parent: ScopeId?
     children: [ScopeId]
-    throws: bool
+    can_throw: bool
 }
 
 struct Module {
@@ -156,7 +168,7 @@ struct CheckedParameter {
 }
 
 struct CheckedVariable {
-    var_id: VarId
+    id: VarId
     definition_span: Span
 }
 
@@ -341,6 +353,25 @@ struct Typechecker {
         }
     }
 
+    function create_scope(mut this, parent_id: ScopeId, can_throw: bool) throws -> ScopeId {
+        let scope = Scope(
+            namespace_name: ""
+            vars: [:]
+            structs: [:]
+            functions: [:]
+            enums: [:]
+            types: [:]
+            imports: [:]
+            parent: parent_id
+            children: []
+            can_throw
+        )
+
+        .program.modules[.current_module.id].scopes.push(scope)
+
+        return ScopeId(module: .current_module, id: .program.modules[.current_module.id].scopes.size() - 1)
+    }
+
     function new_inference(mut this) throws -> TypeId {
         let new_type_var = .program.modules[.current_module.id].new_type_variable()
 
@@ -372,7 +403,7 @@ struct Typechecker {
         }
     }
 
-    function typename(this, anon type_id: TypeId) throws -> String {
+    function type_name(this, anon type_id: TypeId) throws -> String {
         let type = .get_type(type_id)
 
         return match type {
@@ -397,19 +428,19 @@ struct Typechecker {
                 GenericEnumInstance(id, args) => {
                     mut output = format("enum {}", .get_enum(id).name)
 
-                    output += "<"
-                    mut first = true
-                    for arg in args.iterator() {
-                        if not first {
-                            output += ", "
-                        } else {
-                            first = false
-                        }
+                    // output += "<"
+                    // mut first = true
+                    // for arg in args.iterator() {
+                    //     if not first {
+                    //         output += ", "
+                    //     } else {
+                    //         first = false
+                    //     }
 
-                        output += .typename(arg)
-                    }
+                    //     output += .type_name(arg)
+                    // }
 
-                    output += ">"
+                    // output += ">"
 
                     yield output
                 }
@@ -437,8 +468,8 @@ struct Typechecker {
         IndexedStruct(type_id) => type_id
         Call(type_id) => type_id
         MethodCall(type_id) => type_id
-        NamespacedVar(var) => .get_variable(var.var_id).type_id
-        Var(var) => .get_variable(var.var_id).type_id
+        NamespacedVar(var) => .get_variable(var.id).type_id
+        Var(var) => .get_variable(var.id).type_id
         OptionalNone(type_id) => type_id
         OptionalSome(type_id) => type_id
         ForcedUnwrap(type_id) => type_id
@@ -501,7 +532,7 @@ struct Typechecker {
 
         mut idx = 0uz
         for item in module.types.iterator() {
-            if item == type {
+            if item.equals(type) {
                 return TypeId(module: module_id, id: idx)
             }
             ++idx
@@ -509,7 +540,7 @@ struct Typechecker {
 
         idx = 0uz
         for item in .program.modules[0].types.iterator() {
-            if item == type {
+            if item.equals(type) {
                 return TypeId(module: .program.modules[0].id, id: idx)
             }
             ++idx
@@ -577,141 +608,160 @@ struct Typechecker {
         return None
     }
 
-    function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId) throws -> TypeId => match parsed_type {
-        NamespacedName(name, namespaces, params, span) => {
-            mut current_namespace_scope_id = scope_id
+    function typecheck_module(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
+        .typecheck_namespace_predecl(parsed_namespace, scope_id)
+        .typecheck_namespace_declarations(parsed_namespace, scope_id)
+    }
 
-            for ns in namespaces.iterator() {
-                let result = .find_namespace_in_scope(scope_id: current_namespace_scope_id, name: ns)
-
-                if result.has_value() {
-                    current_namespace_scope_id = result.value()
-                } else {
-                    .error(format("Unknown namespace: '{}'", ns), span)
-                    return .new_inference()
-                }
-            }
-
-            mut generic_args: [TypeId] = []
-
-            for param in params.iterator() {
-                let checked_arg = .typecheck_typename(parsed_type: param, scope_id)
-
-                generic_args.push(checked_arg)
-            }
-
-            // TODO: add synthetic typename and generic support
-
-            return .typecheck_typename(parsed_type, scope_id)
+    function typecheck_namespace_predecl(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
+        for fun in parsed_namespace.functions.iterator() {
+            //.typecheck_function_predecl(fun, parent_scope_id: scope_id)
         }
-        Name(name, span) => {
-            return match name {
-                "i8" => builtin(BuiltinType::I8)
-                "i16" => builtin(BuiltinType::I16)
-                "i32" => builtin(BuiltinType::I32)
-                "i64" => builtin(BuiltinType::I64)
-                "u8" => builtin(BuiltinType::U8)
-                "u16" => builtin(BuiltinType::U16)
-                "u32" => builtin(BuiltinType::U32)
-                "u64" => builtin(BuiltinType::U64)
-                "f32" => builtin(BuiltinType::F32)
-                "f64" => builtin(BuiltinType::F64)
-                "c_char" => builtin(BuiltinType::CChar)
-                "c_int" => builtin(BuiltinType::CInt)
-                "usize" => builtin(BuiltinType::Usize)
-                "String" => builtin(BuiltinType::String)
-                "bool" => builtin(BuiltinType::Bool)
-                "void" => builtin(BuiltinType::Void)
-                else => {
-                    let type_id = .find_type_in_scope(scope_id, name)
+    }
 
-                    if type_id.has_value() {
-                        return type_id.value()
+    function typecheck_namespace_declarations(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
+        for fun in parsed_namespace.functions.iterator() {
+            //.typecheck_function(fun, parent_scope_id: scope_id)
+        }
+    }
+
+    function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId) throws -> TypeId { 
+        match parsed_type {
+            NamespacedName(name, namespaces, params, span) => {
+                mut current_namespace_scope_id = scope_id
+
+                for ns in namespaces.iterator() {
+                    let result = .find_namespace_in_scope(scope_id: current_namespace_scope_id, name: ns)
+
+                    if result.has_value() {
+                        current_namespace_scope_id = result.value()
                     } else {
-                        .error(format("Unknown type ‘{}’", name), span)
+                        .error(format("Unknown namespace: '{}'", ns), span)
                         return .new_inference()
                     }
                 }
+
+                mut generic_args: [TypeId] = []
+
+                for param in params.iterator() {
+                    let checked_arg = .typecheck_typename(parsed_type: param, scope_id)
+
+                    generic_args.push(checked_arg)
+                }
+
+                // TODO: add synthetic type_name and generic support
+
+                return .typecheck_typename(parsed_type, scope_id)
             }
-        }
-        Empty => {
-            return .new_inference()
-        }
-        JaktTuple(types, span) => {
-            mut checked_types: [TypeId] = []
-            for parsed_type in types.iterator() {
-                checked_types.push(.typecheck_typename(parsed_type, scope_id))
+            Name(name, span) => {
+                return match name {
+                    "i8" => builtin(BuiltinType::I8)
+                    "i16" => builtin(BuiltinType::I16)
+                    "i32" => builtin(BuiltinType::I32)
+                    "i64" => builtin(BuiltinType::I64)
+                    "u8" => builtin(BuiltinType::U8)
+                    "u16" => builtin(BuiltinType::U16)
+                    "u32" => builtin(BuiltinType::U32)
+                    "u64" => builtin(BuiltinType::U64)
+                    "f32" => builtin(BuiltinType::F32)
+                    "f64" => builtin(BuiltinType::F64)
+                    "c_char" => builtin(BuiltinType::CChar)
+                    "c_int" => builtin(BuiltinType::CInt)
+                    "usize" => builtin(BuiltinType::Usize)
+                    "String" => builtin(BuiltinType::String)
+                    "bool" => builtin(BuiltinType::Bool)
+                    "void" => builtin(BuiltinType::Void)
+                    else => {
+                        let type_id = .find_type_in_scope(scope_id, name)
+
+                        if type_id.has_value() {
+                            return type_id.value()
+                        } else {
+                            .error(format("Unknown type ‘{}’", name), span)
+                            return .new_inference()
+                        }
+                    }
+                }
             }
-            let tuple_struct_id = .find_struct_in_prelude("Tuple")
-
-            let type_id = .find_or_add_type_id(Type::GenericInstance(id: tuple_struct_id, args: checked_types))
-
-            return type_id
-        }
-        JaktArray(inner, span) => {
-            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
-
-            let array_struct_id = .find_struct_in_prelude("Array")
-
-            let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
-
-            return type_id
-        }
-        Dictionary(key, value, span) => {
-            let key_type_id = .typecheck_typename(parsed_type: key, scope_id)
-            let value_type_id = .typecheck_typename(parsed_type: value, scope_id)
-
-            let dict_struct_id = .find_struct_in_prelude("Dictionary")
-
-            let type_id = .find_or_add_type_id(Type::GenericInstance(id: dict_struct_id, args: [key_type_id, value_type_id]))
-
-            return type_id
-        }
-        Set(inner, span) => {
-            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
-
-            let set_struct_id = .find_struct_in_prelude("Set")
-
-            let type_id = .find_or_add_type_id(Type::GenericInstance(id: set_struct_id, args: [inner_type_id]))
-
-            return type_id
-        }
-        Optional(inner, span) => {
-            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
-
-            let optional_struct_id = .find_struct_in_prelude("Optional")
-
-            let type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [inner_type_id]))
-
-            return type_id
-        }
-        WeakPtr(inner, span) => {
-            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
-
-            let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
-
-            let type_id = .find_or_add_type_id(Type::GenericInstance(id: weakptr_struct_id, args: [inner_type_id]))
-
-            return type_id
-        }
-        RawPtr(inner, span) => {
-            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
-
-            let type_id = .find_or_add_type_id(Type::RawPtr(id: inner_type_id))
-
-            return type_id
-        }
-        GenericType(name, generic_parameters, span) => {
-            mut checked_inner_types: [TypeId] = []
-
-            for inner_type in generic_parameters.iterator() {
-                let inner_type_id = .typecheck_typename(parsed_type, scope_id)
-                checked_inner_types.push(inner_type_id)
+            Empty => {
+                return .new_inference()
             }
-            // FIXME: add support for "GenericResolvedType", though the Rust version
-            // puts this in the parser even though it should be in the typechecker
-            // as the parser doesn't have a concept of type ids
-            return .new_inference()
+            JaktTuple(types, span) => {
+                mut checked_types: [TypeId] = []
+                for parsed_type in types.iterator() {
+                    checked_types.push(.typecheck_typename(parsed_type, scope_id))
+                }
+                let tuple_struct_id = .find_struct_in_prelude("Tuple")
+
+                let type_id = .find_or_add_type_id(Type::GenericInstance(id: tuple_struct_id, args: checked_types))
+
+                return type_id
+            }
+            JaktArray(inner, span) => {
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+
+                let array_struct_id = .find_struct_in_prelude("Array")
+
+                let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
+
+                return type_id
+            }
+            Dictionary(key, value, span) => {
+                let key_type_id = .typecheck_typename(parsed_type: key, scope_id)
+                let value_type_id = .typecheck_typename(parsed_type: value, scope_id)
+
+                let dict_struct_id = .find_struct_in_prelude("Dictionary")
+
+                let type_id = .find_or_add_type_id(Type::GenericInstance(id: dict_struct_id, args: [key_type_id, value_type_id]))
+
+                return type_id
+            }
+            Set(inner, span) => {
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+
+                let set_struct_id = .find_struct_in_prelude("Set")
+
+                let type_id = .find_or_add_type_id(Type::GenericInstance(id: set_struct_id, args: [inner_type_id]))
+
+                return type_id
+            }
+            Optional(inner, span) => {
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+
+                let optional_struct_id = .find_struct_in_prelude("Optional")
+
+                let type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [inner_type_id]))
+
+                return type_id
+            }
+            WeakPtr(inner, span) => {
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+
+                let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
+
+                let type_id = .find_or_add_type_id(Type::GenericInstance(id: weakptr_struct_id, args: [inner_type_id]))
+
+                return type_id
+            }
+            RawPtr(inner, span) => {
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+
+                let type_id = .find_or_add_type_id(Type::RawPtr(id: inner_type_id))
+
+                return type_id
+            }
+            GenericType(name, generic_parameters, span) => {
+                mut checked_inner_types: [TypeId] = []
+
+                for inner_type in generic_parameters.iterator() {
+                    let inner_type_id = .typecheck_typename(parsed_type, scope_id)
+                    checked_inner_types.push(inner_type_id)
+                }
+                // FIXME: add support for "GenericResolvedType", though the Rust version
+                // puts this in the parser even though it should be in the typechecker
+                // as the parser doesn't have a concept of type ids
+                return .new_inference()
+            }
         }
     }
 
@@ -750,7 +800,7 @@ struct Typechecker {
                     GenericInstance(id, args) => {
                         let optional_struct_id = .find_struct_in_prelude("Optional")
 
-                        if id == optional_struct_id {
+                        if id.equals(optional_struct_id) {
                             // Success: LHS is T? and RHS is T?.
                             if lhs_type_id.equals(rhs_type_id) {
                                 return lhs_type_id
@@ -766,8 +816,8 @@ struct Typechecker {
                         } else {
                             .error_with_hint(format(
                                 "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
-                                .typename(lhs_type_id),
-                                .typename(rhs_type_id),
+                                .type_name(lhs_type_id),
+                                .type_name(rhs_type_id),
                             ), span,
                             "Left side of ?? must be an Optional but isn't",
                             lhs_span)
@@ -776,8 +826,8 @@ struct Typechecker {
                     else => {
                         .error_with_hint(format(
                             "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
-                            .typename(lhs_type_id),
-                            .typename(rhs_type_id),
+                            .type_name(lhs_type_id),
+                            .type_name(rhs_type_id),
                         ), span,
                         "Left side of ?? must be an Optional but isn't",
                         lhs_span)
@@ -786,15 +836,15 @@ struct Typechecker {
 
                 .error(format(
                     "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
-                    .typename(lhs_type_id),
-                    .typename(rhs_type_id),
+                    .type_name(lhs_type_id),
+                    .type_name(rhs_type_id),
                 ), span)
 
                 return lhs_type_id
             }
             LessThan | LessThanOrEqual | GreaterThan | GreaterThanOrEqual | Equal | NotEqual => {
                 if not lhs_type_id.equals(rhs_type_id) {
-                    .error(format("Binary comparison between incompatible types ({} vs {})", .typename(lhs_type_id), .typename(rhs_type_id)), span)
+                    .error(format("Binary comparison between incompatible types ({} vs {})", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
                 }
 
                 type_id = builtin(BuiltinType::Bool)
@@ -822,7 +872,7 @@ struct Typechecker {
 
                         match lhs_type {
                             GenericInstance(id, args) => {
-                                if id == optional_struct_id {
+                                if id.equals(optional_struct_id) {
                                     return lhs_type_id
                                 }
                             }
@@ -834,7 +884,7 @@ struct Typechecker {
 
                 let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
                 if result.1 {
-                    .error(format("Assignment between incompatible types (‘{}’ and ‘{}’)", .typename(lhs_type_id), .typename(rhs_type_id)), span)
+                    .error(format("Assignment between incompatible types (‘{}’ and ‘{}’)", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
                 }
                 return result.0
             }
@@ -843,7 +893,7 @@ struct Typechecker {
 
                 match .get_type(lhs_type_id) {
                     GenericInstance(id, args) => {
-                        if id == weak_ptr_struct_id {
+                        if id.equals(weak_ptr_struct_id) {
                             let inner_type_id = args[0]
                             match .get_type(inner_type_id) {
                                 Type::Struct(struct_id: lhs_struct_id) => {
@@ -863,8 +913,8 @@ struct Typechecker {
                         if not lhs_type_id.equals(rhs_type_id) {
                             .error(format(
                                 "Assignment between incompatible types (‘{}’ and ‘{}’)",
-                                .typename(lhs_type_id),
-                                .typename(rhs_type_id),
+                                .type_name(lhs_type_id),
+                                .type_name(rhs_type_id),
                             ), span)
                         }
 
@@ -879,8 +929,8 @@ struct Typechecker {
                 if not lhs_type_id.equals(rhs_type_id) {
                     .error(format(
                         "Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)",
-                        .typename(lhs_type_id),
-                        .typename(rhs_type_id),
+                        .type_name(lhs_type_id),
+                        .type_name(rhs_type_id),
                     ),
                     span)
                 }
