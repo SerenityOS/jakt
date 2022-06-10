@@ -338,6 +338,33 @@ struct Typechecker {
     current_module: ModuleId
     errors: [JaktError]
 
+    function typecheck(parsed_namespace: ParsedNamespace, errors: [JaktError]) throws -> CheckedProgram {
+        let root_module_id = ModuleId(id: 0)
+        let module = Module(
+            id: root_module_id,
+            name: parsed_namespace.name ?? "Root Module",
+            functions: [],
+            structures: [],
+            enums: [],
+            scopes: [],
+            types: [],
+            variables: [],
+            imports: [],
+            is_root: true,
+        )
+
+        mut typechecker = Typechecker(
+            program: CheckedProgram(modules: [module]),
+            inferences: [],
+            current_module_id: root_module_id,
+            errors
+        )
+
+        typechecker.typecheck_module(parsed_namespace, scope_id: ScopeId(module: root_module_id, id: 0))
+
+        return typechecker.program
+    }
+
     function get_function(this, anon id: FunctionId) => .program.get_function(id)
     function get_variable(this, anon id: VarId) => .program.get_variable(id)
     function get_type(this, anon id: TypeId) => .program.get_type(id)

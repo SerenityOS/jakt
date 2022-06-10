@@ -9,6 +9,7 @@
 import error { JaktError, print_error }
 import lexer { Lexer, Token }
 import parser { BinaryOperator, DefinitionLinkage, DefinitionType, ParsedCall, ParsedExpression, ParsedNamespace, Parser }
+import typechecker { Typechecker }
 import utility { panic, todo, Span }
 
 function usage() {
@@ -81,6 +82,8 @@ function main(args: [String]) {
     if parser_debug {
         println("{:#}", parsed_namespace);
     }
+
+    let checked_program = Typechecker::typecheck(parsed_namespace, errors)
 
     for error in errors.iterator() {
         print_error(file_name: args[1], file_contents, error)
