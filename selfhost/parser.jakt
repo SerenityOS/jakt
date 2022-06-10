@@ -699,12 +699,12 @@ struct Parser {
                         }
                         variants.push(SumEnumVariant(name, span, params: var_decls))
                     } else {
+                        .index++
                         let none_decls: [ParsedVarDecl]? = None
                         variants.push(SumEnumVariant(name, span, params: none_decls))
                     }
                 }
                 RCurly => {
-                    .index++
                     break
                 }
                 Comma | Eol => {
@@ -747,10 +747,11 @@ struct Parser {
             }
         }
 
-        if .eof() {
+        if not .current() is RCurly {
             .error("Invalid enum definition, expected `}`", .current().span())
             return (variants, methods)
         }
+        .index++
 
         if variants.is_empty() {
             .error("Empty enums are not allowed", partial_enum.name_span)
