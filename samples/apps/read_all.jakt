@@ -1,0 +1,17 @@
+/// Expect:
+/// - output: "text: So there I was, in the rain, all alone...\n"
+
+function parse_to_string(file_path: String) throws -> String {
+    mut file = File::open_for_reading(file_path)
+    mut builder = StringBuilder::create()
+    for b in file.read_all().iterator() {
+        builder.append(b)
+    }
+    return builder.to_string()
+}
+
+function main(args: [String]) throws {
+    // replace "mystery.txt" with args[1] to be able to run "./readall mystery.txt"
+    let file_data = parse_to_string(file_path: "mystery.txt")
+    println("text: {}", file_data)
+}
