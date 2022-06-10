@@ -1,7 +1,7 @@
 import error { JaktError }
 import parser { BinaryOperator, DefinitionLinkage, FunctionLinkage,
-                DefinitionType, ParsedExpression, ParsedCall,
-                ParsedType, ParsedNamespace, RecordType }
+                DefinitionType, ParsedCall, ParsedExpression, 
+                ParsedFunction, ParsedType, ParsedNamespace, RecordType }
 import utility { panic, todo, Span }
 
 struct ModuleId {
@@ -140,6 +140,14 @@ struct Module {
 
         return TypeId(module: .id, id: new_id)
     }
+
+    function add_function(mut this, checked_function: CheckedFunction) throws -> FunctionId {
+        let new_id = .functions.size()
+
+        .functions.push(checked_function)
+
+        return FunctionId(module: .id, id: new_id)
+    }
 }
 
 struct CheckedNamespace {
@@ -154,6 +162,7 @@ struct CheckedFunction {
     block: CheckedBlock
     can_throw: bool
     linkage: FunctionLinkage
+    function_scope_id: ScopeId
 
     // FIXME: This should return false if the first parameter is "this" or "mut this"
     function is_static(this) => true
@@ -384,7 +393,7 @@ struct Typechecker {
 
     function is_integer(this, anon type_id: TypeId) => .program.is_integer(type_id)
 
-    function create_scope(mut this, parent_id: ScopeId, can_throw: bool) throws -> ScopeId {
+    function create_scope(mut this, parent_scope_id: ScopeId, can_throw: bool) throws -> ScopeId {
         let scope = Scope(
             namespace_name: ""
             vars: [:]
@@ -393,7 +402,7 @@ struct Typechecker {
             enums: [:]
             types: [:]
             imports: [:]
-            parent: parent_id
+            parent: parent_scope_id
             children: []
             can_throw
         )
@@ -639,6 +648,19 @@ struct Typechecker {
         return None
     }
 
+    function add_function_to_scope(mut this, parent_scope_id: ScopeId, name: String, function_id: FunctionId, span: Span) throws -> bool {
+        mut scope = .get_scope(id: parent_scope_id)
+        for existing_function in scope.functions.iterator() {
+            if name == existing_function.0 {
+                // FIXME: Show hint of the original definition, once we store the name span.
+                .error(format("Redefinition of function ‘{}’", name), span)
+                return false
+            }
+        }
+        scope.functions.set(key: name, value: function_id)
+        return true
+    }
+
     function typecheck_module(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         .typecheck_namespace_predecl(parsed_namespace, scope_id)
         .typecheck_namespace_declarations(parsed_namespace, scope_id)
@@ -646,7 +668,7 @@ struct Typechecker {
 
     function typecheck_namespace_predecl(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         for fun in parsed_namespace.functions.iterator() {
-            //.typecheck_function_predecl(fun, parent_scope_id: scope_id)
+            .typecheck_function_predecl(parsed_function: fun, parent_scope_id: scope_id)
         }
     }
 
@@ -654,6 +676,40 @@ struct Typechecker {
         for fun in parsed_namespace.functions.iterator() {
             //.typecheck_function(fun, parent_scope_id: scope_id)
         }
+    }
+
+    function typecheck_function_predecl(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
+        let function_scope_id = .create_scope(parent_scope_id, can_throw: parsed_function.can_throw)
+        let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: parsed_function.can_throw)
+        let module_id = .current_module_id.id
+
+        // TODO: Make this true if it's a method of a generic class/struct.
+        let is_generic = not parsed_function.generic_parameters.is_empty()
+
+        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
+
+        mut checked_function = CheckedFunction(
+            name: parsed_function.name,
+            return_type_id: UNKNOWN_TYPE_ID,
+            params: [],
+            block: CheckedBlock(statements: [], definitely_returns: false),
+            can_throw: parsed_function.can_throw,
+            linkage: parsed_function.linkage,
+            function_scope_id,
+        )
+        // FIXME: We can't return a `mut Foo` from a function right now, but assigning anything to a `mut` variable makes it mutable.
+        //        AKA, working around one bug with another bug. :^)
+        mut current_module = .current_module()
+        let function_id = current_module.add_function(checked_function)
+        let checked_function_scope_id = checked_function.function_scope_id
+
+        // TODO: Check generic parameters
+
+        // TODO: Check parameters
+
+        // TODO: Check return type
+
+        .add_function_to_scope(parent_scope_id, name: parsed_function.name, function_id, span: parsed_function.name_span)
     }
 
     function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId) throws -> TypeId { 
