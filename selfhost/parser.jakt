@@ -68,6 +68,7 @@ struct ParsedFunction {
     return_type: ParsedType
     return_type_span: Span
     can_throw: bool
+    linkage: FunctionLinkage
 }
 
 struct ParsedParameter {
@@ -1080,8 +1081,9 @@ struct Parser {
             generic_parameters: [],
             block: ParsedBlock(stmts: []),
             return_type: ParsedType::Empty,
-            return_type_span: Span(start: 0, end: 0)
+            return_type_span: Span(start: 0, end: 0),
             can_throw: false,
+            linkage,
         )
 
         .index++
