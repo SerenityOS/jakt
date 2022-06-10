@@ -16,7 +16,7 @@ enum Token {
     SingleQuotedString(quote: String, span: Span)
     SingleQuotedByteString(quote: String, span: Span)
     QuotedString(quote: String, span: Span)
-    Number(number: i64, span: Span)
+    Number(number: NumericConstant, span: Span)
     Identifier(name: String, span: Span)
     Semicolon(Span)
     Colon(Span)
@@ -283,6 +283,45 @@ enum LiteralSuffix {
     I64
 }
 
+enum NumericConstant {
+    // FIXME: Implement floats
+    I8(i8)
+    I16(i16)
+    I32(i32)
+    I64(i64)
+    U8(u8)
+    U16(u16)
+    U32(u32)
+    U64(u64)
+    USize(u64)
+
+    public function to_usize(this) => match this {
+        I8(num) => num as! usize
+        I16(num) => num as! usize
+        I32(num) => num as! usize
+        I64(num) => num as! usize
+        U8(num) => num as! usize
+        U16(num) => num as! usize
+        U32(num) => num as! usize
+        U64(num) => num as! usize
+        USize(num) => num as! usize
+    }
+}
+
+function make_number_token(number: i64, suffix: LiteralSuffix, span: Span) throws -> Token => match suffix {
+    // FIXME: Implement floats
+    LiteralSuffix::U8 => Token::Number(number: NumericConstant::U8(number as! u8), span)
+    LiteralSuffix::U16 => Token::Number(number: NumericConstant::U16(number as! u16), span)
+    LiteralSuffix::U32 => Token::Number(number: NumericConstant::U32(number as! u32), span)
+    LiteralSuffix::U64 => Token::Number(number: NumericConstant::U64(number as! u64), span)
+    LiteralSuffix::UZ => Token::Number(number: NumericConstant::USize(number as! u64), span)
+
+    LiteralSuffix::I8 => Token::Number(number: NumericConstant::I8(number as! i8), span)
+    LiteralSuffix::I16 => Token::Number(number: NumericConstant::I16(number as! i16), span)
+    LiteralSuffix::I32 => Token::Number(number: NumericConstant::I32(number as! i32), span)
+    LiteralSuffix::I64 => Token::Number(number: NumericConstant::I64(number as! i64), span)
+}
+
 struct Lexer {
     index: usize
     input: [u8]
@@ -393,7 +432,10 @@ struct Lexer {
                 total = total * 10 + digit
             }
             let end = .index
-            return Token::Number(number: total, span: Span(start, end))
+            let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::I64
+
+            return make_number_token(number: total, suffix, span: Span(start, end))
+
         } else if is_ascii_alpha(.peek()) or .peek() == b'_' {
             mut string_builder = StringBuilder::create()
 

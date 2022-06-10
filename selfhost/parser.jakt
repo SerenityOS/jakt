@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 import error { JaktError }
-import lexer { Token }
+import lexer { Token, NumericConstant }
 import utility { panic, todo, Span }
 
 function merge_spans(anon start: Span, anon end: Span) -> Span => Span(start: start.start, end: end.end)
@@ -207,7 +207,7 @@ enum ParsedMatchBody {
 
 boxed enum ParsedExpression {
     Boolean(val: bool, span: Span)
-    NumericConstant(val: i64, span: Span)
+    NumericConstant(val: NumericConstant, span: Span)
     QuotedString(val: String, span: Span)
     SingleQuotedString(val: String, span: Span)
     SingleQuotedByteString(val: String, span: Span)
@@ -1902,8 +1902,8 @@ struct Parser {
                         Number(number) => {
                             // Indexing into a tuple
                             .index++
-                            // FIXME: Proper numeric constants.
-                            yield ParsedExpression::IndexedTuple(expr: result, index: number as! usize, span: merge_spans(start, end: .previous().span()))
+                            let num = number.to_usize()
+                            yield ParsedExpression::IndexedTuple(expr: result, index: num, span: merge_spans(start, end: .previous().span()))
                         }
                         Identifier(name) => {
                             // Struct field access or method call
