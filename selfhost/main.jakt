@@ -86,7 +86,7 @@ function main(args: [String]) {
     let checked_program = Typechecker::typecheck(parsed_namespace, errors)
 
     for error in errors.iterator() {
-        print_error(file_name: args[1], file_contents, error)
+        print_error(file_name: file_name!, file_contents, error)
     }
 
     if not errors.is_empty() {
