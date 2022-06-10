@@ -1,0 +1,12 @@
+/// Expect:
+/// - error: "‘else’ not allowed after ‘unless’\n"
+
+function main() {
+    let x: i64 = 80;
+
+    unless (x == 100) {
+        println("true")
+    } else {
+        println("not 100")
+    }
+}

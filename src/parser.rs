@@ -2105,6 +2105,7 @@ pub fn parse_statement(
             (ParsedStatement::UnsafeBlock(block), error)
         }
         TokenContents::Name(name) if name == "if" => parse_if_statement(tokens, index),
+        TokenContents::Name(name) if name == "unless" => parse_unless_statement(tokens, index),
         TokenContents::Name(name) if name == "break" => {
             trace!("parsing break");
             *index += 1;
@@ -2390,6 +2391,57 @@ fn parse_if_statement(tokens: &[Token], index: &mut usize) -> (ParsedStatement, 
     }
 
     (ParsedStatement::If(cond, block, else_stmt), error)
+}
+
+fn parse_unless_statement(
+    tokens: &[Token],
+    index: &mut usize,
+) -> (ParsedStatement, Option<JaktError>) {
+    trace!(format!("parse_unless_statement: {:?}", tokens[*index]));
+
+    let mut error = None;
+
+    match &tokens[*index].contents {
+        TokenContents::Name(name) if name == "unless" => {
+            // Good, we have our keyword
+        }
+        _ => {
+            return (
+                ParsedStatement::Garbage,
+                Some(JaktError::ParserError(
+                    "expected unless statement".to_string(),
+                    tokens[*index].span,
+                )),
+            );
+        }
+    }
+
+    *index += 1;
+
+    let (cond, err) = parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
+    error = error.or(err);
+
+    let expr_span = cond.span();
+
+    let negated = ParsedExpression::UnaryOp(Box::new(cond), UnaryOperator::LogicalNot, expr_span);
+
+    let (block, err) = parse_block(tokens, index);
+    error = error.or(err);
+
+    if *index < tokens.len() {
+        // Check for an 'else'
+        match &tokens[*index].contents {
+            TokenContents::Name(name) if name == "else" => {
+                error = error.or(Some(JaktError::ParserError(
+                    "‘else’ not allowed after ‘unless’ block".to_string(),
+                    tokens[*index].span,
+                )))
+            }
+            _ => {}
+        }
+    }
+
+    (ParsedStatement::If(negated, block, None), error)
 }
 
 pub fn parse_expression(

@@ -1,0 +1,10 @@
+/// Expect:
+/// - error: "assignment is not allowed in this position"
+
+function main() {
+    mut x = 100;
+
+    unless (x = 99) {
+        println("true")
+    }
+}
