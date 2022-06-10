@@ -1,17 +1,10 @@
 /// Expect:
-/// - output: "JsonValue::Object([\"foo\": JsonValue::Number(123), \"bar\": JsonValue::Number(456)])\n"
-
-extern struct StringBuilder {
-    // FIXME: Jakt::StringBuilder::append() actually takes a c_char, not a u8, but nobody complains
-    function append(mut this, anon c: u8)
-    function to_string(this) throws -> String
-    function create() throws -> StringBuilder
-}
+/// - output: "JsonValue::JsonArray([JsonValue::Object(["states": JsonValue::JsonArray([]), "name": JsonValue::JsonString("air"), "maxStateId": JsonValue::Number(0), "minStateId": JsonValue::Number(0), "resistance": JsonValue::Number(0), "id": JsonValue::Number(0.5), "hardness": JsonValue::Number(3.9), "displayName": JsonValue::JsonString("Air")])])\n"
 
 enum JsonValue {
     Null
     Bool(bool)
-    Number(i64)
+    Number(f64)
     // FIXME: This variant should be called String
     JsonString(String)
     // FIXME: This variant should be called Array
@@ -175,7 +168,36 @@ class JsonParser {
     }
 
     function parse_array(mut this) throws -> JsonValue {
-        return JsonValue::Null
+        mut array: [JsonValue] = []
+        if (not .consume_specific(b'[')) {
+            // Expected '['
+            throw Error::from_errno(9014)
+        }
+        loop {
+            .skip_whitespace()
+            if .peek() == b']' {
+                break
+            }
+            array.push(.parse_helper())
+            .skip_whitespace()
+            if .peek() == b']' {
+                break
+            }
+            if not .consume_specific(b',') {
+                // Expected ','
+                throw Error::from_errno(9014)
+            }
+            .skip_whitespace()
+            if .peek() == b']' {
+                // Unexpected ']'
+                throw Error::from_errno(9014)
+            }
+        }
+        if not .consume_specific(b']') {
+            // Expected ']'
+            throw Error::from_errno(9015)
+        }
+        return JsonValue::JsonArray(array)
     }
 
     function parse_object(mut this) throws -> JsonValue {
@@ -223,37 +245,95 @@ class JsonParser {
         return JsonValue::Object(values)
     }
 
-    function parse_number(mut this) throws -> JsonValue {
-        let is_negative = .consume_specific(b'-')
+    function char_to_f64(anon num: u8) throws -> f64 {
+        // FIXME 1: Shouldn't need this function at all
+        // FIXME 2: Shouldn't need return in else branch
+        return match num {
+            0u8 => 0.0
+            1u8 => 1.0
+            2u8 => 2.0
+            3u8 => 3.0
+            4u8 => 4.0
+            5u8 => 5.0
+            6u8 => 6.0
+            7u8 => 7.0
+            8u8 => 8.0
+            9u8 => 9.0
+            else => {
+                // FIXME: "Unexpected number"
+                throw Error::from_errno(9017)
+                return 1.0
+            }
+        }
+    }
 
-        mut value = 0
+    function parse_number(mut this) throws -> JsonValue {
+        // FIXME: This implementation doesn't match JsonParser.cpp
+        let is_negative = .consume_specific(b'-')
+        mut decimal_start_index: usize? = None
+
+        mut value = 0.0
 
         while not .eof() {
             let ch = .peek()
-            if not (ch >= b'0' and ch <= b'9') {
+            if ch == b'.' {
+                if decimal_start_index.has_value() {
+                    // FIXME: "Unexpected '.'"
+                    throw Error::from_errno(9016)
+                }
+                decimal_start_index = .index++
+                continue
+            } else if not (ch >= b'0' and ch <= b'9') {
                 break
             }
-            value *= 10
-            value += (ch - b'0') as! i64
+
+            if not decimal_start_index.has_value() {
+                value *= 10.0
+                value += char_to_f64(ch - b'0')
+            } else {
+                mut num = char_to_f64(ch - b'0')
+                // FIXME: This should really be: `value += pow(10, -decimal_place)*num`, but: there's no pow function and you can't multiply float by usize
+                let decimal_place = .index - decimal_start_index.value()
+                for i in 0..decimal_place {
+                    num /= 10.0
+                }
+                value += num
+            }
             .index++
+        }
+
+        if is_negative {
+            value *= -1.0
         }
 
         return JsonValue::Number(value)
     }
 
     function parse_string(mut this) throws -> JsonValue {
-        return JsonValue::Null
+        return JsonValue::JsonString(.consume_and_unescape_string())
     }
 
     function parse_false(mut this) throws -> JsonValue {
-        return JsonValue::Null
+        if (.consume() != b'f' or .consume() != b'a' or .consume() != b'l' or .consume() != b's' or .consume() != b'e') {
+            // FIXME: "Expected 'false'"
+            throw Error::from_errno(9011)
+        }
+        return JsonValue::Bool(false)
     }
 
     function parse_true(mut this) throws -> JsonValue {
-        return JsonValue::Null
+        if (.consume() != b't' or .consume() != b'r' or .consume() != b'u' or .consume() != b'e') {
+            // FIXME: "Expected 'true'"
+            throw Error::from_errno(9012)
+        }
+        return JsonValue::Bool(true)
     }
 
     function parse_null(mut this) throws -> JsonValue {
+        if (.consume() != b'n' or .consume() != b'u' or .consume() != b'l' or .consume() != b'l') {
+            // FIXME: "Expected 'null'"
+            throw Error::from_errno(9013)
+        }
         return JsonValue::Null
     }
 }
@@ -264,7 +344,6 @@ function parse_json(input: String) throws -> JsonValue {
 }
 
 function main() {
-    let input = "{\"foo\": 123\n,\"bar\":    456\n}"
-    let value = parse_json(input)
+    let value = parse_json(input: "[{\"id\":0.5,\"displayName\":\"Air\",\"name\":\"air\",\"hardness\":3.9,\"resistance\":0,\"minStateId\":0,\"maxStateId\":0,\"states\":[]}]")
     println("{}", value)
 }
