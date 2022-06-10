@@ -270,7 +270,9 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
                 }
                 assert!(status.status.success());
 
-                let binary_run = Command::new(&exe_name).output()?;
+                let binary_run = Command::new(&exe_name)
+                    .current_dir(&path.parent().unwrap())
+                    .output()?;
 
                 let binary_output = String::from_utf8_lossy(&binary_run.stdout).to_string();
                 let binary_output = binary_output.replace("\r\n", "\n");
