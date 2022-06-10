@@ -270,6 +270,19 @@ enum Token {
     }
 }
 
+enum LiteralSuffix {
+    // FIXME: Implement floats
+    UZ
+    U8
+    U16
+    U32
+    U64
+    I8
+    I16
+    I32
+    I64
+}
+
 struct Lexer {
     index: usize
     input: [u8]
@@ -401,6 +414,58 @@ struct Lexer {
         .error(format("unknown character: {:c}", unknown_char), Span(start, end))
         return Token::Garbage(Span(start, end))
     }
+
+    function consume_numeric_literal_suffix(mut this) -> LiteralSuffix? {
+        match .peek() {
+            b'u' | b'i' => {}
+            else => {
+                return None
+            }
+        }
+
+        if .peek() == b'u' and .peek_ahead(1) == b'z' {
+            .index += 2
+            return LiteralSuffix::UZ
+        }
+
+        mut local_index = 1uz
+        mut width = 0i64
+
+        while is_ascii_digit(.peek_ahead(local_index)) {
+            let value = .input[.index + local_index]
+            ++local_index
+            let digit: i64 = as_saturated(value - b'0')
+            width = width * 10 + digit
+        }
+
+        let suffix = match .peek() {
+            b'u' => match width {
+                8 => LiteralSuffix::U8
+                16 => LiteralSuffix::U16
+                32 => LiteralSuffix::U32
+                64 => LiteralSuffix::U64
+                else => {
+                    return None
+                }
+            }
+            b'i' => match width {
+                8 => LiteralSuffix::I8
+                16 => LiteralSuffix::I16
+                32 => LiteralSuffix::I32
+                64 => LiteralSuffix::I64
+                else => {
+                    return None
+                }
+            }
+            else => {
+                return None
+            }
+        }
+
+        .index += local_index
+        return suffix
+    }
+
 
     function lex_quoted_string(mut this, delimiter: u8) throws -> Token {
         let start = .index
