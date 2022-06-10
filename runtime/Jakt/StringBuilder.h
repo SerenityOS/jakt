@@ -105,7 +105,6 @@ struct Formatter<JaktInternal::Array<T>> : Formatter<StringView> {
             if (i != value.size() - 1)
                 TRY(string_builder.append(", "));
         }
-        m_alternative_form = false;
         JaktInternal::_pretty_print_level--;
         TRY(string_builder.append("]"));
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
@@ -128,7 +127,6 @@ struct Formatter<JaktInternal::Set<T>> : Formatter<StringView> {
             if (i != set.size() - 1)
                 TRY(string_builder.append(", "));
         }
-        m_alternative_form = false;
         TRY(string_builder.append("}"));
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
@@ -154,7 +152,6 @@ struct Formatter<JaktInternal::Dictionary<K, V>> : Formatter<StringView> {
             if (i != dict.size() - 1)
                 TRY(string_builder.append(", "));
         }
-        m_alternative_form = false;
         JaktInternal::_pretty_print_level--;
         TRY(string_builder.append("]"));
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
@@ -191,7 +188,6 @@ struct Formatter<Jakt::Tuple<Ts...>> : Formatter<StringView> {
             JaktInternal::_pretty_print_level--;
         }
 
-        m_alternative_form = false;
         TRY(string_builder.append(")"));
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
