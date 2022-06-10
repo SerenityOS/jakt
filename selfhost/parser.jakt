@@ -1529,6 +1529,7 @@ struct Parser {
                 yield ParsedStatement::VarDecl(var, init)
             }
             If => .parse_if_statement()
+            Unless => .parse_unless_statement()
             For => .parse_for_statement()
             Try => .parse_try_statement()
             LCurly => ParsedStatement::Block(.parse_block())
@@ -1621,6 +1622,28 @@ struct Parser {
         }
 
         return ParsedStatement::If(condition, then_block, else_statement)
+    }
+
+    function parse_unless_statement(mut this) throws -> ParsedStatement {
+        if not .current() is Unless {
+            .error("Expected ‘unless’ statement", .current().span())
+            return ParsedStatement::Garbage
+        }
+
+        let start_span = .current().span()
+        .index++
+
+        let expr = .parse_expression(allow_assignments: false)
+        let condition = ParsedExpression::UnaryOp(expr, op: UnaryOperator::LogicalNot(), span: expr.span())
+        
+        let then_block = .parse_block()
+
+        if .current() is Else {
+            .error("‘else’ not allowed after ‘unless’ block", .previous().span())
+        }
+
+        let none_else: ParsedStatement? = None
+        return ParsedStatement::If(condition, then_block, else_statement: none_else)
     }
 
     function parse_expression(mut this, allow_assignments: bool) throws -> ParsedExpression {
