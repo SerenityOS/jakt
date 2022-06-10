@@ -6,16 +6,16 @@ file_extensions:
   - jakt
 scope: source.jakt
 variables:
-  non_raw_ident: '[[:alpha:]][_[:alnum:]]*|_[_[:alnum:]]+'
+  non_raw_ident: "[[:alpha:]][_[:alnum:]]*|_[_[:alnum:]]+"
   identifier: '(?:(?:(?:r\#)?{{non_raw_ident}})\b)'
   camel_ident: '\b_*[A-Z][a-zA-Z0-9_]*[a-z][a-zA-Z0-9_]*\b'
   lifetime: '''(?:_|{{non_raw_ident}})(?!\'')\b'
   escaped_byte: '\\([nrt0\"''\\]|x\h{2})'
   escaped_char: '\\([nrt0\"''\\]|x[0-7]\h|u\{(?:\h_*){1,6}\})'
-  int_suffixes: '[iu](?:8|16|32|64|128|size)'
-  float_suffixes: 'f(32|64)'
-  dec_literal: '[0-9](?:[0-9_])*'
-  float_exponent: '[eE][+-]?[0-9_]*[0-9][0-9_]*'
+  int_suffixes: "[iu](?:8|16|32|64|128|size)"
+  float_suffixes: "f(32|64)"
+  dec_literal: "[0-9](?:[0-9_])*"
+  float_exponent: "[eE][+-]?[0-9_]*[0-9][0-9_]*"
 contexts:
   main:
     - include: statements
@@ -27,7 +27,7 @@ contexts:
   statements:
     - include: visibility
 
-    - match: ';'
+    - match: ";"
       scope: punctuation.terminator.jakt
 
     - match: '(''(?:{{non_raw_ident}}))\s*(:)'
@@ -43,7 +43,7 @@ contexts:
         2: entity.name.module.jakt
       push:
         - meta_scope: meta.module.jakt
-        - match: ';'
+        - match: ";"
           scope: punctuation.terminator.jakt
           pop: true
         - include: statements-block
@@ -68,11 +68,11 @@ contexts:
         1: storage.type.type.jakt
         2: entity.name.type.jakt
       push:
-      - match: '=(?!=)'
-        scope: keyword.operator.assignment.jakt
-        push: after-operator
-      - match: '(?=\S)'
-        pop: true
+        - match: "=(?!=)"
+          scope: keyword.operator.assignment.jakt
+          push: after-operator
+        - match: '(?=\S)'
+          pop: true
 
     - match: '\b(trait)\s+({{identifier}})\b'
       captures:
@@ -80,11 +80,11 @@ contexts:
         2: entity.name.trait.jakt
       push:
         - meta_scope: meta.trait.jakt
-        - match: '(?=:)'
+        - match: "(?=:)"
           push: impl-where
         - match: '(?=\bwhere\b)'
           push: impl-where
-        - match: '(?=<)'
+        - match: "(?=<)"
           push: generic-angles
         - include: statements-block
 
@@ -142,7 +142,7 @@ contexts:
         - match: '\]'
           scope: punctuation.section.group.end.jakt
           pop: true
-        - match: ';'
+        - match: ";"
           scope: punctuation.separator.jakt
         - include: statements
 
@@ -150,14 +150,14 @@ contexts:
     - include: symbols
     - include: keywords
 
-    - match: ','
+    - match: ","
       scope: punctuation.separator.jakt
       push: after-operator
 
     - match: '\b[[:lower:]_][[:lower:][:digit:]_]*\s*(?=\()'
       scope: variable.function.jakt
 
-    - match: '{{identifier}}'
+    - match: "{{identifier}}"
 
     - match: '\.'
       scope: punctuation.accessor.dot.jakt
@@ -172,11 +172,11 @@ contexts:
         - match: '\)'
           scope: punctuation.section.group.end.jakt
           pop: true
-        - match: '(in|self)'
+        - match: "(in|self)"
           scope: keyword.other.jakt
-        - match: '::'
+        - match: "::"
           scope: meta.path.jakt
-        - match: '{{identifier}}'
+        - match: "{{identifier}}"
           scope: meta.path.jakt
     - match: '\bpublic\b'
       scope: storage.modifier.jakt
@@ -201,7 +201,7 @@ contexts:
               scope: meta.annotation.parameters.jakt meta.group.jakt punctuation.section.group.end.jakt
               pop: true
             - include: attribute-call
-        - match: '='
+        - match: "="
           scope: keyword.operator.assignment.jakt
           set:
             - meta_content_scope: meta.annotation.jakt
@@ -230,9 +230,9 @@ contexts:
       push:
         - meta_content_scope: meta.function-call.jakt
         - include: attribute-call
-    - match: ','
+    - match: ","
       scope: punctuation.separator.jakt
-    - match: '='
+    - match: "="
       scope: keyword.operator.assignment.jakt
     - include: strings
     - include: chars
@@ -279,7 +279,7 @@ contexts:
     - include: statements
 
   after-operator:
-    - match: '(?=<)'
+    - match: "(?=<)"
       set: generic-angles
     - include: try-closure
 
@@ -308,26 +308,26 @@ contexts:
         - include: impl-generic
         - match: '(?=\S)'
           pop: true
-    - match: '->'
+    - match: "->"
       scope: punctuation.separator.jakt
       push:
         - meta_scope: meta.function.return-type.jakt
         - match: '(?=\s*\{|\bwhere\b)'
           pop: true
-        - match: '(?=<)'
+        - match: "(?=<)"
           push: generic-angles
         - include: type-any-identifier
-        - match: '{{identifier}}'
+        - match: "{{identifier}}"
         - match: '(?=\S)'
           pop: true
 
   pattern-param:
     - include: comments
-    - match: '&'
+    - match: "&"
       scope: keyword.operator.jakt
     - match: \b(mut|ref)\b
       scope: storage.modifier.jakt
-    - match: '@'
+    - match: "@"
       scope: keyword.operator.jakt
     - include: lifetime
     - match: '\b{{identifier}}\b(?!\s*(?:::|\{|\[|\())'
@@ -374,16 +374,16 @@ contexts:
     - match: '\bself\b|\bsuper\b'
       scope: keyword.other.jakt
     - match: '\b{{identifier}}\b'
-    - match: '::'
+    - match: "::"
 
-    - match: ':(?!:)'
+    - match: ":(?!:)"
       scope: punctuation.separator.jakt
       push:
         - match: '(?=,|\)|\]|\}|\|)'
           pop: true
         - include: type-any-identifier
 
-    - match: ','
+    - match: ","
       scope: punctuation.separator.jakt
 
   closure:
@@ -422,7 +422,7 @@ contexts:
     - include: block
 
   type:
-    - match: '{{identifier}}(?=<)'
+    - match: "{{identifier}}(?=<)"
       push: generic-angles
     - match: \b(Self|{{int_suffixes}}|{{float_suffixes}}|bool|char|str)\b
       scope: storage.type.jakt
@@ -442,10 +442,10 @@ contexts:
 
   generic-angles:
     - meta_scope: meta.generic.jakt
-    - match: '>'
+    - match: ">"
       scope: punctuation.definition.generic.end.jakt
       pop: true
-    - match: '<'
+    - match: "<"
       scope: punctuation.definition.generic.begin.jakt
       push: generic-angles-contents
     - match: '(?=\S)'
@@ -454,12 +454,12 @@ contexts:
   generic-angles-contents:
     - include: comments
     - include: attribute
-    - match: '(?=>)'
+    - match: "(?=>)"
       pop: true
-    - match: '<'
+    - match: "<"
       scope: punctuation.definition.generic.begin.jakt
       push:
-        - match: '>'
+        - match: ">"
           scope: punctuation.definition.generic.end.jakt
           pop: true
         - include: generic-angles-contents
@@ -467,12 +467,12 @@ contexts:
     - include: byte
     - include: type-any-identifier
     - include: char
-    - match: '-'
+    - match: "-"
       scope: keyword.operator.arithmetic.jakt
     - include: integers
     - include: block
-    - match: '{{identifier}}'
-    - match: ':|,'
+    - match: "{{identifier}}"
+    - match: ":|,"
       scope: punctuation.separator.jakt
     - match: '\+|='
       scope: keyword.operator.jakt
@@ -489,18 +489,18 @@ contexts:
           scope: punctuation.section.group.end.jakt
           pop: true
         - include: constant-integer-expression
-    - match: '{{identifier}}'
+    - match: "{{identifier}}"
       scope: variable.other.constant.jakt
-    - match: '::'
+    - match: "::"
       scope: punctuation.accessor.double-colon.jakt
-    - match: '[-+%/*]'
+    - match: "[-+%/*]"
       scope: keyword.operator.arithmetic.jakt
 
   type-any-identifier:
     - include: comments
     - include: support-type
     - include: return-type
-    - match: '&'
+    - match: "&"
       scope: keyword.operator.jakt
     - include: raw-pointer
     - match: \b(mutable|ref|const|unsafe)\b
@@ -526,13 +526,13 @@ contexts:
       captures:
         1: storage.type.jakt
         2: punctuation.accessor.jakt
-    - match: '{{identifier}}(::)'
+    - match: "{{identifier}}(::)"
       scope: meta.path.jakt
       captures:
         1: punctuation.accessor.jakt
-    - match: '(::)(?={{identifier}})'
+    - match: "(::)(?={{identifier}})"
       scope: meta.path.jakt punctuation.accessor.jakt
-    - match: '(?=<)'
+    - match: "(?=<)"
       push: generic-angles
     - match: '\('
       scope: punctuation.section.group.begin.jakt
@@ -541,7 +541,7 @@ contexts:
         - match: '\)'
           scope: punctuation.section.group.end.jakt
           pop: true
-        - match: ','
+        - match: ","
           scope: punctuation.separator.jakt
         - include: type-any-identifier
     - match: '\+'
@@ -557,9 +557,9 @@ contexts:
     - include: type-slice-or-array
     - match: '\b_\b'
       scope: keyword.operator.jakt
-    - match: '!'
+    - match: "!"
       scope: keyword.operator.jakt
-    - match: '{{identifier}}'
+    - match: "{{identifier}}"
 
   raw-pointer:
     - match: '\*\s*(?:const|mutable)\b'
@@ -569,10 +569,10 @@ contexts:
     - match: \bfor\b
       scope: keyword.other.jakt
       push:
-        - match: '(?=<)'
+        - match: "(?=<)"
           push: generic-angles
         - include: type-any-identifier
-        - match: '&'
+        - match: "&"
           scope: keyword.operator.jakt
         - include: lifetime
         - match: '(?=\S)'
@@ -585,7 +585,7 @@ contexts:
         - match: '\]'
           scope: punctuation.section.group.end.jakt
           pop: true
-        - match: ';'
+        - match: ";"
           scope: punctuation.separator.jakt
           set:
             - match: '\]'
@@ -597,15 +597,15 @@ contexts:
   struct-identifier:
     - meta_scope: meta.struct.jakt
     - include: comments
-    - match: '{{identifier}}(?=<)'
+    - match: "{{identifier}}(?=<)"
       scope: entity.name.struct.jakt
       set:
         - meta_scope: meta.struct.jakt meta.generic.jakt
-        - match: '(?=<)'
+        - match: "(?=<)"
           push: generic-angles
-        - match: ''
+        - match: ""
           set: struct-body
-    - match: '{{identifier}}'
+    - match: "{{identifier}}"
       scope: entity.name.struct.jakt
       set: struct-body
     - match: '(?=\S)'
@@ -637,7 +637,7 @@ contexts:
         - include: comments
         - include: visibility
         - include: type-any-identifier
-        - match: ','
+        - match: ","
           scope: punctuation.separator.jakt
 
   struct-classic:
@@ -661,13 +661,13 @@ contexts:
     - match: '{{identifier}}(?=\s*:)'
       scope: variable.other.member.jakt
       push:
-        - match: ','
+        - match: ","
           scope: punctuation.separator.jakt
           pop: true
         - match: '(?=\})'
           pop: true
         - include: comments
-        - match: ':'
+        - match: ":"
           scope: punctuation.separator.jakt
         - include: type-any-identifier
     - match: '(?=\S)'
@@ -676,15 +676,15 @@ contexts:
   union-identifier:
     - meta_scope: meta.union.jakt
     - include: comments
-    - match: '{{identifier}}(?=<)'
+    - match: "{{identifier}}(?=<)"
       scope: entity.name.union.jakt
       set:
         - meta_scope: meta.union.jakt meta.generic.jakt
-        - match: '(?=<)'
+        - match: "(?=<)"
           push: generic-angles
-        - match: ''
+        - match: ""
           set: union-body
-    - match: '{{identifier}}'
+    - match: "{{identifier}}"
       scope: entity.name.union.jakt
       set: union-body
 
@@ -699,21 +699,21 @@ contexts:
     - match: '\}'
       scope: meta.block.jakt punctuation.section.block.end.jakt
       pop: true
-    - match: '(?=;)'
+    - match: "(?=;)"
       pop: true
 
   enum-identifier:
     - meta_scope: meta.enum.jakt
     - include: comments
-    - match: '{{identifier}}(?=<)'
+    - match: "{{identifier}}(?=<)"
       scope: entity.name.enum.jakt
       set:
         - meta_scope: meta.enum.jakt meta.generic.jakt
-        - match: '(?=<)'
+        - match: "(?=<)"
           push: generic-angles
-        - match: ''
+        - match: ""
           set: enum-maybe-where
-    - match: '{{identifier}}'
+    - match: "{{identifier}}"
       scope: entity.name.enum.jakt
       set: enum-maybe-where
     - match: '(?=\S)'
@@ -740,10 +740,10 @@ contexts:
     - match: '\b[[:upper:]_][[:upper:][:digit:]_]*\b'
       scope: constant.other.jakt
       push: enum-variant-type
-    - match: '{{camel_ident}}'
+    - match: "{{camel_ident}}"
       scope: storage.type.source.jakt
       push: enum-variant-type
-    - match: '{{identifier}}'
+    - match: "{{identifier}}"
       push: enum-variant-type
 
   enum-variant-type:
@@ -753,7 +753,7 @@ contexts:
     - match: '\n'
       scope: punctuation.separator.jakt
       pop: true
-    - match: '='
+    - match: "="
       set: enum-discriminant
     - match: '(?=\()'
       push: struct-tuple
@@ -761,7 +761,7 @@ contexts:
       push: struct-classic
 
   enum-discriminant:
-    - match: ','
+    - match: ","
       pop: true
     - match: '(?=\})'
       pop: true
@@ -770,16 +770,16 @@ contexts:
   impl-definition:
     - meta_scope: meta.impl.jakt
     - include: comments
-    - match: '(?=<)'
+    - match: "(?=<)"
       set: [impl-for, impl-generic]
     - match: (?=\S)
       set: impl-for
 
   impl-generic:
     - meta_scope: meta.impl.jakt
-    - match: '(?=<)'
+    - match: "(?=<)"
       push: generic-angles
-    - match: ''
+    - match: ""
       pop: true
 
   impl-for:
@@ -793,7 +793,7 @@ contexts:
           scope: keyword.other.jakt
           set: impl-identifier
         - include: type-any-identifier
-    - match: ''
+    - match: ""
       set: impl-identifier
 
   impl-identifier:
@@ -805,12 +805,12 @@ contexts:
       push: impl-where
     - match: \b(mutable|ref)\b
       scope: storage.modifier.jakt
-    - match: '{{identifier}}(?=<)'
+    - match: "{{identifier}}(?=<)"
       scope: entity.name.impl.jakt
       push: generic-angles
-    - match: '{{identifier}}'
+    - match: "{{identifier}}"
       scope: entity.name.impl.jakt
-    - match: '&'
+    - match: "&"
       scope: keyword.operator.jakt
     - include: lifetime
     - match: '(?=\S)'
@@ -824,7 +824,7 @@ contexts:
     - match: \bwhere\b
       scope: keyword.other.jakt
     - include: type-any-identifier
-    - match: ':'
+    - match: ":"
       scope: punctuation.separator.jakt
 
   impl-body:
@@ -834,19 +834,19 @@ contexts:
   function-definition:
     - meta_scope: meta.function.jakt
     - include: comments
-    - match: '{{identifier}}'
+    - match: "{{identifier}}"
       scope: entity.name.function.jakt
       set: function-generic
 
   function-generic:
     - include: comments
-    - match: '(?=<)'
+    - match: "(?=<)"
       push: generic-angles
     - match: '(?=\()'
       set: function-parameters
     - match: \bwhere\b
       set: function-where
-    - match: '(?=;)'
+    - match: "(?=;)"
       pop: true
 
   function-parameters:
@@ -882,7 +882,7 @@ contexts:
     - match: \bwhere\b
       scope: keyword.other.jakt
     - include: type-any-identifier
-    - match: '[:,]'
+    - match: "[:,]"
       scope: punctuation.separator.jakt
     # Escape for incomplete expression, or ';'
     - match: '(?=\S)'
@@ -969,10 +969,10 @@ contexts:
         # not valid syntax.
         - match: '\n'
           pop: true
-        - match: '{{escaped_byte}}'
+        - match: "{{escaped_byte}}"
           scope: constant.character.escape.jakt
           set: byte-tail
-        - match: ''
+        - match: ""
           set: byte-tail
 
   byte-tail:
@@ -981,7 +981,7 @@ contexts:
       pop: true
     - match: '\n'
       pop: true
-    - match: '.'
+    - match: "."
       scope: invalid.illegal.byte.jakt
 
   byte-string:
@@ -995,7 +995,7 @@ contexts:
         - match: '"'
           scope: punctuation.definition.string.end.jakt
           pop: true
-        - match: '{{escaped_byte}}'
+        - match: "{{escaped_byte}}"
           scope: constant.character.escape.jakt
         - match: '(\\)$'
           scope: punctuation.separator.continuation.line.jakt
@@ -1015,7 +1015,7 @@ contexts:
           pop: true
 
   escaped-char:
-    - match: '{{escaped_char}}'
+    - match: "{{escaped_char}}"
       scope: constant.character.escape.jakt
     - match: '\\u\{[^}]*\}'
       scope: invalid.illegal.character.escape.jakt
@@ -1031,10 +1031,10 @@ contexts:
           set: char-tail
         - match: '\n'
           pop: true
-        - match: '{{escaped_char}}'
+        - match: "{{escaped_char}}"
           scope: constant.character.escape.jakt
           set: char-tail
-        - match: ''
+        - match: ""
           set: char-tail
 
   char-tail:
@@ -1043,7 +1043,7 @@ contexts:
       pop: true
     - match: '\n'
       pop: true
-    - match: '.'
+    - match: "."
       scope: invalid.illegal.char.jakt
 
   string:
@@ -1153,7 +1153,7 @@ contexts:
         2: storage.type.numeric.jakt
 
   lifetime:
-    - match: '{{lifetime}}'
+    - match: "{{lifetime}}"
       scope: storage.modifier.lifetime.jakt
 
   basic-identifiers:
@@ -1163,14 +1163,14 @@ contexts:
       scope: storage.type.jakt
     - match: '\b(?:r#)?_*[A-Z][a-zA-Z0-9_]*[a-z][a-zA-Z0-9_]*\b'
       scope: storage.type.source.jakt
-    - match: '(?={{identifier}}::)'
+    - match: "(?={{identifier}}::)"
       push:
         - meta_scope: meta.path.jakt
         - include: no-path-identifiers
-        - match: '::'
+        - match: "::"
           scope: punctuation.accessor.jakt
           set: no-type-names
-    - match: '(::)(?={{identifier}})'
+    - match: "(::)(?={{identifier}})"
       scope: meta.path.jakt
       captures:
         1: punctuation.accessor.jakt
@@ -1184,46 +1184,46 @@ contexts:
       scope: keyword.other.jakt
 
   no-type-names:
-      - include: comments
-      - include: basic-identifiers
-      - match: '{{identifier}}'
-      - match: '(?=<)'
-        push: generic-angles
-      - match: ''
-        pop: true
+    - include: comments
+    - include: basic-identifiers
+    - match: "{{identifier}}"
+    - match: "(?=<)"
+      push: generic-angles
+    - match: ""
+      pop: true
 
   symbols:
-    - match: '=>'
+    - match: "=>"
       scope: keyword.operator.jakt
 
-    - match: '<-|->'
+    - match: "<-|->"
       scope: keyword.operator.jakt
 
     - match: '\.\.\.|\.\.=|\.\.'
       scope: keyword.operator.range.jakt
 
-    - match: '[!<>=]='
+    - match: "[!<>=]="
       scope: keyword.operator.comparison.jakt
 
-    - match: '(?:[-+%/*^&|]|<<|>>)?='
+    - match: "(?:[-+%/*^&|]|<<|>>)?="
       scope: keyword.operator.assignment.jakt
 
     - match: '&&|\|\||!'
       scope: keyword.operator.logical.jakt
 
-    - match: '[&|^]|<<|>>'
+    - match: "[&|^]|<<|>>"
       scope: keyword.operator.bitwise.jakt
 
-    - match: '[<>]'
+    - match: "[<>]"
       scope: keyword.operator.comparison.jakt
 
-    - match: '[-+%/*]'
+    - match: "[-+%/*]"
       scope: keyword.operator.arithmetic.jakt
 
-    - match: '[@~?$#'']'
+    - match: "[@~?$#']"
       scope: keyword.operator.jakt
 
-    - match: '[:;,]'
+    - match: "[:;,]"
       scope: punctuation.separator.jakt
 
   bool:
@@ -1260,7 +1260,7 @@ contexts:
     - match: \b(mutable|public|unsafe|class|throws)\b
       scope: storage.modifier.jakt
 
-    - match: \b(else|for|if|loop|match|try|while|yield)\b
+    - match: \b(else|for|if|unless|loop|match|try|while|yield)\b
       scope: keyword.control.jakt
 
     - match: \b(break|continue)\b

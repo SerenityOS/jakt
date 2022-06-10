@@ -39,7 +39,7 @@
 
 (setq jakt-font-lock-defaults
       (let* (
-             (jakt-conditional '("if" "else" "match"))
+             (jakt-conditional '("if" "else" "match" "unless"))
              (jakt-repeat '("while" "for" "loop"))
              (jakt-execution '("return" "break" "continue" "throw" "yield"))
              (jakt-boolean '("true" "false"))

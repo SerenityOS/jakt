@@ -13,6 +13,7 @@ let s:jakt_syntax_keywords = {
     \   'jaktConditional' :["if"
     \ ,                     "else"
     \ ,                     "match"
+    \ ,                     "unless"
     \ ,                    ]
     \ , 'jaktRepeat' :["while"
     \ ,                "for"
