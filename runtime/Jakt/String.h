@@ -223,7 +223,7 @@ template<typename T>
 struct Formatter<NonnullRefPtr<T>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, NonnullRefPtr<T> const& value)
     {
-        auto str = TRY(Jakt::String::formatted("{}", *value));
+        auto str = TRY(Jakt::String::formatted(m_alternative_form ? "{:#}" : "{}", *value));
         return Formatter<StringView>::format(builder, str);
     }
 };
