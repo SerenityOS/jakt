@@ -952,7 +952,17 @@ struct Typechecker {
         Boolean(val, span) => CheckedExpression::Boolean(val, span)
         NumericConstant(val, span) => {
             // FIXME: better constant support
-            yield CheckedExpression::NumericConstant(val: CheckedNumericConstant::I64(val), span, type_id: builtin(BuiltinType::I64))
+            yield match val {
+                I8(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I8(val), span, type_id: builtin(BuiltinType::I8))
+                I16(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I16(val), span, type_id: builtin(BuiltinType::I16))
+                I32(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(val), span, type_id: builtin(BuiltinType::I32))
+                I64(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I64(val), span, type_id: builtin(BuiltinType::I64))
+                U8(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val), span, type_id: builtin(BuiltinType::U8))
+                U16(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U16(val), span, type_id: builtin(BuiltinType::U16))
+                U32(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U32(val), span, type_id: builtin(BuiltinType::U32))
+                U64(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(val), span, type_id: builtin(BuiltinType::U64))
+                USize(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val), span, type_id: builtin(BuiltinType::U64))
+            }
         }
         QuotedString(val, span) => CheckedExpression::QuotedString(val, span)
         Call(call, span) => .typecheck_call(call, scope_id, span)
