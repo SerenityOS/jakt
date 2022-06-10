@@ -4594,9 +4594,13 @@ pub fn typecheck_expression(
             let checked_namespace = scopes
                 .iter()
                 .zip(ns.iter())
-                .map(|(scope, ns)| CheckedNamespace {
-                    name: Some(ns.clone()),
-                    scope: scope.unwrap(),
+                .scan(scope_id, |last_scope, (scope, ns)| {
+                    let scope = scope.unwrap_or(*last_scope);
+                    *last_scope = scope;
+                    Some(CheckedNamespace {
+                        name: Some(ns.clone()),
+                        scope,
+                    })
                 })
                 .collect();
 
