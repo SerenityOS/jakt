@@ -683,6 +683,15 @@ struct Parser {
                                 continue
                             }
 
+                            if .current() is Identifier and .peek(1) is RParen {
+                                var_decls.push(ParsedVarDecl(
+                                    name: ""
+                                    parsed_type: .parse_typename()
+                                    is_mutable: false
+                                    span: .current().span()
+                                ))
+                            }
+
                             match .current() {
                                 RParen => {
                                     .index++
