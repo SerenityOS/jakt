@@ -1886,7 +1886,29 @@ pub fn parse_function(
                         block.stmts.push(ParsedStatement::Return(expr, name_span));
                         (block, None)
                     }
-                    None => parse_block(tokens, index),
+                    None => {
+                        skip_newlines(tokens, index);
+                        match tokens[*index].contents {
+                            TokenContents::LCurly => parse_block(tokens, index),
+                            _ => {
+                                let error_string = if throws {
+                                    "Expected ‘->’, ‘=>’ or ‘{’"
+                                } else {
+                                    "Expected ‘throws’, ‘->’, ‘=>’ or ‘{’"
+                                };
+                                let err = Some(JaktError::ParserError(
+                                    error_string.to_string(),
+                                    tokens[*index].span,
+                                ));
+
+                                // Skip over the bogus token and hope to find a block.
+                                *index += 1;
+                                let (block, _) = parse_block(tokens, index);
+
+                                (block, err)
+                            }
+                        }
+                    }
                 };
                 error = error.or(err);
 

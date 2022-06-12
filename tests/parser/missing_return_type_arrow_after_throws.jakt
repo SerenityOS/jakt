@@ -1,0 +1,9 @@
+/// Expect:
+/// - error: "Expected ‘->’, ‘=>’ or ‘{’"
+function foo() throws i64 {
+    return 5
+}
+
+function main() {
+    let x = foo()
+}
