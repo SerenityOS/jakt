@@ -10,6 +10,7 @@ import utility { Span }
 function is_ascii_alpha(anon c: u8) -> bool => (c >= b'a' and c <= b'z') or (c >= b'A' and c <= b'Z')
 function is_ascii_digit(anon c: u8) -> bool => (c >= b'0' and c <= b'9')
 function is_ascii_hexdigit(anon c: u8) -> bool => (c >= b'0' and c <= b'9') or (c >= b'a' and c <= b'f') or (c >= b'A' and c <= b'F')
+function is_ascii_octdigit(anon c: u8) -> bool => (c >= b'0' and c <= b'8')
 function is_ascii_alphanumeric(anon c: u8) -> bool => is_ascii_alpha(c) or is_ascii_digit(c)
 
 enum Token {
@@ -472,6 +473,16 @@ struct Lexer {
                     let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::I64
 
                     return make_number_token(number: total, suffix, span: Span(start, end))
+                }
+                // Octal Number
+                b'o' => {
+                    .index += 2
+                    while(is_ascii_octdigit(.peek())) {
+                        let value = .input[.index]
+                        ++.index
+                        let digit: i64 = as_saturated(value - b'0')
+                        total = total * 8 + digit
+                    }
                 }
                 else => {}
             }
