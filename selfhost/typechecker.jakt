@@ -152,7 +152,7 @@ struct CheckedFunction {
     return_type_id: TypeId
     params: [CheckedParameter]
     block: CheckedBlock
-    throws_: bool
+    can_throw: bool
     linkage: FunctionLinkage
 
     // FIXME: This should return false if the first parameter is "this" or "mut this"

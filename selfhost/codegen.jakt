@@ -527,7 +527,7 @@ struct CodeGenerator {
             if function_.is_static() and not containing_struct.has_value() {
                 output += "static "
             }
-            output += match function_.throws_ {
+            output += match function_.can_throw {
                 true => format("ErrorOr<{}>", .codegen_type(function_.return_type_id))
                 else => .codegen_type(function_.return_type_id)
             }
@@ -585,7 +585,7 @@ struct CodeGenerator {
         if is_main {
             output += "using _JaktCurrentFunctionReturnType = ErrorOr<int>;"
         } else {
-            if function_.throws_ {
+            if function_.can_throw {
                 output += format("using _JaktCurrentFunctionReturnType = ErrorOr<{}>;", .codegen_type(function_.return_type_id))
             } else {
                 output += format("using _JaktCurrentFunctionReturnType = {};", .codegen_type(function_.return_type_id))
@@ -600,7 +600,7 @@ struct CodeGenerator {
 
         if is_main {
             output += "return 0;"
-        } else if function_.throws_ and function_.return_type_id.id == BuiltinType::Void as! usize {
+        } else if function_.can_throw and function_.return_type_id.id == BuiltinType::Void as! usize {
             output += "return {};"
         }
 
