@@ -873,7 +873,7 @@ struct Parser {
                         .error("Expected function or parameter after visibility modifier", token.span())
                     }
                     .index++
-                    break
+                    return (fields, methods)
                 }
                 Comma | Eol => {
                     // Treat comma as whitespace? Might require them in the future
@@ -939,6 +939,7 @@ struct Parser {
                 }
             }
         }
+        .error("Incomplete class body, expected '}'", .current().span())
         return (fields, methods)
     }
 
@@ -1058,12 +1059,7 @@ struct Parser {
             return parsed_class
         }
 
-	let fields_methods = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Private)
-
-	if .eof() {
-	    .error("Incomplete struct definition, expected `}`", .current().span())
-	    return parsed_class
-	}
+        let fields_methods = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Private)
 
         parsed_class.methods = fields_methods.1
         parsed_class.record_type = RecordType::Class(fields: fields_methods.0, super_class)
