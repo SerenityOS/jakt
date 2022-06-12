@@ -34,14 +34,14 @@ struct ParsedNamespace {
     imports: [ParsedImport]
 }
 struct ValueEnumVariant {
-  name: String
-  span: Span
-  value: ParsedExpression?
+    name: String
+    span: Span
+    value: ParsedExpression?
 }
 struct SumEnumVariant {
-  name: String
-  span: Span
-  params: [ParsedVarDecl]?
+    name: String
+    span: Span
+    params: [ParsedVarDecl]?
 }
 enum RecordType {
     Struct(fields: [ParsedField])
