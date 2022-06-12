@@ -1728,6 +1728,10 @@ struct Parser {
             .index++
             yield ParsedExpression::Boolean(val: false, span)
         }
+        This(span) => {
+            .index++
+            yield ParsedExpression::Var(name: "this", span)
+        }
         Not(span) => {
             let start = .current().span()
             .index++
