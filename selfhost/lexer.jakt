@@ -634,7 +634,13 @@ struct Lexer {
         let start = .index++
         return match .peek() {
             b'=' => Token::LessThanOrEqual(Span(start, end: ++.index))
-            b'<' => Token::LeftShift(Span(start, end: ++.index))
+            b'>' => {
+                .index++
+                yield match .peek() {
+                    b'=' => Token::LeftShiftEqual(Span(start, end: ++.index))
+                    else => Token::LeftShift(Span(start: .index - 1, end: .index))
+                }
+            }
             else => Token::LessThan(Span(start: .index - 1, end: .index))
         }
     }
@@ -643,7 +649,13 @@ struct Lexer {
         let start = .index++
         return match .peek() {
             b'=' => Token::GreaterThanOrEqual(Span(start, end: ++.index))
-            b'>' => Token::RightShift(Span(start, end: ++.index))
+            b'>' => {
+                .index++
+                yield match .peek() {
+                    b'=' => Token::RightShiftEqual(Span(start, end: ++.index))
+                    else => Token::RightShift(Span(start: .index - 1, end: .index))
+                }
+            }
             else => Token::GreaterThan(Span(start: .index - 1, end: .index))
         }
     }
