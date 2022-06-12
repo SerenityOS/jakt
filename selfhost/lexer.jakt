@@ -484,6 +484,16 @@ struct Lexer {
                         total = total * 8 + digit
                     }
                 }
+                // Binary Number
+                b'b' => {
+                    .index += 2
+                    while(.peek() == b'0' or .peek() == b'1') {
+                        let value = .input[.index]
+                        ++.index
+                        let digit: i64 = as_saturated(value - b'0')
+                        total = total * 2 + digit
+                    }
+                }
                 else => {}
             }
         }
