@@ -1267,60 +1267,11 @@ struct Parser {
     }
 
     function parse_typename(mut this) throws -> ParsedType {
+        let start = .current().span()
         mut parsed_type = .parse_type_shorthand()
 
-        if not parsed_type is Empty {
-            return parsed_type
-        }
-
-        let start = .current().span()
-
-        parsed_type = match .current() {
-            Raw => {
-                .index++
-                let inner = .parse_typename()
-                let span = merge_spans(start, .current().span())
-                // NOTE: We rewrite `raw T?` from `RawPtr<Optional<T>>` to `Optional<RawPtr<T>>`
-                yield match inner {
-                    Optional(inner) => ParsedType::Optional(inner: ParsedType::RawPtr(inner, span), span)
-                    else => ParsedType::RawPtr(inner, span)
-                }
-            }
-            Weak => {
-                .index++
-                let inner = .parse_typename()
-                let span = merge_spans(start, .current().span())
-                // NOTE: We rewrite `weak T?` from `WeakPtr<Optional<T>>` to `WeakPtr<T>`
-                yield match inner {
-                    Optional(inner) => ParsedType::WeakPtr(inner, span)
-                    else => {
-                        .error("missing `?` after weak pointer type name", span)
-                        yield ParsedType::WeakPtr(inner, span)
-                    }
-                }
-            }
-            Identifier(name) => {
-                let span = .current().span()
-                .index++
-                mut parsed_type =  ParsedType::Name(name, span)
-                if .current() is LessThan {
-                    mut parsed_generics = .parse_generic_parameters()
-                    // FIXME: clean this up when ParsedType::GenericType can have [[String:Span]] generic parameters
-                    mut generic_parameters: [(String, Span)] = []
-                    for dict in parsed_generics.iterator() {
-                        for generic in dict.iterator() { 
-                            generic_parameters.push(generic)
-                        }
-                    }
-
-                    parsed_type = ParsedType::GenericType(name, generic_parameters, span)
-                }
-                yield parsed_type
-            }
-            else => {
-                .error("Expected type name", .current().span())
-                yield ParsedType::Empty
-            }
+        if parsed_type is Empty {
+            parsed_type = .parse_type_longhand()
         }
 
         if .current() is QuestionMark {
@@ -1330,6 +1281,55 @@ struct Parser {
         }
 
         return parsed_type
+    }
+
+    function parse_type_longhand(mut this) throws -> ParsedType => match .current() {
+        Raw => {
+            let start = .current().span()
+            .index++
+            let inner = .parse_typename()
+            let span = merge_spans(start, .current().span())
+            // NOTE: We rewrite `raw T?` from `RawPtr<Optional<T>>` to `Optional<RawPtr<T>>`
+            yield match inner {
+                Optional(inner) => ParsedType::Optional(inner: ParsedType::RawPtr(inner, span), span)
+                else => ParsedType::RawPtr(inner, span)
+            }
+        }
+        Weak => {
+            let start = .current().span()
+            .index++
+            let inner = .parse_typename()
+            let span = merge_spans(start, .current().span())
+            // NOTE: We rewrite `weak T?` from `WeakPtr<Optional<T>>` to `WeakPtr<T>`
+            yield match inner {
+                Optional(inner) => ParsedType::WeakPtr(inner, span)
+                else => {
+                    .error("missing `?` after weak pointer type name", span)
+                    yield ParsedType::WeakPtr(inner, span)
+                }
+            }
+        }
+        Identifier(name) => {
+            let span = .current().span()
+            .index++
+            mut parsed_type =  ParsedType::Name(name, span)
+            if .current() is LessThan {
+                mut parsed_generics = .parse_generic_parameters()
+                // FIXME: clean this up when ParsedType::GenericType can have [[String:Span]] generic parameters
+                mut generic_parameters: [(String, Span)] = []
+                for dict in parsed_generics.iterator() {
+                    for generic in dict.iterator() {
+                        generic_parameters.push(generic)
+                    }
+                }
+                parsed_type = ParsedType::GenericType(name, generic_parameters, span)
+            }
+            yield parsed_type
+        }
+        else => {
+            .error("Expected type name", .current().span())
+            yield ParsedType::Empty
+        }
     }
 
     function parse_variable_declaration(mut this, is_mutable: bool) throws -> ParsedVarDecl {
