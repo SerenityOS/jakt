@@ -67,7 +67,7 @@ struct ParsedFunction {
     block: ParsedBlock
     return_type: ParsedType
     return_type_span: Span
-    throws: bool
+    can_throw: bool
 }
 
 struct ParsedParameter {
@@ -1080,7 +1080,7 @@ struct Parser {
             block: ParsedBlock(stmts: []),
             return_type: ParsedType::Empty,
             return_type_span: Span(start: 0, end: 0)
-            throws: false,
+            can_throw: false,
         )
 
         .index++
@@ -1207,9 +1207,9 @@ struct Parser {
 
         // NOTE: main() always throws
         if function_name == "main" {
-            parsed_function.throws = true
+            parsed_function.can_throw = true
         } else if .current() is Throws {
-            parsed_function.throws = true
+            parsed_function.can_throw = true
             .index++
         }
 
