@@ -1739,6 +1739,13 @@ struct Parser {
             let span = merge_spans(start, expr.span())
             yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::LogicalNot, span)
         }
+        Tilde(span) => {
+            let start = .current().span()
+            .index++
+            let expr = .parse_operand()
+            let span = merge_spans(start, expr.span())
+            yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::BitwiseNot, span)
+        }
         Identifier(name, span) => {
             if .peek(1) is LParen {
                 if name == "Some" {
