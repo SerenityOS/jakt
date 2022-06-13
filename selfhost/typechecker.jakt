@@ -660,6 +660,21 @@ struct Typechecker {
         scope.functions.set(key: name, value: function_id)
         return true
     }
+    
+    function find_function_in_scope(this, parent_scope_id: ScopeId, function_name: String) -> FunctionId? {
+        mut scope_id = Some(parent_scope_id)
+        while scope_id.has_value() {
+            let scope = .get_scope(id: scope_id!)
+            for s in scope.functions.iterator() {
+                if s.0 == function_name {
+                    return Some(s.1)
+                }
+            }
+            scope_id = scope.parent
+        }
+
+        return None
+    }
 
     function typecheck_module(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         .typecheck_namespace_predecl(parsed_namespace, scope_id)
@@ -674,7 +689,7 @@ struct Typechecker {
 
     function typecheck_namespace_declarations(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         for fun in parsed_namespace.functions.iterator() {
-            //.typecheck_function(fun, parent_scope_id: scope_id)
+            .typecheck_function(parsed_function: fun, parent_scope_id: scope_id)
         }
     }
 
@@ -710,6 +725,45 @@ struct Typechecker {
         // TODO: Check return type
 
         .add_function_to_scope(parent_scope_id, name: parsed_function.name, function_id, span: parsed_function.name_span)
+    }
+
+    function typecheck_function(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
+        if not parsed_function.generic_parameters.is_empty() and not parsed_function.must_instantiate {
+            // FIXME: Just `return` here once we support that, instead of having an `else`.
+        } else {
+            // FIXME: Optional.expect("...") would be nicer here.
+            let function_id = .find_function_in_scope(parent_scope_id, function_name: parsed_function.name)
+            if not function_id.has_value() {
+                panic("Internal error: missing previously defined function")
+            }
+            if parsed_function.name == "main" {
+                todo("typecheck_jakt_main")
+            }
+            mut checked_function = .get_function(function_id!)
+            let function_scope_id = checked_function.function_scope_id
+            let function_linkage = checked_function.linkage
+
+            mut param_vars: [CheckedVariable] = []
+            for param in checked_function.params.iterator() {
+                param_vars.push(param.variable)
+            }
+
+            for variable in param_vars.iterator() {
+                todo("add_var_to_scope")
+            }
+
+            // TODO: Resolve concreete types
+
+            // TODO: Typecheck function block
+
+            // TODO: Typecheck return type a second time to resolve generics
+
+            // TODO: Infer return type if necessary
+
+            // TODO: Report if control reaches end of non-void function
+
+            // TODO: Assign checked block and return type to checked_function
+        }
     }
 
     function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId) throws -> TypeId { 

@@ -69,6 +69,7 @@ struct ParsedFunction {
     return_type_span: Span
     can_throw: bool
     linkage: FunctionLinkage
+    must_instantiate: bool
 }
 
 struct ParsedParameter {
@@ -1084,6 +1085,7 @@ struct Parser {
             return_type_span: Span(start: 0, end: 0),
             can_throw: false,
             linkage,
+            must_instantiate: false,
         )
 
         .index++
@@ -1258,10 +1260,15 @@ struct Parser {
     }
 
     function parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility) throws -> ParsedMethod {
-        let parsed_function = .parse_function(linkage)
+        mut parsed_function = .parse_function(linkage)
 
-        // TODO: The bootstrap compiler sets parsed_function.must_instantiate here if the linkage is External.
-        //       Do we still need to do that?
+        // FIXME: This wants to be `if linkage == FunctionLinkage::External` but that causes codegen errors.
+        match linkage {
+            External => {
+                parsed_function.must_instantiate = true
+            }
+            else => {}
+        }
 
         return ParsedMethod(
             parsed_function,
