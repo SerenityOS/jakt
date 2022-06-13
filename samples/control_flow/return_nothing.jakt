@@ -1,0 +1,15 @@
+/// Expect:
+/// - output: "PASS\n"
+
+function foo() {
+    if true {
+        println("PASS")
+        return
+    }
+    println("FAIL")
+}
+
+function main() {
+    foo()
+    
+}

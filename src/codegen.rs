@@ -2306,12 +2306,17 @@ fn codegen_statement(
                 context.control_flow_state = last_control_flow;
             }
         }
-        CheckedStatement::Return(expr) => {
-            let expr = codegen_expr(indent, expr, project, context);
-            output.push_str("return (");
-            output.push_str(&expr);
-            output.push_str(");\n")
-        }
+        CheckedStatement::Return(expr) => match expr {
+            Some(expr) => {
+                let expr = codegen_expr(indent, expr, project, context);
+                output.push_str("return (");
+                output.push_str(&expr);
+                output.push_str(");\n")
+            }
+            None => {
+                output.push_str("return;\n");
+            }
+        },
         CheckedStatement::Yield(expr) => {
             // yield expr -> block_var = expr; goto block_end;
             let expr = codegen_expr(indent, expr, project, context);

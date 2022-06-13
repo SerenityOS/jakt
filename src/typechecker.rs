@@ -1142,7 +1142,7 @@ pub enum CheckedStatement {
     Block(CheckedBlock),
     Loop(CheckedBlock),
     While(CheckedExpression, CheckedBlock),
-    Return(CheckedExpression),
+    Return(Option<CheckedExpression>),
     Yield(CheckedExpression),
     Break,
     Continue,
@@ -2310,7 +2310,7 @@ fn typecheck_enum_predecl(
             );
 
             let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
-                if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
+                if let Some(CheckedStatement::Return(Some(ret))) = block.stmts.last() {
                     ret.type_id(method_scope_id, project)
                 } else {
                     VOID_TYPE_ID
@@ -2938,7 +2938,7 @@ fn typecheck_struct_predecl(
             );
 
             let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
-                if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
+                if let Some(CheckedStatement::Return(Some(ret))) = block.stmts.last() {
                     ret.type_id(method_scope_id, project)
                 } else {
                     VOID_TYPE_ID
@@ -3227,7 +3227,7 @@ fn typecheck_function_predecl(
         );
 
         let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
-            if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
+            if let Some(CheckedStatement::Return(Some(ret))) = block.stmts.last() {
                 ret.type_id(function_scope_id, project)
             } else {
                 VOID_TYPE_ID
@@ -3373,7 +3373,7 @@ fn typecheck_function(
     // If the return type is unknown, and the function starts with a return statement,
     // we infer the return type from its expression.
     let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
-        if let Some(CheckedStatement::Return(ret)) = block.stmts.last() {
+        if let Some(CheckedStatement::Return(Some(ret))) = block.stmts.last() {
             ret.type_id(function_scope_id, project)
         } else {
             VOID_TYPE_ID
@@ -3506,7 +3506,7 @@ fn typecheck_method(
     // If the return type is unknown, and the function starts with a return statement,
     // we infer the return type from its expression.
     let return_type_id = if function_return_type_id == UNKNOWN_TYPE_ID {
-        if let Some(CheckedStatement::Return(ret)) = block.stmts.first() {
+        if let Some(CheckedStatement::Return(Some(ret))) = block.stmts.first() {
             ret.type_id(function_scope_id, project)
         } else {
             VOID_TYPE_ID
@@ -4088,16 +4088,20 @@ pub fn typecheck_statement(
             (CheckedStatement::While(checked_cond, checked_block), error)
         }
         ParsedStatement::Return(expr, span) => {
-            let (output, err) = typecheck_expression(
-                expr,
-                scope_id,
-                project,
-                safety_mode,
-                project
-                    .current_function_index
-                    .map(|i| project.get_function(i).return_type_id),
-            );
-            error = error.or(err);
+            let mut checked_expr = None;
+            if let Some(expr) = expr {
+                let (output, err) = typecheck_expression(
+                    expr,
+                    scope_id,
+                    project,
+                    safety_mode,
+                    project
+                        .current_function_index
+                        .map(|i| project.get_function(i).return_type_id),
+                );
+                checked_expr = Some(output);
+                error = error.or(err);
+            }
 
             if project.inside_defer {
                 error = error.or(Some(JaktError::TypecheckError(
@@ -4106,7 +4110,7 @@ pub fn typecheck_statement(
                 )));
             }
 
-            (CheckedStatement::Return(output), error)
+            (CheckedStatement::Return(checked_expr), error)
         }
         ParsedStatement::Yield(expr, _) => {
             let (output, err) = typecheck_expression(expr, scope_id, project, safety_mode, None);

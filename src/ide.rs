@@ -327,7 +327,7 @@ pub fn find_span_in_statement(
         }
         CheckedStatement::InlineCpp(_) => None,
         CheckedStatement::Loop(block) => find_span_in_block(project, block, span),
-        CheckedStatement::Return(expr) | CheckedStatement::Throw(expr) => {
+        CheckedStatement::Return(Some(expr)) | CheckedStatement::Throw(expr) => {
             find_span_in_expression(project, expr, span)
         }
         CheckedStatement::Try(stmt, _, block) => {
@@ -362,6 +362,7 @@ pub fn find_span_in_statement(
         CheckedStatement::Yield(expr) => find_span_in_expression(project, expr, span),
         CheckedStatement::Break => None,
         CheckedStatement::Continue => None,
+        CheckedStatement::Return(..) => None,
         CheckedStatement::Garbage => None,
     }
 }
