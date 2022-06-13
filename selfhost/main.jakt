@@ -6,6 +6,7 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
+import codegen { CodeGenerator }
 import error { JaktError, print_error }
 import lexer { Lexer, Token }
 import parser { BinaryOperator, DefinitionLinkage, DefinitionType, ParsedCall, ParsedExpression, ParsedNamespace, Parser }
@@ -92,4 +93,7 @@ function main(args: [String]) {
     if not errors.is_empty() {
         return 1
     }
+
+    let output = CodeGenerator::generate(checked_program)
+    println("{}", output)
 }
