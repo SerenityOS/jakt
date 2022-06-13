@@ -15,14 +15,14 @@ enum AllowedControlExits {
     /// `continue`/`break` allowed: `return` is also allowed in this context
     AtLoop
 
-    function is_return_allowed(this) => not this is Nothing
-    function are_loop_exits_allowed(this) => this is AtLoop
-
     function allow_return(this) => match this {
         Nothing | JustReturn => AllowedControlExits::JustReturn
         AtLoop => AllowedControlExits::AtLoop
     }
 }
+
+function are_loop_exits_allowed(anon allowed_control_exits: AllowedControlExits) -> bool => allowed_control_exits is AtLoop
+function is_return_allowed(anon allowed_control_exits: AllowedControlExits) -> bool => not allowed_control_exits is Nothing
 
 struct ControlFlowState {
     allowed_exits: AllowedControlExits
@@ -65,7 +65,7 @@ struct ControlFlowState {
     }
     function is_match_nested(this) => .match_nest_level != 0
     function choose_control_flow_macro(this) -> String {
-        if .allowed_exits.are_loop_exits_allowed() {
+        if are_loop_exits_allowed(.allowed_exits) {
             if .is_match_nested() {
                 return "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH"
             }
@@ -324,7 +324,7 @@ struct CodeGenerator {
             else => {
                 if call.function_id.has_value() {
                     let type_module = .program.get_module(call.function_id!.module)
-                    if type_module.is_root or type_module.id == ModuleId(id: 0) or .program.get_function(call.function_id!).linkage == FunctionLinkage::External or (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name)
+                    if type_module.is_root or type_module.id.id == 0 or .program.get_function(call.function_id!).linkage is External or (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name)
                     {
                         output += type_module.name
                         output += "::"
@@ -403,9 +403,9 @@ struct CodeGenerator {
                 output += "for (;;) {"
                 let last_control_flow = .control_flow_state
                 .control_flow_state = last_control_flow.enter_loop()
-                let block = .codegen_block(block)
+                let block_str = .codegen_block(block)
                 .control_flow_state = last_control_flow
-                output += block
+                output += block_str
                 output += "}"
             }
             While(guard, block) => {
@@ -600,8 +600,11 @@ struct CodeGenerator {
 
         if is_main {
             output += "return 0;"
-        } else if function_.can_throw and function_.return_type_id.id == BuiltinType::Void as! usize {
-            output += "return {};"
+        } else {
+            // FIXME: This should check if the id is BuiltinType::Void, but the baseline compiler chokes on that.
+            if function_.can_throw and function_.return_type_id.id == 0 {
+                output += "return {};"
+            }
         }
 
         output += "}"
