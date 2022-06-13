@@ -1,0 +1,6 @@
+/// Expect:
+/// - error: "Main function must return c_int\n"
+
+function main(x: [String]) -> i64 {
+    return 0
+}

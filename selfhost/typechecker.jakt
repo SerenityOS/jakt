@@ -733,6 +733,46 @@ struct Typechecker {
         .add_function_to_scope(parent_scope_id, name: parsed_function.name, function_id, span: parsed_function.name_span)
     }
 
+    function typecheck_jakt_main(mut this, parsed_function: ParsedFunction) throws {
+        let param_type_error = "Main function must take a single array of strings as its parameter"
+        if parsed_function.params.size() > 1 {
+            .error(param_type_error, parsed_function.name_span)
+        }
+
+        if not parsed_function.params.is_empty() {
+            match parsed_function.params[0].variable.parsed_type {
+                ParsedType::JaktArray(inner, span) => {
+                    match inner {
+                        ParsedType::Name(name, span) => {
+                            if (name != "String") {
+                                .error(param_type_error, span)
+                            }
+                        }
+                        else => {
+                            .error(param_type_error, span)
+                        }
+                    }
+                }
+                else => {
+                    .error(param_type_error, parsed_function.name_span)
+                }
+            }
+        }
+
+        let return_type_error = "Main function must return c_int"
+        match parsed_function.return_type {
+            ParsedType::Empty => {}
+            ParsedType::Name(name, span) => {
+                if name != "c_int" {
+                    .error(return_type_error, span)
+                }
+            }
+            else => {
+                .error(return_type_error, parsed_function.return_type_span)
+            }
+        }
+    }
+
     function typecheck_function(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
         if not parsed_function.generic_parameters.is_empty() and not parsed_function.must_instantiate {
             // FIXME: Just `return` here once we support that, instead of having an `else`.
@@ -743,7 +783,7 @@ struct Typechecker {
                 panic("Internal error: missing previously defined function")
             }
             if parsed_function.name == "main" {
-                //todo("typecheck_jakt_main")
+               .typecheck_jakt_main(parsed_function)
             }
             mut checked_function = .get_function(function_id!)
             let function_scope_id = checked_function.function_scope_id
