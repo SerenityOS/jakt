@@ -16,10 +16,11 @@ In the editors/vscode directory:
 > npm install
 ```
 
-To create the package
+To create & install the package
 ```
 > npm install vsce -g
 > vsce package
+> code --install-extension ./jakt-0.0.2.vsix`
 ```
 
 Then install vscode by switching to the Extensions section on the left, then the `...` at the top middle and choose "Install from VSIX..." and choose the package you just created.
