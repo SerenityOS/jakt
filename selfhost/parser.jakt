@@ -531,13 +531,13 @@ struct Parser {
             .error("Expected ‘{’", .current().span())
         }
 
-        while not .eol() {
+        while not .eof() {
             match .current() {
                 Identifier(name, span) => {
                     parsed_import.import_list.push(ImportName(name, span))
                     .index++
                 }
-                Comma => {
+                Comma | Eol => {
                     .index++
                 }
                 RCurly => {
