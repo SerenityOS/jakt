@@ -94,7 +94,7 @@ boxed enum ParsedStatement {
     For(iterator_name: String, name_span: Span, range: ParsedExpression, block: ParsedBlock)
     Break
     Continue
-    Return(expr: ParsedExpression, span: Span)
+    Return(expr: ParsedExpression?, span: Span)
     Throw(ParsedExpression)
     Yield(ParsedExpression)
     InlineCpp(block: ParsedBlock, span: Span)
@@ -1527,8 +1527,11 @@ struct Parser {
             }
             Return => {
                 .index++
-                let expr = .parse_expression(allow_assignments: false)
-                yield ParsedStatement::Return(expr, span: merge_spans(start, .previous().span()))
+                let none_expr: ParsedExpression? = None
+                yield match .current() {
+                    Eol | Eof | RCurly => ParsedStatement::Return(expr: none_expr, span: .current().span())
+                    else => ParsedStatement::Return(expr: .parse_expression(allow_assignments: false), span: merge_spans(start, .previous().span()))
+                }
             }
             Let | Mut => {
                 let is_mutable = .current() is Mut

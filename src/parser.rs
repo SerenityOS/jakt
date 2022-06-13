@@ -267,7 +267,7 @@ pub enum ParsedStatement {
     For((String, Span), ParsedExpression, ParsedBlock),
     Break,
     Continue,
-    Return(ParsedExpression, Span),
+    Return(Option<ParsedExpression>, Span),
     Yield(ParsedExpression, Span),
     Throw(ParsedExpression),
     Try(Box<ParsedStatement>, String, Span, ParsedBlock),
@@ -1883,7 +1883,9 @@ pub fn parse_function(
                 let (block, err) = match fat_arrow_expr {
                     Some(expr) => {
                         let mut block = ParsedBlock::new();
-                        block.stmts.push(ParsedStatement::Return(expr, name_span));
+                        block
+                            .stmts
+                            .push(ParsedStatement::Return(Some(expr), name_span));
                         (block, None)
                     }
                     None => {
@@ -2237,21 +2239,36 @@ pub fn parse_statement(
 
             *index += 1;
 
-            let (expr, err) =
-                parse_expression(tokens, index, ExpressionKind::ExpressionWithoutAssignment);
-            error = error.or(err);
+            match tokens.get(*index) {
+                Some(Token {
+                    contents: TokenContents::RCurly,
+                    ..
+                })
+                | Some(Token {
+                    contents: TokenContents::Eol,
+                    ..
+                }) => (ParsedStatement::Return(None, tokens[*index].span), None),
+                _ => {
+                    let (expr, err) = parse_expression(
+                        tokens,
+                        index,
+                        ExpressionKind::ExpressionWithoutAssignment,
+                    );
+                    error = error.or(err);
 
-            (
-                ParsedStatement::Return(
-                    expr,
-                    Span {
-                        file_id: start.file_id,
-                        start: start.start,
-                        end: tokens[(*index - 1)].span.end,
-                    },
-                ),
-                error,
-            )
+                    (
+                        ParsedStatement::Return(
+                            Some(expr),
+                            Span {
+                                file_id: start.file_id,
+                                start: start.start,
+                                end: tokens[(*index - 1)].span.end,
+                            },
+                        ),
+                        error,
+                    )
+                }
+            }
         }
         TokenContents::Name(name) if name == "yield" => {
             trace!("parsing yield");
