@@ -357,13 +357,18 @@ struct Parser {
     index: usize
     tokens: [Token]
     errors: [JaktError]
+    ignore_errors: bool
 
     function error(mut this, anon message: String, anon span: Span) throws {
-        .errors.push(JaktError::Message(message, span))
+        if not .ignore_errors {
+            .errors.push(JaktError::Message(message, span))
+        }
     }
 
     function error_with_hint(mut this, anon message: String, anon span: Span, anon hint: String, anon hint_span: Span) throws {
-        .errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
+        if not .ignore_errors {
+            .errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
+        }
     }
 
     function eof(this) => .index >= .tokens.size() - 1
@@ -1754,7 +1759,9 @@ struct Parser {
             }
             if .peek(1) is LessThan {
                 // We *try* to see if it's a generic, but the parse errors, we back up and try something else
+                .ignore_errors = true
                 let call = .parse_call()
+                .ignore_errors = false
                 if not call.has_value() {
                     return match name {
                         "None" => ParsedExpression::OptionalNone(span)
@@ -2307,7 +2314,9 @@ struct Parser {
                 if .current() is LParen {
                     .index++
                 } else {
+                    .index = index_reset
                     .error("Expected '('", .current().span())
+                    return None
                 }
 
                 while  not .eof() {

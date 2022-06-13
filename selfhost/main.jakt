@@ -74,7 +74,7 @@ function main(args: [String]) {
         }
     }
 
-    mut parser = Parser(index: 0, tokens, errors)
+    mut parser = Parser(index: 0, tokens, errors, ignore_errors: false)
 
     let parsed_namespace = parser.parse_namespace()
 
