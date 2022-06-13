@@ -1,7 +1,8 @@
 import error { JaktError }
 import parser { BinaryOperator, DefinitionLinkage, FunctionLinkage,
-                DefinitionType, ParsedCall, ParsedExpression, 
-                ParsedFunction, ParsedType, ParsedNamespace, RecordType }
+                DefinitionType, ParsedBlock, ParsedCall, ParsedExpression,
+                ParsedFunction, ParsedNamespace, ParsedType, ParsedStatement,
+                RecordType }
 import utility { panic, todo, Span }
 
 struct ModuleId {
@@ -155,20 +156,20 @@ struct CheckedNamespace {
     scope: ScopeId
 }
 
-struct CheckedFunction {
-    name: String
-    return_type_id: TypeId
-    params: [CheckedParameter]
-    block: CheckedBlock
-    can_throw: bool
-    linkage: FunctionLinkage
-    function_scope_id: ScopeId
+class CheckedFunction {
+    public name: String
+    public return_type_id: TypeId
+    public params: [CheckedParameter]
+    public block: CheckedBlock
+    public can_throw: bool
+    public linkage: FunctionLinkage
+    public function_scope_id: ScopeId
 
     // FIXME: This should return false if the first parameter is "this" or "mut this"
-    function is_static(this) => true
+    public function is_static(this) => true
 
     // FIXME: This should return true if the first parameter is "mut this"
-    function is_mutating(this) => true
+    public function is_mutating(this) => true
 }
 
 struct CheckedParameter {
@@ -190,6 +191,7 @@ struct CheckedVarDecl {
 
 struct CheckedBlock {
     statements: [CheckedStatement]
+    scope_id: ScopeId
     definitely_returns: bool
 }
 
@@ -707,7 +709,11 @@ struct Typechecker {
             name: parsed_function.name,
             return_type_id: UNKNOWN_TYPE_ID,
             params: [],
-            block: CheckedBlock(statements: [], definitely_returns: false),
+            block: CheckedBlock(
+                statements: []
+                scope_id: block_scope_id
+                definitely_returns: false
+            )
             can_throw: parsed_function.can_throw,
             linkage: parsed_function.linkage,
             function_scope_id,
@@ -755,6 +761,7 @@ struct Typechecker {
             // TODO: Resolve concreete types
 
             // TODO: Typecheck function block
+            checked_function.block = .typecheck_block(parsed_function.block, parent_scope_id: function_scope_id)
 
             // TODO: Typecheck return type a second time to resolve generics
 
@@ -764,6 +771,22 @@ struct Typechecker {
 
             // TODO: Assign checked block and return type to checked_function
         }
+    }
+
+    function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId) throws -> CheckedBlock {
+        let parent_throws = .get_scope(parent_scope_id).can_throw
+        let block_scope_id = .create_scope(parent_scope_id, can_throw: parent_throws)
+        mut checked_block = CheckedBlock(
+            statements: []
+            scope_id: block_scope_id
+            definitely_returns: false
+        )
+
+        for parsed_statement in parsed_block.stmts.iterator() {
+            checked_block.statements.push(.typecheck_statement(parsed_statement, scope_id: block_scope_id))
+        }
+
+        return checked_block
     }
 
     function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId) throws -> TypeId { 
@@ -1085,6 +1108,14 @@ struct Typechecker {
         }
 
         return type_id
+    }
+
+    function typecheck_statement(mut this, anon statement: ParsedStatement, scope_id: ScopeId) throws -> CheckedStatement => match statement {
+        Expression(expr) => CheckedStatement::Expression(expr: .typecheck_expression(expr, scope_id))
+        else => {
+            todo("typecheck_statement else")
+            yield CheckedStatement::Garbage
+        }
     }
 
     function typecheck_expression(mut this, anon expr: ParsedExpression, scope_id: ScopeId) throws -> CheckedExpression => match expr {
