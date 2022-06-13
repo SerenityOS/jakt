@@ -743,7 +743,7 @@ struct Typechecker {
                 panic("Internal error: missing previously defined function")
             }
             if parsed_function.name == "main" {
-                todo("typecheck_jakt_main")
+                //todo("typecheck_jakt_main")
             }
             mut checked_function = .get_function(function_id!)
             let function_scope_id = checked_function.function_scope_id

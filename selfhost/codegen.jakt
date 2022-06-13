@@ -81,6 +81,33 @@ struct CodeGenerator {
     control_flow_state: ControlFlowState
     entered_yieldable_blocks: [(String, String)] // label, variable name
 
+    function generate(anon program: CheckedProgram) throws -> String {
+        mut generator = CodeGenerator(
+            program
+            control_flow_state: ControlFlowState(
+                allowed_exits: AllowedControlExits::Nothing
+                passes_through_match: false
+                match_nest_level: 0
+            )
+            entered_yieldable_blocks: []
+        )
+
+        mut output = ""
+
+        output += "#include <lib.h>\n"
+        output += "namespace Jakt {\n"
+
+        for module in generator.program.modules.iterator() {
+            for function_ in module.functions.iterator() {
+                output += generator.codegen_function(function_)
+            }
+        }
+
+        output += "}\n"
+
+        return output
+    }
+
     function codegen_expression(mut this, anon expression: CheckedExpression) throws -> String => match expression {
         Range(from, to, type_id) => {
             mut output = ""
@@ -314,12 +341,29 @@ struct CodeGenerator {
 
     function codegen_call(mut this, call: CheckedCall) throws -> String {
         mut output = ""
+
         if call.callee_throws {
             output += "TRY("
         }
         match call.name {
             "print" | "println" | "eprintln" | "format" => {
-                
+                let helper = match call.name {
+                    "print" => "out"
+                    "println" => "outln"
+                    "eprintln" => "warnln"
+                    "format" => "String::formatted"
+                    else => ""
+                }
+                output += helper
+                output += "("
+                for i in 0..call.args.size() {
+                    let expr = call.args[i].1
+                    output += .codegen_expression(expr)
+                    if i != call.args.size() - 1 {
+                        output += ","
+                    }
+                }
+                output += ")"
             }
             else => {
                 if call.function_id.has_value() {
@@ -335,6 +379,11 @@ struct CodeGenerator {
                 output += call.name
             }
         }
+
+        if call.callee_throws {
+            output += ")"
+        }
+
         return output
     }
 
@@ -511,7 +560,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_function(mut this, function_: CheckedFunction) throws -> String {
+    function codegen_function(mut this, anon function_: CheckedFunction) throws -> String {
         let none: TypeId? = None
         return .codegen_function_in_namespace(function_, containing_struct: none)
     }
