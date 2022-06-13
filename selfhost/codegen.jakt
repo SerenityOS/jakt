@@ -388,8 +388,35 @@ struct CodeGenerator {
     }
 
     function codegen_namespace_path(this, call: CheckedCall) throws -> String {
-        // FIXME: Implement
-        return ""
+        mut output = ""
+
+        mut index: usize = 0
+
+        for namespace_ in call.namespace_.iterator() {
+            // hack warning: this is to get around C++'s limitation that a constructor
+            // can't be called like other static methods
+            if index == call.namespace_.size() - 1 and namespace_.name == call.name {
+                break
+            }
+
+            output += namespace_.name
+            if namespace_.generic_parameters.has_value() {
+                output += "<"
+                mut i: usize = 0
+                for param in namespace_.generic_parameters!.iterator() {
+                    output += .codegen_type(param)
+                    if i != namespace_.generic_parameters!.size() - 1 {
+                        output += ","
+                    }
+                    ++i
+                }
+                output += ">"
+            }
+            output += "::"
+
+            ++index
+        }
+        return output
     }
 
     function codegen_block(mut this, block: CheckedBlock) throws -> String {
