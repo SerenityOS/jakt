@@ -96,7 +96,7 @@ struct ParsedBlock {
 
 boxed enum ParsedStatement {
     Expression(ParsedExpression)
-    Defer(ParsedStatement)
+    Defer(statement: ParsedStatement, span: Span)
     UnsafeBlock(ParsedBlock)
     VarDecl(var: ParsedVarDecl, init: ParsedExpression)
     If(condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?)
@@ -1501,7 +1501,8 @@ struct Parser {
             }
             Defer => {
                 .index++
-                yield ParsedStatement::Defer(.parse_statement(inside_block: false))
+                let statement = .parse_statement(inside_block: false)
+                yield ParsedStatement::Defer(statement, span: merge_spans(start, .previous().span()))
             }
             Unsafe => {
                 .index++

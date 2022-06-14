@@ -354,6 +354,7 @@ struct Typechecker {
     program: CheckedProgram
     inferences: [TypeId]
     current_module_id: ModuleId
+    inside_defer: bool
     errors: [JaktError]
 
     function typecheck(parsed_namespace: ParsedNamespace, errors: [JaktError]) throws -> CheckedProgram {
@@ -375,6 +376,7 @@ struct Typechecker {
             program: CheckedProgram(modules: [module]),
             inferences: [],
             current_module_id: root_module_id,
+            inside_defer: false
             errors
         )
 
@@ -1167,10 +1169,27 @@ struct Typechecker {
         Yield(expr) => CheckedStatement::Yield(.typecheck_expression(expr, scope_id, safety_mode))
         Return(expr) => .typecheck_return(expr, scope_id, safety_mode)
         Block(parsed_block) => .typecheck_block_statement(parsed_block, scope_id, safety_mode)
+        Defer(statement, span) => .typecheck_defer(statement, scope_id, safety_mode, span)
         else => {
             todo("typecheck_statement else")
             yield CheckedStatement::Garbage
         }
+    }
+
+    function typecheck_defer(mut this, statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+        let was_inside_defer = .inside_defer
+        .inside_defer = true
+        defer .inside_defer = was_inside_defer
+        let checked_statement = .typecheck_statement(statement, scope_id, safety_mode)
+        match checked_statement {
+            Block(block) => {
+                if block.yielded_type.has_value() {
+                    .error("‘yield’ inside ‘defer’ is meaningless", span)
+                }
+            }
+            else => { }
+        }
+        return CheckedStatement::Defer(checked_statement)
     }
 
     function typecheck_block_statement(mut this, parsed_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
