@@ -238,7 +238,7 @@ boxed enum CheckedStatement {
     Block(CheckedBlock)
     Loop(CheckedBlock)
     While(guard: CheckedExpression, block: CheckedBlock)
-    Return(CheckedExpression)
+    Return(CheckedExpression?)
     Break
     Continue
     Throw(CheckedExpression)
@@ -1158,10 +1158,20 @@ struct Typechecker {
     function typecheck_statement(mut this, anon statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement => match statement {
         Expression(expr) => CheckedStatement::Expression(expr: .typecheck_expression(expr, scope_id, safety_mode))
         UnsafeBlock(parsed_block) => CheckedStatement::Block(.typecheck_block(parsed_block, parent_scope_id: scope_id, safety_mode: SafetyMode::Unsafe))
+        Return(expr) => .typecheck_return(expr, scope_id, safety_mode)
         else => {
             todo("typecheck_statement else")
             yield CheckedStatement::Garbage
         }
+    }
+
+    function typecheck_return(mut this, expr: ParsedExpression?, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
+        if not expr.has_value() {
+            let none_expr: CheckedExpression? = None
+            return CheckedStatement::Return(none_expr)
+        }
+        let checked_expr = .typecheck_expression(expr!, scope_id, safety_mode)
+        return CheckedStatement::Return(checked_expr)
     }
 
     function typecheck_expression(mut this, anon expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression => match expr {

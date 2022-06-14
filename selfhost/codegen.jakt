@@ -445,7 +445,11 @@ struct CodeGenerator {
                 }
             }
             Return(expression) => {
-                return "return (" + .codegen_expression(expression) + ");\n"
+                if expression.has_value() {
+                    return "return (" + .codegen_expression(expression!) + ");\n"
+                } else {
+                    return "return;\n"
+                }
             }
             Loop(block) => {
                 mut output = ""
