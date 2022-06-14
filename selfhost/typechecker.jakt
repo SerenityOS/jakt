@@ -113,33 +113,33 @@ boxed enum Type {
     }
 }
 
-struct Scope {
-    namespace_name: String?
-    vars: [String: VarId]
-    structs: [String: StructId]
-    functions: [String: FunctionId]
-    enums: [String: EnumId]
-    types: [String: TypeId]
-    imports: [String: (ModuleId, Span)]
-    parent: ScopeId?
-    children: [ScopeId]
-    can_throw: bool
+class Scope {
+    public namespace_name: String?
+    public vars: [String: VarId]
+    public structs: [String: StructId]
+    public functions: [String: FunctionId]
+    public enums: [String: EnumId]
+    public types: [String: TypeId]
+    public imports: [String: (ModuleId, Span)]
+    public parent: ScopeId?
+    public children: [ScopeId]
+    public can_throw: bool
 }
 
-struct Module {
-    id: ModuleId
-    name: String
-    functions: [CheckedFunction]
-    structures: [CheckedStruct]
-    enums: [CheckedEnum]
-    scopes: [Scope]
-    types: [Type]
-    variables: [CheckedVarDecl]
-    imports: [ModuleId]
+class Module {
+    public id: ModuleId
+    public name: String
+    public functions: [CheckedFunction]
+    public structures: [CheckedStruct]
+    public enums: [CheckedEnum]
+    public scopes: [Scope]
+    public types: [Type]
+    public variables: [CheckedVariable]
+    public imports: [ModuleId]
 
-    is_root: bool
+    public is_root: bool
 
-    function new_type_variable(mut this) throws -> TypeId {
+    public function new_type_variable(mut this) throws -> TypeId {
         let new_id = .types.size()
 
         .types.push(Type::TypeVariable(format("T{}", new_id)))
@@ -147,12 +147,20 @@ struct Module {
         return TypeId(module: .id, id: new_id)
     }
 
-    function add_function(mut this, checked_function: CheckedFunction) throws -> FunctionId {
+    public function add_function(mut this, checked_function: CheckedFunction) throws -> FunctionId {
         let new_id = .functions.size()
 
         .functions.push(checked_function)
 
         return FunctionId(module: .id, id: new_id)
+    }
+
+    public function add_variable(mut this, anon checked_variable: CheckedVariable) throws -> VarId {
+        let new_id = .variables.size()
+
+        .variables.push(checked_variable)
+
+        return VarId(module: .id, id: new_id)
     }
 }
 
@@ -183,7 +191,9 @@ struct CheckedParameter {
 }
 
 struct CheckedVariable {
-    id: VarId
+    name: String
+    type_id: TypeId
+    is_mutable: bool
     definition_span: Span
 }
 
@@ -244,6 +254,7 @@ boxed enum CheckedStatement {
     Continue
     Throw(CheckedExpression)
     Yield(CheckedExpression)
+    Try(stmt: CheckedStatement, error_name: String, catch_block: CheckedBlock)
     Garbage
 }
 
@@ -334,7 +345,7 @@ class CheckedProgram {
 
     public function get_module(this, anon id: ModuleId) -> Module => .modules[id.id]
     public function get_function(this, anon id: FunctionId) -> CheckedFunction => .modules[id.module.id].functions[id.id]
-    public function get_variable(this, anon id: VarId) -> CheckedVarDecl => .modules[id.module.id].variables[id.id]
+    public function get_variable(this, anon id: VarId) -> CheckedVariable => .modules[id.module.id].variables[id.id]
     public function get_type(this, anon id: TypeId) -> Type => .modules[id.module.id].types[id.id]
     public function get_enum(this, anon id: EnumId) -> CheckedEnum => .modules[id.module.id].enums[id.id]
     public function get_struct(this, anon id: StructId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
@@ -519,8 +530,8 @@ struct Typechecker {
         IndexedStruct(type_id) => type_id
         Call(type_id) => type_id
         MethodCall(type_id) => type_id
-        NamespacedVar(var) => .get_variable(var.id).type_id
-        Var(var) => .get_variable(var.id).type_id
+        NamespacedVar(var) => var.type_id
+        Var(var) => var.type_id
         OptionalNone(type_id) => type_id
         OptionalSome(type_id) => type_id
         ForcedUnwrap(type_id) => type_id
@@ -558,7 +569,7 @@ struct Typechecker {
     }
 
     function expression_is_mutable(this, anon expr: CheckedExpression) -> bool => match expr {
-        Var(var) => .get_variable(var.id).is_mutable
+        Var(var) => var.is_mutable
         IndexedStruct(expr) => .expression_is_mutable(expr)
         IndexedExpression(expr) => .expression_is_mutable(expr)
         IndexedTuple(expr) => .expression_is_mutable(expr)
@@ -669,6 +680,18 @@ struct Typechecker {
             }
         }
         scope.functions.set(key: name, value: function_id)
+        return true
+    }
+
+    function add_var_to_scope(mut this, scope_id: ScopeId, name: String, var_id: VarId, span: Span) throws -> bool {
+        mut scope = .get_scope(scope_id)
+        for existing_var in scope.vars.iterator() {
+            if name == existing_var.0 {
+                // FIXME: Show hint of the original definition, once we store the name span.
+                .error(format("Redefinition of variable ‘{}’", name), span)
+            }
+        }
+        scope.vars.set(key: name, value: var_id)
         return true
     }
     
@@ -1004,7 +1027,7 @@ struct Typechecker {
                 if op is NoneCoalescingAssign {
                     match checked_lhs {
                         Var(var, span) => {
-                            if not .get_variable(id: var.id).is_mutable {
+                            if not var.is_mutable {
                                 .error_with_hint(message: "left-hand side of ??= must be a mutable variable", span, hint: "This variable isn't marked as mutable", hint_span: var.definition_span)
                                 return .new_inference()
                             }
@@ -1171,10 +1194,32 @@ struct Typechecker {
         Block(parsed_block) => .typecheck_block_statement(parsed_block, scope_id, safety_mode)
         Defer(statement, span) => .typecheck_defer(statement, scope_id, safety_mode, span)
         Loop(parsed_block) => .typecheck_loop(parsed_block, scope_id, safety_mode)
+        Try(stmt, error_name, error_span, catch_block) => .typecheck_try(stmt, error_name, error_span, catch_block, scope_id, safety_mode)
         else => {
             todo("typecheck_statement else")
             yield CheckedStatement::Garbage
         }
+    }
+
+    function typecheck_try(mut this, stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
+        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
+        let try_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true)
+        let checked_stmt = .typecheck_statement(stmt, scope_id, safety_mode)
+        let error_struct_id = .find_struct_in_prelude("Error")
+        let error_decl = CheckedVariable(
+            name: error_name
+            type_id: UNKNOWN_TYPE_ID
+            is_mutable: false
+            definition_span: error_span
+        )
+        mut module = .current_module()
+        let error_id = module.add_variable(name: error_decl)
+
+        let catch_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false)
+        .add_var_to_scope(scope_id: catch_scope_id, name: error_name, var_id: error_id, span: error_span)
+        let checked_catch_block = .typecheck_block(catch_block, parent_scope_id: catch_scope_id, safety_mode)
+
+        return CheckedStatement::Try(stmt: checked_stmt, error_name, catch_block: checked_catch_block)
     }
 
     function typecheck_loop(mut this, parsed_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
