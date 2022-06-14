@@ -5,6 +5,11 @@ import parser { BinaryOperator, DefinitionLinkage, FunctionLinkage,
                 RecordType }
 import utility { panic, todo, Span }
 
+enum SafetyMode {
+    Safe
+    Unsafe
+}
+
 struct ModuleId {
     id: usize
 }
@@ -801,7 +806,7 @@ struct Typechecker {
             // TODO: Resolve concreete types
 
             // TODO: Typecheck function block
-            checked_function.block = .typecheck_block(parsed_function.block, parent_scope_id: function_scope_id)
+            checked_function.block = .typecheck_block(parsed_function.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
 
             // TODO: Typecheck return type a second time to resolve generics
 
@@ -813,7 +818,7 @@ struct Typechecker {
         }
     }
 
-    function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId) throws -> CheckedBlock {
+    function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedBlock {
         let parent_throws = .get_scope(parent_scope_id).can_throw
         let block_scope_id = .create_scope(parent_scope_id, can_throw: parent_throws)
         mut checked_block = CheckedBlock(
@@ -823,7 +828,7 @@ struct Typechecker {
         )
 
         for parsed_statement in parsed_block.stmts.iterator() {
-            checked_block.statements.push(.typecheck_statement(parsed_statement, scope_id: block_scope_id))
+            checked_block.statements.push(.typecheck_statement(parsed_statement, scope_id: block_scope_id, safety_mode))
         }
 
         return checked_block
@@ -1150,15 +1155,15 @@ struct Typechecker {
         return type_id
     }
 
-    function typecheck_statement(mut this, anon statement: ParsedStatement, scope_id: ScopeId) throws -> CheckedStatement => match statement {
-        Expression(expr) => CheckedStatement::Expression(expr: .typecheck_expression(expr, scope_id))
+    function typecheck_statement(mut this, anon statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement => match statement {
+        Expression(expr) => CheckedStatement::Expression(expr: .typecheck_expression(expr, scope_id, safety_mode))
         else => {
             todo("typecheck_statement else")
             yield CheckedStatement::Garbage
         }
     }
 
-    function typecheck_expression(mut this, anon expr: ParsedExpression, scope_id: ScopeId) throws -> CheckedExpression => match expr {
+    function typecheck_expression(mut this, anon expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression => match expr {
         Boolean(val, span) => CheckedExpression::Boolean(val, span)
         NumericConstant(val, span) => {
             // FIXME: better constant support
@@ -1175,10 +1180,10 @@ struct Typechecker {
             }
         }
         QuotedString(val, span) => CheckedExpression::QuotedString(val, span)
-        Call(call, span) => .typecheck_call(call, scope_id, span)
+        Call(call, span) => .typecheck_call(call, scope_id, span, safety_mode)
         Range(from, to, span) => {
-            let checked_from = .typecheck_expression(from, scope_id)
-            let checked_to = .typecheck_expression(to, scope_id)
+            let checked_from = .typecheck_expression(from, scope_id, safety_mode)
+            let checked_to = .typecheck_expression(to, scope_id, safety_mode)
 
             let from_type = .expression_type(checked_from)
             let to_type = .expression_type(checked_to)
@@ -1191,8 +1196,8 @@ struct Typechecker {
             yield CheckedExpression::Range(from: checked_from, to: checked_to, span, type_id: from_type)
         }
         BinaryOp(lhs, op, rhs, span) => {
-            let checked_lhs = .typecheck_expression(lhs, scope_id)
-            mut checked_rhs = .typecheck_expression(rhs, scope_id)
+            let checked_lhs = .typecheck_expression(lhs, scope_id, safety_mode)
+            mut checked_rhs = .typecheck_expression(rhs, scope_id, safety_mode)
 
             let lhs_type = .expression_type(checked_lhs)
 
@@ -1204,7 +1209,7 @@ struct Typechecker {
         }
         OptionalNone(span) => CheckedExpression::OptionalNone(span, type_id: .new_inference())
         OptionalSome(expr, span) => {
-            let checked_expr = .typecheck_expression(expr, scope_id)
+            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
             let type_id = .expression_type(checked_expr)
             let optional_struct_id = .find_struct_in_prelude("Optional")
             let optional_type = Type::GenericInstance(id: optional_struct_id, args: [type_id])
@@ -1218,7 +1223,7 @@ struct Typechecker {
         }
     }
 
-    function typecheck_call(mut this, call: ParsedCall, scope_id: ScopeId, span: Span) throws -> CheckedExpression {
+    function typecheck_call(mut this, call: ParsedCall, scope_id: ScopeId, span: Span, safety_mode: SafetyMode) throws -> CheckedExpression {
         mut args: [(String, CheckedExpression)] = []
         mut return_type = builtin(BuiltinType::Void)
         mut callee_throws = false
@@ -1226,7 +1231,7 @@ struct Typechecker {
         match call.name {
             "print" | "println" | "eprintln" | "format" => {
                 for arg in call.args.iterator() {
-                    let checked_arg = .typecheck_expression(expr: arg.1, scope_id)
+                    let checked_arg = .typecheck_expression(expr: arg.1, scope_id, safety_mode)
 
                     args.push((call.name, checked_arg))
                 }
