@@ -198,6 +198,7 @@ struct CheckedBlock {
     statements: [CheckedStatement]
     scope_id: ScopeId
     definitely_returns: bool
+    yielded_type: TypeId?
 }
 
 struct CheckedStruct {
@@ -710,6 +711,7 @@ struct Typechecker {
         let is_generic = not parsed_function.generic_parameters.is_empty()
 
         let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
+        let none_type_id: TypeId? = None
 
         mut checked_function = CheckedFunction(
             name: parsed_function.name,
@@ -719,6 +721,7 @@ struct Typechecker {
                 statements: []
                 scope_id: block_scope_id
                 definitely_returns: false
+                yielded_type: none_type_id
             )
             can_throw: parsed_function.can_throw,
             linkage: parsed_function.linkage,
@@ -822,10 +825,12 @@ struct Typechecker {
     function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedBlock {
         let parent_throws = .get_scope(parent_scope_id).can_throw
         let block_scope_id = .create_scope(parent_scope_id, can_throw: parent_throws)
+        let none_type_id: TypeId? = None
         mut checked_block = CheckedBlock(
             statements: []
             scope_id: block_scope_id
             definitely_returns: false
+            yielded_type: none_type_id
         )
 
         for parsed_statement in parsed_block.stmts.iterator() {
@@ -1161,10 +1166,19 @@ struct Typechecker {
         UnsafeBlock(parsed_block) => CheckedStatement::Block(.typecheck_block(parsed_block, parent_scope_id: scope_id, safety_mode: SafetyMode::Unsafe))
         Yield(expr) => CheckedStatement::Yield(.typecheck_expression(expr, scope_id, safety_mode))
         Return(expr) => .typecheck_return(expr, scope_id, safety_mode)
+        Block(parsed_block) => .typecheck_block_statement(parsed_block, scope_id, safety_mode)
         else => {
             todo("typecheck_statement else")
             yield CheckedStatement::Garbage
         }
+    }
+
+    function typecheck_block_statement(mut this, parsed_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
+        let checked_block = .typecheck_block(parsed_block, parent_scope_id: scope_id, safety_mode)
+        if checked_block.yielded_type.has_value() {
+            .error("A block used as a statement cannot yield values, as the value cannot be observed in any way", parsed_block.find_yield_span()!)
+        }
+        return CheckedStatement::Block(checked_block)
     }
 
     function typecheck_return(mut this, expr: ParsedExpression?, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
