@@ -242,6 +242,7 @@ boxed enum CheckedStatement {
     Break
     Continue
     Throw(CheckedExpression)
+    Yield(CheckedExpression)
     Garbage
 }
 
@@ -1158,6 +1159,7 @@ struct Typechecker {
     function typecheck_statement(mut this, anon statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement => match statement {
         Expression(expr) => CheckedStatement::Expression(expr: .typecheck_expression(expr, scope_id, safety_mode))
         UnsafeBlock(parsed_block) => CheckedStatement::Block(.typecheck_block(parsed_block, parent_scope_id: scope_id, safety_mode: SafetyMode::Unsafe))
+        Yield(expr) => CheckedStatement::Yield(.typecheck_expression(expr, scope_id, safety_mode))
         Return(expr) => .typecheck_return(expr, scope_id, safety_mode)
         else => {
             todo("typecheck_statement else")
