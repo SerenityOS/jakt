@@ -1170,10 +1170,19 @@ struct Typechecker {
         Return(expr) => .typecheck_return(expr, scope_id, safety_mode)
         Block(parsed_block) => .typecheck_block_statement(parsed_block, scope_id, safety_mode)
         Defer(statement, span) => .typecheck_defer(statement, scope_id, safety_mode, span)
+        Loop(parsed_block) => .typecheck_loop(parsed_block, scope_id, safety_mode)
         else => {
             todo("typecheck_statement else")
             yield CheckedStatement::Garbage
         }
+    }
+
+    function typecheck_loop(mut this, parsed_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
+        let checked_block = .typecheck_block(parsed_block, parent_scope_id: scope_id, safety_mode)
+        if checked_block.yielded_type.has_value() {
+            .error("A ‘loop’ block is not allowed to yield values", parsed_block.find_yield_span()!)
+        }
+        return CheckedStatement::Loop(checked_block)
     }
 
     function typecheck_defer(mut this, statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
