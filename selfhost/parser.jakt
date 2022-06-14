@@ -80,6 +80,18 @@ struct ParsedParameter {
 
 struct ParsedBlock {
     stmts: [ParsedStatement]
+
+    function find_yield_span(this) -> Span? {
+        for stmt in .stmts.iterator() {
+            match stmt {
+                Yield(expr) => {
+                    return expr.span()
+                }
+                else => { }
+            }
+        }
+        return None
+    }
 }
 
 boxed enum ParsedStatement {
