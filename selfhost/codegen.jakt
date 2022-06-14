@@ -140,7 +140,7 @@ struct CodeGenerator {
         QuotedString(val) => "String(\"" + val + "\")"
         ByteConstant(val) => "'" + val + "'"
         CharacterConstant(val) => "'" + val + "'"
-        Var(var) => .program.get_variable(var.id).name
+        Var(var) => var.name
         IndexedExpression(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
         IndexedDictionary(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
         IndexedTuple(expr, index) => format("(({}).get<{}>())", .codegen_expression(expr), index)
@@ -610,7 +610,7 @@ struct CodeGenerator {
 
         mut first = true
         for param in function_.params.iterator() {
-            let variable = .program.get_variable(param.variable.id)
+            let variable = param.variable
             if variable.name == "this" {
                 continue
             }
