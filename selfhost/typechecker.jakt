@@ -180,10 +180,10 @@ class CheckedFunction {
 
     public function is_static(this) -> bool {
         if .params.size() < 1 {
-            return false
+            return true
         }
 
-        return .params[0].variable.name == "this"
+        return .params[0].variable.name != "this"
     }
 
     public function is_mutating(this) -> bool {
