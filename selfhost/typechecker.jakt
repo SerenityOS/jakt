@@ -1196,6 +1196,8 @@ struct Typechecker {
         Loop(parsed_block) => .typecheck_loop(parsed_block, scope_id, safety_mode)
         Try(stmt, error_name, error_span, catch_block) => .typecheck_try(stmt, error_name, error_span, catch_block, scope_id, safety_mode)
         While(guard, block) => .typecheck_while(guard, block, scope_id, safety_mode)
+        Continue => CheckedStatement::Continue
+        Break => CheckedStatement::Break
         else => {
             todo("typecheck_statement else")
             yield CheckedStatement::Garbage
