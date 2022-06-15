@@ -498,6 +498,21 @@ struct CodeGenerator {
             // FIXME: panic() should be `noreturn` and no `yield` should be necessary:
             yield ""
         }
+        VarDecl(var_id, init) => {
+            let var = .program.get_variable(var_id)
+
+            mut output = ""
+            if not var.is_mutable {
+                output += "const "
+            }
+            output += .codegen_type(var.type_id)
+            output += " "
+            output += var.name
+            output += " = "
+            output += .codegen_expression(init)
+            output += ";\n"
+            yield output
+        }
         else => {
             eprintln("Missing statement codegen for {}", statement)
             todo("codegen_statement")

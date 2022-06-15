@@ -2,7 +2,7 @@ import error { JaktError }
 import parser { BinaryOperator, DefinitionLinkage, FunctionLinkage,
                 DefinitionType, ParsedBlock, ParsedCall, ParsedExpression,
                 ParsedFunction, ParsedNamespace, ParsedType, ParsedStatement,
-                RecordType }
+                ParsedVarDecl, RecordType }
 import utility { panic, todo, Span }
 
 enum SafetyMode {
@@ -389,7 +389,25 @@ struct Typechecker {
             structures: [],
             enums: [],
             scopes: [],
-            types: [],
+            types: [
+                Type::Void,
+                Type::Bool,
+                Type::U8,
+                Type::U16,
+                Type::U32,
+                Type::U64,
+                Type::I8,
+                Type::I16,
+                Type::I32,
+                Type::I64,
+                Type::F32,
+                Type::F64,
+                Type::Usize,
+                Type::JaktString,
+                Type::CChar,
+                Type::CInt,
+                Type::CString,
+            ],
             variables: [],
             imports: [],
             is_root: true,
@@ -496,6 +514,7 @@ struct Typechecker {
             CChar => "c_char"
             CInt => "c_int"
             Bool => "bool"
+            JaktString => "String"
             else => match type {
                 Enum(id) => .get_enum(id).name
                 Struct(id) => .get_struct(id).name
@@ -1210,10 +1229,33 @@ struct Typechecker {
         While(guard, block) => .typecheck_while(guard, block, scope_id, safety_mode)
         Continue => CheckedStatement::Continue
         Break => CheckedStatement::Break
+        VarDecl(var, init) => .typecheck_var_decl(var, init, scope_id)
         else => {
             todo("typecheck_statement else")
             yield CheckedStatement::Garbage
         }
+    }
+
+    function typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId) throws -> CheckedStatement {
+        let lhs = .typecheck_typename(parsed_type: var.parsed_type, scope_id)
+        let checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode: SafetyMode::Safe)
+        let rhs = .expression_type(checked_expr)
+
+        if lhs.equals(rhs) {
+            let checked_var = CheckedVariable(
+                name: var.name
+                type_id: lhs
+                is_mutable: false
+                definition_span: var.span
+            )
+            mut module = .current_module()
+            let var_id = module.add_variable(checked_var)
+            .add_var_to_scope(scope_id, name: var.name, var_id, span: checked_var.definition_span)
+            return CheckedStatement::VarDecl(var_id, init: checked_expr)
+        }
+
+        todo("implement typecheck var decl")
+        return CheckedStatement::Garbage
     }
 
     function typecheck_while(mut this, guard: ParsedExpression, block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
@@ -1345,11 +1387,31 @@ struct Typechecker {
             let optional_type_id = .find_or_add_type_id(optional_type)
             yield CheckedExpression::OptionalSome(expr: checked_expr, span, type_id: optional_type_id)
         }
+        Var(name, span) => {
+            let var = .find_var_in_scope(scope_id, var: name)
+            return match var.has_value() { // FIXME: this wants to be a match on Optional instead of boolean
+                true => CheckedExpression::Var(var: var!, span)
+                else => {
+                    .error(format("Variable '{}' not found", name), span)
+                    yield CheckedExpression::Garbage(span)
+                }
+            }
+        }
         else => {
             panic("not complete")
 
             yield CheckedExpression::Boolean(val: false, span: Span(start: 0, end: 0))
         }
+    }
+
+    function find_var_in_scope(mut this, scope_id: ScopeId, var: String) -> CheckedVariable? {
+        let scope = .get_scope(scope_id)
+        for existing_var in scope.vars.iterator() {
+            if existing_var.0 == var {
+                return .program.get_variable(existing_var.1)
+            }
+        }
+        return None
     }
 
     function typecheck_call(mut this, call: ParsedCall, scope_id: ScopeId, span: Span, safety_mode: SafetyMode) throws -> CheckedExpression {
