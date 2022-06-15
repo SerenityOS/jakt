@@ -443,6 +443,7 @@ struct CodeGenerator {
                     output += "});\n"
                     .control_flow_state = last_control_flow
                 }
+                return output
             }
             Return(expression) => {
                 if expression.has_value() {
@@ -460,6 +461,7 @@ struct CodeGenerator {
                 .control_flow_state = last_control_flow
                 output += block_str
                 output += "}"
+                return output
             }
             While(guard, block) => {
                 mut output = ""
@@ -473,6 +475,7 @@ struct CodeGenerator {
                     .control_flow_state = last_control_flow
                     output += code
                 }
+                return output
             }
             Block(block) => {
                 return "{" + .codegen_block(block) + "}"
