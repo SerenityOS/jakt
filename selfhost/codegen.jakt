@@ -410,85 +410,73 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_statement(mut this, statement: CheckedStatement) throws -> String {
-        match statement {
-            Throw(expression) => {
-                return "return " + .codegen_expression(expression) + ";"
-            }   
-            Continue => {
-                if .control_flow_state.passes_through_match {
-                    return "return JaktInternal::LoopContinue{};"
-                }
-                return "continue;"
+    function codegen_statement(mut this, statement: CheckedStatement) throws -> String => match statement {
+        Throw(expression) => "return " + .codegen_expression(expression) + ";"
+        Continue => match .control_flow_state.passes_through_match {
+            true => "return JaktInternal::LoopContinue{};"
+            else => "continue;"
+        }
+        Break => match .control_flow_state.passes_through_match {
+            true => "return JaktInternal::LoopBreak{};"
+            else => "break;"
+        }
+        Expression(expression) => .codegen_expression(expression) + ";\n"
+        Defer(statement) => {
+            // NOTE: We let the preprocessor generate a unique name for the RAII helper.
+            mut output = ""
+            output += "#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n"
+            output += "ScopeGuard __SCOPE_GUARD_NAME ([&] \n"
+            output += "#undef __SCOPE_GUARD_NAME\n{"
+            {
+                let last_control_flow = .control_flow_state
+                .control_flow_state.passes_through_match = false
+                output += .codegen_statement(statement)
+                output += "});\n"
+                .control_flow_state = last_control_flow
             }
-            Break => {
-                if .control_flow_state.passes_through_match {
-                    return "return JaktInternal::LoopBreak{};"
-                }
-                return "break;"
-            }
-            Expression(expression) => {
-                return .codegen_expression(expression) + ";\n"
-            }
-            Defer(statement) => {
-                // NOTE: We let the preprocessor generate a unique name for the RAII helper.
-                mut output = ""
-                output += "#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n"
-                output += "ScopeGuard __SCOPE_GUARD_NAME ([&] \n"
-                output += "#undef __SCOPE_GUARD_NAME\n{"
-                {
-                    let last_control_flow = .control_flow_state
-                    .control_flow_state.passes_through_match = false
-                    output += .codegen_statement(statement)
-                    output += "});\n"
-                    .control_flow_state = last_control_flow
-                }
-                return output
-            }
-            Return(expression) => {
-                if expression.has_value() {
-                    return "return (" + .codegen_expression(expression!) + ");\n"
-                } else {
-                    return "return;\n"
-                }
-            }
-            Loop(block) => {
-                mut output = ""
-                output += "for (;;) {"
+            yield output
+        }
+        Return(expression) => match expression.has_value() {
+            true => "return (" + .codegen_expression(expression!) + ");\n"
+            else => "return;\n"
+        }
+        Loop(block) => {
+            mut output = ""
+            output += "for (;;) {"
+            let last_control_flow = .control_flow_state
+            .control_flow_state = last_control_flow.enter_loop()
+            let block_str = .codegen_block(block)
+            .control_flow_state = last_control_flow
+            output += block_str
+            output += "}"
+            yield output
+        }
+        While(guard, block) => {
+            mut output = ""
+            output += "while ("
+            output += .codegen_expression(expression: guard)
+            output += ") "
+            {
                 let last_control_flow = .control_flow_state
                 .control_flow_state = last_control_flow.enter_loop()
-                let block_str = .codegen_block(block)
+                let code = .codegen_block(block)
                 .control_flow_state = last_control_flow
-                output += block_str
-                output += "}"
-                return output
+                output += code
             }
-            While(guard, block) => {
-                mut output = ""
-                output += "while ("
-                output += .codegen_expression(expression: guard)
-                output += ") "
-                {
-                    let last_control_flow = .control_flow_state
-                    .control_flow_state = last_control_flow.enter_loop()
-                    let code = .codegen_block(block)
-                    .control_flow_state = last_control_flow
-                    output += code
-                }
-                return output
-            }
-            Block(block) => {
-                return "{" + .codegen_block(block) + "}"
-            }
-            Garbage => {
-                panic("Garbage statement in codegen")
-            }
-            else => {
-                eprintln("Missing statement codegen for {}", statement)
-                todo("codegen_statement")
-            }
+            yield output
         }
-        return ""
+        Block(block) => "{" + .codegen_block(block) + "}"
+        Garbage => {
+            panic("Garbage statement in codegen")
+            // FIXME: panic() should be `noreturn` and no `yield` should be necessary:
+            yield ""
+        }
+        else => {
+            eprintln("Missing statement codegen for {}", statement)
+            todo("codegen_statement")
+            // FIXME: panic() should be `noreturn` and no `yield` should be necessary:
+            yield ""
+        }
     }
 
     function codegen_type(this, anon type_id: TypeId) throws -> String {
