@@ -178,11 +178,23 @@ class CheckedFunction {
     public linkage: FunctionLinkage
     public function_scope_id: ScopeId
 
-    // FIXME: This should return false if the first parameter is "this" or "mut this"
-    public function is_static(this) => true
+    public function is_static(this) -> bool {
+        if .params.size() < 1 {
+            return false
+        }
 
-    // FIXME: This should return true if the first parameter is "mut this"
-    public function is_mutating(this) => true
+        return .params[0].variable.name == "this"
+    }
+
+    public function is_mutating(this) -> bool {
+        if .params.size() < 1 {
+            return false
+        }
+
+        let first_param_variable = .params[0].variable
+
+        return first_param_variable.name == "this" and first_param_variable.is_mutable
+    }
 }
 
 struct CheckedParameter {
