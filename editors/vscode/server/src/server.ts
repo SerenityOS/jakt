@@ -118,6 +118,7 @@ connection.onInitialized(() => {
 connection.onDefinition(async (request) => {
 	console.time('onDefinition');
 	const document = documents.get(request.textDocument.uri);
+	const settings = await getDocumentSettings(request.textDocument.uri);
 
 	const text = document?.getText();
 
@@ -126,7 +127,7 @@ connection.onDefinition(async (request) => {
 		// console.log("request: ");
 		// console.log(request);
 		// console.log("index: " + convertPosition(request.position, text));
-		const stdout = await runCompiler(text, "-g " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri));
+		const stdout = await runCompiler(text, "-g " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri), settings);
 		// console.log("got: ", stdout);
 
 		const lines = stdout.split('\n').filter(l => l.length > 0);
@@ -151,6 +152,7 @@ connection.onDefinition(async (request) => {
 connection.onTypeDefinition(async (request) => {
 	console.time('onTypeDefinition');
 	const document = documents.get(request.textDocument.uri);
+	const settings = await getDocumentSettings(request.textDocument.uri);
 
 	const text = document?.getText();
 
@@ -159,7 +161,7 @@ connection.onTypeDefinition(async (request) => {
 		// console.log("request: ");
 		// console.log(request);
 		// console.log("index: " + convertPosition(request.position, text));
-		const stdout = await runCompiler(text, "-t " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri));
+		const stdout = await runCompiler(text, "-t " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri), settings);
 		// console.log("got: ", stdout);
 
 		const lines = stdout.split('\n').filter(l => l.length > 0);
@@ -185,6 +187,7 @@ connection.onTypeDefinition(async (request) => {
 connection.onHover(async (request) => {
 	console.time('onHover');
 	const document = documents.get(request.textDocument.uri);
+	const settings = await getDocumentSettings(request.textDocument.uri);
 
 	const text = document?.getText();
 
@@ -192,7 +195,7 @@ connection.onHover(async (request) => {
 		// console.log("request: ");
 		// console.log(request);
 		// console.log("index: " + convertPosition(request.position, text));
-		const stdout = await runCompiler(text, "-v " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri));
+		const stdout = await runCompiler(text, "-v " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri), settings);
 		// console.log("got: ", stdout);
 
 		const lines = stdout.split('\n').filter(l => l.length > 0);
@@ -223,24 +226,29 @@ connection.onHover(async (request) => {
 // The example settings
 interface ExampleSettings {
 	maxNumberOfProblems: number;
+	compiler: {
+		executablePath: string;
+	};
 }
 
 // The global settings, used when the `workspace/configuration` request is not supported by the client.
 // Please note that this is not the case when using this server with the client provided in this example
 // but could happen with other clients.
-const defaultSettings: ExampleSettings = { maxNumberOfProblems: 1000 };
+const defaultSettings: ExampleSettings = { maxNumberOfProblems: 1000, compiler: { executablePath: "jakt" } };
 let globalSettings: ExampleSettings = defaultSettings;
 
 // Cache the settings of all open documents
 const documentSettings: Map<string, Thenable<ExampleSettings>> = new Map();
 
 connection.onDidChangeConfiguration(change => {
+	console.log("onDidChangeConfiguration, hasConfigurationCapability: " + hasConfigurationCapability);
+	console.log("change is " + JSON.stringify(change));
 	if (hasConfigurationCapability) {
 		// Reset all cached document settings
 		documentSettings.clear();
 	} else {
 		globalSettings = <ExampleSettings>(
-			(change.settings.languageServerExample || defaultSettings)
+			(change.settings.jaktLanguageServer || defaultSettings)
 		);
 	}
 
@@ -363,7 +371,7 @@ function convertPosition(position: Position, text: string): number {
 	return i;
 }
 
-async function runCompiler(text: string, flags: string): Promise<string> {
+async function runCompiler(text: string, flags: string, settings: ExampleSettings): Promise<string> {
 	try {
 		fs.writeFileSync(tmpFile.name, text);
 	} catch (error) {
@@ -372,7 +380,7 @@ async function runCompiler(text: string, flags: string): Promise<string> {
 
 	let stdout: string;
 	try {
-		const output = await exec("jakt " + flags + " " + tmpFile.name);
+		const output = await exec(`${settings.compiler.executablePath} ${flags} ${tmpFile.name}`);
 		// console.log(output);
 		stdout = output.stdout;
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -381,6 +389,8 @@ async function runCompiler(text: string, flags: string): Promise<string> {
 		if (e.signal != null) {
 			console.log("compile failed: ");
 			console.log(e);
+		} else {
+			console.log("Error:", e);
 		}
 	}
 
@@ -408,7 +418,7 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
 	}
 
 	// // In this simple example we get the settings for every validate run.
-	// const settings = await getDocumentSettings(textDocument.uri);
+	const settings = await getDocumentSettings(textDocument.uri);
 
 	// The validator creates diagnostics for all uppercase words length 2 and more
 	const text = textDocument.getText();
@@ -417,7 +427,7 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
 
 	textDocument.jaktInlayHints = [];
 
-	const stdout = await runCompiler(text, "-c -H -j" + includeFlagForPath(textDocument.uri));
+	const stdout = await runCompiler(text, "-c -H -j" + includeFlagForPath(textDocument.uri), settings);
 
 	const diagnostics: Diagnostic[] = [];
 
@@ -497,6 +507,7 @@ connection.onCompletion(
 		// info and always provide the same completion items.
 
 		const document = documents.get(request.textDocument.uri);
+		const settings = await getDocumentSettings(request.textDocument.uri);
 
 		const text = document?.getText();
 
@@ -505,7 +516,7 @@ connection.onCompletion(
 			// console.log(request);
 			const index = convertPosition(request.position, text) - 1;
 			// console.log("index: " + index);
-			const stdout = await runCompiler(text, "-m " + index + includeFlagForPath(request.textDocument.uri));
+			const stdout = await runCompiler(text, "-m " + index + includeFlagForPath(request.textDocument.uri), settings);
 			// console.log("got: ", stdout);
 
 			const lines = stdout.split('\n').filter(l => l.length > 0);
