@@ -113,23 +113,7 @@ boxed enum Type {
     }
 
     function is_builtin(this) -> bool => match this {
-        Void => true
-        Bool => true
-        U8 => true
-        U16 => true
-        U32 => true
-        U64 => true
-        I8 => true
-        I16 => true
-        I32 => true
-        I64 => true
-        F32 => true
-        F64 => true
-        Usize => true
-        JaktString => true
-        CChar => true
-        CInt => true
-        CString => true
+        Void | Bool | U8 | U16 | U32 | U64 | I8 | I16 | I32 | I64 | F32 | F64 | Usize | JaktString | CChar | CInt | CString => true
         else => false
     }
 }
