@@ -1336,7 +1336,9 @@ struct Typechecker {
         let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
         let optional_struct_id = .find_struct_in_prelude("Optional")
 
-        match .get_type(lhs) {
+        let lhs_type = .get_type(lhs)
+
+        match lhs_type {
             GenericInstance(id, args) => {
                 if id.equals(weak_ptr_struct_id) {
                     if not var.is_mutable {
@@ -1354,7 +1356,23 @@ struct Typechecker {
                 }
             }
             else => {
-                todo("typecheck_var_decl implement builtin type checking")
+                if lhs_type.is_builtin() {
+                    let number_constant = checked_expr.to_number_constant(program: .program)
+
+                    mut is_rhs_zero = false
+                    if number_constant.has_value() {
+                        is_rhs_zero = match number_constant! {
+                            Signed(value) => value == 0
+                            Unsigned(value) => value == 0
+                            Floating(value) => value == 0.0
+                        }
+                    }
+
+                    if not (.program.is_numeric(lhs) and is_rhs_zero) and (.is_integer(lhs) ^ .is_integer(rhs)) {
+                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs), .type_name(rhs)), .expression_span(checked_expr))
+                        return CheckedStatement::Garbage
+                    }
+                }
             }
         }
 
@@ -1364,6 +1382,9 @@ struct Typechecker {
             is_mutable: var.is_mutable
             definition_span: var.span
         )
+
+        // TODO: dump type hints
+
         mut module = .current_module()
         let var_id = module.add_variable(checked_var)
         .add_var_to_scope(scope_id, name: var.name, var_id, span: checked_var.definition_span)
