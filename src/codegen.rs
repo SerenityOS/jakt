@@ -2345,7 +2345,16 @@ fn codegen_statement(
                 output.push_str(");\n")
             }
             None => {
-                output.push_str("return;\n");
+                let function = project.get_function(
+                    context
+                        .current_function_id
+                        .expect("must be in a function to generate a return"),
+                );
+                if function.throws {
+                    output.push_str("return {};\n");
+                } else {
+                    output.push_str("return;\n");
+                }
             }
         },
         CheckedStatement::Yield(expr) => {
