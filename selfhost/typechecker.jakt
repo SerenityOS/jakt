@@ -1435,11 +1435,18 @@ struct Typechecker {
     }
 
     function find_var_in_scope(mut this, scope_id: ScopeId, var: String) -> CheckedVariable? {
-        let scope = .get_scope(scope_id)
-        for existing_var in scope.vars.iterator() {
-            if existing_var.0 == var {
-                return .program.get_variable(existing_var.1)
+        mut current_scope_id = scope_id
+        loop {
+            let scope = .get_scope(current_scope_id)
+            for existing_var in scope.vars.iterator() {
+                if existing_var.0 == var {
+                    return .program.get_variable(existing_var.1)
+                }
             }
+            if not scope.parent.has_value() {
+                break
+            }
+            current_scope_id = scope.parent!
         }
         return None
     }
