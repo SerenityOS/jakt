@@ -1269,6 +1269,20 @@ struct Typechecker {
         return None
     }
 
+    function find_enum_in_scope(this, scope_id: ScopeId, name: String) -> EnumId? {
+        mut current_scope_id = Some(scope_id)
+        while current_scope_id.has_value() {
+            let scope = .get_scope(id: current_scope_id!)
+            for s in scope.enums.iterator() {
+                if s.0 == name {
+                    return Some(s.1)
+                }
+            }
+            current_scope_id = scope.parent
+        }
+        return None
+    }
+
     function typecheck_module(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         .typecheck_namespace_predecl(parsed_namespace, scope_id)
         .typecheck_namespace_declarations(parsed_namespace, scope_id)
@@ -1602,9 +1616,21 @@ struct Typechecker {
                     let inner_type_id = .typecheck_typename(parsed_type, scope_id)
                     checked_inner_types.push(inner_type_id)
                 }
-                // FIXME: add support for "GenericResolvedType", though the Rust version
+
+                // FIXME: use GenericResolvedType instead, though the Rust version
                 // puts this in the parser even though it should be in the typechecker
                 // as the parser doesn't have a concept of type ids
+                let struct_id = .find_struct_in_scope(scope_id, name)
+                if struct_id.has_value() {
+                    return .find_or_add_type_id(Type::GenericInstance(id: struct_id.value(), args: checked_inner_types))
+                }
+
+                let enum_id = .find_enum_in_scope(scope_id, name)
+                if enum_id.has_value() {
+                    return .find_or_add_type_id(Type::GenericEnumInstance(id: enum_id.value(), args: checked_inner_types))
+                }
+
+                .error(format("could not find {}", name), span)
                 return .new_inference()
             }
         }
