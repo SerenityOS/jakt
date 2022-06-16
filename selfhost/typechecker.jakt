@@ -526,6 +526,8 @@ struct Typechecker {
     }
 
     function is_integer(this, anon type_id: TypeId) => .program.is_integer(type_id)
+    function is_floating(this, anon type_id: TypeId) => .program.is_floating(type_id)
+    function is_numeric(this, anon type_id: TypeId) => .program.is_numeric(type_id)
 
     function create_scope(mut this, parent_scope_id: ScopeId, can_throw: bool) throws -> ScopeId {
         let scope = Scope(
