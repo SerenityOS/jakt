@@ -468,6 +468,9 @@ struct Lexer {
                         ++.index
                         let digit: i64 = as_saturated(value - b'0')
                         total = total * 16 + digit
+                        if .peek() == b'_' {
+                            ++.index
+                        }
                     }
                     let end = .index
                     let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::I64
@@ -482,6 +485,9 @@ struct Lexer {
                         ++.index
                         let digit: i64 = as_saturated(value - b'0')
                         total = total * 8 + digit
+                        if .peek() == b'_' {
+                            ++.index
+                        }
                     }
                 }
                 // Binary Number
@@ -492,6 +498,9 @@ struct Lexer {
                         ++.index
                         let digit: i64 = as_saturated(value - b'0')
                         total = total * 2 + digit
+                        if .peek() == b'_' {
+                            ++.index
+                        }
                     }
                 }
                 else => {}
