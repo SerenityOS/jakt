@@ -1,0 +1,18 @@
+/// Expect:
+/// - output: "PASS\n"
+
+struct Foo {
+    function go(anon bar: Bar) throws {
+        if bar.x == 1 {
+            println("PASS")
+        }
+    }
+}
+
+struct Bar {
+    x: i64
+}
+
+function main() {
+    Foo::go(Bar(x: 1))
+}
