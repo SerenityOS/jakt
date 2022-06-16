@@ -449,6 +449,10 @@ class CheckedProgram {
             else => false
         }
     }
+
+    public function is_numeric(this, anon type_id: TypeId) -> bool {
+        return .is_integer(type_id) or .is_floating(type_id)
+    }
 }
 
 struct Typechecker {
