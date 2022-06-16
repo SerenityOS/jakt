@@ -794,7 +794,23 @@ struct Typechecker {
 
         // TODO: Check generic parameters
 
-        // TODO: Check parameters
+        for parameter in parsed_function.params.iterator() {
+            let type_id = .typecheck_typename(parsed_type: parameter.variable.parsed_type, scope_id: checked_function_scope_id)
+
+            let variable = CheckedVariable(
+                name: parameter.variable.name
+                type_id
+                is_mutable: parameter.variable.is_mutable
+                definition_span: parameter.variable.span
+            )
+
+            let checked_parameter = CheckedParameter(
+                requires_label: parameter.requires_label
+                variable
+            )
+
+            checked_function.params.push(checked_parameter)
+        }
 
         // TODO: Check return type
 
@@ -859,12 +875,15 @@ struct Typechecker {
         let function_linkage = checked_function.linkage
 
         mut param_vars: [CheckedVariable] = []
+
         for param in checked_function.params.iterator() {
             param_vars.push(param.variable)
         }
 
         for variable in param_vars.iterator() {
-            todo("add_var_to_scope")
+            mut module = .current_module()
+            let var_id = module.add_variable(variable)
+            .add_var_to_scope(scope_id: function_scope_id, name: variable.name, var_id, span: variable.definition_span)
         }
 
         // TODO: Resolve concreete types
