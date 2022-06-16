@@ -19,7 +19,9 @@ VSIX_FILE=$(find ./editors/vscode -maxdepth 1 -type f -name "*.vsix")
 if [ -n "$VSIX_FILE" ]
 then
     echo "Found VSIX. Removing it."
-    rm "$VSIX_FILE"
+    for f in $VSIX_FILE; do
+        rm "$f"
+    done
 fi
 
 # uninstall old version of extension if needed
@@ -42,7 +44,7 @@ cd - || error_and_exit "Failed to navigate back to project root"
 # install new vsix
 code --install-extension "$NEW_VSIX_PATH"
 
-if code --list-extensions | grep -q jakt 
+if code --list-extensions | grep -q jakt
 then
     echo "Successfully updated"
 else
