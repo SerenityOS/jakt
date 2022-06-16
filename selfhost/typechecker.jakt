@@ -840,42 +840,42 @@ struct Typechecker {
 
     function typecheck_function(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
         if not parsed_function.generic_parameters.is_empty() and not parsed_function.must_instantiate {
-            // FIXME: Just `return` here once we support that, instead of having an `else`.
-        } else {
-            // FIXME: Optional.expect("...") would be nicer here.
-            let function_id = .find_function_in_scope(parent_scope_id, function_name: parsed_function.name)
-            if not function_id.has_value() {
-                panic("Internal error: missing previously defined function")
-            }
-            if parsed_function.name == "main" {
-               .typecheck_jakt_main(parsed_function)
-            }
-            mut checked_function = .get_function(function_id!)
-            let function_scope_id = checked_function.function_scope_id
-            let function_linkage = checked_function.linkage
+            return
+        } 
 
-            mut param_vars: [CheckedVariable] = []
-            for param in checked_function.params.iterator() {
-                param_vars.push(param.variable)
-            }
-
-            for variable in param_vars.iterator() {
-                todo("add_var_to_scope")
-            }
-
-            // TODO: Resolve concreete types
-
-            // TODO: Typecheck function block
-            checked_function.block = .typecheck_block(parsed_function.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
-
-            // TODO: Typecheck return type a second time to resolve generics
-
-            // TODO: Infer return type if necessary
-
-            // TODO: Report if control reaches end of non-void function
-
-            // TODO: Assign checked block and return type to checked_function
+        // FIXME: Optional.expect("...") would be nicer here.
+        let function_id = .find_function_in_scope(parent_scope_id, function_name: parsed_function.name)
+        if not function_id.has_value() {
+            panic("Internal error: missing previously defined function")
         }
+        if parsed_function.name == "main" {
+            .typecheck_jakt_main(parsed_function)
+        }
+        mut checked_function = .get_function(function_id!)
+        let function_scope_id = checked_function.function_scope_id
+        let function_linkage = checked_function.linkage
+
+        mut param_vars: [CheckedVariable] = []
+        for param in checked_function.params.iterator() {
+            param_vars.push(param.variable)
+        }
+
+        for variable in param_vars.iterator() {
+            todo("add_var_to_scope")
+        }
+
+        // TODO: Resolve concreete types
+
+        // TODO: Typecheck function block
+        checked_function.block = .typecheck_block(parsed_function.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
+
+        // TODO: Typecheck return type a second time to resolve generics
+
+        // TODO: Infer return type if necessary
+
+        // TODO: Report if control reaches end of non-void function
+
+        // TODO: Assign checked block and return type to checked_function
     }
 
     function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedBlock {
