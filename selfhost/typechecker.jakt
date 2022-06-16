@@ -479,6 +479,9 @@ struct Typechecker {
     }
 
     function find_struct_in_prelude(this, anon name: String) throws -> StructId {
+        // FIXME: Remove this short-circuit once we actually start parsing the prelude!
+        return StructId(module: ModuleId(id: 0), id: 0)
+
         // start at the prelude scope id
         for entry in .get_scope(ScopeId(module: ModuleId(id: 0), id: 0)).structs.iterator() {
             if entry.0 == name {
