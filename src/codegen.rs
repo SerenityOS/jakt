@@ -16,7 +16,7 @@
 use crate::compiler::{UNKNOWN_TYPE_ID, VOID_TYPE_ID};
 use crate::typechecker::{
     CheckedCall, CheckedEnum, CheckedEnumVariant, CheckedMatchBody, CheckedMatchCase,
-    FunctionGenericParameter, Module, ModuleId, ScopeId,
+    FunctionGenericParameter, FunctionId, Module, ModuleId, ScopeId,
 };
 use crate::{
     compiler,
@@ -125,6 +125,7 @@ struct CodegenContext {
     fresh_label_counter: usize,
     entered_yieldable_blocks: Vec<(String, String)>, // label, variable name
     pub control_flow_state: ControlFlowState,
+    current_function_id: Option<FunctionId>,
 }
 
 impl CodegenContext {
@@ -192,6 +193,7 @@ pub fn codegen(project: &Project) -> String {
         fresh_label_counter: 0,
         entered_yieldable_blocks: vec![],
         control_flow_state: ControlFlowState::no_control_flow(),
+        current_function_id: None,
     };
 
     output.push_str("namespace Jakt {\n");
@@ -441,11 +443,15 @@ fn codegen_namespace(
             continue;
         }
 
+        let previous_function_id = context.current_function_id;
+        context.current_function_id = Some(*function_id);
+
         let function = project.get_function(*function_id);
         if function.linkage == FunctionLinkage::External
             || function.linkage == FunctionLinkage::ImplicitConstructor
             || function.linkage == FunctionLinkage::ImplicitEnumConstructor
         {
+            context.current_function_id = previous_function_id;
             continue;
         } else {
             let function_output = codegen_function(function, project, context);
@@ -453,6 +459,8 @@ fn codegen_namespace(
             output.push_str(&function_output);
             output.push('\n');
         }
+
+        context.current_function_id = previous_function_id;
     }
 
     for (_, struct_id, _) in &scope.structs {
@@ -472,6 +480,9 @@ fn codegen_namespace(
 
         let scope = &project.get_scope(structure.scope_id);
         for (_, function_id, _) in &scope.functions {
+            let previous_function_id = context.current_function_id;
+            context.current_function_id = Some(*function_id);
+
             let function = project.get_function(*function_id);
             if function.linkage != FunctionLinkage::ImplicitConstructor {
                 let function_output = codegen_function_in_namespace(
@@ -484,6 +495,8 @@ fn codegen_namespace(
                 output.push_str(&function_output);
                 output.push('\n');
             }
+
+            context.current_function_id = previous_function_id;
         }
     }
 
@@ -504,6 +517,9 @@ fn codegen_namespace(
 
         let scope = &project.get_scope(enum_.scope_id);
         for (_, function_id, _) in &scope.functions {
+            let previous_function_id = context.current_function_id;
+            context.current_function_id = Some(*function_id);
+
             let function = project.get_function(*function_id);
             if function.linkage != FunctionLinkage::ImplicitEnumConstructor {
                 let function_output =
@@ -512,6 +528,8 @@ fn codegen_namespace(
                 output.push_str(&function_output);
                 output.push('\n');
             }
+
+            context.current_function_id = previous_function_id;
         }
     }
 
@@ -748,6 +766,9 @@ fn codegen_nonrecursive_enum(
 
     let scope = project.get_scope(enum_.scope_id);
     for (_, function_id, _) in &scope.functions {
+        let previous_function_id = context.current_function_id;
+        context.current_function_id = Some(*function_id);
+
         let function = &project.get_function(*function_id);
         if function.linkage != FunctionLinkage::ImplicitEnumConstructor {
             output.push_str(&codegen_indent(INDENT_SIZE));
@@ -759,6 +780,8 @@ fn codegen_nonrecursive_enum(
             output.push_str(&method_output);
             output.push('\n');
         }
+
+        context.current_function_id = previous_function_id;
     }
 
     output.push_str("};\n");
@@ -1193,6 +1216,9 @@ fn codegen_recursive_enum(
 
     let scope = project.get_scope(enum_.scope_id);
     for (_, function_id, _) in &scope.functions {
+        let previous_function_id = context.current_function_id;
+        context.current_function_id = Some(*function_id);
+
         let function = project.get_function(*function_id);
         if function.linkage != FunctionLinkage::ImplicitEnumConstructor {
             output.push_str(&codegen_indent(INDENT_SIZE));
@@ -1204,6 +1230,8 @@ fn codegen_recursive_enum(
             output.push_str(&method_output);
             output.push('\n');
         }
+
+        context.current_function_id = previous_function_id;
     }
 
     output.push_str("};\n");
@@ -1517,6 +1545,9 @@ fn codegen_struct(
 
     let scope = &project.get_scope(structure.scope_id);
     for (_, function_id, _) in &scope.functions {
+        let previous_function_id = context.current_function_id;
+        context.current_function_id = Some(*function_id);
+
         let function = &project.get_function(*function_id);
         if function.linkage == FunctionLinkage::ImplicitConstructor {
             let function_output = codegen_constructor(function, project);
@@ -1533,6 +1564,8 @@ fn codegen_struct(
             };
             output.push_str(&method_output);
         }
+
+        context.current_function_id = previous_function_id;
     }
 
     output.push_str(&codegen_debug_description_getter(structure, project));
@@ -1761,24 +1794,8 @@ fn codegen_function_in_namespace(
     output.push_str("\n{\n");
     output.push_str(&codegen_indent(INDENT_SIZE));
 
-    // Put the return type in scope.
-    if is_main {
-        output.push_str("using _JaktCurrentFunctionReturnType = ErrorOr<int>;\n");
-    } else {
-        if function.return_type_id == UNKNOWN_TYPE_ID {
-            panic!("Function type unknown at codegen time in {}", function.name);
-        }
-        if function.throws {
-            output.push_str(&format!(
-                "using _JaktCurrentFunctionReturnType = ErrorOr<{}>;\n",
-                codegen_type(function.return_type_id, project)
-            ));
-        } else {
-            output.push_str(&format!(
-                "using _JaktCurrentFunctionReturnType = {};\n",
-                codegen_type(function.return_type_id, project)
-            ));
-        }
+    if !is_main && function.return_type_id == UNKNOWN_TYPE_ID {
+        panic!("Function type unknown at codegen time in {}", function.name);
     }
 
     let last_control_flow = context.control_flow_state;
@@ -1989,6 +2006,20 @@ pub fn codegen_namespace_qualifier(scope_id: ScopeId, project: &Project) -> Stri
 
 pub fn codegen_type(type_id: TypeId, project: &Project) -> String {
     codegen_type_possibly_as_namespace(type_id, project, false)
+}
+
+pub fn codegen_function_return_type(function_id: FunctionId, project: &Project) -> String {
+    let function = &project.get_function(function_id);
+    if function.is_static() && function.name == "main" {
+        return "ErrorOr<int>".to_string();
+    }
+
+    let type_name = codegen_type(function.return_type_id, project);
+    if function.throws {
+        format!("ErrorOr<{}>", type_name)
+    } else {
+        type_name
+    }
 }
 
 pub fn codegen_type_possibly_as_namespace(
@@ -2529,7 +2560,12 @@ fn codegen_enum_match(
                 output.push_str("(([&]() -> JaktInternal::ExplicitValueOrControlFlow<");
                 output.push_str(&codegen_type(*return_type_id, project));
                 output.push_str(", ");
-                output.push_str("_JaktCurrentFunctionReturnType");
+                output.push_str(&codegen_type(
+                    project
+                        .get_function(context.current_function_id.expect("must be in a function"))
+                        .return_type_id,
+                    project,
+                ));
                 output.push_str("> { \n");
                 output.push_str("switch (");
                 if needs_deref {
@@ -2541,7 +2577,10 @@ fn codegen_enum_match(
                 output.push_str("(([&]() -> JaktInternal::ExplicitValueOrControlFlow<");
                 output.push_str(&codegen_type(*return_type_id, project));
                 output.push_str(", ");
-                output.push_str("_JaktCurrentFunctionReturnType");
+                output.push_str(&codegen_function_return_type(
+                    context.current_function_id.expect("must be in a function"),
+                    project,
+                ));
                 output.push_str("> { \n");
                 output.push_str("auto __jakt_enum_value = ");
                 if needs_deref {
@@ -2660,7 +2699,10 @@ fn codegen_enum_match(
             output.push_str("(([&]() -> JaktInternal::ExplicitValueOrControlFlow<");
             output.push_str(&codegen_type(*return_type_id, project));
             output.push_str(", ");
-            output.push_str("_JaktCurrentFunctionReturnType");
+            output.push_str(&codegen_function_return_type(
+                context.current_function_id.expect("must be in a function"),
+                project,
+            ));
             output.push_str(">{\n");
 
             output.push_str("auto&& __jakt_match_variant_maybe_deref = ");
@@ -2817,7 +2859,10 @@ fn codegen_generic_match(
         output.push_str("(([&]() -> JaktInternal::ExplicitValueOrControlFlow<");
         output.push_str(&codegen_type(*return_type_id, project));
         output.push_str(", ");
-        output.push_str("_JaktCurrentFunctionReturnType");
+        output.push_str(&codegen_function_return_type(
+            context.current_function_id.expect("must be in a function"),
+            project,
+        ));
         output.push_str("> { \n");
         output.push_str("switch (");
         output.push_str(&codegen_expr(indent, expr, project, context));
@@ -2826,7 +2871,10 @@ fn codegen_generic_match(
         output.push_str("(([&]() -> JaktInternal::ExplicitValueOrControlFlow<");
         output.push_str(&codegen_type(*return_type_id, project));
         output.push_str(", ");
-        output.push_str("_JaktCurrentFunctionReturnType");
+        output.push_str(&codegen_function_return_type(
+            context.current_function_id.expect("must be in a function"),
+            project,
+        ));
         output.push_str("> { \n");
         if is_generic_enum {
             output.push_str("auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(");

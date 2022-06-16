@@ -99,6 +99,7 @@ struct CodeGenerator {
 
         for module in generator.program.modules.iterator() {
             for function_ in module.functions.iterator() {
+                // FIXME: Set current function ID in the context
                 output += generator.codegen_function(function_)
             }
         }
@@ -667,16 +668,6 @@ struct CodeGenerator {
         }
 
         output += "{"
-
-        if is_main {
-            output += "using _JaktCurrentFunctionReturnType = ErrorOr<int>;"
-        } else {
-            if function_.can_throw {
-                output += format("using _JaktCurrentFunctionReturnType = ErrorOr<{}>;", .codegen_type(function_.return_type_id))
-            } else {
-                output += format("using _JaktCurrentFunctionReturnType = {};", .codegen_type(function_.return_type_id))
-            }
-        }
 
         let last_control_flow = .control_flow_state
         .control_flow_state = last_control_flow.enter_function()
