@@ -1229,16 +1229,16 @@ struct Typechecker {
         While(guard, block) => .typecheck_while(guard, block, scope_id, safety_mode)
         Continue => CheckedStatement::Continue
         Break => CheckedStatement::Break
-        VarDecl(var, init) => .typecheck_var_decl(var, init, scope_id)
+        VarDecl(var, init) => .typecheck_var_decl(var, init, scope_id, safety_mode)
         else => {
             todo("typecheck_statement else")
             yield CheckedStatement::Garbage
         }
     }
 
-    function typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId) throws -> CheckedStatement {
+    function typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
         let lhs = .typecheck_typename(parsed_type: var.parsed_type, scope_id)
-        let checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode: SafetyMode::Safe)
+        let checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode)
         let rhs = .expression_type(checked_expr)
 
         if lhs.equals(rhs) {
