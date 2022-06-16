@@ -533,7 +533,7 @@ struct CodeGenerator {
             }
             yield output
         }
-        Block(block) => "{" + .codegen_block(block) + "}"
+        Block(block) => .codegen_block(block)
         Garbage => {
             panic("Garbage statement in codegen")
             // FIXME: panic() should be `noreturn` and no `yield` should be necessary:
@@ -554,6 +554,19 @@ struct CodeGenerator {
             output += ";\n"
             yield output
         }
+        If(guard, then_block, else_statement) => {
+            mut output = "if ("
+            output += .codegen_expression(guard)
+            output += ") "
+            output += .codegen_block(block: then_block)
+
+            output += match else_statement.has_value() {
+                true => " else " + .codegen_statement(statement: else_statement!)
+                else => ""
+            }
+
+            yield output
+        }
         else => {
             eprintln("Missing statement codegen for {}", statement)
             todo("codegen_statement")
@@ -561,6 +574,7 @@ struct CodeGenerator {
             yield ""
         }
     }
+
 
     function codegen_type(this, anon type_id: TypeId) throws -> String {
         return .codegen_type_possibly_as_namespace(type_id, as_namespace: false)
