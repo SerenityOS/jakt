@@ -1246,21 +1246,43 @@ struct Typechecker {
             lhs = rhs
         }
 
-        if lhs.equals(rhs) {
-            let checked_var = CheckedVariable(
-                name: var.name
-                type_id: lhs
-                is_mutable: false
-                definition_span: var.span
-            )
-            mut module = .current_module()
-            let var_id = module.add_variable(checked_var)
-            .add_var_to_scope(scope_id, name: var.name, var_id, span: checked_var.definition_span)
-            return CheckedStatement::VarDecl(var_id, init: checked_expr)
+        .try_to_promote_constant_expr_to_type(lhs_type: lhs, checked_rhs: checked_expr, span: init.span())
+
+        let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
+        let optional_struct_id = .find_struct_in_prelude("Optional")
+
+        match .get_type(lhs) {
+            GenericInstance(id, args) => {
+                if id.equals(weak_ptr_struct_id) {
+                    if not var.is_mutable {
+                        .error("Weak reference must be mutable", var.span)
+                    }
+
+                    if not lhs.equals(rhs) and not args[0].equals(rhs) and not rhs.equals(UNKNOWN_TYPE_ID) {
+                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs), .type_name(rhs)), .expression_span(checked_expr))
+                    }
+                }
+                if id.equals(optional_struct_id) {
+                    if not lhs.equals(rhs) and not args[0].equals(rhs) and not rhs.equals(UNKNOWN_TYPE_ID) {
+                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs), .type_name(rhs)), .expression_span(checked_expr))
+                    }
+                }
+            }
+            else => {
+                todo("typecheck_var_decl implement builtin type checking")
+            }
         }
 
-        todo("implement typecheck var decl")
-        return CheckedStatement::Garbage
+        let checked_var = CheckedVariable(
+            name: var.name
+            type_id: lhs
+            is_mutable: var.is_mutable
+            definition_span: var.span
+        )
+        mut module = .current_module()
+        let var_id = module.add_variable(checked_var)
+        .add_var_to_scope(scope_id, name: var.name, var_id, span: checked_var.definition_span)
+        return CheckedStatement::VarDecl(var_id, init: checked_expr)
     }
 
     function typecheck_while(mut this, guard: ParsedExpression, block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
