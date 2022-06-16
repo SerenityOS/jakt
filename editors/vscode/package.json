@@ -60,6 +60,12 @@
 					],
 					"default": "off",
 					"description": "Traces the communication between VS Code and the language server."
+				},
+				"jaktLanguageServer.compiler.executablePath": {
+					"scope": "resource",
+					"type": "string",
+					"default": "jakt",
+					"description": "The path to the jakt compiler executable."
 				}
 			}
 		}
