@@ -407,7 +407,15 @@ struct CodeGenerator {
                 output += call.name
                 output += "("
 
-                // FIXME: Codegen arguments here
+                mut first = true
+                for arg in call.args.iterator() {
+                    if first {
+                        first = false
+                    } else {
+                        output += ","
+                    }
+                    output += .codegen_expression(arg.1)
+                }
 
                 output += ")"
             }
