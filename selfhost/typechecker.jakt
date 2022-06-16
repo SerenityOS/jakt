@@ -1370,7 +1370,7 @@ struct Typechecker {
                         }
                     }
 
-                    if not (.program.is_numeric(lhs) and is_rhs_zero) and (.is_integer(lhs) ^ .is_integer(rhs)) {
+                    if not (.is_numeric(lhs) and is_rhs_zero) and (.is_integer(lhs) ^ .is_integer(rhs)) {
                         .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs), .type_name(rhs)), .expression_span(checked_expr))
                         return CheckedStatement::Garbage
                     }
