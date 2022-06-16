@@ -169,6 +169,18 @@ struct CheckedNamespace {
     scope: ScopeId
 }
 
+struct CheckedParameter {
+    requires_label: bool
+    variable: CheckedVariable
+}
+
+struct CheckedVariable {
+    name: String
+    type_id: TypeId
+    is_mutable: bool
+    definition_span: Span
+}
+
 class CheckedFunction {
     public name: String
     public return_type_id: TypeId
@@ -195,18 +207,6 @@ class CheckedFunction {
 
         return first_param_variable.name == "this" and first_param_variable.is_mutable
     }
-}
-
-struct CheckedParameter {
-    requires_label: bool
-    variable: CheckedVariable
-}
-
-struct CheckedVariable {
-    name: String
-    type_id: TypeId
-    is_mutable: bool
-    definition_span: Span
 }
 
 struct CheckedVarDecl {
