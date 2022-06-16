@@ -182,6 +182,33 @@ struct CodeGenerator {
             yield output
         }
         BinaryOp(lhs, rhs, op, type_id) => .codegen_binary_expression(expression, type_id, lhs, rhs, op)
+        NumericConstant(val, type_id) => {
+            let suffix = match val {
+                I64 => "LL"
+                U64 | USize => "ULL"
+                else => ""
+            }
+
+            let type_name = match val {
+                USize => "size_t"
+                else => .codegen_type(type_id)
+            }
+
+            yield match val {
+                F32(val)
+                | F64(val)
+                | I8(val)
+                | I16(val)
+                | I32(val)
+                | I64(val)
+                | U8(val)
+                | U16(val)
+                | U32(val)
+                | U64(val)
+                | USize(val)
+                => format("static_cast<{}>({}{})", type_name, val, suffix)
+            }
+        }
         else => {
             todo("codegen_expression else")
             yield ""
