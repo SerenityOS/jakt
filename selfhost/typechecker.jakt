@@ -1237,9 +1237,14 @@ struct Typechecker {
     }
 
     function typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
-        let lhs = .typecheck_typename(parsed_type: var.parsed_type, scope_id)
-        let checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode)
+        mut lhs = .typecheck_typename(parsed_type: var.parsed_type, scope_id)
+        mut checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode)
         let rhs = .expression_type(checked_expr)
+        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
+
+        if lhs.equals(UNKNOWN_TYPE_ID) and not rhs.equals(UNKNOWN_TYPE_ID) {
+            lhs = rhs
+        }
 
         if lhs.equals(rhs) {
             let checked_var = CheckedVariable(
