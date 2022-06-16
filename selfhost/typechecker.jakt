@@ -1465,7 +1465,16 @@ struct Typechecker {
                 }
             }
             else => {
+                for arg in call.args.iterator() {
 
+                    // FIXME: Check argument labels
+
+                    // FIXME: Check argument count
+
+                    let checked_arg = .typecheck_expression(expr: arg.1, scope_id, safety_mode)
+
+                    args.push((call.name, checked_arg))
+                }
             }
         }
 
