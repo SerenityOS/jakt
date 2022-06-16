@@ -13,65 +13,48 @@ import parser { BinaryOperator, DefinitionLinkage, DefinitionType, ParsedCall, P
 import typechecker { Typechecker }
 import utility { panic, todo, Span }
 
-function usage() -> String {
-    return "usage: jakt [-h] [OPTIONS] <path>"
-}
+function usage() => "usage: jakt [-h] [OPTIONS] <path>"
+function help() => "Flags:\n  -h\t\tPrint this help and exit.\n  -l\t\tPrint debug info for the lexer.\n  -p\t\tPrint debug info for the parser."
 
-function help() -> String {
-    return "Flags:\n  -h\t\tPrint this help and exit.\nOptions:\n  -l\t\tPrint debug info for the lexer.\n  -p\t\tPrint debug info for the parser."
-}
+function flag(args: [String], anon name: String) => args.contains("-" + name)
 
 function main(args: [String]) {
     if args.size() <= 1 {
         eprintln("{}", usage())
+        return 1
     }
-    mut lexer_debug = false
-    mut parser_debug = false
+    
+    if flag(args, "h") {
+        println("{}\n", usage())
+        println("{}", help())
+        return 0
+    }
+
+    let lexer_debug = flag(args, "l")
+    let parser_debug = flag(args, "p")
+
     mut file_name: String? = None
     mut first_arg = true
+
     for arg in args.iterator() {
         if first_arg {
             first_arg = false
             continue
         }
-        match arg {
-            "-l" => {
-                if lexer_debug {
-                    eprintln("you can only have the -l option once")
-                    eprintln("{}", usage())
-                    return 1
-                } else {
-                    lexer_debug = true
-                }
-            }
-            "-p" => {
-                if parser_debug {
-                    eprintln("you can only have the -p option once")
-                    eprintln("{}", usage())
-                    return 1
-                } else {
-                    parser_debug = true
-                }
-            }
-            "-h" => {
-                println("{}\n", usage())
-                println("{}", help())
-                return 0
-            }
-            else => {
-                if file_name.has_value() {
-                    eprintln("you can only pass one file")
-                    eprintln("{}", usage())
-                    return 1
-                } else {
-                    file_name = arg
-                }
+        if arg != "-h" and arg != "-l" and arg != "-p" {
+            if file_name.has_value() {
+                eprintln("you can only pass one file")
+                eprintln("{}", usage())
+                return 1
+            } else {
+                file_name = arg
             }
         }
     }
     if not file_name.has_value() {
         eprintln("you must pass a source file")
         eprintln("{}", usage())
+        return 1
     }
 
     mut file = File::open_for_reading(file_name!)
