@@ -1,4 +1,4 @@
-/// Expect
+/// Expect:
 /// - error: "Type mismatch: expected ‘String’, but got ‘i64’\n"
 
 function main() {
