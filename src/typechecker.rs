@@ -1881,12 +1881,64 @@ pub fn typecheck_module(
         return err;
     }
 
+    let err = typecheck_namespace_fields(parsed_namespace, scope_id, project);
+    if err.is_some() {
+        return err;
+    }
+
     let err = typecheck_namespace_declarations(parsed_namespace, scope_id, project);
     if err.is_some() {
         return err;
     }
 
     None
+}
+
+pub fn typecheck_namespace_fields(
+    parsed_namespace: &ParsedNamespace,
+    scope_id: ScopeId,
+    project: &mut Project,
+) -> Option<JaktError> {
+    let mut error = None;
+
+    for namespace in parsed_namespace.namespaces.iter() {
+        if let Some(namespace_name) = &namespace.name {
+            // Typecheck struct fields in the named namespaces
+            let (namespace_scope_id, _) = project
+                .find_namespace_in_scope(scope_id, namespace_name)
+                .expect("internal error: can't find previously added namespace");
+
+            error = error.or(typecheck_namespace_fields(
+                namespace,
+                namespace_scope_id,
+                project,
+            ));
+        } else {
+            // Typecheck struct fields in the unnamed namespace
+            let namespace_scope_id = project.create_scope(scope_id, false);
+            project.get_scope_mut(namespace_scope_id).namespace_name = namespace.name.clone();
+            project
+                .get_scope_mut(scope_id)
+                .children
+                .push(namespace_scope_id);
+
+            error = error.or(typecheck_namespace_fields(
+                parsed_namespace,
+                namespace_scope_id,
+                project,
+            ))
+        }
+    }
+
+    for (_, structure) in parsed_namespace.structs.iter().enumerate() {
+        let struct_id = project
+            .find_struct_in_scope(scope_id, &structure.name)
+            .expect("internal error: can't find previously added struct");
+
+        error = error.or(typecheck_struct_fields(structure, struct_id, project));
+    }
+
+    error
 }
 
 pub fn typecheck_namespace_predecl(
@@ -2987,20 +3039,17 @@ fn typecheck_struct_predecl(
     error
 }
 
-fn typecheck_struct(
+fn typecheck_struct_fields(
     structure: &ParsedStruct,
     struct_id: StructId,
-    parent_scope_id: ScopeId,
     project: &mut Project,
 ) -> Option<JaktError> {
     let mut error = None;
 
     let mut fields = Vec::new();
 
-    let checked_struct = project.get_struct_mut(struct_id);
-    let checked_struct_scope_id = checked_struct.scope_id;
+    let checked_struct_scope_id = project.get_struct(struct_id).scope_id;
     let struct_type_id = project.find_or_add_type_id(Type::Struct(struct_id));
-    let module_id = project.current_module().id;
     project.current_struct_type_id = Some(struct_type_id);
 
     for unchecked_member in &structure.fields {
@@ -3021,6 +3070,24 @@ fn typecheck_struct(
         });
     }
 
+    project.get_struct_mut(struct_id).fields = fields;
+
+    error
+}
+
+fn typecheck_struct(
+    structure: &ParsedStruct,
+    struct_id: StructId,
+    parent_scope_id: ScopeId,
+    project: &mut Project,
+) -> Option<JaktError> {
+    let mut error = None;
+
+    let checked_struct_scope_id = project.get_struct(struct_id).scope_id;
+    let struct_type_id = project.find_or_add_type_id(Type::Struct(struct_id));
+    let module_id = project.current_module().id;
+    project.current_struct_type_id = Some(struct_type_id);
+
     if let Some(constructor_id) =
         project.find_function_in_scope(checked_struct_scope_id, &structure.name)
     {
@@ -3038,7 +3105,7 @@ fn typecheck_struct(
         // No constructor found, so let's make one
 
         let mut constructor_params = Vec::new();
-        for field in &fields {
+        for field in &project.get_struct(struct_id).fields {
             constructor_params.push(CheckedParameter {
                 requires_label: true,
                 variable: CheckedVariable {
@@ -3090,9 +3157,6 @@ fn typecheck_struct(
             error = error.or(Some(err));
         }
     }
-
-    let checked_struct = &mut project.get_struct_mut(struct_id);
-    checked_struct.fields = fields;
 
     for function in &structure.methods {
         error = error.or(typecheck_method(
