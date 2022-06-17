@@ -8,10 +8,9 @@
 
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
-import lexer { Lexer, Token }
-import parser { BinaryOperator, DefinitionLinkage, DefinitionType, ParsedCall, ParsedExpression, ParsedNamespace, Parser }
+import lexer { Lexer }
+import parser { Parser }
 import typechecker { Typechecker }
-import utility { panic, todo, Span }
 
 function usage() => "usage: jakt [-h] [OPTIONS] <path>"
 function help() => "Flags:\n  -h\t\tPrint this help and exit.\n  -l\t\tPrint debug info for the lexer.\n  -p\t\tPrint debug info for the parser."
