@@ -7,9 +7,18 @@ It currently transpiles to C++.
 **NOTE:** The language is under heavy development.
 
 ## Usage
-The transpilation to C++ requires `clang`. Make sure you have that installed.
+Firstly transpilation to C++ requires `clang`. Make sure you have that installed.
+
+Then compile the Jakt binary using the following command:
 ```
-jakt file.jakt
+cargo install --path .
+```
+Then compile your Jakt file using the following command: 
+```
+jakt <filename here>.jakt
+```
+Finally run the compiled binary using the following command:
+```
 ./build/file
 ```
 
