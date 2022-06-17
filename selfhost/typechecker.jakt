@@ -1752,6 +1752,25 @@ struct Typechecker {
             }
             yield CheckedExpression::Garbage(span)
         }
+        ForcedUnwrap(expr, span) => {
+            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
+            let optional_struct_id = .find_struct_in_prelude("Optional")
+            let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
+            let type_id = match .program.get_type(.expression_type(checked_expr)) {
+                GenericInstance(id, args) => {
+                    if not id.equals(optional_struct_id) {
+                        .error("Forced unwrap only works on Optional", span)
+                    }
+                    yield args[0]
+                }
+                else => {
+                    .error("Forced unwrap only works on Optional", span)
+                    yield UNKNOWN_TYPE_ID
+                }
+            }
+
+            yield CheckedExpression::ForcedUnwrap(expr: checked_expr, span, type_id)
+        }
         else => {
             panic("not complete")
 
