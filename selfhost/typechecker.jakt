@@ -489,6 +489,82 @@ enum NumberConstant {
         }
     }
 }
+// FIXME: Make this a member function of NumberConstant.
+//        Right now we cannot do that as the compiler does not know the CheckedNumericConstant
+//        constructors when we use them in a member function (https://github.com/SerenityOS/jakt/issues/677).
+function promote(anon num_const: NumberConstant, type_id: TypeId, program: CheckedProgram) -> CheckedNumericConstant? {
+    if not num_const.can_fit_number(type_id, program) {
+        return None
+    }
+
+    let bits = program.get_bits(type_id)
+    let is_signed = program.is_signed(type_id)
+    let new_constant = match num_const {
+        Signed(value) => match is_signed {
+            false => match bits {
+                8 => CheckedNumericConstant::U8(value as! u8)
+                16 => CheckedNumericConstant::U16(value as! u16)
+                32 => CheckedNumericConstant::U32(value as! u32)
+                64 => CheckedNumericConstant::U64(value as! u64)
+                else => {
+                    panic("Numeric constants can only be 8, 16, 32, or 64 bits long")
+                    yield CheckedNumericConstant::I64(0)
+                }
+            }
+            true => match bits {
+                8 => CheckedNumericConstant::I8(value as! i8)
+                16 => CheckedNumericConstant::I16(value as! i16)
+                32 => CheckedNumericConstant::I32(value as! i32)
+                64 => CheckedNumericConstant::I64(value)
+                else => {
+                    panic("Numeric constants can only be 8, 16, 32, or 64 bits long")
+                    yield CheckedNumericConstant::I64(0)
+                }
+            }
+        }
+        Unsigned(value) => match is_signed {
+            false => match bits {
+                8 => CheckedNumericConstant::U8(value as! u8)
+                16 => CheckedNumericConstant::U16(value as! u16)
+                32 => CheckedNumericConstant::U32(value as! u32)
+                64 => CheckedNumericConstant::U64(value)
+                else => {
+                    panic("Numeric constants can only be 8, 16, 32, or 64 bits long")
+                    yield CheckedNumericConstant::I64(0)
+                }
+            }
+            true => match bits {
+                8 => CheckedNumericConstant::I8(value as! i8)
+                16 => CheckedNumericConstant::I16(value as! i16)
+                32 => CheckedNumericConstant::I32(value as! i32)
+                64 => CheckedNumericConstant::I64(value as! i64)
+                else => {
+                    panic("Numeric constants can only be 8, 16, 32, or 64 bits long")
+                    yield CheckedNumericConstant::I64(0)
+                }
+            }
+        }
+        Floating(value) => match is_signed {
+            true => match bits {
+                32 => {
+                    todo("Add conversion from f64 to f32")
+                    yield CheckedNumericConstant::I64(0)
+                }
+                64 => CheckedNumericConstant::F64(value)
+                else => {
+                    panic("Floating numeric constants can only be 8, 16, 32, or 64 bits long")
+                    yield CheckedNumericConstant::I64(0)
+                }
+            }
+            false => {
+                panic("Floating numeric constant cannot be unsigned")
+                yield CheckedNumericConstant::I64(0)
+            }
+        }
+    }
+
+    return new_constant
+}
 
 enum CheckedNumericConstant {
     I8(i8)
