@@ -257,6 +257,23 @@ boxed enum Type {
         else => false
     }
 
+    function get_bits(this) -> i64 => match this {
+        U8 | I8 | CChar => 8
+        U16 | I16 => 16
+        U32 | I32 | CInt => 32
+        U64 | I64 | Usize => 64
+        F32 => 32
+        F64 => 64
+        else => 0
+    }
+
+    function is_signed(this) -> bool => match this {
+        I8 | I16 | I32 | I64 | CChar | CInt => true
+        U8 | U16 | U32 | U64 | Usize => false
+        F32 | F64 => true
+        else => false
+    }
+
     function min(this) -> i64 => match this {
         CChar => -128
         CInt => -2147483648
@@ -605,6 +622,10 @@ class CheckedProgram {
     public function is_numeric(this, anon type_id: TypeId) -> bool {
         return .is_integer(type_id) or .is_floating(type_id)
     }
+
+    public function get_bits(this, anon type_id: TypeId) => .get_type(type_id).get_bits()
+
+    public function is_signed(this, anon type_id: TypeId) => .get_type(type_id).is_signed()
 }
 
 struct Typechecker {
