@@ -1040,7 +1040,9 @@ struct Typechecker {
         return None
     }
 
-    function find_namespace_in_scope(this, scope_id: ScopeId, name: String) -> ScopeId? {
+    // Find the namespace in the current scope, or one of its parents,
+    // and whether the found scope was an import.
+    function find_namespace_in_scope(this, scope_id: ScopeId, name: String) -> (ScopeId, bool)? {
         mut current = scope_id;
 
         loop {
@@ -1050,7 +1052,7 @@ struct Typechecker {
                 let child_scope = .get_scope(child)
                 if child_scope.namespace_name.has_value() {
                     if name == child_scope.namespace_name.value() {
-                        return current
+                        return (current, false)
                     }
                 }
             }
@@ -1068,7 +1070,7 @@ struct Typechecker {
         for imp in .get_scope(ScopeId(module: module_id, id: 0)).imports.iterator() {
             if name == imp.0 {
                 let value = imp.1
-                return ScopeId(module: value.0, id: 0)
+                return (ScopeId(module: value.0, id: 0), true)
             }
         }
 
@@ -1298,7 +1300,7 @@ struct Typechecker {
                     let result = .find_namespace_in_scope(scope_id: current_namespace_scope_id, name: ns)
 
                     if result.has_value() {
-                        current_namespace_scope_id = result.value()
+                        current_namespace_scope_id = result!.0
                     } else {
                         .error(format("Unknown namespace: '{}'", ns), span)
                         return .new_inference()
