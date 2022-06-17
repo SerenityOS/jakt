@@ -256,6 +256,34 @@ boxed enum Type {
         Void | Bool | U8 | U16 | U32 | U64 | I8 | I16 | I32 | I64 | F32 | F64 | Usize | JaktString | CChar | CInt | CString => true
         else => false
     }
+
+    function min(this) -> i64 => match this {
+        CChar => -128
+        CInt => -2147483648
+        I8 => -128
+        I16 => -32768
+        I32 => -2147483648
+        // FIXME: this generates a warning in the C++ code
+        I64 => -9223372036854775808
+        U8 | U16 | U32 | U64 | Usize => 0
+        else => 0
+    }
+
+    function max(this) -> u64 => match this {
+        CChar => 127u64
+        CInt => 2147483647u64
+        I8 => 127u64
+        I16 => 32767u64
+        I32 => 2147483647u64
+        I64 => 9223372036854775807u64
+        U8 => 255u64
+        U16 => 65535u64
+        U32 => 4294967295u64
+        U64 => 18446744073709551615u64
+        // FIXME: Don't assume that usize is 64-bit
+        Usize => 18446744073709551615u64
+        else => 0u64
+    }
 }
 
 class Scope {
