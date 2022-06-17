@@ -70,9 +70,7 @@ function main(args: [String]) {
         }
     }
 
-    mut parser = Parser(index: 0, tokens, errors, ignore_errors: false)
-
-    let parsed_namespace = parser.parse_namespace()
+    let parsed_namespace = Parser::parse(tokens, errors)
 
     if parser_debug {
         println("{:#}", parsed_namespace);
