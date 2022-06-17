@@ -1,0 +1,185 @@
+// About this document
+// This is a EBNF *like* description of the Jakt Programming Language
+//
+// EBNF/LL1 dialect:
+// * Blocks are defined by an identifier and an equals, followed by the definition
+// * Literal Characters are surrounded by quotation-marks, preferably double-quotes
+// * Regex-literals matches are surrounded by forward-slashes
+// * Optional groups are surrounded by square-brackets
+// * Repeated groups are surrounded by curly-braces
+// * Groupings are surrounded by round-parentheses
+// * Comments are denoted by a double-slash in-front of them
+// * Multiple possible matches are separated by a vertical-bar/or-sign
+// * FIXME: This currently relies on left-side-recursion, which is not valid in LL(k)
+//
+// The most outer scope checks for `Declaration`s
+//
+// This is not yet as fine grained as it could be and does not differentiate
+// between some groups, so this is not (yet) a full guide to tokenization
+// Also the order of definitions and notation is currently not fully consistent
+
+// Stolen from https://webidl.spec.whatwg.org/#prod-i and adjusted to match Jakt more closely
+integer     = /-?([1-9][0-9]*|0[Xx][0-9A-Fa-f]+|0[Oo][0-7]*|0)([ui](8|16|32|64)|uz)?/
+float       = /-?(([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)([Ee][+-]?[0-9]+)?|[0-9]+[Ee][+-]?[0-9]+)(f(64|32))?/
+            | /-?([1-9][0-9]*|0)f(64|32)/
+identifier  = /_?[A-Za-z][0-9A-Z_a-z-]*/
+
+String      = '"' {EscapedChar} '"'
+ByteLiteral = "b'" EscapedChar "'"
+CChar       = "'" EscapedChar "'"
+
+EscapedChar = /([^\\]|\\.)/
+
+boolean_op = /[<>]|[<>=!]=/
+
+op  = /[+-*\/%|^&]/
+    | /[&|+-*\/]=/
+    | boolean_op
+    | /\?\?=?/ 
+lop = /++|--?|[*~]|/
+    | "not"
+    | "&raw"
+rop = /++|--/
+    | ("[" Expression "]")
+
+Constant         = integer
+                 | float
+                 | String
+                 | ByteLiteral
+                 | CChar
+                 | "None"
+                 | "true" | "false"
+
+BuiltinType      = /f(32|64)/
+                 | /[iu](8|16|32|64)/
+                 | "usize"
+                 | /c_(int|char)/
+                 | "bool"
+                 | "String"
+                 | "void"
+
+TypeExpression   = BuiltinType ["?"]
+                 | {identifier [GenericSpecifier] "::" } identifier [GenericSpecifier] ["?"]
+                 | "[" TypeExpression "]" ["?"]
+                 | "[" TypeExpression ":" TypeExpression "]" ["?"]
+                 | "{ TypeExpression "}" ["?"]
+                 | "raw" TypeExpression  ["?"]
+                 | "weak" TypeExpression "?"
+
+GenericSpecifier = "<" TypeExpression {"," TypeExpression} ">"
+
+ArrayLiteral     = "[" [ArrayItem [ArrayItems]] "]"
+                 | "[" Expression ";" integer "]"
+ArrayItems       = "," ArrayItem [ArrayItems]
+ArrayItem        = Expression
+
+MapLiteral       = "[:]"
+                 | "[" MapItem [MapItems] "]"
+MapItems         = "," MapItem [MapItems]
+MapItem          = Expression ":" Expression
+
+SetLiteral       = "{" [SetItem [SetItems]] "}"
+SetItems         = "," SetItem [SetItems]
+SetItem          = Expression
+
+Range            = Expression ".." Expression
+
+MatchExpression  = "match" Expression "{" {MatchCase} "}"
+MatchCase        = MatchKey "=>" Statement
+MatchKey         = MatchKey "|" MatchKey
+                 | {identifier "::"} identifier ["(" {identifier [":" identifier]} ")"]
+                 | Constant
+                 | "else"
+
+// FIXME: The second operand can be an Enum-Variant as well, but that is coincidentally
+//        also handled by the  TypeExpression
+IsExpression     = Expression "is" TypeExpression
+CastExpression   = Expression /as[!?]/ TypeExpression
+
+// FIXME: Generics are currently only allowed on the last part of the Expression
+Expression       = Expression op Expression
+                 | lop Expression
+                 | Expression rop
+                 | "(" Expression ")"
+                 | Constant
+                 | ArrayLiteral
+                 | MapLiteral
+                 | SetLiteral
+                 | Range
+                 | MatchExpression
+                 | IsExpression
+                 | CastExpression
+                 | identifier [GenericSpecifier] {"::" identifier [GenericSpecifier]}
+                 | [Expression] /!?\./ identifier [GenericSpecifier]
+                 | Expression "(" ArgumentList ")"
+
+Statement        = Expression  [";"]
+                 | DeclarationStatement
+                 | AssignmentStatement
+                 | ReturnStatement
+                 | YieldStatement
+                 | BlockStatement
+                 | ThrowStatement
+                 | IfStatement
+                 | TryStatement
+                 | ForStatement
+                 | LoopStatement
+                 | WhileStatement
+                 | "defer" Statement
+                 | "unsafe" BlockStatement
+                 | "cpp" "{" {String} "}"
+                 | "continue"
+                 | "break"
+
+DeclarationStatement = /let|mut/ identifier [":" TypeExpression] "=" Expression [";"]
+AssignmentStatement  = identifier "=" Expression [";"]
+ReturnStatement      = "return" [Expression] [";"]
+YieldStatement       = "yield" [Expression] [";"]
+ThrowStatement       = "throw" [Expression] [";"]
+
+BlockStatement       = "{" Statement "}"
+
+IfStatement          = "if" BooleanExpression BlockStatement ["else" BlockStatement]
+TryStatement         = "try" (Expression | BlockStatement) "catch" identifier BlockStatement
+ForStatement         = "for" identifier "in" Expression BlockStatement
+LoopStatement        = "loop" BlockStatement
+WhileStatement       = "while" Expression BlockStatement
+
+// NOTE: `mut this` is only allowed in ClassFunctions
+ParameterList   = ["mut"] "this" [Parameters]
+                | Parameter [Parameters]
+                |
+Parameters      = "," Parameter [Parameters]
+Parameter       = ["anon"] ["mut"] identifier ":" TypeExpression
+
+ArgumentList  = [Argument [Arguments]]^^
+Arguments     = "," Argument [Arguments]
+Argument      = [identifier ":"] Expression
+
+Declaration    = Comment
+               | Namespace
+               | Import
+               | Function
+               | Class
+               | Enum
+
+Comment        = /\/\/.*$/
+Namespace      = "namespace" identifier "{" {Declaration} "}"
+Import         = "import" identifier ["{" identifier {"," identifier} "}"]
+Function       = ["extern"] "function" identifier [GenericSpecifier] "(" ParameterList ")" ["->" TypeExpression] ["throws"] [("{" {Statement} "}") | ("=>" Expression)]
+
+// NOTE: This describes Classes and Structs
+Class          = ["extern"] ("class"|"struct") identifier "{" {ClassMembers} "}"
+ClassMembers   = ClassFunction | ClassMember
+ClassMember    = [AccessModifier ["mut"]] identifier ":" TypeExpression
+ClassFunction  = [AccessModifier] "function" identifier [GenericSpecifier] "(" ParameterList ")" ["->" TypeExpression] ["throws"] [("{" {Statement} "}") | ("=>" Expression)]
+AccessModifier = "public"
+               | "private"
+               | "restricted" "(" identifier [GenericSpecifier] {"," identifier [GenericSpecifier]} ")"
+
+Enum           = ["boxed"] "enum" identifier [GenericSpecifier] "{" EnumMember {EnumMember} "}"
+Enum           | "enum" identifier ":" TypeExpression "{" EnumMember {EnumMember} "}"
+// FIXME: `restricted(...)` is currently not allowed on Enums
+EnumMember     = ClassFunction
+               | identifier ["(" [identifier ":"] TypeExpression {"," [identifier ":"] TypeExpression} ")"]
+               | identifier "=" Expression
