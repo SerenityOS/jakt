@@ -1731,6 +1731,27 @@ struct Typechecker {
             let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
             yield CheckedExpression::JaktArray(vals, repeat, span, type_id)
         }
+        MethodCall(expr, call, span) => {
+            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
+            let checked_expr_type = .program.get_type(.expression_type(checked_expr))
+            yield match checked_expr_type {
+                GenericInstance(id) => {
+                    let checked_call = .typecheck_call(call, scope_id, span, safety_mode)
+                    yield match checked_call {
+                        Call(call, span, type_id) => CheckedExpression::MethodCall(expr: checked_expr, call, span, type_id)
+                        else => {
+                            panic("typecheck_call should always return CheckedExpression::Call")
+                            yield CheckedExpression::Garbage(span)
+                        }
+                    }
+                }
+                else => {
+                    todo(format("got expr type: {}", checked_expr_type))
+                    yield CheckedExpression::Garbage(span)
+                }
+            }
+            yield CheckedExpression::Garbage(span)
+        }
         else => {
             panic("not complete")
 
@@ -1769,6 +1790,13 @@ struct Typechecker {
                 }
             }
             else => {
+                let callee_function_id = .resolve_call(call, resolved_namespaces: [], span, callee_scope_id: scope_id, must_be_enum_constructor: false)
+                if callee_function_id.has_value() {
+                    let callee = .program.get_function(callee_function_id!)
+                    return_type = callee.return_type_id
+                    callee_throws = callee.can_throw
+                }
+
                 for arg in call.args.iterator() {
 
                     // FIXME: Check argument labels
@@ -1784,5 +1812,19 @@ struct Typechecker {
 
         let none_function_id: FunctionId? = None
         return CheckedExpression::Call(call: CheckedCall(namespace_: [], name: call.name, args, function_id: none_function_id, return_type, callee_throws), span, type_id: return_type)
+    }
+
+    function resolve_call(mut this,call: ParsedCall, resolved_namespaces: [ResolvedNamespace], span: Span, callee_scope_id: ScopeId, must_be_enum_constructor: bool) -> FunctionId? {
+        // TODO: Resolve namespaces from left to right.
+
+        // 1. Look for a function with this name.
+        let function_id = .find_function_in_scope(parent_scope_id: callee_scope_id, function_name: call.name)
+        if function_id.has_value() {
+            return function_id!
+        }
+        // 2. Look for a struct, class or enum constructor with this name.
+        // 3. Find most similar name to give an error hint.
+
+        return None
     }
 }
