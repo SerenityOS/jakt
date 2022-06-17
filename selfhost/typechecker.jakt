@@ -1828,9 +1828,10 @@ struct Typechecker {
             let from_span = .expression_span(checked_from)
             let to_span = .expression_span(checked_to)
 
-            .unify(lhs: from_type, lhs_span: from_span, rhs: to_type, rhs_span: from_span)
+            let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
+            let type_id = .unify(lhs: from_type, lhs_span: from_span, rhs: to_type, rhs_span: from_span) ?? UNKNOWN_TYPE_ID
 
-            yield CheckedExpression::Range(from: checked_from, to: checked_to, span, type_id: from_type)
+            yield CheckedExpression::Range(from: checked_from, to: checked_to, span, type_id)
         }
         BinaryOp(lhs, op, rhs, span) => {
             let checked_lhs = .typecheck_expression(lhs, scope_id, safety_mode)
