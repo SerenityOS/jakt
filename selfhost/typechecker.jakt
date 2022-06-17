@@ -464,6 +464,30 @@ enum NumberConstant {
     Signed(i64)
     Unsigned(u64)
     Floating(f64)
+
+    function can_fit_number(this, type_id: TypeId, program: CheckedProgram) -> bool {
+        let type_ = program.get_type(type_id)
+
+        return match this {
+            Signed(value) => match type_ {
+                I64 => true
+                U64 | Usize => value >= 0
+                else => program.is_integer(type_id) and value >= type_.min() and value <= (type_.max() as! i64)
+            }
+            Unsigned(value) => match type_ {
+                U64 | Usize => true
+                else => program.is_integer(type_id) and value <= type_.max()
+            }
+            Floating(value) => match type_ {
+                F32 => {
+                    todo("Implement casting f32 to f64")
+                    yield false
+                }
+                F64 => true
+                else => false
+            }
+        }
+    }
 }
 
 enum CheckedNumericConstant {
