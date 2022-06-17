@@ -36,6 +36,10 @@ struct StructId {
 struct EnumId {
     module: ModuleId
     id: usize
+
+    function equals(this, anon rhs: EnumId) -> bool {
+        return this.module.id == rhs.module.id and this.id == rhs.id
+    }
 }
 
 struct TypeId {
@@ -49,6 +53,13 @@ struct TypeId {
 
 struct InferenceId {
     id: usize
+
+    function equals(this, anon rhs: InferenceId) -> bool {
+        // FIXME: this should do follow the inference id
+        // to see what the type is being inferred to be,
+        // and check if both types are equal
+        return this.id == rhs.id
+    }
 }
 
 struct ScopeId {
@@ -107,7 +118,136 @@ boxed enum Type {
             return true
         } else if this is Bool and rhs is Bool {
             return true
+        } else if this is U8 and rhs is U8 {
+            return true
+        } else if this is U16 and rhs is U16 {
+            return true
+        } else if this is U32 and rhs is U32 {
+            return true
+        } else if this is U64 and rhs is U64 {
+            return true
+        } else if this is I8 and rhs is I8 {
+            return true
+        } else if this is I16 and rhs is I16 {
+            return true
+        } else if this is I32 and rhs is I32 {
+            return true
+        } else if this is I64 and rhs is I64 {
+            return true
+        } else if this is F32 and rhs is F32 {
+            return true
+        } else if this is F64 and rhs is F64 {
+            return true
+        } else if this is Usize and rhs is Usize {
+            return true
+        } else if this is JaktString and rhs is JaktString {
+            return true
+        } else if this is CChar and rhs is CChar {
+            return true
+        } else if this is CInt and rhs is CInt {
+            return true
+        } else if this is CString and rhs is CString {
+            return true
         } else {
+            match this {
+                TypeVariable(lhs_name) => {
+                    match rhs {
+                        TypeVariable(rhs_name) => {
+                            return lhs_name == rhs_name
+                        }
+                        else => {
+                            return false
+                        }
+                    }
+                }
+                GenericInstance(id: lhs_id, args: lhs_args) => {
+                    match rhs {
+                        GenericInstance(id: rhs_id, args: rhs_args) => {
+                            if lhs_id.equals(rhs_id) and lhs_args.size() == rhs_args.size() {
+                                mut idx = 0uz
+
+                                while idx < lhs_args.size() {
+                                    if lhs_args[idx].equals(rhs_args[idx]) {
+                                        return false
+                                    }
+                                    idx++
+                                }
+                                return true
+                            }
+                            return false
+                        }
+                        else => {
+                            return false
+                        }
+                    }
+                    return false
+                }
+                GenericEnumInstance(id: lhs_id, args: lhs_args) => {
+                    match rhs {
+                        GenericEnumInstance(id: rhs_id, args: rhs_args) => {
+                            if lhs_id.equals(rhs_id) and lhs_args.size() == rhs_args.size() {
+                                mut idx = 0uz
+
+                                while idx < lhs_args.size() {
+                                    if lhs_args[idx].equals(rhs_args[idx]) {
+                                        return false
+                                    }
+                                    idx++
+                                }
+                                return true
+                            }
+                            return false
+                        }
+                        else => {
+                            return false
+                        }
+                    }
+                    return false
+                }
+                Struct(lhs_id) => {
+                    match rhs {
+                        Struct(rhs_id) => {
+                            return lhs_id.equals(rhs_id)
+                        }
+                        else => {
+                            return false
+                        }
+                    }
+                }
+                Enum(lhs_id) => {
+                    match rhs {
+                        Enum(rhs_id) => {
+                            return lhs_id.equals(rhs_id)
+                        }
+                        else => {
+                            return false
+                        }
+                    }
+                }
+                Inference(lhs_id) => {
+                    match rhs {
+                        Inference(rhs_id) => {
+                            return lhs_id.equals(rhs_id)
+                        }
+                        else => {
+                            return false
+                        }
+                    }
+                }
+                RawPtr(lhs_id) => {
+                    match rhs {
+                        RawPtr(rhs_id) => {
+                            return lhs_id.equals(rhs_id)
+                        }
+                        else => {
+                            return false
+                        }
+                    }
+                }
+                else => {
+                    return false
+                }
+            }
             return false
         }
     }
@@ -612,13 +752,13 @@ struct Typechecker {
         else => false
     }
 
-    function unify(mut this, lhs: TypeId, lhs_span: Span, rhs: TypeId, rhs_span: Span) throws -> (TypeId, bool) {
+    function unify(mut this, lhs: TypeId, lhs_span: Span, rhs: TypeId, rhs_span: Span) throws -> TypeId? {
         // FIXME: Add more unification logic
         if lhs.id != rhs.id {
             .error("types incompatible ", rhs_span)
-            return (lhs, true)
+            return None
         } else {
-            return (lhs, false)
+            return lhs
         }
     }
 
@@ -1179,10 +1319,10 @@ struct Typechecker {
                 }
 
                 let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
-                if result.1 {
+                if not result.has_value() {
                     .error(format("Assignment between incompatible types (‘{}’ and ‘{}’)", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
                 }
-                return result.0
+                return result.value_or(lhs_type_id)
             }
             AddAssign | SubtractAssign | MultiplyAssign | DivideAssign | ModuloAssign | BitwiseAndAssign | BitwiseOrAssign | BitwiseXorAssign | BitwiseLeftShiftAssign | BitwiseRightShiftAssign => {
                 let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
