@@ -373,6 +373,11 @@ struct Parser {
     errors: [JaktError]
     ignore_errors: bool
 
+    function parse(tokens: [Token], errors: [JaktError]) throws -> ParsedNamespace {
+        mut parser = Parser(index: 0, tokens, errors, ignore_errors: false)
+        return parser.parse_namespace()
+    }
+
     function error(mut this, anon message: String, anon span: Span) throws {
         if not .ignore_errors {
             .errors.push(JaktError::Message(message, span))
