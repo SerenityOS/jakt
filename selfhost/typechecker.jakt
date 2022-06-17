@@ -1494,8 +1494,9 @@ struct Typechecker {
         let rhs = .expression_type(checked_expr)
         let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
 
-        if lhs.equals(UNKNOWN_TYPE_ID) and not rhs.equals(UNKNOWN_TYPE_ID) {
-            lhs = rhs
+        match .get_type(lhs) {
+            Inference(i) => {lhs = rhs}
+            else => {}
         }
 
         .try_to_promote_constant_expr_to_type(lhs_type: lhs, checked_rhs: checked_expr, span: init.span())
