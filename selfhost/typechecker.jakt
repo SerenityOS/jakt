@@ -878,7 +878,8 @@ struct Typechecker {
 
         let result = promote(rhs_constant, type_id: lhs_type, program: .program)
         if not result.has_value() {
-            .error("Integer promotion failed", span)
+            let type = .get_type(lhs_type)
+            .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type.min(), type.max(), .type_name(lhs_type)), span)
             return None
         }
         let new_constant = result!
