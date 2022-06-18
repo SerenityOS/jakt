@@ -456,6 +456,7 @@ boxed enum CheckedStatement {
     Throw(CheckedExpression)
     Yield(CheckedExpression)
     Try(stmt: CheckedStatement, error_name: String, catch_block: CheckedBlock)
+    InlineCpp([String])
     Garbage
 }
 
@@ -1683,6 +1684,7 @@ struct Typechecker {
         Yield(expr) => CheckedStatement::Yield(.typecheck_expression(expr, scope_id, safety_mode))
         Return(expr) => .typecheck_return(expr, scope_id, safety_mode)
         Block(parsed_block) => .typecheck_block_statement(parsed_block, scope_id, safety_mode)
+        InlineCpp(block, span) => .typecheck_inline_cpp(block, span, safety_mode)
         Defer(statement, span) => .typecheck_defer(statement, scope_id, safety_mode, span)
         Loop(parsed_block) => .typecheck_loop(parsed_block, scope_id, safety_mode)
         Try(stmt, error_name, error_span, catch_block) => .typecheck_try(stmt, error_name, error_span, catch_block, scope_id, safety_mode)
@@ -1857,6 +1859,33 @@ struct Typechecker {
             .error("A block used as a statement cannot yield values, as the value cannot be observed in any way", parsed_block.find_yield_span()!)
         }
         return CheckedStatement::Block(checked_block)
+    }
+
+    function typecheck_inline_cpp(mut this, block: ParsedBlock, span: Span, safety_mode: SafetyMode) throws -> CheckedStatement {
+
+            match safety_mode {
+                Safe => .error("Use of inline cpp block outside of unsafe block", span)
+                else => {}
+            }
+
+            mut strings: [String] = []
+            for statement in block.stmts.iterator() {
+                match statement {
+                    ParsedStatement::Expression(expression) => {
+                        match expression {
+                            ParsedExpression::QuotedString(val, span) => {
+                                strings.push(val)
+                            }
+                            else => .error("Expected block of strings", span)
+                        }
+                    }
+                    else => {
+                        .error("Expected block of strings", span)
+                    }
+                }
+            }
+
+            return CheckedStatement::InlineCpp(strings)
     }
 
     function typecheck_return(mut this, expr: ParsedExpression?, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
