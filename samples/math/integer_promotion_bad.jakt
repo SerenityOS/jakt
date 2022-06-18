@@ -1,0 +1,6 @@
+/// Expect:
+/// - error: "Integer promotion failed"
+
+function main() {
+    let a: i16 = 64000
+}
