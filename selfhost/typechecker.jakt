@@ -2074,6 +2074,34 @@ struct Typechecker {
             let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
             yield CheckedExpression::JaktArray(vals, repeat, span, type_id)
         }
+        IndexedExpression(base, index, span) => {
+            let checked_base = .typecheck_expression(base, scope_id, safety_mode)
+            let checked_index = .typecheck_expression(index, scope_id, safety_mode)
+
+            let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
+            let array_struct_id = .find_struct_in_prelude("Array")
+            let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
+            mut expr_type_id = UNKNOWN_TYPE_ID;
+
+            match .get_type(.expression_type(checked_base)) {
+                GenericInstance(id, args) => {
+                    if id.equals(array_struct_id) {
+                        if .is_integer(.expression_type(checked_index)) {
+                            expr_type_id = args[0]
+                        } else {
+                            .error("Index is not an integer", span)
+                        }
+                    } else if id.equals(dictionary_struct_id) {
+                        expr_type_id = args[1]
+                    }
+                }
+                else => {
+                    .error("Index used on value that cannot be indexed", span)
+                }
+            }
+
+            yield CheckedExpression::IndexedExpression(expr: checked_base, index: checked_index, span, type_id: expr_type_id)
+        }
         else => {
             panic("not complete")
 
