@@ -919,7 +919,8 @@ struct Typechecker {
         let type = .get_type(type_id)
 
         return match type {
-            Void => "void"
+            F32 => "f32"
+            F64 => "f64"
             I8 => "i8"
             I16 => "i16"
             I32 => "i32"
@@ -928,19 +929,81 @@ struct Typechecker {
             U16 => "u16"
             U32 => "u32"
             U64 => "u64"
-            F32 => "f32"
-            F64 => "f64"
             Usize => "usize"
             CChar => "c_char"
             CInt => "c_int"
             Bool => "bool"
+            CString => "c_string"
+            Void => "void"
             JaktString => "String"
-            else => match type {
-                Enum(id) => .get_enum(id).name
-                Struct(id) => .get_struct(id).name
-                GenericEnumInstance(id, args) => {
-                    mut output = format("enum {}", .get_enum(id).name)
+            Enum(id) => .get_enum(id).name
+            Struct(id) => .get_struct(id).name
+            GenericEnumInstance(id, args) => {
+                mut output = format("enum {}", .get_enum(id).name)
 
+                output += "<"
+                mut first = true
+                for arg in args.iterator() {
+                    if not first {
+                        output += ", "
+                    } else {
+                        first = false
+                    }
+
+                    output += .type_name(arg)
+                }
+
+                output += ">"
+
+                yield output
+            }
+            GenericInstance(id, args) => {
+                // FIXME: remove prelude_struct_id debugging branch once prelude is added
+                let prelude_struct_id = StructId(module: ModuleId(id:0), id:0)
+
+                let array_struct_id = .find_struct_in_prelude("Array")
+                let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
+                let optional_struct_id = .find_struct_in_prelude("Optional")
+                let range_struct_id = .find_struct_in_prelude("Range")
+                let set_struct_id = .find_struct_in_prelude("Set")
+                let tuple_struct_id = .find_struct_in_prelude("Tuple")
+                let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
+
+                mut output = ""
+
+                if id.equals(prelude_struct_id) {
+                    mut arg_names: [String] = []
+                    for type_id in args.iterator() {
+                        arg_names.push(.type_name(type_id))
+                    }
+                    output = format("TODO prelude struct: {}, args: {}", id, arg_names)
+                } else if id.equals(array_struct_id) {
+                    output = format("[{}]", .type_name(args[0]))
+                } else if id.equals(dictionary_struct_id) {
+                    output = format("[{}:{}]", .type_name(args[0]), .type_name(args[1]))
+                } else if id.equals(optional_struct_id) {
+                    output = format("{}?", .type_name(args[0]))
+                } else if id.equals(range_struct_id) {
+                    output = format("{}..{}", .type_name(args[0]), .type_name(args[0]))
+                } else if id.equals(set_struct_id) {
+                    output = format("{{{}}}", .type_name(args[0]))
+                } else if id.equals(tuple_struct_id) {
+                    output = "("
+                    mut first = true
+                    for arg in args.iterator() {
+                        if not first {
+                            output += ", "
+                        } else {
+                            first = false
+                        }
+                        output += .type_name(type_id)
+                    }
+                    output += "}"
+                } else if id.equals(weak_ptr_struct_id) {
+                    output = format("weak {}?", .type_name(args[0]))
+                } else {
+                    let structure = .get_struct(id)
+                    output = structure.name
                     output += "<"
                     mut first = true
                     for arg in args.iterator() {
@@ -949,81 +1012,16 @@ struct Typechecker {
                         } else {
                             first = false
                         }
-
-                        output += .type_name(arg)
+                        output += .type_name(type_id)
                     }
-
                     output += ">"
-
-                    yield output
                 }
-                GenericInstance(id, args) => {
-                    // FIXME: remove prelude_struct_id debugging branch once prelude is added
-                    let prelude_struct_id = StructId(module: ModuleId(id:0), id:0)
 
-                    let array_struct_id = .find_struct_in_prelude("Array")
-                    let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
-                    let optional_struct_id = .find_struct_in_prelude("Optional")
-                    let range_struct_id = .find_struct_in_prelude("Range")
-                    let set_struct_id = .find_struct_in_prelude("Set")
-                    let tuple_struct_id = .find_struct_in_prelude("Tuple")
-                    let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
-
-                    mut output = ""
-
-                    if id.equals(prelude_struct_id) {
-                        mut arg_names: [String] = []
-                        for type_id in args.iterator() {
-                            arg_names.push(.type_name(type_id))
-                        }
-                        output = format("TODO prelude struct: {}, args: {}", id, arg_names)
-                    } else if id.equals(array_struct_id) {
-                        output = format("[{}]", .type_name(args[0]))
-                    } else if id.equals(dictionary_struct_id) {
-                        output = format("[{}:{}]", .type_name(args[0]), .type_name(args[1]))
-                    } else if id.equals(optional_struct_id) {
-                        output = format("{}?", .type_name(args[0]))
-                    } else if id.equals(range_struct_id) {
-                        output = format("{}..{}", .type_name(args[0]), .type_name(args[0]))
-                    } else if id.equals(set_struct_id) {
-                        output = format("{{{}}}", .type_name(args[0]))
-                    } else if id.equals(tuple_struct_id) {
-                        output = "("
-                        mut first = true
-                        for arg in args.iterator() {
-                            if not first {
-                                output += ", "
-                            } else {
-                                first = false
-                            }
-                            output += .type_name(type_id)
-                        }
-                        output += "}"
-                    } else if id.equals(weak_ptr_struct_id) {
-                        output = format("weak {}?", .type_name(args[0]))
-                    } else {
-                        let structure = .get_struct(id)
-                        output = structure.name
-                        output += "<"
-                        mut first = true
-                        for arg in args.iterator() {
-                            if not first {
-                                output += ", "
-                            } else {
-                                first = false
-                            }
-                            output += .type_name(type_id)
-                        }
-                        output += ">"
-                    }
-
-                    yield output
-                }
-                TypeVariable(name) => name
-                Inference(inference_id) => "TODO Inference"
-                RawPtr(type_id) => format("raw {}", .type_name(type_id))
-                else => format("TODO {}", type)
+                yield output
             }
+            TypeVariable(name) => name
+            Inference(inference_id) => "TODO Inference"
+            RawPtr(type_id) => format("raw {}", .type_name(type_id))
         }
     }
 
