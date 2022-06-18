@@ -511,7 +511,7 @@ function promote(anon num_const: NumberConstant, type_id: TypeId, program: Check
                     yield CheckedNumericConstant::I64(0)
                 }
             }
-            true => match bits {
+            else => match bits {
                 8 => CheckedNumericConstant::I8(value as! i8)
                 16 => CheckedNumericConstant::I16(value as! i16)
                 32 => CheckedNumericConstant::I32(value as! i32)
@@ -533,7 +533,7 @@ function promote(anon num_const: NumberConstant, type_id: TypeId, program: Check
                     yield CheckedNumericConstant::I64(0)
                 }
             }
-            true => match bits {
+            else => match bits {
                 8 => CheckedNumericConstant::I8(value as! i8)
                 16 => CheckedNumericConstant::I16(value as! i16)
                 32 => CheckedNumericConstant::I32(value as! i32)
@@ -556,7 +556,7 @@ function promote(anon num_const: NumberConstant, type_id: TypeId, program: Check
                     yield CheckedNumericConstant::I64(0)
                 }
             }
-            false => {
+            else => {
                 panic("Floating numeric constant cannot be unsigned")
                 yield CheckedNumericConstant::I64(0)
             }
@@ -867,7 +867,7 @@ struct Typechecker {
         }
         let new_constant = result!
 
-        return CheckedExpression::NumericConstant(new_constant, span, type_id: lhs_type)
+        return CheckedExpression::NumericConstant(val: new_constant, span, type_id: lhs_type)
     }
 
     function type_name(this, anon type_id: TypeId) throws -> String {
@@ -1839,7 +1839,7 @@ struct Typechecker {
 
             let lhs_type = .expression_type(checked_lhs)
 
-            let promoted_rhs = .try_to_promote_constant_expr_to_type(lhs_type, checked_rhs, span)?
+            let promoted_rhs = .try_to_promote_constant_expr_to_type(lhs_type, checked_rhs, span)
             if promoted_rhs.has_value() {
                 checked_rhs = promoted_rhs!
             }
