@@ -823,12 +823,12 @@ void vdbgln(StringView fmtstr, TypeErasedFormatParams& params)
             ts = TimeManagement::the().monotonic_time(TimePrecision::Coarse).to_timespec();
         if (Kernel::Thread::current()) {
             auto& thread = *Kernel::Thread::current();
-            builder.appendff("{}.{:03} \033[34;1m[#{} {}({}:{})]\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000, Kernel::Processor::current_id(), thread.process().name(), thread.pid().value(), thread.tid().value());
+            MUST(builder.appendff("{}.{:03} \033[34;1m[#{} {}({}:{})]\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000, Kernel::Processor::current_id(), thread.process().name(), thread.pid().value(), thread.tid().value()));
         } else {
-            builder.appendff("{}.{:03} \033[34;1m[#{} Kernel]\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000, Kernel::Processor::current_id());
+            MUST(builder.appendff("{}.{:03} \033[34;1m[#{} Kernel]\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000, Kernel::Processor::current_id()));
         }
     } else {
-        builder.appendff("\033[34;1m[Kernel]\033[0m: ");
+        MUST(builder.appendff("\033[34;1m[Kernel]\033[0m: "));
     }
 #    else
     static TriState got_process_name = TriState::Unknown;
@@ -843,7 +843,7 @@ void vdbgln(StringView fmtstr, TypeErasedFormatParams& params)
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC_COARSE, &ts);
     if (got_process_name == TriState::True)
-        builder.appendff("{}.{:03} \033[33;1m{}({}:{})\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000, process_name_buffer, getpid(), gettid());
+        MUST(builder.appendff("{}.{:03} \033[33;1m{}({}:{})\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000, process_name_buffer, getpid(), gettid()));
 #    endif
 #endif
 
@@ -878,9 +878,9 @@ void vdmesgln(StringView fmtstr, TypeErasedFormatParams& params)
 
     if (Kernel::Processor::is_initialized() && Kernel::Thread::current()) {
         auto& thread = *Kernel::Thread::current();
-        builder.appendff("{}.{:03} \033[34;1m[{}({}:{})]\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000, thread.process().name(), thread.pid().value(), thread.tid().value());
+        MUST(builder.appendff("{}.{:03} \033[34;1m[{}({}:{})]\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000, thread.process().name(), thread.pid().value(), thread.tid().value()));
     } else {
-        builder.appendff("{}.{:03} \033[34;1m[Kernel]\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000);
+        MUST(builder.appendff("{}.{:03} \033[34;1m[Kernel]\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000));
     }
 #    endif
 
@@ -900,9 +900,9 @@ void v_critical_dmesgln(StringView fmtstr, TypeErasedFormatParams& params)
 #    ifdef __serenity__
     if (Kernel::Processor::is_initialized() && Kernel::Thread::current()) {
         auto& thread = *Kernel::Thread::current();
-        builder.appendff("[{}({}:{})]: ", thread.process().name(), thread.pid().value(), thread.tid().value());
+        MUST(builder.appendff("[{}({}:{})]: ", thread.process().name(), thread.pid().value(), thread.tid().value()));
     } else {
-        builder.appendff("[Kernel]: ");
+        MUST(builder.appendff("[Kernel]: "));
     }
 #    endif
 
