@@ -841,13 +841,28 @@ struct Typechecker {
         return StructId(module: ModuleId(id: 0), id: 0)
 
         // start at the prelude scope id
-        for entry in .get_scope(ScopeId(module: ModuleId(id: 0), id: 0)).structs.iterator() {
-            if entry.0 == name {
-                return entry.1
-            }
+        let scope_id = ScopeId(module: ModuleId(id: 0), id: 0)
+        let struct_id = .find_struct_in_scope(scope_id, name)
+        if struct_id.has_value() {
+            return struct_id.value()
         }
+
         panic(format("internal error: {} builtin definition not found" name))
         return StructId(module: ModuleId(id: 0), id: 0)
+    }
+
+    function find_type_in_prelude(this, anon name: String) throws -> TypeId {
+        // FIXME: Remove this short-circuit once we actually start parsing the prelude!
+        return TypeId(module: ModuleId(id: 0), id: 0)
+
+        // start at the prelude scope id
+        let scope_id = ScopeId(module: ModuleId(id: 0), id: 0)
+        let type_id = .find_type_in_scope(scope_id, name)
+        if type_id.has_value() {
+            return type_id.value()
+        }
+        panic(format("internal error: {} builtin definition not found" name))
+        return TypeId(module: ModuleId(id: 0), id: 0)
     }
 
     function try_to_promote_constant_expr_to_type(mut this, lhs_type: TypeId, checked_rhs: CheckedExpression, span: Span) throws -> CheckedExpression? {
@@ -1704,6 +1719,7 @@ struct Typechecker {
         Defer(statement, span) => .typecheck_defer(statement, scope_id, safety_mode, span)
         Loop(parsed_block) => .typecheck_loop(parsed_block, scope_id, safety_mode)
         Try(stmt, error_name, error_span, catch_block) => .typecheck_try(stmt, error_name, error_span, catch_block, scope_id, safety_mode)
+        Throw(expr) => .typecheck_throw(expr, scope_id, safety_mode)
         While(guard, block) => .typecheck_while(guard, block, scope_id, safety_mode)
         Continue => CheckedStatement::Continue
         Break => CheckedStatement::Break
@@ -1843,6 +1859,23 @@ struct Typechecker {
         let checked_catch_block = .typecheck_block(catch_block, parent_scope_id: catch_scope_id, safety_mode)
 
         return CheckedStatement::Try(stmt: checked_stmt, error_name, catch_block: checked_catch_block)
+    }
+
+    function typecheck_throw(mut this, expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
+
+        let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
+
+        let error_type_id = .find_type_in_prelude("Error")
+        if not .expression_type(checked_expr).equals(error_type_id) {
+            .error("throw expression does not produce an error", expr.span())
+        }
+
+        let scope = .get_scope(scope_id)
+        if not scope.can_throw {
+            .error("Throw statment needs to be in a try statement or a function marked as throws", expr.span())
+        }
+
+        return CheckedStatement::Throw(checked_expr)
     }
 
     function typecheck_loop(mut this, parsed_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
