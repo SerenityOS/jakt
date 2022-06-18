@@ -1899,6 +1899,32 @@ struct Typechecker {
                 }
             }
         }
+        ForcedUnwrap(expr, span) => {
+            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
+            let type = .get_type(.expression_type(checked_expr))
+
+            let optional_struct_id = .find_struct_in_prelude("Optional")
+            let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
+            let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
+
+            let type_id: TypeId = match type {
+                GenericInstance(id, args) => {
+                    mut inner_type_id = UNKNOWN_TYPE_ID
+                    if  id.equals(optional_struct_id) or id.equals(weakptr_struct_id) {
+                        inner_type_id = args[0]
+                    } else {
+                        .error("Forced unwrap only works on Optional", span)
+                    }
+                    yield inner_type_id
+                }
+                else => {
+                    .error("Forced unwrap only works on Optional", span)
+                    yield TypeId(module: ModuleId(id: 0), id: 0)
+                }
+            }
+
+            yield CheckedExpression::ForcedUnwrap(expr: checked_expr, span, type_id)
+        }
         else => {
             panic("not complete")
 
