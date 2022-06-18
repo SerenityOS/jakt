@@ -393,11 +393,11 @@ struct Lexer {
 
         mut total: i64 = 0
 
-        if (.eof()) {
+        if local_index >= .input.size() {
             return None
         }
 
-        while (not .eof()) and is_ascii_digit(.input[local_index]) {
+        while (local_index < .input.size()) and is_ascii_digit(.input[local_index]) {
             let value = .input[local_index]
             local_index += 1
             let digit: i64 = as_saturated(value - b'0')
