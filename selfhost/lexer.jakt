@@ -12,11 +12,25 @@ function is_ascii_digit(anon c: u8) -> bool => (c >= b'0' and c <= b'9')
 function is_ascii_hexdigit(anon c: u8) -> bool => (c >= b'0' and c <= b'9') or (c >= b'a' and c <= b'f') or (c >= b'A' and c <= b'F')
 function is_ascii_alphanumeric(anon c: u8) -> bool => is_ascii_alpha(c) or is_ascii_digit(c)
 
+enum LiteralSuffix {
+    UZ,
+    U8,
+    U16,
+    U32,
+    U64,
+    I8,
+    I16,
+    I32,
+    I64,
+    F32,
+    F64
+}
+
 enum Token {
     SingleQuotedString(quote: String, span: Span)
     SingleQuotedByteString(quote: String, span: Span)
     QuotedString(quote: String, span: Span)
-    Number(number: i64, span: Span)
+    Number(number: i64, literal_suffix: LiteralSuffix?, span: Span)
     Identifier(name: String, span: Span)
     Semicolon(Span)
     Colon(Span)
@@ -270,6 +284,14 @@ enum Token {
     }
 }
 
+// Can't return tuples from function. Thus created this intermediate struct.
+struct ReadIntegerResult {
+    // Integer parsed if found
+    public integer: i64
+    // New index to start lex if used.
+    public new_index: usize 
+}
+
 struct Lexer {
     index: usize
     input: [u8]
@@ -292,6 +314,7 @@ struct Lexer {
 
     // Peek at next upcoming character
     function peek(this) -> u8 {
+        println("input length: {}, index: {}", .input.size(), .index)
         if .eof() {
             return 0
         }
@@ -363,24 +386,105 @@ struct Lexer {
         return Token::SingleQuotedString(quote: str, span: Span(start, end))
     }
 
+    function read_ascii_integer(mut this, mut start_index: usize) -> ReadIntegerResult? {
+        println("read_ascii_integer")
+
+        mut local_index = start_index
+
+        mut total: i64 = 0
+
+        if (.eof()) {
+            return None
+        }
+
+        while (not .eof()) and is_ascii_digit(.input[local_index]) {
+            let value = .input[local_index]
+            local_index += 1
+            let digit: i64 = as_saturated(value - b'0')
+            total = total * 10 + digit
+        }
+
+        if (local_index != start_index) {
+            println("exit read_ascii_integer")
+            return ReadIntegerResult(integer: total, new_index: local_index)
+        } else {
+            println("exit read_ascii_integer")
+            return None
+        }
+    }
+
+    function read_literal_suffix(mut this) -> LiteralSuffix? {
+        println("read_literal_suffix")
+
+        let number_width_result = .read_ascii_integer(start_index: .index + 1)
+        if (not number_width_result.has_value()) {
+            return None
+        }
+
+        let number_width = number_width_result.value().integer
+        let new_index = number_width_result.value().new_index
+
+        // Doing this ugly thing because yield doesn't work with optional enums
+        mut result: LiteralSuffix? = None
+        let suffix_letter = .peek()
+        match suffix_letter {
+            b'u' => {
+                match number_width {
+                    8 => { result = LiteralSuffix::U8 }
+                    16 => { result = LiteralSuffix::U16 }
+                    32 => { result = LiteralSuffix::U32 }
+                    64 => { result = LiteralSuffix::U64 }
+                    else => {}
+                }
+            }
+            b'i' => {
+                match number_width {
+                    8 => { result = LiteralSuffix::I8 }
+                    16 => { result = LiteralSuffix::I16 }
+                    32 => { result = LiteralSuffix::I32 }
+                    64 => { result = LiteralSuffix::I64 }
+                    else => {}
+                }
+            }
+            b'f' => {
+                match number_width {
+                    32 => { result = LiteralSuffix::F32 }
+                    64 => { result = LiteralSuffix::F64 }
+                    else => {}
+                }
+            }
+            else => { return None }
+        }
+        
+        if (result.has_value()) {
+            .index = new_index
+        }
+        
+        return result
+    }
+
     function lex_number_or_name(mut this) throws -> Token {
+
         let start = .index
 
         if .eof() {
             .error("unexpected eof", Span(start, end: start))
             return Token::Garbage(Span(start, end: start))
         }
-        if is_ascii_digit(.peek()) {
-            mut total = 0i64
 
-            while is_ascii_digit(.peek()) {
-                let value = .input[.index]
-                ++.index
-                let digit: i64 = as_saturated(value - b'0')
-                total = total * 10 + digit
-            }
+        let ascii_number_result = .read_ascii_integer(start_index: .index)
+
+        if ascii_number_result.has_value() {
+            let ascii_number = ascii_number_result.value().integer
+            // If a valid number, advance the index.
+            .index = ascii_number_result.value().new_index
+            let number = ascii_number
             let end = .index
-            return Token::Number(number: total, span: Span(start, end))
+                
+            // For now this is ignored
+            let literal_suffix = .read_literal_suffix()
+
+            return Token::Number(number, literal_suffix, span: Span(start, end))
         } else if is_ascii_alpha(.peek()) or .peek() == b'_' {
             mut string_builder = StringBuilder::create()
 
