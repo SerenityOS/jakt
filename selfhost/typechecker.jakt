@@ -280,8 +280,7 @@ boxed enum Type {
         I8 => -128
         I16 => -32768
         I32 => -2147483648
-        // FIXME: this generates a warning in the C++ code
-        I64 => -9223372036854775808
+        I64 => -9223372036854775807 - 1
         U8 | U16 | U32 | U64 | Usize => 0
         else => 0
     }
