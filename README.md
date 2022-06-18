@@ -9,7 +9,7 @@ It currently transpiles to C++.
 ## Usage
 Firstly transpilation to C++ requires `clang`. Make sure you have that installed.
 
-Also that `~/.cargo/bin` is in your path.
+Also ensure that `~/.cargo/bin` is in your path.
 
 Then compile the Jakt binary using the following command:
 ```
