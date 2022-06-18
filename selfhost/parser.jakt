@@ -59,6 +59,13 @@ struct ParsedRecord {
     record_type: RecordType
 }
 
+enum FunctionType {
+    Normal
+    ImplicitConstructor
+    ImplicitEnumConstructor
+    ExternalClassConstructor
+}
+
 struct ParsedFunction {
     name: String
     name_span: Span
@@ -68,6 +75,7 @@ struct ParsedFunction {
     return_type: ParsedType
     return_type_span: Span
     can_throw: bool
+    type: FunctionType
     linkage: FunctionLinkage
     must_instantiate: bool
 }
@@ -1101,6 +1109,7 @@ struct Parser {
             return_type: ParsedType::Empty,
             return_type_span: Span(start: 0, end: 0),
             can_throw: false,
+            type: FunctionType::Normal,
             linkage,
             must_instantiate: false,
         )
