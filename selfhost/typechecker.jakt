@@ -1,8 +1,8 @@
 import error { JaktError }
-import parser { BinaryOperator, DefinitionLinkage, FunctionLinkage,
-                DefinitionType, ParsedBlock, ParsedCall, ParsedExpression,
-                ParsedFunction, ParsedNamespace, ParsedType, ParsedStatement,
-                ParsedVarDecl, RecordType }
+import parser { BinaryOperator, DefinitionLinkage, DefinitionType,
+                FunctionLinkage, FunctionType, ParsedBlock, ParsedCall,
+                ParsedExpression, ParsedFunction, ParsedNamespace,
+                ParsedType, ParsedStatement, ParsedVarDecl, RecordType }
 import utility { panic, todo, Span }
 
 enum SafetyMode {
@@ -364,6 +364,7 @@ class CheckedFunction {
     public params: [CheckedParameter]
     public block: CheckedBlock
     public can_throw: bool
+    public type: FunctionType
     public linkage: FunctionLinkage
     public function_scope_id: ScopeId
 
@@ -1183,6 +1184,20 @@ struct Typechecker {
         return None
     }
 
+    function find_struct_in_scope(this, scope_id: ScopeId, name: String) -> StructId? {
+        mut current_scope_id = Some(scope_id)
+        while current_scope_id.has_value() {
+            let scope = .get_scope(id: current_scope_id!)
+            for s in scope.structs.iterator() {
+                if s.0 == name {
+                    return Some(s.1)
+                }
+            }
+            current_scope_id = scope.parent
+        }
+        return None
+    }
+
     function typecheck_module(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         .typecheck_namespace_predecl(parsed_namespace, scope_id)
         .typecheck_namespace_declarations(parsed_namespace, scope_id)
@@ -1222,6 +1237,7 @@ struct Typechecker {
                 yielded_type: none_type_id
             )
             can_throw: parsed_function.can_throw,
+            type: FunctionType::Normal,
             linkage: parsed_function.linkage,
             function_scope_id,
         )
@@ -1914,7 +1930,7 @@ struct Typechecker {
             }
         }
         QuotedString(val, span) => CheckedExpression::QuotedString(val, span)
-        Call(call, span) => .typecheck_call(call, scope_id, span, safety_mode)
+        Call(call, span) => .typecheck_call(call, scope_id, span, safety_mode, must_be_enum_constructor: false)
         Range(from, to, span) => {
             let checked_from = .typecheck_expression(from, scope_id, safety_mode)
             let checked_to = .typecheck_expression(to, scope_id, safety_mode)
@@ -2014,10 +2030,73 @@ struct Typechecker {
         return None
     }
 
-    function typecheck_call(mut this, call: ParsedCall, scope_id: ScopeId, span: Span, safety_mode: SafetyMode) throws -> CheckedExpression {
+    function resolve_call(mut this, call: ParsedCall, namespaces: [ResolvedNamespace], span: Span, scope_id: ScopeId, must_be_enum_constructor: bool) throws -> FunctionId? {
+        mut callee: FunctionId? = None
+        mut current_scope_id = scope_id
+
+        for namespace_index in 0..call.namespace_.size() {
+            let scope_name = call.namespace_[namespace_index]
+            let maybe_ns_scope = .find_namespace_in_scope(scope_id: current_scope_id, name: scope_name)
+            if maybe_ns_scope.has_value() {
+                let scope_id = maybe_ns_scope!.0
+                let is_import = maybe_ns_scope!.1
+                if is_import {
+                    namespaces[namespace_index].name = .program.modules[scope_id.module.id].name
+                }
+                current_scope_id = scope_id
+                continue
+            }
+            let maybe_struct_scope = .find_struct_in_scope(scope_id, name: scope_name)
+            if maybe_struct_scope.has_value() {
+                let structure = .get_struct(maybe_struct_scope!)
+                current_scope_id = structure.scope_id
+                continue
+            }
+
+            .error(format("Not a namespace, enum, class, or struct: ‘{}’", call.namespace_), span)
+        }
+
+        // 1. Look for a function with this name.
+        let maybe_function_id = .find_function_in_scope(parent_scope_id: current_scope_id, function_name: call.name)
+        if maybe_function_id.has_value() {
+            let function_id = maybe_function_id!
+            if not must_be_enum_constructor or .get_function(function_id).type is ImplicitEnumConstructor {
+                return function_id
+            }
+        }
+
+        if must_be_enum_constructor {
+            .error(format("No such enum constructor ‘{}’", call.name), span)
+            return callee
+        }
+
+        // 2. Look for a struct, class or enum constructor with this name.
+        let maybe_struct_id = .find_struct_in_scope(scope_id: current_scope_id, name: call.name)
+        if maybe_struct_id.has_value() {
+            let struct_id = maybe_struct_id!
+            let structure = .get_struct(struct_id)
+            let maybe_function_id = .find_function_in_scope(parent_scope_id: structure.scope_id, function_name: call.name)
+            if maybe_function_id.has_value() {
+                return maybe_function_id!
+            }
+            return callee
+        }
+
+        .error(format("Call to unknown function: ‘{}’", call.name), span)
+
+        return None
+    }
+
+    function typecheck_call(mut this, call: ParsedCall, scope_id: ScopeId, span: Span, safety_mode: SafetyMode, must_be_enum_constructor: bool) throws -> CheckedExpression {
         mut args: [(String, CheckedExpression)] = []
         mut return_type = builtin(BuiltinType::Void)
         mut callee_throws = false
+
+        mut resolved_namespaces: [ResolvedNamespace] = []
+        for name in call.namespace_.iterator() {
+            let generic_parameters: [TypeId]? = None
+            resolved_namespaces.push(ResolvedNamespace(name, generic_parameters))
+        }
 
         match call.name {
             "print" | "println" | "eprintln" | "format" => {
@@ -2028,13 +2107,31 @@ struct Typechecker {
                 }
             }
             else => {
-                for arg in call.args.iterator() {
+                let maybe_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
 
-                    // FIXME: Check argument labels
+                if not maybe_function_id.has_value() {
+                    let none_function_id: FunctionId? = None
+                    return CheckedExpression::Call(call: CheckedCall(namespace_: [], name: call.name, args, function_id: none_function_id, return_type, callee_throws), span, type_id: return_type)
+                }
 
-                    // FIXME: Check argument count
+                let function_id = maybe_function_id!
+                let callee = .get_function(function_id)
+                callee_throws = callee.can_throw
+                return_type = callee.return_type_id
 
-                    let checked_arg = .typecheck_expression(expr: arg.1, scope_id, safety_mode)
+                if callee.params.size() != call.args.size() {
+                    .error("Wrong number of arguments", span)
+                }
+
+                for i in 0..call.args.size() {
+                    let parsed_label_and_arg = call.args[i]
+                    let param = callee.params[i]
+                    if param.requires_label and parsed_label_and_arg.0 != param.variable.name {
+                        .error("Wrong parameter name in argument label", span)
+                    }
+                    let checked_arg = .typecheck_expression(expr: parsed_label_and_arg.1, scope_id, safety_mode)
+
+                    // FIXME: Check argument/parameter type compatibility
 
                     args.push((call.name, checked_arg))
                 }
