@@ -1691,6 +1691,7 @@ struct Typechecker {
         Break => CheckedStatement::Break
         VarDecl(var, init) => .typecheck_var_decl(var, init, scope_id, safety_mode)
         If(condition, then_block, else_statement) => .typecheck_if(condition, then_block, else_statement, scope_id, safety_mode)
+        Garbage => CheckedStatement::Garbage
         else => {
             todo(format("typecheck_statement else: {}", statement))
             yield CheckedStatement::Garbage
