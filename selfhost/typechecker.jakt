@@ -2040,6 +2040,40 @@ struct Typechecker {
 
             yield CheckedExpression::ForcedUnwrap(expr: checked_expr, span, type_id)
         }
+        JaktArray(values, fill_size, span) => {
+            mut repeat: CheckedExpression? = None
+            match fill_size.has_value() {
+                true => {
+                    repeat = .typecheck_expression(fill_size!, scope_id, safety_mode)
+                }
+                else => {}
+            }
+            let array_struct_id = .find_struct_in_prelude("Array")
+            let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
+            mut inner_type_id = UNKNOWN_TYPE_ID
+            mut inferred_type_span: Span? = None
+
+            mut vals: [CheckedExpression] = []
+            for value in values.iterator() {
+                let checked_expr = .typecheck_expression(value, scope_id, safety_mode)
+                let current_value_type_id = .expression_type(checked_expr)
+
+                if inner_type_id.equals(UNKNOWN_TYPE_ID) {
+                    inner_type_id = current_value_type_id
+                    inferred_type_span = value.span()
+                } else if not inner_type_id.equals(current_value_type_id) {
+                    .error_with_hint(
+                        format("Type '{}' does not match type '{}' of previous values in array", .type_name(current_value_type_id), .type_name(inner_type_id)),
+                        value.span(),
+                        format("array was inferred to store type '{}' here", .type_name(inner_type_id))
+                        inferred_type_span!
+                    )
+                }
+                vals.push(checked_expr)
+            }
+            let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
+            yield CheckedExpression::JaktArray(vals, repeat, span, type_id)
+        }
         else => {
             panic("not complete")
 
