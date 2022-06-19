@@ -126,3 +126,4 @@ extern function fgetc(anon mut file: raw FILE) -> c_int
 extern function fclose(anon mut file: raw FILE) -> c_int
 extern function feof(anon mut file: raw FILE) -> c_int
 extern function putchar(anon ch: c_int) -> c_int
+extern function system(anon command: raw c_char) -> c_int
