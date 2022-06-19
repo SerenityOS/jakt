@@ -4697,13 +4697,8 @@ pub fn typecheck_expression(
 
             let mut checked_fill_size_expr = None;
             if let Some(fill_size_expr) = fill_size_expr {
-                let (checked_expr, err) = typecheck_expression(
-                    fill_size_expr,
-                    scope_id,
-                    project,
-                    safety_mode,
-                    inner_hint,
-                );
+                let (checked_expr, err) =
+                    typecheck_expression(fill_size_expr, scope_id, project, safety_mode, None);
                 checked_fill_size_expr = Some(Box::new(checked_expr));
                 error = error.or(err);
             }
