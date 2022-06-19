@@ -1293,12 +1293,8 @@ struct Parser {
     function parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility) throws -> ParsedMethod {
         mut parsed_function = .parse_function(linkage)
 
-        // FIXME: This wants to be `if linkage == FunctionLinkage::External` but that causes codegen errors.
-        match linkage {
-            External => {
-                parsed_function.must_instantiate = true
-            }
-            else => {}
+        if linkage is External {
+            parsed_function.must_instantiate = true
         }
 
         return ParsedMethod(
