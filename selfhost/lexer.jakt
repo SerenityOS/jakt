@@ -512,6 +512,9 @@ struct Lexer {
             ++.index
             let digit: i64 = as_saturated(value - b'0')
             total = total * 10 + digit
+            if .peek() == b'_' {
+                .index += 1
+            }
         }
         let end = .index
         let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::I64
