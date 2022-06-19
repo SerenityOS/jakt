@@ -31,6 +31,7 @@ function main(args: [String]) {
 
     let lexer_debug = flag(args, "l")
     let parser_debug = flag(args, "p")
+    let build_executable = flag(args, "b")
 
     mut file_name: String? = None
     mut first_arg = true
@@ -40,7 +41,7 @@ function main(args: [String]) {
             first_arg = false
             continue
         }
-        if arg != "-h" and arg != "-l" and arg != "-p" {
+        if arg != "-h" and arg != "-l" and arg != "-p" and arg != "-b" {
             if file_name.has_value() {
                 eprintln("you can only pass one file")
                 eprintln("{}", usage())
@@ -86,5 +87,43 @@ function main(args: [String]) {
     }
 
     let output = CodeGenerator::generate(checked_program)
-    println("{}", output)
+
+    if build_executable {
+        let output_filename = "output.cpp"
+        write_to_file(data: output, output_filename)
+        run_compiler(output_filename)
+    } else {
+        println("{}", output)
+    }
+}
+
+function run_compiler(output_filename: String) throws {
+    mut compile_args = [
+        "clang++"
+        "-fcolor-diagnostics"
+        "-std=c++20"
+        "-Wno-unknown-warning-option"
+        "-Wno-trigraphs"
+        "-Wno-parentheses-equality"
+        "-Wno-unqualified-std-cast-call"
+        "-Wno-user-defined-literals"
+        "-Wno-deprecated-declarations"
+        "-Iruntime"
+    ]
+    compile_args.push(output_filename)
+    mut command = ""
+    for compile_arg in compile_args.iterator() {
+        command += compile_arg
+        command += " "
+    }
+    system(command.c_string())
+}
+
+function write_to_file(data: String, output_filename: String) throws {
+    mut outfile = File::open_for_writing(output_filename)
+    mut bytes: [u8] = []
+    for i in 0..data.length() {
+        bytes.push(data.byte_at(i))
+    }
+    outfile.write(bytes)
 }
