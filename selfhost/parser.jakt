@@ -53,7 +53,7 @@ enum RecordType {
 struct ParsedRecord {
     name: String
     name_span: Span
-    generic_parameters: [[String:Span]]
+    generic_parameters: [ParsedGenericParameter]
     definition_linkage: DefinitionLinkage
     methods: [ParsedMethod]
     record_type: RecordType
@@ -70,7 +70,7 @@ struct ParsedFunction {
     name: String
     name_span: Span
     params: [ParsedParameter]
-    generic_parameters: [[String:Span]]
+    generic_parameters: [ParsedGenericParameter]
     block: ParsedBlock
     return_type: ParsedType
     return_type_span: Span
@@ -83,6 +83,11 @@ struct ParsedFunction {
 struct ParsedParameter {
     requires_label: bool
     variable: ParsedVariable
+    span: Span
+}
+
+struct ParsedGenericParameter {
+    name: String
     span: Span
 }
 
@@ -1353,10 +1358,8 @@ struct Parser {
                 mut parsed_generics = .parse_generic_parameters()
                 // FIXME: clean this up when ParsedType::GenericType can have [[String:Span]] generic parameters
                 mut generic_parameters: [(String, Span)] = []
-                for dict in parsed_generics.iterator() {
-                    for generic in dict.iterator() {
-                        generic_parameters.push(generic)
-                    }
+                for parsed_generic in parsed_generics.iterator() {
+                    generic_parameters.push((parsed_generic.name, parsed_generic.span))
                 }
                 parsed_type = ParsedType::GenericType(name, generic_parameters, span)
             }
@@ -2390,17 +2393,17 @@ struct Parser {
         }
     }
 
-    function parse_generic_parameters(mut this) throws -> [[String:Span]] {
+    function parse_generic_parameters(mut this) throws -> [ParsedGenericParameter] {
         if not .current() is LessThan {
             return []
         }
         .index++
-        mut generic_parameters: [[String:Span]] = []
+        mut generic_parameters: [ParsedGenericParameter] = []
         .skip_newlines()
         while not .current() is GreaterThan and not .current() is Garbage {
             match .current() {
                 Identifier(name, span) => {
-                    generic_parameters.push([name : span])
+                    generic_parameters.push(ParsedGenericParameter(name, span))
                     .index++
                     if .current() is Comma or .current() is Eol {
                         .index++
