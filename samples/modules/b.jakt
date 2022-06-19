@@ -1,3 +1,5 @@
+/// Expect: Skip
+
 function something_cool() {
     println("something_cool")
 }
