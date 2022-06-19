@@ -1792,11 +1792,8 @@ struct Typechecker {
         }
 
         mut checked_else: CheckedStatement? = None
-        match else_statement.has_value() {
-            true => {
-                checked_else = .typecheck_statement(else_statement!, scope_id, safety_mode)
-            }
-            else => {}
+        if else_statement.has_value() {
+            checked_else = .typecheck_statement(else_statement!, scope_id, safety_mode)
         }
         return CheckedStatement::If(guard: checked_guard, then_block: checked_block, else_statement: checked_else)
     }
@@ -1959,30 +1956,28 @@ struct Typechecker {
     }
 
     function typecheck_inline_cpp(mut this, block: ParsedBlock, span: Span, safety_mode: SafetyMode) throws -> CheckedStatement {
+        if safety_mode is Safe {
+            .error("Use of inline cpp block outside of unsafe block", span)
+        }
 
-            match safety_mode {
-                Safe => .error("Use of inline cpp block outside of unsafe block", span)
-                else => {}
-            }
-
-            mut strings: [String] = []
-            for statement in block.stmts.iterator() {
-                match statement {
-                    ParsedStatement::Expression(expression) => {
-                        match expression {
-                            ParsedExpression::QuotedString(val, span) => {
-                                strings.push(val)
-                            }
-                            else => .error("Expected block of strings", span)
+        mut strings: [String] = []
+        for statement in block.stmts.iterator() {
+            match statement {
+                ParsedStatement::Expression(expression) => {
+                    match expression {
+                        ParsedExpression::QuotedString(val, span) => {
+                            strings.push(val)
                         }
-                    }
-                    else => {
-                        .error("Expected block of strings", span)
+                        else => .error("Expected block of strings", span)
                     }
                 }
+                else => {
+                    .error("Expected block of strings", span)
+                }
             }
+        }
 
-            return CheckedStatement::InlineCpp(strings)
+        return CheckedStatement::InlineCpp(strings)
     }
 
     function typecheck_return(mut this, expr: ParsedExpression?, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
@@ -2089,22 +2084,19 @@ struct Typechecker {
         }
         JaktArray(values, fill_size, span) => {
             mut repeat: CheckedExpression? = None
-            match fill_size.has_value() {
-                true => {
-                    // Check fill size is an integer.
-                    // TODO: Check fill size is positive when possible.
-                    let fill_size_value = fill_size.value()
-                    let fill_size_checked = .typecheck_expression(fill_size_value, scope_id, safety_mode)
-                    let fill_size_type = .expression_type(fill_size_checked)
-                    if not .is_integer(fill_size_type) {
-                        .error(
-                            format("Type '{}' is not convertible to an integer. Only integer values can be array fill size expressions.", .type_name(fill_size_type)), 
-                            fill_size_value.span()
-                        )
-                    }
-                    repeat = repeat
+            if fill_size.has_value() {
+                // Check fill size is an integer.
+                // TODO: Check fill size is positive when possible.
+                let fill_size_value = fill_size.value()
+                let fill_size_checked = .typecheck_expression(fill_size_value, scope_id, safety_mode)
+                let fill_size_type = .expression_type(fill_size_checked)
+                if not .is_integer(fill_size_type) {
+                    .error(
+                        format("Type '{}' is not convertible to an integer. Only integer values can be array fill size expressions.", .type_name(fill_size_type)), 
+                        fill_size_value.span()
+                    )
                 }
-                else => {}
+                repeat = repeat
             }
             let array_struct_id = .find_struct_in_prelude("Array")
             let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
