@@ -65,6 +65,10 @@ struct InferenceId {
 struct ScopeId {
     module: ModuleId
     id: usize
+
+    function equals(this, anon other: ScopeId) -> bool {
+        return this.module.id == other.module.id and this.id == other.id
+    }
 }
 
 enum BuiltinType: usize {
@@ -783,6 +787,9 @@ struct Typechecker {
             errors
         )
 
+        let none: ScopeId? = None
+        typechecker.create_scope(parent_scope_id: none, can_throw: false)
+
         typechecker.typecheck_module(parsed_namespace, scope_id: ScopeId(module: root_module_id, id: 0))
 
         return typechecker.program
@@ -809,7 +816,22 @@ struct Typechecker {
     function is_floating(this, anon type_id: TypeId) => .program.is_floating(type_id)
     function is_numeric(this, anon type_id: TypeId) => .program.is_numeric(type_id)
 
-    function create_scope(mut this, parent_scope_id: ScopeId, can_throw: bool) throws -> ScopeId {
+    function create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool) throws -> ScopeId {
+        // Check that parent_scope_id is a valid ScopeId
+        if parent_scope_id.has_value() {
+            // Check that the ModuleId is valid
+            if parent_scope_id!.module.id >= .program.modules.size() {
+                panic(format("create_scope: parent_scope_id.module is invalid! No module with id {}.", parent_scope_id!.module.id))
+                return ScopeId(module: ModuleId(id: 0), id: 0)
+            }
+
+            // Check that ScopeId.id is valid in the module
+            if parent_scope_id!.id >= .program.modules[parent_scope_id!.module.id].scopes.size() {
+                panic(format("create_scope: parent_scope_id.id is invalid! Module {} does not have a scope with id {}.", parent_scope_id!.module.id, parent_scope_id!.id))
+                return ScopeId(module: ModuleId(id: 0), id: 0)
+            }
+        }
+
         let scope = Scope(
             namespace_name: ""
             vars: [:]
@@ -1215,6 +1237,20 @@ struct Typechecker {
                     return Some(s.1)
                 }
             }
+
+            if scope.parent.has_value() {
+                if scope_id!.equals(scope.parent!) {
+                    mut msg = ""
+                    try {
+                        msg = format("Scope {} is its own parent!", scope_id)
+                    } catch error {
+                        msg = "Scope is its own parent!"
+                    }
+
+                    panic(msg)
+                }
+            }
+
             scope_id = scope.parent
         }
 
