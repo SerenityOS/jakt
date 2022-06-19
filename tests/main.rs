@@ -180,12 +180,134 @@ fn find_results(
     }
 
     if output.is_none() && error.is_none() && stderr.is_none() {
-        return Err(JaktError::StringError(
-            "Expected output, error, or stderr".into(),
-        ));
+        panic!(
+            "\r\nTest: {:?}\r\nNot marked as skip and does not have expectations\r\n",
+            path
+        );
     }
 
     Ok((output, error, stderr))
+}
+
+fn test_sample(path: &PathBuf) -> Result<(), JaktError> {
+    let (expected_output, expected_error, expected_stderr) = find_results(&path)?;
+
+    if expected_output.is_none() && expected_error.is_none() && expected_stderr.is_none() {
+        // No expectations, skip it
+        return Ok(());
+    }
+
+    // We have an output to compare to, let's do it.
+    let mut compiler = Compiler::new(Vec::new());
+    let cpp_string = compiler.convert_to_cpp(&path);
+
+    let cpp_string = match cpp_string {
+        Ok(cpp_string) => {
+            if expected_error.is_some() {
+                let expected_error_msg = expected_error.unwrap();
+                let expected_error_msg = expected_error_msg.replace('\r', "");
+                let expected_error_msg = expected_error_msg.replace('\n', "");
+
+                panic!(
+                    "\r\nTest: {:?}\r\nExpected error not created: {}",
+                    path, expected_error_msg,
+                );
+            }
+            cpp_string
+        }
+        Err(err) => {
+            if expected_error.is_some() {
+                let expected_error_msg = expected_error.unwrap();
+                let expected_error_msg = expected_error_msg.replace('\r', "");
+                let expected_error_msg = expected_error_msg.replace('\n', "");
+
+                let returned_error = format!("{:#?}", err);
+
+                assert!(
+                    returned_error.contains(&expected_error_msg),
+                    "\r\nTest: {:?}\r\nReturned error: {}\r\nExpected error: {}",
+                    path,
+                    returned_error,
+                    expected_error_msg,
+                );
+                return Ok(());
+            } else {
+                println!("Test failed: {:?}", path);
+                return Err(err);
+            }
+        }
+    };
+
+    let uuid = uuid::Uuid::new_v4();
+
+    let mut cpp_filename = temp_dir();
+    cpp_filename.push(format!("output{}.cpp", uuid));
+
+    {
+        let mut cpp_file = std::fs::File::create(&cpp_filename)?;
+        cpp_file.write_all(cpp_string.as_bytes())?;
+    }
+
+    let mut exe_name = temp_dir();
+    exe_name.push(format!("output{}", uuid));
+
+    let status = Command::new("clang++")
+        .arg(&cpp_filename)
+        .arg("-o")
+        .arg(&exe_name)
+        .arg("-include-pch")
+        .arg(&*PCH_FILENAME)
+        .args(COMMON_ARGS)
+        .output()?;
+
+    if !status.status.success() {
+        println!("{}", String::from_utf8_lossy(&status.stdout));
+        println!("{}", String::from_utf8_lossy(&status.stderr));
+    }
+    assert!(status.status.success());
+
+    let binary_run = Command::new(&exe_name)
+        .current_dir(&path.parent().unwrap())
+        .output()?;
+
+    let binary_output = String::from_utf8_lossy(&binary_run.stdout).to_string();
+    let binary_output = binary_output.replace("\r\n", "\n");
+
+    let binary_stderr_output = String::from_utf8_lossy(&binary_run.stderr).to_string();
+    let binary_stderr_output = binary_stderr_output.replace("\r\n", "\n");
+
+    let baseline_text = expected_output;
+    let baseline_text = baseline_text.map(|text| text.replace("\r\n", "\n"));
+
+    let baseline_stderr_text = expected_stderr;
+    let baseline_stderr_text = baseline_stderr_text.map(|text| text.replace("\r\n", "\n"));
+
+    let mut stderr_checked = false;
+    if let Some(baseline_stderr_text) = baseline_stderr_text {
+        assert!(
+            // Because runtime assertion text depends on file name, C++ library line names etc., the exact stderr text is both unpredictable and volatile.
+            // Therefore, stderr checks allow to only check for some substring of the actual output,
+            // where we can e.g. put in the exact assertion text we are checking for.
+            // This is still vulnerable to changes in the assertion expression, but we do need to check for something.
+            // It looks like the best solution right now.
+            binary_stderr_output.contains(&baseline_stderr_text),
+            "\r\n Test (stderr): {}",
+            path.to_string_lossy()
+        );
+        stderr_checked = true;
+    }
+
+    // If we checked stderr, we're not required to check stdout.
+    if !stderr_checked && baseline_text.is_some() {
+        assert_eq!(
+            binary_output,
+            baseline_text.unwrap(),
+            "\r\nTest: {}",
+            path.to_string_lossy()
+        );
+    }
+
+    Ok(())
 }
 
 fn test_samples(path: &str) -> Result<(), JaktError> {
@@ -194,130 +316,8 @@ fn test_samples(path: &str) -> Result<(), JaktError> {
 
         let path = sample.path();
 
-        if let Some(ext) = path.extension() {
-            if ext == "jakt" {
-                // Great, we found a test file
-                let (expected_output, expected_error, expected_stderr) = find_results(&path)?;
-
-                if expected_output.is_none()
-                    && expected_error.is_none()
-                    && expected_stderr.is_none()
-                {
-                    // No expectations, skip it
-                    continue;
-                }
-
-                // We have an output to compare to, let's do it.
-                let mut compiler = Compiler::new(Vec::new());
-                let cpp_string = compiler.convert_to_cpp(&path);
-
-                let cpp_string = match cpp_string {
-                    Ok(cpp_string) => {
-                        if expected_error.is_some() {
-                            let expected_error_msg = expected_error.unwrap();
-                            let expected_error_msg = expected_error_msg.replace('\r', "");
-                            let expected_error_msg = expected_error_msg.replace('\n', "");
-
-                            panic!(
-                                "\r\nTest: {:?}\r\nExpected error not created: {}",
-                                path, expected_error_msg,
-                            );
-                        }
-                        cpp_string
-                    }
-                    Err(err) => {
-                        if expected_error.is_some() {
-                            let expected_error_msg = expected_error.unwrap();
-                            let expected_error_msg = expected_error_msg.replace('\r', "");
-                            let expected_error_msg = expected_error_msg.replace('\n', "");
-
-                            let returned_error = format!("{:#?}", err);
-
-                            assert!(
-                                returned_error.contains(&expected_error_msg),
-                                "\r\nTest: {:?}\r\nReturned error: {}\r\nExpected error: {}",
-                                path,
-                                returned_error,
-                                expected_error_msg,
-                            );
-                            continue;
-                        } else {
-                            println!("Test failed: {:?}", path);
-                            return Err(err);
-                        }
-                    }
-                };
-
-                let uuid = uuid::Uuid::new_v4();
-
-                let mut cpp_filename = temp_dir();
-                cpp_filename.push(format!("output{}.cpp", uuid));
-
-                {
-                    let mut cpp_file = std::fs::File::create(&cpp_filename)?;
-                    cpp_file.write_all(cpp_string.as_bytes())?;
-                }
-
-                let mut exe_name = temp_dir();
-                exe_name.push(format!("output{}", uuid));
-
-                let status = Command::new("clang++")
-                    .arg(&cpp_filename)
-                    .arg("-o")
-                    .arg(&exe_name)
-                    .arg("-include-pch")
-                    .arg(&*PCH_FILENAME)
-                    .args(COMMON_ARGS)
-                    .output()?;
-
-                if !status.status.success() {
-                    println!("{}", String::from_utf8_lossy(&status.stdout));
-                    println!("{}", String::from_utf8_lossy(&status.stderr));
-                }
-                assert!(status.status.success());
-
-                let binary_run = Command::new(&exe_name)
-                    .current_dir(&path.parent().unwrap())
-                    .output()?;
-
-                let binary_output = String::from_utf8_lossy(&binary_run.stdout).to_string();
-                let binary_output = binary_output.replace("\r\n", "\n");
-
-                let binary_stderr_output = String::from_utf8_lossy(&binary_run.stderr).to_string();
-                let binary_stderr_output = binary_stderr_output.replace("\r\n", "\n");
-
-                let baseline_text = expected_output;
-                let baseline_text = baseline_text.map(|text| text.replace("\r\n", "\n"));
-
-                let baseline_stderr_text = expected_stderr;
-                let baseline_stderr_text =
-                    baseline_stderr_text.map(|text| text.replace("\r\n", "\n"));
-
-                let mut stderr_checked = false;
-                if let Some(baseline_stderr_text) = baseline_stderr_text {
-                    assert!(
-                        // Because runtime assertion text depends on file name, C++ library line names etc., the exact stderr text is both unpredictable and volatile.
-                        // Therefore, stderr checks allow to only check for some substring of the actual output,
-                        // where we can e.g. put in the exact assertion text we are checking for.
-                        // This is still vulnerable to changes in the assertion expression, but we do need to check for something.
-                        // It looks like the best solution right now.
-                        binary_stderr_output.contains(&baseline_stderr_text),
-                        "\r\n Test (stderr): {}",
-                        path.to_string_lossy()
-                    );
-                    stderr_checked = true;
-                }
-
-                // If we checked stderr, we're not required to check stdout.
-                if !stderr_checked && baseline_text.is_some() {
-                    assert_eq!(
-                        binary_output,
-                        baseline_text.unwrap(),
-                        "\r\nTest: {}",
-                        path.to_string_lossy()
-                    );
-                }
-            }
+        if matches!(path.extension(), Some(ext) if ext == "jakt") {
+            test_sample(&path)?
         }
     }
 
@@ -461,7 +461,7 @@ fn test_modules() -> Result<(), JaktError> {
 
 #[test]
 fn test_selfhost() -> Result<(), JaktError> {
-    test_samples("selfhost")
+    test_sample(&PathBuf::from("selfhost/main.jakt"))
 }
 
 #[test]
