@@ -1462,6 +1462,12 @@ struct Parser {
             if .current() is Comma {
                 .index++
             }
+            let index_before = .index
+            let type = .parse_typename()
+            let index_after = .index
+            if index_before == index_after {
+                break
+            }
             types.push(.parse_typename())
         }
         .error("Expected ‘)’", .current().span())
