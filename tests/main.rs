@@ -179,6 +179,12 @@ fn find_results(
         }
     }
 
+    if output.is_none() && error.is_none() && stderr.is_none() {
+        return Err(JaktError::StringError(
+            "Expected output, error, or stderr".into(),
+        ));
+    }
+
     Ok((output, error, stderr))
 }
 
