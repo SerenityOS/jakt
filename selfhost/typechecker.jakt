@@ -1613,6 +1613,28 @@ struct Typechecker {
         return .new_inference()
     }
 
+    function typecheck_unary_operation(mut this, checked_expr: CheckedExpression, checked_op: CheckedUnaryOperator, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
+        let expr_type_id = .expression_type(checked_expr)
+        let expr_type = .get_type(expr_type_id)
+
+        match checked_op {
+            PreIncrement | PostIncrement | PreDecrement | PostDecrement => {
+                if .is_integer(expr_type_id) {
+                    if not .expression_is_mutable(checked_expr) {
+                        .error("Increment/decrement of immutable variable", span)
+                    }
+                } else {
+                    .error("Increment/decrement of non-numeric value", span)
+                }
+            }
+            else => {
+                todo(format("typecheck_unary_operation: expr:{}, op:{}", checked_expr, checked_op))
+            }
+        }
+
+        return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: expr_type_id)
+    }
+
     function typecheck_binary_operation(mut this, checked_lhs: CheckedExpression, op: BinaryOperator, checked_rhs: CheckedExpression, scope_id: ScopeId, span: Span) throws -> TypeId {
         let lhs_type_id = .expression_type(checked_lhs)
         let rhs_type_id = .expression_type(checked_rhs)
@@ -2056,6 +2078,25 @@ struct Typechecker {
             let type_id = .unify(lhs: from_type, lhs_span: from_span, rhs: to_type, rhs_span: from_span) ?? UNKNOWN_TYPE_ID
 
             yield CheckedExpression::Range(from: checked_from, to: checked_to, span, type_id)
+        }
+        UnaryOp(expr, op, span) => {
+            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
+            let checked_op = match op {
+                PreIncrement => CheckedUnaryOperator::PreIncrement
+                PostIncrement => CheckedUnaryOperator::PostIncrement
+                PreDecrement => CheckedUnaryOperator::PreDecrement
+                PostDecrement => CheckedUnaryOperator::PostDecrement
+                Negate => CheckedUnaryOperator::Negate
+                Dereference => CheckedUnaryOperator::Dereference
+                RawAddress => CheckedUnaryOperator::RawAddress
+                LogicalNot => CheckedUnaryOperator::LogicalNot
+                BitwiseNot => CheckedUnaryOperator::BitwiseNot
+                else => {
+                    todo(format("UnaryOp else: {}", op))
+                    yield CheckedUnaryOperator::PreIncrement
+                }
+            }
+            yield .typecheck_unary_operation(checked_expr, checked_op, span, scope_id, safety_mode)
         }
         BinaryOp(lhs, op, rhs, span) => {
             let checked_lhs = .typecheck_expression(lhs, scope_id, safety_mode)
