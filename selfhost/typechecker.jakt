@@ -362,6 +362,7 @@ class CheckedFunction {
     public name: String
     public return_type_id: TypeId
     public params: [CheckedParameter]
+    public generic_params: [FunctionGenericParameter]
     public block: CheckedBlock
     public can_throw: bool
     public type: FunctionType
@@ -390,6 +391,11 @@ class CheckedFunction {
 struct CheckedParameter {
     requires_label: bool
     variable: CheckedVariable
+}
+
+enum FunctionGenericParameter {
+    InferenceGuide(TypeId)
+    Parameter(TypeId)
 }
 
 struct CheckedVariable {
@@ -1160,6 +1166,21 @@ struct Typechecker {
         return None
     }
 
+    function add_type_to_scope(mut this, scope_id: ScopeId, type_name: String, type_id: TypeId, span: Span) throws -> bool {
+        mut scope = .get_scope(id: scope_id)
+        let found_type_id = .find_type_in_scope(scope_id, name: type_name)
+        if found_type_id.has_value() {
+            // FIXME: Show hint of the original definition, once we store the name span.
+            .error(
+                format("Redefinition of type ‘{}’", type_name)
+                span
+            )
+            return false
+        }
+        scope.types.set(key: type_name, value: type_id)
+        return true
+    }
+
     function add_function_to_scope(mut this, parent_scope_id: ScopeId, name: String, function_id: FunctionId, span: Span) throws -> bool {
         mut scope = .get_scope(id: parent_scope_id)
         for existing_function in scope.functions.iterator() {
@@ -1243,19 +1264,20 @@ struct Typechecker {
         let none_type_id: TypeId? = None
 
         mut checked_function = CheckedFunction(
-            name: parsed_function.name,
-            return_type_id: UNKNOWN_TYPE_ID,
-            params: [],
+            name: parsed_function.name
+            return_type_id: UNKNOWN_TYPE_ID
+            params: []
+            generic_params: []
             block: CheckedBlock(
                 statements: []
                 scope_id: block_scope_id
                 definitely_returns: false
                 yielded_type: none_type_id
             )
-            can_throw: parsed_function.can_throw,
-            type: FunctionType::Normal,
-            linkage: parsed_function.linkage,
-            function_scope_id,
+            can_throw: parsed_function.can_throw
+            type: FunctionType::Normal
+            linkage: parsed_function.linkage
+            function_scope_id
         )
         // FIXME: We can't return a `mut Foo` from a function right now, but assigning anything to a `mut` variable makes it mutable.
         //        AKA, working around one bug with another bug. :^)
@@ -1263,8 +1285,32 @@ struct Typechecker {
         let function_id = current_module.add_function(checked_function)
         let checked_function_scope_id = checked_function.function_scope_id
 
-        // TODO: Check generic parameters
+        // Check generic parameters
+        for generic_parameter in parsed_function.generic_parameters.iterator() {
 
+            current_module.types.push(Type::TypeVariable(generic_parameter.name))
+
+            let type_var_type_id = TypeId(
+                module: current_module.id
+                id: current_module.types.size() - 1
+            )
+            checked_function.generic_params.push(FunctionGenericParameter::Parameter(type_var_type_id))
+
+            let external_linkage = match parsed_function.linkage {
+                FunctionLinkage::External => true
+                else => false
+            }
+            if not parsed_function.must_instantiate or external_linkage {
+                .add_type_to_scope(
+                    scope_id: checked_function_scope_id
+                    type_name: generic_parameter.name
+                    type_id: type_var_type_id
+                    span: generic_parameter.span
+                )
+            }
+        }
+
+        // Check parameters
         for parameter in parsed_function.params.iterator() {
             let type_id = .typecheck_typename(parsed_type: parameter.variable.parsed_type, scope_id: checked_function_scope_id)
 
@@ -1283,6 +1329,7 @@ struct Typechecker {
             checked_function.params.push(checked_parameter)
         }
 
+        // Check return type
         checked_function.return_type_id = .typecheck_typename(parsed_type: parsed_function.return_type, scope_id: checked_function_scope_id)
 
         .add_function_to_scope(parent_scope_id, name: parsed_function.name, function_id, span: parsed_function.name_span)
