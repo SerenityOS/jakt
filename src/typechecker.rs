@@ -1862,7 +1862,7 @@ pub fn typecheck_namespace_imports(
         }
     }
 
-    None
+    error
 }
 
 pub fn typecheck_module(
