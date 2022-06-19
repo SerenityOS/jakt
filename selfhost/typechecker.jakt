@@ -2091,7 +2091,18 @@ struct Typechecker {
             mut repeat: CheckedExpression? = None
             match fill_size.has_value() {
                 true => {
-                    repeat = .typecheck_expression(fill_size!, scope_id, safety_mode)
+                    // Check fill size is an integer.
+                    // TODO: Check fill size is positive when possible.
+                    let fill_size_value = fill_size.value()
+                    let fill_size_checked = .typecheck_expression(fill_size_value, scope_id, safety_mode)
+                    let fill_size_type = .expression_type(fill_size_checked)
+                    if not .is_integer(fill_size_type) {
+                        .error(
+                            format("Type '{}' is not convertible to an integer. Only integer values can be array fill size expressions.", .type_name(fill_size_type)), 
+                            fill_size_value.span()
+                        )
+                    }
+                    repeat = repeat
                 }
                 else => {}
             }
