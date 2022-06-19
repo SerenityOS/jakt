@@ -1,3 +1,5 @@
+/// Expect: Skip
+
 import b
 
 function use_cool_things() {
