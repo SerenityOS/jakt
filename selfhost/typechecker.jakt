@@ -1627,11 +1627,13 @@ struct Typechecker {
                     .error("Increment/decrement of non-numeric value", span)
                 }
             }
+            LogicalNot | BitwiseNot => {
+                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: expr_type_id)
+            }
             else => {
                 todo(format("typecheck_unary_operation: expr:{}, op:{}", checked_expr, checked_op))
             }
         }
-
         return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: expr_type_id)
     }
 
