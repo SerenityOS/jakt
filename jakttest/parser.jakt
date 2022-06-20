@@ -1,0 +1,77 @@
+import error { JaktError }
+import lexer { Token, NumericConstant }
+import utility { panic, todo, Span }
+
+enum ParsedTest {
+    SuccessTest(String),
+    FailureTest(String),
+    SkipTest
+}
+
+struct Parser {
+    index: usize
+    tokens: [Token]
+    errors: [JaktError]
+    ignore_errors: bool
+
+    function parse(tokens: [Token], errors: [JaktError]) throws -> ParsedTest {
+        mut parser = Parser(index: 0, tokens, errors, ignore_errors: false)
+        return parser.parse_test()
+    }
+
+    function parse_test(mut this) -> ParsedTest {
+        loop {
+            match .tokens[.index] {
+                ForwardSlash(span) => {
+                    // We have a test
+                    .index += 2
+
+                    match .tokens[.index] {
+                        Identifier(name, span) => {
+                            if name == "output" {
+                                // skip colon and find the expected value
+                                .index += 2
+                                match .tokens[.index] {
+                                    QuotedString(quote) => {
+                                        return ParsedTest::SuccessTest(quote)
+                                    }
+                                    else => {
+                                        return ParsedTest::SkipTest
+                                    }
+                                }
+                            } else if name == "error" {
+                                // skip colon and find the expected value
+                                .index += 2
+                                match .tokens[.index] {
+                                    QuotedString(quote) => {
+                                        return ParsedTest::FailureTest(quote)
+                                    }
+                                    else => {
+                                        return ParsedTest::SkipTest
+                                    }
+                                }
+                            }
+                        }
+                        else => {}
+                    }
+                }
+                Eof => {
+                    break
+                }
+                else => {
+                    loop {
+                        if .tokens[.index] is Eol {
+                            .index++
+                            break
+                        } else if .tokens[.index] is Eof {
+                            break
+                        } else {
+                            .index++
+                        }
+                    }
+                }
+            }
+        }
+        return ParsedTest::SkipTest
+    }
+}
