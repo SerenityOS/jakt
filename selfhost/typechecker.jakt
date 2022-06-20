@@ -1161,6 +1161,25 @@ struct Typechecker {
         return None
     }
 
+    function add_struct_to_scope(mut this, scope_id: ScopeId, name: String, struct_id: StructId, span: Span) throws -> bool {
+        mut scope = .get_scope(scope_id)
+
+        if scope.structs.contains(name) {
+            let existing_struct_id = scope.structs[name]
+            let definition_span = .get_struct(existing_struct_id).name_span
+
+            .error_with_hint(
+                format("redefinition of struct/class {}", name)
+                span
+                format("struct/class {} was first defined here", name)
+                definition_span
+            )
+            return false
+        }
+        scope.structs.set(key: name, value: struct_id)
+        return true
+    }
+
     function add_type_to_scope(mut this, scope_id: ScopeId, type_name: String, type_id: TypeId, span: Span) throws -> bool {
         mut scope = .get_scope(id: scope_id)
         let found_type_id = .find_type_in_scope(scope_id, name: type_name)
@@ -1301,8 +1320,8 @@ struct Typechecker {
         .current_struct_type_id = struct_type_id
 
         let struct_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false)
-        // FIXME: implement add_struct_to_scope
-        // .add_struct_to_scope(scope_id, name: parsed_record.name, struct_id, parsed_record.name_span)
+
+        .add_struct_to_scope(scope_id, name: parsed_record.name, struct_id, span: parsed_record.name_span)
 
         let is_extern = parsed_record.definition_linkage
 
@@ -1497,9 +1516,117 @@ struct Typechecker {
     }
 
     function typecheck_namespace_declarations(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
+        for namespce in parsed_namespace.namespaces.iterator() {
+            mut namespace_scope_id: ScopeId = ScopeId(module: ModuleId(id: 0), id: 0)
+            if namespce.name.has_value() {
+                // Finish typecheck of the named namespaces
+                let namespace_name = namespce.name!
+                let namespace_scope_tuple = .find_namespace_in_scope(scope_id, name: namespace_name)
+
+                if not namespace_scope_tuple.has_value() {
+                    panic("can't find previously added namespace")
+                }
+                namespace_scope_id = namespace_scope_tuple!.0
+            } else {
+                // Create the unnamed namespace (aka a block scope)
+                namespace_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false)
+                mut scope = .get_scope(scope_id)
+                scope.children.push(namespace_scope_id)
+
+                .typecheck_namespace_predecl(parsed_namespace: namespce, scope_id: namespace_scope_id)
+            }
+            .typecheck_namespace_declarations(parsed_namespace: namespce, scope_id: namespace_scope_id)
+        }
+
+        for record in parsed_namespace.records.iterator() {
+            match record.record_type {
+                Struct => {
+                    let struct_id = .find_struct_in_scope(scope_id, name: record.name)
+                    if not struct_id.has_value() {
+                        panic("can't find struct that has been previous added")
+                    }
+                    .typecheck_struct(record, struct_id: struct_id!, parent_scope_id: scope_id)
+                }
+                else => {
+                    todo(format("typecheck_namespace_declarations implement parsion of record type {}", record.record_type))
+                }
+            }
+        }
+
         for fun in parsed_namespace.functions.iterator() {
             .typecheck_function(parsed_function: fun, parent_scope_id: scope_id)
         }
+    }
+
+    function typecheck_struct(mut this, record: ParsedRecord, struct_id: StructId, parent_scope_id: ScopeId) throws {
+        let checked_struct_scope_id = .get_struct(struct_id).scope_id
+        let struct_type_id = .find_or_add_type_id(Type::Struct(struct_id))
+        let module_id = .current_module_id
+        .current_struct_type_id = struct_type_id
+
+        let constructor_id = .find_function_in_scope(parent_scope_id: checked_struct_scope_id, function_name: record.name)
+        if constructor_id.has_value() {
+            if record.record_type is Class and record.definition_linkage is External {
+                // XXX: The parser always sets the linkage type of an extern class'
+                //      constructor to External, but we actually want to call the
+                //      class' ::create function, just like we do with a
+                //      ImplicitConstructor class.
+                mut func = .get_function(constructor_id!)
+                func.linkage = FunctionLinkage::External
+            }
+        } else if not record.definition_linkage is External {
+            // No constructor found, so let's make one
+
+            let constructor_can_throw = record.record_type is Class
+            let function_scope_id = .create_scope(parent_scope_id, can_throw: constructor_can_throw)
+            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: constructor_can_throw)
+
+            let none_type_id: TypeId? = None
+            let checked_constructor = CheckedFunction(
+                name: record.name
+                name_span: record.name_span
+                return_type_id: struct_type_id
+                params: []
+                generic_params: []
+                block: CheckedBlock(
+                    statements: []
+                    scope_id: block_scope_id
+                    definitely_returns: false
+                    yielded_type: none_type_id
+                )
+                can_throw: constructor_can_throw
+                type: FunctionType::ImplicitConstructor
+                linkage: FunctionLinkage::Internal
+                function_scope_id
+            )
+
+            // Internal constructor
+            mut module = .current_module()
+            module.functions.push(checked_constructor)
+
+            mut func = module.functions[module.functions.size() - 1]
+            for field_id in .get_struct(struct_id).fields.iterator() {
+                let field = .get_variable(field_id)
+                func.params.push(CheckedParameter(
+                    requires_label: true
+                    variable: field
+                ))
+            }
+
+            // Add constructor to the struct's scope
+            .add_function_to_scope(
+                parent_scope_id: checked_struct_scope_id
+                name: record.name
+                function_id: FunctionId(module: module_id, id: .current_module().functions.size() - 1)
+                span: record.name_span
+            )
+        }
+
+        for func in record.methods.iterator() {
+            // TODO: typecheck method
+        }
+
+        .current_struct_type_id = None
     }
 
     function typecheck_function_predecl(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
