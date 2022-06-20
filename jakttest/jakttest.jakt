@@ -75,9 +75,15 @@ function main(args: [String]) {
             write_to_file(file_contents, output_filename: "output.jakt")
 
             run_compiler("output.jakt")
+
+            // Because we're having to skip failure tests, let's report that it's skipped now
+            return 2
         }
         SkipTest => {
             println("Expected output/error not found. Test skipped")
+
+            // Can't understand test, so we skip it
+            return 2
         }
     }
 }
