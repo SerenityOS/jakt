@@ -43,6 +43,11 @@ struct EnumId {
     }
 }
 
+enum StructOrEnumId {
+    Struct(StructId)
+    Enum(EnumId)
+}
+
 struct TypeId {
     module: ModuleId
     id: usize
@@ -1687,11 +1692,89 @@ struct Typechecker {
             )
         }
 
-        for func in record.methods.iterator() {
-            // TODO: typecheck method
+        for method in record.methods.iterator() {
+            .typecheck_method(func: method.parsed_function, parent_id: StructOrEnumId::Struct(struct_id))
         }
 
         .current_struct_type_id = None
+    }
+
+    function typecheck_method(mut this, func: ParsedFunction, parent_id: StructOrEnumId) throws {
+        mut parent_generic_parameters: [TypeId] = []
+        mut scope_id = ScopeId(module: ModuleId(id: 0), id: 0)
+        mut definition_linkage = DefinitionLinkage::Internal
+
+        match parent_id {
+            Struct(struct_id) => {
+                mut structure = .get_struct(struct_id)
+                parent_generic_parameters = structure.generic_parameters
+                scope_id = structure.scope_id
+                definition_linkage = structure.definition_linkage
+            }
+            Enum => {
+                todo("typecheck_method implement enum case")
+            }
+        }
+
+        if (not func.generic_parameters.is_empty() or not parent_generic_parameters.is_empty()) and not func.must_instantiate {
+            return
+        }
+
+        let structure_scope_id = scope_id
+        let structure_linkage = definition_linkage
+
+        let method_id = .find_function_in_scope(parent_scope_id: structure_scope_id, function_name: func.name)
+        if not method_id.has_value() {
+            panic("we just pushed the checked function, but it's not present")
+        }
+
+        mut checked_function = .get_function(method_id!)
+        let function_scope_id = checked_function.function_scope_id
+
+        mut module = .current_module()
+        for param in checked_function.params.iterator() {
+            let variable = param.variable
+            let var_id = module.add_variable(variable)
+            .add_var_to_scope(scope_id: function_scope_id, name: variable.name, var_id, span: variable.definition_span)
+        }
+
+        // Set current function index before a block type check so that
+        // method return type is checked against its implementation
+        .current_function_id = method_id
+
+        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
+        let VOID_TYPE_ID = builtin(BuiltinType::Void)
+
+        let block = .typecheck_block(parsed_block: func.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
+        let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: function_scope_id)
+
+        mut return_type_id = function_return_type_id
+        if function_return_type_id.equals(UNKNOWN_TYPE_ID) and not block.statements.is_empty() {
+            // If the return type is unknown, and the function starts with a return statement,
+            // we infer the return type from its expression.
+            match block.statements[0] {
+                Return(ret) => {
+                    if ret.has_value() {
+                        return_type_id = .expression_type(ret!)
+                    } else {
+                        return_type_id = VOID_TYPE_ID
+                    }
+                }
+                else => {
+                    return_type_id = VOID_TYPE_ID
+                }
+            }
+        } else if function_return_type_id.equals(UNKNOWN_TYPE_ID) {
+            return_type_id = VOID_TYPE_ID
+        }
+
+        if not structure_linkage is External and not return_type_id.equals(VOID_TYPE_ID) and not block.definitely_returns {
+            // FIXME: Use better span
+            .error("Control reaches end of non-void function", func.name_span)
+        }
+
+        checked_function.block = block
+        checked_function.return_type_id = return_type_id
     }
 
     function typecheck_function_predecl(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
