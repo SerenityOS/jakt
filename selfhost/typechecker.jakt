@@ -2075,6 +2075,18 @@ struct Typechecker {
         SingleQuotedByteString(val, span) => CheckedExpression::ByteConstant(val, span)
         QuotedString(val, span) => CheckedExpression::QuotedString(val, span)
         Call(call, span) => .typecheck_call(call, scope_id, span, safety_mode, must_be_enum_constructor: false)
+        MethodCall(expr, call, span) => {
+            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
+            let checked_call_expr = .typecheck_call(call, scope_id, span, safety_mode, must_be_enum_constructor: false)
+            let type_id = .expression_type(checked_call_expr)
+            yield match checked_call_expr {
+                Call(call) => CheckedExpression::MethodCall(expr: checked_expr, call, span, type_id)
+                else => {
+                    panic("typecheck_call should return `CheckedExpression::Call()`")
+                    yield CheckedExpression::Garbage(span)
+                }
+            }
+        }
         Range(from, to, span) => {
             let checked_from = .typecheck_expression(from, scope_id, safety_mode)
             let checked_to = .typecheck_expression(to, scope_id, safety_mode)
