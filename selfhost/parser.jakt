@@ -1702,7 +1702,7 @@ struct Parser {
                 let rhs = expr_stack.pop()!
                 let op = expr_stack.pop()!
 
-                last_precedence = parsed_operator.precedence()
+                last_precedence = op.precedence()
 
                 if last_precedence < precedence {
                     expr_stack.push(op)
