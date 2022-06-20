@@ -2777,6 +2777,10 @@ struct Typechecker {
                 }
 
                 for i in 0..call.args.size() {
+                    if i == callee.params.size() {
+                        break
+                    }
+
                     let parsed_label_and_arg = call.args[i]
                     let param = callee.params[i]
 
