@@ -1717,7 +1717,7 @@ struct Parser {
 
                 let lhs = expr_stack.pop()!
 
-                match parsed_operator {
+                match op {
                     Operator(op, span) => {
                         let new_span = merge_spans(lhs.span(), rhs.span())
 
