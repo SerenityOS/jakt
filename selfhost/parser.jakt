@@ -189,6 +189,11 @@ enum BinaryOperator {
 enum TypeCast {
     Fallible(ParsedType)
     Infallible(ParsedType)
+
+    function parsed_type(this) -> ParsedType => match this {
+        Fallible(parsed_type) => parsed_type
+        Infallible(parsed_type) => parsed_type
+    }
 }
 
 enum UnaryOperator {
