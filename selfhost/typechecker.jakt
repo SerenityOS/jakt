@@ -3,7 +3,7 @@ import parser { BinaryOperator, DefinitionLinkage, DefinitionType,
                 FunctionLinkage, FunctionType, ParsedBlock, ParsedCall,
                 ParsedExpression, ParsedFunction, ParsedNamespace,
                 ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
-                ParsedRecord }
+                ParsedRecord, ParsedField }
 import utility { panic, todo, Span }
 
 enum SafetyMode {
@@ -1265,7 +1265,72 @@ struct Typechecker {
 
     function typecheck_module(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         .typecheck_namespace_predecl(parsed_namespace, scope_id)
+        .typecheck_namespace_fields(parsed_namespace, scope_id)
         .typecheck_namespace_declarations(parsed_namespace, scope_id)
+    }
+
+    function typecheck_namespace_fields(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
+        for namespce in parsed_namespace.namespaces.iterator() {
+            let namespace_name = namespce.name
+            mut namespace_scope_id = ScopeId(module: ModuleId(id: 0), id: 0)
+            if namespace_name.has_value() {
+                // Typecheck struct fields in the named namespaces
+                let namespace_scope_tuple = .find_namespace_in_scope(scope_id, name: namespace_name!)
+                if not namespace_scope_tuple.has_value() {
+                    panic(format("can't find previously added namespace {}", namespace_name!))
+                }
+                namespace_scope_id = namespace_scope_tuple!.0
+            } else {
+                // Typecheck struct fields in the unnamed namespace
+                namespace_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false)
+                mut scope = .get_scope(scope_id)
+                scope.children.push(namespace_scope_id)
+            }
+
+            .typecheck_namespace_fields(parsed_namespace: namespce, scope_id: namespace_scope_id)
+        }
+
+        for record in parsed_namespace.records.iterator() {
+            if record.record_type is Struct {
+                let struct_id = .find_struct_in_scope(scope_id, name: record.name)
+                if not struct_id.has_value() {
+                    panic("can't find previously added struct")
+                }
+                .typecheck_struct_fields(record, struct_id: struct_id!)
+            }
+        }
+    }
+
+    function typecheck_struct_fields(mut this, record: ParsedRecord, struct_id: StructId) throws {
+        mut structure = .get_struct(struct_id)
+
+        let checked_struct_scope_id = .get_struct(struct_id).scope_id
+        let struct_type_id = .find_or_add_type_id(Type::Struct(struct_id))
+        .current_struct_type_id = struct_type_id
+
+        let parsed_fields = match record.record_type {
+            Struct(fields) => fields
+            Class(fields) => fields
+            else => {
+                panic("typecheck_struct_fields cannot handle non-structs")
+                let none: [ParsedField] = []
+                yield none
+            }
+        }
+
+        for unchecked_member in parsed_fields.iterator() {
+            let parsed_var_decl = unchecked_member.var_decl
+            let checked_member_type = .typecheck_typename(parsed_type: parsed_var_decl.parsed_type, scope_id: checked_struct_scope_id)
+
+            mut module = .current_module()
+            let var_id = module.add_variable(checked_variable: CheckedVariable(
+                name: parsed_var_decl.name
+                type_id: checked_member_type
+                is_mutable: parsed_var_decl.is_mutable
+                definition_span: parsed_var_decl.span
+            ))
+            structure.fields.push(var_id)
+        }
     }
 
     function typecheck_namespace_predecl(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
