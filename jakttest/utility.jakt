@@ -1,0 +1,19 @@
+// Copyright (c) 2022, JT <jt@serenityos.org>
+// Copyright (c) 2022, Andreas Kling <kling@serenityos.org>
+//
+// SPDX-License-Identifier: BSD-2-Clause
+
+function panic(anon message: String) -> void {
+    eprintln("internal error: {}", message)
+    abort()
+}
+
+function todo(anon message: String) {
+    eprintln("TODO: {}", message)
+    abort()
+}
+
+struct Span {
+    start: usize
+    end: usize
+}

@@ -1,0 +1,124 @@
+import error { JaktError, print_error }
+import lexer { Lexer }
+import parser { Parser }
+
+function usage() => "usage: jakttest [-h] [OPTIONS] <path>"
+
+function compare_test(bytes: [u8], expected: String) throws -> bool {
+    // first, build up the content to compare to
+    mut builder = StringBuilder::create()
+
+    for b in bytes.iterator() {
+        if b == 0xd {
+            // skip
+        } else if b == 0xa {
+            builder.append(b'\\')
+            builder.append(b'n')
+        } else {
+            builder.append(b)
+        }
+    }
+
+    let builder_output = builder.to_string()
+
+    if builder_output != expected {
+        eprintln("expected: {}", expected)
+        eprintln("found:    {}", builder_output)
+        return false
+    }
+    return true
+}
+
+function main(args: [String]) {
+    if args.size() <= 1 {
+        eprintln("{}", usage())
+        return 1
+    }
+
+    let file_name = args[1];
+
+    mut file = File::open_for_reading(file_name)
+    let file_contents = file.read_all()
+
+    mut errors: [JaktError] = []
+
+    let tokens = Lexer::lex(input: file_contents, errors)
+
+    let parsed_test = Parser::parse(tokens, errors);
+
+    match parsed_test {
+        SuccessTest(expected) => {
+            write_to_file(file_contents, output_filename: "output.jakt")
+
+            run_compiler("output.jakt")
+
+            // Windows
+            // run_test("build\\output", expected)
+
+            // Unix
+            run_test("./build/output", expected)
+
+            mut runtest_file = File::open_for_reading("runtest.out")
+            let runtest_output = runtest_file.read_all()
+
+            let test_passes = compare_test(bytes: runtest_output, expected)
+
+            if not test_passes {
+                eprintln("Test failed: {}", file_name)
+                return 1
+            } else {
+                println("Test passed: {}", file_name)
+                return 0
+            }
+        }
+        FailureTest(test) => {
+            write_to_file(file_contents, output_filename: "output.jakt")
+
+            run_compiler("output.jakt")
+        }
+        SkipTest => {
+            println("Expected output/error not found. Test skipped")
+        }
+    }
+}
+
+function run_test(anon filename: String, expected: String) throws {
+    mut run_test_args = [filename]
+
+    run_test_args.push(">")
+    run_test_args.push("runtest.out")
+    run_test_args.push("2>")
+    run_test_args.push("runtest.err")
+
+    mut command = ""
+    for compile_arg in run_test_args.iterator() {
+        command += compile_arg
+        command += " "
+    }
+    
+    system(command.c_string())
+}
+
+function run_compiler(anon output_filename: String) throws {
+    mut compile_args = [
+        "jakt"
+    ]
+    compile_args.push(output_filename)
+    compile_args.push(">")
+    compile_args.push("compiler.out")
+    compile_args.push("2>")
+    compile_args.push("compiler.err")
+
+    mut command = ""
+    for compile_arg in compile_args.iterator() {
+        command += compile_arg
+        command += " "
+    }
+    
+    system(command.c_string())
+}
+
+function write_to_file(file_contents: [u8], output_filename: String) throws {
+    mut outfile = File::open_for_writing(output_filename)
+    outfile.write(file_contents)
+}
