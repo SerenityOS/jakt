@@ -364,6 +364,7 @@ struct CheckedNamespace {
 
 class CheckedFunction {
     public name: String
+    public name_span: Span
     public return_type_id: TypeId
     public params: [CheckedParameter]
     public generic_params: [FunctionGenericParameter]
@@ -1304,6 +1305,7 @@ struct Typechecker {
 
         mut checked_function = CheckedFunction(
             name: parsed_function.name
+            name_span: parsed_function.name_span
             return_type_id: UNKNOWN_TYPE_ID
             params: []
             generic_params: []
@@ -1450,11 +1452,12 @@ struct Typechecker {
 
         // TODO: Typecheck return type a second time to resolve generics
 
-        // TODO: Infer return type if necessary
+        checked_function.return_type_id = checked_function.block.yielded_type ?? builtin(BuiltinType::Void)
 
-        // TODO: Report if control reaches end of non-void function
-
-        // TODO: Assign checked block and return type to checked_function
+        if checked_function.linkage is Internal and not checked_function.return_type_id.equals(builtin(BuiltinType::Void)) {
+            // FIXME: Use better span
+            .error("Control reaches end of non-void function", checked_function.name_span)
+        }
     }
 
     function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedBlock {
@@ -1469,7 +1472,24 @@ struct Typechecker {
         )
 
         for parsed_statement in parsed_block.stmts.iterator() {
-            checked_block.statements.push(.typecheck_statement(parsed_statement, scope_id: block_scope_id, safety_mode))
+            let statement = .typecheck_statement(parsed_statement, scope_id: block_scope_id, safety_mode)
+            
+            match statement {
+                Return(expr) => {
+                    checked_block.definitely_returns = true
+                    checked_block.yielded_type = match expr.has_value() {
+                        true => .expression_type(expr!)
+                        else => builtin(BuiltinType::Void)
+                    }
+                }
+                Yield(expr) => {
+                    checked_block.definitely_returns = true
+                    checked_block.yielded_type = .expression_type(expr)
+                }
+                else => {}
+            }
+
+            checked_block.statements.push(statement)
         }
 
         return checked_block
