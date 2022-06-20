@@ -364,7 +364,7 @@ struct CodeGenerator {
         output += .codegen_expression(rhs)
         output += ");"
         output += "}"
-        return ""
+        return output
     }
 
     function codegen_call(mut this, call: CheckedCall) throws -> String {
