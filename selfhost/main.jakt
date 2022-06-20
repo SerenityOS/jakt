@@ -89,7 +89,7 @@ function main(args: [String]) {
     let output = CodeGenerator::generate(checked_program)
 
     if build_executable {
-        let output_filename = "output.cpp"
+        let output_filename = "build/output.cpp"
         write_to_file(data: output, output_filename)
         run_compiler(output_filename)
     } else {
@@ -109,6 +109,8 @@ function run_compiler(output_filename: String) throws {
         "-Wno-user-defined-literals"
         "-Wno-deprecated-declarations"
         "-Iruntime"
+        "-o"
+        output_filename.split('.')[0]
     ]
     compile_args.push(output_filename)
     mut command = ""
