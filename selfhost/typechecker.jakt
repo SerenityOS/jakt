@@ -2259,6 +2259,7 @@ struct Typechecker {
 
             yield CheckedExpression::IndexedExpression(expr: checked_base, index: checked_index, span, type_id: expr_type_id)
         }
+        Garbage(span) => CheckedExpression::Garbage(span)
         else => {
             panic("not complete")
 
