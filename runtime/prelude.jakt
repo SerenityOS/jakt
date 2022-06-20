@@ -65,7 +65,7 @@ extern struct Dictionary<K, V> {
     function is_empty(this) -> bool
     function get(this, anon key: K) -> V?
     function contains(this, anon key: K) -> bool
-    function set(mut this, key: K, value: V) throws
+    function set(mut this, anon key: K, anon value: V) throws
     function remove(mut this, anon key: K) -> bool
     function ensure_capacity(mut this, anon capacity: usize) throws
     function clear(mut this)
