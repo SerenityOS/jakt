@@ -362,7 +362,7 @@ struct ParsedVariable {
 struct ParsedCall {
     namespace_: [String]
     name: String
-    args: [(String, ParsedExpression)]
+    args: [(String, Span, ParsedExpression)]
     type_args: [ParsedType]
 }
 
@@ -2373,10 +2373,12 @@ struct Parser {
                             .index++
                         }
                         else => {
-                            let param_name = .parse_argument_label()
+                            let label_span = .current().span()
+                            let label = .parse_argument_label()
 
                             let expr = .parse_expression(allow_assignments: false)
-                            call.args.push((param_name, expr))
+
+                            call.args.push((label, label_span, expr))
                         }
                     }
                 }

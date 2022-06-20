@@ -2325,7 +2325,7 @@ struct Typechecker {
         match call.name {
             "print" | "println" | "eprintln" | "format" => {
                 for arg in call.args.iterator() {
-                    let checked_arg = .typecheck_expression(expr: arg.1, scope_id, safety_mode)
+                    let checked_arg = .typecheck_expression(expr: arg.2, scope_id, safety_mode)
 
                     args.push((call.name, checked_arg))
                 }
@@ -2350,10 +2350,11 @@ struct Typechecker {
                 for i in 0..call.args.size() {
                     let parsed_label_and_arg = call.args[i]
                     let param = callee.params[i]
-                    if param.requires_label and parsed_label_and_arg.0 != param.variable.name {
-                        .error("Wrong parameter name in argument label", span)
+
+                    if param.requires_label {
+                        .validate_argument_label(param, label: parsed_label_and_arg.0, span: parsed_label_and_arg.1, expr: parsed_label_and_arg.2)
                     }
-                    let checked_arg = .typecheck_expression(expr: parsed_label_and_arg.1, scope_id, safety_mode)
+                    let checked_arg = .typecheck_expression(expr: parsed_label_and_arg.2, scope_id, safety_mode)
 
                     // FIXME: Check argument/parameter type compatibility
 
@@ -2364,5 +2365,22 @@ struct Typechecker {
 
         let none_function_id: FunctionId? = None
         return CheckedExpression::Call(call: CheckedCall(namespace_: [], name: call.name, args, function_id: none_function_id, return_type, callee_throws), span, type_id: return_type)
+    }
+
+    function validate_argument_label(mut this, param: CheckedParameter, label: String, span: Span, expr: ParsedExpression) throws -> bool {
+        if label == param.variable.name {
+            return true
+        }
+        match expr {
+            Var(name, span) => {
+                if name == param.variable.name {
+                    return true
+                }
+                .error(format("Wrong parameter name in argument label (got '{}', expected '{}')", name, param.variable.name), span)
+            }
+            else => {}
+        }
+        .error(format("Wrong parameter name in argument label (got '{}', expected '{}')", label, param.variable.name), span)
+        return false
     }
 }
