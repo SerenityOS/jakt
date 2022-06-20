@@ -2063,6 +2063,7 @@ struct Typechecker {
                 USize(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val), span, type_id: builtin(BuiltinType::U64))
             }
         }
+        SingleQuotedString(val, span) => CheckedExpression::CharacterConstant(val, span)
         SingleQuotedByteString(val, span) => CheckedExpression::ByteConstant(val, span)
         QuotedString(val, span) => CheckedExpression::QuotedString(val, span)
         Call(call, span) => .typecheck_call(call, scope_id, span, safety_mode, must_be_enum_constructor: false)
