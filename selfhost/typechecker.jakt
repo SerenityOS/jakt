@@ -1870,7 +1870,7 @@ struct Typechecker {
         let rhs = .expression_type(checked_expr)
         let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
 
-        if lhs.equals(UNKNOWN_TYPE_ID) and not rhs.equals(UNKNOWN_TYPE_ID) {
+        if .get_type(lhs) is Inference {
             lhs = rhs
         }
 
