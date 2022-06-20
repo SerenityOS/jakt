@@ -1885,6 +1885,13 @@ struct Parser {
             let span = merge_spans(start, expr.span())
             yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::PreIncrement, span)
         }
+        Minus => {
+            let start = .current().span()
+            .index++
+            let expr = .parse_operand()
+            let span = merge_spans(start, expr.span())
+            yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::Negate, span)
+        }
         LSquare => {
             yield .parse_array_or_dictionary_literal()
         }

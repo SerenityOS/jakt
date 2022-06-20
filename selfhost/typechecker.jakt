@@ -1658,6 +1658,9 @@ struct Typechecker {
             TypeCast(cast) => {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: cast.type_id())
             }
+            Negate => {
+                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: expr_type_id)
+            }
             else => {
                 todo(format("typecheck_unary_operation: expr:{}, op:{}", checked_expr, checked_op))
             }
