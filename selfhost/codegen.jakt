@@ -492,7 +492,7 @@ struct CodeGenerator {
         Defer(statement) => {
             // NOTE: We let the preprocessor generate a unique name for the RAII helper.
             mut output = ""
-            output += "#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n"
+            output += "\n#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n"
             output += "ScopeGuard __SCOPE_GUARD_NAME ([&] \n"
             output += "#undef __SCOPE_GUARD_NAME\n{"
             {
