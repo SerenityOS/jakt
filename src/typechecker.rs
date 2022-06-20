@@ -2077,16 +2077,14 @@ pub fn typecheck_namespace_declarations(
     let mut error = None;
 
     for namespace in parsed_namespace.namespaces.iter() {
-        if let Some(namespace_name) = &namespace.name {
-            // Finish typecheck of the named namespaces
+        let namespace_scope_id = if let Some(namespace_name) = &namespace.name {
             let (namespace_scope_id, _) = project
                 .find_namespace_in_scope(scope_id, namespace_name)
                 .expect("internal error: can't find previously added namespace");
 
-            let err = typecheck_namespace_declarations(namespace, namespace_scope_id, project);
-            error = error.or(err);
+            namespace_scope_id
         } else {
-            // Create a typecheck the unnamed namespace (aka a block scope)
+            // Create the unnamed namespace (aka a block scope)
 
             let namespace_scope_id = project.create_scope(scope_id, false);
             project.get_scope_mut(namespace_scope_id).namespace_name = namespace.name.clone();
@@ -2095,12 +2093,15 @@ pub fn typecheck_namespace_declarations(
                 .children
                 .push(namespace_scope_id);
             typecheck_namespace_predecl(namespace, namespace_scope_id, project);
-            error = error.or(typecheck_namespace_declarations(
-                parsed_namespace,
-                namespace_scope_id,
-                project,
-            ))
-        }
+
+            namespace_scope_id
+        };
+
+        error = error.or(typecheck_namespace_declarations(
+            namespace,
+            namespace_scope_id,
+            project,
+        ))
     }
 
     // for (_, enum_) in parsed_namespace.enums.iter().enumerate() {
