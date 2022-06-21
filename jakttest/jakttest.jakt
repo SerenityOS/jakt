@@ -29,6 +29,31 @@ function compare_test(bytes: [u8], expected: String) throws -> bool {
     return true
 }
 
+function compare_error(bytes: [u8], expected: String) throws -> bool {
+    // first, build up the content to compare to
+    mut builder = StringBuilder::create()
+
+    for b in bytes.iterator() {
+        if b == 0xd {
+            // skip
+        } else if b == 0xa {
+            builder.append(b'\\')
+            builder.append(b'n')
+        } else {
+            builder.append(b)
+        }
+    }
+
+    let builder_output = builder.to_string()
+
+    if not builder_output.contains(expected) {
+        eprintln("expected: {}", expected)
+        eprintln("found:    {}", builder_output)
+        return false
+    }
+    return true
+}
+
 function main(args: [String]) {
     if args.size() <= 1 {
         eprintln("{}", usage())
@@ -71,13 +96,24 @@ function main(args: [String]) {
                 return 0
             }
         }
-        FailureTest(test) => {
+        FailureTest(expected) => {
             write_to_file(file_contents, output_filename: "output.jakt")
 
             run_compiler("output.jakt")
 
-            // Because we're having to skip failure tests, let's report that it's skipped now
-            return 2
+            mut compiler_error_file = File::open_for_reading("compiler.err")
+            let compiler_error_output = compiler_error_file.read_all()
+
+            let test_passes = compare_error(bytes: compiler_error_output, expected)
+
+            if not test_passes {
+                eprintln("Test failed: {}", file_name)
+                return 1
+            } else {
+                println("Test passed: {}", file_name)
+                return 0
+            }
+
         }
         SkipTest => {
             println("Expected output/error not found. Test skipped")
@@ -107,7 +143,8 @@ function run_test(anon filename: String, expected: String) throws {
 
 function run_compiler(anon output_filename: String) throws {
     mut compile_args = [
-        "jakt"
+        "build/main"
+        "-b"
     ]
     compile_args.push(output_filename)
     compile_args.push(">")
