@@ -881,7 +881,7 @@ struct Typechecker {
             return struct_id.value()
         }
 
-        panic(format("internal error: {} builtin definition not found" name))
+        panic(format("internal error: {} builtin definition not found", name))
         return StructId(module: ModuleId(id: 0), id: 0)
     }
 
@@ -895,7 +895,7 @@ struct Typechecker {
         if type_id.has_value() {
             return type_id.value()
         }
-        panic(format("internal error: {} builtin definition not found" name))
+        panic(format("internal error: {} builtin definition not found", name))
         return TypeId(module: ModuleId(id: 0), id: 0)
     }
 

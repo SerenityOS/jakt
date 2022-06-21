@@ -683,7 +683,7 @@ struct Parser {
         return (variants, methods)
     }
 
-    function parse_sum_enum_body(mut this, partial_enum: ParsedRecord, definition_linkage: DefinitionLinkage is_boxed: bool) throws -> ([SumEnumVariant], [ParsedMethod]) {
+    function parse_sum_enum_body(mut this, partial_enum: ParsedRecord, definition_linkage: DefinitionLinkage, is_boxed: bool) throws -> ([SumEnumVariant], [ParsedMethod]) {
         mut methods: [ParsedMethod] = []
         mut variants: [SumEnumVariant] = []
 
@@ -890,7 +890,7 @@ struct Parser {
         return parsed_enum
     }
 
-    public function parse_struct_class_body(mut this, definition_linkage: DefinitionLinkage default_visibility: Visibility) throws -> ([ParsedField],[ParsedMethod]) {
+    public function parse_struct_class_body(mut this, definition_linkage: DefinitionLinkage, default_visibility: Visibility) throws -> ([ParsedField],[ParsedMethod]) {
         if .current() is LCurly {
             .index++
         } else {
