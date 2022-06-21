@@ -55,6 +55,27 @@ struct TypeId {
     function equals(this, anon rhs: TypeId) -> bool {
         return this.module.id == rhs.module.id and this.id == rhs.id
     }
+
+    // FIXME: Remove when we have language support, used as workaround [String:String] <-> [TypeId:TypeId]
+    function to_string(this) throws -> String {
+        return format("{}_{}", .module.id, .id)
+    }
+
+    // FIXME: Remove when we have language support, used as workaround [String:String] <-> [TypeId:TypeId]
+    function from_string(anon type_id_string: String) throws -> TypeId {
+        let parts = type_id_string.split('_')
+        if not (parts.size() == 2) {
+            throw Error::from_errno(999) // FIXME: good error message
+        }
+
+        let module_id = parts[0].to_uint()
+        let type_id = parts[1].to_uint()
+        if module_id.has_value() or not type_id.has_value() {
+            throw Error::from_errno(9999) // FIXME: good error message
+        }
+
+        return TypeId(module: ModuleId(id: module_id.value() as! usize), id: type_id.value() as! usize)
+    }
 }
 
 struct ScopeId {
@@ -2041,6 +2062,252 @@ struct Typechecker {
             else => false
         }
         else => false
+    }
+
+    // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
+    function check_types_for_compat(mut this, lhs_type_id: TypeId, rhs_type_id: TypeId, mut generic_inferences: [String:String], span: Span) throws -> bool {
+        let lhs_type = .get_type(lhs_type_id)
+
+        let lhs_type_id_string = lhs_type_id.to_string()
+        let rhs_type_id_string = rhs_type_id.to_string()
+
+        let optional_struct_id = .find_struct_in_prelude("Optional")
+        let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
+
+        // TODO: Skip the type compatibility check if assigning a T to a T? or to a
+        //       weak T? without going through `Some`.
+
+        match lhs_type {
+            TypeVariable() => {
+                // If the call expects a generic type variable, let's see if we've already seen it
+                let seen_type_id_string = generic_inferences.get(lhs_type_id_string)
+                if seen_type_id_string.has_value() {
+                    // We've seen this type variable assigned something before
+                    // we should error if it's incompatible.
+
+                    if seen_type_id_string.value() != rhs_type_id_string {
+                        .error(
+                            format(
+                                "Type mismatch: expected ‘{}’ but got ‘{}’"
+                                .type_name(TypeId::from_string(seen_type_id_string.value()))
+                                .type_name(rhs_type_id)
+                            )
+                            span
+                        )
+                        return false
+                    }
+                } else {
+                    generic_inferences.set(key: lhs_type_id_string, value: rhs_type_id_string)
+                }
+            }
+            GenericEnumInstance(id, args) => {
+                let lhs_enum_id = id
+                let lhs_args = args
+                let rhs_type = .get_type(rhs_type_id)
+                match rhs_type {
+                    GenericEnumInstance(id, args) => {
+                        let rhs_enum_id = id
+                        let rhs_args = args
+                        if lhs_enum_id.equals(rhs_enum_id) {
+                            let lhs_enum = .get_enum(lhs_enum_id)
+                            if lhs_args.size() != rhs_args.size() {
+                                .error(format("mismatched number of generic parameters for {}", lhs_enum.name), span)
+                                return false
+                            }
+
+                            mut idx: usize = 0
+                            while idx < args.size() {
+                                if not .check_types_for_compat(
+                                    lhs_type_id: lhs_args[idx]
+                                    rhs_type_id: rhs_args[idx]
+                                    generic_inferences
+                                    span
+                                ) {
+                                    // FIXME: maybe emit secondary error?
+                                    return false
+                                }
+                                ++idx
+                            }
+                        }
+                    }
+                    else => {
+                        if not rhs_type_id.equals(lhs_type_id) {
+                            .error(
+                                format("Type mismatch: expected ‘{}’ but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                span
+                            )
+                            return false
+                        }
+                    }
+                }
+            }
+            GenericInstance(id, args) => {
+                let lhs_struct_id = id
+                let lhs_args = args
+                let rhs_type = .get_type(rhs_type_id)
+                match rhs_type {
+                    GenericInstance(id, args) => {
+                        let rhs_struct_id = id
+                        if lhs_struct_id.equals(rhs_struct_id) {
+                            let rhs_args = args
+                            let lhs_struct = .get_struct(lhs_struct_id)
+                            if lhs_args.size() != rhs_args.size() {
+                                .error(format("mismatched number of generic parameters for {}", lhs_struct.name), span)
+                                return false
+                            }
+
+                            mut idx: usize = 0
+                            while idx < args.size() {
+                                if not .check_types_for_compat(
+                                    lhs_type_id: lhs_args[idx]
+                                    rhs_type_id: rhs_args[idx]
+                                    generic_inferences
+                                    span
+                                ) {
+                                    // FIXME: maybe emit secondary error?
+                                    return false
+                                }
+                                ++idx
+                            }
+                        } else {
+                            .error(
+                                format("Type mismatch: expected ‘{}’ but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                span
+                            )
+                            return false
+                        }
+                    }
+                    else => {
+                        if not rhs_type_id.equals(lhs_type_id) {
+                            .error(
+                                format("Type mismatch: expected ‘{}’ but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                span
+                            )
+                            return false
+                        }
+                    }
+                }
+            }
+            Enum(enum_id) => {
+                if lhs_type_id.equals(rhs_type_id) {
+                    return true
+                }
+                let rhs_type = .get_type(rhs_type_id)
+                match rhs_type {
+                    GenericEnumInstance(id, args) => {
+                        if enum_id.equals(id) {
+                            let lhs_enum = .get_enum(enum_id)
+                            if args.size() != lhs_enum.generic_parameters.size() {
+                                .error(format("mismatched number of generic parameters for {}", lhs_enum.name), span)
+                                return false
+                            }
+
+                            mut idx: usize = 0
+                            while idx < args.size() {
+                                if not .check_types_for_compat(
+                                    lhs_type_id: lhs_enum.generic_parameters[idx]
+                                    rhs_type_id: args[idx]
+                                    generic_inferences
+                                    span
+                                ) {
+                                    // FIXME: maybe emit secondary error?
+                                    return false
+                                }
+                                ++idx
+                            }
+                        }
+                    }
+                    else => {
+                        if not rhs_type_id.equals(lhs_type_id) {
+                            .error(
+                                format("Type mismatch: expected ‘{}’ but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                span
+                            )
+                            return false
+                        }
+                    }
+                }
+            }
+            Struct(lhs_struct_id) => {
+                if lhs_type_id.equals(rhs_type_id) {
+                    return true
+                }
+                let rhs_type = .get_type(rhs_type_id)
+                match rhs_type {
+                    GenericInstance(id, args) => {
+                        let lhs_struct = .get_struct(lhs_struct_id)
+                        if args.size() != lhs_struct.generic_parameters.size() {
+                            .error(format("mismatched number of generic parameters for {}", lhs_struct.name), span)
+                            return false
+                        }
+
+                        mut idx: usize = 0
+                        while idx < args.size() {
+                            if not .check_types_for_compat(
+                                lhs_type_id: lhs_struct.generic_parameters[idx]
+                                rhs_type_id: args[idx]
+                                generic_inferences
+                                span
+                            ) {
+                                // FIXME: maybe emit secondary error?
+                                return false
+                            }
+                            ++idx
+                        }
+
+                    }
+                    else => {
+                        if not rhs_type_id.equals(lhs_type_id) {
+                            .error(
+                                format("Type mismatch: expected ‘{}’ but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                span
+                            )
+                            return false
+                        }
+                    }
+                }
+            }
+            RawPtr(lhs_rawptr_type_id) => {
+                if lhs_rawptr_type_id.equals(rhs_type_id) {
+                    return true
+                }
+
+                let rhs_type = .get_type(rhs_type_id)
+                match rhs_type {
+                    RawPtr(rhs_rawptr_type_id) => {
+                        if not .check_types_for_compat(
+                            lhs_type_id: lhs_rawptr_type_id
+                            rhs_type_id: rhs_rawptr_type_id
+                            generic_inferences
+                            span
+                        ) {
+                            // FIXME: maybe emit secondary error?
+                            return false
+                        }
+                    }
+                    else => {
+                        if not rhs_type_id.equals(lhs_type_id) {
+                            .error(
+                                format("Type mismatch: expected ‘{}’ but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                span
+                            )
+                            return false
+                        }
+                    }
+                }
+            }
+            else => {
+                if not rhs_type_id.equals(lhs_type_id) {
+                    .error(
+                        format("Type mismatch: expected ‘{}’ but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                        span
+                    )
+                    return false
+                }
+            }
+        }
+
+        return true
     }
 
     function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedBlock {
