@@ -1,5 +1,5 @@
 import error { JaktError }
-import parser { BinaryOperator, DefinitionLinkage, DefinitionType,
+import parser { BinaryOperator, DefinitionLinkage, DefinitionType, UnaryOperator,
                 FunctionLinkage, FunctionType, ParsedBlock, ParsedCall,
                 ParsedExpression, ParsedFunction, ParsedNamespace,
                 ParsedType, ParsedStatement, ParsedVarDecl, RecordType }
@@ -1863,10 +1863,159 @@ struct Typechecker {
         VarDecl(var, init) => .typecheck_var_decl(var, init, scope_id, safety_mode)
         If(condition, then_block, else_statement) => .typecheck_if(condition, then_block, else_statement, scope_id, safety_mode)
         Garbage => CheckedStatement::Garbage
-        else => {
-            todo(format("typecheck_statement else: {}", statement))
-            yield CheckedStatement::Garbage
+        For(iterator_name, name_span, range, block) => .typecheck_for(iterator_name,  name_span, range, block, scope_id, safety_mode)
+    }
+
+    function typecheck_for(mut this, iterator_name: String, name_span: Span, range: ParsedExpression, block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
+        let maybe_span = block.find_yield_span()
+        if maybe_span.has_value() {
+            .error("a 'for' loop block is not allowed to yield values", maybe_span!)
         }
+
+
+        // Translate `for x in expr { body }` to
+        // block {
+        //     let (mutable) _magic = expr
+        //     loop {
+        //         let x = _magic.next()
+        //         if not x.has_value() {
+        //             break
+        //         }
+        //         let iterator_name = x!
+        //         body
+        //     }
+        // }
+        //
+        // The only restrictions placed on the iterator are such:
+        //     1- Must respond to .next(); the mutability of the iterator is inferred from .next()'s signature
+        //     2- The result of .next() must be an Optional.
+
+        // TODO: when optional type hint is available, add `None` as the type hint
+        let iterable_expr = .typecheck_expression(range, scope_id, safety_mode) 
+        mut iterable_should_be_mutable = false
+
+
+        let iterable_type = .program.get_type(.expression_type(iterable_expr))
+
+        match iterable_type {
+            TypeVariable => {
+                // Since we're not sure, just make it mutable.
+                iterable_should_be_mutable = true
+            }
+            GenericInstance(id, args) | Struct(id) => {
+                let struct_ = .get_struct(id)
+                let next_method_function_id = .find_function_in_scope(
+                    parent_scope_id: struct_.scope_id,
+                    function_name: "next"
+                    )
+                if not next_method_function_id.has_value() {
+                    .error("Iterator must have a .next() method", range.span())
+                } else {
+                    let next_method_function = .get_function(next_method_function_id!)
+                    // Check whether we need to make the iteratar mutable
+                    if next_method_function.is_mutating() {
+                        iterable_should_be_mutable = true
+                    }
+                }
+            }
+            else => {
+                .error("Iterator must have a .next() method", name_span)
+            }
+        }
+
+
+        // FIXME: proper type inference for `None`
+        let else_statement: ParsedStatement? = None
+
+        let rewritten_statement = ParsedStatement::Block(ParsedBlock(
+                stmts: [
+                    // let (mutable) _magic = expr
+                    ParsedStatement::VarDecl(
+                        var: ParsedVarDecl(
+                            name: "_magic",
+                            parsed_type: ParsedType::Empty,
+                            is_mutable: iterable_should_be_mutable,
+                            span: name_span
+                        ),
+                        init: range
+                    )
+                    // loop {
+                    ParsedStatement::Loop(ParsedBlock(
+                        stmts: [
+                            // let _magic_value = _magic.next()
+                            ParsedStatement::VarDecl(
+                                var: ParsedVarDecl(
+                                    name: "_magic_value",
+                                    parsed_type: ParsedType::Empty,
+                                    is_mutable: iterable_should_be_mutable,
+                                    span: name_span
+                                ),
+                                init: ParsedExpression::MethodCall(
+                                    expr: ParsedExpression::Var(
+                                        name: "_magic",
+                                        span: name_span
+                                    ),
+                                    call: ParsedCall(
+                                        namespace_: [],
+                                            name: "next",
+                                            args: [],
+                                        type_args: []
+                                    ),
+                                    span: name_span
+                                )
+                            ),
+                            // if not _magic_value.has_value() {
+                            ParsedStatement::If(
+                                condition: ParsedExpression::UnaryOp(
+                                    expr: ParsedExpression::MethodCall(
+                                        expr: ParsedExpression::Var(
+                                            name: "_magic_value",
+                                            span: name_span
+                                        ),
+                                        call: ParsedCall(
+                                            namespace_: [],
+                                            name: "has_value",
+                                            args: [],
+                                            type_args: []
+                                        )
+                                        span: name_span
+                                    ),
+                                    op: UnaryOperator::LogicalNot,
+                                    span: name_span
+                                ),
+                                then_block: ParsedBlock(
+                                    stmts: [
+                                        // break
+                                        ParsedStatement::Break
+                                    ]
+                                ),
+                                else_statement
+                            ),
+                           // let iterator_name = _magic_value!
+                           ParsedStatement::VarDecl(
+                               var: ParsedVarDecl(
+                                   name: iterator_name,
+                                   parsed_type: ParsedType::Empty,
+                                   // FIXME: loop variable mutability should be independent
+                                   // of iterable mutability
+                                   is_mutable: iterable_should_be_mutable,
+                                   span: name_span
+                                ),
+                                init: ParsedExpression::ForcedUnwrap(
+                                    expr: ParsedExpression::Var(
+                                        name: "_magic_value",
+                                        span: name_span
+                                    )
+                                    span: name_span
+                                )
+                           ),
+                           ParsedStatement::Block(block)
+                        ]
+                    ))
+                ]
+        ))
+
+        return .typecheck_statement(rewritten_statement, scope_id, safety_mode)
     }
 
     function typecheck_if(mut this, condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
