@@ -35,6 +35,7 @@ extern struct String {
     function is_empty(this) -> bool
     function length(this) -> usize
     function byte_at(this, anon index: usize) -> u8
+    function contains(this, anon needle: String) -> bool
 }
 
 extern struct StringBuilder {
