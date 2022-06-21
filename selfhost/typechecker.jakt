@@ -624,6 +624,17 @@ enum CheckedUnaryOperator {
     IsEnumVariant(String)
 }
 
+enum CheckedMatchBody {
+    Expression(CheckedExpression)
+    Block(CheckedBlock)
+}
+
+enum CheckedMatchCases {
+    EnumVariant(name: String, args: [(String?, String, Span)], subject_type_id: TypeId, index: usize, scope_id: ScopeId, body: CheckedMatchBody, marker_span: Span)
+    Expression(expression: CheckedExpression, body: CheckedMatchBody, marker_span: Span)
+    CatchAll(body: CheckedMatchBody, marker_span: Span)
+}
+
 boxed enum CheckedExpression {
     Boolean(val: bool, span: Span)
     NumericConstant(val: CheckedNumericConstant, span: Span, type_id: TypeId)
@@ -641,6 +652,7 @@ boxed enum CheckedExpression {
     IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
     IndexedTuple(expr: CheckedExpression, index: usize, span: Span, type_id: TypeId)
     IndexedStruct(expr: CheckedExpression, index: String, span: Span, type_id: TypeId)
+    Match(expr: CheckedExpression, match_cases: [CheckedMatchCases], span: Span, type_id: TypeId, all_variants_constant: bool)
     Call(call: CheckedCall, span: Span, type_id: TypeId)
     MethodCall(expr: CheckedExpression, call: CheckedCall, span: Span, type_id: TypeId)
     NamespacedVar(namespaces: [CheckedNamespace], var: CheckedVariable, span: Span)
@@ -1029,6 +1041,7 @@ struct Typechecker {
         OptionalNone(type_id) => type_id
         OptionalSome(type_id) => type_id
         ForcedUnwrap(type_id) => type_id
+        Match(type_id) => type_id
         Block(type_id) => type_id
         Garbage => builtin(BuiltinType::Void)
     }
@@ -1058,6 +1071,7 @@ struct Typechecker {
         OptionalNone(span) => span
         OptionalSome(span) => span
         ForcedUnwrap(span) => span
+        Match(span) => span
         Block(span) => span
         Garbage(span) => span
     }
