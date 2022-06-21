@@ -2420,6 +2420,31 @@ struct Typechecker {
         return CheckedExpression::Call(call: CheckedCall(namespace_: [], name: call.name, args, function_id: none_function_id, return_type, callee_throws), span, type_id: return_type)
     }
 
+    function resolve_type_var(this, type_var_type_id: TypeId, scope_id: ScopeId) -> TypeId {
+        mut current_type_id = type_var_type_id
+
+        loop {
+            let type_var_type = .get_type(current_type_id)
+            match type_var_type {
+                Type::TypeVariable(type_name) => {
+                    let maybe_found_type_id = .find_type_in_scope(scope_id, name: type_name)
+                    if maybe_found_type_id.has_value() {
+                        let found_type_id = maybe_found_type_id.value()
+                        if found_type_id.equals(current_type_id) {
+                            return current_type_id
+                        }
+                        current_type_id = found_type_id
+                    } else {
+                        return current_type_id
+                    }
+                } else => {
+                    return current_type_id
+                }
+            }
+        }
+        return current_type_id
+    }
+
     function validate_argument_label(mut this, param: CheckedParameter, label: String, span: Span, expr: ParsedExpression) throws -> bool {
         if label == param.variable.name {
             return true
