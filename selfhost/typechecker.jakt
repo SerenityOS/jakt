@@ -1167,7 +1167,7 @@ struct Typechecker {
                 let child_scope = .get_scope(child)
                 if child_scope.namespace_name.has_value() {
                     if name == child_scope.namespace_name.value() {
-                        return (current, false)
+                        return (child, false)
                     }
                 }
             }
