@@ -107,7 +107,8 @@ function run_test(anon filename: String, expected: String) throws {
 
 function run_compiler(anon output_filename: String) throws {
     mut compile_args = [
-        "jakt"
+        "build/main"
+        "-b"
     ]
     compile_args.push(output_filename)
     compile_args.push(">")
