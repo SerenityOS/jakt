@@ -2018,19 +2018,63 @@ struct Typechecker {
             .add_var_to_scope(scope_id: function_scope_id, name: variable.name, var_id, span: variable.definition_span)
         }
 
-        // TODO: Resolve concreete types
+        // Resolve concrete types
+        mut function_return_type_id = .typecheck_typename(
+            parsed_type: parsed_function.return_type
+            scope_id: function_scope_id
+        )
+        checked_function.return_type_id = function_return_type_id
 
         // TODO: Typecheck function block
-        checked_function.block = .typecheck_block(parsed_function.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
+        let block = .typecheck_block(
+            parsed_function.block
+            parent_scope_id: function_scope_id
+            safety_mode: SafetyMode::Safe
+        )
 
-        // TODO: Typecheck return type a second time to resolve generics
+        // Typecheck return type a second time to resolve generics
+        function_return_type_id = .typecheck_typename(
+            parsed_type: parsed_function.return_type
+            scope_id: function_scope_id
+        )
 
-        checked_function.return_type_id = checked_function.block.yielded_type ?? builtin(BuiltinType::Void)
-
-        if checked_function.linkage is Internal and not checked_function.return_type_id.equals(builtin(BuiltinType::Void)) {
-            // FIXME: Use better span
-            .error("Control reaches end of non-void function", checked_function.name_span)
+        // Infer return type if necessary
+        // If the return type is unknown, and the function starts with a return statement,
+        // we infer the return type from its expression.
+        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
+        let VOID_TYPE_ID = builtin(BuiltinType::Void)
+        mut return_type_id = VOID_TYPE_ID
+        if function_return_type_id.equals(UNKNOWN_TYPE_ID) {
+            let last_stmt: CheckedStatement = block.statements[block.statements.size() - 1]
+            match last_stmt {
+                CheckedStatement::Return(ret) => {
+                    if ret.has_value() {
+                        return_type_id = .expression_type(expr: ret.value())
+                    }
+                }
+                else => {
+                    return_type_id = VOID_TYPE_ID
+                }
+            }
+        } else {
+            return_type_id = .resolve_type_var(
+                type_var_type_id: function_return_type_id,
+                scope_id: function_scope_id
+            )
         }
+
+        let external_linkage = match function_linkage {
+            FunctionLinkage::External => true
+            else => false
+        }
+        if not external_linkage and not return_type_id.equals(VOID_TYPE_ID) and not block.definitely_returns
+        {
+            // FIXME: Use better span
+            .error("Control reaches end of non-void function", parsed_function.name_span)
+        }
+
+        checked_function.block = block
+        checked_function.return_type_id = return_type_id
     }
 
     function statement_definitely_returns(this, anon statement: CheckedStatement) -> bool => match statement{
