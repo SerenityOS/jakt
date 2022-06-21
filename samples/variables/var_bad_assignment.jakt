@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "assignment to immutable variable"
+/// - error: "Assignment to immutable variable"
 
 function main() {
     let x: i64 = 100

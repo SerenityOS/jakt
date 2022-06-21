@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "assignment is not allowed in this position"
+/// - error: "Assignment is not allowed in this position"
 
 function main() {
     mut x = 100;

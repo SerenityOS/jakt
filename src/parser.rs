@@ -3717,7 +3717,7 @@ pub fn parse_operator(
             (
                 ParsedExpression::Operator(operator, span),
                 Some(JaktError::ValidationError(
-                    "assignment is not allowed in this position".to_string(),
+                    "Assignment is not allowed in this position".to_string(),
                     span,
                 )),
             )

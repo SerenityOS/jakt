@@ -6291,7 +6291,7 @@ pub fn typecheck_unary_operation(
                     (
                         CheckedExpression::UnaryOp(Box::new(expr), op, span, expr_type_id),
                         Some(JaktError::TypecheckError(
-                            "increment/decrement of immutable variable".to_string(),
+                            "Increment/decrement of immutable variable".to_string(),
                             span,
                         )),
                     )
@@ -6481,7 +6481,7 @@ pub fn typecheck_binary_operation(
                 return (
                     lhs_type_id,
                     Some(JaktError::TypecheckError(
-                        "assignment to immutable variable".to_string(),
+                        "Assignment to immutable variable".to_string(),
                         span,
                     )),
                 );
@@ -6566,7 +6566,7 @@ pub fn typecheck_binary_operation(
                 return (
                     lhs_type_id,
                     Some(JaktError::TypecheckError(
-                        "assignment to immutable variable".to_string(),
+                        "Assignment to immutable variable".to_string(),
                         span,
                     )),
                 );

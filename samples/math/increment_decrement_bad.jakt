@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "increment/decrement of immutable variable"
+/// - error: "Increment/decrement of immutable variable"
 
 function main() {
     let x = 10

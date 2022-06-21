@@ -1765,7 +1765,7 @@ struct Typechecker {
             }
             Assign => {
                 if not .expression_is_mutable(checked_lhs) {
-                    .error("assignment to immutable variable", span)
+                    .error("Assignment to immutable variable", span)
                     return lhs_type_id
                 }
                 match checked_rhs {
