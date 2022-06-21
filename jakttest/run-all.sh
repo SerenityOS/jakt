@@ -8,7 +8,7 @@ fi
 
 if [ ! -x ./build/main ]; then
     echo "selfhosted jakt binary does not exist."
-    echo 'You can build it with `cargo run selfhosted/main.jakt`'
+    echo 'You can build it with `cargo run selfhost/main.jakt`'
     exit 1
 fi
 
