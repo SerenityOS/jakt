@@ -681,6 +681,59 @@ boxed enum CheckedExpression {
 
         return None
     }
+
+}
+
+function checked_expression_definitely_returns(anon check_expression: CheckedExpression) -> bool {
+    mut ret = false
+
+    match check_expression {
+        Match(expr, match_cases, span, type_id, all_variants_constant) => {
+            mut case_ret = true
+            for case_ in match_cases.iterator() {
+                match case_ {
+                    EnumVariant(body) => match body {
+                        Block(block) => {
+                            if block.definitely_returns {
+                                continue
+                            }
+                        }
+                        else => {
+                            case_ret = false
+                            break
+                        }
+                    }
+                    Expression(body)  => match body {
+                        Block(block) => {
+                            if block.definitely_returns {
+                                continue
+                            }
+                        }
+                        else => {
+                            case_ret = false
+                            break
+                        }
+                    }
+                    CatchAll(body)  => match body {
+                        Block(block) => {
+                            if block.definitely_returns {
+                                continue
+                            }
+                        }
+                        else => {
+                            case_ret = false
+                            break
+                        }
+                    }
+                }
+            }
+            ret = case_ret
+        }
+        else => {
+            return false
+        }
+    }
+    return ret
 }
 
 struct ResolvedNamespace {
