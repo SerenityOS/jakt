@@ -7416,10 +7416,10 @@ pub fn check_types_for_compat(
 
                     let mut idx = 0;
 
-                    let lhs_arg_type_id = lhs_struct.generic_parameters[idx];
-                    let rhs_arg_type_id = args[idx];
-
                     while idx < args.len() {
+                        let lhs_arg_type_id = lhs_struct.generic_parameters[idx];
+                        let rhs_arg_type_id = args[idx];
+
                         if let Some(err) = check_types_for_compat(
                             lhs_arg_type_id,
                             rhs_arg_type_id,
