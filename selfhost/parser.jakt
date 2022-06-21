@@ -1877,20 +1877,28 @@ struct Parser {
 
             yield expr
         }
-        PlusPlus(span) => {
+        PlusPlus(span)
+        | MinusMinus(span)
+        | Minus(span) => {
+
+            let op = match .current() {
+                PlusPlus => UnaryOperator::PreIncrement
+                MinusMinus => UnaryOperator::PreDecrement
+                Minus => UnaryOperator::Negate
+                else => {
+                    // FIXME: This is unreachable
+                    panic("unreachable")
+                    yield UnaryOperator::Negate
+                }
+            }
+
             let start = .current().span()
             .index++
 
             let expr = .parse_operand()
             let span = merge_spans(start, expr.span())
-            yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::PreIncrement, span)
-        }
-        Minus => {
-            let start = .current().span()
-            .index++
-            let expr = .parse_operand()
-            let span = merge_spans(start, expr.span())
-            yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::Negate, span)
+
+            yield ParsedExpression::UnaryOp(expr, op, span)
         }
         LSquare => {
             yield .parse_array_or_dictionary_literal()
