@@ -2012,6 +2012,37 @@ struct Typechecker {
         }
     }
 
+    function statement_definitely_returns(this, anon statement: CheckedStatement) -> bool => match statement{
+        Return(expr) => true
+        // FIXME: CheckedStatement::If branches ugly implementation due to current compiler limitations
+        If(guard, then_block, else_statement) => {
+            mut ret = false
+            let guard_result = match guard {
+                Boolean(val) => {
+                    if val and then_block.definitely_returns {
+                        ret = true
+                    }
+                    yield ret
+                }
+                else => false
+            }
+            if not guard_result and else_statement.has_value(){
+                if then_block.definitely_returns and .statement_definitely_returns(else_statement.value()) {
+                    ret = true
+                }
+            }
+            yield ret
+        }
+        Block(block) => block.definitely_returns
+        Loop(block) => block.definitely_returns
+        While(guard, block) => block.definitely_returns
+        Expression(match_expr) => match match_expr {
+            Match() => checked_expression_definitely_returns(match_expr)
+            else => false
+        }
+        else => false
+    }
+
     function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedBlock {
         let parent_throws = .get_scope(parent_scope_id).can_throw
         let block_scope_id = .create_scope(parent_scope_id, can_throw: parent_throws)
