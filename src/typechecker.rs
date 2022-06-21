@@ -4305,8 +4305,8 @@ pub fn typecheck_match_body(
             match final_result_type {
                 Some(type_id) => {
                     if let Some(err) = check_types_for_compat(
-                        body.type_id(scope_id, project),
                         *type_id,
+                        body.type_id(scope_id, project),
                         generic_parameters,
                         span,
                         project,
