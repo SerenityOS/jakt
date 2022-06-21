@@ -6768,7 +6768,7 @@ pub fn typecheck_call(
     let mut function_id = None;
 
     match call.name.as_str() {
-        "print" | "println" | "eprintln" | "format"
+        "print" | "println" | "eprint" | "eprintln" | "format"
             if !must_be_enum_constructor && parent_id.is_none() =>
         {
             // FIXME: This is a hack since println() and eprintln() are hard-coded into codegen at the moment.
