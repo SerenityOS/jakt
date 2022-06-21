@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [ ! -x ./build/jakttest ]; then
+    echo "jakttest binary does not exist."
+    echo 'You can build it with `cargo run jakttest/jakttest.jakt`'
+    exit 1
+fi
+
 pass=0
 fail=0
 
