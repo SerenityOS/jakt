@@ -3,4 +3,5 @@ a.out
 output.cpp
 build
 
+.vscode/
 .idea/
