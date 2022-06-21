@@ -6,6 +6,12 @@ if [ ! -x ./build/jakttest ]; then
     exit 1
 fi
 
+if [ ! -x ./build/main ]; then
+    echo "selfhosted jakt binary does not exist."
+    echo 'You can build it with `cargo run selfhosted/main.jakt`'
+    exit 1
+fi
+
 pass=0
 fail=0
 
