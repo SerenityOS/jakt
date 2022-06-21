@@ -2399,26 +2399,54 @@ struct Typechecker {
             definitely_returns: false
             yielded_type: none_type_id
         )
+        // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
+        mut generic_inferences: [String: String] = [:]
 
         for parsed_statement in parsed_block.stmts.iterator() {
-            let statement = .typecheck_statement(parsed_statement, scope_id: block_scope_id, safety_mode)
-            
-            match statement {
-                Return(expr) => {
-                    checked_block.definitely_returns = true
-                    checked_block.yielded_type = match expr.has_value() {
-                        true => .expression_type(expr!)
-                        else => builtin(BuiltinType::Void)
-                    }
+
+            let checked_statement = .typecheck_statement(
+                statement: parsed_statement
+                scope_id: block_scope_id
+                safety_mode
+            )
+
+            // check that statment definitly returns
+            checked_block.definitely_returns = .statement_definitely_returns(checked_statement)
+
+            let none_yield: Span? = None // FIXME: Can't yield None directly
+            let yield_span: Span? = match parsed_statement {
+                ParsedStatement::Yield(expr) => Some(expr.span())
+                else => none_yield
+            }
+            let  none_expr: CheckedExpression? = None // FIXME: Can't yield None directly
+            let checked_yield_expression: CheckedExpression? = match checked_statement {
+                CheckedStatement::Yield(expr) => Some(expr)
+                else => none_expr
+            }
+            if yield_span.has_value() and checked_yield_expression.has_value() {
+                let type_var_type_id = .expression_type(checked_yield_expression.value())
+                let type_ = .resolve_type_var(type_var_type_id , scope_id: block_scope_id)
+                if checked_block.yielded_type.has_value() {
+                    // TODO check types for compat
+                    .check_types_for_compat(
+                        lhs_type_id: checked_block.yielded_type.value()
+                        rhs_type_id: type_
+                        generic_enferences: generic_inferences
+                        span: yield_span.value()
+                    )
+                } else {
+                    checked_block.yielded_type = Some(type_)
                 }
-                Yield(expr) => {
-                    checked_block.definitely_returns = true
-                    checked_block.yielded_type = .expression_type(expr)
-                }
-                else => {}
             }
 
-            checked_block.statements.push(statement)
+            checked_block.statements.push(checked_statement)
+        }
+
+        if checked_block.yielded_type.has_value() {
+             checked_block.yielded_type = Some(.substitute_typevars_in_type(
+                 type_id: checked_block.yielded_type.value()
+                 generic_inferences
+             ))
         }
 
         return checked_block
