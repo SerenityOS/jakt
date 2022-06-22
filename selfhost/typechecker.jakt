@@ -1433,7 +1433,7 @@ struct Typechecker {
         mut struct_index: usize = 0
         for parsed_record in parsed_namespace.records.iterator() {
             match parsed_record.record_type {
-                Struct => { .typecheck_struct_predecl_initial(parsed_record, struct_index: struct_index++, module_struct_len, scope_id) }
+                Struct | Class => { .typecheck_struct_predecl_initial(parsed_record, struct_index: struct_index++, module_struct_len, scope_id) }
                 else => {
                     todo(format("typecheck_namespace_predecl: else {}", parsed_record.record_type))
                 }
@@ -1459,7 +1459,7 @@ struct Typechecker {
         for parsed_record in parsed_namespace.records.iterator() {
             let struct_id = StructId(module: .current_module_id, id: struct_index + module_struct_len)
             match parsed_record.record_type {
-                Struct => { .typecheck_struct_predecl(parsed_record, struct_id, scope_id) }
+                Struct | Class => { .typecheck_struct_predecl(parsed_record, struct_id, scope_id) }
                 else => {
                     todo(format("typecheck_namespace_predecl: else {}", parsed_record.record_type))
                 }
@@ -1698,7 +1698,7 @@ struct Typechecker {
 
         for record in parsed_namespace.records.iterator() {
             match record.record_type {
-                Struct => {
+                Struct | Class => {
                     let struct_id = .find_struct_in_scope(scope_id, name: record.name)
                     if not struct_id.has_value() {
                         panic("can't find struct that has been previous added")
