@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "expected complete block"
+/// - error: "Expected complete block"
 struct Parser {
     function parse_call_parameter_name(mut this) throws -> String {
         match .current() {

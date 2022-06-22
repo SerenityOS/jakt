@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "expected complete block"
+/// - error: "Expected complete block"
 
 // When the parser tries to parse an expression from "}" (for the second argument of the function),
 // it errors out and doesn't increment the token index.
