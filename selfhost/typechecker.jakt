@@ -1415,7 +1415,7 @@ struct Typechecker {
 
         checked_function.return_type_id = checked_function.block.yielded_type ?? builtin(BuiltinType::Void)
 
-        if checked_function.linkage is Internal and not checked_function.return_type_id.equals(builtin(BuiltinType::Void)) {
+        if checked_function.linkage is Internal and not checked_function.block.definitely_returns and not checked_function.return_type_id.equals(builtin(BuiltinType::Void)) {
             // FIXME: Use better span
             .error("Control reaches end of non-void function", checked_function.name_span)
         }
