@@ -51,17 +51,6 @@ struct TypeId {
     }
 }
 
-struct InferenceId {
-    id: usize
-
-    function equals(this, anon rhs: InferenceId) -> bool {
-        // FIXME: this should do follow the inference id
-        // to see what the type is being inferred to be,
-        // and check if both types are equal
-        return this.id == rhs.id
-    }
-}
-
 struct ScopeId {
     module: ModuleId
     id: usize
@@ -114,7 +103,6 @@ boxed enum Type {
     GenericEnumInstance(id: EnumId, args: [TypeId])
     Struct(StructId)
     Enum(EnumId)
-    Inference(InferenceId)
     RawPtr(TypeId)
 
     function equals(this, anon rhs: Type) -> bool {
@@ -221,16 +209,6 @@ boxed enum Type {
                 Enum(lhs_id) => {
                     match rhs {
                         Enum(rhs_id) => {
-                            return lhs_id.equals(rhs_id)
-                        }
-                        else => {
-                            return false
-                        }
-                    }
-                }
-                Inference(lhs_id) => {
-                    match rhs {
-                        Inference(rhs_id) => {
                             return lhs_id.equals(rhs_id)
                         }
                         else => {
@@ -747,7 +725,6 @@ class CheckedProgram {
 
 struct Typechecker {
     program: CheckedProgram
-    inferences: [TypeId]
     current_module_id: ModuleId
     inside_defer: bool
     errors: [JaktError]
@@ -787,7 +764,6 @@ struct Typechecker {
 
         mut typechecker = Typechecker(
             program: CheckedProgram(modules: [module]),
-            inferences: [],
             current_module_id: root_module_id,
             inside_defer: false
             errors
@@ -854,20 +830,6 @@ struct Typechecker {
         .program.modules[.current_module_id.id].scopes.push(scope)
 
         return ScopeId(module: .current_module_id, id: .program.modules[.current_module_id.id].scopes.size() - 1)
-    }
-
-    function new_inference(mut this) throws -> TypeId {
-        let new_type_var = .program.modules[.current_module_id.id].new_type_variable()
-
-        .inferences.push(new_type_var)
-
-        let inference_id = .inferences.size() - 1
-
-        .program.modules[.current_module_id.id].types.push(Type::Inference(InferenceId(id: inference_id)))
-
-        let new_type_id = .program.modules[.current_module_id.id].types.size() - 1
-
-        return TypeId(module: .current_module_id, id: new_type_id)
     }
 
     function find_struct_in_prelude(this, anon name: String) throws -> StructId {
@@ -1026,7 +988,6 @@ struct Typechecker {
                 yield output
             }
             TypeVariable(name) => name
-            Inference(inference_id) => "TODO Inference"
             RawPtr(type_id) => format("raw {}", .type_name(type_id))
         }
     }
@@ -1496,6 +1457,7 @@ struct Typechecker {
     }
 
     function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId) throws -> TypeId { 
+        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
         match parsed_type {
             NamespacedName(name, namespaces, params, span) => {
                 mut current_namespace_scope_id = scope_id
@@ -1507,7 +1469,7 @@ struct Typechecker {
                         current_namespace_scope_id = result!.0
                     } else {
                         .error(format("Unknown namespace: '{}'", ns), span)
-                        return .new_inference()
+                        return UNKNOWN_TYPE_ID
                     }
                 }
 
@@ -1548,13 +1510,13 @@ struct Typechecker {
                             return type_id.value()
                         } else {
                             .error(format("Unknown type ‘{}’", name), span)
-                            return .new_inference()
+                            return UNKNOWN_TYPE_ID
                         }
                     }
                 }
             }
             Empty => {
-                return .new_inference()
+                return UNKNOWN_TYPE_ID
             }
             JaktTuple(types, span) => {
                 mut checked_types: [TypeId] = []
@@ -1630,12 +1592,12 @@ struct Typechecker {
                 // FIXME: add support for "GenericResolvedType", though the Rust version
                 // puts this in the parser even though it should be in the typechecker
                 // as the parser doesn't have a concept of type ids
-                return .new_inference()
+                return UNKNOWN_TYPE_ID
             }
         }
         // FIXME: This is unreachable but the generated C++ causes a warning.
         panic("should be unreachable")
-        return .new_inference()
+        return UNKNOWN_TYPE_ID
     }
 
     function typecheck_unary_operation(mut this, checked_expr: CheckedExpression, checked_op: CheckedUnaryOperator, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
@@ -1676,6 +1638,7 @@ struct Typechecker {
         let rhs_span = .expression_span(checked_rhs)
 
         mut type_id = .expression_type(checked_lhs)
+        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
 
         match op {
             NoneCoalescing | NoneCoalescingAssign => {
@@ -1689,12 +1652,12 @@ struct Typechecker {
                         Var(var, span) => {
                             if not var.is_mutable {
                                 .error_with_hint(message: "left-hand side of ??= must be a mutable variable", span, hint: "This variable isn't marked as mutable", hint_span: var.definition_span)
-                                return .new_inference()
+                                return UNKNOWN_TYPE_ID
                             }
                         }
                         else => {
                             .error(message: "left-hand side of ??= must be a mutable variable", span)
-                            return .new_inference()
+                            return UNKNOWN_TYPE_ID
                         }
                     }
                 }
@@ -1888,16 +1851,16 @@ struct Typechecker {
     }
 
     function typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
-        mut lhs = .typecheck_typename(parsed_type: var.parsed_type, scope_id)
+        mut lhs_type_id = .typecheck_typename(parsed_type: var.parsed_type, scope_id)
         mut checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode)
-        let rhs = .expression_type(checked_expr)
+        let rhs_type_id = .expression_type(checked_expr)
         let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
 
-        if .get_type(lhs) is Inference {
-            lhs = rhs
+        if lhs_type_id.equals(UNKNOWN_TYPE_ID) and not rhs_type_id.equals(UNKNOWN_TYPE_ID) {
+            lhs_type_id = rhs_type_id
         }
 
-        let promoted_rhs = .try_to_promote_constant_expr_to_type(lhs_type: lhs, checked_rhs: checked_expr, span: init.span())
+        let promoted_rhs = .try_to_promote_constant_expr_to_type(lhs_type: lhs_type_id, checked_rhs: checked_expr, span: init.span())
         if promoted_rhs.has_value() {
             checked_expr = promoted_rhs!
         }
@@ -1905,7 +1868,7 @@ struct Typechecker {
         let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
         let optional_struct_id = .find_struct_in_prelude("Optional")
 
-        let lhs_type = .get_type(lhs)
+        let lhs_type = .get_type(lhs_type_id)
 
         match lhs_type {
             GenericInstance(id, args) => {
@@ -1914,13 +1877,13 @@ struct Typechecker {
                         .error("Weak reference must be mutable", var.span)
                     }
 
-                    if not lhs.equals(rhs) and not args[0].equals(rhs) and not rhs.equals(UNKNOWN_TYPE_ID) {
-                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs), .type_name(rhs)), .expression_span(checked_expr))
+                    if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(UNKNOWN_TYPE_ID) {
+                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
                     }
                 }
                 if id.equals(optional_struct_id) {
-                    if not lhs.equals(rhs) and not args[0].equals(rhs) and not rhs.equals(UNKNOWN_TYPE_ID) {
-                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs), .type_name(rhs)), .expression_span(checked_expr))
+                    if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(UNKNOWN_TYPE_ID) {
+                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
                     }
                 }
             }
@@ -1937,8 +1900,8 @@ struct Typechecker {
                         }
                     }
 
-                    if not (.is_numeric(lhs) and is_rhs_zero) and (.is_integer(lhs) ^ .is_integer(rhs)) {
-                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs), .type_name(rhs)), .expression_span(checked_expr))
+                    if not (.is_numeric(lhs_type_id) and is_rhs_zero) and (.is_integer(lhs_type_id) ^ .is_integer(rhs_type_id)) {
+                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
                         return CheckedStatement::Garbage
                     }
                 }
@@ -1947,7 +1910,7 @@ struct Typechecker {
 
         let checked_var = CheckedVariable(
             name: var.name
-            type_id: lhs
+            type_id: lhs_type_id
             is_mutable: var.is_mutable
             definition_span: var.span
         )
@@ -2167,7 +2130,10 @@ struct Typechecker {
 
             yield CheckedExpression::BinaryOp(lhs: checked_lhs, op, rhs: checked_rhs, span, type_id: output_type)
         }
-        OptionalNone(span) => CheckedExpression::OptionalNone(span, type_id: .new_inference())
+        OptionalNone(span) => {
+            let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
+            yield CheckedExpression::OptionalNone(span, type_id: UNKNOWN_TYPE_ID)
+        }
         OptionalSome(expr, span) => {
             let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
             let type_id = .expression_type(checked_expr)
