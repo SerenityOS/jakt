@@ -1783,7 +1783,7 @@ pub fn parse_function(
                             trace!("ERROR: expected parameter");
 
                             error = error.or(Some(JaktError::ParserError(
-                                "expected parameter".to_string(),
+                                "Expected parameter".to_string(),
                                 tokens[*index].span,
                             )));
 
@@ -2020,7 +2020,7 @@ pub fn parse_block(tokens: &[Token], index: &mut usize) -> (ParsedBlock, Option<
     (
         block,
         Some(JaktError::ParserError(
-            "expected complete block".to_string(),
+            "Expected complete block".to_string(),
             Span {
                 file_id: start.file_id,
                 start: start.start,
