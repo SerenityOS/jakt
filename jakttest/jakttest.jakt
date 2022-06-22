@@ -71,6 +71,12 @@ function main(args: [String]) {
 
     let parsed_test = Parser::parse(tokens, errors);
 
+    // Windows
+    // system("del compiler.out compiler.err runtest.out runtest.err".c_string())
+
+    // Unix
+    system("rm compiler.out compiler.err runtest.out runtest.err".c_string())
+
     match parsed_test {
         SuccessTest(expected) => {
             write_to_file(file_contents, output_filename: "output.jakt")
@@ -86,9 +92,18 @@ function main(args: [String]) {
             mut runtest_file = File::open_for_reading("runtest.out")
             let runtest_output = runtest_file.read_all()
 
-            let test_passes = compare_test(bytes: runtest_output, expected)
+            let test_passes_output = compare_test(bytes: runtest_output, expected)
 
-            if not test_passes {
+            mut compiler_output_file = File::open_for_reading("compiler.out")
+            let compiler_output = compiler_output_file.read_all()
+
+            mut compiler_error_file = File::open_for_reading("compiler.err")
+            let compiler_error_output = compiler_error_file.read_all()
+
+            let test_passes_compiler_out = compare_test(bytes: compiler_output, expected: "")
+            let test_passes_compiler_err = compare_test(bytes: compiler_error_output, expected: "")
+
+            if not (test_passes_output and test_passes_compiler_out and test_passes_compiler_err) {
                 eprintln("Test failed: {}", file_name)
                 return 1
             } else {
