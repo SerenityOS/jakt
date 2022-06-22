@@ -767,6 +767,7 @@ struct CheckedCall {
     callee_throws: bool
 }
 
+function unknown_type_id() -> TypeId => TypeId(module: ModuleId(id: 0), id: 0)
 
 function builtin(anon builtin: BuiltinType) -> TypeId {
     return TypeId(module: ModuleId(id: 0), id: builtin as! usize)
@@ -1466,7 +1467,6 @@ struct Typechecker {
     }
 
     function typecheck_struct_predecl(mut this, parsed_record: ParsedRecord, struct_id: StructId, scope_id: ScopeId) throws {
-        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
 
         let struct_type_id = .find_or_add_type_id(type: Type::Struct(struct_id))
         .current_struct_type_id = struct_type_id
@@ -1517,7 +1517,7 @@ struct Typechecker {
             mut checked_function = CheckedFunction(
                 name: func.name
                 name_span: func.name_span
-                return_type_id: UNKNOWN_TYPE_ID
+                return_type_id: unknown_type_id()
                 params: []
                 generic_params: []
                 block: CheckedBlock(
@@ -1615,7 +1615,7 @@ struct Typechecker {
                 let block = .typecheck_block(parsed_block: func.block, parent_scope_id: check_scope!, safety_mode: SafetyMode::Safe)
 
                 mut return_type_id: TypeId = builtin(BuiltinType::Void)
-                if function_return_type_id.equals(UNKNOWN_TYPE_ID) {
+                if function_return_type_id.equals(unknown_type_id()) {
                     if not block.statements.is_empty() {
                         let ret = block.statements[block.statements.size() - 1]
                         // expression_type
@@ -1824,14 +1824,13 @@ struct Typechecker {
         // method return type is checked against its implementation
         .current_function_id = method_id
 
-        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
         let VOID_TYPE_ID = builtin(BuiltinType::Void)
 
         let block = .typecheck_block(parsed_block: func.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
         let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: function_scope_id)
 
         mut return_type_id = function_return_type_id
-        if function_return_type_id.equals(UNKNOWN_TYPE_ID) and not block.statements.is_empty() {
+        if function_return_type_id.equals(unknown_type_id()) and not block.statements.is_empty() {
             // If the return type is unknown, and the function starts with a return statement,
             // we infer the return type from its expression.
             match block.statements[0] {
@@ -1846,7 +1845,7 @@ struct Typechecker {
                     return_type_id = VOID_TYPE_ID
                 }
             }
-        } else if function_return_type_id.equals(UNKNOWN_TYPE_ID) {
+        } else if function_return_type_id.equals(unknown_type_id()) {
             return_type_id = VOID_TYPE_ID
         }
 
@@ -1867,13 +1866,12 @@ struct Typechecker {
         // TODO: Make this true if it's a method of a generic class/struct.
         let is_generic = not parsed_function.generic_parameters.is_empty()
 
-        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
         let none_type_id: TypeId? = None
 
         mut checked_function = CheckedFunction(
             name: parsed_function.name
             name_span: parsed_function.name_span
-            return_type_id: UNKNOWN_TYPE_ID
+            return_type_id: unknown_type_id()
             params: []
             generic_params: []
             block: CheckedBlock(
@@ -2491,7 +2489,6 @@ struct Typechecker {
     }
 
     function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId) throws -> TypeId { 
-        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
         match parsed_type {
             NamespacedName(name, namespaces, params, span) => {
                 mut current_namespace_scope_id = scope_id
@@ -2503,7 +2500,7 @@ struct Typechecker {
                         current_namespace_scope_id = result!.0
                     } else {
                         .error(format("Unknown namespace: '{}'", ns), span)
-                        return UNKNOWN_TYPE_ID
+                        return unknown_type_id()
                     }
                 }
 
@@ -2544,13 +2541,13 @@ struct Typechecker {
                             return type_id.value()
                         } else {
                             .error(format("Unknown type ‘{}’", name), span)
-                            return UNKNOWN_TYPE_ID
+                            return unknown_type_id()
                         }
                     }
                 }
             }
             Empty => {
-                return UNKNOWN_TYPE_ID
+                return unknown_type_id()
             }
             JaktTuple(types, span) => {
                 mut checked_types: [TypeId] = []
@@ -2626,12 +2623,12 @@ struct Typechecker {
                 // FIXME: add support for "GenericResolvedType", though the Rust version
                 // puts this in the parser even though it should be in the typechecker
                 // as the parser doesn't have a concept of type ids
-                return UNKNOWN_TYPE_ID
+                return unknown_type_id()
             }
         }
         // FIXME: This is unreachable but the generated C++ causes a warning.
         panic("should be unreachable")
-        return UNKNOWN_TYPE_ID
+        return unknown_type_id()
     }
 
     function typecheck_unary_operation(mut this, checked_expr: CheckedExpression, checked_op: CheckedUnaryOperator, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
@@ -2672,7 +2669,6 @@ struct Typechecker {
         let rhs_span = .expression_span(checked_rhs)
 
         mut type_id = .expression_type(checked_lhs)
-        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
 
         match op {
             NoneCoalescing | NoneCoalescingAssign => {
@@ -2686,12 +2682,12 @@ struct Typechecker {
                         Var(var, span) => {
                             if not var.is_mutable {
                                 .error_with_hint(message: "left-hand side of ??= must be a mutable variable", span, hint: "This variable isn't marked as mutable", hint_span: var.definition_span)
-                                return UNKNOWN_TYPE_ID
+                                return unknown_type_id()
                             }
                         }
                         else => {
                             .error(message: "left-hand side of ??= must be a mutable variable", span)
-                            return UNKNOWN_TYPE_ID
+                            return unknown_type_id()
                         }
                     }
                 }
@@ -3037,9 +3033,8 @@ struct Typechecker {
         mut lhs_type_id = .typecheck_typename(parsed_type: var.parsed_type, scope_id)
         mut checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode)
         let rhs_type_id = .expression_type(checked_expr)
-        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
 
-        if lhs_type_id.equals(UNKNOWN_TYPE_ID) and not rhs_type_id.equals(UNKNOWN_TYPE_ID) {
+        if lhs_type_id.equals(unknown_type_id()) and not rhs_type_id.equals(unknown_type_id()) {
             lhs_type_id = rhs_type_id
         }
 
@@ -3060,12 +3055,12 @@ struct Typechecker {
                         .error("Weak reference must be mutable", var.span)
                     }
 
-                    if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(UNKNOWN_TYPE_ID) {
+                    if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
                         .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
                     }
                 }
                 if id.equals(optional_struct_id) {
-                    if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(UNKNOWN_TYPE_ID) {
+                    if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
                         .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
                     }
                 }
@@ -3121,13 +3116,12 @@ struct Typechecker {
     }
 
     function typecheck_try(mut this, stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
-        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
         let try_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true)
         let checked_stmt = .typecheck_statement(stmt, scope_id, safety_mode)
         let error_struct_id = .find_struct_in_prelude("Error")
         let error_decl = CheckedVariable(
             name: error_name
-            type_id: UNKNOWN_TYPE_ID
+            type_id: unknown_type_id()
             is_mutable: false
             definition_span: error_span
         )
@@ -3266,8 +3260,7 @@ struct Typechecker {
             let from_span = .expression_span(checked_from)
             let to_span = .expression_span(checked_to)
 
-            let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
-            let type_id = .unify(lhs: from_type, lhs_span: from_span, rhs: to_type, rhs_span: from_span) ?? UNKNOWN_TYPE_ID
+            let type_id = .unify(lhs: from_type, lhs_span: from_span, rhs: to_type, rhs_span: from_span) ?? unknown_type_id()
 
             yield CheckedExpression::Range(from: checked_from, to: checked_to, span, type_id)
         }
@@ -3314,8 +3307,7 @@ struct Typechecker {
             yield CheckedExpression::BinaryOp(lhs: checked_lhs, op, rhs: checked_rhs, span, type_id: output_type)
         }
         OptionalNone(span) => {
-            let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
-            yield CheckedExpression::OptionalNone(span, type_id: UNKNOWN_TYPE_ID)
+            yield CheckedExpression::OptionalNone(span, type_id: unknown_type_id())
         }
         OptionalSome(expr, span) => {
             let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
@@ -3341,11 +3333,10 @@ struct Typechecker {
 
             let optional_struct_id = .find_struct_in_prelude("Optional")
             let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
-            let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
 
             let type_id: TypeId = match type {
                 GenericInstance(id, args) => {
-                    mut inner_type_id = UNKNOWN_TYPE_ID
+                    mut inner_type_id = unknown_type_id()
                     if  id.equals(optional_struct_id) or id.equals(weakptr_struct_id) {
                         inner_type_id = args[0]
                     } else {
@@ -3378,8 +3369,7 @@ struct Typechecker {
                 repeat = repeat
             }
             let array_struct_id = .find_struct_in_prelude("Array")
-            let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
-            mut inner_type_id = UNKNOWN_TYPE_ID
+            mut inner_type_id = unknown_type_id()
             mut inferred_type_span: Span? = None
 
             mut vals: [CheckedExpression] = []
@@ -3387,7 +3377,7 @@ struct Typechecker {
                 let checked_expr = .typecheck_expression(value, scope_id, safety_mode)
                 let current_value_type_id = .expression_type(checked_expr)
 
-                if inner_type_id.equals(UNKNOWN_TYPE_ID) {
+                if inner_type_id.equals(unknown_type_id()) {
                     inner_type_id = current_value_type_id
                     inferred_type_span = value.span()
                 } else if not inner_type_id.equals(current_value_type_id) {
@@ -3407,10 +3397,9 @@ struct Typechecker {
             let checked_base = .typecheck_expression(base, scope_id, safety_mode)
             let checked_index = .typecheck_expression(index, scope_id, safety_mode)
 
-            let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
             let array_struct_id = .find_struct_in_prelude("Array")
             let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
-            mut expr_type_id = UNKNOWN_TYPE_ID;
+            mut expr_type_id = unknown_type_id()
 
             match .get_type(.expression_type(checked_base)) {
                 GenericInstance(id, args) => {
