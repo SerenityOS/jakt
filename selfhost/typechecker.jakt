@@ -703,6 +703,38 @@ boxed enum CheckedExpression {
         return None
     }
 
+    function type_id_or_type_var(this) -> TypeId {
+        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
+        return match this {
+            Boolean => builtin(BuiltinType::Bool)
+            NumericConstant(val, span, type_id) => type_id
+            QuotedString(val, span) => builtin(BuiltinType::String)
+            ByteConstant(val, span) => builtin(BuiltinType::U8)
+            CharacterConstant(val, span) => builtin(BuiltinType::CChar)
+            UnaryOp(expr, op, span, type_id) => type_id
+            BinaryOp(lhs, op, rhs, span, type_id) => type_id
+            JaktTuple(vals, span, type_id) => type_id
+            Range(from, to, span, type_id) => type_id
+            JaktArray(vals, repeat, span, type_id) => type_id
+            JaktDictionary(vals, span, type_id) => type_id
+            JaktSet(vals, span, type_id) => type_id
+            IndexedExpression(expr, index, span, type_id) => type_id
+            IndexedDictionary(expr, index, span, type_id) => type_id
+            IndexedTuple(expr, index, span, type_id) => type_id
+            IndexedStruct(expr, index, span, type_id) => type_id
+            Match(expr, match_cases, span, type_id, all_variants_constant) => type_id
+            Call(call, span, type_id) => type_id
+            MethodCall(expr, call, span, type_id) => type_id
+            NamespacedVar(namespaces, var, span) => var.type_id
+            Var(var, span) => var.type_id
+            OptionalNone(span, type_id) => type_id
+            OptionalSome(expr, span, type_id) => type_id
+            ForcedUnwrap(expr, span, type_id) => type_id
+            Block(block, span, type_id) => type_id
+            Garbage(span) => UNKNOWN_TYPE_ID
+        }
+    }
+
 }
 
 function checked_expression_definitely_returns(anon check_expression: CheckedExpression) -> bool {
