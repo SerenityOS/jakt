@@ -593,6 +593,31 @@ impl Project {
         )
     }
 
+    pub fn find_namespace_in_scope_by_uid(
+        &self,
+        current_scope_id: ScopeId,
+        namespace_uid: u64,
+    ) -> Option<(ScopeId, bool)> {
+        let mut scope_id = Some(current_scope_id);
+
+        while let Some(current_id) = scope_id {
+            let scope = self.get_scope(current_id);
+            for child_scope_id in &scope.children {
+                let child_scope = self.get_scope(*child_scope_id);
+                if let Some(uid) = child_scope.namespace_uid {
+                    if uid == namespace_uid {
+                        return Some((*child_scope_id, false));
+                    }
+                }
+            }
+            scope_id = scope.parent;
+        }
+
+        // FIXME: Do we want to look for unnamed namespaces in imports? If so, find a way to do it :^)
+
+        None
+    }
+
     // Find the namespace in the current scope, or one of its parents
     // and whether the found import was an import
     pub fn find_namespace_in_scope(
@@ -1034,6 +1059,7 @@ pub enum CheckedEnumVariant {
 pub struct CheckedNamespace {
     pub name: Option<String>,
     pub scope: ScopeId,
+    pub uid: Option<u64>,
 }
 
 #[derive(Clone, Debug)]
@@ -1567,6 +1593,7 @@ pub struct CheckedCall {
 #[derive(Clone, Debug)]
 pub struct Scope {
     pub namespace_name: Option<String>,
+    pub namespace_uid: Option<u64>,
     pub vars: Vec<CheckedVariable>,
     pub structs: Vec<(String, StructId, Span)>,
     pub functions: Vec<(String, FunctionId, Span)>,
@@ -1584,6 +1611,7 @@ impl Scope {
     pub fn new(parent: Option<ScopeId>, throws: bool) -> Self {
         Self {
             namespace_name: None,
+            namespace_uid: None,
             vars: Vec::new(),
             structs: Vec::new(),
             functions: Vec::new(),
@@ -1902,32 +1930,27 @@ pub fn typecheck_namespace_fields(
     let mut error = None;
 
     for namespace in parsed_namespace.namespaces.iter() {
-        if let Some(namespace_name) = &namespace.name {
+        let namespace_scope_id = if let Some(namespace_name) = &namespace.name {
             // Typecheck struct fields in the named namespaces
             let (namespace_scope_id, _) = project
                 .find_namespace_in_scope(scope_id, namespace_name)
                 .expect("internal error: can't find previously added namespace");
 
-            error = error.or(typecheck_namespace_fields(
-                namespace,
-                namespace_scope_id,
-                project,
-            ));
+            namespace_scope_id
         } else {
             // Typecheck struct fields in the unnamed namespace
-            let namespace_scope_id = project.create_scope(scope_id, false);
-            project.get_scope_mut(namespace_scope_id).namespace_name = namespace.name.clone();
-            project
-                .get_scope_mut(scope_id)
-                .children
-                .push(namespace_scope_id);
+            let (namespace_scope_id, _) = project
+                .find_namespace_in_scope_by_uid(scope_id, namespace.uid)
+                .expect("internal error: can't find previously added namespace");
 
-            error = error.or(typecheck_namespace_fields(
-                namespace,
-                namespace_scope_id,
-                project,
-            ))
-        }
+            namespace_scope_id
+        };
+
+        error = error.or(typecheck_namespace_fields(
+            namespace,
+            namespace_scope_id,
+            project,
+        ));
     }
 
     for (_, structure) in parsed_namespace.structs.iter().enumerate() {
@@ -2015,16 +2038,20 @@ pub fn typecheck_namespace_predecl(
 
     for namespace in parsed_namespace.namespaces.iter() {
         // Find all predeclarations in namespaces that are children of this namespace
+
+        let namespace_scope_id = project.create_scope(scope_id, false);
+
         if namespace.name.is_some() {
-            let namespace_scope_id = project.create_scope(scope_id, false);
             project.get_scope_mut(namespace_scope_id).namespace_name = namespace.name.clone();
-            project
-                .get_scope_mut(scope_id)
-                .children
-                .push(namespace_scope_id);
-            let err = typecheck_namespace_predecl(namespace, namespace_scope_id, project);
-            error = error.or(err);
         }
+        project.get_scope_mut(namespace_scope_id).namespace_uid = Some(namespace.uid);
+
+        project
+            .get_scope_mut(scope_id)
+            .children
+            .push(namespace_scope_id);
+        let err = typecheck_namespace_predecl(namespace, namespace_scope_id, project);
+        error = error.or(err);
     }
 
     for (struct_id, structure) in parsed_namespace.structs.iter().enumerate() {
@@ -2077,30 +2104,23 @@ pub fn typecheck_namespace_declarations(
     let mut error = None;
 
     for namespace in parsed_namespace.namespaces.iter() {
-        if let Some(namespace_name) = &namespace.name {
-            // Finish typecheck of the named namespaces
+        let namespace_scope_id = if let Some(namespace_name) = &namespace.name {
             let (namespace_scope_id, _) = project
                 .find_namespace_in_scope(scope_id, namespace_name)
                 .expect("internal error: can't find previously added namespace");
 
-            let err = typecheck_namespace_declarations(namespace, namespace_scope_id, project);
-            error = error.or(err);
+            namespace_scope_id
         } else {
-            // Create a typecheck the unnamed namespace (aka a block scope)
+            let (namespace_scope_id, _) = project
+                .find_namespace_in_scope_by_uid(scope_id, namespace.uid)
+                .expect("internal error: can't find previously added namespace");
 
-            let namespace_scope_id = project.create_scope(scope_id, false);
-            project.get_scope_mut(namespace_scope_id).namespace_name = namespace.name.clone();
-            project
-                .get_scope_mut(scope_id)
-                .children
-                .push(namespace_scope_id);
-            typecheck_namespace_predecl(namespace, namespace_scope_id, project);
-            error = error.or(typecheck_namespace_declarations(
-                namespace,
-                namespace_scope_id,
-                project,
-            ))
-        }
+            namespace_scope_id
+        };
+
+        // Finish typecheck of the namespaces
+        let err = typecheck_namespace_declarations(namespace, namespace_scope_id, project);
+        error = error.or(err);
     }
 
     // for (_, enum_) in parsed_namespace.enums.iter().enumerate() {
@@ -4668,6 +4688,7 @@ pub fn typecheck_expression(
                 .map(|(scope, ns)| CheckedNamespace {
                     name: Some(ns.clone()),
                     scope: scope.unwrap(),
+                    uid: project.get_scope(scope.unwrap()).namespace_uid,
                 })
                 .collect();
 
