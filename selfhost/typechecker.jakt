@@ -3524,6 +3524,11 @@ struct Typechecker {
 
                     args.push((call.name, checked_arg))
                 }
+                
+                if call.name == "format" {
+                    return_type = builtin(BuiltinType::String)
+                    callee_throws = true
+                }
             }
             else => {
                 let maybe_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
