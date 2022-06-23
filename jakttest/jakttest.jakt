@@ -75,7 +75,7 @@ function main(args: [String]) {
     // system("del compiler.out compiler.err runtest.out runtest.err".c_string())
 
     // Unix
-    system("rm compiler.out compiler.err runtest.out runtest.err".c_string())
+    system("rm -f compiler.out compiler.err runtest.out runtest.err".c_string())
 
     match parsed_test {
         SuccessTest(expected) => {
