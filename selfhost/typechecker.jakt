@@ -2041,15 +2041,19 @@ struct Typechecker {
         let VOID_TYPE_ID = builtin(BuiltinType::Void)
         mut return_type_id = VOID_TYPE_ID
         if function_return_type_id.equals(UNKNOWN_TYPE_ID) {
-            let last_stmt: CheckedStatement = block.statements[block.statements.size() - 1]
-            match last_stmt {
-                CheckedStatement::Return(ret) => {
-                    if ret.has_value() {
-                        return_type_id = .expression_type(expr: ret.value())
+            if block.statements.is_empty() {
+                return_type_id = VOID_TYPE_ID
+            } else {
+                let last_stmt: CheckedStatement = block.statements[block.statements.size() - 1]
+                match last_stmt {
+                    CheckedStatement::Return(ret) => {
+                        if ret.has_value() {
+                            return_type_id = .expression_type(expr: ret.value())
+                        }
                     }
-                }
-                else => {
-                    return_type_id = VOID_TYPE_ID
+                    else => {
+                        return_type_id = VOID_TYPE_ID
+                    }
                 }
             }
         } else {
