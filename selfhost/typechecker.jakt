@@ -13,6 +13,10 @@ enum SafetyMode {
 
 struct ModuleId {
     id: usize
+
+    function equals(this, anon rhs: ModuleId) -> bool {
+        return this.id == rhs.id
+    }
 }
 
 struct VarId {
