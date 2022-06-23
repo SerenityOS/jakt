@@ -616,7 +616,6 @@ struct CodeGenerator {
         JaktString => "String"
         CChar => "char"
         CInt => "int"
-        CString => "char const*"
         RawPtr(type_id) => .codegen_type(type_id) + "*"
         GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
         else => {
