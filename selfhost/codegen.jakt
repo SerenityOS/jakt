@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 import parser { BinaryOperator, FunctionLinkage }
-import typechecker { BuiltinType, CheckedBlock, CheckedCall, CheckedExpression, CheckedFunction, CheckedProgram, CheckedStatement, ModuleId, ScopeId, StructId, Type, TypeId }
+import typechecker { BuiltinType, CheckedBlock, CheckedCall, CheckedExpression, CheckedFunction, CheckedProgram, CheckedStatement, ModuleId, ScopeId, StructId, EnumId, Type, TypeId }
 import utility { panic, todo }
 
 enum AllowedControlExits {
@@ -619,6 +619,7 @@ struct CodeGenerator {
         RawPtr(type_id) => .codegen_type(type_id) + "*"
         GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
         Struct(id) => .codegen_struct(id, as_namespace)
+        Enum(id) => .codegen_enum(id, as_namespace)
         else => {
             todo("codegen_type else")
             yield ""
@@ -697,6 +698,40 @@ struct CodeGenerator {
             }
             output += .codegen_namespace_qualifier(scope_id: checked_struct.scope_id)
             output += checked_struct.name
+        }
+
+        return output
+    }
+
+    function codegen_enum(this, id: EnumId, as_namespace: bool) throws -> String {
+        mut output = ""
+        let type_module = .program.get_module(id.module)
+        let checked_enum = .program.get_enum(id)
+
+        if not as_namespace and checked_enum.record_type is Class {
+            output += "NonnullRefPtr<"
+            if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))) {
+                output += type_module.name
+                output += "::"
+            }
+            let qualifier = .codegen_namespace_qualifier(scope_id: checked_enum.scope_id)
+            if not qualifier.is_empty() {
+                output += "typename "
+                output += qualifier
+            }
+            output += checked_enum.name
+            output += ">"
+        } else {
+            if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))) {
+                output += type_module.name
+                output += "::"
+            }
+            let qualifier = .codegen_namespace_qualifier(scope_id: checked_enum.scope_id)
+            if not qualifier.is_empty() {
+                output += "typename "
+                output += qualifier
+            }
+            output += checked_enum.name
         }
 
         return output
