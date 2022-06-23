@@ -1,0 +1,12 @@
+/// Expect:
+/// - output: "Well hello friends!\n"
+
+namespace {
+    struct Foo {
+        bar: i64
+    }
+}
+
+function main() {
+    println("Well hello friends!")
+}
