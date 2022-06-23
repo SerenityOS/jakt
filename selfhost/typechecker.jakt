@@ -137,6 +137,7 @@ boxed enum Type {
     TypeVariable(String)
     GenericInstance(id: StructId, args: [TypeId])
     GenericEnumInstance(id: EnumId, args: [TypeId])
+    GenericResolvedType(id: StructId, args: [TypeId])
     Struct(StructId)
     Enum(EnumId)
     RawPtr(TypeId)
@@ -1205,6 +1206,22 @@ struct Typechecker {
                     }
                     output += ">"
                 }
+
+                yield output
+            }
+            GenericResolvedType(id, args) => {
+                mut output = .program.get_struct(id).name
+                mut first = true
+                output += "<"
+                for arg in args.iterator() {
+                    if not first {
+                        output += ", "
+                    } else {
+                        first = false
+                    }
+                    output += .type_name(type_id)
+                }
+                output += ">"
 
                 yield output
             }
