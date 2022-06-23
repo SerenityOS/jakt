@@ -985,7 +985,7 @@ struct Parser {
         return (fields, methods)
     }
 
-    public function parse_struct(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord{
+    public function parse_struct(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord {
         mut parsed_struct = ParsedRecord(
             name: "",
             name_span: empty_span(),
@@ -1030,12 +1030,7 @@ struct Parser {
             return parsed_struct
         }
 
-	let fields_methods = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Public)
-
-	if .eof() {
-	    .error("Incomplete struct definition, expected `}`", .current().span())
-	    return parsed_struct
-	}
+        let fields_methods = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Public)
 
         parsed_struct.methods = fields_methods.1
         parsed_struct.record_type = RecordType::Struct(fields: fields_methods.0)
