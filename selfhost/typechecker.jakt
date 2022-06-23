@@ -3426,7 +3426,7 @@ struct Typechecker {
         }
         Garbage(span) => CheckedExpression::Garbage(span)
         else => {
-            panic("not complete")
+            panic(format("typechecker needs support for {}", expr))
 
             yield CheckedExpression::Boolean(val: false, span: Span(start: 0, end: 0))
         }
