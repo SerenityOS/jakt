@@ -6905,7 +6905,7 @@ pub fn typecheck_call(
 
                 if callee.params.len() != (call.args.len() + arg_offset) {
                     error = error.or(Some(JaktError::TypecheckError(
-                        "wrong number of arguments".to_string(),
+                        "Wrong number of arguments".to_string(),
                         *span,
                     )));
                 } else {
