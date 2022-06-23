@@ -20,8 +20,14 @@ struct ImportName {
     span: Span
 }
 
+struct ImportAlias {
+    name: String
+    span: Span
+}
+
 struct ParsedImport {
     module_name: ImportName
+    alias_name: ImportAlias?
     import_list: [ImportName]
 }
 
@@ -545,8 +551,10 @@ struct Parser {
     }
 
     function parse_import(mut this) throws -> ParsedImport {
+        let none_alias: ImportAlias? = None // FIXME: directly set None when compiler allowes it
         mut parsed_import = ParsedImport(
             module_name: ImportName(name: "", span: .current().span())
+            alias_name: none_alias
             import_list: []
         )
 
@@ -565,7 +573,26 @@ struct Parser {
             return parsed_import
         }
 
-        // FIXME: Parse module alias
+        match .current() {
+            As => {
+                .index++
+                match .current() {
+                    Identifier(name, span) => {
+                        .index++
+                        parsed_import.alias_name = ImportAlias(name, span)
+                    }
+                    else => {
+                        .error("Expected name", .current().span())
+                        .index++
+                    }
+                }
+            }
+            else => {}
+        }
+
+        if .eol() {
+            return parsed_import
+        }
 
         if .current() is LCurly {
             .index++
