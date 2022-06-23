@@ -3035,7 +3035,7 @@ struct Typechecker {
                 mut checked_inner_types: [TypeId] = []
 
                 for inner_type in generic_parameters.iterator() {
-                    let inner_type_id = .typecheck_typename(parsed_type, scope_id, ignore_errors)
+                    let inner_type_id = .typecheck_typename(parsed_type: ParsedType::Name(name: inner_type.0, span: inner_type.1), scope_id, ignore_errors)
                     checked_inner_types.push(inner_type_id)
                 }
                 // FIXME: add support for "GenericResolvedType", though the Rust version
