@@ -621,6 +621,7 @@ struct CodeGenerator {
         GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
         Struct(id) => .codegen_struct(id, as_namespace)
         Enum(id) => .codegen_enum(id, as_namespace)
+        TypeVariable(name) => name
         else => {
             todo(format("codegen_type else: {}", .program.get_type(type_id)))
             yield ""
