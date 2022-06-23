@@ -1923,7 +1923,7 @@ pub fn typecheck_namespace_fields(
                 .push(namespace_scope_id);
 
             error = error.or(typecheck_namespace_fields(
-                parsed_namespace,
+                namespace,
                 namespace_scope_id,
                 project,
             ))
@@ -2096,7 +2096,7 @@ pub fn typecheck_namespace_declarations(
                 .push(namespace_scope_id);
             typecheck_namespace_predecl(namespace, namespace_scope_id, project);
             error = error.or(typecheck_namespace_declarations(
-                parsed_namespace,
+                namespace,
                 namespace_scope_id,
                 project,
             ))
