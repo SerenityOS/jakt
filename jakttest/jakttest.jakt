@@ -7,16 +7,8 @@ function usage() => "usage: jakttest [-h] [OPTIONS] <path>"
 function compare_test(bytes: [u8], expected: String) throws -> bool {
     // first, build up the content to compare to
     mut builder = StringBuilder::create()
-
     for b in bytes.iterator() {
-        if b == 0xd {
-            // skip
-        } else if b == 0xa {
-            builder.append(b'\\')
-            builder.append(b'n')
-        } else {
-            builder.append(b)
-        }
+        builder.append(b)
     }
 
     let builder_output = builder.to_string()
@@ -45,13 +37,26 @@ function compare_error(bytes: [u8], expected: String) throws -> bool {
     }
 
     let builder_output = builder.to_string()
+    let stripped_expected = strip_line_breaks(expected)
 
-    if not builder_output.contains(expected) {
-        eprintln("expected: {}", expected)
+    if not builder_output.contains(stripped_expected) {
+        eprintln("expected: {}", stripped_expected)
         eprintln("found:    {}", builder_output)
         return false
     }
     return true
+}
+
+function strip_line_breaks(anon input: String) throws -> String {
+    mut builder = StringBuilder::create();
+    for i in 0..input.length() {
+        let b = input.byte_at(i)
+        if b == b'\n' or b == b'\r' {
+            continue
+        }
+        builder.append(b)
+    }
+    return builder.to_string()
 }
 
 function main(args: [String]) {
