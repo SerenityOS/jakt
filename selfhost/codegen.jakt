@@ -618,6 +618,7 @@ struct CodeGenerator {
         CInt => "int"
         RawPtr(type_id) => .codegen_type(type_id) + "*"
         GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
+        Struct(id) => .codegen_struct(id, as_namespace)
         else => {
             todo("codegen_type else")
             yield ""
@@ -673,6 +674,32 @@ struct CodeGenerator {
     function codegen_function(mut this, anon function_: CheckedFunction) throws -> String {
         let none: TypeId? = None
         return .codegen_function_in_namespace(function_, containing_struct: none)
+    }
+
+    function codegen_struct(this, id: StructId, as_namespace: bool) throws -> String {
+        mut output = ""
+        let type_module = .program.get_module(id.module)
+        let checked_struct = .program.get_struct(id)
+
+        if not as_namespace and checked_struct.record_type is Class {
+            output += "NonnullRefPtr<"
+            if not type_module.is_root or type_module.id.equals(ModuleId(id: 0)) {
+                output += type_module.name
+                output += "::"
+            }
+            output += .codegen_namespace_qualifier(scope_id: checked_struct.scope_id)
+            output += checked_struct.name
+            output += ">"
+        } else {
+            if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))  or checked_struct.definition_linkage is External) {
+                output += type_module.name
+                output += "::"
+            }
+            output += .codegen_namespace_qualifier(scope_id: checked_struct.scope_id)
+            output += checked_struct.name
+        }
+
+        return output
     }
 
     function codegen_function_in_namespace(mut this, function_: CheckedFunction, containing_struct: TypeId?) throws -> String {
