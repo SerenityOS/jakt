@@ -2128,7 +2128,7 @@ struct Typechecker {
                     if seen_type_id_string.value() != rhs_type_id_string {
                         .error(
                             format(
-                                "Type mismatch: expected ‘{}’ but got ‘{}’"
+                                "Type mismatch: expected ‘{}’, but got ‘{}’"
                                 .type_name(TypeId::from_string(seen_type_id_string.value()))
                                 .type_name(rhs_type_id)
                             )
@@ -2173,7 +2173,7 @@ struct Typechecker {
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
                             .error(
-                                format("Type mismatch: expected ‘{}’ but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                                 span
                             )
                             return false
@@ -2211,7 +2211,7 @@ struct Typechecker {
                             }
                         } else {
                             .error(
-                                format("Type mismatch: expected ‘{}’ but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                                 span
                             )
                             return false
@@ -2220,7 +2220,7 @@ struct Typechecker {
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
                             .error(
-                                format("Type mismatch: expected ‘{}’ but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                                 span
                             )
                             return false
@@ -2260,7 +2260,7 @@ struct Typechecker {
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
                             .error(
-                                format("Type mismatch: expected ‘{}’ but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                                 span
                             )
                             return false
@@ -2299,7 +2299,7 @@ struct Typechecker {
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
                             .error(
-                                format("Type mismatch: expected ‘{}’ but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                                 span
                             )
                             return false
@@ -2328,7 +2328,7 @@ struct Typechecker {
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
                             .error(
-                                format("Type mismatch: expected ‘{}’ but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                                 span
                             )
                             return false
@@ -2339,7 +2339,7 @@ struct Typechecker {
             else => {
                 if not rhs_type_id.equals(lhs_type_id) {
                     .error(
-                        format("Type mismatch: expected ‘{}’ but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                        format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                         span
                     )
                     return false
