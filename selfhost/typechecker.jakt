@@ -103,8 +103,7 @@ enum BuiltinType: usize {
     Usize = 12
     String = 13
     CChar = 14
-    CString = 15
-    CInt = 16
+    CInt = 15
 }
 
 boxed enum Type {
@@ -124,7 +123,6 @@ boxed enum Type {
     JaktString
     CChar
     CInt
-    CString
     TypeVariable(String)
     GenericInstance(id: StructId, args: [TypeId])
     GenericEnumInstance(id: EnumId, args: [TypeId])
@@ -164,8 +162,6 @@ boxed enum Type {
         } else if this is CChar and rhs is CChar {
             return true
         } else if this is CInt and rhs is CInt {
-            return true
-        } else if this is CString and rhs is CString {
             return true
         } else {
             match this {
@@ -262,7 +258,7 @@ boxed enum Type {
     }
 
     function is_builtin(this) -> bool => match this {
-        Void | Bool | U8 | U16 | U32 | U64 | I8 | I16 | I32 | I64 | F32 | F64 | Usize | JaktString | CChar | CInt | CString => true
+        Void | Bool | U8 | U16 | U32 | U64 | I8 | I16 | I32 | I64 | F32 | F64 | Usize | JaktString | CChar | CInt => true
         else => false
     }
 
@@ -848,7 +844,6 @@ struct Typechecker {
                 Type::Usize,
                 Type::JaktString,
                 Type::CChar,
-                Type::CString,
                 Type::CInt,
             ],
             variables: [],
@@ -1000,7 +995,6 @@ struct Typechecker {
             CChar => "c_char"
             CInt => "c_int"
             Bool => "bool"
-            CString => "c_string"
             Void => "void"
             JaktString => "String"
             Enum(id) => .get_enum(id).name
