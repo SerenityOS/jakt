@@ -3560,7 +3560,8 @@ struct Typechecker {
                     }
                     let checked_arg = .typecheck_expression(expr: parsed_label_and_arg.2, scope_id, safety_mode)
 
-                    // FIXME: Check argument/parameter type compatibility
+                    // FIXME: It's super awkward that we have to pass "generic_inferences" here:
+                    .check_types_for_compat(lhs_type_id: param.variable.type_id, rhs_type_id: .expression_type(checked_arg), generic_inferences: ["":""], span)
 
                     args.push((call.name, checked_arg))
                 }
