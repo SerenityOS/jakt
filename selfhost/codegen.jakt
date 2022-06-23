@@ -622,7 +622,7 @@ struct CodeGenerator {
         Struct(id) => .codegen_struct(id, as_namespace)
         Enum(id) => .codegen_enum(id, as_namespace)
         else => {
-            todo("codegen_type else")
+            todo(format("codegen_type else: {}", .program.get_type(type_id)))
             yield ""
         }
     }
