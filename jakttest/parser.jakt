@@ -19,7 +19,7 @@ struct Parser {
         return parser.parse_test()
     }
 
-    function parse_test(mut this) -> ParsedTest {
+    function parse_test(mut this) throws -> ParsedTest {
         loop {
             match .tokens[.index] {
                 ForwardSlash(span) => {
@@ -33,7 +33,7 @@ struct Parser {
                                 .index += 2
                                 match .tokens[.index] {
                                     QuotedString(quote) => {
-                                        return ParsedTest::SuccessTest(quote)
+                                        return ParsedTest::SuccessTest(parse_quoted_string(quote))
                                     }
                                     else => {
                                         return ParsedTest::SkipTest
@@ -44,7 +44,7 @@ struct Parser {
                                 .index += 2
                                 match .tokens[.index] {
                                     QuotedString(quote) => {
-                                        return ParsedTest::FailureTest(quote)
+                                        return ParsedTest::FailureTest(parse_quoted_string(quote))
                                     }
                                     else => {
                                         return ParsedTest::SkipTest
@@ -74,4 +74,36 @@ struct Parser {
         }
         return ParsedTest::SkipTest
     }
+}
+
+function parse_quoted_string(anon quote: String) throws -> String {
+    mut builder = StringBuilder::create()
+    mut i = 0uz
+    while i < quote.length() {
+        let ch = quote.byte_at(i)
+        if ch == b'\\' and i + 1 < quote.length() {
+            i += 1
+            let ch = quote.byte_at(i)
+            let escape = match ch {
+                b'"' => ""
+                b'\\' => "\\"
+                b'a' => "\0x07"
+                b'b' => "\x08"
+                b'f' => "\x0c"
+                b'n' => "\n"
+                b'r' => "\r"
+                b't' => "\t"
+                b'v' => "\x0b"
+                else => {
+                    panic(format("Unknown escape character: '{}'", ch))
+                    yield ""
+                }
+            }
+            builder.append_string(escape)
+        } else {
+            builder.append(ch)
+        }
+        i += 1
+    }
+    return builder.to_string()
 }
