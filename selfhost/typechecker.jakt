@@ -1436,14 +1436,17 @@ struct Typechecker {
 
     function typecheck_namespace_predecl(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         let module_struct_len = .current_module().structures.size()
+        let module_enum_len = .current_module().enums.size()
 
-        // 1. Initialize structs
+        // 1. Initialize structs and enums
         mut struct_index: usize = 0
+        mut enum_index: usize = 0
         for parsed_record in parsed_namespace.records.iterator() {
             match parsed_record.record_type {
                 Struct | Class => { .typecheck_struct_predecl_initial(parsed_record, struct_index: struct_index++, module_struct_len, scope_id) }
-                else => {
-                    todo(format("typecheck_namespace_predecl: else {}", parsed_record.record_type))
+                ValueEnum | SumEnum => { .typecheck_enum_predecl_initial(parsed_record, enum_index: enum_index++, module_enum_len, scope_id) }
+                Garbage => {
+                    panic("Trying to typecheck a garbage record")
                 }
             }
         }
@@ -1659,6 +1662,30 @@ struct Typechecker {
         module.structures[struct_id.id].generic_parameters = generic_parameters
 
         .current_struct_type_id = None
+    }
+
+    function typecheck_enum_predecl_initial(mut this, parsed_record: ParsedRecord, enum_index: usize, module_enum_len: usize, scope_id: ScopeId) throws {
+        // Bring the enum names into scope for future typechecking
+        let module_id = .current_module_id
+        let enum_id = EnumId(module: module_id, id: enum_index + module_enum_len)
+        mut module = .current_module()
+        module.types.push(Type::Enum(enum_id))
+
+        let enum_type_id = TypeId(module: module_id, id: .current_module().types.size() - 1)
+        .add_type_to_scope(scope_id, type_name: parsed_record.name, type_id: enum_type_id, span: parsed_record.name_span)
+
+        // Add a placeholder entry, this will be replaced later.
+        module.enums.push(CheckedEnum(
+            name: parsed_record.name
+            name_span: parsed_record.name_span
+            generic_parameters: []
+            variants: []
+            scope_id: unknown_scope_id()
+            definition_linkage: parsed_record.definition_linkage
+            record_type: parsed_record.record_type
+            underlying_type_id: unknown_type_id()
+            type_id: enum_type_id
+        ))
     }
 
     function typecheck_struct_predecl_initial(mut this, parsed_record: ParsedRecord, struct_index: usize, module_struct_len: usize, scope_id: ScopeId) throws {
