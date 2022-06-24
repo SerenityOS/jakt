@@ -4,7 +4,10 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 import parser { BinaryOperator, FunctionLinkage }
-import typechecker { BuiltinType, CheckedBlock, CheckedCall, CheckedExpression, CheckedFunction, CheckedProgram, CheckedStatement, ModuleId, ScopeId, StructId, EnumId, Type, TypeId, expression_type }
+import typechecker {
+    BuiltinType, CheckedBlock, CheckedCall, CheckedExpression,
+    CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
+    ModuleId, ScopeId, StructId, EnumId, Type, TypeId, expression_type }
 import utility { panic, todo }
 
 enum AllowedControlExits {
@@ -98,6 +101,11 @@ struct CodeGenerator {
         output += "namespace Jakt {\n"
 
         for module in generator.program.modules.iterator() {
+
+            for struct_ in module.structures.iterator() {
+                output += generator.codegen_struct(struct_)
+            }
+
             for function_ in module.functions.iterator() {
                 // FIXME: Set current function ID in the context
                 output += generator.codegen_function(function_)
@@ -105,6 +113,54 @@ struct CodeGenerator {
         }
 
         output += "}\n"
+
+        return output
+    }
+
+    function codegen_struct(mut this, struct_: CheckedStruct) throws -> String {
+        mut output = ""
+
+        if struct_.definition_linkage is External {
+            return ""
+        }
+
+        if not struct_.generic_parameters.is_empty() {
+            output += "template <"
+        }
+
+        // FIXME: generic parameter names
+
+        if not struct_.generic_parameters.is_empty() {
+            output += "> "
+        }
+
+        match struct_.record_type {
+            Class => {
+                todo("codegen_struct Class")
+            }
+            Struct => {
+                output += "struct "
+                output += struct_.name
+                output += " { "
+            }
+            SumEnum => {
+                todo("codegen_struct SumEnum")
+            }
+            ValueEnum => {
+                todo("codegen_struct ValueEnum")
+            }
+            else => {}
+        }
+
+        for field_id in struct_.fields.iterator() {
+            let field = .program.get_variable(field_id)
+            output += .codegen_type(field.type_id)
+            output += " "
+            output += field.name
+            output += ";"
+        }
+
+        output += "};"
 
         return output
     }
