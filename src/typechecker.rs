@@ -4682,10 +4682,16 @@ pub fn typecheck_expression(
             match scope {
                 Some(variable_scope_id) => {
                     if let Some(var) = project.find_var_in_scope(variable_scope_id, v) {
-                        (
-                            CheckedExpression::NamespacedVar(checked_namespace, var.clone(), *span),
-                            check_accessibility(scope_id, variable_scope_id, var, span, project),
-                        )
+                        let checked_namespaced_var = CheckedExpression::NamespacedVar(checked_namespace, var.clone(), *span);
+                        let (_, unify_error) = unify_with_type(var.type_id, type_hint, *span, project);
+                        let access_error = check_accessibility(scope_id, variable_scope_id, var, span, project);
+
+                        let namespaced_var_error: Option<JaktError> = match unify_error {
+                            Some(_) => unify_error,
+                            None => access_error,
+                        };
+
+                        (checked_namespaced_var, namespaced_var_error)
                     } else {
                         // Check if there's a constructor with this name.
 
