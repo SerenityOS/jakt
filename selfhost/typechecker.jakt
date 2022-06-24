@@ -1854,7 +1854,7 @@ struct Typechecker {
         mut next_constant_value = 0u64
         mut seen_names: [String] = [] // FIXME: HashSet
 
-        let enum_ = .get_enum(enum_id)
+        mut enum_ = .get_enum(enum_id)
 
         match record.record_type {
             ValueEnum(underlying_type, variants) => {
@@ -1867,11 +1867,30 @@ struct Typechecker {
                         seen_names.push(variant.name)
 
                         let expr = match variant.value.has_value() {
-                            true => .cast_to_underlying(variant.value!, scope_id: parent_scope_id, parsed_type: underlying_type)
+                            true => {
+                                let value_expression = .cast_to_underlying(variant.value!, scope_id: parent_scope_id, parsed_type: underlying_type)
+                                let number_constant = value_expression.to_number_constant(program: .program)
+                                match number_constant.has_value() {
+                                    true => {
+                                        next_constant_value = match number_constant! {
+                                            Signed(val) => (val + 1) as! u64
+                                            Unsigned(val) => val + 1
+                                            Floating(val) => {
+                                                todo("Implement floats")
+                                                yield 0u64
+                                            }
+                                        }
+                                    }
+                                    else => {
+                                        .error(format("Enum variant '{}' in enum '{}' has a non-constant value: {}", variant.name, enum_.name, value_expression), variant.span)
+                                    }
+                                }
+                                yield value_expression
+                            }
                             else => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(next_constant_value++), span: variant.span, type_id: underlying_type_id)
                         }
-
-                        checked_variants.push(CheckedEnumVariant::WithValue(name: variant.name, expr, span: variant.span))
+                        
+                        enum_.variants.push(CheckedEnumVariant::WithValue(name: variant.name, expr, span: variant.span))
                         let var_id = module.add_variable(CheckedVariable(
                             name: variant.name
                             type_id: underlying_type_id
@@ -1881,7 +1900,6 @@ struct Typechecker {
                         .add_var_to_scope(scope_id: enum_.scope_id, name: variant.name, var_id, span: variant.span)
                     }
                 }
-                module.enums[enum_id.id].variants = checked_variants
             }
             else => {}
         }

@@ -7,7 +7,8 @@ import parser { BinaryOperator, FunctionLinkage }
 import typechecker {
     BuiltinType, CheckedBlock, CheckedCall, CheckedExpression,
     CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
-    ModuleId, ScopeId, StructId, EnumId, Type, TypeId, expression_type }
+    ModuleId, ScopeId, StructId, EnumId, Type, TypeId, expression_type,
+    CheckedEnum, unknown_type_id }
 import utility { panic, todo }
 
 enum AllowedControlExits {
@@ -94,6 +95,11 @@ struct CodeGenerator {
             )
             entered_yieldable_blocks: []
         )
+        // for mod in program.modules.iterator() {
+        //     for e in mod.enums.iterator() {
+        //         eprintln("variants: {:#}", e.variants)
+        //     }
+        // }
 
         mut output = ""
 
@@ -108,6 +114,10 @@ struct CodeGenerator {
 
             for struct_ in module.structures.iterator() {
                 output += generator.codegen_struct(struct_)
+            }
+
+            for enum_ in module.enums.iterator() {
+                output += generator.codegen_enum(enum_)
             }
 
             for function_ in module.functions.iterator() {
@@ -230,6 +240,26 @@ struct CodeGenerator {
 
         output += "};"
 
+        return output
+    }
+
+    function codegen_enum(mut this, enum_: CheckedEnum) throws -> String {
+        mut output = ""
+        if not enum_.underlying_type_id.equals(unknown_type_id()) {
+            if .program.is_integer(enum_.underlying_type_id) {
+                output += "enum class " + enum_.name + ": " + .codegen_type(enum_.underlying_type_id) + " {\n"
+                for variant in enum_.variants.iterator() {
+                    output += match variant {
+                        WithValue(name, expr) => name + " = " + .codegen_expression(expr) + ",\n"
+                        else => {
+                            todo(format("codegen_enum can't generate variant: {}", variant))
+                            yield ""
+                        }
+                    }
+                }
+                output += "};\n"
+            }
+        }
         return output
     }
 
