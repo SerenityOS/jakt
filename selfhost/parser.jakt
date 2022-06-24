@@ -1273,12 +1273,12 @@ struct Parser {
         parsed_function.params = params
 
         // NOTE: main() always throws
-        if function_name == "main" {
-            parsed_function.can_throw = true
-        } else if .current() is Throws {
-            parsed_function.can_throw = true
+        mut can_throw = function_name == "main"
+        if .current() is Throws {
+            can_throw = true
             .index++
         }
+        parsed_function.can_throw = can_throw
 
         if .current() is Arrow {
             .index++
