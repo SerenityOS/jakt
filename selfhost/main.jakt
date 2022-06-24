@@ -8,12 +8,13 @@
 
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
+import utility { FilePath }
 import lexer { Lexer }
 import parser { Parser }
 import typechecker { Typechecker }
 
 function usage() => "usage: jakt [-h] [OPTIONS] <path>"
-function help() => "Flags:\n  -h\t\tPrint this help and exit.\n  -l\t\tPrint debug info for the lexer.\n  -p\t\tPrint debug info for the parser.\n  -b\t\tBuild an executable file."
+function help() => "Flags:\n  -h\t\tPrint this help and exit.\n  -l\t\tPrint debug info for the lexer.\n  -p\t\tPrint debug info for the parser.\n  -t\t\tPrint debug info for the typechecker.\n  -b\t\tBuild an executable file."
 
 function flag(args: [String], anon name: String) => args.contains("-" + name)
 
@@ -31,6 +32,7 @@ function main(args: [String]) {
 
     let lexer_debug = flag(args, "l")
     let parser_debug = flag(args, "p")
+    let typechecker_debug = flag(args, "t")
     let build_executable = flag(args, "b")
 
     mut file_name: String? = None
@@ -41,7 +43,7 @@ function main(args: [String]) {
             first_arg = false
             continue
         }
-        if arg != "-h" and arg != "-l" and arg != "-p" and arg != "-b" {
+        if arg != "-h" and arg != "-l" and arg != "-p" and arg != "-t" and arg != "-b" {
             if file_name.has_value() {
                 eprintln("you can only pass one file")
                 eprintln("{}", usage())
@@ -57,6 +59,20 @@ function main(args: [String]) {
         return 1
     }
 
+    let file_path = FilePath::make(file_name!)
+    //println(
+    //    "loading file path: {}, dir {}, base: {}, ext: {}"
+    //    file_path
+    //    file_path.dirname()
+    //    file_path.basename()
+    //    file_path.ext()
+    //)
+
+    if file_path.ext() != "jakt" {
+        eprintln("the compiler expects files with file extension .jakt")
+        eprintln("{}", usage())
+        return 1
+    }
     mut file = File::open_for_reading(file_name!)
     let file_contents = file.read_all()
 
@@ -76,7 +92,18 @@ function main(args: [String]) {
         println("{:#}", parsed_namespace);
     }
 
-    let checked_program = Typechecker::typecheck(parsed_namespace, errors)
+    // FIXME: maybe a config struct instead of single bools for compiler flags ?
+    let checked_program = Typechecker::typecheck(
+        root_file: file_path
+        parsed_namespace
+        errors
+        lexer_debug
+        parser_debug
+    )
+
+    if typechecker_debug {
+        println("{:#}", checked_program);
+    }
 
     for error in errors.iterator() {
         print_error(file_name: file_name!, file_contents, error)

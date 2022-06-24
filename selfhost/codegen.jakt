@@ -100,7 +100,15 @@ struct CodeGenerator {
         output += "#include <lib.h>\n"
         output += "namespace Jakt {\n"
 
-        for module in generator.program.modules.iterator() {
+        // FIXME: module sorting
+        let module_count = generator.program.modules.size()
+        mut i = module_count - 1
+        while (i >= 0 and i < module_count) {
+            let module = generator.program.modules[i]
+
+            if not module.is_root {
+                output += format("namespace {} {{\n", module.name)
+            }
 
             for struct_ in module.structures.iterator() {
                 output += generator.codegen_struct(struct_)
@@ -110,6 +118,12 @@ struct CodeGenerator {
                 // FIXME: Set current function ID in the context
                 output += generator.codegen_function(function_)
             }
+
+            if not module.is_root {
+                output += "}\n"
+            }
+
+            i--
         }
 
         output += "}\n"
