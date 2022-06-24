@@ -1460,7 +1460,10 @@ struct Typechecker {
         for parsed_record in parsed_namespace.records.iterator() {
             let struct_id = StructId(module: .current_module_id, id: struct_index + module_struct_len)
             match parsed_record.record_type {
-                Struct | Class => { .typecheck_struct_predecl(parsed_record, struct_id, scope_id) }
+                Struct | Class => {
+                    .typecheck_struct_predecl(parsed_record, struct_id, scope_id)
+                    struct_index++
+                }
                 else => {
                     todo(format("typecheck_namespace_predecl: else {}", parsed_record.record_type))
                 }
