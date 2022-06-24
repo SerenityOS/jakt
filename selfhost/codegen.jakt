@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 import parser { BinaryOperator, FunctionLinkage }
-import typechecker { BuiltinType, CheckedBlock, CheckedCall, CheckedExpression, CheckedFunction, CheckedProgram, CheckedStatement, ModuleId, ScopeId, StructId, EnumId, Type, TypeId }
+import typechecker { BuiltinType, CheckedBlock, CheckedCall, CheckedExpression, CheckedFunction, CheckedProgram, CheckedStatement, ModuleId, ScopeId, StructId, EnumId, Type, TypeId, expression_type }
 import utility { panic, todo }
 
 enum AllowedControlExits {
@@ -145,6 +145,41 @@ struct CodeGenerator {
         IndexedExpression(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
         IndexedDictionary(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
         IndexedTuple(expr, index) => format("(({}).get<{}>())", .codegen_expression(expr), index)
+        IndexedStruct(expr, index) => {
+            mut output = ""
+            output += "(("
+            output += .codegen_expression(expression: expr)
+            output += ")"
+
+            let is_this = match expr {
+                Var(var) => var.name == "this"
+                else => false
+            }
+
+            if is_this {
+                output += "->"
+            } else {
+                match .program.get_type(expression_type(expr)) {
+                    RawPtr => {
+                        output += "->"
+                    }
+                    Struct(struct_id) => {
+                        let structure = .program.get_struct(struct_id)
+                        if structure.record_type is Class {
+                            output += "->"
+                        } else {
+                            output += "."
+                        }
+                    }
+                    else => {
+                        output += "."
+                    }
+                }
+            }
+            output += index
+            output += ")"
+            yield output
+        }
         Block(block) => .codegen_block(block)
         Call(call) => .codegen_call(call)
         Boolean(val) => match val {
