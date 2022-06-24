@@ -5,10 +5,7 @@ if [ ! -x ./build/jakttest ]; then
     cargo run jakttest/jakttest.jakt
 fi
 
-if [ ! -x ./build/main ]; then
-    echo "selfhosted jakt binary does not exist. Building it now."
-    cargo run selfhost/main.jakt
-fi
+cargo run selfhost/main.jakt
 
 pass=0
 fail=0
