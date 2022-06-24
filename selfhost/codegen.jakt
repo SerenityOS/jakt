@@ -699,11 +699,12 @@ struct CodeGenerator {
         mut current_scope_id = .program.get_scope(scope_id).parent
 
         while current_scope_id.has_value() {
-            if .program.get_scope(current_scope_id!).namespace_name.has_value() {
-                let namespace_name = .program.get_scope(current_scope_id!).namespace_name!
+            let scope = .program.get_scope(current_scope_id!)
+            if scope.namespace_name.has_value() {
+                let namespace_name = scope.namespace_name!
                 output = format("{}::{}", namespace_name, output)
             }
-            current_scope_id = .program.get_scope(current_scope_id!).parent
+            current_scope_id = scope.parent
         }
         return output
     }
