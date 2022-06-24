@@ -320,7 +320,7 @@ struct CodeGenerator {
             }
         }
         else => {
-            todo("codegen_expression else")
+            todo(format("codegen_expression else: {}", expression))
             yield ""
         }
     }
