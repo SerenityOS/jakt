@@ -3226,7 +3226,35 @@ struct Typechecker {
         return CheckedStatement::Return(checked_expr)
     }
 
+    function typecheck_indexed_struct(mut this, expr: ParsedExpression, field: String, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
+        let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
+        let checked_expr_type_id = .expression_type(checked_expr)
+        let checked_expr_type = .get_type(checked_expr_type_id)
+
+        let struct_id = match checked_expr_type {
+            Type::GenericInstance(id) => id
+            Type::Struct(struct_id) => struct_id
+            else => {
+                panic(format("typecheck_indexed_struct: {}", checked_expr_type))
+                // FIXME: This is unreachable
+                yield StructId(module: ModuleId(id: 0), id: 0)
+            }
+        }
+        let structure = .get_struct(struct_id)
+        for member_id in structure.fields.iterator() {
+            let member = .get_variable(member_id)
+            let resolved_type_id = .resolve_type_var(type_var_type_id: member.type_id, scope_id)
+            // FIXME: Unify with type
+            // FIXME: Access checks
+            return CheckedExpression::IndexedStruct(expr: checked_expr, index: field, span, type_id: resolved_type_id)
+        }
+
+        // FIXME: Unify with type
+        return CheckedExpression::IndexedStruct(expr: checked_expr, index: field, span, type_id: checked_expr_type_id)
+    }
+
     function typecheck_expression(mut this, anon expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression => match expr {
+        IndexedStruct(expr, field, span) => .typecheck_indexed_struct(expr, field, scope_id, safety_mode, span)
         Boolean(val, span) => CheckedExpression::Boolean(val, span)
         NumericConstant(val, span) => {
             // FIXME: better constant support
