@@ -387,6 +387,13 @@ struct CodeGenerator {
                 => format("static_cast<{}>({}{})", type_name, val, suffix)
             }
         }
+        NamespacedVar(namespaces, var) => {
+            mut output = ""
+            for ns in namespaces.iterator() {
+                output += ns.name + "::"
+            }
+            yield output + var.name
+        }
         else => {
             todo(format("codegen_expression else: {}", expression))
             yield ""
