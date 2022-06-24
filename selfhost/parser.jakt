@@ -121,7 +121,7 @@ boxed enum ParsedStatement {
     If(condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?)
     Block(ParsedBlock)
     Loop(ParsedBlock)
-    While(guard: ParsedExpression, block: ParsedBlock)
+    While(condition: ParsedExpression, block: ParsedBlock)
     For(iterator_name: String, name_span: Span, range: ParsedExpression, block: ParsedBlock)
     Break
     Continue
@@ -1572,9 +1572,9 @@ struct Parser {
             }
             While => {
                 .index++
-                let guard = .parse_expression(allow_assignments: false)
+                let condition = .parse_expression(allow_assignments: false)
                 let block = .parse_block()
-                yield ParsedStatement::While(guard, block)
+                yield ParsedStatement::While(condition, block)
             }
             Yield => {
                 .index++

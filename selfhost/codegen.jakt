@@ -538,10 +538,10 @@ struct CodeGenerator {
             output += "}"
             yield output
         }
-        While(guard, block) => {
+        While(condition, block) => {
             mut output = ""
             output += "while ("
-            output += .codegen_expression(expression: guard)
+            output += .codegen_expression(expression: condition)
             output += ") "
             {
                 let last_control_flow = .control_flow_state
@@ -573,9 +573,9 @@ struct CodeGenerator {
             output += ";\n"
             yield output
         }
-        If(guard, then_block, else_statement) => {
+        If(condition, then_block, else_statement) => {
             mut output = "if ("
-            output += .codegen_expression(guard)
+            output += .codegen_expression(condition)
             output += ") "
             output += .codegen_block(block: then_block)
 

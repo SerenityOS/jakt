@@ -463,10 +463,10 @@ boxed enum CheckedStatement {
     Expression(CheckedExpression)
     Defer(CheckedStatement)
     VarDecl(var_id: VarId, init: CheckedExpression)
-    If(guard: CheckedExpression, then_block: CheckedBlock, else_statement: CheckedStatement?)
+    If(condition: CheckedExpression, then_block: CheckedBlock, else_statement: CheckedStatement?)
     Block(CheckedBlock)
     Loop(CheckedBlock)
-    While(guard: CheckedExpression, block: CheckedBlock)
+    While(condition: CheckedExpression, block: CheckedBlock)
     Return(CheckedExpression?)
     Break
     Continue
@@ -2080,9 +2080,9 @@ struct Typechecker {
     function statement_definitely_returns(this, anon statement: CheckedStatement) -> bool => match statement{
         Return(expr) => true
         // FIXME: CheckedStatement::If branches ugly implementation due to current compiler limitations
-        If(guard, then_block, else_statement) => {
+        If(condition, then_block, else_statement) => {
             mut ret = false
-            let guard_result = match guard {
+            let condition_result = match condition {
                 Boolean(val) => {
                     if val and then_block.definitely_returns {
                         ret = true
@@ -2091,7 +2091,7 @@ struct Typechecker {
                 }
                 else => false
             }
-            if not guard_result and else_statement.has_value(){
+            if not condition_result and else_statement.has_value(){
                 if then_block.definitely_returns and .statement_definitely_returns(else_statement.value()) {
                     ret = true
                 }
@@ -2100,7 +2100,7 @@ struct Typechecker {
         }
         Block(block) => block.definitely_returns
         Loop(block) => block.definitely_returns
-        While(guard, block) => block.definitely_returns
+        While(condition, block) => block.definitely_returns
         Expression(match_expr) => match match_expr {
             Match() => checked_expression_definitely_returns(match_expr)
             else => false
@@ -2858,7 +2858,7 @@ struct Typechecker {
         Loop(parsed_block) => .typecheck_loop(parsed_block, scope_id, safety_mode)
         Try(stmt, error_name, error_span, catch_block) => .typecheck_try(stmt, error_name, error_span, catch_block, scope_id, safety_mode)
         Throw(expr) => .typecheck_throw(expr, scope_id, safety_mode)
-        While(guard, block) => .typecheck_while(guard, block, scope_id, safety_mode)
+        While(condition, block) => .typecheck_while(condition, block, scope_id, safety_mode)
         Continue => CheckedStatement::Continue
         Break => CheckedStatement::Break
         VarDecl(var, init) => .typecheck_var_decl(var, init, scope_id, safety_mode)
@@ -3020,8 +3020,8 @@ struct Typechecker {
     }
 
     function typecheck_if(mut this, condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
-        let checked_guard = .typecheck_expression(condition, scope_id, safety_mode)
-        if not .expression_type(checked_guard).equals(builtin(BuiltinType::Bool)) {
+        let checked_condition = .typecheck_expression(condition, scope_id, safety_mode)
+        if not .expression_type(checked_condition).equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", condition.span())
         }
 
@@ -3034,7 +3034,7 @@ struct Typechecker {
         if else_statement.has_value() {
             checked_else = .typecheck_statement(else_statement!, scope_id, safety_mode)
         }
-        return CheckedStatement::If(guard: checked_guard, then_block: checked_block, else_statement: checked_else)
+        return CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else)
     }
 
     function typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
@@ -3109,10 +3109,10 @@ struct Typechecker {
         return CheckedStatement::VarDecl(var_id, init: checked_expr)
     }
 
-    function typecheck_while(mut this, guard: ParsedExpression, block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
-        let checked_guard = .typecheck_expression(guard, scope_id, safety_mode)
-        if not .expression_type(checked_guard).equals(builtin(BuiltinType::Bool)) {
-            .error("Condition must be a boolean expression", guard.span())
+    function typecheck_while(mut this, condition: ParsedExpression, block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
+        let checked_condition = .typecheck_expression(condition, scope_id, safety_mode)
+        if not .expression_type(checked_condition).equals(builtin(BuiltinType::Bool)) {
+            .error("Condition must be a boolean expression", condition.span())
         }
 
         let checked_block = .typecheck_block(block, parent_scope_id: scope_id, safety_mode)
@@ -3120,7 +3120,7 @@ struct Typechecker {
             .error("A ‘while’ block is not allowed to yield values", block.find_yield_span()!)
         }
 
-        return CheckedStatement::While(guard: checked_guard, block: checked_block)
+        return CheckedStatement::While(condition: checked_condition, block: checked_block)
     }
 
     function typecheck_try(mut this, stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
