@@ -705,6 +705,35 @@ boxed enum CheckedExpression {
 
 }
 
+function expression_type(anon expr: CheckedExpression) -> TypeId => match expr {
+    Boolean => builtin(BuiltinType::Bool)
+    NumericConstant(type_id) => type_id
+    QuotedString => builtin(BuiltinType::String)
+    ByteConstant => builtin(BuiltinType::U8)
+    CharacterConstant => builtin(BuiltinType::CChar)
+    UnaryOp(type_id) => type_id
+    BinaryOp(type_id) => type_id
+    JaktTuple(type_id) => type_id
+    Range(type_id) => type_id
+    JaktArray(type_id) => type_id
+    JaktDictionary(type_id) => type_id
+    JaktSet(type_id) => type_id
+    IndexedExpression(type_id) => type_id
+    IndexedDictionary(type_id) => type_id
+    IndexedTuple(type_id) => type_id
+    IndexedStruct(type_id) => type_id
+    Call(type_id) => type_id
+    MethodCall(type_id) => type_id
+    NamespacedVar(var) => var.type_id
+    Var(var) => var.type_id
+    OptionalNone(type_id) => type_id
+    OptionalSome(type_id) => type_id
+    ForcedUnwrap(type_id) => type_id
+    Match(type_id) => type_id
+    Block(type_id) => type_id
+    Garbage => builtin(BuiltinType::Void)
+}
+
 function checked_expression_definitely_returns(anon check_expression: CheckedExpression) -> bool {
     mut ret = false
 
@@ -1088,35 +1117,6 @@ struct Typechecker {
             TypeVariable(name) => name
             RawPtr(type_id) => format("raw {}", .type_name(type_id))
         }
-    }
-
-    function expression_type(this, anon expr: CheckedExpression) -> TypeId => match expr {
-        Boolean => builtin(BuiltinType::Bool)
-        NumericConstant(type_id) => type_id
-        QuotedString => builtin(BuiltinType::String)
-        ByteConstant => builtin(BuiltinType::U8)
-        CharacterConstant => builtin(BuiltinType::CChar)
-        UnaryOp(type_id) => type_id
-        BinaryOp(type_id) => type_id
-        JaktTuple(type_id) => type_id
-        Range(type_id) => type_id
-        JaktArray(type_id) => type_id
-        JaktDictionary(type_id) => type_id
-        JaktSet(type_id) => type_id
-        IndexedExpression(type_id) => type_id
-        IndexedDictionary(type_id) => type_id
-        IndexedTuple(type_id) => type_id
-        IndexedStruct(type_id) => type_id
-        Call(type_id) => type_id
-        MethodCall(type_id) => type_id
-        NamespacedVar(var) => var.type_id
-        Var(var) => var.type_id
-        OptionalNone(type_id) => type_id
-        OptionalSome(type_id) => type_id
-        ForcedUnwrap(type_id) => type_id
-        Match(type_id) => type_id
-        Block(type_id) => type_id
-        Garbage => builtin(BuiltinType::Void)
     }
 
     // FIXME: not a method of expression because of https://github.com/SerenityOS/jakt/issues/527
@@ -1626,7 +1626,7 @@ struct Typechecker {
                         match ret {
                             Return(val) => {
                                 if val.has_value() {
-                                    return_type_id = .resolve_type_var(type_var_type_id: .expression_type(val!), scope_id: method_scope_id)
+                                    return_type_id = .resolve_type_var(type_var_type_id: expression_type(val!), scope_id: method_scope_id)
                                 }
                             }
                             else => {}
@@ -1840,7 +1840,7 @@ struct Typechecker {
             match block.statements[0] {
                 Return(ret) => {
                     if ret.has_value() {
-                        return_type_id = .expression_type(ret!)
+                        return_type_id = expression_type(ret!)
                     } else {
                         return_type_id = VOID_TYPE_ID
                     }
@@ -2048,7 +2048,7 @@ struct Typechecker {
                 match last_stmt {
                     CheckedStatement::Return(ret) => {
                         if ret.has_value() {
-                            return_type_id = .expression_type(expr: ret.value())
+                            return_type_id = expression_type(expr: ret.value())
                         }
                     }
                     else => {
@@ -2468,7 +2468,7 @@ struct Typechecker {
                 else => none_expr
             }
             if yield_span.has_value() and checked_yield_expression.has_value() {
-                let type_var_type_id = .expression_type(checked_yield_expression.value())
+                let type_var_type_id = expression_type(checked_yield_expression.value())
                 let type_ = .resolve_type_var(type_var_type_id , scope_id: block_scope_id)
                 if checked_block.yielded_type.has_value() {
                     // TODO check types for compat
@@ -2640,7 +2640,7 @@ struct Typechecker {
     }
 
     function typecheck_unary_operation(mut this, checked_expr: CheckedExpression, checked_op: CheckedUnaryOperator, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
-        let expr_type_id = .expression_type(checked_expr)
+        let expr_type_id = expression_type(checked_expr)
         let expr_type = .get_type(expr_type_id)
 
         match checked_op {
@@ -2670,13 +2670,13 @@ struct Typechecker {
     }
 
     function typecheck_binary_operation(mut this, checked_lhs: CheckedExpression, op: BinaryOperator, checked_rhs: CheckedExpression, scope_id: ScopeId, span: Span) throws -> TypeId {
-        let lhs_type_id = .expression_type(checked_lhs)
-        let rhs_type_id = .expression_type(checked_rhs)
+        let lhs_type_id = expression_type(checked_lhs)
+        let rhs_type_id = expression_type(checked_rhs)
 
         let lhs_span = .expression_span(checked_lhs)
         let rhs_span = .expression_span(checked_rhs)
 
-        mut type_id = .expression_type(checked_lhs)
+        mut type_id = expression_type(checked_lhs)
 
         match op {
             NoneCoalescing | NoneCoalescingAssign => {
@@ -2896,7 +2896,7 @@ struct Typechecker {
         mut iterable_should_be_mutable = false
 
 
-        let iterable_type = .program.get_type(.expression_type(iterable_expr))
+        let iterable_type = .program.get_type(expression_type(iterable_expr))
 
         match iterable_type {
             TypeVariable => {
@@ -3021,7 +3021,7 @@ struct Typechecker {
 
     function typecheck_if(mut this, condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
         let checked_condition = .typecheck_expression(condition, scope_id, safety_mode)
-        if not .expression_type(checked_condition).equals(builtin(BuiltinType::Bool)) {
+        if not expression_type(checked_condition).equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", condition.span())
         }
 
@@ -3040,7 +3040,7 @@ struct Typechecker {
     function typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
         mut lhs_type_id = .typecheck_typename(parsed_type: var.parsed_type, scope_id)
         mut checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode)
-        let rhs_type_id = .expression_type(checked_expr)
+        let rhs_type_id = expression_type(checked_expr)
 
         if lhs_type_id.equals(unknown_type_id()) and not rhs_type_id.equals(unknown_type_id()) {
             lhs_type_id = rhs_type_id
@@ -3111,7 +3111,7 @@ struct Typechecker {
 
     function typecheck_while(mut this, condition: ParsedExpression, block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
         let checked_condition = .typecheck_expression(condition, scope_id, safety_mode)
-        if not .expression_type(checked_condition).equals(builtin(BuiltinType::Bool)) {
+        if not expression_type(checked_condition).equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", condition.span())
         }
 
@@ -3148,7 +3148,7 @@ struct Typechecker {
         let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
 
         let error_type_id = .find_type_in_prelude("Error")
-        if not .expression_type(checked_expr).equals(error_type_id) {
+        if not expression_type(checked_expr).equals(error_type_id) {
             .error("throw expression does not produce an error", expr.span())
         }
 
@@ -3228,7 +3228,7 @@ struct Typechecker {
 
     function typecheck_indexed_struct(mut this, expr: ParsedExpression, field: String, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
         let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
-        let checked_expr_type_id = .expression_type(checked_expr)
+        let checked_expr_type_id = expression_type(checked_expr)
         let checked_expr_type = .get_type(checked_expr_type_id)
 
         let struct_id = match checked_expr_type {
@@ -3277,7 +3277,7 @@ struct Typechecker {
         MethodCall(expr, call, span) => {
             let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
             let checked_call_expr = .typecheck_call(call, scope_id, span, safety_mode, must_be_enum_constructor: false)
-            let type_id = .expression_type(checked_call_expr)
+            let type_id = expression_type(checked_call_expr)
             yield match checked_call_expr {
                 Call(call) => CheckedExpression::MethodCall(expr: checked_expr, call, span, type_id)
                 else => {
@@ -3290,8 +3290,8 @@ struct Typechecker {
             let checked_from = .typecheck_expression(from, scope_id, safety_mode)
             let checked_to = .typecheck_expression(to, scope_id, safety_mode)
 
-            let from_type = .expression_type(checked_from)
-            let to_type = .expression_type(checked_to)
+            let from_type = expression_type(checked_from)
+            let to_type = expression_type(checked_to)
 
             let from_span = .expression_span(checked_from)
             let to_span = .expression_span(checked_to)
@@ -3331,7 +3331,7 @@ struct Typechecker {
             let checked_lhs = .typecheck_expression(lhs, scope_id, safety_mode)
             mut checked_rhs = .typecheck_expression(rhs, scope_id, safety_mode)
 
-            let lhs_type = .expression_type(checked_lhs)
+            let lhs_type = expression_type(checked_lhs)
 
             let promoted_rhs = .try_to_promote_constant_expr_to_type(lhs_type, checked_rhs, span)
             if promoted_rhs.has_value() {
@@ -3347,7 +3347,7 @@ struct Typechecker {
         }
         OptionalSome(expr, span) => {
             let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
-            let type_id = .expression_type(checked_expr)
+            let type_id = expression_type(checked_expr)
             let optional_struct_id = .find_struct_in_prelude("Optional")
             let optional_type = Type::GenericInstance(id: optional_struct_id, args: [type_id])
             let optional_type_id = .find_or_add_type_id(optional_type)
@@ -3365,7 +3365,7 @@ struct Typechecker {
         }
         ForcedUnwrap(expr, span) => {
             let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
-            let type = .get_type(.expression_type(checked_expr))
+            let type = .get_type(expression_type(checked_expr))
 
             let optional_struct_id = .find_struct_in_prelude("Optional")
             let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
@@ -3395,7 +3395,7 @@ struct Typechecker {
                 // TODO: Check fill size is positive when possible.
                 let fill_size_value = fill_size.value()
                 let fill_size_checked = .typecheck_expression(fill_size_value, scope_id, safety_mode)
-                let fill_size_type = .expression_type(fill_size_checked)
+                let fill_size_type = expression_type(fill_size_checked)
                 if not .is_integer(fill_size_type) {
                     .error(
                         format("Type '{}' is not convertible to an integer. Only integer values can be array fill size expressions.", .type_name(fill_size_type)), 
@@ -3411,7 +3411,7 @@ struct Typechecker {
             mut vals: [CheckedExpression] = []
             for value in values.iterator() {
                 let checked_expr = .typecheck_expression(value, scope_id, safety_mode)
-                let current_value_type_id = .expression_type(checked_expr)
+                let current_value_type_id = expression_type(checked_expr)
 
                 if inner_type_id.equals(unknown_type_id()) {
                     inner_type_id = current_value_type_id
@@ -3437,10 +3437,10 @@ struct Typechecker {
             let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
             mut expr_type_id = unknown_type_id()
 
-            match .get_type(.expression_type(checked_base)) {
+            match .get_type(expression_type(checked_base)) {
                 GenericInstance(id, args) => {
                     if id.equals(array_struct_id) {
-                        if .is_integer(.expression_type(checked_index)) {
+                        if .is_integer(expression_type(checked_index)) {
                             expr_type_id = args[0]
                         } else {
                             .error("Index is not an integer", span)
@@ -3593,7 +3593,7 @@ struct Typechecker {
                     let checked_arg = .typecheck_expression(expr: parsed_label_and_arg.2, scope_id, safety_mode)
 
                     // FIXME: It's super awkward that we have to pass "generic_inferences" here:
-                    .check_types_for_compat(lhs_type_id: param.variable.type_id, rhs_type_id: .expression_type(checked_arg), generic_inferences: ["":""], span)
+                    .check_types_for_compat(lhs_type_id: param.variable.type_id, rhs_type_id: expression_type(checked_arg), generic_inferences: ["":""], span)
 
                     args.push((call.name, checked_arg))
                 }
