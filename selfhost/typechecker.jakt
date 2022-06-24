@@ -807,6 +807,7 @@ struct CheckedCall {
 }
 
 function unknown_type_id() -> TypeId => TypeId(module: ModuleId(id: 0), id: 0)
+function unknown_scope_id() -> ScopeId => ScopeId(module: ModuleId(id: 0), id: 0)
 
 function builtin(anon builtin: BuiltinType) -> TypeId {
     return TypeId(module: ModuleId(id: 0), id: builtin as! usize)
