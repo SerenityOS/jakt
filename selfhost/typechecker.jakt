@@ -942,8 +942,10 @@ struct Typechecker {
             }
         }
 
+        let none_string: String? = None
+
         let scope = Scope(
-            namespace_name: ""
+            namespace_name: none_string
             vars: [:]
             structs: [:]
             functions: [:]
