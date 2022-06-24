@@ -1,9 +1,10 @@
 import error { JaktError }
+import lexer { NumericConstant }
 import parser { BinaryOperator, DefinitionLinkage, DefinitionType, UnaryOperator,
                 FunctionLinkage, FunctionType, ParsedBlock, ParsedCall,
                 ParsedExpression, ParsedFunction, ParsedNamespace,
                 ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
-                ParsedRecord, ParsedField }
+                ParsedRecord, ParsedField, TypeCast }
 import utility { panic, todo, Span }
 
 enum SafetyMode {
@@ -481,6 +482,16 @@ enum NumberConstant {
     Signed(i64)
     Unsigned(u64)
     Floating(f64)
+
+    // FIXME: Maybe we should not assume the type cast always succeeds
+    function to_usize(this) -> usize => match this {
+        Signed(value) => value as! usize
+        Unsigned(value) => value as! usize
+        else => {
+            panic("Cannot convert floating point constants to usize")
+            yield 0uz
+        }
+    }
 
     function can_fit_number(this, type_id: TypeId, program: CheckedProgram) -> bool {
         let type_ = program.get_type(type_id)
@@ -1369,6 +1380,20 @@ struct Typechecker {
         return None
     }
 
+    function find_enum_in_scope(this, scope_id: ScopeId, name: String) -> EnumId? {
+        mut current_scope_id = Some(scope_id)
+        while current_scope_id.has_value() {
+            let scope = .get_scope(id: current_scope_id!)
+
+            if scope.enums.contains(name) {
+                return scope.enums[name]
+            }
+
+            current_scope_id = scope.parent
+        }
+        return None
+    }
+
     function find_struct_in_scope(this, scope_id: ScopeId, name: String) -> StructId? {
         mut current_scope_id = Some(scope_id)
         while current_scope_id.has_value() {
@@ -1938,8 +1963,15 @@ struct Typechecker {
                     }
                     .typecheck_struct(record, struct_id: struct_id!, parent_scope_id: scope_id)
                 }
-                else => {
-                    todo(format("typecheck_namespace_declarations implement parsion of record type {}", record.record_type))
+                ValueEnum | SumEnum => {
+                    let enum_id = .find_enum_in_scope(scope_id, name: record.name)
+                    if not enum_id.has_value() {
+                        panic("Can't find enum that has been previous added")
+                    }
+                    .typecheck_enum(record, enum_id: enum_id!, parent_scope_id: scope_id)
+                }
+                Garbage => {
+                    panic("Trying to typecheck a garbage record")
                 }
             }
         }
@@ -1947,6 +1979,271 @@ struct Typechecker {
         for fun in parsed_namespace.functions.iterator() {
             .typecheck_function(parsed_function: fun, parent_scope_id: scope_id)
         }
+    }
+
+    function typecheck_enum(mut this, record: ParsedRecord, enum_id: EnumId, parent_scope_id: ScopeId) throws {
+        let enum_type_id = .find_type_in_scope(scope_id: parent_scope_id, name: record.name)!
+        let enum_scope_id = .get_enum(enum_id).scope_id
+        mut module = .current_module()
+        mut enum_variants = module.enums[enum_id.id].variants
+        mut next_constant_value: u64? = 0u64
+        mut seen_names: [String:Span] = [:]
+
+        match record.record_type {
+            ValueEnum(variants) => {
+                for variant in variants.iterator() {
+                    if seen_names.contains(variant.name) {
+                        .error_with_hint(
+                            format("Enum variant '{}' is defined more than once", variant.name)
+                            variant.span
+                            "Previously seen here"
+                            seen_names[variant.name]
+                        )
+                        continue
+                    }
+
+                    seen_names.set(variant.name, variant.span)
+
+                    if variant.value.has_value() {
+                        // EnumVariant::WithValue
+                        let checked_tuple = .typecheck_enum_variant_with_value(
+                            name: variant.name
+                            span: variant.span
+                            value: variant.value!
+                            next_constant_value
+                            record
+                            enum_id
+                            enum_scope_id
+                            enum_type_id
+                            parent_scope_id
+                        )
+                        let checked_variant = checked_tuple.0
+                        next_constant_value = checked_tuple.1
+                        if checked_variant.has_value() {
+                            enum_variants.push(checked_variant!)
+                        }
+                    } else {
+                        // EnumVariant::Untyped
+                        let checked_tuple = .typecheck_enum_variant_untyped(
+                            name: variant.name
+                            span: variant.span
+                            next_constant_value
+                            record
+                            enum_id
+                            enum_scope_id
+                            enum_type_id
+                            parent_scope_id
+                        )
+                        let checked_variant = checked_tuple.0
+                        next_constant_value = checked_tuple.1
+                        if checked_variant.has_value() {
+                            enum_variants.push(checked_variant!)
+                        }
+                    }
+                }
+            }
+            SumEnum(variants) => {
+                for variant in variants.iterator() {
+                    if seen_names.contains(variant.name) {
+                        .error_with_hint(
+                            format("Enum variant '{}' is defined more than once", variant.name)
+                            variant.span
+                            "Previously seen here"
+                            seen_names[variant.name]
+                        )
+                        continue
+                    }
+
+                    seen_names.set(variant.name, variant.span)
+
+                    if variant.params.has_value() {
+                        // EnumVariant::StructLike
+                        let checked_tuple = .typecheck_enum_variant_struct_like(
+                            name: variant.name
+                            span: variant.span
+                            params: variant.params!
+                            next_constant_value
+                            record
+                            enum_id
+                            enum_scope_id
+                            enum_type_id
+                            parent_scope_id
+                        )
+                        let checked_variant = checked_tuple.0
+                        next_constant_value = checked_tuple.1
+                        if checked_variant.has_value() {
+                            enum_variants.push(checked_variant!)
+                        }
+                    } else {
+                        // EnumVariant::Untyped
+                        let checked_tuple = .typecheck_enum_variant_untyped(
+                            name: variant.name
+                            span: variant.span
+                            next_constant_value
+                            record
+                            enum_id
+                            enum_scope_id
+                            enum_type_id
+                            parent_scope_id
+                        )
+                        let checked_variant = checked_tuple.0
+                        next_constant_value = checked_tuple.1
+                        if checked_variant.has_value() {
+                            enum_variants.push(checked_variant!)
+                        }
+                    }
+                }
+            }
+            else => {
+                panic("typecheck_enum: illegal record type")
+            }
+        }
+    }
+
+    function cast_to_underlying(mut this, anon expr: ParsedExpression, parsed_type: ParsedType, enum_scope_id: ScopeId, span: Span) throws -> CheckedExpression {
+        let expression = ParsedExpression::UnaryOp(
+            expr
+            op: UnaryOperator::TypeCast(TypeCast::Infallible(parsed_type))
+            span
+        )
+
+        return .typecheck_expression(expression, scope_id: enum_scope_id, safety_mode: SafetyMode::Safe)
+    }
+
+    function typecheck_enum_variant_untyped(mut this, name: String, span: Span, next_constant_value: u64?, record: ParsedRecord, enum_id: EnumId, enum_scope_id: ScopeId, enum_type_id: TypeId, parent_scope_id: ScopeId) throws -> (CheckedEnumVariant?, u64?) {
+        let underlying_type_id = .get_enum(enum_id).underlying_type_id
+
+        mut output_variant: CheckedEnumVariant? = None
+        if not underlying_type_id.equals(unknown_type_id()) {
+            if not next_constant_value.has_value() {
+                .error(
+                    "Missing enum variant value, the enum underlying type is not numeric, and so all enum variants must have explicit values"
+                    span
+                )
+                let none_enum_variant: CheckedEnumVariant? = None
+                return (none_enum_variant, next_constant_value)
+            }
+
+            let underlying_type = match record.record_type {
+                ValueEnum(underlying_type) => underlying_type
+                else => ParsedType::Empty
+            }
+
+            let checked_expression = .cast_to_underlying(
+                ParsedExpression::NumericConstant(val: NumericConstant::U64(next_constant_value!), span)
+                parsed_type: underlying_type
+                enum_scope_id
+                span
+            )
+
+            output_variant = CheckedEnumVariant::WithValue(
+                name
+                expr: checked_expression
+                span
+            )
+
+            next_constant_value = next_constant_value! + 1
+
+            mut module = .current_module()
+            let var_id = module.add_variable(CheckedVariable(
+                name
+                type_id: enum_type_id
+                is_mutable: false
+                definition_span: span
+            ))
+            .add_var_to_scope(scope_id: enum_scope_id, name, var_id, span)
+        } else {
+            output_variant = CheckedEnumVariant::Untyped(name, span)
+        }
+
+        if not .find_function_in_scope(parent_scope_id: enum_scope_id, function_name: name).has_value() {
+            let is_boxed = match record.record_type {
+                SumEnum(is_boxed) => is_boxed
+                else => false
+            }
+            let function_scope_id = .create_scope(parent_scope_id: enum_scope_id, can_throw: is_boxed)
+            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: is_boxed)
+
+            let none_type: TypeId? = None
+
+            // TODO: remove this check once we support generic parameters in the constructor below
+            if not record.generic_parameters.is_empty() {
+                todo("typecheck_enum_variant_untyped implement support for generic parameters")
+            }
+
+            let checked_constructor = CheckedFunction(
+                name
+                name_span: span
+                return_type_id: enum_type_id
+                params: []
+                // TODO: support generic parameters
+                generic_params: []
+                block: CheckedBlock(
+                    statements: []
+                    scope_id: block_scope_id
+                    definitely_returns: false
+                    yielded_type: none_type
+                )
+                can_throw: is_boxed
+                type: FunctionType::ImplicitEnumConstructor
+                linkage: FunctionLinkage::Internal
+                function_scope_id
+            )
+
+            mut module = .current_module()
+            module.functions.push(checked_constructor)
+
+            let function_id = FunctionId(module: .current_module_id, id: module.functions.size() - 1)
+
+            .add_function_to_scope(parent_scope_id: enum_scope_id, name, function_id, span)
+        }
+        return (output_variant, next_constant_value)
+    }
+
+    function typecheck_enum_variant_with_value(mut this, name: String, span: Span, value: ParsedExpression, next_constant_value: u64?, record: ParsedRecord, enum_id: EnumId, enum_scope_id: ScopeId, enum_type_id: TypeId, parent_scope_id: ScopeId) throws -> (CheckedEnumVariant?, u64?) {
+        let underlying_type = match record.record_type {
+            ValueEnum(underlying_type) => underlying_type
+            else => ParsedType::Empty
+        }
+        let checked_expression = .cast_to_underlying(
+            ParsedExpression::NumericConstant(val: NumericConstant::U64(next_constant_value!), span)
+            parsed_type: underlying_type
+            enum_scope_id
+            span
+        )
+
+        let constant = checked_expression.to_number_constant(program: .program)
+
+        if constant.has_value() {
+            next_constant_value = constant!.to_usize() as! u64
+        } else {
+            .error(
+                format("Enum variant '{}' in enum '{}' has a non-constant value: {}", name, record.name, checked_expression)
+                span
+            )
+        }
+        let output_variant: CheckedEnumVariant? = CheckedEnumVariant::WithValue(
+            name
+            expr: checked_expression
+            span
+        )
+
+        mut module = .current_module()
+        let var_id = module.add_variable(CheckedVariable(
+            name
+            type_id: enum_type_id
+            is_mutable: false
+            definition_span: span
+        ))
+        .add_var_to_scope(scope_id: enum_scope_id, name, var_id, span)
+
+        return (output_variant, next_constant_value)
+    }
+
+    function typecheck_enum_variant_struct_like(mut this, name: String, span: Span, params: [ParsedVarDecl], next_constant_value: u64?, record: ParsedRecord, enum_id: EnumId, enum_scope_id: ScopeId, enum_type_id: TypeId, parent_scope_id: ScopeId) throws -> (CheckedEnumVariant?, u64?) {
+        todo("implement typecheck_enum_variant_struct_like()")
+        let none_enum_variant: CheckedEnumVariant? = None
+        return (none_enum_variant, next_constant_value)
     }
 
     function typecheck_struct(mut this, record: ParsedRecord, struct_id: StructId, parent_scope_id: ScopeId) throws {
