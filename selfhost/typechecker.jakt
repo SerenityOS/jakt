@@ -1442,6 +1442,7 @@ struct Typechecker {
             match parsed_record.record_type {
                 Struct | Class => { .typecheck_struct_predecl_initial(parsed_record, struct_index: struct_index++, module_struct_len, scope_id) }
                 SumEnum => {}
+                ValueEnum => {}
                 else => {
                     todo(format("typecheck_namespace_predecl: else {}", parsed_record.record_type))
                 }
@@ -1472,6 +1473,7 @@ struct Typechecker {
                     struct_index++
                 }
                 SumEnum => {}
+                ValueEnum => {}
                 else => {
                     todo(format("typecheck_namespace_predecl: else {}", parsed_record.record_type))
                 }
@@ -1717,6 +1719,7 @@ struct Typechecker {
                     .typecheck_struct(record, struct_id: struct_id!, parent_scope_id: scope_id)
                 }
                 SumEnum => {}
+                ValueEnum => {}
                 else => {
                     todo(format("typecheck_namespace_declarations implement parsion of record type {}", record.record_type))
                 }
