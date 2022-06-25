@@ -340,7 +340,7 @@ struct CodeGenerator {
         }
 
         if op is ArithmeticRightShift {
-            mut output = "(JaktInternal::arithmetic_shift_right("
+            mut output = "JaktInternal::arithmetic_shift_right("
             output += .codegen_expression(lhs)
             output += ","
             output += .codegen_expression(rhs)
