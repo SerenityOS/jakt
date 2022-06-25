@@ -3457,6 +3457,20 @@ fn typecheck_function(
         resolve_type_var(function_return_type_id, parent_scope_id, project)
     };
 
+    // After inferring the type we need to check again for main since it can only return c_int
+    if function.name == "main" {
+        let return_type_error = Some(JaktError::TypecheckError(
+            "Main function must return c_int".to_string(),
+            function.name_span,
+        ));
+        if !is_integer(return_type_id) {
+            match return_type_id {
+                VOID_TYPE_ID | UNKNOWN_TYPE_ID => (),
+                _ => error = error.or(return_type_error),
+            }
+        }
+    }
+
     if function_linkage != FunctionLinkage::External
         && return_type_id != VOID_TYPE_ID
         && !block.definitely_returns
@@ -4682,16 +4696,13 @@ pub fn typecheck_expression(
             match scope {
                 Some(variable_scope_id) => {
                     if let Some(var) = project.find_var_in_scope(variable_scope_id, v) {
-                        let checked_namespaced_var = CheckedExpression::NamespacedVar(checked_namespace, var.clone(), *span);
-                        let (_, unify_error) = unify_with_type(var.type_id, type_hint, *span, project);
-                        let access_error = check_accessibility(scope_id, variable_scope_id, var, span, project);
-
-                        let namespaced_var_error: Option<JaktError> = match unify_error {
-                            Some(_) => unify_error,
-                            None => access_error,
-                        };
-
-                        (checked_namespaced_var, namespaced_var_error)
+                        let checked_namespaced_var =
+                            CheckedExpression::NamespacedVar(checked_namespace, var.clone(), *span);
+                        let (_, unify_error) =
+                            unify_with_type(var.type_id, type_hint, *span, project);
+                        let access_error =
+                            check_accessibility(scope_id, variable_scope_id, var, span, project);
+                        (checked_namespaced_var, unify_error.or(access_error))
                     } else {
                         // Check if there's a constructor with this name.
 
