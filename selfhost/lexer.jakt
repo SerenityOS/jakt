@@ -388,6 +388,12 @@ struct Lexer {
         mut escaped = false;
 
         while not .eof() and (escaped or .peek() != b'\'') {
+            if escaped and (.index - start > 3) {
+                break
+            } else if .index - start > 2 {
+                break
+            }
+
             if not escaped and .peek() == b'\\' {
                 escaped = true
             } else {
