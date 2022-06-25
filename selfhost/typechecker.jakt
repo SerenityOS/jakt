@@ -2856,7 +2856,7 @@ struct Typechecker {
         Expression(expr) => CheckedStatement::Expression(expr: .typecheck_expression(expr, scope_id, safety_mode))
         UnsafeBlock(parsed_block) => CheckedStatement::Block(.typecheck_block(parsed_block, parent_scope_id: scope_id, safety_mode: SafetyMode::Unsafe))
         Yield(expr) => CheckedStatement::Yield(.typecheck_expression(expr, scope_id, safety_mode))
-        Return(expr) => .typecheck_return(expr, scope_id, safety_mode)
+        Return(expr, span) => .typecheck_return(expr, span, scope_id, safety_mode)
         Block(parsed_block) => .typecheck_block_statement(parsed_block, scope_id, safety_mode)
         InlineCpp(block, span) => .typecheck_inline_cpp(block, span, safety_mode)
         Defer(statement, span) => .typecheck_defer(statement, scope_id, safety_mode, span)
@@ -3222,7 +3222,10 @@ struct Typechecker {
         return CheckedStatement::InlineCpp(strings)
     }
 
-    function typecheck_return(mut this, expr: ParsedExpression?, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
+    function typecheck_return(mut this, expr: ParsedExpression?, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
+        if .inside_defer {
+            .error("‘return’ is not allowed inside ‘defer’", span)
+        }
         if not expr.has_value() {
             let none_expr: CheckedExpression? = None
             return CheckedStatement::Return(none_expr)
