@@ -980,7 +980,10 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
 
         let mut escaped = false;
 
-        while *index < bytes.len() && (escaped || bytes[*index] != b'\'') {
+        while *index < bytes.len()
+            && (escaped || bytes[*index] != b'\'')
+            && *index - start < if escaped { 3 } else { 2 }
+        {
             if !escaped && bytes[*index] == b'\\' {
                 escaped = true;
             } else {
