@@ -697,7 +697,7 @@ struct Lexer {
         let start = .index++
         return match .peek() {
             b'=' => Token::LessThanOrEqual(Span(start, end: ++.index))
-            b'>' => {
+            b'<' => {
                 .index++
                 yield match .peek() {
                     b'=' => Token::LeftShiftEqual(Span(start, end: ++.index))
