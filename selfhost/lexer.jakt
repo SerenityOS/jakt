@@ -765,14 +765,20 @@ struct Lexer {
     }
 
     function next(mut this) throws -> Token? {
-        if .index == .input.size() {
-            ++.index
-            return Token::Eof(Span(start: .index - 1, end: .index - 1))
-        }
-        if .eof() {
-            return None
-        }
+        // Consume whitespace until a character is encountered or Eof is
+        // reached. For Eof return a token.
         loop {
+            if .index == .input.size() {
+                ++.index
+                return Token::Eof(Span(start: .index - 1, end: .index - 1))
+            }
+            // FIXME: Once the handling of Token::Eof is fully implmented,
+            //        remove the test of eof() and return of None. The purpose
+            //        of it seems to be to catch situations where index has
+            //        been incremented more than one past the end of the data stream.
+            if .eof() {
+                return None
+            }
             let ch = .peek()
             if ch == b' ' or ch == b'\t' or ch == b'\r' {
                 .index++
