@@ -2129,9 +2129,7 @@ struct Typechecker {
         let optional_struct_id = .find_struct_in_prelude("Optional")
         let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
 
-        // TODO: Skip the type compatibility check if assigning a T to a T? or to a
-        //       weak T? without going through `Some`.
-
+        
         match lhs_type {
             TypeVariable() => {
                 // If the call expects a generic type variable, let's see if we've already seen it
@@ -2199,7 +2197,19 @@ struct Typechecker {
             GenericInstance(id, args) => {
                 let lhs_struct_id = id
                 let lhs_args = args
+
+                // If lhs is T? or weak T? and rhs is T, skip type compat check
+                if (lhs_struct_id.equals(optional_struct_id)) or 
+                    (lhs_struct_id.equals(weakptr_struct_id)) {
+                    if lhs_args.size() > 0 {
+                        if (lhs_args[0].equals(rhs_type_id)) {
+                            return true
+                        }
+                    }
+                }
+
                 let rhs_type = .get_type(rhs_type_id)
+
                 match rhs_type {
                     GenericInstance(id, args) => {
                         let rhs_struct_id = id
