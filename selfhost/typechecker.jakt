@@ -1262,6 +1262,25 @@ struct Typechecker {
         return None
     }
 
+    function add_enum_to_scope(mut this, scope_id: ScopeId, name: String, enum_id: EnumId, span: Span) throws -> bool {
+        mut scope = .get_scope(scope_id)
+
+        if scope.enums.contains(name) {
+            let existing_enum_id = scope.enums[name]
+            let definition_span = .get_enum(existing_enum_id).name_span
+
+            .error_with_hint(
+                format("redefinition of enum {}", name)
+                span
+                format("enum {} was first defined here", name)
+                definition_span
+            )
+            return false
+        }
+        scope.enums.set(name, enum_id)
+        return true
+    }
+
     function add_struct_to_scope(mut this, scope_id: ScopeId, name: String, struct_id: StructId, span: Span) throws -> bool {
         mut scope = .get_scope(scope_id)
 
@@ -1465,23 +1484,200 @@ struct Typechecker {
                 .typecheck_namespace_predecl(parsed_namespace: namespce, scope_id: namespace_scope_id)
             }
         }
-        // 3. Typecheck struct predeclaration
+        // 3. Typecheck struct and enum predeclaration
         struct_index = 0
+        enum_index = 0
         for parsed_record in parsed_namespace.records.iterator() {
             let struct_id = StructId(module: .current_module_id, id: struct_index + module_struct_len)
+            let enum_id = EnumId(module: .current_module_id, id: enum_index + module_enum_len)
             match parsed_record.record_type {
                 Struct | Class => {
                     .typecheck_struct_predecl(parsed_record, struct_id, scope_id)
                     struct_index++
                 }
-                else => {
-                    todo(format("typecheck_namespace_predecl: else {}", parsed_record.record_type))
+                ValueEnum | SumEnum => {
+                    .typecheck_enum_predecl(parsed_record, enum_id, scope_id)
+                    enum_index++
+                }
+                Garbage => {
+                    panic("Trying to typecheck a garbage record")
                 }
             }
         }
         // 4. Typecheck functions
         for fun in parsed_namespace.functions.iterator() {
             .typecheck_function_predecl(parsed_function: fun, parent_scope_id: scope_id)
+        }
+    }
+
+    function typecheck_enum_predecl(mut this, parsed_record: ParsedRecord, enum_id: EnumId, scope_id: ScopeId) throws {
+        let enum_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false)
+        let module_id = .current_module_id
+
+        mut module = .current_module()
+        mut generic_parameters = module.enums[enum_id.id].generic_parameters
+
+        let has_variants = match parsed_record.record_type {
+            ValueEnum(variants) => not variants.is_empty()
+            SumEnum(variants) => not variants.is_empty()
+            else => {
+                panic("Trying typecheck_enum_predecl on non-enum record")
+                yield false
+            }
+        }
+
+        if not has_variants {
+            .error_with_hint(
+                "Empty enums are not allowed"
+                parsed_record.name_span
+                "Add at least one enum variant"
+                parsed_record.name_span
+            )
+        }
+
+        for gen_para in parsed_record.generic_parameters.iterator() {
+            module.types.push(Type::TypeVariable(gen_para.name))
+            let parameter_type_id = TypeId(module: module_id, id: module.types.size() - 1)
+            .add_type_to_scope(scope_id: enum_scope_id, type_name: gen_para.name, type_id: parameter_type_id, span: gen_para.span)
+            generic_parameters.push(parameter_type_id)
+        }
+
+        mut underlying_type_id: TypeId? = None
+        match parsed_record.record_type {
+            ValueEnum(underlying_type) => {
+                underlying_type_id = .typecheck_typename(parsed_type: underlying_type, scope_id: enum_scope_id)
+            }
+            else => {}
+        }
+
+        let enum_type_id = .find_type_in_scope(scope_id, name: parsed_record.name)
+        if not enum_type_id.has_value() {
+            panic("Enum must exist before predeclaration")
+        }
+
+        module.enums[enum_id.id].scope_id = enum_scope_id
+        module.enums[enum_id.id].underlying_type_id = underlying_type_id ?? unknown_type_id()
+
+        .add_enum_to_scope(parent_scope_id: scope_id, name: parsed_record.name, enum_id, span: parsed_record.name_span)
+
+        for method in parsed_record.methods.iterator() {
+            let func = method.parsed_function
+            let method_scope_id = .create_scope(parent_scope_id: enum_scope_id, can_throw: func.can_throw)
+            let block_scope_id = .create_scope(parent_scope_id: method_scope_id, can_throw: func.can_throw)
+
+            let is_generic = not parsed_record.generic_parameters.is_empty() or not func.generic_parameters.is_empty()
+            let none_type_id: TypeId? = None
+            module.functions.push(CheckedFunction(
+                name: func.name
+                name_span: func.name_span
+                return_type_id: unknown_type_id()
+                params: []
+                generic_params: []
+                block: CheckedBlock(
+                    statements: []
+                    scope_id: block_scope_id
+                    definitely_returns: false
+                    yielded_type: none_type_id
+                )
+                can_throw: func.can_throw
+                type: FunctionType::Normal
+                linkage: func.linkage
+                function_scope_id: method_scope_id
+            ))
+
+            let function_id = FunctionId(module: module_id, id: module.functions.size() - 1)
+            mut checked_function = module.functions[function_id.id]
+            let previous_index = .current_function_id
+            .current_function_id = function_id
+
+            mut generic_parameters = checked_function.generic_params
+            for gen_param in func.generic_parameters.iterator() {
+                module.types.push(Type::TypeVariable(gen_param.name))
+                let type_var_type_id = TypeId(module: module_id, id: module.types.size() - 1)
+
+                generic_parameters.push(FunctionGenericParameter::Parameter(type_var_type_id))
+
+                if not func.must_instantiate {
+                    .add_type_to_scope(scope_id: method_scope_id, type_name: gen_param.name, type_id: type_var_type_id, span: gen_param.span)
+                }
+            }
+
+            mut check_scope: ScopeId? = None
+            if is_generic {
+                check_scope = .create_scope(parent_scope_id: method_scope_id, can_throw: func.can_throw)
+            }
+
+            for param in func.params.iterator() {
+                if param.variable.name == "this" {
+                    let checked_variable = CheckedVariable(
+                        name: param.variable.name
+                        type_id: enum_type_id!
+                        is_mutable: param.variable.is_mutable
+                        definition_span: param.variable.span
+                    )
+
+                    checked_function.params.push(CheckedParameter(
+                        requires_label: param.requires_label
+                        variable: checked_variable
+                    ))
+
+                    if check_scope.has_value() {
+                        let var_id = module.add_variable(checked_variable)
+                        .add_var_to_scope(scope_id: check_scope!, name: param.variable.name, var_id, span: param.variable.span)
+                    }
+                } else {
+                    let param_type_id = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id)
+
+                    let checked_variable = CheckedVariable(
+                        name: param.variable.name
+                        type_id: param_type_id
+                        is_mutable: param.variable.is_mutable
+                        definition_span: param.variable.span
+                    )
+
+                    checked_function.params.push(CheckedParameter(
+                        requires_label: param.requires_label
+                        variable: checked_variable
+                    ))
+
+                    if check_scope.has_value() {
+                        let var_id = module.add_variable(checked_variable)
+                        .add_var_to_scope(scope_id: check_scope!, name: param.variable.name, var_id, span: param.variable.span)
+                    }
+                }
+            }
+
+            .add_function_to_scope(parent_scope_id: enum_scope_id, name: func.name, function_id, span: parsed_record.name_span)
+
+            let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: method_scope_id)
+            checked_function.return_type_id = function_return_type_id
+
+            if is_generic {
+                let block = .typecheck_block(func.block, parent_scope_id: check_scope!, safety_mode: SafetyMode::Safe)
+
+                mut return_type_id = builtin(BuiltinType::Void)
+                if function_return_type_id.equals(unknown_type_id()) {
+                    if not block.statements.is_empty() {
+                        let ret = block.statements[block.statements.size() - 1]
+                        // expression_type
+                        match ret {
+                            Return(val) => {
+                                if val.has_value() {
+                                    return_type_id = .resolve_type_var(type_var_type_id: expression_type(val!), scope_id: method_scope_id)
+                                }
+                            }
+                            else => {}
+                        }
+                    }
+                } else {
+                    return_type_id = .resolve_type_var(type_var_type_id: function_return_type_id, scope_id)
+                }
+
+                checked_function.block = block
+                checked_function.return_type_id = return_type_id
+            }
+
+            .current_function_id = previous_index
         }
     }
 
