@@ -1016,8 +1016,20 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
         *index += 1;
 
         let mut escaped = false;
+        let mut found_newline = false;
 
         while *index < bytes.len() && (escaped || bytes[*index] != b'"') {
+            // Ignore a standalone carriage return
+            if bytes[*index] == b'\r' {
+                *index += 1;
+            }
+
+            // Strings can't span multiple lines
+            if bytes[*index] == b'\n' {
+                found_newline = true;
+                break;
+            }
+
             if !escaped && bytes[*index] == b'\\' {
                 escaped = true;
             } else {
@@ -1025,6 +1037,13 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
             }
 
             *index += 1;
+        }
+
+        if found_newline {
+            error = error.or(Some(JaktError::ParserError(
+                "strings spanning multiple lines are not allowed".to_string(),
+                Span::new(file_id, start, *index),
+            )));
         }
 
         if *index == bytes.len() || bytes[*index] != b'"' {
@@ -1036,13 +1055,6 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
 
         // Everything but the quotes
         let str = String::from_utf8_lossy(&bytes[(start + 1)..(*index)]);
-
-        if str.lines().count() > 1 {
-            error = error.or(Some(JaktError::ParserError(
-                "strings spanning multiple lines are not allowed".to_string(),
-                Span::new(file_id, start, *index),
-            )));
-        }
 
         *index += 1;
 

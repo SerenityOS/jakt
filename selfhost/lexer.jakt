@@ -585,7 +585,20 @@ struct Lexer {
         }
 
         mut escaped = false
+        mut found_newline = false
+
         while not .eof() and (escaped or .peek() != delimiter) {
+            // Ignore a standalone carriage return
+            if .peek() == b'\r' {
+                ++.index
+            }
+
+            // Strings can't span multiple lines
+            if .peek() == b'\n' {
+                found_newline = true
+                break
+            }
+
             if not escaped and .peek() == b'\\' {
                 escaped = true
             } else {
@@ -595,6 +608,11 @@ struct Lexer {
         }
 
         let end = .index
+
+        if found_newline {
+            .error("expected end quote", Span(start, end))
+            return Token::Garbage(Span(start, end))
+        }
 
         let str = .substring(start: start + 1, length: .index)
 
