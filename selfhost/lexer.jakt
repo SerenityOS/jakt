@@ -700,6 +700,7 @@ struct Lexer {
             b'<' => {
                 .index++
                 yield match .peek() {
+                    b'<' => Token::LeftArithmeticShift(Span(start, end: ++.index))
                     b'=' => Token::LeftShiftEqual(Span(start, end: ++.index))
                     else => Token::LeftShift(Span(start: .index - 1, end: .index))
                 }
@@ -715,6 +716,7 @@ struct Lexer {
             b'>' => {
                 .index++
                 yield match .peek() {
+                    b'>' => Token::RightArithmeticShift(Span(start, end: ++.index))
                     b'=' => Token::RightShiftEqual(Span(start, end: ++.index))
                     else => Token::RightShift(Span(start: .index - 1, end: .index))
                 }
