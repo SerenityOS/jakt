@@ -689,20 +689,26 @@ boxed enum CheckedExpression {
         match this {
             NumericConstant(val, span, type_id) => { return val.number_constant() }
             UnaryOp(expr, op, span, type_id) => {
-                if not program.is_integer(type_id) and not program.is_floating(type_id) {
-                    return None
-                }
-                match expr {
-                    NumericConstant(val, span: span_, type_id: type_id_) => { return val.number_constant() }
+                match op {
+                    TypeCast(cast) => {
+                        if not cast is Infallible {
+                            return None
+                        }
+                        if not program.is_integer(type_id) and not program.is_floating(type_id) {
+                            return None
+                        }
+                        match expr {
+                            NumericConstant(val, span: span_, type_id: type_id_) => { return val.number_constant() }
+                            else => {}
+                        }
+                    }
                     else => {}
                 }
             }
             else => {}
         }
-
         return None
     }
-
 }
 
 function expression_type(anon expr: CheckedExpression) -> TypeId => match expr {
