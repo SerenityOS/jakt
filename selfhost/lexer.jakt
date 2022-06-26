@@ -804,7 +804,7 @@ struct Lexer {
                 return None
             }
             let ch = .peek()
-            if ch == b' ' or ch == b'\t' or ch == b'\r' {
+            if .is_whitespace(ch) {
                 .index++
             } else {
                 break
