@@ -6720,7 +6720,7 @@ pub fn resolve_call(
     }
 
     error = error.or(Some(JaktError::TypecheckError(
-        format!("call to unknown function: {}", &call.name),
+        format!("Call to unknown function: {}", &call.name),
         *span,
     )));
 
