@@ -3502,6 +3502,28 @@ struct Typechecker {
 
             yield CheckedExpression::IndexedExpression(expr: checked_base, index: checked_index, span, type_id: expr_type_id)
         }
+        IndexedTuple(expr, index, span) => {
+            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode)
+
+            let tuple_struct_id = .find_struct_in_prelude("Tuple")
+            mut expr_type_id = unknown_type_id()
+
+            match .get_type(expression_type(checked_expr)) {
+                GenericInstance(id, args) => {
+                    if id.equals(tuple_struct_id) {
+                        if (index >= args.size()){
+                            .error("Tuple index past the end of the tuple", span)
+                        }
+                        expr_type_id = args[index]
+                    }
+                }
+                else => {
+                    .error("Tuple index used non-tuple value", span)
+                }
+            }
+
+            yield CheckedExpression::IndexedTuple(expr: checked_expr, index: index, span, type_id: expr_type_id)
+        }
         Garbage(span) => CheckedExpression::Garbage(span)
         else => {
             panic(format("typechecker needs support for {}", expr))
