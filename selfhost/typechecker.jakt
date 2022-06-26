@@ -3453,6 +3453,28 @@ struct Typechecker {
             let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
             yield CheckedExpression::JaktArray(vals, repeat, span, type_id)
         }
+        JaktTuple(values, span) => {
+            let VOID_TYPE_ID = builtin(BuiltinType::Void)
+            mut checked_values: [CheckedExpression] = []
+            mut checked_types: [TypeId] = []
+
+            for value in values.iterator() {
+                let checked_value= .typecheck_expression(value, scope_id, safety_mode)
+                let type_id = expression_type(checked_value)
+                if type_id.equals(VOID_TYPE_ID) {
+                    .error("Cannot create a tuple that contains a value of type void", value.span())
+                }
+                checked_types.push(type_id)
+                checked_values.push(checked_value)
+            }
+
+            let tuple_struct_id = .find_struct_in_prelude("Tuple")
+            let type_id = .find_or_add_type_id(Type::GenericInstance(id: tuple_struct_id, args: checked_types))
+
+            // FIXME: Unify type
+
+            yield CheckedExpression::JaktTuple(vals: checked_values, span, type_id)
+        }
         IndexedExpression(base, index, span) => {
             let checked_base = .typecheck_expression(base, scope_id, safety_mode)
             let checked_index = .typecheck_expression(index, scope_id, safety_mode)

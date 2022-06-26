@@ -5030,7 +5030,7 @@ pub fn typecheck_expression(
 
                 if checked_item.type_id(scope_id, project) == VOID_TYPE_ID {
                     error = error.or(Some(JaktError::TypecheckError(
-                        "cannot create a tuple that contains a value of type void".to_string(),
+                        "Cannot create a tuple that contains a value of type void".to_string(),
                         item.span(),
                     )))
                 }
