@@ -20,4 +20,11 @@ directory, which is either `~/.vim/pack/plugins/start/` for vim or
     ```
     Where `<path/to/jakt>` is to be substituted by the location of this repository in your
     local filesystem.
+
+    To get LSP support, make sure you `cd` into `editors/vscode` and run:
+    ```bash
+    npm install
+    npm run compile
+    ```
+    So that the LSP server is built.
  2. Run `:PackerSync`
