@@ -27,4 +27,9 @@ directory, which is either `~/.vim/pack/plugins/start/` for vim or
     npm run compile
     ```
     So that the LSP server is built.
+
+    Neovim LSP attachment only tested in Neovim 0.7.2's Lua API, needing:
+      - `vim.notify_once`
+      - `vim.start_client`
+
  2. Run `:PackerSync`
