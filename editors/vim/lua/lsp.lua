@@ -16,8 +16,8 @@ local function start()
 
     -- We need the file to be readable by node, otherwise we'll warn the user
     -- and keep going without the client.
-    local file_readable = vim.fn.filereadable(ls_path) ~= 0
-    if file_readable then
+    local is_file_readable = vim.fn.filereadable(ls_path) ~= 0
+    if is_file_readable then
       client = vim.lsp.start_client {
         cmd = { 'node', ls_path, '--stdio' }
       }
