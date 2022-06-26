@@ -847,4 +847,8 @@ struct Lexer {
             else => .lex_number_or_name()
         }
     }
+
+    function is_whitespace(this, anon ch: u8) -> bool {
+        return ch == b' ' or ch == b'\t' or ch == b'\r' or ch == b'\f' or ch == b'\v'
+    }    
 }
