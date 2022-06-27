@@ -623,10 +623,7 @@ struct CodeGenerator {
                 RawAddress => "&"
                 LogicalNot => "!"
                 BitwiseNot => "~"
-                Is => {
-                    todo("codegen Is")
-                    yield ""
-                }
+                Is(type_id) => "is<" + .codegen_type(type_id) + ">("
                 TypeCast(cast) => {
                     let is_integer = .program.is_integer(cast.type_id())
                     yield match cast {
@@ -653,9 +650,26 @@ struct CodeGenerator {
                 PostIncrement => "++"
                 PostDecrement => "--"
                 TypeCast | Is => ")"
-                IsEnumVariant => {
-                    todo("codegen IsEnumVariant")
-                    yield ""
+                IsEnumVariant(name) => {
+                    mut suffix = ")"
+                    let is_boxed = match .program.get_type(expression_type(expr)) {
+                        Enum(enum_id) => {
+                            let enum_ = .program.get_enum(enum_id)
+                            yield enum_.record_type is Class
+                        }
+                        else => false
+                    }
+                    if is_boxed {
+                        suffix += "->"
+                    } else {
+                        suffix += "."
+                    }
+                    suffix += "has<"
+                    suffix += .codegen_type_possibly_as_namespace(type_id, as_namespace: true)
+                    suffix += "::"
+                    suffix += name
+                    suffix += ">("
+                    yield suffix
                 }
                 else => ""
             }

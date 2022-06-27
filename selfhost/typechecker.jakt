@@ -3000,6 +3000,9 @@ struct Typechecker {
             Negate => {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: expr_type_id)
             }
+            Is => {
+                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: builtin(BuiltinType::Bool))
+            }
             else => {
                 todo(format("typecheck_unary_operation: expr:{}, op:{}", checked_expr, checked_op))
             }
@@ -3661,9 +3664,43 @@ struct Typechecker {
                     }
                     yield CheckedUnaryOperator::TypeCast(checked_cast)
                 }
-                else => {
-                    todo(format("UnaryOp else: {}", op))
-                    yield CheckedUnaryOperator::PreIncrement
+                Is(unchecked_type) => {
+                    let type_id = .typecheck_typename(parsed_type: unchecked_type, scope_id)
+                    mut operator_is = CheckedUnaryOperator::Is(type_id)
+                    if type_id.equals(unknown_type_id()) {
+                        match unchecked_type {
+                            ParsedType::Name(name) => {
+                                // Let's assume it's an enum variant
+                                let expr_type_id = expression_type(checked_expr)
+                                match .get_type(expr_type_id) {
+                                    Type::Enum(enum_id) => {
+                                        let enum_ = .get_enum(enum_id)
+                                        mut exists = false
+                                        for variant in enum_.variants.iterator() {
+                                            exists = match variant {
+                                                StructLike(name: var_name) | Typed(name: var_name) | Untyped(name: var_name) => var_name == name
+                                                else => false
+                                            }
+                                            if exists {
+                                                operator_is = CheckedUnaryOperator::IsEnumVariant(name)
+                                                break
+                                            }
+                                        }
+                                        if not exists {
+                                            .error(format("Enum variant '{}' does not exist on '{}'", name, .type_name(expr_type_id)), span)
+                                        }
+                                    }
+                                    else => {
+                                        .error(format("Not a valid type name: {}", name), span)
+                                    }
+                                }
+                            }
+                            else => {
+                                .error("The right-hand side of an `is` operator must be a type name or enum variant", span)
+                            }
+                        }
+                    }
+                    yield operator_is
                 }
             }
             yield .typecheck_unary_operation(checked_expr, checked_op, span, scope_id, safety_mode)
