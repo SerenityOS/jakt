@@ -9,7 +9,8 @@ import typechecker {
     CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
     ModuleId, ScopeId, StructId, EnumId, Type, TypeId, expression_type,
     CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody }
-import utility { panic, todo, join, prepend_to_each }
+import utility { panic, todo, join, prepend_to_each, Span }
+
 
 enum AllowedControlExits {
     /// No control exit statements allowed
@@ -79,6 +80,47 @@ struct ControlFlowState {
     }
 }
 
+struct CodegenDebugInfo {
+    // FIXME: Add support for multiple source files
+    file_name: String
+    file_contents: [u8]
+    line_spans: [(usize, usize)]
+    statement_span_comments: bool
+
+    function span_to_source_location(mut this, anon span: Span) throws -> String {
+        if .line_spans.is_empty() {
+            .gather_line_spans()
+        }
+
+        mut line_index = 0uz
+        while line_index < .line_spans.size() {
+            if span.start >= .line_spans[line_index].0 and span.start <= .line_spans[line_index].1 {
+                let column_index = span.start - .line_spans[line_index].0
+                return format("{}:{}:{}", .file_name, line_index+1, column_index+1)
+            }
+            line_index += 1
+        }
+
+        panic("Reached end of file and could not find index")
+        return ""
+    }
+
+    function gather_line_spans(mut this) throws {
+        mut idx = 0uz
+        mut start = idx
+        while idx < .file_contents.size() {
+            if .file_contents[idx] == b'\n' {
+                .line_spans.push((start, idx))
+                start = idx + 1
+            }
+            idx += 1
+        }
+        if start < idx {
+            .line_spans.push((start, idx))
+        }
+    }
+}
+
 struct CodeGenerator {
 
     program: CheckedProgram
@@ -86,8 +128,9 @@ struct CodeGenerator {
     entered_yieldable_blocks: [(String, String)] // label, variable name
     deferred_output: String
     current_function: CheckedFunction?
+    debug_info: CodegenDebugInfo
 
-    function generate(anon program: CheckedProgram) throws -> String {
+    function generate(anon program: CheckedProgram, file_name: String, file_contents: [u8], debug_info: bool) throws -> String {
         let none_function: CheckedFunction? = None
         mut generator = CodeGenerator(
             program
@@ -99,6 +142,12 @@ struct CodeGenerator {
             entered_yieldable_blocks: []
             deferred_output: ""
             current_function: none_function
+            debug_info: CodegenDebugInfo(
+                file_name
+                file_contents
+                line_spans: []
+                statement_span_comments: debug_info
+            )
         )
 
         mut output = ""
