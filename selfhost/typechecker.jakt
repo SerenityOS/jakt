@@ -4092,6 +4092,12 @@ struct Typechecker {
                 current_scope_id = structure.scope_id
                 continue
             }
+            let maybe_enum_scope = .find_enum_in_scope(scope_id, name: scope_name)
+            if maybe_enum_scope.has_value() {
+                let enum_ = .get_enum(maybe_enum_scope!)
+                current_scope_id = enum_.scope_id
+                continue
+            }
 
             .error(format("Not a namespace, enum, class, or struct: ‘{}’", call.namespace_), span)
         }
@@ -4120,6 +4126,20 @@ struct Typechecker {
                 return maybe_function_id!
             }
             return callee
+        }
+
+        if call.namespace_.size() >= 1 {
+            let enum_name = call.namespace_[call.namespace_.size() - 1]
+            let maybe_enum_id = .find_enum_in_scope(scope_id: current_scope_id, name: enum_name)
+            if maybe_enum_id.has_value() {
+                let enum_id = maybe_enum_id!
+                let enum_ = .get_enum(enum_id)
+                let maybe_function_id = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: call.name)
+                if maybe_function_id.has_value() {
+                    return maybe_function_id!
+                }
+                return callee
+            }
         }
 
         .error(format("Call to unknown function: ‘{}’", call.name), span)
