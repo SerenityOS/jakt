@@ -634,9 +634,6 @@ template<Integral T>
 ErrorOr<void> Formatter<T>::format(FormatBuilder& builder, T value)
 {
     if (m_mode == Mode::Character) {
-        // FIXME: We just support ASCII for now, in the future maybe unicode?
-        VERIFY(value >= 0 && value <= 127);
-
         m_mode = Mode::String;
 
         Formatter<StringView> formatter { *this };
