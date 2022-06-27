@@ -1351,6 +1351,10 @@ pub fn parse_struct(
 
     let mut error = None;
     let mut generic_parameters = vec![];
+    let definition_type_str = match definition_type {
+        DefinitionType::Class => "class",
+        DefinitionType::Struct => "struct",
+    };
 
     *index += 1;
 
@@ -1393,7 +1397,7 @@ pub fn parse_struct(
                     trace!("ERROR: incomplete struct");
 
                     error = error.or(Some(JaktError::ParserError(
-                        "incomplete struct".to_string(),
+                        format!("Incomplete {} body, expected ‘}}’", definition_type_str),
                         tokens[*index - 1].span,
                     )));
                 }
@@ -1590,7 +1594,7 @@ pub fn parse_struct(
                     *index -= 1;
 
                     error = error.or(Some(JaktError::ParserError(
-                        "incomplete struct".to_string(),
+                        format!("Incomplete {} body, expected ‘}}’", definition_type_str),
                         tokens[*index - 1].span,
                     )));
                 }

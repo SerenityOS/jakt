@@ -917,7 +917,7 @@ struct Parser {
         return parsed_enum
     }
 
-    public function parse_struct_class_body(mut this, definition_linkage: DefinitionLinkage, default_visibility: Visibility) throws -> ([ParsedField],[ParsedMethod]) {
+    public function parse_struct_class_body(mut this, definition_linkage: DefinitionLinkage, default_visibility: Visibility, is_class: bool) throws -> ([ParsedField],[ParsedMethod]) {
         if .current() is LCurly {
             .index++
         } else {
@@ -1008,7 +1008,11 @@ struct Parser {
                 }
             }
         }
-        .error("Incomplete class body, expected '}'", .current().span())
+        if is_class {
+            .error("Incomplete class body, expected ‘}’", .current().span())
+        } else {
+            .error("Incomplete struct body, expected ‘}’", .current().span())
+        }
         return (fields, methods)
     }
 
@@ -1057,7 +1061,7 @@ struct Parser {
             return parsed_struct
         }
 
-        let fields_methods = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Public)
+        let fields_methods = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Public, is_class: false)
 
         parsed_struct.methods = fields_methods.1
         parsed_struct.record_type = RecordType::Struct(fields: fields_methods.0)
@@ -1123,7 +1127,7 @@ struct Parser {
             return parsed_class
         }
 
-        let fields_methods = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Private)
+        let fields_methods = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Private, is_class: true)
 
         parsed_class.methods = fields_methods.1
         parsed_class.record_type = RecordType::Class(fields: fields_methods.0, super_class)

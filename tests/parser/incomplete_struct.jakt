@@ -1,4 +1,4 @@
 /// Expect:
-/// - error: "incomplete struct\n"
+/// - error: "Incomplete struct body, expected ‘}’\n"
 
 struct Incomplete {
