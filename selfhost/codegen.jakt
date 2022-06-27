@@ -84,8 +84,11 @@ struct CodeGenerator {
     program: CheckedProgram
     control_flow_state: ControlFlowState
     entered_yieldable_blocks: [(String, String)] // label, variable name
+    deferred_output: String
+    current_function: CheckedFunction?
 
     function generate(anon program: CheckedProgram) throws -> String {
+        let none_function: CheckedFunction? = None
         mut generator = CodeGenerator(
             program
             control_flow_state: ControlFlowState(
@@ -94,12 +97,9 @@ struct CodeGenerator {
                 match_nest_level: 0
             )
             entered_yieldable_blocks: []
+            deferred_output: ""
+            current_function: none_function
         )
-        // for mod in program.modules.iterator() {
-        //     for e in mod.enums.iterator() {
-        //         eprintln("variants: {:#}", e.variants)
-        //     }
-        // }
 
         mut output = ""
 
@@ -107,9 +107,15 @@ struct CodeGenerator {
         output += "namespace Jakt {\n"
 
         for module in generator.program.modules.iterator() {
+            for enum_ in module.enums.iterator() {
+                output += generator.codegen_enum_predecl(enum_)
+            }
 
             for function_ in module.functions.iterator() {
-                output += generator.codegen_function_predecl(function_)
+                let predecl = generator.codegen_function_predecl(function_)
+                if function_.name != "main" {
+                    output += predecl
+                }
             }
 
             for struct_ in module.structures.iterator() {
@@ -121,9 +127,12 @@ struct CodeGenerator {
             }
 
             for function_ in module.functions.iterator() {
-                // FIXME: Set current function ID in the context
-                output += generator.codegen_function(function_)
+                if not (function_.type is ImplicitEnumConstructor or function_.type is ImplicitConstructor or function_.linkage is External) {
+                    generator.current_function = function_
+                    output += generator.codegen_function(function_)
+                }
             }
+
         }
 
         output += "}\n"
@@ -243,6 +252,65 @@ struct CodeGenerator {
         return output
     }
 
+    function codegen_enum_predecl(mut this, enum_: CheckedEnum) throws -> String => match enum_.record_type {
+        Class => {
+            todo("codegen_enum_predecl class record type")
+            yield ""
+        }
+        else => .codegen_nonrecursive_enum_predecl(enum_)
+    }
+
+    function codegen_nonrecursive_enum_predecl(mut this, enum_: CheckedEnum) throws -> String {
+        mut output = ""
+
+        if not enum_.underlying_type_id.equals(unknown_type_id()) {
+            if .program.is_integer(enum_.underlying_type_id) {
+                output += "enum class "
+                output += enum_.name
+                output += ": "
+                output += .codegen_type(enum_.underlying_type_id)
+                output += ";\n"
+                return output
+            } else {
+                todo("Enums with a non-integer underlying type")
+            }
+        }
+
+        let is_generic = not enum_.generic_parameters.is_empty()
+        mut template_args_array: [String] = []
+        for generic_parameter in enum_.generic_parameters.iterator() {
+            match .program.get_type(generic_parameter) {
+                TypeVariable(name) => template_args_array.push("typename " + name)
+                else => {}
+            }
+        }
+        mut template_args = join(template_args_array, separator: ", ")
+
+        output += format("namespace {}_Details", enum_.name) + " {\n"
+        for variant in enum_.variants.iterator() {
+            match variant {
+                Untyped(name) => {
+                    if is_generic {
+                        output += format("template<{}>\n", template_args)
+                    }
+                    output += format("struct {};\n", name)
+                }
+                StructLike | Typed => {
+                    todo(format("implement codegen for structlike/typed enum variants predecl: {}", variant))
+                }
+                else => {}
+            }
+        }
+        output += "}\n"
+
+        if is_generic {
+            output += format("template<{}>\n", template_args)
+        }
+        output += format("struct {};\n", enum_.name)
+
+        return output
+    }
+
     function codegen_enum(mut this, enum_: CheckedEnum) throws -> String {
         mut output = ""
         if not enum_.underlying_type_id.equals(unknown_type_id()) {
@@ -257,9 +325,126 @@ struct CodeGenerator {
                         }
                     }
                 }
-                output += "};\n"
+                return output + "};\n"
+            } else {
+                todo("Enums with a non-integer underlying type")
             }
         }
+
+        let is_generic = not enum_.generic_parameters.is_empty()
+        mut generic_parameter_names: [String] = []
+        for generic_parameter in enum_.generic_parameters.iterator() {
+            match .program.get_type(generic_parameter) {
+                TypeVariable(name) => generic_parameter_names.push(name)
+                else => {}
+            }
+        }
+        mut template_args = ""
+        mut i = 0uz
+        for name in generic_parameter_names.iterator() {
+            template_args += "typename " + name
+            if i < generic_parameter_names.size() - 1 {
+                template_args += ", "
+            }
+            i++
+        }
+        output += "namespace " + enum_.name + "_Details {\n"
+        for variant in enum_.variants.iterator() {
+            match variant {
+                Untyped(name) => {
+                    if is_generic {
+                        output += "template<" + template_args + ">\n"
+                    }
+                    output += "struct " + name + " {};\n"
+                }
+                else => {
+                    todo(format("codegen enum variant: {}", variant))
+                }
+            }
+        }
+        output += "}\n"
+
+        if is_generic {
+            output += "template<" + template_args + ">\n"
+        }
+        output += "struct " + enum_.name + " : public Variant<"
+        mut variant_args = ""
+        mut first = true
+        mut variant_names: [String] = []
+        for variant in enum_.variants.iterator() {
+            if first {
+                first = false
+            } else {
+                variant_args += ", "
+            }
+            
+            variant_args += enum_.name + "_Details::" + variant.name()
+            variant_names.push(variant.name())
+            if is_generic {
+                variant_args += "<"
+                output += join(generic_parameter_names, separator: ", ")
+                variant_args += ">"
+            }
+        }
+        output += variant_args + "> {\n"
+        output += "using Variant<" + variant_args + ">::Variant;\n"
+
+        for name in variant_names.iterator() {
+            output += "    using " +  name + " = " + enum_.name + "_Details::" + name
+            if is_generic {
+                output += "<"
+                output += join(generic_parameter_names, separator: ", ")
+                output += ">"
+            }
+            output += ";\n"
+        }
+
+        output += .codegen_enum_debug_description_getter(enum_)
+
+        // FIXME: scope functions
+
+        output += "};\n"
+
+        let module = .program.get_module(enum_.scope_id.module)
+        let name = match module.is_root {
+            true => enum_.name
+            else => format("{}::{}", module.name, enum_.name)
+        }
+
+        .deferred_output += .codegen_ak_formatter(name, generic_parameter_names)
+
+        return output
+    }
+
+    function codegen_enum_debug_description_getter(mut this, enum_: CheckedEnum) throws -> String {
+        mut output = ""
+
+        output += "ErrorOr<String> debug_description() const { "
+        output += "auto builder = TRY(StringBuilder::create());"
+        output += "TRY(this->visit("
+
+        mut i = 0uz
+        for variant in enum_.variants.iterator() {
+            let name = variant.name()
+            output += format("[&]([[maybe_unused]] {} const& that) -> ErrorOr<void> {{\n", name)
+            output += format("TRY(builder.append(\"{}::{}\"));", enum_.name, name)
+
+            // FIXME: Handle structlike variant fields and typed variant
+
+            output += "return {}; }"
+            if i != enum_.variants.size() - 1 {
+                output += ","
+            }
+        }
+
+        output += "));" + "return builder.to_string();" + "}"
+
+        return output
+    }
+
+    function codegen_ak_formatter(mut this, name: String, generic_parameter_names: [String]) throws -> String {
+        mut output = ""
+        // FIXME: implement ak formatter
         return output
     }
 
@@ -611,10 +796,32 @@ struct CodeGenerator {
             else => {
                 if call.function_id.has_value() {
                     let type_module = .program.get_module(call.function_id!.module)
-                    if type_module.is_root or type_module.id.id == 0 or .program.get_function(call.function_id!).linkage is External or (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name)
-                    {
-                        output += type_module.name
-                        output += "::"
+                    let function_ = .program.get_function(call.function_id!)
+                    if function_.type is ImplicitConstructor or function_.type is ExternalClassConstructor {
+                        todo("implement codegen for implicit or external class constructors")
+                    } else if function_.type is ImplicitEnumConstructor {
+                        match .program.get_type(function_.return_type_id) {
+                            Enum(enum_id) => {
+                                let enum_ = .program.get_enum(enum_id)
+                                output += "typename "
+                                let enum_type_module = .program.get_module(enum_id.module)
+                                if not (enum_type_module.is_root or enum_type_module.id.equals(ModuleId(id: 0))) {
+                                    output += enum_type_module.name + "::"
+                                }
+                            }
+                            GenericEnumInstance(id) => {
+                                todo("codegen generic enum instance")
+                            }
+                            else => {
+                                panic("constructor expected enum type")
+                            }
+                        }
+                    } else {
+                        if not (type_module.is_root or type_module.id.id == 0 or function_.linkage is External or (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name))
+                        {
+                            output += type_module.name
+                            output += "::"
+                        }
                     }
                 }
 
