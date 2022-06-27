@@ -102,6 +102,10 @@ struct CodeGenerator {
 
         for module in generator.program.modules.iterator() {
 
+            for function_ in module.functions.iterator() {
+                output += generator.codegen_function_predecl(function_)
+            }
+
             for struct_ in module.structures.iterator() {
                 output += generator.codegen_struct(struct_)
             }
@@ -113,6 +117,70 @@ struct CodeGenerator {
         }
 
         output += "}\n"
+
+        return output
+    }
+
+    function codegen_function_predecl(mut this, function_: CheckedFunction) throws -> String {
+        mut output = ""
+
+        if function_.linkage is External {
+            output += "extern "
+        }
+
+        if not function_.generic_params.is_empty() {
+            output += "template <"
+
+            // FIXME: Generic parameters
+
+            output += ">"
+        }
+
+        if function_.name == "main" {
+            output += "ErrorOr<int>"
+        } else {
+            if function_.is_static() and not function_.linkage is External {
+                output += "static "
+            }
+            let naked_return_type = .codegen_type(function_.return_type_id)
+            let return_type = match function_.can_throw {
+                true => format("ErrorOr<{}>", naked_return_type)
+                else => naked_return_type
+            }
+            output += return_type
+        }
+
+        output += " "
+        output += function_.name
+        output += "("
+
+        mut first = true
+        for param in function_.params.iterator() {
+            if first and param.variable.name == "this" {
+                continue
+            }
+
+            if first {
+                first = false
+            } else {
+                output += ", "
+            }
+
+            if not param.variable.is_mutable {
+                output += "const "
+            }
+
+            output += .codegen_type(param.variable.type_id)
+            output += " "
+            output += param.variable.name
+        }
+        output += ")"
+
+        if not function_.is_static() and not function_.is_mutating() {
+            output += " const;"
+        } else {
+            output += ";"
+        }
 
         return output
     }
