@@ -28,6 +28,22 @@ function join(anon strings: [String], separator: String) -> String {
     return output
 }
 
+function prepend_to_each(anon strings: [String], prefix: String) throws -> [String] {
+    mut output: [String] = []
+    for str in strings.iterator() {
+        output.push(prefix + str)
+    }
+    return output
+}
+
+function append_to_each(anon strings: [String], suffix: String) throws -> [String] {
+    mut output: [String] = []
+    for str in strings.iterator() {
+        output.push(str + suffix)
+    }
+    return output
+}
+
 struct Span {
     start: usize
     end: usize
