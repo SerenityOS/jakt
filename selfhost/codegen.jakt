@@ -8,8 +8,8 @@ import typechecker {
     BuiltinType, CheckedBlock, CheckedCall, CheckedExpression,
     CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
     ModuleId, ScopeId, StructId, EnumId, Type, TypeId, expression_type,
-    CheckedEnum, unknown_type_id }
-import utility { panic, todo }
+    CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody }
+import utility { panic, todo, join }
 
 enum AllowedControlExits {
     /// No control exit statements allowed
@@ -609,10 +609,129 @@ struct CodeGenerator {
             }
             yield output + var.name
         }
+        Match(expr, match_cases, type_id, all_variants_constant) => .codegen_match(expr, match_cases, type_id, all_variants_constant)
         else => {
             todo(format("codegen_expression else: {}", expression))
             yield ""
         }
+    }
+
+    function codegen_match(mut this, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, all_variants_constant: bool) throws -> String {
+        mut output = ""
+
+        let expr_type = .program.get_type(expression_type(expr))
+        match expr_type {
+            Enum(enum_id) => {
+                output += .codegen_enum_match(
+                    enum_: .program.get_enum(enum_id)
+                    expr
+                    match_cases
+                    type_id
+                    all_variants_constant
+                )
+            }
+            else => {
+                todo("codegen generic match")
+            }
+        }
+
+        return output
+    }
+
+    function codegen_enum_match(mut this, enum_: CheckedEnum, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, all_variants_constant: bool) throws -> String {
+        mut output = ""
+        output += .control_flow_state.choose_control_flow_macro()
+
+        if enum_.underlying_type_id.equals(unknown_type_id()) {
+            output += "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
+            output += .codegen_type(type_id)
+            output += ", "
+            output += .codegen_function_return_type(function_: .current_function!)
+            output += ">{\n"
+            output += "auto&& __jakt_match_variant_maybe_deref = " + .codegen_expression(expr) + ";"
+            output += "auto&& __jakt_match_variant = "
+            // FIXME: needs deref
+            output += "__jakt_match_variant_maybe_deref;\nswitch(__jakt_match_variant.index()) {\n"
+
+            mut has_default = false
+            for match_case in match_cases.iterator() {
+                match match_case {
+                    EnumVariant(name, args, subject_type_id, index, scope_id, body) => {
+                        let enum_type = .program.get_type(subject_type_id)
+                        let enum_id = match enum_type {
+                            Enum(id) => id
+                            else => {
+                                panic("Expected enum type")
+                                // FIXME: unreachable
+                                yield EnumId(module: ModuleId(id: 0), id: 0)
+                            }
+                        }
+                        let match_case_enum = .program.get_enum(enum_id)
+                        let variant = match_case_enum.variants[index]
+                        output += "case " + format("{}", index) + ": {\n"
+                        match variant {
+                            Untyped(name) => {
+                                output += format("auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
+                                    .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true),
+                                    name
+                                )
+                            }
+                            else => {
+                                todo(format("codegen_enum_match match variant else: {}", variant))
+                            }
+                        }
+                        output += .codegen_match_body(body, return_type_id: type_id)
+                        output += "};/*case end*/\n"
+                    }
+                    CatchAll => {
+                        todo("implement catchall match")
+                    }
+                    else => {
+                        panic("Matching enum subject with non-enum value")
+                    }
+                }
+            }
+            if not has_default {
+                if enum_.variants.size() != match_cases.size() {
+                    panic("Inexhaustive match statement")
+                }
+                output += "default: VERIFY_NOT_REACHED();"
+            }
+            output += "}/*switch end*/\n"
+            output += "}()\n))"
+        } else {
+            // FIXME: underlying type enum match
+        }
+
+        return output
+    }
+
+    function codegen_match_body(mut this, body: CheckedMatchBody, return_type_id: TypeId) throws -> String {
+        mut output = ""
+        match body {
+            Block(block) => {
+                output += .codegen_block(block)
+
+                if return_type_id.equals(unknown_type_id()) {
+                    output += "return JaktInternal::ExplicitValue<void>();\n"
+                }
+            }
+            Expression => {
+                todo(format("codegen_match_body: {}", body))
+            }
+        }
+        return output
+    }
+
+    function codegen_function_return_type(mut this, anon function_: CheckedFunction) throws -> String {
+        if function_.is_static() and function_.name == "main" {
+            return "ErrorOr<int>"
+        }
+        let type_name = .codegen_type(function_.return_type_id)
+        if function_.can_throw {
+            return format("ErrorOr<{}>", type_name)
+        }
+        return type_name
     }
 
     function codegen_binary_expression(mut this, expression: CheckedExpression, type_id: TypeId, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator) throws -> String {
@@ -990,8 +1109,7 @@ struct CodeGenerator {
             yield output
         }
         else => {
-            eprintln("Missing statement codegen for {}", statement)
-            todo("codegen_statement")
+            todo(format("codegen_statement - Missing statement codegen for {}", statement))
             // FIXME: panic() should be `noreturn` and no `yield` should be necessary:
             yield ""
         }
