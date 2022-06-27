@@ -3,7 +3,7 @@ import parser { BinaryOperator, DefinitionLinkage, DefinitionType, UnaryOperator
                 FunctionLinkage, FunctionType, ParsedBlock, ParsedCall,
                 ParsedExpression, ParsedFunction, ParsedNamespace,
                 ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
-                ParsedRecord, ParsedField, TypeCast }
+                ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument }
 import utility { panic, todo, Span }
 
 enum SafetyMode {
@@ -457,6 +457,30 @@ enum CheckedEnumVariant {
     Typed(name: String, type_id: TypeId, span: Span)
     WithValue(name: String, expr: CheckedExpression, span: Span)
     StructLike(name: String, fields: [VarId], span: Span)
+
+    function equals(this, anon other: CheckedEnumVariant) -> bool {
+        return match this {
+            Untyped(name: this_name) => match other {
+                Untyped(name: other_name) => this_name == other_name
+                else => false
+            }
+            else => false
+        }
+    }
+
+    function span(this) -> Span => match this {
+        Untyped(span) => span
+        Typed(span) => span
+        WithValue(span) => span
+        StructLike(span)  => span
+    }
+
+    function name(this) -> String => match this {
+        Untyped(name) => name
+        Typed(name) => name
+        WithValue(name) => name
+        StructLike(name)  => name
+    }
 }
 
 boxed enum CheckedStatement {
@@ -650,8 +674,8 @@ enum CheckedMatchBody {
     Block(CheckedBlock)
 }
 
-enum CheckedMatchCases {
-    EnumVariant(name: String, args: [(String?, String, Span)], subject_type_id: TypeId, index: usize, scope_id: ScopeId, body: CheckedMatchBody, marker_span: Span)
+enum CheckedMatchCase {
+    EnumVariant(name: String, args: [EnumVariantPatternArgument], subject_type_id: TypeId, index: usize, scope_id: ScopeId, body: CheckedMatchBody, marker_span: Span)
     Expression(expression: CheckedExpression, body: CheckedMatchBody, marker_span: Span)
     CatchAll(body: CheckedMatchBody, marker_span: Span)
 }
@@ -1484,8 +1508,7 @@ struct Typechecker {
         for parsed_record in parsed_namespace.records.iterator() {
             match parsed_record.record_type {
                 Struct | Class => { .typecheck_struct_predecl_initial(parsed_record, struct_index: struct_index++, module_struct_len, scope_id) }
-                SumEnum => {}
-                ValueEnum => { .typecheck_value_enum_predecl_initial(parsed_record, enum_index: enum_index++, module_enum_len, scope_id) }
+                SumEnum | ValueEnum => { .typecheck_enum_predecl_initial(parsed_record, enum_index: enum_index++, module_enum_len, scope_id) }
                 else => {
                     todo(format("typecheck_namespace_predecl: else {}", parsed_record.record_type))
                 }
@@ -1516,10 +1539,10 @@ struct Typechecker {
                     .typecheck_struct_predecl(parsed_record, struct_id, scope_id)
                     struct_index++
                 }
-                SumEnum => {}
-                ValueEnum => {
-                    let enum_id = EnumId(module: .current_module_id, id: enum_index++ + module_enum_len)
-                    .typecheck_value_enum_predecl(parsed_record, enum_id, scope_id)
+                SumEnum | ValueEnum => {
+                    let enum_id = EnumId(module: .current_module_id, id: enum_index + module_enum_len)
+                    .typecheck_enum_predecl(parsed_record, enum_id, scope_id)
+                    enum_index++
                 }
                 else => {
                     todo(format("typecheck_namespace_predecl: else {}", parsed_record.record_type))
@@ -1532,7 +1555,7 @@ struct Typechecker {
         }
     }
 
-    function typecheck_value_enum_predecl_initial(mut this, parsed_record: ParsedRecord, enum_index: usize, module_enum_len: usize, scope_id: ScopeId) throws {
+    function typecheck_enum_predecl_initial(mut this, parsed_record: ParsedRecord, enum_index: usize, module_enum_len: usize, scope_id: ScopeId) throws {
         let module_id = .current_module_id
         let enum_id = EnumId(module: .current_module_id, id: enum_index + module_enum_len)
         mut module = .current_module()
@@ -1555,7 +1578,7 @@ struct Typechecker {
         ))
     }
 
-    function typecheck_value_enum_predecl(mut this, parsed_record: ParsedRecord, enum_id: EnumId, scope_id: ScopeId) throws {
+    function typecheck_enum_predecl(mut this, parsed_record: ParsedRecord, enum_id: EnumId, scope_id: ScopeId) throws {
         let enum_type_id = .find_or_add_type_id(type: Type::Enum(enum_id))
 
         let enum_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false)
@@ -1830,8 +1853,7 @@ struct Typechecker {
                     }
                     .typecheck_struct(record, struct_id: struct_id!, parent_scope_id: scope_id)
                 }
-                SumEnum => {}
-                ValueEnum => {
+                SumEnum | ValueEnum => {
                     let enum_id = .find_enum_in_scope(scope_id, name: record.name)
                     if not enum_id.has_value() {
                         panic("can't find enum that has been previous added")
@@ -1898,6 +1920,38 @@ struct Typechecker {
                             definition_span: variant.span
                         ))
                         .add_var_to_scope(scope_id: enum_.scope_id, name: variant.name, var_id, span: variant.span)
+                    }
+                }
+            }
+            SumEnum(variants) => {
+                mut module = .current_module()
+                for variant in variants.iterator() {
+                    if seen_names.contains(variant.name) {
+                        .error(format("Enum variant '{}' is defined more than once", variant.name), variant.span)
+                    } else {
+                        seen_names.push(variant.name)
+                        enum_.variants.push(CheckedEnumVariant::Untyped(name: variant.name, span: variant.span))
+                        let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
+                        if not maybe_enum_variant_constructor.has_value() {
+                            let can_function_throw = false // TODO: is_boxed
+                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw)
+                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw)
+                            let none_type_id: TypeId? = None
+                            let checked_function = CheckedFunction(
+                                name: variant.name,
+                                name_span: variant.span,
+                                return_type_id: .find_or_add_type_id(Type::Enum(enum_id)),
+                                params: [],
+                                generic_params: [],
+                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, yielded_type: none_type_id),
+                                can_throw: can_function_throw,
+                                type: FunctionType::ImplicitEnumConstructor,
+                                linkage: FunctionLinkage::Internal,
+                                function_scope_id
+                            )
+                            let function_id = module.add_function(checked_function)
+                            .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
+                        }
                     }
                 }
             }
@@ -3868,8 +3922,8 @@ struct Typechecker {
         mut args: [(String, CheckedExpression)] = []
         mut return_type = builtin(BuiltinType::Void)
         mut callee_throws = false
-
         mut resolved_namespaces: [ResolvedNamespace] = []
+        mut resolved_function_id: FunctionId? = None
         for name in call.namespace_.iterator() {
             let generic_parameters: [TypeId]? = None
             resolved_namespaces.push(ResolvedNamespace(name, generic_parameters))
@@ -3889,14 +3943,12 @@ struct Typechecker {
                 }
             }
             else => {
-                let maybe_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
-
-                if not maybe_function_id.has_value() {
-                    let none_function_id: FunctionId? = None
-                    return CheckedExpression::Call(call: CheckedCall(namespace_: [], name: call.name, args, function_id: none_function_id, return_type, callee_throws), span, type_id: return_type)
+                resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
+                if not resolved_function_id.has_value() {
+                    return CheckedExpression::Call(call: CheckedCall(namespace_: resolved_namespaces, name: call.name, args, function_id: resolved_function_id, return_type, callee_throws), span, type_id: return_type)
                 }
 
-                let function_id = maybe_function_id!
+                let function_id = resolved_function_id!
                 let callee = .get_function(function_id)
                 callee_throws = callee.can_throw
                 return_type = callee.return_type_id
@@ -3926,8 +3978,7 @@ struct Typechecker {
             }
         }
 
-        let none_function_id: FunctionId? = None
-        return CheckedExpression::Call(call: CheckedCall(namespace_: [], name: call.name, args, function_id: none_function_id, return_type, callee_throws), span, type_id: return_type)
+        return CheckedExpression::Call(call: CheckedCall(namespace_: resolved_namespaces, name: call.name, args, function_id: resolved_function_id, return_type, callee_throws), span, type_id: return_type)
     }
 
     function resolve_type_var(this, type_var_type_id: TypeId, scope_id: ScopeId) -> TypeId {
