@@ -13,6 +13,21 @@ function todo(anon message: String) {
     abort()
 }
 
+function join(anon strings: [String], separator: String) -> String {
+    mut output = ""
+    
+    mut i = 0uz
+    for s in strings.iterator() {
+        output += s
+        if i < strings.size() - 1 {
+            output += separator
+        }
+        i++
+    }
+
+    return output
+}
+
 struct Span {
     start: usize
     end: usize
