@@ -32,6 +32,7 @@ function main(args: [String]) {
     let lexer_debug = flag(args, "l")
     let parser_debug = flag(args, "p")
     let build_executable = flag(args, "b")
+    let codegen_debug = flag(args, "d")
 
     mut file_name: String? = None
     mut first_arg = true
@@ -41,7 +42,7 @@ function main(args: [String]) {
             first_arg = false
             continue
         }
-        if arg != "-h" and arg != "-l" and arg != "-p" and arg != "-b" {
+        if arg != "-h" and arg != "-l" and arg != "-p" and arg != "-b" and arg != "-d" {
             if file_name.has_value() {
                 eprintln("you can only pass one file")
                 eprintln("{}", usage())
@@ -86,7 +87,7 @@ function main(args: [String]) {
         return 1
     }
 
-    let output = CodeGenerator::generate(checked_program, file_name: file_name!, file_contents, debug_info: true)
+    let output = CodeGenerator::generate(checked_program, file_name: file_name!, file_contents, debug_info: codegen_debug)
 
     if build_executable {
         let output_filename = "build/output.cpp"
