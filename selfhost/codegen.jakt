@@ -1205,100 +1205,129 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_statement(mut this, statement: CheckedStatement) throws -> String => match statement {
-        Throw(expr) => "return " + .codegen_expression(expr) + ";"
-        Continue => match .control_flow_state.passes_through_match {
-            true => "return JaktInternal::LoopContinue{};"
-            else => "continue;"
-        }
-        Break => match .control_flow_state.passes_through_match {
-            true => "return JaktInternal::LoopBreak{};"
-            else => "break;"
-        }
-        Expression(expr) => .codegen_expression(expr) + ";\n"
-        Defer(statement) => {
-            // NOTE: We let the preprocessor generate a unique name for the RAII helper.
-            mut output = ""
-            output += "\n#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n"
-            output += "ScopeGuard __SCOPE_GUARD_NAME ([&] \n"
-            output += "#undef __SCOPE_GUARD_NAME\n{"
-            {
-                let last_control_flow = .control_flow_state
-                .control_flow_state.passes_through_match = false
-                output += .codegen_statement(statement)
-                output += "});\n"
-                .control_flow_state = last_control_flow
+    function codegen_statement(mut this, statement: CheckedStatement) throws -> String {
+        mut add_newline = true
+        mut output = match statement {
+            Throw(expr) => "return " + .codegen_expression(expr) + ";"
+            Continue => match .control_flow_state.passes_through_match {
+                true => "return JaktInternal::LoopContinue{};"
+                else => "continue;"
             }
-            yield output
-        }
-        Return(val) => match val.has_value() {
-            true => "return (" + .codegen_expression(val!) + ");\n"
-            else => "return;\n"
-        }
-        Loop(block) => {
-            mut output = ""
-            output += "for (;;) {"
-            let last_control_flow = .control_flow_state
-            .control_flow_state = last_control_flow.enter_loop()
-            let block_str = .codegen_block(block)
-            .control_flow_state = last_control_flow
-            output += block_str
-            output += "}"
-            yield output
-        }
-        While(condition, block) => {
-            mut output = ""
-            output += "while ("
-            output += .codegen_expression(expression: condition)
-            output += ") "
-            {
+            Break => match .control_flow_state.passes_through_match {
+                true => "return JaktInternal::LoopBreak{};"
+                else => "break;"
+            }
+            Expression(expr) => .codegen_expression(expr) + ";"
+            Defer(statement) => {
+                // NOTE: We let the preprocessor generate a unique name for the RAII helper.
+                mut output = ""
+                output += "\n#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n"
+                output += "ScopeGuard __SCOPE_GUARD_NAME ([&] \n"
+                output += "#undef __SCOPE_GUARD_NAME\n{"
+                {
+                    let last_control_flow = .control_flow_state
+                    .control_flow_state.passes_through_match = false
+                    output += .codegen_statement(statement)
+                    output += "});"
+                    .control_flow_state = last_control_flow
+                }
+                yield output
+            }
+            Return(val) => match val.has_value() {
+                true => "return (" + .codegen_expression(val!) + ");"
+                else => "return;"
+            }
+            Loop(block) => {
+                mut output = ""
+                output += "for (;;)"
+                if .debug_info.statement_span_comments and statement.span().has_value() {
+                    output += format(" /* {} */ ", .debug_info.span_to_source_location(statement.span()!))
+                }
+                add_newline = false
                 let last_control_flow = .control_flow_state
                 .control_flow_state = last_control_flow.enter_loop()
-                let code = .codegen_block(block)
+                let block_str = .codegen_block(block)
                 .control_flow_state = last_control_flow
-                output += code
+                output += block_str
+                yield output
             }
-            yield output
-        }
-        Block(block) => .codegen_block(block)
-        Garbage => {
-            panic("Garbage statement in codegen")
-            // FIXME: panic() should be `noreturn` and no `yield` should be necessary:
-            yield ""
-        }
-        VarDecl(var_id, init) => {
-            let var = .program.get_variable(var_id)
+            While(condition, block) => {
+                mut output = ""
+                output += "while ("
+                output += .codegen_expression(expression: condition)
+                output += ")"
 
-            mut output = ""
-            if not var.is_mutable {
-                output += "const "
+                if .debug_info.statement_span_comments and statement.span().has_value() {
+                    output += format(" /* {} */ ", .debug_info.span_to_source_location(statement.span()!))
+                }
+
+                {
+                    let last_control_flow = .control_flow_state
+                    .control_flow_state = last_control_flow.enter_loop()
+                    let code = .codegen_block(block)
+                    .control_flow_state = last_control_flow
+                    output += code
+                }
+                add_newline = false
+                yield output
             }
-            output += .codegen_type(var.type_id)
-            output += " "
-            output += var.name
-            output += " = "
-            output += .codegen_expression(init)
-            output += ";\n"
-            yield output
-        }
-        If(condition, then_block, else_statement) => {
-            mut output = "if ("
-            output += .codegen_expression(condition)
-            output += ") "
-            output += .codegen_block(block: then_block)
-
-            output += match else_statement.has_value() {
-                true => " else " + .codegen_statement(statement: else_statement!)
-                else => ""
+            Block(block) => .codegen_block(block)
+            Garbage => {
+                panic("Garbage statement in codegen")
+                // FIXME: panic() should be `noreturn` and no `yield` should be necessary:
+                yield ""
             }
+            VarDecl(var_id, init) => {
+                let var = .program.get_variable(var_id)
 
-            yield output
+                mut output = ""
+                if not var.is_mutable {
+                    output += "const "
+                }
+                output += .codegen_type(var.type_id)
+                output += " "
+                output += var.name
+                output += " = "
+                output += .codegen_expression(init)
+                output += ";"
+                yield output
+            }
+            If(condition, then_block, else_statement) => {
+                mut output = "if ("
+                output += .codegen_expression(condition)
+                output += ")"
+
+                if .debug_info.statement_span_comments and statement.span().has_value() {
+                    output += format(" /* {} */ ", .debug_info.span_to_source_location(statement.span()!))
+                }
+
+                output += .codegen_block(block: then_block)
+
+                output += match else_statement.has_value() {
+                    true => "else " + .codegen_statement(statement: else_statement!)
+                    else => ""
+                }
+
+                add_newline = false
+
+                yield output
+            }
+            else => {
+                todo(format("codegen_statement - Missing statement codegen for {}", statement))
+                // FIXME: panic() should be `noreturn` and no `yield` should be necessary:
+                yield ""
+            }
         }
-        else => {
-            todo(format("codegen_statement - Missing statement codegen for {}", statement))
-            // FIXME: panic() should be `noreturn` and no `yield` should be necessary:
-            yield ""
+
+        if .debug_info.statement_span_comments and statement.span().has_value() and add_newline {
+            output += format(" /* {} */", .debug_info.span_to_source_location(statement.span()!))
         }
+
+        if add_newline {
+            output += "\n"
+        }
+
+        return output
     }
 
 
