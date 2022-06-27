@@ -91,11 +91,14 @@ function print_source_line(severity: MessageSeverity, file_contents: [u8], file_
             c = b'_'
         }
 
-        if (index >= error_span.start and index < error_span.end) or (error_span.start == error_span.end and index == error_span.start) {
-            eprint("\u001b[{}m{:c}", severity.ansi_color_code(), c)
-        } else {
-            eprint("\u001b[0m{:c}", c)
+        if (index == error_span.start) {
+            eprint("\u001b[{}m", severity.ansi_color_code())
         }
+        if (index == error_span.end) {
+            eprint("\u001b[0m")
+        }
+
+        eprint("{:c}", c)
 
         ++index
     }
