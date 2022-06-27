@@ -112,6 +112,10 @@ struct CodeGenerator {
             }
 
             for function_ in module.functions.iterator() {
+                if function_.type is ImplicitEnumConstructor {
+                    continue
+                }
+
                 let predecl = generator.codegen_function_predecl(function_)
                 if function_.name != "main" {
                     output += predecl
