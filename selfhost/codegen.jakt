@@ -1206,7 +1206,7 @@ struct CodeGenerator {
     }
 
     function codegen_statement(mut this, statement: CheckedStatement) throws -> String => match statement {
-        Throw(expression) => "return " + .codegen_expression(expression) + ";"
+        Throw(expr) => "return " + .codegen_expression(expr) + ";"
         Continue => match .control_flow_state.passes_through_match {
             true => "return JaktInternal::LoopContinue{};"
             else => "continue;"
@@ -1215,7 +1215,7 @@ struct CodeGenerator {
             true => "return JaktInternal::LoopBreak{};"
             else => "break;"
         }
-        Expression(expression) => .codegen_expression(expression) + ";\n"
+        Expression(expr) => .codegen_expression(expr) + ";\n"
         Defer(statement) => {
             // NOTE: We let the preprocessor generate a unique name for the RAII helper.
             mut output = ""
@@ -1231,8 +1231,8 @@ struct CodeGenerator {
             }
             yield output
         }
-        Return(expression) => match expression.has_value() {
-            true => "return (" + .codegen_expression(expression!) + ");\n"
+        Return(val) => match val.has_value() {
+            true => "return (" + .codegen_expression(val!) + ");\n"
             else => "return;\n"
         }
         Loop(block) => {
