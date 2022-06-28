@@ -295,14 +295,11 @@ struct CodeGenerator {
         output += format("namespace {}_Details", enum_.name) + " {\n"
         for variant in enum_.variants.iterator() {
             match variant {
-                Untyped(name) => {
+                Untyped(name) | StructLike(name) | Typed(name) => {
                     if is_generic {
                         output += format("template<{}>\n", template_args)
                     }
                     output += format("struct {};\n", name)
-                }
-                StructLike | Typed => {
-                    todo(format("implement codegen for structlike/typed enum variants predecl: {}", variant))
                 }
                 else => {}
             }
@@ -362,6 +359,43 @@ struct CodeGenerator {
                         output += "template<" + template_args + ">\n"
                     }
                     output += "struct " + name + " {};\n"
+                }
+                StructLike(name, fields) => {
+                    if is_generic {
+                        output += "template<" + template_args + ">\n"
+                    }
+                    output += "struct " + name + " {\n"
+                    for field in fields.iterator() {
+                        let var = .program.get_variable(field)
+                        output += format("{} {};\n", .codegen_type(var.type_id), var.name)
+                    }
+                    output += "template<"
+                    mut generic_typenames: [String] = []
+                    mut generic_argument_types: [String] = []
+                    mut initializers: [String] = []
+                    for i in 0..fields.size() {
+                        generic_typenames.push(format("typename _MemberT{}", i))
+                        generic_argument_types.push(format("_MemberT{}&& member_{}", i, i))
+
+                        mut initializer = .program.get_variable(fields[i]).name + "{ forward<_MemberT"
+                        initializer += format("{}>(member_{}", i, i) + ")}"
+                        initializers.push(initializer)
+                    }
+                    output += join(generic_typenames, separator: ", ")
+                    output += ">\n"
+                    output += name + "(" + join(generic_argument_types, separator: ", ") + "):\n"
+                    output += join(initializers, separator: ",\n") + "\n{}\n"
+                    output +="};\n"
+                }
+                Typed(name, type_id) => {
+                    if is_generic {
+                        output += "template<" + template_args + ">\n"
+                    }
+                    output += "struct " + name + "{\n"
+                    output += .codegen_type(type_id) + " value;\n"
+                    output += "template<typename... Args>\n"
+                    output += name + "(Args&&... args): value { forward<Args>(args)... } {}\n"
+                    output += "};\n"
                 }
                 else => {
                     todo(format("codegen enum variant: {}", variant))
@@ -434,10 +468,46 @@ struct CodeGenerator {
             let name = variant.name()
             mut lambda = format("[&]([[maybe_unused]] {} const& that)", name) + " -> ErrorOr<void> {\n"
             lambda += format("TRY(builder.append(\"{}::{}\"));", enum_.name, name)
+
+            match variant {
+                StructLike(fields) => {
+                    lambda += "TRY(builder.append(\"(\"));"
+                    lambda += "JaktInternal::_pretty_print_level++;"
+                    mut i = 0uz
+                    for field in fields.iterator() {
+                        lambda += "TRY(JaktInternal::_output_pretty_indent(builder));"
+                        let var = .program.get_variable(field)
+                        lambda += format("TRY(builder.append(\"{}: \"));", var.name)
+                        if .program.is_string(var.type_id) {
+                            lambda += "TRY(builder.append(\"\\\"\"));"
+                        }
+                        lambda += "TRY(builder.appendff(\"{}\", that." + var.name + "));"
+                        if .program.is_string(var.type_id) {
+                            lambda += "TRY(builder.append(\"\\\"\"));"
+                        }
+                        if i != fields.size() - 1 {
+                            lambda += "TRY(builder.append(\", \"));"
+                        }
+                        i++
+                    }
+                    lambda += "JaktInternal::_pretty_print_level--;"
+                    lambda += "TRY(builder.append(\")\"));"
+                }
+                Typed(type_id) => {
+                    lambda += "TRY(builder.append(\"(\"));"
+                    if .program.is_string(type_id) {
+                        lambda += "TRY(builder.append(\"\\\"\"));"
+                    }
+                    lambda += "TRY(builder.appendff(\"{}\", that.value));"
+                    if .program.is_string(type_id) {
+                        lambda += "TRY(builder.append(\"\\\"\"));"
+                    }
+                    lambda += "TRY(builder.append(\")\"));"
+                }
+                else => {}
+            }
+
             lambda += "return {}; }"
-
-            // FIXME: Handle structlike variant fields and typed variant
-
             variant_lambdas.push(lambda)
         }
         output += join(variant_lambdas, separator: ",")
