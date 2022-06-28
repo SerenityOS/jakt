@@ -4,6 +4,16 @@ When contributing to Jakt, make sure that the changes you wish to make are in li
 
 Everyone is welcome to work on the project, and while we have lots of fun, it's a serious kind of fun. :^)
 
+## Build
+
+```bash
+# build compiler writter in rust
+cargo run
+
+# build selfhost compiler
+cargo run selfhost/main.jakt
+```
+
 ## Communication
 
 Join the SerenityOS Discord server: [SerenityOS Discord](https://discord.gg/serenityos). The "Jakt" category of channels is specifically about Jakt and its development.
