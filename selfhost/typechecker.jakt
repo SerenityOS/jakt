@@ -4193,7 +4193,10 @@ struct Typechecker {
                     if param.requires_label {
                         .validate_argument_label(param, label: parsed_label_and_arg.0, span: parsed_label_and_arg.1, expr: parsed_label_and_arg.2)
                     }
-                    let checked_arg = .typecheck_expression(expr: parsed_label_and_arg.2, scope_id, safety_mode)
+                    mut checked_arg = .typecheck_expression(expr: parsed_label_and_arg.2, scope_id, safety_mode)
+
+                    let promoted_arg = .try_to_promote_constant_expr_to_type(lhs_type: param.variable.type_id, checked_rhs: checked_arg, span)
+                    checked_arg = promoted_arg ?? checked_arg
 
                     // FIXME: It's super awkward that we have to pass "generic_inferences" here:
                     .check_types_for_compat(lhs_type_id: param.variable.type_id, rhs_type_id: expression_type(checked_arg), generic_inferences: ["":""], span)
