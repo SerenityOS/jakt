@@ -871,6 +871,8 @@ class CheckedProgram {
         return .is_integer(type_id) or .is_floating(type_id)
     }
 
+    public function is_string(this, anon type_id: TypeId) -> bool => .get_type(type_id) is JaktString 
+
     public function get_bits(this, anon type_id: TypeId) => .get_type(type_id).get_bits()
 
     public function is_signed(this, anon type_id: TypeId) => .get_type(type_id).is_signed()
@@ -1929,8 +1931,83 @@ struct Typechecker {
                 for variant in variants.iterator() {
                     if seen_names.contains(variant.name) {
                         .error(format("Enum variant '{}' is defined more than once", variant.name), variant.span)
+                        continue
+                    } 
+                    seen_names.push(variant.name)
+                    if variant.params.has_value() and variant.params!.size() > 0 and variant.params![0].name != "" {
+                        mut seen_fields: [String] = [] // FIXME: HashSet
+                        mut fields: [VarId] = []
+                        for param in variant.params!.iterator() {
+                            if seen_fields.contains(param.name) {
+                                .error(format("Enum variant '{}' has a member named '{}' more than once", variant.name, param.name), param.span)
+                                continue
+                            }
+                            seen_fields.push(param.name)
+
+                            let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id)
+                            let checked_var = CheckedVariable(
+                                name: param.name
+                                type_id
+                                is_mutable: param.is_mutable
+                                definition_span: param.span
+                            )
+
+                            // TODO: dump type hints
+
+                            mut module = .current_module()
+                            let var_id = module.add_variable(checked_var)
+                            .add_var_to_scope(scope_id: enum_.scope_id, name: checked_var.name, var_id, span: checked_var.definition_span)
+                            fields.push(var_id)
+                        }
+                        enum_.variants.push(CheckedEnumVariant::StructLike(name: variant.name, fields, span: variant.span))
+                        let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
+                        if not maybe_enum_variant_constructor.has_value() {
+                            let can_function_throw = false // TODO: is_boxed
+                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw)
+                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw)
+                            let none_type_id: TypeId? = None
+                            let checked_function = CheckedFunction(
+                                name: variant.name,
+                                name_span: variant.span,
+                                return_type_id: .find_or_add_type_id(Type::Enum(enum_id)),
+                                params: [], // TODO: params @nocommit
+                                generic_params: [],
+                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, yielded_type: none_type_id),
+                                can_throw: can_function_throw,
+                                type: FunctionType::ImplicitEnumConstructor,
+                                linkage: FunctionLinkage::Internal,
+                                function_scope_id
+                            )
+                            let function_id = module.add_function(checked_function)
+                            .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
+                        }
+                    } else if variant.params.has_value() and variant.params!.size() == 1 and variant.params![0].name == "" {
+                        let param = variant.params![0]
+                        let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id)
+                        enum_.variants.push(CheckedEnumVariant::Typed(name: variant.name, type_id, span: param.span))
+                        
+                        let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
+                        if not maybe_enum_variant_constructor.has_value() {
+                            let can_function_throw = false // TODO: is_boxed
+                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw)
+                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw)
+                            let none_type_id: TypeId? = None
+                            let checked_function = CheckedFunction(
+                                name: variant.name,
+                                name_span: variant.span,
+                                return_type_id: .find_or_add_type_id(Type::Enum(enum_id)),
+                                params: [], // TODO: params @nocommit
+                                generic_params: [],
+                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, yielded_type: none_type_id),
+                                can_throw: can_function_throw,
+                                type: FunctionType::ImplicitEnumConstructor,
+                                linkage: FunctionLinkage::Internal,
+                                function_scope_id
+                            )
+                            let function_id = module.add_function(checked_function)
+                            .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
+                        }
                     } else {
-                        seen_names.push(variant.name)
                         enum_.variants.push(CheckedEnumVariant::Untyped(name: variant.name, span: variant.span))
                         let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
