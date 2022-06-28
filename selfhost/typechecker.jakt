@@ -3000,7 +3000,7 @@ struct Typechecker {
             Negate => {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: expr_type_id)
             }
-            Is => {
+            Is | IsEnumVariant => {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: builtin(BuiltinType::Bool))
             }
             else => {
