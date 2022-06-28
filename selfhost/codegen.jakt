@@ -393,15 +393,7 @@ struct CodeGenerator {
                 else => {}
             }
         }
-        mut template_args = ""
-        mut i = 0uz
-        for name in generic_parameter_names.iterator() {
-            template_args += "typename " + name
-            if i < generic_parameter_names.size() - 1 {
-                template_args += ", "
-            }
-            i++
-        }
+        mut template_args = join(prepend_to_each(generic_parameter_names, prefix: "typename "), separator: ", ")
         output += "namespace " + enum_.name + "_Details {\n"
         for variant in enum_.variants.iterator() {
             match variant {
@@ -459,24 +451,17 @@ struct CodeGenerator {
             output += "template<" + template_args + ">\n"
         }
         output += "struct " + enum_.name + " : public Variant<"
-        mut variant_args = ""
-        mut first = true
         mut variant_names: [String] = []
+        mut variant_arguments_array: [String] = []
         for variant in enum_.variants.iterator() {
-            if first {
-                first = false
-            } else {
-                variant_args += ", "
-            }
-            
-            variant_args += enum_.name + "_Details::" + variant.name()
-            variant_names.push(variant.name())
+            mut argument = enum_.name + "_Details::" + variant.name()
             if is_generic {
-                variant_args += "<"
-                output += join(generic_parameter_names, separator: ", ")
-                variant_args += ">"
+                argument += format("<{}>", join(generic_parameter_names, separator: ", "))
             }
+            variant_arguments_array.push(argument)
+            variant_names.push(variant.name())
         }
+        let variant_args = join(variant_arguments_array, separator: ", ")
         output += variant_args + "> {\n"
         output += "using Variant<" + variant_args + ">::Variant;\n"
 
@@ -575,7 +560,10 @@ struct CodeGenerator {
         let generic_type_args = join(generic_parameter_names, separator: ", ")
 
         // FIXME: track namespace_stack so we can generate qualified name
-        let qualified_name = name
+        mut qualified_name = name
+        if not generic_parameter_names.is_empty() {
+            qualified_name += format("<{}>\n", generic_type_args)
+        }
 
         output += format("template<{}>", template_args)
         output += format("struct Formatter<{}> : Formatter<StringView>", qualified_name)
