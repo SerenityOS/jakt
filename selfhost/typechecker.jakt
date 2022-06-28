@@ -11,7 +11,7 @@ import parser { BinaryOperator, DefinitionLinkage, DefinitionType, UnaryOperator
                 ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
                 ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
                 ParsedMatchBody, ParsedMatchCase }
-import utility { panic, todo, Span }
+import utility { panic, todo, Span, join }
 
 enum SafetyMode {
     Safe
@@ -4076,6 +4076,74 @@ struct Typechecker {
                                             definition_span: span
                                         ))
                                         .add_var_to_scope(scope_id: new_scope_id, name: variant_argument.binding, var_id, span)
+                                    }
+                                    StructLike(name, fields) => {
+                                        covered_variants.push(name)
+
+                                        mut field_variables: [CheckedVariable] = []
+                                        for var_id in fields.iterator() {
+                                            field_variables.push(.program.get_variable(var_id))
+                                        }
+                                        mut seen_names: [String] = [] // FIXME: HashSet
+                                        for arg in variant_arguments.iterator() {
+                                            if not arg.name.has_value() {
+                                                mut found_field_name = false
+                                                mut field_names: [String] = []
+                                                for var in field_variables.iterator() {
+                                                    field_names.push(var.name)
+                                                    if var.name == arg.binding {
+                                                        found_field_name = true
+                                                    }
+                                                }
+                                                if not found_field_name {
+                                                    mut unused_field_names: [String] = []
+                                                    for field_name in field_names.iterator() {
+                                                        if seen_names.contains(field_name) {
+                                                            continue
+                                                        }
+                                                        unused_field_names.push(field_name)
+                                                    }
+                                                    .error_with_hint(
+                                                        "Match case argument '{}' for struct-like enum variant cannot be anon"
+                                                        arg.span
+                                                        format("Available arguments are: {}\n", join(unused_field_names, separator: ", "))
+                                                        arg.span
+                                                    )
+                                                    continue
+                                                }
+                                            }
+                                            let arg_name = arg.name ?? arg.binding
+                                            if seen_names.contains(arg_name) {
+                                                .error(format("match case argument '{}' is already defined", arg_name), arg.span)
+                                                continue
+                                            }
+                                            seen_names.push(arg_name)
+                                            mut matched_field_variable: CheckedVariable? = None
+                                            for var in field_variables.iterator() {
+                                                if var.name == arg_name {
+                                                    matched_field_variable = var
+                                                }
+                                            }
+
+                                            match matched_field_variable.has_value() {
+                                                true => {
+                                                    let substituted_type_id = .substitute_typevars_in_type(type_id: matched_field_variable!.type_id, generic_inferences: [:])
+                                                    let matched_span = matched_field_variable!.definition_span
+                                                    // FIXME: dump type hints
+
+                                                   let var_id = module.add_variable(CheckedVariable(
+                                                        name: arg_name
+                                                        type_id: substituted_type_id
+                                                        is_mutable: false
+                                                        definition_span: matched_span
+                                                    ))
+                                                    .add_var_to_scope(scope_id: new_scope_id, name: arg_name, var_id, span)
+                                                }
+                                                else => {
+                                                    .error(format("Match case argument '{}' does not exist in struct-like enum variant '{}'", arg_name, name), arg.span)
+                                                }
+                                            }
+                                        }
                                     }
                                     else => {
                                         todo(format("implement {} match case for matched variant", matched_variant))
