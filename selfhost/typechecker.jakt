@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 import error { JaktError }
+import lexer { NumericConstant }
 import parser { BinaryOperator, DefinitionLinkage, DefinitionType, UnaryOperator,
                 FunctionLinkage, FunctionType, ParsedBlock, ParsedCall,
                 ParsedExpression, ParsedFunction, ParsedNamespace,
@@ -1935,7 +1936,11 @@ struct Typechecker {
                                 }
                                 yield value_expression
                             }
-                            else => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(next_constant_value++), span: variant.span, type_id: underlying_type_id)
+                            else => .cast_to_underlying(
+                                expr: ParsedExpression::NumericConstant(val: NumericConstant::U64(next_constant_value++), span: variant.span)
+                                scope_id: parent_scope_id
+                                parsed_type: underlying_type
+                            )
                         }
                         
                         enum_.variants.push(CheckedEnumVariant::WithValue(name: variant.name, expr, span: variant.span))
