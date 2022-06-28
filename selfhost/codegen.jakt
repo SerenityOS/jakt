@@ -427,19 +427,18 @@ struct CodeGenerator {
         output += "auto builder = TRY(StringBuilder::create());"
         output += "TRY(this->visit("
 
-        mut i = 0uz
+        mut variant_lambdas: [String] = []
         for variant in enum_.variants.iterator() {
             let name = variant.name()
-            output += format("[&]([[maybe_unused]] {} const& that) -> ErrorOr<void> {{\n", name)
-            output += format("TRY(builder.append(\"{}::{}\"));", enum_.name, name)
+            mut lambda = format("[&]([[maybe_unused]] {} const& that)", name) + " -> ErrorOr<void> {\n"
+            lambda += format("TRY(builder.append(\"{}::{}\"));", enum_.name, name)
+            lambda += "return {}; }"
 
             // FIXME: Handle structlike variant fields and typed variant
 
-            output += "return {}; }"
-            if i != enum_.variants.size() - 1 {
-                output += ","
-            }
+            variant_lambdas.push(lambda)
         }
+        output += join(variant_lambdas, separator: ",")
 
         output += "));" + "return builder.to_string();" + "}"
 
