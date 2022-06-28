@@ -817,6 +817,18 @@ struct CodeGenerator {
                                     name
                                 )
                             }
+                            Typed(name, type_id) => {
+                                output += format(
+                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
+                                    .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true),
+                                    name
+                                )
+                                if not args.is_empty() {
+                                    let arg = args[0]
+                                    let var = .program.find_var_in_scope(scope_id, var: arg.binding)!
+                                    output += format("{} const& {} = __jakt_match_value.value;\n", .codegen_type(var.type_id), arg.binding)
+                                }
+                            }
                             else => {
                                 todo(format("codegen_enum_match match variant else: {}", variant))
                             }
