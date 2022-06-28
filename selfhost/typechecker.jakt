@@ -4022,17 +4022,15 @@ struct Typechecker {
                                     .error(format("Match case '{}' does not match enum '{}'", variant_names[0].0, enum_.name), variant_names[0].1)
                                     continue
                                 }
+                                mut i = 0uz
                                 mut matched_variant: CheckedEnumVariant? = None
+                                mut variant_index: usize? = None
                                 for v in enum_.variants.iterator() {
-                                    let name = match v {
-                                        WithValue(name) => name
-                                        Untyped(name) => name
-                                        Typed(name) => name
-                                        StructLike(name) => name
-                                    }
-                                    if name == variant_names[1].0 {
+                                    if v.name() == variant_names[1].0 {
                                         matched_variant = v
+                                        variant_index = i
                                     }
+                                    i++
                                 }
 
                                 if not matched_variant.has_value() {
@@ -4040,6 +4038,8 @@ struct Typechecker {
                                     return CheckedExpression::Match(expr: checked_expr, match_cases: [], span, type_id: unknown_type_id(), all_variants_constant: false)
                                 }
 
+                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw)
+                                mut module = .current_module()
                                 match matched_variant! {
                                     Untyped(name) => {
                                         covered_variants.push(name)
@@ -4047,22 +4047,25 @@ struct Typechecker {
                                             .error(format("Match case '{}' cannot have arguments", name), span)
                                         }
                                     }
+                                    Typed(name, type_id, span) => {
+                                        covered_variants.push(name)
+                                        if variant_arguments.size() != 1 {
+                                            .error("Match case '{}' must have exactly one argument", span)
+                                        }
+
+                                        let variant_argument = variant_arguments[0]
+                                        let var_id = module.add_variable(CheckedVariable(
+                                            name: variant_argument.binding
+                                            type_id
+                                            is_mutable: false
+                                            definition_span: span
+                                        ))
+                                        .add_var_to_scope(scope_id: new_scope_id, name: variant_argument.binding, var_id, span)
+                                    }
                                     else => {
                                         todo(format("implement {} match case for matched variant", matched_variant))
                                     }
                                 }
-                                mut variant_index: usize? = None
-                                mut i = 0uz
-                                for v in enum_.variants.iterator() {
-                                    if v.equals(matched_variant!) {
-                                        variant_index = i
-                                    }
-                                    i++
-                                }
-                                if not variant_index.has_value() {
-                                    panic("Can't find previously matched variant")
-                                }
-                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw)
 
                                 let checked_body = .typecheck_match_body(body: case_.body, scope_id: new_scope_id, safety_mode, span: case_.marker_span)
                                 let checked_match_case = CheckedMatchCase::EnumVariant(
