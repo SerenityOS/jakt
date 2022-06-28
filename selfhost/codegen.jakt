@@ -9,7 +9,7 @@ import typechecker {
     CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
     ModuleId, ScopeId, StructId, EnumId, Type, TypeId, expression_type,
     CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody }
-import utility { panic, todo, join }
+import utility { panic, todo, join, prepend_to_each }
 
 enum AllowedControlExits {
     /// No control exit statements allowed
@@ -139,7 +139,9 @@ struct CodeGenerator {
 
         }
 
-        output += "}\n"
+        output += generator.deferred_output
+
+        output += "} // namespace Jakt\n"
 
         return output
     }
@@ -447,8 +449,21 @@ struct CodeGenerator {
 
     function codegen_ak_formatter(mut this, name: String, generic_parameter_names: [String]) throws -> String {
         mut output = ""
-        // FIXME: implement ak formatter
-        return output
+
+        let template_args = join(prepend_to_each(generic_parameter_names, prefix: "typename "), separator: ", ")
+        let generic_type_args = join(generic_parameter_names, separator: ", ")
+
+        // FIXME: track namespace_stack so we can generate qualified name
+        let qualified_name = name
+
+        output += format("template<{}>", template_args)
+        output += format("struct Formatter<{}> : Formatter<StringView>", qualified_name)
+        output += "{\n"
+        output += format("ErrorOr<void> format(FormatBuilder& builder, {} const& value)\n", qualified_name)
+        output += "{ if (m_alternative_form) { JaktInternal::_pretty_print_enabled = true; }"
+        output += "return Formatter<StringView>::format(builder, MUST(value.debug_description())); }"
+
+        return output + "};\n"
     }
 
     function codegen_expression(mut this, anon expression: CheckedExpression) throws -> String => match expression {
