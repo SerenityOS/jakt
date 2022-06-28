@@ -1019,7 +1019,38 @@ struct CodeGenerator {
                     let type_module = .program.get_module(call.function_id!.module)
                     let function_ = .program.get_function(call.function_id!)
                     if function_.type is ImplicitConstructor or function_.type is ExternalClassConstructor {
-                        todo("implement codegen for implicit or external class constructors")
+                        let type_id = call.return_type
+                        let type = .program.get_type(type_id)
+
+                        if call.function_id.has_value() {
+                            let function_id = call.function_id!
+                            let type_module = .program.get_module(function_id.module)
+                            if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))) {
+                                output += type_module.name
+                                output += "::"
+                            }
+                        }
+
+                        output += .codegen_namespace_path(call)
+                        match type {
+                            Struct(struct_id) => {
+                                let struct_ = .program.get_struct(struct_id)
+                                if struct_.record_type is Class {
+                                    output += call.name
+                                    output += "::"
+                                    output += "create"
+                                } else {
+                                    output += call.name
+                                }
+                            }
+                            GenericInstance(id, args) => {
+                                todo("Implement codegen for constructor call to GenericInstance")
+                            }
+                            else => {
+                                panic("Should be unreachable")
+                            }
+                        }
+
                     } else if function_.type is ImplicitEnumConstructor {
                         match .program.get_type(function_.return_type_id) {
                             Enum(enum_id) => {
@@ -1037,17 +1068,21 @@ struct CodeGenerator {
                                 panic("constructor expected enum type")
                             }
                         }
+
+                        output += .codegen_namespace_path(call)
+                        output += call.name
                     } else {
                         if not (type_module.is_root or type_module.id.id == 0 or function_.linkage is External or (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name))
                         {
                             output += type_module.name
                             output += "::"
                         }
+
+                        output += .codegen_namespace_path(call)
+                        output += call.name
                     }
                 }
 
-                output += .codegen_namespace_path(call)
-                output += call.name
                 output += "("
 
                 mut first = true
