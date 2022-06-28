@@ -873,6 +873,23 @@ class CheckedProgram {
     public function get_struct(this, anon id: StructId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
     public function get_scope(this, anon id: ScopeId) -> Scope => .modules[id.module.id].scopes[id.id]
 
+    public function find_var_in_scope(this, scope_id: ScopeId, var: String) -> CheckedVariable? {
+        mut current_scope_id = scope_id
+        loop {
+            let scope = .get_scope(current_scope_id)
+            for existing_var in scope.vars.iterator() {
+                if existing_var.0 == var {
+                    return .get_variable(existing_var.1)
+                }
+            }
+            if not scope.parent.has_value() {
+                break
+            }
+            current_scope_id = scope.parent!
+        }
+        return None
+    }
+
     public function is_integer(this, anon type_id: TypeId) -> bool {
         let type = .get_type(type_id)
 
@@ -968,6 +985,7 @@ struct Typechecker {
     function get_enum(this, anon id: EnumId) => .program.get_enum(id)
     function get_struct(this, anon id: StructId) => .program.get_struct(id)
     function get_scope(this, anon id: ScopeId) => .program.get_scope(id)
+    function find_var_in_scope(this, scope_id: ScopeId, var: String) => .program.find_var_in_scope(scope_id, var)
 
     function current_module(this) => .program.get_module(.current_module_id)
 
@@ -4102,23 +4120,6 @@ struct Typechecker {
             todo("implement typecheck match body expression")
             yield CheckedMatchBody::Expression(CheckedExpression::Garbage(span))
         }
-    }
-
-    function find_var_in_scope(mut this, scope_id: ScopeId, var: String) -> CheckedVariable? {
-        mut current_scope_id = scope_id
-        loop {
-            let scope = .get_scope(current_scope_id)
-            for existing_var in scope.vars.iterator() {
-                if existing_var.0 == var {
-                    return .program.get_variable(existing_var.1)
-                }
-            }
-            if not scope.parent.has_value() {
-                break
-            }
-            current_scope_id = scope.parent!
-        }
-        return None
     }
 
     function resolve_call(mut this, call: ParsedCall, namespaces: [ResolvedNamespace], span: Span, scope_id: ScopeId, must_be_enum_constructor: bool) throws -> FunctionId? {
