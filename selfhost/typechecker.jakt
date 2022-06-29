@@ -1919,7 +1919,7 @@ struct Typechecker {
     function typecheck_enum(mut this, record: ParsedRecord, enum_id: EnumId, parent_scope_id: ScopeId) throws {
         mut checked_variants: [CheckedEnumVariant] = []
         mut next_constant_value = 0u64
-        mut seen_names: [String] = [] // FIXME: HashSet
+        mut seen_names: {String} = {}
 
         mut enum_ = .get_enum(enum_id)
 
@@ -1931,7 +1931,7 @@ struct Typechecker {
                     if seen_names.contains(variant.name) {
                         .error(format("Enum variant '{}' is defined more than once", variant.name), variant.span)
                     } else {
-                        seen_names.push(variant.name)
+                        seen_names.add(variant.name)
 
                         let expr = match variant.value.has_value() {
                             true => {
@@ -1979,16 +1979,16 @@ struct Typechecker {
                         .error(format("Enum variant '{}' is defined more than once", variant.name), variant.span)
                         continue
                     } 
-                    seen_names.push(variant.name)
+                    seen_names.add(variant.name)
                     if variant.params.has_value() and variant.params!.size() > 0 and variant.params![0].name != "" {
-                        mut seen_fields: [String] = [] // FIXME: HashSet
+                        mut seen_fields: {String} = {}
                         mut fields: [VarId] = []
                         for param in variant.params!.iterator() {
                             if seen_fields.contains(param.name) {
                                 .error(format("Enum variant '{}' has a member named '{}' more than once", variant.name, param.name), param.span)
                                 continue
                             }
-                            seen_fields.push(param.name)
+                            seen_fields.add(param.name)
 
                             let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id)
                             let checked_var = CheckedVariable(
@@ -4020,7 +4020,7 @@ struct Typechecker {
                 let enum_ = .get_enum(enum_id)
                 mut seen_catch_all = false
                 mut catch_all_span: Span? = None
-                mut covered_variants: [String] = [] // FIXME: HashSet
+                mut covered_variants: {String} = {}
                 for case_ in cases.iterator() {
                     for pattern in case_.patterns.iterator() {
                         match pattern {
@@ -4057,13 +4057,13 @@ struct Typechecker {
                                 mut module = .current_module()
                                 match matched_variant! {
                                     Untyped(name) => {
-                                        covered_variants.push(name)
+                                        covered_variants.add(name)
                                         if not variant_arguments.is_empty() {
                                             .error(format("Match case '{}' cannot have arguments", name), span)
                                         }
                                     }
                                     Typed(name, type_id, span) => {
-                                        covered_variants.push(name)
+                                        covered_variants.add(name)
                                         if variant_arguments.size() != 1 {
                                             .error("Match case '{}' must have exactly one argument", span)
                                         }
@@ -4078,13 +4078,13 @@ struct Typechecker {
                                         .add_var_to_scope(scope_id: new_scope_id, name: variant_argument.binding, var_id, span)
                                     }
                                     StructLike(name, fields) => {
-                                        covered_variants.push(name)
+                                        covered_variants.add(name)
 
                                         mut field_variables: [CheckedVariable] = []
                                         for var_id in fields.iterator() {
                                             field_variables.push(.program.get_variable(var_id))
                                         }
-                                        mut seen_names: [String] = [] // FIXME: HashSet
+                                        mut seen_names: {String} = {}
                                         for arg in variant_arguments.iterator() {
                                             if not arg.name.has_value() {
                                                 mut found_field_name = false
@@ -4117,7 +4117,7 @@ struct Typechecker {
                                                 .error(format("match case argument '{}' is already defined", arg_name), arg.span)
                                                 continue
                                             }
-                                            seen_names.push(arg_name)
+                                            seen_names.add(arg_name)
                                             mut matched_field_variable: CheckedVariable? = None
                                             for var in field_variables.iterator() {
                                                 if var.name == arg_name {
