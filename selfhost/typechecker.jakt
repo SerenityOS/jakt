@@ -3620,10 +3620,13 @@ struct Typechecker {
         let structure = .get_struct(struct_id)
         for member_id in structure.fields.iterator() {
             let member = .get_variable(member_id)
-            let resolved_type_id = .resolve_type_var(type_var_type_id: member.type_id, scope_id)
-            // FIXME: Unify with type
-            // FIXME: Access checks
-            return CheckedExpression::IndexedStruct(expr: checked_expr, index: field, span, type_id: resolved_type_id)
+
+            if member.name == field {
+                let resolved_type_id = .resolve_type_var(type_var_type_id: member.type_id, scope_id)
+                // FIXME: Unify with type
+                // FIXME: Access checks
+                return CheckedExpression::IndexedStruct(expr: checked_expr, index: field, span, type_id: resolved_type_id)
+            }
         }
 
         // FIXME: Unify with type

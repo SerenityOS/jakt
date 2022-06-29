@@ -198,6 +198,11 @@ struct CodeGenerator {
     function codegen_function_predecl(mut this, function_: CheckedFunction) throws -> String {
         mut output = ""
 
+        // FIXME: for now, just exit early if we're a constructor
+        if function_.type is ImplicitConstructor {
+            return ""
+        }
+
         if function_.linkage is External {
             output += "extern "
         }
@@ -283,9 +288,9 @@ struct CodeGenerator {
                 todo("codegen_struct Class")
             }
             Struct => {
-                output += "struct "
-                output += struct_.name
-                output += " { "
+                output += format("struct {}", struct_.name)
+                output += " {\n"
+                output += "  public:\n"
             }
             SumEnum => {
                 todo("codegen_struct SumEnum")
@@ -302,6 +307,29 @@ struct CodeGenerator {
             output += " "
             output += field.name
             output += ";"
+        }
+
+        let scope = .program.get_scope(struct_.scope_id)
+        for fn in scope.functions.iterator() {
+            let previous_function_id = .current_function
+
+            let function_ = .program.get_function(fn.1)
+            .current_function = Some(function_)
+
+            if function_.type is ImplicitConstructor {
+                let function_output = .codegen_constructor(function_)
+
+                output += function_output
+                output += "\n"
+            } else {
+                if struct_.generic_parameters.is_empty() {
+                    output += .codegen_function_predecl(function_)
+                } else {
+                    output += .codegen_function(function_)
+                }
+            }
+
+            .current_function = previous_function_id
         }
 
         output += "};"
@@ -1475,6 +1503,157 @@ struct CodeGenerator {
         }
 
         return output
+    }
+
+    function codegen_constructor(mut this, anon function_: CheckedFunction) throws -> String {
+        let type_id = function_.return_type_id
+        let type_ = .program.get_type(type_id)
+
+        match type_ {
+            Struct(struct_id) => {
+                let structure = .program.get_struct(struct_id)
+
+                if structure.record_type is Class {
+                    mut output = ""
+
+                    output += "private:\n"
+
+                    output += format("explicit {}", function_.name)
+                    mut first = true
+                    for param in function_.params.iterator() {
+                        if not first {
+                            output += ", "
+                        } else {
+                            first = false
+                        }
+
+                        let param_type_id = param.variable.type_id
+                        output += .codegen_type(param_type_id)
+                        output += "&& a_"
+                        output += param.variable.name
+                    }
+                    output += ")"
+
+                    if not function_.params.is_empty() {
+                        output += ": "
+                        mut first = true
+                        for param in function_.params.iterator() {
+                            if not first {
+                                output += ", "
+                            } else {
+                                first = false
+                            }
+
+                            output += param.variable.name
+                            output += "(move(a_"
+                            output += param.variable.name
+                            output += "))"
+                        }
+                    }
+
+                    output += "{}\n"
+
+                    mut class_name_with_generics = ""
+                    class_name_with_generics += structure.name
+
+                    first = true
+                    for generic_parameter in structure.generic_parameters.iterator() {
+                        if not first {
+                            class_name_with_generics += ", "
+                        } else {
+                            class_name_with_generics += "<"
+                            first = false
+                        }
+
+                        class_name_with_generics += .codegen_type(generic_parameter)
+                    }
+                    if not structure.generic_parameters.is_empty() {
+                        class_name_with_generics += ">"
+                    }
+
+                    output += "public:\n"
+                    output += format("static ErrorOr<NonnullRefPtr<{}>> create", class_name_with_generics)
+                    output += "("
+
+                    first = true
+                    for param in function_.params.iterator() {
+                        if not first {
+                            output += ", "
+                        } else {
+                            first = false
+                        }
+
+                        output += .codegen_type(param.variable.type_id)
+                        output += " "
+                        output += param.variable.name
+                    }
+
+                    output += format(") {{ auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) {} (", class_name_with_generics)
+
+                    first = true
+                    for param in function_.params.iterator() {
+                        if not first {
+                            output += ", "
+                        } else {
+                            first = false
+                        }
+
+                        output += "move("
+                        output += param.variable.name
+                        output += ")"
+                    }
+
+                    output += "))); return o; }"
+
+                    return output
+                } else {
+                    mut output = ""
+                    output += function_.name
+                    output += "("
+
+                    mut first = true
+                    for param in function_.params.iterator() {
+                        if not first {
+                            output += ", "
+                        } else {
+                            first = false
+                        }
+
+                        output += .codegen_type(param.variable.type_id)
+                        output += " a_"
+                        output += param.variable.name
+                    }
+                    output += ") "
+
+                    if not function_.params.is_empty() {
+                        output += ":"
+                    }
+
+                    first = true
+                    for param in function_.params.iterator() {
+                        if not first {
+                            output += ", "
+                        } else {
+                            first = false
+                        }
+
+                        output += param.variable.name
+                        output += "(a_"
+                        output += param.variable.name
+                        output += ")"
+                    }
+
+                    output += "{}\n"
+
+                    return output
+                }
+            }
+            else => {
+                panic("internal error: call to a constructor, but not a struct/class type")
+                return ""
+            }
+        }
+        return ""
     }
 
     function codegen_function_in_namespace(mut this, function_: CheckedFunction, containing_struct: TypeId?) throws -> String {
