@@ -1499,7 +1499,7 @@ struct Parser {
             if index_before == index_after {
                 break
             }
-            types.push(.parse_typename())
+            types.push(type)
         }
         .error("Expected ‘)’", .current().span())
         return ParsedType::Empty
