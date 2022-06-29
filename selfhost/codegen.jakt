@@ -256,6 +256,8 @@ struct CodeGenerator {
             output += ";"
         }
 
+        output += "\n"
+
         return output
     }
 
@@ -1192,13 +1194,13 @@ struct CodeGenerator {
 
         // FIXME: yielded_type
 
-        output += "{"
+        output += "{\n"
 
         for statement in block.statements.iterator() {
             output += .codegen_statement(statement)
         }
 
-        output += "}"
+        output += "}\n"
 
         // FIXME: yielded_type
 
@@ -1539,7 +1541,7 @@ struct CodeGenerator {
             output += " const"
         }
 
-        output += "{"
+        output += " {\n"
 
         let last_control_flow = .control_flow_state
         .control_flow_state = last_control_flow.enter_function()
@@ -1548,15 +1550,15 @@ struct CodeGenerator {
         output += block
 
         if is_main {
-            output += "return 0;"
+            output += "return 0;\n"
         } else {
             // FIXME: This should check if the id is BuiltinType::Void, but the baseline compiler chokes on that.
             if function_.can_throw and function_.return_type_id.id == 0 {
-                output += "return {};"
+                output += "return {};\n"
             }
         }
 
-        output += "}"
+        output += "}\n"
 
         return output
     }
