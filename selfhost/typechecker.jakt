@@ -508,20 +508,20 @@ boxed enum CheckedStatement {
 
     function span(this) => match this {
         Expression(span) => Some(span)
-        Defer(span) => span
-        VarDecl(span) => span
-        If(span) => span
-        Block(span) => span
-        Loop(span) => span
-        While(span) => span
+        Defer(span) => Some(span)
+        VarDecl(span) => Some(span)
+        If(span) => Some(span)
+        Block(span) => Some(span)
+        Loop(span) => Some(span)
+        While(span) => Some(span)
         Return(span) => span
-        Break(span) => span
-        Continue(span) => span
-        Throw(span) => span
-        Yield(span) => span
-        Try(span) => span
-        InlineCpp(span) => span
-        Garbage(span) => span
+        Break(span) => Some(span)
+        Continue(span) => Some(span)
+        Throw(span) => Some(span)
+        Yield(span) => Some(span)
+        Try(span) => Some(span)
+        InlineCpp(span) => Some(span)
+        Garbage(span) => Some(span)
     }
 }
 
