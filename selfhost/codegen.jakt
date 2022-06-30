@@ -735,13 +735,10 @@ struct CodeGenerator {
                 PostIncrement => "++"
                 PostDecrement => "--"
                 TypeCast | Is => ")"
-                IsEnumVariant(name) => {
+                IsEnumVariant(name, enum_type_id) => {
                     mut suffix = ")"
-                    let is_boxed = match .program.get_type(expression_type(expr)) {
-                        Enum(enum_id) => {
-                            let enum_ = .program.get_enum(enum_id)
-                            yield enum_.record_type is Class
-                        }
+                    let is_boxed = match .program.get_type(enum_type_id) {
+                        Enum(enum_id) => .program.get_enum(enum_id).record_type is Class
                         else => false
                     }
                     if is_boxed {
@@ -750,7 +747,7 @@ struct CodeGenerator {
                         suffix += "."
                     }
                     suffix += "has<"
-                    suffix += .codegen_type_possibly_as_namespace(type_id, as_namespace: true)
+                    suffix += .codegen_type_possibly_as_namespace(type_id: enum_type_id, as_namespace: true)
                     suffix += "::"
                     suffix += name
                     suffix += ">("
