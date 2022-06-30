@@ -693,7 +693,7 @@ enum CheckedUnaryOperator {
     BitwiseNot
     TypeCast(CheckedTypeCast)
     Is(TypeId)
-    IsEnumVariant(String)
+    IsEnumVariant(name: String, enum_type_id: TypeId)
 }
 
 enum CheckedMatchBody {
@@ -1547,7 +1547,7 @@ struct Typechecker {
 
         for unchecked_member in parsed_fields.iterator() {
             let parsed_var_decl = unchecked_member.var_decl
-            let checked_member_type = .typecheck_typename(parsed_type: parsed_var_decl.parsed_type, scope_id: checked_struct_scope_id)
+            let checked_member_type = .typecheck_typename(parsed_type: parsed_var_decl.parsed_type, scope_id: checked_struct_scope_id, ignore_errors: false)
 
             mut module = .current_module()
             let var_id = module.add_variable(checked_variable: CheckedVariable(
@@ -1649,7 +1649,7 @@ struct Typechecker {
         .add_enum_to_scope(scope_id, name: parsed_record.name, enum_id, span: parsed_record.name_span)
 
         let underlying_type_id = match parsed_record.record_type {
-            ValueEnum(underlying_type) => .typecheck_typename(parsed_type: underlying_type, scope_id)
+            ValueEnum(underlying_type) => .typecheck_typename(parsed_type: underlying_type, scope_id, ignore_errors: false)
             else => builtin(BuiltinType::Void)
         }
 
@@ -1794,7 +1794,7 @@ struct Typechecker {
                         .add_var_to_scope(scope_id: check_scope!, name: param.variable.name, var_id, span: param.variable.span)
                     }
                 } else {
-                    let param_type = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id)
+                    let param_type = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id, ignore_errors: false)
 
                     let checked_variable = CheckedVariable(
                         name: param.variable.name
@@ -1823,7 +1823,7 @@ struct Typechecker {
                 span: parsed_record.name_span
             )
 
-            let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: method_scope_id)
+            let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: method_scope_id, ignore_errors: false)
 
             checked_function.return_type_id = function_return_type_id
 
@@ -1946,7 +1946,7 @@ struct Typechecker {
 
         match record.record_type {
             ValueEnum(underlying_type, variants) => {
-                let underlying_type_id = .typecheck_typename(parsed_type: underlying_type, scope_id: parent_scope_id)
+                let underlying_type_id = .typecheck_typename(parsed_type: underlying_type, scope_id: parent_scope_id, ignore_errors: false)
                 mut module = .current_module()
                 for variant in variants.iterator() {
                     if seen_names.contains(variant.name) {
@@ -2012,7 +2012,7 @@ struct Typechecker {
                             }
                             seen_fields.add(param.name)
 
-                            let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id)
+                            let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id, ignore_errors: false)
                             let checked_var = CheckedVariable(
                                 name: param.name
                                 type_id
@@ -2053,7 +2053,7 @@ struct Typechecker {
                         }
                     } else if variant.params.has_value() and variant.params!.size() == 1 and variant.params![0].name == "" {
                         let param = variant.params![0]
-                        let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id)
+                        let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id, ignore_errors: false)
                         enum_.variants.push(CheckedEnumVariant::Typed(name: variant.name, type_id, span: param.span))
                         
                         let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
@@ -2232,7 +2232,7 @@ struct Typechecker {
         let VOID_TYPE_ID = builtin(BuiltinType::Void)
 
         let block = .typecheck_block(parsed_block: func.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
-        let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: function_scope_id)
+        let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: function_scope_id, ignore_errors: false)
 
         mut return_type_id = function_return_type_id
         if function_return_type_id.equals(unknown_type_id()) and not block.statements.is_empty() {
@@ -2324,7 +2324,7 @@ struct Typechecker {
 
         // Check parameters
         for parameter in parsed_function.params.iterator() {
-            let type_id = .typecheck_typename(parsed_type: parameter.variable.parsed_type, scope_id: checked_function_scope_id)
+            let type_id = .typecheck_typename(parsed_type: parameter.variable.parsed_type, scope_id: checked_function_scope_id, ignore_errors: false)
 
             let variable = CheckedVariable(
                 name: parameter.variable.name
@@ -2343,7 +2343,7 @@ struct Typechecker {
         }
 
         // Check return type
-        checked_function.return_type_id = .typecheck_typename(parsed_type: parsed_function.return_type, scope_id: checked_function_scope_id)
+        checked_function.return_type_id = .typecheck_typename(parsed_type: parsed_function.return_type, scope_id: checked_function_scope_id, ignore_errors: false)
 
         .add_function_to_scope(parent_scope_id, name: parsed_function.name, function_id, span: parsed_function.name_span)
     }
@@ -2421,6 +2421,7 @@ struct Typechecker {
         mut function_return_type_id = .typecheck_typename(
             parsed_type: parsed_function.return_type
             scope_id: function_scope_id
+            ignore_errors: false
         )
         checked_function.return_type_id = function_return_type_id
 
@@ -2435,6 +2436,7 @@ struct Typechecker {
         function_return_type_id = .typecheck_typename(
             parsed_type: parsed_function.return_type
             scope_id: function_scope_id
+            ignore_errors: false
         )
 
         // Infer return type if necessary
@@ -2909,7 +2911,7 @@ struct Typechecker {
         return checked_block
     }
 
-    function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId) throws -> TypeId { 
+    function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId, ignore_errors: bool) throws -> TypeId { 
         match parsed_type {
             NamespacedName(name, namespaces, params, span) => {
                 mut current_namespace_scope_id = scope_id
@@ -2928,14 +2930,14 @@ struct Typechecker {
                 mut generic_args: [TypeId] = []
 
                 for param in params.iterator() {
-                    let checked_arg = .typecheck_typename(parsed_type: param, scope_id)
+                    let checked_arg = .typecheck_typename(parsed_type: param, scope_id, ignore_errors)
 
                     generic_args.push(checked_arg)
                 }
 
                 // TODO: add synthetic type_name and generic support
 
-                return .typecheck_typename(parsed_type, scope_id)
+                return .typecheck_typename(parsed_type, scope_id, ignore_errors)
             }
             Name(name, span) => {
                 return match name {
@@ -2961,7 +2963,9 @@ struct Typechecker {
                         if type_id.has_value() {
                             return type_id.value()
                         } else {
-                            .error(format("Unknown type ‘{}’", name), span)
+                            if not ignore_errors {
+                                .error(format("Unknown type ‘{}’", name), span)
+                            }
                             return unknown_type_id()
                         }
                     }
@@ -2973,7 +2977,7 @@ struct Typechecker {
             JaktTuple(types, span) => {
                 mut checked_types: [TypeId] = []
                 for parsed_type in types.iterator() {
-                    checked_types.push(.typecheck_typename(parsed_type, scope_id))
+                    checked_types.push(.typecheck_typename(parsed_type, scope_id, ignore_errors))
                 }
                 let tuple_struct_id = .find_struct_in_prelude("Tuple")
 
@@ -2982,7 +2986,7 @@ struct Typechecker {
                 return type_id
             }
             JaktArray(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, ignore_errors)
 
                 let array_struct_id = .find_struct_in_prelude("Array")
 
@@ -2991,8 +2995,8 @@ struct Typechecker {
                 return type_id
             }
             Dictionary(key, value, span) => {
-                let key_type_id = .typecheck_typename(parsed_type: key, scope_id)
-                let value_type_id = .typecheck_typename(parsed_type: value, scope_id)
+                let key_type_id = .typecheck_typename(parsed_type: key, scope_id, ignore_errors)
+                let value_type_id = .typecheck_typename(parsed_type: value, scope_id, ignore_errors)
 
                 let dict_struct_id = .find_struct_in_prelude("Dictionary")
 
@@ -3001,7 +3005,7 @@ struct Typechecker {
                 return type_id
             }
             Set(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, ignore_errors)
 
                 let set_struct_id = .find_struct_in_prelude("Set")
 
@@ -3010,7 +3014,7 @@ struct Typechecker {
                 return type_id
             }
             Optional(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, ignore_errors)
 
                 let optional_struct_id = .find_struct_in_prelude("Optional")
 
@@ -3019,7 +3023,7 @@ struct Typechecker {
                 return type_id
             }
             WeakPtr(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, ignore_errors)
 
                 let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
 
@@ -3028,7 +3032,7 @@ struct Typechecker {
                 return type_id
             }
             RawPtr(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, ignore_errors)
 
                 let type_id = .find_or_add_type_id(Type::RawPtr(id: inner_type_id))
 
@@ -3038,7 +3042,7 @@ struct Typechecker {
                 mut checked_inner_types: [TypeId] = []
 
                 for inner_type in generic_parameters.iterator() {
-                    let inner_type_id = .typecheck_typename(parsed_type, scope_id)
+                    let inner_type_id = .typecheck_typename(parsed_type, scope_id, ignore_errors)
                     checked_inner_types.push(inner_type_id)
                 }
                 // FIXME: add support for "GenericResolvedType", though the Rust version
@@ -3464,7 +3468,7 @@ struct Typechecker {
     }
 
     function typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
-        mut lhs_type_id = .typecheck_typename(parsed_type: var.parsed_type, scope_id)
+        mut lhs_type_id = .typecheck_typename(parsed_type: var.parsed_type, scope_id, ignore_errors: false)
         mut checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode)
         let rhs_type_id = expression_type(checked_expr)
 
@@ -3777,7 +3781,7 @@ struct Typechecker {
                 LogicalNot => CheckedUnaryOperator::LogicalNot
                 BitwiseNot => CheckedUnaryOperator::BitwiseNot
                 TypeCast(cast) => {
-                    let type_id = .typecheck_typename(parsed_type: cast.parsed_type(), scope_id)
+                    let type_id = .typecheck_typename(parsed_type: cast.parsed_type(), scope_id, ignore_errors: false)
                     let checked_cast = match cast {
                         Fallible => CheckedTypeCast::Fallible(type_id)
                         Infallible => CheckedTypeCast::Infallible(type_id)
@@ -3785,7 +3789,7 @@ struct Typechecker {
                     yield CheckedUnaryOperator::TypeCast(checked_cast)
                 }
                 Is(unchecked_type) => {
-                    let type_id = .typecheck_typename(parsed_type: unchecked_type, scope_id)
+                    let type_id = .typecheck_typename(parsed_type: unchecked_type, scope_id, ignore_errors: true)
                     mut operator_is = CheckedUnaryOperator::Is(type_id)
                     if type_id.equals(unknown_type_id()) {
                         match unchecked_type {
@@ -3802,7 +3806,7 @@ struct Typechecker {
                                                 else => false
                                             }
                                             if exists {
-                                                operator_is = CheckedUnaryOperator::IsEnumVariant(name)
+                                                operator_is = CheckedUnaryOperator::IsEnumVariant(name, enum_type_id: expr_type_id)
                                                 break
                                             }
                                         }
