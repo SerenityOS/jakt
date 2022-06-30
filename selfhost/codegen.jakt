@@ -285,7 +285,25 @@ struct CodeGenerator {
 
         match struct_.record_type {
             Class => {
-                todo("codegen_struct Class")
+                mut class_name_with_generics = ""
+                class_name_with_generics += struct_.name
+                mut first = true
+                for generic_parameter in struct_.generic_parameters.iterator() {
+                    if not first {
+                        class_name_with_generics += ", "
+                    } else {
+                        class_name_with_generics += "<"
+                        first = false
+                    }
+                    class_name_with_generics += .codegen_type(generic_parameter)
+                }
+                if not struct_.generic_parameters.is_empty() {
+                    class_name_with_generics += ">"
+                }
+
+                output += format("class {} : public RefCounted<{}>, public Weakable<{}> {{\n", struct_.name, class_name_with_generics, class_name_with_generics)
+                output += "  public:\n"
+                output += format("virtual ~{}() = default;\n", struct_.name)
             }
             Struct => {
                 output += format("struct {}", struct_.name)
@@ -1452,7 +1470,7 @@ struct CodeGenerator {
 
         if not as_namespace and checked_struct.record_type is Class {
             output += "NonnullRefPtr<"
-            if not type_module.is_root or type_module.id.equals(ModuleId(id: 0)) {
+            if not type_module.is_root and not type_module.id.equals(ModuleId(id: 0)) {
                 output += type_module.name
                 output += "::"
             }
@@ -1518,7 +1536,7 @@ struct CodeGenerator {
 
                     output += "private:\n"
 
-                    output += format("explicit {}", function_.name)
+                    output += format("explicit {}(", function_.name)
                     mut first = true
                     for param in function_.params.iterator() {
                         if not first {
