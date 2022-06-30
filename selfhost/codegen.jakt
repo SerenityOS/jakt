@@ -598,17 +598,8 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_function_predecl(mut this, function_: CheckedFunction) throws -> String {
+    function codegen_function_generic_parameters(mut this, function_: CheckedFunction) throws -> String {
         mut output = ""
-
-        // FIXME: for now, just exit early if we're a constructor
-        if function_.type is ImplicitConstructor {
-            return ""
-        }
-
-        if function_.linkage is External {
-            output += "extern "
-        }
 
         if not function_.generic_params.is_empty() {
             output += "template <"
@@ -626,8 +617,25 @@ struct CodeGenerator {
                 }
                 output += .codegen_type(type_id)
             }
-            output += ">"
+            output += ">\n"
         }
+
+        return output
+    }
+
+    function codegen_function_predecl(mut this, function_: CheckedFunction) throws -> String {
+        mut output = ""
+
+        // FIXME: for now, just exit early if we're a constructor
+        if function_.type is ImplicitConstructor {
+            return ""
+        }
+
+        if function_.linkage is External {
+            output += "extern "
+        }
+
+        output += .codegen_function_generic_parameters(function_)
 
         if function_.name == "main" {
             output += "ErrorOr<int>"
@@ -2531,7 +2539,17 @@ struct CodeGenerator {
     }
 
     function codegen_function_in_namespace(mut this, function_: CheckedFunction, containing_struct: TypeId?) throws -> String {
+        // Extern generics need to be in the header anyways, so we can't codegen for them.
+        if not function_.generic_params.is_empty() {
+            match function_.linkage {
+                External => { return "" }
+                else => {}
+            }
+        }
+
         mut output = ""
+
+        output += .codegen_function_generic_parameters(function_)
 
         let is_main = function_.name == "main" and not containing_struct.has_value()
 
@@ -2595,6 +2613,8 @@ struct CodeGenerator {
         }
 
         output += " {\n"
+
+        // FIXME: Panic if function type is unknown, and this isn't `main()`
 
         let last_control_flow = .control_flow_state
         .control_flow_state = last_control_flow.enter_function()
