@@ -377,6 +377,7 @@ struct CheckedNamespace {
 class CheckedFunction {
     public name: String
     public name_span: Span
+    public visibility: Visibility
     public return_type_id: TypeId
     public params: [CheckedParameter]
     public generic_params: [FunctionGenericParameter]
@@ -1733,6 +1734,7 @@ struct Typechecker {
             mut checked_function = CheckedFunction(
                 name: func.name
                 name_span: func.name_span
+                visibility: method.visibility
                 return_type_id: unknown_type_id()
                 params: []
                 generic_params: []
@@ -2036,6 +2038,7 @@ struct Typechecker {
                             let checked_function = CheckedFunction(
                                 name: variant.name,
                                 name_span: variant.span,
+                                visibility: Visibility::Public,
                                 return_type_id: .find_or_add_type_id(Type::Enum(enum_id)),
                                 params: [], // TODO: params @nocommit
                                 generic_params: [],
@@ -2062,6 +2065,7 @@ struct Typechecker {
                             let checked_function = CheckedFunction(
                                 name: variant.name,
                                 name_span: variant.span,
+                                visibility: Visibility::Public,
                                 return_type_id: .find_or_add_type_id(Type::Enum(enum_id)),
                                 params: [], // TODO: params @nocommit
                                 generic_params: [],
@@ -2085,6 +2089,7 @@ struct Typechecker {
                             let checked_function = CheckedFunction(
                                 name: variant.name,
                                 name_span: variant.span,
+                                visibility: Visibility::Public,
                                 return_type_id: .find_or_add_type_id(Type::Enum(enum_id)),
                                 params: [],
                                 generic_params: [],
@@ -2136,6 +2141,7 @@ struct Typechecker {
             let checked_constructor = CheckedFunction(
                 name: record.name
                 name_span: record.name_span
+                visibility: Visibility::Public
                 return_type_id: struct_type_id
                 params: []
                 generic_params: []
@@ -2270,6 +2276,7 @@ struct Typechecker {
         mut checked_function = CheckedFunction(
             name: parsed_function.name
             name_span: parsed_function.name_span
+            visibility: parsed_function.visibility
             return_type_id: unknown_type_id()
             params: []
             generic_params: []
@@ -3671,7 +3678,7 @@ struct Typechecker {
             if member.name == field {
                 let resolved_type_id = .resolve_type_var(type_var_type_id: member.type_id, scope_id)
                 // FIXME: Unify with type
-                .check_scope_access(accessor: scope_id, accessee: structure.scope_id, member, span)
+                .check_member_access(accessor: scope_id, accessee: structure.scope_id, member, span)
                 return CheckedExpression::IndexedStruct(expr: checked_expr, index: field, span, type_id: resolved_type_id)
             }
         }
@@ -3680,16 +3687,31 @@ struct Typechecker {
         return CheckedExpression::IndexedStruct(expr: checked_expr, index: field, span, type_id: checked_expr_type_id)
     }
 
-    function check_scope_access(mut this, accessor: ScopeId, accessee: ScopeId, member: CheckedVariable, span: Span) throws {
+    function check_member_access(mut this, accessor: ScopeId, accessee: ScopeId, member: CheckedVariable, span: Span) throws {
         match member.visibility {
             Private => {
                 if not .scope_can_access(accessor, accessee) {
-                    .error(format("Can't access variable ‘{}’ from scope {}, because it is marked private", member.name, .get_scope(own_scope).namespace_name), span)
+                    .error(format("Can't access variable ‘{}’ from scope {}, because it is marked private", member.name, .get_scope(accessor).namespace_name), span)
                 }
             }
             Restricted(whitelist, span) => {
                 // FIXME: Implement
-                todo("check_scope_access: Restricted")
+                todo("check_member_access: Restricted")
+            }
+            else => {}
+        }
+    }
+
+    function check_method_access(mut this, accessor: ScopeId, accessee: ScopeId, method: CheckedFunction, span: Span) throws {
+        match method.visibility {
+            Private => {
+                if not .scope_can_access(accessor, accessee) {
+                    .error(format("Can't access function ‘{}’ from scope {}, because it is marked private", method.name, .get_scope(accessor).namespace_name), span)
+                }
+            }
+            Restricted(whitelist, span) => {
+                // FIXME: Implement
+                todo("check_method_access: Restricted")
             }
             else => {}
         }
@@ -4332,6 +4354,10 @@ struct Typechecker {
                 let callee = .get_function(function_id)
                 callee_throws = callee.can_throw
                 return_type = callee.return_type_id
+
+                let scope_containing_callee = .get_scope(callee.function_scope_id).parent!
+
+                .check_method_access(accessor: scope_id, accessee: scope_containing_callee, method: callee, span)
 
                 if callee.params.size() != call.args.size() {
                     .error("Wrong number of arguments", span)
