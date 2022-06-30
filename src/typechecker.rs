@@ -398,7 +398,7 @@ impl Project {
         for existing_var in &scope.vars {
             if var.name == existing_var.name {
                 return Err(JaktError::TypecheckErrorWithHint(
-                    format!("redefinition of variable {}", var.name),
+                    format!("Redefinition of variable ‘{}’", var.name),
                     span,
                     format!("variable {} was first defined here", var.name),
                     existing_var.definition_span,
