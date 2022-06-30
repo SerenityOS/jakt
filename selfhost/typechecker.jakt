@@ -1482,7 +1482,7 @@ struct Typechecker {
         }
 
         for record in parsed_namespace.records.iterator() {
-            if record.record_type is Struct {
+            if record.record_type is Struct or record.record_type is Class {
                 let struct_id = .find_struct_in_scope(scope_id, name: record.name)
                 if not struct_id.has_value() {
                     panic("can't find previously added struct")
