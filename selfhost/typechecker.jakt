@@ -3234,19 +3234,18 @@ struct Typechecker {
                             }
                         }
 
-                        if not lhs_type_id.equals(rhs_type_id) {
-                            .error(format(
-                                "Assignment between incompatible types (‘{}’ and ‘{}’)",
-                                .type_name(lhs_type_id),
-                                .type_name(rhs_type_id),
-                            ), span)
-                        }
-
-                        if not .expression_is_mutable(checked_lhs) {
-                            .error("Assignment to immutbale variable", span)
-                        }
                     }
                     else => {}
+                }
+                if not lhs_type_id.equals(rhs_type_id) {
+                    .error(format(
+                        "Assignment between incompatible types (‘{}’ and ‘{}’)",
+                        .type_name(lhs_type_id),
+                        .type_name(rhs_type_id),
+                    ), span)
+                }
+                if not .expression_is_mutable(checked_lhs) {
+                    .error("Assignment to immutable variable", span)
                 }
             }
             Add | Subtract | Multiply | Divide | Modulo => {
