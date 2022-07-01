@@ -227,7 +227,7 @@ struct CodeGenerator {
             if seen_types.contains(enum_.type_id.id) {
                 continue
             }
-            output += .codegen_enum_predecl(enum_)
+            output += .codegen_enum(enum_)
             output += "\n"
         }
 
@@ -289,7 +289,7 @@ struct CodeGenerator {
                 .current_function = function_
                 defer .current_function = previous_function
 
-                if not function_.type is ImplicitConstructor {
+                if not function_.type is ImplicitConstructor and not function_.type is ImplicitEnumConstructor {
                     output += .codegen_function_in_namespace(function_, containing_struct: struct_.type_id)
                     output += "\n"
                 }
@@ -319,7 +319,7 @@ struct CodeGenerator {
                 .current_function = function_
                 defer .current_function = previous_function
 
-                if not function_.type is ImplicitConstructor {
+                if not function_.type is ImplicitConstructor and not function_.type is ImplicitEnumConstructor {
                     output += .codegen_function_in_namespace(function_, containing_struct: enum_.type_id)
                     output += "\n"
                 }
