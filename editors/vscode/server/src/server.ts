@@ -15,6 +15,8 @@ import {
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
 	InitializeResult,
+	HandlerResult,
+	Definition,
 } from 'vscode-languageserver/node';
 
 import {
@@ -45,6 +47,7 @@ import path = require('path');
 
 import util = require('node:util');
 import { TextEncoder } from 'node:util';
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const exec = util.promisify(require('node:child_process').exec);
 
@@ -115,73 +118,60 @@ connection.onInitialized(() => {
 	}
 });
 
+async function goToDefinition(document: TextDocument, jaktOutput: string): Promise<HandlerResult<Definition, void> | undefined> {
+	const lines = jaktOutput.split('\n').filter(l => l.length > 0);
+	for (const line of lines) {
+
+		const obj = JSON.parse(line);
+		// console.log("going to type definition");
+		console.log(obj);
+		if (obj.file === '')
+			return;
+
+		const lineBreaks = findLineBreaks(obj.file ? (await fs.promises.readFile(obj.file)).toString() : document.getText() ?? "");
+		const uri = obj.file ? "file:/" + obj.file : document.uri;
+		console.log(uri);
+
+		console.timeEnd('onDefinition');
+		return {
+			uri: uri,
+			range: {
+				start: convertSpan(obj.start, lineBreaks),
+				end: convertSpan(obj.end, lineBreaks),
+			}
+		};
+	}
+}
+
 connection.onDefinition(async (request) => {
 	console.time('onDefinition');
 	const document = documents.get(request.textDocument.uri);
+	if (!document)
+		return;
 	const settings = await getDocumentSettings(request.textDocument.uri);
 
-	const text = document?.getText();
+	const text = document.getText();
 
-	if (typeof text == "string") {
-		const lineBreaks = findLineBreaks(text);
-		// console.log("request: ");
-		// console.log(request);
-		// console.log("index: " + convertPosition(request.position, text));
-		const stdout = await runCompiler(text, "-g " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri), settings);
-		// console.log("got: ", stdout);
-
-		const lines = stdout.split('\n').filter(l => l.length > 0);
-		for (const line of lines) {
-
-			const obj = JSON.parse(line);
-			// console.log("going to definition");
-			// console.log(obj);
-
-			console.timeEnd('onDefinition');
-			return {
-				uri: request.textDocument.uri,
-				range: {
-					start: convertSpan(obj.start, lineBreaks),
-					end:   convertSpan(obj.end,   lineBreaks) 
-				} 
-			};		}
-	}
-	console.timeEnd('onDefinition');
+	// console.log("request: ");
+	// console.log(request);
+	// console.log("index: " + convertPosition(request.position, text));
+	const stdout = await runCompiler(text, "-g " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri), settings);
+	return goToDefinition(document, stdout);
 });
 
 connection.onTypeDefinition(async (request) => {
 	console.time('onTypeDefinition');
 	const document = documents.get(request.textDocument.uri);
+	if (!document)
+		return;
 	const settings = await getDocumentSettings(request.textDocument.uri);
 
-	const text = document?.getText();
-
-	if (typeof text == "string") {
-		const lineBreaks = findLineBreaks(text);
-		// console.log("request: ");
-		// console.log(request);
-		// console.log("index: " + convertPosition(request.position, text));
-		const stdout = await runCompiler(text, "-t " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri), settings);
-		// console.log("got: ", stdout);
-
-		const lines = stdout.split('\n').filter(l => l.length > 0);
-		for (const line of lines) {
-
-			const obj = JSON.parse(line);
-			// console.log("going to type definition");
-			// console.log(obj);
-
-			console.timeEnd('onTypeDefinition');
-			return {
-				uri: request.textDocument.uri,
-				range: {
-					start: convertSpan(obj.start, lineBreaks),
-					end:   convertSpan(obj.end,   lineBreaks) 
-				} 
-			};
-		}
-	}
-	console.timeEnd('onTypeDefinition');
+	const text = document.getText();
+	// console.log("request: ");
+	// console.log(request);
+	// console.log("index: " + convertPosition(request.position, text));
+	const stdout = await runCompiler(text, "-t " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri), settings);
+	return goToDefinition(document, stdout);
 });
 
 connection.onHover(async (request) => {
@@ -322,13 +312,13 @@ function lowerBoundBinarySearch(arr: number[], num: number): number {
 	let mid = 0;
 	let high = arr.length - 1;
 
-	if(num >= arr[high]) return high;
+	if (num >= arr[high]) return high;
 
 	while (low < high) {
 		// Bitshift to avoid floating point division
 		mid = (low + high) >> 1;
 
-		if(arr[mid] < num) {
+		if (arr[mid] < num) {
 			low = mid + 1;
 		} else {
 			high = mid;
@@ -456,7 +446,7 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
 				}
 
 				const position_start = convertSpan(obj.span.start, lineBreaks);
-				const position_end   = convertSpan(obj.span.end,   lineBreaks);
+				const position_end = convertSpan(obj.span.end, lineBreaks);
 
 				const diagnostic: Diagnostic = {
 					severity,
