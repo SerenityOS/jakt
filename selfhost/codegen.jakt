@@ -505,21 +505,13 @@ struct CodeGenerator {
             return ""
         }
 
+        mut generic_parameter_names: [String] = []
         if not struct_.generic_parameters.is_empty() {
-            output += "template <"
-
-            mut first = true
             for generic_parameter in struct_.generic_parameters.iterator() {
-                if first {
-                    first = false
-                } else {
-                    output += ","
-                }
-                output += "typename "
-                output += .codegen_type(generic_parameter)
+                generic_parameter_names.push(.codegen_type(generic_parameter))
             }
 
-            output += "> "
+            output += format("template <{}>", join(prepend_to_each(generic_parameter_names, prefix: "typename "), separator: ", "))
         }
 
         match struct_.record_type {
@@ -589,7 +581,11 @@ struct CodeGenerator {
             .current_function = previous_function_id
         }
 
+        output += .codegen_debug_description_getter(struct_)
+
         output += "};"
+
+        .deferred_output += .codegen_ak_formatter(name: struct_.name, generic_parameter_names)
 
         return output
     }
@@ -774,6 +770,46 @@ struct CodeGenerator {
 
         .deferred_output += .codegen_ak_formatter(name, generic_parameter_names)
 
+        return output
+    }
+
+    function codegen_debug_description_getter(mut this, struct_: CheckedStruct) throws -> String {
+        mut output = "ErrorOr<String> debug_description() const { "
+        output += "auto builder = MUST(StringBuilder::create());"
+        output += format("TRY(builder.append(\"{}(\"));", struct_.name)
+        output += "JaktInternal::_pretty_print_level++;\n"
+
+        mut i = 0uz
+        for field in struct_.fields.iterator() {
+            let field_var = .program.get_variable(field)
+            output += "TRY(JaktInternal::_output_pretty_indent(builder));"
+            output += format("TRY(builder.append(\"{}: \"));", field_var.name)
+            output += "TRY(builder.appendff(\""
+            if .program.is_string(field_var.type_id) {
+                output += "\\\"{}\\\""
+            } else {
+                output += "{}"
+            }
+            if i != struct_.fields.size() - 1 {
+                output += ", "
+            }
+            output += "\", "
+
+            output += match .program.get_type(field_var.type_id) {
+                Struct(struct_id) => match .program.get_struct(struct_id).record_type {
+                    Class => "*"
+                    else => ""
+                }
+                else => ""
+            }
+            output += field_var.name + "));\n"
+            i++
+        }
+
+        output += "JaktInternal::_pretty_print_level--;\n"
+        output += "TRY(builder.append(\")\"));"
+        output += "return builder.to_string();"
+        output += " }"
         return output
     }
 
