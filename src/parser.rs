@@ -812,7 +812,7 @@ pub fn parse_namespace(
 
                                 *index += 1;
                                 error = error.or(Some(JaktError::ParserError(
-                                    "unexpected token".to_string(),
+                                    "Unexpected token".to_string(),
                                     tokens[*index].span,
                                 )));
                             }
@@ -853,7 +853,7 @@ pub fn parse_namespace(
                 *index += 1;
 
                 error = error.or(Some(JaktError::ParserError(
-                    "unexpected token (expected keyword)".to_string(),
+                    "Unexpected token (expected keyword)".to_string(),
                     *span,
                 )));
             }

@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "unexpected token (expected keyword)"
+/// - error: "Unexpected token (expected keyword)"
 
 // When the lexer sees the dot, it increments the index into the `bytes` array
 // and then uses the incremented index to check for another dot. However, it did not

@@ -560,7 +560,7 @@ struct Parser {
                     break
                 }
                 else => {
-                    .error("Unrecognized token in namespace (probably not implemented yet)", .current().span())
+                    .error("Unexpected token (expected keyword)", .current().span())
                     break
                 }
             }
