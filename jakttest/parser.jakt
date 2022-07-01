@@ -85,7 +85,7 @@ function parse_quoted_string(anon quote: String) throws -> String {
             i += 1
             let ch = quote.byte_at(i)
             let escape = match ch {
-                b'"' => ""
+                b'"' => "\""
                 b'\\' => "\\"
                 b'a' => "\0x07"
                 b'b' => "\x08"
