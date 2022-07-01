@@ -4316,7 +4316,7 @@ struct Typechecker {
                 continue
             }
 
-            .error(format("Not a namespace, enum, class, or struct: ‘{}’", call.namespace_), span)
+            .error(format("Not a namespace, enum, class, or struct: ‘{}’", join(call.namespace_, separator: "::")), span)
         }
 
         // 1. Look for a function with this name.
