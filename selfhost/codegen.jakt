@@ -241,7 +241,8 @@ struct CodeGenerator {
                 output += " {\n"
                 output += .codegen_namespace(scope: child_scope, current_module)
                 output += "}\n"
-                .namespace_stack.pop()
+                // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+                let dummy = .namespace_stack.pop()
             }
         }
 
