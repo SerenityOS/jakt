@@ -1357,7 +1357,7 @@ struct Typechecker {
         }
 
         // if we do not find it then check imports
-        let module_id = current.module
+        let module_id = scope_id.module
 
         for imp in .get_scope(ScopeId(module: module_id, id: 0)).imports.iterator() {
             if name == imp.0 {
