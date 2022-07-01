@@ -4259,6 +4259,24 @@ struct Typechecker {
                                 )
                                 checked_cases.push(checked_match_case)
                             }
+                            CatchAll => {
+                                if seen_catch_all {
+                                    .error(
+                                        "Multiple catch-all cases in match are not allowed"
+                                        case_.marker_span
+                                    )
+                                } else {
+                                    seen_catch_all = true
+                                    catch_all_span = case_.marker_span
+                                }
+                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw)
+                                let checked_body = .typecheck_match_body(body: case_.body, scope_id: new_scope_id, safety_mode, span: case_.marker_span)
+                                let checked_match_case = CheckedMatchCase::CatchAll(
+                                    body: checked_body
+                                    marker_span: case_.marker_span
+                                )
+                                checked_cases.push(checked_match_case)
+                            }
                             else => {}
                         }
                     }

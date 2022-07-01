@@ -1163,8 +1163,12 @@ struct CodeGenerator {
                         output += .codegen_match_body(body, return_type_id: type_id)
                         output += "};/*case end*/\n"
                     }
-                    CatchAll => {
-                        todo("implement catchall match")
+                    CatchAll(body) => {
+                        has_default = true
+
+                        output += "default: {\n"
+                        output += .codegen_match_body(body, return_type_id: type_id)
+                        output += "};/*case end*/\n"
                     }
                     else => {
                         panic("Matching enum subject with non-enum value")
