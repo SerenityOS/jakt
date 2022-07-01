@@ -13,7 +13,16 @@ import parser { Parser }
 import typechecker { Typechecker }
 
 function usage() => "usage: jakt [-h] [OPTIONS] <path>"
-function help() => "Flags:\n  -h\t\tPrint this help and exit.\n  -l\t\tPrint debug info for the lexer.\n  -p\t\tPrint debug info for the parser.\n  -b\t\tBuild an executable file.\n  -d\t\tInsert debug statement spans in generated C++ code."
+function help() -> String{
+    mut output = "Flags:\n"
+    output += "  -h\t\tPrint this help and exit.\n"
+    output += "  -l\t\tPrint debug info for the lexer.\n"
+    output += "  -p\t\tPrint debug info for the parser.\n"
+    output += "  -b\t\tBuild an executable file.\n"
+    output += "  -r\t\tBuild and run an executable file.\n"
+    output += "  -d\t\tInsert debug statement spans in generated C++ code."
+    return output
+} 
 
 function flag(args: [String], anon name: String) => args.contains("-" + name)
 
@@ -32,6 +41,7 @@ function main(args: [String]) {
     let lexer_debug = flag(args, "l")
     let parser_debug = flag(args, "p")
     let build_executable = flag(args, "b")
+    let run_executable = flag(args, "r")
     let codegen_debug = flag(args, "d")
 
     mut file_name: String? = None
@@ -42,9 +52,9 @@ function main(args: [String]) {
             first_arg = false
             continue
         }
-        if arg != "-h" and arg != "-l" and arg != "-p" and arg != "-b" and arg != "-d" {
+        if arg != "-h" and arg != "-l" and arg != "-p" and arg != "-b" and arg != "-r" and arg != "-d" {
             if file_name.has_value() {
-                eprintln("you can only pass one file")
+                eprintln("you can only pass one source file")
                 eprintln("{}", usage())
                 return 1
             } else {
@@ -89,16 +99,21 @@ function main(args: [String]) {
 
     let output = CodeGenerator::generate(checked_program, file_name: file_name!, file_contents, debug_info: codegen_debug)
 
-    if build_executable {
-        let output_filename = "build/output.cpp"
-        write_to_file(data: output, output_filename)
-        run_compiler(output_filename)
+    if (build_executable or run_executable) {
+        let cpp_filename = "build/output.cpp"
+        let output_filename = "build/output"
+        write_to_file(data: output, output_filename: cpp_filename)
+        run_compiler(cpp_filename, output_filename)
+
+        if run_executable {
+            system(output_filename.c_string())
+        }
     } else {
         println("{}", output)
     }
 }
 
-function run_compiler(output_filename: String) throws {
+function run_compiler(cpp_filename: String, output_filename: String) throws {
     mut compile_args = [
         "clang++"
         "-fcolor-diagnostics"
@@ -111,9 +126,9 @@ function run_compiler(output_filename: String) throws {
         "-Wno-deprecated-declarations"
         "-Iruntime"
         "-o"
-        output_filename.split('.')[0]
+        output_filename
     ]
-    compile_args.push(output_filename)
+    compile_args.push(cpp_filename)
     mut command = ""
     for compile_arg in compile_args.iterator() {
         command += compile_arg
