@@ -3698,8 +3698,7 @@ struct Typechecker {
                 }
             }
             Restricted(whitelist, span) => {
-                // FIXME: Implement
-                todo("check_member_access: Restricted")
+                .check_restricted_access(accessor, accessee_kind: "variable", accessee, name: member.name, whitelist, span)
             }
             else => {}
         }
@@ -3713,10 +3712,38 @@ struct Typechecker {
                 }
             }
             Restricted(whitelist, span) => {
-                // FIXME: Implement
-                todo("check_method_access: Restricted")
+                .check_restricted_access(accessor, accessee_kind: "function", accessee, name: method.name, whitelist, span)
             }
             else => {}
+        }
+    }
+
+    function check_restricted_access(mut this, accessor: ScopeId, accessee_kind: String, accessee: ScopeId, name: String, whitelist: [ParsedType], span: Span) throws {
+        if not .current_struct_type_id.has_value() {
+            .error(format("Can't access {} ‘{}’ from scope ‘{}’, because ‘{}’ is not in the restricted whitelist", accessee_kind, name, .get_scope(accessor).namespace_name, .get_scope(accessor).namespace_name), span)
+            return
+        }
+        let own_type_id = .current_struct_type_id!
+        let type = .get_type(own_type_id)
+        match type {
+            Struct(id) => {
+                mut was_whitelisted = false
+                for whitelisted_type in whitelist.iterator() {
+                    let type_id = .typecheck_typename(parsed_type: whitelisted_type, scope_id: accessee, ignore_errors: false)
+                    // FIXME: Handle typecheck failure
+                    if type_id.equals(own_type_id) {
+                        // FIXME: A naked `return` would be nicer here
+                        was_whitelisted = true
+                        break
+                    }
+                }
+                if not was_whitelisted {
+                    .error(format("Can't access {} ‘{}’ from scope ‘{}’, because it is not in the restricted whitelist", accessee_kind, name, .get_scope(accessor).namespace_name), span)
+                }
+            }
+            else => {
+                .error(format("Can't access {} ‘{}’ from scope ‘{}’, because it is not in the restricted whitelist", accessee_kind, name, .get_scope(accessor).namespace_name), span)
+            }
         }
     }
 
