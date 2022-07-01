@@ -213,9 +213,20 @@ struct CodeGenerator {
 
         if not function_.generic_params.is_empty() {
             output += "template <"
-
-            // FIXME: Generic parameters
-
+            mut first = true
+            for generic_parameter in function_.generic_params.iterator() {
+                if first {
+                    first = false
+                } else {
+                    output += ","
+                }
+                output += "typename "
+                let type_id = match generic_parameter {
+                    InferenceGuide(type_id) => type_id
+                    Parameter(type_id) => type_id
+                }
+                output += .codegen_type(type_id)
+            }
             output += ">"
         }
 
