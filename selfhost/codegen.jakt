@@ -312,11 +312,18 @@ struct CodeGenerator {
 
         if not struct_.generic_parameters.is_empty() {
             output += "template <"
-        }
 
-        // FIXME: generic parameter names
+            mut first = true
+            for generic_parameter in struct_.generic_parameters.iterator() {
+                if first {
+                    first = false
+                } else {
+                    output += ","
+                }
+                output += "typename "
+                output += .codegen_type(generic_parameter)
+            }
 
-        if not struct_.generic_parameters.is_empty() {
             output += "> "
         }
 
