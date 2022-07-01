@@ -357,12 +357,16 @@ class Module {
         return TypeId(module: .id, id: new_id)
     }
 
+    public function next_function_id(this) -> FunctionId {
+        return FunctionId(module: .id, id: .functions.size())
+    }
+
     public function add_function(mut this, checked_function: CheckedFunction) throws -> FunctionId {
-        let new_id = .functions.size()
+        let new_id = .next_function_id()
 
         .functions.push(checked_function)
 
-        return FunctionId(module: .id, id: new_id)
+        return new_id
     }
 
     public function add_variable(mut this, anon checked_variable: CheckedVariable) throws -> VarId {
