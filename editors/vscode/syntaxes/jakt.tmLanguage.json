@@ -211,7 +211,7 @@
         },
         {
           "name": "meta.type.enum.body.jakt",
-          "begin": "(?<=enum.*?)(\\{)",
+          "begin": "(?<=\\benum\\b.*?)(\\{)",
           "beginCaptures": {
             "1": {
               "name": "punctuation.begin.brace.jakt"
