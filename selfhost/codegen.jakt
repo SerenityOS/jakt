@@ -156,6 +156,10 @@ struct CodeGenerator {
         output += "namespace Jakt {\n"
 
         for module in generator.program.modules.iterator() {
+            for struct_ in module.structures.iterator() {
+                output += generator.codegen_struct_predecl(struct_)
+            }
+
             for enum_ in module.enums.iterator() {
                 output += generator.codegen_enum_predecl(enum_)
             }
@@ -262,6 +266,39 @@ struct CodeGenerator {
         }
 
         output += "\n"
+
+        return output
+    }
+
+    function codegen_struct_predecl(mut this, struct_: CheckedStruct) throws -> String {
+        if struct_.definition_linkage is External {
+            return ""
+        }
+        mut output = ""
+
+        if not struct_.generic_parameters.is_empty() {
+            output += "template <"
+            mut first = true
+            for generic_parameter in struct_.generic_parameters.iterator() {
+                if first {
+                    first = false                
+                } else {
+                    output += ","
+                }
+                output += "typename "
+                output += .codegen_type(generic_parameter)
+            }
+            output += ">"
+        }
+
+        output += match struct_.record_type {
+            Class => "class "
+            Struct => "struct "
+            else => ""
+        }
+
+        output += struct_.name
+        output += ";"
 
         return output
     }
