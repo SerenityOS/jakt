@@ -334,6 +334,8 @@ class Scope {
     public parent: ScopeId?
     public children: [ScopeId]
     public can_throw: bool
+
+    public debug_name: String
 }
 
 class Module {
@@ -1010,7 +1012,7 @@ struct Typechecker {
         )
 
         let PRELUDE_SCOPE_ID: ScopeId = typechecker.prelude_scope_id()
-        let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: false)
+        let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: false, debug_name: "root")
         typechecker.typecheck_module(parsed_namespace, scope_id: root_scope_id)
 
         return typechecker.program
@@ -1061,7 +1063,7 @@ struct Typechecker {
     function is_floating(this, anon type_id: TypeId) => .program.is_floating(type_id)
     function is_numeric(this, anon type_id: TypeId) => .program.is_numeric(type_id)
 
-    function create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool) throws -> ScopeId {
+    function create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String) throws -> ScopeId {
         // Check that parent_scope_id is a valid ScopeId
         if parent_scope_id.has_value() {
             // Check that the ModuleId is valid
@@ -1090,6 +1092,7 @@ struct Typechecker {
             parent: parent_scope_id
             children: []
             can_throw
+            debug_name
         )
 
         .program.modules[.current_module_id.id].scopes.push(scope)
@@ -1164,6 +1167,7 @@ struct Typechecker {
         let prelude_scope_id = .create_scope(
             parent_scope_id: none_scope_id
             can_throw: false
+            debug_name: "prelude"
         )
 
         let tokens = Lexer::lex(compiler: .compiler)
@@ -1660,7 +1664,7 @@ struct Typechecker {
                 namespace_scope_id = namespace_scope_tuple!.0
             } else {
                 // Typecheck struct fields in the unnamed namespace
-                namespace_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false)
+                namespace_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("namespace({})", namespace_name))
                 mut scope = .get_scope(scope_id)
                 scope.children.push(namespace_scope_id)
             }
@@ -1754,7 +1758,7 @@ struct Typechecker {
 
                 .current_module_id = imported_module_id!
                 
-                let imported_scope_id = .create_scope(parent_scope_id: .root_scope_id(), can_throw: false)
+                let imported_scope_id = .create_scope(parent_scope_id: .root_scope_id(), can_throw: false, debug_name: format("module({})", import_.module_name.name))
                 .typecheck_module(parsed_namespace: parsed_namespace!, scope_id: imported_scope_id)
 
                 .current_module_id = original_current_module_id
@@ -1865,7 +1869,7 @@ struct Typechecker {
         for namespce in parsed_namespace.namespaces.iterator() {
             // Find all predeclarations in namespaces that are children of this namespace
             if namespce.name.has_value() {
-                let namespace_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false)
+                let namespace_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("namespace({})", namespce.name!))
 
                 mut child_scope = .get_scope(namespace_scope_id)
                 child_scope.namespace_name = namespce.name!
@@ -1933,7 +1937,7 @@ struct Typechecker {
     function typecheck_enum_predecl(mut this, parsed_record: ParsedRecord, enum_id: EnumId, scope_id: ScopeId) throws {
         let enum_type_id = .find_or_add_type_id(type: Type::Enum(enum_id))
 
-        let enum_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false)
+        let enum_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("enum({})", parsed_record.name))
 
         .add_enum_to_scope(scope_id, name: parsed_record.name, enum_id, span: parsed_record.name_span)
 
@@ -1982,7 +1986,7 @@ struct Typechecker {
         let struct_type_id = .find_or_add_type_id(type: Type::Struct(struct_id))
         .current_struct_type_id = struct_type_id
 
-        let struct_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false)
+        let struct_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("struct({})", parsed_record.name))
 
         .add_struct_to_scope(scope_id, name: parsed_record.name, struct_id, span: parsed_record.name_span)
 
@@ -2022,8 +2026,8 @@ struct Typechecker {
         for method in parsed_record.methods.iterator() {
             let func = method.parsed_function
 
-            let method_scope_id = .create_scope(parent_scope_id: struct_scope_id, can_throw: func.can_throw)
-            let block_scope_id = .create_scope(parent_scope_id: method_scope_id, can_throw: func.can_throw)
+            let method_scope_id = .create_scope(parent_scope_id: struct_scope_id, can_throw: func.can_throw, debug_name: format("method({}::{})", parsed_record.name, func.name))
+            let block_scope_id = .create_scope(parent_scope_id: method_scope_id, can_throw: func.can_throw, debug_name: format("method-block({}::{})", parsed_record.name, func.name))
 
             let is_generic = not parsed_record.generic_parameters.is_empty() or not func.generic_parameters.is_empty()
 
@@ -2058,7 +2062,7 @@ struct Typechecker {
 
             mut check_scope: ScopeId? = None
             if is_generic {
-                check_scope = .create_scope(parent_scope_id: method_scope_id, can_throw: func.can_throw)
+                check_scope = .create_scope(parent_scope_id: method_scope_id, can_throw: func.can_throw, debug_name: format("method-checking({}::{})", parsed_record.name, func.name))
             }
 
             for gen_parameter in func.generic_parameters.iterator() {
@@ -2199,7 +2203,7 @@ struct Typechecker {
                 namespace_scope_id = namespace_scope_tuple!.0
             } else {
                 // Create the unnamed namespace (aka a block scope)
-                namespace_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false)
+                namespace_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: "unnamed-namespace")
                 mut scope = .get_scope(scope_id)
                 scope.children.push(namespace_scope_id)
 
@@ -2334,8 +2338,8 @@ struct Typechecker {
                         let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
                             let can_function_throw = is_boxed
-                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw)
-                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw)
+                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
+                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
                             let none_parsed_function: ParsedFunction? = None
                             let checked_function = CheckedFunction(
                                 name: variant.name,
@@ -2363,8 +2367,8 @@ struct Typechecker {
                         let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
                             let can_function_throw = is_boxed
-                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw)
-                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw)
+                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
+                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
                             let variable = CheckedVariable(
                                 name: "value"
                                 type_id
@@ -2396,8 +2400,8 @@ struct Typechecker {
                         let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
                             let can_function_throw = is_boxed
-                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw)
-                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw)
+                            let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
+                            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
                             let none_parsed_function: ParsedFunction? = None
                             let checked_function = CheckedFunction(
                                 name: variant.name,
@@ -2449,8 +2453,8 @@ struct Typechecker {
             // No constructor found, so let's make one
 
             let constructor_can_throw = record.record_type is Class
-            let function_scope_id = .create_scope(parent_scope_id, can_throw: constructor_can_throw)
-            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: constructor_can_throw)
+            let function_scope_id = .create_scope(parent_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor({})", record.name))
+            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor-block({})", record.name))
 
             let none_parsed_function: ParsedFunction? = None
             let checked_constructor = CheckedFunction(
@@ -2581,8 +2585,8 @@ struct Typechecker {
     }
 
     function typecheck_function_predecl(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
-        let function_scope_id = .create_scope(parent_scope_id, can_throw: parsed_function.can_throw)
-        let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: parsed_function.can_throw)
+        let function_scope_id = .create_scope(parent_scope_id, can_throw: parsed_function.can_throw, debug_name: format("function({})", parsed_function.name))
+        let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: parsed_function.can_throw, debug_name: format("function-block({})", parsed_function.name))
         let module_id = .current_module_id.id
 
         // TODO: Make this true if it's a method of a generic class/struct.
@@ -3167,7 +3171,7 @@ struct Typechecker {
 
     function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedBlock {
         let parent_throws = .get_scope(parent_scope_id).can_throw
-        let block_scope_id = .create_scope(parent_scope_id, can_throw: parent_throws)
+        let block_scope_id = .create_scope(parent_scope_id, can_throw: parent_throws, debug_name: "block")
         mut checked_block = CheckedBlock(
             statements: []
             scope_id: block_scope_id
@@ -3905,7 +3909,7 @@ struct Typechecker {
     }
 
     function typecheck_try(mut this, stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
-        let try_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true)
+        let try_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "try")
         let checked_stmt = .typecheck_statement(stmt, scope_id, safety_mode)
         let error_struct_id = .find_struct_in_prelude("Error")
         let error_decl = CheckedVariable(
@@ -3918,7 +3922,7 @@ struct Typechecker {
         mut module = .current_module()
         let error_id = module.add_variable(name: error_decl)
 
-        let catch_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false)
+        let catch_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: "catch")
         .add_var_to_scope(scope_id: catch_scope_id, name: error_name, var_id: error_id, span: error_span)
         let checked_catch_block = .typecheck_block(catch_block, parent_scope_id: catch_scope_id, safety_mode)
 
@@ -4641,7 +4645,7 @@ struct Typechecker {
                                     return CheckedExpression::Match(expr: checked_expr, match_cases: [], span, type_id: unknown_type_id(), all_variants_constant: false)
                                 }
 
-                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw)
+                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant_names))
                                 mut module = .current_module()
                                 match matched_variant! {
                                     Untyped(name) => {
@@ -4765,7 +4769,7 @@ struct Typechecker {
                                     seen_catch_all = true
                                     catch_all_span = case_.marker_span
                                 }
-                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw)
+                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
                                 let checked_tuple = .typecheck_match_body(body: case_.body, scope_id: new_scope_id, safety_mode, generic_inferences, final_result_type, span: case_.marker_span)
                                 let checked_body = checked_tuple.0
                                 final_result_type = checked_tuple.1
@@ -4814,7 +4818,7 @@ struct Typechecker {
                                 // We don't know what the enum type is, but we have the type var for it, so generate a generic enum match.
                                 // note that this will be fully checked when this match expression is actually instantiated.
 
-                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw)
+                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant_names))
                                 let checked_tuple = .typecheck_match_body(body: case_.body, scope_id: new_scope_id, safety_mode, generic_inferences, final_result_type, span: case_.marker_span)
                                 let checked_body = checked_tuple.0
                                 final_result_type = checked_tuple.1
@@ -4839,7 +4843,7 @@ struct Typechecker {
                                 }
                                 seen_catch_all = true
 
-                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw)
+                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
                                 let checked_tuple = .typecheck_match_body(body: case_.body, scope_id: new_scope_id, safety_mode, generic_inferences, final_result_type, span: case_.marker_span)
                                 let checked_body = checked_tuple.0
                                 final_result_type = checked_tuple.1
@@ -4874,7 +4878,7 @@ struct Typechecker {
                                     span: case_.marker_span
                                 )
 
-                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw)
+                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-expression({})", expr))
                                 let checked_tuple = .typecheck_match_body(body: case_.body, scope_id: new_scope_id, safety_mode, generic_inferences, final_result_type, span: case_.marker_span)
                                 let checked_body = checked_tuple.0
                                 final_result_type = checked_tuple.1
