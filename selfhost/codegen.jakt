@@ -947,7 +947,16 @@ struct CodeGenerator {
                 RawAddress => "&"
                 LogicalNot => "!"
                 BitwiseNot => "~"
-                Is(type_id) => "is<" + .codegen_type(type_id) + ">("
+                Is(type_id) => {
+                    let is_type = match .program.get_type(type_id) {
+                        Struct(id) => {
+                            let type_module = .program.get_module(id.module)
+                            yield .program.get_struct(id).name
+                        }
+                        else => .codegen_type(type_id)
+                    }
+                    yield "is<" + is_type + ">("
+                }
                 TypeCast(cast) => {
                     let is_integer = .program.is_integer(cast.type_id())
                     yield match cast {
