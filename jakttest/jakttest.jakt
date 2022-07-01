@@ -77,38 +77,22 @@ function main(args: [String]) {
     let parsed_test = Parser::parse(tokens, errors);
 
     // Windows
-    // system("del compiler.out compiler.err runtest.out runtest.err".c_string())
+    // system("del runtest.out runtest.err".c_string())
 
     // Unix
-    system("rm -f compiler.out compiler.err runtest.out runtest.err".c_string())
+    system("rm -f runtest.out runtest.err".c_string())
 
     match parsed_test {
         SuccessTest(expected) => {
-            write_to_file(file_contents, output_filename: "output.jakt")
 
-            run_compiler("output.jakt")
+            build_and_run(file_name)
 
-            // Windows
-            // run_test("build\\output", expected)
+            mut build_and_run_output_file = File::open_for_reading("runtest.out")
+            let build_and_run_output = build_and_run_output_file.read_all()
 
-            // Unix
-            run_test("./build/output", expected)
+            let test_passes_output = compare_test(bytes: build_and_run_output, expected)
 
-            mut runtest_file = File::open_for_reading("runtest.out")
-            let runtest_output = runtest_file.read_all()
-
-            let test_passes_output = compare_test(bytes: runtest_output, expected)
-
-            mut compiler_output_file = File::open_for_reading("compiler.out")
-            let compiler_output = compiler_output_file.read_all()
-
-            mut compiler_error_file = File::open_for_reading("compiler.err")
-            let compiler_error_output = compiler_error_file.read_all()
-
-            let test_passes_compiler_out = compare_test(bytes: compiler_output, expected: "")
-            let test_passes_compiler_err = compare_test(bytes: compiler_error_output, expected: "")
-
-            if not (test_passes_output and test_passes_compiler_out and test_passes_compiler_err) {
+            if not (test_passes_output) {
                 eprintln("Test failed: {}", file_name)
                 return 1
             } else {
@@ -117,14 +101,13 @@ function main(args: [String]) {
             }
         }
         FailureTest(expected) => {
-            write_to_file(file_contents, output_filename: "output.jakt")
 
-            run_compiler("output.jakt")
+            build_and_run(file_name)
 
-            mut compiler_error_file = File::open_for_reading("compiler.err")
-            let compiler_error_output = compiler_error_file.read_all()
+            mut build_and_run_error_file = File::open_for_reading("runtest.err")
+            let build_and_run_output = build_and_run_error_file.read_all()
 
-            let test_passes = compare_error(bytes: compiler_error_output, expected)
+            let test_passes = compare_error(bytes: build_and_run_output, expected)
 
             if not test_passes {
                 eprintln("Test failed: {}", file_name)
@@ -144,33 +127,16 @@ function main(args: [String]) {
     }
 }
 
-function run_test(anon filename: String, expected: String) throws {
-    mut run_test_args = [filename]
-
-    run_test_args.push(">")
-    run_test_args.push("runtest.out")
-    run_test_args.push("2>")
-    run_test_args.push("runtest.err")
-
-    mut command = ""
-    for compile_arg in run_test_args.iterator() {
-        command += compile_arg
-        command += " "
-    }
-    
-    system(command.c_string())
-}
-
-function run_compiler(anon output_filename: String) throws {
+function build_and_run(anon jakt_source_file: String) throws {
     mut compile_args = [
         "build/main"
-        "-b"
+        "-r"
     ]
-    compile_args.push(output_filename)
+    compile_args.push(jakt_source_file)
     compile_args.push(">")
-    compile_args.push("compiler.out")
+    compile_args.push("runtest.out")
     compile_args.push("2>")
-    compile_args.push("compiler.err")
+    compile_args.push("runtest.err")
 
     mut command = ""
     for compile_arg in compile_args.iterator() {

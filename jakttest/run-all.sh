@@ -57,7 +57,7 @@ for f in $TEST_FILES; do
 
 done
 
-rm compiler.err compiler.out output.jakt runtest.err runtest.out
+rm runtest.err runtest.out
 
 echo ==============================
 echo "$pass" passed
