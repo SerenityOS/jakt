@@ -404,7 +404,7 @@ struct Lexer {
         }
 
         if .eof() or .peek() != b'\'' {
-            .error("expected single quote", Span(start, end: start))
+            .error("Expected single quote", Span(start, end: start))
         }
         .index += 1
 
@@ -616,7 +616,7 @@ struct Lexer {
         let end = .index
 
         if found_newline {
-            .error("expected end quote", Span(start, end))
+            .error("Expected end quote", Span(start, end))
             return Token::Garbage(Span(start, end))
         }
 

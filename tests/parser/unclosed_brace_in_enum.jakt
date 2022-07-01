@@ -1,4 +1,4 @@
 /// Expect:
-/// - error: "expected variant name\n"
+/// - error: "Incomplete enum definition, expected variant name\n"
 
 enum foo {
