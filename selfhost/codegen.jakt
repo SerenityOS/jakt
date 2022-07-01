@@ -7,7 +7,7 @@ import parser { BinaryOperator, FunctionLinkage }
 import typechecker {
     BuiltinType, CheckedBlock, CheckedCall, CheckedExpression,
     CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
-    ModuleId, ScopeId, StructId, EnumId, Type, TypeId, expression_type,
+    Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId, expression_type,
     CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody }
 import utility { panic, todo, join, prepend_to_each, Span }
 
@@ -129,6 +129,7 @@ struct CodeGenerator {
     deferred_output: String
     current_function: CheckedFunction?
     debug_info: CodegenDebugInfo
+    namespace_stack: [String]
 
     function generate(anon program: CheckedProgram, file_name: String, file_contents: [u8], debug_info: bool) throws -> String {
         let none_function: CheckedFunction? = None
@@ -148,6 +149,7 @@ struct CodeGenerator {
                 line_spans: []
                 statement_span_comments: debug_info
             )
+            namespace_stack: []
         )
 
         mut output = ""
@@ -156,46 +158,227 @@ struct CodeGenerator {
         output += "namespace Jakt {\n"
 
         for module in generator.program.modules.iterator() {
-            for struct_ in module.structures.iterator() {
-                output += generator.codegen_struct_predecl(struct_)
+            let scope_id = ScopeId(module: ModuleId(id: 0), id: 0)
+            let scope = generator.program.get_scope(scope_id)
+
+            if not module.is_root {
+                output += "namespace "
+                output += module.name
+                output += " {\n"
             }
 
-            for enum_ in module.enums.iterator() {
-                output += generator.codegen_enum_predecl(enum_)
+            output += generator.codegen_namespace_predecl(scope, current_module: module)
+
+            if not module.is_root {
+                output += "}\n"
+            }
+        }
+
+
+        for module in generator.program.modules.iterator() {
+            let scope_id = ScopeId(module: ModuleId(id: 0), id: 0)
+            let scope = generator.program.get_scope(scope_id)
+
+            if not module.is_root {
+                output += "namespace "
+                output += module.name
+                output += " {\n"
             }
 
-            for function_ in module.functions.iterator() {
-                if function_.type is ImplicitEnumConstructor {
-                    continue
-                }
+            output += generator.codegen_namespace(scope, current_module: module)
 
-                let predecl = generator.codegen_function_predecl(function_)
-                if function_.name != "main" {
-                    output += predecl
-                }
+            if not module.is_root {
+                output += "}\n"
             }
-
-            for struct_ in module.structures.iterator() {
-                output += generator.codegen_struct(struct_)
-            }
-
-            for enum_ in module.enums.iterator() {
-                output += generator.codegen_enum(enum_)
-            }
-
-            for function_ in module.functions.iterator() {
-                if not (function_.type is ImplicitEnumConstructor or function_.type is ImplicitConstructor or function_.linkage is External) {
-                    generator.current_function = function_
-                    output += generator.codegen_function(function_)
-                }
-            }
-
         }
 
         output += generator.deferred_output
 
         output += "} // namespace Jakt\n"
 
+        return output
+    }
+
+    function codegen_namespace(mut this, scope: Scope, current_module: Module) throws -> String {
+        mut output = ""
+
+        // FIXME: This wants to be a {TypeId}
+        mut seen_types: {usize} = {}
+
+        for name_and_struct_id in scope.structs.iterator() {
+            let struct_id = name_and_struct_id.1
+            if not struct_id.module.equals(current_module.id) {
+                continue
+            }
+            let struct_ = .program.get_struct(struct_id)
+            if seen_types.contains(struct_.type_id.id) {
+                continue
+            }
+            output += .codegen_struct(struct_)
+            output += "\n"
+        }
+
+        for name_and_enum_id in scope.enums.iterator() {
+            let enum_id = name_and_enum_id.1
+            if not enum_id.module.equals(current_module.id) {
+                continue
+            }
+            let enum_ = .program.get_enum(enum_id)
+            if seen_types.contains(enum_.type_id.id) {
+                continue
+            }
+            output += .codegen_enum_predecl(enum_)
+            output += "\n"
+        }
+
+        for child_scope_id in scope.children.iterator() {
+            let child_scope = .program.get_scope(child_scope_id)
+            if child_scope.namespace_name.has_value() {
+                let name = child_scope.namespace_name!
+                .namespace_stack.push(name)
+                output += "namespace "
+                output += name
+                output += " {\n"
+                output += .codegen_namespace(scope: child_scope, current_module)
+                output += "}\n"
+                .namespace_stack.pop()
+            }
+        }
+
+        for name_and_function_id in scope.functions.iterator() {
+            let function_id = name_and_function_id.1
+            if not function_id.module.equals(current_module.id) {
+                continue
+            }
+
+            let function_ = .program.get_function(function_id)
+
+            let previous_function = .current_function
+            .current_function = function_
+            defer .current_function = previous_function
+
+            if function_.linkage is External or function_.type is ImplicitConstructor or function_.type is ImplicitEnumConstructor {
+                continue
+            }
+
+            output += .codegen_function(function_)
+            output += "\n"
+        }
+
+        for name_and_struct_id in scope.structs.iterator() {
+            let struct_id = name_and_struct_id.1
+            if not struct_id.module.equals(current_module.id) {
+                continue
+            }
+            let struct_ = .program.get_struct(struct_id)
+
+            if struct_.definition_linkage is External {
+                continue
+            }
+
+            if not struct_.generic_parameters.is_empty() {
+                continue
+            }
+
+            let scope = .program.get_scope(struct_.scope_id)
+            for name_and_function_id in scope.functions.iterator() {
+                let function_id = name_and_function_id.1
+                let function_ = .program.get_function(function_id)
+                let previous_function = .current_function
+                .current_function = function_
+                defer .current_function = previous_function
+
+                if not function_.type is ImplicitConstructor {
+                    output += .codegen_function_in_namespace(function_, containing_struct: struct_.type_id)
+                    output += "\n"
+                }
+            }
+        }
+
+        for name_and_enum_id in scope.enums.iterator() {
+            let enum_id = name_and_enum_id.1
+            if not enum_id.module.equals(current_module.id) {
+                continue
+            }
+            let enum_ = .program.get_enum(enum_id)
+
+            if enum_.definition_linkage is External {
+                continue
+            }
+
+            if not enum_.generic_parameters.is_empty() {
+                continue
+            }
+
+            let scope = .program.get_scope(enum_.scope_id)
+            for name_and_function_id in scope.functions.iterator() {
+                let function_id = name_and_function_id.1
+                let function_ = .program.get_function(function_id)
+                let previous_function = .current_function
+                .current_function = function_
+                defer .current_function = previous_function
+
+                if not function_.type is ImplicitConstructor {
+                    output += .codegen_function_in_namespace(function_, containing_struct: enum_.type_id)
+                    output += "\n"
+                }
+            }
+        }
+
+        return output
+    }
+
+    function codegen_namespace_predecl(mut this, scope: Scope, current_module: Module) throws -> String {
+        mut output = ""
+        if scope.namespace_name.has_value() {
+            output += "namespace "
+            output += scope.namespace_name!
+            output += " {\n"
+        }
+
+        for name_and_struct_id in scope.structs.iterator() {
+            let struct_id = name_and_struct_id.1
+            if not struct_id.module.equals(current_module.id) {
+                continue
+            }
+            let struct_ = .program.get_struct(struct_id)
+            output += .codegen_struct_predecl(struct_)
+            output += "\n"
+        }
+
+        for name_and_enum_id in scope.enums.iterator() {
+            let enum_id = name_and_enum_id.1
+            if not enum_id.module.equals(current_module.id) {
+                continue
+            }
+            let enum_ = .program.get_enum(enum_id)
+            output += .codegen_enum_predecl(enum_)
+            output += "\n"
+        }
+
+        for child in scope.children.iterator() {
+            output += .codegen_namespace_predecl(scope: .program.get_scope(child), current_module)
+        }
+
+        for name_and_function_id in scope.functions.iterator() {
+            let function_id = name_and_function_id.1
+            if not function_id.module.equals(current_module.id) {
+                continue
+            }
+            let function_ = .program.get_function(function_id)
+            if function_.type is ImplicitEnumConstructor {
+                continue
+            }
+            let function_output = .codegen_function_predecl(function_)
+            if not function_.type is ImplicitConstructor and function_.name != "main" {
+                output += function_output
+                output += "\n"
+            }
+        }
+
+        if scope.namespace_name.has_value() {
+            output += "}\n"
+        }
         return output
     }
 
