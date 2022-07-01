@@ -396,6 +396,8 @@ class CheckedFunction {
     public type: FunctionType
     public linkage: FunctionLinkage
     public function_scope_id: ScopeId
+    public is_instantiated: bool
+    public parsed_function: ParsedFunction?
 
     public function is_static(this) -> bool {
         if .params.size() < 1 {
@@ -413,6 +415,13 @@ class CheckedFunction {
         let first_param_variable = .params[0].variable
 
         return first_param_variable.name == "this" and first_param_variable.is_mutable
+    }
+
+    public function to_parsed_function(this) -> ParsedFunction {
+        if not .parsed_function.has_value() {
+            panic("to_parsed_function() called on a synthetic function")
+        }
+        return .parsed_function!
     }
 }
 
@@ -1973,7 +1982,10 @@ struct Typechecker {
 
         .add_struct_to_scope(scope_id, name: parsed_record.name, struct_id, span: parsed_record.name_span)
 
-        let is_extern = parsed_record.definition_linkage
+        let is_extern = match parsed_record.definition_linkage {
+            External => true
+            Internal => false
+        }
 
         mut module = .current_module()
         module.structures[struct_id.id] = CheckedStruct(
@@ -1982,7 +1994,7 @@ struct Typechecker {
             generic_parameters: []
             fields: []
             scope_id: struct_scope_id
-            definition_linkage: is_extern
+            definition_linkage: parsed_record.definition_linkage
             record_type: parsed_record.record_type
             type_id: struct_type_id
         )
@@ -2028,6 +2040,8 @@ struct Typechecker {
                 type: func.type
                 linkage: func.linkage
                 function_scope_id: method_scope_id
+                is_instantiated: not is_generic or is_extern
+                parsed_function: method.parsed_function
             )
 
             module.functions.push(checked_function)
@@ -2318,6 +2332,7 @@ struct Typechecker {
                             let can_function_throw = is_boxed
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw)
                             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw)
+                            let none_parsed_function: ParsedFunction? = None
                             let checked_function = CheckedFunction(
                                 name: variant.name,
                                 name_span: variant.span,
@@ -2330,6 +2345,8 @@ struct Typechecker {
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
                                 function_scope_id
+                                is_instantiated: true
+                                parsed_function: none_parsed_function
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
@@ -2351,6 +2368,7 @@ struct Typechecker {
                                 definition_span: param.span
                                 visibility: Visibility::Public
                             )
+                            let none_parsed_function: ParsedFunction? = None
                             let checked_function = CheckedFunction(
                                 name: variant.name,
                                 name_span: variant.span,
@@ -2363,6 +2381,8 @@ struct Typechecker {
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
                                 function_scope_id
+                                is_instantiated: true
+                                parsed_function: none_parsed_function
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
@@ -2374,6 +2394,7 @@ struct Typechecker {
                             let can_function_throw = is_boxed
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw)
                             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw)
+                            let none_parsed_function: ParsedFunction? = None
                             let checked_function = CheckedFunction(
                                 name: variant.name,
                                 name_span: variant.span,
@@ -2386,6 +2407,8 @@ struct Typechecker {
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
                                 function_scope_id
+                                is_instantiated: true
+                                parsed_function: none_parsed_function
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
@@ -2425,6 +2448,7 @@ struct Typechecker {
             let function_scope_id = .create_scope(parent_scope_id, can_throw: constructor_can_throw)
             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: constructor_can_throw)
 
+            let none_parsed_function: ParsedFunction? = None
             let checked_constructor = CheckedFunction(
                 name: record.name
                 name_span: record.name_span
@@ -2442,6 +2466,8 @@ struct Typechecker {
                 type: FunctionType::ImplicitConstructor
                 linkage: FunctionLinkage::Internal
                 function_scope_id
+                is_instantiated: true
+                parsed_function: none_parsed_function
             )
 
             // Internal constructor
@@ -2575,6 +2601,8 @@ struct Typechecker {
             type: FunctionType::Normal
             linkage: parsed_function.linkage
             function_scope_id
+            is_instantiated: not is_generic
+            parsed_function
         )
         // FIXME: We can't return a `mut Foo` from a function right now, but assigning anything to a `mut` variable makes it mutable.
         //        AKA, working around one bug with another bug. :^)
