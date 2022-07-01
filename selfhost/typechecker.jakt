@@ -4123,7 +4123,11 @@ struct Typechecker {
                                 mut variant_names = variant_name
 
                                 if variant_names.size() == 1 {
-                                    variant_names.push((enum_.name, variant_names[0].1))
+                                    let temp = variant_names[0]
+                                    variant_names = [
+                                        (enum_.name, variant_names[0].1)
+                                        temp
+                                    ]
                                 }
                                 if variant_names.is_empty() {
                                     continue
