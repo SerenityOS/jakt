@@ -7,6 +7,7 @@
  */
 
 use std::collections::HashSet;
+use std::fmt::Write;
 
 use crate::{
     typechecker::{
@@ -627,7 +628,7 @@ pub fn get_function_signature(project: &Project, function_id: FunctionId) -> Str
                 }
             };
             let seperator = if is_first_param { "" } else { ", " };
-            generic_parameters.push_str(&format!("{}{}", seperator, generic_type));
+            let _ = write!(generic_parameters, "{}{}", seperator, generic_type);
             is_first_param = false;
         }
 
@@ -649,10 +650,11 @@ pub fn get_function_signature(project: &Project, function_id: FunctionId) -> Str
         }
 
         let seperator = if is_first_param { "" } else { ", " };
-        parameters.push_str(&format!(
+        let _ = write!(
+            parameters,
             "{}{}{}{}{}",
             seperator, anon, mutable, param.variable.name, variable_type
-        ));
+        );
         is_first_param = false;
     }
 

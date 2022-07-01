@@ -59,12 +59,9 @@ fn parse_quoted_string(s: &str) -> Result<String, JaktError> {
     let mut last_index = 0;
     for (i, _) in data.match_indices('\\') {
         result.push_str(&data[last_index..i]);
-        let escaped_char = data
-            .get(i + 1..i + 2)
-            .ok_or(JaktError::StringError(format!(
-                "Expected escaped character at offset {}",
-                i
-            )))?;
+        let escaped_char = data.get(i + 1..i + 2).ok_or_else(|| {
+            JaktError::StringError(format!("Expected escaped character at offset {}", i))
+        })?;
         match escaped_char {
             "\"" => result.push('"'),
             "\\" => result.push('\\'),
@@ -190,7 +187,7 @@ fn find_results(
 }
 
 fn test_sample(path: &PathBuf) -> Result<(), JaktError> {
-    let (expected_output, expected_error, expected_stderr) = find_results(&path)?;
+    let (expected_output, expected_error, expected_stderr) = find_results(path)?;
 
     if expected_output.is_none() && expected_error.is_none() && expected_stderr.is_none() {
         // No expectations, skip it
@@ -199,12 +196,11 @@ fn test_sample(path: &PathBuf) -> Result<(), JaktError> {
 
     // We have an output to compare to, let's do it.
     let mut compiler = Compiler::new(Vec::new());
-    let cpp_string = compiler.convert_to_cpp(&path);
+    let cpp_string = compiler.convert_to_cpp(path);
 
     let cpp_string = match cpp_string {
         Ok(cpp_string) => {
-            if expected_error.is_some() {
-                let expected_error_msg = expected_error.unwrap();
+            if let Some(expected_error_msg) = expected_error {
                 let expected_error_msg = expected_error_msg.replace('\r', "");
                 let expected_error_msg = expected_error_msg.replace('\n', "");
 
@@ -216,8 +212,7 @@ fn test_sample(path: &PathBuf) -> Result<(), JaktError> {
             cpp_string
         }
         Err(err) => {
-            if expected_error.is_some() {
-                let expected_error_msg = expected_error.unwrap();
+            if let Some(expected_error_msg) = expected_error {
                 let expected_error_msg = expected_error_msg.replace('\r', "");
                 let expected_error_msg = expected_error_msg.replace('\n', "");
 

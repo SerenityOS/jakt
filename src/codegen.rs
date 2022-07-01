@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
-
 use crate::compiler::{UNKNOWN_TYPE_ID, VOID_TYPE_ID};
 use crate::typechecker::{
     CheckedCall, CheckedEnum, CheckedEnumVariant, CheckedMatchBody, CheckedMatchCase,
@@ -28,6 +27,7 @@ use crate::{
     },
 };
 use std::collections::{BTreeMap, BTreeSet, LinkedList};
+use std::fmt::Write;
 
 const INDENT_SIZE: usize = 4;
 
@@ -253,7 +253,7 @@ fn codegen_namespace_predecl(
 ) -> String {
     let mut output = String::new();
     if let Some(name) = &scope.namespace_name {
-        output.push_str(&format!("namespace {} {{\n", name));
+        let _ = writeln!(output, "namespace {} {{", name);
     }
 
     // Visit the types.
@@ -423,7 +423,7 @@ fn codegen_namespace(
         let child_scope = project.get_scope(*child_scope_id);
         if let Some(name) = &child_scope.namespace_name {
             context.namespace_stack.push(name.clone());
-            output.push_str(&format!("namespace {} {{\n", name));
+            let _ = writeln!(output, "namespace {} {{", name);
             output.push_str(&codegen_namespace(
                 project,
                 child_scope,
@@ -1277,10 +1277,10 @@ fn codegen_struct_predecl(structure: &CheckedStruct, project: &Project) -> Strin
         }
         match structure.definition_type {
             DefinitionType::Class => {
-                output.push_str(&format!("class {};", structure.name));
+                let _ = write!(output, "class {};", structure.name);
             }
             DefinitionType::Struct => {
-                output.push_str(&format!("struct {};", structure.name));
+                let _ = write!(output, "struct {};", structure.name);
             }
         }
 
@@ -1303,28 +1303,27 @@ fn codegen_enum_debug_description_getter(enum_: &CheckedEnum) -> String {
             CheckedEnumVariant::WithValue(name, ..) => name,
             CheckedEnumVariant::StructLike(name, ..) => name,
         };
-        output.push_str(&format!(
-            "[&]([[maybe_unused]] {} const& that) -> ErrorOr<void> {{\n",
+        let _ = writeln!(
+            output,
+            "[&]([[maybe_unused]] {} const& that) -> ErrorOr<void> {{",
             name
-        ));
-        output.push_str(&format!(
-            "TRY(builder.append(\"{}::{}\"));",
-            enum_.name, name
-        ));
+        );
+        let _ = write!(output, "TRY(builder.append(\"{}::{}\"));", enum_.name, name);
         match variant {
             CheckedEnumVariant::StructLike(_, fields, ..) => {
                 output.push_str("TRY(builder.append(\"(\"));");
                 output.push_str("JaktInternal::_pretty_print_level++;");
                 for (j, field) in fields.iter().enumerate() {
                     output.push_str(codegen_pretty_print_indent());
-                    output.push_str(&format!("TRY(builder.append(\"{}: \"));", field.name));
+                    let _ = write!(output, "TRY(builder.append(\"{}: \"));", field.name);
                     if field.type_id == crate::compiler::STRING_TYPE_ID {
                         output.push_str("TRY(builder.append(\"\\\"\"));");
                     }
-                    output.push_str(&format!(
+                    let _ = write!(
+                        output,
                         "TRY(builder.appendff(\"{{}}\", that.{}));",
                         field.name
-                    ));
+                    );
                     if field.type_id == crate::compiler::STRING_TYPE_ID {
                         output.push_str("TRY(builder.append(\"\\\"\"));");
                     }
@@ -1371,7 +1370,7 @@ fn codegen_debug_description_getter(structure: &CheckedStruct, project: &Project
 
     output.push_str("auto builder = MUST(StringBuilder::create());");
 
-    output.push_str(&format!("TRY(builder.append(\"{}(\"));", structure.name));
+    let _ = write!(output, "TRY(builder.append(\"{}(\"));", structure.name);
 
     output.push_str("JaktInternal::_pretty_print_level++;\n");
     for (i, field) in structure.fields.iter().enumerate() {
@@ -1442,14 +1441,16 @@ fn codegen_ak_formatter(
     output.push_str("template<");
     output.push_str(&template_args);
     output.push('>');
-    output.push_str(&format!(
-        "struct Formatter<{}> : Formatter<StringView> {{\n",
+    let _ = writeln!(
+        output,
+        "struct Formatter<{}> : Formatter<StringView> {{",
         qualified_name
-    ));
-    output.push_str(&format!(
-        "    ErrorOr<void> format(FormatBuilder& builder, {} const& value)\n",
+    );
+    let _ = writeln!(
+        output,
+        "    ErrorOr<void> format(FormatBuilder& builder, {} const& value)",
         qualified_name,
-    ));
+    );
     output.push_str("{ ");
     output.push_str("if (m_alternative_form) { JaktInternal::_pretty_print_enabled = true; }");
     output.push_str(
@@ -1516,19 +1517,20 @@ fn codegen_struct(
                 class_name_with_generics.push('>');
             }
 
-            output.push_str(&format!(
-                "class {} : public RefCounted<{}>, public Weakable<{}> {{\n",
+            let _ = writeln!(
+                output,
+                "class {} : public RefCounted<{}>, public Weakable<{}> {{",
                 structure.name, class_name_with_generics, class_name_with_generics
-            ));
+            );
             // As we should test the visibility before codegen, we take a simple
             // approach to codegen
             output.push_str("  public:\n");
 
             // Make sure emitted classes always have a vtable.
-            output.push_str(&format!("    virtual ~{}() = default;\n", structure.name));
+            let _ = writeln!(output, "    virtual ~{}() = default;", structure.name);
         }
         DefinitionType::Struct => {
-            output.push_str(&format!("struct {}", structure.name));
+            let _ = write!(output, "struct {}", structure.name);
             output.push_str(" {\n");
             output.push_str("  public:\n");
         }
@@ -1839,7 +1841,7 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
                 // First, generate a private constructor:
                 output.push_str("private:\n");
 
-                output.push_str(&format!("explicit {}(", function.name));
+                let _ = write!(output, "explicit {}(", function.name);
                 let mut first = true;
                 for param in &function.params {
                     if !first {
@@ -1888,10 +1890,11 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
                 }
 
                 output.push_str("public:\n");
-                output.push_str(&format!(
+                let _ = write!(
+                    output,
                     "static ErrorOr<NonnullRefPtr<{}>> create",
                     class_name_with_generics
-                ));
+                );
 
                 output.push('(');
 
@@ -1907,10 +1910,11 @@ fn codegen_constructor(function: &CheckedFunction, project: &Project) -> String 
                     output.push(' ');
                     output.push_str(&param.variable.name);
                 }
-                output.push_str(&format!(
+                let _ = write!(
+                    output,
                     ") {{ auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) {} (",
                     class_name_with_generics
-                ));
+                );
 
                 let mut first = true;
                 for param in &function.params {
@@ -2744,18 +2748,19 @@ fn codegen_enum_match(
 
                         let enum_ = &project.get_enum(*enum_id);
                         let variant = &enum_.variants[*variant_index];
-                        output.push_str(&format!("case {}: {{\n", variant_index));
+                        let _ = writeln!(output, "case {}: {{", variant_index);
                         match variant {
                             CheckedEnumVariant::Typed(name, _, _) => {
-                                output.push_str(&format!(
-                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
+                                let _ = writeln!(
+                                    output,
+                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();",
                                     &codegen_type_possibly_as_namespace(
                                         *subject_type_id,
                                         project,
                                         true,
                                     ),
                                     name
-                                ));
+                                );
                                 if !args.is_empty() {
                                     let var = project
                                         .find_var_in_scope(*scope_id, args[0].1.as_str())
@@ -2767,26 +2772,28 @@ fn codegen_enum_match(
                                 }
                             }
                             CheckedEnumVariant::Untyped(name, _) => {
-                                output.push_str(&format!(
-                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
+                                let _ = writeln!(
+                                    output,
+                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();",
                                     &codegen_type_possibly_as_namespace(
                                         *subject_type_id,
                                         project,
                                         true,
                                     ),
                                     name
-                                ));
+                                );
                             }
                             CheckedEnumVariant::StructLike(name, _, _) => {
-                                output.push_str(&format!(
-                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
+                                let _ = writeln!(
+                                    output,
+                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();",
                                     &codegen_type_possibly_as_namespace(
                                         *subject_type_id,
                                         project,
                                         true,
                                     ),
                                     name
-                                ));
+                                );
                                 if !args.is_empty() {
                                     for arg in args {
                                         let var =
@@ -3684,11 +3691,12 @@ fn codegen_expr(
                 _ => panic!("Internal error: Dictionary doesn't have inner type"),
             };
 
-            output.push_str(&format!(
+            let _ = write!(
+                output,
                 "(TRY(Dictionary<{}, {}>::create_with_entries({{",
                 codegen_type(key_type_id, project),
                 codegen_type(value_type_id, project),
-            ));
+            );
             let mut first = true;
             for (key, value) in vals {
                 if !first {
@@ -3712,10 +3720,11 @@ fn codegen_expr(
                 _ => panic!("Internal error: Set doesn't have inner type"),
             };
 
-            output.push_str(&format!(
+            let _ = write!(
+                output,
                 "(TRY(Set<{}>::create_with_values({{",
                 codegen_type(value_type_id, project),
-            ));
+            );
             let mut first = true;
             for value in values {
                 if !first {
@@ -3760,7 +3769,7 @@ fn codegen_expr(
             // x.get<1>()
             output.push_str("((");
             output.push_str(&codegen_expr(indent, expr, project, context));
-            output.push_str(&format!(").get<{}>())", idx));
+            let _ = write!(output, ").get<{}>())", idx);
         }
         CheckedExpression::IndexedStruct(expr, name, _, _) => {
             // x.foo or x->foo
@@ -3791,7 +3800,7 @@ fn codegen_expr(
                 },
             }
 
-            output.push_str(&format!("{})", name));
+            let _ = write!(output, "{})", name);
         }
         CheckedExpression::Block(block, _, _) => {
             output.push_str(&codegen_block(indent, block, project, context));
