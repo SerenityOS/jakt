@@ -49,7 +49,19 @@ fn main() -> Result<(), JaktError> {
         // FIXME: use file_id: 1 for now
         let result = find_definition_in_project(&project, Span::new(1, index, index));
 
-        println!("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
+        if result.file_id == 1 {
+            println!("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
+        } else {
+            let file_name = compiler
+                .get_file_name(result.file_id)
+                .to_str()
+                .unwrap_or("");
+
+            println!(
+                "{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}",
+                result.start, result.end, file_name
+            );
+        }
     } else if let Some(index) = arguments.goto_type_def_index {
         let mut project = Project::new();
 
@@ -60,7 +72,19 @@ fn main() -> Result<(), JaktError> {
         // FIXME: use file_id: 1 for now
         let result = find_type_definition_in_project(&project, Span::new(1, index, index));
 
-        println!("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
+        if result.file_id == 1 {
+            println!("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
+        } else {
+            let file_name = compiler
+                .get_file_name(result.file_id)
+                .to_str()
+                .unwrap_or("");
+
+            println!(
+                "{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}",
+                result.start, result.end, file_name
+            );
+        }
     } else if let Some(index) = arguments.hover_index {
         let mut project = Project::new();
 
