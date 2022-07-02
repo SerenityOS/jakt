@@ -4776,6 +4776,14 @@ pub fn typecheck_expression(
                     typecheck_expression(fill_size_expr, scope_id, project, safety_mode, None);
                 checked_fill_size_expr = Some(Box::new(checked_expr));
                 error = error.or(err);
+
+                let parent_throws = project.get_scope(scope_id).throws;
+                if !parent_throws {
+                    error = error.or(Some(JaktError::TypecheckError(
+                        "Prefilling an array may throw and needs to be in a try statement or a function marked as throws".to_string(),
+                        fill_size_expr.span(),
+                    )))
+                }
             }
 
             for v in vec {
