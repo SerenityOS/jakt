@@ -4097,6 +4097,7 @@ struct Typechecker {
 
         }
         Match(expr, cases, span) => .typecheck_match(expr, cases, span, scope_id, safety_mode)
+        JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode)
         else => {
             panic(format("typechecker needs support for {}", expr))
 
@@ -4285,6 +4286,76 @@ struct Typechecker {
             todo("implement typecheck match body expression")
             yield CheckedMatchBody::Expression(CheckedExpression::Garbage(span))
         }
+    }
+
+    function typecheck_dictionary(mut this, values: [(ParsedExpression, ParsedExpression)], span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
+        let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
+        mut checked_kv_pairs: [(CheckedExpression, CheckedExpression)] = []
+        mut key_type_id = unknown_type_id()
+        mut key_type_span: Span? = None
+        mut value_type_id = unknown_type_id()
+        mut value_type_span: Span? = None
+
+        // TODO: hint type logic
+
+        for kv_pair in values.iterator() {
+            let key = kv_pair.0
+            let value = kv_pair.1
+            let checked_key = .typecheck_expression(key, scope_id, safety_mode)
+            let current_key_type_id = expression_type(checked_key)
+
+            let checked_value = .typecheck_expression(value, scope_id, safety_mode)
+            let current_value_type_id = expression_type(checked_value)
+            let VOID_TYPE_ID = builtin(BuiltinType::Void)
+
+            if key_type_id.equals(unknown_type_id()) and value_type_id.equals(unknown_type_id()) {
+                if current_key_type_id.equals(VOID_TYPE_ID) {
+                    .error("Can't create a dictionary with keys of type void", span: key.span())
+                }
+                if current_value_type_id.equals(VOID_TYPE_ID) {
+                    .error("Can't create a dictionary with values of type void", span: value.span())
+                }
+                key_type_id = current_key_type_id
+                key_type_span = Some(key.span())
+                value_type_id = current_value_type_id
+                value_type_span = Some(value.span())
+            } else {
+                if not key_type_id.equals(current_key_type_id) {
+                    let key_type_name = .type_name(key_type_id)
+                    let current_key_type_name = .type_name(current_key_type_id)
+                    .error_with_hint(
+                        message: format("Type '{}' does not match type '{}' of previous keys in dictionary", current_key_type_name, key_type_name)
+                        span: key.span()
+                        hint: format("Dictionary was inferred to store keys of type '{}' here", key_type_name)
+                        span: key_type_span!
+                    )
+                }
+                if not value_type_id.equals(current_value_type_id) {
+                    let value_type_name = .type_name(value_type_id)
+                    let current_value_type_name = .type_name(current_value_type_id)
+                    .error_with_hint(
+                        message: format("Type '{}' does not match type '{}' of previous values in dictionary", current_value_type_name, value_type_name)
+                        span: value.span()
+                        hint: format("Dictionary was inferred to store values of type '{}' here", value_type_name)
+                        span: value_type_span!
+                    )
+                }
+            }
+            checked_kv_pairs.push((checked_key, checked_value))
+        }
+
+        let type_id = .find_or_add_type_id(Type::GenericInstance(
+            id: dictionary_struct_id,
+            args: [key_type_id, value_type_id]
+        ))
+
+        // TODO: unify type with hint type
+
+        return CheckedExpression::JaktDictionary(
+            vals: checked_kv_pairs
+            span
+            type_id
+        )
     }
 
     function resolve_call(mut this, call: ParsedCall, namespaces: [ResolvedNamespace], span: Span, scope_id: ScopeId, must_be_enum_constructor: bool) throws -> FunctionId? {
