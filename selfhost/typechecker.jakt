@@ -1447,26 +1447,19 @@ struct Typechecker {
         return true
     }
     
-    function find_function_in_scope(this, parent_scope_id: ScopeId, function_name: String) -> FunctionId? {
+    function find_function_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> FunctionId? {
         mut scope_id = Some(parent_scope_id)
         while scope_id.has_value() {
             let scope = .get_scope(id: scope_id!)
-            for s in scope.functions.iterator() {
-                if s.0 == function_name {
-                    return Some(s.1)
+            for name_and_function_id in scope.functions.iterator() {
+                if name_and_function_id.0 == function_name {
+                    return name_and_function_id.1
                 }
             }
 
             if scope.parent.has_value() {
                 if scope_id!.equals(scope.parent!) {
-                    mut msg = ""
-                    try {
-                        msg = format("Scope {} is its own parent!", scope_id)
-                    } catch error {
-                        msg = "Scope is its own parent!"
-                    }
-
-                    panic(msg)
+                    panic(format("Scope {} is its own parent!", scope_id))
                 }
             }
 
