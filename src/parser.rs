@@ -2291,7 +2291,7 @@ pub fn parse_statement(
 
             if inside_block == InsideBlock::No {
                 error = error.or(Some(JaktError::ParserError(
-                    "yield can only be used inside a block".to_string(),
+                    "‘yield’ can only be used inside a block".to_string(),
                     span,
                 )));
             }
