@@ -2,6 +2,9 @@
 
 includepath="/usr/include/"
 runtime="./runtime/*"
-cargo install --path . &&
+exe="./target/debug/jakt"
+path="/usr/bin/"
+cargo build &&
+sudo cp $exe $path &&
 sudo cp -r $runtime $includepath
 
