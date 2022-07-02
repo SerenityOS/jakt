@@ -925,7 +925,11 @@ struct CodeGenerator {
         OptionalNone => "JaktInternal::OptionalNone()"
         OptionalSome(expr, type_id) => "(" + .codegen_expression(expr) + ")"
         ForcedUnwrap(expr, type_id) => "(" + .codegen_expression(expr) + ".value())"
-        QuotedString(val) => "String(\"" + val + "\")"
+        QuotedString(val) => {
+            // FIXME: this should replace newlines to allow for multiline strings
+            //"String(\"" + val.replace(replace: "\n", with: "\\n") + "\")"
+            yield "String(\"" + val + "\")"
+        }
         ByteConstant(val) => "'" + val + "'"
         CharacterConstant(val) => "'" + val + "'"
         Var(var) => var.name
