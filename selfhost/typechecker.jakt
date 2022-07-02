@@ -4439,6 +4439,10 @@ struct Typechecker {
             }
         }
 
+        if callee_throws and not .get_scope(scope_id).can_throw {
+            .error("Call to function that may throw needs to be in a try statement or a function marked as throws", span)
+        }
+
         return CheckedExpression::Call(call: CheckedCall(namespace_: resolved_namespaces, name: call.name, args, function_id: resolved_function_id, return_type, callee_throws), span, type_id: return_type)
     }
 
