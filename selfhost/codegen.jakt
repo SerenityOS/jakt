@@ -969,6 +969,7 @@ struct CodeGenerator {
         }
         Block(block) => .codegen_block(block)
         Call(call) => .codegen_call(call)
+        MethodCall(expr, call) => .codegen_method_call(expr, call)
         Boolean(val) => match val {
             true => "true"
             else => "false"
@@ -1367,6 +1368,71 @@ struct CodeGenerator {
         output += .codegen_expression(rhs)
         output += ");"
         output += "}"
+        return output
+    }
+
+    function codegen_method_call(mut this, expr: CheckedExpression, call: CheckedCall) throws -> String {
+        mut output = ""
+        if call.callee_throws {
+            output += "TRY("
+        }
+
+        output += "(("
+        output += .codegen_expression(expr)
+        output += ")"
+
+        let is_this = match expr {
+            Var(var) => var.name == "this"
+            else => false
+        }
+
+        if is_this {
+            output += "->"
+        } else {
+            match .program.get_type(expression_type(expr)) {
+                RawPtr => {
+                    output += "->"
+                }
+                Struct(id) => {
+                    let struct_ = .program.get_struct(id)
+                    if struct_.record_type is Class {
+                        output += "->"
+                    } else {
+                        output += "."
+                    }
+                }
+                Enum(id) => {
+                    let enum_ = .program.get_enum(id)
+                    if enum_.record_type is Class {
+                        output += "->"
+                    } else {
+                        output += "."
+                    }
+                }
+                else => {
+                    output += "."
+                }
+            }
+        }
+
+        output += call.name
+        output += "("
+
+        mut first = true
+        for name_and_expr in call.args.iterator() {
+            if first {
+                first = false
+            } else {
+                output += ","
+            }
+            output += .codegen_expression(name_and_expr.1)
+        }
+
+        output += "))"
+
+        if call.callee_throws {
+            output += ")"
+        }
         return output
     }
 
