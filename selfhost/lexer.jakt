@@ -273,7 +273,6 @@ enum Token {
 }
 
 enum LiteralSuffix {
-    // FIXME: Implement floats
     UZ
     U8
     U16
@@ -283,10 +282,11 @@ enum LiteralSuffix {
     I16
     I32
     I64
+    F32
+    F64
 }
 
 enum NumericConstant {
-    // FIXME: Implement floats
     I8(i8)
     I16(i16)
     I32(i32)
@@ -296,6 +296,8 @@ enum NumericConstant {
     U32(u32)
     U64(u64)
     USize(u64)
+    F32(f32)
+    F64(f64)
 
     public function to_usize(this) => match this {
         I8(num) => num as! usize
@@ -307,11 +309,13 @@ enum NumericConstant {
         U32(num) => num as! usize
         U64(num) => num as! usize
         USize(num) => num as! usize
+        // FIXME: handle floats properly - if the function is used at all?
+        else =>  0 as! usize
     }
 }
 
-function make_number_token(number: u64, suffix: LiteralSuffix, span: Span) throws -> Token => match suffix {
-    // FIXME: Implement floats
+function make_integer_token(number: u64, suffix: LiteralSuffix, span: Span) throws -> Token => match suffix {
+    // FIXME: consider unifying with make_float_token() to a single function
     LiteralSuffix::U8 => Token::Number(number: NumericConstant::U8(number as! u8), span)
     LiteralSuffix::U16 => Token::Number(number: NumericConstant::U16(number as! u16), span)
     LiteralSuffix::U32 => Token::Number(number: NumericConstant::U32(number as! u32), span)
@@ -322,6 +326,44 @@ function make_number_token(number: u64, suffix: LiteralSuffix, span: Span) throw
     LiteralSuffix::I16 => Token::Number(number: NumericConstant::I16(number as! i16), span)
     LiteralSuffix::I32 => Token::Number(number: NumericConstant::I32(number as! i32), span)
     LiteralSuffix::I64 => Token::Number(number: NumericConstant::I64(number as! i64), span)
+
+    else => Token::Garbage(span)
+}
+
+function make_float_token(number: f64, suffix: LiteralSuffix, span: Span) throws -> Token => match suffix {
+    // FIXME: consider unifying with make_integer_token() to a single function
+    LiteralSuffix::F32 => Token::Number(number: NumericConstant::F32(f64_to_f32(number)), span)
+    LiteralSuffix::F64 => Token::Number(number: NumericConstant::F64(number), span)
+
+    else => Token::Garbage(span)
+}
+
+// A simple function to convert integers to floats. T is intended
+// to be either f32 or f64.
+// FIXME: Remove when a more general conversion is in place
+function u64_to_float<T>(anon number: u64) -> T {
+    mut float_value: T = 0
+
+    unsafe {
+        cpp {
+            "float_value = number;"
+        }
+    }
+
+    return float_value
+}
+
+// FIXME: Remove when a more general conversion is in place
+function f64_to_f32(anon number: f64) -> f32 {
+    mut f32_value: f32 = 0
+
+    unsafe {
+        cpp {
+            "f32_value = (f32)number;"
+        }
+    }
+
+    return f32_value
 }
 
 struct Lexer {
@@ -501,15 +543,7 @@ struct Lexer {
 
                     let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::I64
 
-                    if is_ascii_alphanumeric(.peek()) or .peek() == b'_' {
-                        .error(
-                            "Could not parse hexadecimal number"
-                            span
-                        )
-                        return Token::Garbage(span)
-                    }
-
-                    return make_number_token(number: total, suffix, span)
+                    return make_integer_token(number: total, suffix, span: .span(start, end))
                 }
                 // Octal Number
                 b'o' => {
@@ -544,7 +578,7 @@ struct Lexer {
                         return Token::Garbage(span)
                     }
 
-                    return make_number_token(number: total, suffix, span)
+                    return make_integer_token(number: total, suffix, span)
                 }
                 // Binary Number
                 b'b' => {
@@ -580,7 +614,7 @@ struct Lexer {
                         return Token::Garbage(span)
                     }
 
-                    return make_number_token(number: total, suffix, span)
+                    return make_integer_token(number: total, suffix, span)
                 }
                 else => {}
             }
@@ -608,21 +642,17 @@ struct Lexer {
 
         let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::I64
 
-        if is_ascii_alphanumeric(.peek()) {
-            .error(
-                "Could not parse number"
-                span
-            )
-
-            return Token::Garbage(span)
+        // FIXME: Lex floats and make it take the whole range of floats, 
+        //        not just unsigned integers repackaged as floats.
+        return match suffix {
+            LiteralSuffix::F32 | LiteralSuffix::F64 => make_float_token(number: u64_to_float(total), suffix, span: .span(start, end))
+            else => make_integer_token(number: total, suffix, span: .span(start, end))
         }
-
-        return make_number_token(number: total, suffix, span: .span(start, end))
     }
 
     function consume_numeric_literal_suffix(mut this) -> LiteralSuffix? {
         match .peek() {
-            b'u' | b'i' => {}
+            b'u' | b'i' | b'f' => {}
             else => {
                 return None
             }
@@ -663,6 +693,13 @@ struct Lexer {
                 16 => LiteralSuffix::I16
                 32 => LiteralSuffix::I32
                 64 => LiteralSuffix::I64
+                else => {
+                    return None
+                }
+            }
+            b'f' => match width {
+                32 => LiteralSuffix::F32
+                64 => LiteralSuffix::F64
                 else => {
                     return None
                 }
