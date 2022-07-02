@@ -3061,7 +3061,9 @@ fn codegen_expr(
         }
         CheckedExpression::QuotedString(qs, _) => {
             output.push_str("String(\"");
-            output.push_str(qs);
+            let tmp = qs.replace("\r\n", "\\n");
+            let tmp = tmp.replace('\n', "\\n");
+            output.push_str(&tmp);
             output.push_str("\")");
         }
         CheckedExpression::ByteConstant(b, _) => {
