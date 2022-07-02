@@ -5,6 +5,7 @@
 
 import error { JaktError }
 import utility { Span }
+import compiler { Compiler }
 
 // FIXME: These should not need explicit "-> bool" return types.
 function is_ascii_alpha(anon c: u8) -> bool => (c >= b'a' and c <= b'z') or (c >= b'A' and c <= b'Z')
@@ -326,10 +327,10 @@ function make_number_token(number: u64, suffix: LiteralSuffix, span: Span) throw
 struct Lexer {
     index: usize
     input: [u8]
-    errors: [JaktError]
+    compiler: Compiler
 
-    function lex(input: [u8], errors: [JaktError]) throws -> [Token] {
-        mut lexer = Lexer(index: 0, input, errors)
+    function lex(compiler: Compiler, input: [u8]) throws -> [Token] {
+        mut lexer = Lexer(index: 0, input, compiler)
         mut tokens: [Token] = []
 
         for token in lexer {
@@ -340,7 +341,7 @@ struct Lexer {
     }
 
     function error(mut this, anon message: String, anon span: Span) throws {
-        .errors.push(JaktError::Message(message, span))
+        .compiler.errors.push(JaktError::Message(message, span))
     }
 
     // Peek at next upcoming character

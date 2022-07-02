@@ -6,8 +6,10 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
+import compiler { Compiler }
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
+import utility { FilePath }
 import lexer { Lexer }
 import parser { Parser }
 import typechecker { Typechecker }
@@ -18,134 +20,15 @@ function help() -> String{
     output += "  -h\t\tPrint this help and exit.\n"
     output += "  -l\t\tPrint debug info for the lexer.\n"
     output += "  -p\t\tPrint debug info for the parser.\n"
+    output += "  -t\t\tPrint debug info for the typechecker.\n"
     output += "  -b\t\tBuild an executable file.\n"
     output += "  -r\t\tBuild and run an executable file.\n"
-    output += "  -d\t\tInsert debug statement spans in generated C++ code."
+    output += "  -d\t\tInsert debug statement spans in generated C++ code.\n"
+    output += "  -dp\t\tOutput debug print."
     return output
 } 
 
 function flag(args: [String], anon name: String) => args.contains("-" + name)
-
-//FIXME: Include the full prelude when we support it
-function prelude() => "
-extern struct Optional<T> {
-    function has_value(this) -> bool
-    function value(this) -> T
-    function value_or(this, anon x: T) -> T
-    function Optional<S>(anon x: S) -> Optional<S>
-}
-
-extern struct ArrayIterator<T> {
-    function next(mut this) -> T?
-}
-
-extern struct Array<T> {
-    function is_empty(this) -> bool
-    function contains(this, anon value: T) -> bool
-    function size(this) -> usize
-    function capacity(this) -> usize
-    function ensure_capacity(this, anon capacity: usize) throws
-    function add_capacity(this, anon capacity: usize) throws
-    function resize(mut this, anon size: usize) throws
-    function push(mut this, anon value: T) throws
-    function pop(mut this) -> T?
-    function iterator(this) -> ArrayIterator<T>
-}
-
-extern struct String {
-    function number(anon number: i64) throws -> String
-    function split(this, anon c: c_char) throws -> [String]
-    function c_string(this) -> raw c_char
-    function to_int(this) -> i32?
-    function to_uint(this) -> u32?
-    function is_whitespace(this) -> bool
-    function hash(this) -> u32
-    function substring(this, start: usize, length: usize) throws -> String
-    function repeated(character: c_char, count: usize) throws -> String
-    function is_empty(this) -> bool
-    function length(this) -> usize
-    function byte_at(this, anon index: usize) -> u8
-    function contains(this, anon needle: String) -> bool
-}
-
-extern struct StringBuilder {
-    function append(mut this, anon b: u8) throws
-    function append_string(mut this, anon s: String) throws
-    function append_c_string(mut this, anon s: raw c_char) throws
-    function append_code_point(mut this, anon code_point: u32) throws
-    function append_escaped_for_json(mut this, anon s: String) throws
-    function to_string(this) throws -> String
-    function is_empty(this) -> bool
-    function length(this) -> usize
-    function clear(mut this)
-    function create() throws -> StringBuilder
-}
-
-extern struct WeakPtr<T> {
-    function has_value(this) -> bool
-    function clear(mut this)
-}
-
-extern struct Tuple {}
-
-extern struct DictionaryIterator<K, V> {
-    function next(mut this) -> (K, V)?
-}
-
-extern struct Dictionary<K, V> {
-    function is_empty(this) -> bool
-    function get(this, anon key: K) -> V?
-    function contains(this, anon key: K) -> bool
-    function set(mut this, anon key: K, anon value: V) throws
-    function remove(mut this, anon key: K) -> bool
-    function ensure_capacity(mut this, anon capacity: usize) throws
-    function clear(mut this)
-    function size(this) -> usize
-    function capacity(this) -> usize
-    function keys(this) throws -> [K]
-    function hash(this) -> u32
-    function Dictionary<A, B>() -> Dictionary<A, B>
-    function iterator(this) -> DictionaryIterator<K, V>
-}
-
-extern struct SetIterator<T> {
-    function next(mut this) -> T?
-}
-
-extern struct Set<V> {
-    function is_empty(this) -> bool
-    function contains(this, anon value: V) -> bool
-    function add(mut this, anon value: V) throws
-    function remove(mut this, anon value: V) -> bool
-    function ensure_capacity(mut this, anon capacity: usize) throws
-    function clear(mut this)
-    function size(this) -> usize
-    function capacity(this) -> usize
-    function hash(this) -> u32
-    function Set<A>() -> Set<A>
-    function iterator(this) -> SetIterator<V>
-}
-
-extern struct Range<T> {
-    function next(mut this) -> T?
-}
-
-extern struct Error {
-    function code(this) -> i32
-    function from_errno(anon errno: i32) -> Error
-}
-
-extern class File {
-    public function open_for_reading(anon path: String) throws -> File
-    public function open_for_writing(anon path: String) throws -> File
-
-    public function read(mut this, anon buffer: [u8]) throws -> usize
-    public function write(mut this, anon data: [u8]) throws -> usize
-
-    public function read_all(mut this) throws -> [u8]
-}
-"
-
 
 function main(args: [String]) {
     if args.size() <= 1 {
@@ -161,9 +44,11 @@ function main(args: [String]) {
 
     let lexer_debug = flag(args, "l")
     let parser_debug = flag(args, "p")
+    let typechecker_debug = flag(args, "t")
     let build_executable = flag(args, "b")
     let run_executable = flag(args, "r")
     let codegen_debug = flag(args, "d")
+    let debug_print = flag(args, "dp")
 
     mut file_name: String? = None
     mut first_arg = true
@@ -173,7 +58,7 @@ function main(args: [String]) {
             first_arg = false
             continue
         }
-        if arg != "-h" and arg != "-l" and arg != "-p" and arg != "-b" and arg != "-r" and arg != "-d" {
+        if arg != "-h" and arg != "-l" and arg != "-p" and arg != "-t" and arg != "-b" and arg != "-r" and arg != "-d" and arg != "-dp"{
             if file_name.has_value() {
                 eprintln("you can only pass one source file")
                 eprintln("{}", usage())
@@ -189,36 +74,29 @@ function main(args: [String]) {
         return 1
     }
 
+    let file_path = FilePath::make(file_name!)
+    if file_path.ext() != "jakt" {
+        eprintln("the compiler expects files with file extension .jakt")
+        eprintln("{}", usage())
+        return 1
+    }
+
     mut file = File::open_for_reading(file_name!)
-    let file_contents = file.read_all()
+    mut file_contents = file.read_all()
 
     mut errors: [JaktError] = []
 
-    // Handle the prelude
-    // FIXME: we need a way to get to the bytes
-    mut prelude_bytes: [u8] = []
+    mut compiler = Compiler(
+      errors: []
+      current_file: file_path
+      current_file_contents: file_contents
+      dump_lexer: lexer_debug
+      dump_parser: parser_debug
+      ignore_parser_errors: false
+      debug_print: debug_print
+    )
 
-    let prelude_string = prelude()
-
-    mut index = 0uz
-    while index < prelude_string.length() {
-        prelude_bytes.push(prelude_string.byte_at(index))
-        ++index
-    }
-
-    let prelude_tokens = Lexer::lex(input: prelude_bytes, errors)
-    for error in errors.iterator() {
-        print_error(file_name: "<prelude>", file_contents: prelude_bytes, error)
-    }
-
-    let parsed_prelude = Parser::parse(tokens: prelude_tokens, errors)
-    for error in errors.iterator() {
-        print_error(file_name: "<prelude>", file_contents: prelude_bytes, error)
-    }
-
-    // Handle the user's file
-
-    let tokens = Lexer::lex(input: file_contents, errors)
+    let tokens = Lexer::lex(compiler, input: file_contents)
 
     if lexer_debug {
         for token in tokens.iterator() {
@@ -226,23 +104,30 @@ function main(args: [String]) {
         }
     }
 
-    let parsed_namespace = Parser::parse(tokens, errors)
+    let parsed_namespace = Parser::parse(compiler, tokens)
 
     if parser_debug {
         println("{:#}", parsed_namespace);
     }
 
-    let checked_program = Typechecker::typecheck(parsed_namespace, parsed_prelude, errors)
+    let checked_program = Typechecker::typecheck(
+        compiler
+        parsed_namespace
+    )
 
-    for error in errors.iterator() {
+    if typechecker_debug {
+        println("{:#}", checked_program);
+    }
+
+    for error in compiler.errors.iterator() {
         print_error(file_name: file_name!, file_contents, error)
     }
 
-    if not errors.is_empty() {
+    if not compiler.errors.is_empty() {
         return 1
     }
 
-    let output = CodeGenerator::generate(checked_program, file_name: file_name!, file_contents, debug_info: codegen_debug)
+    let output = CodeGenerator::generate(compiler, checked_program, debug_info: codegen_debug)
 
     if (build_executable or run_executable) {
         let cpp_filename = "build/output.cpp"
