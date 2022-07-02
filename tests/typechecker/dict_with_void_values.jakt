@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "cannot create a dictionary with values of type void\n"
+/// - error: "Can't create a dictionary with values of type void\n"
 
 enum Bar {
     Value
