@@ -4324,7 +4324,181 @@ struct Typechecker {
                 .error("Can't match on 'void' type", .expression_span(checked_expr))
             }
             else => {
-                todo(format("type to match on: {}", type_to_match_on))
+                mut is_enum_match = false
+                mut is_value_match = false
+                mut seen_catch_all = false
+
+                mut all_variants_constant = true
+
+                mut final_result_type: TypeId? = None
+
+                for case_ in cases.iterator() {
+                    for pattern in case_.patterns.iterator() {
+                        match pattern {
+                            EnumVariant(variant_name, variant_arguments, arguments_span) => {
+                                mut variant_names = variant_name
+
+                                if is_value_match {
+                                    .error(
+                                        "Cannot have an enum match case in a match expression containing value matches"
+                                        case_.marker_span
+                                    )
+                                }
+
+                                if variant_names.size() == 0 {
+                                    panic("typecheck_match - else - EnumVariant - variant_names.size() == 0")
+                                }
+
+                                is_enum_match = true
+
+                                // We don't know what the enum type is, but we have the type var for it, so generate a generic enum match.
+                                // note that this will be fully checked when this match expression is actually instantiated.
+
+                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw)
+                                let checked_body = .typecheck_match_body(body: case_.body, scope_id: new_scope_id, safety_mode, span: case_.marker_span)
+
+                                let maybe_current_result_type = match checked_body {
+                                    Expression(expr) => Some(expression_type(expr))
+                                    Block(block) => block.yielded_type
+                                }
+                                let current_result_type = maybe_current_result_type ?? builtin(BuiltinType::Void)
+
+                                let maybe_current_yield_span = match case_.body {
+                                    Expression(expr) => Some(expr.span())
+                                    Block(block) => block.find_yield_span()
+                                }
+                                let current_yield_span = maybe_current_yield_span ?? case_.marker_span
+
+                                if not final_result_type.has_value() {
+                                    final_result_type = current_result_type
+                                } else {
+                                    .check_types_for_compat(
+                                        lhs_type_id: final_result_type!
+                                        rhs_type_id: current_result_type
+                                        generic_inferences: [:] // FIXME: use correct generic inferences
+                                        span: current_yield_span
+                                    )
+                                }
+
+                                let checked_match_case = CheckedMatchCase::EnumVariant(
+                                    name: variant_names[variant_names.size() - 1].0
+                                    args: variant_arguments
+                                    subject_type_id
+                                    index: 0
+                                    scope_id: new_scope_id
+                                    body: checked_body
+                                    marker_span: case_.marker_span
+                                )
+                                checked_cases.push(checked_match_case)
+                            }
+                            CatchAll => {
+                                if seen_catch_all {
+                                    .error(
+                                        "Cannot have multiple catch-all match cases"
+                                        case_.marker_span
+                                    )
+                                }
+                                seen_catch_all = true
+
+                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw)
+                                let checked_body = .typecheck_match_body(body: case_.body, scope_id: new_scope_id, safety_mode, span: case_.marker_span)
+
+                                let maybe_current_result_type = match checked_body {
+                                    Expression(expr) => Some(expression_type(expr))
+                                    Block(block) => block.yielded_type
+                                }
+                                let current_result_type = maybe_current_result_type ?? builtin(BuiltinType::Void)
+
+                                let maybe_current_yield_span = match case_.body {
+                                    Expression(expr) => Some(expr.span())
+                                    Block(block) => block.find_yield_span()
+                                }
+                                let current_yield_span = maybe_current_yield_span ?? case_.marker_span
+
+                                if not final_result_type.has_value() {
+                                    final_result_type = current_result_type
+                                } else {
+                                    .check_types_for_compat(
+                                        lhs_type_id: final_result_type!
+                                        rhs_type_id: current_result_type
+                                        generic_inferences: [:] // FIXME: use correct generic inferences
+                                        span: current_yield_span
+                                    )
+                                }
+
+                                let checked_match_case = CheckedMatchCase::CatchAll(
+                                    body: checked_body
+                                    marker_span: case_.marker_span
+                                )
+                                checked_cases.push(checked_match_case)
+                            }
+                            Expression(expr) => {
+                                if is_enum_match {
+                                    .error(
+                                        "Cannot have a value match case in a match expression containing enum matches"
+                                        case_.marker_span
+                                    )
+                                }
+                                is_value_match = true
+
+                                let checked_expression = .typecheck_expression(expr, scope_id, safety_mode)
+
+                                if not checked_expression.to_number_constant(program: .program).has_value() {
+                                    all_variants_constant = false
+                                }
+
+                                // FIXME: In the future, we should really make this a "does it satisfy some trait" check.
+                                //        For now, we just check that the types are equal.
+                                .check_types_for_compat(
+                                    lhs_type_id: expression_type(checked_expression)
+                                    rhs_type_id: subject_type_id
+                                    generic_inferences: [:] // FIXME: use correct generic inferences
+                                    span: case_.marker_span
+                                )
+
+                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw)
+                                let checked_body = .typecheck_match_body(body: case_.body, scope_id: new_scope_id, safety_mode, span: case_.marker_span)
+
+                                let maybe_current_result_type = match checked_body {
+                                    Expression(expr) => Some(expression_type(expr))
+                                    Block(block) => block.yielded_type
+                                }
+                                let current_result_type = maybe_current_result_type ?? builtin(BuiltinType::Void)
+
+                                let maybe_current_yield_span = match case_.body {
+                                    Expression(expr) => Some(expr.span())
+                                    Block(block) => block.find_yield_span()
+                                }
+                                let current_yield_span = maybe_current_yield_span ?? case_.marker_span
+
+                                if not final_result_type.has_value() {
+                                    final_result_type = current_result_type
+                                } else {
+                                    .check_types_for_compat(
+                                        lhs_type_id: final_result_type!
+                                        rhs_type_id: current_result_type
+                                        generic_inferences: [:] // FIXME: use correct generic inferences
+                                        span: current_yield_span
+                                    )
+                                }
+
+                                let checked_match_case = CheckedMatchCase::Expression(
+                                    expression: checked_expression
+                                    body: checked_body
+                                    marker_span: case_.marker_span
+                                )
+                                checked_cases.push(checked_match_case)
+                            }
+                        }
+                    }
+                }
+
+                if is_value_match and not seen_catch_all {
+                    .error(
+                        "match expression is not exhaustive, a value match must contain an irrefutable 'else' pattern"
+                        span
+                    )
+                }
             }
         }
 
@@ -4336,9 +4510,9 @@ struct Typechecker {
             let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: scope_id, safety_mode)
             yield CheckedMatchBody::Block(checked_block)
         }
-        Expression => {
-            todo("implement typecheck match body expression")
-            yield CheckedMatchBody::Expression(CheckedExpression::Garbage(span))
+        Expression(expr) => {
+            let checked_expression = .typecheck_expression(expr, scope_id, safety_mode)
+            yield CheckedMatchBody::Expression(checked_expression)
         }
     }
 
