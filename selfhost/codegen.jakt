@@ -8,7 +8,8 @@ import typechecker {
     BuiltinType, CheckedBlock, CheckedCall, CheckedExpression,
     CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
     Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId, expression_type,
-    CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id }
+    CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id,
+    CheckedVariable }
 import utility { panic, todo, join, prepend_to_each, Span }
 import compiler { Compiler }
 
@@ -614,25 +615,12 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_enum_predecl(mut this, enum_: CheckedEnum) throws -> String => match enum_.record_type {
-        Class => {
-            todo("codegen_enum_predecl class record type")
-            yield ""
-        }
-        else => .codegen_nonrecursive_enum_predecl(enum_)
-    }
-
-    function codegen_nonrecursive_enum_predecl(mut this, enum_: CheckedEnum) throws -> String {
+    function codegen_enum_predecl(mut this, enum_: CheckedEnum) throws -> String {
         mut output = ""
 
         if not enum_.underlying_type_id.equals(unknown_type_id()) {
             if .program.is_integer(enum_.underlying_type_id) {
-                output += "enum class "
-                output += enum_.name
-                output += ": "
-                output += .codegen_type(enum_.underlying_type_id)
-                output += ";\n"
-                return output
+                return format("enum class {}: {};", enum_.name, .codegen_type(enum_.underlying_type_id))
             } else {
                 todo("Enums with a non-integer underlying type")
             }
@@ -755,7 +743,6 @@ struct CodeGenerator {
         if is_generic {
             output += "template<" + template_args + ">\n"
         }
-        output += "struct " + enum_.name + " : public Variant<"
         mut variant_names: [String] = []
         mut variant_arguments_array: [String] = []
         for variant in enum_.variants.iterator() {
@@ -767,7 +754,16 @@ struct CodeGenerator {
             variant_names.push(variant.name())
         }
         let variant_args = join(variant_arguments_array, separator: ", ")
-        output += variant_args + "> {\n"
+
+        output += format("struct {} : public Variant<{}>", enum_.name, variant_args)
+        if enum_.is_boxed {
+            output += format(", public RefCounted<{}", enum_.name)
+            if is_generic {
+                output += format("<{}>", join(generic_parameter_names, separator: ", "))
+            }
+            output += ">"
+        }
+        output += " {\n"
         output += "using Variant<" + variant_args + ">::Variant;\n"
 
         for name in variant_names.iterator() {
@@ -778,6 +774,16 @@ struct CodeGenerator {
                 output += ">"
             }
             output += ";\n"
+        }
+
+        if enum_.is_boxed {
+            mut fully_instantiated_name = enum_.name
+            if is_generic {
+                fully_instantiated_name += format("<{}>", join(generic_parameter_names, separator: ", "))
+            }
+            output += "template<typename V, typename... Args> static auto create(Args&&... args) {\n"
+            output += format("return adopt_nonnull_ref_or_enomem(new (nothrow) {}(V(forward<Args>(args)...)));\n", fully_instantiated_name)
+            output += "}\n"
         }
 
         output += .codegen_enum_debug_description_getter(enum_)
@@ -1297,7 +1303,9 @@ struct CodeGenerator {
             output += ">{\n"
             output += "auto&& __jakt_match_variant_maybe_deref = " + .codegen_expression(expr) + ";"
             output += "auto&& __jakt_match_variant = "
-            // FIXME: needs deref
+            if enum_.is_boxed {
+                output += "*"
+            }
             output += "__jakt_match_variant_maybe_deref;\nswitch(__jakt_match_variant.index()) {\n"
 
             mut has_default = false
@@ -1333,6 +1341,22 @@ struct CodeGenerator {
                                     let arg = args[0]
                                     let var = .program.find_var_in_scope(scope_id, var: arg.binding)!
                                     output += format("{} const& {} = __jakt_match_value.value;\n", .codegen_type(var.type_id), arg.binding)
+                                }
+                            }
+                            StructLike(name, fields) => {
+                                output += format(
+                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();",
+                                    .codegen_type_possibly_as_namespace(
+                                        type_id: subject_type_id,
+                                        as_namespace: true,
+                                    ),
+                                    name)
+                                
+                                if not args.is_empty() {
+                                    for arg in fields.iterator() {
+                                        let var = .program.get_variable(arg)
+                                        output += format("{} const& {} = __jakt_match_value.{};\n", .codegen_type(var.type_id), var.name, var.name)
+                                    }
                                 }
                             }
                             else => {
@@ -1690,10 +1714,22 @@ struct CodeGenerator {
                         match .program.get_type(function_.return_type_id) {
                             Enum(enum_id) => {
                                 let enum_ = .program.get_enum(enum_id)
-                                output += "typename "
                                 let enum_type_module = .program.get_module(enum_id.module)
-                                if not (enum_type_module.is_root or enum_type_module.id.equals(ModuleId(id: 0))) {
-                                    output += enum_type_module.name + "::"
+
+                                if enum_.is_boxed {
+                                    if not (enum_type_module.is_root or enum_type_module.id.equals(ModuleId(id: 0))) {
+                                        output += enum_type_module.name + "::"
+                                    }
+                                    output += .codegen_namespace_path(call)
+                                    output += "template create<typename "
+                                    output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
+                                    output += "::" + call.name + ">"
+                                } else {
+                                    output += "typename "
+                                    if not (enum_type_module.is_root or enum_type_module.id.equals(ModuleId(id: 0))) {
+                                        output += enum_type_module.name + "::"
+                                    }
+                                    output += .codegen_namespace_path(call) + call.name
                                 }
                             }
                             GenericEnumInstance(id) => {
@@ -1703,9 +1739,6 @@ struct CodeGenerator {
                                 panic("constructor expected enum type")
                             }
                         }
-
-                        output += .codegen_namespace_path(call)
-                        output += call.name
                     } else {
                         if not (type_module.is_root or type_module.id.id == 0 or function_.linkage is External or (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name))
                         {
@@ -2074,7 +2107,7 @@ struct CodeGenerator {
         let type_module = .program.get_module(id.module)
         let checked_enum = .program.get_enum(id)
 
-        if not as_namespace and checked_enum.record_type is Class {
+        if not as_namespace and checked_enum.is_boxed {
             output += "NonnullRefPtr<"
             if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))) {
                 output += type_module.name
