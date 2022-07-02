@@ -3,9 +3,12 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-import error { JaktError }
+
+import error { JaktError, print_error}
 import lexer { Token, NumericConstant }
 import utility { panic, todo, Span }
+import compiler { Compiler }
+import prelude { JaktPrelude }
 
 function merge_spans(anon start: Span, anon end: Span) -> Span => Span(start: start.start, end: end.end)
 function empty_span() -> Span => Span(start: 0, end: 0)
@@ -422,7 +425,7 @@ struct ParsedCall {
 boxed enum ParsedType {
     Name(name: String, span: Span)
     NamespacedName(name: String, namespaces: [String], params: [ParsedType], span: Span)
-    GenericType(name: String, generic_parameters: [(String, Span)], span: Span), // FIXME: tuple should be dictionary
+    GenericType(name: String, generic_parameters: [ParsedType], span: Span), // FIXME: tuple should be dictionary
     JaktArray(inner: ParsedType, span: Span)
     Dictionary(key: ParsedType, value: ParsedType, span: Span)
     JaktTuple(types: [ParsedType], span: Span)
@@ -436,23 +439,22 @@ boxed enum ParsedType {
 struct Parser {
     index: usize
     tokens: [Token]
-    errors: [JaktError]
-    ignore_errors: bool
+    compiler: Compiler
 
-    function parse(tokens: [Token], errors: [JaktError]) throws -> ParsedNamespace {
-        mut parser = Parser(index: 0, tokens, errors, ignore_errors: false)
+    function parse(compiler: Compiler, tokens: [Token]) throws -> ParsedNamespace {
+        mut parser = Parser(index: 0, tokens, compiler)
         return parser.parse_namespace()
     }
 
     function error(mut this, anon message: String, anon span: Span) throws {
-        if not .ignore_errors {
-            .errors.push(JaktError::Message(message, span))
+        if not .compiler.ignore_parser_errors {
+            .compiler.errors.push(JaktError::Message(message, span))
         }
     }
 
     function error_with_hint(mut this, anon message: String, anon span: Span, anon hint: String, anon hint_span: Span) throws {
-        if not .ignore_errors {
-            .errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
+        if not .compiler.ignore_parser_errors {
+            .compiler.errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
         }
     }
 
@@ -1427,9 +1429,9 @@ struct Parser {
             if .current() is LessThan {
                 mut parsed_generics = .parse_generic_parameters()
                 // FIXME: clean this up when ParsedType::GenericType can have [[String:Span]] generic parameters
-                mut generic_parameters: [(String, Span)] = []
+                mut generic_parameters: [ParsedType] = []
                 for parsed_generic in parsed_generics.iterator() {
-                    generic_parameters.push((parsed_generic.name, parsed_generic.span))
+                    generic_parameters.push(ParsedType::Name(name: parsed_generic.name, span: parsed_generic.span))
                 }
                 parsed_type = ParsedType::GenericType(name, generic_parameters, span)
             }
@@ -1805,7 +1807,7 @@ struct Parser {
 
                         expr_stack.push(ParsedExpression::BinaryOp(lhs, op, rhs, span: new_span))
                     }
-                    else => panic("operator is not an operator")
+                    else => .compiler.panic("operator is not an operator")
                 }
             }
 
@@ -1825,7 +1827,7 @@ struct Parser {
                     let new_span = merge_spans(lhs.span(), rhs.span())
                     expr_stack.push(ParsedExpression::BinaryOp(lhs, op, rhs, span: new_span))
                 }
-                else => panic("operator is not an operator")
+                else => .compiler.panic("operator is not an operator")
             }
         }
 
@@ -1890,9 +1892,9 @@ struct Parser {
             }
             if .peek(1) is LessThan {
                 // We *try* to see if it's a generic, but the parse errors, we back up and try something else
-                .ignore_errors = true
+                .compiler.ignore_parser_errors = true
                 let call = .parse_call()
-                .ignore_errors = false
+                .compiler.ignore_parser_errors = false
                 if not call.has_value() {
                     return match name {
                         "None" => ParsedExpression::OptionalNone(span)
@@ -1969,7 +1971,7 @@ struct Parser {
                 Minus => UnaryOperator::Negate
                 else => {
                     // FIXME: This is unreachable
-                    panic("unreachable")
+                    .compiler.panic("unreachable")
                     yield UnaryOperator::Negate
                 }
             }

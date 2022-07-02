@@ -1,0 +1,150 @@
+
+struct JaktPrelude {
+
+    function to_bytes() throws -> [u8] {
+        let string = JaktPrelude::to_string()
+        mut pos: usize = 0
+        mut bytes_: [u8] = []
+        bytes_.ensure_capacity(string.length())
+        while pos < string.length() {
+            bytes_.push(string.byte_at(pos)) 
+            ++pos
+        }
+
+        return bytes_
+    }
+
+    //FIXME: Include the full prelude when we support it
+    function to_string() -> String => "
+extern struct Optional<T> {
+    function has_value(this) -> bool
+    function value(this) -> T
+    function value_or(this, anon x: T) -> T
+    function Optional<S>(anon x: S) -> Optional<S>
+}
+
+extern struct ArrayIterator<T> {
+    function next(mut this) -> T?
+}
+
+extern struct Array<T> {
+    function is_empty(this) -> bool
+    function contains(this, anon value: T) -> bool
+    function size(this) -> usize
+    function capacity(this) -> usize
+    function ensure_capacity(this, anon capacity: usize) throws
+    function add_capacity(this, anon capacity: usize) throws
+    function resize(mut this, anon size: usize) throws
+    function push(mut this, anon value: T) throws
+    function pop(mut this) -> T?
+    function iterator(this) -> ArrayIterator<T>
+}
+
+extern struct String {
+    function number(anon number: i64) throws -> String
+    function split(this, anon c: c_char) throws -> [String]
+    function c_string(this) -> raw c_char
+    function to_int(this) -> i32?
+    function to_uint(this) -> u32?
+    function is_whitespace(this) -> bool
+    function hash(this) -> u32
+    function substring(this, start: usize, length: usize) throws -> String
+    function repeated(character: c_char, count: usize) throws -> String
+    function is_empty(this) -> bool
+    function length(this) -> usize
+    function byte_at(this, anon index: usize) -> u8
+    function contains(this, anon needle: String) -> bool
+}
+
+extern struct StringBuilder {
+    function append(mut this, anon b: u8) throws
+    function append_string(mut this, anon s: String) throws
+    function append_c_string(mut this, anon s: raw c_char) throws
+    function append_code_point(mut this, anon code_point: u32) throws
+    function append_escaped_for_json(mut this, anon s: String) throws
+    function to_string(this) throws -> String
+    function is_empty(this) -> bool
+    function length(this) -> usize
+    function clear(mut this)
+    function create() throws -> StringBuilder
+}
+
+extern struct WeakPtr<T> {
+    function has_value(this) -> bool
+    function clear(mut this)
+}
+
+extern struct Tuple {}
+
+extern struct DictionaryIterator<K, V> {
+    function next(mut this) -> (K, V)?
+}
+
+extern struct Dictionary<K, V> {
+    function is_empty(this) -> bool
+    function get(this, anon key: K) -> V?
+    function contains(this, anon key: K) -> bool
+    function set(mut this, anon key: K, anon value: V) throws
+    function remove(mut this, anon key: K) -> bool
+    function ensure_capacity(mut this, anon capacity: usize) throws
+    function clear(mut this)
+    function size(this) -> usize
+    function capacity(this) -> usize
+    function keys(this) throws -> [K]
+    function hash(this) -> u32
+    function Dictionary<A, B>() -> Dictionary<A, B>
+    function iterator(this) -> DictionaryIterator<K, V>
+}
+
+extern struct SetIterator<T> {
+    function next(mut this) -> T?
+}
+
+extern struct Set<V> {
+    function is_empty(this) -> bool
+    function contains(this, anon value: V) -> bool
+    function add(mut this, anon value: V) throws
+    function remove(mut this, anon value: V) -> bool
+    function ensure_capacity(mut this, anon capacity: usize) throws
+    function clear(mut this)
+    function size(this) -> usize
+    function capacity(this) -> usize
+    function hash(this) -> u32
+    function Set<A>() -> Set<A>
+    function iterator(this) -> SetIterator<V>
+}
+
+extern struct Range<T> {
+    function next(mut this) -> T?
+}
+
+extern struct Error {
+    function code(this) -> i32
+    function from_errno(anon errno: i32) -> Error
+}
+
+extern class File {
+    public function open_for_reading(anon path: String) throws -> File
+    public function open_for_writing(anon path: String) throws -> File
+
+    public function read(mut this, anon buffer: [u8]) throws -> usize
+    public function write(mut this, anon data: [u8]) throws -> usize
+
+    public function read_all(mut this) throws -> [u8]
+}
+
+extern function abort()
+extern function as_saturated<U, T>(anon input: T) -> U
+extern function as_truncated<U, T>(anon input: T) -> U
+
+// FIXME: Remove from prelude once extern C functions are working again
+extern struct FILE {}
+
+extern function fopen(anon str: raw c_char, anon mode: raw c_char) -> raw FILE
+extern function fgetc(anon mut file: raw FILE) -> c_int
+extern function fclose(anon mut file: raw FILE) -> c_int
+extern function feof(anon mut file: raw FILE) -> c_int
+extern function putchar(anon ch: c_int) -> c_int
+extern function system(anon command: raw c_char) -> c_int
+"
+}

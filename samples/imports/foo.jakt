@@ -3,3 +3,7 @@
 function bar() {
     println("PASS")
 }
+
+struct Bar {
+    function foo() -> String => "PASS"
+}

@@ -10,7 +10,7 @@ import typechecker {
     Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId, expression_type,
     CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id }
 import utility { panic, todo, join, prepend_to_each, Span }
-
+import compiler { Compiler }
 
 enum AllowedControlExits {
     /// No control exit statements allowed
@@ -123,7 +123,9 @@ struct CodegenDebugInfo {
 
 struct CodeGenerator {
 
+    compiler: Compiler
     program: CheckedProgram
+
     control_flow_state: ControlFlowState
     entered_yieldable_blocks: [(String, String)] // label, variable name
     deferred_output: String
@@ -137,9 +139,10 @@ struct CodeGenerator {
 
     function fresh_label(mut this) throws => format("__jakt_label_{}", .fresh_label_counter++) // FIXME: remove when vscode syntax highlighting works properly"
 
-    function generate(anon program: CheckedProgram, file_name: String, file_contents: [u8], debug_info: bool) throws -> String {
+    function generate(compiler: Compiler, anon program: CheckedProgram, debug_info: bool) throws -> String {
         let none_function: CheckedFunction? = None
         mut generator = CodeGenerator(
+            compiler
             program
             control_flow_state: ControlFlowState(
                 allowed_exits: AllowedControlExits::Nothing
@@ -149,9 +152,10 @@ struct CodeGenerator {
             entered_yieldable_blocks: []
             deferred_output: ""
             current_function: none_function
+            //TODO: use program.loaded_modules
             debug_info: CodegenDebugInfo(
-                file_name
-                file_contents
+                file_name: compiler.current_file.path
+                file_contents: compiler.current_file_contents
                 line_spans: []
                 statement_span_comments: debug_info
             )
@@ -165,8 +169,14 @@ struct CodeGenerator {
         output += "#include <lib.h>\n"
         output += "namespace Jakt {\n"
 
-        for module in generator.program.modules.iterator() {
-            let scope_id = ScopeId(module: ModuleId(id: 0), id: 0)
+        // FIXME: module sorting
+        let module_count = generator.program.modules.size()
+        mut i = module_count - 1
+        while (i >= 1 and i <= module_count) { // skip 0 as it is prelude
+            let module = generator.program.modules[i]
+            generator.compiler.dbg_println(format("generate: module idx: {}, module.name {}", i, module.name))
+
+            let scope_id = ScopeId(module_id: module.id, id: 0)
             let scope = generator.program.get_scope(scope_id)
 
             if not module.is_root {
@@ -180,11 +190,16 @@ struct CodeGenerator {
             if not module.is_root {
                 output += "}\n"
             }
+            i--
         }
 
+        // FIXME: module sorting
+        i = module_count - 1
+        while (i >= 1 and i <= module_count) { // skip 0 as it is prelude
+            let module = generator.program.modules[i]
+            generator.compiler.dbg_println(format("generate: module idx: {}, module.name {}", i, module.name))
 
-        for module in generator.program.modules.iterator() {
-            let scope_id = ScopeId(module: ModuleId(id: 0), id: 0)
+            let scope_id = ScopeId(module_id: module.id, id: 0)
             let scope = generator.program.get_scope(scope_id)
 
             if not module.is_root {
@@ -198,6 +213,7 @@ struct CodeGenerator {
             if not module.is_root {
                 output += "}\n"
             }
+            i--
         }
 
         output += generator.deferred_output
@@ -770,7 +786,7 @@ struct CodeGenerator {
 
         output += "};\n"
 
-        let module = .program.get_module(enum_.scope_id.module)
+        let module = .program.get_module(enum_.scope_id.module_id)
         let name = match module.is_root {
             true => enum_.name
             else => format("{}::{}", module.name, enum_.name)
@@ -888,8 +904,11 @@ struct CodeGenerator {
         let template_args = join(prepend_to_each(generic_parameter_names, prefix: "typename "), separator: ", ")
         let generic_type_args = join(generic_parameter_names, separator: ", ")
 
-        // FIXME: track namespace_stack so we can generate qualified name
         mut qualified_name = name
+        for namespace_ in .namespace_stack.iterator() {
+            qualified_name += format("{}::", namespace_)
+        }
+
         if not generic_parameter_names.is_empty() {
             qualified_name += format("<{}>\n", generic_type_args)
         }

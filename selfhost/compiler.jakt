@@ -1,0 +1,37 @@
+import error { JaktError, print_error }
+import utility
+
+
+class Compiler {
+  public errors: [JaktError]
+  public current_file: utility::FilePath
+  public current_file_contents: [u8]
+  public dump_lexer: bool
+  public dump_parser: bool
+  public ignore_parser_errors: bool
+  public debug_print: bool
+
+  public function panic(this, anon message: String) throws {
+      .print_errors()
+      utility::panic(message)
+  }
+
+  public function print_errors(this) throws {
+      for error in .errors.iterator() {
+          print_error(file_name: .current_file.path, file_contents: .current_file_contents, error)
+      }
+  }
+  public function set_current_file(mut this, anon file: utility::FilePath) {
+    .current_file = file
+  }
+
+  public function set_current_file_contents(mut this, anon file_contents: [u8]) {
+    .current_file_contents = file_contents
+  }
+
+  public function dbg_println(this, anon message: String) {
+    if .debug_print {
+      println("{}", message)
+    }
+  }
+}
