@@ -5,13 +5,23 @@ if [ ! -x ./build/jakttest ]; then
     cargo run jakttest/jakttest.jakt
 fi
 
+# check for jakttest/ mtime and build/jakttest mtime
+{
+    jakttest_binary_mtime=$(stat -c %Y build/jakttest)
+    latest_jakttest_source_mtime=$(stat -c %Y jakttest/*.jakt | sort | tail -n1)
+    if [ "$jakttest_binary_mtime" -lt "$latest_jakttest_source_mtime" ]; then
+        echo "re-compiling jakttest to match source"
+        cargo run jakttest/jakttest.jakt
+    fi
+}
+
 
 # check for selfhost/ mtime and build/main mtime
 {
     binary_mtime=$(stat -c %Y build/main)
-    latest_selfhost_mtime=$(stat -c %Y selfhost/* | sort | tail -n1)
+    latest_selfhost_mtime=$(stat -c %Y selfhost/*.jakt | sort | tail -n1)
     if [ "$binary_mtime" -lt "$latest_selfhost_mtime" ]; then
-        echo "re-compiling selfhost to match binary"
+        echo "re-compiling selfhost to match source"
         cargo run selfhost/main.jakt
     fi
 }
