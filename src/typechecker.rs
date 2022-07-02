@@ -4939,14 +4939,14 @@ pub fn typecheck_expression(
                 if (key_type_id, value_type_id) == (UNKNOWN_TYPE_ID, UNKNOWN_TYPE_ID) {
                     if current_key_type_id == VOID_TYPE_ID {
                         error = error.or(Some(JaktError::TypecheckError(
-                            "cannot create a dictionary with keys of type void".to_string(),
+                            "Can't create a dictionary with keys of type void".to_string(),
                             key.span(),
                         )))
                     }
 
                     if current_value_type_id == VOID_TYPE_ID {
                         error = error.or(Some(JaktError::TypecheckError(
-                            "cannot create a dictionary with values of type void".to_string(),
+                            "Can't create a dictionary with values of type void".to_string(),
                             value.span(),
                         )))
                     }
@@ -4976,9 +4976,9 @@ pub fn typecheck_expression(
                     if value_type_id != current_value_type_id {
                         let value_type_name = project.typename_for_type_id(value_type_id);
                         error = error.or(Some(JaktError::TypecheckErrorWithHint(
-                            format!("type '{}' does not match type '{}' of previous values in dictionary", project.typename_for_type_id(current_value_type_id), value_type_name),
+                            format!("Type '{}' does not match type '{}' of previous values in dictionary", project.typename_for_type_id(current_value_type_id), value_type_name),
                             value.span(),
-                            format!("dictionary was inferred to store values of type '{}' here", value_type_name),
+                            format!("Dictionary was inferred to store values of type '{}' here", value_type_name),
                             value_type_span.unwrap(),
                         )))
                     }

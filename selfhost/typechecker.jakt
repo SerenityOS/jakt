@@ -3957,6 +3957,63 @@ struct Typechecker {
             let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
             yield CheckedExpression::JaktArray(vals, repeat, span, type_id)
         }
+        JaktDictionary(values, span) => {
+            let VOID_TYPE_ID = builtin(BuiltinType::Void)
+            mut key_type_id = unknown_type_id()
+            mut value_type_id = unknown_type_id()
+            mut vals: [(CheckedExpression, CheckedExpression)] = []
+            let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
+
+            for kv in values.iterator() {
+                let key = kv.0
+                let value = kv.1
+
+                let checked_key = .typecheck_expression(key, scope_id, safety_mode)
+                let current_key_type_id = expression_type(checked_key)
+
+                let checked_value = .typecheck_expression(value, scope_id, safety_mode)
+                let current_value_type_id = expression_type(checked_value)
+
+                if key_type_id.equals(unknown_type_id()) and value_type_id.equals(unknown_type_id()) {
+                    if current_key_type_id.equals(VOID_TYPE_ID) {
+                        .error("Can't create a dictionary with keys of type void", span)
+                    }
+
+                    if current_value_type_id.equals(VOID_TYPE_ID) {
+                        .error("Can't create a dictionary with values of type void", span)
+                    }
+
+                    key_type_id = current_key_type_id
+                    value_type_id = current_value_type_id
+                } else {
+                    if not key_type_id.equals(current_key_type_id) {
+                        .error(
+                            format(
+                                "Type '{}' does not match type '{}' of previous keys in dictionary",
+                                .type_name(current_key_type_id)
+                                .type_name(key_type_id)
+                            )
+                        , span)
+                    }
+
+                    if not value_type_id.equals(current_value_type_id) {
+                        .error(
+                            format(
+                                "Type '{}' does not match type '{}' of previous values in dictionary",
+                                .type_name(current_value_type_id)
+                                .type_name(value_type_id)
+                            )
+                        , span)
+                    }
+                }
+
+                let checked = (checked_key, checked_value)
+                vals.push(checked)
+            }
+
+            let type_id = .find_or_add_type_id(Type::GenericInstance(id: dictionary_struct_id, args: [key_type_id, value_type_id]))
+            yield CheckedExpression::JaktDictionary(vals, span, type_id)
+        }
         JaktTuple(values, span) => {
             let VOID_TYPE_ID = builtin(BuiltinType::Void)
             mut checked_values: [CheckedExpression] = []
