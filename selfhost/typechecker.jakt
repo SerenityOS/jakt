@@ -880,10 +880,9 @@ class CheckedProgram {
         mut current_scope_id = scope_id
         loop {
             let scope = .get_scope(current_scope_id)
-            for existing_var in scope.vars.iterator() {
-                if existing_var.0 == var {
-                    return .get_variable(existing_var.1)
-                }
+            let maybe_var = scope.vars.get(var)
+            if maybe_var.has_value() {
+                return .get_variable(maybe_var!)
             }
             if not scope.parent.has_value() {
                 break
@@ -1310,13 +1309,10 @@ struct Typechecker {
 
         loop {
             let scope = .get_scope(current)
-
-            for type in scope.types.iterator() {
-                if type.0 == name {
-                    return type.1
-                }
+            let maybe_type = scope.types.get(name)
+            if maybe_type.has_value() {
+                return maybe_type
             }
-
             if scope.parent.has_value() {
                 current = scope.parent.value()
             } else {
@@ -1332,13 +1328,10 @@ struct Typechecker {
 
         loop {
             let scope = .get_scope(current)
-
-            for enum_ in scope.enums.iterator() {
-                if enum_.0 == name {
-                    return enum_.1
-                }
+            let maybe_enum = scope.enums.get(name)
+            if maybe_enum.has_value() {
+                return maybe_enum
             }
-
             if scope.parent.has_value() {
                 current = scope.parent.value()
             } else {
@@ -1388,9 +1381,9 @@ struct Typechecker {
 
     function add_struct_to_scope(mut this, scope_id: ScopeId, name: String, struct_id: StructId, span: Span) throws -> bool {
         mut scope = .get_scope(scope_id)
-
-        if scope.structs.contains(name) {
-            let existing_struct_id = scope.structs[name]
+        let maybe_scope_id = scope.structs.get(name)
+        if maybe_scope_id.has_value() {
+            let existing_struct_id = maybe_scope_id!
             let definition_span = .get_struct(existing_struct_id).name_span
 
             .error_with_hint(
@@ -1407,9 +1400,9 @@ struct Typechecker {
 
     function add_enum_to_scope(mut this, scope_id: ScopeId, name: String, enum_id: EnumId, span: Span) throws -> bool {
         mut scope = .get_scope(scope_id)
-
-        if scope.enums.contains(name) {
-            let existing_enum_id = scope.enums[name]
+        let maybe_enum_id = scope.enums.get(name)
+        if maybe_enum_id.has_value() {
+            let existing_enum_id = maybe_enum_id!
             let definition_span = .get_enum(existing_enum_id).name_span
 
             .error_with_hint(
@@ -1468,18 +1461,15 @@ struct Typechecker {
         mut scope_id = Some(parent_scope_id)
         while scope_id.has_value() {
             let scope = .get_scope(id: scope_id!)
-            for name_and_function_id in scope.functions.iterator() {
-                if name_and_function_id.0 == function_name {
-                    return name_and_function_id.1
-                }
+            let maybe_function = scope.functions.get(function_name)
+            if maybe_function.has_value() {
+                return maybe_function
             }
-
             if scope.parent.has_value() {
                 if scope_id!.equals(scope.parent!) {
                     panic(format("Scope {} is its own parent!", scope_id))
                 }
             }
-
             scope_id = scope.parent
         }
 
@@ -1490,10 +1480,9 @@ struct Typechecker {
         mut current_scope_id = Some(scope_id)
         while current_scope_id.has_value() {
             let scope = .get_scope(id: current_scope_id!)
-            for s in scope.structs.iterator() {
-                if s.0 == name {
-                    return Some(s.1)
-                }
+            let maybe_scope = scope.structs.get(name)
+            if maybe_scope.has_value() {
+                return maybe_scope
             }
             current_scope_id = scope.parent
         }
