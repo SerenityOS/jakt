@@ -929,7 +929,7 @@ struct Typechecker {
     inside_defer: bool
     errors: [JaktError]
 
-    function typecheck(parsed_namespace: ParsedNamespace, errors: [JaktError]) throws -> CheckedProgram {
+    function typecheck(parsed_namespace: ParsedNamespace, parsed_prelude: ParsedNamespace, errors: [JaktError]) throws -> CheckedProgram {
         let root_module_id = ModuleId(id: 0)
         let module = Module(
             id: root_module_id,
@@ -975,6 +975,7 @@ struct Typechecker {
 
         let none: ScopeId? = None
         typechecker.create_scope(parent_scope_id: none, can_throw: false)
+        typechecker.typecheck_module(parsed_namespace: parsed_prelude, scope_id: ScopeId(module: root_module_id, id: 0))
 
         typechecker.typecheck_module(parsed_namespace, scope_id: ScopeId(module: root_module_id, id: 0))
 
@@ -1055,9 +1056,6 @@ struct Typechecker {
     }
 
     function find_struct_in_prelude(this, anon name: String) throws -> StructId {
-        // FIXME: Remove this short-circuit once we actually start parsing the prelude!
-        return StructId(module: ModuleId(id: 0), id: 0)
-
         // start at the prelude scope id
         let scope_id = ScopeId(module: ModuleId(id: 0), id: 0)
         let struct_id = .find_struct_in_scope(scope_id, name)
@@ -1070,9 +1068,6 @@ struct Typechecker {
     }
 
     function find_type_in_prelude(this, anon name: String) throws -> TypeId {
-        // FIXME: Remove this short-circuit once we actually start parsing the prelude!
-        return TypeId(module: ModuleId(id: 0), id: 0)
-
         // start at the prelude scope id
         let scope_id = ScopeId(module: ModuleId(id: 0), id: 0)
         let type_id = .find_type_in_scope(scope_id, name)
@@ -1436,8 +1431,8 @@ struct Typechecker {
         mut scope = .get_scope(id: parent_scope_id)
         for existing_function in scope.functions.iterator() {
             if name == existing_function.0 {
-                // FIXME: Show hint of the original definition, once we store the name span.
-                .error(format("Redefinition of function ‘{}’", name), span)
+                let function_ = .get_function(existing_function.1)
+                .error_with_hint(message: format("Redefinition of function ‘{}’", name), span, hint: "previous definition here", hint_span: function_.name_span)
                 return false
             }
         }
@@ -1449,8 +1444,8 @@ struct Typechecker {
         mut scope = .get_scope(scope_id)
         for existing_var in scope.vars.iterator() {
             if name == existing_var.0 {
-                // FIXME: Show hint of the original definition, once we store the name span.
-                .error(format("Redefinition of variable ‘{}’", name), span)
+                let variable_ = .get_variable(existing_var.1)
+                .error_with_hint(message: format("Redefinition of variable ‘{}’", name), span, hint: "previous definition here", hint_span: variable_.definition_span)
             }
         }
         scope.vars.set(key: name, value: var_id)
@@ -3794,8 +3789,9 @@ struct Typechecker {
             let parent_id = match .get_type(expression_type(checked_expr)) {
                 Struct(id) => StructOrEnumId::Struct(id)
                 Enum(id) => StructOrEnumId::Enum(id)
+                JaktString => StructOrEnumId::Struct(.find_struct_in_prelude("String"))
                 else => {
-                    panic("Method call on unsupported base")
+                    panic(format("Method call on unsupported base {}", .get_type(expression_type(checked_expr))))
                     yield StructOrEnumId::Struct(StructId(module: ModuleId(id: 0), id: 0))
                 }
             }
