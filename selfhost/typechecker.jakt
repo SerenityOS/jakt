@@ -468,6 +468,7 @@ struct CheckedEnum {
     record_type: RecordType
     underlying_type_id: TypeId
     type_id: TypeId
+    is_boxed: bool
 }
 
 enum CheckedEnumVariant {
@@ -1873,6 +1874,10 @@ struct Typechecker {
         let enum_type_id = TypeId(module: module_id, id: .current_module().types.size() - 1)
         .add_type_to_scope(scope_id, type_name: parsed_record.name, type_id: enum_type_id, span: parsed_record.name_span)
 
+        let is_boxed = match parsed_record.record_type {
+            SumEnum(is_boxed) => is_boxed
+            else => false
+        }
         // Add a placeholder entry, this will be replaced later.
         module.enums.push(CheckedEnum(
             name: parsed_record.name
@@ -1884,6 +1889,7 @@ struct Typechecker {
             record_type: parsed_record.record_type
             underlying_type_id: enum_type_id
             type_id: enum_type_id
+            is_boxed
         ))
     }
 
@@ -1899,6 +1905,10 @@ struct Typechecker {
             else => builtin(BuiltinType::Void)
         }
 
+        let is_boxed = match parsed_record.record_type {
+            SumEnum(is_boxed) => is_boxed
+            else => false
+        }
         mut module = .current_module()
         module.enums[enum_id.id] = CheckedEnum(
             name: parsed_record.name
@@ -1910,6 +1920,7 @@ struct Typechecker {
             record_type: parsed_record.record_type
             underlying_type_id
             type_id: enum_type_id
+            is_boxed
         )
 
         mut generic_parameters: [TypeId] = module.enums[enum_id.id].generic_parameters
@@ -2240,7 +2251,7 @@ struct Typechecker {
                     }
                 }
             }
-            SumEnum(variants) => {
+            SumEnum(is_boxed, variants) => {
                 mut module = .current_module()
                 for variant in variants.iterator() {
                     if seen_names.contains(variant.name) {
@@ -2281,7 +2292,7 @@ struct Typechecker {
                         enum_.variants.push(CheckedEnumVariant::StructLike(name: variant.name, fields, span: variant.span))
                         let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
-                            let can_function_throw = false // TODO: is_boxed
+                            let can_function_throw = is_boxed
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw)
                             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw)
                             let none_type_id: TypeId? = None
@@ -2308,7 +2319,7 @@ struct Typechecker {
 
                         let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
-                            let can_function_throw = false // TODO: is_boxed
+                            let can_function_throw = is_boxed
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw)
                             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw)
                             let none_type_id: TypeId? = None
@@ -2339,7 +2350,7 @@ struct Typechecker {
                         enum_.variants.push(CheckedEnumVariant::Untyped(name: variant.name, span: variant.span))
                         let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
-                            let can_function_throw = false // TODO: is_boxed
+                            let can_function_throw = is_boxed
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw)
                             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw)
                             let none_type_id: TypeId? = None
