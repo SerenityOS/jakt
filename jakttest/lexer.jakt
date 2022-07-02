@@ -309,7 +309,7 @@ enum NumericConstant {
     }
 }
 
-function make_number_token(number: i64, suffix: LiteralSuffix, span: Span) throws -> Token => match suffix {
+function make_number_token(number: u64, suffix: LiteralSuffix, span: Span) throws -> Token => match suffix {
     // FIXME: Implement floats
     LiteralSuffix::U8 => Token::Number(number: NumericConstant::U8(number as! u8), span)
     LiteralSuffix::U16 => Token::Number(number: NumericConstant::U16(number as! u16), span)
@@ -450,7 +450,7 @@ struct Lexer {
 
     function lex_number(mut this) throws -> Token {
         let start = .index
-        mut total = 0i64
+        mut total = 0u64
 
         if .peek() == b'0' {
             match .peek_ahead(1) {
@@ -466,7 +466,7 @@ struct Lexer {
                         }
                         let value = .input[.index] - offset
                         ++.index
-                        let digit: i64 = as_saturated(value - b'0')
+                        let digit: u64 = as_saturated(value - b'0')
                         total = total * 16 + digit
                         if .peek() == b'_' {
                             ++.index
@@ -483,7 +483,7 @@ struct Lexer {
                     while(is_ascii_octdigit(.peek())) {
                         let value = .input[.index]
                         ++.index
-                        let digit: i64 = as_saturated(value - b'0')
+                        let digit: u64 = as_saturated(value - b'0')
                         total = total * 8 + digit
                         if .peek() == b'_' {
                             ++.index
@@ -496,7 +496,7 @@ struct Lexer {
                     while(.peek() == b'0' or .peek() == b'1') {
                         let value = .input[.index]
                         ++.index
-                        let digit: i64 = as_saturated(value - b'0')
+                        let digit: u64 = as_saturated(value - b'0')
                         total = total * 2 + digit
                         if .peek() == b'_' {
                             ++.index
@@ -510,7 +510,7 @@ struct Lexer {
         while is_ascii_digit(.peek()) {
             let value = .input[.index]
             ++.index
-            let digit: i64 = as_saturated(value - b'0')
+            let digit: u64 = as_saturated(value - b'0')
             total = total * 10 + digit
             if .peek() == b'_' {
                 .index += 1
