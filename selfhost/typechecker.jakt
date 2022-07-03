@@ -83,7 +83,7 @@ struct TypeId {
 
         let module_id = parts[0].to_uint()
         let type_id = parts[1].to_uint()
-        if module_id.has_value() or not type_id.has_value() {
+        if not module_id.has_value() or not type_id.has_value() {
             throw Error::from_errno(9999) // FIXME: good error message
         }
 
@@ -4868,8 +4868,7 @@ struct Typechecker {
                 yield CheckedMatchBody::Expression(checked_expression)
             }
         }
-
-        return (checked_match_body, result_type!)
+        return (checked_match_body, result_type ?? unknown_type_id())
     }
 
     function typecheck_dictionary(mut this, values: [(ParsedExpression, ParsedExpression)], span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
