@@ -366,6 +366,7 @@ function f64_to_f32(anon number: f64) -> f32 {
     return f32_value
 }
 
+
 struct Lexer {
     index: usize
     input: [u8]
@@ -620,16 +621,47 @@ struct Lexer {
             }
         }
 
-        while is_ascii_digit(.peek()) {
+        mut floating: bool = false
+
+        mut fraction_nominator: u64 = 0
+        mut fraction_denominator: u64 = 1
+
+        while not .eof() {
+
             let value = .input[.index]
-            ++.index
-            let digit: u64 = as_saturated(value - b'0')
-            total = total * 10 + digit
-            if .peek() == b'_' {
-                .index += 1
+
+            if value == b'.' {
+                if not is_ascii_digit(.peek_ahead(1)) or floating {
+                    break
+                }
+                floating = true
+                .index++
+                continue
+            } else if not is_ascii_digit(value) {
+                break
             }
+
+            ++.index
+
+            let digit: u64 = as_saturated(value - b'0')
+            if not floating {
+                total = total * 10 + digit
+            } else {
+                fraction_nominator = fraction_nominator * 10u64 + digit
+                fraction_denominator *= 10u64
+            }
+            if .peek() == b'_' {
+                if is_ascii_digit(.peek_ahead(1)) {
+                    ++.index
+                } else {
+                    break
+                }
+            }            
         }
+
+        // FIXME: Change match to if statements or similar when available
         let end = .index
+
         let span = .span(start, end)
 
         if .peek_behind(1) == b'_' {
@@ -640,15 +672,32 @@ struct Lexer {
             return Token::Garbage(span)
         }
 
-        let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::I64
+        let default_suffix = match floating {
+            true => LiteralSuffix::F64
+            else => LiteralSuffix::I64
+        }
+        let suffix = .consume_numeric_literal_suffix() ?? default_suffix
 
-        // FIXME: Lex floats and make it take the whole range of floats, 
-        //        not just unsigned integers repackaged as floats.
+        let is_float_suffix = match suffix {
+            LiteralSuffix::F32 | LiteralSuffix::F64 => true
+            else => false
+        }
+
+        // Sanity check
+        if floating and not is_float_suffix {
+            // FIXME: Provide better error handling
+            return Token::Garbage(.span(start, end: .index))
+        }
+
         return match suffix {
-            LiteralSuffix::F32 | LiteralSuffix::F64 => make_float_token(number: u64_to_float(total), suffix, span: .span(start, end))
+            LiteralSuffix::F32 | LiteralSuffix::F64 => {
+                let number: f64 = u64_to_float<f64>(total) + u64_to_float<f64>(fraction_nominator)/u64_to_float<f64>(fraction_denominator)
+                yield make_float_token(number, suffix, span: .span(start, end))
+            }
             else => make_integer_token(number: total, suffix, span: .span(start, end))
         }
     }
+
 
     function consume_numeric_literal_suffix(mut this) -> LiteralSuffix? {
         match .peek() {
