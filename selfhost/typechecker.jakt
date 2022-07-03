@@ -4443,7 +4443,7 @@ struct Typechecker {
             }
         }
 
-        return CheckedExpression::Match(expr: checked_expr, match_cases: checked_cases, span, type_id: unknown_type_id(), all_variants_constant: true)
+        return CheckedExpression::Match(expr: checked_expr, match_cases: checked_cases, span, type_id: final_result_type ?? void_type_id(), all_variants_constant: true)
     }
 
     function typecheck_match_body(mut this, body: ParsedMatchBody, scope_id: ScopeId, safety_mode: SafetyMode, generic_inferences: [String: String], final_result_type: TypeId?, span: Span) throws -> (CheckedMatchBody, TypeId) {
@@ -4452,23 +4452,35 @@ struct Typechecker {
             Block(block) => {
                 let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: scope_id, safety_mode)
 
-                // FIXME: The rust compiler only checks this if the checked_block does NOT
-                //        definitely return. However, I think we should always check this.
-                let block_type_id = checked_block.yielded_type ?? builtin(BuiltinType::Void)
-                let yield_span = block.find_yield_span() ?? span
+                // FIXME: Check that this is not the wrong way around
+                if not checked_block.definitely_returns {
+                    let block_type_id = checked_block.yielded_type ?? builtin(BuiltinType::Void)
+                    let yield_span = block.find_yield_span() ?? span
 
-                if result_type.has_value() {
-                    .check_types_for_compat(
-                        lhs_type_id: result_type!
-                        rhs_type_id: block_type_id
-                        generic_inferences
-                        span: yield_span
-                    )
-                } else {
-                    result_type = block_type_id
+                    if result_type.has_value() {
+                        .check_types_for_compat(
+                            lhs_type_id: result_type!
+                            rhs_type_id: block_type_id
+                            generic_inferences
+                            span: yield_span
+                        )
+                    } else {
+                        result_type = block_type_id
+                    }
                 }
 
-                yield CheckedMatchBody::Block(checked_block)
+                mut final_body: CheckedMatchBody? = None
+                if checked_block.yielded_type.has_value() {
+                    final_body = CheckedMatchBody::Expression(CheckedExpression::Block(
+                        block: checked_block
+                        span
+                        type_id: checked_block.yielded_type!
+                    ))
+                } else {
+                    final_body = CheckedMatchBody::Block(checked_block)
+                }
+
+                yield final_body!
             }
             Expression(expr) => {
                 let checked_expression = .typecheck_expression(expr, scope_id, safety_mode)
