@@ -1314,6 +1314,34 @@ struct CodeGenerator {
 
             yield output
         }
+        JaktDictionary(vals, span, type_id, key_type_id, value_type_id) => {
+            mut output = format("(TRY(Dictionary<{}, {}>::create_with_entries({{",
+                .codegen_type(key_type_id),
+                .codegen_type(value_type_id))
+
+            mut first = true
+            for val in vals.iterator() {
+                let key = val.0
+                let value = val.1
+
+                if not first {
+                    output += ", "
+                } else {
+                    first = false
+                }
+
+                output += "{"
+                output += .codegen_expression(key)
+                output += ", "
+                output += .codegen_expression(value)
+                output += "}"
+            }
+
+            output += "})))"
+
+            yield output
+        }
+
         JaktSet(vals, span, type_id, inner_type_id) => {
             mut output = ""
             output += format("(TRY(Set<{}>::create_with_values({{", .codegen_type(inner_type_id))
