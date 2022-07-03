@@ -1121,6 +1121,23 @@ struct CodeGenerator {
 
             yield output
         }
+        JaktTuple(vals, span, type_id) => {
+            mut output = ""
+            output += "(Tuple{"
+            mut first = true
+            for val in vals.iterator() {
+                if not first {
+                    output += ", "
+                } else {
+                    first = false
+                }
+
+                output += .codegen_expression(val)
+            }
+            output += "})"
+
+            yield output
+        }
         else => {
             todo(format("codegen_expression else: {}", expression))
             yield ""
