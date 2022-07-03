@@ -4132,11 +4132,62 @@ struct Typechecker {
         }
         Match(expr, cases, span) => .typecheck_match(expr, cases, span, scope_id, safety_mode)
         JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode)
+        Set(values, span) => .typecheck_set(values, span, scope_id, safety_mode)
         else => {
             panic(format("typechecker needs support for {}", expr))
 
             yield CheckedExpression::Boolean(val: false, span: Span(start: 0, end: 0))
         }
+    }
+
+    function typecheck_set(mut this, values: [ParsedExpression], span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
+        mut inner_type_id = unknown_type_id()
+        mut inner_type_span: Span? = None
+        mut output: [CheckedExpression] = []
+
+        let set_struct_id = .find_struct_in_prelude("Set")
+
+        // TODO: type hints
+
+        for value in values.iterator() {
+            let checked_value = .typecheck_expression(expr: value, scope_id, safety_mode)
+            let current_value_type_id = expression_type(checked_value)
+            if inner_type_id.equals(unknown_type_id()) {
+                if current_value_type_id.equals(void_type_id()) or current_value_type_id.equals(unknown_type_id()) {
+                    .error(
+                        "Cannot create a set with values of type void"
+                        value.span()
+                    )
+                }
+
+                inner_type_id = current_value_type_id
+                inner_type_span = value.span()
+            } else if not inner_type_id.equals(current_value_type_id) {
+                let set_type_name = .type_name(inner_type_id)
+                .error_with_hint(
+                    format(
+                        "Type '{}' does not match type '{}' of previous values in set"
+                        .type_name(current_value_type_id)
+                        set_type_name
+                    )
+                    value.span()
+                    format("Set was inferred to store type '{}' here", set_type_name)
+                    inner_type_span!
+                )
+            }
+            output.push(checked_value)
+        }
+
+        if inner_type_id.equals(unknown_type_id()) {
+            .error("Cannot infer generic type for Set<T>", span)
+        }
+
+        let type_id = .find_or_add_type_id(Type::GenericInstance(
+            id: set_struct_id
+            args: [inner_type_id]
+        ))
+
+        return CheckedExpression::JaktSet(vals: output, span, type_id)
     }
 
     function typecheck_match(mut this, expr: ParsedExpression, cases: [ParsedMatchCase], span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {

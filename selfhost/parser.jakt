@@ -302,6 +302,7 @@ boxed enum ParsedExpression {
     OptionalNone(Span)
     JaktArray(values: [ParsedExpression], fill_size: ParsedExpression?, span: Span)
     JaktDictionary(values: [(ParsedExpression, ParsedExpression)], span: Span)
+    Set(values: [ParsedExpression], span: Span)
     JaktTuple(values: [ParsedExpression], span: Span)
     Range(from: ParsedExpression, to: ParsedExpression, span: Span)
     ForcedUnwrap(expr: ParsedExpression, span: Span)
@@ -325,6 +326,7 @@ boxed enum ParsedExpression {
         OptionalNone(span) => span
         JaktArray(values, fill_size, span) => span
         JaktDictionary(values, span) => span
+        Set(span) => span
         JaktTuple(values, span) => span
         Range(from, to, span) => span
         ForcedUnwrap(expr, span) => span
@@ -1986,12 +1988,53 @@ struct Parser {
         Match => {
             yield .parse_match_expression()
         }
+        LCurly => {
+            yield .parse_set_literal()
+        }
         else => {
             let span = .current().span()
             .index++
             .error("Unsupported expression", span)
             yield ParsedExpression::Garbage(span)
         }
+    }
+
+    function parse_set_literal(mut this) throws -> ParsedExpression {
+        let start = .current().span()
+
+        if not .current() is LCurly {
+            .error("Expected ‘{’", .current().span())
+            return ParsedExpression::Garbage(.current().span())
+        }
+        .index++
+
+        mut output: [ParsedExpression] = []
+        while not .eof() {
+            match .current() {
+                RCurly => {
+                    .index++
+                    break
+                }
+                Comma | Eol => {
+                    .index++
+                }
+                else => {
+                    let expr = .parse_expression(allow_assignments: false)
+                    if expr is Garbage {
+                        break
+                    }
+
+                    output.push(expr)
+                }
+            }
+        }
+
+        let end = .index - 1
+        if end >= .tokens.size() or not .tokens[end] is RCurly {
+            .error("Expected ‘}’ to close the set", .tokens[end].span())
+        }
+
+        return ParsedExpression::Set(values: output, span: merge_spans(start, .tokens[end].span()))
     }
     
 
