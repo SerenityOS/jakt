@@ -224,11 +224,171 @@ struct CodeGenerator {
         return output
     }
 
+    function postorder_traversal(this, encoded_type_id: String, mut visited: {usize}, encoded_dependency_graph: [String: [String]], mut output: [TypeId]) throws {
+        let type_id = TypeId::from_string(encoded_type_id)
+        if visited.contains(type_id.id) {
+            return
+        }
+        visited.add(type_id.id)
+        if encoded_dependency_graph.contains(encoded_type_id) {
+            for dependency in encoded_dependency_graph.get(encoded_type_id)!.iterator() {
+                .postorder_traversal(encoded_type_id: dependency, visited, encoded_dependency_graph, output)
+            }
+        }
+        output.push(type_id)
+    }
+
+    function produce_codegen_dependency_graph(this, scope: Scope) throws -> [String : [String]] {
+        mut dependency_graph: [String : [String]] = [:]
+
+        for type_ in scope.types.iterator() {
+            dependency_graph.set(type_.1.to_string(), .extract_dependencies_from(type_id: type_.1, dependency_graph, top_level: true))
+        }
+
+        return dependency_graph
+    }
+
+    function extract_dependencies_from(this, type_id: TypeId, dependency_graph: [String : [String]], top_level: bool) throws -> [String] {
+        mut dependencies: [String] = []
+
+        if dependency_graph.contains(type_id.to_string()) {
+            for dependency in dependency_graph.get(type_id.to_string())!.iterator() {
+                dependencies.push(dependency)
+            }
+            return dependencies
+        }
+
+        let type_ = .program.get_type(type_id)
+        let inner_dependencies = match type_ {
+            Enum(enum_id) => .extract_dependencies_from_enum(enum_id, dependency_graph, top_level)
+            GenericEnumInstance(id) => .extract_dependencies_from_enum(enum_id: id, dependency_graph, top_level)
+            Struct(id) => .extract_dependencies_from_struct(struct_id: id, dependency_graph, top_level)
+            GenericInstance(id) => .extract_dependencies_from_struct(struct_id: id, dependency_graph, top_level)
+            else => []
+        }
+
+        for dependency in inner_dependencies.iterator() {
+            dependencies.push(dependency)
+        }
+
+        return dependencies
+    }
+
+    function extract_dependencies_from_enum(this, enum_id: EnumId, dependency_graph: [String : [String]], top_level: bool) throws -> [String] {
+        mut dependencies: [String] = []
+
+        let enum_ = .program.get_enum(enum_id)
+        if enum_.definition_linkage is External {
+            // This type is defined somewhere else,
+            // so we can skip marking it as a dependency.
+            return dependencies
+        }
+        if enum_.is_boxed and not top_level {
+            // We store and pass these as pointers, so we don't need to
+            // include them in the dependency graph.
+            return dependencies
+        }
+        dependencies.push(enum_.type_id.to_string())
+        if not enum_.underlying_type_id.equals(unknown_type_id()) {
+            let inner_dependencies = .extract_dependencies_from(type_id: enum_.underlying_type_id, dependency_graph, top_level: false)
+            for dependency in inner_dependencies.iterator() {
+                dependencies.push(dependency)
+            }
+        }
+        for variant in enum_.variants.iterator() {
+            match variant {
+                Typed(type_id) => {
+                    let inner_dependencies = .extract_dependencies_from(type_id, dependency_graph, top_level: false)
+                    for dependency in inner_dependencies.iterator() {
+                        dependencies.push(dependency)
+                    }
+                }
+                StructLike(fields) => {
+                    for field in fields.iterator() {
+                        let type_id = .program.get_variable(field).type_id
+                        let inner_dependencies = .extract_dependencies_from(type_id, dependency_graph, top_level: false)
+                        for dependency in inner_dependencies.iterator() {
+                            dependencies.push(dependency)
+                        }
+                    }
+                }
+                else => {}
+            }
+        }
+
+        return dependencies
+    }
+
+    function extract_dependencies_from_struct(this, struct_id: StructId, dependency_graph: [String : [String]], top_level: bool) throws -> [String] {
+        mut dependencies: [String] = []
+        let struct_ = .program.get_struct(struct_id)
+        if struct_.definition_linkage is External {
+            // This type is defined somewhere else,
+            // so we can skip marking it as a dependency.
+            return dependencies
+        }
+
+        if struct_.record_type is Class and not top_level {
+            // We store and pass these as pointers, so we don't need to
+            // include them in the dependency graph.
+            return dependencies
+        }
+
+        dependencies.push(struct_.type_id.to_string())
+        // The struct's fields are also dependencies.
+        for field in struct_.fields.iterator() {
+            let type_id = .program.get_variable(field).type_id
+            let inner_dependencies = .extract_dependencies_from(type_id, dependency_graph, top_level: false)
+            for dependency in inner_dependencies.iterator() {
+                dependencies.push(dependency)
+            }
+        }
+        return dependencies
+    }
+
     function codegen_namespace(mut this, scope: Scope, current_module: Module) throws -> String {
         mut output = ""
 
+        let encoded_dependency_graph = .produce_codegen_dependency_graph(scope)
         // FIXME: This wants to be a {TypeId}
         mut seen_types: {usize} = {}
+        for entry in encoded_dependency_graph.iterator() {
+            let traversal: [TypeId] = []
+            .postorder_traversal(encoded_type_id: entry.0, visited: seen_types, dependency_graph: encoded_dependency_graph, output: traversal)
+            for type_id in traversal.iterator() {
+                let type_ = .program.get_type(type_id)
+                match type_ {
+                    Enum(enum_id) => {
+                        if not enum_id.module.equals(current_module.id) {
+                            // Skip over imports from other modules
+                            continue
+                        }
+                        let enum_ = .program.get_enum(enum_id)
+                        let enum_output = .codegen_enum(enum_)
+                        if not enum_output.is_empty() {
+                            output += enum_output
+                        }
+                    }
+                    Struct(struct_id) => {
+                        if not struct_id.module.equals(current_module.id) {
+                            // Skip over imports from other modules
+                            continue
+                        }
+
+                        let struct_ = .program.get_struct(struct_id)
+                        let struct_output = .codegen_struct(struct_)
+
+                        if not struct_output.is_empty() {
+                            output += struct_output
+                        }
+                    }
+                    else => {
+                        panic(format("Unexpected type in dependency graph: {}", type_))
+                    }
+                }
+                seen_types.add(type_id.id)
+            }
+        }
 
         for name_and_struct_id in scope.structs.iterator() {
             let struct_id = name_and_struct_id.1
