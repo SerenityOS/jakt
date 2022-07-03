@@ -130,6 +130,12 @@ struct CodeGenerator {
     current_function: CheckedFunction?
     debug_info: CodegenDebugInfo
     namespace_stack: [String]
+    fresh_var_counter: usize
+    fresh_label_counter: usize
+
+    function fresh_var(mut this) throws => format("__jakt_var_{}", .fresh_var_counter++) // FIXME: remove when vscode syntax highlighting works properly"
+
+    function fresh_label(mut this) throws => format("__jakt_label_{}", .fresh_label_counter++) // FIXME: remove when vscode syntax highlighting works properly"
 
     function generate(anon program: CheckedProgram, file_name: String, file_contents: [u8], debug_info: bool) throws -> String {
         let none_function: CheckedFunction? = None
@@ -150,6 +156,8 @@ struct CodeGenerator {
                 statement_span_comments: debug_info
             )
             namespace_stack: []
+            fresh_var_counter: 0
+            fresh_label_counter: 0
         )
 
         mut output = ""
@@ -1233,7 +1241,7 @@ struct CodeGenerator {
                 }
             }
         }
-        if return_type_id.equals(void_type_id()) {
+        if return_type_id.equals(void_type_id()) or return_type_id.equals(unknown_type_id()) {
             output += "return JaktInternal::ExplicitValue<void>();\n"
         }
         output += "}()))\n"
@@ -1732,7 +1740,20 @@ struct CodeGenerator {
     function codegen_block(mut this, block: CheckedBlock) throws -> String {
         mut output = ""
 
-        // FIXME: yielded_type
+        if block.yielded_type.has_value() {
+            let yielded_type = block.yielded_type!
+            let type_output = .codegen_type(yielded_type)
+            let fresh_var = .fresh_var()
+            let fresh_label = .fresh_label()
+
+            .entered_yieldable_blocks.push((fresh_var, fresh_label))
+
+            output += "({ Optional<"
+            output += type_output
+            output += "> "
+            output += fresh_var
+            output += "; "
+        }
 
         output += "{\n"
 
@@ -1742,7 +1763,16 @@ struct CodeGenerator {
 
         output += "}\n"
 
-        // FIXME: yielded_type
+        if block.yielded_type.has_value() {
+            let block_tuple = .entered_yieldable_blocks.pop()!
+            let block_var = block_tuple.0
+            let block_label = block_tuple.1
+
+            output += block_label
+            output += ":; "
+            output += block_var
+            output += ".release_value(); })"
+        }
 
         return output
     }
@@ -1851,6 +1881,26 @@ struct CodeGenerator {
                 }
 
                 add_newline = false
+
+                yield output
+            }
+            Yield(expr, span) => {
+                mut output = ""
+
+                if .entered_yieldable_blocks.size() == 0 {
+                    panic("Must be in a block to yield")
+                }
+
+                let block_tuple = .entered_yieldable_blocks[.entered_yieldable_blocks.size() - 1]
+                let block_var_name = block_tuple.0
+                let block_end_label = block_tuple.1
+
+                output += block_var_name
+                output += " = "
+                output += .codegen_expression(expr)
+                output += "; goto "
+                output += block_end_label
+                output += ";\n"
 
                 yield output
             }
