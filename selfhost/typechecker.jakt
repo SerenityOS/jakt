@@ -4978,7 +4978,7 @@ struct Typechecker {
         let maybe_function_id = .find_function_in_scope(parent_scope_id: current_scope_id, function_name: call.name)
         if maybe_function_id.has_value() {
             let function_id = maybe_function_id!
-            if not (must_be_enum_constructor or .get_function(function_id).type is ImplicitEnumConstructor) {
+            if not must_be_enum_constructor or .get_function(function_id).type is ImplicitEnumConstructor {
                 return function_id
             }
         }
