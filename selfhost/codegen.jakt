@@ -207,9 +207,15 @@ struct CodeGenerator {
                 output += "namespace "
                 output += module.name
                 output += " {\n"
+                generator.namespace_stack.push(module.name)
             }
 
             output += generator.codegen_namespace(scope, current_module: module)
+
+            if not module.is_root {
+                // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+                let dummy = generator.namespace_stack.pop()
+            }
 
             if not module.is_root {
                 output += "}\n"
@@ -1070,10 +1076,12 @@ struct CodeGenerator {
         let template_args = join(prepend_to_each(generic_parameter_names, prefix: "typename "), separator: ", ")
         let generic_type_args = join(generic_parameter_names, separator: ", ")
 
-        mut qualified_name = name
+        mut qualified_name = ""
         for namespace_ in .namespace_stack.iterator() {
             qualified_name += format("{}::", namespace_)
         }
+
+        qualified_name += name
 
         if not generic_parameter_names.is_empty() {
             qualified_name += format("<{}>\n", generic_type_args)
