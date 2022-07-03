@@ -4795,13 +4795,13 @@ pub fn typecheck_expression(
                     let array_type_name = project.typename_for_type_id(inner_type_id);
                     error = error.or(Some(JaktError::TypecheckErrorWithHint(
                         format!(
-                            "type '{}' does not match type '{}' of previous values in array",
+                            "Type '{}' does not match type '{}' of previous values in array",
                             project.typename_for_type_id(current_value_type_id),
                             array_type_name
                         ),
                         v.span(),
                         format!(
-                            "array was inferred to store type '{}' here",
+                            "Array was inferred to store type '{}' here",
                             array_type_name
                         ),
                         inner_type_span.unwrap(),
@@ -5078,7 +5078,7 @@ pub fn typecheck_expression(
 
                         _ => {
                             error = error.or(Some(JaktError::TypecheckError(
-                                "index is not an integer".to_string(),
+                                "Index is not an integer".to_string(),
                                 idx.span(),
                             )))
                         }
