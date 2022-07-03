@@ -136,9 +136,9 @@ struct CodeGenerator {
     fresh_var_counter: usize
     fresh_label_counter: usize
 
-    function fresh_var(mut this) throws => format("__jakt_var_{}", .fresh_var_counter++) // FIXME: remove when vscode syntax highlighting works properly"
+    function fresh_var(mut this) throws => format("__jakt_var_{}", .fresh_var_counter++)
 
-    function fresh_label(mut this) throws => format("__jakt_label_{}", .fresh_label_counter++) // FIXME: remove when vscode syntax highlighting works properly"
+    function fresh_label(mut this) throws => format("__jakt_label_{}", .fresh_label_counter++)
 
     function generate(compiler: Compiler, anon program: CheckedProgram, debug_info: bool) throws -> String {
         let none_function: CheckedFunction? = None
