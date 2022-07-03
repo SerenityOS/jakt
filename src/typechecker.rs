@@ -5216,7 +5216,7 @@ pub fn typecheck_expression(
                             MatchCase::CatchAll { body, marker_span } => {
                                 if seen_catch_all {
                                     error = error.or(Some(JaktError::TypecheckError(
-                                        "multiple catch-all cases in match are not allowed"
+                                        "Multiple catch-all cases in match are not allowed"
                                             .to_string(),
                                         *marker_span,
                                     )));

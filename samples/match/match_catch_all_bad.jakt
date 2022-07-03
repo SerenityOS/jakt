@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "multiple catch-all cases in match are not allowed\n"
+/// - error: "Multiple catch-all cases in match are not allowed\n"
 
 enum Foo {
     A
