@@ -194,7 +194,7 @@ boxed enum Type {
                                 mut idx = 0uz
 
                                 while idx < lhs_args.size() {
-                                    if lhs_args[idx].equals(rhs_args[idx]) {
+                                    if not lhs_args[idx].equals(rhs_args[idx]) {
                                         return false
                                     }
                                     idx++
@@ -718,7 +718,7 @@ boxed enum CheckedExpression {
     BinaryOp(lhs: CheckedExpression, op: BinaryOperator, rhs: CheckedExpression, span: Span, type_id: TypeId)
     JaktTuple(vals: [CheckedExpression], span: Span, type_id: TypeId)
     Range(from: CheckedExpression, to: CheckedExpression, span: Span, type_id: TypeId)
-    JaktArray(vals: [CheckedExpression], repeat: CheckedExpression?, span: Span, type_id: TypeId)
+    JaktArray(vals: [CheckedExpression], repeat: CheckedExpression?, span: Span, type_id: TypeId, inner_type_id: TypeId)
     JaktDictionary(vals: [(CheckedExpression, CheckedExpression)], span: Span, type_id: TypeId)
     JaktSet(vals: [CheckedExpression], span: Span, type_id: TypeId)
     IndexedExpression(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
@@ -3982,7 +3982,7 @@ struct Typechecker {
                 vals.push(checked_expr)
             }
             let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
-            yield CheckedExpression::JaktArray(vals, repeat, span, type_id)
+            yield CheckedExpression::JaktArray(vals, repeat, span, type_id, inner_type_id)
         }
         JaktTuple(values, span) => {
             let VOID_TYPE_ID = builtin(BuiltinType::Void)

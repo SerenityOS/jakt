@@ -1083,6 +1083,36 @@ struct CodeGenerator {
             yield output + var.name
         }
         Match(expr, match_cases, type_id, all_variants_constant) => .codegen_match(expr, match_cases, type_id, all_variants_constant)
+        JaktArray(vals, repeat, span, type_id, inner_type_id) => {
+            mut output = ""
+            if repeat.has_value() {
+                let repeat_val = repeat.value()
+                output += "(TRY(Array<"
+                output += .codegen_type(inner_type_id)
+                output += ">::filled("
+                output += .codegen_expression(repeat_val)
+                output += ", "
+                output += .codegen_expression(vals[0])
+                output += ")))"
+            } else {
+                output += "(TRY(Array<"
+                output += .codegen_type(inner_type_id)
+                output += ">::create_with({"
+                mut first = true
+                for val in vals.iterator() {
+                    if not first {
+                        output += ", "
+                    } else {
+                        first = false
+                    }
+
+                    output += .codegen_expression(val)
+                }
+                output += "})))"
+            }
+
+            yield output
+        }
         else => {
             todo(format("codegen_expression else: {}", expression))
             yield ""
