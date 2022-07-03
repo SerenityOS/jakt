@@ -4248,6 +4248,11 @@ struct Typechecker {
                 }
                 vals.push(checked_expr)
             }
+
+            if inner_type_id.equals(unknown_type_id()) {
+                .error("Cannot infer generic type for Array<T>", span)
+            }
+
             let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
             yield CheckedExpression::JaktArray(vals, repeat, span, type_id, inner_type_id)
         }
