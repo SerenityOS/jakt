@@ -729,7 +729,7 @@ boxed enum CheckedExpression {
     Range(from: CheckedExpression, to: CheckedExpression, span: Span, type_id: TypeId)
     JaktArray(vals: [CheckedExpression], repeat: CheckedExpression?, span: Span, type_id: TypeId, inner_type_id: TypeId)
     JaktDictionary(vals: [(CheckedExpression, CheckedExpression)], span: Span, type_id: TypeId)
-    JaktSet(vals: [CheckedExpression], span: Span, type_id: TypeId)
+    JaktSet(vals: [CheckedExpression], span: Span, type_id: TypeId, inner_type_id: TypeId)
     IndexedExpression(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
     IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
     IndexedTuple(expr: CheckedExpression, index: usize, span: Span, type_id: TypeId)
@@ -4475,7 +4475,7 @@ struct Typechecker {
             args: [inner_type_id]
         ))
 
-        return CheckedExpression::JaktSet(vals: output, span, type_id)
+        return CheckedExpression::JaktSet(vals: output, span, type_id, inner_type_id)
     }
 
     function typecheck_generic_arguments_method_call(mut this, checked_expr: CheckedExpression, call: ParsedCall, scope_id: ScopeId, span: Span, safety_mode: SafetyMode) throws -> CheckedExpression {
@@ -5090,11 +5090,12 @@ struct Typechecker {
                     }
 
                     let parsed_label_and_arg = call.args[i]
-                    let param = callee.params[i]
+                    let param = callee.params[i + arg_offset]
 
                     if param.requires_label {
                         .validate_argument_label(param, label: parsed_label_and_arg.0, span: parsed_label_and_arg.1, expr: parsed_label_and_arg.2)
                     }
+
                     mut checked_arg = .typecheck_expression(expr: parsed_label_and_arg.2, scope_id: caller_scope_id, safety_mode)
 
                     let promoted_arg = .try_to_promote_constant_expr_to_type(lhs_type: param.variable.type_id, checked_rhs: checked_arg, span)
