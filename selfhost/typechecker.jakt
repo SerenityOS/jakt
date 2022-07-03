@@ -4264,7 +4264,7 @@ struct Typechecker {
                     .error_with_hint(
                         format("Type '{}' does not match type '{}' of previous values in array", .type_name(current_value_type_id), .type_name(inner_type_id)),
                         value.span(),
-                        format("array was inferred to store type '{}' here", .type_name(inner_type_id))
+                        format("Array was inferred to store type '{}' here", .type_name(inner_type_id))
                         inferred_type_span!
                     )
                 }
