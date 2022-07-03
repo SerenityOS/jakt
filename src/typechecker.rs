@@ -4860,7 +4860,7 @@ pub fn typecheck_expression(
                 if inner_type_id == UNKNOWN_TYPE_ID {
                     if current_value_type_id == VOID_TYPE_ID {
                         error = error.or(Some(JaktError::TypecheckError(
-                            "cannot create a set with values of type void".to_string(),
+                            "Cannot create a set with values of type void".to_string(),
                             value.span(),
                         )))
                     }
@@ -4871,12 +4871,12 @@ pub fn typecheck_expression(
                     let set_type_name = project.typename_for_type_id(inner_type_id);
                     error = error.or(Some(JaktError::TypecheckErrorWithHint(
                         format!(
-                            "type '{}' does not match type '{}' of previous values in set",
+                            "Type '{}' does not match type '{}' of previous values in set",
                             project.typename_for_type_id(current_value_type_id),
                             set_type_name
                         ),
                         value.span(),
-                        format!("set was inferred to store type '{}' here", set_type_name),
+                        format!("Set was inferred to store type '{}' here", set_type_name),
                         inner_type_span.unwrap(),
                     )))
                 }

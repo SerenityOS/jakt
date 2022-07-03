@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "cannot create a set with values of type void\n"
+/// - error: "Cannot create a set with values of type void\n"
 
 enum Bar {
     Value
