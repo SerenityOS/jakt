@@ -4224,7 +4224,7 @@ struct Typechecker {
                         fill_size_value.span()
                     )
                 }
-                repeat = repeat
+                repeat = fill_size_checked
             }
             let array_struct_id = .find_struct_in_prelude("Array")
             mut inner_type_id = unknown_type_id()
