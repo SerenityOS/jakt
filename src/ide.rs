@@ -588,6 +588,11 @@ pub fn find_span_in_expression(
             if let Some(usage) = find_span_in_expression(project, object, span) {
                 return Some(usage);
             }
+            for (_, arg) in &call.args {
+                if let Some(usage) = find_span_in_expression(project, arg, span) {
+                    return Some(usage);
+                }
+            }
             if method_span.contains(span) {
                 if let Some(function_id) = call.function_id {
                     return Some(Usage::Call(function_id));
