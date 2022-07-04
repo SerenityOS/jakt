@@ -262,4 +262,9 @@ void StringStorage::compute_hash() const
     m_has_hash = true;
 }
 
+ErrorOr<String> String::replace(StringView needle, StringView replacement, bool all_occurrences) const
+{
+    return Jakt::StringUtils::replace(*this, needle, replacement, all_occurrences);
+}
+
 }

@@ -355,6 +355,36 @@ Optional<size_t> find_any_of(StringView haystack, StringView needles, SearchDire
     }
     return {};
 }
+
+ErrorOr<String> replace(StringView str, StringView needle, StringView replacement, bool all_occurrences)
+{
+    if (str.is_empty())
+        return String::copy(str);
+
+    auto positions = TRY(JaktInternal::Array<size_t>::create_empty());
+    if (all_occurrences) {
+        positions = TRY(str.find_all(needle));
+        if (!positions.size())
+            return String::copy(str);
+    } else {
+        auto pos = str.find(needle);
+        if (!pos.has_value())
+            return String::copy(str);
+        TRY(positions.push(pos.value()));
+    }
+
+    auto replaced_string = TRY(StringBuilder::create());
+    size_t last_position = 0;
+    for (size_t i = 0; i < positions.size(); ++i) {
+        auto& position = positions[i];
+        TRY(replaced_string.append(str.substring_view(last_position, position - last_position)));
+        TRY(replaced_string.append(replacement));
+        last_position = position + needle.length();
+    }
+    TRY(replaced_string.append(str.substring_view(last_position, str.length() - last_position)));
+    return replaced_string.to_string();
+}
+
 // TODO: Benchmark against KMP (Jakt/MemMem.h) and switch over if it's faster for short strings too
 size_t count(StringView str, StringView needle)
 {
