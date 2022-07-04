@@ -4106,7 +4106,18 @@ struct Typechecker {
             let from_span = .expression_span(checked_from)
             let to_span = .expression_span(checked_to)
 
-            let type_id = .unify(lhs: from_type, lhs_span: from_span, rhs: to_type, rhs_span: from_span) ?? unknown_type_id()
+            let values_type_id = .unify(lhs: from_type, lhs_span: from_span, rhs: to_type, rhs_span: from_span)
+            if not values_type_id.has_value() {
+                .error("Range values differ in types", span)
+            }
+
+            let range_struct_id = .find_struct_in_prelude("Range")
+            let range_type = Type::GenericInstance(
+                id: range_struct_id,
+                args: [values_type_id.value_or(unknown_type_id())]
+            )
+
+            let type_id = .find_or_add_type_id(range_type)
 
             yield CheckedExpression::Range(from: checked_from, to: checked_to, span, type_id)
         }
