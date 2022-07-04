@@ -141,6 +141,8 @@ public:
     [[nodiscard]] bool is_empty() const { return length() == 0; }
     [[nodiscard]] size_t length() const { return m_storage->length(); }
 
+    [[nodiscard]] ErrorOr<String> replace(StringView needle, StringView replacement, bool all_occurrences = true) const;
+    
     // Guaranteed to include null terminator.
     [[nodiscard]] char const* c_string() const { return m_storage->c_string(); }
 
