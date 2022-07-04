@@ -10,21 +10,22 @@ use std::collections::HashSet;
 use std::fmt::Write;
 
 use crate::{
-    parser::Visibility,
+    parser::{DefinitionType, FunctionLinkage, Visibility},
     typechecker::{
         CheckedBlock, CheckedEnum, CheckedEnumVariant, CheckedExpression, CheckedFunction,
         CheckedMatchBody, CheckedMatchCase, CheckedStatement, CheckedStruct,
-        FunctionGenericParameter, FunctionId, Scope, ScopeId, Type, TypeId,
+        FunctionGenericParameter, FunctionId, Module, NumberConstant, Scope, ScopeId, Type, TypeId,
     },
     Project, Span,
 };
 
 pub fn find_definition_in_project(project: &Project, span: Span) -> Span {
     match find_span_in_project(project, span) {
-        Some(Usage::Variable(span, _, _, _, _, _)) => span,
+        Some(Usage::Variable(span, _, _, _, _, _, _)) => span,
         Some(Usage::Call(function_id)) => project.get_function(function_id).name_span,
         Some(Usage::Typename(type_id)) => find_type_definition_for_type_id(project, type_id, span),
         Some(Usage::NameSet(_)) => span,
+        Some(Usage::EnumVariant(span, _, _, _, _)) => span,
         None => span,
     }
 }
@@ -69,24 +70,42 @@ fn find_type_definition_for_type_id(project: &Project, type_id: TypeId, span: Sp
 
 pub fn find_type_definition_in_project(project: &Project, span: Span) -> Span {
     match find_span_in_project(project, span) {
-        Some(Usage::Variable(span, _, type_id, _, _, _)) => {
+        Some(Usage::Variable(span, _, type_id, _, _, _, _)) => {
             find_type_definition_for_type_id(project, type_id, span)
         }
         Some(Usage::Call(function_id)) => project.get_function(function_id).name_span,
         Some(Usage::Typename(type_id)) => find_type_definition_for_type_id(project, type_id, span),
         Some(Usage::NameSet(_)) => span,
+        Some(Usage::EnumVariant(span, _, _, _, _)) => span,
         None => span,
     }
 }
 
 pub fn find_typename_in_project(project: &Project, span: Span) -> Option<String> {
     match find_span_in_project(project, span) {
-        Some(Usage::Variable(_, name, type_id, mutability, var_type, visibility)) => Some(
-            get_var_signature(project, &name, type_id, mutability, var_type, visibility),
-        ),
+        Some(Usage::Variable(
+            _,
+            name,
+            type_id,
+            mutability,
+            var_type,
+            visibility,
+            struct_type_id,
+        )) => Some(get_var_signature(
+            project,
+            &name,
+            type_id,
+            mutability,
+            var_type,
+            visibility,
+            struct_type_id,
+        )),
         Some(Usage::Call(function_id)) => Some(get_function_signature(project, function_id)),
-        Some(Usage::Typename(type_id)) => Some(project.typename_for_type_id(type_id)),
+        Some(Usage::Typename(type_id)) => Some(get_type_signature(project, type_id)),
         Some(Usage::NameSet(names)) => Some(names.join(" | ")),
+        Some(Usage::EnumVariant(_, name, enum_name, params, value)) => Some(
+            get_enum_variant_signature(project, name, enum_name, params, value),
+        ),
         None => None,
     }
 }
@@ -149,13 +168,16 @@ fn completions_for_type_id(project: &Project, type_id: TypeId) -> Vec<String> {
 
 pub fn find_dot_completions_in_project(project: &Project, span: Span) -> Vec<String> {
     match find_span_in_project(project, span) {
-        Some(Usage::Variable(_, _, type_id, _, _, _)) => completions_for_type_id(project, type_id),
+        Some(Usage::Variable(_, _, type_id, _, _, _, _)) => {
+            completions_for_type_id(project, type_id)
+        }
         Some(Usage::Call(function_id)) => {
             let result_type_id = project.get_function(function_id).return_type_id;
             completions_for_type_id(project, result_type_id)
         }
         Some(Usage::NameSet(_)) => vec![],
         Some(Usage::Typename(_)) => vec![],
+        Some(Usage::EnumVariant(_, _, _, _, _)) => vec![],
         None => vec![],
     }
 }
@@ -227,7 +249,7 @@ pub fn find_span_in_enum(
 
     for variant in &checked_enum.variants {
         match variant {
-            CheckedEnumVariant::StructLike(_, fields, _) => {
+            CheckedEnumVariant::StructLike(name, fields, variant_span) => {
                 for field in fields {
                     if let Some(type_span) = field.type_span {
                         if type_span.contains(span) {
@@ -235,16 +257,52 @@ pub fn find_span_in_enum(
                         }
                     }
                 }
-            }
-            CheckedEnumVariant::Typed(_, type_id, variant_span) => {
+
                 if variant_span.contains(span) {
-                    return Some(Usage::Typename(*type_id));
+                    return Some(Usage::EnumVariant(
+                        *variant_span,
+                        name.clone(),
+                        checked_enum.type_id,
+                        enum_variant_fields(variant),
+                        None,
+                    ));
                 }
             }
-            CheckedEnumVariant::Untyped(_, _) => {}
-            CheckedEnumVariant::WithValue(_, expr, _) => {
+            CheckedEnumVariant::Typed(name, _, variant_span) => {
+                if variant_span.contains(span) {
+                    return Some(Usage::EnumVariant(
+                        *variant_span,
+                        name.clone(),
+                        checked_enum.type_id,
+                        enum_variant_fields(variant),
+                        None,
+                    ));
+                }
+            }
+            CheckedEnumVariant::Untyped(name, variant_span) => {
+                if variant_span.contains(span) {
+                    return Some(Usage::EnumVariant(
+                        *variant_span,
+                        name.clone(),
+                        checked_enum.type_id,
+                        vec![],
+                        None,
+                    ));
+                }
+            }
+            CheckedEnumVariant::WithValue(name, expr, variant_span) => {
                 if let Some(usage) = find_span_in_expression(project, expr, span) {
                     return Some(usage);
+                }
+
+                if variant_span.contains(span) {
+                    return Some(Usage::EnumVariant(
+                        *variant_span,
+                        name.clone(),
+                        checked_enum.type_id,
+                        vec![],
+                        expr.to_number_constant(),
+                    ));
                 }
             }
         }
@@ -369,6 +427,7 @@ pub fn find_span_in_statement(
                     mutability,
                     VarType::Variable,
                     VarVisibility::DoesNotApply,
+                    None,
                 ))
             } else {
                 None
@@ -474,6 +533,7 @@ pub fn find_span_in_expression(
                                 Mutability::DoesNotApply,
                                 VarType::Field,
                                 visibility,
+                                Some(type_id),
                             ));
                         }
                     }
@@ -493,25 +553,37 @@ pub fn find_span_in_expression(
             for case in cases {
                 match case {
                     CheckedMatchCase::EnumVariant {
-                        variant_name: _,
+                        variant_name,
                         variant_arguments: _,
                         subject_type_id: _,
                         variant_index: _,
                         scope_id: _,
                         body,
-                        ..
-                    } => match body {
-                        CheckedMatchBody::Block(block) => {
-                            if let Some(usage) = find_span_in_block(project, block, span) {
-                                return Some(usage);
+                        marker_span,
+                    } => {
+                        if marker_span.contains(span) {
+                            let type_id = expr.type_id_or_type_var();
+
+                            return Some(get_enum_variant_usage_from_type_id_and_name(
+                                project,
+                                type_id,
+                                variant_name.clone(),
+                            ));
+                        }
+
+                        match body {
+                            CheckedMatchBody::Block(block) => {
+                                if let Some(usage) = find_span_in_block(project, block, span) {
+                                    return Some(usage);
+                                }
+                            }
+                            CheckedMatchBody::Expression(expr) => {
+                                if let Some(usage) = find_span_in_expression(project, expr, span) {
+                                    return Some(usage);
+                                }
                             }
                         }
-                        CheckedMatchBody::Expression(expr) => {
-                            if let Some(usage) = find_span_in_expression(project, expr, span) {
-                                return Some(usage);
-                            }
-                        }
-                    },
+                    }
                     CheckedMatchCase::Expression {
                         expression, body, ..
                     } => {
@@ -581,7 +653,6 @@ pub fn find_span_in_expression(
 
                             return Some(Usage::NameSet(remaining));
                         }
-
                         match body {
                             CheckedMatchBody::Block(block) => {
                                 if let Some(usage) = find_span_in_block(project, block, span) {
@@ -646,7 +717,29 @@ pub fn find_span_in_expression(
                     mutability,
                     VarType::Variable,
                     VarVisibility::DoesNotApply,
+                    None,
                 ));
+            }
+        }
+        CheckedExpression::NamespacedVar(namespaces, var, var_span) => {
+            if var_span.contains(span)
+                && !namespaces.is_empty()
+                && namespaces.last().unwrap().name.is_some()
+            {
+                let enum_id = project.find_enum_in_scope(
+                    namespaces.last().unwrap().scope,
+                    namespaces.last().unwrap().name.as_ref().unwrap(),
+                );
+
+                if let Some(enum_id) = enum_id {
+                    let enum_ = project.get_enum(enum_id);
+
+                    return Some(get_enum_variant_usage_from_type_id_and_name(
+                        project,
+                        enum_.type_id,
+                        var.name.clone(),
+                    ));
+                }
             }
         }
         _ => {}
@@ -657,6 +750,18 @@ pub fn find_span_in_expression(
 
 pub fn get_function_signature(project: &Project, function_id: FunctionId) -> String {
     let function = project.get_function(function_id);
+
+    match function.linkage {
+        FunctionLinkage::ImplicitEnumConstructor => {
+            let type_id = function.return_type_id;
+            let name = function.name.clone();
+            return get_enum_variant_signature_from_type_id_and_name(project, type_id, name);
+        }
+        FunctionLinkage::ImplicitConstructor => {
+            return get_constructor_signature(project, function_id);
+        }
+        _ => {}
+    }
 
     let mut generic_parameters = String::new();
     let mut is_first_param = true;
@@ -726,6 +831,7 @@ pub fn get_var_signature(
     mutability: Mutability,
     var_type: VarType,
     visibility: VarVisibility,
+    struct_type_id: Option<TypeId>,
 ) -> String {
     match var_type {
         VarType::Variable => {
@@ -734,19 +840,322 @@ pub fn get_var_signature(
                 Mutability::Immutable => "let",
                 _ => "",
             };
-            let type_name = project.typename_for_type_id(var_type_id);
+            let type_name = get_type_signature(project, var_type_id);
             format!("{} {}: {}", mut_string, name, type_name)
         }
         VarType::Field => {
+            let record_string =
+                struct_type_id.map(|struct_type_id| get_type_signature(project, struct_type_id));
             let visibility_string = match visibility {
                 VarVisibility::Public => "public ",
                 VarVisibility::Private => "private ",
                 _ => "",
             };
-            let type_name = project.typename_for_type_id(var_type_id);
-            format!("{}{}: {}", visibility_string, name, type_name)
+            let type_name = get_type_signature(project, var_type_id);
+
+            if let Some(record_string) = record_string {
+                format!(
+                    "{}\\n\\t{}{}: {}",
+                    &record_string, visibility_string, name, type_name
+                )
+            } else {
+                format!("{}{}: {}", visibility_string, name, type_name)
+            }
         }
     }
+}
+
+pub fn get_type_signature(project: &Project, type_id: TypeId) -> String {
+    let array_struct_id = project.cached_array_struct_id.unwrap();
+    let dictionary_struct_id = project.cached_dictionary_struct_id.unwrap();
+    let optional_struct_id = project.cached_optional_struct_id.unwrap();
+    let range_struct_id = project.cached_range_struct_id.unwrap();
+    let set_struct_id = project.cached_set_struct_id.unwrap();
+    let tuple_struct_id = project.cached_tuple_struct_id.unwrap();
+    let weak_ptr_struct_id = project.cached_weakptr_struct_id.unwrap();
+
+    match project.get_type(type_id) {
+        Type::Builtin => project.typename_for_type_id(type_id),
+        Type::GenericInstance(struct_id, params) => {
+            if *struct_id == array_struct_id {
+                if params.is_empty() {
+                    "[]".to_string()
+                } else {
+                    format!("[{}]", get_type_signature(project, params[0]))
+                }
+            } else if *struct_id == dictionary_struct_id {
+                if params.len() < 2 {
+                    "[:]".to_string()
+                } else {
+                    format!(
+                        "[{}: {}]",
+                        get_type_signature(project, params[0]),
+                        get_type_signature(project, params[1])
+                    )
+                }
+            } else if *struct_id == optional_struct_id {
+                if params.is_empty() {
+                    "".to_string()
+                } else {
+                    format!("{}?", get_type_signature(project, params[0]))
+                }
+            } else if *struct_id == range_struct_id {
+                if params.is_empty() {
+                    "..".to_string()
+                } else {
+                    // Ranges probably only make sense for builtin types, but if not we use the format
+                    // struct MyRangeStruct..MyRangeStruct
+                    format!(
+                        "{}..{}",
+                        get_type_signature(project, params[0]),
+                        project.typename_for_type_id(params[0])
+                    )
+                }
+            } else if *struct_id == set_struct_id {
+                if params.is_empty() {
+                    "".to_string()
+                } else {
+                    format!("{{{}}}", get_type_signature(project, params[0]))
+                }
+            } else if *struct_id == tuple_struct_id {
+                let mut output = "(".to_string();
+
+                let mut first = true;
+                for param in params.iter() {
+                    if first {
+                        first = false;
+                    } else {
+                        output.push_str(", ");
+                    }
+
+                    output.push_str(&get_type_signature(project, *param));
+                }
+                output.push(')');
+                output
+            } else if *struct_id == weak_ptr_struct_id {
+                if params.is_empty() {
+                    "".to_string()
+                } else {
+                    format!("weak {}?", get_type_signature(project, params[0]))
+                }
+            } else {
+                let struct_ = project.get_struct(*struct_id);
+                let mut output = match struct_.definition_type {
+                    DefinitionType::Class => "class ",
+                    DefinitionType::Struct => "struct ",
+                }
+                .to_string();
+                output.push_str(&struct_.name);
+                output.push('<');
+                let mut first = true;
+                for param in params.iter() {
+                    if first {
+                        first = false;
+                    } else {
+                        output.push_str(", ");
+                    }
+
+                    output.push_str(&get_type_signature(project, *param));
+                }
+                output.push('>');
+                output
+            }
+        }
+        Type::Struct(struct_id) => {
+            let struct_type = match project.get_struct(*struct_id).definition_type {
+                DefinitionType::Class => "class",
+                DefinitionType::Struct => "struct",
+            };
+            format!("{} {}", struct_type, &project.get_struct(*struct_id).name)
+        }
+        Type::Enum(enum_id) => {
+            let is_boxed = project.get_enum(*enum_id).definition_type == DefinitionType::Class;
+            let mut output = String::new();
+            if is_boxed {
+                output.push_str("boxed ");
+            }
+            output.push_str("enum ");
+            output.push_str(&project.get_enum(*enum_id).name);
+            output
+        }
+        Type::GenericEnumInstance(enum_id, params) => {
+            let is_boxed = project.get_enum(*enum_id).definition_type == DefinitionType::Class;
+            let mut output = String::new();
+            if is_boxed {
+                output.push_str("boxed ");
+            }
+            output.push_str("enum ");
+            output.push_str(&project.get_enum(*enum_id).name);
+            output.push('<');
+            let mut first = true;
+            for param in params.iter() {
+                if first {
+                    first = false;
+                } else {
+                    output.push_str(", ");
+                }
+
+                output.push_str(&get_type_signature(project, *param));
+            }
+            output.push('>');
+            output
+        }
+        _ => project.typename_for_type_id(type_id),
+    }
+}
+
+fn get_enum_variant_signature(
+    project: &Project,
+    name: String,
+    type_id: TypeId,
+    params: Vec<(Option<String>, TypeId)>,
+    value: Option<NumberConstant>,
+) -> String {
+    let mut output = get_type_signature(project, type_id);
+    output.push_str("::");
+    output.push_str(&name);
+    if !params.is_empty() {
+        output.push('(');
+        let mut first = true;
+        for (param_name, param_type_id) in params.iter() {
+            if first {
+                first = false;
+            } else {
+                output.push_str(", ");
+            }
+
+            if let Some(param_name) = param_name {
+                output.push_str(param_name);
+                output.push_str(": ");
+            }
+
+            output.push_str(&project.typename_for_type_id(*param_type_id));
+        }
+        output.push(')');
+    }
+    if let Some(value) = value {
+        output.push_str(" = ");
+        let value_string = match value {
+            NumberConstant::Signed(value) => format!("{}", value),
+            NumberConstant::Unsigned(value) => format!("{}", value),
+            NumberConstant::Floating(value) => format!("{}", value),
+        };
+        output.push_str(&value_string);
+    }
+    output
+}
+
+fn get_enum_variant_signature_from_type_id_and_name(
+    project: &Project,
+    type_id: TypeId,
+    name: String,
+) -> String {
+    let module: &Module = &project.modules[type_id.0 .0];
+    let enum_ = module
+        .enums
+        .iter()
+        .find(|e| e.type_id == type_id)
+        .expect("could not find enum");
+    let checked_enum_variant = enum_
+        .variants
+        .iter()
+        .find(|v| match v {
+            CheckedEnumVariant::Untyped(v_name, _)
+            | CheckedEnumVariant::Typed(v_name, _, _)
+            | CheckedEnumVariant::WithValue(v_name, _, _)
+            | CheckedEnumVariant::StructLike(v_name, _, _) => *v_name == name,
+        })
+        .expect("could not find variant");
+    let params = enum_variant_fields(checked_enum_variant);
+    let value = match checked_enum_variant {
+        CheckedEnumVariant::WithValue(_, expr, _) => expr.to_number_constant(),
+        _ => None,
+    };
+
+    get_enum_variant_signature(project, name, type_id, params, value)
+}
+
+fn get_enum_variant_usage_from_type_id_and_name(
+    project: &Project,
+    type_id: TypeId,
+    name: String,
+) -> Usage {
+    let module: &Module = &project.modules[type_id.0 .0];
+    let enum_ = module
+        .enums
+        .iter()
+        .find(|e| e.type_id == type_id)
+        .expect("could not find enum");
+    let checked_enum_variant = enum_
+        .variants
+        .iter()
+        .find(|v| match v {
+            CheckedEnumVariant::Untyped(v_name, _)
+            | CheckedEnumVariant::Typed(v_name, _, _)
+            | CheckedEnumVariant::WithValue(v_name, _, _)
+            | CheckedEnumVariant::StructLike(v_name, _, _) => *v_name == name,
+        })
+        .expect("could not find variant");
+    let variant_fields = enum_variant_fields(checked_enum_variant);
+    let value = match checked_enum_variant {
+        CheckedEnumVariant::WithValue(_, expr, _) => expr.to_number_constant(),
+        _ => None,
+    };
+    let span = match checked_enum_variant {
+        CheckedEnumVariant::Untyped(_, span)
+        | CheckedEnumVariant::Typed(_, _, span)
+        | CheckedEnumVariant::WithValue(_, _, span)
+        | CheckedEnumVariant::StructLike(_, _, span) => *span,
+    };
+
+    Usage::EnumVariant(span, name, type_id, variant_fields, value)
+}
+
+fn enum_variant_fields(checked_enum_variant: &CheckedEnumVariant) -> Vec<(Option<String>, TypeId)> {
+    match checked_enum_variant {
+        CheckedEnumVariant::StructLike(_, fields, _) => fields
+            .iter()
+            .map(|var_decl| (Some(var_decl.name.clone()), var_decl.type_id))
+            .collect(),
+        CheckedEnumVariant::Typed(_, type_id, _) => vec![(None, *type_id)],
+        CheckedEnumVariant::Untyped(_, _) => vec![],
+        CheckedEnumVariant::WithValue(_, _, _) => vec![],
+    }
+}
+
+fn get_constructor_signature(project: &Project, constructor_function_id: FunctionId) -> String {
+    let function = project.get_function(constructor_function_id);
+    let type_id = function.return_type_id;
+    let module: &Module = &project.modules[type_id.0 .0];
+    let struct_ = module
+        .structs
+        .iter()
+        .find(|s| s.type_id == type_id)
+        .expect("could not find enum");
+
+    let mut output = get_type_signature(project, type_id);
+
+    output.push('(');
+    let mut first = true;
+    for field in struct_.fields.iter() {
+        if first {
+            first = false;
+        } else {
+            output.push_str(", ");
+        }
+        if field.mutable {
+            output.push_str("mut ");
+        }
+        write!(
+            &mut output,
+            "{}: {}",
+            &field.name,
+            project.typename_for_type_id(field.type_id)
+        )
+        .expect("writing failed");
+    }
+    output.push(')');
+    output
 }
 
 pub enum Mutability {
@@ -768,8 +1177,23 @@ pub enum VarVisibility {
 }
 
 pub enum Usage {
-    Variable(Span, String, TypeId, Mutability, VarType, VarVisibility),
+    Variable(
+        Span,
+        String,
+        TypeId,
+        Mutability,
+        VarType,
+        VarVisibility,
+        Option<TypeId>,
+    ),
     Call(FunctionId),
     Typename(TypeId),
     NameSet(Vec<String>),
+    EnumVariant(
+        Span,
+        String,
+        TypeId,
+        Vec<(Option<String>, TypeId)>,
+        Option<NumberConstant>,
+    ),
 }
