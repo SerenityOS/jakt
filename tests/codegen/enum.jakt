@@ -1,0 +1,9 @@
+/// Expect:
+/// - output: ""
+
+enum Test {
+    Some(s: String)
+    None()
+}
+
+function main() {}

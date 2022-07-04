@@ -614,7 +614,7 @@ fn codegen_nonrecursive_enum(
     for variant in &enum_.variants {
         match variant {
             CheckedEnumVariant::StructLike(name, members, _) => {
-                if is_generic {
+                if is_generic && !template_args.is_empty() {
                     output.push_str("    template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
@@ -630,15 +630,17 @@ fn codegen_nonrecursive_enum(
                     output.push_str(";\n");
                 }
                 output.push('\n');
-                output.push_str("        template<");
-                for i in 0..members.len() {
-                    if i > 0 {
-                        output.push_str(", ");
+                if !members.is_empty() {
+                    output.push_str("        template<");
+                    for i in 0..members.len() {
+                        if i > 0 {
+                            output.push_str(", ");
+                        }
+                        output.push_str("typename _MemberT");
+                        output.push_str(&i.to_string());
                     }
-                    output.push_str("typename _MemberT");
-                    output.push_str(&i.to_string());
+                    output.push_str(">\n");
                 }
-                output.push_str(">\n");
                 output.push_str("        ");
                 output.push_str(name);
                 output.push('(');
@@ -651,26 +653,30 @@ fn codegen_nonrecursive_enum(
                     output.push_str("&& member_");
                     output.push_str(&i.to_string());
                 }
-                output.push_str("):\n");
-                for (i, member) in members.iter().enumerate() {
-                    output.push_str("            ");
-                    output.push_str(&member.name);
-                    output.push_str("{ forward<_MemberT");
-                    output.push_str(&i.to_string());
-                    output.push_str(">(member_");
-                    output.push_str(&i.to_string());
-                    output.push_str(")}");
-                    if i < members.len() - 1 {
-                        output.push_str(",\n");
-                    } else {
-                        output.push('\n');
+                if members.is_empty() {
+                    output.push_str(")\n");
+                } else {
+                    output.push_str("):\n");
+                    for (i, member) in members.iter().enumerate() {
+                        output.push_str("            ");
+                        output.push_str(&member.name);
+                        output.push_str("{ forward<_MemberT");
+                        output.push_str(&i.to_string());
+                        output.push_str(">(member_");
+                        output.push_str(&i.to_string());
+                        output.push_str(")}");
+                        if i < members.len() - 1 {
+                            output.push_str(",\n");
+                        } else {
+                            output.push('\n');
+                        }
                     }
                 }
                 output.push_str("    {}\n");
                 output.push_str("};\n");
             }
             CheckedEnumVariant::Untyped(name, _) => {
-                if is_generic {
+                if is_generic && !template_args.is_empty() {
                     output.push_str("    template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
@@ -680,7 +686,7 @@ fn codegen_nonrecursive_enum(
                 output.push_str(" {};\n");
             }
             CheckedEnumVariant::Typed(name, type_id, _) => {
-                if is_generic {
+                if is_generic && !template_args.is_empty() {
                     output.push_str("    template<");
                     output.push_str(template_args.as_str());
                     output.push_str(">\n");
