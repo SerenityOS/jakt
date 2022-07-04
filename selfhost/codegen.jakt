@@ -1127,9 +1127,8 @@ struct CodeGenerator {
         OptionalSome(expr, type_id) => "(" + .codegen_expression(expr) + ")"
         ForcedUnwrap(expr, type_id) => "(" + .codegen_expression(expr) + ".value())"
         QuotedString(val) => {
-            // FIXME: this should replace newlines to allow for multiline strings
-            //"String(\"" + val.replace(replace: "\n", with: "\\n") + "\")"
-            yield "String(\"" + val + "\")"
+            let escaped_value = val.replace(replace: "\n", with: "\\n")
+            yield "String(\"" + escaped_value + "\")"
         }
         ByteConstant(val) => "'" + val + "'"
         CharacterConstant(val) => "'" + val + "'"
@@ -2125,8 +2124,7 @@ struct CodeGenerator {
             }
             Block(block) => .codegen_block(block)
             Garbage => {
-                panic("Garbage statement in codegen")
-                // FIXME: panic() should be `noreturn` and no `yield` should be necessary:
+                panic("Garbage statement in codegen") // FIXME: panic() should be `noreturn` and no `yield` should be necessary:
                 yield ""
             }
             VarDecl(var_id, init) => {
@@ -2142,6 +2140,16 @@ struct CodeGenerator {
                 output += " = "
                 output += .codegen_expression(init)
                 output += ";"
+                yield output
+            }
+            InlineCpp(lines) => {
+                mut output = ""
+                for line in lines.iterator() {
+                    mut escaped_line = line
+                    escaped_line = escaped_line.replace(replace: "\\\"", with: "\"")
+                    escaped_line = escaped_line.replace(replace: "\\\\", with: "\\")
+                    output += escaped_line
+                }
                 yield output
             }
             If(condition, then_block, else_statement) => {
