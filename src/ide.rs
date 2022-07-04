@@ -10,6 +10,7 @@ use std::collections::HashSet;
 use std::fmt::Write;
 
 use crate::{
+    parser::Visibility,
     typechecker::{
         CheckedBlock, CheckedEnum, CheckedEnumVariant, CheckedExpression, CheckedFunction,
         CheckedMatchBody, CheckedMatchCase, CheckedStatement, CheckedStruct,
@@ -20,7 +21,7 @@ use crate::{
 
 pub fn find_definition_in_project(project: &Project, span: Span) -> Span {
     match find_span_in_project(project, span) {
-        Some(Usage::Variable(span, _)) => span,
+        Some(Usage::Variable(span, _, _, _, _, _)) => span,
         Some(Usage::Call(function_id)) => project.get_function(function_id).name_span,
         Some(Usage::Typename(type_id)) => find_type_definition_for_type_id(project, type_id, span),
         Some(Usage::NameSet(_)) => span,
@@ -68,7 +69,7 @@ fn find_type_definition_for_type_id(project: &Project, type_id: TypeId, span: Sp
 
 pub fn find_type_definition_in_project(project: &Project, span: Span) -> Span {
     match find_span_in_project(project, span) {
-        Some(Usage::Variable(span, type_id)) => {
+        Some(Usage::Variable(span, _, type_id, _, _, _)) => {
             find_type_definition_for_type_id(project, type_id, span)
         }
         Some(Usage::Call(function_id)) => project.get_function(function_id).name_span,
@@ -80,7 +81,9 @@ pub fn find_type_definition_in_project(project: &Project, span: Span) -> Span {
 
 pub fn find_typename_in_project(project: &Project, span: Span) -> Option<String> {
     match find_span_in_project(project, span) {
-        Some(Usage::Variable(_, type_id)) => Some(project.typename_for_type_id(type_id)),
+        Some(Usage::Variable(_, name, type_id, mutability, var_type, visibility)) => Some(
+            get_var_signature(project, &name, type_id, mutability, var_type, visibility),
+        ),
         Some(Usage::Call(function_id)) => Some(get_function_signature(project, function_id)),
         Some(Usage::Typename(type_id)) => Some(project.typename_for_type_id(type_id)),
         Some(Usage::NameSet(names)) => Some(names.join(" | ")),
@@ -146,7 +149,7 @@ fn completions_for_type_id(project: &Project, type_id: TypeId) -> Vec<String> {
 
 pub fn find_dot_completions_in_project(project: &Project, span: Span) -> Vec<String> {
     match find_span_in_project(project, span) {
-        Some(Usage::Variable(_, type_id)) => completions_for_type_id(project, type_id),
+        Some(Usage::Variable(_, _, type_id, _, _, _)) => completions_for_type_id(project, type_id),
         Some(Usage::Call(function_id)) => {
             let result_type_id = project.get_function(function_id).return_type_id;
             completions_for_type_id(project, result_type_id)
@@ -354,7 +357,19 @@ pub fn find_span_in_statement(
             }
 
             if var_decl.span.contains(span) {
-                Some(Usage::Variable(var_decl.span, var_decl.type_id))
+                let mutability = if var_decl.mutable {
+                    Mutability::Mutable
+                } else {
+                    Mutability::Immutable
+                };
+                Some(Usage::Variable(
+                    var_decl.span,
+                    var_decl.name.clone(),
+                    var_decl.type_id,
+                    mutability,
+                    VarType::Variable,
+                    VarVisibility::DoesNotApply,
+                ))
             } else {
                 None
             }
@@ -445,8 +460,21 @@ pub fn find_span_in_expression(
                     let structure = project.get_struct(*struct_id);
 
                     for field in &structure.fields {
+                        let visibility = match field.visibility {
+                            Visibility::Public => VarVisibility::Public,
+                            Visibility::Private => VarVisibility::Private,
+                            Visibility::Restricted(_, _) => VarVisibility::Restricted,
+                        };
+
                         if &field.name == field_name {
-                            return Some(Usage::Variable(field.span, field.type_id));
+                            return Some(Usage::Variable(
+                                field.span,
+                                field_name.clone(),
+                                field.type_id,
+                                Mutability::DoesNotApply,
+                                VarType::Field,
+                                visibility,
+                            ));
                         }
                     }
                 }
@@ -605,7 +633,20 @@ pub fn find_span_in_expression(
         }
         CheckedExpression::Var(var, var_span) => {
             if var_span.contains(span) {
-                return Some(Usage::Variable(var.definition_span, var.type_id));
+                let mutability = if var.mutable {
+                    Mutability::Mutable
+                } else {
+                    Mutability::Immutable
+                };
+
+                return Some(Usage::Variable(
+                    var.definition_span,
+                    var.name.clone(),
+                    var.type_id,
+                    mutability,
+                    VarType::Variable,
+                    VarVisibility::DoesNotApply,
+                ));
             }
         }
         _ => {}
@@ -678,8 +719,56 @@ pub fn get_function_signature(project: &Project, function_id: FunctionId) -> Str
     )
 }
 
+pub fn get_var_signature(
+    project: &Project,
+    name: &String,
+    var_type_id: TypeId,
+    mutability: Mutability,
+    var_type: VarType,
+    visibility: VarVisibility,
+) -> String {
+    match var_type {
+        VarType::Variable => {
+            let mut_string = match mutability {
+                Mutability::Mutable => "mut",
+                Mutability::Immutable => "let",
+                _ => "",
+            };
+            let type_name = project.typename_for_type_id(var_type_id);
+            format!("{} {}: {}", mut_string, name, type_name)
+        }
+        VarType::Field => {
+            let visibility_string = match visibility {
+                VarVisibility::Public => "public ",
+                VarVisibility::Private => "private ",
+                _ => "",
+            };
+            let type_name = project.typename_for_type_id(var_type_id);
+            format!("{}{}: {}", visibility_string, name, type_name)
+        }
+    }
+}
+
+pub enum Mutability {
+    DoesNotApply,
+    Immutable,
+    Mutable,
+}
+
+pub enum VarType {
+    Variable,
+    Field,
+}
+
+pub enum VarVisibility {
+    DoesNotApply,
+    Public,
+    Private,
+    Restricted, // TODO: add more info
+}
+
 pub enum Usage {
-    Variable(Span, TypeId),
+    Variable(Span, String, TypeId, Mutability, VarType, VarVisibility),
     Call(FunctionId),
     Typename(TypeId),
     NameSet(Vec<String>),
