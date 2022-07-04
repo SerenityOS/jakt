@@ -148,13 +148,19 @@ fn main() -> Result<(), JaktError> {
                     if arguments.prettify_cpp_source {
                         let cpp_source = path_as_string(&out_filepath);
                         let default_clang_format_path = PathBuf::from("clang-format");
+                        let dot_clang_format_file_argument =
+                            if let Some(dot_clang_format_path) = &arguments.dot_clang_format_path {
+                                format!("--style=file:{}", path_as_string(dot_clang_format_path))
+                            } else {
+                                "--style=file".to_string()
+                            };
                         let clang_format_output = Command::new(
                             arguments
                                 .clang_format_path
                                 .as_ref()
                                 .unwrap_or(&default_clang_format_path),
                         )
-                        .args(["-i", &cpp_source])
+                        .args(["-i", &cpp_source, &dot_clang_format_file_argument])
                         .output()?;
                         io::stderr().write_all(&clang_format_output.stderr)?;
                     }
@@ -265,32 +271,35 @@ const USAGE: &str = "usage: jakt [-h,-S] [OPTIONS] [FILES...]";
 // FIXME: Once format is stable as a const function, include USAGE in this string.
 const HELP: &str = "\
 Flags:
-  -h,--help                     Print this help and exit.
-  -p,--prettify-cpp-source      Run emitted C++ source through clang-format.
-  -S,--emit-cpp-source-only     Only emit the generated C++ source, do not compile.
-  -c,--check-only               Only check the code for errors
-  -j,--json-errors              Emit machine-readable (JSON) errors
-  -H,--type-hints               Emit machine-readable type hints (for IDE integration)
+  -h,--help                         Print this help and exit.
+  -p,--prettify-cpp-source          Run emitted C++ source through clang-format.
+  -S,--emit-cpp-source-only         Only emit the generated C++ source, do not compile.
+  -c,--check-only                   Only check the code for errors
+  -j,--json-errors                  Emit machine-readable (JSON) errors
+  -H,--type-hints                   Emit machine-readable type hints (for IDE integration)
 
 Options:
-  -o,--binary-dir PATH          Output directory for compiled files.
-                                Defaults to $PWD/build.
-  -C,--cxx-compiler-path PATH   Path of the C++ compiler to use when compiling the generated sources.
-                                Defaults to clang++.
-  -F,--clang-format-path PATH   Path to clang-format executable.
-                                Defaults to clang-format.
-  -R,--runtime-path PATH        Path of the Jakt runtime headers.
-                                Defaults to $PWD/runtime.
-  -I,--include-path PATH        Add an include path for imported Jakt files.
-                                Can be specified multiple times.
-  -g,--goto-def INDEX           Return the span for the definition at index.
-  -t,--goto-type-def INDEX      Return the span for the type definition at index.
-  -v,--hover INDEX              Return the type of element at index.
-  -m,--completions INDEX        Return dot completions at index.
+  -o,--binary-dir PATH              Output directory for compiled files.
+                                    Defaults to $PWD/build.
+  -C,--cxx-compiler-path PATH       Path of the C++ compiler to use when compiling the generated sources.
+                                    Defaults to clang++.
+  -F,--clang-format-path PATH       Path to clang-format executable.
+                                    Defaults to clang-format.
+  -R,--runtime-path PATH            Path of the Jakt runtime headers.
+                                    Defaults to $PWD/runtime.
+  -I,--include-path PATH            Add an include path for imported Jakt files.
+                                    Can be specified multiple times.
+  -g,--goto-def INDEX               Return the span for the definition at index.
+  -t,--goto-type-def INDEX          Return the span for the type definition at index.
+  -v,--hover INDEX                  Return the type of element at index.
+  -m,--completions INDEX            Return dot completions at index.
+  -v, --version                     Print the compiler version and exit.
+  -D, --dot-clang-format-path PATH  Path to the .clang-format file to use.
+                                    Defaults to none, invoking clangs default .clang-format file handling.     
 
 Arguments:
-  FILES...                      List of files to compile. The outputs are
-                                `<input-filename>.cpp` in the binary directory.
+  FILES...                          List of files to compile. The outputs are
+                                    `<input-filename>.cpp` in the binary directory.
 ";
 
 #[derive(Debug)]
@@ -310,6 +319,7 @@ struct JaktArguments {
     prettify_cpp_source: bool,
     clang_format_path: Option<PathBuf>,
     runtime_path: Option<PathBuf>,
+    dot_clang_format_path: Option<PathBuf>,
 }
 
 /// Exits if the arguments are invalid or the user doesn't want to run Jakt (e.g. help output)
@@ -317,6 +327,10 @@ fn parse_arguments() -> JaktArguments {
     let mut pico_arguments = Arguments::from_env();
     if pico_arguments.contains(["-h", "--help"]) {
         println!("{}\n\n{}", USAGE, HELP);
+        exit(0);
+    }
+    if pico_arguments.contains(["-v", "--version"]) {
+        println!("unreleased");
         exit(0);
     }
     let emit_source_only = pico_arguments.contains(["-S", "--emit-cpp-source-only"]);
@@ -347,6 +361,7 @@ fn parse_arguments() -> JaktArguments {
         prettify_cpp_source,
         clang_format_path: None,
         runtime_path: None,
+        dot_clang_format_path: None,
     };
 
     let mut get_path_arg = |keys| {
@@ -394,6 +409,10 @@ fn parse_arguments() -> JaktArguments {
         }
     }
 
+    if let Ok(Some(dot_clang_format_path)) = get_path_arg(["-D", "--dot-clang-format-path"]) {
+        arguments.dot_clang_format_path = Some(dot_clang_format_path);
+    }
+
     while let Ok(filename) = pico_arguments.free_from_str::<PathBuf>() {
         if !filename.exists() {
             eprintln!(
@@ -416,7 +435,7 @@ fn parse_arguments() -> JaktArguments {
                 .join(", ")
         )
     } else if arguments.input_files.is_empty() {
-        println!("{}", USAGE);
+        println!("Input files empty: {}", USAGE);
         exit(0);
     }
 
