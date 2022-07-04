@@ -100,3 +100,59 @@ class FilePath {
 	    return i
     }
 }
+
+// FIXME: Use jakt stdlib if available
+struct ArgsParser {
+    args: [String]
+    removed_indices: [usize]
+
+    function flag(mut this, anon names: [String]) throws -> bool {
+        for i in 0...args.size() {
+            for name in names.iterator() {
+                if .args[i] == name {
+                    .removed_indices.push(i)
+                    return true
+                }
+            }
+        }
+
+        return false
+    } 
+
+    function option(mut this, anon names: [String]) throws -> String? {
+        for i in 1...args.size() {
+            for name in names.iterator() {
+                if .args[i] == name {
+                    if .args.size() <= i+1 {
+                        eprintln("The option '{}' requires a value, but none was supplied", name)
+                        throw Error::from_errno(200)
+                    }
+
+                    .removed_indices.push(i)
+                    .removed_indices.push(i+1)
+
+                    return .args[i+1]
+                } 
+            }
+        }
+
+        return None
+    }
+
+    function from_args(anon args: [String]) throws -> ArgsParser {
+        return ArgsParser (args, removed_indices: [])
+    }
+
+    function remaining_arguments(this) throws -> [String] {
+        mut remaining : [String] = []
+
+        for i in 0...args.size() {
+            if not .removed_indices.contains(i) {
+                remaining.push(.args[i])
+            }
+        }
+
+        return remaining
+    }
+
+}

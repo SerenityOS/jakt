@@ -9,7 +9,7 @@
 import compiler { Compiler, FileId }
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
-import utility { FilePath }
+import utility { FilePath, ArgsParser }
 import lexer { Lexer }
 import parser { Parser }
 import typechecker { Typechecker }
@@ -24,48 +24,68 @@ function help() -> String{
     output += "  -b\t\tBuild an executable file.\n"
     output += "  -r\t\tBuild and run an executable file.\n"
     output += "  -d\t\tInsert debug statement spans in generated C++ code.\n"
-    output += "  -dp\t\tOutput debug print."
+    output += "  --debug-print\t\tOutput debug print.\n"
+    output += "  --prettify-cpp-source\t\tRun emitted C++ source through clang-format.\n" // FIXME: Add -p flag to be the same as rust compiler.
+
+    output += "\nOptions:\n"
+    output += "  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\tDefaults to clang-format\n"
+    output += "  -D, --dot-clang-format-path PATH\t\tPath to the .clang-format file to use.\n\t\tDefaults to none, invoking clangs default .clang-format file handling.\n"
+    output += "  -R,--runtime-path PATH\t\tPath of the Jakt runtime headers.\n\t\tDefaults to $PWD/runtime.\n"
+    output += "  -o,--binary-dir PATH\t\tOutput directory for compiled files.\n\t\tDefaults to $PWD/build.\n"
+    output += "  -C,--cxx-compiler-path PATH\t\tPath of the C++ compiler to use when compiling the generated sources.\n\t\tDefaults to clang++.\n"
     return output
 } 
-
-function flag(args: [String], anon name: String) => args.contains("-" + name)
 
 function main(args: [String]) {
     if args.size() <= 1 {
         eprintln("{}", usage())
         return 1
     }
+
+    mut args_parser = ArgsParser::from_args(args)
     
-    if flag(args, "h") {
+    if args_parser.flag(["-h"]) {
         println("{}\n", usage())
         println("{}", help())
         return 0
     }
 
-    let lexer_debug = flag(args, "l")
-    let parser_debug = flag(args, "p")
-    let typechecker_debug = flag(args, "t")
-    let build_executable = flag(args, "b")
-    let run_executable = flag(args, "r")
-    let codegen_debug = flag(args, "d")
-    let debug_print = flag(args, "dp")
+    if args_parser.flag(["-v", "--version"]) {
+        println("unreleased")
+        return 0
+    }
+
+    let lexer_debug = args_parser.flag(["-l"])
+    let parser_debug = args_parser.flag(["-p"])
+    let typechecker_debug = args_parser.flag(["-t"])
+    let build_executable = args_parser.flag(["-b"])
+    let run_executable = args_parser.flag(["-r"])
+    let codegen_debug = args_parser.flag(["-d"])
+    let debug_print = args_parser.flag(["--debug-print"])
+    let prettify_cpp_source = args_parser.flag(["--prettify-cpp-source"])
+
+    let clang_format_path = args_parser.option(["-F", "--clang-format-path"]) ?? "clang-format"
+    let runtime_path = args_parser.option(["-R", "--runtime-path"]) ?? "runtime"
+    let binary_dir = args_parser.option(["-o", "--binary-dir"]) ?? "build"
+    let dot_clang_format_path = args_parser.option(["-D", "--dot-clang-format-path"])
+    let cxx_compiler_path = args_parser.option(["-C", "--cxx-compiler-path"]) ?? "clang++"
+
+    let positional_arguments = args_parser.remaining_arguments()
 
     mut file_name: String? = None
     mut first_arg = true
 
-    for arg in args.iterator() {
+    for arg in positional_arguments.iterator() {
         if first_arg {
             first_arg = false
             continue
         }
-        if arg != "-h" and arg != "-l" and arg != "-p" and arg != "-t" and arg != "-b" and arg != "-r" and arg != "-d" and arg != "-dp"{
-            if file_name.has_value() {
-                eprintln("you can only pass one source file")
-                eprintln("{}", usage())
-                return 1
-            } else {
-                file_name = arg
-            }
+        if file_name.has_value() {
+            eprintln("you can only pass one source file")
+            eprintln("{}", usage())
+            return 1
+        } else {
+            file_name = arg
         }
     }
     if not file_name.has_value() {
@@ -131,10 +151,19 @@ function main(args: [String]) {
     let output = CodeGenerator::generate(compiler, checked_program, debug_info: codegen_debug)
 
     if (build_executable or run_executable) {
-        let cpp_filename = "build/output.cpp"
-        let output_filename = "build/output"
+        let basename_without_extension = file_path.basename().substring(start: 0, length: file_path.basename().length() - 5)
+        let cpp_filename = binary_dir + "/" + basename_without_extension + ".cpp"
+        let output_filename = binary_dir + "/" + basename_without_extension
         write_to_file(data: output, output_filename: cpp_filename)
-        run_compiler(cpp_filename, output_filename)
+        run_compiler(cxx_compiler_path, cpp_filename, output_filename, runtime_path)
+
+        if prettify_cpp_source {
+            mut command = clang_format_path + " -i " + cpp_filename
+            if dot_clang_format_path.has_value() {
+                command+= " --style=file:" + dot_clang_format_path!
+            }
+            system(command.c_string())
+        }
 
         if run_executable {
             system(output_filename.c_string())
@@ -144,9 +173,9 @@ function main(args: [String]) {
     }
 }
 
-function run_compiler(cpp_filename: String, output_filename: String) throws {
+function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_filename: String, runtime_path: String) throws {
     mut compile_args = [
-        "clang++"
+        cxx_compiler_path
         "-fcolor-diagnostics"
         "-std=c++20"
         "-Wno-unknown-warning-option"
@@ -155,7 +184,8 @@ function run_compiler(cpp_filename: String, output_filename: String) throws {
         "-Wno-unqualified-std-cast-call"
         "-Wno-user-defined-literals"
         "-Wno-deprecated-declarations"
-        "-Iruntime"
+        "-I"
+        runtime_path
         "-o"
         output_filename
     ]
