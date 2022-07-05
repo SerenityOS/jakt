@@ -1,37 +1,126 @@
 import error { JaktError, print_error }
 import utility
-
+import utility { FilePath, FileId }
 
 class Compiler {
-  public errors: [JaktError]
-  public current_file: utility::FilePath
-  public current_file_contents: [u8]
-  public dump_lexer: bool
-  public dump_parser: bool
-  public ignore_parser_errors: bool
-  public debug_print: bool
+    public files: [FilePath]
+    public file_ids: [String: FileId]
+    public errors: [JaktError]
+    public current_file: FileId?
+    public current_file_contents: [u8]
+    public dump_lexer: bool
+    public dump_parser: bool
+    public ignore_parser_errors: bool
+    public debug_print: bool
 
-  public function panic(this, anon message: String) throws {
-      .print_errors()
-      utility::panic(message)
-  }
-
-  public function print_errors(this) throws {
-      for error in .errors.iterator() {
-          print_error(file_name: .current_file.path, file_contents: .current_file_contents, error)
-      }
-  }
-  public function set_current_file(mut this, anon file: utility::FilePath) {
-    .current_file = file
-  }
-
-  public function set_current_file_contents(mut this, anon file_contents: [u8]) {
-    .current_file_contents = file_contents
-  }
-
-  public function dbg_println(this, anon message: String) {
-    if .debug_print {
-      println("{}", message)
+    public function panic(this, anon message: String) throws {
+        .print_errors()
+        utility::panic(message)
     }
-  }
+
+    public function print_errors(this) throws {
+        // FIXME: This method of enumerating errors might be a problem for really huge code bases.
+        //        So at some point we might want to use better data structures here.
+        mut idx = 0uz
+        for file in .files.iterator() {
+            mut file_contents: [u8]? = None
+            let file_name = file.path
+
+            // Only display the errors that belong to this file
+            for error in .errors.iterator() {
+                let span = error.span()
+
+                if span.file_id.id == idx {
+
+                    // Lazily load file contents
+                    if not file_contents.has_value() {
+                        mut file = File::open_for_reading(file_name)
+                        file_contents = file.read_all()
+                    }
+
+                    print_error(file_name, file_contents: file_contents!, error)
+                }
+            }
+            idx++
+        }
+    }
+
+    public function get_file_path(this, anon file_id: FileId) throws -> FilePath? {
+        if file_id.id >= .files.size() {
+            return None
+        }
+        return .files[file_id.id]
+    }
+
+    public function current_file_id(this) -> FileId? {
+        return .current_file
+    }
+
+    public function current_file_path(this) -> FilePath? {
+        if .current_file.has_value() {
+            return .files[.current_file!.id]
+        }
+
+        return None
+    }
+
+    public function get_file_id_or_register(mut this, anon file: FilePath) throws -> FileId {
+        // FIXME: maybe we want to index with the absolute path, just to be sure?
+        mut file_id = .file_ids.get(file.path)
+
+        if file_id.has_value() {
+            return file_id!
+        }
+
+        .files.push(file)
+        file_id = FileId(id: .files.size() - 1)
+
+        .file_ids.set(file.path, file_id!)
+
+        return file_id!
+    }
+
+    public function set_current_file(mut this, anon file_id: FileId) -> bool {
+        // FIXME: Make use of builtin types in lib.h
+        let ErrNOENT = 2i32
+        let ErrACCES = 13i32
+        let ErrFBIG = 27i32
+        let ErrNAMETOOLONG = 36i32
+
+
+        let old_file_id = .current_file
+        .current_file = file_id
+
+        // set file contents
+        try {
+            mut file = File::open_for_reading(.files[file_id.id].path)
+            .current_file_contents = file.read_all()
+        } catch error {
+            let code = error.code()
+
+            // FIXME: match on code
+            if code == ErrNOENT {
+                // Couldn't find the file. That's okay, probably just a typo :^)
+            } else if code == ErrACCES {
+                eprintln("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied", .files[file_id.id].path)
+            } else if code == ErrFBIG {
+                eprintln("\u001b[31;1mError\u001b[0m Could not access {}: File too big", .files[file_id.id].path)
+            } else if code == ErrNAMETOOLONG {
+                eprintln("\u001b[31;1mError\u001b[0m Could not access {}: Name too long", .files[file_id.id].path)
+            } else {
+                utility::panic("Incurred unrecognized error while trying to open file")
+            }
+
+            .current_file = old_file_id
+            return false
+        }
+
+        return true
+    }
+
+    public function dbg_println(this, anon message: String) {
+        if .debug_print {
+            println("{}", message)
+        }
+    }
 }
