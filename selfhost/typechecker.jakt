@@ -11,7 +11,7 @@ import parser { Parser, BinaryOperator, DefinitionLinkage, DefinitionType, Unary
                 ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
                 ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
                 ParsedMatchBody, ParsedMatchCase, Visibility }
-import utility { panic, todo, Span, join, FilePath }
+import utility { panic, todo, Span, join, FilePath, FileId }
 import compiler { Compiler }
 import prelude { JaktPrelude }
 
@@ -376,8 +376,7 @@ class Module {
 
 struct LoadedModule {
     module_id: ModuleId
-    file_name: FilePath
-    file_contents: [u8]
+    file_id: FileId
 }
 
 struct CheckedNamespace {
@@ -961,15 +960,13 @@ struct Typechecker {
     inside_defer: bool
     checkidx: usize
 
-    function set_current_file_and_contents(mut this, file_name: FilePath, file_contents: [u8]) throws {
-        .compiler.set_current_file(file_name)
-        .compiler.set_current_file_contents(file_contents)
-    }
-
     function typecheck(mut compiler: Compiler, parsed_namespace: ParsedNamespace) throws -> CheckedProgram {
 
         let input_file = compiler.current_file
-        let input_file_contents = compiler.current_file_contents
+
+        if not input_file.has_value() {
+            panic("trying to typecheck a non-existant file")
+        }
 
         let placeholder_module_id = ModuleId(id: 0)
 
@@ -990,13 +987,12 @@ struct Typechecker {
         let root_module_name = "Root Module"
         let root_module_id = typechecker.create_module(name: root_module_name, is_root: true)
         typechecker.current_module_id = root_module_id
-        typechecker.set_current_file_and_contents(file_name: input_file, file_contents: input_file_contents)
+        compiler.set_current_file(input_file!)
         typechecker.program.set_loaded_module(
             module_name: root_module_name
             loaded_module: LoadedModule(
                 module_id: root_module_id
-                file_name: input_file
-                file_contents: input_file_contents
+                file_id: input_file!
             )
         )
 
@@ -1016,7 +1012,9 @@ struct Typechecker {
     function find_var_in_scope(this, scope_id: ScopeId, var: String) throws -> CheckedVariable? => .program.find_var_in_scope(scope_id, var)
 
     function get_root_path(this) throws -> FilePath {
-        return .program.get_loaded_module("Root Module")!.file_name
+        let file_id = .program.get_loaded_module("Root Module")!.file_id
+
+        return .compiler.get_file_path(file_id)!
     }
     function prelude_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 0), id: 0)
     function root_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 1), id: 0)
@@ -1127,6 +1125,18 @@ struct Typechecker {
         let module_name = "__prelude__"
         let file_name = FilePath::make(module_name)
         let file_contents = JaktPrelude::to_bytes()
+
+        let old_file_id = .compiler.current_file!
+        let file_id = .compiler.get_file_id_or_register(file_name)
+
+        // We manually set the compiler's current_file and current_file_contents fields here
+        // for now, because this is a special case.
+
+        .compiler.current_file = file_id
+        .compiler.current_file_contents = file_contents
+
+        defer .compiler.set_current_file(old_file_id)
+
         // we are using the root module (so it doesn't have to be optional)
         let prelude_module_id = .create_module(name: module_name, is_root: false)
         .current_module_id = prelude_module_id
@@ -1134,8 +1144,7 @@ struct Typechecker {
             module_name
             loaded_module: LoadedModule(
                 module_id: prelude_module_id
-                file_name
-                file_contents
+                file_id
          ))
 
         let none_scope_id: ScopeId? = None // FIXME: set None directly when compiler allows it
@@ -1144,7 +1153,22 @@ struct Typechecker {
             can_throw: false
         )
 
-        let parsed_namespace = .lex_and_parse_file_contents(file_contents)
+        let tokens = Lexer::lex(compiler: .compiler)
+        .compiler.print_errors()
+
+        if .compiler.dump_lexer {
+            for token in tokens.iterator() {
+                println("token: {}", token)
+            }
+        }
+
+        let parsed_namespace = Parser::parse(compiler: .compiler, tokens)
+
+        if .compiler.dump_parser {
+            println("{:#}", parsed_namespace)
+        }
+        .compiler.print_errors()
+
         .compiler.dbg_println(format("before typechecking parsed prelude, modules `{}`", .program.modules))
         .typecheck_module(
             parsed_namespace
@@ -1152,9 +1176,15 @@ struct Typechecker {
         )
     }
 
-    function lex_and_parse_file_contents(mut this, anon file_contents: [u8]) throws -> ParsedNamespace {
+    function lex_and_parse_file_contents(mut this, file_id: FileId) throws -> ParsedNamespace? {
+        let old_file_id = .compiler.current_file!
 
-        let tokens = Lexer::lex(compiler: .compiler, input: file_contents)
+        if not .compiler.set_current_file(file_id) {
+            return None
+        }
+        defer .compiler.set_current_file(old_file_id)
+
+        let tokens = Lexer::lex(compiler: .compiler)
         .compiler.print_errors()
 
         if .compiler.dump_lexer {
@@ -1685,26 +1715,20 @@ struct Typechecker {
             }
 
             if not already_loaded {
-                mut file_contents: [u8] = []
                 let file_name = FilePath::make(format("{}{}.jakt", .get_root_path().dirname(), import_.module_name.name))
 
-                mut was_able_to_load_file = true // FIXME: return false directly in try scope
-                try {
-                    mut file = File::open_for_reading(file_name.path)
-                    file_contents = file.read_all()
-                } catch error {
-                    mut panic_message: String = ""
-                    try {
-                        .error(format("Module '{}' not found", import_.module_name.name), import_.module_name.span)
-                        was_able_to_load_file = false
-                    } catch {
-                        panic("couldn't create panic message for module file loading error")
-                    }
+                let file_id = .compiler.get_file_id_or_register(file_name)
+
+                let parsed_namespace = .lex_and_parse_file_contents(file_id)
+
+                if not parsed_namespace.has_value() {
+                    .error(
+                        format("Module '{}' not found", import_.module_name.name)
+                        import_.module_name.span
+                    )
+                    continue
                 }
-                if not was_able_to_load_file {
-                    return false
-                }
-                let parsed_namespace = .lex_and_parse_file_contents(file_contents)
+
                 let original_current_module_id = .current_module_id
 
                 imported_module_id = .create_module(name: import_.module_name.name, is_root: false)
@@ -1712,14 +1736,13 @@ struct Typechecker {
                     module_name: import_.module_name.name
                     loaded_module: LoadedModule(
                         module_id: imported_module_id!
-                        file_name
-                        file_contents
+                        file_id
                 ))
 
                 .current_module_id = imported_module_id!
                 
                 let imported_scope_id = .create_scope(parent_scope_id: .root_scope_id(), can_throw: false)
-                .typecheck_module(parsed_namespace: parsed_namespace, scope_id: imported_scope_id)
+                .typecheck_module(parsed_namespace: parsed_namespace!, scope_id: imported_scope_id)
 
                 .current_module_id = original_current_module_id
             }
@@ -4399,7 +4422,7 @@ struct Typechecker {
         else => {
             .compiler.panic(format("typechecker needs support for {}", expr))
 
-            yield CheckedExpression::Boolean(val: false, span: Span(start: 0, end: 0))
+            yield CheckedExpression::Boolean(val: false, span: Span(file_id: .compiler.current_file!, start: 0, end: 0))
         }
     }
 

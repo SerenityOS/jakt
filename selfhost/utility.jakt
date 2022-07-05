@@ -45,8 +45,13 @@ function append_to_each(anon strings: [String], suffix: String) throws -> [Strin
 }
 
 struct Span {
+    file_id: FileId
     start: usize
     end: usize
+}
+
+struct FileId {
+    id: usize
 }
 
 // FIXME: Use jakt stdlib if available

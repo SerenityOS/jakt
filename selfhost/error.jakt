@@ -8,6 +8,11 @@ import utility { Span }
 enum JaktError {
     Message(message: String, span: Span)
     MessageWithHint(message: String, span: Span, hint: String, hint_span: Span)
+
+    function span(this) -> Span => match this {
+        Message(span) => span
+        MessageWithHint(span) => span
+    }
 }
 
 function print_error(file_name: String, file_contents: [u8], error: JaktError) throws {

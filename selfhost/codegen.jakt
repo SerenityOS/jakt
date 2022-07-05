@@ -155,7 +155,7 @@ struct CodeGenerator {
             current_function: none_function
             //TODO: use program.loaded_modules
             debug_info: CodegenDebugInfo(
-                file_name: compiler.current_file.path
+                file_name: compiler.current_file_path()!.path
                 file_contents: compiler.current_file_contents
                 line_spans: []
                 statement_span_comments: debug_info

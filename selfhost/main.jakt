@@ -6,7 +6,7 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-import compiler { Compiler }
+import compiler { Compiler, FileId }
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
 import utility { FilePath }
@@ -81,22 +81,25 @@ function main(args: [String]) {
         return 1
     }
 
-    mut file = File::open_for_reading(file_name!)
-    mut file_contents = file.read_all()
-
     mut errors: [JaktError] = []
 
+    let none_file_id: FileId? = None
     mut compiler = Compiler(
-      errors: []
-      current_file: file_path
-      current_file_contents: file_contents
-      dump_lexer: lexer_debug
-      dump_parser: parser_debug
-      ignore_parser_errors: false
-      debug_print: debug_print
+        files: []
+        file_ids: [:]
+        errors: []
+        current_file: none_file_id
+        current_file_contents: []
+        dump_lexer: lexer_debug
+        dump_parser: parser_debug
+        ignore_parser_errors: false
+        debug_print: debug_print
     )
 
-    let tokens = Lexer::lex(compiler, input: file_contents)
+    let main_file_id = compiler.get_file_id_or_register(file_path)
+    compiler.set_current_file(main_file_id)
+
+    let tokens = Lexer::lex(compiler)
 
     if lexer_debug {
         for token in tokens.iterator() {
@@ -119,9 +122,7 @@ function main(args: [String]) {
         println("{:#}", checked_program);
     }
 
-    for error in compiler.errors.iterator() {
-        print_error(file_name: file_name!, file_contents, error)
-    }
+    compiler.print_errors()
 
     if not compiler.errors.is_empty() {
         return 1

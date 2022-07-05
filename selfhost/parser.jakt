@@ -10,8 +10,13 @@ import utility { panic, todo, Span }
 import compiler { Compiler }
 import prelude { JaktPrelude }
 
-function merge_spans(anon start: Span, anon end: Span) -> Span => Span(start: start.start, end: end.end)
-function empty_span() -> Span => Span(start: 0, end: 0)
+function merge_spans(anon start: Span, anon end: Span) -> Span {
+    if start.file_id.id != end.file_id.id {
+        panic("cannot merge spans from two different files!")
+    }
+
+    return Span(file_id: start.file_id, start: start.start, end: end.end)
+}
 
 enum DefinitionLinkage {
     Internal
@@ -116,7 +121,7 @@ struct ParsedBlock {
         return None
     }
 
-    function span(this) throws -> Span? {
+    function span(this, parser: Parser) throws -> Span? {
         mut start: usize? = None
         mut end: usize = 0
 
@@ -129,7 +134,7 @@ struct ParsedBlock {
         }
 
         if start.has_value() {
-            return Span(start: start!, end)
+            return parser.span(start: start!, end)
         }
 
         return None
@@ -446,6 +451,12 @@ struct Parser {
         return parser.parse_namespace()
     }
 
+    function span(this, start: usize, end: usize) -> Span {
+        return Span(file_id: .compiler.current_file!, start, end)
+    }
+
+    function empty_span(this) -> Span => .span(start: 0, end: 0)
+
     function error(mut this, anon message: String, anon span: Span) throws {
         if not .compiler.ignore_parser_errors {
             .compiler.errors.push(JaktError::Message(message, span))
@@ -471,7 +482,7 @@ struct Parser {
 
     function previous(this) -> Token {
         if .index == 0 or .index > .tokens.size() {
-            return Token::Eof(Span(start: 0, end: 0))
+            return Token::Eof(.span(start: 0, end: 0))
         }
         return .tokens[.index - 1]
     }
@@ -585,7 +596,7 @@ struct Parser {
             .error("Expected `struct`, `class`, `enum`, or `boxed`", .current().span())
             yield ParsedRecord(
                 name: "",
-                name_span: empty_span(),
+                name_span: .empty_span(),
                 generic_parameters: [],
                 definition_linkage,
                 methods: [],
@@ -884,7 +895,7 @@ struct Parser {
     function parse_enum(mut this, anon definition_linkage: DefinitionLinkage, is_boxed: bool) throws -> ParsedRecord {
         mut parsed_enum = ParsedRecord(
             name: "",
-            name_span: empty_span(),
+            name_span: .empty_span(),
             generic_parameters: [],
             definition_linkage,
             methods: [],
@@ -1063,7 +1074,7 @@ struct Parser {
     public function parse_struct(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord {
         mut parsed_struct = ParsedRecord(
             name: "",
-            name_span: empty_span(),
+            name_span: .empty_span(),
             generic_parameters: [],
             definition_linkage,
             methods: [],
@@ -1116,7 +1127,7 @@ struct Parser {
     public function parse_class(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord {
         mut parsed_class = ParsedRecord(
             name: "",
-            name_span: empty_span(),
+            name_span: .empty_span(),
             generic_parameters: [],
             definition_linkage,
             methods: [],
@@ -1182,13 +1193,13 @@ struct Parser {
     public function parse_function(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility) throws -> ParsedFunction {
         mut parsed_function = ParsedFunction(
             name: "",
-            name_span: empty_span(),
+            name_span: .empty_span(),
             visibility,
             params: [],
             generic_parameters: [],
             block: ParsedBlock(stmts: []),
             return_type: ParsedType::Empty,
-            return_type_span: Span(start: 0, end: 0),
+            return_type_span: .span(start: 0, end: 0),
             can_throw: false,
             type: FunctionType::Normal,
             linkage,
