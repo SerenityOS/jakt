@@ -64,7 +64,9 @@ enum StructOrEnumId {
 struct TypeId {
     module: ModuleId
     id: usize
-    
+
+    function none() -> TypeId? => None
+
     function equals(this, anon rhs: TypeId) -> bool {
         return this.module.id == rhs.module.id and this.id == rhs.id
     }
@@ -971,14 +973,13 @@ struct Typechecker {
 
         let placeholder_module_id = ModuleId(id: 0)
 
-        let none_type_id: TypeId? = None
         let none_function_id: FunctionId? = None
 
         mut typechecker = Typechecker(
             compiler
             program: CheckedProgram(compiler, modules: [], loaded_modules: [:]),
             current_module_id: placeholder_module_id,
-            current_struct_type_id: none_type_id
+            current_struct_type_id: TypeId::none()
             current_function_id: none_function_id
             inside_defer: false
             checkidx: 0uz
@@ -1987,7 +1988,6 @@ struct Typechecker {
 
             let is_generic = not parsed_record.generic_parameters.is_empty() or not func.generic_parameters.is_empty()
 
-            let none_type_id: TypeId? = None
             mut checked_function = CheckedFunction(
                 name: func.name
                 name_span: func.name_span
@@ -1999,7 +1999,7 @@ struct Typechecker {
                     statements: []
                     scope_id: block_scope_id
                     definitely_returns: false
-                    yielded_type: none_type_id
+                    yielded_type: TypeId::none()
                 )
                 can_throw: func.can_throw
                 type: func.type
@@ -2295,7 +2295,6 @@ struct Typechecker {
                             let can_function_throw = is_boxed
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw)
                             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw)
-                            let none_type_id: TypeId? = None
                             let checked_function = CheckedFunction(
                                 name: variant.name,
                                 name_span: variant.span,
@@ -2303,7 +2302,7 @@ struct Typechecker {
                                 return_type_id: .find_or_add_type_id(Type::Enum(enum_id)),
                                 params,
                                 generic_params: [],
-                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, yielded_type: none_type_id),
+                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, yielded_type: TypeId::none()),
                                 can_throw: can_function_throw,
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
@@ -2322,7 +2321,6 @@ struct Typechecker {
                             let can_function_throw = is_boxed
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw)
                             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw)
-                            let none_type_id: TypeId? = None
                             let variable = CheckedVariable(
                                 name: "value"
                                 type_id
@@ -2337,7 +2335,7 @@ struct Typechecker {
                                 return_type_id: .find_or_add_type_id(Type::Enum(enum_id)),
                                 params: [CheckedParameter(requires_label: false, variable)],
                                 generic_params: [],
-                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, yielded_type: none_type_id),
+                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, yielded_type: TypeId::none()),
                                 can_throw: can_function_throw,
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
@@ -2353,7 +2351,6 @@ struct Typechecker {
                             let can_function_throw = is_boxed
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw)
                             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw)
-                            let none_type_id: TypeId? = None
                             let checked_function = CheckedFunction(
                                 name: variant.name,
                                 name_span: variant.span,
@@ -2361,7 +2358,7 @@ struct Typechecker {
                                 return_type_id: .find_or_add_type_id(Type::Enum(enum_id)),
                                 params: [],
                                 generic_params: [],
-                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, yielded_type: none_type_id),
+                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, yielded_type: TypeId::none()),
                                 can_throw: can_function_throw,
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
@@ -2405,7 +2402,6 @@ struct Typechecker {
             let function_scope_id = .create_scope(parent_scope_id, can_throw: constructor_can_throw)
             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: constructor_can_throw)
 
-            let none_type_id: TypeId? = None
             let checked_constructor = CheckedFunction(
                 name: record.name
                 name_span: record.name_span
@@ -2417,7 +2413,7 @@ struct Typechecker {
                     statements: []
                     scope_id: block_scope_id
                     definitely_returns: false
-                    yielded_type: none_type_id
+                    yielded_type: TypeId::none()
                 )
                 can_throw: constructor_can_throw
                 type: FunctionType::ImplicitConstructor
@@ -2539,8 +2535,6 @@ struct Typechecker {
         // TODO: Make this true if it's a method of a generic class/struct.
         let is_generic = not parsed_function.generic_parameters.is_empty()
 
-        let none_type_id: TypeId? = None
-
         mut checked_function = CheckedFunction(
             name: parsed_function.name
             name_span: parsed_function.name_span
@@ -2552,7 +2546,7 @@ struct Typechecker {
                 statements: []
                 scope_id: block_scope_id
                 definitely_returns: false
-                yielded_type: none_type_id
+                yielded_type: TypeId::none()
             )
             can_throw: parsed_function.can_throw
             type: FunctionType::Normal
@@ -3119,12 +3113,11 @@ struct Typechecker {
     function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedBlock {
         let parent_throws = .get_scope(parent_scope_id).can_throw
         let block_scope_id = .create_scope(parent_scope_id, can_throw: parent_throws)
-        let none_type_id: TypeId? = None
         mut checked_block = CheckedBlock(
             statements: []
             scope_id: block_scope_id
             definitely_returns: false
-            yielded_type: none_type_id
+            yielded_type: TypeId::none()
         )
         // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
         mut generic_inferences: [String: String] = [:]
@@ -4243,7 +4236,7 @@ struct Typechecker {
 
             yield CheckedExpression::ForcedUnwrap(expr: checked_expr, span, type_id)
         }
-        JaktArray(values, fill_size, span) => .typecheck_array(scope_id, values, fill_size, span, safety_mode, default_inner_type_id: unknown_type_id())
+        JaktArray(values, fill_size, span) => .typecheck_array(scope_id, values, fill_size, span, safety_mode, default_inner_type_id: TypeId::none())
         JaktTuple(values, span) => {
             let VOID_TYPE_ID = builtin(BuiltinType::Void)
             mut checked_values: [CheckedExpression] = []
@@ -4394,7 +4387,7 @@ struct Typechecker {
         }
     }
 
-    function typecheck_array(mut this, scope_id: ScopeId, values: [ParsedExpression], fill_size: ParsedExpression?, span: Span, safety_mode: SafetyMode, default_inner_type_id: TypeId) throws -> CheckedExpression {
+    function typecheck_array(mut this, scope_id: ScopeId, values: [ParsedExpression], fill_size: ParsedExpression?, span: Span, safety_mode: SafetyMode, default_inner_type_id: TypeId?) throws -> CheckedExpression {
         mut repeat: CheckedExpression? = None
         if fill_size.has_value() {
             // Check fill size is an integer.
@@ -4433,8 +4426,8 @@ struct Typechecker {
             vals.push(checked_expr)
         }
 
-        if inner_type_id.equals(unknown_type_id()) {
-            inner_type_id = default_inner_type_id
+        if inner_type_id.equals(unknown_type_id()) and default_inner_type_id.has_value() {
+            inner_type_id = default_inner_type_id!
         }
 
         if inner_type_id.equals(unknown_type_id()) {
