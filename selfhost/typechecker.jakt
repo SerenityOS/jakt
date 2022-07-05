@@ -64,7 +64,7 @@ enum StructOrEnumId {
 struct TypeId {
     module: ModuleId
     id: usize
-
+    
     function equals(this, anon rhs: TypeId) -> bool {
         return this.module.id == rhs.module.id and this.id == rhs.id
     }
@@ -2791,7 +2791,7 @@ struct Typechecker {
         let optional_struct_id = .find_struct_in_prelude("Optional")
         let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
 
-        
+
         match lhs_type {
             TypeVariable() => {
                 // If the call expects a generic type variable, let's see if we've already seen it
@@ -4243,52 +4243,7 @@ struct Typechecker {
 
             yield CheckedExpression::ForcedUnwrap(expr: checked_expr, span, type_id)
         }
-        JaktArray(values, fill_size, span) => {
-            mut repeat: CheckedExpression? = None
-            if fill_size.has_value() {
-                // Check fill size is an integer.
-                // TODO: Check fill size is positive when possible.
-                let fill_size_value = fill_size.value()
-                let fill_size_checked = .typecheck_expression(fill_size_value, scope_id, safety_mode)
-                let fill_size_type = expression_type(fill_size_checked)
-                if not .is_integer(fill_size_type) {
-                    .error(
-                        format("Type '{}' is not convertible to an integer. Only integer values can be array fill size expressions.", .type_name(fill_size_type)), 
-                        fill_size_value.span()
-                    )
-                }
-                repeat = fill_size_checked
-            }
-            let array_struct_id = .find_struct_in_prelude("Array")
-            mut inner_type_id = unknown_type_id()
-            mut inferred_type_span: Span? = None
-
-            mut vals: [CheckedExpression] = []
-            for value in values.iterator() {
-                let checked_expr = .typecheck_expression(value, scope_id, safety_mode)
-                let current_value_type_id = expression_type(checked_expr)
-
-                if inner_type_id.equals(unknown_type_id()) {
-                    inner_type_id = current_value_type_id
-                    inferred_type_span = value.span()
-                } else if not inner_type_id.equals(current_value_type_id) {
-                    .error_with_hint(
-                        format("Type '{}' does not match type '{}' of previous values in array", .type_name(current_value_type_id), .type_name(inner_type_id)),
-                        value.span(),
-                        format("Array was inferred to store type '{}' here", .type_name(inner_type_id))
-                        inferred_type_span!
-                    )
-                }
-                vals.push(checked_expr)
-            }
-
-            if inner_type_id.equals(unknown_type_id()) {
-                .error("Cannot infer generic type for Array<T>", span)
-            }
-
-            let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
-            yield CheckedExpression::JaktArray(vals, repeat, span, type_id, inner_type_id)
-        }
+        JaktArray(values, fill_size, span) => .typecheck_array(scope_id, values, fill_size, span, safety_mode, default_inner_type_id: unknown_type_id())
         JaktTuple(values, span) => {
             let VOID_TYPE_ID = builtin(BuiltinType::Void)
             mut checked_values: [CheckedExpression] = []
@@ -4437,6 +4392,57 @@ struct Typechecker {
 
             yield CheckedExpression::Boolean(val: false, span: Span(start: 0, end: 0))
         }
+    }
+
+    function typecheck_array(mut this, scope_id: ScopeId, values: [ParsedExpression], fill_size: ParsedExpression?, span: Span, safety_mode: SafetyMode, default_inner_type_id: TypeId) throws -> CheckedExpression {
+        mut repeat: CheckedExpression? = None
+        if fill_size.has_value() {
+            // Check fill size is an integer.
+            // TODO: Check fill size is positive when possible.
+            let fill_size_value = fill_size.value()
+            let fill_size_checked = .typecheck_expression(fill_size_value, scope_id, safety_mode)
+            let fill_size_type = expression_type(fill_size_checked)
+            if not .is_integer(fill_size_type) {
+                .error(
+                    format("Type '{}' is not convertible to an integer. Only integer values can be array fill size expressions.", .type_name(fill_size_type)), 
+                    fill_size_value.span()
+                )
+            }
+            repeat = fill_size_checked
+        }
+        let array_struct_id = .find_struct_in_prelude("Array")
+        mut inner_type_id = unknown_type_id()
+        mut inferred_type_span: Span? = None
+
+        mut vals: [CheckedExpression] = []
+        for value in values.iterator() {
+            let checked_expr = .typecheck_expression(value, scope_id, safety_mode)
+            let current_value_type_id = expression_type(checked_expr)
+
+            if inner_type_id.equals(unknown_type_id()) {
+                inner_type_id = current_value_type_id
+                inferred_type_span = value.span()
+            } else if not inner_type_id.equals(current_value_type_id) {
+                .error_with_hint(
+                    format("Type '{}' does not match type '{}' of previous values in array", .type_name(current_value_type_id), .type_name(inner_type_id)),
+                    value.span(),
+                    format("Array was inferred to store type '{}' here", .type_name(inner_type_id))
+                    inferred_type_span!
+                )
+            }
+            vals.push(checked_expr)
+        }
+
+        if inner_type_id.equals(unknown_type_id()) {
+            inner_type_id = default_inner_type_id
+        }
+
+        if inner_type_id.equals(unknown_type_id()) {
+            .error("Cannot infer generic type for Array<T>", span)
+        }
+
+        let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
+        return CheckedExpression::JaktArray(vals, repeat, span, type_id, inner_type_id)
     }
 
     function typecheck_set(mut this, values: [ParsedExpression], span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
@@ -5121,7 +5127,23 @@ struct Typechecker {
                         .validate_argument_label(param, label: parsed_label_and_arg.0, span: parsed_label_and_arg.1, expr: parsed_label_and_arg.2)
                     }
 
-                    mut checked_arg = .typecheck_expression(expr: parsed_label_and_arg.2, scope_id: caller_scope_id, safety_mode)
+                    mut checked_arg = match parsed_label_and_arg.2 {
+                        JaktArray(values, fill_size, span) => {
+                            let default_inner_type_id = match .get_type(param.variable.type_id) {
+                                GenericInstance(id, args) => {
+                                    let array_struct_id = .find_struct_in_prelude("Array")
+                                    mut result = unknown_type_id()
+                                    if id.equals(array_struct_id) {
+                                        result = args[0]
+                                    }
+                                    yield result
+                                }
+                                else => unknown_type_id()
+                            }
+                            yield .typecheck_array(scope_id: caller_scope_id, values, fill_size, span, safety_mode, default_inner_type_id)
+                        }
+                        else => .typecheck_expression(expr: parsed_label_and_arg.2, scope_id: caller_scope_id, safety_mode)
+                    }
 
                     let promoted_arg = .try_to_promote_constant_expr_to_type(lhs_type: param.variable.type_id, checked_rhs: checked_arg, span)
                     checked_arg = promoted_arg ?? checked_arg
