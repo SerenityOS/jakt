@@ -3748,7 +3748,23 @@ struct Typechecker {
 
     function typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
         mut lhs_type_id = .typecheck_typename(parsed_type: var.parsed_type, scope_id, ignore_errors: false)
-        mut checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode)
+        mut checked_expr = match init {
+            JaktArray(values, fill_size, span) => {
+                let default_inner_type_id = match .get_type(lhs_type_id) {
+                    GenericInstance(id, args) => {
+                        let array_struct_id = .find_struct_in_prelude("Array")
+                        mut result = lhs_type_id
+                        if id.equals(array_struct_id) {
+                            result = args[0]
+                        }
+                        yield result
+                    }
+                    else => lhs_type_id
+                }
+                yield .typecheck_array(scope_id, values, fill_size, span, safety_mode, default_inner_type_id)
+            }
+            else => .typecheck_expression(expr: init, scope_id, safety_mode)
+        }
         let rhs_type_id = expression_type(checked_expr)
 
         if lhs_type_id.equals(unknown_type_id()) and not rhs_type_id.equals(unknown_type_id()) {
