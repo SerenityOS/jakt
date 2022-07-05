@@ -54,6 +54,7 @@ extern struct String {
     function length(this) -> usize
     function byte_at(this, anon index: usize) -> u8
     function contains(this, anon needle: String) -> bool
+    function replace(this, replace: String, with: String) throws -> String
 }
 
 extern struct StringBuilder {
