@@ -2,7 +2,7 @@ import error { JaktError, print_error }
 import lexer { Lexer }
 import parser { Parser }
 
-function usage() => "usage: jakttest [-h] [OPTIONS] <path>"
+function usage() => "usage: jakttest [-h] [--selfhost-executable <path>] [OPTIONS] <path>"
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
     // first, build up the content to compare to
@@ -59,13 +59,49 @@ function strip_line_breaks(anon input: String) throws -> String {
     return builder.to_string()
 }
 
+struct Options {
+    file_name: String
+    selfhost_executable: String
+    errors: [String]
+}
+
+
+
+function parse_args(args: [String]) throws -> Options {
+    let errors: [String] = []
+    mut options = Options(file_name: "", selfhost_executable: "selfhost/build/main", errors)
+    mut index = 1uz
+    while index != args.size() {
+        if args[index] == "--selfhost-executable" {
+            index++
+            if index == args.size() {
+                options.errors.push("--selfhost-executable was given without a path")
+            }
+            options.selfhost_executable = args[index]
+        } else {
+            options.file_name = args[index]
+        }
+        index++
+    }
+    if options.file_name == "" {
+        options.errors.push("No file was given")
+    }
+    return options
+}
+
 function main(args: [String]) {
-    if args.size() <= 1 {
+
+    let options = parse_args(args)
+
+    if not options.errors.is_empty() {
+        for error in options.errors.iterator() {
+            eprintln("Error: {}", error)
+        }
         eprintln("{}", usage())
-        return 1
     }
 
-    let file_name = args[1];
+    let file_name = options.file_name;
+    let selfhost_executable = options.selfhost_executable;
 
     mut file = File::open_for_reading(file_name)
     let file_contents = file.read_all()
@@ -85,7 +121,7 @@ function main(args: [String]) {
     match parsed_test {
         SuccessTest(expected) => {
 
-            build_and_run(file_name)
+            build_and_run(file_name, selfhost_executable)
 
             mut build_and_run_output_file = File::open_for_reading("runtest.out")
             let build_and_run_output = build_and_run_output_file.read_all()
@@ -102,7 +138,7 @@ function main(args: [String]) {
         }
         FailureTest(expected) => {
 
-            build_and_run(file_name)
+            build_and_run(file_name, selfhost_executable)
 
             mut build_and_run_error_file = File::open_for_reading("runtest.err")
             let build_and_run_output = build_and_run_error_file.read_all()
@@ -127,9 +163,9 @@ function main(args: [String]) {
     }
 }
 
-function build_and_run(anon jakt_source_file: String) throws {
+function build_and_run(anon jakt_source_file: String, selfhost_executable: String) throws {
     mut compile_args = [
-        "build/main"
+        selfhost_executable
         "-r"
     ]
     compile_args.push(jakt_source_file)
