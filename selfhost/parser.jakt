@@ -2826,14 +2826,8 @@ function parsed_statement_equals(anon lhs_statement: ParsedStatement, anon rhs_s
         }
         else => false
     }
-    Break => match rhs_statement {
-        Break => true
-        else => false
-    }
-    Continue => match rhs_statement {
-        Continue => true
-        else => false
-    }
+    Break => rhs_statement is Break
+    Continue => rhs_statement is Continue
     Return(expr: lhs_expr) => match rhs_statement {
         Return(expr: rhs_expr) => {
             if not lhs_expr.has_value() {
@@ -2868,10 +2862,7 @@ function parsed_statement_equals(anon lhs_statement: ParsedStatement, anon rhs_s
         }
         else => false
     }
-    Garbage => match rhs_statement {
-        Garbage => true
-        else => false
-    }
+    Garbage => rhs_statement is Garbage
 }
 
 function parsed_expression_equals(anon lhs_expression: ParsedExpression, anon rhs_expression: ParsedExpression) -> bool => match lhs_expression {
@@ -2936,10 +2927,7 @@ function parsed_expression_equals(anon lhs_expression: ParsedExpression, anon rh
         OptionalSome(expr: rhs_expr) => parsed_expression_equals(lhs_expr, rhs_expr)
         else => false
     }
-    OptionalNone => match rhs_expression {
-        OptionalNone => true
-        else => false
-    }
+    OptionalNone => rhs_expression is OptionalNone
     JaktArray(values: lhs_values, fill_size: lhs_fill_size) => match rhs_expression {
         JaktArray(values: rhs_values, fill_size: rhs_fill_size) => {
             // TODO: compare fill_size as well
@@ -3015,10 +3003,7 @@ function parsed_expression_equals(anon lhs_expression: ParsedExpression, anon rh
         NamespacedVar(name: rhs_name) => lhs_name == rhs_name
         else => false
     }
-    Garbage => match rhs_expression {
-        Garbage => true
-        else => false
-    }
+    Garbage => rhs_expression is Garbage
 }
 
 function parsed_var_decl_equals(anon lhs_var_decl: ParsedVarDecl, anon rhs_var_decl: ParsedVarDecl) -> bool {
@@ -3045,42 +3030,15 @@ function parsed_call_equals(anon lhs_parsed_call: ParsedCall, anon rhs_parsed_ca
 }
 
 function unary_operator_equals(anon lhs_op: UnaryOperator, anon rhs_op: UnaryOperator) -> bool => match lhs_op {
-    PreIncrement => match rhs_op {
-        PreIncrement => true
-        else => false
-    }
-    PostIncrement => match rhs_op {
-        PostIncrement => true
-        else => false
-    }
-    PreDecrement => match rhs_op {
-        PreDecrement => true
-        else => false
-    }
-    PostDecrement => match rhs_op {
-        PostDecrement => true
-        else => false
-    }
-    Negate => match rhs_op {
-        Negate => true
-        else => false
-    }
-    Dereference => match rhs_op {
-        Dereference => true
-        else => false
-    }
-    RawAddress => match rhs_op {
-        RawAddress => true
-        else => false
-    }
-    LogicalNot => match rhs_op {
-        LogicalNot => true
-        else => false
-    }
-    BitwiseNot => match rhs_op {
-        BitwiseNot => true
-        else => false
-    }
+    PreIncrement => rhs_op is PreIncrement
+    PostIncrement =>  rhs_op is PostIncrement
+    PreDecrement => rhs_op is PreDecrement
+    PostDecrement => rhs_op is PostDecrement
+    Negate => rhs_op is Negate
+    Dereference => rhs_op is Dereference
+    RawAddress => rhs_op is RawAddress
+    LogicalNot => rhs_op is LogicalNot
+    BitwiseNot => rhs_op is BitwiseNot
     // FIXME: Compare Types
     TypeCast => match rhs_op {
         TypeCast => true
@@ -3094,140 +3052,38 @@ function unary_operator_equals(anon lhs_op: UnaryOperator, anon rhs_op: UnaryOpe
 }
 
 function binary_operator_equals(anon lhs_op: BinaryOperator, anon rhs_op: BinaryOperator) -> bool => match lhs_op {
-    Add => match rhs_op {
-        Add => true
-        else => false
-    }
-    Subtract => match rhs_op {
-        Subtract => true
-        else => false
-    }
-    Multiply => match rhs_op {
-        Multiply => true
-        else => false
-    }
-    Divide => match rhs_op {
-        Divide => true
-        else => false
-    }
-    Modulo => match rhs_op {
-        Modulo => true
-        else => false
-    }
-    LessThan => match rhs_op {
-        LessThan => true
-        else => false
-    }
-    LessThanOrEqual => match rhs_op {
-        LessThanOrEqual => true
-        else => false
-    }
-    GreaterThan => match rhs_op {
-        GreaterThan => true
-        else => false
-    }
-    GreaterThanOrEqual => match rhs_op {
-        GreaterThanOrEqual => true
-        else => false
-    }
-    Equal => match rhs_op {
-        Equal => true
-        else => false
-    }
-    NotEqual => match rhs_op {
-        NotEqual => true
-        else => false
-    }
-    BitwiseAnd => match rhs_op {
-        BitwiseAnd => true
-        else => false
-    }
-    BitwiseXor => match rhs_op {
-        BitwiseXor => true
-        else => false
-    }
-    BitwiseOr => match rhs_op {
-        BitwiseOr => true
-        else => false
-    }
-    BitwiseLeftShift => match rhs_op {
-        BitwiseLeftShift => true
-        else => false
-    }
-    BitwiseRightShift => match rhs_op {
-        BitwiseRightShift => true
-        else => false
-    }
-    ArithmeticLeftShift => match rhs_op {
-        ArithmeticLeftShift => true
-        else => false
-    }
-    ArithmeticRightShift => match rhs_op {
-        ArithmeticRightShift => true
-        else => false
-    }
-    LogicalOr => match rhs_op {
-        LogicalOr => true
-        else => false
-    }
-    LogicalAnd => match rhs_op {
-        LogicalAnd => true
-        else => false
-    }
-    NoneCoalescing => match rhs_op {
-        NoneCoalescing => true
-        else => false
-    }
-    Assign => match rhs_op {
-        Assign => true
-        else => false
-    }
-    BitwiseAndAssign => match rhs_op {
-        BitwiseAndAssign => true
-        else => false
-    }
-    BitwiseOrAssign => match rhs_op {
-        BitwiseOrAssign => true
-        else => false
-    }
-    BitwiseXorAssign => match rhs_op {
-        BitwiseXorAssign => true
-        else => false
-    }
-    BitwiseLeftShiftAssign => match rhs_op {
-        BitwiseLeftShiftAssign => true
-        else => false
-    }
-    BitwiseRightShiftAssign => match rhs_op {
-        BitwiseRightShiftAssign => true
-        else => false
-    }
-    AddAssign => match rhs_op {
-        AddAssign => true
-        else => false
-    }
-    SubtractAssign => match rhs_op {
-        SubtractAssign => true
-        else => false
-    }
-    MultiplyAssign => match rhs_op {
-        MultiplyAssign => true
-        else => false
-    }
-    ModuloAssign => match rhs_op {
-        ModuloAssign => true
-        else => false
-    }
-    DivideAssign => match rhs_op {
-        DivideAssign => true
-        else => false
-    }
-    NoneCoalescingAssign => match rhs_op {
-        NoneCoalescingAssign => true
-        else => false
-    }
-    Garbage => match rhs_op {
-        Garbage => true
-        else => false
-    }
+    Add => rhs_op is Add
+    Subtract => rhs_op is Subtract
+    Multiply => rhs_op is Multiply
+    Divide => rhs_op is Divide
+    Modulo => rhs_op is Modulo
+    LessThan => rhs_op is LessThan
+    LessThanOrEqual => rhs_op is LessThanOrEqual
+    GreaterThan => rhs_op is GreaterThan
+    GreaterThanOrEqual => rhs_op is GreaterThanOrEqual
+    Equal => rhs_op is Equal
+    NotEqual => rhs_op is NotEqual
+    BitwiseAnd => rhs_op is BitwiseAnd
+    BitwiseXor => rhs_op is BitwiseXor
+    BitwiseOr => rhs_op is BitwiseOr
+    BitwiseLeftShift => rhs_op is BitwiseLeftShift
+    BitwiseRightShift => rhs_op is BitwiseRightShift
+    ArithmeticLeftShift => rhs_op is ArithmeticLeftShift
+    ArithmeticRightShift => rhs_op is ArithmeticRightShift
+    LogicalOr => rhs_op is LogicalOr
+    LogicalAnd => rhs_op is LogicalAnd
+    NoneCoalescing => rhs_op is NoneCoalescing
+    Assign => rhs_op is Assign
+    BitwiseAndAssign => rhs_op is BitwiseAndAssign
+    BitwiseOrAssign => rhs_op is BitwiseOrAssign
+    BitwiseXorAssign => rhs_op is BitwiseXorAssign
+    BitwiseLeftShiftAssign => rhs_op is BitwiseLeftShiftAssign
+    BitwiseRightShiftAssign => rhs_op is BitwiseRightShiftAssign
+    AddAssign => rhs_op is AddAssign
+    SubtractAssign => rhs_op is SubtractAssign
+    MultiplyAssign => rhs_op is MultiplyAssign
+    ModuloAssign => rhs_op is ModuloAssign
+    DivideAssign => rhs_op is DivideAssign
+    NoneCoalescingAssign => rhs_op is NoneCoalescingAssign
+    Garbage => rhs_op is Garbage
 }
