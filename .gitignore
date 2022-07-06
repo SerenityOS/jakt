@@ -2,6 +2,8 @@ target
 a.out
 output.cpp
 build
+selfhost/build
+jakttest/build
 
 .vscode/
 .idea/

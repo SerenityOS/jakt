@@ -1,35 +1,50 @@
 #!/bin/bash
 
-if [ ! -x ./build/jakttest ]; then
-    echo "jakttest binary does not exist. Building it now."
-    cargo run jakttest/jakttest.jakt
-fi
-
-stat_format_flags="-c %Y"
+STAT_FORMAT_FLAGS="-c %Y"
 if [[ $OSTYPE == 'darwin'* ]]; then
-  stat_format_flags="-f %m"
+    STAT_FORMAT_FLAGS="-f %m"
 fi
 
-# check for jakttest/ mtime and build/jakttest mtime
-{
-    jakttest_binary_mtime=$(stat "$stat_format_flags" build/jakttest)
-    latest_jakttest_source_mtime=$(stat "$stat_format_flags" jakttest/*.jakt | sort | tail -n1)
-    if [ "$jakttest_binary_mtime" -lt "$latest_jakttest_source_mtime" ]; then
-        echo "re-compiling jakttest to match source"
-        cargo run jakttest/jakttest.jakt
-    fi
+JAKTTEST_BUILD_DIR="./jakttest/build"
+SELFHOST_BUILD_DIR="./selfhost/build"
+
+JAKTTEST_EXECUTABLE="$JAKTTEST_BUILD_DIR/jakttest"
+SELFHOST_EXECUTABLE="$SELFHOST_BUILD_DIR/main"
+
+is_executable_behind_src() {
+    local executable_path=$1
+    local src_path=$2
+
+    local executable_mtime=$(stat "$STAT_FORMAT_FLAGS" "$executable_path")
+    local src_latest_mtime=$(stat $STAT_FORMAT_FLAGS "$src_path"/*.jakt | sort | tail -n1)
+    [ "$executable_mtime" -lt "$src_latest_mtime" ]
 }
 
-
-# check for selfhost/ mtime and build/main mtime
-{
-    binary_mtime=$(stat "$stat_format_flags" build/main)
-    latest_selfhost_mtime=$(stat "$stat_format_flags" selfhost/*.jakt | sort | tail -n1)
-    if [ "$binary_mtime" -lt "$latest_selfhost_mtime" ]; then
-        echo "re-compiling selfhost to match source"
-        cargo run selfhost/main.jakt
-    fi
+compile_jakttest() {
+    cargo run jakttest/jakttest.jakt -o "$JAKTTEST_BUILD_DIR"
 }
+
+compile_selfhost() {
+    cargo run selfhost/main.jakt -o "$SELFHOST_BUILD_DIR"
+}
+
+# check for jakttest availability
+if [ ! -x "$JAKTTEST_EXECUTABLE" ]; then
+    echo "Jakttest binary does not exist. Compiling it now."
+    compile_jakttest
+elif is_executable_behind_src "$JAKTTEST_EXECUTABLE" jakttest; then
+    echo "Updating jakttest binary to match source."
+    compile_jakttest
+fi
+
+# check for selfhost availability
+if [ ! -x "$SELFHOST_EXECUTABLE" ]; then
+    echo "Selfhost binary does not exist. Compiling it now."
+    compile_selfhost
+elif is_executable_behind_src "$SELFHOST_EXECUTABLE" selfhost; then
+    echo "Updating selfhost binary to match source."
+    compile_selfhost
+fi
 
 pass=0
 fail=0
@@ -54,7 +69,9 @@ set +m
 
 for f in $TEST_FILES; do
     i=$((i + 1))
-    $(./build/jakttest $f >/dev/null 2>/dev/null) >/dev/null 2>/dev/null
+    $($JAKTTEST_EXECUTABLE \
+        --selfhost-executable "$SELFHOST_EXECUTABLE" \
+        $f >/dev/null 2>/dev/null) >/dev/null 2>/dev/null
     
     exitcode=$?
 
