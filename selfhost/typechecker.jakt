@@ -5044,7 +5044,6 @@ struct Typechecker {
         mut resolved_namespaces: [ResolvedNamespace] = []
         mut resolved_function_id: FunctionId? = None
         mut maybe_this_type_id: TypeId? = None
-        mut generic_inferences = ["":""]
         for name in call.namespace_.iterator() {
             let generic_parameters: [TypeId]? = None
             resolved_namespaces.push(ResolvedNamespace(name, generic_parameters))
@@ -5092,18 +5091,7 @@ struct Typechecker {
                     maybe_this_type_id = type_id
                     let param_type = .get_type(type_id)
 
-                    match param_type {
-                        GenericInstance(id, args) => {
-                            let structure = .get_struct(id)
-                            for i in 0..structure.generic_parameters.size() {
-                                generic_inferences.set(
-                                    structure.generic_parameters[i].to_string()
-                                    args[i].to_string()
-                                    )
-                            }
-                        }
-                        else => {}
-                    }
+                    // FIXME: Handle generics
 
                     if callee.is_static() {
                         .error("Cannot call static method on an instance of an object", span)
@@ -5164,11 +5152,6 @@ struct Typechecker {
                 }
             }
         }
-
-        return_type = .substitute_typevars_in_type(
-            type_id: return_type,
-            generic_inferences,
-            )
 
         if callee_throws and not .get_scope(caller_scope_id).can_throw {
             .error("Call to function that may throw needs to be in a try statement or a function marked as throws", span)
