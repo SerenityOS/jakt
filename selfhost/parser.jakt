@@ -905,7 +905,7 @@ struct Parser {
         if .current() is Enum {
             .index++
         } else {
-            .error("Expected `enum` keyword", .current().span())
+            .error("Expected ‘enum’ keyword", .current().span())
             return parsed_enum
         }
 

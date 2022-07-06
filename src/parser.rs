@@ -686,7 +686,7 @@ pub fn parse_namespace(
                     }
 
                     error = error.or(Some(JaktError::ParserError(
-                        "Expected enum keyword".to_string(),
+                        "Expected ‘enum’ keyword".to_string(),
                         tokens[*index].span,
                     )));
                 }
