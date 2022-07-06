@@ -1765,8 +1765,10 @@ struct Parser {
                     else_statement = .parse_if_statement()
                 }
                 LCurly => {
-                    // FIXME: Lint: check that ‘if’ and ‘else’ blocks are not the same.
                     let block = .parse_block()
+                    if parsed_block_equals(then_block, block) {
+                        .error("if and else have identical blocks", .current().span())
+                    }
                     else_statement = ParsedStatement::Block(block, span: merge_spans(start_span, .previous().span()))
                 }
                 else => {
