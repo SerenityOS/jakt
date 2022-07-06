@@ -2754,3 +2754,478 @@ enum Visibility {
     Private
     Restricted(whitelist: [ParsedType], span: Span)
 }
+
+function parsed_block_equals(anon lhs_block: ParsedBlock, anon rhs_block: ParsedBlock) -> bool {
+    if lhs_block.stmts.size() != rhs_block.stmts.size() {
+        return false
+    }
+    for x in 0..lhs_block.stmts.size() {
+        let lhs_statement = lhs_block.stmts[x]
+        let rhs_statement = rhs_block.stmts[x]
+        let are_statements_equal = parsed_statement_equals(lhs_block.stmts[x], rhs_block.stmts[x])
+        if not are_statements_equal {
+            return false
+        }
+    }
+    return true
+}
+
+function parsed_statement_equals(anon lhs_statement: ParsedStatement, anon rhs_statement: ParsedStatement) -> bool => match lhs_statement {
+    Expression(expr: lhs_expr) => match rhs_statement {
+        Expression(expr: rhs_expr) => parsed_expression_equals(lhs_expr, rhs_expr)
+        else => false
+    }
+    Defer(statement: lhs_statement) => match rhs_statement {
+        Defer(statement: rhs_statement) => parsed_statement_equals(lhs_statement, rhs_statement)
+        else => false
+    }
+    UnsafeBlock(block: lhs_block) => match rhs_statement {
+        UnsafeBlock(block: rhs_block) => parsed_block_equals(lhs_block, rhs_block)
+        else => false
+    }
+    VarDecl(var: lhs_var, init: lhs_init) => match rhs_statement {
+        VarDecl(var: rhs_var, init: rhs_init) => parsed_var_decl_equals(lhs_var, rhs_var) and parsed_expression_equals(lhs_init, rhs_init)
+        else => false
+    }
+    If(condition: lhs_condition, then_block: lhs_then_block, else_statement: lhs_else_statement) => match rhs_statement {
+        If(condition: rhs_condition, then_block: rhs_then_block, else_statement: rhs_else_statement) => {
+            if not (parsed_expression_equals(lhs_condition, rhs_condition) and parsed_block_equals(lhs_then_block, rhs_then_block)) {
+                return false
+            }
+            if not lhs_else_statement.has_value() {
+                return not rhs_else_statement.has_value()
+            } else {
+                if not rhs_else_statement.has_value() {
+                    return false
+                }
+                if parsed_statement_equals(lhs_else_statement!, rhs_else_statement!) {
+                    return true
+                }
+                return false
+            }
+        }
+        else => false
+    }
+    Block(block: lhs_block) => match rhs_statement {
+        Block(block: rhs_block) => parsed_block_equals(lhs_block, rhs_block)
+        else => false
+    }
+    Loop(block: lhs_block) => match rhs_statement {
+        Loop(block: rhs_block) => parsed_block_equals(lhs_block, rhs_block)
+        else => false
+    }
+    While(condition: lhs_condition, block: lhs_block) => match rhs_statement {
+        While(condition: rhs_condition, block: rhs_block) => parsed_expression_equals(lhs_condition, rhs_condition) and parsed_block_equals(lhs_block, rhs_block)
+        else => false
+    }
+    For(iterator_name: lhs_iterator_name, range: lhs_range, block: lhs_block) => match rhs_statement {
+        For(iterator_name: rhs_iterator_name, range: rhs_range, block: rhs_block) => {
+            yield lhs_iterator_name == rhs_iterator_name and parsed_expression_equals(lhs_range, rhs_range) and parsed_block_equals(lhs_block, rhs_block)
+        }
+        else => false
+    }
+    Break => match rhs_statement {
+        Break => true
+        else => false
+    }
+    Continue => match rhs_statement {
+        Continue => true
+        else => false
+    }
+    Return(expr: lhs_expr) => match rhs_statement {
+        Return(expr: rhs_expr) => {
+            if not lhs_expr.has_value() {
+                return not rhs_expr.has_value()
+            } else {
+                if not rhs_expr.has_value() {
+                    return false
+                }
+                if parsed_expression_equals(lhs_expr!, rhs_expr!) {
+                    return true
+                }
+                return false
+            }
+        }
+        else => false
+    }
+    Throw(expr: lhs_expr) => match rhs_statement {
+        Throw(expr: rhs_expr) => parsed_expression_equals(lhs_expr, rhs_expr)
+        else => false
+    }
+    Yield(expr: lhs_expr) =>  match rhs_statement {
+        Yield(expr: rhs_expr) => parsed_expression_equals(lhs_expr, rhs_expr)
+        else => false
+    }
+    InlineCpp(block: lhs_block) =>  match rhs_statement {
+        InlineCpp(block) => parsed_block_equals(lhs_block, block)
+        else => false
+    }
+    Try(stmt: lhs_stmt, error_name: lhs_error_name, catch_block: lhs_catch_block) => match rhs_statement {
+        Try(stmt: rhs_stmt, error_name: rhs_error_name, catch_block: rhs_catch_block) => {
+            yield lhs_error_name == rhs_error_name and parsed_statement_equals(lhs_stmt, rhs_stmt) and parsed_block_equals(lhs_catch_block, rhs_catch_block)
+        }
+        else => false
+    }
+    Garbage => match rhs_statement {
+        Garbage => true
+        else => false
+    }
+}
+
+function parsed_expression_equals(anon lhs_expression: ParsedExpression, anon rhs_expression: ParsedExpression) -> bool => match lhs_expression {
+    Boolean(val: lhs_val) => match rhs_expression {
+        Boolean(val: rhs_val) => lhs_val == rhs_val
+        else => false
+    }
+    NumericConstant(val: lhs_val) => match rhs_expression {
+        NumericConstant(val: rhs_val) => lhs_val.to_usize() == rhs_val.to_usize()
+        else => false
+    }
+    QuotedString(val: lhs_val) => match rhs_expression {
+        QuotedString(val: rhs_val) => lhs_val == rhs_val
+        else => false
+    }
+    SingleQuotedString(val: lhs_val) => match rhs_expression {
+        SingleQuotedString(val: rhs_val) => lhs_val == rhs_val
+        else => false
+    }
+    SingleQuotedByteString(val: lhs_val) => match rhs_expression {
+        SingleQuotedByteString(val: rhs_val) => lhs_val == rhs_val
+        else => false
+    }
+    Call(call: lhs_call) => match rhs_expression {
+        Call(call: rhs_call) => parsed_call_equals(lhs_call, rhs_call)
+        else => false
+    }
+    MethodCall(expr: lhs_expr, call: lhs_call) => match rhs_expression {
+        MethodCall(expr: rhs_expr, call: rhs_call) => parsed_expression_equals(lhs_expr, rhs_expr) and parsed_call_equals(lhs_call, rhs_call)
+        else => false
+    }
+    IndexedTuple(expr: lhs_expr) => match rhs_expression {
+        // FIXME: compare indexes as well as the expression
+        IndexedTuple(expr: rhs_expr) => parsed_expression_equals(lhs_expr, rhs_expr)
+        else => false
+    }
+    IndexedStruct(expr: lhs_expr, field: lhs_field) => match rhs_expression {
+        IndexedStruct(expr: rhs_expr, field: rhs_field) => parsed_expression_equals(lhs_expr, rhs_expr) and lhs_field == rhs_field
+        else => false
+    }
+    Var(name: lhs_name) => match rhs_expression {
+        Var(name: rhs_name) => lhs_name == rhs_name
+        else => false
+    }
+    IndexedExpression(base: lhs_base, index: lhs_index) => match rhs_expression {
+        IndexedExpression(base: rhs_base, index: rhs_index) => parsed_expression_equals(lhs_base, rhs_base) and parsed_expression_equals(lhs_index, rhs_index)
+        else => false
+    }
+    UnaryOp(expr: lhs_expr, op: lhs_op) => match rhs_expression {
+        UnaryOp(expr: rhs_expr, op: rhs_op) => parsed_expression_equals(lhs_expr, rhs_expr) and unary_operator_equals(lhs_op, rhs_op)
+        else => false
+    }
+    BinaryOp(lhs: lhs_lhs, op: lhs_op, rhs: lhs_rhs) => match rhs_expression {
+        BinaryOp(lhs: rhs_lhs, op: rhs_op, rhs: rhs_rhs) => parsed_expression_equals(lhs_lhs, rhs_lhs) and binary_operator_equals(lhs_op, rhs_op) and parsed_expression_equals(lhs_rhs, rhs_rhs)
+        else => false
+    }
+    Operator(op: lhs_op) => match rhs_expression {
+        Operator(op: rhs_op) => binary_operator_equals(lhs_op, rhs_op)
+        else => false
+    }
+    OptionalSome(expr: lhs_expr) => match rhs_expression {
+        OptionalSome(expr: rhs_expr) => parsed_expression_equals(lhs_expr, rhs_expr)
+        else => false
+    }
+    OptionalNone => match rhs_expression {
+        OptionalNone => true
+        else => false
+    }
+    JaktArray(values: lhs_values, fill_size: lhs_fill_size) => match rhs_expression {
+        JaktArray(values: rhs_values, fill_size: rhs_fill_size) => {
+            // TODO: compare fill_size as well
+            if not lhs_values.size() == rhs_values.size() {
+                return false
+            }
+            for i in 0..lhs_values.size() {
+                if not parsed_expression_equals(lhs_values[i], rhs_values[i]) {
+                    return false
+                }
+            }
+            yield true
+        }
+        else => false
+    }
+    JaktDictionary(values: lhs_values) => match rhs_expression {
+        JaktDictionary(values: rhs_values) => {
+            if not lhs_values.size() == rhs_values.size() {
+                return false
+            }
+            for i in 0..lhs_values.size() {
+                if not (parsed_expression_equals(lhs_values[i].0, rhs_values[i].0) and parsed_expression_equals(lhs_values[i].1, rhs_values[i].1))  {
+                    return false
+                }
+            }
+            yield true
+        }
+        else => false
+    }
+    Set(values: lhs_values) => match rhs_expression {
+        Set(values: rhs_values) => {
+            if not lhs_values.size() == rhs_values.size() {
+                return false
+            }
+            for i in 0..lhs_values.size() {
+                if not parsed_expression_equals(lhs_values[i], rhs_values[i]) {
+                    return false
+                }
+            }
+            yield true
+        }
+        else => false
+    }
+    JaktTuple(values: lhs_values) => match rhs_expression {
+        JaktTuple(values: rhs_values) => {
+            if not lhs_values.size() == rhs_values.size() {
+                return false
+            }
+            for i in 0..lhs_values.size() {
+                if not parsed_expression_equals(lhs_values[i], rhs_values[i]) {
+                    return false
+                }
+            }
+            yield true
+        }
+        else => false
+    }
+    Range(from: lhs_from, to: lhs_to) => match rhs_expression {
+        Range(from: rhs_from, to: rhs_to) => parsed_expression_equals(lhs_from, rhs_from) and parsed_expression_equals(lhs_to, rhs_to)
+        else => false
+    }
+    ForcedUnwrap(expr: lhs_expr) => match rhs_expression {
+        ForcedUnwrap(expr: rhs_expr) => parsed_expression_equals(lhs_expr, rhs_expr)
+        else => false
+    }
+    Match(expr: lhs_expr) => match rhs_expression {
+        // FIXME: compare MachedCases as well
+        ForcedUnwrap(expr: rhs_expr) => parsed_expression_equals(lhs_expr, rhs_expr)
+        else => false
+    }
+    NamespacedVar(name: lhs_name) => match rhs_expression {
+        // FIXME: compare Namespaces as well
+        NamespacedVar(name: rhs_name) => lhs_name == rhs_name
+        else => false
+    }
+    Garbage => match rhs_expression {
+        Garbage => true
+        else => false
+    }
+}
+
+function parsed_var_decl_equals(anon lhs_var_decl: ParsedVarDecl, anon rhs_var_decl: ParsedVarDecl) -> bool {
+    return lhs_var_decl.name == rhs_var_decl.name and lhs_var_decl.is_mutable == rhs_var_decl.is_mutable
+}
+
+function parsed_call_equals(anon lhs_parsed_call: ParsedCall, anon rhs_parsed_call: ParsedCall) -> bool {
+    if lhs_parsed_call.name != rhs_parsed_call.name {
+        return false
+    }
+    if lhs_parsed_call.args.size() != rhs_parsed_call.args.size() {
+        return false
+    }
+    for i in 0..lhs_parsed_call.args.size() {
+        let lhs_str = lhs_parsed_call.args[i].0
+        let rhs_str = rhs_parsed_call.args[i].0
+        let lhs_expr = lhs_parsed_call.args[i].2
+        let rhs_expr = rhs_parsed_call.args[i].2
+        if (lhs_str != rhs_str) or (not parsed_expression_equals(lhs_expr, rhs_expr)) {
+            return false
+        }
+    }
+    return true
+}
+
+function unary_operator_equals(anon lhs_op: UnaryOperator, anon rhs_op: UnaryOperator) -> bool => match lhs_op {
+    PreIncrement => match rhs_op {
+        PreIncrement => true
+        else => false
+    }
+    PostIncrement => match rhs_op {
+        PostIncrement => true
+        else => false
+    }
+    PreDecrement => match rhs_op {
+        PreDecrement => true
+        else => false
+    }
+    PostDecrement => match rhs_op {
+        PostDecrement => true
+        else => false
+    }
+    Negate => match rhs_op {
+        Negate => true
+        else => false
+    }
+    Dereference => match rhs_op {
+        Dereference => true
+        else => false
+    }
+    RawAddress => match rhs_op {
+        RawAddress => true
+        else => false
+    }
+    LogicalNot => match rhs_op {
+        LogicalNot => true
+        else => false
+    }
+    BitwiseNot => match rhs_op {
+        BitwiseNot => true
+        else => false
+    }
+    // FIXME: Compare Types
+    TypeCast => match rhs_op {
+        TypeCast => true
+        else => false
+    }
+    // FIXME: Compare Types
+    Is => match rhs_op {
+        Is => true
+        else => false
+    }
+}
+
+function binary_operator_equals(anon lhs_op: BinaryOperator, anon rhs_op: BinaryOperator) -> bool => match lhs_op {
+    Add => match rhs_op {
+        Add => true
+        else => false
+    }
+    Subtract => match rhs_op {
+        Subtract => true
+        else => false
+    }
+    Multiply => match rhs_op {
+        Multiply => true
+        else => false
+    }
+    Divide => match rhs_op {
+        Divide => true
+        else => false
+    }
+    Modulo => match rhs_op {
+        Modulo => true
+        else => false
+    }
+    LessThan => match rhs_op {
+        LessThan => true
+        else => false
+    }
+    LessThanOrEqual => match rhs_op {
+        LessThanOrEqual => true
+        else => false
+    }
+    GreaterThan => match rhs_op {
+        GreaterThan => true
+        else => false
+    }
+    GreaterThanOrEqual => match rhs_op {
+        GreaterThanOrEqual => true
+        else => false
+    }
+    Equal => match rhs_op {
+        Equal => true
+        else => false
+    }
+    NotEqual => match rhs_op {
+        NotEqual => true
+        else => false
+    }
+    BitwiseAnd => match rhs_op {
+        BitwiseAnd => true
+        else => false
+    }
+    BitwiseXor => match rhs_op {
+        BitwiseXor => true
+        else => false
+    }
+    BitwiseOr => match rhs_op {
+        BitwiseOr => true
+        else => false
+    }
+    BitwiseLeftShift => match rhs_op {
+        BitwiseLeftShift => true
+        else => false
+    }
+    BitwiseRightShift => match rhs_op {
+        BitwiseRightShift => true
+        else => false
+    }
+    ArithmeticLeftShift => match rhs_op {
+        ArithmeticLeftShift => true
+        else => false
+    }
+    ArithmeticRightShift => match rhs_op {
+        ArithmeticRightShift => true
+        else => false
+    }
+    LogicalOr => match rhs_op {
+        LogicalOr => true
+        else => false
+    }
+    LogicalAnd => match rhs_op {
+        LogicalAnd => true
+        else => false
+    }
+    NoneCoalescing => match rhs_op {
+        NoneCoalescing => true
+        else => false
+    }
+    Assign => match rhs_op {
+        Assign => true
+        else => false
+    }
+    BitwiseAndAssign => match rhs_op {
+        BitwiseAndAssign => true
+        else => false
+    }
+    BitwiseOrAssign => match rhs_op {
+        BitwiseOrAssign => true
+        else => false
+    }
+    BitwiseXorAssign => match rhs_op {
+        BitwiseXorAssign => true
+        else => false
+    }
+    BitwiseLeftShiftAssign => match rhs_op {
+        BitwiseLeftShiftAssign => true
+        else => false
+    }
+    BitwiseRightShiftAssign => match rhs_op {
+        BitwiseRightShiftAssign => true
+        else => false
+    }
+    AddAssign => match rhs_op {
+        AddAssign => true
+        else => false
+    }
+    SubtractAssign => match rhs_op {
+        SubtractAssign => true
+        else => false
+    }
+    MultiplyAssign => match rhs_op {
+        MultiplyAssign => true
+        else => false
+    }
+    ModuloAssign => match rhs_op {
+        ModuloAssign => true
+        else => false
+    }
+    DivideAssign => match rhs_op {
+        DivideAssign => true
+        else => false
+    }
+    NoneCoalescingAssign => match rhs_op {
+        NoneCoalescingAssign => true
+        else => false
+    }
+    Garbage => match rhs_op {
+        Garbage => true
+        else => false
+    }
+}
