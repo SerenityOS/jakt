@@ -81,11 +81,15 @@ struct ControlFlowState {
     }
 }
 
+struct LineSpan {
+    start: usize
+    end: usize
+}
+
 struct CodegenDebugInfo {
     // FIXME: Add support for multiple source files
-    file_name: String
-    file_contents: [u8]
-    line_spans: [(usize, usize)]
+    compiler: Compiler
+    line_spans: [usize: [LineSpan]]
     statement_span_comments: bool
 
     function span_to_source_location(mut this, anon span: Span) throws -> String {
@@ -93,11 +97,17 @@ struct CodegenDebugInfo {
             .gather_line_spans()
         }
 
+        let file_idx = span.file_id.id
+
+        if not .line_spans.contains(file_idx) {
+            return ""
+        }
+
         mut line_index = 0uz
-        while line_index < .line_spans.size() {
-            if span.start >= .line_spans[line_index].0 and span.start <= .line_spans[line_index].1 {
-                let column_index = span.start - .line_spans[line_index].0
-                return format("{}:{}:{}", .file_name, line_index+1, column_index+1)
+        while line_index < .line_spans[file_idx].size() {
+            if span.start >= .line_spans[file_idx][line_index].start and span.start <= .line_spans[file_idx][line_index].end {
+                let column_index = span.start - .line_spans[file_idx][line_index].start
+                return format("{}:{}:{}", .compiler.get_file_path(span.file_id)!.path, line_index+1, column_index+1)
             }
             line_index += 1
         }
@@ -107,17 +117,32 @@ struct CodegenDebugInfo {
     }
 
     function gather_line_spans(mut this) throws {
-        mut idx = 0uz
-        mut start = idx
-        while idx < .file_contents.size() {
-            if .file_contents[idx] == b'\n' {
-                .line_spans.push((start, idx))
-                start = idx + 1
+        for file in .compiler.file_ids.iterator() {
+
+            if file.0 == "__prelude__" {
+                continue
             }
-            idx += 1
-        }
-        if start < idx {
-            .line_spans.push((start, idx))
+
+            .compiler.set_current_file(file.1)
+
+            let file_idx = file.1.id
+
+            // FIXME: remove when we can infer the type
+            let empty_array: [LineSpan] = []
+            .line_spans.set(file_idx, empty_array)
+
+            mut idx = 0uz
+            mut start = idx
+            while idx < .compiler.current_file_contents.size() {
+                if .compiler.current_file_contents[idx] == b'\n' {
+                    .line_spans[file_idx].push(LineSpan(start, end: idx))
+                    start = idx + 1
+                }
+                idx += 1
+            }
+            if start < idx {
+                .line_spans[file_idx].push(LineSpan(start, end: idx))
+            }
         }
     }
 }
@@ -155,9 +180,8 @@ struct CodeGenerator {
             current_function: none_function
             //TODO: use program.loaded_modules
             debug_info: CodegenDebugInfo(
-                file_name: compiler.current_file_path()!.path
-                file_contents: compiler.current_file_contents
-                line_spans: []
+                compiler
+                line_spans: [:]
                 statement_span_comments: debug_info
             )
             namespace_stack: []
