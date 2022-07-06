@@ -1843,8 +1843,8 @@ struct Typechecker {
             match parsed_record.record_type {
                 Struct | Class => { .typecheck_struct_predecl_initial(parsed_record, struct_index: struct_index++, module_struct_len, scope_id) }
                 SumEnum | ValueEnum => { .typecheck_enum_predecl_initial(parsed_record, enum_index: enum_index++, module_enum_len, scope_id) }
-                else => {
-                    todo(format("typecheck_namespace_predecl: else {}", parsed_record.record_type))
+                Garbage => {
+                    // NOTE: We've already emitted a parse error about this, no need for a separate type error.
                 }
             }
         }
