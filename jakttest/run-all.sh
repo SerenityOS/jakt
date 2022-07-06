@@ -5,6 +5,11 @@ if [ ! -x ./build/jakttest ]; then
     cargo run jakttest/jakttest.jakt
 fi
 
+if [ ! -x ./build/main ]; then
+    echo "selfhost binary does not exist. Building it now."
+    cargo run selfhost/main.jakt
+fi
+
 stat_format_flags="-c %Y"
 if [[ $OSTYPE == 'darwin'* ]]; then
   stat_format_flags="-f %m"
