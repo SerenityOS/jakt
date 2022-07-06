@@ -195,7 +195,7 @@ connection.onHover(async (request) => {
 		// console.log("request: ");
 		// console.log(request);
 		// console.log("index: " + convertPosition(request.position, text));
-		const stdout = await runCompiler(text, "-v " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri), settings);
+		const stdout = await runCompiler(text, "-e " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri), settings);
 		// console.log("got: ", stdout);
 
 		const lines = stdout.split('\n').filter(l => l.length > 0);

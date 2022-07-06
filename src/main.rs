@@ -397,7 +397,7 @@ fn parse_arguments() -> JaktArguments {
         }
     }
 
-    if let Ok(Some(index)) = get_path_arg(["-v", "--hover"]) {
+    if let Ok(Some(index)) = get_path_arg(["-e", "--hover"]) {
         if let Ok(val) = index.to_string_lossy().parse::<usize>() {
             arguments.hover_index = Some(val);
         }
