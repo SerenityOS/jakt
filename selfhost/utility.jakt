@@ -63,41 +63,51 @@ class FilePath {
     }
 
     public function dirname(this) throws -> String {
-        let parts = .split()
+        let parts = .split_at_last_slash()
         return parts.0
     }
 
     public function basename(this) throws -> String {
-        let parts = .split()
+        let parts = .split_at_last_slash()
         return parts.1
     }
 
     public function ext(this) throws -> String {
         mut i = .path.length() -1
-	    while (i >= 0 and .path.byte_at(i) != b'/')  {
-		    if .path.byte_at(i) == b'.' {
-			    return .path.substring(start: (i + 1), length: (.path.length() - 1 - i))
-		    }
-		    i--
-	    }
-	    return ""
+        while (i >= 0 and .path.byte_at(i) != b'/')  {
+            if .path.byte_at(i) == b'.' {
+                return .path.substring(start: (i + 1), length: (.path.length() - 1 - i))
+            }
+            i--
+        }
+        return ""
     }
 
-    private function split(this) throws -> (String, String) {
+    private function split_at_last_slash(this) throws -> (String, String) {
         let len = .path.length()
-        let pos = FilePath::last_slash(.path)
-        let dir = .path.substring(start: 0, length: (pos + 1)) 
-        let base = .path.substring(start: (pos + 1), length: (len - pos - 1))
-        return (dir, base)
+        let last_slash = FilePath::last_slash(.path)
+
+        if last_slash.has_value() {
+            let dir = .path.substring(start: 0, length: (last_slash! + 1)) 
+            let base = .path.substring(start: (last_slash! + 1), length: (len - last_slash! - 1))
+            return (dir, base)
+        }
+
+        return ("", .path)
     }
 
 
-    private function last_slash(anon path: String) -> usize {
-	    mut i = path.length() - 1
-	    while (i >= 1 and path.byte_at(i) != b'/') {
-		    i--
-	    }
-	    return i
+    private function last_slash(anon path: String) -> usize? {
+        mut i = path.length() - 1
+        while (i >= 1 and path.byte_at(i) != b'/') {
+            i--
+        }
+
+        if (i == 0 and path.byte_at(i) != b'/') {
+            return None
+        }
+
+        return i
     }
 }
 
