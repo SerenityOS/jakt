@@ -6,7 +6,7 @@
 
 import error { JaktError, print_error}
 import lexer { Token, NumericConstant }
-import utility { panic, todo, Span }
+import utility { panic, todo, FileId, Span }
 import compiler { Compiler }
 import prelude { JaktPrelude }
 
@@ -439,6 +439,20 @@ boxed enum ParsedType {
     RawPtr(inner: ParsedType, span: Span)
     WeakPtr(inner: ParsedType, span: Span)
     Empty
+
+    function span(this) => match this {
+        Name(name, span) => span
+        NamespacedName(name, namespaces, params, span) => span
+        GenericType(name, generic_parameters, span) => span
+        JaktArray(inner, span) => span
+        Dictionary(key, value, span) => span
+        JaktTuple(types, span) => span
+        Set(inner, span) => span
+        Optional(inner, span) => span
+        RawPtr(inner, span) => span
+        WeakPtr(inner, span) => span
+        Empty => Span(file_id: FileId(id: 0uz), start: 0, end: 0) // FIXME: For some reason we can't see `empty_span()` here.
+    }
 }
 
 struct Parser {
