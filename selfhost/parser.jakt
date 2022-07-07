@@ -2900,9 +2900,8 @@ function parsed_expression_equals(anon lhs_expression: ParsedExpression, anon rh
         MethodCall(expr: rhs_expr, call: rhs_call) => parsed_expression_equals(lhs_expr, rhs_expr) and parsed_call_equals(lhs_call, rhs_call)
         else => false
     }
-    IndexedTuple(expr: lhs_expr) => match rhs_expression {
-        // FIXME: compare indexes as well as the expression
-        IndexedTuple(expr: rhs_expr) => parsed_expression_equals(lhs_expr, rhs_expr)
+    IndexedTuple(expr: lhs_expr, index: lhs_index) => match rhs_expression {
+        IndexedTuple(expr: rhs_expr, index: rhs_index) => parsed_expression_equals(lhs_expr, rhs_expr) and lhs_index == rhs_index
         else => false
     }
     IndexedStruct(expr: lhs_expr, field: lhs_field) => match rhs_expression {
@@ -2936,7 +2935,18 @@ function parsed_expression_equals(anon lhs_expression: ParsedExpression, anon rh
     OptionalNone => rhs_expression is OptionalNone
     JaktArray(values: lhs_values, fill_size: lhs_fill_size) => match rhs_expression {
         JaktArray(values: rhs_values, fill_size: rhs_fill_size) => {
-            // TODO: compare fill_size as well
+            if not lhs_fill_size.has_value() {
+                if rhs_fill_size.has_value() {
+                    return false
+                }
+            } else {
+                if not rhs_fill_size.has_value() {
+                    return false
+                }
+                if not parsed_expression_equals(lhs_fill_size!, rhs_fill_size!) {
+                    return false
+                }
+            }
             if not lhs_values.size() == rhs_values.size() {
                 return false
             }
@@ -3004,9 +3014,18 @@ function parsed_expression_equals(anon lhs_expression: ParsedExpression, anon rh
         ForcedUnwrap(expr: rhs_expr) => parsed_expression_equals(lhs_expr, rhs_expr)
         else => false
     }
-    NamespacedVar(name: lhs_name) => match rhs_expression {
-        // FIXME: compare Namespaces as well
-        NamespacedVar(name: rhs_name) => lhs_name == rhs_name
+    NamespacedVar(name: lhs_name, namespace_: lhs_namespace) => match rhs_expression {
+        NamespacedVar(name: rhs_name, namespace_: rhs_namespace) => {
+            if lhs_namespace.size() != rhs_namespace.size() {
+                return false
+            }
+            for i in 0..lhs_namespace.size() {
+                if lhs_namespace[i] != rhs_namespace[i] {
+                    return false
+                }
+            }
+            yield lhs_name == rhs_name
+        }
         else => false
     }
     Garbage => rhs_expression is Garbage
