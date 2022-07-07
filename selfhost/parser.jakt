@@ -2688,7 +2688,7 @@ struct Parser {
                         .index++
                         fill_size_expr = .parse_expression(allow_assignments: false);
                     } else {
-                        .error("Can't fill array with more than one expression", .current().span())
+                        .error("Can't fill an Array with more than one expression", .current().span())
                         .index++
                     }
                 }
