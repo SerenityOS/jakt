@@ -220,7 +220,7 @@ boxed enum Type {
                                 mut idx = 0uz
 
                                 while idx < lhs_args.size() {
-                                    if lhs_args[idx].equals(rhs_args[idx]) {
+                                    if not lhs_args[idx].equals(rhs_args[idx]) {
                                         return false
                                     }
                                     idx++
