@@ -4749,6 +4749,32 @@ struct Typechecker {
                     }
                 }
 
+                mut enum_variant_names: [String] = []
+                mut missing_variants: [String] = []
+
+                for variant in enum_.variants.iterator() {
+                    enum_variant_names.push(variant.name())
+                }
+
+                for variant in enum_variant_names.iterator() {
+                    if not covered_variants.contains(variant) {
+                        missing_variants.push(variant)
+                    }
+                }
+
+                if missing_variants.size() > 0 and not seen_catch_all {
+                    mut str_missing_values = StringBuilder::create()
+
+                    // FIXME: replace this block with missing_variants.join(", ") when it is available
+                    for i in 0..missing_variants.size() {
+                        str_missing_values.append_c_string(missing_variants[i].c_string())
+                        if i < missing_variants.size() - 1 {
+                            str_missing_values.append_c_string(", ".c_string())
+                        }
+                    }
+
+                    .error(format("match expression is not exhaustive, missing variants are: {}", str_missing_values.to_string()), span)
+                }
             }
             Void => {
                 .error("Can't match on 'void' type", .expression_span(checked_expr))
