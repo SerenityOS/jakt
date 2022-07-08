@@ -365,6 +365,13 @@ struct Lexer {
         return .input[.index + steps]
     }
 
+    function peek_behind(this, anon steps: usize) -> u8 {
+        if .index < steps {
+            return 0
+        }
+        return .input[.index - steps]
+    }
+
     function eof(this) -> bool {
         return .index >= .input.size()
     }
@@ -482,9 +489,27 @@ struct Lexer {
                         }
                     }
                     let end = .index
+                    let span = .span(start, end)
+
+                    if .peek_behind(1) == b'_' {
+                        .error(
+                            "Hexadecimal number literal cannot end with underscore"
+                            span
+                        )
+                        return Token::Garbage(span)
+                    }
+
                     let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::I64
 
-                    return make_number_token(number: total, suffix, span: .span(start, end))
+                    if is_ascii_alphanumeric(.peek()) or .peek() == b'_' {
+                        .error(
+                            "Could not parse hexadecimal number"
+                            span
+                        )
+                        return Token::Garbage(span)
+                    }
+
+                    return make_number_token(number: total, suffix, span)
                 }
                 // Octal Number
                 b'o' => {
@@ -498,6 +523,28 @@ struct Lexer {
                             ++.index
                         }
                     }
+                    let end = .index
+                    let span = .span(start, end)
+
+                    if .peek_behind(1) == b'_' {
+                        .error(
+                            "Octal number literal cannot end with underscore"
+                            span
+                        )
+                        return Token::Garbage(span)
+                    }
+
+                    let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::I64
+
+                    if is_ascii_alphanumeric(.peek()) {
+                        .error(
+                            "Could not parse octal number"
+                            span
+                        )
+                        return Token::Garbage(span)
+                    }
+
+                    return make_number_token(number: total, suffix, span)
                 }
                 // Binary Number
                 b'b' => {
@@ -511,6 +558,29 @@ struct Lexer {
                             ++.index
                         }
                     }
+                    let end = .index
+                    let span = .span(start, end)
+
+                    if .peek_behind(1) == b'_' {
+                        .error(
+                            "Binary number literal cannot end with underscore"
+                            span
+                        )
+                        return Token::Garbage(span)
+                    }
+
+                    let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::I64
+
+                    if is_ascii_alphanumeric(.peek()) {
+                        .error(
+                            "Could not parse binary number"
+                            span
+                        )
+
+                        return Token::Garbage(span)
+                    }
+
+                    return make_number_token(number: total, suffix, span)
                 }
                 else => {}
             }
@@ -526,7 +596,26 @@ struct Lexer {
             }
         }
         let end = .index
+        let span = .span(start, end)
+
+        if .peek_behind(1) == b'_' {
+            .error(
+                "Number literal cannot end with underscore"
+                span
+            )
+            return Token::Garbage(span)
+        }
+
         let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::I64
+
+        if is_ascii_alphanumeric(.peek()) {
+            .error(
+                "Could not parse number"
+                span
+            )
+
+            return Token::Garbage(span)
+        }
 
         return make_number_token(number: total, suffix, span: .span(start, end))
     }
@@ -548,6 +637,11 @@ struct Lexer {
         mut width = 0i64
 
         while is_ascii_digit(.peek_ahead(local_index)) {
+            // Make sure we don't overflow the width
+            if local_index > 3 {
+                return None
+            }
+
             let value = .input[.index + local_index]
             ++local_index
             let digit: i64 = as_saturated(value - b'0')
