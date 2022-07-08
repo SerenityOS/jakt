@@ -401,8 +401,6 @@ struct Lexer {
 
             if not escaped and .peek() == b'\\' {
                 escaped = true
-            } else {
-                escaped = false
             }
 
             .index++
