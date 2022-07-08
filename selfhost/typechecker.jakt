@@ -907,6 +907,19 @@ class CheckedProgram {
         return .loaded_modules.get(module_name)
     }
 
+    public function find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? {
+        mut current_scope_id = Some(scope_id)
+        while current_scope_id.has_value() {
+            let scope = .get_scope(id: current_scope_id!)
+            let maybe_scope = scope.structs.get(name)
+            if maybe_scope.has_value() {
+                return maybe_scope
+            }
+            current_scope_id = scope.parent
+        }
+        return None
+    }
+
     public function find_var_in_scope(this, scope_id: ScopeId, var: String) throws -> CheckedVariable? {
         mut current_scope_id = scope_id
         loop {
@@ -1615,18 +1628,8 @@ struct Typechecker {
         return None
     }
 
-    function find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? {
-        mut current_scope_id = Some(scope_id)
-        while current_scope_id.has_value() {
-            let scope = .get_scope(id: current_scope_id!)
-            let maybe_scope = scope.structs.get(name)
-            if maybe_scope.has_value() {
-                return maybe_scope
-            }
-            current_scope_id = scope.parent
-        }
-        return None
-    }
+    function find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? => 
+        .program.find_struct_in_scope(scope_id, name)
 
     function typecheck_module(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         .typecheck_namespace_imports(parsed_namespace, scope_id)
