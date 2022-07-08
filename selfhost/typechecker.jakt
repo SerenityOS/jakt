@@ -920,6 +920,19 @@ class CheckedProgram {
         return None
     }
 
+    public function find_struct_in_prelude(this, anon name: String) throws -> StructId {
+        // start at the prelude scope id
+        let scope_id = prelude_scope_id()
+        let struct_id = .find_struct_in_scope(scope_id, name)
+        if struct_id.has_value() {
+            return struct_id.value()
+        }
+
+        .compiler.panic(format("internal error: {} builtin definition not found", name))
+        return StructId(module: ModuleId(id: 0), id: 0)
+    }
+
+
     public function find_var_in_scope(this, scope_id: ScopeId, var: String) throws -> CheckedVariable? {
         mut current_scope_id = scope_id
         loop {
@@ -1217,17 +1230,8 @@ struct Typechecker {
         return parsed_namespace
     } 
 
-    function find_struct_in_prelude(this, anon name: String) throws -> StructId {
-        // start at the prelude scope id
-        let scope_id = .prelude_scope_id()
-        let struct_id = .find_struct_in_scope(scope_id, name)
-        if struct_id.has_value() {
-            return struct_id.value()
-        }
-
-        .compiler.panic(format("internal error: {} builtin definition not found", name))
-        return StructId(module: ModuleId(id: 0), id: 0)
-    }
+    function find_struct_in_prelude(this, anon name: String) throws -> StructId =>
+        .program.find_struct_in_prelude(name)
 
     function find_type_in_prelude(this, anon name: String) throws -> TypeId {
         // start at the prelude scope id
