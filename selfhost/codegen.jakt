@@ -2239,10 +2239,28 @@ struct CodeGenerator {
 
                 yield output
             }
-            else => {
-                todo(format("codegen_statement - Missing statement codegen for {}", statement))
-                // FIXME: panic() should be `noreturn` and no `yield` should be necessary:
-                yield ""
+            Try(stmt, error_name, catch_block, span) => {
+                mut output = "{"
+                output += "auto _jakt_try_result = [&]() -> ErrorOr<void> {"
+                {
+                    let last_control_flow = .control_flow_state
+                    .control_flow_state.passes_through_match = false
+                    output += .codegen_statement(statement: stmt)
+                    output += ";"
+                    output += "return {};"
+                    output += "}();"
+                    output += "if (_jakt_try_result.is_error()) {"
+                    if not error_name.is_empty() {
+                        output += "auto "
+                        output += error_name
+                        output += " = _jakt_try_result.release_error();"
+                    }
+                    output += .codegen_block(block: catch_block)
+                    .control_flow_state = last_control_flow
+                }
+                output += "}}"
+
+                yield output
             }
         }
 
