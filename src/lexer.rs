@@ -775,7 +775,7 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
             return (
                 Token::unknown(Span::new(file_id, start, *index)),
                 Some(JaktError::ParserError(
-                    "hex number literal cannot end with underscore".to_string(),
+                    "Hexadecimal number literal cannot end with underscore".to_string(),
                     Span::new(file_id, start, *index),
                 )),
             );
@@ -793,7 +793,7 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
             Err(_) => (
                 Token::unknown(span),
                 Some(JaktError::ParserError(
-                    "could not parse hex number".to_string(),
+                    "Could not parse hexadecimal number".to_string(),
                     span,
                 )),
             ),
@@ -813,7 +813,7 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
             return (
                 Token::unknown(span),
                 Some(JaktError::ParserError(
-                    "octal number literal cannot end with underscore".to_string(),
+                    "Octal number literal cannot end with underscore".to_string(),
                     Span::new(file_id, start, *index),
                 )),
             );
@@ -823,7 +823,7 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
             return (
                 Token::unknown(Span::new(file_id, start, *index)),
                 Some(JaktError::ParserError(
-                    "could not parse octal number".to_string(),
+                    "Could not parse octal number".to_string(),
                     Span::new(file_id, start, *index),
                 )),
             );
@@ -862,7 +862,7 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
             return (
                 Token::unknown(Span::new(file_id, start, *index)),
                 Some(JaktError::ParserError(
-                    "binary number literal cannot end with underscore".to_string(),
+                    "Binary number literal cannot end with underscore".to_string(),
                     Span::new(file_id, start, *index),
                 )),
             );
@@ -872,7 +872,7 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
             return (
                 Token::unknown(Span::new(file_id, start, *index)),
                 Some(JaktError::ParserError(
-                    "could not parse binary number".to_string(),
+                    "Could not parse binary number".to_string(),
                     Span::new(file_id, start, *index),
                 )),
             );
@@ -891,7 +891,7 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
             Err(_) => (
                 Token::unknown(span),
                 Some(JaktError::ParserError(
-                    "could not parse binary number".to_string(),
+                    "Could not parse binary number".to_string(),
                     span,
                 )),
             ),
