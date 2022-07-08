@@ -4867,18 +4867,24 @@ struct Typechecker {
                     }
                 }
 
-                if missing_variants.size() > 0 and not seen_catch_all {
-                    mut str_missing_values = StringBuilder::create()
+                if missing_variants.size() > 0 {
+                    if not seen_catch_all {
+                        mut str_missing_values = StringBuilder::create()
 
-                    // FIXME: replace this block with missing_variants.join(", ") when it is available
-                    for i in 0..missing_variants.size() {
-                        str_missing_values.append_c_string(missing_variants[i].c_string())
-                        if i < missing_variants.size() - 1 {
-                            str_missing_values.append_c_string(", ".c_string())
+                        // FIXME: replace this block with missing_variants.join(", ") when it is available
+                        for i in 0..missing_variants.size() {
+                            str_missing_values.append_c_string(missing_variants[i].c_string())
+                            if i < missing_variants.size() - 1 {
+                                str_missing_values.append_c_string(", ".c_string())
+                            }
                         }
-                    }
 
-                    .error(format("match expression is not exhaustive, missing variants are: {}", str_missing_values.to_string()), span)
+                        .error(format("match expression is not exhaustive, missing variants are: {}", str_missing_values.to_string()), span)
+                    }
+                } else {
+                    if seen_catch_all {
+                        .error("all variants are covered, but an irrefutable pattern is also present", span)
+                    }
                 }
             }
             Void => {
