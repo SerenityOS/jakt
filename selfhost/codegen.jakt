@@ -1666,8 +1666,23 @@ struct CodeGenerator {
 
     function codegen_binary_expression(mut this, expression: CheckedExpression, type_id: TypeId, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator) throws -> String {
         if op is NoneCoalescing {
-            todo(format("codegen {}", op))
-            return ""
+            let rhs_type = .program.get_type(expression_type(rhs))
+
+            mut output = .codegen_expression(lhs)
+            match rhs_type {
+                GenericInstance(id, args) => {
+                    if .program.get_struct(id).name == "Optional" {
+                        output += ".value_or_lazy_evaluated_optional([&] { return ";
+                    }
+                }
+                else => {
+                    output += ".value_or_lazy_evaluated([&] { return "
+                }
+            }
+
+            output += .codegen_expression(rhs)
+            output += "; })"
+            return output
         }
 
         if op is NoneCoalescingAssign {
