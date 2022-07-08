@@ -932,7 +932,6 @@ class CheckedProgram {
         return StructId(module: ModuleId(id: 0), id: 0)
     }
 
-
     public function find_var_in_scope(this, scope_id: ScopeId, var: String) throws -> CheckedVariable? {
         mut current_scope_id = scope_id
         loop {
