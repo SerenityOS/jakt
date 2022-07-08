@@ -1337,7 +1337,7 @@ struct Typechecker {
                         } else {
                             first = false
                         }
-                        output += .type_name(type_id)
+                        output += .type_name(arg)
                     }
                     output += "}"
                 } else if id.equals(weak_ptr_struct_id) {
@@ -1353,7 +1353,7 @@ struct Typechecker {
                         } else {
                             first = false
                         }
-                        output += .type_name(type_id)
+                        output += .type_name(arg)
                     }
                     output += ">"
                 }
