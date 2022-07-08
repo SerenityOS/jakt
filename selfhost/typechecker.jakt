@@ -868,6 +868,7 @@ struct CheckedCall {
     callee_throws: bool
 }
 
+function prelude_scope_id() -> ScopeId => ScopeId(module_id: ModuleId(id: 0), id: 0)
 function unknown_type_id() -> TypeId => TypeId(module: ModuleId(id: 0), id: 0)
 function void_type_id() -> TypeId => builtin(BuiltinType::Void)
 
