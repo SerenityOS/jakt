@@ -661,10 +661,9 @@ struct Lexer {
 
         // FIXME: Change match to if statements or similar when available
         let end = .index
-
         let span = .span(start, end)
 
-        if .peek_behind(1) == b'_' {
+        if .peek() == b'_' {
             .error(
                 "Number literal cannot end with underscore"
                 span
@@ -678,12 +677,20 @@ struct Lexer {
         }
         let suffix = .consume_numeric_literal_suffix() ?? default_suffix
 
+        if is_ascii_alphanumeric(.peek()) {
+            .error(
+                "Could not parse number"
+                span
+            )
+
+            return Token::Garbage(span)
+        }
+
+        // Sanity check for float numbers with an integer suffix
         let is_float_suffix = match suffix {
             LiteralSuffix::F32 | LiteralSuffix::F64 => true
             else => false
         }
-
-        // Sanity check
         if floating and not is_float_suffix {
             // FIXME: Provide better error handling
             return Token::Garbage(.span(start, end: .index))
