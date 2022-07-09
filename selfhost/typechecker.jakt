@@ -3582,6 +3582,18 @@ struct Typechecker {
                     else => {}
                 }
 
+                let lhs_type = .get_type(lhs_type_id)
+                match lhs_type {
+                    GenericInstance(id, args) => {
+                        if .program.get_struct(id).name == "Optional" {
+                            if expression_type(checked_rhs).equals(args[0]) {
+                                return lhs_type_id
+                            }
+                        }
+                    }
+                    else => {}
+                }
+
                 let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
                 if not result.has_value() {
                     .error(format("Assignment between incompatible types (‘{}’ and ‘{}’)", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
