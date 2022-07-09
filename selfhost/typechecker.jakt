@@ -1431,6 +1431,22 @@ struct Typechecker {
         }
     }
 
+    function unify_with_type(mut this, found_type: TypeId, expected_type: TypeId?, span: Span) throws -> TypeId {
+        if expected_type.has_value() {
+            if expected_type!.equals(unknown_type_id()) {
+                return found_type
+            }
+            let generic_inferences: [String:String] = [:]
+            if .check_types_for_compat(lhs_type_id: expected_type!, rhs_type_id: found_type, generic_inferences, span) {
+                return found_type
+            }
+
+            return .substitute_typevars_in_type(type_id: found_type, generic_inferences)
+        } else {
+            return found_type
+        }
+    }
+
     function find_or_add_type_id(mut this, anon type: Type) throws -> TypeId {
         let module = .program.modules[.current_module_id.id]
         let module_id = module.id
@@ -2304,7 +2320,9 @@ struct Typechecker {
         }
 
         for fun in parsed_namespace.functions.iterator() {
+            .current_function_id = .find_function_in_scope(parent_scope_id: scope_id, function_name: fun.name)
             .typecheck_function(parsed_function: fun, parent_scope_id: scope_id)
+            .current_function_id = None
         }
     }
 
@@ -4266,7 +4284,10 @@ struct Typechecker {
         }
         SingleQuotedString(val, span) => CheckedExpression::CharacterConstant(val, span)
         SingleQuotedByteString(val, span) => CheckedExpression::ByteConstant(val, span)
-        QuotedString(val, span) => CheckedExpression::QuotedString(val, span)
+        QuotedString(val, span) => {
+            .unify_with_type(found_type: builtin(BuiltinType::String), expected_type: type_hint, rhs_span: span)
+            yield CheckedExpression::QuotedString(val, span)
+        }
         Call(call, span) => {
             let none_expr: CheckedExpression? = None
             let parent_id: StructOrEnumId? = None
