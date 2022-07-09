@@ -207,19 +207,15 @@ fn main() -> Result<(), JaktError> {
                         } else {
                             String::from("runtime")
                         };
-                        let default_cxx_compiler_path = PathBuf::from("clang++");
-                        let cxx_compiler_path = arguments
-                            .cxx_compiler_path
-                            .as_ref()
-                            .unwrap_or(&default_cxx_compiler_path);
-                        if !cxx_compiler_path.exists() {
-                            eprintln!(
-                                "jakt: error: C++ compiler {:?} not found",
-                                cxx_compiler_path
-                            );
-                            exit(1);
-                        }
-                        let clang_output = Command::new(cxx_compiler_path)
+
+                        let compiler =
+                            if let Some(ref cxx_compiler_path) = arguments.cxx_compiler_path {
+                                path_as_string(cxx_compiler_path)
+                            } else {
+                                String::from("clang++")
+                            };
+
+                        let clang_output = Command::new(&compiler)
                             .args([
                                 "-fcolor-diagnostics",
                                 "-std=c++20",
@@ -241,15 +237,20 @@ fn main() -> Result<(), JaktError> {
                                 "-o",
                                 &output_executable,
                             ])
-                            .output()?;
-                        io::stderr().write_all(&clang_output.stderr)?;
-                        if !clang_output.status.success() {
-                            std::process::exit(
-                                clang_output
-                                    .status
-                                    .code()
-                                    .expect("Process exited with no code"),
-                            );
+                            .output();
+                        if let Ok(clang_output) = clang_output {
+                            io::stderr().write_all(&clang_output.stderr)?;
+                            if !clang_output.status.success() {
+                                std::process::exit(
+                                    clang_output
+                                        .status
+                                        .code()
+                                        .expect("Process exited with no code"),
+                                );
+                            }
+                        } else {
+                            eprintln!("jakt: error: C++ compiler ({}) not found", compiler);
+                            exit(1);
                         }
                     }
                 }
