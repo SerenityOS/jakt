@@ -89,7 +89,7 @@ struct Parser {
             .index++
             .skip_whitespace()
             let is_error = not .lex_literal("output")
-            if is_error and not .lex_literal("error") {
+            if is_error and not (.lex_literal("error") or .lex_literal("stderr")) {
                 continue
             }
             .skip_whitespace()
