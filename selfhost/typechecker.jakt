@@ -4332,11 +4332,24 @@ struct Typechecker {
         }
         Range(from, to, span) => {
             let none_type_hint: TypeId? = None
-            let checked_from = .typecheck_expression(from, scope_id, safety_mode, type_hint: none_type_hint)
-            let checked_to = .typecheck_expression(to, scope_id, safety_mode, type_hint: none_type_hint)
+            mut checked_from = .typecheck_expression(from, scope_id, safety_mode, type_hint: none_type_hint)
+            mut checked_to = .typecheck_expression(to, scope_id, safety_mode, type_hint: none_type_hint)
 
-            let from_type = expression_type(checked_from)
-            let to_type = expression_type(checked_to)
+            mut from_type = expression_type(checked_from)
+            mut to_type = expression_type(checked_to)
+
+            // If the range starts or ends at a constant number, we try promoting the constant to the
+            // type of the other end. This makes ranges like `0..array.size()` (as the 0 becomes 0uz).
+            let promoted_to = .try_to_promote_constant_expr_to_type(lhs_type: from_type, checked_rhs: checked_to, span)
+            if promoted_to.has_value() {
+                checked_to = promoted_to!
+                to_type = expression_type(checked_to)
+            }
+            let promoted_from = .try_to_promote_constant_expr_to_type(lhs_type: to_type, checked_rhs: checked_from, span)
+            if promoted_from.has_value() {
+                checked_from = promoted_from!
+                from_type = expression_type(checked_from)
+            }
 
             let from_span = .expression_span(checked_from)
             let to_span = .expression_span(checked_to)
