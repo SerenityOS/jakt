@@ -4693,7 +4693,7 @@ struct Typechecker {
             }
         }
         Match(expr, cases, span) => .typecheck_match(expr, cases, span, scope_id, safety_mode)
-        JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode)
+        JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode, type_hint)
         Set(values, span) => .typecheck_set(values, span, scope_id, safety_mode)
         else => {
             .compiler.panic(format("typechecker needs support for {}", expr))
@@ -5241,7 +5241,7 @@ struct Typechecker {
         return (checked_match_body, result_type ?? unknown_type_id())
     }
 
-    function typecheck_dictionary(mut this, values: [(ParsedExpression, ParsedExpression)], span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
+    function typecheck_dictionary(mut this, values: [(ParsedExpression, ParsedExpression)], span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
         let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
         mut checked_kv_pairs: [(CheckedExpression, CheckedExpression)] = []
         mut key_type_id = unknown_type_id()
@@ -5249,9 +5249,19 @@ struct Typechecker {
         mut value_type_id = unknown_type_id()
         mut value_type_span: Span? = None
 
-        // TODO: hint type logic
         mut key_hint: TypeId? = None
         mut value_hint: TypeId? = None
+        if type_hint.has_value() {
+            match .get_type(type_hint!) {
+                GenericInstance(id, args) => {
+                    if id.equals(dictionary_struct_id) {
+                        key_hint = args[0]
+                        value_hint = args[1]
+                    }
+                }
+                else => {}
+            }
+        }
 
         for kv_pair in values.iterator() {
             let key = kv_pair.0
@@ -5297,6 +5307,22 @@ struct Typechecker {
                 }
             }
             checked_kv_pairs.push((checked_key, checked_value))
+        }
+
+        if key_type_id.equals(unknown_type_id()) {
+            if key_hint.has_value() {
+                key_type_id = key_hint!
+            } else {
+                .error("Cannot infer key type for Dictionary<K, V>", span)
+            }
+        }
+
+        if value_type_id.equals(unknown_type_id()) {
+            if value_hint.has_value() {
+                value_type_id = value_hint!
+            } else {
+                .error("Cannot infer value type for Dictionary", span)
+            }
         }
 
         let type_id = .find_or_add_type_id(Type::GenericInstance(
