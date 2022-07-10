@@ -996,6 +996,44 @@ class CheckedProgram {
         .compiler.panic(format("internal error: {} builtin definition not found", name))
         return StructId(module: ModuleId(id: 0), id: 0)
     }
+
+    // Checks given struct id is weak ptr and
+    //  validates args are compatible with weak ptr type
+    // Returns the inner struct id if given struct is weak ptr
+    public function check_and_extract_weak_ptr(this, struct_id: StructId, args: [TypeId]) throws -> StructId? {
+        let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
+
+        if struct_id.equals(weak_ptr_struct_id) {
+            if (args.size() != 1) {
+                .compiler.panic(
+                    format(
+                        "Internal error: Generic type is WeakPtr but there are not exactly 1 type parameter. There are {} parameters.",
+                        args.size()
+                    )
+                )
+            }
+
+            let inner_type_id = args[0]
+            let inner_type = .get_type(inner_type_id)
+
+            match inner_type {
+                Struct(inner_struct_id) => { return inner_struct_id }
+                else => {
+                    panic(
+                        format(
+                            "Internal error: Inner type of WeakPtr is not a struct. It is {}.",
+                            inner_type
+                        )
+                    )
+                }
+            }
+            
+            .compiler.panic("should be unreachable")
+            return None // FIXME: control flow analysis
+        } else {
+            return None
+        }
+    }
 }
 
 struct Typechecker {
