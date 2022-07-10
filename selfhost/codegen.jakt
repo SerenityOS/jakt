@@ -1547,6 +1547,11 @@ struct CodeGenerator {
         mut output = ""
         output += .control_flow_state.choose_control_flow_macro()
 
+        mut needs_deref = enum_.is_boxed
+        if .codegen_expression(expr) == "this" {
+            needs_deref = true
+        }
+
         if enum_.underlying_type_id.equals(unknown_type_id()) {
             output += "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
             output += .codegen_type(type_id)
@@ -1555,7 +1560,7 @@ struct CodeGenerator {
             output += ">{\n"
             output += "auto&& __jakt_match_variant_maybe_deref = " + .codegen_expression(expr) + ";"
             output += "auto&& __jakt_match_variant = "
-            if enum_.is_boxed {
+            if needs_deref {
                 output += "*"
             }
             output += "__jakt_match_variant_maybe_deref;\nswitch(__jakt_match_variant.index()) {\n"
