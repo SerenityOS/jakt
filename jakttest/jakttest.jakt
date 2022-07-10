@@ -1,7 +1,24 @@
 import error { JaktError, print_error }
 import parser { Parser }
+import lexer { Lexer }
 
-function usage() => "usage: jakttest [-h] [OPTIONS] <path>"
+namespace process {
+    /// Starts a background job by means of fork() and exec(). Returns
+    /// the PID of the launched process.
+    extern function start_background_process(args: [String]) throws -> i32
+    /// Checks whether a process has finished executing. Returns its
+    /// exit code if it has.
+    extern function poll_process_exit(pid: i32) throws -> i32?
+    /// Kills a process by sending SIGKILL to it
+    extern function forcefully_kill_process(pid: i32) throws
+}
+
+function print_usage()  {
+    eprintln("usage: jakttest [OPTIONS...] <temp-dir> <path> [... <path>]")
+    eprintln("OPTIONS:")
+    eprintln("\t-h\t\tShow this message and exit.")
+    eprintln("\t-j,--jobs <JOBS>\t\tUse JOBS processes. Defaults to 8.")
+}
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
     // first, build up the content to compare to
@@ -58,87 +75,281 @@ function strip_line_breaks(anon input: String) throws -> String {
     return builder.to_string()
 }
 
-function main(args: [String]) {
-    if args.size() <= 1 {
-        eprintln("{}", usage())
-        return 1
+function u64_from_ascii_digit(anon byte: u8) -> u64? {
+    if byte >= b'0' and byte <= b'9' {
+        return (byte - b'0') as! u64
+    }
+    return None
+}
+
+function u64_from_ascii_digits(anon digits: String) -> u64? {
+    mut value = 0u64
+
+    for index in 0..digits.length() {
+        let byte = digits.byte_at(index)
+        let digit = u64_from_ascii_digit(byte)
+        if not digit.has_value() {
+            return None
+        }
+        // FIXME: overflow check
+        value = value * 10 + digit!
     }
 
-    let file_name = args[1];
 
-    mut file = File::open_for_reading(file_name)
-    let file_contents = file.read_all()
-    let parsed_test = Parser::parse(input: file_contents)
+    return value
+}
 
-    // Windows
-    // system("del runtest.out runtest.err".c_string())
+struct Options {
+    files: [String]
+    temp_dir: String
+    errors: [String]
+    job_count: u64
+    help_wanted: bool
 
-    // Unix
-    system("rm -f runtest.out runtest.err".c_string())
+    function from_args(args: [String]) throws -> Options {
+        let files: [String] = []
+        let errors: [String] = []
+        mut options = Options(files, temp_dir: "", errors, job_count: 8, help_wanted: false)
 
-    match parsed_test {
-        SuccessTest(expected) => {
-
-            build_and_run(file_name)
-
-            mut build_and_run_output_file = File::open_for_reading("runtest.out")
-            let build_and_run_output = build_and_run_output_file.read_all()
-
-            let test_passes_output = compare_test(bytes: build_and_run_output, expected)
-
-            if not (test_passes_output) {
-                eprintln("Test failed: {}", file_name)
-                return 1
-            } else {
-                println("Test passed: {}", file_name)
-                return 0
-            }
-        }
-        FailureTest(expected) => {
-
-            build_and_run(file_name)
-
-            mut build_and_run_error_file = File::open_for_reading("runtest.err")
-            let build_and_run_output = build_and_run_error_file.read_all()
-
-            let test_passes = compare_error(bytes: build_and_run_output, expected)
-
-            if not test_passes {
-                eprintln("Test failed: {}", file_name)
-                return 1
-            } else {
-                println("Test passed: {}", file_name)
-                return 0
+        mut index = 1uz
+        while index != args.size() {
+            if args[index] == "-h" {
+                // end processing here since the user wants some help
+                options.help_wanted = true
+                return options
             }
 
-        }
-        SkipTest => {
-            println("Expected output/error not found. Test skipped")
+            if args[index] == "-j" or args[index] == "--jobs" {
+                index++
+                if index == args.size() {
+                    options.errors.push("Used --jobs/-j without an argument")
+                    break // we reached end of arguments
+                }
+                let jobs = u64_from_ascii_digits(args[index])
+                if not jobs.has_value() or jobs! == 0 {
+                    options.errors.push("--jobs/-j needs a positive integer as its argument")
+                } else {
+                    options.job_count = jobs!
+                }
+                index++
+                continue
+            }
 
-            // Can't understand test, so we skip it
-            return 2
+            // positional argument.
+
+            // if temp dir was empty, this means this is the first positional
+            // argument we encounter, which corresponds to the temporary directory
+            // we'll use for operations.
+            if options.temp_dir.is_empty() {
+                options.temp_dir = args[index]
+            } else {
+                // otherwise it's a file path.
+                options.files.push(args[index])
+            }
+
+            index++
         }
+
+        if options.temp_dir.is_empty() {
+            options.errors.push("Missing <temp-dir>")
+        }
+
+        if options.files.is_empty() {
+            options.errors.push("At least one file <path> must be provided")
+        }
+        return options
     }
 }
 
-function build_and_run(anon jakt_source_file: String) throws {
-    mut compile_args = [
-        "build/main"
-        "-r"
-    ]
-    compile_args.push(jakt_source_file)
-    compile_args.push(">")
-    compile_args.push("runtest.out")
-    compile_args.push("2>")
-    compile_args.push("runtest.err")
+enum ResultKind {
+    Success
+    Failure
+}
 
-    mut command = ""
-    for compile_arg in compile_args.iterator() {
-        command += compile_arg
-        command += " "
+struct ExpectedResult {
+    kind: ResultKind
+    output: String
+}
+
+struct Test {
+    result: ExpectedResult
+    file_name: String
+    directory_index: usize
+}
+
+struct TestsRunResult {
+    passed_count: usize
+    failed_count: usize
+}
+
+// A test scheduler that has its process rate limited by
+// the number of directories it has available.
+struct TestScheduler {
+    running_tests: [i32:Test]
+    free_directories: [usize]
+    directories: [String]
+    passed_count: usize
+    failed_count: usize
+    // TODO: timeout
+    // TODO: show reasons why tests fail
+
+    function poll_running_tests(mut this) throws {
+        // TODO: switch back to using dict iterator
+        // to debug weird String not having pointer
+        // (see https://discord.com/channels/830522505605283862/977605897964617771/995699296685011004)
+        for pid in .running_tests.keys().iterator() {
+            let poll_result = process::poll_process_exit(pid)
+            if poll_result.has_value() {
+                let test = .running_tests[pid]
+
+                // check the test result
+                let file_to_check = format("{}/{}"
+                                    .directories[test.directory_index]
+                                    match test.result.kind {
+                                        Success => "runtest.out"
+                                        Failure => "runtest.err"
+                                    })
+
+                mut file = File::open_for_reading(file_to_check)
+                let output = file.read_all()
+
+                let passed_test = match test.result.kind {
+                    Success => compare_test(bytes: output, expected: test.result.output)
+                    Failure => compare_error(bytes: output, expected: test.result.output)
+                }
+
+                if passed_test {
+                    eprintln("[ \x1b[32;1mPASS\x1b[m ] {}", test.file_name)
+                    .passed_count++
+                } else {
+                    eprintln("[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
+                    .failed_count++
+                }
+
+
+                .free_directories.push(test.directory_index)
+                .running_tests.remove(pid)
+            }
+        }
     }
-    
-    system(command.c_string())
+
+    function get_free_directory(mut this) -> usize? => .free_directories.pop()
+
+    function create(directories: [String]) throws -> TestScheduler {
+        mut running_tests: [i32:Test] = [:]
+        running_tests.ensure_capacity(directories.size())
+        mut free_directories: [usize] = []
+        free_directories.ensure_capacity(directories.size())
+        for i in 0..directories.size() {
+            free_directories.push(i)
+        }
+
+        return TestScheduler(running_tests
+                            free_directories
+                            directories
+                            passed_count: 0
+                            failed_count: 0)
+    }
+
+    public function run_tests(mut tests: [Test], directories: [String]) throws -> TestsRunResult {
+        mut scheduler = TestScheduler::create(directories)
+        while not tests.is_empty() {
+            let dir_index = scheduler.get_free_directory()
+            if dir_index.has_value() {
+                // we got a free directory! Let's launch a new test job!
+                mut test = tests.pop()!
+                test.directory_index = dir_index!
+                let directory = scheduler.directories[test.directory_index]
+                let command =
+                    format("./jakttest/run-one.sh {} {} >{}/runtest.out 2>{}/runtest.err"
+                           directory
+                           test.file_name
+                           directory,directory
+                           )
+                let pid = process::start_background_process(args: [
+                    "sh"
+                    "-c"
+                    command
+                ])
+                scheduler.running_tests[pid] = test
+                continue
+            }
+
+            scheduler.poll_running_tests()
+        }
+
+        while not scheduler.running_tests.is_empty() {
+            scheduler.poll_running_tests()
+        }
+
+        return TestsRunResult(passed_count: scheduler.passed_count
+                              failed_count: scheduler.failed_count)
+    }
+}
+
+
+function main(args: [String]) {
+    let parsed_options = Options::from_args(args)
+
+    if parsed_options.help_wanted {
+        print_usage()
+        return 0
+    }
+
+    if not parsed_options.errors.is_empty() {
+        for error in parsed_options.errors.iterator() {
+            eprintln("Error: {}.", error)
+        }
+        print_usage()
+        return 1
+    }
+
+    mut skipped_count = 0uz
+
+    mut tests: [Test] = []
+    tests.ensure_capacity(parsed_options.files.size())
+
+    // parse all files to collect the actual work we have to do
+    for file_name in parsed_options.files.iterator() {
+        mut file = File::open_for_reading(file_name)
+        let contents = file.read_all()
+        let result = Parser::parse(input: contents)
+        match result {
+            SuccessTest(output) => {
+                tests.push(Test(result: ExpectedResult(kind: ResultKind::Success, output)
+                                file_name
+                                directory_index: 0))
+            }
+            FailureTest(output) => {
+                tests.push(Test(result: ExpectedResult(kind: ResultKind::Failure, output)
+                                file_name
+                                directory_index: 0))
+            }
+            SkipTest => {
+                eprintln("[ \x1b[33;1mSKIP\x1b[m ] {}", file_name)
+                skipped_count += 1
+            }
+        }
+    }
+
+    // TODO: wrap logic in a TestScheduler class
+
+    mut directories: [String] = []
+    directories.ensure_capacity(parsed_options.job_count as! usize)
+    for i in 0..parsed_options.job_count {
+        let name = format("{}/jakttest-tmp-{}",  parsed_options.temp_dir, i)
+        // FIXME: Does this work in Windows?
+        system(("mkdir -p " + name).c_string())
+        directories.push(name)
+    }
+
+    let run_result = TestScheduler::run_tests(tests, directories)
+
+    println("==============================")
+    println("{} passed" , run_result.passed_count)
+    println("{} failed" run_result.failed_count)
+    println("{} skipped", skipped_count)
+    println("==============================")
 }
 
 function write_to_file(file_contents: [u8], output_filename: String) throws {
