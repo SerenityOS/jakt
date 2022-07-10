@@ -2863,13 +2863,11 @@ struct Typechecker {
         let function_linkage = checked_function.linkage
 
         mut param_vars: [CheckedVariable] = []
-
+        mut module = .current_module()
         for param in checked_function.params.iterator() {
-            param_vars.push(param.variable)
-        }
+            let variable = param.variable
+            param_vars.push(variable)
 
-        for variable in param_vars.iterator() {
-            mut module = .current_module()
             let var_id = module.add_variable(variable)
             .add_var_to_scope(scope_id: function_scope_id, name: variable.name, var_id, span: variable.definition_span)
         }
