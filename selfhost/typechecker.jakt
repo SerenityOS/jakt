@@ -4185,8 +4185,7 @@ struct Typechecker {
             Type::GenericInstance(id) => id
             Type::Struct(struct_id) => struct_id
             else => {
-                .compiler.panic(format("typecheck_indexed_struct: {}", checked_expr_type))
-                // FIXME: This is unreachable
+                .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
                 yield StructId(module: ModuleId(id: 0), id: 0)
             }
         }
