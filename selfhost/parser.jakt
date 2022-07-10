@@ -2130,23 +2130,9 @@ struct Parser {
                 }
                 Is => {
                     .index++
-                    yield match .current() {
-                        Not => {
-                            .index++
-                            let parsed_type = .parse_typename()
-                            let span = merge_spans(start, .current().span())
-                            yield ParsedExpression::UnaryOp(
-                                expr: ParsedExpression::UnaryOp(expr: result, op: UnaryOperator::Is(parsed_type), span),
-                                op: UnaryOperator::LogicalNot,
-                                span
-                            )
-                        }
-                        else => {
-                            let parsed_type = .parse_typename()
-                            let span = merge_spans(start, .current().span())
-                            yield ParsedExpression::UnaryOp(expr: result, op: UnaryOperator::Is(parsed_type), span)
-                        }
-                    }
+                    let parsed_type = .parse_typename()
+                    let span = merge_spans(start, .current().span())
+                    yield ParsedExpression::UnaryOp(expr: result, op: UnaryOperator::Is(parsed_type), span)
                 }
                 ColonColon => .parse_postfix_colon_colon(start, expr: result)
                 Dot => {
