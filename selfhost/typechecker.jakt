@@ -2495,6 +2495,13 @@ struct Typechecker {
             }
             else => {}
         }
+
+        for method in record.methods.iterator() {
+            .typecheck_method(
+                func: method.parsed_function
+                parent_id: StructOrEnumId::Enum(enum_id)
+            )
+        }
     }
 
     function cast_to_underlying(mut this, anon expr: ParsedExpression, scope_id: ScopeId, parsed_type: ParsedType) throws -> CheckedExpression {
@@ -2589,8 +2596,11 @@ struct Typechecker {
                 scope_id = structure.scope_id
                 definition_linkage = structure.definition_linkage
             }
-            Enum => {
-                todo("typecheck_method implement enum case")
+            Enum(enum_id) => {
+                let enum_ = .get_enum(enum_id)
+                definition_linkage = enum_.definition_linkage
+                scope_id = enum_.scope_id
+                parent_generic_parameters = enum_.generic_parameters
             }
         }
 
