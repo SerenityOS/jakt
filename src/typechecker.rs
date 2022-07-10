@@ -4960,7 +4960,7 @@ pub fn typecheck_expression(
                         let key_type_name = project.typename_for_type_id(key_type_id);
                         error = error.or(Some(JaktError::TypecheckErrorWithHint(
                             format!(
-                                "type '{}' does not match type '{}' of previous keys in dictionary",
+                                "Type '{}' does not match type '{}' of previous keys in dictionary",
                                 project.typename_for_type_id(current_key_type_id),
                                 key_type_name
                             ),
