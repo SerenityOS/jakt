@@ -4003,9 +4003,12 @@ struct Typechecker {
                     if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
                         .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
                     }
-                }
-                if id.equals(optional_struct_id) {
+                } else if id.equals(optional_struct_id) {
                     if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
+                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
+                    }
+                } else {
+                    if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
                         .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
                     }
                 }
@@ -4026,6 +4029,10 @@ struct Typechecker {
                     if not (.is_numeric(lhs_type_id) and is_rhs_zero) and (.is_integer(lhs_type_id) ^ .is_integer(rhs_type_id)) {
                         .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
                         return CheckedStatement::Garbage(span)
+                    }
+                } else {
+                    if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
+                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
                     }
                 }
             }
