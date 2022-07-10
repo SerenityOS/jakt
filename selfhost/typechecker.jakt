@@ -3947,8 +3947,9 @@ struct Typechecker {
         }
 
         let checked_block = .typecheck_block(then_block, parent_scope_id: scope_id, safety_mode)
-        if checked_block.yielded_type.has_value() {
-            .error("An ‘if’ block is not allowed to yield values", then_block.find_yield_span()!)
+        let yield_span = then_block.find_yield_span()
+        if yield_span.has_value() {
+            .error("An ‘if’ block is not allowed to yield values", yield_span!)
         }
 
         mut checked_else: CheckedStatement? = None
