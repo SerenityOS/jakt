@@ -2331,27 +2331,43 @@ struct CodeGenerator {
             output += type_module.name
             output += "::"
         }
-        let struct_ = .program.get_struct(id)
-        let acquired_by_ref = not as_namespace and struct_.record_type is Class
-        if acquired_by_ref {
-            output += "NonnullRefPtr<"
-        }
-        output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
-        output += struct_.name
-        output += "<"
-        mut first = true
-        for type_id in args.iterator() {
-            if not first {
-                output += ","
-            } else {
-                first = false
+
+        let inner_weak_ptr_struct_id = .program.check_and_extract_weak_ptr(struct_id: id, args)
+
+        if inner_weak_ptr_struct_id.has_value() {
+            output += "WeakPtr<"
+
+            let inner_struct_id = inner_weak_ptr_struct_id.value()
+            let struct_ = .program.get_struct(inner_struct_id)
+            output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
+            output += struct_.name
+
+            output += ">" 
+        } else {
+            let struct_ = .program.get_struct(id)
+
+            let acquired_by_ref = not as_namespace and struct_.record_type is Class
+            if acquired_by_ref {
+                output += "NonnullRefPtr<"
             }
-            output += .codegen_type(type_id)
-        }
-        output += ">"
-        if acquired_by_ref {
+            output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
+            output += struct_.name
+            output += "<"
+            mut first = true
+            for type_id in args.iterator() {
+                if not first {
+                    output += ","
+                } else {
+                    first = false
+                }
+                output += .codegen_type(type_id)
+            }
             output += ">"
+            if acquired_by_ref {
+                output += ">"
+            }
         }
+
         return output
     }
 
