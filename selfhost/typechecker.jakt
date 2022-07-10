@@ -4254,7 +4254,7 @@ struct Typechecker {
                     }
                 }
                 if not was_whitelisted {
-                    .error(format("Can't access {} ‘{}’ from scope ‘{}’, because it is not in the restricted whitelist", accessee_kind, name, .get_scope(accessor).namespace_name), span)
+                    .error(format("Can't access {} ‘{}’ from ‘{}’, because ‘{}’ is not in the restricted whitelist", accessee_kind, name, .get_struct(id).name, .get_struct(id).name), span)
                 }
             }
             else => {
