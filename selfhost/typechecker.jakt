@@ -4609,7 +4609,7 @@ struct Typechecker {
                     yield match .compiler.errors.is_empty() {
                         true => CheckedExpression::Call(call: checked_call, span, type_id)
                         else => {
-                            .error(format("Variable {} not found", name), span)
+                            .error(format("Variable '{}' not found", name), span)
                             yield CheckedExpression::NamespacedVar(
                                 namespaces: checked_namespaces,
                                 var: CheckedVariable(

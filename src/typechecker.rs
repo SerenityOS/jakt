@@ -4619,7 +4619,7 @@ pub fn typecheck_expression(
                         *span,
                     ),
                     Some(JaktError::TypecheckErrorWithHint(
-                        format!("variable '{}' not found", v),
+                        format!("Variable '{}' not found", v),
                         *span,
                         format!("Did you mean '{}'?", most_similar_var),
                         *span,
@@ -4639,7 +4639,7 @@ pub fn typecheck_expression(
                         *span,
                     ),
                     Some(JaktError::TypecheckError(
-                        format!("variable '{}' not found", v),
+                        format!("Variable '{}' not found", v),
                         *span,
                     )),
                 )
@@ -4722,7 +4722,7 @@ pub fn typecheck_expression(
                                     *span,
                                 ),
                                 Some(JaktError::TypecheckError(
-                                    format!("variable '{}' not found", v),
+                                    format!("Variable '{}' not found", v),
                                     *span,
                                 )),
                             )
