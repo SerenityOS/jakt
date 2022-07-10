@@ -1941,6 +1941,8 @@ struct Typechecker {
 
         .add_enum_to_scope(scope_id, name: parsed_record.name, enum_id, span: parsed_record.name_span)
 
+        let is_extern = parsed_record.definition_linkage is External
+
         let underlying_type_id = match parsed_record.record_type {
             ValueEnum(underlying_type) => .typecheck_typename(parsed_type: underlying_type, scope_id, ignore_errors: false)
             else => builtin(BuiltinType::Void)
@@ -1978,6 +1980,56 @@ struct Typechecker {
             generic_parameters.push(parameter_type_id)
 
             .add_type_to_scope(scope_id: enum_scope_id, type_name: gen_parameter.name, type_id: parameter_type_id, span: gen_parameter.span)
+        }
+
+        for method in parsed_record.methods.iterator() {
+            let func = method.parsed_function
+            let method_scope_id = .create_scope(
+                parent_scope_id: enum_scope_id
+                can_throw: func.can_throw
+                debug_name: format("method({}::{})", parsed_record.name, func.name)
+            )
+            let block_scope_id = .create_scope(
+                parent_scope_id: method_scope_id
+                can_throw: func.can_throw
+                debug_name: format("method-block({}::{})", parsed_record.name, func.name)
+            )
+            let is_generic = not parsed_record.generic_parameters.is_empty() or not func.generic_parameters.is_empty()
+
+            mut checked_function = CheckedFunction(
+                name: func.name
+                name_span: func.name_span
+                visibility: method.visibility
+                return_type_id: unknown_type_id()
+                params: []
+                generic_params: []
+                block: CheckedBlock(
+                    statements: []
+                    scope_id: block_scope_id
+                    definitely_returns: false
+                    yielded_type: TypeId::none()
+                )
+                can_throw: func.can_throw
+                type: func.type
+                linkage: func.linkage
+                function_scope_id: method_scope_id
+                is_instantiated: not is_generic or is_extern
+                parsed_function: func
+            )
+
+            module.functions.push(checked_function)
+
+            let function_id = FunctionId(
+                module: .current_module_id
+                id: .current_module().functions.size() - 1
+            )
+
+            .add_function_to_scope(
+                parent_scope_id: enum_scope_id
+                name: func.name
+                function_id
+                span: parsed_record.name_span
+            )
         }
     }
 
