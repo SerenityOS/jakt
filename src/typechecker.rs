@@ -4094,7 +4094,7 @@ pub fn typecheck_statement(
             error = error.or(err);
             if checked_block.yielded_type.is_some() {
                 error = error.or(Some(JaktError::TypecheckError(
-                    "an 'if' block is not allowed to yield values".to_string(),
+                    "An 'if' block is not allowed to yield values".to_string(),
                     find_yield_span_in_block(block)
                         .expect("must have a yield if the block yields values"),
                 )))
