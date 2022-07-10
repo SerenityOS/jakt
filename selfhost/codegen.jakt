@@ -1975,7 +1975,27 @@ struct CodeGenerator {
                                 }
                             }
                             GenericInstance(id, args) => {
-                                todo("Implement codegen for constructor call to GenericInstance")
+                                let struct_ = .program.get_struct(id)
+                                if struct_.record_type is Class {
+                                    output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
+                                    output += struct_.name
+                                    output += "<"
+
+                                    mut first = true
+                                    for arg in args.iterator() {
+                                        if not first {
+                                            output += ", "
+                                        } else {
+                                            first = false
+                                        }
+
+                                        output += .codegen_type(arg)
+                                    }
+
+                                    output += ">::create"
+                                } else {
+                                    output += call.name
+                                }
                             }
                             else => {
                                 panic("Should be unreachable")
