@@ -30,8 +30,8 @@ function compare_test(bytes: [u8], expected: String) throws -> bool {
     let builder_output = builder.to_string()
 
     if builder_output != expected {
-        eprintln("expected: {}", expected)
-        eprintln("found:    {}", builder_output)
+        // TODO: return more information about expected/parsed
+        // for --show-reason flag
         return false
     }
     return true
@@ -56,8 +56,8 @@ function compare_error(bytes: [u8], expected: String) throws -> bool {
     let stripped_expected = strip_line_breaks(expected)
 
     if not builder_output.contains(stripped_expected) {
-        eprintln("expected: {}", stripped_expected)
-        eprintln("found:    {}", builder_output)
+        // TODO: return more information about expected/parsed
+        // for --show-reason flag
         return false
     }
     return true
