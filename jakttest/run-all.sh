@@ -10,7 +10,12 @@ set -e
 ninja -C jakttest
 set +e
 
-
+if [ ! -x build/main ]; then
+    echo "Selfhost binary does not exist; compiling it"
+    set -e
+    cargo run selfhost/main.jakt
+    set +e
+else
 # check for selfhost/ mtime and build/main mtime
 {
     binary_mtime=$(stat "$stat_format_flags" build/main)
@@ -22,6 +27,7 @@ set +e
         set +e
     fi
 }
+fi
 
 pass=0
 fail=0
