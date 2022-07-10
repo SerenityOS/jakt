@@ -986,7 +986,17 @@ struct CodeGenerator {
 
         output += .codegen_enum_debug_description_getter(enum_)
 
-        // FIXME: scope functions
+        let enum_scope = .program.get_scope(enum_.scope_id)
+        for function_item in enum_scope.functions.iterator() {
+            let function_ = .program.get_function(function_item.1)
+            if not function_.type is ImplicitEnumConstructor {
+                if enum_.generic_parameters.is_empty() {
+                    output += .codegen_function_predecl(function_)
+                } else {
+                    output += .codegen_function(function_)
+                }
+            }
+        }
 
         output += "};\n"
 
