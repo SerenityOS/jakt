@@ -1,5 +1,4 @@
 import error { JaktError }
-import lexer { Token, NumericConstant }
 import utility { panic, todo, Span }
 
 enum ParsedTest {
@@ -8,71 +7,124 @@ enum ParsedTest {
     SkipTest
 }
 
+function is_whitespace(anon byte: u8) -> bool => byte == b' ' or byte == b'\t' or byte == b'\r'
+
 struct Parser {
     index: usize
-    tokens: [Token]
-    errors: [JaktError]
-    ignore_errors: bool
+    input: [u8]
 
-    function parse(tokens: [Token], errors: [JaktError]) throws -> ParsedTest {
-        mut parser = Parser(index: 0, tokens, errors, ignore_errors: false)
-        return parser.parse_test()
+    function is_eof(this) => .input.size() == .index
+
+    function current(this) => .input[.index]
+
+    function lex_literal(mut this, anon literal: String) -> bool {
+        if .index + literal.length() >= .input.size() {
+            return false
+        }
+
+        let start = .index
+
+        for i in 0..literal.length() {
+            if .current() != literal.byte_at(i) {
+                .index = start
+                return false
+            }
+            .index++
+        }
+        return true
     }
 
-    function parse_test(mut this) throws -> ParsedTest {
-        loop {
-            match .tokens[.index] {
-                ForwardSlash(span) => {
-                    // We have a test
-                    .index += 2
 
-                    match .tokens[.index] {
-                        Identifier(name, span) => {
-                            if name == "output" {
-                                // skip colon and find the expected value
-                                .index += 2
-                                match .tokens[.index] {
-                                    QuotedString(quote) => {
-                                        return ParsedTest::SuccessTest(parse_quoted_string(quote))
-                                    }
-                                    else => {
-                                        return ParsedTest::SkipTest
-                                    }
-                                }
-                            } else if name == "error" {
-                                // skip colon and find the expected value
-                                .index += 2
-                                match .tokens[.index] {
-                                    QuotedString(quote) => {
-                                        return ParsedTest::FailureTest(parse_quoted_string(quote))
-                                    }
-                                    else => {
-                                        return ParsedTest::SkipTest
-                                    }
-                                }
-                            }
-                        }
-                        else => {}
-                    }
-                }
-                Eof => {
-                    break
-                }
-                else => {
-                    loop {
-                        if .tokens[.index] is Eol {
-                            .index++
-                            break
-                        } else if .tokens[.index] is Eof {
-                            break
-                        } else {
-                            .index++
-                        }
-                    }
-                }
+    function skip_whitespace(mut this) {
+        while not .is_eof() and is_whitespace(.current()) {
+            .index++
+        }
+    }
+
+    function lex_quoted_string(mut this) -> Span? {
+        let nothing: Span? = None
+        if .is_eof() or .current() != b'"' {
+            return nothing
+        }
+        .index++
+        let start = .index
+        while not .is_eof() and .current() != b'"' {
+            let current = .current()
+            .index++
+            if current == b'\\' and not .is_eof() {
+                .index++
             }
         }
+
+        if .current() != b'"' {
+            return nothing
+        }
+        .index++
+        return Span(start, end: .index - 1)
+    }
+
+
+
+    function parse_test(mut this) throws -> ParsedTest {
+        while not .is_eof() {
+            if not .lex_literal("///") {
+                .index++
+                continue
+            }
+            .skip_whitespace()
+            if not .lex_literal("Expect:") {
+                continue
+            }
+            if .is_eof() or .current() != b'\n' {
+                continue
+            }
+            .index++
+            if not .lex_literal("///") {
+                continue
+            }
+            .skip_whitespace()
+            if .is_eof() or .current() != b'-' {
+                continue
+            }
+            .index++
+            .skip_whitespace()
+            let is_error = not .lex_literal("output")
+            if is_error and not .lex_literal("error") {
+                continue
+            }
+            .skip_whitespace()
+            if .is_eof() or .current() != b':' {
+                continue
+            }
+            .index++
+            .skip_whitespace()
+            let quoted_string_span = .lex_quoted_string()
+            if not quoted_string_span.has_value() {
+                return ParsedTest::SkipTest
+            }
+
+            // create the string
+            let span = quoted_string_span!
+            mut builder = StringBuilder::create()
+            for i in span.start..span.end {
+                builder.append(.input[i])
+            }
+
+            let output = parse_quoted_string(builder.to_string())
+
+            return match is_error {
+                true => ParsedTest::FailureTest(output)
+                else => ParsedTest::SuccessTest(output)
+            }
+
+
+        }
         return ParsedTest::SkipTest
+    }
+
+    function parse(input: [u8]) throws -> ParsedTest {
+        mut parser = Parser(index: 0, input)
+        return parser.parse_test()
     }
 }
 

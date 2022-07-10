@@ -1,5 +1,4 @@
 import error { JaktError, print_error }
-import lexer { Lexer }
 import parser { Parser }
 
 function usage() => "usage: jakttest [-h] [OPTIONS] <path>"
@@ -69,12 +68,7 @@ function main(args: [String]) {
 
     mut file = File::open_for_reading(file_name)
     let file_contents = file.read_all()
-
-    mut errors: [JaktError] = []
-
-    let tokens = Lexer::lex(input: file_contents, errors)
-
-    let parsed_test = Parser::parse(tokens, errors);
+    let parsed_test = Parser::parse(input: file_contents)
 
     // Windows
     // system("del runtest.out runtest.err".c_string())
