@@ -1,5 +1,6 @@
 #include "process.h"
 #include <sys/wait.h>
+#include <signal.h>
 
 namespace Jakt::process {
 // Allocates & fills one array, which contains:
