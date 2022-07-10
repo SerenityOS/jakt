@@ -69,7 +69,7 @@ public:
 
     ErrorOr<Array<K>> keys() const
     {
-        Array<K> keys;
+        Array<K> keys = TRY(Array<K>::create_empty());
         TRY(keys.ensure_capacity(m_storage->map.size()));
         for (auto& it : m_storage->map) {
             MUST(keys.push(it.key));
