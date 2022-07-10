@@ -4401,7 +4401,7 @@ struct Typechecker {
                                             }
                                         }
                                         if not exists {
-                                            .error(format("Enum variant '{}' does not exist on '{}'", name, .type_name(expr_type_id)), span)
+                                            .error(format("Enum variant {} does not exist on {}", name, .type_name(expr_type_id)), span)
                                         }
                                     }
                                     else => {
