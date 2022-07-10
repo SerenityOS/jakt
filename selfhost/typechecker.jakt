@@ -1050,7 +1050,7 @@ struct Typechecker {
         let input_file = compiler.current_file
 
         if not input_file.has_value() {
-            panic("trying to typecheck a non-existant file")
+            compiler.panic("trying to typecheck a non-existant file")
         }
 
         let placeholder_module_id = ModuleId(id: 0)
@@ -2360,7 +2360,7 @@ struct Typechecker {
                 SumEnum | ValueEnum => {
                     let enum_id = .find_enum_in_scope(scope_id, name: record.name)
                     if not enum_id.has_value() {
-                        panic("can't find enum that has been previous added")
+                        .compiler.panic("can't find enum that has been previous added")
                     }
                     .typecheck_enum(record, enum_id: enum_id!, parent_scope_id: scope_id)
                 }
@@ -4357,7 +4357,7 @@ struct Typechecker {
                 GenericInstance(id) => StructOrEnumId::Struct(id)
                 GenericEnumInstance(id) => StructOrEnumId::Enum(id)
                 else => {
-                    panic(format("Method call on unsupported base {}", .get_type(checked_expr_type_id)))
+                    .compiler.panic(format("Method call on unsupported base {}", .get_type(checked_expr_type_id)))
                     yield StructOrEnumId::Struct(StructId(module: ModuleId(id: 0), id: 0))
                 }
             }
@@ -4370,7 +4370,7 @@ struct Typechecker {
                     yield CheckedExpression::MethodCall(expr: checked_expr, call, span, type_id: result_type)
                 }
                 else => {
-                    panic("typecheck_call should return `CheckedExpression::Call()`")
+                    .compiler.panic("typecheck_call should return `CheckedExpression::Call()`")
                     yield CheckedExpression::Garbage(span)
                 }
             }
@@ -4636,7 +4636,7 @@ struct Typechecker {
                 } else if enum_in_scope.has_value() {
                     next_scope = .get_enum(enum_in_scope!).scope_id
                 } else {
-                    panic(format("Namespace {} not found", ns))
+                    .compiler.panic(format("Namespace {} not found", ns))
                 }
                 scopes.push(next_scope)
             }
@@ -4666,7 +4666,7 @@ struct Typechecker {
                     let checked_call = match call_expression {
                         Call(call) => call
                         else => {
-                            panic("typecheck_call returned something other than a CheckedCall")
+                            .compiler.panic("typecheck_call returned something other than a CheckedCall")
                             // FIXME: Unreachable
                             let none_function_id: FunctionId? = None
                             yield CheckedCall(namespace_: [], name: "", args: [], function_id: none_function_id, return_type: builtin(BuiltinType::Void), callee_throws: true)
@@ -5090,7 +5090,7 @@ struct Typechecker {
                                 }
 
                                 if variant_names.size() == 0 {
-                                    panic("typecheck_match - else - EnumVariant - variant_names.size() == 0")
+                                    .compiler.panic("typecheck_match - else - EnumVariant - variant_names.size() == 0")
                                 }
 
                                 is_enum_match = true
