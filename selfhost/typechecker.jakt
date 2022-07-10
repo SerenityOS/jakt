@@ -2024,6 +2024,23 @@ struct Typechecker {
                 id: .current_module().functions.size() - 1
             )
 
+            for param in func.params.iterator() {
+                if param.variable.name == "this" {
+                    let checked_variable = CheckedVariable(
+                        name: param.variable.name
+                        type_id: enum_type_id
+                        is_mutable: param.variable.is_mutable
+                        definition_span: param.variable.span
+                        visibility: Visibility::Public
+                    )
+
+                    checked_function.params.push(CheckedParameter(
+                        requires_label: param.requires_label
+                        variable: checked_variable
+                    ))
+                }
+            }
+
             .add_function_to_scope(
                 parent_scope_id: enum_scope_id
                 name: func.name
