@@ -2846,10 +2846,6 @@ struct Typechecker {
     }
 
     function typecheck_function(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
-        if not parsed_function.generic_parameters.is_empty() and not parsed_function.must_instantiate {
-            return
-        } 
-
         // FIXME: Optional.expect("...") would be nicer here.
         let function_id = .find_function_in_scope(parent_scope_id, function_name: parsed_function.name)
         if not function_id.has_value() {
