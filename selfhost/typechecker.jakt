@@ -2716,6 +2716,11 @@ struct Typechecker {
         let function_id = current_module.add_function(checked_function)
         let checked_function_scope_id = checked_function.function_scope_id
 
+        let external_linkage = match parsed_function.linkage {
+            FunctionLinkage::External => true
+            else => false
+        }
+
         // Check generic parameters
         for generic_parameter in parsed_function.generic_parameters.iterator() {
 
@@ -2727,10 +2732,6 @@ struct Typechecker {
             )
             checked_function.generic_params.push(FunctionGenericParameter::Parameter(type_var_type_id))
 
-            let external_linkage = match parsed_function.linkage {
-                FunctionLinkage::External => true
-                else => false
-            }
             if not parsed_function.must_instantiate or external_linkage {
                 .add_type_to_scope(
                     scope_id: checked_function_scope_id
