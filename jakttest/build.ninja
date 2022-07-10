@@ -1,0 +1,16 @@
+cxxflags = -fcolor-diagnostics -std=c++20 -Wno-user-defined-literals -Wno-deprecated-declarations
+
+rule cxx
+    command = clang++ $cxxflags -o $out -I ../runtime $in 
+
+rule jakttest
+    command = cargo run --color always -- -o build --emit-cpp-source-only jakttest.jakt
+
+rule patch-includes
+    command = sed -e '1a#include "../process.h"' $in > $out
+
+
+build build/jakttest.cpp: jakttest | jakttest.jakt utility.jakt parser.jakt lexer.jakt error.jakt
+build build/jakttest: cxx build/jakttest-patched.cpp process.cpp | process.h
+build build/jakttest-patched.cpp: patch-includes build/jakttest.cpp
+default build/jakttest

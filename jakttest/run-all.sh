@@ -1,29 +1,14 @@
 #!/bin/bash
 
-if [ ! -x ./build/jakttest ]; then
-    echo "jakttest binary does not exist. Building it now."
-    cargo run jakttest/jakttest.jakt
-fi
-
-if [ ! -x ./build/main ]; then
-    echo "selfhost binary does not exist. Building it now."
-    cargo run selfhost/main.jakt
-fi
-
 stat_format_flags="-c %Y"
 if [[ $OSTYPE == 'darwin'* ]]; then
   stat_format_flags="-f %m"
 fi
 
-# check for jakttest/ mtime and build/jakttest mtime
-{
-    jakttest_binary_mtime=$(stat "$stat_format_flags" build/jakttest)
-    latest_jakttest_source_mtime=$(stat "$stat_format_flags" jakttest/*.jakt | sort | tail -n1)
-    if [ "$jakttest_binary_mtime" -lt "$latest_jakttest_source_mtime" ]; then
-        echo "re-compiling jakttest to match source"
-        cargo run jakttest/jakttest.jakt
-    fi
-}
+echo "Checking & building Jakttest if necessary"
+set -e
+ninja -C jakttest
+set +e
 
 
 # check for selfhost/ mtime and build/main mtime
@@ -32,7 +17,9 @@ fi
     latest_selfhost_mtime=$(stat "$stat_format_flags" selfhost/*.jakt | sort | tail -n1)
     if [ "$binary_mtime" -lt "$latest_selfhost_mtime" ]; then
         echo "re-compiling selfhost to match source"
+        set -e
         cargo run selfhost/main.jakt
+        set +e
     fi
 }
 
@@ -53,34 +40,14 @@ for f in $TEST_FILES; do
     count=$((count + 1))
 done
 
-i=0
 
-set +m
 
-for f in $TEST_FILES; do
-    i=$((i + 1))
-    $(./build/jakttest $f >/dev/null 2>/dev/null) >/dev/null 2>/dev/null
-    
-    exitcode=$?
+# default JOBS to number of prossing units dictated by kernel
+[ -z "$JOBS" ] && JOBS=$(nproc)
 
-    if [ $exitcode == 0 ]; then
-        pass=$((pass + 1))
-        echo -ne "[ \033[32;1mPASS\033[0m ] "
-    elif [ $exitcode == 2 ]; then
-        skipped=$((skipped + 1))
-        echo -ne "[ \033[33;1mSKIP\033[0m ] "
-    else
-        fail=$((fail + 1))
-        echo -ne "[ \033[31;1mFAIL\033[0m ] "
-    fi
-    echo "$f"
+tempdir=$(mktemp -d)
 
-done
+trap "rm -rf $tempdir" EXIT
 
-rm runtest.err runtest.out
+./jakttest/build/jakttest --jobs "$JOBS" "$tempdir" ${TEST_FILES[@]}
 
-echo ==============================
-echo "$pass" passed
-echo "$fail" failed
-echo "$skipped" skipped
-echo ==============================
