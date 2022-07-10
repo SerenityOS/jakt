@@ -911,6 +911,8 @@ class CheckedProgram {
         return .modules[id.module_id.id].scopes[id.id]
     } 
 
+    public function prelude_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 0), id: 0)
+
     public function set_loaded_module(mut this, module_name: String, loaded_module: LoadedModule) throws {
         .loaded_modules.set(
             key: module_name
@@ -964,6 +966,31 @@ class CheckedProgram {
     public function get_bits(this, anon type_id: TypeId) => .get_type(type_id).get_bits()
 
     public function is_signed(this, anon type_id: TypeId) => .get_type(type_id).is_signed()
+
+    public function find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? {
+        mut current_scope_id = Some(scope_id)
+        while current_scope_id.has_value() {
+            let scope = .get_scope(id: current_scope_id!)
+            let maybe_scope = scope.structs.get(name)
+            if maybe_scope.has_value() {
+                return maybe_scope
+            }
+            current_scope_id = scope.parent
+        }
+        return None
+    }
+
+    public function find_struct_in_prelude(this, anon name: String) throws -> StructId {
+        // start at the prelude scope id
+        let scope_id = .prelude_scope_id()
+        let struct_id = .find_struct_in_scope(scope_id, name)
+        if struct_id.has_value() {
+            return struct_id.value()
+        }
+
+        .compiler.panic(format("internal error: {} builtin definition not found", name))
+        return StructId(module: ModuleId(id: 0), id: 0)
+    }
 }
 
 struct Typechecker {
@@ -1031,7 +1058,7 @@ struct Typechecker {
 
         return .compiler.get_file_path(file_id)!
     }
-    function prelude_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 0), id: 0)
+    function prelude_scope_id(this) -> ScopeId => .program.prelude_scope_id()
     function root_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 1), id: 0)
 
     function current_module(this) => .program.get_module(.current_module_id)
@@ -1220,17 +1247,8 @@ struct Typechecker {
         return parsed_namespace
     } 
 
-    function find_struct_in_prelude(this, anon name: String) throws -> StructId {
-        // start at the prelude scope id
-        let scope_id = .prelude_scope_id()
-        let struct_id = .find_struct_in_scope(scope_id, name)
-        if struct_id.has_value() {
-            return struct_id.value()
-        }
-
-        .compiler.panic(format("internal error: {} builtin definition not found", name))
-        return StructId(module: ModuleId(id: 0), id: 0)
-    }
+    function find_struct_in_prelude(this, anon name: String) throws -> StructId =>
+        .program.find_struct_in_prelude(name)
 
     function find_type_in_prelude(this, anon name: String) throws -> TypeId {
         // start at the prelude scope id
@@ -1647,18 +1665,8 @@ struct Typechecker {
         return None
     }
 
-    function find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? {
-        mut current_scope_id = Some(scope_id)
-        while current_scope_id.has_value() {
-            let scope = .get_scope(id: current_scope_id!)
-            let maybe_scope = scope.structs.get(name)
-            if maybe_scope.has_value() {
-                return maybe_scope
-            }
-            current_scope_id = scope.parent
-        }
-        return None
-    }
+    function find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? =>
+        .program.find_struct_in_scope(scope_id, name)
 
     function typecheck_module(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         .typecheck_namespace_imports(parsed_namespace, scope_id)
