@@ -8,8 +8,6 @@ namespace Jakt::process {
 // - the string arguments that follow the last argv NULL pointer, terminated by zeroes.
 static ErrorOr<char**> dup_argv(Array<String> args)
 {
-    // TODO: make this just one allocation by putting argv pointers at
-    // the front of the array, and then the strings.
 
     // 1. Calculate the total size  of all the pointers + all the strings, accounting
     // for the last NULL pointer and each argument's NUL terminator.
