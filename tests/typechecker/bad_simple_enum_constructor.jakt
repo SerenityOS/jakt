@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "variable 'B' not found"
+/// - error: "Variable 'B' not found"
 
 enum E {
     A
