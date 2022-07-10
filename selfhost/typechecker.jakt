@@ -439,6 +439,11 @@ struct CheckedParameter {
 enum FunctionGenericParameter {
     InferenceGuide(TypeId)
     Parameter(TypeId)
+
+    function type_id(this) => match this {
+        InferenceGuide(id) => id
+        Parameter(id) => id
+    }
 }
 
 struct CheckedVariable {
