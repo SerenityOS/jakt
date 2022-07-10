@@ -2043,6 +2043,32 @@ struct CodeGenerator {
                     }
                 }
 
+                let type = .program.get_type(call.return_type)
+
+                let generic_parameters = match type {
+                    GenericInstance(args) => args
+                    GenericEnumInstance(args) => args
+                    GenericResolvedType(args) => args
+                    else => []
+                }
+
+                if not generic_parameters.is_empty() {
+                    output += "<"
+
+                    mut first = true
+                    for gen_param in generic_parameters.iterator() {
+                        if not first {
+                            output += ", "
+                        } else {
+                            first = false
+                        }
+
+                        output += .codegen_type_possibly_as_namespace(type_id: gen_param, as_namespace: true)
+                    }
+
+                    output += ">"
+                }
+
                 output += "("
 
                 mut first = true
