@@ -3435,10 +3435,10 @@ struct Typechecker {
                     generic_args.push(checked_arg)
                 }
 
-                // TODO: add synthetic type_name and generic support
-
                 if generic_args.is_empty() {
-                    return .typecheck_typename(parsed_type, scope_id, ignore_errors)
+                    let synthetic_typename = ParsedType::Name(name, span)
+                    // TODO: add and generic support
+                    return .typecheck_typename(parsed_type: synthetic_typename, scope_id: current_namespace_scope_id, ignore_errors)
                 } else {
                     return .typecheck_generic_resolved_type(name, checked_inner_types: generic_args, scope_id, span)
                 }
