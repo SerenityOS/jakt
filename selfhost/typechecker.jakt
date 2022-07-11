@@ -3729,10 +3729,11 @@ struct Typechecker {
                 let lhs_type = .get_type(lhs_type_id)
                 match lhs_type {
                     GenericInstance(id, args) => {
-                        if .program.get_struct(id).name == "Optional" {
-                            if expression_type(checked_rhs).equals(args[0]) {
-                                return lhs_type_id
-                            }
+                        if .program.get_struct(id).name == "Optional" and expression_type(checked_rhs).equals(args[0]) {
+                            return lhs_type_id
+                        }
+                        if .program.get_struct(id).name == "WeakPtr" and expression_type(checked_rhs).equals(args[0]) {
+                            return lhs_type_id
                         }
                     }
                     else => {}
