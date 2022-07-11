@@ -2042,48 +2042,28 @@ struct CodeGenerator {
 
                         output += .codegen_namespace_path(call)
                         output += call.name
+
+                        
                     }
+
                 }
 
-                let type = .program.get_type(call.return_type)
-
-                let generic_parameters = match type {
-                    GenericInstance(args) => args
-                    GenericEnumInstance(args) => args
-                    GenericResolvedType(args) => args
-                    else => []
-                }
+                let generic_parameters = call.type_args
 
                 if not generic_parameters.is_empty() {
-                    output += "<"
-
-                    mut first = true
+                    mut types: [String] = []
                     for gen_param in generic_parameters.iterator() {
-                        if not first {
-                            output += ", "
-                        } else {
-                            first = false
-                        }
-
-                        output += .codegen_type_possibly_as_namespace(type_id: gen_param, as_namespace: true)
+                        types.push(.codegen_type_possibly_as_namespace(type_id: gen_param, as_namespace: true))
                     }
-
-                    output += ">"
+                    output += format("<{}>", join(types, separator: ", "))
                 }
 
-                output += "("
-
-                mut first = true
+                mut arguments: [String] = []
                 for arg in call.args.iterator() {
-                    if first {
-                        first = false
-                    } else {
-                        output += ","
-                    }
-                    output += .codegen_expression(arg.1)
+                    arguments.push(.codegen_expression(arg.1))
                 }
 
-                output += ")"
+                output += format("({})", join(arguments, separator: ","))
             }
         }
 
