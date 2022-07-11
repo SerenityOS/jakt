@@ -1422,6 +1422,8 @@ struct CodeGenerator {
     }
 
     function codegen_match(mut this, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, all_variants_constant: bool) throws -> String {
+        let last_control_flow = .control_flow_state
+        .control_flow_state = .control_flow_state.enter_match()
         mut output = ""
 
         let expr_type = .program.get_type(expression_type(expr))
@@ -1444,7 +1446,7 @@ struct CodeGenerator {
                 )
             }
         }
-
+        .control_flow_state = last_control_flow
         return output
     }
 
