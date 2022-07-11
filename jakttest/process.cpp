@@ -81,8 +81,8 @@ ErrorOr<i32> start_background_process(Array<String> args)
 
 ErrorOr<Optional<i32>> poll_process_exit(i32 pid)
 {
-    i32 exit_code;
-    auto const result = waitpid(pid, &exit_code, WNOHANG);
+    i32 wstatus;
+    auto const result = waitpid(pid, &wstatus, WNOHANG);
     if (result == -1) {
         return Error::from_errno(errno);
     }
@@ -92,7 +92,7 @@ ErrorOr<Optional<i32>> poll_process_exit(i32 pid)
     }
     // NOTE: compiler seems to struggle to find a constructor when
     // nesting error & optional
-    return Optional<i32>(exit_code);
+    return Optional<i32>(WEXITSTATUS(wstatus));
 }
 
 ErrorOr<void> forcefully_kill_process(i32 pid)
