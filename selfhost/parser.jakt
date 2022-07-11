@@ -1460,6 +1460,42 @@ struct Parser {
                 }
                 parsed_type = ParsedType::GenericType(name, generic_parameters, span)
             }
+
+            if .current() is ColonColon {
+                .index++
+                mut namespaces: [String] = [name]
+
+                while not .eof() {
+                    match .current() {
+                        Identifier(name: namespace_name) => {
+                            if .previous() is ColonColon {
+                                namespaces.push(namespace_name)
+                                .index++
+                            }
+                        }
+                        ColonColon => {
+                            if .previous() is Identifier {
+                                .index++
+                            } else {
+                                .error("Expected name after", span)
+                            }
+                        }
+                        else => {
+                            break
+                        }
+                    }
+                }
+
+                let type_name = namespaces.pop()!
+
+                mut params: [ParsedType] = []
+                if .current() is LessThan {
+                    // TODO: Implement Generic Inner Types for Namespaced Type
+                }
+
+                parsed_type = ParsedType::NamespacedName(name: type_name, namespaces, params, span: .previous().span())
+            }
+
             yield parsed_type
         }
         else => {
