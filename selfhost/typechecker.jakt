@@ -4696,7 +4696,7 @@ struct Typechecker {
         }
         Match(expr, cases, span) => .typecheck_match(expr, cases, span, scope_id, safety_mode)
         JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode, type_hint)
-        Set(values, span) => .typecheck_set(values, span, scope_id, safety_mode)
+        Set(values, span) => .typecheck_set(values, span, scope_id, safety_mode, type_hint)
         else => {
             .compiler.panic(format("typechecker needs support for {}", expr))
 
@@ -4759,7 +4759,7 @@ struct Typechecker {
         return CheckedExpression::JaktArray(vals, repeat, span, type_id, inner_type_id)
     }
 
-    function typecheck_set(mut this, values: [ParsedExpression], span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
+    function typecheck_set(mut this, values: [ParsedExpression], span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
         mut inner_type_id = unknown_type_id()
         mut inner_type_span: Span? = None
         mut output: [CheckedExpression] = []
@@ -4796,6 +4796,18 @@ struct Typechecker {
                 )
             }
             output.push(checked_value)
+        }
+
+        if inner_type_id.equals(unknown_type_id()) and type_hint.has_value() and not type_hint!.equals(unknown_type_id()) {
+            match .get_type(type_hint!) {
+                GenericInstance(id, args) => {
+                    if not id.equals(set_struct_id) {
+                        panic("expected Set struct")
+                    }
+                    inner_type_id = args[0]
+                }
+                else => panic("expected Set struct")
+            }
         }
 
         if inner_type_id.equals(unknown_type_id()) {
