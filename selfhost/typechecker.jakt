@@ -3015,6 +3015,21 @@ struct Typechecker {
         else => false
     }
 
+    function error_type_mismatch(mut this, lhs_type_id: TypeId, rhs_type_id: TypeId, span: Span) throws {
+        .error(
+            format(
+                "Type mismatch: expected ‘{}’, but got ‘{}’"
+                .type_name(lhs_type_id)
+                .type_name(rhs_type_id)
+            )
+            span
+        )
+    }
+
+    function error_generic_type_parameter_number_mismatch(mut this, lhs_type_name: String, span: Span) throws {
+        .error(format("mismatched number of generic parameters for {}", lhs_type_name), span)
+    }
+
     // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
     function check_types_for_compat(mut this, lhs_type_id: TypeId, rhs_type_id: TypeId, mut generic_inferences: [String:String], span: Span) throws -> bool {
         let lhs_type = .get_type(lhs_type_id)
@@ -3030,16 +3045,14 @@ struct Typechecker {
                 // If the call expects a generic type variable, let's see if we've already seen it
                 let seen_type_id_string = generic_inferences.get(lhs_type_id_string)
                 if seen_type_id_string.has_value() {
+                    let seen_type_id = TypeId::from_string(seen_type_id_string.value())
                     // We've seen this type variable assigned something before
                     // we should error if it's incompatible.
 
-                    if seen_type_id_string.value() != rhs_type_id_string {
-                        .error(
-                            format(
-                                "Type mismatch: expected ‘{}’, but got ‘{}’"
-                                .type_name(TypeId::from_string(seen_type_id_string.value()))
-                                .type_name(rhs_type_id)
-                            )
+                    if not seen_type_id.equals(rhs_type_id) {
+                        .error_type_mismatch(
+                            lhs_type_id: seen_type_id,
+                            rhs_type_id,
                             span
                         )
                         return false
@@ -3080,10 +3093,7 @@ struct Typechecker {
                     }
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
-                            .error(
-                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                span
-                            )
+                            .error_type_mismatch(lhs_type_id, rhs_type_id, span)
                             return false
                         }
                     }
@@ -3112,7 +3122,8 @@ struct Typechecker {
                             let rhs_args = args
                             let lhs_struct = .get_struct(lhs_struct_id)
                             if lhs_args.size() != rhs_args.size() {
-                                .error(format("mismatched number of generic parameters for {}", lhs_struct.name), span)
+                                .error_generic_type_parameter_number_mismatch(lhs_type_name: lhs_struct.name, span)
+                                .error_type_mismatch(lhs_type_id, rhs_type_id, span)
                                 return false
                             }
 
@@ -3130,19 +3141,13 @@ struct Typechecker {
                                 ++idx
                             }
                         } else {
-                            .error(
-                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                span
-                            )
+                            .error_type_mismatch(lhs_type_id, rhs_type_id, span)
                             return false
                         }
                     }
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
-                            .error(
-                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                span
-                            )
+                            .error_type_mismatch(lhs_type_id, rhs_type_id, span)
                             return false
                         }
                     }
@@ -3158,7 +3163,8 @@ struct Typechecker {
                         if enum_id.equals(id) {
                             let lhs_enum = .get_enum(enum_id)
                             if args.size() != lhs_enum.generic_parameters.size() {
-                                .error(format("mismatched number of generic parameters for {}", lhs_enum.name), span)
+                                .error_generic_type_parameter_number_mismatch(lhs_type_name: lhs_enum.name, span)
+                                .error_type_mismatch(lhs_type_id, rhs_type_id, span)
                                 return false
                             }
 
@@ -3179,10 +3185,7 @@ struct Typechecker {
                     }
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
-                            .error(
-                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                span
-                            )
+                            .error_type_mismatch(lhs_type_id, rhs_type_id, span)
                             return false
                         }
                     }
@@ -3197,7 +3200,8 @@ struct Typechecker {
                     GenericInstance(id, args) => {
                         let lhs_struct = .get_struct(lhs_struct_id)
                         if args.size() != lhs_struct.generic_parameters.size() {
-                            .error(format("mismatched number of generic parameters for {}", lhs_struct.name), span)
+                            .error_generic_type_parameter_number_mismatch(lhs_type_name: lhs_struct.name, span)
+                            .error_type_mismatch(lhs_type_id, rhs_type_id, span)
                             return false
                         }
 
@@ -3218,10 +3222,7 @@ struct Typechecker {
                     }
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
-                            .error(
-                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                span
-                            )
+                            .error_type_mismatch(lhs_type_id, rhs_type_id, span)
                             return false
                         }
                     }
@@ -3247,10 +3248,7 @@ struct Typechecker {
                     }
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
-                            .error(
-                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                span
-                            )
+                            .error_type_mismatch(lhs_type_id, rhs_type_id, span)
                             return false
                         }
                     }
@@ -3258,10 +3256,7 @@ struct Typechecker {
             }
             else => {
                 if not rhs_type_id.equals(lhs_type_id) {
-                    .error(
-                        format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                        span
-                    )
+                    .error_type_mismatch(lhs_type_id, rhs_type_id, span)
                     return false
                 }
             }
