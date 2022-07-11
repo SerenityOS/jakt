@@ -396,10 +396,48 @@ enum TestFailedReason {
 }
 
 enum TestExitedResult {
-    Passed
+    Passed(file: String)
     Failed(file: String)
 }
 
+
+enum LoggedTestResult {
+    Failed
+    Skipped
+    Passed
+
+    public function try_from_string(anon str: String) -> LoggedTestResult? {
+        if str == "SKIP" {
+            return LoggedTestResult::Skipped
+        }
+        if str == "FAIL" {
+            return LoggedTestResult::Failed
+        }
+        if str == "PASS" {
+            return LoggedTestResult::Passed
+        }
+        let nothing: LoggedTestResult? = None
+        return nothing
+    }
+
+    public function to_string(this) -> String => match this {
+        Failed => "FAIL"
+        Skipped => "SKIP"
+        Passed => "PASS"
+    }
+
+    public function to_colored_string(this) -> String => match this {
+        Failed => "\x1b[1;31mFAIL\x1b[m"
+        Skipped => "\x1b[1;33mSKIP\x1b[m"
+        Passed => "\x1b[1;32mPASS\x1b[m"
+    }
+
+    public function equals(this, anon other: LoggedTestResult) -> bool => match this {
+        Failed => other is Failed
+        Skipped => other is Skipped
+        Passed => other is Passed
+    }
+}
 
 // A test scheduler that has its process rate limited by
 // the number of directories it has available.
@@ -410,6 +448,7 @@ struct TestScheduler {
     passed_count: usize
     failed_count: usize
     failed_reasons: [String:TestFailedReason]?
+    results: [String:LoggedTestResult]
     // TODO: timeout
 
 
@@ -447,11 +486,9 @@ struct TestScheduler {
 
         if not stage.equals(expected_stage) {
             if .failed_reasons.has_value() {
-
                 if not (stage is TranspileJakt) {
                     panic("unreachable: Since clang++ errors and other codes get handled otherwise, only thing that could fail before its expected stage is Jakt to C++.")
                 }
-
                 let file_to_check = format("{}/compile_jakt.err"
                                            .directories[test.directory_index])
 
@@ -502,17 +539,19 @@ struct TestScheduler {
             }
             return TestExitedResult::Failed(file: test.file_name)
         }
-        return TestExitedResult::Passed
+        return TestExitedResult::Passed(file: test.file_name)
     }
 
     function poll_running_tests(mut this) throws {
         mut exited = process::poll_process_exit(pid: -1i32)
         while exited.has_value() {
             match .on_test_exited(pid: exited!.pid(), exit_code: exited!.exit_code()) {
-                Passed => {
+                Passed(file) => {
+                    .results[file] = LoggedTestResult::Passed
                     .passed_count++
                 }
                 Failed(file) => {
+                    .results[file] = LoggedTestResult::Failed
                     eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", file)
                     .failed_count++
                 }
@@ -547,7 +586,7 @@ struct TestScheduler {
         return .free_directories.pop()!
     }
 
-    function create(directories: [String], collect_reasons: bool) throws -> TestScheduler {
+    function create(directories: [String], results: [String:LoggedTestResult], collect_reasons: bool) throws -> TestScheduler {
         mut running_tests: [i32:Test] = [:]
         running_tests.ensure_capacity(directories.size())
         mut free_directories: [usize] = []
@@ -567,10 +606,12 @@ struct TestScheduler {
                             directories
                             passed_count: 0
                             failed_count: 0
-                            failed_reasons)
+                            failed_reasons
+                            results)
     }
 
-    public function run_tests(mut tests: [Test], directories: [String], collect_reasons: bool) throws -> TestsRunResult {
+    public function run_tests(mut tests: [Test], directories: [String], results: [String:LoggedTestResult], collect_reasons: bool) throws -> TestsRunResult {
+        mut scheduler = TestScheduler::create(directories, results, collect_reasons)
         let total_test_count = tests.size()
         // create an empty handler so SIGCHLD is not ignored
         unsafe {
@@ -582,7 +623,6 @@ struct TestScheduler {
             cpp { "if (sigaction(SIGCHLD, &action, NULL) == -1)" }
             cpp { "    return Error::from_errno(errno);" }
         }
-        mut scheduler = TestScheduler::create(directories, collect_reasons)
         // pre-allocate the command buffer to avoid allocating inside a loop
         mut command_buffer: [String] = ["./jakttest/run-one.sh" "" ""]
         while not tests.is_empty() {
@@ -690,6 +730,9 @@ function main(args: [String]) {
 
     mut tests: [Test] = []
     tests.ensure_capacity(parsed_options.files.size())
+    // results dictionary that contains file names and their result (pass/fail/skip)
+    mut results: [String:LoggedTestResult] = [:]
+    results.ensure_capacity(parsed_options.files.size())
 
     // parse all files to collect the actual work we have to do
     for file_name in parsed_options.files.iterator() {
@@ -713,7 +756,9 @@ function main(args: [String]) {
                                 directory_index: 0))
             }
             SkipTest => {
-                eprintln("[ \x1b[33;1mSKIP\x1b[m ] {}", file_name)
+                let result = LoggedTestResult::Skipped
+                eprintln("[ {} ] {}", result.to_colored_string(), file_name)
+                results[file_name] = result
                 skipped_count += 1
             }
         }
@@ -730,7 +775,7 @@ function main(args: [String]) {
         directories.push(path)
     }
 
-    let run_result = TestScheduler::run_tests(tests, directories, collect_reasons: parsed_options.show_reasons)
+    let run_result = TestScheduler::run_tests(tests, directories, results, collect_reasons: parsed_options.show_reasons)
 
     // delete directories
     for dir in directories.iterator() {
