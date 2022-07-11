@@ -15,7 +15,7 @@ file=$2
 file_cwd=$(dirname $file)
 
 # Generate C++ code into 
-build/main $2 > $temp_dir/output.cpp
+build/main $2 > $temp_dir/output.cpp 2>$temp_dir/compile_jakt.err || exit 3
 
 # Compile C++ code
 clang++ -fcolor-diagnostics \
@@ -28,9 +28,9 @@ clang++ -fcolor-diagnostics \
     -Wno-deprecated-declarations \
     -Iruntime \
     -o $temp_dir/output \
-    $temp_dir/output.cpp
+    $temp_dir/output.cpp 2>$temp_dir/compile_cpp.err || exit 2
 
 pushd $file_cwd >/dev/null 2>/dev/null
 # Run
-$temp_dir/output
+$temp_dir/output >$temp_dir/runtest.out 2>$temp_dir/runtest.err || exit 1
 popd >/dev/null 2>/dev/null
