@@ -1,6 +1,7 @@
 import error { JaktError, print_error }
 import parser { Parser }
 import lexer { Lexer }
+import utility { panic }
 
 namespace process {
     /// Starts a background job by means of fork() and exec(). Returns
@@ -18,6 +19,7 @@ function print_usage()  {
     eprintln("OPTIONS:")
     eprintln("\t-h\t\tShow this message and exit.")
     eprintln("\t-j,--jobs <JOBS>\t\tUse JOBS processes. Defaults to 8.")
+    eprintln("\t--show-reasons\t\tShow the reasons why tests that fail do so.")
 }
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
@@ -103,13 +105,19 @@ struct Options {
     files: [String]
     temp_dir: String
     errors: [String]
+    show_reasons: bool
     job_count: u64
     help_wanted: bool
 
     function from_args(args: [String]) throws -> Options {
         let files: [String] = []
         let errors: [String] = []
-        mut options = Options(files, temp_dir: "", errors, job_count: 8, help_wanted: false)
+        mut options = Options(files
+                              temp_dir: ""
+                              errors
+                              show_reasons: false
+                              job_count: 8
+                              help_wanted: false)
 
         mut index = 1uz
         while index != args.size() {
@@ -132,6 +140,12 @@ struct Options {
                     options.job_count = jobs!
                 }
                 index++
+                continue
+            }
+
+            if args[index] == "--show-reasons" {
+                index++
+                options.show_reasons = true
                 continue
             }
 
@@ -180,6 +194,14 @@ struct Test {
 struct TestsRunResult {
     passed_count: usize
     failed_count: usize
+    failed_reasons: [String:TestFailedReason]?
+}
+
+enum TestFailedReason {
+    CompilerErrorUnmatched(had: String, expected: String)
+    ClangError(String)
+    StderrUnmatched(had: String, expected: String)
+    StdoutUnmatched(had: String, expected: String)
 }
 
 // A test scheduler that has its process rate limited by
@@ -190,8 +212,8 @@ struct TestScheduler {
     directories: [String]
     passed_count: usize
     failed_count: usize
+    failed_reasons: [String:TestFailedReason]?
     // TODO: timeout
-    // TODO: show reasons why tests fail
 
     function poll_running_tests(mut this) throws {
         // TODO: switch back to using dict iterator
@@ -200,31 +222,67 @@ struct TestScheduler {
         for pid in .running_tests.keys().iterator() {
             let poll_result = process::poll_process_exit(pid)
             if poll_result.has_value() {
+                let exit_code = poll_result!
                 let test = .running_tests[pid]
 
-                // check the test result
-                let file_to_check = format("{}/{}"
-                                    .directories[test.directory_index]
-                                    match test.result.kind {
-                                        Success => "runtest.out"
-                                        Failure => "runtest.err"
-                                    })
 
-                mut file = File::open_for_reading(file_to_check)
-                let output = file.read_all()
-
-                let passed_test = match test.result.kind {
-                    Success => compare_test(bytes: output, expected: test.result.output)
-                    Failure => compare_error(bytes: output, expected: test.result.output)
-                }
-
-                if passed_test {
-                    eprintln("[ \x1b[32;1mPASS\x1b[m ] {}", test.file_name)
-                    .passed_count++
-                } else {
+                // clang++ error
+                if exit_code == 2 {
                     eprintln("[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
+                    if .failed_reasons.has_value() {
+                        mut file = File::open_for_reading("compile_cpp.err")
+                        let had = bytes_to_string(file.read_all())
+                        .failed_reasons![test.file_name] = TestFailedReason::ClangError(had)
+                    }
+                    .failed_count++
+                } else {
+                    // check the test result
+                    let file_to_check = format("{}/{}"
+                                        .directories[test.directory_index]
+                                        match exit_code {
+                                            // everything run and we expect the output
+                                            0i32 => "runtest.out"
+                                            // test failed; in that case we want the runtest.errfile
+                                            1i32 => "runtest.err"
+                                            // Jakt failed to build our sample
+                                            3i32 => "compile_jakt.err"
+                                            else => {
+                                                panic("unreachable: Job return should be 0, 1, 2 or 3")
+                                                yield ""
+                                            }
+                                        })
+
+                    mut file = File::open_for_reading(file_to_check)
+                    let output = file.read_all()
+                    let expected = test.result.output
+
+                    let passed_test = match test.result.kind {
+                        Success => compare_test(bytes: output, expected)
+                        Failure => compare_error(bytes: output, expected)
+                    }
+                    if passed_test {
+                        eprintln("[ \x1b[32;1mPASS\x1b[m ] {}", test.file_name)
+                        .passed_count++
+                    } else {
+                        eprintln("[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
+                        if .failed_reasons.has_value() {
+                            .failed_reasons![test.file_name] = match exit_code {
+                                0i32 => TestFailedReason::StdoutUnmatched(had: bytes_to_string(output)
+                                                                          expected)
+                                1i32 => TestFailedReason::StderrUnmatched(had: bytes_to_string(output)
+                                                                          expected)
+                                3i32 => TestFailedReason::CompilerErrorUnmatched(had: bytes_to_string(output)
+                                                                                 expected)
+                                else => {
+                                    panic("unreachable: exit code 2 (clang++) was handled by the other branch and possible codes are 0-4")
+                                    yield TestFailedReason::ClangError("")
+                                }
+                            }
+                        }
                     .failed_count++
                 }
+                }
+
 
 
                 .free_directories.push(test.directory_index)
@@ -235,7 +293,7 @@ struct TestScheduler {
 
     function get_free_directory(mut this) -> usize? => .free_directories.pop()
 
-    function create(directories: [String]) throws -> TestScheduler {
+    function create(directories: [String], collect_reasons: bool) throws -> TestScheduler {
         mut running_tests: [i32:Test] = [:]
         running_tests.ensure_capacity(directories.size())
         mut free_directories: [usize] = []
@@ -244,15 +302,24 @@ struct TestScheduler {
             free_directories.push(i)
         }
 
+        mut failed_reasons: [String:TestFailedReason]? = None
+        if collect_reasons {
+            let dict: [String:TestFailedReason] = [:]
+            failed_reasons = dict
+        }
+
         return TestScheduler(running_tests
                             free_directories
                             directories
                             passed_count: 0
-                            failed_count: 0)
+                            failed_count: 0
+                            failed_reasons)
     }
 
-    public function run_tests(mut tests: [Test], directories: [String]) throws -> TestsRunResult {
-        mut scheduler = TestScheduler::create(directories)
+    public function run_tests(mut tests: [Test], directories: [String], collect_reasons: bool) throws -> TestsRunResult {
+        mut scheduler = TestScheduler::create(directories, collect_reasons)
+        // pre-allocate the command buffer to avoid allocating inside a loop
+        mut command_buffer: [String] = ["./jakttest/run-one.sh" "" ""]
         while not tests.is_empty() {
             let dir_index = scheduler.get_free_directory()
             if dir_index.has_value() {
@@ -260,17 +327,9 @@ struct TestScheduler {
                 mut test = tests.pop()!
                 test.directory_index = dir_index!
                 let directory = scheduler.directories[test.directory_index]
-                let command =
-                    format("./jakttest/run-one.sh {} {} >{}/runtest.out 2>{}/runtest.err"
-                           directory
-                           test.file_name
-                           directory,directory
-                           )
-                let pid = process::start_background_process(args: [
-                    "sh"
-                    "-c"
-                    command
-                ])
+                command_buffer[1] = directory
+                command_buffer[2] = test.file_name
+                let pid = process::start_background_process(args: command_buffer)
                 scheduler.running_tests[pid] = test
                 continue
             }
@@ -283,7 +342,8 @@ struct TestScheduler {
         }
 
         return TestsRunResult(passed_count: scheduler.passed_count
-                              failed_count: scheduler.failed_count)
+                              failed_count: scheduler.failed_count
+                              failed_reasons: scheduler.failed_reasons)
     }
 }
 
@@ -343,16 +403,68 @@ function main(args: [String]) {
         directories.push(name)
     }
 
-    let run_result = TestScheduler::run_tests(tests, directories)
+    let run_result = TestScheduler::run_tests(tests, directories, collect_reasons: parsed_options.show_reasons)
 
     println("==============================")
     println("{} passed" , run_result.passed_count)
     println("{} failed" run_result.failed_count)
     println("{} skipped", skipped_count)
     println("==============================")
+
+    if run_result.failed_reasons.has_value() {
+        eprintln("Showing why tests failed:")
+        let reasons = run_result.failed_reasons!
+        mut is_first = true
+        for file in reasons.keys().iterator() {
+            if not is_first {
+                eprintln("----------------------------------------")
+            }
+            eprintln("\x1b[1m{}\x1b[m:", file)
+            mut output = ""
+            match reasons[file] {
+                CompilerErrorUnmatched(had, expected) => {
+                    output += format("Could not find error \"{}\" in error output:\n", expected)
+                    output += had
+                }
+                ClangError(error) => {
+                    output += "Could not compile generated C++ code into a binary:\n"
+                    output += error
+                }
+                StdoutUnmatched(had, expected) => {
+                    output += "Could not match test stdout:\n"
+                    output += "Expected:\n"
+                    output += expected
+                    output += "\nGot:\n"
+                    output += had
+                }
+                StderrUnmatched(had, expected) => {
+                    output += "Could not match test stderr:\n"
+                    output += "Expected:\n"
+                    output += expected
+                    output += "\nGot:"
+                    output += had
+                }
+            }
+
+            for line in output.split('\n').iterator() {
+                eprintln("\x1b[1;0m|\x1b[m\t{}", line)
+            }
+        }
+        eprintln("==============================")
+    }
 }
 
 function write_to_file(file_contents: [u8], output_filename: String) throws {
     mut outfile = File::open_for_writing(output_filename)
     outfile.write(file_contents)
+}
+
+function bytes_to_string(anon bytes: [u8]) throws -> String {
+    mut builder = StringBuilder::create()
+
+    for byte in bytes.iterator() {
+        builder.append(byte)
+    }
+
+    return builder.to_string()
 }
