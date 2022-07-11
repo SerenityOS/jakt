@@ -76,7 +76,7 @@
 		"esbuild": "npm run esbuild-base -- --sourcemap --minify",
 		"compile": "npm run esbuild",
 		"install-code-dep": "code --install-extension connor4312.esbuild-problem-matchers && code --install-extension dbaeumer.vscode-eslint",
-		"install": "cd server; npm install; cd ../client; npm install; cd ..; npm run install-code-dep",
+		"install": "cd server && npm install && cd ../client && npm install && cd .. && npm run install-code-dep",
 		"watch": "npm run esbuild-base -- --sourcemap --watch",
 		"lint": "npx eslint ./client/src ./server/src --ext .ts,.tsx",
 		"test": "sh ./scripts/e2e.sh"
