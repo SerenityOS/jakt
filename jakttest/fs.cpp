@@ -12,6 +12,7 @@
 #    define st_ctim st_ctimespec
 #    define st_mtim st_mtimespec
 #endif
+#include <unistd.h>
 
 namespace Jakt::fs {
 ErrorOr<void> mkdir(String path)

@@ -90,8 +90,12 @@ namespace fs {
 
         return results
     }
-}
 
+
+    function exists(path: String) throws -> bool {
+        return not stat_silencing_enoent(path).has_value()
+    }
+}
 
 namespace process {
     extern struct ExitPollResult {
@@ -129,6 +133,20 @@ function print_usage()  {
     eprintln("\t\t\tWill try to use $TMP_DIR or /tmp in UNIX-based systems, or %TEMP% in Windows")
     eprintln("\t--assume-updated-selfhost\t\tAssume selfhost is up to date, i.e don't check it.")
     eprintln("\t--assume-updated\t\tAssume jakttest is up to date, i.e don't check it.")
+    eprintln("\t--previous-log <FILE>\t\tUse FILE as the previous log for diffs.")
+    eprintln("\t                     \t\tDefault is 'jakttest/.jakttest_log'")
+    eprintln("\t--new-log <FILE>\t\tUse FILE as the write target for the new log.")
+    eprintln("\t                \t\tDefaults to whatever --previous-log is. Overrides -W.")
+    eprintln("\t-W,--no-overwrite-log\t\tDon't overwrite the logfile. Overrides --new-log.")
+}
+
+function string_to_u8_array(anon str: String) throws -> [u8] {
+    mut array: [u8] = []
+    array.ensure_capacity(str.length())
+    for i in 0..str.length() {
+        array.push(str.byte_at(i))
+    }
+    return array
 }
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
@@ -227,18 +245,24 @@ struct Options {
     help_wanted: bool
     assume_selfhost_updated: bool
     assume_updated: bool
+    previous_log: String
+    new_log: String
+    overwrite_log: bool
 
     function from_args(args: [String]) throws -> Options {
         let files: [String] = []
         let errors: [String] = []
-        mut options = Options(files
+        mut options = Options(files, 
                               temp_dir: ""
                               errors
                               show_reasons: false
                               job_count: 0
                               help_wanted: false
                               assume_selfhost_updated: false
-                              assume_updated: false)
+                              assume_updated: false
+                              previous_log: "jakttest/.jakttest_log"
+                              new_log: ""
+                              overwrite_log: true)
 
         mut index = 1uz
         while index != args.size() {
@@ -267,6 +291,34 @@ struct Options {
             if args[index] == "--show-reasons" {
                 index++
                 options.show_reasons = true
+                continue
+            }
+            if args[index] == "-W" or args[index] == "--no-overwrite-log" {
+                index++
+                options.overwrite_log = false
+                continue
+            }
+
+            if args[index] == "--new-log" {
+                index++
+                if index == args.size() {
+                    options.errors.push("Used --new-log without an argument")
+                    break
+                }
+                options.new_log = args[index]
+                options.overwrite_log = true
+                index++
+                continue
+            }
+
+            if args[index] == "--previous-log" {
+                index++
+                if index == args.size() {
+                    options.errors.push("Used --previous-log without an argument")
+                    break
+                }
+                options.previous_log = args[index]
+                index++
                 continue
             }
 
@@ -316,6 +368,9 @@ struct Options {
 
         if options.job_count == 0 {
             options.job_count = os::get_num_cpus()
+        }
+        if options.overwrite_log and options.new_log.is_empty() {
+            options.new_log = options.previous_log
         }
 
         return options
@@ -846,14 +901,108 @@ function main(args: [String]) {
         eprintln("==============================")
     }
 
+    // try and show a diff
+    if fs::exists(path: parsed_options.previous_log) {
+        // read the file and construct a result
+        let previous_results = read_log_file(path: parsed_options.previous_log)
+
+        let diff = generate_log_diff(previous: previous_results, now: results)
+
+        if not diff.is_empty() {
+            eprintln("Detected differences from previous log.")
+            eprintln("Legend:")
+            eprintln(" - new files are shown in \x1b[1;94mBLUE\x1b[m")
+            eprintln(" - deleted files are shown in \x1b[1;91mRED\x1b[m")
+            eprintln(" - files with different results are shown in \x1b[1;93mYELLOW\x1b[m")
+            eprintln("==============================")
+
+            for file in diff.keys().iterator() {
+                match diff[file] {
+                    Deleted(result) => eprintln("\x1b[91m{}\x1b[m {}", file, result.to_colored_string())
+                    New(result) => eprintln("\x1b[93m{}\x1b[m {}", file, result.to_colored_string())
+                    Changed(previous, now) => eprintln("\x1b[93m{}\x1b[m {} (previously {})", file, now.to_colored_string()
+                                                       previous.to_colored_string())
+                }
+            }
+
+            eprintln("==============================")
+        }
+    }
+
+    if parsed_options.overwrite_log {
+        write_log_file(results, path: parsed_options.new_log)
+    }
+
     if run_result.failed_count > 0 {
         return 1
     }
 }
 
+enum LoggedTestDiff {
+    Deleted(LoggedTestResult)
+    New(LoggedTestResult)
+    Changed(previous: LoggedTestResult, now: LoggedTestResult)
+}
+
+function generate_log_diff(previous: [String:LoggedTestResult], now: [String:LoggedTestResult]) throws -> [String:LoggedTestDiff] {
+    mut diff: [String:LoggedTestDiff] = [:]
+
+    // detect deleted (in previous but not in now)
+    for file in previous.keys().iterator() {
+        if not now.contains(file) {
+            diff[file] = LoggedTestDiff::Deleted(previous[file])
+        }
+    }
+
+    // detect diff/new
+    for file in now.keys().iterator() {
+        if not previous.contains(file) {
+            diff[file] = LoggedTestDiff::New(now[file])
+        } else {
+            let prev = previous[file]
+            let next = now[file]
+            if not prev.equals(next) {
+                diff[file] = LoggedTestDiff::Changed(previous: prev,  now: next)
+            }
+        }
+    }
+
+    return diff
+}
+
 function write_to_file(file_contents: [u8], output_filename: String) throws {
     mut outfile = File::open_for_writing(output_filename)
     outfile.write(file_contents)
+}
+
+// TODO: move these to a different module
+function read_log_file(path: String) throws -> [String:LoggedTestResult] {
+    // the file will contain lines in the format: {file} {result}
+    mut file = File::open_for_reading(path)
+    let contents = file.read_all()
+
+
+    let lines = bytes_to_string(contents).split('\n')
+
+    mut results: [String:LoggedTestResult] = [:]
+
+    for line in lines.iterator() {
+        let split = line.split(' ')
+        let filepath = split[0]
+        let result = LoggedTestResult::try_from_string(split[1])
+        if not result.has_value() {
+            continue
+        }
+        results[filepath] = result!
+    }
+    return results
+}
+
+function write_log_file(results: [String:LoggedTestResult], path: String) throws {
+    mut file = File::open_for_writing(path)
+    for filename in results.keys().iterator() {
+        file.write(string_to_u8_array(format("{} {}\n", filename, results[filename].to_string())))
+    }
 }
 
 function bytes_to_string(anon bytes: [u8]) throws -> String {
