@@ -883,6 +883,7 @@ struct CheckedCall {
     namespace_: [ResolvedNamespace]
     name: String,
     args: [(String, CheckedExpression)]
+    type_args: [TypeId]
     function_id: FunctionId?
     return_type: TypeId
     callee_throws: bool
@@ -4669,7 +4670,7 @@ struct Typechecker {
                             .compiler.panic("typecheck_call returned something other than a CheckedCall")
                             // FIXME: Unreachable
                             let none_function_id: FunctionId? = None
-                            yield CheckedCall(namespace_: [], name: "", args: [], function_id: none_function_id, return_type: builtin(BuiltinType::Void), callee_throws: true)
+                            yield CheckedCall(namespace_: [], name: "", args: [], type_args: [], function_id: none_function_id, return_type: builtin(BuiltinType::Void), callee_throws: true)
                         }
                     }
                     yield match .compiler.errors.is_empty() {
@@ -4825,6 +4826,11 @@ struct Typechecker {
             checked_args.push(checked_arg)
         }
 
+        mut checked_type_args: [TypeId] = []
+        for type_arg in call.type_args.iterator() {
+            checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id, ignore_errors: false))
+        }
+
         let none_function_id: FunctionId? = None // FIXME: use None directly
         return CheckedExpression::MethodCall(
             expr: checked_expr
@@ -4832,6 +4838,7 @@ struct Typechecker {
                 namespace_: []
                 name: call.name
                 args: checked_args
+                type_args: checked_type_args
                 function_id: none_function_id
                 return_type: unknown_type_id()
                 callee_throws: false
@@ -5414,6 +5421,8 @@ struct Typechecker {
         mut maybe_this_type_id: TypeId? = None
         mut generic_inferences: [String:String] = [:]
         mut generic_checked_function_to_instantiate: FunctionId? = None
+        mut checked_type_args: [TypeId] = []
+
         for name in call.namespace_.iterator() {
             let generic_parameters: [TypeId]? = None
             resolved_namespaces.push(ResolvedNamespace(name, generic_parameters))
@@ -5444,7 +5453,11 @@ struct Typechecker {
             else => {
                 resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id: callee_scope_id, must_be_enum_constructor)
                 if not resolved_function_id.has_value() {
-                    return CheckedExpression::Call(call: CheckedCall(namespace_: resolved_namespaces, name: call.name, args, function_id: resolved_function_id, return_type, callee_throws), span, type_id: return_type)
+                    mut checked_type_args: [TypeId] = []
+                    for type_arg in call.type_args.iterator() {
+                        checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id: caller_scope_id, ignore_errors: false))
+                    }
+                    return CheckedExpression::Call(call: CheckedCall(namespace_: resolved_namespaces, name: call.name, args, type_args: checked_type_args, function_id: resolved_function_id, return_type, callee_throws), span, type_id: return_type)
                 }
 
                 let function_id = resolved_function_id!
@@ -5474,6 +5487,33 @@ struct Typechecker {
                     generic_inferences.set(typevar_type_id.to_string(), checked_type.to_string())
 
                     type_arg_index += 1
+                }
+
+                // If no type_args were given, infer them from the parameters
+                if call.type_args.is_empty() and not callee.generic_params.is_empty() {
+                    mut i = 0uz
+                    for arg in call.args.iterator() {
+                        let expression_type_id = expression_type(
+                            .typecheck_expression(
+                                expr: arg.2
+                                scope_id: caller_scope_id
+                                safety_mode
+                                type_hint
+                            )
+                        )
+                        match .get_type(expression_type_id) {
+                            GenericInstance(id, args) => {
+                                let array_struct_id = .find_struct_in_prelude("Array")
+                                if id.equals(array_struct_id) {
+                                    checked_type_args.push(args[0])
+                                }
+                            }
+                            else => {
+                                checked_type_args.push(expression_type_id)
+                            }
+                        }
+                        i++
+                    }
                 }
 
                 // If this is a method, let's also add the types we know from our `this` pointer.
@@ -5606,7 +5646,10 @@ struct Typechecker {
             )
         }
 
-        return CheckedExpression::Call(call: CheckedCall(namespace_: resolved_namespaces, name: call.name, args, function_id: resolved_function_id, return_type, callee_throws), span, type_id: return_type)
+        for type_arg in call.type_args.iterator() {
+            checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id: caller_scope_id, ignore_errors: false))
+        }
+        return CheckedExpression::Call(call: CheckedCall(namespace_: resolved_namespaces, name: call.name, args, type_args: checked_type_args, function_id: resolved_function_id, return_type, callee_throws), span, type_id: return_type)
     }
 
     function resolve_type_var(this, type_var_type_id: TypeId, scope_id: ScopeId) throws -> TypeId {
