@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "dereference of raw pointer outside of unsafe block"
+/// - error: "Dereference of raw pointer outside of unsafe block"
 
 function main() {
     let x = 10

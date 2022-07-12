@@ -6112,7 +6112,7 @@ pub fn typecheck_unary_operation(
                     (
                         CheckedExpression::UnaryOp(Box::new(expr), op, span, *x),
                         Some(JaktError::TypecheckError(
-                            "dereference of raw pointer outside of unsafe block".to_string(),
+                            "Dereference of raw pointer outside of unsafe block".to_string(),
                             span,
                         )),
                     )
@@ -6121,7 +6121,7 @@ pub fn typecheck_unary_operation(
             _ => (
                 CheckedExpression::UnaryOp(Box::new(expr), op, span, UNKNOWN_TYPE_ID),
                 Some(JaktError::TypecheckError(
-                    "dereference of a non-pointer value".to_string(),
+                    "Dereference of a non-pointer value".to_string(),
                     span,
                 )),
             ),
