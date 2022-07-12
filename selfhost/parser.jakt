@@ -2056,12 +2056,25 @@ struct Parser {
         LCurly => {
             yield .parse_set_literal()
         }
+        Ampersand => .parse_ampersand()
         else => {
             let span = .current().span()
             .index++
             .error("Unsupported expression", span)
             yield ParsedExpression::Garbage(span)
         }
+    }
+
+    function parse_ampersand(mut this) throws -> ParsedExpression {
+        let start = .current().span()
+        .index++
+        if .current() is Raw {
+            .index++
+            let expr = .parse_operand()
+            return ParsedExpression::UnaryOp(expr, op: UnaryOperator::RawAddress, span: merge_spans(start, expr.span()))
+        }
+        .error("Ampersand not currently supported", start)
+        return ParsedExpression::Garbage(.current().span())
     }
 
     function parse_set_literal(mut this) throws -> ParsedExpression {
