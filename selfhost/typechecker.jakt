@@ -2470,7 +2470,6 @@ struct Typechecker {
 
                             mut module = .current_module()
                             let var_id = module.add_variable(checked_var)
-                            .add_var_to_scope(scope_id: enum_.scope_id, name: checked_var.name, var_id, span: checked_var.definition_span)
                             fields.push(var_id)
                         }
                         enum_.variants.push(CheckedEnumVariant::StructLike(name: variant.name, fields, span: variant.span))
