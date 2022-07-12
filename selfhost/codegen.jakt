@@ -1465,12 +1465,12 @@ struct CodeGenerator {
         output += .control_flow_state.choose_control_flow_macro()
 
         // TODO: Use switch statement if all values are constant
+        output += format(
+            "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<{},{}>"
+            .codegen_type(return_type_id)
+            .codegen_function_return_type(function_: .current_function!)
+        ) + "{\n"
 
-        output += "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
-        output += .codegen_type(return_type_id)
-        output += ", "
-        output += .codegen_function_return_type(function_: .current_function!)
-        output += ">{\n"
         if is_generic_enum {
             output += "auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer("
         } else {
@@ -1481,16 +1481,13 @@ struct CodeGenerator {
 
         mut first = true
         for case_ in cases.iterator() {
-            let first_ = first
-            first = false
-
             match case_ {
                 EnumVariant(name, args, subject_type_id, scope_id, body) => {
                     output += "if (__jakt_enum_value.template has<"
 
                     mut variant_type_name = ""
                     let qualifier = .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true)
-                    if qualifier.length() > 0 {
+                    if not qualifier.is_empty() {
                         variant_type_name += "typename JaktInternal::RemoveRefPtr<"
                         variant_type_name += qualifier
                         variant_type_name += ">::"
@@ -1516,7 +1513,7 @@ struct CodeGenerator {
                 }
                 CatchAll(body, marker_span) => {
                     // TODO: Use default statement if all values are constant
-                    if first_ {
+                    if first {
                         output += "{"
                     } else {
                         output += "else {\n"
@@ -1526,7 +1523,7 @@ struct CodeGenerator {
                 }
                 Expression(expression, body, marker_span) => {
                     // TODO: Use case statement if all values are constant
-                    if not first_ {
+                    if not first {
                         output += "else "
                     }
                     output += "if (__jakt_enum_value == "
@@ -1536,6 +1533,7 @@ struct CodeGenerator {
                     output += "}\n"
                 }
             }
+            first = false
         }
         if return_type_id.equals(void_type_id()) or return_type_id.equals(unknown_type_id()) {
             output += "return JaktInternal::ExplicitValue<void>();\n"
@@ -1549,10 +1547,7 @@ struct CodeGenerator {
         mut output = ""
         output += .control_flow_state.choose_control_flow_macro()
 
-        mut needs_deref = enum_.is_boxed
-        if .codegen_expression(expr) == "this" {
-            needs_deref = true
-        }
+        let needs_deref = enum_.is_boxed or .codegen_expression(expr) == "this"
 
         if enum_.underlying_type_id.equals(unknown_type_id()) {
             output += "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
@@ -1582,7 +1577,7 @@ struct CodeGenerator {
                         }
                         let match_case_enum = .program.get_enum(enum_id)
                         let variant = match_case_enum.variants[index]
-                        output += "case " + format("{}", index) + ": {\n"
+                        output += format("case {}: ", index) + "{\n"
                         match variant {
                             Untyped(name) => {
                                 output += format("auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
