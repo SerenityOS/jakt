@@ -3217,6 +3217,28 @@ struct Typechecker {
                         }
 
                     }
+                    TypeVariable => {
+                        // If the call expects a generic type variable, let's see if we've already seen it
+                        let seen_type_id_string = generic_inferences.get(rhs_type_id_string)
+                        if seen_type_id_string.has_value() {
+                            // We've seen this type variable assigned something before
+                            // we should error if it's incompatible.
+
+                            if seen_type_id_string.value() != lhs_type_id_string {
+                                .error(
+                                    format(
+                                        "Type mismatch: expected ‘{}’, but got ‘{}’"
+                                        .type_name(TypeId::from_string(seen_type_id_string.value()))
+                                        .type_name(rhs_type_id)
+                                    )
+                                    span
+                                )
+                                return false
+                            }
+                        } else {
+                            generic_inferences.set(key: lhs_type_id_string, value: rhs_type_id_string)
+                        }
+                    }
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
                             .error(
@@ -4008,23 +4030,7 @@ struct Typechecker {
 
     function typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
         mut lhs_type_id = .typecheck_typename(parsed_type: var.parsed_type, scope_id, ignore_errors: false)
-        mut checked_expr = match init {
-            JaktArray(values, fill_size, span) => {
-                let default_inner_type_id = match .get_type(lhs_type_id) {
-                    GenericInstance(id, args) => {
-                        let array_struct_id = .find_struct_in_prelude("Array")
-                        mut result = lhs_type_id
-                        if id.equals(array_struct_id) {
-                            result = args[0]
-                        }
-                        yield result
-                    }
-                    else => lhs_type_id
-                }
-                yield .typecheck_array(scope_id, values, fill_size, span, safety_mode, default_inner_type_id)
-            }
-            else => .typecheck_expression(expr: init, scope_id, safety_mode, type_hint: lhs_type_id)
-        }
+        mut checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode, type_hint: lhs_type_id)
         let rhs_type_id = expression_type(checked_expr)
 
         if lhs_type_id.equals(unknown_type_id()) and not rhs_type_id.equals(unknown_type_id()) {
@@ -4550,7 +4556,7 @@ struct Typechecker {
 
             yield CheckedExpression::ForcedUnwrap(expr: checked_expr, span, type_id)
         }
-        JaktArray(values, fill_size, span) => .typecheck_array(scope_id, values, fill_size, span, safety_mode, default_inner_type_id: TypeId::none())
+        JaktArray(values, fill_size, span) => .typecheck_array(scope_id, values, fill_size, span, safety_mode, type_hint)
         JaktTuple(values, span) => {
             let VOID_TYPE_ID = builtin(BuiltinType::Void)
             mut checked_values: [CheckedExpression] = []
@@ -4704,7 +4710,7 @@ struct Typechecker {
         }
     }
 
-    function typecheck_array(mut this, scope_id: ScopeId, values: [ParsedExpression], fill_size: ParsedExpression?, span: Span, safety_mode: SafetyMode, default_inner_type_id: TypeId?) throws -> CheckedExpression {
+    function typecheck_array(mut this, scope_id: ScopeId, values: [ParsedExpression], fill_size: ParsedExpression?, span: Span, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
         mut repeat: CheckedExpression? = None
         if fill_size.has_value() {
             // Check fill size is an integer.
@@ -4747,8 +4753,16 @@ struct Typechecker {
             vals.push(checked_expr)
         }
 
-        if inner_type_id.equals(unknown_type_id()) and default_inner_type_id.has_value() {
-            inner_type_id = default_inner_type_id!
+        if inner_type_id.equals(unknown_type_id()) and type_hint.has_value() and not type_hint!.equals(unknown_type_id()) {
+            match .get_type(type_hint!) {
+                GenericInstance(id, args) => {
+                    if not id.equals(array_struct_id) {
+                        panic("expected Array struct")
+                    }
+                    inner_type_id = args[0]
+                }
+                else => panic("expected Array struct")
+            }
         }
 
         if inner_type_id.equals(unknown_type_id()) {
@@ -5472,12 +5486,11 @@ struct Typechecker {
                     }
                     return CheckedExpression::Call(call: CheckedCall(namespace_: resolved_namespaces, name: call.name, args, type_args: checked_type_args, function_id: resolved_function_id, return_type, callee_throws), span, type_id: return_type)
                 }
-
                 let function_id = resolved_function_id!
                 let callee = .get_function(function_id)
+                // eprintln("callee: {}", callee.params)
                 callee_throws = callee.can_throw
                 return_type = callee.return_type_id
-
                 let scope_containing_callee = .get_scope(callee.function_scope_id).parent!
 
                 .check_method_access(accessor: caller_scope_id, accessee: scope_containing_callee, method: callee, span)
@@ -5583,24 +5596,7 @@ struct Typechecker {
                         .validate_argument_label(param, label: parsed_label_and_arg.0, span: parsed_label_and_arg.1, expr: parsed_label_and_arg.2)
                     }
 
-                    mut checked_arg = match parsed_label_and_arg.2 {
-                        JaktArray(values, fill_size, span) => {
-                            let default_inner_type_id = match .get_type(param.variable.type_id) {
-                                GenericInstance(id, args) => {
-                                    let array_struct_id = .find_struct_in_prelude("Array")
-                                    mut result = unknown_type_id()
-                                    if id.equals(array_struct_id) {
-                                        result = args[0]
-                                    }
-                                    yield result
-                                }
-                                else => unknown_type_id()
-                            }
-                            yield .typecheck_array(scope_id: caller_scope_id, values, fill_size, span, safety_mode, default_inner_type_id)
-                        }
-                        else => .typecheck_expression(expr: parsed_label_and_arg.2, scope_id: caller_scope_id, safety_mode, type_hint)
-                    }
-
+                    mut checked_arg = .typecheck_expression(expr: parsed_label_and_arg.2, scope_id: caller_scope_id, safety_mode, type_hint: param.variable.type_id)
                     let promoted_arg = .try_to_promote_constant_expr_to_type(lhs_type: param.variable.type_id, checked_rhs: checked_arg, span)
                     checked_arg = promoted_arg ?? checked_arg
 
