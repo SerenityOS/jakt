@@ -202,6 +202,7 @@ enum TestFailedReason {
     ClangError(String)
     StderrUnmatched(had: String, expected: String)
     StdoutUnmatched(had: String, expected: String)
+    AbruptExit(i32)
 }
 
 // A test scheduler that has its process rate limited by
@@ -226,6 +227,14 @@ struct TestScheduler {
                 let test = .running_tests[pid]
 
 
+                // unknown exit code. Assume that the job exited abruptly.
+                if exit_code < 0 or exit_code > 3 {
+                    eprintln("[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
+                    if .failed_reasons.has_value() {
+                        .failed_reasons![test.file_name] = TestFailedReason::AbruptExit(exit_code)
+                    }
+                    .failed_count++
+                }
                 // clang++ error
                 if exit_code == 2 {
                     eprintln("[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
@@ -247,7 +256,7 @@ struct TestScheduler {
                                             // Jakt failed to build our sample
                                             3i32 => "compile_jakt.err"
                                             else => {
-                                                panic("unreachable: Job return should be 0, 1, 2 or 3")
+                                                panic("unreachable: Job return at this point should be 0, 1, or 3")
                                                 yield ""
                                             }
                                         })
@@ -443,6 +452,10 @@ function main(args: [String]) {
                     output += expected
                     output += "\nGot:"
                     output += had
+                }
+                AbruptExit(exit_code) => {
+                    output += "Test job exited with an unexpected code.\n"
+                    output += format("Exit code: {}", exit_code)
                 }
             }
 
