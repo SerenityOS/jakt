@@ -4123,7 +4123,7 @@ struct Typechecker {
         let error_struct_id = .find_struct_in_prelude("Error")
         let error_decl = CheckedVariable(
             name: error_name
-            type_id: unknown_type_id()
+            type_id: .get_struct(error_struct_id).type_id
             is_mutable: false
             definition_span: error_span
             visibility: Visibility::Public
