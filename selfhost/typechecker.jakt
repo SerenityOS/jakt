@@ -3182,6 +3182,24 @@ struct Typechecker {
                             }
                         }
                     }
+                    TypeVariable => {
+                        let seen_type_id_string = generic_inferences.get(rhs_type_id_string)
+                        if seen_type_id_string.has_value() {
+                            if seen_type_id_string.value() != lhs_type_id_string {
+                                .error(
+                                    format(
+                                        "Type mismatch: expected ‘{}’, but got ‘{}’"
+                                        .type_name(lhs_type_id)
+                                        .type_name(TypeId::from_string(seen_type_id_string.value()))
+                                    )
+                                    span
+                                )
+                                return false
+                            }
+                        } else {
+                            generic_inferences.set(key: lhs_type_id_string, value: rhs_type_id_string)
+                        }
+                    }
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
                             .error(
@@ -3285,6 +3303,7 @@ struct Typechecker {
             }
             else => {
                 if not rhs_type_id.equals(lhs_type_id) {
+                    
                     .error(
                         format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                         span
@@ -5509,7 +5528,6 @@ struct Typechecker {
                 }
                 let function_id = resolved_function_id!
                 let callee = .get_function(function_id)
-                // eprintln("callee: {}", callee.params)
                 callee_throws = callee.can_throw
                 return_type = callee.return_type_id
                 let scope_containing_callee = .get_scope(callee.function_scope_id).parent!
