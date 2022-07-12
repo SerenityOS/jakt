@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Type mismatch: expected ‘i64’, but got ‘String’"
+/// - error: "Type mismatch: expected ‘String’, but got ‘i64’"
 
 function main() {
     match 123 {
