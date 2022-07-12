@@ -1728,18 +1728,14 @@ struct CodeGenerator {
         }
 
         if op is Assign and lhs is IndexedDictionary {
-            match lhs {
-                IndexedDictionary(expr, index) => {
-                    mut output = .codegen_expression(expr)
-                    output += ".set("
-                    output += .codegen_expression(index)
-                    output += ", "
-                    output += .codegen_expression(rhs)
-                    output += "))"
-                }
-                else => {
-                    // FIXME: unreachable
-                }
+            return match lhs {
+                IndexedDictionary(expr, index) => format(
+                    "{}.set({}, {})"
+                    .codegen_expression(expr)
+                    .codegen_expression(index)
+                    .codegen_expression(rhs)
+                )
+                else => "" // FIXME: unreachable
             }
         }
 
