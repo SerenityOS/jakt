@@ -4582,25 +4582,26 @@ struct Typechecker {
             let array_struct_id = .find_struct_in_prelude("Array")
             let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
             mut expr_type_id = unknown_type_id()
-
-            match .get_type(expression_type(checked_base)) {
+            
+            yield match .get_type(expression_type(checked_base)) {
                 GenericInstance(id, args) => {
+                    mut result = CheckedExpression::Garbage(span)
                     if id.equals(array_struct_id) {
                         if .is_integer(expression_type(checked_index)) {
-                            expr_type_id = args[0]
+                            result = CheckedExpression::IndexedExpression(expr: checked_base, index: checked_index, span, type_id: args[0])
                         } else {
                             .error("Index is not an integer", span)
                         }
                     } else if id.equals(dictionary_struct_id) {
-                        expr_type_id = args[1]
+                        result = CheckedExpression::IndexedDictionary(expr: checked_base, index: checked_index, span, type_id: args[1])
                     }
+                    yield result
                 }
                 else => {
                     .error("Index used on value that cannot be indexed", span)
+                    yield CheckedExpression::Garbage(span)
                 }
             }
-
-            yield CheckedExpression::IndexedExpression(expr: checked_base, index: checked_index, span, type_id: expr_type_id)
         }
         IndexedTuple(expr, index, span) => {
             let none_type_hint: TypeId? = None
