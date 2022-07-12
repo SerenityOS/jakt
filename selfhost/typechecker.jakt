@@ -3627,8 +3627,18 @@ struct Typechecker {
             RawAddress => {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: .find_or_add_type_id(Type::RawPtr(expr_type_id)))
             }
-            else => {
-                todo(format("typecheck_unary_operation: expr:{}, op:{}", checked_expr, checked_op))
+            Dereference => {
+                match expr_type {
+                    RawPtr(type_id) => {
+                        if safety_mode is Safe {
+                            .error("Dereference of raw pointer outside of unsafe block", span)
+                        }
+                        return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id)
+                    }
+                    else => {
+                        .error("Dereference of a non-pointer value", span)
+                    }
+                }
             }
         }
         return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: expr_type_id)
