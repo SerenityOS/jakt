@@ -1968,6 +1968,20 @@ struct Typechecker {
                 }
             }
         }
+
+        for record in parsed_namespace.records.iterator() {
+            match record.record_type {
+                SumEnum | ValueEnum => {
+                    let enum_id = .find_enum_in_scope(scope_id, name: record.name)
+                    if not enum_id.has_value() {
+                        .compiler.panic("can't find enum that has been previous added")
+                    }
+                    .typecheck_enum(record, enum_id: enum_id!, parent_scope_id: scope_id)
+                }
+                else => {}
+            }
+        }
+
         // 4. Typecheck functions
         for fun in parsed_namespace.functions.iterator() {
             .typecheck_function_predecl(parsed_function: fun, parent_scope_id: scope_id)
@@ -2358,16 +2372,7 @@ struct Typechecker {
                     }
                     .typecheck_struct(record, struct_id: struct_id!, parent_scope_id: scope_id)
                 }
-                SumEnum | ValueEnum => {
-                    let enum_id = .find_enum_in_scope(scope_id, name: record.name)
-                    if not enum_id.has_value() {
-                        .compiler.panic("can't find enum that has been previous added")
-                    }
-                    .typecheck_enum(record, enum_id: enum_id!, parent_scope_id: scope_id)
-                }
-                else => {
-                    todo(format("typecheck_namespace_declarations implement parsion of record type {}", record.record_type))
-                }
+                else => {}
             }
         }
 
