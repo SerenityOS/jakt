@@ -2401,7 +2401,9 @@ struct Parser {
                 else => ParsedMatchBody::Expression(.parse_expression(allow_assignments: false))
             }
 
-            cases.push(ParsedMatchCase(patterns, marker_span, body))
+            for pattern in patterns.iterator() {
+                cases.push(ParsedMatchCase(patterns: [pattern], marker_span, body))
+            }
 
             if .index == pattern_start_index {
                 // Parser didn't advance, bail.
@@ -2448,7 +2450,7 @@ struct Parser {
         | QuotedString
         | SingleQuotedString
         | SingleQuotedByteString
-        | LParen => ParsedMatchPattern::Expression(.parse_expression(allow_assignments: false))
+        | LParen => ParsedMatchPattern::Expression(.parse_operand())
 
         Else => {
             .index++
