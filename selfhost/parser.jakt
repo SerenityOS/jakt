@@ -2057,12 +2057,20 @@ struct Parser {
             yield .parse_set_literal()
         }
         Ampersand => .parse_ampersand()
+        Asterisk => .parse_asterisk()
         else => {
             let span = .current().span()
             .index++
             .error("Unsupported expression", span)
             yield ParsedExpression::Garbage(span)
         }
+    }
+
+    function parse_asterisk(mut this) throws -> ParsedExpression {
+        let start = .current().span()
+        .index++
+        let expr = .parse_operand()
+        return ParsedExpression::UnaryOp(expr, op: UnaryOperator::Dereference, span: merge_spans(start, .current().span()))
     }
 
     function parse_ampersand(mut this) throws -> ParsedExpression {
