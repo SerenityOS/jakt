@@ -7,8 +7,12 @@
 
 set -e
 
-temp_dir=$1
+# Since we're running the output binary from a different
+# working directory, we need the full path of the binary.
+temp_dir=$(realpath $1)
 file=$2
+
+file_cwd=$(dirname $file)
 
 # Generate C++ code into 
 build/main $2 > $temp_dir/output.cpp
@@ -26,5 +30,7 @@ clang++ -fcolor-diagnostics \
     -o $temp_dir/output \
     $temp_dir/output.cpp
 
+pushd $file_cwd >/dev/null 2>/dev/null
 # Run
 $temp_dir/output
+popd >/dev/null 2>/dev/null
