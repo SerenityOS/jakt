@@ -4752,6 +4752,9 @@ struct Typechecker {
         for value in values.iterator() {
             let checked_expr = .typecheck_expression(value, scope_id, safety_mode, type_hint: inner_hint)
             let current_value_type_id = expression_type(checked_expr)
+            if current_value_type_id.equals(void_type_id()) {
+                .error("Cannot create an array with values of type void\n", span)
+            }
 
             if inner_type_id.equals(unknown_type_id()) {
                 inner_type_id = current_value_type_id

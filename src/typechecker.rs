@@ -4784,7 +4784,7 @@ pub fn typecheck_expression(
                 if inner_type_id == UNKNOWN_TYPE_ID {
                     if current_value_type_id == VOID_TYPE_ID {
                         error = error.or(Some(JaktError::TypecheckError(
-                            "cannot create an array with values of type void".to_string(),
+                            "Cannot create an array with values of type void".to_string(),
                             v.span(),
                         )))
                     }
