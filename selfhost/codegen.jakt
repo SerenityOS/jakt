@@ -1924,10 +1924,11 @@ struct CodeGenerator {
             output += "TRY("
         }
         match call.name {
-            "print" | "println" | "eprintln" | "format" => {
+            "print" | "println" | "eprintln" | "eprint" | "format" => {
                 let helper = match call.name {
                     "print" => "out"
                     "println" => "outln"
+                    "eprint" => "warn"
                     "eprintln" => "warnln"
                     "format" => "String::formatted"
                     else => ""
