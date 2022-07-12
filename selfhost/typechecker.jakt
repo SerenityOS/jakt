@@ -1401,7 +1401,7 @@ struct Typechecker {
                         }
                         output += .type_name(arg)
                     }
-                    output += "}"
+                    output += ")"
                 } else if id.equals(weak_ptr_struct_id) {
                     output = format("weak {}?", .type_name(args[0]))
                 } else {
