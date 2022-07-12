@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "dereference of a non-pointer value"
+/// - error: "Dereference of a non-pointer value"
 
 function main() {
     let x = 4
