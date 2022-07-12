@@ -3602,6 +3602,9 @@ struct Typechecker {
             Is | IsEnumVariant => {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: builtin(BuiltinType::Bool))
             }
+            RawAddress => {
+                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: .find_or_add_type_id(Type::RawPtr(expr_type_id)))
+            }
             else => {
                 todo(format("typecheck_unary_operation: expr:{}, op:{}", checked_expr, checked_op))
             }
