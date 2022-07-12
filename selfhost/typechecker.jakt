@@ -5481,7 +5481,7 @@ struct Typechecker {
         }
 
         match call.name {
-            "print" | "println" | "eprintln" | "format" => {
+            "print" | "println" | "eprintln" | "eprint" | "format" => {
                 let none_type_hint: TypeId? = None
                 for arg in call.args.iterator() {
                     let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: none_type_hint)
