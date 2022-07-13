@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Main function must return c_int\n"
+/// - error: Main function must return c_int
 
 function main(x: [String]) -> i64 {
     return 0
