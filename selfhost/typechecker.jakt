@@ -119,6 +119,7 @@ enum BuiltinType: usize {
     String = 13
     CChar = 14
     CInt = 15
+    Unknown = 16
 }
 
 boxed enum Type {
@@ -138,6 +139,7 @@ boxed enum Type {
     JaktString
     CChar
     CInt
+    Unknown
     TypeVariable(String)
     GenericInstance(id: StructId, args: [TypeId])
     GenericEnumInstance(id: EnumId, args: [TypeId])
@@ -889,7 +891,7 @@ struct CheckedCall {
     callee_throws: bool
 }
 
-function unknown_type_id() -> TypeId => TypeId(module: ModuleId(id: 0), id: 0)
+function unknown_type_id() -> TypeId => builtin(BuiltinType::Unknown)
 function void_type_id() -> TypeId => builtin(BuiltinType::Void)
 
 function builtin(anon builtin: BuiltinType) -> TypeId {
@@ -1198,6 +1200,7 @@ struct Typechecker {
                 Type::JaktString,
                 Type::CChar,
                 Type::CInt,
+                Type::Unknown,
             ],
             variables: [],
             imports: [],
@@ -1346,6 +1349,7 @@ struct Typechecker {
             CInt => "c_int"
             Bool => "bool"
             Void => "void"
+            Unknown => "unknown"
             JaktString => "String"
             Enum(id) => .get_enum(id).name
             Struct(id) => .get_struct(id).name
@@ -2949,8 +2953,8 @@ struct Typechecker {
         // Infer return type if necessary
         // If the return type is unknown, and the function starts with a return statement,
         // we infer the return type from its expression.
-        let UNKNOWN_TYPE_ID = TypeId(module: ModuleId(id: 0), id: 0)
-        let VOID_TYPE_ID = builtin(BuiltinType::Void)
+        let UNKNOWN_TYPE_ID = unknown_type_id()
+        let VOID_TYPE_ID = void_type_id()
         mut return_type_id = VOID_TYPE_ID
         if function_return_type_id.equals(UNKNOWN_TYPE_ID) {
             if block.statements.is_empty() {
@@ -3029,6 +3033,7 @@ struct Typechecker {
 
         let optional_struct_id = .find_struct_in_prelude("Optional")
         let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
+        let array_struct_id = .find_struct_in_prelude("Array")
 
         match lhs_type {
             TypeVariable() => {
@@ -3133,6 +3138,12 @@ struct Typechecker {
                                     return false
                                 }
                                 ++idx
+                            }
+                        } else if (lhs_struct_id.equals(array_struct_id)) {
+                            let array_value_type_id = args[0]
+
+                            if (array_value_type_id.equals(unknown_type_id())) {
+                                return true
                             }
                         } else {
                             .error(
@@ -4586,7 +4597,7 @@ struct Typechecker {
                 }
                 else => {
                     .error("Forced unwrap only works on Optional", span)
-                    yield TypeId(module: ModuleId(id: 0), id: 0)
+                    yield unknown_type_id()
                 }
             }
 
@@ -5256,7 +5267,7 @@ struct Typechecker {
                 }
             }
         }
-
+        
         return CheckedExpression::Match(expr: checked_expr, match_cases: checked_cases, span, type_id: final_result_type ?? void_type_id(), all_variants_constant: true)
     }
 
@@ -5268,7 +5279,7 @@ struct Typechecker {
 
                 // FIXME: Check that this is not the wrong way around
                 if not checked_block.definitely_returns {
-                    let block_type_id = checked_block.yielded_type ?? builtin(BuiltinType::Void)
+                    let block_type_id = checked_block.yielded_type ?? void_type_id()
                     let yield_span = block.find_yield_span() ?? span
 
                     if result_type.has_value() {
@@ -5312,7 +5323,7 @@ struct Typechecker {
                 yield CheckedMatchBody::Expression(checked_expression)
             }
         }
-        return (checked_match_body, result_type ?? unknown_type_id())
+        return (checked_match_body, result_type ?? void_type_id())
     }
 
     function typecheck_dictionary(mut this, values: [(ParsedExpression, ParsedExpression)], span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
