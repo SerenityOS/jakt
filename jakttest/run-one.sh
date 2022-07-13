@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # run-one.sh <temp-dir> <file>
 
 # NOTE: we need this because selfhost doesn't yet have a way to specify
