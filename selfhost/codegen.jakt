@@ -816,7 +816,7 @@ struct CodeGenerator {
     function codegen_enum_predecl(mut this, enum_: CheckedEnum) throws -> String {
         mut output = ""
 
-        if not enum_.underlying_type_id.equals(unknown_type_id()) {
+        if not enum_.underlying_type_id.equals(void_type_id()) {
             if .program.is_integer(enum_.underlying_type_id) {
                 return format("enum class {}: {};", enum_.name, .codegen_type(enum_.underlying_type_id))
             } else {
@@ -858,7 +858,7 @@ struct CodeGenerator {
 
     function codegen_enum(mut this, enum_: CheckedEnum) throws -> String {
         mut output = ""
-        if not enum_.underlying_type_id.equals(unknown_type_id()) {
+        if not enum_.underlying_type_id.equals(void_type_id()) {
             if .program.is_integer(enum_.underlying_type_id) {
                 output += "enum class " + enum_.name + ": " + .codegen_type(enum_.underlying_type_id) + " {\n"
                 for variant in enum_.variants.iterator() {
@@ -1148,7 +1148,7 @@ struct CodeGenerator {
                 else => {
                     panic("Internal error: range expression doesn't have Range type")
                     // FIXME: panic() should be "noreturn" and this can be removed
-                    yield TypeId(module: ModuleId(id: 0), id: 0)
+                    yield unknown_type_id()
                 }
             }
             output += "("
@@ -1549,7 +1549,7 @@ struct CodeGenerator {
 
         let needs_deref = enum_.is_boxed or .codegen_expression(expr) == "this"
 
-        if enum_.underlying_type_id.equals(unknown_type_id()) {
+        if enum_.underlying_type_id.equals(void_type_id()) {
             output += "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
             output += .codegen_type(type_id)
             output += ", "
@@ -1641,6 +1641,7 @@ struct CodeGenerator {
             output += "}/*switch end*/\n"
             output += "}()\n))"
         } else {
+            todo("underlying type enum match")
             // FIXME: underlying type enum match
         }
 
