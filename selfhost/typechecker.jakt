@@ -5357,13 +5357,13 @@ struct Typechecker {
                 current_scope_id = scope_id
                 continue
             }
-            let maybe_struct_scope = .find_struct_in_scope(scope_id, name: scope_name)
+            let maybe_struct_scope = .find_struct_in_scope(scope_id: current_scope_id, name: scope_name)
             if maybe_struct_scope.has_value() {
                 let structure = .get_struct(maybe_struct_scope!)
                 current_scope_id = structure.scope_id
                 continue
             }
-            let maybe_enum_scope = .find_enum_in_scope(scope_id, name: scope_name)
+            let maybe_enum_scope = .find_enum_in_scope(scope_id: current_scope_id, name: scope_name)
             if maybe_enum_scope.has_value() {
                 let enum_ = .get_enum(maybe_enum_scope!)
                 current_scope_id = enum_.scope_id
