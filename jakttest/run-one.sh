@@ -30,7 +30,6 @@ clang++ -fcolor-diagnostics \
     -o $temp_dir/output \
     $temp_dir/output.cpp 2>$temp_dir/compile_cpp.err || exit 2
 
-pushd $file_cwd >/dev/null 2>/dev/null
-# Run
+# Run the executable inside the parent directory of the test file
+cd $file_cwd
 $temp_dir/output >$temp_dir/runtest.out 2>$temp_dir/runtest.err || exit 1
-popd >/dev/null 2>/dev/null
