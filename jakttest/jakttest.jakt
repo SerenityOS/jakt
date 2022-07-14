@@ -252,7 +252,7 @@ struct Options {
     function from_args(args: [String]) throws -> Options {
         let files: [String] = []
         let errors: [String] = []
-        mut options = Options(files, 
+        mut options = Options(files,
                               temp_dir: ""
                               errors
                               show_reasons: false
