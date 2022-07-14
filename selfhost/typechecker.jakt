@@ -4384,7 +4384,7 @@ struct Typechecker {
                 U16(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U16(val), span, type_id: builtin(BuiltinType::U16))
                 U32(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U32(val), span, type_id: builtin(BuiltinType::U32))
                 U64(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(val), span, type_id: builtin(BuiltinType::U64))
-                USize(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val), span, type_id: builtin(BuiltinType::U64))
+                USize(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val), span, type_id: builtin(BuiltinType::Usize))
                 F32(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F32(val), span, type_id: builtin(BuiltinType::F32))
                 F64(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F64(val), span, type_id: builtin(BuiltinType::F64))
             }
