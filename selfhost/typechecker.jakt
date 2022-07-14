@@ -4172,7 +4172,7 @@ struct Typechecker {
 
     function typecheck_try(mut this, stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
         let try_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "try")
-        let checked_stmt = .typecheck_statement(stmt, scope_id, safety_mode)
+        let checked_stmt = .typecheck_statement(stmt, scope_id: try_scope_id, safety_mode)
         let error_struct_id = .find_struct_in_prelude("Error")
         let error_decl = CheckedVariable(
             name: error_name
