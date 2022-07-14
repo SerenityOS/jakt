@@ -1,4 +1,4 @@
-cxxflags = -fcolor-diagnostics -std=c++20 -Wno-user-defined-literals -Wno-deprecated-declarations -Wno-parentheses-equality
+cxxflags = -fcolor-diagnostics -std=c++20 -Wno-user-defined-literals -Wno-deprecated-declarations -Wno-parentheses-equality -Wno-unqualified-std-cast-call
 
 rule cxx
     command = clang++ $cxxflags -o $out -I ../runtime $in 
