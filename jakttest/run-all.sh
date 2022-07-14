@@ -33,25 +33,6 @@ else
 }
 fi
 
-pass=0
-fail=0
-skipped=0
-
-count=0
-
-if [ -n "$1" ]
-then
-    TEST_FILES=$(find "$1" -type f -name "*.jakt")
-else
-    TEST_FILES="samples/**/*.jakt tests/**/*.jakt"
-fi
-
-for f in $TEST_FILES; do
-    count=$((count + 1))
-done
-
-
-
 # default JOBS to number of prossing units dictated by kernel
 if [[ $OSTYPE == 'darwin'* ]]; then
     [ -z "$JOBS" ] && JOBS=$(sysctl -n hw.ncpu)
@@ -63,4 +44,4 @@ tempdir=$(mktemp -d)
 
 trap "rm -rf $tempdir" EXIT
 
-./jakttest/build/jakttest --jobs "$JOBS" "$tempdir" ${TEST_FILES[@]}
+./jakttest/build/jakttest --jobs "$JOBS" "$tempdir"
