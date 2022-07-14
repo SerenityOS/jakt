@@ -1,0 +1,44 @@
+// Copyright (c) 2022, JT <jt@serenityos.org>
+// Copyright (c) 2022, Andreas Kling <kling@serenityos.org>
+//
+// SPDX-License-Identifier: BSD-2-Clause
+
+// common definitions for jakttest modules.
+
+enum LoggedTestResult {
+    Failed
+    Skipped
+    Passed
+
+    public function try_from_string(anon str: String) -> LoggedTestResult? {
+        if str == "SKIP" {
+            return LoggedTestResult::Skipped
+        }
+        if str == "FAIL" {
+            return LoggedTestResult::Failed
+        }
+        if str == "PASS" {
+            return LoggedTestResult::Passed
+        }
+        let nothing: LoggedTestResult? = None
+        return nothing
+    }
+
+    public function to_string(this) -> String => match this {
+        Failed => "FAIL"
+        Skipped => "SKIP"
+        Passed => "PASS"
+    }
+
+    public function to_colored_string(this) -> String => match this {
+        Failed => "\x1b[1;31mFAIL\x1b[m"
+        Skipped => "\x1b[1;33mSKIP\x1b[m"
+        Passed => "\x1b[1;32mPASS\x1b[m"
+    }
+
+    public function equals(this, anon other: LoggedTestResult) -> bool => match this {
+        Failed => other is Failed
+        Skipped => other is Skipped
+        Passed => other is Passed
+    }
+}

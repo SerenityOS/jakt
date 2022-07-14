@@ -1,0 +1,70 @@
+// Copyright (c) 2022, JT <jt@serenityos.org>
+// Copyright (c) 2022, Andreas Kling <kling@serenityos.org>
+//
+// SPDX-License-Identifier: BSD-2-Clause
+
+import common { LoggedTestResult }
+import utility { bytes_to_string, string_to_u8_array }
+
+
+
+enum LoggedTestDiff {
+    Deleted(LoggedTestResult)
+    New(LoggedTestResult)
+    Changed(previous: LoggedTestResult, now: LoggedTestResult)
+}
+
+function generate_log_diff(previous: [String:LoggedTestResult], now: [String:LoggedTestResult]) throws -> [String:LoggedTestDiff] {
+    mut diff: [String:LoggedTestDiff] = [:]
+
+    // detect deleted (in previous but not in now)
+    for file in previous.keys().iterator() {
+        if not now.contains(file) {
+            diff[file] = LoggedTestDiff::Deleted(previous[file])
+        }
+    }
+
+    // detect diff/new
+    for file in now.keys().iterator() {
+        if not previous.contains(file) {
+            diff[file] = LoggedTestDiff::New(now[file])
+        } else {
+            let prev = previous[file]
+            let next = now[file]
+            if not prev.equals(next) {
+                diff[file] = LoggedTestDiff::Changed(previous: prev,  now: next)
+            }
+        }
+    }
+
+    return diff
+}
+
+function read_log_file(path: String) throws -> [String:LoggedTestResult] {
+    // the file will contain lines in the format: {file} {result}
+    mut file = File::open_for_reading(path)
+    let contents = file.read_all()
+
+
+    let lines = bytes_to_string(contents).split('\n')
+
+    mut results: [String:LoggedTestResult] = [:]
+
+    for line in lines.iterator() {
+        let split = line.split(' ')
+        let filepath = split[0]
+        let result = LoggedTestResult::try_from_string(split[1])
+        if not result.has_value() {
+            continue
+        }
+        results[filepath] = result!
+    }
+    return results
+}
+
+function write_log_file(results: [String:LoggedTestResult], path: String) throws {
+    mut file = File::open_for_writing(path)
+    for filename in results.keys().iterator() {
+        file.write(string_to_u8_array(format("{} {}\n", filename, results[filename].to_string())))
+    }
+}

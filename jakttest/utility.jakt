@@ -17,3 +17,22 @@ struct Span {
     start: usize
     end: usize
 }
+
+function bytes_to_string(anon bytes: [u8]) throws -> String {
+    mut builder = StringBuilder::create()
+
+    for byte in bytes.iterator() {
+        builder.append(byte)
+    }
+
+    return builder.to_string()
+}
+
+function string_to_u8_array(anon str: String) throws -> [u8] {
+    mut array: [u8] = []
+    array.ensure_capacity(str.length())
+    for i in 0..str.length() {
+        array.push(str.byte_at(i))
+    }
+    return array
+}

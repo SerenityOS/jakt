@@ -8,7 +8,9 @@
 import error { JaktError, print_error }
 import parser { Parser }
 import lexer { Lexer }
-import utility { panic }
+import utility { panic, bytes_to_string }
+import common { LoggedTestResult }
+import diff
 
 namespace fs {
 
@@ -138,15 +140,6 @@ function print_usage()  {
     eprintln("\t--new-log <FILE>\t\tUse FILE as the write target for the new log.")
     eprintln("\t                \t\tDefaults to whatever --previous-log is. Overrides -W.")
     eprintln("\t-W,--no-overwrite-log\t\tDon't overwrite the logfile. Overrides --new-log.")
-}
-
-function string_to_u8_array(anon str: String) throws -> [u8] {
-    mut array: [u8] = []
-    array.ensure_capacity(str.length())
-    for i in 0..str.length() {
-        array.push(str.byte_at(i))
-    }
-    return array
 }
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
@@ -455,44 +448,6 @@ enum TestExitedResult {
     Failed(file: String)
 }
 
-
-enum LoggedTestResult {
-    Failed
-    Skipped
-    Passed
-
-    public function try_from_string(anon str: String) -> LoggedTestResult? {
-        if str == "SKIP" {
-            return LoggedTestResult::Skipped
-        }
-        if str == "FAIL" {
-            return LoggedTestResult::Failed
-        }
-        if str == "PASS" {
-            return LoggedTestResult::Passed
-        }
-        let nothing: LoggedTestResult? = None
-        return nothing
-    }
-
-    public function to_string(this) -> String => match this {
-        Failed => "FAIL"
-        Skipped => "SKIP"
-        Passed => "PASS"
-    }
-
-    public function to_colored_string(this) -> String => match this {
-        Failed => "\x1b[1;31mFAIL\x1b[m"
-        Skipped => "\x1b[1;33mSKIP\x1b[m"
-        Passed => "\x1b[1;32mPASS\x1b[m"
-    }
-
-    public function equals(this, anon other: LoggedTestResult) -> bool => match this {
-        Failed => other is Failed
-        Skipped => other is Skipped
-        Passed => other is Passed
-    }
-}
 
 // A test scheduler that has its process rate limited by
 // the number of directories it has available.
@@ -904,9 +859,9 @@ function main(args: [String]) {
     // try and show a diff
     if fs::exists(path: parsed_options.previous_log) {
         // read the file and construct a result
-        let previous_results = read_log_file(path: parsed_options.previous_log)
+        let previous_results = diff::read_log_file(path: parsed_options.previous_log)
 
-        let diff = generate_log_diff(previous: previous_results, now: results)
+        let diff = diff::generate_log_diff(previous: previous_results, now: results)
 
         if not diff.is_empty() {
             eprintln("Detected differences from previous log.")
@@ -930,7 +885,7 @@ function main(args: [String]) {
     }
 
     if parsed_options.overwrite_log {
-        write_log_file(results, path: parsed_options.new_log)
+        diff::write_log_file(results, path: parsed_options.new_log)
     }
 
     if run_result.failed_count > 0 {
@@ -938,79 +893,7 @@ function main(args: [String]) {
     }
 }
 
-enum LoggedTestDiff {
-    Deleted(LoggedTestResult)
-    New(LoggedTestResult)
-    Changed(previous: LoggedTestResult, now: LoggedTestResult)
-}
-
-function generate_log_diff(previous: [String:LoggedTestResult], now: [String:LoggedTestResult]) throws -> [String:LoggedTestDiff] {
-    mut diff: [String:LoggedTestDiff] = [:]
-
-    // detect deleted (in previous but not in now)
-    for file in previous.keys().iterator() {
-        if not now.contains(file) {
-            diff[file] = LoggedTestDiff::Deleted(previous[file])
-        }
-    }
-
-    // detect diff/new
-    for file in now.keys().iterator() {
-        if not previous.contains(file) {
-            diff[file] = LoggedTestDiff::New(now[file])
-        } else {
-            let prev = previous[file]
-            let next = now[file]
-            if not prev.equals(next) {
-                diff[file] = LoggedTestDiff::Changed(previous: prev,  now: next)
-            }
-        }
-    }
-
-    return diff
-}
-
 function write_to_file(file_contents: [u8], output_filename: String) throws {
     mut outfile = File::open_for_writing(output_filename)
     outfile.write(file_contents)
-}
-
-// TODO: move these to a different module
-function read_log_file(path: String) throws -> [String:LoggedTestResult] {
-    // the file will contain lines in the format: {file} {result}
-    mut file = File::open_for_reading(path)
-    let contents = file.read_all()
-
-
-    let lines = bytes_to_string(contents).split('\n')
-
-    mut results: [String:LoggedTestResult] = [:]
-
-    for line in lines.iterator() {
-        let split = line.split(' ')
-        let filepath = split[0]
-        let result = LoggedTestResult::try_from_string(split[1])
-        if not result.has_value() {
-            continue
-        }
-        results[filepath] = result!
-    }
-    return results
-}
-
-function write_log_file(results: [String:LoggedTestResult], path: String) throws {
-    mut file = File::open_for_writing(path)
-    for filename in results.keys().iterator() {
-        file.write(string_to_u8_array(format("{} {}\n", filename, results[filename].to_string())))
-    }
-}
-
-function bytes_to_string(anon bytes: [u8]) throws -> String {
-    mut builder = StringBuilder::create()
-
-    for byte in bytes.iterator() {
-        builder.append(byte)
-    }
-
-    return builder.to_string()
 }
