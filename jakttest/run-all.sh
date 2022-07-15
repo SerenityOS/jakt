@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# Copyright (c) 2022, Jesús Lapastora <cyber.gsuscode@gmail.com>
+#
+# SPDX-License-Identifier: BSD-2-Clause
 
 stat_format_flags="-c %Y"
 if [[ $OSTYPE == 'darwin'* ]]; then

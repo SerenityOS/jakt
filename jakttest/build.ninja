@@ -1,3 +1,7 @@
+#
+# Copyright (c) 2022, Jesús Lapastora <cyber.gsuscode@gmail.com>
+#
+# SPDX-License-Identifier: BSD-2-Clause
 cxxflags = -fcolor-diagnostics -std=c++20 -Wno-user-defined-literals -Wno-deprecated-declarations -Wno-parentheses-equality -Wno-unqualified-std-cast-call
 
 rule cxx

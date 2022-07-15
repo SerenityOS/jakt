@@ -1,6 +1,10 @@
 #!/bin/bash
-# run-one.sh <temp-dir> <file>
+#
+# Copyright (c) 2022, Jesús Lapastora <cyber.gsuscode@gmail.com>
+#
+# SPDX-License-Identifier: BSD-2-Clause
 
+# run-one.sh <temp-dir> <file>
 # NOTE: we need this because selfhost doesn't yet have a way to specify
 # build directories, and it doesn't use temporary directories for
 # temporary building (i.e building and running)
