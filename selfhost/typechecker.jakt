@@ -2124,6 +2124,21 @@ struct Typechecker {
                         requires_label: param.requires_label
                         variable: checked_variable
                     ))
+                } else {
+                    let param_type = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id, ignore_errors: false)
+
+                    let checked_variable = CheckedVariable(
+                        name: param.variable.name
+                        type_id: param_type
+                        is_mutable: param.variable.is_mutable
+                        definition_span: param.variable.span
+                        visibility: Visibility::Public
+                    )
+
+                    checked_function.params.push(CheckedParameter(
+                        requires_label: param.requires_label
+                        variable: checked_variable
+                    ))
                 }
             }
 
