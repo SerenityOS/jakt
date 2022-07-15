@@ -4696,74 +4696,7 @@ struct Typechecker {
             yield CheckedExpression::IndexedTuple(expr: checked_expr, index: index, span, type_id: expr_type_id)
         }
         Garbage(span) => CheckedExpression::Garbage(span)
-        NamespacedVar(name, namespace_, span) => {
-            mut scopes = [scope_id]
-            for ns in namespace_.iterator() {
-                let scope = scopes[scopes.size() - 1]
-                let ns_in_scope = .find_namespace_in_scope(scope_id: scope, name: ns)
-                let enum_in_scope = .find_enum_in_scope(scope_id: scope, name: ns)
-                mut next_scope = scope
-                if ns_in_scope.has_value() {
-                    next_scope = ns_in_scope!.0
-                } else if enum_in_scope.has_value() {
-                    next_scope = .get_enum(enum_in_scope!).scope_id
-                } else {
-                    .compiler.panic(format("Namespace {} not found", ns))
-                }
-                scopes.push(next_scope)
-            }
-
-            let scope = scopes.last()!
-
-            mut i = 0uz
-            let min_length = match scopes.size() <= namespace_.size() {
-                true => scopes.size()
-                else => namespace_.size()
-            }
-            mut checked_namespaces: [CheckedNamespace] = []
-            while i < min_length {
-                checked_namespaces.push(CheckedNamespace(name: namespace_[i], scope_id: scope))
-                i++
-            }
-
-            let var = .find_var_in_scope(scope_id: scope, var: name)
-            yield match var.has_value() {
-                true => CheckedExpression::NamespacedVar(namespaces: checked_namespaces, var: var!, span)
-                else => {
-                    let implicit_constructor_call = ParsedCall(namespace_, name, args: [], type_args: [])
-                    let none_expr: CheckedExpression? = None
-                    let parent_id: StructOrEnumId? = None
-                    let call_expression = .typecheck_call(call: implicit_constructor_call, caller_scope_id: scope_id, span, this_expr: none_expr, parent_id, safety_mode, type_hint, must_be_enum_constructor: true)
-                    let type_id = expression_type(call_expression)
-                    let checked_call = match call_expression {
-                        Call(call) => call
-                        else => {
-                            .compiler.panic("typecheck_call returned something other than a CheckedCall")
-                            // FIXME: Unreachable
-                            let none_function_id: FunctionId? = None
-                            yield CheckedCall(namespace_: [], name: "", args: [], type_args: [], function_id: none_function_id, return_type: builtin(BuiltinType::Void), callee_throws: true)
-                        }
-                    }
-                    yield match .compiler.errors.is_empty() {
-                        true => CheckedExpression::Call(call: checked_call, span, type_id)
-                        else => {
-                            .error(format("Variable '{}' not found", name), span)
-                            yield CheckedExpression::NamespacedVar(
-                                namespaces: checked_namespaces,
-                                var: CheckedVariable(
-                                    name,
-                                    type_id: unknown_type_id(),
-                                    is_mutable: false,
-                                    definition_span: span
-                                    visibility: Visibility::Public
-                                ),
-                                span
-                            )
-                        }
-                    }
-                }
-            }
-        }
+        NamespacedVar(name, namespace_, span) => .typecheck_namespaced_var_or_simple_enum_constructor_call(name, namespace_, scope_id, safety_mode, type_hint, span)
         Match(expr, cases, span) => .typecheck_match(expr, cases, span, scope_id, safety_mode)
         JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode, type_hint)
         Set(values, span) => .typecheck_set(values, span, scope_id, safety_mode, type_hint)
@@ -4772,6 +4705,72 @@ struct Typechecker {
 
             yield CheckedExpression::Boolean(val: false, span: Span(file_id: .compiler.current_file!, start: 0, end: 0))
         }
+    }
+
+    function typecheck_namespaced_var_or_simple_enum_constructor_call(mut this, name: String, namespace_: [String], scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?, span: Span) throws -> CheckedExpression {
+        mut scopes = [scope_id]
+        for ns in namespace_.iterator() {
+            let scope = scopes[scopes.size() - 1]
+            let ns_in_scope = .find_namespace_in_scope(scope_id: scope, name: ns)
+            let enum_in_scope = .find_enum_in_scope(scope_id: scope, name: ns)
+            mut next_scope = scope
+            if ns_in_scope.has_value() {
+                next_scope = ns_in_scope!.0
+            } else if enum_in_scope.has_value() {
+                next_scope = .get_enum(enum_in_scope!).scope_id
+            } else {
+                .compiler.panic(format("Namespace {} not found", ns))
+            }
+            scopes.push(next_scope)
+        }
+
+        let scope = scopes.last()!
+
+        mut i = 0uz
+        let min_length = match scopes.size() <= namespace_.size() {
+            true => scopes.size()
+            else => namespace_.size()
+        }
+        mut checked_namespaces: [CheckedNamespace] = []
+        while i < min_length {
+            checked_namespaces.push(CheckedNamespace(name: namespace_[i], scope_id: scope))
+            i++
+        }
+
+        let var = .find_var_in_scope(scope_id: scope, var: name)
+        if var.has_value() {
+            return CheckedExpression::NamespacedVar(namespaces: checked_namespaces, var: var!, span)
+        }
+
+        let implicit_constructor_call = ParsedCall(namespace_, name, args: [], type_args: [])
+        let none_expr: CheckedExpression? = None
+        let parent_id: StructOrEnumId? = None
+        let call_expression = .typecheck_call(call: implicit_constructor_call, caller_scope_id: scope_id, span, this_expr: none_expr, parent_id, safety_mode, type_hint, must_be_enum_constructor: true)
+        let type_id = expression_type(call_expression)
+        let call = match call_expression {
+            Call(call) => call
+            else => {
+                .compiler.panic("typecheck_call returned something other than a CheckedCall")
+                // FIXME: Unreachable
+                let none_function_id: FunctionId? = None
+                yield CheckedCall(namespace_: [], name: "", args: [], type_args: [], function_id: none_function_id, return_type: builtin(BuiltinType::Void), callee_throws: true)
+            }
+        }
+        if .compiler.errors.is_empty() {
+            return CheckedExpression::Call(call, span, type_id)
+        }
+        .error(format("Variable '{}' not found", name), span)
+        return CheckedExpression::NamespacedVar(
+            namespaces: checked_namespaces,
+            var: CheckedVariable(
+                name,
+                type_id: unknown_type_id(),
+                is_mutable: false,
+                definition_span: span
+                visibility: Visibility::Public
+            ),
+            span
+        )
     }
 
     function typecheck_array(mut this, scope_id: ScopeId, values: [ParsedExpression], fill_size: ParsedExpression?, span: Span, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
