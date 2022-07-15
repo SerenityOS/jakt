@@ -53,6 +53,8 @@ namespace fs {
         return results
     }
 
+    extern function mkdir(path: String) throws
+
 }
 
 
@@ -67,16 +69,17 @@ namespace process {
     extern function forcefully_kill_process(pid: i32) throws
 }
 
-namespace fs {
-    extern function mkdir(path: String) throws
+namespace os {
+    /// Calls sysconf(_SC_NPROCESSORS_ONLN) to get the number of CPUs available
+    extern function get_num_cpus() throws -> usize
 }
 
 function print_usage()  {
     eprintln("usage: jakttest [OPTIONS...] <temp-dir> [<path> ...]")
     eprintln("OPTIONS:")
     eprintln("\t-h\t\tShow this message and exit.")
-    eprintln("\t-j,--jobs <JOBS>\t\tUse JOBS processes. Defaults to 8.")
     eprintln("\t--show-reasons\t\tShow the reasons why tests that fail do so.")
+    eprintln("\t-j,--jobs <JOBS>\t\tUse JOBS processes. Defaults to the number of available CPUs.")
 }
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
@@ -142,19 +145,19 @@ function strip_line_breaks(anon input: String) throws -> String {
     return builder.to_string()
 }
 
-function u64_from_ascii_digit(anon byte: u8) -> u64? {
+function usize_from_ascii_digit(anon byte: u8) -> usize? {
     if byte >= b'0' and byte <= b'9' {
-        return (byte - b'0') as! u64
+        return (byte - b'0') as! usize
     }
     return None
 }
 
-function u64_from_ascii_digits(anon digits: String) -> u64? {
-    mut value = 0u64
+function usize_from_ascii_digits(anon digits: String) -> usize? {
+    mut value = 0uz
 
     for index in 0..digits.length() {
         let byte = digits.byte_at(index)
-        let digit = u64_from_ascii_digit(byte)
+        let digit = usize_from_ascii_digit(byte)
         if not digit.has_value() {
             return None
         }
@@ -171,7 +174,7 @@ struct Options {
     temp_dir: String
     errors: [String]
     show_reasons: bool
-    job_count: u64
+    job_count: usize
     help_wanted: bool
 
     function from_args(args: [String]) throws -> Options {
@@ -180,8 +183,8 @@ struct Options {
         mut options = Options(files
                               temp_dir: ""
                               errors
-                              show_reasons: true
-                              job_count: 8
+                              show_reasons: false
+                              job_count: 0
                               help_wanted: false)
 
         mut index = 1uz
@@ -198,7 +201,7 @@ struct Options {
                     options.errors.push("Used --jobs/-j without an argument")
                     break // we reached end of arguments
                 }
-                let jobs = u64_from_ascii_digits(args[index])
+                let jobs = usize_from_ascii_digits(args[index])
                 if not jobs.has_value() or jobs! == 0 {
                     options.errors.push("--jobs/-j needs a positive integer as its argument")
                 } else {
@@ -238,6 +241,11 @@ struct Options {
             fs::get_jakt_files_under(directory: "samples", results: options.files)
             fs::get_jakt_files_under(directory: "tests",   results: options.files)
         }
+
+        if options.job_count == 0 {
+            options.job_count = os::get_num_cpus()
+        }
+
         return options
     }
 }
@@ -423,9 +431,6 @@ struct TestScheduler {
                     }
                     .failed_count++
                 }
-
-
-
             }
         }
     }

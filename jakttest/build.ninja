@@ -22,6 +22,6 @@ build build: mkdir
 # NOTE: pipe `|` is for implicit dependencies, so that ninja considers the target outdated if any
 # of those have changed, even if it's not stated as an input.
 build build/jakttest.cpp: jakttest | jakttest.jakt utility.jakt parser.jakt lexer.jakt error.jakt
-build build/jakttest: cxx build/jakttest-patched.cpp process.cpp fs.cpp | process.h fs.h
+build build/jakttest: cxx build/jakttest-patched.cpp process.cpp fs.cpp os.cpp | process.h fs.h os.h
 build build/jakttest-patched.cpp: patch-includes build/jakttest.cpp | patch-includes.py
 default build/jakttest
