@@ -490,7 +490,7 @@ struct Parser {
 
     function peek(this, anon steps: usize) -> Token {
         if .eof() or (steps + .index) >= .tokens.size()  {
-            return .tokens[.tokens.size() - 1]
+            return .tokens.last()!
         }
         return .tokens[.index + steps]
     }
