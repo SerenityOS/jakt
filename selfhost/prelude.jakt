@@ -38,6 +38,8 @@ extern struct Array<T> {
     function push(mut this, anon value: T) throws
     function pop(mut this) -> T?
     function iterator(this) -> ArrayIterator<T>
+    function first(this) -> T?
+    function last(this) -> T?
 }
 
 extern struct String {

@@ -333,6 +333,20 @@ public:
         return m_storage->unsafe_data();
     }
 
+    Optional<T> first() const
+    {
+        if (is_empty())
+            return {};
+        return at(0);
+    }
+
+    Optional<T> last() const
+    {
+        if (is_empty())
+            return {};
+        return at(size() - 1);
+    }
+
 private:
     explicit Array(NonnullRefPtr<Storage> storage)
         : m_storage(storage)
