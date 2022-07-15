@@ -2310,7 +2310,7 @@ struct Typechecker {
                 mut return_type_id: TypeId = builtin(BuiltinType::Void)
                 if function_return_type_id.equals(unknown_type_id()) {
                     if not block.statements.is_empty() {
-                        let ret = block.statements[block.statements.size() - 1]
+                        let ret = block.statements.last()!
                         // expression_type
                         match ret {
                             Return(val) => {
@@ -2653,7 +2653,7 @@ struct Typechecker {
             mut module = .current_module()
             module.functions.push(checked_constructor)
 
-            mut func = module.functions[module.functions.size() - 1]
+            mut func = module.functions.last()!
             for field_id in .get_struct(struct_id).fields.iterator() {
                 let field = .get_variable(field_id)
                 func.params.push(CheckedParameter(
@@ -2976,7 +2976,7 @@ struct Typechecker {
             if block.statements.is_empty() {
                 return_type_id = VOID_TYPE_ID
             } else {
-                let last_stmt: CheckedStatement = block.statements[block.statements.size() - 1]
+                let last_stmt: CheckedStatement = block.statements.last()!
                 match last_stmt {
                     CheckedStatement::Return(val) => {
                         if val.has_value() {
@@ -4713,7 +4713,7 @@ struct Typechecker {
                 scopes.push(next_scope)
             }
 
-            let scope = scopes[scopes.size() - 1]
+            let scope = scopes.last()!
 
             mut i = 0uz
             let min_length = match scopes.size() <= namespace_.size() {
@@ -5205,7 +5205,7 @@ struct Typechecker {
                                 final_result_type = checked_tuple.1
 
                                 let checked_match_case = CheckedMatchCase::EnumVariant(
-                                    name: variant_names[variant_names.size() - 1].0
+                                    name: variant_names.last()!.0
                                     args: variant_arguments
                                     subject_type_id
                                     index: 0

@@ -2263,7 +2263,7 @@ struct CodeGenerator {
                     panic("Must be in a block to yield")
                 }
 
-                let block_tuple = .entered_yieldable_blocks[.entered_yieldable_blocks.size() - 1]
+                let block_tuple = .entered_yieldable_blocks.last()!
                 let block_var_name = block_tuple.0
                 let block_end_label = block_tuple.1
 
