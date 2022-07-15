@@ -4756,7 +4756,7 @@ struct Typechecker {
                 yield CheckedCall(namespace_: [], name: "", args: [], type_args: [], function_id: none_function_id, return_type: builtin(BuiltinType::Void), callee_throws: true)
             }
         }
-        if .compiler.errors.is_empty() {
+        if call.function_id.has_value() {
             return CheckedExpression::Call(call, span, type_id)
         }
         .error(format("Variable '{}' not found", name), span)
