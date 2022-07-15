@@ -1,3 +1,8 @@
+//
+// Copyright (c) 2022, Jesús Lapastora <cyber.gsuscode@gmail.com>
+//
+// SPDX-License-Identifier: BSD-2-Clause
+
 import error { JaktError, print_error }
 import parser { Parser }
 import lexer { Lexer }

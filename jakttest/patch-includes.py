@@ -1,5 +1,9 @@
 #!/bin/env python
-# ./patch.sh $in $out
+#
+# Copyright (c) 2022, Jesús Lapastora <cyber.gsuscode@gmail.com>
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
 # Add `#include "../process.h"` to the output file (.. because file is under build/)
 import sys
 

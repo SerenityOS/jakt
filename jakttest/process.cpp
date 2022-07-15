@@ -1,3 +1,7 @@
+//
+// Copyright (c) 2022, Jesús Lapastora <cyber.gsuscode@gmail.com>
+//
+// SPDX-License-Identifier: BSD-2-Clause
 #include "process.h"
 #include <sys/wait.h>
 #include <signal.h>
