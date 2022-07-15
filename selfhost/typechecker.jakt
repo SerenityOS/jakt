@@ -3050,6 +3050,21 @@ struct Typechecker {
         let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
         let array_struct_id = .find_struct_in_prelude("Array")
 
+        // This skips the type compatibility check if assigning a T to a T? or to a
+        // weak T? without going through `Some`.
+        match lhs_type {
+            Type::GenericInstance(id, args) => {
+                if id.equals(optional_struct_id) or id.equals(weakptr_struct_id) {
+                    if args.size() > 0 {
+                        if args[0].equals(rhs_type_id) {
+                            return true
+                        }
+                    }
+                }
+            }
+            else => {}
+        }
+
         match lhs_type {
             TypeVariable() => {
                 // If the call expects a generic type variable, let's see if we've already seen it
@@ -4585,7 +4600,10 @@ struct Typechecker {
         Var(name, span) => {
             let var = .find_var_in_scope(scope_id, var: name)
             return match var.has_value() { // FIXME: this wants to be a match on Optional instead of boolean
-                true => CheckedExpression::Var(var: var!, span)
+                true => {
+                    .unify_with_type(found_type: var!.type_id, expected_type: type_hint, span)
+                    yield CheckedExpression::Var(var: var!, span)
+                }
                 else => {
                     .error(format("Variable '{}' not found", name), span)
                     yield CheckedExpression::Garbage(span)
@@ -4948,11 +4966,26 @@ struct Typechecker {
         let type_to_match_on = .get_type(subject_type_id)
         mut checked_cases: [CheckedMatchCase] = []
 
-        mut generic_inferences: [String: String] = [:] // FIXME: Use correct generic_inferences dictionary
+        mut generic_inferences: [String: String] = match type_to_match_on {
+            Type::GenericEnumInstance(id, args: inner_type_ids) => {
+                let enum_ = .get_enum(id)
+                mut tmp_dict: [String: String] = [:]
+                if enum_.generic_parameters.size() == inner_type_ids.size() {
+                    for x in 0..enum_.generic_parameters.size() {
+                        tmp_dict.set(key: enum_.generic_parameters[x].to_string(), value: inner_type_ids[x].to_string())
+                    }
+                } else {
+                    panic("Generic enum instance arguments and enum inner types should be the same size")
+                }
+                yield tmp_dict
+            }
+            else => [:]
+        }
+
         mut final_result_type: TypeId? = None
 
         match type_to_match_on {
-            Enum(enum_id) => {
+            Enum(enum_id) | Type::GenericEnumInstance(id: enum_id, args) => {
                 let enum_ = .get_enum(enum_id)
                 mut seen_catch_all = false
                 mut catch_all_span: Span? = None
@@ -5002,21 +5035,24 @@ struct Typechecker {
                                             .error(format("Match case '{}' cannot have arguments", name), span)
                                         }
                                     }
-                                    Typed(name, type_id, span) => {
-                                        covered_variants.add(name)
-                                        if variant_arguments.size() != 1 {
-                                            .error("Match case '{}' must have exactly one argument", span)
-                                        }
+                                    Typed(name, type_id: type_id_, span) => {
+                                        if not variant_arguments.is_empty() {
+                                            covered_variants.add(name)
+                                            if variant_arguments.size() != 1 {
+                                                .error("Match case '{}' must have exactly one argument", span)
+                                            }
 
-                                        let variant_argument = variant_arguments[0]
-                                        let var_id = module.add_variable(CheckedVariable(
-                                            name: variant_argument.binding
-                                            type_id
-                                            is_mutable: false
-                                            definition_span: span
-                                            visibility: Visibility::Public
-                                        ))
-                                        .add_var_to_scope(scope_id: new_scope_id, name: variant_argument.binding, var_id, span)
+                                            let type_id = .substitute_typevars_in_type(type_id: type_id_, generic_inferences)
+                                            let variant_argument = variant_arguments[0]
+                                            let var_id = module.add_variable(CheckedVariable(
+                                                name: variant_argument.binding
+                                                type_id
+                                                is_mutable: false
+                                                definition_span: span
+                                                visibility: Visibility::Public
+                                            ))
+                                            .add_var_to_scope(scope_id: new_scope_id, name: variant_argument.binding, var_id, span)
+                                        }
                                     }
                                     StructLike(name, fields) => {
                                         covered_variants.add(name)
@@ -5068,7 +5104,7 @@ struct Typechecker {
 
                                             match matched_field_variable.has_value() {
                                                 true => {
-                                                    let substituted_type_id = .substitute_typevars_in_type(type_id: matched_field_variable!.type_id, generic_inferences: [:])
+                                                    let substituted_type_id = .substitute_typevars_in_type(type_id: matched_field_variable!.type_id, generic_inferences)
                                                     let matched_span = matched_field_variable!.definition_span
                                                     // FIXME: dump type hints
 
@@ -5254,7 +5290,7 @@ struct Typechecker {
                                 .check_types_for_compat(
                                     lhs_type_id: expression_type(checked_expression)
                                     rhs_type_id: subject_type_id
-                                    generic_inferences: [:] // FIXME: use correct generic inferences
+                                    generic_inferences
                                     span: case_.marker_span
                                 )
 
@@ -5723,7 +5759,20 @@ struct Typechecker {
         for type_arg in call.type_args.iterator() {
             checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id: caller_scope_id, ignore_errors: false))
         }
-        return CheckedExpression::Call(call: CheckedCall(namespace_: resolved_namespaces, name: call.name, args, type_args: checked_type_args, function_id: resolved_function_id, return_type, callee_throws), span, type_id: return_type)
+
+        let checked_call = CheckedCall(
+            namespace_: resolved_namespaces, 
+            name: call.name, 
+            args, 
+            type_args: 
+            checked_type_args, 
+            function_id: resolved_function_id, 
+            return_type, 
+            callee_throws
+        )
+
+        let type_id = .unify_with_type(found_type: return_type, expected_type: type_hint, span: span)
+        return CheckedExpression::Call(call: checked_call, span, type_id)
     }
 
     function resolve_type_var(this, type_var_type_id: TypeId, scope_id: ScopeId) throws -> TypeId {
