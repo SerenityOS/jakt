@@ -1656,8 +1656,8 @@ struct Typechecker {
 
     function add_type_to_scope(mut this, scope_id: ScopeId, type_name: String, type_id: TypeId, span: Span) throws -> bool {
         mut scope = .get_scope(id: scope_id)
-        let found_type_id = .find_type_in_scope(scope_id, name: type_name)
-        if found_type_id.has_value() {
+        let found_type_id = scope.types.get(type_name)
+        if found_type_id.has_value() and not found_type_id!.equals(type_id) {
             // FIXME: Show hint of the original definition, once we store the name span.
             .error(
                 format("Redefinition of type ‘{}’", type_name)
