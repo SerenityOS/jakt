@@ -1,0 +1,30 @@
+/// Expect:
+/// - output: "PASS\n0\n2\n4\n6\n8\n"
+
+function test1(anon x: i64) -> String {
+    guard x == 1 else {
+        return "FAIL"
+    }
+
+    return "PASS"
+}
+
+function test2() {
+    mut i = 0
+    loop {
+        guard i % 2 == 0 else {
+            i++
+            continue
+        }
+        guard i < 10 else {
+            break
+        }
+
+        println("{}", i++)
+    }
+}
+
+function main() {
+    println("{}", test1(1))
+    test2()
+}

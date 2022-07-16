@@ -1,0 +1,8 @@
+/// Expect:
+/// - error: "Expected `else` keyword"
+
+function a() {
+    guard true
+}
+
+function main() {}
