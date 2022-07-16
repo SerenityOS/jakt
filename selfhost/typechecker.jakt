@@ -4091,6 +4091,7 @@ struct Typechecker {
         If(condition, then_block, else_statement, span) => .typecheck_if(condition, then_block, else_statement, scope_id, safety_mode, span)
         Garbage(span) => CheckedStatement::Garbage(span)
         For(iterator_name, name_span, range, block, span) => .typecheck_for(iterator_name,  name_span, range, block, scope_id, safety_mode, span)
+        Guard(span) => CheckedStatement::Garbage(span) // TODO: implement
     }
 
     function typecheck_for(mut this, iterator_name: String, name_span: Span, range: ParsedExpression, block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
