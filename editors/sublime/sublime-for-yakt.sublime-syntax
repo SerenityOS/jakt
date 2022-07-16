@@ -1260,7 +1260,7 @@ contexts:
     - match: \b(mutable|public|unsafe|class|throws)\b
       scope: storage.modifier.jakt
 
-    - match: \b(else|for|if|loop|match|try|while|yield)\b
+    - match: \b(else|for|if|loop|match|try|while|yield|guard)\b
       scope: keyword.control.jakt
 
     - match: \b(break|continue)\b

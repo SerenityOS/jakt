@@ -6,7 +6,7 @@ comment "//"
 color magenta "function [a-z_0-9]+"
 
 # Reserved words
-color yellow "\<(and|anon|boxed|break|catch|class|continue|cpp|defer|else|enum|extern|false|for|function|if|import|in|is|let|loop|match|mut|namespace|not|or|private|public|raw|return|restricted|struct|this|throw|throws|true|try|unsafe|weak|while|yield)\>"
+color yellow "\<(and|anon|boxed|break|catch|class|continue|cpp|defer|else|enum|extern|false|for|function|if|import|in|is|let|loop|match|mut|namespace|not|or|private|public|raw|return|restricted|struct|this|throw|throws|true|try|unsafe|weak|while|yield|guard)\>"
 
 # Constants
 color magenta "[A-Z][A-Z_0-9]+"
