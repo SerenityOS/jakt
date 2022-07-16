@@ -14,4 +14,5 @@ with open(target_file) as source, open(target_output, "w") as sink:
     sink.write('#include "../process.h"\n')
     sink.write('#include "../fs.h"\n')
     sink.write('#include "../os.h"\n')
+    sink.write('#include <signal.h>\n') # needed for sigwait()
     sink.write(source.read())

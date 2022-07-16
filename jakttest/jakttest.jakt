@@ -94,12 +94,16 @@ namespace fs {
 
 
 namespace process {
+    extern struct ExitPollResult {
+        function exit_code(this) -> i32
+        function pid(this) -> i32
+    }
     /// Starts a background job by means of fork() and exec(). Returns
     /// the PID of the launched process.
     extern function start_background_process(args: [String]) throws -> i32
     /// Checks whether a process has finished executing. Returns its
     /// exit code if it has.
-    extern function poll_process_exit(pid: i32) throws -> i32?
+    extern function poll_process_exit(pid: i32) throws -> ExitPollResult?
     /// Kills a process by sending SIGKILL to it
     extern function forcefully_kill_process(pid: i32) throws
 
@@ -401,108 +405,137 @@ struct TestScheduler {
     failed_reasons: [String:TestFailedReason]?
     // TODO: timeout
 
-    function poll_running_tests(mut this) throws {
-        // TODO: switch back to using dict iterator
-        // to debug weird String not having pointer
-        // (see https://discord.com/channels/830522505605283862/977605897964617771/995699296685011004)
-        for pid in .running_tests.keys().iterator() {
-            let poll_result = process::poll_process_exit(pid)
-            if poll_result.has_value() {
-                let exit_code = poll_result!
-                let test = .running_tests[pid]
-                .free_directories.push(test.directory_index)
-                .running_tests.remove(pid)
 
-                let maybe_stage = TestStage::from_exit_code(exit_code)
+    function on_test_exited(mut this, pid: i32, exit_code: i32) throws {
+        let test = .running_tests[pid]
+        .free_directories.push(test.directory_index)
+        .running_tests.remove(pid)
+        let maybe_stage = TestStage::from_exit_code(exit_code)
 
-                // unknown exit code. Assume that the job exited abruptly.
-                if not maybe_stage.has_value() {
-                    eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
-                    if .failed_reasons.has_value() {
-                        .failed_reasons![test.file_name] = TestFailedReason::AbruptExit(exit_code)
-                    }
-                    .failed_count++
-                    continue
-                }
-                let stage = maybe_stage!
+        // unknown exit code. Assume that the job exited abruptly.
+        if not maybe_stage.has_value() {
+            eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
+            if .failed_reasons.has_value() {
+                .failed_reasons![test.file_name] = TestFailedReason::AbruptExit(exit_code)
+            }
+            .failed_count++
+            return
+        }
+        let stage = maybe_stage!
 
-                if stage is CompileCpp {
-                    eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
-                    if .failed_reasons.has_value() {
-                        let path = format("{}/compile_cpp.err",
-                            .directories[test.directory_index])
-                        mut file = File::open_for_reading(path)
-                        let had = bytes_to_string(file.read_all())
-                        .failed_reasons![test.file_name] = TestFailedReason::ClangError(had)
-                    }
-                    .failed_count++
-                    continue
-                }
+        if stage is CompileCpp {
+            eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
+            if .failed_reasons.has_value() {
+                let path = format("{}/compile_cpp.err",
+                    .directories[test.directory_index])
+                mut file = File::open_for_reading(path)
+                let had = bytes_to_string(file.read_all())
+                .failed_reasons![test.file_name] = TestFailedReason::ClangError(had)
+            }
+            .failed_count++
+            return
+        }
 
-                // check the exit code before anything
-                let expected_stage = test.result.kind.to_stage()
+        // check the exit code before anything
+        let expected_stage = test.result.kind.to_stage()
 
 
-                if not stage.equals(expected_stage) {
-                    eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
-                    if .failed_reasons.has_value() {
+        if not stage.equals(expected_stage) {
+            eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
+            if .failed_reasons.has_value() {
 
-                        if not (stage is TranspileJakt) {
-                            panic("unreachable: Since clang++ errors and other codes get handled otherwise, only thing that could fail before its expected stage is Jakt to C++.")
-                        }
-
-                        let file_to_check = format("{}/compile_jakt.err"
-                                                   .directories[test.directory_index])
-
-                        mut file = File::open_for_reading(file_to_check)
-                        let error = bytes_to_string(file.read_all())
-
-                        .failed_reasons![test.file_name] = 
-                            TestFailedReason::ErroredAtEarlierStage(
-                                failed_stage: stage.to_string()
-                                error)
-
-                    }
-                    .failed_count++
-                    continue
+                if not (stage is TranspileJakt) {
+                    panic("unreachable: Since clang++ errors and other codes get handled otherwise, only thing that could fail before its expected stage is Jakt to C++.")
                 }
 
-                // check the test result
-                let file_to_check = format("{}/{}"
-                                    .directories[test.directory_index]
-                                    test.result.kind.output_filename())
-
+                let file_to_check = format("{}/compile_jakt.err"
+                                           .directories[test.directory_index])
 
                 mut file = File::open_for_reading(file_to_check)
-                let output = file.read_all()
-                let expected = test.result.output
+                let error = bytes_to_string(file.read_all())
+
+                .failed_reasons![test.file_name] = 
+                    TestFailedReason::ErroredAtEarlierStage(
+                        failed_stage: stage.to_string()
+                        error)
+
+            }
+            .failed_count++
+            return
+        }
+
+        // check the test result
+        let file_to_check = format("{}/{}"
+                            .directories[test.directory_index]
+                            test.result.kind.output_filename())
 
 
-                let passed_test = match test.result.kind {
-                    Okay => compare_test(bytes: output, expected)
-                    RuntimeError | CompileError => compare_error(bytes: output, expected)
-                }
-                if passed_test {
-                    .passed_count++
-                } else {
-                    eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
-                    if .failed_reasons.has_value() {
-                        .failed_reasons![test.file_name] = match test.result.kind {
-                            Okay => TestFailedReason::StdoutUnmatched(had: bytes_to_string(output)
-                                                                      expected)
-                            RuntimeError => TestFailedReason::StderrUnmatched(had: bytes_to_string(output)
-                                                                      expected)
-                            CompileError => TestFailedReason::CompilerErrorUnmatched(had: bytes_to_string(output)
-                                                                             expected)
-                        }
-                    }
-                    .failed_count++
+        mut file = File::open_for_reading(file_to_check)
+        let output = file.read_all()
+        let expected = test.result.output
+
+
+        let passed_test = match test.result.kind {
+            Okay => compare_test(bytes: output, expected)
+            RuntimeError | CompileError => compare_error(bytes: output, expected)
+        }
+        if passed_test {
+            .passed_count++
+        } else {
+            eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
+            if .failed_reasons.has_value() {
+                .failed_reasons![test.file_name] = match test.result.kind {
+                    Okay => 
+                        TestFailedReason::StdoutUnmatched(
+                            had: bytes_to_string(output)
+                            expected)
+                    RuntimeError => 
+                        TestFailedReason::StderrUnmatched(
+                            had: bytes_to_string(output)
+                            expected)
+                    CompileError => 
+                        TestFailedReason::CompilerErrorUnmatched(
+                            had: bytes_to_string(output)
+                            expected)
                 }
             }
+            .failed_count++
         }
     }
 
-    function get_free_directory(mut this) -> usize? => .free_directories.pop()
+    function poll_running_tests(mut this) throws {
+        mut exited = process::poll_process_exit(pid: -1i32)
+        while exited.has_value() {
+            .on_test_exited(pid: exited!.pid(), exit_code: exited!.exit_code())
+            exited = process::poll_process_exit(pid: -1i32)
+        }
+    }
+
+    function wait_for_free_directory(mut this) throws -> usize {
+        // NOTE: `unsafe` creates its own scope (because variables *can* be
+        // created inside an unsafe block) but in turn the C++ generated is not
+        // inline, it's inside a block. Since we're using `set` to initialize it
+        // once, we can't separate initialization to a separate `unsafe` block.
+        // Maybe `unsafe inline` blocks that have the same scope as its parent
+        // scope could be a solution to this?
+        unsafe {
+            cpp { "sigset_t set;" }
+            cpp { "int signal;"   }
+            cpp { "sigemptyset(&set);" }
+            cpp { "sigaddset(&set, SIGCHLD);" }
+
+            while .free_directories.is_empty() {
+                // wait for sigchld
+                unsafe {
+                    cpp { "if (sigwait(&set, &signal) > 0)" }
+                    cpp { "    return Error::from_errno(errno);" }
+                }
+                // check if any test has exited
+                .poll_running_tests()
+            }
+        }
+        return .free_directories.pop()!
+    }
 
     function create(directories: [String], collect_reasons: bool) throws -> TestScheduler {
         mut running_tests: [i32:Test] = [:]
@@ -529,30 +562,34 @@ struct TestScheduler {
 
     public function run_tests(mut tests: [Test], directories: [String], collect_reasons: bool) throws -> TestsRunResult {
         let total_test_count = tests.size()
+        // create an empty handler so SIGCHLD is not ignored
+        unsafe {
+            cpp { "struct sigaction action{};" }
+            cpp { "action.sa_handler = [](int){};" }
+            cpp { "sigemptyset(&action.sa_mask);" }
+            cpp { "sigaddset(&action.sa_mask, SIGCHLD);" }
+            cpp { "action.sa_flags = SA_NOCLDSTOP;" }
+            cpp { "if (sigaction(SIGCHLD, &action, NULL) == -1)" }
+            cpp { "    return Error::from_errno(errno);" }
+        }
         mut scheduler = TestScheduler::create(directories, collect_reasons)
         // pre-allocate the command buffer to avoid allocating inside a loop
         mut command_buffer: [String] = ["./jakttest/run-one.sh" "" ""]
         while not tests.is_empty() {
-            let dir_index = scheduler.get_free_directory()
-            if dir_index.has_value() {
-                // we got a free directory! Let's launch a new test job!
-                mut test = tests.pop()!
-                test.directory_index = dir_index!
-                let directory = scheduler.directories[test.directory_index]
-                command_buffer[1] = directory
-                command_buffer[2] = test.file_name
-                let pid = process::start_background_process(args: command_buffer)
-                scheduler.running_tests[pid] = test
-                eprint("\r\x1b[2K[ \x1b[1;31m{}\x1b[m/\x1b[1;32m{}\x1b[m/{} ] Testing {}"
-                        scheduler.failed_count
-                        scheduler.passed_count
-                        total_test_count
-                        test.file_name)
-                unsafe { cpp { "fflush(stderr);" }}
-                continue
-            }
-
-            scheduler.poll_running_tests()
+            let dir_index = scheduler.wait_for_free_directory()
+            mut test = tests.pop()!
+            test.directory_index = dir_index
+            let directory = scheduler.directories[test.directory_index]
+            command_buffer[1] = directory
+            command_buffer[2] = test.file_name
+            let pid = process::start_background_process(args: command_buffer)
+            scheduler.running_tests[pid] = test
+            eprint("\r\x1b[2K[ \x1b[1;31m{}\x1b[m/\x1b[1;32m{}\x1b[m/{} ] Testing {}"
+                    scheduler.failed_count
+                    scheduler.passed_count
+                    total_test_count
+                    test.file_name)
+            unsafe { cpp { "fflush(stderr);" }}
         }
 
         while not scheduler.running_tests.is_empty() {
