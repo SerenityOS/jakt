@@ -1,5 +1,6 @@
 // Copyright (c) 2022, JT <jt@serenityos.org>
 // Copyright (c) 2022, Andreas Kling <kling@serenityos.org>
+// Copyright (c) 2022, Kyle Lanmon <kyle.lanmon@gmail.com>
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
@@ -117,6 +118,7 @@ enum Token {
     Weak(Span)
     While(Span)
     Yield(Span)
+    Guard(Span)
 
     // Catch-all for failed parses
     Garbage(Span)
@@ -222,6 +224,7 @@ enum Token {
         Weak(span) => span
         While(span) => span
         Yield(span) => span
+        Guard(span) => span
         Garbage(span) => span
     }
 
@@ -268,6 +271,7 @@ enum Token {
         "weak" => Token::Weak(span)
         "while" => Token::While(span)
         "yield" => Token::Yield(span)
+        "guard" => Token::Guard(span)
         else => Token::Identifier(name: string, span)
     }
 }
