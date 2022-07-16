@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Unknown type\n"
+/// - error: "Unknown type"
 
 function main() {
     let foo: ThisTypeDoesNotExist = 42
