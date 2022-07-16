@@ -57,6 +57,9 @@ function compare_error(bytes: [u8], expected: String) throws -> bool {
     let builder_output = builder.to_string()
     let stripped_expected = strip_line_breaks(expected)
 
+    // println("builder output: {}", builder_output)
+    // println("stripped_expected: {}", stripped_expected)
+
     if not builder_output.contains(stripped_expected) {
         // TODO: return more information about expected/parsed
         // for --show-reason flag
@@ -69,7 +72,12 @@ function strip_line_breaks(anon input: String) throws -> String {
     mut builder = StringBuilder::create();
     for i in 0..input.length() {
         let b = input.byte_at(i)
-        if b == b'\n' or b == b'\r' {
+        if b == b'\n' {
+            builder.append(b'\\')
+            builder.append(b'n')
+            continue
+        }
+        if b == b'\r' {
             continue
         }
         builder.append(b)
@@ -176,8 +184,9 @@ struct Options {
 }
 
 enum ResultKind {
-    Success
-    Failure
+    Okay
+    CompileError
+    RuntimeError
 }
 
 struct ExpectedResult {
@@ -248,17 +257,10 @@ struct TestScheduler {
                     // check the test result
                     let file_to_check = format("{}/{}"
                                         .directories[test.directory_index]
-                                        match exit_code {
-                                            // everything run and we expect the output
-                                            0i32 => "runtest.out"
-                                            // test failed; in that case we want the runtest.errfile
-                                            1i32 => "runtest.err"
-                                            // Jakt failed to build our sample
-                                            3i32 => "compile_jakt.err"
-                                            else => {
-                                                panic("unreachable: Job return at this point should be 0, 1, or 3")
-                                                yield ""
-                                            }
+                                        match test.result.kind {
+                                            Okay => "runtest.out"
+                                            RuntimeError => "runtest.err"
+                                            CompileError => "compile_jakt.err"
                                         })
 
                     mut file = File::open_for_reading(file_to_check)
@@ -266,8 +268,8 @@ struct TestScheduler {
                     let expected = test.result.output
 
                     let passed_test = match test.result.kind {
-                        Success => compare_test(bytes: output, expected)
-                        Failure => compare_error(bytes: output, expected)
+                        Okay => compare_test(bytes: output, expected)
+                        RuntimeError | CompileError => compare_error(bytes: output, expected)
                     }
                     if passed_test {
                         eprintln("[ \x1b[32;1mPASS\x1b[m ] {}", test.file_name)
@@ -385,12 +387,17 @@ function main(args: [String]) {
         let result = Parser::parse(input: contents)
         match result {
             SuccessTest(output) => {
-                tests.push(Test(result: ExpectedResult(kind: ResultKind::Success, output)
+                tests.push(Test(result: ExpectedResult(kind: ResultKind::Okay, output)
                                 file_name
                                 directory_index: 0))
             }
-            FailureTest(output) => {
-                tests.push(Test(result: ExpectedResult(kind: ResultKind::Failure, output)
+            CompileErrorTest(output) => {
+                tests.push(Test(result: ExpectedResult(kind: ResultKind::CompileError, output)
+                                file_name
+                                directory_index: 0))
+            }
+            RuntimeErrorTest(output) => {
+                tests.push(Test(result: ExpectedResult(kind: ResultKind::RuntimeError, output)
                                 file_name
                                 directory_index: 0))
             }
