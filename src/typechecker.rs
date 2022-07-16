@@ -740,14 +740,18 @@ impl Project {
     ) -> Result<(), JaktError> {
         let scope = self.get_scope_mut(scope_id);
 
-        for (existing_type, _, definition_span) in &scope.types {
+        for (existing_type, existing_type_id, definition_span) in &scope.types {
             if &type_name == existing_type {
-                return Err(JaktError::TypecheckErrorWithHint(
-                    format!("redefinition of type {}", type_name),
-                    span,
-                    format!("type {} was first defined here", type_name),
-                    *definition_span,
-                ));
+                if &type_id != existing_type_id {
+                    return Err(JaktError::TypecheckErrorWithHint(
+                        format!("redefinition of type {}", type_name),
+                        span,
+                        format!("type {} was first defined here", type_name),
+                        *definition_span,
+                    ));
+                } else {
+                    return Ok(());
+                }
             }
         }
         scope.types.push((type_name, type_id, span));
@@ -6982,7 +6986,7 @@ pub fn typecheck_call(
                     }
                 }
 
-                // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
+                // We've now seen all the arguments and should be able to substitute the return type, if it contains a
                 // type variable. For the moment, we'll just checked to see if it's a type variable.
                 if let Some(type_hint) = type_hint {
                     check_types_for_compat(
@@ -6993,8 +6997,20 @@ pub fn typecheck_call(
                         project,
                     );
                 }
+
                 return_type_id =
                     substitute_typevars_in_type(return_type_id, &generic_substitutions, project);
+
+                if let Some(type_hint) = type_hint {
+                    let err = check_types_for_compat(
+                        type_hint,
+                        return_type_id,
+                        &mut generic_substitutions,
+                        *span,
+                        project,
+                    );
+                    error = error.or(err);
+                }
 
                 resolved_namespaces = resolved_namespaces
                     .iter()
@@ -7193,6 +7209,10 @@ pub fn check_types_for_compat(
         }
     }
 
+    if lhs_type_id == UNKNOWN_TYPE_ID || rhs_type_id == UNKNOWN_TYPE_ID {
+        return None;
+    }
+
     match lhs_type {
         Type::TypeVariable(_) => {
             // If the call expects a generic type variable, let's see if we've already seen it
@@ -7208,9 +7228,9 @@ pub fn check_types_for_compat(
                             project.typename_for_type_id(rhs_type_id),
                         ),
                         span,
-                    )))
+                    )));
                 }
-            } else {
+            } else if lhs_type_id != rhs_type_id {
                 // We haven't seen this type variable before, so go ahead
                 // and give it an actual type during this call
                 generic_inferences.insert(lhs_type_id, rhs_type_id);
@@ -7265,7 +7285,7 @@ pub fn check_types_for_compat(
                                 project.typename_for_type_id(rhs_type_id),
                             ),
                             span,
-                        )))
+                        )));
                     }
                 }
             }
@@ -7315,7 +7335,7 @@ pub fn check_types_for_compat(
                                 project.typename_for_type_id(rhs_type_id),
                             ),
                             span,
-                        )))
+                        )));
                     }
                 }
                 _ => {
@@ -7328,7 +7348,7 @@ pub fn check_types_for_compat(
                                 project.typename_for_type_id(rhs_type_id),
                             ),
                             span,
-                        )))
+                        )));
                     }
                 }
             }
@@ -7386,7 +7406,7 @@ pub fn check_types_for_compat(
                                 project.typename_for_type_id(rhs_type_id),
                             ),
                             span,
-                        )))
+                        )));
                     }
                 }
             }
@@ -7442,7 +7462,7 @@ pub fn check_types_for_compat(
                                 project.typename_for_type_id(rhs_type_id),
                             ),
                             span,
-                        )))
+                        )));
                     }
                 }
             }
@@ -7475,7 +7495,7 @@ pub fn check_types_for_compat(
                                 project.typename_for_type_id(rhs_type_id),
                             ),
                             span,
-                        )))
+                        )));
                     }
                 }
             }
@@ -7489,7 +7509,7 @@ pub fn check_types_for_compat(
                         project.typename_for_type_id(rhs_type_id),
                     ),
                     span,
-                )))
+                )));
             }
         }
     }
