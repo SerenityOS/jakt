@@ -15,7 +15,7 @@ file=$2
 file_cwd=$(dirname $file)
 
 # Generate C++ code into 
-build/main $2 > $temp_dir/output.cpp 2>$temp_dir/compile_jakt.err || exit 3
+$(build/main $2 > $temp_dir/output.cpp 2>$temp_dir/compile_jakt.err) || exit 3
 
 # Compile C++ code
 clang++ -fcolor-diagnostics \
@@ -32,4 +32,4 @@ clang++ -fcolor-diagnostics \
 
 # Run the executable inside the parent directory of the test file
 cd $file_cwd
-$temp_dir/output >$temp_dir/runtest.out 2>$temp_dir/runtest.err || exit 1
+$($temp_dir/output >$temp_dir/runtest.out 2>$temp_dir/runtest.err) || exit 1
