@@ -1499,19 +1499,18 @@ struct Typechecker {
     }
 
     function unify_with_type(mut this, found_type: TypeId, expected_type: TypeId?, span: Span) throws -> TypeId {
-        if expected_type.has_value() {
-            if expected_type!.equals(unknown_type_id()) {
-                return found_type
-            }
-            let generic_inferences: [String:String] = [:]
-            if .check_types_for_compat(lhs_type_id: expected_type!, rhs_type_id: found_type, generic_inferences, span) {
-                return found_type
-            }
-
-            return .substitute_typevars_in_type(type_id: found_type, generic_inferences)
-        } else {
+        if not expected_type.has_value() {
             return found_type
         }
+        if expected_type!.equals(unknown_type_id()) {
+            return found_type
+        }
+        let generic_inferences: [String:String] = [:]
+        if .check_types_for_compat(lhs_type_id: expected_type!, rhs_type_id: found_type, generic_inferences, span) {
+            return found_type
+        }
+
+        return .substitute_typevars_in_type(type_id: found_type, generic_inferences)
     }
 
     function find_or_add_type_id(mut this, anon type: Type) throws -> TypeId {
