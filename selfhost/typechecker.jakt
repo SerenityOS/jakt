@@ -4070,15 +4070,9 @@ struct Typechecker {
     }
 
     function typecheck_statement(mut this, anon statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement => match statement {
-        Expression(expr, span) => {
-            let type_hint: TypeId? = None
-            yield CheckedStatement::Expression(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint), span)
-        }
+        Expression(expr, span) => CheckedStatement::Expression(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint: TypeId::none()), span)
         UnsafeBlock(block, span) => CheckedStatement::Block(block: .typecheck_block(block, parent_scope_id: scope_id, safety_mode: SafetyMode::Unsafe), span)
-        Yield(expr, span) => {
-            let type_hint: TypeId? = None
-            yield CheckedStatement::Yield(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint), span)
-        }
+        Yield(expr, span) => CheckedStatement::Yield(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint: TypeId::none()), span)
         Return(expr, span) => .typecheck_return(expr, span, scope_id, safety_mode)
         Block(block, span) => .typecheck_block_statement(parsed_block: block, scope_id, safety_mode, span)
         InlineCpp(block, span) => .typecheck_inline_cpp(block, span, safety_mode)
