@@ -6,6 +6,7 @@
 #include <Jakt/Assertions.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <time.h>
 
 namespace Jakt::process {
 // Allocates & fills one array, which contains:
@@ -129,11 +130,15 @@ ErrorOr<i32> start_background_process(Array<String> args)
     return pid;
 }
 
-ErrorOr<Optional<i32>> poll_process_exit(i32 pid)
+ErrorOr<Optional<ExitPollResult>> poll_process_exit(i32 pid)
 {
     i32 wstatus;
     auto const result = waitpid(pid, &wstatus, WNOHANG);
     if (result == -1) {
+        // no children
+        if (errno == ECHILD) {
+            return JaktInternal::NullOptional {};
+        }
         return Error::from_errno(errno);
     }
     // not exited.
@@ -142,7 +147,7 @@ ErrorOr<Optional<i32>> poll_process_exit(i32 pid)
     }
     // NOTE: compiler seems to struggle to find a constructor when
     // nesting error & optional
-    return Optional<i32>(WEXITSTATUS(wstatus));
+    return Optional<ExitPollResult>(ExitPollResult { WEXITSTATUS(wstatus), result });
 }
 
 ErrorOr<void> forcefully_kill_process(i32 pid)
@@ -152,5 +157,4 @@ ErrorOr<void> forcefully_kill_process(i32 pid)
     }
     return ErrorOr<void> {};
 }
-
 }
