@@ -1,6 +1,7 @@
 // Copyright (c) 2022, JT <jt@serenityos.org>
 // Copyright (c) 2022, Andreas Kling <kling@serenityos.org>
 // Copyright (c) 2022, Charles Mirabile <charlie.mirabile@gmail.com>
+// Copyright (c) 2022, Kyle Lanmon <kyle.lanmon@gmail.com>
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
@@ -159,6 +160,7 @@ boxed enum ParsedStatement {
     Yield(expr: ParsedExpression, span: Span)
     InlineCpp(block: ParsedBlock, span: Span)
     Try(stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, span: Span)
+    Guard(expr: ParsedExpression, else_block: ParsedBlock, span: Span)
     Garbage(Span)
 
     function span(this) -> Span => match this {
@@ -178,6 +180,7 @@ boxed enum ParsedStatement {
         Yield(span) => span
         InlineCpp(span) => span
         Try(span) => span
+        Guard(span) => span
         Garbage(span) => span
     }
 }
@@ -1734,11 +1737,29 @@ struct Parser {
                 let block = .parse_block()
                 yield ParsedStatement::Block(block, span: merge_spans(start, .previous().span()))
             }
+            Guard => .parse_guard_statement()
             else => {
                 let expr = .parse_expression(allow_assignments: true)
                 yield ParsedStatement::Expression(expr, span: merge_spans(start, .previous().span()))
             }
         }
+    }
+
+    function parse_guard_statement(mut this) throws -> ParsedStatement {
+        let span = .current().span()
+        .index++
+        let expr = .parse_expression(allow_assignments: false)
+        match .current() {
+            Else => {
+                .index++
+            }
+            else => {
+                .error("Expected `else` keyword", .current().span())
+            }
+        }
+        let else_block = .parse_block()
+
+        return ParsedStatement::Guard(expr, else_block, span)
     }
 
     function parse_try_statement(mut this) throws -> ParsedStatement {
@@ -2943,6 +2964,10 @@ function parsed_statement_equals(anon lhs_statement: ParsedStatement, anon rhs_s
         Try(stmt: rhs_stmt, error_name: rhs_error_name, catch_block: rhs_catch_block) => {
             yield lhs_error_name == rhs_error_name and parsed_statement_equals(lhs_stmt, rhs_stmt) and parsed_block_equals(lhs_catch_block, rhs_catch_block)
         }
+        else => false
+    }
+    Guard(expr, else_block) => match rhs_statement {
+        Guard(expr: rhs_expr, else_block: rhs_else_block) => parsed_expression_equals(expr, rhs_expr) and parsed_block_equals(else_block, rhs_else_block)
         else => false
     }
     Garbage => rhs_statement is Garbage
