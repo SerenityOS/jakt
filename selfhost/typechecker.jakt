@@ -574,6 +574,8 @@ boxed enum CheckedStatement {
         InlineCpp(span) => span
         Garbage(span) => span
     }
+
+    function none() -> CheckedStatement? => None
 }
 
 enum NumberConstant {
@@ -4091,7 +4093,30 @@ struct Typechecker {
         If(condition, then_block, else_statement, span) => .typecheck_if(condition, then_block, else_statement, scope_id, safety_mode, span)
         Garbage(span) => CheckedStatement::Garbage(span)
         For(iterator_name, name_span, range, block, span) => .typecheck_for(iterator_name,  name_span, range, block, scope_id, safety_mode, span)
-        Guard(span) => CheckedStatement::Garbage(span) // TODO: implement
+        Guard(expr, else_block, span) => .typecheck_guard(expr, else_block, scope_id, safety_mode, span)
+    }
+
+    function typecheck_guard(mut this, expr: ParsedExpression, else_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+        let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: TypeId::none())
+        let checked_else_block = .typecheck_block(parsed_block: else_block, parent_scope_id: scope_id, safety_mode)
+
+        mut seen_scope_exit = false
+        for statement in checked_else_block.statements.iterator() {
+            match statement {
+                Break | Continue | Return | Throw => {
+                    seen_scope_exit = true
+                    break
+                }
+                else => {}
+            }
+        }
+        if not seen_scope_exit {
+            .error("Else block of guard must either `return`, `break`, `continue`, or `throw`", span) // FIXME: better span?
+        }
+
+        let condition = CheckedExpression::UnaryOp(expr: checked_expr, op: CheckedUnaryOperator::LogicalNot(), span: expr.span(), type_id: builtin(BuiltinType::Bool))
+
+        return CheckedStatement::If(condition, then_block: checked_else_block, else_statement: CheckedStatement::none(), span)
     }
 
     function typecheck_for(mut this, iterator_name: String, name_span: Span, range: ParsedExpression, block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
