@@ -3,7 +3,8 @@ import utility { panic, todo, Span }
 
 enum ParsedTest {
     SuccessTest(String),
-    FailureTest(String),
+    CompileErrorTest(String),
+    RuntimeErrorTest(String),
     SkipTest
 }
 
@@ -89,7 +90,9 @@ struct Parser {
             .index++
             .skip_whitespace()
             let is_error = not .lex_literal("output")
-            if is_error and not (.lex_literal("error") or .lex_literal("stderr")) {
+            let compile_error = .lex_literal("error")
+            let runtime_error = .lex_literal("stderr")
+            if is_error and not (compile_error or runtime_error) {
                 continue
             }
             .skip_whitespace()
@@ -112,12 +115,13 @@ struct Parser {
 
             let output = parse_quoted_string(builder.to_string())
 
-            return match is_error {
-                true => ParsedTest::FailureTest(output)
-                else => ParsedTest::SuccessTest(output)
+            if is_error and runtime_error {
+                return ParsedTest::RuntimeErrorTest(output)
+            } else if is_error and compile_error {
+                return ParsedTest::CompileErrorTest(output)
+            } else {
+                return ParsedTest::SuccessTest(output)
             }
-
-
         }
         return ParsedTest::SkipTest
     }
