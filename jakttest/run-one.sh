@@ -27,6 +27,7 @@ clang++ -fcolor-diagnostics \
     -Wno-user-defined-literals \
     -Wno-deprecated-declarations \
     -Iruntime \
+    -DJAKT_CONTINUE_ON_PANIC \
     -o $temp_dir/output \
     $temp_dir/output.cpp 2>$temp_dir/compile_cpp.err || exit 2
 
