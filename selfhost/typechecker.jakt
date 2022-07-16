@@ -5041,18 +5041,18 @@ struct Typechecker {
                                     Typed(name, type_id, span) => {
                                         covered_variants.add(name)
                                         if variant_arguments.size() != 1 {
-                                            .error("Match case '{}' must have exactly one argument", span)
+                                            .error(format("Match case ‘{}’ must have exactly one argument", name), span)
+                                        } else {
+                                            let variant_argument = variant_arguments[0]
+                                            let var_id = module.add_variable(CheckedVariable(
+                                                name: variant_argument.binding
+                                                type_id
+                                                is_mutable: false
+                                                definition_span: span
+                                                visibility: Visibility::Public
+                                            ))
+                                            .add_var_to_scope(scope_id: new_scope_id, name: variant_argument.binding, var_id, span)
                                         }
-
-                                        let variant_argument = variant_arguments[0]
-                                        let var_id = module.add_variable(CheckedVariable(
-                                            name: variant_argument.binding
-                                            type_id
-                                            is_mutable: false
-                                            definition_span: span
-                                            visibility: Visibility::Public
-                                        ))
-                                        .add_var_to_scope(scope_id: new_scope_id, name: variant_argument.binding, var_id, span)
                                     }
                                     StructLike(name, fields) => {
                                         covered_variants.add(name)
