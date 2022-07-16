@@ -277,17 +277,13 @@ struct TestScheduler {
                     } else {
                         eprintln("[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
                         if .failed_reasons.has_value() {
-                            .failed_reasons![test.file_name] = match exit_code {
-                                0i32 => TestFailedReason::StdoutUnmatched(had: bytes_to_string(output)
+                            .failed_reasons![test.file_name] = match test.result.kind {
+                                Okay => TestFailedReason::StdoutUnmatched(had: bytes_to_string(output)
                                                                           expected)
-                                1i32 => TestFailedReason::StderrUnmatched(had: bytes_to_string(output)
+                                RuntimeError => TestFailedReason::StderrUnmatched(had: bytes_to_string(output)
                                                                           expected)
-                                3i32 => TestFailedReason::CompilerErrorUnmatched(had: bytes_to_string(output)
+                                CompileError => TestFailedReason::CompilerErrorUnmatched(had: bytes_to_string(output)
                                                                                  expected)
-                                else => {
-                                    panic("unreachable: exit code 2 (clang++) was handled by the other branch and possible codes are 0-4")
-                                    yield TestFailedReason::ClangError("")
-                                }
                             }
                         }
                     .failed_count++
