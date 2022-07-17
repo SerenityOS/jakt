@@ -1049,6 +1049,7 @@ struct Typechecker {
     current_function_id: FunctionId?
     inside_defer: bool
     checkidx: usize
+    ignore_errors: bool
 
     function typecheck(mut compiler: Compiler, parsed_namespace: ParsedNamespace) throws -> CheckedProgram {
 
@@ -1070,6 +1071,7 @@ struct Typechecker {
             current_function_id: none_function_id
             inside_defer: false
             checkidx: 0uz
+            ignore_errors: false
         )
 
         typechecker.include_prelude()
@@ -1127,11 +1129,15 @@ struct Typechecker {
     }
 
     function error(mut this, anon message: String, anon span: Span) throws {
-        .compiler.errors.push(JaktError::Message(message, span))
+        if not .ignore_errors {
+            .compiler.errors.push(JaktError::Message(message, span))
+        }
     }
 
     function error_with_hint(mut this, anon message: String, anon span: Span, anon hint: String, anon hint_span: Span) throws {
-        .compiler.errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
+        if not .ignore_errors {
+            .compiler.errors.push(JaktError::MessageWithHint(message, span, hint, hint_span))
+        }
     }
 
     function is_integer(this, anon type_id: TypeId) => .program.is_integer(type_id)
@@ -1507,7 +1513,7 @@ struct Typechecker {
             return found_type
         }
         let generic_inferences: [String:String] = [:]
-        if .check_types_for_compat(lhs_type_id: expected_type!, rhs_type_id: found_type, generic_inferences, span, ignore_errors: false) {
+        if .check_types_for_compat(lhs_type_id: expected_type!, rhs_type_id: found_type, generic_inferences, span) {
             return found_type
         }
 
@@ -1775,7 +1781,7 @@ struct Typechecker {
 
         for unchecked_member in parsed_fields.iterator() {
             let parsed_var_decl = unchecked_member.var_decl
-            let checked_member_type = .typecheck_typename(parsed_type: parsed_var_decl.parsed_type, scope_id: checked_struct_scope_id, ignore_errors: false)
+            let checked_member_type = .typecheck_typename(parsed_type: parsed_var_decl.parsed_type, scope_id: checked_struct_scope_id)
 
             mut module = .current_module()
             let var_id = module.add_variable(checked_variable: CheckedVariable(
@@ -2031,7 +2037,7 @@ struct Typechecker {
         let is_extern = parsed_record.definition_linkage is External
 
         let underlying_type_id = match parsed_record.record_type {
-            ValueEnum(underlying_type) => .typecheck_typename(parsed_type: underlying_type, scope_id, ignore_errors: false)
+            ValueEnum(underlying_type) => .typecheck_typename(parsed_type: underlying_type, scope_id)
             else => builtin(BuiltinType::Void)
         }
 
@@ -2126,7 +2132,7 @@ struct Typechecker {
                         variable: checked_variable
                     ))
                 } else {
-                    let param_type = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id, ignore_errors: false)
+                    let param_type = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id)
 
                     let checked_variable = CheckedVariable(
                         name: param.variable.name
@@ -2267,7 +2273,7 @@ struct Typechecker {
                         .add_var_to_scope(scope_id: check_scope!, name: param.variable.name, var_id, span: param.variable.span)
                     }
                 } else {
-                    let param_type = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id, ignore_errors: false)
+                    let param_type = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id)
 
                     let checked_variable = CheckedVariable(
                         name: param.variable.name
@@ -2296,7 +2302,7 @@ struct Typechecker {
                 span: parsed_record.name_span
             )
 
-            let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: method_scope_id, ignore_errors: false)
+            let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: method_scope_id)
 
             checked_function.return_type_id = function_return_type_id
 
@@ -2412,7 +2418,7 @@ struct Typechecker {
 
         match record.record_type {
             ValueEnum(underlying_type, variants) => {
-                let underlying_type_id = .typecheck_typename(parsed_type: underlying_type, scope_id: parent_scope_id, ignore_errors: false)
+                let underlying_type_id = .typecheck_typename(parsed_type: underlying_type, scope_id: parent_scope_id)
                 mut module = .current_module()
                 for variant in variants.iterator() {
                     if seen_names.contains(variant.name) {
@@ -2481,7 +2487,7 @@ struct Typechecker {
                             }
                             seen_fields.add(param.name)
 
-                            let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id, ignore_errors: false)
+                            let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id)
                             let checked_var = CheckedVariable(
                                 name: param.name
                                 type_id
@@ -2524,7 +2530,7 @@ struct Typechecker {
                         }
                     } else if is_typed {
                         let param = variant.params![0]
-                        let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id, ignore_errors: false)
+                        let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id)
                         enum_.variants.push(CheckedEnumVariant::Typed(name: variant.name, type_id, span: param.span))
 
                         let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
@@ -2727,7 +2733,7 @@ struct Typechecker {
         let VOID_TYPE_ID = builtin(BuiltinType::Void)
 
         let block = .typecheck_block(parsed_block: func.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
-        let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: function_scope_id, ignore_errors: false)
+        let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: function_scope_id)
 
         mut return_type_id = function_return_type_id
         if function_return_type_id.equals(unknown_type_id()) and not block.statements.is_empty() {
@@ -2820,7 +2826,7 @@ struct Typechecker {
 
         // Check parameters
         for parameter in parsed_function.params.iterator() {
-            let type_id = .typecheck_typename(parsed_type: parameter.variable.parsed_type, scope_id: checked_function_scope_id, ignore_errors: false)
+            mut type_id = .typecheck_typename(parsed_type: parameter.variable.parsed_type, scope_id: checked_function_scope_id)
 
             let variable = CheckedVariable(
                 name: parameter.variable.name
@@ -2839,7 +2845,8 @@ struct Typechecker {
         }
 
         // Check return type
-        checked_function.return_type_id = .typecheck_typename(parsed_type: parsed_function.return_type, scope_id: checked_function_scope_id, ignore_errors: false)
+        let function_return_type_id = .typecheck_typename(parsed_type: parsed_function.return_type, scope_id: checked_function_scope_id)
+        checked_function.return_type_id = function_return_type_id
 
         .add_function_to_scope(parent_scope_id, name: parsed_function.name, function_id, span: parsed_function.name_span)
     }
@@ -2948,7 +2955,6 @@ struct Typechecker {
         mut function_return_type_id = .typecheck_typename(
             parsed_type: parsed_function.return_type
             scope_id: function_scope_id
-            ignore_errors: false
         )
         checked_function.return_type_id = function_return_type_id
 
@@ -2963,7 +2969,6 @@ struct Typechecker {
         function_return_type_id = .typecheck_typename(
             parsed_type: parsed_function.return_type
             scope_id: function_scope_id
-            ignore_errors: false
         )
 
         // Infer return type if necessary
@@ -3041,7 +3046,7 @@ struct Typechecker {
     }
 
     // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
-    function check_types_for_compat(mut this, lhs_type_id: TypeId, rhs_type_id: TypeId, mut generic_inferences: [String:String], span: Span, ignore_errors: bool) throws -> bool {
+    function check_types_for_compat(mut this, lhs_type_id: TypeId, rhs_type_id: TypeId, mut generic_inferences: [String:String], span: Span) throws -> bool {
         let lhs_type = .get_type(lhs_type_id)
 
         let lhs_type_id_string = lhs_type_id.to_string()
@@ -3064,16 +3069,14 @@ struct Typechecker {
                     // we should error if it's incompatible.
 
                     if seen_type_id_string.value() != rhs_type_id_string {
-                        if not ignore_errors {
-                            .error(
-                                format(
-                                    "Type mismatch: expected ‘{}’, but got ‘{}’"
-                                    .type_name(TypeId::from_string(seen_type_id_string.value()))
-                                    .type_name(rhs_type_id)
-                                )
-                                span
+                        .error(
+                            format(
+                                "Type mismatch: expected ‘{}’, but got ‘{}’"
+                                .type_name(TypeId::from_string(seen_type_id_string.value()))
+                                .type_name(rhs_type_id)
                             )
-                        }
+                            span
+                        )
                         return false
                     }
                 } else {
@@ -3091,9 +3094,7 @@ struct Typechecker {
                         if lhs_enum_id.equals(rhs_enum_id) {
                             let lhs_enum = .get_enum(lhs_enum_id)
                             if lhs_args.size() != rhs_args.size() {
-                                if not ignore_errors {
-                                    .error(format("mismatched number of generic parameters for {}", lhs_enum.name), span)
-                                }
+                                .error(format("mismatched number of generic parameters for {}", lhs_enum.name), span)
                                 return false
                             }
 
@@ -3104,7 +3105,6 @@ struct Typechecker {
                                     rhs_type_id: rhs_args[idx]
                                     generic_inferences
                                     span
-                                    ignore_errors: false
                                 ) {
                                     // FIXME: maybe emit secondary error?
                                     return false
@@ -3115,12 +3115,10 @@ struct Typechecker {
                     }
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
-                            if not ignore_errors {
-                                .error(
-                                    format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                    span
-                                )
-                            }
+                            .error(
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                span
+                            )
                             return false
                         }
                     }
@@ -3149,9 +3147,7 @@ struct Typechecker {
                             let rhs_args = args
                             let lhs_struct = .get_struct(lhs_struct_id)
                             if lhs_args.size() != rhs_args.size() {
-                                if not ignore_errors {
-                                    .error(format("mismatched number of generic parameters for {}", lhs_struct.name), span)
-                                }
+                                .error(format("mismatched number of generic parameters for {}", lhs_struct.name), span)
                                 return false
                             }
 
@@ -3162,7 +3158,6 @@ struct Typechecker {
                                     rhs_type_id: rhs_args[idx]
                                     generic_inferences
                                     span
-                                    ignore_errors: false
                                 ) {
                                     // FIXME: maybe emit secondary error?
                                     return false
@@ -3176,23 +3171,19 @@ struct Typechecker {
                                 return true
                             }
                         } else {
-                            if not ignore_errors {
-                                .error(
-                                    format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                    span
-                                )
-                            }
+                            .error(
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                span
+                            )
                             return false
                         }
                     }
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
-                            if not ignore_errors {
-                                .error(
-                                    format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                    span
-                                )
-                            }
+                            .error(
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                span
+                            )
                             return false
                         }
                     }
@@ -3208,9 +3199,7 @@ struct Typechecker {
                         if enum_id.equals(id) {
                             let lhs_enum = .get_enum(enum_id)
                             if args.size() != lhs_enum.generic_parameters.size() {
-                                if not ignore_errors {
-                                    .error(format("mismatched number of generic parameters for {}", lhs_enum.name), span)
-                                }
+                                .error(format("mismatched number of generic parameters for {}", lhs_enum.name), span)
                                 return false
                             }
 
@@ -3221,7 +3210,6 @@ struct Typechecker {
                                     rhs_type_id: args[idx]
                                     generic_inferences
                                     span
-                                    ignore_errors: false
                                 ) {
                                     // FIXME: maybe emit secondary error?
                                     return false
@@ -3234,16 +3222,14 @@ struct Typechecker {
                         let seen_type_id_string = generic_inferences.get(rhs_type_id_string)
                         if seen_type_id_string.has_value() {
                             if seen_type_id_string.value() != lhs_type_id_string {
-                                if not ignore_errors {
-                                    .error(
-                                        format(
-                                            "Type mismatch: expected ‘{}’, but got ‘{}’"
-                                            .type_name(lhs_type_id)
-                                            .type_name(TypeId::from_string(seen_type_id_string.value()))
-                                        )
-                                        span
+                                .error(
+                                    format(
+                                        "Type mismatch: expected ‘{}’, but got ‘{}’"
+                                        .type_name(lhs_type_id)
+                                        .type_name(TypeId::from_string(seen_type_id_string.value()))
                                     )
-                                }
+                                    span
+                                )
                                 return false
                             }
                         } else {
@@ -3252,12 +3238,10 @@ struct Typechecker {
                     }
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
-                            if not ignore_errors {
-                                .error(
-                                    format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                    span
-                                )
-                            }
+                            .error(
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                span
+                            )
                             return false
                         }
                     }
@@ -3272,9 +3256,7 @@ struct Typechecker {
                     GenericInstance(id, args) => {
                         let lhs_struct = .get_struct(lhs_struct_id)
                         if args.size() != lhs_struct.generic_parameters.size() {
-                            if not ignore_errors {
-                                .error(format("mismatched number of generic parameters for {}", lhs_struct.name), span)
-                            }
+                            .error(format("mismatched number of generic parameters for {}", lhs_struct.name), span)
                             return false
                         }
 
@@ -3285,7 +3267,6 @@ struct Typechecker {
                                 rhs_type_id: args[idx]
                                 generic_inferences
                                 span
-                                ignore_errors: false
                             ) {
                                 // FIXME: maybe emit secondary error?
                                 return false
@@ -3302,16 +3283,14 @@ struct Typechecker {
                             // we should error if it's incompatible.
 
                             if seen_type_id_string.value() != lhs_type_id_string {
-                                if not ignore_errors {
-                                    .error(
-                                        format(
-                                            "Type mismatch: expected ‘{}’, but got ‘{}’"
-                                            .type_name(TypeId::from_string(seen_type_id_string.value()))
-                                            .type_name(rhs_type_id)
-                                        )
-                                        span
+                                .error(
+                                    format(
+                                        "Type mismatch: expected ‘{}’, but got ‘{}’"
+                                        .type_name(TypeId::from_string(seen_type_id_string.value()))
+                                        .type_name(rhs_type_id)
                                     )
-                                }
+                                    span
+                                )
                                 return false
                             }
                         } else {
@@ -3320,12 +3299,10 @@ struct Typechecker {
                     }
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
-                            if not ignore_errors {
-                                .error(
-                                    format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                    span
-                                )
-                            }
+                            .error(
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                span
+                            )
                             return false
                         }
                     }
@@ -3344,7 +3321,6 @@ struct Typechecker {
                             rhs_type_id: rhs_rawptr_type_id
                             generic_inferences
                             span
-                            ignore_errors: false
                         ) {
                             // FIXME: maybe emit secondary error?
                             return false
@@ -3352,12 +3328,10 @@ struct Typechecker {
                     }
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
-                            if not ignore_errors {
-                                .error(
-                                    format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                    span
-                                )
-                            }
+                            .error(
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                span
+                            )
                             return false
                         }
                     }
@@ -3365,12 +3339,10 @@ struct Typechecker {
             }
             else => {
                 if not rhs_type_id.equals(lhs_type_id) {
-                    if not ignore_errors {
-                        .error(
-                            format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                            span
-                        )
-                    }
+                    .error(
+                        format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                        span
+                    )
                     return false
                 }
             }
@@ -3501,7 +3473,6 @@ struct Typechecker {
                         rhs_type_id: type_
                         generic_enferences: generic_inferences
                         span: yield_span.value()
-                        ignore_errors: false
                     )
                 } else {
                     checked_block.yielded_type = Some(type_)
@@ -3521,7 +3492,7 @@ struct Typechecker {
         return checked_block
     }
 
-    function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId, ignore_errors: bool) throws -> TypeId { 
+    function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId) throws -> TypeId {
         match parsed_type {
             NamespacedName(name, namespaces, params, span) => {
                 mut current_namespace_scope_id = scope_id
@@ -3540,7 +3511,7 @@ struct Typechecker {
                 mut generic_args: [TypeId] = []
 
                 for param in params.iterator() {
-                    let checked_arg = .typecheck_typename(parsed_type: param, scope_id, ignore_errors)
+                    let checked_arg = .typecheck_typename(parsed_type: param, scope_id)
 
                     generic_args.push(checked_arg)
                 }
@@ -3548,7 +3519,7 @@ struct Typechecker {
                 if generic_args.is_empty() {
                     let synthetic_typename = ParsedType::Name(name, span)
                     // TODO: add and generic support
-                    return .typecheck_typename(parsed_type: synthetic_typename, scope_id: current_namespace_scope_id, ignore_errors)
+                    return .typecheck_typename(parsed_type: synthetic_typename, scope_id: current_namespace_scope_id)
                 } else {
                     return .typecheck_generic_resolved_type(name, checked_inner_types: generic_args, scope_id, span)
                 }
@@ -3577,9 +3548,7 @@ struct Typechecker {
                         if type_id.has_value() {
                             return type_id.value()
                         } else {
-                            if not ignore_errors {
-                                .error(format("Unknown type ‘{}’", name), span)
-                            }
+                            .error(format("Unknown type ‘{}’", name), span)
                             return unknown_type_id()
                         }
                     }
@@ -3591,7 +3560,7 @@ struct Typechecker {
             JaktTuple(types, span) => {
                 mut checked_types: [TypeId] = []
                 for parsed_type in types.iterator() {
-                    checked_types.push(.typecheck_typename(parsed_type, scope_id, ignore_errors))
+                    checked_types.push(.typecheck_typename(parsed_type, scope_id))
                 }
                 let tuple_struct_id = .find_struct_in_prelude("Tuple")
 
@@ -3600,7 +3569,7 @@ struct Typechecker {
                 return type_id
             }
             JaktArray(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, ignore_errors)
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
 
                 let array_struct_id = .find_struct_in_prelude("Array")
 
@@ -3609,8 +3578,8 @@ struct Typechecker {
                 return type_id
             }
             Dictionary(key, value, span) => {
-                let key_type_id = .typecheck_typename(parsed_type: key, scope_id, ignore_errors)
-                let value_type_id = .typecheck_typename(parsed_type: value, scope_id, ignore_errors)
+                let key_type_id = .typecheck_typename(parsed_type: key, scope_id)
+                let value_type_id = .typecheck_typename(parsed_type: value, scope_id)
 
                 let dict_struct_id = .find_struct_in_prelude("Dictionary")
 
@@ -3619,7 +3588,7 @@ struct Typechecker {
                 return type_id
             }
             Set(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, ignore_errors)
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
 
                 let set_struct_id = .find_struct_in_prelude("Set")
 
@@ -3628,7 +3597,7 @@ struct Typechecker {
                 return type_id
             }
             Optional(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, ignore_errors)
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
 
                 let optional_struct_id = .find_struct_in_prelude("Optional")
 
@@ -3637,7 +3606,7 @@ struct Typechecker {
                 return type_id
             }
             WeakPtr(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, ignore_errors)
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
 
                 let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
 
@@ -3646,7 +3615,7 @@ struct Typechecker {
                 return type_id
             }
             RawPtr(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, ignore_errors)
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
 
                 let type_id = .find_or_add_type_id(Type::RawPtr(id: inner_type_id))
 
@@ -3656,7 +3625,7 @@ struct Typechecker {
                 mut checked_inner_types: [TypeId] = []
 
                 for inner_type in generic_parameters.iterator() {
-                    let inner_type_id = .typecheck_typename(parsed_type: inner_type, scope_id, ignore_errors)
+                    let inner_type_id = .typecheck_typename(parsed_type: inner_type, scope_id)
                     checked_inner_types.push(inner_type_id)
                 }
 
@@ -4129,7 +4098,7 @@ struct Typechecker {
     }
 
     function typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
-        mut lhs_type_id = .typecheck_typename(parsed_type: var.parsed_type, scope_id, ignore_errors: false)
+        mut lhs_type_id = .typecheck_typename(parsed_type: var.parsed_type, scope_id)
         mut checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode, type_hint: lhs_type_id)
         let rhs_type_id = expression_type(checked_expr)
 
@@ -4405,7 +4374,7 @@ struct Typechecker {
             Struct(id) => {
                 mut was_whitelisted = false
                 for whitelisted_type in whitelist.iterator() {
-                    let type_id = .typecheck_typename(parsed_type: whitelisted_type, scope_id: accessee, ignore_errors: false)
+                    let type_id = .typecheck_typename(parsed_type: whitelisted_type, scope_id: accessee)
                     // FIXME: Handle typecheck failure
                     if type_id.equals(own_type_id) {
                         // FIXME: A naked `return` would be nicer here
@@ -4544,7 +4513,7 @@ struct Typechecker {
                 LogicalNot => CheckedUnaryOperator::LogicalNot
                 BitwiseNot => CheckedUnaryOperator::BitwiseNot
                 TypeCast(cast) => {
-                    let type_id = .typecheck_typename(parsed_type: cast.parsed_type(), scope_id, ignore_errors: false)
+                    let type_id = .typecheck_typename(parsed_type: cast.parsed_type(), scope_id)
                     let checked_cast = match cast {
                         Fallible => CheckedTypeCast::Fallible(type_id)
                         Infallible => CheckedTypeCast::Infallible(type_id)
@@ -4552,7 +4521,11 @@ struct Typechecker {
                     yield CheckedUnaryOperator::TypeCast(checked_cast)
                 }
                 Is(unchecked_type) => {
-                    let type_id = .typecheck_typename(parsed_type: unchecked_type, scope_id, ignore_errors: true)
+                    let old_ignore_errors = .ignore_errors
+                    .ignore_errors = true
+                    let type_id = .typecheck_typename(parsed_type: unchecked_type, scope_id)
+                    .ignore_errors = old_ignore_errors
+
                     mut operator_is = CheckedUnaryOperator::Is(type_id)
                     if type_id.equals(unknown_type_id()) {
                         match unchecked_type {
@@ -4958,7 +4931,7 @@ struct Typechecker {
 
         mut checked_type_args: [TypeId] = []
         for type_arg in call.type_args.iterator() {
-            checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id, ignore_errors: false))
+            checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id))
         }
 
         let none_function_id: FunctionId? = None // FIXME: use None directly
@@ -5293,7 +5266,6 @@ struct Typechecker {
                                     rhs_type_id: subject_type_id
                                     generic_inferences: [:] // FIXME: use correct generic inferences
                                     span: case_.marker_span
-                                    ignore_errors: false
                                 )
 
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-expression({})", expr))
@@ -5341,7 +5313,6 @@ struct Typechecker {
                             rhs_type_id: block_type_id
                             generic_inferences
                             span: yield_span
-                            ignore_errors: false
                         )
                     } else {
                         result_type = block_type_id
@@ -5369,7 +5340,6 @@ struct Typechecker {
                         rhs_type_id: expression_type(checked_expression)
                         generic_inferences
                         span
-                        ignore_errors: false
                     )
                 } else {
                     result_type = expression_type(checked_expression)
@@ -5588,7 +5558,7 @@ struct Typechecker {
                 if not resolved_function_id.has_value() {
                     mut checked_type_args: [TypeId] = []
                     for type_arg in call.type_args.iterator() {
-                        checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id: caller_scope_id, ignore_errors: false))
+                        checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id: caller_scope_id))
                     }
                     return CheckedExpression::Call(call: CheckedCall(namespace_: resolved_namespaces, name: call.name, args, type_args: checked_type_args, function_id: resolved_function_id, return_type, callee_throws), span, type_id: return_type)
                 }
@@ -5603,7 +5573,7 @@ struct Typechecker {
                 // If the user gave us explicit type arguments, let's use them in our substitutions
                 mut type_arg_index = 0uz
                 for parsed_type in call.type_args.iterator() {
-                    let checked_type = .typecheck_typename(parsed_type, scope_id: caller_scope_id, ignore_errors: false)
+                    let checked_type = .typecheck_typename(parsed_type, scope_id: caller_scope_id)
                     if callee.generic_params.size() <= type_arg_index {
                         .error("Trying to access generic parameter out of bounds", parsed_type.span())
                         continue
@@ -5717,7 +5687,6 @@ struct Typechecker {
                         rhs_type_id: expression_type(checked_arg)
                         generic_inferences
                         span
-                        ignore_errors: false
                     )
 
                     args.push((call.name, checked_arg))
@@ -5727,13 +5696,15 @@ struct Typechecker {
                 // type variable. For the moment, we'll just checked to see if it's a type variable.
                 // FIXME: `unknown_type_id()` and `None` are really the same thing. Can we remove `unknown_type_id()`?
                 if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
+                    let old_ignore_errors = .ignore_errors
+                    .ignore_errors = true
                     .check_types_for_compat(
                         lhs_type_id: return_type
                         rhs_type_id: type_hint!
                         generic_inferences
                         span
-                        ignore_errors: true
                     )
+                    .ignore_errors = old_ignore_errors
                 }
                 return_type = .substitute_typevars_in_type(type_id: return_type, generic_inferences)
 
@@ -5743,7 +5714,6 @@ struct Typechecker {
                         rhs_type_id: return_type
                         generic_inferences
                         span
-                        ignore_errors: false
                     )
                 }
 
@@ -5790,7 +5760,7 @@ struct Typechecker {
         }
 
         for type_arg in call.type_args.iterator() {
-            checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id: caller_scope_id, ignore_errors: false))
+            checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id: caller_scope_id))
         }
         return CheckedExpression::Call(call: CheckedCall(namespace_: resolved_namespaces, name: call.name, args, type_args: checked_type_args, function_id: resolved_function_id, return_type, callee_throws), span, type_id: return_type)
     }
