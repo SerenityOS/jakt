@@ -19,6 +19,15 @@ namespace fs {
     // Returns whether the given path is a directory
     extern function is_directory(path: String) throws -> bool
 
+    // Create a directory
+    extern function mkdir(path: String) throws
+
+    // Remove a directory
+    extern function rmdir(path: String) throws
+
+    // Remove a file
+    extern function unlink(path: String) throws
+
     function has_jakt_extension(name: String) throws -> bool {
         if name.length() < 5 {
             println("too short")
@@ -52,9 +61,6 @@ namespace fs {
 
         return results
     }
-
-    extern function mkdir(path: String) throws
-
 }
 
 
@@ -72,6 +78,9 @@ namespace process {
 namespace os {
     /// Calls sysconf(_SC_NPROCESSORS_ONLN) to get the number of CPUs available
     extern function get_num_cpus() throws -> usize
+
+    /// Returns %TEMP% in Windows and $TMP_DIR or /tmp in macOS/linux
+    extern function get_system_temporary_directory() throws -> String
 }
 
 function print_usage()  {
@@ -80,6 +89,8 @@ function print_usage()  {
     eprintln("\t-h\t\tShow this message and exit.")
     eprintln("\t--show-reasons\t\tShow the reasons why tests that fail do so.")
     eprintln("\t-j,--jobs <JOBS>\t\tUse JOBS processes. Defaults to the number of available CPUs.")
+    eprintln("\t--temp-dir <DIR>\t\tUse DIR as the temporary directory.")
+    eprintln("\t\t\tWill try to use $TMP_DIR or /tmp in UNIX-based systems, or %TEMP% in Windows")
 }
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
@@ -217,23 +228,29 @@ struct Options {
                 continue
             }
 
-            // positional argument.
-
-            // if temp dir was empty, this means this is the first positional
-            // argument we encounter, which corresponds to the temporary directory
-            // we'll use for operations.
-            if options.temp_dir.is_empty() {
+            if args[index] == "--temp-dir" {
+                index++
+                if index == args.size() {
+                    options.errors.push("Used --temp-dir without an argument")
+                    break
+                }
                 options.temp_dir = args[index]
-            } else {
-                // otherwise it's a file path.
-                options.files.push(args[index])
+                index++
+                continue
             }
+            
+            if args[index].length() > 0 and args[index].byte_at(0) == b'-' {
+                options.errors.push(format("Unknown argument: {}", args[index]))
+            }
+
+            // positional argument: file path
+            options.files.push(args[index])
 
             index++
         }
 
         if options.temp_dir.is_empty() {
-            options.errors.push("Missing <temp-dir>")
+            options.temp_dir = os::get_system_temporary_directory() + "/jakttest"
         }
 
         if options.files.is_empty() {
@@ -517,6 +534,7 @@ function main(args: [String]) {
         return 1
     }
 
+
     mut skipped_count = 0uz
 
     mut tests: [Test] = []
@@ -554,6 +572,7 @@ function main(args: [String]) {
 
     mut directories: [String] = []
     directories.ensure_capacity(parsed_options.job_count as! usize)
+    fs::mkdir(path: parsed_options.temp_dir)
     for i in 0..parsed_options.job_count {
         let path = format("{}/jakttest-tmp-{}",  parsed_options.temp_dir, i)
         fs::mkdir(path)
@@ -561,6 +580,18 @@ function main(args: [String]) {
     }
 
     let run_result = TestScheduler::run_tests(tests, directories, collect_reasons: parsed_options.show_reasons)
+
+    // delete directories
+    for dir in directories.iterator() {
+        for file in fs::list_directory(path: dir) {
+            if file == "." or file == ".." {
+                continue
+            }
+            fs::unlink(path: dir + "/" + file)
+        }
+        fs::rmdir(path: dir)
+    }
+    fs::rmdir(path: parsed_options.temp_dir)
 
     println("==============================")
     println("{} passed" , run_result.passed_count)

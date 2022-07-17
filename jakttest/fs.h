@@ -24,4 +24,7 @@ public:
 };
 ErrorOr<NonnullRefPtr<DirectoryIterator>> list_directory(String path);
 ErrorOr<bool> is_directory(String path);
+ErrorOr<void> mkdir(String path);
+ErrorOr<void> rmdir(String path);
+ErrorOr<void> unlink(String path);
 }
