@@ -273,6 +273,7 @@ enum Token {
 }
 
 enum LiteralSuffix {
+    None
     UZ
     U8
     U16
@@ -312,22 +313,6 @@ enum NumericConstant {
         // FIXME: handle floats properly - if the function is used at all?
         else =>  0 as! usize
     }
-}
-
-function make_integer_token(number: u64, suffix: LiteralSuffix, span: Span) throws -> Token => match suffix {
-    // FIXME: consider unifying with make_float_token() to a single function
-    LiteralSuffix::U8 => Token::Number(number: NumericConstant::U8(number as! u8), span)
-    LiteralSuffix::U16 => Token::Number(number: NumericConstant::U16(number as! u16), span)
-    LiteralSuffix::U32 => Token::Number(number: NumericConstant::U32(number as! u32), span)
-    LiteralSuffix::U64 => Token::Number(number: NumericConstant::U64(number as! u64), span)
-    LiteralSuffix::UZ => Token::Number(number: NumericConstant::USize(number as! u64), span)
-
-    LiteralSuffix::I8 => Token::Number(number: NumericConstant::I8(number as! i8), span)
-    LiteralSuffix::I16 => Token::Number(number: NumericConstant::I16(number as! i16), span)
-    LiteralSuffix::I32 => Token::Number(number: NumericConstant::I32(number as! i32), span)
-    LiteralSuffix::I64 => Token::Number(number: NumericConstant::I64(number as! i64), span)
-
-    else => Token::Garbage(span)
 }
 
 function make_float_token(number: f64, suffix: LiteralSuffix, span: Span) throws -> Token => match suffix {
@@ -542,9 +527,9 @@ struct Lexer {
                         return Token::Garbage(span)
                     }
 
-                    let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::I64
+                    let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::None
 
-                    return make_integer_token(number: total, suffix, span: .span(start, end))
+                    return .make_integer_token(number: total, suffix, span: .span(start, end))
                 }
                 // Octal Number
                 b'o' => {
@@ -569,7 +554,7 @@ struct Lexer {
                         return Token::Garbage(span)
                     }
 
-                    let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::I64
+                    let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::None
 
                     if is_ascii_alphanumeric(.peek()) {
                         .error(
@@ -579,7 +564,7 @@ struct Lexer {
                         return Token::Garbage(span)
                     }
 
-                    return make_integer_token(number: total, suffix, span)
+                    return .make_integer_token(number: total, suffix, span)
                 }
                 // Binary Number
                 b'b' => {
@@ -604,7 +589,7 @@ struct Lexer {
                         return Token::Garbage(span)
                     }
 
-                    let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::I64
+                    let suffix = .consume_numeric_literal_suffix() ?? LiteralSuffix::None
 
                     if is_ascii_alphanumeric(.peek()) {
                         .error(
@@ -615,7 +600,7 @@ struct Lexer {
                         return Token::Garbage(span)
                     }
 
-                    return make_integer_token(number: total, suffix, span)
+                    return .make_integer_token(number: total, suffix, span)
                 }
                 else => {}
             }
@@ -673,7 +658,7 @@ struct Lexer {
 
         let default_suffix = match floating {
             true => LiteralSuffix::F64
-            else => LiteralSuffix::I64
+            else => LiteralSuffix::None
         }
         let suffix = .consume_numeric_literal_suffix() ?? default_suffix
 
@@ -701,7 +686,7 @@ struct Lexer {
                 let number: f64 = u64_to_float<f64>(total) + u64_to_float<f64>(fraction_nominator)/u64_to_float<f64>(fraction_denominator)
                 yield make_float_token(number, suffix, span: .span(start, end))
             }
-            else => make_integer_token(number: total, suffix, span: .span(start, end))
+            else => .make_integer_token(number: total, suffix, span: .span(start, end))
         }
     }
 
@@ -1030,4 +1015,91 @@ struct Lexer {
     function is_whitespace(this, anon ch: u8) -> bool {
         return ch == b' ' or ch == b'\t' or ch == b'\r' or ch == b'\f' or ch == b'\v'
     }    
+
+    function make_integer_token(mut this, number: u64, suffix: LiteralSuffix, span: Span) throws -> Token {
+        // FIXME: consider unifying with make_float_token() to a single function
+        match suffix {
+            None => {
+                let n = number as? i64
+                if n.has_value() {
+                    return Token::Number(number: NumericConstant::I64(n!), span)
+                }
+                return Token::Number(number: NumericConstant::U64(number), span)
+            }
+            U8 => {
+                let n = number as? u8
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return Token::Number(number: NumericConstant::U64(number), span)
+                }
+                return Token::Number(number: NumericConstant::U8(n!), span)
+            }
+            U16 => {
+                let n = number as? u16
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return Token::Number(number: NumericConstant::U64(number), span)
+                }
+                return Token::Number(number: NumericConstant::U16(n!), span)
+            }
+            U32 => {
+                let n = number as? u32
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return Token::Number(number: NumericConstant::U64(number), span)
+                }
+                return Token::Number(number: NumericConstant::U32(n!), span)
+            }
+            U64 => {
+                let n = number as? u64
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return Token::Number(number: NumericConstant::U64(number), span)
+                }
+                return Token::Number(number: NumericConstant::U64(n!), span)
+            }
+            UZ => {
+                let n = number as? usize
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return Token::Number(number: NumericConstant::U64(number), span)
+                }
+                return Token::Number(number: NumericConstant::USize(n! as! u64), span)
+            }
+            I8 => {
+                let n = number as? i8
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return Token::Number(number: NumericConstant::U64(number), span)
+                }
+                return Token::Number(number: NumericConstant::I8(n!), span)
+            }
+            I16 => {
+                let n = number as? i16
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return Token::Number(number: NumericConstant::U64(number), span)
+                }
+                return Token::Number(number: NumericConstant::I16(n!), span)
+            }
+            I32 => {
+                let n = number as? i32
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return Token::Number(number: NumericConstant::U64(number), span)
+                }
+                return Token::Number(number: NumericConstant::I32(n!), span)
+            }
+            I64 => {
+                let n = number as? i64
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return Token::Number(number: NumericConstant::U64(number), span)
+                }
+                return Token::Number(number: NumericConstant::I64(n!), span)
+            }
+            else => {}
+        }
+        return Token::Garbage(span)
+    }
 }
