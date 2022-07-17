@@ -1995,7 +1995,7 @@ struct Typechecker {
 
         // 4. Typecheck functions
         for fun in parsed_namespace.functions.iterator() {
-            .typecheck_function_predecl(parsed_function: fun, parent_scope_id: scope_id)
+            .typecheck_function_predecl(parsed_function: fun, parent_scope_id: scope_id, this_arg_type_id: None)
         }
     }
 
@@ -2116,6 +2116,31 @@ struct Typechecker {
                 module: .current_module_id
                 id: .current_module().functions.size() - 1
             )
+
+            mut generic_parameters: [FunctionGenericParameter] = []
+
+            for generic_parameter in func.generic_parameters.iterator() {
+                module.types.push(Type::TypeVariable(generic_parameter.name))
+                let type_var_type_id = TypeId(
+                    module: .current_module_id
+                    id: .current_module().types.size() - 1
+                )
+
+                generic_parameters.push(FunctionGenericParameter::Parameter(
+                    type_id: type_var_type_id
+                ))
+
+                if not func.must_instantiate {
+                    .add_type_to_scope(
+                        scope_id: method_scope_id,
+                        type_name: generic_parameter.name,
+                        type_id: type_var_type_id,
+                        span: generic_parameter.span,
+                    )
+                }
+            }
+
+            checked_function.generic_params = generic_parameters
 
             for param in func.params.iterator() {
                 if param.variable.name == "this" {
@@ -2311,7 +2336,10 @@ struct Typechecker {
                     .compiler.panic("Generic method with generic parameters must have a check scope")
                 }
 
+                let old_ignore_errors = .ignore_errors
+                .ignore_errors = true
                 let block = .typecheck_block(parsed_block: func.block, parent_scope_id: check_scope!, safety_mode: SafetyMode::Safe)
+                .ignore_errors = old_ignore_errors
 
                 mut return_type_id: TypeId = builtin(BuiltinType::Void)
                 if function_return_type_id.equals(unknown_type_id()) {
@@ -2764,13 +2792,20 @@ struct Typechecker {
         checked_function.return_type_id = return_type_id
     }
 
-    function typecheck_function_predecl(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
+    function typecheck_function_predecl(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId, this_arg_type_id: TypeId?) throws {
         let function_scope_id = .create_scope(parent_scope_id, can_throw: parsed_function.can_throw, debug_name: format("function({})", parsed_function.name))
-        let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: parsed_function.can_throw, debug_name: format("function-block({})", parsed_function.name))
+        let scope_debug_name = format("function-block({})", parsed_function.name)
+        let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: parsed_function.can_throw, debug_name: scope_debug_name)
         let module_id = .current_module_id.id
 
-        // TODO: Make this true if it's a method of a generic class/struct.
-        let is_generic = not parsed_function.generic_parameters.is_empty()
+        let is_generic_function = not parsed_function.generic_parameters.is_empty()
+        let is_generic = match this_arg_type_id.has_value() {
+            true => match .get_type(this_arg_type_id!) {
+                GenericInstance => true
+                else => is_generic_function
+            }
+            else => is_generic_function
+        }
 
         mut checked_function = CheckedFunction(
             name: parsed_function.name
@@ -2824,9 +2859,24 @@ struct Typechecker {
             }
         }
 
+        let check_scope = match is_generic {
+            true => Some(.create_scope(parent_scope_id, can_throw: parsed_function.can_throw, debug_name: scope_debug_name))
+            else => None
+        }
+
         // Check parameters
+        mut first = true
+        mut module = .current_module()
+
         for parameter in parsed_function.params.iterator() {
             mut type_id = .typecheck_typename(parsed_type: parameter.variable.parsed_type, scope_id: checked_function_scope_id)
+
+            if first and parameter.variable.name == "this" {
+                if this_arg_type_id.has_value() {
+                    type_id = this_arg_type_id!
+                }
+            }
+            first = false
 
             let variable = CheckedVariable(
                 name: parameter.variable.name
@@ -2842,11 +2892,52 @@ struct Typechecker {
             )
 
             checked_function.params.push(checked_parameter)
+
+            if check_scope.has_value() {
+                let var_id = module.add_variable(variable)
+                .add_var_to_scope(
+                    scope_id: check_scope!,
+                    name: parameter.variable.name,
+                    variable: var_id,
+                    span: parameter.variable.span,
+                )
+            }
         }
 
         // Check return type
         let function_return_type_id = .typecheck_typename(parsed_type: parsed_function.return_type, scope_id: checked_function_scope_id)
         checked_function.return_type_id = function_return_type_id
+
+        if not parsed_function.generic_parameters.is_empty() {
+            let old_ignore_errors = .ignore_errors
+            .ignore_errors = true
+            let block = .typecheck_block(
+                parsed_block: parsed_function.block,
+                parent_scope_id: check_scope!,
+                safety_mode: SafetyMode::Safe
+            )
+            .ignore_errors = old_ignore_errors
+
+            let return_type_id = match function_return_type_id.equals(unknown_type_id()) {
+                true => {
+                    let statement = block.statements.last()
+                    yield match statement.has_value() {
+                        true => match statement! {
+                            Return(val) => match val.has_value() {
+                                true => expression_type(val!)
+                                else => void_type_id()
+                            }
+                            else => void_type_id()
+                        }
+                        else => unknown_type_id()
+                    }
+                }
+                else => .resolve_type_var(type_var_type_id: function_return_type_id, scope_id: parent_scope_id)
+            }
+
+            checked_function.block = block
+            checked_function.return_type_id = return_type_id
+        }
 
         .add_function_to_scope(parent_scope_id, name: parsed_function.name, function_id, span: parsed_function.name_span)
     }
@@ -2880,7 +2971,7 @@ struct Typechecker {
         parsed_function.must_instantiate = true
 
         .current_function_id = Some(function_id)
-        .typecheck_function_predecl(parsed_function, parent_scope_id: scope_id)
+        .typecheck_function_predecl(parsed_function, parent_scope_id: scope_id, this_arg_type_id: this_type_id)
         .typecheck_function(parsed_function, parent_scope_id: scope_id)
         .current_function_id = None
 
@@ -2929,6 +3020,10 @@ struct Typechecker {
     }
 
     function typecheck_function(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
+        if not parsed_function.generic_parameters.is_empty() and not parsed_function.must_instantiate {
+            return
+        }
+
         // FIXME: Optional.expect("...") would be nicer here.
         let function_id = .find_function_in_scope(parent_scope_id, function_name: parsed_function.name)
         if not function_id.has_value() {
@@ -3492,7 +3587,7 @@ struct Typechecker {
         return checked_block
     }
 
-    function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId) throws -> TypeId {
+    function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId) throws -> TypeId { 
         match parsed_type {
             NamespacedName(name, namespaces, params, span) => {
                 mut current_namespace_scope_id = scope_id
@@ -5601,7 +5696,7 @@ struct Typechecker {
                                 generic_inferences.set(
                                     structure.generic_parameters[i].to_string()
                                     args[i].to_string()
-                                    )
+                                )
                             }
                         }
                         else => {}
@@ -5702,7 +5797,7 @@ struct Typechecker {
         return_type = .substitute_typevars_in_type(
             type_id: return_type,
             generic_inferences,
-            )
+        )
 
         if callee_throws and not .get_scope(caller_scope_id).can_throw {
             .error("Call to function that may throw needs to be in a try statement or a function marked as throws", span)
