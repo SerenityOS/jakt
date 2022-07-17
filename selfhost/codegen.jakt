@@ -627,6 +627,10 @@ struct CodeGenerator {
     function codegen_function_predecl(mut this, function_: CheckedFunction) throws -> String {
         mut output = ""
 
+        if not function_.generic_params.is_empty() and function_.linkage is External {
+            return ""
+        }
+
         // FIXME: for now, just exit early if we're a constructor
         if function_.type is ImplicitConstructor {
             return ""
