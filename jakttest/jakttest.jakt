@@ -14,6 +14,11 @@ namespace process {
     extern function forcefully_kill_process(pid: i32) throws
 }
 
+namespace fs {
+    extern function touch(path: String) throws
+    extern function mkdir(path: String) throws
+}
+
 function print_usage()  {
     eprintln("usage: jakttest [OPTIONS...] <temp-dir> <path> [... <path>]")
     eprintln("OPTIONS:")
@@ -409,10 +414,14 @@ function main(args: [String]) {
     mut directories: [String] = []
     directories.ensure_capacity(parsed_options.job_count as! usize)
     for i in 0..parsed_options.job_count {
-        let name = format("{}/jakttest-tmp-{}",  parsed_options.temp_dir, i)
-        // FIXME: Does this work in Windows?
-        system(("mkdir -p " + name).c_string())
-        directories.push(name)
+        let path = format("{}/jakttest-tmp-{}",  parsed_options.temp_dir, i)
+        fs::mkdir(path)
+        // create the output files
+        fs::touch(path: path + "/compile_jakt.err")
+        fs::touch(path: path + "/compile_cpp.err")
+        fs::touch(path: path + "/runtest.err")
+        fs::touch(path: path + "/runtest.out")
+        directories.push(path)
     }
 
     let run_result = TestScheduler::run_tests(tests, directories, collect_reasons: parsed_options.show_reasons)
