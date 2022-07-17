@@ -49,11 +49,14 @@ done
 
 
 # default JOBS to number of prossing units dictated by kernel
-[ -z "$JOBS" ] && JOBS=$(nproc)
+if [[ $OSTYPE == 'darwin'* ]]; then
+    [ -z "$JOBS" ] && JOBS=$(sysctl -n hw.ncpu)
+else
+    [ -z "$JOBS" ] && JOBS=$(nproc)
+fi
 
 tempdir=$(mktemp -d)
 
 trap "rm -rf $tempdir" EXIT
 
 ./jakttest/build/jakttest --jobs "$JOBS" "$tempdir" ${TEST_FILES[@]}
-
