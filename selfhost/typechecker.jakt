@@ -4311,28 +4311,27 @@ struct Typechecker {
         let checked_expr_type_id = expression_type(checked_expr)
         let checked_expr_type = .get_type(checked_expr_type_id)
 
-        let struct_id = match checked_expr_type {
-            Type::GenericInstance(id) => id
-            Type::Struct(struct_id) => struct_id
-            else => {
-                .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
-                yield StructId(module: ModuleId(id: 0), id: 0)
-            }
-        }
-        let structure = .get_struct(struct_id)
-        for member_id in structure.fields.iterator() {
-            let member = .get_variable(member_id)
+        match checked_expr_type {
+            Type::GenericInstance(id: struct_id) | Type::Struct(struct_id) => {
+                let structure = .get_struct(struct_id)
+                for member_id in structure.fields.iterator() {
+                    let member = .get_variable(member_id)
 
-            if member.name == field {
-                let resolved_type_id = .resolve_type_var(type_var_type_id: member.type_id, scope_id)
-                // FIXME: Unify with type
-                .check_member_access(accessor: scope_id, accessee: structure.scope_id, member, span)
-                return CheckedExpression::IndexedStruct(expr: checked_expr, index: field, span, type_id: resolved_type_id)
+                    if member.name == field {
+                        let resolved_type_id = .resolve_type_var(type_var_type_id: member.type_id, scope_id)
+                        // FIXME: Unify with type
+                        .check_member_access(accessor: scope_id, accessee: structure.scope_id, member, span)
+                        return CheckedExpression::IndexedStruct(expr: checked_expr, index: field, span, type_id: resolved_type_id)
+                    }
+                }
+
+                .error(format("unknown member of struct: {}.{}", structure.name, field), span)
             }
+            else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
         }
 
         // FIXME: Unify with type
-        return CheckedExpression::IndexedStruct(expr: checked_expr, index: field, span, type_id: checked_expr_type_id)
+        return CheckedExpression::IndexedStruct(expr: checked_expr, index: field, span, type_id: unknown_type_id())
     }
 
     function check_member_access(mut this, accessor: ScopeId, accessee: ScopeId, member: CheckedVariable, span: Span) throws {
