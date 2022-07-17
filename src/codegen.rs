@@ -3471,9 +3471,17 @@ fn codegen_expr(
                     output.push_str(">(");
                 }
                 CheckedUnaryOperator::TypeCast(cast) => {
+                    let mut final_type_id = *type_id;
                     match cast {
                         CheckedTypeCast::Fallible(_) => {
-                            if is_integer(*type_id) {
+                            let type_id = match project.get_type(*type_id) {
+                                Type::GenericInstance(_, args) => args[0],
+                                _ => {
+                                    panic!("Fallible type cast must have Optional result.");
+                                }
+                            };
+                            if is_integer(type_id) {
+                                final_type_id = type_id;
                                 output.push_str("fallible_integer_cast");
                             } else {
                                 output.push_str("dynamic_cast");
@@ -3488,7 +3496,7 @@ fn codegen_expr(
                         }
                     }
                     output.push('<');
-                    output.push_str(&codegen_type(*type_id, project));
+                    output.push_str(&codegen_type(final_type_id, project));
                     output.push_str(">(");
                 }
                 _ => {}
