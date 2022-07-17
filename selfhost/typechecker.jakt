@@ -327,6 +327,19 @@ boxed enum Type {
     }
 }
 
+// FIXME: This could be part of Type
+function flip_signedness(type: Type) throws -> TypeId => match type {
+    I8 => builtin(BuiltinType::U8)
+    I16 => builtin(BuiltinType::U16)
+    I32 => builtin(BuiltinType::U32)
+    I64 => builtin(BuiltinType::U64)
+    U8 => builtin(BuiltinType::I8)
+    U16 => builtin(BuiltinType::I16)
+    U32 => builtin(BuiltinType::I32)
+    U64 => builtin(BuiltinType::I64)
+    else => builtin(BuiltinType::Unknown)
+}
+
 class Scope {
     public namespace_name: String?
     public vars: [String: VarId]
@@ -589,6 +602,15 @@ enum NumberConstant {
                 F64 => true
                 else => false
             }
+        }
+    }
+
+    function to_usize(this) -> usize => match this {
+        Signed(value) => value as! usize
+        Unsigned(value) => value as! usize
+        Floating(value) => {
+            panic("to_usize on a floating point constant")
+            yield 0uz
         }
     }
 }
@@ -3770,7 +3792,7 @@ struct Typechecker {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: cast.type_id())
             }
             Negate => {
-                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: expr_type_id)
+                return .typecheck_unary_negate(expr: checked_expr, span, type_id: expr_type_id)
             }
             Is | IsEnumVariant => {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: builtin(BuiltinType::Bool))
@@ -3793,6 +3815,53 @@ struct Typechecker {
             }
         }
         return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: expr_type_id)
+    }
+
+    function typecheck_unary_negate(mut this, expr: CheckedExpression, span: Span, type_id: TypeId) throws -> CheckedExpression {
+        if not .program.is_integer(type_id) or .program.is_signed(type_id) {
+            return CheckedExpression::UnaryOp(expr, op: CheckedUnaryOperator::Negate, span, type_id)
+        }
+
+        // Flipping the sign on a small enough unsigned constant is fine. We'll change the type to the signed variant.
+        let flipped_sign_type = flip_signedness(type: .get_type(type_id))
+
+        let constant = match expr {
+            NumericConstant(val) => val
+            else => {
+                return CheckedExpression::UnaryOp(expr, op: CheckedUnaryOperator::Negate, span, type_id)
+            }
+        }
+
+        let number = constant.number_constant()!
+        let raw_number = number.to_usize()
+
+        if not number.can_fit_number(type_id: flipped_sign_type, program: .program) {
+            .error(
+                format(
+                    "Negative literal -{} too small for type ‘{}’"
+                    raw_number
+                    .type_name(flipped_sign_type)
+                )
+                span
+            )
+            return CheckedExpression::UnaryOp(expr, op: CheckedUnaryOperator::Negate, span, type_id)
+        }
+
+        let negated_number = 0 - raw_number as! i64
+
+        let new_constant = match .get_type(flipped_sign_type) {
+            I8 => CheckedNumericConstant::I8(negated_number as! i8)
+            I16 => CheckedNumericConstant::I16(negated_number as! i16)
+            I32 => CheckedNumericConstant::I32(negated_number as! i32)
+            I64 => CheckedNumericConstant::I64(negated_number as! i64)
+            else => {
+                // FIXME: Unreachable
+                panic("Unreachable")
+                yield CheckedNumericConstant::I64(negated_number as! i64)
+            }
+        }
+
+        return CheckedExpression::UnaryOp(expr: CheckedExpression::NumericConstant(val: new_constant, span, type_id), op: CheckedUnaryOperator::Negate, span, type_id: flipped_sign_type)
     }
 
     function typecheck_binary_operation(mut this, checked_lhs: CheckedExpression, op: BinaryOperator, checked_rhs: CheckedExpression, scope_id: ScopeId, span: Span) throws -> TypeId {

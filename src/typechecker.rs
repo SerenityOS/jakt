@@ -6210,9 +6210,9 @@ pub fn typecheck_unary_operation(
                                     Some(JaktError::TypecheckError(
                                         // FIXME: Print this more nicely
                                         format!(
-                                            "Literal {:?} too small for unsigned integer type {}",
-                                            number.number_constant().unwrap(),
-                                            project.typename_for_type_id(type_id)
+                                            "Negative literal -{} too small for type ‘{}’",
+                                            number.number_constant().unwrap().to_usize(),
+                                            project.typename_for_type_id(flipped_sign_type)
                                         ),
                                         span,
                                     )),
