@@ -5623,6 +5623,12 @@ struct Typechecker {
                 // If no type_args were given, infer them from the parameters
                 if call.type_args.is_empty() and not callee.generic_params.is_empty() {
                     mut i = 0uz
+                    if callee.generic_params.size() > call.args.size() {
+                        // We appear to also need the return type
+                        // FIXME: this should be based on the type variable order
+                        checked_type_args.push(type_hint!)
+                    }
+
                     for arg in call.args.iterator() {
                         let expression_type_id = expression_type(
                             .typecheck_expression(
