@@ -33,8 +33,5 @@ else
 }
 fi
 
-tempdir=$(mktemp -d)
 
-trap "rm -rf $tempdir" EXIT
-
-./jakttest/build/jakttest "$tempdir"
+exec ./jakttest/build/jakttest

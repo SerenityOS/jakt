@@ -58,4 +58,25 @@ ErrorOr<bool> is_directory(String path)
     }
     return S_ISDIR(st.st_mode);
 }
+
+ErrorOr<void> mkdir(String path)
+{
+    int const result = ::mkdir(path.c_string(), S_IRWXU);
+    if (result == -1 && errno != EEXIST)
+        return Error::from_errno(errno);
+    return ErrorOr<void> {};
+}
+
+ErrorOr<void> rmdir(String path)
+{
+    if (::rmdir(path.c_string()) == -1)
+        return Error::from_errno(errno);
+    return ErrorOr<void> {};
+}
+ErrorOr<void> unlink(String path)
+{
+    if (::unlink(path.c_string()) == -1)
+        return Error::from_errno(errno);
+    return ErrorOr<void> {};
+}
 }
