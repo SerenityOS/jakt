@@ -1,6 +1,7 @@
 // Copyright (c) 2022, JT <jt@serenityos.org>
 // Copyright (c) 2022, Andreas Kling <kling@serenityos.org>
 // Copyright (c) 2022, Kyle Lanmon <kyle.lanmon@gmail.com>
+// Copyright (c) 2022, Adler Oliveira <adler.rs.oliveira@gmail.com>
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
@@ -4988,7 +4989,7 @@ struct Typechecker {
         mut final_result_type: TypeId? = None
 
         match type_to_match_on {
-            Enum(enum_id) => {
+            Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
                 let enum_ = .get_enum(enum_id)
                 mut seen_catch_all = false
                 mut catch_all_span: Span? = None
