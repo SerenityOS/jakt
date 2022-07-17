@@ -3110,7 +3110,7 @@ struct Typechecker {
     }
 
     function statement_definitely_returns(this, anon statement: CheckedStatement) -> bool => match statement{
-        Return => true
+        Return | Throw => true
         // FIXME: CheckedStatement::If branches ugly implementation due to current compiler limitations
         If(condition, then_block, else_statement) => {
             mut ret = false
