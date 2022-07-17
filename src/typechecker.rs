@@ -3607,7 +3607,7 @@ fn typecheck_method(
 
 pub fn statement_definitely_returns(stmt: &CheckedStatement) -> bool {
     match stmt {
-        CheckedStatement::Return(_) => true,
+        CheckedStatement::Return(_) | CheckedStatement::Throw(_) => true,
         CheckedStatement::If(CheckedExpression::Boolean(true, _), then_block, _) => {
             then_block.definitely_returns
         }
