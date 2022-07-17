@@ -1317,15 +1317,19 @@ pub enum CheckedTypeCast {
 }
 
 impl CheckedTypeCast {
-    pub fn type_id_or_type_var(&self) -> TypeId {
+    pub fn type_id_or_type_var(&self, project: &mut Project) -> TypeId {
         match self {
-            CheckedTypeCast::Fallible(type_id) => *type_id,
+            CheckedTypeCast::Fallible(type_id) => {
+                let optional_struct_id = project.find_struct_in_prelude("Optional");
+                let optional_type = Type::GenericInstance(optional_struct_id, vec![*type_id]);
+                project.find_or_add_type_id(optional_type)
+            }
             CheckedTypeCast::Infallible(type_id) => *type_id,
         }
     }
 
-    pub fn type_id(&self, scope_id: ScopeId, project: &Project) -> TypeId {
-        resolve_type_var(self.type_id_or_type_var(), scope_id, project)
+    pub fn type_id(&self, scope_id: ScopeId, project: &mut Project) -> TypeId {
+        resolve_type_var(self.type_id_or_type_var(project), scope_id, project)
     }
 }
 
