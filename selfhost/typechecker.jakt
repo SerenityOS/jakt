@@ -5121,8 +5121,20 @@ struct Typechecker {
         let type_to_match_on = .get_type(subject_type_id)
         mut checked_cases: [CheckedMatchCase] = []
 
-        mut generic_inferences: [String: String] = [:] // FIXME: Use correct generic_inferences dictionary
+        mut generic_inferences: [String: String] = [:]
         mut final_result_type: TypeId? = None
+
+        match type_to_match_on {
+            GenericEnumInstance(id, args) => {
+                let enum_ = .get_enum(id)
+                for i in 0..enum_.generic_parameters.size() {
+                    let generic = enum_.generic_parameters[i].to_string()
+                    let argument_type = args[i].to_string()
+                    generic_inferences.set(generic, argument_type)
+                }
+            }
+            else => {}
+        }
 
         match type_to_match_on {
             Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
@@ -5182,9 +5194,13 @@ struct Typechecker {
                                                 .error(format("Match case ‘{}’ must have exactly one argument", name), span)
                                             } else {
                                                 let variant_argument = variant_arguments[0]
+                                                let variable_type_id = .substitute_typevars_in_type(
+                                                    type_id
+                                                    generic_inferences
+                                                )
                                                 let var_id = module.add_variable(CheckedVariable(
                                                     name: variant_argument.binding
-                                                    type_id
+                                                    type_id: variable_type_id
                                                     is_mutable: false
                                                     definition_span: span
                                                     visibility: Visibility::Public
