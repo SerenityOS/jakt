@@ -33,6 +33,8 @@ struct ModuleId {
 struct VarId {
     module: ModuleId
     id: usize
+
+    function equals(this, anon rhs: VarId) -> bool => .module.equals(rhs.module) and .id == rhs.id
 }
 
 struct FunctionId {
@@ -149,6 +151,7 @@ boxed enum Type {
     Struct(StructId)
     Enum(EnumId)
     RawPtr(TypeId)
+    Function(params: [TypeId], return_type_id: TypeId)
 
     function equals(this, anon rhs: Type) -> bool {
         if this is Void and rhs is Void {
@@ -268,6 +271,20 @@ boxed enum Type {
                             return false
                         }
                     }
+                }
+                Function(params, return_type_id) => match rhs {
+                    Function(params: rhs_params, return_type_id: rhs_return_type_id) => {
+                        if params.size() != rhs_params.size() {
+                            return false
+                        }
+                        for i in 0..params.size() {
+                            if not params[i].equals(rhs_params[i]) {
+                                return false
+                            }
+                        }
+                        return return_type_id.equals(rhs_return_type_id)
+                    }
+                    else => false
                 }
                 else => {
                     return false
@@ -790,6 +807,7 @@ boxed enum CheckedExpression {
     OptionalSome(expr: CheckedExpression, span: Span, type_id: TypeId)
     ForcedUnwrap(expr: CheckedExpression, span: Span, type_id: TypeId)
     Block(block: CheckedBlock, span: Span, type_id: TypeId)
+    Function(function_: CheckedFunction, span: Span, type_id: TypeId)
     Garbage(Span)
 
     // FIXME: rewrite this into a FAMF once we can yield None out of a match (https://github.com/SerenityOS/jakt/issues/669)
@@ -845,6 +863,7 @@ function expression_type(anon expr: CheckedExpression) -> TypeId => match expr {
     ForcedUnwrap(type_id) => type_id
     Match(type_id) => type_id
     Block(type_id) => type_id
+    Function(function_) => builtin(BuiltinType::Unknown) // FIXME add function type
     Garbage => builtin(BuiltinType::Void)
 }
 
@@ -1474,6 +1493,7 @@ struct Typechecker {
             }
             TypeVariable(name) => name
             RawPtr(type_id) => format("raw {}", .type_name(type_id))
+            Function => "auto"
         }
     }
 
@@ -1504,6 +1524,7 @@ struct Typechecker {
         ForcedUnwrap(span) => span
         Match(span) => span
         Block(span) => span
+        Function(span) => span
         Garbage(span) => span
     }
 
@@ -3754,6 +3775,15 @@ struct Typechecker {
 
                 return .typecheck_generic_resolved_type(name, checked_inner_types, scope_id, span)
             }
+            Function(params, return_type) => {
+                mut checked_params: [TypeId] = []
+                for param in params.iterator() {
+                    let inner_type_id = .typecheck_typename(parsed_type: param, scope_id)
+                    checked_params.push(inner_type_id)
+                }
+                let return_type_id = .typecheck_typename(parsed_type: return_type, scope_id)
+                return .find_or_add_type_id(Type::Function(params: checked_params, return_type_id))
+            }
         }
 
         // FIXME: This is unreachable but the generated C++ causes a warning.
@@ -4908,11 +4938,28 @@ struct Typechecker {
         Match(expr, cases, span) => .typecheck_match(expr, cases, span, scope_id, safety_mode)
         JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode, type_hint)
         Set(values, span) => .typecheck_set(values, span, scope_id, safety_mode, type_hint)
+        Function(function_, span) => .typecheck_function_expression(function_, parent_scope_id: scope_id, span)
         else => {
             .compiler.panic(format("typechecker needs support for {}", expr))
 
             yield CheckedExpression::Boolean(val: false, span: Span(file_id: .compiler.current_file!, start: 0, end: 0))
         }
+    }
+
+    function typecheck_function_expression(mut this, function_: ParsedFunction, parent_scope_id: ScopeId, span: Span) throws -> CheckedExpression {
+        .typecheck_function_predecl(parsed_function: function_, parent_scope_id, this_arg_type_id: None)
+        .typecheck_function(parsed_function: function_, parent_scope_id)
+        let function_id = .find_function_in_scope(parent_scope_id, function_name: function_.name)
+        if not function_id.has_value() {
+            .compiler.panic("Internal error: missing previously defined function")
+        }
+        let function_ = .get_function(function_id!)
+        mut params: [TypeId] = []
+        for param in function_.params.iterator() {
+            params.push(param.variable.type_id)
+        }
+        let type_id = .find_or_add_type_id(Type::Function(params, return_type_id: function_.return_type_id))
+        return CheckedExpression::Function(function_, span, type_id)
     }
 
     function typecheck_namespaced_var_or_simple_enum_constructor_call(mut this, name: String, namespace_: [String], scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?, span: Span) throws -> CheckedExpression {

@@ -1,0 +1,12 @@
+/// Expect
+/// - output: "PASS\nPASS\n"
+
+function main() {
+    let x = function() {
+        return "PASS"
+    }
+    let y = function() => "PASS"
+
+    println("{}", x())
+    println("{}", y())
+}

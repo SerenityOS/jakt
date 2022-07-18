@@ -1469,6 +1469,13 @@ struct CodeGenerator {
 
             yield output
         }
+        Function(function_) => {
+            mut params: [String] = []
+            for param in function_.params.iterator() {
+                params.push(.codegen_type(param.variable.type_id) + param.variable.name)
+            }
+            yield format("[&]({}) {}", join(params, separator: ", "), .codegen_block(block: function_.block))
+        }
         else => {
             todo(format("codegen_expression else: {}", expression))
             yield ""
@@ -2368,6 +2375,7 @@ struct CodeGenerator {
         JaktString => "String"
         CChar => "char"
         CInt => "int"
+        Unknown => "auto"
         RawPtr(type_id) => .codegen_type(type_id) + "*"
         GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
         Struct(id) => .codegen_struct_type(id, as_namespace)
