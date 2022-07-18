@@ -3260,6 +3260,7 @@ struct Typechecker {
                 match rhs_type {
                     GenericInstance(id, args) => {
                         let rhs_struct_id = id
+
                         if lhs_struct_id.equals(rhs_struct_id) {
                             let rhs_args = args
                             let lhs_struct = .get_struct(lhs_struct_id)
@@ -3371,6 +3372,11 @@ struct Typechecker {
                 let rhs_type = .get_type(rhs_type_id)
                 match rhs_type {
                     GenericInstance(id, args) => {
+                        if not lhs_struct_id.equals(id) {
+                            .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
+                            return false
+                        }
+
                         let lhs_struct = .get_struct(lhs_struct_id)
                         if args.size() != lhs_struct.generic_parameters.size() {
                             .error(format("mismatched number of generic parameters for {}", lhs_struct.name), span)
@@ -4994,8 +5000,18 @@ struct Typechecker {
         mut inner_type_id = unknown_type_id()
         mut inferred_type_span: Span? = None
 
-        // TODO: type hints
         mut inner_hint: TypeId? = None
+        if type_hint.has_value() {
+            let full_type = .get_type(type_hint!)
+            match full_type {
+                GenericInstance(id, args) => {
+                    if id.equals(array_struct_id) {
+                        inner_hint = Some(args[0])
+                    }
+                }
+                else => {}
+            }
+        }
 
         mut vals: [CheckedExpression] = []
         for value in values.iterator() {
@@ -5019,20 +5035,12 @@ struct Typechecker {
             vals.push(checked_expr)
         }
 
-        if inner_type_id.equals(unknown_type_id()) and type_hint.has_value() and not type_hint!.equals(unknown_type_id()) {
-            match .get_type(type_hint!) {
-                GenericInstance(id, args) => {
-                    if not id.equals(array_struct_id) {
-                        panic("expected Array struct")
-                    }
-                    inner_type_id = args[0]
-                }
-                else => panic("expected Array struct")
-            }
-        }
-
         if inner_type_id.equals(unknown_type_id()) {
-            .error("Cannot infer generic type for Array<T>", span)
+            if inner_hint.has_value() {
+                inner_type_id = inner_hint!
+            } else if type_hint.has_value() and type_hint!.equals(unknown_type_id()) {
+                .error("Cannot infer generic type for Array<T>", span)
+            }
         }
 
         let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
@@ -5860,7 +5868,7 @@ struct Typechecker {
                         lhs_type_id: param.variable.type_id
                         rhs_type_id: expression_type(checked_arg)
                         generic_inferences
-                        span
+                        span: .expression_span(checked_arg)
                     )
 
                     args.push((call.name, checked_arg))
