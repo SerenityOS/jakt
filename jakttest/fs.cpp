@@ -80,10 +80,6 @@ ErrorOr<Optional<StatResults>> stat_silencing_enoent(String path)
         }
         return Error::from_errno(errno);
     }
-    return Optional<StatResults>(StatResults(
-        /* modified_time */ st.st_atim.tv_sec,
-        /* is_executable */ (st.st_mode & S_IXUSR) != 0,
-        /* is_regular_file */ S_ISREG(st.st_mode),
-        /* exists */ true));
+    return Optional<StatResults>(StatResults(st.st_atim.tv_sec, st.st_mode));
 }
 }
