@@ -49,6 +49,33 @@ jobs:
         with:
           command: test
           args: --workspace ${{ matrix.flags }}
+  selfhost:
+    strategy:
+      fail-fast: true
+      matrix:
+        platform: [ubuntu-latest]
+        style: [default]
+        rust:
+          - stable
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Ninja
+        uses: ashutoshvarma/setup-ninja@master
+        with:
+          # ninja version to download. Default: 1.10.0
+          version: 1.10.0
+
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - name: Test Jakt Selfhost
+        run: ./jakttest/run-all.sh
   clippy:
     strategy:
       fail-fast: true
