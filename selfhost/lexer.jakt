@@ -606,6 +606,7 @@ struct Lexer {
             }
         }
 
+        mut number_too_large = false
         mut floating: bool = false
 
         mut fraction_nominator: u64 = 0
@@ -630,7 +631,13 @@ struct Lexer {
 
             let digit: u64 = as_saturated(value - b'0')
             if not floating {
-                total = total * 10 + digit
+                // NOTE: We use unchecked arithmetic here to see if the number is too large
+                //       for our u64 storage type.
+                let old_total = total
+                total = unchecked_add(unchecked_mul(total, 10u64), digit)
+                if total < old_total {
+                    number_too_large = true
+                }
             } else {
                 fraction_nominator = fraction_nominator * 10u64 + digit
                 fraction_denominator *= 10u64
@@ -647,6 +654,11 @@ struct Lexer {
         // FIXME: Change match to if statements or similar when available
         let end = .index
         let span = .span(start, end)
+
+        if number_too_large {
+            .error(format("Integer literal too large"), span)
+            return Token::Garbage(span)
+        }
 
         if .peek() == b'_' {
             .error(
