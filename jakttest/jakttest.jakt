@@ -608,13 +608,19 @@ function main(args: [String]) {
 
     if not parsed_options.assume_selfhost_updated and does_selfhost_need_update() {
         eprintln("[ \x1b[1;94mINFO\x1b[m ] Compiling selfhost to match source...")
-        system("cargo run --color=always selfhost/main.jakt".c_string())
+        if system("cargo run --color=always selfhost/main.jakt".c_string()) != 0 {
+            eprintln("[ \x1b[1;31mFATAL\x1b[m ] Compiling selfhost failed!")
+            return 1
+        }
     }
 
     if not parsed_options.assume_updated {
         eprintln("[ \x1b[1;94mINFO\x1b[m ] Running incremental build on Jakttest")
         let current_binary_stat = fs::stat_silencing_enoent(path: args[0])
-        system("ninja -C jakttest".c_string())
+        if system("ninja -C jakttest".c_string()) != 0 {
+            eprintln("[ \x1b[1;31mFATAL\x1b[m ] Compiling new Jakttest failed!")
+            return 1
+        }
         let latest_binary_stat = fs::stat_silencing_enoent(path: args[0])!
 
         if not current_binary_stat.has_value() or
