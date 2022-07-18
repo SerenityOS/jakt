@@ -4604,8 +4604,23 @@ struct Typechecker {
                 GenericInstance(id) => StructOrEnumId::Struct(id)
                 GenericEnumInstance(id) => StructOrEnumId::Enum(id)
                 else => {
-                    .compiler.panic(format("Method call on unsupported base {}", .get_type(checked_expr_type_id)))
-                    yield StructOrEnumId::Struct(StructId(module: ModuleId(id: 0), id: 0))
+                    .error(message: format("no methods available on value (type: {})", .type_name(type_id: checked_expr_type_id)), span: .expression_span(expression: checked_expr))
+                    mut checked_args: [(String, CheckedExpression)] = []
+
+                    return CheckedExpression::MethodCall(
+                        expr: checked_expr,
+                        call: CheckedCall(
+                            namespace_: [],
+                            name: call.name,
+                            args: checked_args,
+                            type_args: [],
+                            function_id: None,
+                            return_type: unknown_type_id(),
+                            callee_throws: false,
+                        ),
+                        span,
+                        type_id: unknown_type_id(),
+                    )
                 }
             }
 
