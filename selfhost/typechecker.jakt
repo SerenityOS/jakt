@@ -12,7 +12,7 @@ import parser { Parser, BinaryOperator, DefinitionLinkage, DefinitionType, Unary
                 ParsedExpression, ParsedFunction, ParsedNamespace,
                 ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
                 ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
-                ParsedMatchBody, ParsedMatchCase, Visibility }
+                ParsedMatchBody, ParsedMatchCase, Visibility, ParsedParameter }
 import utility { panic, todo, Span, join, FilePath, FileId }
 import compiler { Compiler }
 import prelude { JaktPrelude }
@@ -151,7 +151,7 @@ boxed enum Type {
     Struct(StructId)
     Enum(EnumId)
     RawPtr(TypeId)
-    Function(params: [TypeId], return_type_id: TypeId)
+    Function(params: [CheckedParameter], return_type_id: TypeId)
 
     function equals(this, anon rhs: Type) -> bool {
         if this is Void and rhs is Void {
@@ -278,9 +278,10 @@ boxed enum Type {
                             return false
                         }
                         for i in 0..params.size() {
-                            if not params[i].equals(rhs_params[i]) {
-                                return false
-                            }
+                            // FIXME: compare parameters
+                            // if not params[i].equals(rhs_params[i]) { 
+                            //     return false
+                            // }
                         }
                         return return_type_id.equals(rhs_return_type_id)
                     }
@@ -2835,6 +2836,73 @@ struct Typechecker {
         checked_function.return_type_id = return_type_id
     }
 
+    function typecheck_parameters(mut this, parsed_parameters: [ParsedParameter], parent_scope_id: ScopeId, checked_function_scope_id: ScopeId, block_scope_id: ScopeId, this_arg_type_id: TypeId?, check_scope: ScopeId?) throws -> [CheckedParameter] {
+        mut checked_parameters: [CheckedParameter] = []
+        mut first = true
+        mut module = .current_module()
+
+        for parameter in parsed_parameters.iterator() {
+            mut type_id = .typecheck_typename(parsed_type: parameter.variable.parsed_type, scope_id: checked_function_scope_id)
+
+            if first and parameter.variable.name == "this" {
+                if this_arg_type_id.has_value() {
+                    type_id = this_arg_type_id!
+                }
+            }
+            first = false
+
+            let variable = CheckedVariable(
+                name: parameter.variable.name
+                type_id
+                is_mutable: parameter.variable.is_mutable
+                definition_span: parameter.variable.span
+                visibility: Visibility::Public
+            )
+
+            let checked_parameter = CheckedParameter(
+                requires_label: parameter.requires_label
+                variable
+            )
+
+            checked_parameters.push(checked_parameter)
+
+            if check_scope.has_value() {
+                let var_id = module.add_variable(variable)
+                .add_var_to_scope(
+                    scope_id: check_scope!,
+                    name: parameter.variable.name,
+                    variable: var_id,
+                    span: parameter.variable.span,
+                )
+            }
+
+            match .get_type(type_id) {
+                Function(params, return_type_id) => {
+                    let function_parameter = CheckedFunction(
+                        name: parameter.variable.name
+                        name_span: parameter.variable.span
+                        visibility: Visibility::Public
+                        return_type_id
+                        params
+                        generic_params: [] // FIXME: support generics
+                        block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: false, yielded_type: None)
+                        can_throw: false // FIXME: store this on the type?
+                        type: FunctionType::Normal // FIXME: lambda?
+                        linkage: FunctionLinkage::Internal
+                        function_scope_id: block_scope_id
+                        is_instantiated: false
+                        parsed_function: None
+                    )
+                    let function_id = module.add_function(checked_function: function_parameter)
+                    .add_function_to_scope(parent_scope_id, name: parameter.variable.name, function_id, span: function_parameter.name_span)
+                }
+                else => {}
+            }
+        }
+
+        return checked_parameters
+    }
+
     function typecheck_function_predecl(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId, this_arg_type_id: TypeId?) throws {
         let function_scope_id = .create_scope(parent_scope_id, can_throw: parsed_function.can_throw, debug_name: format("function({})", parsed_function.name))
         let scope_debug_name = format("function-block({})", parsed_function.name)
@@ -2908,44 +2976,7 @@ struct Typechecker {
         }
 
         // Check parameters
-        mut first = true
-        mut module = .current_module()
-
-        for parameter in parsed_function.params.iterator() {
-            mut type_id = .typecheck_typename(parsed_type: parameter.variable.parsed_type, scope_id: checked_function_scope_id)
-
-            if first and parameter.variable.name == "this" {
-                if this_arg_type_id.has_value() {
-                    type_id = this_arg_type_id!
-                }
-            }
-            first = false
-
-            let variable = CheckedVariable(
-                name: parameter.variable.name
-                type_id
-                is_mutable: parameter.variable.is_mutable
-                definition_span: parameter.variable.span
-                visibility: Visibility::Public
-            )
-
-            let checked_parameter = CheckedParameter(
-                requires_label: parameter.requires_label
-                variable
-            )
-
-            checked_function.params.push(checked_parameter)
-
-            if check_scope.has_value() {
-                let var_id = module.add_variable(variable)
-                .add_var_to_scope(
-                    scope_id: check_scope!,
-                    name: parameter.variable.name,
-                    variable: var_id,
-                    span: parameter.variable.span,
-                )
-            }
-        }
+        checked_function.params = .typecheck_parameters(parsed_parameters: parsed_function.params, parent_scope_id, checked_function_scope_id, block_scope_id, this_arg_type_id, check_scope)
 
         // Check return type
         let function_return_type_id = .typecheck_typename(parsed_type: parsed_function.return_type, scope_id: checked_function_scope_id)
@@ -2990,6 +3021,9 @@ struct Typechecker {
         mut module = .current_module()
 
         let function_id = module.next_function_id()
+        if not checked_function.parsed_function.has_value() {
+            return
+        }
         mut parsed_function = checked_function.to_parsed_function()
         let scope_id = .create_scope(parent_scope_id, can_throw: parsed_function.can_throw, debug_name: format("function-specialization({})", parsed_function.name))
 
@@ -3776,11 +3810,15 @@ struct Typechecker {
                 return .typecheck_generic_resolved_type(name, checked_inner_types, scope_id, span)
             }
             Function(params, return_type) => {
-                mut checked_params: [TypeId] = []
-                for param in params.iterator() {
-                    let inner_type_id = .typecheck_typename(parsed_type: param, scope_id)
-                    checked_params.push(inner_type_id)
-                }
+                mut checked_params = .typecheck_parameters(
+                    parsed_parameters: params
+                    parent_scope_id: scope_id
+                    checked_function_scope_id: scope_id
+                    block_scope_id: scope_id
+                    this_arg_type_id: None
+                    check_scope: None
+                )
+
                 let return_type_id = .typecheck_typename(parsed_type: return_type, scope_id)
                 return .find_or_add_type_id(Type::Function(params: checked_params, return_type_id))
             }
@@ -4954,11 +4992,7 @@ struct Typechecker {
             .compiler.panic("Internal error: missing previously defined function")
         }
         let function_ = .get_function(function_id!)
-        mut params: [TypeId] = []
-        for param in function_.params.iterator() {
-            params.push(param.variable.type_id)
-        }
-        let type_id = .find_or_add_type_id(Type::Function(params, return_type_id: function_.return_type_id))
+        let type_id = .find_or_add_type_id(Type::Function(params: function_.params, return_type_id: function_.return_type_id))
         return CheckedExpression::Function(function_, span, type_id)
     }
 

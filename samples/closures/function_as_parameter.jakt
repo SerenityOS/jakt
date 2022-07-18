@@ -1,0 +1,10 @@
+/// Expect
+/// - output: "PASS the peas!\n"
+
+function a(anon cb: function(x: String) -> void) {
+    cb(x: " the peas!")
+}
+
+function main() {
+    a(function(x: String) => println("PASS{}", x))
+}

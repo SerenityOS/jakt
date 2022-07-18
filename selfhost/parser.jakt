@@ -441,7 +441,7 @@ boxed enum ParsedType {
     Optional(inner: ParsedType, span: Span)
     RawPtr(inner: ParsedType, span: Span)
     WeakPtr(inner: ParsedType, span: Span)
-    Function(params: [ParsedType], return_type: ParsedType, span: Span)
+    Function(params: [ParsedParameter], return_type: ParsedType, span: Span)
     Empty
 
     function span(this) => match this {
@@ -1514,29 +1514,9 @@ struct Parser {
         Function => {
             let span = .current().span()
             .index++
-            mut params: [ParsedType] = []
             mut return_type = ParsedType::Empty
-            match .current() {
-                LParen => {
-                    .index++
-                }
-                else => {
-                    .error("Expected '('", .current().span())
-                    return ParsedType::Empty
-                }
-            }
 
-            while not .eof() {
-                match .current() {
-                    RParen => {
-                        .index++
-                        break
-                    }
-                    else => {
-                        params.push(.parse_typename())
-                    }
-                }
-            }
+            let params = .parse_function_parameters()
 
             match .current() {
                 Arrow => {
@@ -1562,6 +1542,7 @@ struct Parser {
                 if .current() is Colon {
                     .index++
                 } else {
+                    eprintln("here; {}", .current())
                     return ParsedVarDecl(
                         name: var_name,
                         parsed_type: ParsedType::Empty,
