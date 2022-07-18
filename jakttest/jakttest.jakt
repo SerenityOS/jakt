@@ -513,7 +513,7 @@ function main(args: [String]) {
     println("{} skipped", skipped_count)
     println("==============================")
 
-    if run_result.failed_reasons.has_value() {
+    if run_result.failed_reasons.has_value() and run_result.failed_count > 0 {
         eprintln("Showing why tests failed:")
         let reasons = run_result.failed_reasons!
         mut is_first = true
@@ -562,6 +562,10 @@ function main(args: [String]) {
             }
         }
         eprintln("==============================")
+    }
+
+    if run_result.failed_count > 0 {
+        return 1
     }
 }
 
