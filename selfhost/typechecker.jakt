@@ -5666,7 +5666,7 @@ struct Typechecker {
         )
     }
 
-    function resolve_call(mut this, call: ParsedCall, namespaces: [ResolvedNamespace], span: Span, scope_id: ScopeId, must_be_enum_constructor: bool) throws -> FunctionId? {
+    function resolve_call(mut this, call: ParsedCall, mut namespaces: [ResolvedNamespace], span: Span, scope_id: ScopeId, must_be_enum_constructor: bool) throws -> FunctionId? {
         mut callee: FunctionId? = None
         mut current_scope_id = scope_id
 
@@ -5677,8 +5677,7 @@ struct Typechecker {
                 let scope_id = maybe_ns_scope!.0
                 let is_import = maybe_ns_scope!.1
                 if is_import {
-                    mut ns = namespaces[namespace_index]
-                    ns.name = .program.modules[scope_id.module_id.id].name
+                    namespaces[namespace_index].name = .program.modules[scope_id.module_id.id].name
                 }
                 current_scope_id = scope_id
                 continue
