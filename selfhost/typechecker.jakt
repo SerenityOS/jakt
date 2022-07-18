@@ -5263,7 +5263,7 @@ struct Typechecker {
                                                         unused_field_names.push(field_name)
                                                     }
                                                     .error_with_hint(
-                                                        "Match case argument '{}' for struct-like enum variant cannot be anon"
+                                                        format("Match case argument '{}' for struct-like enum variant cannot be anon", arg.binding)
                                                         arg.span
                                                         format("Available arguments are: {}\n", join(unused_field_names, separator: ", "))
                                                         arg.span
