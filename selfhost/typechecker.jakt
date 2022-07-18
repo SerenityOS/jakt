@@ -3568,7 +3568,7 @@ struct Typechecker {
             )
 
             // check that statment definitly returns
-            checked_block.definitely_returns = .statement_definitely_returns(checked_statement)
+            checked_block.definitely_returns = checked_block.definitely_returns or .statement_definitely_returns(checked_statement)
 
             let none_yield: Span? = None // FIXME: Can't yield None directly
             let yield_span: Span? = match parsed_statement {
