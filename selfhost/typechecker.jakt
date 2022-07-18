@@ -4721,7 +4721,7 @@ struct Typechecker {
                                         }
                                     }
                                     else => {
-                                        .error(format("Not a valid type name: {}", name), span)
+                                        .error(format("Unknown type or invalid type name: {}", name), span)
                                     }
                                 }
                             }
