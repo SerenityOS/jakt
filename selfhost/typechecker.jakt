@@ -2507,7 +2507,7 @@ struct Typechecker {
                         enum_.variants.push(CheckedEnumVariant::WithValue(name: variant.name, expr, span: variant.span))
                         let var_id = module.add_variable(CheckedVariable(
                             name: variant.name
-                            type_id: underlying_type_id
+                            type_id: enum_.type_id
                             is_mutable: false
                             definition_span: variant.span
                             visibility: Visibility::Public
