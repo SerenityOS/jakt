@@ -1,3 +1,6 @@
+// Copyright (c) 2022, Jesús Lapastora <cyber.gsuscode@gmail.com>
+//
+// SPDX-License-Identifier: BSD-2-Clause
 #include "os.h"
 #include <Jakt/String.h>
 // FIXME:  StringBuilder fails to compile because

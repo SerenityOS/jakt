@@ -1,3 +1,6 @@
+// Copyright (c) 2022, Jesús Lapastora <cyber.gsuscode@gmail.com>
+//
+// SPDX-License-Identifier: BSD-2-Clause
 #include "fs.h"
 #include <Jakt/RefPtr.h>
 #include <Jakt/String.h>
