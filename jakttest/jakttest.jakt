@@ -132,7 +132,7 @@ struct Options {
         mut options = Options(files
                               temp_dir: ""
                               errors
-                              show_reasons: false
+                              show_reasons: true
                               job_count: 8
                               help_wanted: false)
 
