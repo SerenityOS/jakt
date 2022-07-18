@@ -10,4 +10,5 @@ namespace Jakt::process {
 ErrorOr<i32> start_background_process(Array<String> args);
 ErrorOr<Optional<i32>> poll_process_exit(i32 pid);
 ErrorOr<void> forcefully_kill_process(i32 pid);
+ErrorOr<void> exec(Array<String> args);
 }
