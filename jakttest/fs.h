@@ -1,6 +1,8 @@
+#pragma once
 #include <Jakt/Forward.h>
 #include <Jakt/String.h>
 #include <dirent.h>
+#include <sys/stat.h>
 
 namespace Jakt::fs {
 ErrorOr<void> mkdir(String path);
@@ -23,29 +25,24 @@ public:
     ErrorOr<Optional<String>> next();
 };
 ErrorOr<NonnullRefPtr<DirectoryIterator>> list_directory(String path);
-ErrorOr<bool> is_directory(String path);
 ErrorOr<void> mkdir(String path);
 ErrorOr<void> rmdir(String path);
 ErrorOr<void> unlink(String path);
 
 class StatResults {
     size_t m_modified_time;
-    bool m_is_executable;
-    bool m_is_regular_file;
-    bool m_exists;
+    mode_t m_mode;
 
 public:
-    constexpr StatResults(size_t modified_time, bool is_executable, bool is_regular_file, bool exists)
+    constexpr StatResults(size_t modified_time, mode_t mode)
         : m_modified_time(modified_time)
-        , m_is_executable(is_executable)
-        , m_is_regular_file(is_regular_file)
-        , m_exists(exists)
+        , m_mode(mode)
     {
     }
     constexpr size_t modified_time() const { return m_modified_time; }
-    constexpr size_t is_executable() const { return m_is_executable; }
-    constexpr size_t is_regular_file() const { return m_is_regular_file; }
-    constexpr size_t exists() const { return m_exists; }
+    constexpr size_t is_executable() const { return (m_mode & S_IXUSR) != 0; }
+    constexpr size_t is_regular_file() const { return S_ISREG(m_mode); }
+    constexpr size_t is_directory() const { return S_ISDIR(m_mode); }
 };
 ErrorOr<Optional<StatResults>> stat_silencing_enoent(String path);
 }

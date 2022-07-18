@@ -17,6 +17,7 @@ namespace fs {
         // Whether the file is executable by the current user
         function is_executable(this) -> bool
         function is_regular_file(this) -> bool
+        function is_directory(this) -> bool
     }
 
     extern class DirectoryIterator {
@@ -27,7 +28,6 @@ namespace fs {
     // Get a listing of a directory, using readdir().
     extern function list_directory(path: String) throws -> DirectoryIterator
     // Returns whether the given path is a directory
-    extern function is_directory(path: String) throws -> bool
 
     // Create a directory
     extern function mkdir(path: String) throws
@@ -41,6 +41,19 @@ namespace fs {
     // Calls `stat` on a file. Silences `ENOENT` error by setting
     // StatResults.exists to false.
     extern function stat_silencing_enoent(path: String) throws -> StatResults?
+
+
+    function is_directory(path: String) throws -> bool {
+        let stat = stat_silencing_enoent(path)
+        return stat.has_value() and stat!.is_directory()
+    }
+
+    function mkdir_if_not_present(path: String) throws {
+        let stat = stat_silencing_enoent(path)
+        if not stat.has_value() or not stat!.is_directory() {
+            fs::mkdir(path)
+        }
+    }
 
 
     function has_jakt_extension(name: String) throws -> bool {
@@ -655,10 +668,10 @@ function main(args: [String]) {
 
     mut directories: [String] = []
     directories.ensure_capacity(parsed_options.job_count as! usize)
-    fs::mkdir(path: parsed_options.temp_dir)
+    fs::mkdir_if_not_present(path: parsed_options.temp_dir)
     for i in 0..parsed_options.job_count {
         let path = format("{}/jakttest-tmp-{}",  parsed_options.temp_dir, i)
-        fs::mkdir(path)
+        fs::mkdir_if_not_present(path)
         directories.push(path)
     }
 
