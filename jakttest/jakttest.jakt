@@ -394,6 +394,12 @@ enum TestFailedReason {
     AbruptExit(i32)
 }
 
+enum TestExitedResult {
+    Passed
+    Failed(file: String)
+}
+
+
 // A test scheduler that has its process rate limited by
 // the number of directories it has available.
 struct TestScheduler {
@@ -406,7 +412,9 @@ struct TestScheduler {
     // TODO: timeout
 
 
-    function on_test_exited(mut this, pid: i32, exit_code: i32) throws {
+    /// Returns whether the test that the exited process was running has passed
+    /// or not
+    function on_test_exited(mut this, pid: i32, exit_code: i32) throws -> TestExitedResult {
         let test = .running_tests[pid]
         .free_directories.push(test.directory_index)
         .running_tests.remove(pid)
@@ -414,17 +422,14 @@ struct TestScheduler {
 
         // unknown exit code. Assume that the job exited abruptly.
         if not maybe_stage.has_value() {
-            eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
             if .failed_reasons.has_value() {
                 .failed_reasons![test.file_name] = TestFailedReason::AbruptExit(exit_code)
             }
-            .failed_count++
-            return
+            return TestExitedResult::Failed(file: test.file_name)
         }
         let stage = maybe_stage!
 
         if stage is CompileCpp {
-            eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
             if .failed_reasons.has_value() {
                 let path = format("{}/compile_cpp.err",
                     .directories[test.directory_index])
@@ -432,8 +437,7 @@ struct TestScheduler {
                 let had = bytes_to_string(file.read_all())
                 .failed_reasons![test.file_name] = TestFailedReason::ClangError(had)
             }
-            .failed_count++
-            return
+            return TestExitedResult::Failed(file: test.file_name)
         }
 
         // check the exit code before anything
@@ -441,7 +445,6 @@ struct TestScheduler {
 
 
         if not stage.equals(expected_stage) {
-            eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
             if .failed_reasons.has_value() {
 
                 if not (stage is TranspileJakt) {
@@ -460,8 +463,7 @@ struct TestScheduler {
                         error)
 
             }
-            .failed_count++
-            return
+            return TestExitedResult::Failed(file: test.file_name)
         }
 
         // check the test result
@@ -479,10 +481,8 @@ struct TestScheduler {
             Okay => compare_test(bytes: output, expected)
             RuntimeError | CompileError => compare_error(bytes: output, expected)
         }
-        if passed_test {
-            .passed_count++
-        } else {
-            eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", test.file_name)
+
+        if not passed_test {
             if .failed_reasons.has_value() {
                 .failed_reasons![test.file_name] = match test.result.kind {
                     Okay => 
@@ -499,14 +499,23 @@ struct TestScheduler {
                             expected)
                 }
             }
-            .failed_count++
+            return TestExitedResult::Failed(file: test.file_name)
         }
+        return TestExitedResult::Passed
     }
 
     function poll_running_tests(mut this) throws {
         mut exited = process::poll_process_exit(pid: -1i32)
         while exited.has_value() {
-            .on_test_exited(pid: exited!.pid(), exit_code: exited!.exit_code())
+            match .on_test_exited(pid: exited!.pid(), exit_code: exited!.exit_code()) {
+                Passed => {
+                    .passed_count++
+                }
+                Failed(file) => {
+                    eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", file)
+                    .failed_count++
+                }
+            }
             exited = process::poll_process_exit(pid: -1i32)
         }
     }
