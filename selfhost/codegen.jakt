@@ -166,6 +166,48 @@ struct CodeGenerator {
 
     function fresh_label(mut this) throws => format("__jakt_label_{}", .fresh_label_counter++)
 
+    function topologically_sort_modules(this) throws -> [ModuleId] {
+        mut in_degrees: [usize:i64] = [:]
+
+        for module in .program.modules.iterator() {
+            for imported_module in module.imports.iterator() {
+                let existing = in_degrees.get(imported_module.id) ?? 0
+                in_degrees.set(imported_module.id, existing + 1)
+            }
+
+            if not in_degrees.contains(module.id.id) {
+                in_degrees.set(module.id.id, 0)
+            }
+        }
+
+        mut stack: [ModuleId] = []
+        for module in .program.modules.iterator() {
+            if in_degrees[module.id.id] == 0 {
+                stack.push(module.id)
+            }
+        }
+
+        mut sorted_modules: [ModuleId] = []
+        while not stack.is_empty() {
+            let id = stack.pop()!
+            sorted_modules.push(id)
+            for imported_module in .program.modules[id.id].imports.iterator() {
+                let module_in_degrees = in_degrees[imported_module.id]
+                in_degrees.set(imported_module.id, module_in_degrees - 1)
+                if module_in_degrees == 1 {
+                    stack.push(ModuleId(id: imported_module.id))
+                }
+            }
+        }
+
+        if sorted_modules.size() == .program.modules.size() {
+            return sorted_modules
+        }
+
+        panic("Cyclic module imports")
+        return []
+    }
+
     function generate(compiler: Compiler, anon program: CheckedProgram, debug_info: bool) throws -> String {
         let none_function: CheckedFunction? = None
         mut generator = CodeGenerator(
@@ -195,10 +237,14 @@ struct CodeGenerator {
         output += "#include <lib.h>\n"
         output += "namespace Jakt {\n"
 
-        // FIXME: module sorting
-        let module_count = generator.program.modules.size()
-        mut i = module_count - 1
-        while (i >= 1 and i <= module_count) { // skip 0 as it is prelude
+        let sorted_modules = generator.topologically_sort_modules()
+
+        for idx in sorted_modules.size()..0 {
+            let i = sorted_modules[idx - 1].id
+            if i == 0 {
+                // Skip 0 because it's the prelude
+                continue
+            }
             let module = generator.program.modules[i]
             generator.compiler.dbg_println(format("generate: module idx: {}, module.name {}", i, module.name))
 
@@ -216,12 +262,16 @@ struct CodeGenerator {
             if not module.is_root {
                 output += "}\n"
             }
-            i--
         }
 
         // FIXME: module sorting
-        i = module_count - 1
-        while (i >= 1 and i <= module_count) { // skip 0 as it is prelude
+        for idx in sorted_modules.size()..0 {
+            let i = sorted_modules[idx - 1].id
+            if i == 0 {
+                // Skip 0 because it's the prelude
+                continue
+            }
+
             let module = generator.program.modules[i]
             generator.compiler.dbg_println(format("generate: module idx: {}, module.name {}", i, module.name))
 
@@ -245,7 +295,6 @@ struct CodeGenerator {
             if not module.is_root {
                 output += "}\n"
             }
-            i--
         }
 
         output += generator.deferred_output
