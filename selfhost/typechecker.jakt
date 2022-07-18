@@ -3834,8 +3834,17 @@ struct Typechecker {
 
         let number = constant.number_constant()!
         let raw_number = number.to_usize()
+        let max_signed = Type::I64.max() as! usize;
+        mut negated_number = 0;
+        if raw_number == max_signed + 1 {
+            negated_number = Type::I64.min()
+        }
+        if raw_number <= max_signed {
+            negated_number = 0 - (raw_number as! i64)
+        }
+        let negated_number_constant = NumberConstant::Signed(negated_number as! i64)
 
-        if not number.can_fit_number(type_id: flipped_sign_type, program: .program) {
+        if raw_number > (max_signed + 1) or not negated_number_constant.can_fit_number(type_id: flipped_sign_type, program: .program) {
             .error(
                 format(
                     "Negative literal -{} too small for type ‘{}’"
@@ -3846,8 +3855,6 @@ struct Typechecker {
             )
             return CheckedExpression::UnaryOp(expr, op: CheckedUnaryOperator::Negate, span, type_id)
         }
-
-        let negated_number = 0 - raw_number as! i64
 
         let new_constant = match .get_type(flipped_sign_type) {
             I8 => CheckedNumericConstant::I8(negated_number as! i8)
