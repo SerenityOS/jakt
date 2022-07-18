@@ -4469,7 +4469,7 @@ struct Typechecker {
 
         mut type_hint: TypeId? = None
         if .current_function_id.has_value() {
-            type_hint = Some(.get_function(current_function_id!).return_type_id)
+            type_hint = Some(.get_function(.current_function_id!).return_type_id)
         }
 
         let checked_expr = .typecheck_expression(expr!, scope_id, safety_mode, type_hint)
