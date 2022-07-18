@@ -2011,7 +2011,9 @@ struct CodeGenerator {
                                 if not (enum_type_module.is_root or enum_type_module.id.equals(ModuleId(id: 0))) {
                                     output += enum_type_module.name + "::"
                                 }
-                                output += .codegen_namespace_path(call) + call.name
+                                output += .codegen_type(call.return_type)
+                                output += "::"
+                                output += call.name
                             }
                         }
                         GenericEnumInstance(id) => {
