@@ -1998,7 +1998,6 @@ pub fn codegen_namespace_qualifier(scope_id: ScopeId, project: &Project) -> Stri
     while let Some(current) = current_scope_id {
         // Walk backward, prepending the parents with names to the current output
         if let Some(namespace_name) = &project.get_scope(current).namespace_name {
-            println!("{}", namespace_name);
             output.insert_str(0, &format!("{}::", namespace_name));
         }
 
