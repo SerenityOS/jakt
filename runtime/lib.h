@@ -81,19 +81,32 @@ struct Range {
     T start {};
     T end {};
     T current {};
+    bool forwards { true };
 
     Range(T start, T end)
         : start(start)
         , end(end)
         , current(start)
     {
+        normalize();
     }
 
     Optional<T> next()
     {
         if (current == end)
             return {};
-        return current++;
+
+        if (forwards)
+            return current++;
+
+        return current--;
+    }
+
+private:
+    void normalize()
+    {
+        if (start > end)
+            forwards = false;
     }
 };
 }
