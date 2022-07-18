@@ -59,14 +59,6 @@ ErrorOr<bool> is_directory(String path)
     return S_ISDIR(st.st_mode);
 }
 
-ErrorOr<void> mkdir(String path)
-{
-    int const result = ::mkdir(path.c_string(), S_IRWXU);
-    if (result == -1 && errno != EEXIST)
-        return Error::from_errno(errno);
-    return ErrorOr<void> {};
-}
-
 ErrorOr<void> rmdir(String path)
 {
     if (::rmdir(path.c_string()) == -1)
@@ -78,5 +70,20 @@ ErrorOr<void> unlink(String path)
     if (::unlink(path.c_string()) == -1)
         return Error::from_errno(errno);
     return ErrorOr<void> {};
+}
+ErrorOr<Optional<StatResults>> stat_silencing_enoent(String path)
+{
+    struct stat st;
+    if (stat(path.c_string(), &st) < 0) {
+        if (errno == ENOENT) {
+            return JaktInternal::NullOptional {};
+        }
+        return Error::from_errno(errno);
+    }
+    return Optional<StatResults>(StatResults(
+        /* modified_time */ st.st_atim.tv_sec,
+        /* is_executable */ (st.st_mode & S_IXUSR) != 0,
+        /* is_regular_file */ S_ISREG(st.st_mode),
+        /* exists */ true));
 }
 }
