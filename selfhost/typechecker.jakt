@@ -5669,7 +5669,8 @@ struct Typechecker {
                 let scope_id = maybe_ns_scope!.0
                 let is_import = maybe_ns_scope!.1
                 if is_import {
-                    namespaces[namespace_index].name = .program.modules[scope_id.module_id.id].name
+                    mut ns = namespaces[namespace_index]
+                    ns.name = .program.modules[scope_id.module_id.id].name
                 }
                 current_scope_id = scope_id
                 continue
