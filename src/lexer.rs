@@ -696,7 +696,7 @@ fn make_number_token(
                             TokenContents::Number(NumericConstant::U64(number as u64))
                         } else {
                             error = Some(JaktError::ParserError(
-                                format!("Integer literal {} too large", number),
+                                "Integer literal too large".to_string(),
                                 span,
                             ));
                             TokenContents::Garbage

@@ -24,6 +24,7 @@
 #include <Jakt/NumericLimits.h>
 #include <Jakt/Optional.h>
 #include <Jakt/Platform.h>
+#include <Jakt/PrettyPrint.h>
 #include <Jakt/RefCounted.h>
 #include <Jakt/RefPtr.h>
 #include <Jakt/ScopeGuard.h>
@@ -48,7 +49,6 @@
 #include <Jakt/Weakable.h>
 #include <Jakt/kmalloc.h>
 #include <Jakt/kstdio.h>
-#include <Jakt/PrettyPrint.h>
 
 #include <Jakt/Format.cpp>
 #include <Jakt/GenericLexer.cpp>
@@ -119,6 +119,18 @@ inline void panic(StringView message)
 inline void abort()
 {
     ::abort();
+}
+
+template<typename T>
+inline constexpr T unchecked_add(T value, T other)
+{
+    return value + other;
+}
+
+template<typename T>
+inline constexpr T unchecked_mul(T value, T other)
+{
+    return value * other;
 }
 
 template<typename T>
@@ -420,6 +432,8 @@ using JaktInternal::as_truncated;
 using JaktInternal::fallible_integer_cast;
 using JaktInternal::infallible_integer_cast;
 using JaktInternal::Range;
+using JaktInternal::unchecked_add;
+using JaktInternal::unchecked_mul;
 }
 
 // We place main in a separate namespace to ensure it has access to the same identifiers as other functions
