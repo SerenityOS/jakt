@@ -87,6 +87,9 @@ namespace process {
     extern function poll_process_exit(pid: i32) throws -> i32?
     /// Kills a process by sending SIGKILL to it
     extern function forcefully_kill_process(pid: i32) throws
+
+    /// Calls execvp() with the given argument array.
+    extern function exec(args: [String]) throws
 }
 
 namespace os {
@@ -106,6 +109,7 @@ function print_usage()  {
     eprintln("\t--temp-dir <DIR>\t\tUse DIR as the temporary directory.")
     eprintln("\t\t\tWill try to use $TMP_DIR or /tmp in UNIX-based systems, or %TEMP% in Windows")
     eprintln("\t--assume-updated-selfhost\t\tAssume selfhost is up to date, i.e don't check it.")
+    eprintln("\t--assume-updated\t\tAssume jakttest is up to date, i.e don't check it.")
 }
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
@@ -203,6 +207,7 @@ struct Options {
     job_count: usize
     help_wanted: bool
     assume_selfhost_updated: bool
+    assume_updated: bool
 
     function from_args(args: [String]) throws -> Options {
         let files: [String] = []
@@ -213,7 +218,8 @@ struct Options {
                               show_reasons: false
                               job_count: 0
                               help_wanted: false
-                              assume_selfhost_updated: false)
+                              assume_selfhost_updated: false
+                              assume_updated: false)
 
         mut index = 1uz
         while index != args.size() {
@@ -258,6 +264,12 @@ struct Options {
 
             if args[index] == "--assume-updated-selfhost" {
                 options.assume_selfhost_updated = true
+                index++
+                continue
+            }
+
+            if args[index] == "--assume-updated" {
+                options.assume_updated = true
                 index++
                 continue
             }
@@ -584,6 +596,25 @@ function main(args: [String]) {
     if not parsed_options.assume_selfhost_updated and does_selfhost_need_update() {
         eprintln("[ \x1b[1;94mINFO\x1b[m ] Compiling selfhost to match source...")
         system("cargo run --color=always selfhost/main.jakt".c_string())
+    }
+
+    if not parsed_options.assume_updated {
+        eprintln("[ \x1b[1;94mINFO\x1b[m ] Running incremental build on Jakttest")
+        let current_binary_stat = fs::stat_silencing_enoent(path: args[0])
+        system("ninja -C jakttest".c_string())
+        let latest_binary_stat = fs::stat_silencing_enoent(path: args[0])!
+
+        if not current_binary_stat.has_value() or
+            current_binary_stat!.modified_time() < latest_binary_stat.modified_time() {
+            eprintln("[ \x1b[1;94mINFO\x1b[m ] Jakttest updated; restarting")
+            mut forwarded_args: [String] = args
+            forwarded_args.add_capacity(2)
+            // we know at this point that we have selfhost updated and that we
+            // have updated jakttest, so don't re-check any of them.
+            forwarded_args.push("--assume-updated")
+            forwarded_args.push("--assume-updated-selfhost")
+            process::exec(args: forwarded_args)
+        }
     }
 
 
