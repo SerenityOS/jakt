@@ -4795,7 +4795,9 @@ struct Typechecker {
                 true => CheckedExpression::Var(var: var!, span)
                 else => {
                     .error(format("Variable '{}' not found", name), span)
-                    yield CheckedExpression::Garbage(span)
+                    yield CheckedExpression::Var(
+                        var: CheckedVariable(name, type_id: type_hint.value_or(unknown_type_id()), is_mutable: false, definition_span: span, visibility: Visibility::Public), span
+                    )
                 }
             }
         }
@@ -5898,7 +5900,6 @@ struct Typechecker {
                         span
                     )
                 }
-
                 
                 for generic_typevar in callee.generic_params.iterator() {
                     match generic_typevar {
