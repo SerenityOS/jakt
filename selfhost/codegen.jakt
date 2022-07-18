@@ -2375,8 +2375,8 @@ struct CodeGenerator {
         GenericEnumInstance(id, args) => .codegen_generic_enum_instance(id, args, as_namespace)
         TypeVariable(name) => name
         else => {
-            todo(format("codegen_type else: {}", .program.get_type(type_id)))
-            yield ""
+            // The RBC uses 'auto' here but we probably want to improve in the future
+            yield "auto"
         }
     }
 
