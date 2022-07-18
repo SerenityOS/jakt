@@ -9,6 +9,16 @@ import lexer { Lexer }
 import utility { panic }
 
 namespace fs {
+
+    // subset of `struct stat` from <sys/stat.h> that contains
+    // just what is used.
+    extern struct StatResults {
+        function modified_time(this) -> usize
+        // Whether the file is executable by the current user
+        function is_executable(this) -> bool
+        function is_regular_file(this) -> bool
+    }
+
     extern class DirectoryIterator {
         // Get next listing name. Note that the full path is not given,
         // just the base name.
@@ -21,16 +31,20 @@ namespace fs {
 
     // Create a directory
     extern function mkdir(path: String) throws
-
+    
     // Remove a directory
     extern function rmdir(path: String) throws
 
     // Remove a file
     extern function unlink(path: String) throws
 
+    // Calls `stat` on a file. Silences `ENOENT` error by setting
+    // StatResults.exists to false.
+    extern function stat_silencing_enoent(path: String) throws -> StatResults?
+
+
     function has_jakt_extension(name: String) throws -> bool {
         if name.length() < 5 {
-            println("too short")
             return false
         }
         let extension = name.substring(start: name.length() - 5, length: 5)
@@ -91,6 +105,7 @@ function print_usage()  {
     eprintln("\t-j,--jobs <JOBS>\t\tUse JOBS processes. Defaults to the number of available CPUs.")
     eprintln("\t--temp-dir <DIR>\t\tUse DIR as the temporary directory.")
     eprintln("\t\t\tWill try to use $TMP_DIR or /tmp in UNIX-based systems, or %TEMP% in Windows")
+    eprintln("\t--assume-updated-selfhost\t\tAssume selfhost is up to date, i.e don't check it.")
 }
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
@@ -187,6 +202,7 @@ struct Options {
     show_reasons: bool
     job_count: usize
     help_wanted: bool
+    assume_selfhost_updated: bool
 
     function from_args(args: [String]) throws -> Options {
         let files: [String] = []
@@ -196,7 +212,8 @@ struct Options {
                               errors
                               show_reasons: false
                               job_count: 0
-                              help_wanted: false)
+                              help_wanted: false
+                              assume_selfhost_updated: false)
 
         mut index = 1uz
         while index != args.size() {
@@ -235,6 +252,12 @@ struct Options {
                     break
                 }
                 options.temp_dir = args[index]
+                index++
+                continue
+            }
+
+            if args[index] == "--assume-updated-selfhost" {
+                options.assume_selfhost_updated = true
                 index++
                 continue
             }
@@ -517,6 +540,30 @@ struct TestScheduler {
     }
 }
 
+function does_selfhost_need_update() throws -> bool {
+    let maybe_binary_stat = fs::stat_silencing_enoent(path: "build/main")
+    if not maybe_binary_stat.has_value() {
+        return true
+    }
+    let binary_stat = maybe_binary_stat!
+    if binary_stat.is_executable() and binary_stat.is_regular_file() {
+        // Looks like we've got the binary. Let's check the sources.
+        mut latest_mtime: usize = 0
+        mut selfhost_files: [String] = []
+        fs::get_jakt_files_under(directory: "selfhost", results: selfhost_files)
+        for file in selfhost_files.iterator() {
+            let stat = fs::stat_silencing_enoent(path: file)!
+            let mtime = stat.modified_time()
+            if mtime > latest_mtime {
+                latest_mtime = mtime
+            }
+        }
+
+        return latest_mtime > binary_stat.modified_time()
+    }
+    return true
+}
+
 
 function main(args: [String]) {
     let parsed_options = Options::from_args(args)
@@ -532,6 +579,11 @@ function main(args: [String]) {
         }
         print_usage()
         return 1
+    }
+
+    if not parsed_options.assume_selfhost_updated and does_selfhost_need_update() {
+        eprintln("[ \x1b[1;94mINFO\x1b[m ] Compiling selfhost to match source...")
+        system("cargo run --color=always selfhost/main.jakt".c_string())
     }
 
 
