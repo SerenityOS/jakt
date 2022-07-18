@@ -5291,13 +5291,13 @@ struct Typechecker {
                                                     // FIXME: dump type hints
 
                                                    let var_id = module.add_variable(CheckedVariable(
-                                                        name: arg_name
+                                                        name: arg.binding
                                                         type_id: substituted_type_id
                                                         is_mutable: false
                                                         definition_span: matched_span
                                                         visibility: Visibility::Public
                                                     ))
-                                                    .add_var_to_scope(scope_id: new_scope_id, name: arg_name, var_id, span)
+                                                    .add_var_to_scope(scope_id: new_scope_id, name: arg.binding, var_id, span)
                                                 }
                                                 else => {
                                                     .error(format("Match case argument '{}' does not exist in struct-like enum variant '{}'", arg_name, name), arg.span)
@@ -5504,13 +5504,12 @@ struct Typechecker {
         return CheckedExpression::Match(expr: checked_expr, match_cases: checked_cases, span, type_id: final_result_type ?? void_type_id(), all_variants_constant: true)
     }
 
-    function typecheck_match_body(mut this, body: ParsedMatchBody, scope_id: ScopeId, safety_mode: SafetyMode, generic_inferences: [String: String], final_result_type: TypeId?, span: Span) throws -> (CheckedMatchBody, TypeId) {
+    function typecheck_match_body(mut this, body: ParsedMatchBody, scope_id: ScopeId, safety_mode: SafetyMode, generic_inferences: [String: String], final_result_type: TypeId?, span: Span) throws -> (CheckedMatchBody, TypeId?) {
         mut result_type = final_result_type
         let checked_match_body = match body {
             Block(block) => {
                 let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: scope_id, safety_mode)
 
-                // FIXME: Check that this is not the wrong way around
                 if not checked_block.definitely_returns {
                     let block_type_id = checked_block.yielded_type ?? void_type_id()
                     let yield_span = block.find_yield_span() ?? span
@@ -5556,7 +5555,7 @@ struct Typechecker {
                 yield CheckedMatchBody::Expression(checked_expression)
             }
         }
-        return (checked_match_body, result_type ?? void_type_id())
+        return (checked_match_body, result_type)
     }
 
     function typecheck_dictionary(mut this, values: [(ParsedExpression, ParsedExpression)], span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
