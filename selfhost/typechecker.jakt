@@ -543,6 +543,7 @@ enum CheckedEnumVariant {
 boxed enum CheckedStatement {
     Expression(expr: CheckedExpression, span: Span)
     Defer(statement: CheckedStatement, span: Span)
+    DestructuringAssignment(vars: [CheckedStatement], var_decl: CheckedStatement, span: Span)
     VarDecl(var_id: VarId, init: CheckedExpression, span: Span)
     If(condition: CheckedExpression, then_block: CheckedBlock, else_statement: CheckedStatement?, span: Span)
     Block(block: CheckedBlock, span: Span)
@@ -560,6 +561,7 @@ boxed enum CheckedStatement {
     function span(this) => match this {
         Expression(span) => Some(span)
         Defer(span) => span
+        DestructuringAssignment(span) => span
         VarDecl(span) => span
         If(span) => span
         Block(span) => span
@@ -4084,6 +4086,7 @@ struct Typechecker {
         Continue(span) => CheckedStatement::Continue(span)
         Break(span) => CheckedStatement::Break(span)
         VarDecl(var, init, span) => .typecheck_var_decl(var, init, scope_id, safety_mode, span)
+        DestructuringAssignment(vars, var_decl, span) => .typecheck_destructuring_assignment(vars, var_decl, scope_id, safety_mode, span)
         If(condition, then_block, else_statement, span) => .typecheck_if(condition, then_block, else_statement, scope_id, safety_mode, span)
         Garbage(span) => CheckedStatement::Garbage(span)
         For(iterator_name, name_span, range, block, span) => .typecheck_for(iterator_name,  name_span, range, block, scope_id, safety_mode, span)
@@ -4292,6 +4295,46 @@ struct Typechecker {
             checked_else = .typecheck_statement(else_statement!, scope_id, safety_mode)
         }
         return CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
+    }
+
+    function typecheck_destructuring_assignment(mut this, vars: [ParsedVarDecl], var_decl: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+        mut var_decls: [CheckedStatement] = []
+        let checked_tuple_var_decl = .typecheck_statement(statement: var_decl, scope_id, safety_mode)
+        mut expr_type_id: TypeId = unknown_type_id()
+        mut tuple_var_id = VarId(module: ModuleId(id: 0), id: 0)
+        match checked_tuple_var_decl {
+            VarDecl(var_id, init) => {
+                expr_type_id = expression_type(init)
+                tuple_var_id = var_id
+            }
+            else => {
+                .error("Destructuting assignment should be a variable declaration", span)
+            }
+        }
+
+        mut inner_types: [TypeId] = []
+        let tuple_type = .get_type(expr_type_id)
+        match tuple_type {
+            GenericInstance(args) => {
+                inner_types = args
+            }
+            else => {
+                .error("Tuple Type should be Generic Instance", span)
+            }
+        }
+        let tuple_variable = .program.get_variable(tuple_var_id)
+        if vars.size() == inner_types.size() {
+            for i in 0..vars.size() {
+                mut new_var = vars[i]
+                new_var.parsed_type = ParsedType::Name(name: .type_name(inner_types[i]), span)
+                let init = ParsedExpression::IndexedTuple(expr: ParsedExpression::Var(name: tuple_variable.name, span)  index: i, span)
+                var_decls.push(.typecheck_var_decl(var: vars[i], init, scope_id, safety_mode, span))
+            }
+        } else {
+            .error("Tuple inner types sould have same size as tuple members", span)
+        }
+        
+        return CheckedStatement::DestructuringAssignment(vars: var_decls, var_decl: checked_tuple_var_decl, span)
     }
 
     function typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {

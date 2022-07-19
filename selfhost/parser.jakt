@@ -2,6 +2,7 @@
 // Copyright (c) 2022, Andreas Kling <kling@serenityos.org>
 // Copyright (c) 2022, Charles Mirabile <charlie.mirabile@gmail.com>
 // Copyright (c) 2022, Kyle Lanmon <kyle.lanmon@gmail.com>
+// Copyright (c) 2022, Adler Oliveira <adler.rs.oliveira@gmail.com>
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
@@ -147,6 +148,7 @@ boxed enum ParsedStatement {
     Expression(expr: ParsedExpression, span: Span)
     Defer(statement: ParsedStatement, span: Span)
     UnsafeBlock(block: ParsedBlock, span: Span)
+    DestructuringAssignment(vars: [ParsedVarDecl], var_decl: ParsedStatement, span: Span)
     VarDecl(var: ParsedVarDecl, init: ParsedExpression, span: Span)
     If(condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, span: Span)
     Block(block: ParsedBlock, span: Span)
@@ -167,6 +169,7 @@ boxed enum ParsedStatement {
         Expression(span) => span
         Defer(span) => span
         UnsafeBlock(span) => span
+        DestructuringAssignment(span) => span
         VarDecl(span) => span
         If(span) => span
         Block(span) => span
@@ -1511,6 +1514,37 @@ struct Parser {
         }
     }
 
+    function parse_destructuring_assignment(mut this, is_mutable: bool) throws -> [ParsedVarDecl] {
+        .index++
+        mut var_declarations: [ParsedVarDecl] = []
+
+        loop {
+            match .current() {
+                Identifier => {
+                    var_declarations.push(.parse_variable_declaration(is_mutable))
+                }
+                Comma => {
+                    .index++
+                }
+                RParen => {
+                    .index++
+                    return var_declarations
+                }
+                else => {
+                    .error("Expected close of destructuring assignment block", .current().span())
+                    return []
+                }
+            }
+        }
+        // FIXME: This seams to be unreacheable but is still required
+        return [ParsedVarDecl(
+            name: "",
+            parsed_type: ParsedType::Empty,
+            is_mutable: false,
+            span: .current().span(),
+        )]
+    }
+
     function parse_variable_declaration(mut this, is_mutable: bool) throws -> ParsedVarDecl {
         match .current() {
             Identifier(name) => {
@@ -1715,7 +1749,28 @@ struct Parser {
             Let | Mut => {
                 let is_mutable = .current() is Mut
                 .index++
-                let var = .parse_variable_declaration(is_mutable)
+
+                mut vars: [ParsedVarDecl] = []
+                mut is_destructuring_assingment = false
+                mut tuple_var_name = ""
+                mut tuple_var_decl = ParsedVarDecl(
+                    name: "",
+                    parsed_type: ParsedType::Empty,
+                    is_mutable: is_mutable,
+                    span: .current().span(),
+                )
+
+                if .current() is LParen {
+                    vars = .parse_destructuring_assignment(is_mutable)
+                    for var in vars.iterator() {
+                        tuple_var_name += var.name
+                        tuple_var_name += "_"
+                    }
+                    tuple_var_decl.name = tuple_var_name
+                    is_destructuring_assingment = true
+                } else {
+                    tuple_var_decl = .parse_variable_declaration(is_mutable)
+                }
 
                 let init = match .current() {
                     Equal => {
@@ -1728,7 +1783,13 @@ struct Parser {
                     }
                 }
 
-                yield ParsedStatement::VarDecl(var, init, span: merge_spans(start, .previous().span()))
+                mut return_statement = ParsedStatement::VarDecl(var: tuple_var_decl, init, span: merge_spans(start, .previous().span()))
+
+                if is_destructuring_assingment {
+                    let old_return_statement = return_statement
+                    return_statement = ParsedStatement::DestructuringAssignment(vars, var_decl: old_return_statement, span: merge_spans(start, .previous().span()))
+                }
+                yield return_statement
             }
             If => .parse_if_statement()
             For => .parse_for_statement()
@@ -2891,6 +2952,25 @@ function parsed_statement_equals(anon lhs_statement: ParsedStatement, anon rhs_s
     }
     VarDecl(var: lhs_var, init: lhs_init) => match rhs_statement {
         VarDecl(var: rhs_var, init: rhs_init) => parsed_var_decl_equals(lhs_var, rhs_var) and parsed_expression_equals(lhs_init, rhs_init)
+        else => false
+    }
+    DestructuringAssignment(vars: lhs_vars, var_decl: lhs_var_decl) => match rhs_statement {
+        DestructuringAssignment(vars: rhs_vars, var_decl: rhs_var_decl) => {
+            if lhs_vars.size() != rhs_vars.size() {
+                return false
+            }
+            for i in 0..lhs_vars.size() {
+                if not parsed_var_decl_equals(lhs_vars[i], rhs_vars[i]) {
+                    return false
+                }
+            }
+
+            if not parsed_statement_equals(lhs_var_decl, rhs_var_decl) {
+                return false
+            }
+
+            return true
+        }
         else => false
     }
     If(condition: lhs_condition, then_block: lhs_then_block, else_statement: lhs_else_statement) => match rhs_statement {
