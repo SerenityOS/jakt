@@ -109,12 +109,8 @@ fn find_results(
             if state & SEEN_MARKER == 0 {
                 if line.starts_with("/// Expect:") {
                     state |= SEEN_MARKER;
-                    if line
-                        .split_once(':')
-                        .unwrap()
-                        .1
-                        .trim_start()
-                        .starts_with("Skip")
+                    let after_expect = line.split_once(':').unwrap().1.trim();
+                    if after_expect.starts_with("Skip") || after_expect.starts_with("selfhost-only")
                     {
                         // Not a test.
                         return Ok((None, None, None));
