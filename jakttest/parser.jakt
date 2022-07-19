@@ -80,8 +80,9 @@ struct Parser {
             if not .lex_literal("Expect:") {
                 continue
             }
-            if .is_eof() or .current() != b'\n' {
-                continue
+
+            while not .is_eof() and .current() != b'\n' {
+                .index++
             }
             .index++
             if not .lex_literal("///") {
