@@ -232,14 +232,33 @@ struct CodeGenerator {
             fresh_var_counter: 0
             fresh_label_counter: 0
         )
-
         mut output = ""
-
         output += "#include <lib.h>\n"
-        output += "namespace Jakt {\n"
-
         let sorted_modules = generator.topologically_sort_modules()
-
+        for idx in sorted_modules.size()..0 {
+            let i = sorted_modules[idx - 1].id
+            if i == 0 {
+                // Skip 0 because it's the prelude
+                continue
+            }
+            let module = generator.program.modules[i]
+            let scope_id = ScopeId(module_id: module.id, id: 0)
+            let scope = generator.program.get_scope(scope_id)
+            for child_scope in scope.children.iterator() {
+                let scope = generator.program.get_scope(scope_id: child_scope)
+                if scope.import_path_if_extern.has_value() {
+                    let has_name = scope.namespace_name.has_value()
+                    if has_name {
+                        output += format("namespace {} {{\n", scope.namespace_name!)
+                    }
+                    output += format("#include <{}>\n", scope.import_path_if_extern!)
+                    if has_name {
+                        output += " } // namespace " + scope.namespace_name! + "\n"
+                    }
+                }
+            }
+        }
+        output += "namespace Jakt {\n"
         for idx in sorted_modules.size()..0 {
             let i = sorted_modules[idx - 1].id
             if i == 0 {
@@ -248,23 +267,18 @@ struct CodeGenerator {
             }
             let module = generator.program.modules[i]
             generator.compiler.dbg_println(format("generate: module idx: {}, module.name {}", i, module.name))
-
-            let scope_id = ScopeId(module_id: module.id, id: 0)
-            let scope = generator.program.get_scope(scope_id)
-
             if not module.is_root {
                 output += "namespace "
                 output += module.name
                 output += " {\n"
             }
-
+            let scope_id = ScopeId(module_id: module.id, id: 0)
+            let scope = generator.program.get_scope(scope_id)
             output += generator.codegen_namespace_predecl(scope, current_module: module)
-
             if not module.is_root {
                 output += "}\n"
             }
         }
-
         // FIXME: module sorting
         for idx in sorted_modules.size()..0 {
             let i = sorted_modules[idx - 1].id
@@ -442,8 +456,10 @@ struct CodeGenerator {
     }
 
     function codegen_namespace(mut this, scope: Scope, current_module: Module) throws -> String {
+        if scope.import_path_if_extern.has_value() {
+            return ""
+        }
         mut output = ""
-
         let encoded_dependency_graph = .produce_codegen_dependency_graph(scope)
         mut seen_types: {String} = {}
         for entry in encoded_dependency_graph.iterator() {
@@ -597,25 +613,25 @@ struct CodeGenerator {
                 let previous_function = .current_function
                 .current_function = function_
                 defer .current_function = previous_function
-
                 if not function_.type is ImplicitConstructor and not function_.type is ImplicitEnumConstructor {
                     output += .codegen_function_in_namespace(function_, containing_struct: enum_.type_id)
                     output += "\n"
                 }
             }
         }
-
         return output
     }
 
     function codegen_namespace_predecl(mut this, scope: Scope, current_module: Module) throws -> String {
+        if scope.import_path_if_extern.has_value() {
+            return ""
+        }
         mut output = ""
         if scope.namespace_name.has_value() {
             output += "namespace "
             output += scope.namespace_name!
             output += " {\n"
         }
-
         for name_and_struct_id in scope.structs.iterator() {
             let struct_id = name_and_struct_id.1
             if not struct_id.module.equals(current_module.id) {
