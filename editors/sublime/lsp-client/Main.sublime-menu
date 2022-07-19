@@ -1,0 +1,34 @@
+[
+  {
+    "id": "preferences",
+    "children": [
+      {
+        "caption": "Package Settings",
+        "mnemonic": "P",
+        "id": "package-settings",
+        "children": [
+          {
+            "caption": "LSP",
+            "id": "lsp-settings",
+            "children": [
+              {
+                "caption": "Servers",
+                "id": "lsp-servers",
+                "children": [
+                  {
+                    "caption": "LSP-jakt",
+                    "command": "edit_settings",
+                    "args": {
+                      "base_file": "${packages}/LSP-jakt/LSP-jakt.sublime-settings",
+                      "default": "// Settings in here override those in \"LSP-jakt/LSP-jakt.sublime-settings\"\n\n{\n\t$0\n}\n",
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

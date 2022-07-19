@@ -101,7 +101,7 @@ connection.onInitialize((params: InitializeParams) => {
 		};
 	}
 
-	console.log('Jakt language server initialized');
+	// connection.console.log('Jakt language server initialized');
 	return result;
 });
 
@@ -113,7 +113,7 @@ connection.onInitialized(() => {
 	if (hasWorkspaceFolderCapability) {
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		connection.workspace.onDidChangeWorkspaceFolders(_event => {
-			connection.console.log('Workspace folder change event received.');
+			// connection.console.log('Workspace folder change event received.');
 		});
 	}
 });
@@ -123,14 +123,14 @@ async function goToDefinition(document: TextDocument, jaktOutput: string): Promi
 	for (const line of lines) {
 
 		const obj = JSON.parse(line);
-		// console.log("going to type definition");
-		console.log(obj);
+		// connection.console.log("going to type definition");
+		// connection.console.log(obj);
 		if (obj.file === '')
 			return;
 
 		const lineBreaks = findLineBreaks(obj.file ? (await fs.promises.readFile(obj.file)).toString() : document.getText() ?? "");
 		const uri = obj.file ? "file:/" + obj.file : document.uri;
-		console.log(uri);
+		// connection.console.log(uri);
 
 		console.timeEnd('onDefinition');
 		return {
@@ -152,9 +152,9 @@ connection.onDefinition(async (request) => {
 
 	const text = document.getText();
 
-	// console.log("request: ");
-	// console.log(request);
-	// console.log("index: " + convertPosition(request.position, text));
+	// connection.console.log("request: ");
+	// connection.console.log(request.textDocument.uri);
+	// connection.console.log("index: " + convertPosition(request.position, text));
 	const stdout = await runCompiler(text, "-g " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri), settings);
 	return goToDefinition(document, stdout);
 });
@@ -167,9 +167,9 @@ connection.onTypeDefinition(async (request) => {
 	const settings = await getDocumentSettings(request.textDocument.uri);
 
 	const text = document.getText();
-	// console.log("request: ");
-	// console.log(request);
-	// console.log("index: " + convertPosition(request.position, text));
+	// connection.console.log("request: ");
+	// connection.console.log(request.textDocument.uri);
+	// connection.console.log("index: " + convertPosition(request.position, text));
 	const stdout = await runCompiler(text, "-t " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri), settings);
 	return goToDefinition(document, stdout);
 });
@@ -182,18 +182,18 @@ connection.onHover(async (request) => {
 	const text = document?.getText();
 
 	if (typeof text == "string") {
-		// console.log("request: ");
-		// console.log(request);
-		// console.log("index: " + convertPosition(request.position, text));
+		// connection.console.log("request: ");
+		// connection.console.log(request.textDocument.uri);
+		// connection.console.log("index: " + convertPosition(request.position, text));
 		const stdout = await runCompiler(text, "-e " + convertPosition(request.position, text) + includeFlagForPath(request.textDocument.uri), settings);
-		// console.log("got: ", stdout);
+		// connection.console.log("got: " + stdout);
 
 		const lines = stdout.split('\n').filter(l => l.length > 0);
 		for (const line of lines) {
 
 			const obj = JSON.parse(line);
-			// console.log("hovering");
-			// console.log(obj);
+			// connection.console.log("hovering");
+			// connection.console.log(obj);
 
 			// FIXME: Figure out how to import `vscode` package in server.ts without
 			// getting runtime import errors to remove this deprication warning.
@@ -231,8 +231,8 @@ let globalSettings: ExampleSettings = defaultSettings;
 const documentSettings: Map<string, Thenable<ExampleSettings>> = new Map();
 
 connection.onDidChangeConfiguration(change => {
-	console.log("onDidChangeConfiguration, hasConfigurationCapability: " + hasConfigurationCapability);
-	console.log("change is " + JSON.stringify(change));
+	// connection.console.log("onDidChangeConfiguration, hasConfigurationCapability: " + hasConfigurationCapability);
+	// connection.console.log("change is " + JSON.stringify(change));
 	if (hasConfigurationCapability) {
 		// Reset all cached document settings
 		documentSettings.clear();
@@ -364,23 +364,24 @@ function convertPosition(position: Position, text: string): number {
 async function runCompiler(text: string, flags: string, settings: ExampleSettings): Promise<string> {
 	try {
 		fs.writeFileSync(tmpFile.name, text);
-	} catch (error) {
-		console.log(error);
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	} catch (e: any) {
+		// connection.console.log(e);
 	}
 
 	let stdout: string;
 	try {
 		const output = await exec(`${settings.compiler.executablePath} ${flags} ${tmpFile.name}`);
-		// console.log(output);
+		// // connection.console.log(output);
 		stdout = output.stdout;
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	} catch (e: any) {
 		stdout = e.stdout;
 		if (e.signal != null) {
-			console.log("compile failed: ");
-			console.log(e);
+			// connection.console.log("compile failed: ");
+			// connection.console.log(e);
 		} else {
-			console.log("Error:", e);
+			// connection.console.log("Error:" + e);
 		}
 	}
 
@@ -427,7 +428,7 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
 
 	const lines = stdout.split('\n').filter(l => l.length > 0);
 	for (const line of lines) {
-		// console.log(line);
+		// connection.console.log(line);
 		try {
 			const obj = JSON.parse(line);
 
@@ -458,7 +459,7 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
 					source: textDocument.uri
 				};
 
-				// console.log(diagnostic);
+				// connection.console.log(diagnostic.message);
 
 				diagnostics.push(diagnostic);
 			} else if (obj.type == "hint") {
@@ -502,19 +503,19 @@ connection.onCompletion(
 		const text = document?.getText();
 
 		if (typeof text == "string") {
-			// console.log("completion request: ");
-			// console.log(request);
+			// connection.console.log("completion request: ");
+			// connection.console.log(request.textDocument.uri);
 			const index = convertPosition(request.position, text) - 1;
-			// console.log("index: " + index);
+			// connection.console.log("index: " + index);
 			const stdout = await runCompiler(text, "-m " + index + includeFlagForPath(request.textDocument.uri), settings);
-			// console.log("got: ", stdout);
+			// connection.console.log("got: " + stdout);
 
 			const lines = stdout.split('\n').filter(l => l.length > 0);
 			for (const line of lines) {
 
 				const obj = JSON.parse(line);
-				// console.log("completions");
-				// console.log(obj);
+				// connection.console.log("completions");
+				// connection.console.log(obj);
 
 				const output = [];
 				let index = 1;
