@@ -1,6 +1,7 @@
 // Copyright (c) 2022, JT <jt@serenityos.org>
 // Copyright (c) 2022, Andreas Kling <kling@serenityos.org>
 // Copyright (c) 2022, Kyle Lanmon <kyle.lanmon@gmail.com>
+// Copyright (c) 2022, Adler Oliveira <adler.rs.oliveira@gmail.com>
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
@@ -2252,6 +2253,15 @@ struct CodeGenerator {
             Garbage => {
                 panic("Garbage statement in codegen") // FIXME: panic() should be `noreturn` and no `yield` should be necessary:
                 yield ""
+            }
+            DestructuringAssignment(vars, var_decl) => {
+                mut output = ""
+                output += .codegen_statement(statement: var_decl)
+
+                for v in vars.iterator() {
+                    output += .codegen_statement(statement: v)
+                }
+                yield output
             }
             VarDecl(var_id, init) => {
                 let var = .program.get_variable(var_id)
