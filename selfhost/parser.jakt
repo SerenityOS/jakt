@@ -31,15 +31,20 @@ struct ImportName {
     span: Span
 }
 
-struct ImportAlias {
-    name: String
-    span: Span
+enum ParsedImport {
+    Module(ParsedModuleImport)
+    Extern(ParsedExternImport)
 }
 
-struct ParsedImport {
+struct ParsedModuleImport {
     module_name: ImportName
-    alias_name: ImportAlias?
+    alias_name: ImportName?
     import_list: [ImportName]
+}
+
+struct ParsedExternImport {
+    is_c: bool
+    assigned_namespace: ParsedNamespace
 }
 
 struct ParsedNamespace {
@@ -49,6 +54,7 @@ struct ParsedNamespace {
     records: [ParsedRecord]
     namespaces: [ParsedNamespace]
     imports: [ParsedImport]
+    import_path_if_extern: String?
 }
 struct ValueEnumVariant {
     name: String
@@ -66,6 +72,14 @@ enum RecordType {
     ValueEnum(underlying_type: ParsedType, variants: [ValueEnumVariant])
     SumEnum(is_boxed: bool, variants: [SumEnumVariant])
     Garbage
+
+    public function record_type_name(this) => match this {
+        Struct => "struct"
+        Class => "class"
+        ValueEnum => "value enum"
+        SumEnum => "sum enum"
+        Garbage => "<garbage record type>"
+    }
 }
 struct ParsedRecord {
     name: String
@@ -523,11 +537,13 @@ struct Parser {
             records: []
             namespaces: []
             imports: []
+            import_path_if_extern: None
         )
 
         while not .eof() {
             match .current() {
                 Import => {
+                    .index++
                     parsed_namespace.imports.push(.parse_import())
                 }
                 Function => {
@@ -605,6 +621,7 @@ struct Parser {
         return parsed_namespace
     }
 
+
     function parse_record(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord => match .current() {
         Struct => .parse_struct(definition_linkage)
         Class => .parse_class(definition_linkage)
@@ -627,54 +644,130 @@ struct Parser {
     }
 
     function parse_import(mut this) throws -> ParsedImport {
-        let none_alias: ImportAlias? = None // FIXME: directly set None when compiler allowes it
-        mut parsed_import = ParsedImport(
-            module_name: ImportName(name: "", span: .current().span())
-            alias_name: none_alias
-            import_list: []
-        )
-
-        .index++
-        parsed_import.module_name = match .current() {
-            Identifier(name, span) => ImportName(name, span)
-            else => {
-                .error("Expected module name", .current().span())
-                return parsed_import
-            }
-        }
-
-        .index++
-
-        if .eol() {
-            return parsed_import
-        }
-
+        // import . <extern <extern-import> | <module-import>>
         match .current() {
-            As => {
+            Extern => {
                 .index++
-                match .current() {
-                    Identifier(name, span) => {
-                        .index++
-                        parsed_import.alias_name = ImportAlias(name, span)
-                    }
-                    else => {
-                        .error("Expected name", .current().span())
-                        .index++
-                    }
+                let res =  ParsedImport::Extern(.parse_extern_import())
+                return res
+            }
+            else => {}
+        }
+
+        return ParsedImport::Module(.parse_module_import())
+    }
+
+
+    function parse_extern_import(mut this) throws -> ParsedExternImport {
+        // import extern . [c] "<path>" [as <alias-name>] namespace
+        mut parsed_import = ParsedExternImport(
+            is_c: false
+            assigned_namespace: ParsedNamespace(
+                name: None
+                name_span: None
+                functions: []
+                records: []
+                namespaces: []
+                imports: []
+                import_path_if_extern: None))
+
+        
+        match .current() {
+            Identifier(name, span) => {
+                .index++
+                if name == "c" or name == "C" {
+                    parsed_import.is_c = true
+                } else {
+                    .error("Expected 'c' or path after `import extern`"
+                           .current().span())
                 }
             }
             else => {}
         }
 
+        let import_path = match .current() {
+            QuotedString(quote) => {
+                .index++
+                yield quote
+            }
+            else => {
+                .error("Expected path after `import extern`"
+                       .current().span())
+                yield ""
+            }
+        }
+
+        if .current() is As {
+            .index++
+            match .current() {
+                Identifier(name, span) => {
+                    .index++
+                    parsed_import.assigned_namespace.name = name
+                    parsed_import.assigned_namespace.name_span = span
+                }
+                else => {
+                    .error("Expected name after 'as' keyword to name the extern import"
+                            .current().span())
+                }
+            }
+        }
+
+        if not .current() is LCurly {
+            .error("Expected '{' to start namespace for the extern import"
+                    .current().span())
+        }
+        .index++
+
+        parsed_import.assigned_namespace = .parse_namespace()
+        parsed_import.assigned_namespace.import_path_if_extern = Some(import_path)
+        if .current() is RCurly {
+            .index++
+        }
+
+        return parsed_import
+    }
+
+    function parse_module_import(mut this) throws -> ParsedModuleImport {
+        mut parsed_import = ParsedModuleImport(
+            module_name: ImportName(name: "", span: .empty_span())
+            alias_name: None
+            import_list: [])
+
+        parsed_import.module_name = match .current() {
+            Identifier(name, span) => ImportName(name, span)
+            else => { 
+                .error("Expected module name", .current().span())
+                return parsed_import
+            }
+        }
+        .index++
+
         if .eol() {
             return parsed_import
         }
 
-        if .current() is LCurly {
+        if .current() is As {
             .index++
-        } else {
-            .error("Expected ‘{’", .current().span())
+            match .current() {
+                Identifier(name, span) => {
+                    .index++
+                    parsed_import.alias_name = ImportName(name, span)
+                }
+                else => {
+                    .error("Expected name", .current().span())
+                    .index++
+                }
+            }
         }
+
+        if .eol() {
+            return parsed_import
+        }
+
+        if not (.current() is LCurly) {
+            .error("Expected '{'", .current().span())
+        }
+        .index++
 
         while not .eof() {
             match .current() {
