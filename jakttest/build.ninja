@@ -14,7 +14,7 @@ rule jakttest
     command = cargo run --color always -- -o build --emit-cpp-source-only jakttest.jakt
 
 rule patch-includes
-    command = python patch-includes.py $in $out
+    command = python3 patch-includes.py $in $out
 
 
 # directory
