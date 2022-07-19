@@ -7,6 +7,11 @@
 #include <Jakt/StringBuilder.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#if defined(__APPLE__)
+#define st_atim st_atimespec
+#define st_ctim st_ctimespec
+#define st_mtim st_mtimespec
+#endif
 
 namespace Jakt::fs {
 ErrorOr<void> mkdir(String path)
