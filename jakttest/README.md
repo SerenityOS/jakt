@@ -3,6 +3,18 @@
 Jakttest is the test driver we use to test the Jakt compiler with code snippets.
 It's also written in Jakt.
 
+## Build dependencies
+
+To build Jakttest you should use the `ninja` build system which will use the provided `build.ninja` file.
+It needs the same `clang++` that is required to build any other Jakt file, and `python` 3.6+ to run the
+patch script that patches the generated C++ from Jakt code to accept the external C++ code.
+
+As a list:
+
+- `ninja` (or `ninja-build` on some package managers)
+- `python` version `3.6+`
+- `clang++`
+
 ## How to run it?
 
 If you've never used Jakttest before or you transitioned from a commit older
