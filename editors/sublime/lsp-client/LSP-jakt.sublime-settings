@@ -1,0 +1,8 @@
+{
+	"command": ["${node_bin}", "${server_path}", "--stdio"],
+	"schemes": ["file", "buffer", "res"],
+	"settings": {
+		"jaktLanguageServer.compiler.executablePath": ""
+	},
+	"selector": "source.jakt"
+}
