@@ -1053,13 +1053,7 @@ struct CodeGenerator {
 
         output += "};\n"
 
-        let module = .program.get_module(enum_.scope_id.module_id)
-        let name = match module.is_root {
-            true => enum_.name
-            else => format("{}::{}", module.name, enum_.name)
-        }
-
-        .deferred_output += .codegen_ak_formatter(name, generic_parameter_names)
+        .deferred_output += .codegen_ak_formatter(name: enum_.name, generic_parameter_names)
 
         return output
     }
