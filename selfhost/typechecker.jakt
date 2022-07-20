@@ -1749,26 +1749,13 @@ struct Typechecker {
     }
 
     function typecheck_namespace_fields(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
-        for namespce in parsed_namespace.namespaces.iterator() {
-            let namespace_name = namespce.name
-            mut namespace_scope_id = .prelude_scope_id()
-            if namespace_name.has_value() {
-                // Typecheck struct fields in the named namespaces
-                let namespace_scope_tuple = .find_namespace_in_scope(scope_id, name: namespace_name!)
-                if not namespace_scope_tuple.has_value() {
-                    .compiler.panic(format("can't find previously added namespace {}", namespace_name!))
-                }
-                namespace_scope_id = namespace_scope_tuple!.0
-            } else {
-                // Typecheck struct fields in the unnamed namespace
-                namespace_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("namespace({})", namespace_name))
-                mut scope = .get_scope(scope_id)
-                scope.children.push(namespace_scope_id)
-            }
-
-            .typecheck_namespace_fields(parsed_namespace: namespce, scope_id: namespace_scope_id)
+        let children = .get_scope(id: scope_id).children
+        for i in 0..parsed_namespace.namespaces.size() {
+            let child_namespace = parsed_namespace.namespaces[i]
+            let child_namespace_scope_id = children[i]
+            .typecheck_namespace_fields(parsed_namespace: child_namespace,
+                scope_id: child_namespace_scope_id)
         }
-
         for record in parsed_namespace.records.iterator() {
             if record.record_type is Struct or record.record_type is Class {
                 let struct_id = .find_struct_in_scope(scope_id, name: record.name)
@@ -2005,17 +1992,23 @@ struct Typechecker {
         // 2. Typecheck subnamespaces
         for namespce in parsed_namespace.namespaces.iterator() {
             // Find all predeclarations in namespaces that are children of this namespace
+            mut debug_name = "namespace("
             if namespce.name.has_value() {
-                let namespace_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("namespace({})", namespce.name!))
-
-                mut child_scope = .get_scope(namespace_scope_id)
-                child_scope.namespace_name = namespce.name!
-
-                mut parent_scope = .get_scope(scope_id)
-                parent_scope.children.push(namespace_scope_id)
-
-                .typecheck_namespace_predecl(parsed_namespace: namespce, scope_id: namespace_scope_id)
+                debug_name += namespce.name!
+            } else {
+                debug_name += "unnamed-namespace"
             }
+            debug_name += ")"
+            let namespace_scope_id = .create_scope(
+                parent_scope_id: scope_id 
+                can_throw: false 
+                debug_name)
+            mut child_scope = .get_scope(namespace_scope_id)
+            child_scope.namespace_name = namespce.name
+            child_scope.import_path_if_extern = namespce.import_path_if_extern
+            mut parent_scope = .get_scope(scope_id)
+            parent_scope.children.push(namespace_scope_id)
+            .typecheck_namespace_predecl(parsed_namespace: namespce, scope_id: namespace_scope_id)
         }
         // 3. Typecheck struct predeclaration
         struct_index = 0
@@ -2453,28 +2446,13 @@ struct Typechecker {
     }
 
     function typecheck_namespace_declarations(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
-        for namespce in parsed_namespace.namespaces.iterator() {
-            mut namespace_scope_id: ScopeId = .prelude_scope_id()
-            if namespce.name.has_value() {
-                // Finish typecheck of the named namespaces
-                let namespace_name = namespce.name!
-                let namespace_scope_tuple = .find_namespace_in_scope(scope_id, name: namespace_name)
-
-                if not namespace_scope_tuple.has_value() {
-                    .compiler.panic("can't find previously added namespace")
-                }
-                namespace_scope_id = namespace_scope_tuple!.0
-            } else {
-                // Create the unnamed namespace (aka a block scope)
-                namespace_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: "unnamed-namespace")
-                mut scope = .get_scope(scope_id)
-                scope.children.push(namespace_scope_id)
-
-                .typecheck_namespace_predecl(parsed_namespace: namespce, scope_id: namespace_scope_id)
-            }
-            .typecheck_namespace_declarations(parsed_namespace: namespce, scope_id: namespace_scope_id)
+        let children = .get_scope(id: scope_id).children
+        for i in 0..parsed_namespace.namespaces.size() {
+            let child_namespace = parsed_namespace.namespaces[i]
+            let child_namespace_scope_id = children[i]
+            .typecheck_namespace_declarations(parsed_namespace: child_namespace,
+                scope_id: child_namespace_scope_id)
         }
-
         for record in parsed_namespace.records.iterator() {
             match record.record_type {
                 Struct | Class => {
