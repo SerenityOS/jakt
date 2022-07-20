@@ -1,0 +1,51 @@
+/// Expect: selfhost-only
+/// - output: "PASS\n"
+
+import extern c "stdlib.h"  {
+    extern function malloc(size: usize) -> raw void
+    extern function free(anon mut ptr: raw void) -> i32
+}
+
+import extern c "fcntl.h"  {
+    extern function open(path: raw c_char, flags: i32) -> i32
+    extern function read(fd: i32, mut buffer: raw void, max_len: usize) -> i64
+    extern function close(fd: i32) -> i32
+}
+
+function main() {
+    // NOTE: that zero is O_RDONLY.
+    let fd = open(path: "import_extern_text.txt".c_string(),  flags: 0)
+    if fd == -1i32 {
+        eprintln("Could not open 'import_extern_text.txt'")
+        unsafe { cpp { "return Error::from_errno(errno);" }}
+    }
+
+    mut buffer = malloc(size: 512)
+    // I can't cast the pointer to compare it!
+    unsafe { 
+        cpp {
+            "if (buffer == NULL) {"
+        }
+        eprintln("Could not allocate memory")
+        cpp { 
+            "    return Error::from_errno(ENOMEM);" 
+            "}" 
+        }
+    }
+    let read_amount = read(fd, buffer, max_len: 512)
+    if read_amount == -1i64 {
+        eprintln("Could not read from 'import_extern_text.txt'")
+        unsafe { cpp { "return Error::from_errno(errno);" }}
+    }
+
+    mut builder = StringBuilder::create();
+    for i in 0..read_amount {
+        unsafe { cpp {
+                "TRY(builder.append(((u8*)buffer)[i]));"
+        }}
+    }
+    print("{}", builder.to_string())
+
+    free(buffer)
+    close(fd)
+}
