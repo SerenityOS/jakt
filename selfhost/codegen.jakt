@@ -304,12 +304,12 @@ struct CodeGenerator {
         return output
     }
 
-    function postorder_traversal(this, encoded_type_id: String, mut visited: {usize}, encoded_dependency_graph: [String: [String]], mut output: [TypeId]) throws {
+    function postorder_traversal(this, encoded_type_id: String, mut visited: {String}, encoded_dependency_graph: [String: [String]], mut output: [TypeId]) throws {
         let type_id = TypeId::from_string(encoded_type_id)
-        if visited.contains(type_id.id) {
+        if visited.contains(type_id.to_string()) {
             return
         }
-        visited.add(type_id.id)
+        visited.add(type_id.to_string())
         if encoded_dependency_graph.contains(encoded_type_id) {
             for dependency in encoded_dependency_graph.get(encoded_type_id)!.iterator() {
                 .postorder_traversal(encoded_type_id: dependency, visited, encoded_dependency_graph, output)
@@ -430,8 +430,7 @@ struct CodeGenerator {
         mut output = ""
 
         let encoded_dependency_graph = .produce_codegen_dependency_graph(scope)
-        // FIXME: This wants to be a {TypeId}
-        mut seen_types: {usize} = {}
+        mut seen_types: {String} = {}
         for entry in encoded_dependency_graph.iterator() {
             let traversal: [TypeId] = []
             .postorder_traversal(encoded_type_id: entry.0, visited: seen_types, dependency_graph: encoded_dependency_graph, output: traversal)
@@ -466,7 +465,7 @@ struct CodeGenerator {
                         panic(format("Unexpected type in dependency graph: {}", type_))
                     }
                 }
-                seen_types.add(type_id.id)
+                seen_types.add(type_id.to_string())
             }
         }
 
@@ -476,7 +475,7 @@ struct CodeGenerator {
                 continue
             }
             let struct_ = .program.get_struct(struct_id)
-            if seen_types.contains(struct_.type_id.id) {
+            if seen_types.contains(struct_.type_id.to_string()) {
                 continue
             }
             output += .codegen_struct(struct_)
@@ -489,7 +488,7 @@ struct CodeGenerator {
                 continue
             }
             let enum_ = .program.get_enum(enum_id)
-            if seen_types.contains(enum_.type_id.id) {
+            if seen_types.contains(enum_.type_id.to_string()) {
                 continue
             }
             output += .codegen_enum(enum_)
