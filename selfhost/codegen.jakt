@@ -1294,23 +1294,33 @@ struct CodeGenerator {
                     yield "is<" + is_type + ">("
                 }
                 TypeCast(cast) => {
-                    let is_integer = .program.is_integer(cast.type_id())
+                    mut final_type_id = cast.type_id();
                     yield match cast {
                         Fallible => {
+                            let ty = .program.get_type(cast.type_id())
+                            let type_id = match ty {
+                                GenericInstance(args) => args[0]
+                                else => {
+                                    panic("Fallible type cast must have Optional result.")
+                                    yield type_id
+                                }
+                            }
                             mut cast_type = "dynamic_cast"
-                            if is_integer {
+                            if .program.is_integer(type_id) {
+                                final_type_id = type_id
                                 cast_type = "fallible_integer_cast"
                             }
+
                             yield cast_type
                         }
                         Infallible => {
                             mut cast_type = "verify_cast"
-                            if is_integer {
+                            if .program.is_integer(type_id) {
                                 cast_type = "infallible_integer_cast"
                             }
                             yield cast_type
                         }
-                    } + "<" + .codegen_type(cast.type_id()) + ">("
+                    } + "<" + .codegen_type(final_type_id) + ">("
                 }
                 else => ""
             }
