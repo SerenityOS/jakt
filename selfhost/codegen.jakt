@@ -1332,7 +1332,7 @@ struct CodeGenerator {
                 IsEnumVariant(name, enum_type_id) => {
                     mut suffix = ")"
                     let is_boxed = match .program.get_type(enum_type_id) {
-                        Enum(enum_id) => .program.get_enum(enum_id).record_type is Class
+                        Enum(enum_id) => .program.get_enum(enum_id).is_boxed
                         else => false
                     }
                     if is_boxed {
@@ -1948,7 +1948,7 @@ struct CodeGenerator {
                 }
                 Enum(id) => {
                     let enum_ = .program.get_enum(id)
-                    if enum_.record_type is Class {
+                    if enum_.is_boxed {
                         output += "->"
                     } else {
                         output += "."
