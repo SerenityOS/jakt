@@ -18,9 +18,9 @@ function usage() => "usage: jakt [-h] [OPTIONS] <path>"
 function help() -> String{
     mut output = "Flags:\n"
     output += "  -h\t\tPrint this help and exit.\n"
-    output += "  -l\t\tPrint debug info for the lexer.\n"
-    output += "  -p\t\tPrint debug info for the parser.\n"
-    output += "  -t\t\tPrint debug info for the typechecker.\n"
+    output += "  -dl\t\tPrint debug info for the lexer.\n"
+    output += "  -dp\t\tPrint debug info for the parser.\n"
+    output += "  -dt\t\tPrint debug info for the typechecker.\n"
     output += "  -b\t\tBuild an executable file.\n"
     output += "  -r\t\tBuild and run an executable file.\n"
     output += "  -d\t\tInsert debug statement spans in generated C++ code.\n"
@@ -33,6 +33,9 @@ function help() -> String{
     output += "  -R,--runtime-path PATH\t\tPath of the Jakt runtime headers.\n\t\tDefaults to $PWD/runtime.\n"
     output += "  -o,--binary-dir PATH\t\tOutput directory for compiled files.\n\t\tDefaults to $PWD/build.\n"
     output += "  -C,--cxx-compiler-path PATH\t\tPath of the C++ compiler to use when compiling the generated sources.\n\t\tDefaults to clang++.\n"
+    output += "  -I PATH\t\tAdd PATH to compiler's include list. Can be specified multiple times.\n"
+    output += "  -L PATH\t\tAdd PATH to linker's search list. Can be specified multiple times.\n"
+    output += "  -l,--link-with LIB\t\tLink executable with LIB. Can be specified multiple times.\n"
     return output
 } 
 
@@ -55,9 +58,9 @@ function main(args: [String]) {
         return 0
     }
 
-    let lexer_debug = args_parser.flag(["-l"])
-    let parser_debug = args_parser.flag(["-p"])
-    let typechecker_debug = args_parser.flag(["-t"])
+    let lexer_debug = args_parser.flag(["-dl"])
+    let parser_debug = args_parser.flag(["-dp"])
+    let typechecker_debug = args_parser.flag(["-dt"])
     let build_executable = args_parser.flag(["-b"])
     let run_executable = args_parser.flag(["-r"])
     let codegen_debug = args_parser.flag(["-d"])
@@ -69,6 +72,10 @@ function main(args: [String]) {
     let binary_dir = args_parser.option(["-o", "--binary-dir"]) ?? "build"
     let dot_clang_format_path = args_parser.option(["-D", "--dot-clang-format-path"])
     let cxx_compiler_path = args_parser.option(["-C", "--cxx-compiler-path"]) ?? "clang++"
+    let extra_include_paths = args_parser.option_multiple(["-I"])
+    let extra_lib_paths = args_parser.option_multiple(["-L"])
+    let extra_link_libs = args_parser.option_multiple(["-l"])
+
 
     let positional_arguments = args_parser.remaining_arguments()
 
@@ -158,7 +165,14 @@ function main(args: [String]) {
         let cpp_filename = binary_dir + "/" + basename_without_extension + ".cpp"
         let output_filename = binary_dir + "/" + basename_without_extension
         write_to_file(data: output, output_filename: cpp_filename)
-        run_compiler(cxx_compiler_path, cpp_filename, output_filename, runtime_path)
+        run_compiler(
+            cxx_compiler_path
+            cpp_filename
+            output_filename
+            runtime_path
+            extra_include_paths
+            extra_lib_paths
+            extra_link_libs)
 
         if prettify_cpp_source {
             mut command = clang_format_path + " -i " + cpp_filename
@@ -176,7 +190,7 @@ function main(args: [String]) {
     }
 }
 
-function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_filename: String, runtime_path: String) throws {
+function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_filename: String, runtime_path: String, extra_include_paths: [String], extra_lib_paths: [String], extra_link_libs: [String]) throws {
     mut compile_args = [
         cxx_compiler_path
         "-fcolor-diagnostics"
@@ -193,6 +207,26 @@ function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_fi
         output_filename
     ]
     compile_args.push(cpp_filename)
+    if not extra_include_paths.is_empty() {
+        compile_args.add_capacity(extra_include_paths.size() * 2)
+        for path in extra_include_paths.iterator() {
+            compile_args.push("-I")
+            compile_args.push(path)
+        }
+    }
+    if not extra_lib_paths.is_empty() {
+        compile_args.add_capacity(extra_lib_paths.size() * 2)
+        for path in extra_lib_paths.iterator() {
+            compile_args.push("-L")
+            compile_args.push(path)
+        }
+    }
+    if not extra_link_libs.is_empty() {
+        compile_args.add_capacity(extra_link_libs.size())
+        for path in extra_link_libs.iterator() {
+            compile_args.push("-l" + path)
+        }
+    }
     mut command = ""
     for compile_arg in compile_args.iterator() {
         command += compile_arg
