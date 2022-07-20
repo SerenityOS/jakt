@@ -1670,9 +1670,14 @@ struct CodeGenerator {
                                     name)
                                 
                                 if not args.is_empty() {
-                                    for arg in fields.iterator() {
-                                        let var = .program.get_variable(arg)
-                                        output += format("{} const& {} = __jakt_match_value.{};\n", .codegen_type(var.type_id), var.name, var.name)
+                                    for arg in args.iterator() {
+                                        let var = .program.find_var_in_scope(scope_id, var: arg.binding)!
+                                        output += .codegen_type(var.type_id)
+                                        output += " const& "
+                                        output += arg.binding
+                                        output += " = __jakt_match_value."
+                                        output += arg.name.value_or(arg.binding)
+                                        output += ";\n"
                                     }
                                 }
                             }
