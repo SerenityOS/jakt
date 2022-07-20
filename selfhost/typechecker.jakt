@@ -1718,23 +1718,46 @@ struct Typechecker {
         scope.vars.set(key: name, value: var_id)
         return true
     }
-    
+
     function find_function_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> FunctionId? {
+        mut visited: [ScopeId] = []
+        mut queue: [ScopeId] = [parent_scope_id]
         mut scope_id = Some(parent_scope_id)
-        while scope_id.has_value() {
-            let scope = .get_scope(id: scope_id!)
+        while not queue.is_empty() {
+            let scope_id = queue.pop()!
+            {
+                mut was_visited = false
+                for visited_id in visited.iterator() {
+                    if visited_id.equals(scope_id) {
+                        was_visited = true
+                        break
+                    }
+                }
+                if was_visited {
+                    continue
+                }
+            }
+            visited.push(scope_id)
+            let scope = .get_scope(id: scope_id)
             let maybe_function = scope.functions.get(function_name)
             if maybe_function.has_value() {
                 return maybe_function
             }
-            if scope.parent.has_value() {
-                if scope_id!.equals(scope.parent!) {
-                    .compiler.panic(format("Scope {} is its own parent!", scope_id))
+            // search inside inline namespaces
+            for child_scope_id in scope.children.iterator() {
+                let scope = .get_scope(id: child_scope_id)
+                if not scope.namespace_name.has_value() {
+                    queue.push(child_scope_id)
                 }
             }
-            scope_id = scope.parent
+            if scope.parent.has_value() {
+                let parent = scope.parent!
+                if parent.equals(scope_id) {
+                    .compiler.panic(format("Scope {} is its own parent!", scope_id))
+                }
+                queue.push(parent)
+            }
         }
-
         return None
     }
 
