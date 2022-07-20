@@ -45,3 +45,20 @@ of:
 ```shell
 ./jakttest/build/jakttest -h
 ```
+
+## Test format
+
+Most tests you'll se have a little comment at the top, with **three slashes**:
+```jakt
+/// Expect:
+/// - <tag>: "<escaped output>"
+```
+
+There are currently three available tags:
+- `output`: Expects the test to compile, succeed execution and output to
+  stdandard output.
+- `stderr`: Expects the test to compile, but execution fails and output is
+  written to stdandard error.
+- `error`: Expects the test to be rejected by the Jakt compiler, where the given
+  output must appear somewhere in its error output.
+
