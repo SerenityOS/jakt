@@ -62,3 +62,15 @@ There are currently three available tags:
 - `error`: Expects the test to be rejected by the Jakt compiler, where the given
   output must appear somewhere in its error output.
 
+## On adding selfhost-only tests
+
+Since CI runs both selfhost and rust-based tests, and because rust-based
+development is being discontinued, if you just add a test with the regular
+`Expect` format, it will probably get picked by the rust test driver, failing in
+the process. For this, add `selfhost-only` after `Expect:`:
+```jakt
+/// Expect: selfhost-only
+/// - ...
+```
+This will tell the rust test driver to skip the test, while Jakttest will run it
+normally.
