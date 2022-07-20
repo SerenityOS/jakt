@@ -149,6 +149,26 @@ struct ArgsParser {
         return None
     }
 
+    function option_multiple(mut this, anon names: [String]) throws -> [String]
+    {
+        mut result: [String] = []
+        for i in 1...args.size() {
+            for name in names.iterator() {
+                if .args[i] == name {
+                    if .args.size() <= i + 1 {
+                        eprintln("The option '{}' requires a value, but none was supplied", name)
+                        throw Error::from_errno(200)
+                    }
+
+                    .removed_indices.push(i)
+                    .removed_indices.push(i + 1)
+                    result.push(.args[i + 1])
+                }
+            }
+        }
+        return result
+    }
+
     function from_args(anon args: [String]) throws -> ArgsParser {
         return ArgsParser (args, removed_indices: [])
     }
