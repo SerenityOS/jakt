@@ -1,0 +1,29 @@
+/// Expect: selfhost-only
+/// - output: ""
+
+struct CheckedBlock {
+    statements: [CheckedStatement]
+    scope_id: ScopeId
+    yielded_type: TypeId?
+}
+
+struct CheckedStatement {
+    id: usize
+}
+
+struct ScopeId {
+    id: usize
+}
+
+struct ModuleId {
+    id: usize
+}
+
+struct TypeId {
+    module: ModuleId
+    id: usize
+}
+
+function main() {
+    // Should compile.
+}
