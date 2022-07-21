@@ -117,7 +117,10 @@ function main(args: [String]) {
     )
 
     let main_file_id = compiler.get_file_id_or_register(file_path)
-    compiler.set_current_file(main_file_id)
+    let file_is_set = compiler.set_current_file(main_file_id)
+    if not file_is_set {
+        return 1
+    }
 
     let tokens = Lexer::lex(compiler)
 
