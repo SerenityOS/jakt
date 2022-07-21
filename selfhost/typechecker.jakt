@@ -1012,6 +1012,15 @@ class CheckedProgram {
             if maybe_scope.has_value() {
                 return maybe_scope
             }
+            for child_id in scope.children.iterator() {
+                let child_scope = .get_scope(id: child_id)
+                if not child_scope.namespace_name.has_value() {
+                    let maybe_scope = child_scope.structs.get(name)
+                    if maybe_scope.has_value() {
+                        return maybe_scope
+                    }
+                }
+            }
             current_scope_id = scope.parent
         }
         return None
@@ -1572,6 +1581,16 @@ struct Typechecker {
             if maybe_type.has_value() {
                 return maybe_type
             }
+            for child_id in scope.children.iterator() {
+                let child_scope = .get_scope(id: child_id)
+                if not child_scope.namespace_name.has_value() {
+                    let maybe_type = child_scope.types.get(name)
+                    if maybe_type.has_value() {
+                        return maybe_type
+                    }
+                }
+            }
+
             if scope.parent.has_value() {
                 current = scope.parent.value()
             } else {
@@ -1591,6 +1610,16 @@ struct Typechecker {
             if maybe_enum.has_value() {
                 return maybe_enum
             }
+            for child_id in scope.children.iterator() {
+                let child_scope = .get_scope(id: child_id)
+                if not child_scope.namespace_name.has_value() {
+                    let maybe_enum = child_scope.enums.get(name)
+                    if maybe_enum.has_value() {
+                        return maybe_enum
+                    }
+                }
+            }
+
             if scope.parent.has_value() {
                 current = scope.parent.value()
             } else {
@@ -1614,6 +1643,20 @@ struct Typechecker {
                 if child_scope.namespace_name.has_value() {
                     if name == child_scope.namespace_name.value() {
                         return (child, false)
+                    }
+                }
+            }
+
+            for child_id in scope.children.iterator() {
+                let child_scope = .get_scope(id: child_id)
+                if not child_scope.namespace_name.has_value() {
+                    for scope in .get_scope(child_id).children.iterator() {
+                        let descendant_scope = .get_scope(scope)
+                        if descendant_scope.namespace_name.has_value() {
+                            if name == descendant_scope.namespace_name.value() {
+                                return (scope, false)
+                            }
+                        }
                     }
                 }
             }
