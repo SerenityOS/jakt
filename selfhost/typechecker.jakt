@@ -3681,7 +3681,7 @@ struct Typechecker {
                     // TODO: add and generic support
                     return .typecheck_typename(parsed_type: synthetic_typename, scope_id: current_namespace_scope_id)
                 } else {
-                    return .typecheck_generic_resolved_type(name, checked_inner_types: generic_args, scope_id, span)
+                    return .typecheck_generic_resolved_type(name, checked_inner_types: generic_args, scope_id: current_namespace_scope_id, span)
                 }
             }
             Name(name, span) => {
