@@ -76,6 +76,13 @@ jobs:
           override: true
       - name: Test Jakt Selfhost
         run: ninja -C jakttest && ./jakttest/build/jakttest
+      - name: Test jakt-in-jakt (stage 1)
+        run: cargo run selfhost/main.jakt && mv build/main build/main_stage1
+      - name: Test jakt-in-jakt (stage 2)
+        run: ./build/main_stage1 -b selfhost/main.jakt && mv build/main build/main_stage2
+      - name: Test jakt-in-jakt (stage 3)
+        run: ./build/main_stage2 -b selfhost/main.jakt 
+
   clippy:
     strategy:
       fail-fast: true
