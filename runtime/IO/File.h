@@ -11,6 +11,7 @@
 #include <Jakt/String.h>
 #include <Builtins/Array.h>
 #include <stdio.h>
+#include <sys/stat.h>
 
 namespace JaktInternal {
 class File final : public RefCounted<File> {
