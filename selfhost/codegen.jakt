@@ -2233,7 +2233,12 @@ struct CodeGenerator {
             }
             Return(val) => match val.has_value() {
                 true => "return (" + .codegen_expression(val!) + ");"
-                else => "return;"
+                else => {
+                    yield match .current_function!.can_throw {
+                        true => "return {};"
+                        else => "return;"
+                    }
+                }   
             }
             Loop(block) => {
                 mut output = ""
