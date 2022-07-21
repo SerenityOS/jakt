@@ -2071,6 +2071,12 @@ struct CodeGenerator {
                             let enum_ = .program.get_enum(enum_id)
                             let enum_type_module = .program.get_module(enum_id.module)
                             if enum_.is_boxed {
+                                let type_module = .program.get_module(function_id.module)
+                                if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))) {
+                                    output += type_module.name
+                                    output += "::"
+                                }
+
                                 output += .codegen_namespace_path(call)
                                 output += "template create<typename "
                                 output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
