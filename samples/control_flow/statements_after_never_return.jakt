@@ -1,0 +1,7 @@
+/// Expect: selfhost-only
+/// - error: "Unreachable code\n"
+
+function main() {
+    abort()
+    println("hello")
+}

@@ -72,6 +72,7 @@ function find_type_definition_for_type_id(program: CheckedProgram, type_id: Type
     let weak_ptr_struct_id = program.find_struct_in_prelude("WeakPtr")
 
     return match program.get_type(type_id) {
+        Never => span
         F32 => span
         F64 => span
         I8 => span
@@ -911,6 +912,7 @@ function get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> 
     let type = program.get_type(type_id)
 
     return match type {
+        Never => "never"
         Void => "void"
         Bool => "bool"
         U8 => "u8"

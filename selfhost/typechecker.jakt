@@ -123,6 +123,7 @@ enum BuiltinType: usize {
     CChar = 14
     CInt = 15
     Unknown = 16
+    Never = 17
 }
 
 boxed enum Type {
@@ -143,6 +144,7 @@ boxed enum Type {
     CChar
     CInt
     Unknown
+    Never
     TypeVariable(String)
     GenericInstance(id: StructId, args: [TypeId])
     GenericEnumInstance(id: EnumId, args: [TypeId])
@@ -508,6 +510,7 @@ struct CheckedBlock {
     statements: [CheckedStatement]
     scope_id: ScopeId
     definitely_returns: bool
+    never_returns: bool // FIXME: never_returns and definitely_returns should be one bool
     yielded_type: TypeId?
 }
 
@@ -949,6 +952,7 @@ struct CheckedCall {
 
 function unknown_type_id() -> TypeId => builtin(BuiltinType::Unknown)
 function void_type_id() -> TypeId => builtin(BuiltinType::Void)
+function never_type_id() -> TypeId => builtin(BuiltinType::Never)
 
 function builtin(anon builtin: BuiltinType) -> TypeId {
     return TypeId(module: ModuleId(id: 0), id: builtin as! usize)
@@ -1136,6 +1140,7 @@ class CheckedProgram {
         let type = .get_type(type_id)
 
         return match type {
+            Never => "never"
             F32 => "f32"
             F64 => "f64"
             I8 => "i8"
@@ -1435,6 +1440,7 @@ struct Typechecker {
                 Type::CChar,
                 Type::CInt,
                 Type::Unknown,
+                Type::Never
             ],
             variables: [],
             imports: [],
@@ -2269,6 +2275,7 @@ struct Typechecker {
                     statements: []
                     scope_id: block_scope_id
                     definitely_returns: false
+                    never_returns: false
                     yielded_type: TypeId::none()
                 )
                 can_throw: func.can_throw
@@ -2416,6 +2423,7 @@ struct Typechecker {
                     statements: []
                     scope_id: block_scope_id
                     definitely_returns: false
+                    never_returns: false
                     yielded_type: TypeId::none()
                 )
                 can_throw: func.can_throw
@@ -2708,7 +2716,7 @@ struct Typechecker {
                                 return_type_span: None
                                 params,
                                 generic_params: [],
-                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, yielded_type: TypeId::none()),
+                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, never_returns: false, yielded_type: TypeId::none()),
                                 can_throw: can_function_throw,
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
@@ -2745,7 +2753,7 @@ struct Typechecker {
                                 return_type_span: None,
                                 params: [CheckedParameter(requires_label: false, variable)],
                                 generic_params: [],
-                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, yielded_type: TypeId::none()),
+                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, never_returns: false, yielded_type: TypeId::none()),
                                 can_throw: can_function_throw,
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
@@ -2771,7 +2779,7 @@ struct Typechecker {
                                 return_type_span: None,
                                 params: [],
                                 generic_params: [],
-                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, yielded_type: TypeId::none()),
+                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, never_returns: false, yielded_type: TypeId::none()),
                                 can_throw: can_function_throw,
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
@@ -2836,6 +2844,7 @@ struct Typechecker {
                     statements: []
                     scope_id: block_scope_id
                     definitely_returns: false
+                    never_returns: false
                     yielded_type: TypeId::none()
                 )
                 can_throw: constructor_can_throw
@@ -2948,8 +2957,13 @@ struct Typechecker {
 
         if not structure_linkage is External and not return_type_id.equals(VOID_TYPE_ID) and not block.definitely_returns {
             // FIXME: Use better span
-            .error("Control reaches end of non-void function", func.name_span)
+            if return_type_id.equals(never_type_id()) and not block.never_returns {
+                .error("Control reaches end of never-returning function", func.name_span)
+            } else if not block.never_returns {
+                .error("Control reaches end of non-void function", func.name_span)
+            }
         }
+
 
         checked_function.block = block
         checked_function.return_type_id = return_type_id
@@ -2982,6 +2996,7 @@ struct Typechecker {
                 statements: []
                 scope_id: block_scope_id
                 definitely_returns: false
+                never_returns: false
                 yielded_type: TypeId::none()
             )
             can_throw: parsed_function.can_throw
@@ -3286,17 +3301,35 @@ struct Typechecker {
             FunctionLinkage::External => true
             else => false
         }
-        if not external_linkage and not return_type_id.equals(VOID_TYPE_ID) and not block.definitely_returns
-        {
+
+        if not external_linkage and not return_type_id.equals(VOID_TYPE_ID) and not block.definitely_returns {
             // FIXME: Use better span
-            .error("Control reaches end of non-void function", parsed_function.name_span)
+            if return_type_id.equals(never_type_id()) and not block.never_returns {
+                .error("Control reaches end of never-returning function", parsed_function.name_span)
+            } else if not block.never_returns {
+                .error("Control reaches end of non-void function", parsed_function.name_span)
+            }
         }
 
         checked_function.block = block
         checked_function.return_type_id = return_type_id
     }
 
-    function statement_definitely_returns(this, anon statement: CheckedStatement) -> bool => match statement{
+    function statement_never_returns(this, anon statement: CheckedStatement) => match statement {
+        Expression(expr) => match expr {
+            Call(call) => {
+                mut never_returns = false
+                if call.function_id.has_value() {
+                    never_returns = .get_function(call.function_id!).return_type_id.equals(never_type_id())
+                }
+                yield never_returns
+            }
+            else => false
+        }
+        else => false
+    }
+
+    function statement_definitely_returns(this, anon statement: CheckedStatement) -> bool => match statement {
         Return | Throw => true
         // FIXME: CheckedStatement::If branches ugly implementation due to current compiler limitations
         If(condition, then_block, else_statement) => {
@@ -3725,12 +3758,15 @@ struct Typechecker {
             statements: []
             scope_id: block_scope_id
             definitely_returns: false
+            never_returns: false
             yielded_type: TypeId::none()
         )
         // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
         mut generic_inferences: [String: String] = [:]
-
         for parsed_statement in parsed_block.stmts.iterator() {
+            if checked_block.never_returns {
+                .error("Unreachable code", parsed_statement.span())
+            }
 
             let checked_statement = .typecheck_statement(
                 statement: parsed_statement
@@ -3738,7 +3774,11 @@ struct Typechecker {
                 safety_mode
             )
 
-            // check that statment definitly returns
+            if not checked_block.never_returns {
+                checked_block.never_returns = .statement_never_returns(checked_statement)
+            }
+
+            // check that statment definitely returns
             checked_block.definitely_returns = checked_block.definitely_returns or .statement_definitely_returns(checked_statement)
 
             let yield_span: Span? = match parsed_statement {
@@ -3838,6 +3878,7 @@ struct Typechecker {
                     "String" => builtin(BuiltinType::String)
                     "bool" => builtin(BuiltinType::Bool)
                     "void" => builtin(BuiltinType::Void)
+                    "never" => builtin(BuiltinType::Never)
                     else => {
                         let type_id = .find_type_in_scope(scope_id, name)
 
