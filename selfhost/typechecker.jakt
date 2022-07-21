@@ -1547,28 +1547,18 @@ struct Typechecker {
     }
 
     function find_or_add_type_id(mut this, anon type: Type) throws -> TypeId {
-        let module = .program.modules[.current_module_id.id]
-        let module_id = module.id
 
-        mut idx = 0uz
-        for item in module.types.iterator() {
-            if item.equals(type) {
-                return TypeId(module: module_id, id: idx)
+        for module in .program.modules.iterator() {
+            for id in 0..module.types.size() {
+                if module.types[id].equals(type) {
+                    return TypeId(module: module.id, id)
+                }
             }
-            ++idx
-        }
-
-        idx = 0uz
-        for item in .program.modules[0].types.iterator() {
-            if item.equals(type) {
-                return TypeId(module: .program.modules[0].id, id: idx)
-            }
-            ++idx
         }
 
         .program.modules[.current_module_id.id].types.push(type)
 
-        return TypeId(module: module_id, id: .current_module().types.size() - 1)
+        return TypeId(module: .current_module_id, id: .current_module().types.size() - 1)
     }
 
     function find_type_in_scope(this, scope_id: ScopeId, name: String) throws -> TypeId? {
