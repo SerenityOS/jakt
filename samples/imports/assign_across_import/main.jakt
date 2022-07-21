@@ -1,0 +1,12 @@
+/// Expect: selfhost-only
+/// - output: ""
+import helper { S }
+
+function main() {
+    mut s = S(value: None)
+    // String? is not instantiated in the current module
+    // but was in the helper. Let's see if typechecker
+    // still thinks they are the same.
+    let opt: String? = None
+    s.value = opt
+}
