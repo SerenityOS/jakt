@@ -154,6 +154,7 @@ function main(args: [String]) {
         let basename_without_extension = file_path.basename().substring(start: 0, length: file_path.basename().length() - 5)
         let cpp_filename = binary_dir + "/" + basename_without_extension + ".cpp"
         let output_filename = binary_dir + "/" + basename_without_extension
+        mkdir(binary_dir.c_string(), 0o777)
         write_to_file(data: output, output_filename: cpp_filename)
         run_compiler(cxx_compiler_path, cpp_filename, output_filename, runtime_path)
 
