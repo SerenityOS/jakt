@@ -343,8 +343,8 @@ struct CodeGenerator {
         let inner_dependencies = match type_ {
             Enum(enum_id) => .extract_dependencies_from_enum(enum_id, dependency_graph, top_level)
             GenericEnumInstance(id) => .extract_dependencies_from_enum(enum_id: id, dependency_graph, top_level)
-            Struct(id) => .extract_dependencies_from_struct(struct_id: id, dependency_graph, top_level)
-            GenericInstance(id) => .extract_dependencies_from_struct(struct_id: id, dependency_graph, top_level)
+            Struct(id) => .extract_dependencies_from_struct(struct_id: id, dependency_graph, top_level, args: [])
+            GenericInstance(id, args) => .extract_dependencies_from_struct(struct_id: id, dependency_graph, top_level, args)
             else => []
         }
 
@@ -400,10 +400,11 @@ struct CodeGenerator {
         return dependencies
     }
 
-    function extract_dependencies_from_struct(this, struct_id: StructId, dependency_graph: [String : [String]], top_level: bool) throws -> [String] {
+    function extract_dependencies_from_struct(this, struct_id: StructId, dependency_graph: [String : [String]], top_level: bool, args: [TypeId]) throws -> [String] {
         mut dependencies: [String] = []
         let struct_ = .program.get_struct(struct_id)
-        if struct_.definition_linkage is External {
+
+        if struct_.definition_linkage is External and struct_.name != "Optional" {
             // This type is defined somewhere else,
             // so we can skip marking it as a dependency.
             return dependencies
@@ -413,6 +414,19 @@ struct CodeGenerator {
             // We store and pass these as pointers, so we don't need to
             // include them in the dependency graph.
             return dependencies
+        }
+
+        if not args.is_empty() {
+            for inner_type in args.iterator() {
+                let inner_dependencies = match .program.get_type(inner_type) {
+                    Enum | Struct => .extract_dependencies_from(type_id: inner_type, dependency_graph, top_level: false)
+                    else => []
+                }
+
+                for dependency in inner_dependencies.iterator() {
+                    dependencies.push(dependency)
+                }
+            }   
         }
 
         dependencies.push(struct_.type_id.to_string())
