@@ -1,0 +1,18 @@
+/// Expect: selfhost-only
+/// - output: "PASS\n"
+
+import extern "vector" {
+    namespace std {
+        extern struct vector<T> {
+            function vector<T>() -> vector<T>
+            function empty(this) -> bool
+        }
+    }
+}
+
+function main() {
+    let v = std::vector<i32>()
+    if v.empty() {
+        println("PASS")
+    }
+}
