@@ -367,6 +367,7 @@ function main(args: [String]) {
         }
 
         try {
+            mkdir(binary_dir)
             write_to_file(data: output, output_filename: cpp_filename)
         } catch error {
             eprintln("Could not write file: {} ({})", cpp_filename, error);
