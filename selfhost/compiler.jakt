@@ -87,7 +87,6 @@ class Compiler {
         let ErrFBIG = 27i32
         let ErrNAMETOOLONG = 36i32
 
-
         let old_file_id = .current_file
         .current_file = file_id
 
@@ -96,19 +95,12 @@ class Compiler {
             mut file = File::open_for_reading(.files[file_id.id].path)
             .current_file_contents = file.read_all()
         } catch error {
-            let code = error.code()
-
-            // FIXME: match on code
-            if code == ErrNOENT {
-                // Couldn't find the file. That's okay, probably just a typo :^)
-            } else if code == ErrACCES {
-                eprintln("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied", .files[file_id.id].path)
-            } else if code == ErrFBIG {
-                eprintln("\u001b[31;1mError\u001b[0m Could not access {}: File too big", .files[file_id.id].path)
-            } else if code == ErrNAMETOOLONG {
-                eprintln("\u001b[31;1mError\u001b[0m Could not access {}: Name too long", .files[file_id.id].path)
-            } else {
-                utility::panic("Incurred unrecognized error while trying to open file")
+            match error.code() {
+                (ErrNOENT) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: File not found", .files[file_id.id].path)
+                (ErrACCES) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied", .files[file_id.id].path)
+                (ErrFBIG) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: File too big", .files[file_id.id].path)
+                (ErrNAMETOOLONG) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: Name too long", .files[file_id.id].path)
+                else => utility::panic("Incurred unrecognized error while trying to open file")
             }
 
             .current_file = old_file_id
