@@ -308,9 +308,10 @@ struct Options {
         }
 
         if options.files.is_empty() {
-            // find files under samples/ and tests/
-            fs::get_jakt_files_under(directory: "samples", results: options.files)
-            fs::get_jakt_files_under(directory: "tests",   results: options.files)
+            // find files under samples, tests, and selfhost
+            fs::get_jakt_files_under(directory: "samples",  results: options.files)
+            fs::get_jakt_files_under(directory: "tests",    results: options.files)
+            fs::get_jakt_files_under(directory: "selfhost", results: options.files)
         }
 
         if options.job_count == 0 {
