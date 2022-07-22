@@ -111,6 +111,13 @@ class FilePath {
     }
 }
 
+function extend_array<T>(mut target: [T], extend_with: [T]) throws {
+    target.add_capacity(extend_with.size())
+    for v in extend_with.iterator() {
+        target.push(v)
+    }
+}
+
 // FIXME: Use jakt stdlib if available
 struct ArgsParser {
     args: [String]

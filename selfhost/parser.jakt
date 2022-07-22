@@ -9,7 +9,7 @@
 
 import error { JaktError, print_error}
 import lexer { Token, NumericConstant }
-import utility { panic, todo, FileId, Span }
+import utility { panic, todo, FileId, Span, extend_array }
 import compiler { Compiler }
 import prelude { JaktPrelude }
 
@@ -35,11 +35,53 @@ struct ParsedModuleImport {
     module_name: ImportName
     alias_name: ImportName?
     import_list: [ImportName]
+
+    function is_equivalent_to(this, anon other: ParsedModuleImport) -> bool =>
+        .module_name.name == other.module_name.name and .has_same_alias_than(other) and .has_same_import_semantics(other)
+
+    // we do this because imports with an empty import list mean a namespaced
+    // import
+    function has_same_import_semantics(this, anon other: ParsedModuleImport) -> bool =>
+        .import_list.is_empty() == other.import_list.is_empty()
+
+
+    function has_same_alias_than(this, anon other: ParsedModuleImport) -> bool  {
+        if .alias_name.has_value() {
+            return other.alias_name.has_value() and other.alias_name!.name == .alias_name!.name
+        } else {
+            return not other.alias_name.has_value()
+        }
+    }
+
+    function merge_import_list(mut this, anon list: [ImportName]) throws {
+        .import_list.add_capacity(list.size())
+        // generate a set of the names that exist
+        mut name_set: {String} = {}
+        for import_ in .import_list.iterator() {
+            name_set.add(import_.name)
+        }
+
+        for import_ in list.iterator() {
+            if not name_set.contains(import_.name) {
+                name_set.add(import_.name)
+                .import_list.push(import_)
+            }
+        }
+    }
 }
 
 struct ParsedExternImport {
     is_c: bool
     assigned_namespace: ParsedNamespace
+
+
+    function get_path(this) -> String => .assigned_namespace.import_path_if_extern!
+
+    function get_name(this) -> String => .assigned_namespace.name!
+
+    function is_equivalent_to(this, anon other: ParsedExternImport) throws {
+        return .is_c and other.is_c and .get_path() == other.get_path() and .get_name() == other.get_name()
+    }
 }
 
 struct ParsedNamespace {
@@ -51,6 +93,58 @@ struct ParsedNamespace {
     module_imports: [ParsedModuleImport]
     extern_imports: [ParsedExternImport]
     import_path_if_extern: String?
+
+    function is_equivalent_to(this, anon other: ParsedNamespace) -> bool =>
+        .name == other.name and .import_path_if_extern == other.import_path_if_extern
+
+    function add_module_import(mut this, anon import_: ParsedModuleImport) throws {
+        for module_import in .module_imports.iterator() {
+            if module_import.is_equivalent_to(import_) {
+                module_import.merge_import_list(import_.import_list)
+                return
+            }
+        }
+        .module_imports.push(import_)
+    }
+
+    function add_extern_import(mut this, anon import_: ParsedExternImport) throws {
+        for extern_import in .extern_imports.iterator() {
+            if extern_import.is_equivalent_to(import_) {
+                extern_import.assigned_namespace.merge_with(import_.assigned_namespace)
+                return
+            }
+        }
+        .extern_imports.push(import_)
+    }
+
+    function add_child_namespace(mut this, anon namespace_: ParsedNamespace) throws {
+        for child_namespace in .namespaces.iterator() {
+            if child_namespace.is_equivalent_to(namespace_) {
+                child_namespace.merge_with(namespace_)
+                return
+            }
+        }
+        .namespaces.push(namespace_)
+    }
+
+    function merge_with(mut this, anon namespace_: ParsedNamespace) throws {
+        extend_array(target: .functions, extend_with: namespace_.functions)
+        extend_array(target: .records, extend_with: namespace_.records)
+
+        .module_imports.add_capacity(namespace_.module_imports.size())
+        for import_ in namespace_.module_imports.iterator() {
+            .add_module_import(import_)
+        }
+
+        .extern_imports.add_capacity(namespace_.extern_imports.size())
+        for import_ in namespace_.extern_imports.iterator() {
+            .add_extern_import(import_)
+        }
+
+        for child_namespace in namespace_.namespaces.iterator() {
+            .add_child_namespace(child_namespace)
+        }
+    }
 }
 
 
@@ -581,7 +675,7 @@ struct Parser {
                         namespace_.name = name!.0
                         namespace_.name_span = name!.1
                     }
-                    parsed_namespace.namespaces.push(namespace_)
+                    parsed_namespace.add_child_namespace(namespace_)
                 }
                 Extern => {
                     .index++
@@ -647,10 +741,10 @@ struct Parser {
         match .current() {
             Extern => {
                 .index++
-                parent.extern_imports.push(.parse_extern_import())
+                parent.add_extern_import(.parse_extern_import())
             }
             else => {
-                parent.module_imports.push(.parse_module_import())
+                parent.add_module_import(.parse_module_import())
             }
         }
     }
