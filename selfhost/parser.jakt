@@ -31,11 +31,6 @@ struct ImportName {
     span: Span
 }
 
-enum ParsedImport {
-    Module(ParsedModuleImport)
-    Extern(ParsedExternImport)
-}
-
 struct ParsedModuleImport {
     module_name: ImportName
     alias_name: ImportName?
@@ -53,9 +48,12 @@ struct ParsedNamespace {
     functions: [ParsedFunction]
     records: [ParsedRecord]
     namespaces: [ParsedNamespace]
-    imports: [ParsedImport]
+    module_imports: [ParsedModuleImport]
+    extern_imports: [ParsedExternImport]
     import_path_if_extern: String?
 }
+
+
 struct ValueEnumVariant {
     name: String
     span: Span
@@ -536,7 +534,8 @@ struct Parser {
             functions: []
             records: []
             namespaces: []
-            imports: []
+            module_imports: []
+            extern_imports: []
             import_path_if_extern: None
         )
 
@@ -544,7 +543,7 @@ struct Parser {
             match .current() {
                 Import => {
                     .index++
-                    parsed_namespace.imports.push(.parse_import())
+                    .parse_import(parent: parsed_namespace)
                 }
                 Function => {
                     let parsed_function = .parse_function(FunctionLinkage::Internal, Visibility::Public)
@@ -643,18 +642,17 @@ struct Parser {
         }
     }
 
-    function parse_import(mut this) throws -> ParsedImport {
+    function parse_import(mut this, mut parent: ParsedNamespace) throws  {
         // import . <extern <extern-import> | <module-import>>
         match .current() {
             Extern => {
                 .index++
-                let res =  ParsedImport::Extern(.parse_extern_import())
-                return res
+                parent.extern_imports.push(.parse_extern_import())
             }
-            else => {}
+            else => {
+                parent.module_imports.push(.parse_module_import())
+            }
         }
-
-        return ParsedImport::Module(.parse_module_import())
     }
 
 
@@ -668,7 +666,8 @@ struct Parser {
                 functions: []
                 records: []
                 namespaces: []
-                imports: []
+                module_imports: []
+                extern_imports: []
                 import_path_if_extern: None))
 
         
