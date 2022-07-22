@@ -1,0 +1,20 @@
+/// Expect: selfhost-only
+/// - output: "PASS\n"
+
+namespace foo {
+    namespace bar {
+        function baz() {
+            println("PASS")
+        }
+    }
+}
+
+namespace foo {
+    function run() {
+        bar::baz()
+    }
+}
+
+function main() {
+    foo::run()
+}
