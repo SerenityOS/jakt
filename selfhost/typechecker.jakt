@@ -2,6 +2,7 @@
 // Copyright (c) 2022, Andreas Kling <kling@serenityos.org>
 // Copyright (c) 2022, Kyle Lanmon <kyle.lanmon@gmail.com>
 // Copyright (c) 2022, Adler Oliveira <adler.rs.oliveira@gmail.com>
+// Copyright (c) 2022, Jesús Lapastora <cyber.gsuscode@gmail.com>
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
@@ -2024,7 +2025,7 @@ struct Typechecker {
 
 
         // typecheck the new namespace, adding it to the parent's children
-        parent.namespaces.push(import_.assigned_namespace)
+        parent.add_child_namespace(import_.assigned_namespace)
     }
 
     function typecheck_namespace_imports(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws  {
