@@ -1671,7 +1671,7 @@ struct CodeGenerator {
                             }
                             StructLike(name, fields) => {
                                 output += format(
-                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();",
+                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<{}::{}>();",
                                     .codegen_type_possibly_as_namespace(
                                         type_id: subject_type_id,
                                         as_namespace: true,

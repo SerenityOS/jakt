@@ -2785,7 +2785,7 @@ fn codegen_enum_match(
                             CheckedEnumVariant::StructLike(name, _, _) => {
                                 let _ = writeln!(
                                     output,
-                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();",
+                                    "auto&& __jakt_match_value = __jakt_match_variant.template get<{}::{}>();",
                                     &codegen_type_possibly_as_namespace(
                                         *subject_type_id,
                                         project,
