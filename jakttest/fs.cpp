@@ -8,9 +8,9 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #if defined(__APPLE__)
-#define st_atim st_atimespec
-#define st_ctim st_ctimespec
-#define st_mtim st_mtimespec
+#    define st_atim st_atimespec
+#    define st_ctim st_ctimespec
+#    define st_mtim st_mtimespec
 #endif
 
 namespace Jakt::fs {
@@ -88,6 +88,6 @@ ErrorOr<Optional<StatResults>> stat_silencing_enoent(String path)
         }
         return Error::from_errno(errno);
     }
-    return Optional<StatResults>(StatResults(st.st_atim.tv_sec, st.st_mode));
+    return Optional<StatResults>(StatResults(st.st_mtim.tv_sec, st.st_mode));
 }
 }
