@@ -1863,7 +1863,7 @@ struct Typechecker {
         }
     }
 
-    function typecheck_module_import(mut this, import_: ParsedModuleImport, scope_id: ScopeId) throws {
+    function typecheck_module_import(mut this, anon import_: ParsedModuleImport, scope_id: ScopeId) throws {
         // load the module if not present
         // FIXME: use match
         mut imported_module_id = ModuleId(id: 0)
@@ -1985,7 +1985,7 @@ struct Typechecker {
         }
     }
 
-    function typecheck_extern_import(mut this, import_: ParsedExternImport, scope_id: ScopeId, mut parent_children: [ParsedNamespace]) throws {
+    function typecheck_extern_import(mut this, anon import_: ParsedExternImport, scope_id: ScopeId, mut parent: ParsedNamespace) throws {
         for f in import_.assigned_namespace.functions.iterator() {
             if not f.linkage is External {
                 .error("Expected all functions in an `import extern` to be be external", f.name_span)
@@ -2024,15 +2024,16 @@ struct Typechecker {
 
 
         // typecheck the new namespace, adding it to the parent's children
-        parent_children.push(import_.assigned_namespace)
+        parent.namespaces.push(import_.assigned_namespace)
     }
 
     function typecheck_namespace_imports(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws  {
-        for import_ in parsed_namespace.imports.iterator() {
-            match import_ {
-                Module(import_) => .typecheck_module_import(import_, scope_id)
-                Extern(import_) => .typecheck_extern_import(import_, scope_id, parent_children: parsed_namespace.namespaces)
-            }
+        for module_import in parsed_namespace.module_imports.iterator() {
+            .typecheck_module_import(module_import, scope_id)
+        }
+
+        for extern_import in parsed_namespace.extern_imports.iterator() {
+            .typecheck_extern_import(extern_import, scope_id, parent: parsed_namespace)
         }
     }
 
