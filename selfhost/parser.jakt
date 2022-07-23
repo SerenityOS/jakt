@@ -1514,18 +1514,12 @@ struct Parser {
                 Identifier(name, span) => {
                     let var_decl = .parse_variable_declaration(is_mutable: current_param_is_mutable)
 
-                    // FIXME: This is pretty sloppy, but basically allow `foo: &mut T` to make the parameter `mut` as well.
-                    let parameter_is_mutable = match var_decl.parsed_type {
-                        MutableReference => true
-                        else => var_decl.is_mutable
-                    }
-
                     params.push(ParsedParameter(
                         requires_label: current_param_requires_label,
                         variable: ParsedVariable(
                             name: var_decl.name,
                             parsed_type: var_decl.parsed_type,
-                            is_mutable: parameter_is_mutable,
+                            is_mutable: var_decl.is_mutable,
                             span: .previous().span(),
                         ),
                         span: .previous().span(),
