@@ -1063,7 +1063,7 @@ function get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> 
 function get_enum_variant_signature(program: CheckedProgram, name: String, type_id: TypeId, variants: [(String?, TypeId)], number_constant: NumberConstant?) throws -> String {
     mut output = get_type_signature(program, type_id)
     output += "::"
-    output += "name"
+    output += name
 
     if not variants.is_empty() {
         output += "("
