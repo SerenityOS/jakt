@@ -1,0 +1,18 @@
+/// Expect:
+/// - output: "[0]\n"
+
+class C {
+    public e: [f64]
+
+    public function f(mut this) throws {
+        .e = [0f64; .n()]
+    }
+
+    function n(this) => 1    
+}
+
+function main() {
+    mut c: C = C(e: [0f64; 0])
+    c.f()
+    println("{}", c.e)
+}
