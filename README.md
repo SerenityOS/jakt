@@ -539,5 +539,6 @@ function zero_out(foo: &mut Foo) {
 
 ### References TODO:
 
+- [ ] Allow `&foo` and `&mut foo` without argument label for parameters named `foo`
 - [ ] (`unsafe`) references and raw pointers bidirectionally convertible
 - [ ] No capture-by-reference in persistent closures
