@@ -491,3 +491,53 @@ unsafe {
 }
 println("{}", x)
 ```
+
+## References
+
+Values and objects can be passed by reference in some situations where it's provably safe to do so.
+
+A reference is either immutable (default) or mutable.
+
+### Reference type syntax
+
+- `&T` is an immutable reference to a value of type `T`.
+- `&mut T` is a mutable reference to a value of type `T`.
+
+### Reference expression syntax
+
+- `&foo` creates an immutable reference to the variable `foo`.
+- `&mut foo` creates a mutable reference to the variable `foo`.
+
+### Dereferencing a reference
+
+To "get the value out" of a reference, it must be dereferenced using the `*` operator:
+
+```jakt
+function sum(a: &i64, b: &i64) -> i64 {
+    return *a + *b
+}
+```
+
+For mutable references to structs, you'll need to wrap the dereference in parentheses in order to do a field access:
+
+```jakt
+struct Foo {
+    x: i64
+}
+function zero_out(foo: &mut Foo) {
+    (*foo).x = 0
+}
+```
+
+### References (first version) feature list:
+
+- [ ] Reference types
+- [ ] Reference function parameters
+- [ ] No reference locals
+- [ ] No references in structs
+- [ ] No references in return types
+
+### References TODO:
+
+- [ ] (`unsafe`) references and raw pointers bidirectionally convertible
+- [ ] No capture-by-reference in persistent closures
