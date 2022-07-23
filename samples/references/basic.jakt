@@ -1,0 +1,14 @@
+/// Expect:
+/// - output: "3\n"
+
+function sum(anon a: &i64, anon b: &i64, anon result: &mut i64) {
+    *result = *a + *b
+}
+
+function main() {
+    let x = 1
+    let y = 2
+    mut result = 0
+    sum(&x, &y, &mut result)
+    println("{}", result)
+}

@@ -150,6 +150,8 @@ boxed enum Type {
     Struct(StructId)
     Enum(EnumId)
     RawPtr(TypeId)
+    Reference(TypeId)
+    MutableReference(TypeId)
 
     function equals(this, anon rhs: Type) -> bool {
         if this is Void and rhs is Void {
@@ -263,6 +265,26 @@ boxed enum Type {
                 RawPtr(lhs_id) => {
                     match rhs {
                         RawPtr(rhs_id) => {
+                            return lhs_id.equals(rhs_id)
+                        }
+                        else => {
+                            return false
+                        }
+                    }
+                }
+                Reference(lhs_id) => {
+                    match rhs {
+                        Reference(rhs_id) => {
+                            return lhs_id.equals(rhs_id)
+                        }
+                        else => {
+                            return false
+                        }
+                    }
+                }
+                MutableReference(lhs_id) => {
+                    match rhs {
+                        MutableReference(rhs_id) => {
                             return lhs_id.equals(rhs_id)
                         }
                         else => {
@@ -752,6 +774,8 @@ enum CheckedUnaryOperator {
     Negate
     Dereference
     RawAddress
+    Reference
+    MutableReference
     LogicalNot
     BitwiseNot
     TypeCast(CheckedTypeCast)
@@ -1487,6 +1511,8 @@ struct Typechecker {
             }
             TypeVariable(name) => name
             RawPtr(type_id) => format("raw {}", .type_name(type_id))
+            Reference(type_id) => format("&{}", .type_name(type_id))
+            MutableReference(type_id) => format("&mut {}", .type_name(type_id))
         }
     }
 
@@ -1527,6 +1553,10 @@ struct Typechecker {
         IndexedTuple(expr) => .expression_is_mutable(expr)
         IndexedDictionary(expr) => .expression_is_mutable(expr)
         ForcedUnwrap(expr) => .expression_is_mutable(expr)
+        UnaryOp(expr, op) => match op {
+            Dereference => .get_type(expression_type(expr)) is MutableReference
+            else => false
+        }
         else => false
     }
 
@@ -3689,6 +3719,16 @@ struct Typechecker {
 
     function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId) throws -> TypeId { 
         match parsed_type {
+            Reference(inner) => {
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+                let type_id = .find_or_add_type_id(Type::Reference(id: inner_type_id))
+                return type_id
+            }
+            MutableReference(inner) => {
+                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id)
+                let type_id = .find_or_add_type_id(Type::MutableReference(id: inner_type_id))
+                return type_id
+            }
             NamespacedName(name, namespaces, params, span) => {
                 mut current_namespace_scope_id = scope_id
 
@@ -3878,12 +3918,21 @@ struct Typechecker {
             RawAddress => {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: .find_or_add_type_id(Type::RawPtr(expr_type_id)))
             }
+            Reference => {
+                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: .find_or_add_type_id(Type::Reference(expr_type_id)))
+            }
+            MutableReference => {
+                return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: .find_or_add_type_id(Type::MutableReference(expr_type_id)))
+            }
             Dereference => {
                 match expr_type {
                     RawPtr(type_id) => {
                         if safety_mode is Safe {
                             .error("Dereference of raw pointer outside of unsafe block", span)
                         }
+                        return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id)
+                    }
+                    Reference(type_id) | MutableReference(type_id) => {
                         return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id)
                     }
                     else => {
@@ -4817,6 +4866,8 @@ struct Typechecker {
                 Negate => CheckedUnaryOperator::Negate
                 Dereference => CheckedUnaryOperator::Dereference
                 RawAddress => CheckedUnaryOperator::RawAddress
+                Reference => CheckedUnaryOperator::Reference
+                MutableReference => CheckedUnaryOperator::MutableReference
                 LogicalNot => CheckedUnaryOperator::LogicalNot
                 BitwiseNot => CheckedUnaryOperator::BitwiseNot
                 TypeCast(cast) => {
