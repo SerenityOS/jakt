@@ -513,6 +513,7 @@ struct ParsedVarDecl {
     name: String
     parsed_type: ParsedType
     is_mutable: bool
+    inlay_span: Span?
     span: Span
 }
 
@@ -1003,9 +1004,10 @@ struct Parser {
 
                         while not .eof() {
                             if .peek(1) is Colon {
-                                let var_decl = .parse_variable_declaration(is_mutable: false)
+                                mut var_decl = .parse_variable_declaration(is_mutable: false)
                                 match var_decl.parsed_type {
-                                    Name(name) => {
+                                    Name(name, span) => {
+                                        var_decl.inlay_span = span
                                         if name == partial_enum.name and not is_boxed{
                                             .error("use 'boxed enum' to make the enum recursive", var_decl.span)
                                         }
@@ -1022,6 +1024,7 @@ struct Parser {
                                         name: ""
                                         parsed_type: .parse_typename()
                                         is_mutable: false
+                                        inlay_span: None
                                         span: .current().span()
                                     ))
                                 }
@@ -1761,6 +1764,7 @@ struct Parser {
             name: "",
             parsed_type: ParsedType::Empty,
             is_mutable: false,
+            inlay_span: None,
             span: .current().span(),
         )]
     }
@@ -1769,19 +1773,22 @@ struct Parser {
         match .current() {
             Identifier(name) => {
                 let var_name = name
+                mut inlay_span: Span? = None
+                let decl_span = .current().span()
+
                 .index++
                 if .current() is Colon {
                     .index++
+                    inlay_span = .current().span()
                 } else {
                     return ParsedVarDecl(
                         name: var_name,
                         parsed_type: ParsedType::Empty,
                         is_mutable,
-                        span: .current().span(),
+                        inlay_span: None
+                        span: decl_span
                     )
                 }
-
-                let decl_span = .current().span()
 
                 let var_type = .parse_typename()
                 if is_mutable and (var_type is Reference or var_type is MutableReference) {
@@ -1792,6 +1799,7 @@ struct Parser {
                     name: var_name,
                     parsed_type: var_type,
                     is_mutable,
+                    inlay_span,
                     span: decl_span,
                 )
             }
@@ -1801,6 +1809,7 @@ struct Parser {
             name: "",
             parsed_type: ParsedType::Empty,
             is_mutable: false,
+            inlay_span: None,
             span: .current().span(),
         )
     }
@@ -1980,6 +1989,7 @@ struct Parser {
                     name: "",
                     parsed_type: ParsedType::Empty,
                     is_mutable: is_mutable,
+                    inlay_span: None,
                     span: .current().span(),
                 )
 
