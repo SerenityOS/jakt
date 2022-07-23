@@ -1,0 +1,9 @@
+/// Expect:
+/// - error: "namespace not found"
+
+
+function main() {
+  let x = some::unknown::ns
+}
+
+// Fixes #560.
