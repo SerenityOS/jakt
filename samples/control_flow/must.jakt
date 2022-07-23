@@ -1,0 +1,15 @@
+function foo(anonymous x: i32) throws -> i32 {
+    if x == 5 {
+        throw Error::from_errno(1);
+    }
+    return x;
+}
+
+function main() {
+    let x: i32 = must foo(10);
+    println("{}", x);
+    must {
+        foo(15);
+        foo(12);
+    }
+}
