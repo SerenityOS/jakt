@@ -535,7 +535,7 @@ function zero_out(foo: &mut Foo) {
 - [x] Reference function parameters
 - [ ] No reference locals
 - [ ] No references in structs
-- [ ] No references in return types
+- [x] No references in return types
 
 ### References TODO:
 
