@@ -750,7 +750,8 @@ struct CodeGenerator {
                 output += ", "
             }
 
-            if not param.variable.is_mutable and not .program.get_type(param.variable.type_id) is Reference {
+            let param_type = .program.get_type(param.variable.type_id)
+            if not param.variable.is_mutable and not (param_type is Reference or param_type is MutableReference) {
                 output += "const "
             }
 
@@ -2311,7 +2312,8 @@ struct CodeGenerator {
                 let var = .program.get_variable(var_id)
 
                 mut output = ""
-                if not var.is_mutable and not .program.get_type(var.type_id) is Reference {
+                let var_type = .program.get_type(var.type_id)
+                if not var.is_mutable and not (var_type is Reference or var_type is MutableReference) {
                     output += "const "
                 }
                 output += .codegen_type(var.type_id)
@@ -2823,7 +2825,8 @@ struct CodeGenerator {
             } else {
                 first = false
             }
-            if not variable.is_mutable and not .program.get_type(variable.type_id) is Reference {
+            let variable_type = .program.get_type(variable.type_id)
+            if not variable.is_mutable and not (variable_type is Reference or variable_type is MutableReference) {
                 output += "const "
             }
             output += .codegen_type(variable.type_id)
