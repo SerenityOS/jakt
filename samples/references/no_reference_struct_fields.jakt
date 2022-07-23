@@ -1,0 +1,7 @@
+/// Expect:
+/// - error: "Reference type ‘&i64’ not usable in this context"
+
+struct Foo {
+    x: &i64
+    y: &mut i64
+}
