@@ -1097,14 +1097,12 @@ struct Typechecker {
 
         let placeholder_module_id = ModuleId(id: 0)
 
-        let none_function_id: FunctionId? = None
-
         mut typechecker = Typechecker(
             compiler
             program: CheckedProgram(compiler, modules: [], loaded_modules: [:]),
             current_module_id: placeholder_module_id,
             current_struct_type_id: TypeId::none()
-            current_function_id: none_function_id
+            current_function_id: None
             inside_defer: false
             checkidx: 0uz
             ignore_errors: false
@@ -1282,9 +1280,8 @@ struct Typechecker {
                 file_id
          ))
 
-        let none_scope_id: ScopeId? = None // FIXME: set None directly when compiler allows it
         let prelude_scope_id = .create_scope(
-            parent_scope_id: none_scope_id
+            parent_scope_id: None
             can_throw: false
             debug_name: "prelude"
         )
@@ -2639,7 +2636,6 @@ struct Typechecker {
                             let can_function_throw = is_boxed
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
                             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
-                            let none_parsed_function: ParsedFunction? = None
                             let checked_function = CheckedFunction(
                                 name: variant.name,
                                 name_span: variant.span,
@@ -2653,7 +2649,7 @@ struct Typechecker {
                                 linkage: FunctionLinkage::Internal,
                                 function_scope_id
                                 is_instantiated: true
-                                parsed_function: none_parsed_function
+                                parsed_function: None
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
@@ -2675,7 +2671,6 @@ struct Typechecker {
                                 definition_span: param.span
                                 visibility: Visibility::Public
                             )
-                            let none_parsed_function: ParsedFunction? = None
                             let checked_function = CheckedFunction(
                                 name: variant.name,
                                 name_span: variant.span,
@@ -2689,7 +2684,7 @@ struct Typechecker {
                                 linkage: FunctionLinkage::Internal,
                                 function_scope_id
                                 is_instantiated: true
-                                parsed_function: none_parsed_function
+                                parsed_function: None
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
@@ -2701,7 +2696,6 @@ struct Typechecker {
                             let can_function_throw = is_boxed
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
                             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
-                            let none_parsed_function: ParsedFunction? = None
                             let checked_function = CheckedFunction(
                                 name: variant.name,
                                 name_span: variant.span,
@@ -2715,7 +2709,7 @@ struct Typechecker {
                                 linkage: FunctionLinkage::Internal,
                                 function_scope_id
                                 is_instantiated: true
-                                parsed_function: none_parsed_function
+                                parsed_function: None
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
@@ -2736,8 +2730,7 @@ struct Typechecker {
 
     function cast_to_underlying(mut this, anon expr: ParsedExpression, scope_id: ScopeId, parsed_type: ParsedType) throws -> CheckedExpression {
         let cast_expression = ParsedExpression::UnaryOp(expr, op: UnaryOperator::TypeCast(TypeCast::Infallible(parsed_type)), span: expr.span())
-        let type_hint: TypeId? = None
-        return .typecheck_expression(cast_expression, scope_id, safety_mode: SafetyMode::Safe, type_hint)
+        return .typecheck_expression(cast_expression, scope_id, safety_mode: SafetyMode::Safe, type_hint: None)
     }
 
     function typecheck_struct(mut this, record: ParsedRecord, struct_id: StructId, parent_scope_id: ScopeId) throws {
@@ -2763,7 +2756,6 @@ struct Typechecker {
             let function_scope_id = .create_scope(parent_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor({})", record.name))
             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor-block({})", record.name))
 
-            let none_parsed_function: ParsedFunction? = None
             let checked_constructor = CheckedFunction(
                 name: record.name
                 name_span: record.name_span
@@ -2782,7 +2774,7 @@ struct Typechecker {
                 linkage: FunctionLinkage::Internal
                 function_scope_id
                 is_instantiated: true
-                parsed_function: none_parsed_function
+                parsed_function: None
             )
 
             // Internal constructor
@@ -3656,15 +3648,13 @@ struct Typechecker {
             // check that statment definitly returns
             checked_block.definitely_returns = checked_block.definitely_returns or .statement_definitely_returns(checked_statement)
 
-            let none_yield: Span? = None // FIXME: Can't yield None directly
             let yield_span: Span? = match parsed_statement {
                 ParsedStatement::Yield(expr) => Some(expr.span())
-                else => none_yield
+                else => None
             }
-            let  none_expr: CheckedExpression? = None // FIXME: Can't yield None directly
             let checked_yield_expression: CheckedExpression? = match checked_statement {
                 CheckedStatement::Yield(expr) => Some(expr)
-                else => none_expr
+                else => None
             }
             if yield_span.has_value() and checked_yield_expression.has_value() {
                 let type_var_type_id = expression_type(checked_yield_expression.value())
@@ -4216,8 +4206,7 @@ struct Typechecker {
         //     1- Must respond to .next(); the mutability of the iterator is inferred from .next()'s signature
         //     2- The result of .next() must be an Optional.
 
-        let type_hint: TypeId? = None
-        let iterable_expr = .typecheck_expression(range, scope_id, safety_mode, type_hint) 
+        let iterable_expr = .typecheck_expression(range, scope_id, safety_mode, type_hint: None) 
         mut iterable_should_be_mutable = false
 
 
@@ -4248,10 +4237,6 @@ struct Typechecker {
                 .error("Iterator must have a .next() method", name_span)
             }
         }
-
-
-        // FIXME: proper type inference for `None`
-        let else_statement: ParsedStatement? = None
 
         let rewritten_statement = ParsedStatement::Block(
             block: ParsedBlock(
@@ -4319,7 +4304,7 @@ struct Typechecker {
                                             ParsedStatement::Break(span)
                                         ]
                                     ),
-                                    else_statement
+                                    else_statement: None
                                     span
                                 ),
                             // let iterator_name = _magic_value!
@@ -4355,8 +4340,7 @@ struct Typechecker {
     }
 
     function typecheck_if(mut this, condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
-        let type_hint: TypeId? = None
-        let checked_condition = .typecheck_expression(condition, scope_id, safety_mode, type_hint)
+        let checked_condition = .typecheck_expression(condition, scope_id, safety_mode, type_hint: None)
         if not expression_type(checked_condition).equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", condition.span())
         }
@@ -4494,8 +4478,7 @@ struct Typechecker {
     }
 
     function typecheck_while(mut this, condition: ParsedExpression, block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
-        let type_hint: TypeId? = None
-        let checked_condition = .typecheck_expression(condition, scope_id, safety_mode, type_hint)
+        let checked_condition = .typecheck_expression(condition, scope_id, safety_mode, type_hint: None)
         if not expression_type(checked_condition).equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", condition.span())
         }
@@ -4530,8 +4513,7 @@ struct Typechecker {
     }
 
     function typecheck_throw(mut this, expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
-        let type_hint: TypeId? = None
-        let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint)
+        let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
 
         let error_type_id = .find_type_in_prelude("Error")
         if not expression_type(checked_expr).equals(error_type_id) {
@@ -4608,8 +4590,7 @@ struct Typechecker {
             .error("‘return’ is not allowed inside ‘defer’", span)
         }
         if not expr.has_value() {
-            let none_expr: CheckedExpression? = None
-            return CheckedStatement::Return(val: none_expr, span)
+            return CheckedStatement::Return(val: None, span)
         }
 
         mut type_hint: TypeId? = None
@@ -4622,8 +4603,7 @@ struct Typechecker {
     }
 
     function typecheck_indexed_struct(mut this, expr: ParsedExpression, field: String, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
-        let type_hint: TypeId? = None
-        let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint)
+        let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
         let checked_expr_type_id = expression_type(checked_expr)
         let checked_expr_type = .get_type(checked_expr_type_id)
 
@@ -4733,13 +4713,10 @@ struct Typechecker {
             yield CheckedExpression::QuotedString(val, span)
         }
         Call(call, span) => {
-            let none_expr: CheckedExpression? = None
-            let parent_id: StructOrEnumId? = None
-            yield .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: none_expr, parent_id, safety_mode, type_hint, must_be_enum_constructor: false)
+            yield .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: false)
         }
         MethodCall(expr, call, span) => {
-            let none_type_hint: TypeId? = None
-            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: none_type_hint)
+            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
             let checked_expr_type_id = expression_type(checked_expr)
 
             let parent_id = match .get_type(checked_expr_type_id) {
@@ -4791,9 +4768,8 @@ struct Typechecker {
             )
         }
         Range(from, to, span) => {
-            let none_type_hint: TypeId? = None
-            mut checked_from = .typecheck_expression(from, scope_id, safety_mode, type_hint: none_type_hint)
-            mut checked_to = .typecheck_expression(to, scope_id, safety_mode, type_hint: none_type_hint)
+            mut checked_from = .typecheck_expression(from, scope_id, safety_mode, type_hint: None)
+            mut checked_to = .typecheck_expression(to, scope_id, safety_mode, type_hint: None)
 
             mut from_type = expression_type(checked_from)
             mut to_type = expression_type(checked_to)
@@ -4830,8 +4806,7 @@ struct Typechecker {
             yield CheckedExpression::Range(from: checked_from, to: checked_to, span, type_id)
         }
         UnaryOp(expr, op, span) => {
-            let none_type_hint: TypeId? = None
-            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: none_type_hint)
+            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
             let checked_op = match op {
                 PreIncrement => CheckedUnaryOperator::PreIncrement
                 PostIncrement => CheckedUnaryOperator::PostIncrement
@@ -4901,9 +4876,8 @@ struct Typechecker {
             yield .typecheck_unary_operation(checked_expr, checked_op, span, scope_id, safety_mode)
         }
         BinaryOp(lhs, op, rhs, span) => {
-            let none_type_hint: TypeId? = None
-            let checked_lhs = .typecheck_expression(lhs, scope_id, safety_mode, type_hint: none_type_hint)
-            mut checked_rhs = .typecheck_expression(rhs, scope_id, safety_mode, type_hint: none_type_hint)
+            let checked_lhs = .typecheck_expression(lhs, scope_id, safety_mode, type_hint: None)
+            mut checked_rhs = .typecheck_expression(rhs, scope_id, safety_mode, type_hint: None)
 
             let lhs_type = expression_type(checked_lhs)
 
@@ -4920,8 +4894,7 @@ struct Typechecker {
             yield CheckedExpression::OptionalNone(span, type_id: unknown_type_id())
         }
         OptionalSome(expr, span) => {
-            let none_type_hint: TypeId? = None
-            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: none_type_hint)
+            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
             let type_id = expression_type(checked_expr)
             let optional_struct_id = .find_struct_in_prelude("Optional")
             let optional_type = Type::GenericInstance(id: optional_struct_id, args: [type_id])
@@ -4941,8 +4914,7 @@ struct Typechecker {
             }
         }
         ForcedUnwrap(expr, span) => {
-            let none_type_hint: TypeId? = None
-            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: none_type_hint)
+            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
             let type = .get_type(expression_type(checked_expr))
 
             let optional_struct_id = .find_struct_in_prelude("Optional")
@@ -4972,9 +4944,8 @@ struct Typechecker {
             mut checked_values: [CheckedExpression] = []
             mut checked_types: [TypeId] = []
 
-            let none_type_hint: TypeId? = None
             for value in values.iterator() {
-                let checked_value= .typecheck_expression(value, scope_id, safety_mode, type_hint: none_type_hint)
+                let checked_value= .typecheck_expression(value, scope_id, safety_mode, type_hint: None)
                 let type_id = expression_type(checked_value)
                 if type_id.equals(VOID_TYPE_ID) {
                     .error("Cannot create a tuple that contains a value of type void", value.span())
@@ -4991,9 +4962,8 @@ struct Typechecker {
             yield CheckedExpression::JaktTuple(vals: checked_values, span, type_id)
         }
         IndexedExpression(base, index, span) => {
-            let none_type_hint: TypeId? = None
-            let checked_base = .typecheck_expression(base, scope_id, safety_mode, type_hint: none_type_hint)
-            let checked_index = .typecheck_expression(index, scope_id, safety_mode, type_hint: none_type_hint)
+            let checked_base = .typecheck_expression(base, scope_id, safety_mode, type_hint: None)
+            let checked_index = .typecheck_expression(index, scope_id, safety_mode, type_hint: None)
 
             let array_struct_id = .find_struct_in_prelude("Array")
             let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
@@ -5020,8 +4990,7 @@ struct Typechecker {
             }
         }
         IndexedTuple(expr, index, span) => {
-            let none_type_hint: TypeId? = None
-            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: none_type_hint)
+            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
 
             let tuple_struct_id = .find_struct_in_prelude("Tuple")
             mut expr_type_id = unknown_type_id()
@@ -5090,17 +5059,14 @@ struct Typechecker {
         }
 
         let implicit_constructor_call = ParsedCall(namespace_, name, args: [], type_args: [])
-        let none_expr: CheckedExpression? = None
-        let parent_id: StructOrEnumId? = None
-        let call_expression = .typecheck_call(call: implicit_constructor_call, caller_scope_id: scope_id, span, this_expr: none_expr, parent_id, safety_mode, type_hint, must_be_enum_constructor: true)
+        let call_expression = .typecheck_call(call: implicit_constructor_call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: true)
         let type_id = expression_type(call_expression)
         let call = match call_expression {
             Call(call) => call
             else => {
                 .compiler.panic("typecheck_call returned something other than a CheckedCall")
                 // FIXME: Unreachable
-                let none_function_id: FunctionId? = None
-                yield CheckedCall(namespace_: [], name: "", args: [], type_args: [], function_id: none_function_id, return_type: builtin(BuiltinType::Void), callee_throws: true)
+                yield CheckedCall(namespace_: [], name: "", args: [], type_args: [], function_id: None, return_type: builtin(BuiltinType::Void), callee_throws: true)
             }
         }
         if call.function_id.has_value() {
@@ -5126,8 +5092,7 @@ struct Typechecker {
             // Check fill size is an integer.
             // TODO: Check fill size is positive when possible.
             let fill_size_value = fill_size.value()
-                let none_type_hint: TypeId? = None
-            let fill_size_checked = .typecheck_expression(fill_size_value, scope_id, safety_mode, type_hint: none_type_hint)
+            let fill_size_checked = .typecheck_expression(fill_size_value, scope_id, safety_mode, type_hint: None)
             let fill_size_type = expression_type(fill_size_checked)
             if not .is_integer(fill_size_type) {
                 .error(
@@ -5254,7 +5219,6 @@ struct Typechecker {
     function typecheck_generic_arguments_method_call(mut this, checked_expr: CheckedExpression, call: ParsedCall, scope_id: ScopeId, span: Span, safety_mode: SafetyMode) throws -> CheckedExpression {
         mut checked_args: [(String, CheckedExpression)] = []
         checked_args.ensure_capacity(call.args.size())
-        let type_hint: TypeId? = None
         for call_arg in call.args.iterator() {
             let name: String = call_arg.0
             let expr: ParsedExpression = call_arg.2
@@ -5262,7 +5226,7 @@ struct Typechecker {
                 expr
                 scope_id
                 safety_mode
-                type_hint
+                type_hint: None
             )
             let checked_arg: (String, CheckedExpression) = (name, checked_arg_expr)
             checked_args.push(checked_arg)
@@ -5273,7 +5237,6 @@ struct Typechecker {
             checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id))
         }
 
-        let none_function_id: FunctionId? = None // FIXME: use None directly
         return CheckedExpression::MethodCall(
             expr: checked_expr
             call: CheckedCall(
@@ -5281,7 +5244,7 @@ struct Typechecker {
                 name: call.name
                 args: checked_args
                 type_args: checked_type_args
-                function_id: none_function_id
+                function_id: None
                 return_type: unknown_type_id()
                 callee_throws: false
             )
@@ -5291,8 +5254,7 @@ struct Typechecker {
     }
 
     function typecheck_match(mut this, expr: ParsedExpression, cases: [ParsedMatchCase], span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
-        let type_hint: TypeId? = None
-        let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint)
+        let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
         let subject_type_id = expression_type(checked_expr)
         let type_to_match_on = .get_type(subject_type_id)
         mut checked_cases: [CheckedMatchCase] = []
@@ -5882,8 +5844,7 @@ struct Typechecker {
         mut generic_checked_function_to_instantiate: FunctionId? = None
 
         for name in call.namespace_.iterator() {
-            let generic_parameters: [TypeId]? = None
-            resolved_namespaces.push(ResolvedNamespace(name, generic_parameters))
+            resolved_namespaces.push(ResolvedNamespace(name, generic_parameters: None))
         }
 
         let callee_scope_id = match parent_id.has_value() {
@@ -5896,9 +5857,8 @@ struct Typechecker {
 
         match call.name {
             "print" | "println" | "eprintln" | "eprint" | "format" => {
-                let none_type_hint: TypeId? = None
                 for arg in call.args.iterator() {
-                    let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: none_type_hint)
+                    let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: None)
 
                     args.push((call.name, checked_arg))
                 }

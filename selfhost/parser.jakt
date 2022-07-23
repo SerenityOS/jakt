@@ -527,12 +527,9 @@ struct Parser {
     }
 
     public function parse_namespace(mut this) throws -> ParsedNamespace {
-        //FIXME: The constructor should just be able to accept None directly and infer its type
-        let none_string: String? = None
-        let none_span: Span? = None
         mut parsed_namespace = ParsedNamespace(
-            name: none_string
-            name_span: none_span
+            name: None
+            name_span: None
             functions: []
             records: []
             namespaces: []
@@ -820,8 +817,7 @@ struct Parser {
                         variants.push(ValueEnumVariant(name, span, value: expr))
                     } else {
                         .index++
-                        let none_expr: ParsedExpression? = None
-                        variants.push(ValueEnumVariant(name, span, value: none_expr))
+                        variants.push(ValueEnumVariant(name, span, value: None))
                     }
                 }
                 RCurly => {
@@ -950,8 +946,7 @@ struct Parser {
                         variants.push(SumEnumVariant(name, span, params: var_decls))
                     } else {
                         .index++
-                        let none_decls: [ParsedVarDecl]? = None
-                        variants.push(SumEnumVariant(name, span, params: none_decls))
+                        variants.push(SumEnumVariant(name, span, params: None))
                     }
                 }
                 RCurly => {
@@ -1844,9 +1839,8 @@ struct Parser {
             }
             Return => {
                 .index++
-                let none_expr: ParsedExpression? = None
                 yield match .current() {
-                    Eol | Eof | RCurly => ParsedStatement::Return(expr: none_expr, span: .current().span())
+                    Eol | Eof | RCurly => ParsedStatement::Return(expr: None, span: .current().span())
                     else => ParsedStatement::Return(expr: .parse_expression(allow_assignments: false), span: merge_spans(start, .previous().span()))
                 }
             }
@@ -2695,10 +2689,8 @@ struct Parser {
                                     }
                                 }
                             } else {
-                                // FIXME: Hack since compiler doesn't recognize `None` in tuple.
-                                let none: String? = None
                                 variant_arguments.push(EnumVariantPatternArgument(
-                                            name: none
+                                            name: None
                                             binding: arg_name
                                             span: .current().span()))
                                 .index++
