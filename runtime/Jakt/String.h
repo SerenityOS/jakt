@@ -39,7 +39,7 @@ public:
 
     char const& operator[](size_t i) const
     {
-        VERIFY(i < m_length);
+        VERIFY(i <= m_length);
         return c_string()[i];
     }
 
