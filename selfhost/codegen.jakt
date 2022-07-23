@@ -704,8 +704,12 @@ struct CodeGenerator {
 
     function codegen_function_predecl(mut this, function_: CheckedFunction) throws -> String {
         mut output = ""
-
+        
         if not function_.generic_params.is_empty() and function_.linkage is External {
+            return ""
+        }
+
+        if not function_.parsed_function.has_value() {
             return ""
         }
 
@@ -1501,6 +1505,13 @@ struct CodeGenerator {
             output += "})"
 
             yield output
+        }
+        Function(function_) => {
+            mut params: [String] = []
+            for param in function_.params.iterator() {
+                params.push(format("{} {}", .codegen_type(param.variable.type_id), param.variable.name))
+            }
+            yield format("[&]({}) {}", join(params, separator: ", "), .codegen_block(block: function_.block))
         }
         else => {
             todo(format("codegen_expression else: {}", expression))
@@ -2426,6 +2437,7 @@ struct CodeGenerator {
         JaktString => "String"
         CChar => "char"
         CInt => "int"
+        Unknown | Function => "auto"
         RawPtr(type_id) => .codegen_type(type_id) + "*"
         GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
         Struct(id) => .codegen_struct_type(id, as_namespace)
@@ -2764,6 +2776,9 @@ struct CodeGenerator {
                 External => { return "" }
                 else => {}
             }
+        }
+        if not function_.parsed_function.has_value() {
+            return ""
         }
 
         mut output = ""

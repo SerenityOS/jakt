@@ -429,6 +429,7 @@ boxed enum ParsedExpression {
     ForcedUnwrap(expr: ParsedExpression, span: Span)
     Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: Span)
     NamespacedVar(name: String, namespace_: [String], span: Span)
+    Function(function_: ParsedFunction, span: Span)
     Garbage(Span)
 
     function span(this) => match this {
@@ -457,6 +458,7 @@ boxed enum ParsedExpression {
         IndexedTuple(expr, index, span) => span
         IndexedStruct(expr, field, span) => span
         NamespacedVar(name, namespace_, span) => span
+        Function(span) => span
     }
 
     function precedence(this) => match this {
@@ -551,6 +553,7 @@ boxed enum ParsedType {
     Optional(inner: ParsedType, span: Span)
     RawPtr(inner: ParsedType, span: Span)
     WeakPtr(inner: ParsedType, span: Span)
+    Function(params: [ParsedParameter], return_type: ParsedType, span: Span)
     Empty
 
     function span(this) => match this {
@@ -564,6 +567,7 @@ boxed enum ParsedType {
         Optional(inner, span) => span
         RawPtr(inner, span) => span
         WeakPtr(inner, span) => span
+        Function(span) => span
         Empty => Span(file_id: FileId(id: 0uz), start: 0, end: 0) // FIXME: For some reason we can't see `empty_span()` here.
     }
 }
@@ -572,9 +576,10 @@ struct Parser {
     index: usize
     tokens: [Token]
     compiler: Compiler
+    lamdba_count: usize
 
     function parse(compiler: Compiler, tokens: [Token]) throws -> ParsedNamespace {
-        mut parser = Parser(index: 0, tokens, compiler)
+        mut parser = Parser(index: 0, tokens, compiler, lamdba_count: 0)
         return parser.parse_namespace()
     }
 
@@ -1395,51 +1400,14 @@ struct Parser {
         return parsed_class
     }
 
-    public function parse_function(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility) throws -> ParsedFunction {
-        mut parsed_function = ParsedFunction(
-            name: "",
-            name_span: .empty_span(),
-            visibility,
-            params: [],
-            generic_parameters: [],
-            block: ParsedBlock(stmts: []),
-            return_type: ParsedType::Empty,
-            return_type_span: .span(start: 0, end: 0),
-            can_throw: false,
-            type: FunctionType::Normal,
-            linkage,
-            must_instantiate: false,
-        )
-
-        .index++
-
-        if .eof() {
-            .error("Incomplete function definition", .current().span())
-            return parsed_function
-        }
-
-        let function_name = match .current() {
-            Identifier(name) => name
-            else => { return parsed_function }
-        }
-        parsed_function.name = function_name
-        parsed_function.name_span = .current().span()
-
-        .index++
-
-        parsed_function.generic_parameters = .parse_generic_parameters()
-
-        if .eof() {
-            .error("Incomplete function", .current().span())
-        }
-
-        if .current() is LParen {
-            .index++
-        } else {
+    function parse_function_parameters(mut this) throws -> [ParsedParameter] {
+        if not .current() is LParen {
             .error("Expected '('", .current().span())
+            return []
         }
-
+        .index++
         mut params: [ParsedParameter] = []
+
         mut current_param_requires_label = true
         mut current_param_is_mutable = false
 
@@ -1531,7 +1499,48 @@ struct Parser {
             }
         }
 
-        parsed_function.params = params
+        return params
+    }
+
+    public function parse_function(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility) throws -> ParsedFunction {
+        mut parsed_function = ParsedFunction(
+            name: "",
+            name_span: .empty_span(),
+            visibility,
+            params: [],
+            generic_parameters: [],
+            block: ParsedBlock(stmts: []),
+            return_type: ParsedType::Empty,
+            return_type_span: .span(start: 0, end: 0),
+            can_throw: false,
+            type: FunctionType::Normal,
+            linkage,
+            must_instantiate: false,
+        )
+
+        .index++
+
+        if .eof() {
+            .error("Incomplete function definition", .current().span())
+            return parsed_function
+        }
+
+        let function_name = match .current() {
+            Identifier(name) => name
+            else => { return parsed_function }
+        }
+        parsed_function.name = function_name
+        parsed_function.name_span = .current().span()
+
+        .index++
+
+        parsed_function.generic_parameters = .parse_generic_parameters()
+
+        if .eof() {
+            .error("Incomplete function", .current().span())
+        }
+
+        parsed_function.params = .parse_function_parameters()
 
         // NOTE: main() always throws
         mut can_throw = function_name == "main"
@@ -1700,6 +1709,23 @@ struct Parser {
 
             yield parsed_type
         }
+        Function => {
+            let span = .current().span()
+            .index++
+            mut return_type = ParsedType::Empty
+
+            let params = .parse_function_parameters()
+
+            match .current() {
+                Arrow => {
+                    .index++
+                    return_type = .parse_typename()
+                }
+                else => {}
+            }
+
+            yield ParsedType::Function(params, return_type, span)
+        }
         else => {
             .error("Expected type name", .current().span())
             yield ParsedType::Empty
@@ -1745,6 +1771,7 @@ struct Parser {
                 if .current() is Colon {
                     .index++
                 } else {
+                    eprintln("here; {}", .current())
                     return ParsedVarDecl(
                         name: var_name,
                         parsed_type: ParsedType::Empty,
@@ -1966,7 +1993,10 @@ struct Parser {
                 let init = match .current() {
                     Equal => {
                         .index++
-                        yield .parse_expression(allow_assignments: false)
+                        yield match .current() {
+                            Function => .parse_function_expression(name: var.name, name_span: var.span)
+                            else => .parse_expression(allow_assignments: false)
+                        }
                     }
                     else => {
                         .error("Expected initializer", .current().span())
@@ -2335,12 +2365,56 @@ struct Parser {
         }
         Ampersand => .parse_ampersand()
         Asterisk => .parse_asterisk()
+        Function => .parse_function_expression(name: None, name_span: None)
         else => {
             let span = .current().span()
             .index++
             .error("Unsupported expression", span)
             yield ParsedExpression::Garbage(span)
         }
+    }
+
+    function parse_function_expression(mut this, name: String?, name_span: Span?) throws -> ParsedExpression {
+        let span = .current().span()
+        .index++
+        mut parsed_function = ParsedFunction(
+            name: name.value_or(format("lamdba{}", ++.lamdba_count)),
+            name_span: name_span ?? .empty_span(),
+            visibility: Visibility::Public,
+            params: [],
+            generic_parameters: [],
+            block: ParsedBlock(stmts: []),
+            return_type: ParsedType::Empty,
+            return_type_span: .span(start: 0, end: 0),
+            can_throw: false,
+            type: FunctionType::Normal,
+            linkage: FunctionLinkage::Internal,
+            must_instantiate: false,
+        )
+
+        parsed_function.generic_parameters = .parse_generic_parameters()
+        if .eof() {
+            .error("Incomplete function", .current().span())
+        }
+        parsed_function.params = .parse_function_parameters()
+        parsed_function.can_throw = .current() is Throws
+        if parsed_function.can_throw {
+            .index++
+        }
+        if .current() is Arrow {
+            .index++
+            let start = .current().span()
+            parsed_function.return_type = .parse_typename()
+            parsed_function.return_type_span = merge_spans(start, .previous().span())
+        }
+
+        if .current() is FatArrow {
+            parsed_function.block = .parse_fat_arrow()
+        } else {
+            parsed_function.block = .parse_block()
+        }
+
+        return ParsedExpression::Function(function_: parsed_function, span)
     }
 
     function parse_asterisk(mut this) throws -> ParsedExpression {
@@ -3397,6 +3471,10 @@ function parsed_expression_equals(anon lhs_expression: ParsedExpression, anon rh
             }
             yield lhs_name == rhs_name
         }
+        else => false
+    }
+    Function(function_) => match rhs_expression {
+        Function(function_: rhs_function) => true // FIXME: compare inputs, output, and body
         else => false
     }
     Garbage => rhs_expression is Garbage
