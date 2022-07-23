@@ -750,7 +750,7 @@ struct CodeGenerator {
                 output += ", "
             }
 
-            if not param.variable.is_mutable {
+            if not param.variable.is_mutable and not .program.get_type(param.variable.type_id) is Reference {
                 output += "const "
             }
 
@@ -1303,7 +1303,11 @@ struct CodeGenerator {
                 PreIncrement => "++"
                 PreDecrement => "--"
                 Negate => "-"
-                Dereference => "*"
+                Dereference => match .program.get_type(expression_type(expr)) {
+                    RawPtr => "*"
+                    Reference | MutableReference => ""
+                    else => ""
+                }
                 RawAddress => "&"
                 LogicalNot => "!"
                 BitwiseNot => "~"
@@ -2307,7 +2311,7 @@ struct CodeGenerator {
                 let var = .program.get_variable(var_id)
 
                 mut output = ""
-                if not var.is_mutable {
+                if not var.is_mutable and not .program.get_type(var.type_id) is Reference {
                     output += "const "
                 }
                 output += .codegen_type(var.type_id)
@@ -2427,6 +2431,8 @@ struct CodeGenerator {
         CChar => "char"
         CInt => "int"
         RawPtr(type_id) => .codegen_type(type_id) + "*"
+        Reference(type_id) => .codegen_type(type_id) + " const&"
+        MutableReference(type_id) => .codegen_type(type_id) + "&"
         GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
         Struct(id) => .codegen_struct_type(id, as_namespace)
         Enum(id) => .codegen_enum_type(id, as_namespace)
@@ -2817,7 +2823,7 @@ struct CodeGenerator {
             } else {
                 first = false
             }
-            if not variable.is_mutable {
+            if not variable.is_mutable and not .program.get_type(variable.type_id) is Reference {
                 output += "const "
             }
             output += .codegen_type(variable.type_id)

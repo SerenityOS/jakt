@@ -371,6 +371,8 @@ enum UnaryOperator {
     Negate
     Dereference
     RawAddress
+    Reference
+    MutableReference
     LogicalNot
     BitwiseNot
     TypeCast(TypeCast)
@@ -549,6 +551,8 @@ boxed enum ParsedType {
     JaktTuple(types: [ParsedType], span: Span)
     Set(inner: ParsedType, span: Span)
     Optional(inner: ParsedType, span: Span)
+    Reference(inner: ParsedType, span: Span)
+    MutableReference(inner: ParsedType, span: Span)
     RawPtr(inner: ParsedType, span: Span)
     WeakPtr(inner: ParsedType, span: Span)
     Empty
@@ -562,6 +566,8 @@ boxed enum ParsedType {
         JaktTuple(types, span) => span
         Set(inner, span) => span
         Optional(inner, span) => span
+        Reference(span) => span
+        MutableReference(span) => span
         RawPtr(inner, span) => span
         WeakPtr(inner, span) => span
         Empty => Span(file_id: FileId(id: 0uz), start: 0, end: 0) // FIXME: For some reason we can't see `empty_span()` here.
@@ -1507,12 +1513,19 @@ struct Parser {
                 }
                 Identifier(name, span) => {
                     let var_decl = .parse_variable_declaration(is_mutable: current_param_is_mutable)
+
+                    // FIXME: This is pretty sloppy, but basically allow `foo: &mut T` to make the parameter `mut` as well.
+                    let parameter_is_mutable = match var_decl.parsed_type {
+                        MutableReference => true
+                        else => var_decl.is_mutable
+                    }
+
                     params.push(ParsedParameter(
                         requires_label: current_param_requires_label,
                         variable: ParsedVariable(
                             name: var_decl.name,
                             parsed_type: var_decl.parsed_type,
-                            is_mutable: var_decl.is_mutable,
+                            is_mutable: parameter_is_mutable,
                             span: .previous().span(),
                         ),
                         span: .previous().span(),
@@ -1597,6 +1610,18 @@ struct Parser {
 
     function parse_typename(mut this) throws -> ParsedType {
         let start = .current().span()
+        mut is_reference = false
+        mut is_mutable_reference = false
+
+        if .current() is Ampersand {
+            is_reference = true
+            .index++
+            if .current() is Mut {
+                is_mutable_reference = true
+                .index++
+            }
+        }
+
         mut parsed_type = .parse_type_shorthand()
 
         if parsed_type is Empty {
@@ -1607,6 +1632,15 @@ struct Parser {
             .index++
             let span = merge_spans(start, .current().span())
             parsed_type = ParsedType::Optional(inner: parsed_type, span)
+        }
+
+        if is_reference {
+            let span = merge_spans(start, .current().span())
+            if is_mutable_reference {
+                parsed_type = ParsedType::MutableReference(inner: parsed_type, span)
+            } else {
+                parsed_type = ParsedType::Reference(inner: parsed_type, span)
+            }
         }
 
         return parsed_type
@@ -2358,8 +2392,13 @@ struct Parser {
             let expr = .parse_operand()
             return ParsedExpression::UnaryOp(expr, op: UnaryOperator::RawAddress, span: merge_spans(start, expr.span()))
         }
-        .error("Ampersand not currently supported", start)
-        return ParsedExpression::Garbage(.current().span())
+        if .current() is Mut {
+            .index++
+            let expr = .parse_operand()
+            return ParsedExpression::UnaryOp(expr, op: UnaryOperator::MutableReference, span: merge_spans(start, expr.span()))
+        }
+        let expr = .parse_operand()
+        return ParsedExpression::UnaryOp(expr, op: UnaryOperator::Reference, span: merge_spans(start, expr.span()))
     }
 
     function parse_set_literal(mut this) throws -> ParsedExpression {
@@ -3433,6 +3472,8 @@ function unary_operator_equals(anon lhs_op: UnaryOperator, anon rhs_op: UnaryOpe
     Negate => rhs_op is Negate
     Dereference => rhs_op is Dereference
     RawAddress => rhs_op is RawAddress
+    Reference => rhs_op is Reference
+    MutableReference => rhs_op is MutableReference
     LogicalNot => rhs_op is LogicalNot
     BitwiseNot => rhs_op is BitwiseNot
     // FIXME: Compare Types
