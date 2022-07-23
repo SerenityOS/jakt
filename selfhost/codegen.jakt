@@ -1122,6 +1122,7 @@ struct CodeGenerator {
         }
 
         output += "JaktInternal::_pretty_print_level--;\n"
+        output += "TRY(JaktInternal::_output_pretty_indent(builder));"
         output += "TRY(builder.append(\")\"));"
         output += "return builder.to_string();"
         output += " }"
@@ -1163,10 +1164,13 @@ struct CodeGenerator {
                         i++
                     }
                     lambda += "JaktInternal::_pretty_print_level--;"
+                    lambda += "TRY(JaktInternal::_output_pretty_indent(builder));"
                     lambda += "TRY(builder.append(\")\"));"
                 }
                 Typed(type_id) => {
                     lambda += "TRY(builder.append(\"(\"));"
+                    lambda += "JaktInternal::_pretty_print_level++;"
+                    lambda += "TRY(JaktInternal::_output_pretty_indent(builder));"
                     if .program.is_string(type_id) {
                         lambda += "TRY(builder.append(\"\\\"\"));"
                     }
@@ -1174,6 +1178,8 @@ struct CodeGenerator {
                     if .program.is_string(type_id) {
                         lambda += "TRY(builder.append(\"\\\"\"));"
                     }
+                    lambda += "JaktInternal::_pretty_print_level--;"
+                    lambda += "TRY(JaktInternal::_output_pretty_indent(builder));"
                     lambda += "TRY(builder.append(\")\"));"
                 }
                 else => {}

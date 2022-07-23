@@ -106,6 +106,7 @@ struct Formatter<JaktInternal::Array<T>> : Formatter<StringView> {
                 TRY(string_builder.append(", "));
         }
         JaktInternal::_pretty_print_level--;
+        TRY(JaktInternal::_output_pretty_indent(string_builder));
         TRY(string_builder.append("]"));
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
@@ -153,6 +154,7 @@ struct Formatter<JaktInternal::Dictionary<K, V>> : Formatter<StringView> {
                 TRY(string_builder.append(", "));
         }
         JaktInternal::_pretty_print_level--;
+        TRY(JaktInternal::_output_pretty_indent(string_builder));
         TRY(string_builder.append("]"));
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
@@ -188,6 +190,7 @@ struct Formatter<Jakt::Tuple<Ts...>> : Formatter<StringView> {
             JaktInternal::_pretty_print_level--;
         }
 
+        TRY(JaktInternal::_output_pretty_indent(string_builder));
         TRY(string_builder.append(")"));
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
