@@ -1,3 +1,4 @@
+/// Expect: Skip
 struct S {
     value: String? // let's force the typechecker to create a typeid for this one.
 }

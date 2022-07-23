@@ -314,10 +314,11 @@ struct Options {
         }
 
         if options.files.is_empty() {
-            // find files under samples, tests, and selfhost
+            // find files under samples and tests
             get_jakt_files_under(directory: "samples",  results: &mut options.files)
             get_jakt_files_under(directory: "tests",    results: &mut options.files)
-            get_jakt_files_under(directory: "selfhost", results: &mut options.files)
+            // compile selfhost to check it can compile itself
+            options.files.push("selfhost/main.jakt")
         }
 
         if options.job_count == 0 {
@@ -594,11 +595,11 @@ struct TestScheduler {
                             failed_reasons)
     }
 
-    public function run_tests(mut tests: [Test], directories: [String], collect_reasons: bool) throws -> TestsRunResult {
-        let total_test_count = tests.size()
+    public function run_tests(mut tests: [Test], directories: [String], collect_reasons: bool, starting_failed_tests: usize, total_test_count: usize) throws -> TestsRunResult {
         // create an empty handler so SIGCHLD is not ignored
         os::ignore_sigchild()
         mut scheduler = TestScheduler::create(directories, collect_reasons)
+        scheduler.failed_count = starting_failed_tests
         // pre-allocate the command buffer to avoid allocating inside a loop
         let run_once_script = os::get_script_execution_string()
         mut command_buffer: [String] = [run_once_script "" ""]
@@ -650,6 +651,7 @@ function main(args: [String]) {
     mut skipped_count = 0uz
 
     mut tests: [Test] = []
+    mut bad_formatted_tests: [String] = []
     tests.ensure_capacity(parsed_options.files.size())
 
     // parse all files to collect the actual work we have to do
@@ -677,6 +679,10 @@ function main(args: [String]) {
                 eprintln("[ \x1b[33;1mSKIP\x1b[m ] {}", file_name)
                 skipped_count += 1
             }
+            NoExpectOrSkip => {
+                eprintln("[ \x1b[31;1mFAIL\x1b[m ] {}", file_name)
+                bad_formatted_tests.push(file_name)
+            }
         }
     }
 
@@ -690,7 +696,11 @@ function main(args: [String]) {
         directories.push(path)
     }
 
-    let run_result = TestScheduler::run_tests(tests, directories, collect_reasons: parsed_options.show_reasons)
+    let run_result = TestScheduler::run_tests(
+        tests, directories,
+        collect_reasons: parsed_options.show_reasons 
+        starting_failed_tests: bad_formatted_tests.size()
+        total_test_count: skipped_count + bad_formatted_tests.size() + tests.size())
 
     // delete directories
     for dir in directories.iterator() {
@@ -706,9 +716,11 @@ function main(args: [String]) {
 
     println("==============================")
     println("{} passed" , run_result.passed_count)
-    println("{} failed" run_result.failed_count)
+    println("{} failed" run_result.failed_count + bad_formatted_tests.size())
     println("{} skipped", skipped_count)
     println("==============================")
+
+    // FIXME: translate ANSI color codes to constants for easier comprehension
 
     if run_result.failed_reasons.has_value() and run_result.failed_count > 0 {
         eprintln("Showing why tests failed:")
@@ -717,6 +729,8 @@ function main(args: [String]) {
         for file in reasons.keys().iterator() {
             if not is_first {
                 eprintln("----------------------------------------")
+            } else {
+                is_first = false
             }
             eprintln("\x1b[1m{}\x1b[m:", file)
             mut output = ""
@@ -777,7 +791,15 @@ function main(args: [String]) {
             }
 
             for line in output.split('\n').iterator() {
-                eprintln("\x1b[1;0m|\x1b[m\t{}", line)
+                eprintln("\x1b[m\x1b[1m|\x1b[m\t{}", line)
+            }
+        }
+
+        if not bad_formatted_tests.is_empty() {
+            eprintln("==============================")
+            eprintln("These tests failed to parse because they didn't have an expectation or skip message:")
+            for file in bad_formatted_tests.iterator() {
+                eprintln("\x1b[1m|\x1b[m\t{}", file)
             }
         }
         eprintln("==============================")
