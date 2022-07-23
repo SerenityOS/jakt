@@ -9,15 +9,16 @@
 import compiler { Compiler, FileId }
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
-import utility { FilePath, ArgsParser }
+import utility { FilePath, ArgsParser, Span }
 import lexer { Lexer }
 import parser { Parser }
 import typechecker { Typechecker }
+import ide
 
 function usage() => "usage: jakt [-h] [OPTIONS] <filename>"
 function help() -> String{
     mut output = "Flags:\n"
-    output += "  -h\t\tPrint this help and exit.\n"
+    output += "  -h,--help\t\tPrint this help and exit.\n"
     output += "  -dl\t\tPrint debug info for the lexer.\n"
     output += "  -dp\t\tPrint debug info for the parser.\n"
     output += "  -dt\t\tPrint debug info for the typechecker.\n"
@@ -26,6 +27,9 @@ function help() -> String{
     output += "  -d\t\tInsert debug statement spans in generated C++ code.\n"
     output += "  --debug-print\t\tOutput debug print.\n"
     output += "  --prettify-cpp-source\t\tRun emitted C++ source through clang-format.\n" // FIXME: Add -p flag to be the same as rust compiler.
+    output += "  -c,--check-only\t\tOnly check the code for errors.\n"
+    output += "  -j,--json-errors\t\tEmit machine-readable (JSON) errors.\n"
+    output += "  -H,--type-hints\t\tEmit machine-readable type hints (for IDE integration).\n"
 
     output += "\nOptions:\n"
     output += "  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\tDefaults to clang-format\n"
@@ -37,6 +41,10 @@ function help() -> String{
     output += "  -L PATH\t\tAdd PATH to linker's search list. Can be specified multiple times.\n"
     output += "  -l,--link-with LIB\t\tLink executable with LIB. Can be specified multiple times.\n"
     output += "  -o,--output-filename FILE\t\tName of the output C++ file and binary.\n\t\tDefaults to the input-filename.\n"
+    output += "  -g,--goto-def INDEX\t\tReturn the span for the definition at index.\n"
+    output += "  -t,--goto-type-def INDEX\t\tReturn the span for the type definition at index.\n"
+    output += "  -e,--hover INDEX                  Return the type of element at index.\n"
+    output += "  -m,--completions INDEX            Return dot completions at index.\n"
     return output
 } 
 
@@ -48,7 +56,7 @@ function main(args: [String]) {
 
     mut args_parser = ArgsParser::from_args(args)
     
-    if args_parser.flag(["-h"]) {
+    if args_parser.flag(["-h", "--help"]) {
         println("{}\n", usage())
         println("{}", help())
         return 0
@@ -67,6 +75,9 @@ function main(args: [String]) {
     let codegen_debug = args_parser.flag(["-d"])
     let debug_print = args_parser.flag(["--debug-print"])
     let prettify_cpp_source = args_parser.flag(["--prettify-cpp-source"])
+    let json_errors = args_parser.flag(["-j","--json-errors"])
+    let dump_type_hints = args_parser.flag(["-H", "--type-hints"])
+    let check_only = args_parser.flag(["-c", "--check-only"])
 
     let clang_format_path = args_parser.option(["-F", "--clang-format-path"]) ?? "clang-format"
     let runtime_path = args_parser.option(["-R", "--runtime-path"]) ?? "runtime"
@@ -77,6 +88,10 @@ function main(args: [String]) {
     let extra_lib_paths = args_parser.option_multiple(["-L"])
     let extra_link_libs = args_parser.option_multiple(["-l"])
     let set_output_filename = args_parser.option(["-o", "--output-filename"])
+    let goto_def = args_parser.option(["-g", "--goto-def"])
+    let goto_type_def = args_parser.option(["-t", "--goto-type-def"])
+    let hover = args_parser.option(["-e", "--hover"])
+    let completions = args_parser.option(["-m", "--completions"])
 
     let positional_arguments = args_parser.remaining_arguments()
 
@@ -103,11 +118,11 @@ function main(args: [String]) {
     }
 
     let file_path = FilePath::make(file_name!)
-    if file_path.ext() != "jakt" {
-        eprintln("the compiler expects files with file extension .jakt")
-        eprintln("{}", usage())
-        return 1
-    }
+    // if file_path.ext() != "jakt" {
+    //     eprintln("the compiler expects files with file extension .jakt")
+    //     eprintln("{}", usage())
+    //     return 1
+    // }
 
     mut errors: [JaktError] = []
 
@@ -121,6 +136,8 @@ function main(args: [String]) {
         dump_parser: parser_debug
         ignore_parser_errors: false
         debug_print: debug_print
+        json_errors
+        dump_type_hints
     )
 
     let main_file_id = compiler.get_file_id_or_register(file_path)
@@ -148,6 +165,63 @@ function main(args: [String]) {
         parsed_namespace
     )
 
+    if goto_def.has_value() {
+        let index = goto_def!.to_uint()! as! usize;
+
+        let result = ide::find_definition_in_program(program: checked_program, span: Span(file_id: FileId(id: 0uz), start: index, end: index))
+
+        if result.file_id.id == 0 {
+            println("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
+        } else {
+            let file_path = compiler.get_file_path(result.file_id)
+            
+            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, file_path!);
+        }
+        return 0
+    }
+    if goto_type_def.has_value() {
+        let index = goto_type_def!.to_uint()! as! usize;
+
+        let result = ide::find_type_definition_in_program(program: checked_program, span: Span(file_id: FileId(id: 0uz), start: index, end: index))
+
+        if result.file_id.id == 0 {
+            println("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
+        } else {
+            let file_path = compiler.get_file_path(result.file_id)
+
+            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, file_path!);
+        }
+        return 0
+    }
+    if hover.has_value() {
+        let index = hover!.to_uint()! as! usize;
+        
+        let result = ide::find_typename_in_program(program: checked_program, span: Span(file_id: FileId(id: 0uz), start: index, end: index))
+
+        if result.has_value() {
+            println("{{\"hover\": \"{}\"}}", result!)
+        }
+        return 0
+    }
+    if completions.has_value() {
+        let index = completions!.to_uint()! as! usize;
+
+        let result = ide::find_dot_completions(program: checked_program, span: Span(file_id: FileId(id: 0uz), start: index, end: index))
+
+        print("{{\"completions\": [");
+        mut first = true
+        for completion in result.iterator() {
+            if not first {
+                print(", ")
+            } else {
+                first = false
+            }
+            print("\"{}\"", completion)
+        }
+        println("]}}");
+        return 0
+    }
+
     if typechecker_debug {
         println("{:#}", checked_program);
     }
@@ -158,8 +232,12 @@ function main(args: [String]) {
         return 1
     }
 
-    let output = CodeGenerator::generate(compiler, checked_program, debug_info: codegen_debug)
+    if check_only {
+        return 0
+    }
 
+    let output = CodeGenerator::generate(compiler, checked_program, debug_info: codegen_debug)
+        
     if (build_executable or run_executable) {
         mut cpp_filename: String = ""
         mut output_filename: String = ""
