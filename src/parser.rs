@@ -15,6 +15,7 @@
 
 use crate::error::JaktError;
 
+use crate::compiler::CompilerMetaData;
 use crate::lexer::{Span, Token, TokenContents};
 use crate::typechecker::NumericConstant;
 
@@ -141,6 +142,7 @@ pub struct ParsedNamespace {
     pub namespaces: Vec<ParsedNamespace>,
     /// other files
     pub imports: Vec<ParsedImport>,
+    pub uid: u64,
 }
 
 #[derive(Debug)]
@@ -521,7 +523,7 @@ impl ParsedExpression {
 }
 
 impl ParsedNamespace {
-    pub fn new() -> Self {
+    pub fn new(uid: u64) -> Self {
         Self {
             name: None,
             functions: Vec::new(),
@@ -529,6 +531,7 @@ impl ParsedNamespace {
             enums: Vec::new(),
             namespaces: Vec::new(),
             imports: Vec::new(),
+            uid,
         }
     }
 }
@@ -641,12 +644,14 @@ fn parse_import(tokens: &[Token], index: &mut usize) -> (ParsedImport, Option<Ja
 pub fn parse_namespace(
     tokens: &[Token],
     index: &mut usize,
+    meta_data: &mut CompilerMetaData,
 ) -> (ParsedNamespace, Option<JaktError>) {
     trace!("parse_namespace");
 
     let mut error = None;
 
-    let mut parsed_namespace = ParsedNamespace::new();
+    let mut parsed_namespace = ParsedNamespace::new(meta_data.namespace_uid_counter);
+    meta_data.namespace_uid_counter += 1;
 
     while *index < tokens.len() {
         let token = &tokens[*index];
@@ -734,7 +739,7 @@ pub fn parse_namespace(
                         if let TokenContents::LCurly = &tokens[*index].contents {
                             *index += 1;
 
-                            let (mut namespace, err) = parse_namespace(tokens, index);
+                            let (mut namespace, err) = parse_namespace(tokens, index, meta_data);
                             error = error.or(err);
 
                             *index += 1;

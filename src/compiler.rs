@@ -52,6 +52,10 @@ pub const STRING_TYPE_ID: TypeId = TypeId(ModuleId(0), 16);
 
 pub const PRELUDE_SCOPE_ID: ScopeId = ScopeId(ModuleId(0), 0);
 
+pub struct CompilerMetaData {
+    pub namespace_uid_counter: u64,
+}
+
 pub struct SourceInfo {
     pub module_id: ModuleId,
     pub file_id: FileId,
@@ -62,6 +66,7 @@ pub struct SourceInfo {
 pub struct Compiler {
     include_paths: Vec<PathBuf>,
     pub loaded_files: Vec<SourceInfo>,
+    pub meta_data: CompilerMetaData,
 }
 
 impl Compiler {
@@ -69,6 +74,9 @@ impl Compiler {
         Self {
             include_paths,
             loaded_files: vec![],
+            meta_data: CompilerMetaData {
+                namespace_uid_counter: 0,
+            },
         }
     }
 
@@ -137,7 +145,7 @@ impl Compiler {
 
         // Not sure where to put prelude, but we're hoping its parsing is infallible
         let (lexed, _) = lex(0, prelude.as_bytes());
-        let (file, _) = parse_namespace(&lexed, &mut 0);
+        let (file, _) = parse_namespace(&lexed, &mut 0, &mut self.meta_data);
 
         // Scope ID 0 is the global project-level scope that all files can see
         error = error.or(typecheck_namespace_predecl(
@@ -156,7 +164,7 @@ impl Compiler {
         error
     }
 
-    pub fn parse_file(&self, file_id: FileId) -> (ParsedNamespace, Option<JaktError>) {
+    pub fn parse_file(&mut self, file_id: FileId) -> (ParsedNamespace, Option<JaktError>) {
         let mut error = None;
 
         let info = &self.loaded_files[file_id];
@@ -164,7 +172,7 @@ impl Compiler {
         let (lexed, err) = lex(file_id, info.content.as_bytes());
         error = error.or(err);
 
-        let (namespace, err) = parse_namespace(&lexed, &mut 0);
+        let (namespace, err) = parse_namespace(&lexed, &mut 0, &mut self.meta_data);
         error = error.or(err);
 
         (namespace, error)
