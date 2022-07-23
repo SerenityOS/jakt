@@ -1,0 +1,13 @@
+/// Expect: selfhost-only
+/// - output: ""
+
+function test() -> String {
+    if false {
+        return "hi"
+    }
+    abort()
+}
+
+function main() -> c_int {
+    abort()
+}
