@@ -537,9 +537,9 @@ function zero_out(foo: &mut Foo) {
 - [x] No references in structs
 - [x] No references in return types
 - [x] No mutable references to immutable values
+- [x] Allow `&foo` and `&mut foo` without argument label for parameters named `foo`
 
 ### References TODO:
 
-- [ ] Allow `&foo` and `&mut foo` without argument label for parameters named `foo`
 - [ ] (`unsafe`) references and raw pointers bidirectionally convertible
 - [ ] No capture-by-reference in persistent closures
