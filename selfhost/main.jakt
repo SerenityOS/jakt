@@ -110,12 +110,11 @@ function main(args: [String]) {
 
     mut errors: [JaktError] = []
 
-    let none_file_id: FileId? = None
     mut compiler = Compiler(
         files: []
         file_ids: [:]
         errors: []
-        current_file: none_file_id
+        current_file: None
         current_file_contents: []
         dump_lexer: lexer_debug
         dump_parser: parser_debug
