@@ -13,7 +13,7 @@ import parser { Parser, BinaryOperator, DefinitionLinkage, DefinitionType, Unary
                 ParsedExpression, ParsedFunction, ParsedNamespace, ParsedModuleImport,
                 ParsedExternImport, ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
                 ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
-                ParsedMatchBody, ParsedMatchCase, Visibility }
+                ParsedMatchBody, ParsedMatchCase, Visibility, ParsedMatchPattern }
 import utility { panic, todo, Span, join, FilePath, FileId }
 import compiler { Compiler }
 import prelude { JaktPrelude }
@@ -780,7 +780,7 @@ enum CheckedUnaryOperator {
     BitwiseNot
     TypeCast(CheckedTypeCast)
     Is(TypeId)
-    IsEnumVariant(name: String, enum_type_id: TypeId)
+    IsEnumVariant(name: String, enum_type_id: TypeId, bindings: [(String, TypeId)])
 }
 
 enum CheckedMatchBody {
@@ -4380,7 +4380,8 @@ struct Typechecker {
                                         stmts: [
                                             // break
                                             ParsedStatement::Break(span)
-                                        ]
+                                        ], 
+                                        bindings: []
                                     ),
                                     else_statement: None
                                     span
@@ -4406,10 +4407,12 @@ struct Typechecker {
                             ),
                             ParsedStatement::Block(block, span)
                             ]
+                            , bindings: []
                         )
                         span
                     )
-                ]
+                ],
+                bindings: []
             )
             span
         )
@@ -4422,8 +4425,8 @@ struct Typechecker {
         if not expression_type(checked_condition).equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", condition.span())
         }
-
-        let checked_block = .typecheck_block(then_block, parent_scope_id: scope_id, safety_mode)
+        let then_block_with_bindings = .expand_block_bindings(then_block, checked_condition, span)
+        let checked_block = .typecheck_block(then_block_with_bindings, parent_scope_id: scope_id, safety_mode)
         if checked_block.yielded_type.has_value() {
             .error("An 'if' block is not allowed to yield values", then_block.find_yield_span()!)
         }
@@ -4433,6 +4436,155 @@ struct Typechecker {
             checked_else = .typecheck_statement(else_statement!, scope_id, safety_mode)
         }
         return CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
+    }
+
+    // FIXME: Desugar of variable binding when using IS operator should probably be done in codegen stage
+    function expand_block_bindings(this, anon block: ParsedBlock, checked_condition: CheckedExpression, span: Span) throws -> ParsedBlock {
+        mut then_block = block
+        mut typed_bindings: [ParsedStatement] = []
+        mut match_expr: ParsedExpression? = None
+        mut unwrapping_declarations: [ParsedStatement] = []
+        mut var_name = ""
+        mut is_enum_exaustive = false
+        match checked_condition {
+            UnaryOp(expr, op, span: op_span) => {
+                mut var_type_id = unknown_type_id()
+                match expr {
+                    Var(var) => {
+                        var_name = var.name
+                        var_type_id = var.type_id
+                    }
+                    else => {}
+                }
+
+                match op {
+                    IsEnumVariant(name: variant_name, enum_type_id, bindings) => {
+                        mut variant_arguments: [EnumVariantPatternArgument] = []
+                        mut rebinding_declarations: [ParsedStatement] = []
+                        for binding in bindings.iterator() {
+                            mut tmp_binding = "tmp_"
+                            tmp_binding += binding.0
+                            mut inner_binding = "inner_"
+                            inner_binding += binding.0
+
+                            match .get_type(var_type_id) {
+                                Type::Enum(enum_id) => {
+                                    let enum_ = .get_enum(enum_id)
+                                    match enum_.record_type {
+                                        SumEnum(variants: sumenum_variants) => {
+                                            if sumenum_variants.size() > 1 {
+                                                is_enum_exaustive = true
+                                            }
+                                            for sumenum_variant in sumenum_variants.iterator() {
+                                                if sumenum_variant.name == variant_name {
+                                                    let variant_params = sumenum_variant.params
+                                                    if variant_params.has_value() {
+                                                        for variant_decl in variant_params!.iterator() {
+                                                            mut variant_patter_argument_name: String? = None
+                                                            if variant_decl.name != "" {
+                                                                variant_patter_argument_name = variant_decl.name
+                                                            }
+                                                            variant_arguments.push(EnumVariantPatternArgument(name: variant_patter_argument_name, binding: inner_binding, span))
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        else => {}
+                                    }
+                                }
+                                else => {}
+                            }
+
+                            for block_binding in then_block.bindings.iterator() {
+                                match block_binding {
+                                    VarDecl(var, init, span) => {
+                                        if binding.0 == var.name {
+                                            typed_bindings.push(ParsedStatement::VarDecl(
+                                                var: ParsedVarDecl(
+                                                    name: tmp_binding
+                                                    parsed_type: ParsedType::Optional(
+                                                        inner: ParsedType::Name(name: .type_name(binding.1), span)
+                                                        span: span
+                                                    )
+                                                    is_mutable: true
+                                                    span: span
+                                                )
+                                                init: ParsedExpression::OptionalNone(span)
+                                                span
+                                            ))
+
+                                            rebinding_declarations.push(ParsedStatement::Expression(
+                                                expr: ParsedExpression::BinaryOp(
+                                                    lhs: ParsedExpression::Var(name: tmp_binding, span)
+                                                    op: BinaryOperator::Assign
+                                                    rhs: ParsedExpression::OptionalSome(expr: ParsedExpression::Var(name: inner_binding, span), span)
+                                                    span
+                                                )
+                                                span
+                                            ))
+
+                                            unwrapping_declarations.push(ParsedStatement::VarDecl(
+                                                var: ParsedVarDecl(
+                                                    name: binding.0
+                                                    parsed_type: ParsedType::Name(name: .type_name(binding.1), span)
+                                                    is_mutable: true
+                                                    span: span
+                                                )
+                                                init: ParsedExpression::ForcedUnwrap(expr: ParsedExpression::Var(name: tmp_binding, span), span)
+                                                span
+                                            ))
+                                        }
+                                    }
+                                    else => {}
+                                }
+                            }
+                        }
+                        mut patterns: [ParsedMatchPattern] = []
+                        patterns.push(ParsedMatchPattern::EnumVariant(
+                            variant_name: [(variant_name, span)]
+                            variant_arguments
+                            arguments_span: span
+                        ))
+                        let variant_match_case = ParsedMatchCase(
+                            patterns
+                            marker_span: span
+                            body: ParsedMatchBody::Block(ParsedBlock(stmts: rebinding_declarations, bindings:[]))
+                        )
+
+                        mut cases: [ParsedMatchCase] = [variant_match_case]
+                        if is_enum_exaustive {
+                            cases.push(ParsedMatchCase(
+                                patterns: [ParsedMatchPattern::CatchAll]
+                                marker_span: span
+                                body: ParsedMatchBody::Block(ParsedBlock(stmts:[], bindings:[]))
+                            ))
+                        }
+                        match_expr = ParsedExpression::Match(expr: ParsedExpression::Var(name: var_name, span), cases, span)
+                    }
+                    else => {}
+                }
+            }
+            else => {}
+        }
+        if typed_bindings.size() > 0 {
+            mut new_stmts: [ParsedStatement] = []
+            for stmt in typed_bindings.iterator() {
+                new_stmts.push(stmt)
+            }
+            if match_expr.has_value() {
+                new_stmts.push(ParsedStatement::Expression(expr: match_expr!, span))
+                for stmt in unwrapping_declarations.iterator() {
+                    new_stmts.push(stmt)
+                }
+            }
+            for stmt in then_block.stmts.iterator() {
+                new_stmts.push(stmt)
+            }
+            then_block.stmts = new_stmts
+        }
+
+        return then_block
     }
 
     function typecheck_destructuring_assignment(mut this, vars: [ParsedVarDecl], var_decl: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
@@ -4921,31 +5073,11 @@ struct Typechecker {
                     mut operator_is = CheckedUnaryOperator::Is(type_id)
                     if type_id.equals(unknown_type_id()) {
                         match unchecked_type {
-                            ParsedType::Name(name) => {
-                                // Let's assume it's an enum variant
-                                let expr_type_id = expression_type(checked_expr)
-                                match .get_type(expr_type_id) {
-                                    Type::Enum(enum_id) => {
-                                        let enum_ = .get_enum(enum_id)
-                                        mut exists = false
-                                        for variant in enum_.variants.iterator() {
-                                            exists = match variant {
-                                                StructLike(name: var_name) | Typed(name: var_name) | Untyped(name: var_name) => var_name == name
-                                                else => false
-                                            }
-                                            if exists {
-                                                operator_is = CheckedUnaryOperator::IsEnumVariant(name, enum_type_id: expr_type_id)
-                                                break
-                                            }
-                                        }
-                                        if not exists {
-                                            .error(format("Enum variant {} does not exist on {}", name, .type_name(expr_type_id)), span)
-                                        }
-                                    }
-                                    else => {
-                                        .error(format("Unknown type or invalid type name: {}", name), span)
-                                    }
-                                }
+                            NamespacedName(name, bindings, span: var_span) => {
+                                operator_is = .check_op_is(checked_expr, name, bindings, span: var_span) ?? operator_is
+                            }
+                            Name(name, span: var_span) => {
+                                operator_is = .check_op_is(checked_expr, name, bindings: None, span: var_span) ?? operator_is
                             }
                             else => {
                                 .error("The right-hand side of an `is` operator must be a type name or enum variant", span)
@@ -5103,6 +5235,80 @@ struct Typechecker {
 
             yield CheckedExpression::Boolean(val: false, span: Span(file_id: .compiler.current_file!, start: 0, end: 0))
         }
+    }
+
+    function check_op_is(mut this, checked_expr: CheckedExpression, name: String, bindings: [EnumVariantPatternArgument]?, span: Span) throws -> CheckedUnaryOperator? {
+        let expr_type_id = expression_type(checked_expr)
+        match .get_type(expr_type_id) {
+            Type::Enum(enum_id) => {
+                let enum_ = .get_enum(enum_id)
+                mut exists = false
+                for variant in enum_.variants.iterator() {
+                    mut seen_variant_args: [String] = []
+                    mut variant_bindings: [(String, TypeId)] = []
+                    exists = match variant {
+                        StructLike(name: var_name, fields) => {
+                            mut field_names: [String] = []
+                            for field in fields.iterator() {
+                                field_names.push(.get_variable(field).name)
+                            }
+                            if bindings.has_value() {
+                                for binding in bindings!.iterator() {
+                                    let binding_name = binding.name ?? binding.binding
+                                    mut found_field = false
+                                    for field in fields.iterator() {
+                                        let variable = .get_variable(field)
+                                        if variable.name == binding_name {
+                                            if seen_variant_args.contains(binding_name) {
+                                                .error(format("Enum variant argument '{}' is already defined", binding_name), binding.span)
+                                            } else {
+                                                seen_variant_args.push(binding_name)
+                                                variant_bindings.push((binding_name, variable.type_id))
+                                                found_field = true
+                                                break
+                                            }
+                                        }
+                                    }
+                                    if not found_field {
+                                        .error_with_hint(
+                                            format("Match case argument '{}' for struct-like enum variant cannot be anon", binding.binding)
+                                            binding.span
+                                            format("Available arguments are: {}\n", join(field_names, separator: ", "))
+                                            binding.span
+                                        )
+                                    }
+                                }
+                            }
+                            yield var_name == name
+                        }
+                        Typed(name: var_name, type_id) => {
+                            if bindings.has_value() {
+                                if bindings!.size() == 1 {
+                                    let variant_argument = bindings![0]
+                                    variant_bindings.push((variant_argument.binding, type_id))
+                                } else {
+                                    .error(format("Enum variant ‘{}’ must have exactly one argument", var_name), span)
+                                }
+                            }
+                            yield var_name == name
+                        }
+                        Untyped(name: var_name) => var_name == name
+                        else => false
+                    }
+                    if exists {
+                        return CheckedUnaryOperator::IsEnumVariant(name, enum_type_id: expr_type_id, bindings: variant_bindings)
+                        break
+                    }
+                }
+                if not exists {
+                    .error(format("Enum variant {} does not exist on {}", name, .type_name(expr_type_id)), span)
+                }
+            }
+            else => {
+                .error(format("Unknown type or invalid type name: {}", name), span)
+            }
+        }
+        return None
     }
 
     function typecheck_namespaced_var_or_simple_enum_constructor_call(mut this, name: String, namespace_: [String], scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?, span: Span) throws -> CheckedExpression {

@@ -217,6 +217,7 @@ struct ParsedGenericParameter {
 
 struct ParsedBlock {
     stmts: [ParsedStatement]
+    bindings: [ParsedStatement]
 
     function find_yield_span(this) -> Span? {
         for stmt in .stmts.iterator() {
@@ -544,7 +545,13 @@ struct ParsedCall {
 
 boxed enum ParsedType {
     Name(name: String, span: Span)
-    NamespacedName(name: String, namespaces: [String], params: [ParsedType], span: Span)
+    NamespacedName(
+        name: String
+        namespaces: [String]
+        params: [ParsedType]
+        bindings: [EnumVariantPatternArgument]
+        span: Span
+    )
     GenericType(name: String, generic_parameters: [ParsedType], span: Span), // FIXME: tuple should be dictionary
     JaktArray(inner: ParsedType, span: Span)
     Dictionary(key: ParsedType, value: ParsedType, span: Span)
@@ -559,7 +566,7 @@ boxed enum ParsedType {
 
     function span(this) => match this {
         Name(name, span) => span
-        NamespacedName(name, namespaces, params, span) => span
+        NamespacedName(name, namespaces, params, bindings, span) => span
         GenericType(name, generic_parameters, span) => span
         JaktArray(inner, span) => span
         Dictionary(key, value, span) => span
@@ -1408,7 +1415,7 @@ struct Parser {
             visibility,
             params: [],
             generic_parameters: [],
-            block: ParsedBlock(stmts: []),
+            block: ParsedBlock(stmts: [], bindings: []),
             return_type: ParsedType::Empty,
             return_type_span: .span(start: 0, end: 0),
             can_throw: false,
@@ -1579,7 +1586,7 @@ struct Parser {
         let start = .current().span()
         let expr = .parse_expression(allow_assignments: false)
         let return_statement = ParsedStatement::Return(expr, span: merge_spans(start, .current().span()))
-        return ParsedBlock(stmts: [return_statement])
+        return ParsedBlock(stmts: [return_statement], bindings: [])
     }
 
     function parse_field(mut this, anon visibility: Visibility) throws -> ParsedField {
@@ -1689,6 +1696,7 @@ struct Parser {
             if .current() is ColonColon {
                 .index++
                 mut namespaces: [String] = [name]
+                mut bindings: [EnumVariantPatternArgument] = []
 
                 while not .eof() {
                     match .current() {
@@ -1704,6 +1712,11 @@ struct Parser {
                             } else {
                                 .error("Expected name after", span)
                             }
+                        }
+                        LParen => {
+                            bindings = .parse_bindings()
+                            .index++
+                            break
                         }
                         else => {
                             break
@@ -1729,7 +1742,7 @@ struct Parser {
                     }
                 }
 
-                parsed_type = ParsedType::NamespacedName(name: type_name, namespaces, params, span: .previous().span())
+                parsed_type = ParsedType::NamespacedName(name: type_name, namespaces, params, bindings, span: .previous().span())
             }
 
             yield parsed_type
@@ -1738,6 +1751,46 @@ struct Parser {
             .error("Expected type name", .current().span())
             yield ParsedType::Empty
         }
+    }
+
+    function parse_bindings(mut this) throws -> [EnumVariantPatternArgument] {
+        mut bindings: [EnumVariantPatternArgument] = []
+        while not .current() is RParen {
+            .index++
+            mut span = .current().span()
+            match .current() {
+                Identifier(name) => {
+                    if .peek(1) is Comma or .peek(1) is RParen {
+                        bindings.push(EnumVariantPatternArgument(name: None, binding: name, span))
+                    }
+                }
+                Colon => {
+                    match .previous() {
+                        Identifier(name) => {
+                            .index++
+                            span = .current().span()
+                            match .current() {
+                                Identifier(name: binding) => {
+                                    bindings.push(EnumVariantPatternArgument(name, binding, span))
+                                }
+                                else => {
+                                    .error("Expected Identifier", span)
+                                }
+                            }
+                        }
+                        else => {
+                            .error("Expected Identifier", span)
+                        }
+                    }
+                }
+                Comma | RParen => {}
+                else => {
+                    .error("Unexpected Token", span)
+                    break
+                }
+            }
+        }
+        return bindings                           
     }
 
     function parse_destructuring_assignment(mut this, is_mutable: bool) throws -> [ParsedVarDecl] {
@@ -1880,7 +1933,7 @@ struct Parser {
 
     function parse_block(mut this) throws -> ParsedBlock {
         let start = .current().span()
-        mut block = ParsedBlock(stmts: [])
+        mut block = ParsedBlock(stmts: [], bindings: [])
 
         if .eof() {
             .error("Incomplete block", start)
@@ -2114,7 +2167,36 @@ struct Parser {
         .index++
 
         let condition = .parse_expression(allow_assignments: false)
-        let then_block = .parse_block()
+        mut var_decl_statements: [ParsedStatement] = []
+        match condition {
+            UnaryOp(expr, op) => match op {
+                Is(parsed_type) => match parsed_type {
+                    NamespacedName(bindings) => {
+                        for binding in bindings.iterator() {
+                            let binding_name = binding.name ?? binding.binding
+                            let parsed_var_decl = ParsedVarDecl(
+                                name: binding_name
+                                parsed_type: ParsedType::Empty
+                                is_mutable: true
+                                span: start_span
+                            )
+                            
+                            var_decl_statements.push(ParsedStatement::VarDecl(
+                                var: parsed_var_decl
+                                init: expr
+                                span: start_span
+                            ))
+                        }
+                    }
+                    else => {}
+                }
+                else => {}
+            }
+            else => {}
+        }
+
+        mut then_block = .parse_block()
+        then_block.bindings = var_decl_statements
 
         mut else_statement: ParsedStatement? = None
 
