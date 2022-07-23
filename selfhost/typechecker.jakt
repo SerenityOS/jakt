@@ -4491,6 +4491,8 @@ struct Typechecker {
 
         let lhs_type = .get_type(lhs_type_id)
 
+        .check_that_type_doesnt_contain_reference(type_id: lhs_type_id, span)
+
         match lhs_type {
             GenericInstance(id, args) => {
                 if id.equals(weak_ptr_struct_id) {
