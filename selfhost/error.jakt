@@ -15,6 +15,19 @@ enum JaktError {
     }
 }
 
+
+function print_error_json(file_name: String, file_contents: [u8], error: JaktError) throws {
+    match error {
+        Message(message, span) => {
+            display_message_with_span_json(MessageSeverity::Error, file_name, file_contents, message, span)
+        }
+        MessageWithHint(message, span, hint, hint_span) => {
+            display_message_with_span_json(MessageSeverity::Error, file_name, file_contents, message, span)
+            display_message_with_span_json(MessageSeverity::Hint, file_name, file_contents, message: hint, span: hint_span)
+        }
+    }
+}
+
 function print_error(file_name: String, file_contents: [u8], error: JaktError) throws {
     match error {
         Message(message, span) => {
@@ -38,6 +51,13 @@ enum MessageSeverity {
         Hint => "94"  // Bright Blue
         Error => "31" // Red
     }
+}
+
+
+function display_message_with_span_json(anon severity: MessageSeverity, file_name: String, file_contents: [u8], message: String, span: Span) throws
+{
+    println("{{\"type\":\"diagnostics\",\"message\":\"{}\",\"severity\":\"{}\",\"file_id\":{},\"span\":{{\"start\":{},\"end\":{}}}}}"
+        message, severity.name(), span.file_id.id, span.start, span.end)
 }
 
 function display_message_with_span(anon severity: MessageSeverity, file_name: String, file_contents: [u8], message: String, span: Span) throws {
