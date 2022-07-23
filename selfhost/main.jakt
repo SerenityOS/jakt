@@ -14,7 +14,7 @@ import lexer { Lexer }
 import parser { Parser }
 import typechecker { Typechecker }
 
-function usage() => "usage: jakt [-h] [OPTIONS] <path>"
+function usage() => "usage: jakt [-h] [OPTIONS] <filename>"
 function help() -> String{
     mut output = "Flags:\n"
     output += "  -h\t\tPrint this help and exit.\n"
@@ -29,13 +29,14 @@ function help() -> String{
 
     output += "\nOptions:\n"
     output += "  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\tDefaults to clang-format\n"
-    output += "  -D, --dot-clang-format-path PATH\t\tPath to the .clang-format file to use.\n\t\tDefaults to none, invoking clangs default .clang-format file handling.\n"
+    output += "  -D,--dot-clang-format-path PATH\t\tPath to the .clang-format file to use.\n\t\tDefaults to none, invoking clangs default .clang-format file handling.\n"
     output += "  -R,--runtime-path PATH\t\tPath of the Jakt runtime headers.\n\t\tDefaults to $PWD/runtime.\n"
-    output += "  -o,--binary-dir PATH\t\tOutput directory for compiled files.\n\t\tDefaults to $PWD/build.\n"
+    output += "  -B,--binary-dir PATH\t\tOutput directory for compiled files.\n\t\tDefaults to $PWD/build.\n"
     output += "  -C,--cxx-compiler-path PATH\t\tPath of the C++ compiler to use when compiling the generated sources.\n\t\tDefaults to clang++.\n"
     output += "  -I PATH\t\tAdd PATH to compiler's include list. Can be specified multiple times.\n"
     output += "  -L PATH\t\tAdd PATH to linker's search list. Can be specified multiple times.\n"
     output += "  -l,--link-with LIB\t\tLink executable with LIB. Can be specified multiple times.\n"
+    output += "  -o,--output-filename FILE\t\tName of the output C++ file and binary.\n\t\tDefaults to the input-filename.\n"
     return output
 } 
 
@@ -69,13 +70,13 @@ function main(args: [String]) {
 
     let clang_format_path = args_parser.option(["-F", "--clang-format-path"]) ?? "clang-format"
     let runtime_path = args_parser.option(["-R", "--runtime-path"]) ?? "runtime"
-    let binary_dir = args_parser.option(["-o", "--binary-dir"]) ?? "build"
+    let binary_dir = args_parser.option(["-B", "--binary-dir"]) ?? "build"
     let dot_clang_format_path = args_parser.option(["-D", "--dot-clang-format-path"])
     let cxx_compiler_path = args_parser.option(["-C", "--cxx-compiler-path"]) ?? "clang++"
     let extra_include_paths = args_parser.option_multiple(["-I"])
     let extra_lib_paths = args_parser.option_multiple(["-L"])
     let extra_link_libs = args_parser.option_multiple(["-l"])
-
+    let set_output_filename = args_parser.option(["-o", "--output-filename"])
 
     let positional_arguments = args_parser.remaining_arguments()
 
@@ -160,9 +161,18 @@ function main(args: [String]) {
     let output = CodeGenerator::generate(compiler, checked_program, debug_info: codegen_debug)
 
     if (build_executable or run_executable) {
-        let basename_without_extension = file_path.basename().substring(start: 0, length: file_path.basename().length() - 5)
-        let cpp_filename = binary_dir + "/" + basename_without_extension + ".cpp"
-        let output_filename = binary_dir + "/" + basename_without_extension
+        mut cpp_filename: String = ""
+        mut output_filename: String = ""
+
+        if set_output_filename.has_value() {
+            cpp_filename = binary_dir + "/" + set_output_filename! + ".cpp"
+            output_filename = binary_dir + "/" + set_output_filename!
+        } else {
+            let basename_without_extension = file_path.basename().substring(start: 0, length: file_path.basename().length() - 5)
+            cpp_filename = binary_dir + "/" + basename_without_extension + ".cpp"
+            output_filename = binary_dir + "/" + basename_without_extension
+        }
+        
         write_to_file(data: output, output_filename: cpp_filename)
         run_compiler(
             cxx_compiler_path
