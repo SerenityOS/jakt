@@ -3946,6 +3946,9 @@ struct Typechecker {
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: .find_or_add_type_id(Type::Reference(expr_type_id)))
             }
             MutableReference => {
+                if not .expression_is_mutable(checked_expr) {
+                    .error("Cannot make mutable reference to immutable value", span)
+                }
                 return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id: .find_or_add_type_id(Type::MutableReference(expr_type_id)))
             }
             Dereference => {
