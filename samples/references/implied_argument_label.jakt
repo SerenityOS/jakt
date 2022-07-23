@@ -1,0 +1,18 @@
+/// Expect:
+/// - output: "PASS\n"
+
+function foo(a: &i64) {
+}
+
+function bar(b: &mut i64) {
+}
+
+function main() {
+    let a = 0
+    foo(&a)
+
+    mut b = 0
+    bar(&mut b)
+
+    println("PASS")
+}

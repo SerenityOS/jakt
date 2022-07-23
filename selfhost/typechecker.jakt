@@ -6172,6 +6172,21 @@ struct Typechecker {
                     return true
                 }
                 .error(format("Wrong parameter name in argument label (got '{}', expected '{}')", name, param.variable.name), span)
+                return false
+            }
+            UnaryOp(expr, op) => {
+                if op is Reference or op is MutableReference {
+                    match expr {
+                        Var(name, span) => {
+                            if name == param.variable.name {
+                                return true
+                            }
+                            .error(format("Wrong parameter name in argument label (got ‘{}’, expected ‘{}’)", name, param.variable.name), span)
+                            return false
+                        }
+                        else => {}
+                    }
+                }
             }
             else => {}
         }
