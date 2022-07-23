@@ -3034,6 +3034,8 @@ struct Typechecker {
         let function_return_type_id = .typecheck_typename(parsed_type: parsed_function.return_type, scope_id: checked_function_scope_id)
         checked_function.return_type_id = function_return_type_id
 
+        .check_that_type_doesnt_contain_reference(type_id: function_return_type_id, span: parsed_function.return_type_span)
+
         if not parsed_function.generic_parameters.is_empty() {
             let old_ignore_errors = .ignore_errors
             .ignore_errors = true
@@ -3066,6 +3068,26 @@ struct Typechecker {
         }
 
         .add_function_to_scope(parent_scope_id, name: parsed_function.name, function_id, span: parsed_function.name_span)
+    }
+
+    function check_that_type_doesnt_contain_reference(mut this, type_id: TypeId, span: Span) throws {
+        let type = .get_type(type_id)
+
+        // FIXME: Check for any type that contains a reference as a generic parameter, etc.
+        let contains_reference = match type {
+            Reference | MutableReference => true
+            else => false
+        }
+
+        if contains_reference {
+            .error(
+                format(
+                    "Reference type ‘{}’ not usable in this context"
+                    .type_name(type_id)
+                )
+                span
+            )
+        }
     }
 
     function typecheck_and_specialize_generic_function(mut this, function_id: FunctionId, generic_arguments: [TypeId], parent_scope_id: ScopeId, this_type_id: TypeId?, generic_substitutions: [String: String]) throws {
