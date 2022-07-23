@@ -127,6 +127,7 @@ extern function unchecked_mul<T>(anon a: T, anon b: T) -> T
 // FIXME: Remove from prelude once extern C functions are working again
 extern struct FILE {}
 
+extern function mkdir(anon str: raw c_char, anon mode: i64) -> c_int
 extern function fopen(anon str: raw c_char, anon mode: raw c_char) -> raw FILE
 extern function fgetc(anon mut file: raw FILE) -> c_int
 extern function fclose(anon mut file: raw FILE) -> c_int

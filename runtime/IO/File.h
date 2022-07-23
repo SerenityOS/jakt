@@ -10,7 +10,11 @@
 #include <Jakt/RefCounted.h>
 #include <Jakt/String.h>
 #include <Builtins/Array.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 #include <stdio.h>
+#include <sys/stat.h>
 
 namespace JaktInternal {
 class File final : public RefCounted<File> {
