@@ -1784,6 +1784,10 @@ struct Parser {
                 let decl_span = .current().span()
 
                 let var_type = .parse_typename()
+                if is_mutable and (var_type is Reference or var_type is MutableReference) {
+                    .error("Reference parameter can not be mutable", decl_span)
+                }
+
                 return ParsedVarDecl(
                     name: var_name,
                     parsed_type: var_type,
