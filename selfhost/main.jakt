@@ -80,6 +80,7 @@ function main(args: [String]) {
     let dump_type_hints = args_parser.flag(["-H", "--type-hints"])
     let dump_try_hints = args_parser.flag(["--try-hints"])
     let check_only = args_parser.flag(["-c", "--check-only"])
+    let write_source_to_file = args_parser.flag(["-S", "--emit-cpp-source-only"])
 
     let clang_format_path = args_parser.option(["-F", "--clang-format-path"]) ?? "clang-format"
     let runtime_path = args_parser.option(["-R", "--runtime-path"]) ?? "runtime"
@@ -240,11 +241,11 @@ function main(args: [String]) {
     }
 
     let output = CodeGenerator::generate(compiler, checked_program, debug_info: codegen_debug)
-        
-    if (build_executable or run_executable) {
-        mut cpp_filename: String = ""
-        mut output_filename: String = ""
 
+    mut cpp_filename: String = ""
+    mut output_filename: String = ""
+
+    if (write_source_to_file or build_executable or run_executable) {
         if set_output_filename.has_value() {
             cpp_filename = binary_dir + "/" + set_output_filename! + ".cpp"
             output_filename = binary_dir + "/" + set_output_filename!
@@ -253,8 +254,21 @@ function main(args: [String]) {
             cpp_filename = binary_dir + "/" + basename_without_extension + ".cpp"
             output_filename = binary_dir + "/" + basename_without_extension
         }
-        
+
         write_to_file(data: output, output_filename: cpp_filename)
+
+        if prettify_cpp_source {
+            mut command = clang_format_path + " -i " + cpp_filename
+            if dot_clang_format_path.has_value() {
+                command+= " --style=file:" + dot_clang_format_path!
+            }
+            system(command.c_string())
+        }
+    } else {
+        println("{}", output)
+    }
+
+    if (build_executable or run_executable) {
         run_compiler(
             cxx_compiler_path
             cpp_filename
@@ -264,19 +278,9 @@ function main(args: [String]) {
             extra_lib_paths
             extra_link_libs)
 
-        if prettify_cpp_source {
-            mut command = clang_format_path + " -i " + cpp_filename
-            if dot_clang_format_path.has_value() {
-                command+= " --style=file:" + dot_clang_format_path!
-            }
-            system(command.c_string())
-        }
-
         if run_executable {
             system(output_filename.c_string())
         }
-    } else {
-        println("{}", output)
     }
 }
 
