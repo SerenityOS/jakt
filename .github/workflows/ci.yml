@@ -53,7 +53,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        platform: [ubuntu-latest]
+        platform: [ubuntu-22.04]
         style: [default]
         rust:
           - stable
@@ -76,12 +76,11 @@ jobs:
           override: true
       - name: Test Jakt Selfhost
         run: ninja -C jakttest && ./jakttest/build/jakttest
-      - name: Test jakt-in-jakt (stage 1)
-        run: cargo run selfhost/main.jakt && mv build/main build/main_stage1
-      - name: Test jakt-in-jakt (stage 2)
-        run: ./build/main_stage1 -b selfhost/main.jakt && mv build/main build/main_stage2
-      - name: Test jakt-in-jakt (stage 3)
-        run: ./build/main_stage2 -b selfhost/main.jakt 
+
+      - name: Test bootstrap
+        run: |
+          cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++-14
+          ninja -C build
 
   clippy:
     strategy:
