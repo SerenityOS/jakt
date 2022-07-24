@@ -193,7 +193,7 @@ function completions_for_type_id(program: CheckedProgram, type_id: TypeId) throw
                         mut first = true
                         full_call += "("
                         mut iter = checked_function.params.iterator()
-                        iter.next()
+                        let dummy = iter.next()
                         for param in iter {
                             if not first {
                                 full_call += ", "
@@ -232,7 +232,7 @@ function completions_for_type_id(program: CheckedProgram, type_id: TypeId) throw
                         mut first = true
                         full_call += "("
                         mut iter = checked_function.params.iterator()
-                        iter.next()
+                        let dummy = iter.next()
                         for param in iter {
                             if not first {
                                 full_call += ", "
@@ -272,7 +272,7 @@ function completions_for_type_id(program: CheckedProgram, type_id: TypeId) throw
                         mut first = true
                         full_call += "("
                         mut iter = checked_function.params.iterator()
-                        iter.next()
+                        let dummy = iter.next()
                         for param in iter {
                             if not first {
                                 full_call += ", "
@@ -316,7 +316,7 @@ function find_dot_completions(program: CheckedProgram, span: Span) throws -> [St
 
 function find_span_in_program(program: CheckedProgram, span: Span) throws -> Usage? {
     mut iterator = program.modules.iterator()
-    iterator.next()
+    let dummy = iterator.next()
     for module in iterator {
         let scope = program.get_scope(ScopeId(module_id: module.id, id: 0))
 
