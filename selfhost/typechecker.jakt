@@ -1262,12 +1262,18 @@ struct Typechecker {
     checkidx: usize
     ignore_errors: bool
     dump_type_hints: bool
+    dump_try_hints: bool
 
     function type_name(this, anon type_id: TypeId) throws => .program.type_name(type_id)
 
     function dump_type_hint(this, type_id: TypeId, span: Span) throws {
         println("{{\"type\":\"hint\",\"file_id\":{},\"position\":{},\"typename\":\"{}\"}}"
                 span.file_id, span.end, .type_name(type_id))
+    }
+
+    function dump_try_hint(this, span: Span) throws {
+        println("{{\"type\":\"try\",\"file_id\":{},\"position\":{}}}"
+                span.file_id, span.start)
     }
 
     function typecheck(mut compiler: Compiler, parsed_namespace: ParsedNamespace) throws -> CheckedProgram {
@@ -1290,6 +1296,7 @@ struct Typechecker {
             checkidx: 0uz
             ignore_errors: false
             dump_type_hints: compiler.dump_type_hints
+            dump_try_hints: compiler.dump_try_hints
         )
 
         typechecker.include_prelude()
@@ -4827,6 +4834,10 @@ struct Typechecker {
         SingleQuotedString(val, span) => CheckedExpression::CharacterConstant(val, span)
         SingleQuotedByteString(val, span) => CheckedExpression::ByteConstant(val, span)
         QuotedString(val, span) => {
+            if .dump_try_hints {
+                .dump_try_hint(span)
+            }
+        
             .unify_with_type(found_type: builtin(BuiltinType::String), expected_type: type_hint, rhs_span: span)
             yield CheckedExpression::QuotedString(val, span)
         }
@@ -5212,6 +5223,9 @@ struct Typechecker {
     }
 
     function typecheck_array(mut this, scope_id: ScopeId, values: [ParsedExpression], fill_size: ParsedExpression?, span: Span, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
+        if .dump_try_hints {
+            .dump_try_hint(span)
+        }
         mut repeat: CheckedExpression? = None
         if fill_size.has_value() {
             // Check fill size is an integer.
@@ -5279,6 +5293,9 @@ struct Typechecker {
     }
 
     function typecheck_set(mut this, values: [ParsedExpression], span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
+        if .dump_try_hints {
+            .dump_try_hint(span)
+        }
         mut inner_type_id = unknown_type_id()
         mut inner_type_span: Span? = None
         mut output: [CheckedExpression] = []
@@ -5800,6 +5817,9 @@ struct Typechecker {
     }
 
     function typecheck_dictionary(mut this, values: [(ParsedExpression, ParsedExpression)], span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
+        if .dump_try_hints {
+            .dump_try_hint(span)
+        }
         let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
         mut checked_kv_pairs: [(CheckedExpression, CheckedExpression)] = []
         mut key_type_id = unknown_type_id()
@@ -6168,6 +6188,10 @@ struct Typechecker {
                 this_type_id: maybe_this_type_id,
                 generic_substitutions: generic_inferences
             )
+        }
+
+        if .dump_try_hints and callee_throws {
+            .dump_try_hint(span)
         }
 
         return CheckedExpression::Call(

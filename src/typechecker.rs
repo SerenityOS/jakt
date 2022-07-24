@@ -251,6 +251,7 @@ pub struct Project {
     pub cached_weakptr_struct_id: Option<StructId>,
 
     pub dump_type_hints: bool,
+    pub dump_try_hints: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -310,6 +311,7 @@ impl Project {
             cached_weakptr_struct_id: None,
 
             dump_type_hints: false,
+            dump_try_hints: false,
         }
     }
 
@@ -4592,6 +4594,10 @@ pub fn typecheck_expression(
             )
         }
         ParsedExpression::QuotedString(qs, span) => {
+            if project.dump_try_hints {
+                dump_try_hint(span);
+            }
+
             let (_, err) = unify_with_type(STRING_TYPE_ID, type_hint, *span, project);
 
             (CheckedExpression::QuotedString(qs.clone(), *span), err)
@@ -4762,6 +4768,10 @@ pub fn typecheck_expression(
             let mut inner_type_span: Option<Span> = None;
             let mut output = Vec::new();
 
+            if project.dump_try_hints {
+                dump_try_hint(span);
+            }
+
             let array_struct_id = project.get_array_struct_id(*span);
             let mut inner_hint = None;
             if let Some(hint) = type_hint {
@@ -4850,6 +4860,10 @@ pub fn typecheck_expression(
             )
         }
         ParsedExpression::Set(values, span) => {
+            if project.dump_try_hints {
+                dump_try_hint(span);
+            }
+
             let mut inner_type_id = UNKNOWN_TYPE_ID;
             let mut inner_type_span: Option<Span> = None;
             let mut output = Vec::new();
@@ -4919,6 +4933,10 @@ pub fn typecheck_expression(
             (CheckedExpression::Set(output, *span, type_id), error)
         }
         ParsedExpression::Dictionary(kv_pairs, span) => {
+            if project.dump_try_hints {
+                dump_try_hint(span);
+            }
+
             let mut key_type_id = UNKNOWN_TYPE_ID;
             let mut key_type_span: Option<Span> = None;
             let mut value_type_id = UNKNOWN_TYPE_ID;
@@ -7089,6 +7107,10 @@ pub fn typecheck_call(
         error = error.or(err);
     }
 
+    if project.dump_type_hints && callee_throws {
+        dump_try_hint(span);
+    }
+
     (
         CheckedCall {
             namespace: resolved_namespaces,
@@ -7759,4 +7781,11 @@ pub fn typecheck_typename(
             )
         }
     }
+}
+
+pub fn dump_try_hint(span: &Span) {
+    println!(
+        "{{\"type\":\"try\",\"file_id\":{},\"position\":{}}}",
+        span.file_id, span.start
+    );
 }

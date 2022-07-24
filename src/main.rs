@@ -120,6 +120,7 @@ fn main() -> Result<(), JaktError> {
     } else if arguments.check_only {
         let mut project = Project::new();
         project.dump_type_hints = arguments.type_hints;
+        project.dump_try_hints = arguments.try_hints;
         for file in &arguments.input_files {
             match compiler.check_project(file, &mut project) {
                 (_, Some(err)) => {
@@ -308,6 +309,7 @@ Flags:
   -c,--check-only                   Only check the code for errors
   -j,--json-errors                  Emit machine-readable (JSON) errors
   -H,--type-hints                   Emit machine-readable type hints (for IDE integration)
+     --try-hints                    Emit machine-readable try hints (for IDE integration)
 
 Options:
   -o,--binary-dir PATH              Output directory for compiled files.
@@ -341,6 +343,7 @@ struct JaktArguments {
     emit_source_only: bool,
     check_only: bool,
     type_hints: bool,
+    try_hints: bool,
     json_errors: bool,
     goto_def_index: Option<usize>,
     goto_type_def_index: Option<usize>,
@@ -369,6 +372,7 @@ fn parse_arguments() -> JaktArguments {
 
     let check_only = pico_arguments.contains(["-c", "--check-only"]);
     let type_hints = pico_arguments.contains(["-H", "--type-hints"]);
+    let try_hints = pico_arguments.contains(["-T", "--try-hints"]);
     let json_errors = pico_arguments.contains(["-j", "--json-errors"]);
 
     let convert_to_pathbuf = |s: &str| -> Result<PathBuf, &'static str> { Ok(s.into()) };
@@ -383,6 +387,7 @@ fn parse_arguments() -> JaktArguments {
         emit_source_only,
         check_only,
         type_hints,
+        try_hints,
         json_errors,
         goto_def_index: None,
         goto_type_def_index: None,
