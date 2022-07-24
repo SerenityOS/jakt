@@ -95,7 +95,7 @@ namespace fs {
 
 
     function exists(path: String) throws -> bool {
-        return not stat_silencing_enoent(path).has_value()
+        return stat_silencing_enoent(path).has_value()
     }
 }
 
