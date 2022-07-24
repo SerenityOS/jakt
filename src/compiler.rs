@@ -24,8 +24,8 @@ use crate::{
     lexer::lex,
     parser::{parse_namespace, ParsedNamespace},
     typechecker::{
-        typecheck_module, typecheck_namespace_declarations, typecheck_namespace_predecl, Module,
-        ModuleId, Project, Scope, ScopeId, Type, TypeId,
+        Module, ModuleId, Project, Scope,
+        ScopeId, Type, typecheck_module, typecheck_namespace_declarations, typecheck_namespace_predecl, TypeId,
     },
 };
 
@@ -261,7 +261,7 @@ fn check_codegen_preconditions(project: &Project) -> Option<JaktError> {
             if function.return_type_id == UNKNOWN_TYPE_ID {
                 return Some(JaktError::TypecheckError(
                     format!("Could not infer the return type of function '{}', please explicitly specify it",
-                    function.name),
+                            function.name),
                     function.parsed_function.as_ref().expect("Typechecking non-parsed function").name_span,
                 ));
             }

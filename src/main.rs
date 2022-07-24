@@ -13,13 +13,13 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-use std::{io, io::Write, path::PathBuf, process::exit, process::Command};
+use std::{io, io::Write, path::PathBuf, process::Command, process::exit};
 
 use pico_args::Arguments;
 
 use jakt::{
-    find_definition_in_project, find_dot_completions_in_project, find_type_definition_in_project,
-    find_typename_in_project, Compiler, JaktError, Project, Span,
+    Compiler, find_definition_in_project, find_dot_completions_in_project,
+    find_type_definition_in_project, find_typename_in_project, JaktError, Project, Span,
 };
 
 fn main() -> Result<(), JaktError> {
@@ -184,8 +184,8 @@ fn main() -> Result<(), JaktError> {
                                 .as_ref()
                                 .unwrap_or(&default_clang_format_path),
                         )
-                        .args(["-i", &cpp_source, &dot_clang_format_file_argument])
-                        .output()?;
+                            .args(["-i", &cpp_source, &dot_clang_format_file_argument])
+                            .output()?;
                         io::stderr().write_all(&clang_format_output.stderr)?;
                     }
 
@@ -241,7 +241,7 @@ fn main() -> Result<(), JaktError> {
                         if let Ok(clang_output) = clang_output {
                             io::stderr().write_all(&clang_output.stderr)?;
                             if !clang_output.status.success() {
-                                std::process::exit(
+                                exit(
                                     clang_output
                                         .status
                                         .code()
@@ -290,7 +290,7 @@ fn main() -> Result<(), JaktError> {
     }
 
     if first_error.is_some() {
-        std::process::exit(1)
+        exit(1)
     } else {
         Ok(())
     }

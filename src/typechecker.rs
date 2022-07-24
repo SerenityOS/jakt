@@ -14,6 +14,7 @@
  */
 
 use std::collections::{HashMap, HashSet};
+use std::os::raw::{c_char, c_int};
 
 use crate::compiler::{PRELUDE_SCOPE_ID, STRING_TYPE_ID};
 use crate::parser::{BinaryOperator, MatchBody, MatchCase, ParsedVarDecl, Visibility};
@@ -32,7 +33,6 @@ use crate::{
         ParsedStruct, ParsedType, TypeCast, UnaryOperator,
     },
 };
-use std::os::raw::{c_char, c_int};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ModuleId(pub usize);
@@ -742,16 +742,16 @@ impl Project {
 
         for (existing_type, existing_type_id, definition_span) in &scope.types {
             if &type_name == existing_type {
-                if &type_id != existing_type_id {
-                    return Err(JaktError::TypecheckErrorWithHint(
+                return if &type_id != existing_type_id {
+                    Err(JaktError::TypecheckErrorWithHint(
                         format!("redefinition of type {}", type_name),
                         span,
                         format!("type {} was first defined here", type_name),
                         *definition_span,
-                    ));
+                    ))
                 } else {
-                    return Ok(());
-                }
+                    Ok(())
+                };
             }
         }
         scope.types.push((type_name, type_id, span));
@@ -805,22 +805,22 @@ impl Project {
 
         match self.get_type(type_id) {
             Type::Builtin => match type_id {
-                crate::compiler::VOID_TYPE_ID => "void".to_string(),
-                crate::compiler::I8_TYPE_ID => "i8".to_string(),
-                crate::compiler::I16_TYPE_ID => "i16".to_string(),
-                crate::compiler::I32_TYPE_ID => "i32".to_string(),
-                crate::compiler::I64_TYPE_ID => "i64".to_string(),
-                crate::compiler::U8_TYPE_ID => "u8".to_string(),
-                crate::compiler::U16_TYPE_ID => "u16".to_string(),
-                crate::compiler::U32_TYPE_ID => "u32".to_string(),
-                crate::compiler::U64_TYPE_ID => "u64".to_string(),
-                crate::compiler::F32_TYPE_ID => "f32".to_string(),
-                crate::compiler::F64_TYPE_ID => "f64".to_string(),
-                crate::compiler::USIZE_TYPE_ID => "usize".to_string(),
-                crate::compiler::CCHAR_TYPE_ID => "c_char".to_string(),
-                crate::compiler::CINT_TYPE_ID => "c_int".to_string(),
-                crate::compiler::STRING_TYPE_ID => "String".to_string(),
-                crate::compiler::BOOL_TYPE_ID => "bool".to_string(),
+                VOID_TYPE_ID => "void".to_string(),
+                I8_TYPE_ID => "i8".to_string(),
+                I16_TYPE_ID => "i16".to_string(),
+                I32_TYPE_ID => "i32".to_string(),
+                I64_TYPE_ID => "i64".to_string(),
+                U8_TYPE_ID => "u8".to_string(),
+                U16_TYPE_ID => "u16".to_string(),
+                U32_TYPE_ID => "u32".to_string(),
+                U64_TYPE_ID => "u64".to_string(),
+                F32_TYPE_ID => "f32".to_string(),
+                F64_TYPE_ID => "f64".to_string(),
+                USIZE_TYPE_ID => "usize".to_string(),
+                CCHAR_TYPE_ID => "c_char".to_string(),
+                CINT_TYPE_ID => "c_int".to_string(),
+                STRING_TYPE_ID => "String".to_string(),
+                BOOL_TYPE_ID => "bool".to_string(),
                 _ => "unknown".to_string(),
             },
             Type::Enum(enum_id) => self.get_enum(*enum_id).name.clone(),
@@ -1642,6 +1642,7 @@ impl NamespaceMember for CheckedVarDecl {
         "variable"
     }
 }
+
 impl NamespaceMember for CheckedVariable {
     fn visibility(&self) -> &Visibility {
         &self.visibility
@@ -1655,6 +1656,7 @@ impl NamespaceMember for CheckedVariable {
         "variable"
     }
 }
+
 impl NamespaceMember for CheckedFunction {
     fn visibility(&self) -> &Visibility {
         &self.visibility
@@ -1865,7 +1867,7 @@ pub fn typecheck_namespace_imports(
                 return Some(JaktError::TypecheckError(
                     format!("Module '{}' not found", import.module_name.name),
                     import.module_name.span,
-                ))
+                ));
             }
         }
     }
@@ -4199,7 +4201,6 @@ pub fn typecheck_statement(
                 err = err.or(Some(JaktError::TypecheckError(
                     "A block used as a statement cannot yield values, as the value cannot be observed in any way".to_string(),
                     find_yield_span_in_block(block).expect("must have a yield if the block yields values"),
-
                 )))
             }
 
@@ -6179,17 +6180,8 @@ pub fn typecheck_unary_operation(
             let type_id = expr.type_id(scope_id, project);
 
             match type_id {
-                crate::compiler::I8_TYPE_ID
-                | crate::compiler::I16_TYPE_ID
-                | crate::compiler::I32_TYPE_ID
-                | crate::compiler::I64_TYPE_ID
-                | crate::compiler::U8_TYPE_ID
-                | crate::compiler::U16_TYPE_ID
-                | crate::compiler::U32_TYPE_ID
-                | crate::compiler::U64_TYPE_ID
-                | crate::compiler::F32_TYPE_ID
-                | crate::compiler::F64_TYPE_ID
-                | crate::compiler::CINT_TYPE_ID => {
+                I8_TYPE_ID | I16_TYPE_ID | I32_TYPE_ID | I64_TYPE_ID | U8_TYPE_ID | U16_TYPE_ID
+                | U32_TYPE_ID | U64_TYPE_ID | F32_TYPE_ID | F64_TYPE_ID | CINT_TYPE_ID => {
                     // FIXME: This at least allows us to check out-of-bounds constants at compile time.
                     //        We should expand it to check any compile-time known value.
                     if let CheckedExpression::NumericConstant(ref number, span, type_id) = expr {
@@ -6290,19 +6282,9 @@ pub fn typecheck_unary_operation(
         | CheckedUnaryOperator::PostIncrement
         | CheckedUnaryOperator::PreDecrement
         | CheckedUnaryOperator::PreIncrement => match expr.type_id(scope_id, project) {
-            crate::compiler::I8_TYPE_ID
-            | crate::compiler::I16_TYPE_ID
-            | crate::compiler::I32_TYPE_ID
-            | crate::compiler::I64_TYPE_ID
-            | crate::compiler::U8_TYPE_ID
-            | crate::compiler::U16_TYPE_ID
-            | crate::compiler::U32_TYPE_ID
-            | crate::compiler::U64_TYPE_ID
-            | crate::compiler::F32_TYPE_ID
-            | crate::compiler::F64_TYPE_ID
-            | crate::compiler::USIZE_TYPE_ID
-            | crate::compiler::CCHAR_TYPE_ID
-            | crate::compiler::CINT_TYPE_ID => {
+            I8_TYPE_ID | I16_TYPE_ID | I32_TYPE_ID | I64_TYPE_ID | U8_TYPE_ID | U16_TYPE_ID
+            | U32_TYPE_ID | U64_TYPE_ID | F32_TYPE_ID | F64_TYPE_ID | USIZE_TYPE_ID
+            | CCHAR_TYPE_ID | CINT_TYPE_ID => {
                 if !expr.is_mutable() {
                     (
                         CheckedExpression::UnaryOp(Box::new(expr), op, span, expr_type_id),
@@ -6518,8 +6500,8 @@ pub fn typecheck_binary_operation(
             let (type_id, err) =
                 unify_with_type(rhs_type_id, Some(lhs_type_id), rhs.span(), project);
 
-            if err.is_some() {
-                return (
+            return if err.is_some() {
+                (
                     type_id,
                     Some(JaktError::TypecheckError(
                         format!(
@@ -6529,10 +6511,10 @@ pub fn typecheck_binary_operation(
                         ),
                         span,
                     )),
-                );
+                )
             } else {
-                return (type_id, None);
-            }
+                (type_id, None)
+            };
         }
         BinaryOperator::AddAssign
         | BinaryOperator::SubtractAssign

@@ -853,8 +853,8 @@ fn lex_item(file_id: FileId, bytes: &[u8], index: &mut usize) -> (Token, Option<
         *index += 2;
         while *index < bytes.len()
             && (bytes[*index] == b'0'
-                || bytes[*index] == b'1'
-                || (bytes[*index] == b'_' && bytes[*index - 1] != b'_'))
+            || bytes[*index] == b'1'
+            || (bytes[*index] == b'_' && bytes[*index - 1] != b'_'))
         {
             *index += 1;
         }

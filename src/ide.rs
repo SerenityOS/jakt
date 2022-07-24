@@ -11,12 +11,12 @@ use std::fmt::Write;
 
 use crate::{
     parser::{DefinitionType, FunctionLinkage, Visibility},
-    typechecker::{
+    Project,
+    Span, typechecker::{
         CheckedBlock, CheckedEnum, CheckedEnumVariant, CheckedExpression, CheckedFunction,
         CheckedMatchBody, CheckedMatchCase, CheckedStatement, CheckedStruct,
         FunctionGenericParameter, FunctionId, Module, NumberConstant, Scope, ScopeId, Type, TypeId,
     },
-    Project, Span,
 };
 
 pub fn find_definition_in_project(project: &Project, span: Span) -> Span {
@@ -50,7 +50,7 @@ fn find_type_definition_for_type_id(project: &Project, type_id: TypeId, span: Sp
                 tuple_struct_id,
                 weak_ptr_struct_id,
             ]
-            .contains(struct_id)
+                .contains(struct_id)
             {
                 find_type_definition_for_type_id(project, params[0], span)
             } else if struct_id == &dictionary_struct_id {
@@ -84,14 +84,14 @@ pub fn find_type_definition_in_project(project: &Project, span: Span) -> Span {
 pub fn find_typename_in_project(project: &Project, span: Span) -> Option<String> {
     match find_span_in_project(project, span) {
         Some(Usage::Variable(
-            _,
-            name,
-            type_id,
-            mutability,
-            var_type,
-            visibility,
-            struct_type_id,
-        )) => Some(get_var_signature(
+                 _,
+                 name,
+                 type_id,
+                 mutability,
+                 var_type,
+                 visibility,
+                 struct_type_id,
+             )) => Some(get_var_signature(
             project,
             &name,
             type_id,
@@ -481,11 +481,7 @@ pub fn find_span_in_expression(
                 }
             }
             if call_span.contains(span) {
-                if let Some(function_id) = call.function_id {
-                    return Some(Usage::Call(function_id));
-                } else {
-                    return None;
-                }
+                return call.function_id.map(Usage::Call);
             }
         }
         CheckedExpression::Dictionary(items, _, _) => {
@@ -640,7 +636,7 @@ pub fn find_span_in_expression(
                                     }
                                     CheckedMatchCase::Expression { .. } => None,
                                 })
-                                .collect::<std::collections::HashSet<_>>();
+                                .collect::<HashSet<_>>();
 
                             let remaining = covered_cases
                                 .symmetric_difference(&all_cases)
@@ -692,15 +688,11 @@ pub fn find_span_in_expression(
                     return Some(usage);
                 }
             }
-            if method_span.contains(span) {
-                if let Some(function_id) = call.function_id {
-                    return Some(Usage::Call(function_id));
-                } else {
-                    return None;
-                }
+            return if method_span.contains(span) {
+                call.function_id.map(Usage::Call)
             } else {
-                return None;
-            }
+                None
+            };
         }
         CheckedExpression::Var(var, var_span) => {
             if var_span.contains(span) {
@@ -944,7 +936,7 @@ pub fn get_type_signature(project: &Project, type_id: TypeId) -> String {
                     DefinitionType::Class => "class ",
                     DefinitionType::Struct => "struct ",
                 }
-                .to_string();
+                    .to_string();
                 output.push_str(&struct_.name);
                 output.push('<');
                 let mut first = true;
@@ -1050,7 +1042,7 @@ fn get_enum_variant_signature_from_type_id_and_name(
     type_id: TypeId,
     name: String,
 ) -> String {
-    let module: &Module = &project.modules[type_id.0 .0];
+    let module: &Module = &project.modules[type_id.0.0];
     let enum_ = module
         .enums
         .iter()
@@ -1080,7 +1072,7 @@ fn get_enum_variant_usage_from_type_id_and_name(
     type_id: TypeId,
     name: String,
 ) -> Usage {
-    let module: &Module = &project.modules[type_id.0 .0];
+    let module: &Module = &project.modules[type_id.0.0];
     let enum_ = module
         .enums
         .iter()
@@ -1126,7 +1118,7 @@ fn enum_variant_fields(checked_enum_variant: &CheckedEnumVariant) -> Vec<(Option
 fn get_constructor_signature(project: &Project, constructor_function_id: FunctionId) -> String {
     let function = project.get_function(constructor_function_id);
     let type_id = function.return_type_id;
-    let module: &Module = &project.modules[type_id.0 .0];
+    let module: &Module = &project.modules[type_id.0.0];
     let struct_ = module
         .structs
         .iter()
@@ -1152,7 +1144,7 @@ fn get_constructor_signature(project: &Project, constructor_function_id: Functio
             &field.name,
             project.typename_for_type_id(field.type_id)
         )
-        .expect("writing failed");
+            .expect("writing failed");
     }
     output.push(')');
     output

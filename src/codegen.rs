@@ -12,22 +12,22 @@
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
-use crate::compiler::{UNKNOWN_TYPE_ID, VOID_TYPE_ID};
+use std::collections::{BTreeMap, BTreeSet, LinkedList};
+use std::fmt::Write;
+
+use crate::{
+    parser::{BinaryOperator, DefinitionLinkage, DefinitionType, FunctionLinkage},
+    typechecker::{
+        CheckedBlock, CheckedExpression, CheckedFunction, CheckedStatement, CheckedStruct,
+        CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, is_integer, NumericConstant,
+        Project, Scope, Type, TypeId,
+    },
+};
+use crate::compiler::{BOOL_TYPE_ID, CCHAR_TYPE_ID, CINT_TYPE_ID, F32_TYPE_ID, F64_TYPE_ID, I16_TYPE_ID, I32_TYPE_ID, I64_TYPE_ID, I8_TYPE_ID, STRING_TYPE_ID, U16_TYPE_ID, U32_TYPE_ID, U64_TYPE_ID, U8_TYPE_ID, UNKNOWN_TYPE_ID, USIZE_TYPE_ID, VOID_TYPE_ID};
 use crate::typechecker::{
     CheckedCall, CheckedEnum, CheckedEnumVariant, CheckedMatchBody, CheckedMatchCase,
     FunctionGenericParameter, FunctionId, Module, ModuleId, ScopeId,
 };
-use crate::{
-    compiler,
-    parser::{BinaryOperator, DefinitionLinkage, DefinitionType, FunctionLinkage},
-    typechecker::{
-        is_integer, CheckedBlock, CheckedExpression, CheckedFunction, CheckedStatement,
-        CheckedStruct, CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, NumericConstant,
-        Project, Scope, Type, TypeId,
-    },
-};
-use std::collections::{BTreeMap, BTreeSet, LinkedList};
-use std::fmt::Write;
 
 const INDENT_SIZE: usize = 4;
 
@@ -123,7 +123,8 @@ struct CodegenContext {
     deferred_output: String,
     fresh_var_counter: usize,
     fresh_label_counter: usize,
-    entered_yieldable_blocks: Vec<(String, String)>, // label, variable name
+    entered_yieldable_blocks: Vec<(String, String)>,
+    // label, variable name
     pub control_flow_state: ControlFlowState,
     current_function_id: Option<FunctionId>,
 }
@@ -1316,7 +1317,7 @@ fn codegen_enum_debug_description_getter(enum_: &CheckedEnum) -> String {
                 for (j, field) in fields.iter().enumerate() {
                     output.push_str(codegen_pretty_print_indent());
                     let _ = write!(output, "TRY(builder.append(\"{}: \"));", field.name);
-                    if field.type_id == crate::compiler::STRING_TYPE_ID {
+                    if field.type_id == STRING_TYPE_ID {
                         output.push_str("TRY(builder.append(\"\\\"\"));");
                     }
                     let _ = write!(
@@ -1324,7 +1325,7 @@ fn codegen_enum_debug_description_getter(enum_: &CheckedEnum) -> String {
                         "TRY(builder.appendff(\"{{}}\", that.{}));",
                         field.name
                     );
-                    if field.type_id == crate::compiler::STRING_TYPE_ID {
+                    if field.type_id == STRING_TYPE_ID {
                         output.push_str("TRY(builder.append(\"\\\"\"));");
                     }
                     if j != fields.len() - 1 {
@@ -1336,11 +1337,11 @@ fn codegen_enum_debug_description_getter(enum_: &CheckedEnum) -> String {
             }
             CheckedEnumVariant::Typed(_, type_id, ..) => {
                 output.push_str("TRY(builder.append(\"(\"));");
-                if *type_id == crate::compiler::STRING_TYPE_ID {
+                if *type_id == STRING_TYPE_ID {
                     output.push_str("TRY(builder.append(\"\\\"\"));");
                 }
                 output.push_str("TRY(builder.appendff(\"{}\", that.value));");
-                if *type_id == crate::compiler::STRING_TYPE_ID {
+                if *type_id == STRING_TYPE_ID {
                     output.push_str("TRY(builder.append(\"\\\"\"));");
                 }
                 output.push_str("TRY(builder.append(\")\"));");
@@ -1379,7 +1380,7 @@ fn codegen_debug_description_getter(structure: &CheckedStruct, project: &Project
         output.push_str(&field.name);
         output.push_str(": \"));");
         output.push_str("TRY(builder.appendff(\"");
-        if field.type_id == crate::compiler::STRING_TYPE_ID {
+        if field.type_id == STRING_TYPE_ID {
             output.push_str("\\\"{}\\\"");
         } else {
             output.push_str("{}");
@@ -1392,10 +1393,10 @@ fn codegen_debug_description_getter(structure: &CheckedStruct, project: &Project
 
         match project.get_type(field.type_id) {
             Type::Struct(struct_id)
-                if project.get_struct(*struct_id).definition_type == DefinitionType::Class =>
-            {
-                output.push('*');
-            }
+            if project.get_struct(*struct_id).definition_type == DefinitionType::Class =>
+                {
+                    output.push('*');
+                }
             _ => {}
         }
         output.push_str(&field.name);
@@ -1599,7 +1600,7 @@ fn codegen_function_predecl(function: &CheckedFunction, project: &Project) -> St
         FunctionLinkage::External,
         FunctionLinkage::ExternalClassConstructor,
     ]
-    .contains(&function.linkage)
+        .contains(&function.linkage)
         && !function.generic_parameters.is_empty()
     {
         return output;
@@ -1699,7 +1700,7 @@ fn codegen_function_in_namespace(
         FunctionLinkage::External,
         FunctionLinkage::ExternalClassConstructor,
     ]
-    .contains(&function.linkage)
+        .contains(&function.linkage)
         && !function.generic_parameters.is_empty()
     {
         return String::new();
@@ -2151,7 +2152,7 @@ pub fn codegen_type_possibly_as_namespace(
                 if !(type_module.is_root()
                     || type_module.id == ModuleId(0)
                     || project.get_struct(*struct_id).definition_linkage
-                        == DefinitionLinkage::External)
+                    == DefinitionLinkage::External)
                 {
                     output.push_str(type_module.name.as_str());
                     output.push_str("::");
@@ -2200,22 +2201,22 @@ pub fn codegen_type_possibly_as_namespace(
             output
         }
         Type::Builtin => match type_id {
-            compiler::USIZE_TYPE_ID => String::from("size_t"),
-            compiler::BOOL_TYPE_ID => String::from("bool"),
-            compiler::STRING_TYPE_ID => String::from("String"),
-            compiler::CCHAR_TYPE_ID => String::from("char"),
-            compiler::CINT_TYPE_ID => String::from("int"),
-            compiler::I8_TYPE_ID => String::from("i8"),
-            compiler::I16_TYPE_ID => String::from("i16"),
-            compiler::I32_TYPE_ID => String::from("i32"),
-            compiler::I64_TYPE_ID => String::from("i64"),
-            compiler::U8_TYPE_ID => String::from("u8"),
-            compiler::U16_TYPE_ID => String::from("u16"),
-            compiler::U32_TYPE_ID => String::from("u32"),
-            compiler::U64_TYPE_ID => String::from("u64"),
-            compiler::F32_TYPE_ID => String::from("f32"),
-            compiler::F64_TYPE_ID => String::from("f64"),
-            compiler::VOID_TYPE_ID => String::from("void"),
+            USIZE_TYPE_ID => String::from("size_t"),
+            BOOL_TYPE_ID => String::from("bool"),
+            STRING_TYPE_ID => String::from("String"),
+            CCHAR_TYPE_ID => String::from("char"),
+            CINT_TYPE_ID => String::from("int"),
+            I8_TYPE_ID => String::from("i8"),
+            I16_TYPE_ID => String::from("i16"),
+            I32_TYPE_ID => String::from("i32"),
+            I64_TYPE_ID => String::from("i64"),
+            U8_TYPE_ID => String::from("u8"),
+            U16_TYPE_ID => String::from("u16"),
+            U32_TYPE_ID => String::from("u32"),
+            U64_TYPE_ID => String::from("u64"),
+            F32_TYPE_ID => String::from("f32"),
+            F64_TYPE_ID => String::from("f64"),
+            VOID_TYPE_ID => String::from("void"),
             _ => String::from("auto"),
         },
         Type::TypeVariable(name) => name.clone(),
@@ -3301,9 +3302,9 @@ fn codegen_expr(
                         if !(type_module.is_root()
                             || type_module.id == ModuleId(0)
                             || project.get_function(function_id).linkage
-                                == FunctionLinkage::External
+                            == FunctionLinkage::External
                             || (!call.namespace.is_empty()
-                                && (call.namespace[0].name == type_module.name.as_str())))
+                            && (call.namespace[0].name == type_module.name.as_str())))
                         {
                             output.push_str(type_module.name.as_str());
                             output.push_str("::");
@@ -3574,35 +3575,35 @@ fn codegen_expr(
                 | BinaryOperator::Multiply
                 | BinaryOperator::Divide
                 | BinaryOperator::Modulo
-                    if is_integer(expr.type_id_or_type_var()) =>
-                {
-                    output.push_str(&codegen_checked_binary_op(
-                        indent,
-                        lhs,
-                        rhs,
-                        expr.type_id_or_type_var(),
-                        op,
-                        project,
-                        context,
-                    ))
-                }
+                if is_integer(expr.type_id_or_type_var()) =>
+                    {
+                        output.push_str(&codegen_checked_binary_op(
+                            indent,
+                            lhs,
+                            rhs,
+                            expr.type_id_or_type_var(),
+                            op,
+                            project,
+                            context,
+                        ))
+                    }
                 BinaryOperator::AddAssign
                 | BinaryOperator::SubtractAssign
                 | BinaryOperator::MultiplyAssign
                 | BinaryOperator::DivideAssign
                 | BinaryOperator::ModuloAssign
-                    if is_integer(expr.type_id_or_type_var()) =>
-                {
-                    output.push_str(&codegen_checked_binary_op_assign(
-                        indent,
-                        lhs,
-                        rhs,
-                        expr.type_id_or_type_var(),
-                        op,
-                        project,
-                        context,
-                    ))
-                }
+                if is_integer(expr.type_id_or_type_var()) =>
+                    {
+                        output.push_str(&codegen_checked_binary_op_assign(
+                            indent,
+                            lhs,
+                            rhs,
+                            expr.type_id_or_type_var(),
+                            op,
+                            project,
+                            context,
+                        ))
+                    }
                 _ => {
                     if *op == BinaryOperator::Assign {
                         if let CheckedExpression::IndexedDictionary(expr, index, ..) = lhs.as_ref()

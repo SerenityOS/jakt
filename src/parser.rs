@@ -14,7 +14,6 @@
  */
 
 use crate::error::JaktError;
-
 use crate::lexer::{Span, Token, TokenContents};
 use crate::typechecker::NumericConstant;
 
@@ -593,9 +592,9 @@ fn parse_import(tokens: &[Token], index: &mut usize) -> (ParsedImport, Option<Ja
 
     let mut import_list = vec![];
     if let Some(Token {
-        contents: TokenContents::LCurly,
-        ..
-    }) = tokens.get(*index)
+                    contents: TokenContents::LCurly,
+                    ..
+                }) = tokens.get(*index)
     {
         *index += 1;
 
@@ -671,9 +670,9 @@ pub fn parse_namespace(
                     *index += 1;
 
                     if let Some(Token {
-                        contents: TokenContents::Name(name),
-                        ..
-                    }) = tokens.get(*index)
+                                    contents: TokenContents::Name(name),
+                                    ..
+                                }) = tokens.get(*index)
                     {
                         if name == "enum" {
                             let (enum_, err) =
@@ -865,9 +864,9 @@ pub fn parse_namespace(
 
 fn skip_newlines(tokens: &[Token], index: &mut usize) {
     while let Some(Token {
-        contents: TokenContents::Eol,
-        ..
-    }) = tokens.get(*index)
+                       contents: TokenContents::Eol,
+                       ..
+                   }) = tokens.get(*index)
     {
         *index += 1;
     }
@@ -902,9 +901,9 @@ pub fn parse_enum(
 
     skip_newlines(tokens, index);
     if let Some(Token {
-        contents: TokenContents::Name(name),
-        span: name_span,
-    }) = tokens.get(*index)
+                    contents: TokenContents::Name(name),
+                    span: name_span,
+                }) = tokens.get(*index)
     {
         trace!(format!("enum name: {}", name));
         *index += 1;
@@ -914,9 +913,9 @@ pub fn parse_enum(
         skip_newlines(tokens, index);
         match tokens.get(*index) {
             Some(Token {
-                contents: TokenContents::Colon,
-                ..
-            }) => {
+                     contents: TokenContents::Colon,
+                     ..
+                 }) => {
                 trace!("enum with underlying type");
                 *index += 1;
                 let (type_, parse_error) = parse_typename(tokens, index);
@@ -925,9 +924,9 @@ pub fn parse_enum(
                 trace!(format!("next token: {:?}", tokens[*index]));
             }
             Some(Token {
-                contents: TokenContents::LessThan,
-                ..
-            }) => {
+                     contents: TokenContents::LessThan,
+                     ..
+                 }) => {
                 trace!("enum with generic parameters");
                 let (params, parse_error) = parse_generic_parameters(tokens, index);
                 enum_.generic_parameters = params;
@@ -973,9 +972,9 @@ pub fn parse_enum(
         ) {
             skip_newlines(tokens, index);
             if let Some(Token {
-                contents: TokenContents::Eol | TokenContents::Comma,
-                ..
-            }) = tokens.get(*index)
+                            contents: TokenContents::Eol | TokenContents::Comma,
+                            ..
+                        }) = tokens.get(*index)
             {
                 *index += 1;
                 continue;
@@ -1058,9 +1057,9 @@ pub fn parse_enum(
 
             match tokens.get(*index) {
                 Some(Token {
-                    contents: TokenContents::LParen,
-                    ..
-                }) => {
+                         contents: TokenContents::LParen,
+                         ..
+                     }) => {
                     trace!("variant with type");
                     *index += 1;
 
@@ -1132,13 +1131,13 @@ pub fn parse_enum(
                         } else {
                             match &decl.parsed_type {
                                 ParsedType::Name(decl_name, _)
-                                    if decl_name == &enum_.name && !is_boxed =>
-                                {
-                                    error = error.or(Some(JaktError::ParserError(
-                                        "use 'boxed enum' to make the enum recursive".into(),
-                                        tokens[*index - 1].span,
-                                    )));
-                                }
+                                if decl_name == &enum_.name && !is_boxed =>
+                                    {
+                                        error = error.or(Some(JaktError::ParserError(
+                                            "use 'boxed enum' to make the enum recursive".into(),
+                                            tokens[*index - 1].span,
+                                        )));
+                                    }
                                 _ => {}
                             }
                         }
@@ -1147,9 +1146,9 @@ pub fn parse_enum(
 
                         // Allow a comma or a newline after each member
                         if let Some(Token {
-                            contents: TokenContents::Comma | TokenContents::Eol,
-                            ..
-                        }) = tokens.get(*index)
+                                        contents: TokenContents::Comma | TokenContents::Eol,
+                                        ..
+                                    }) = tokens.get(*index)
                         {
                             *index += 1;
                         }
@@ -1187,9 +1186,9 @@ pub fn parse_enum(
                     }
                 }
                 Some(Token {
-                    contents: TokenContents::Equal,
-                    ..
-                }) => {
+                         contents: TokenContents::Equal,
+                         ..
+                     }) => {
                     if let ParsedType::Empty = enum_.underlying_type {
                         error = error.or(Some(JaktError::ParserError(
                             "enums with explicit values must have an underlying type".to_string(),
@@ -1223,9 +1222,9 @@ pub fn parse_enum(
                         },
                     ));
                     if let Some(Token {
-                        contents: TokenContents::RCurly,
-                        ..
-                    }) = tokens.get(*index)
+                                    contents: TokenContents::RCurly,
+                                    ..
+                                }) = tokens.get(*index)
                     {
                         break;
                     }
@@ -1234,9 +1233,9 @@ pub fn parse_enum(
 
             // Require a comma or a newline after each variant
             if let Some(Token {
-                contents: TokenContents::Comma | TokenContents::Eol,
-                ..
-            }) = tokens.get(*index)
+                            contents: TokenContents::Comma | TokenContents::Eol,
+                            ..
+                        }) = tokens.get(*index)
             {
                 *index += 1;
             } else {
@@ -1297,15 +1296,15 @@ pub fn parse_generic_parameters(
         skip_newlines(tokens, index);
         match tokens.get(*index) {
             Some(Token {
-                contents: TokenContents::Name(name),
-                span,
-            }) => {
+                     contents: TokenContents::Name(name),
+                     span,
+                 }) => {
                 generic_parameters.push((name.to_string(), *span));
                 *index += 1;
                 if let Some(Token {
-                    contents: TokenContents::Comma | TokenContents::Eol,
-                    ..
-                }) = tokens.get(*index)
+                                contents: TokenContents::Comma | TokenContents::Eol,
+                                ..
+                            }) = tokens.get(*index)
                 {
                     *index += 1;
                 }
@@ -1323,9 +1322,9 @@ pub fn parse_generic_parameters(
     }
 
     if let Some(Token {
-        contents: TokenContents::GreaterThan,
-        ..
-    }) = tokens.get(*index)
+                    contents: TokenContents::GreaterThan,
+                    ..
+                }) = tokens.get(*index)
     {
         *index += 1;
     } else {
@@ -2245,13 +2244,13 @@ pub fn parse_statement(
 
             match tokens.get(*index) {
                 Some(Token {
-                    contents: TokenContents::RCurly,
-                    ..
-                })
+                         contents: TokenContents::RCurly,
+                         ..
+                     })
                 | Some(Token {
-                    contents: TokenContents::Eol,
-                    ..
-                }) => (ParsedStatement::Return(None, tokens[*index].span), None),
+                           contents: TokenContents::Eol,
+                           ..
+                       }) => (ParsedStatement::Return(None, tokens[*index].span), None),
                 _ => {
                     let (expr, err) = parse_expression(
                         tokens,
@@ -2587,13 +2586,13 @@ pub fn parse_expression(
 pub fn parse_literal(tokens: &[Token], index: &mut usize) -> Option<ParsedExpression> {
     match tokens.get(*index) {
         Some(Token {
-            contents:
-                TokenContents::Number(..)
-                | TokenContents::SingleQuotedString(..)
-                | TokenContents::SingleQuotedByteString(..)
-                | TokenContents::QuotedString(..),
-            ..
-        }) => {
+                 contents:
+                 TokenContents::Number(..)
+                 | TokenContents::SingleQuotedString(..)
+                 | TokenContents::SingleQuotedByteString(..)
+                 | TokenContents::QuotedString(..),
+                 ..
+             }) => {
             let (expr, err) = parse_operand(tokens, index);
             if err.is_none() {
                 Some(expr)
@@ -2602,16 +2601,16 @@ pub fn parse_literal(tokens: &[Token], index: &mut usize) -> Option<ParsedExpres
             }
         }
         Some(Token {
-            contents: TokenContents::Name(name),
-            ..
-        }) if name == "true" => {
+                 contents: TokenContents::Name(name),
+                 ..
+             }) if name == "true" => {
             *index += 1;
             Some(ParsedExpression::Boolean(true, tokens[*index].span))
         }
         Some(Token {
-            contents: TokenContents::Name(name),
-            ..
-        }) if name == "false" => {
+                 contents: TokenContents::Name(name),
+                 ..
+             }) if name == "false" => {
             *index += 1;
             Some(ParsedExpression::Boolean(false, tokens[*index].span))
         }
@@ -2682,15 +2681,15 @@ pub fn parse_pattern_case(
             let pattern_start_index = *index;
             let mut pattern = Vec::new();
             while let Some(Token {
-                contents: TokenContents::Name(name),
-                span,
-            }) = tokens.get(*index)
+                               contents: TokenContents::Name(name),
+                               span,
+                           }) = tokens.get(*index)
             {
                 *index += 1;
                 if let Some(Token {
-                    contents: TokenContents::ColonColon,
-                    ..
-                }) = tokens.get(*index)
+                                contents: TokenContents::ColonColon,
+                                ..
+                            }) = tokens.get(*index)
                 {
                     *index += 1;
                 } else {
@@ -2705,9 +2704,9 @@ pub fn parse_pattern_case(
             let args_start = *index;
 
             if let Some(Token {
-                contents: TokenContents::LParen,
-                ..
-            }) = tokens.get(*index)
+                            contents: TokenContents::LParen,
+                            ..
+                        }) = tokens.get(*index)
             {
                 has_parens = true;
                 *index += 1;
@@ -2719,20 +2718,20 @@ pub fn parse_pattern_case(
                     }) | None
                 ) {
                     if let Some(Token {
-                        contents: TokenContents::Name(name),
-                        ..
-                    }) = tokens.get(*index)
+                                    contents: TokenContents::Name(name),
+                                    ..
+                                }) = tokens.get(*index)
                     {
                         if let Some(Token {
-                            contents: TokenContents::Colon,
-                            ..
-                        }) = tokens.get(*index + 1)
+                                        contents: TokenContents::Colon,
+                                        ..
+                                    }) = tokens.get(*index + 1)
                         {
                             *index += 1;
                             if let Some(Token {
-                                contents: TokenContents::Colon,
-                                ..
-                            }) = tokens.get(*index)
+                                            contents: TokenContents::Colon,
+                                            ..
+                                        }) = tokens.get(*index)
                             {
                                 *index += 1;
                             } else {
@@ -2744,9 +2743,9 @@ pub fn parse_pattern_case(
                             }
 
                             if let Some(Token {
-                                contents: TokenContents::Name(binding),
-                                ..
-                            }) = tokens.get(*index)
+                                            contents: TokenContents::Name(binding),
+                                            ..
+                                        }) = tokens.get(*index)
                             {
                                 let span = tokens[*index].span;
                                 *index += 1;
@@ -2760,17 +2759,17 @@ pub fn parse_pattern_case(
                             }
 
                             if let Some(Token {
-                                contents: TokenContents::Comma,
-                                ..
-                            }) = tokens.get(*index)
+                                            contents: TokenContents::Comma,
+                                            ..
+                                        }) = tokens.get(*index)
                             {
                                 *index += 1;
                             }
                         } else {
                             if let Some(Token {
-                                contents: TokenContents::Name(binding),
-                                ..
-                            }) = tokens.get(*index)
+                                            contents: TokenContents::Name(binding),
+                                            ..
+                                        }) = tokens.get(*index)
                             {
                                 let span = tokens[*index].span;
                                 *index += 1;
@@ -2784,17 +2783,17 @@ pub fn parse_pattern_case(
                             }
 
                             if let Some(Token {
-                                contents: TokenContents::Comma,
-                                ..
-                            }) = tokens.get(*index)
+                                            contents: TokenContents::Comma,
+                                            ..
+                                        }) = tokens.get(*index)
                             {
                                 *index += 1;
                             }
                         }
                     } else if let Some(Token {
-                        contents: TokenContents::Name(binding),
-                        ..
-                    }) = tokens.get(*index)
+                                           contents: TokenContents::Name(binding),
+                                           ..
+                                       }) = tokens.get(*index)
                     {
                         let span = tokens[*index].span;
                         *index += 1;
@@ -2834,9 +2833,9 @@ pub fn parse_pattern_case(
 
         skip_newlines(tokens, index);
         if let Some(Token {
-            contents: TokenContents::Pipe,
-            ..
-        }) = tokens.get(*index)
+                        contents: TokenContents::Pipe,
+                        ..
+                    }) = tokens.get(*index)
         {
             *index += 1;
             continue;
@@ -2854,9 +2853,9 @@ pub fn parse_pattern_case(
     skip_newlines(tokens, index);
 
     if let Some(Token {
-        contents: TokenContents::FatArrow,
-        ..
-    }) = tokens.get(*index)
+                    contents: TokenContents::FatArrow,
+                    ..
+                }) = tokens.get(*index)
     {
         *index += 1;
     } else {
@@ -2869,9 +2868,9 @@ pub fn parse_pattern_case(
     skip_newlines(tokens, index);
 
     let (result, err) = if let Some(Token {
-        contents: TokenContents::LCurly,
-        ..
-    }) = tokens.get(*index)
+                                        contents: TokenContents::LCurly,
+                                        ..
+                                    }) = tokens.get(*index)
     {
         let (block, err) = parse_block(tokens, index);
         error = error.or(err);
@@ -3245,26 +3244,26 @@ pub fn parse_operand(tokens: &[Token], index: &mut usize) -> (ParsedExpression, 
             if *index < tokens.len() {
                 match &tokens[*index].contents {
                     TokenContents::Name(name)
-                        if name == "raw"
-                            && tokens[*index].span.start == tokens[*index - 1].span.end =>
-                    {
-                        // we found `&raw`
+                    if name == "raw"
+                        && tokens[*index].span.start == tokens[*index - 1].span.end =>
+                        {
+                            // we found `&raw`
 
-                        let start_span = tokens[*index].span;
+                            let start_span = tokens[*index].span;
 
-                        *index += 1;
+                            *index += 1;
 
-                        let (expr, err) = parse_operand(tokens, index);
-                        error = error.or(err);
+                            let (expr, err) = parse_operand(tokens, index);
+                            error = error.or(err);
 
-                        let span = Span {
-                            file_id: start_span.file_id,
-                            start: start_span.start,
-                            end: expr.span().end,
-                        };
+                            let span = Span {
+                                file_id: start_span.file_id,
+                                start: start_span.start,
+                                end: expr.span().end,
+                            };
 
-                        ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::RawAddress, span)
-                    }
+                            ParsedExpression::UnaryOp(Box::new(expr), UnaryOperator::RawAddress, span)
+                        }
                     _ => {
                         error = error.or(Some(JaktError::ParserError(
                             "ampersand not currently supported".to_string(),
@@ -4566,7 +4565,7 @@ pub fn parse_typename(tokens: &[Token], index: &mut usize) -> (ParsedType, Optio
                                             "Expected name after".to_string(),
                                             tokens[*index - 1].span,
                                         )),
-                                    )
+                                    );
                                 }
                             },
                             _ => break,

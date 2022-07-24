@@ -76,7 +76,7 @@ fn parse_quoted_string(s: &str) -> Result<String, JaktError> {
                 return Err(JaktError::StringError(format!(
                     "Unknown escape sequence: \\{}",
                     c
-                )))
+                )));
             }
         }
         last_index = i + 2;
@@ -208,7 +208,7 @@ fn test_sample(path: &PathBuf) -> Result<(), JaktError> {
             cpp_string
         }
         Err(err) => {
-            if let Some(expected_error_msg) = expected_error {
+            return if let Some(expected_error_msg) = expected_error {
                 let expected_error_msg = expected_error_msg.replace('\r', "");
                 let expected_error_msg = expected_error_msg.replace('\n', "");
 
@@ -221,11 +221,11 @@ fn test_sample(path: &PathBuf) -> Result<(), JaktError> {
                     returned_error,
                     expected_error_msg,
                 );
-                return Ok(());
+                Ok(())
             } else {
                 println!("Test failed: {:?}", path);
-                return Err(err);
-            }
+                Err(err)
+            };
         }
     };
 
