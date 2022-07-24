@@ -30,6 +30,7 @@ function help() -> String{
     output += "  -c,--check-only\t\tOnly check the code for errors.\n"
     output += "  -j,--json-errors\t\tEmit machine-readable (JSON) errors.\n"
     output += "  -H,--type-hints\t\tEmit machine-readable type hints (for IDE integration).\n"
+    output += "  --try-hints\t\tEmit machine-readable try hints (for IDE integration).\n"
 
     output += "\nOptions:\n"
     output += "  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\tDefaults to clang-format\n"
@@ -77,6 +78,7 @@ function main(args: [String]) {
     let prettify_cpp_source = args_parser.flag(["--prettify-cpp-source"])
     let json_errors = args_parser.flag(["-j","--json-errors"])
     let dump_type_hints = args_parser.flag(["-H", "--type-hints"])
+    let dump_try_hints = args_parser.flag(["--try-hints"])
     let check_only = args_parser.flag(["-c", "--check-only"])
 
     let clang_format_path = args_parser.option(["-F", "--clang-format-path"]) ?? "clang-format"
@@ -138,6 +140,7 @@ function main(args: [String]) {
         debug_print: debug_print
         json_errors
         dump_type_hints
+        dump_try_hints
     )
 
     let main_file_id = compiler.get_file_id_or_register(file_path)

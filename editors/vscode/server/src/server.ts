@@ -418,7 +418,7 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
 
 	textDocument.jaktInlayHints = [];
 
-	const stdout = await runCompiler(text, "-c -H -j" + includeFlagForPath(textDocument.uri), settings);
+	const stdout = await runCompiler(text, "-c --type-hints --try-hints -j" + includeFlagForPath(textDocument.uri), settings);
 
 	const diagnostics: Diagnostic[] = [];
 
@@ -467,6 +467,15 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
 					seenTypeHintPositions.add(obj.position);
 					const position = convertSpan(obj.position, lineBreaks);
 					const hint_string = ": " + obj.typename;
+					const hint = InlayHint.create(position, [InlayHintLabelPart.create(hint_string)], InlayHintKind.Type);
+
+					textDocument.jaktInlayHints.push(hint);
+				}
+			} else if (obj.type == "try") {
+				if (!seenTypeHintPositions.has(obj.position)) {
+					seenTypeHintPositions.add(obj.position);
+					const position = convertSpan(obj.position, lineBreaks);
+					const hint_string = "try ";
 					const hint = InlayHint.create(position, [InlayHintLabelPart.create(hint_string)], InlayHintKind.Type);
 
 					textDocument.jaktInlayHints.push(hint);
