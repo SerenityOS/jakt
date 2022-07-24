@@ -1,0 +1,10 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘c_int’, but got ‘MyEnum’\n"
+
+enum MyEnum : u64 {
+  Abc = 1
+}
+
+function main () -> c_int {
+  return MyEnum::Abc
+}
