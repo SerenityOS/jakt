@@ -8,7 +8,9 @@
 import error { JaktError, print_error }
 import parser { Parser }
 import lexer { Lexer }
-import utility { panic }
+import utility { panic, bytes_to_string }
+import common { LoggedTestResult }
+import diff
 
 namespace fs {
 
@@ -90,8 +92,12 @@ namespace fs {
 
         return results
     }
-}
 
+
+    function exists(path: String) throws -> bool {
+        return stat_silencing_enoent(path).has_value()
+    }
+}
 
 namespace process {
     extern struct ExitPollResult {
@@ -129,6 +135,11 @@ function print_usage()  {
     eprintln("\t\t\tWill try to use $TMP_DIR or /tmp in UNIX-based systems, or %TEMP% in Windows")
     eprintln("\t--assume-updated-selfhost\t\tAssume selfhost is up to date, i.e don't check it.")
     eprintln("\t--assume-updated\t\tAssume jakttest is up to date, i.e don't check it.")
+    eprintln("\t--previous-log <FILE>\t\tUse FILE as the previous log for diffs.")
+    eprintln("\t                     \t\tDefault is 'jakttest/.jakttest_log'")
+    eprintln("\t--new-log <FILE>\t\tUse FILE as the write target for the new log.")
+    eprintln("\t                \t\tDefaults to whatever --previous-log is. Overrides -W.")
+    eprintln("\t-W,--no-overwrite-log\t\tDon't overwrite the logfile. Overrides --new-log.")
 }
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
@@ -227,18 +238,24 @@ struct Options {
     help_wanted: bool
     assume_selfhost_updated: bool
     assume_updated: bool
+    previous_log: String
+    new_log: String
+    overwrite_log: bool
 
     function from_args(args: [String]) throws -> Options {
         let files: [String] = []
         let errors: [String] = []
-        mut options = Options(files
+        mut options = Options(files,
                               temp_dir: ""
                               errors
                               show_reasons: false
                               job_count: 0
                               help_wanted: false
                               assume_selfhost_updated: false
-                              assume_updated: false)
+                              assume_updated: false
+                              previous_log: "jakttest/.jakttest_log"
+                              new_log: ""
+                              overwrite_log: true)
 
         mut index = 1uz
         while index != args.size() {
@@ -267,6 +284,34 @@ struct Options {
             if args[index] == "--show-reasons" {
                 index++
                 options.show_reasons = true
+                continue
+            }
+            if args[index] == "-W" or args[index] == "--no-overwrite-log" {
+                index++
+                options.overwrite_log = false
+                continue
+            }
+
+            if args[index] == "--new-log" {
+                index++
+                if index == args.size() {
+                    options.errors.push("Used --new-log without an argument")
+                    break
+                }
+                options.new_log = args[index]
+                options.overwrite_log = true
+                index++
+                continue
+            }
+
+            if args[index] == "--previous-log" {
+                index++
+                if index == args.size() {
+                    options.errors.push("Used --previous-log without an argument")
+                    break
+                }
+                options.previous_log = args[index]
+                index++
                 continue
             }
 
@@ -316,6 +361,9 @@ struct Options {
 
         if options.job_count == 0 {
             options.job_count = os::get_num_cpus()
+        }
+        if options.overwrite_log and options.new_log.is_empty() {
+            options.new_log = options.previous_log
         }
 
         return options
@@ -396,7 +444,7 @@ enum TestFailedReason {
 }
 
 enum TestExitedResult {
-    Passed
+    Passed(file: String)
     Failed(file: String)
 }
 
@@ -410,6 +458,7 @@ struct TestScheduler {
     passed_count: usize
     failed_count: usize
     failed_reasons: [String:TestFailedReason]?
+    results: [String:LoggedTestResult]
     // TODO: timeout
 
 
@@ -447,11 +496,9 @@ struct TestScheduler {
 
         if not stage.equals(expected_stage) {
             if .failed_reasons.has_value() {
-
                 if not (stage is TranspileJakt) {
                     panic("unreachable: Since clang++ errors and other codes get handled otherwise, only thing that could fail before its expected stage is Jakt to C++.")
                 }
-
                 let file_to_check = format("{}/compile_jakt.err"
                                            .directories[test.directory_index])
 
@@ -502,17 +549,19 @@ struct TestScheduler {
             }
             return TestExitedResult::Failed(file: test.file_name)
         }
-        return TestExitedResult::Passed
+        return TestExitedResult::Passed(file: test.file_name)
     }
 
     function poll_running_tests(mut this) throws {
         mut exited = process::poll_process_exit(pid: -1i32)
         while exited.has_value() {
             match .on_test_exited(pid: exited!.pid(), exit_code: exited!.exit_code()) {
-                Passed => {
+                Passed(file) => {
+                    .results[file] = LoggedTestResult::Passed
                     .passed_count++
                 }
                 Failed(file) => {
+                    .results[file] = LoggedTestResult::Failed
                     eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", file)
                     .failed_count++
                 }
@@ -547,7 +596,7 @@ struct TestScheduler {
         return .free_directories.pop()!
     }
 
-    function create(directories: [String], collect_reasons: bool) throws -> TestScheduler {
+    function create(directories: [String], results: [String:LoggedTestResult], collect_reasons: bool) throws -> TestScheduler {
         mut running_tests: [i32:Test] = [:]
         running_tests.ensure_capacity(directories.size())
         mut free_directories: [usize] = []
@@ -567,10 +616,12 @@ struct TestScheduler {
                             directories
                             passed_count: 0
                             failed_count: 0
-                            failed_reasons)
+                            failed_reasons
+                            results)
     }
 
-    public function run_tests(mut tests: [Test], directories: [String], collect_reasons: bool) throws -> TestsRunResult {
+    public function run_tests(mut tests: [Test], directories: [String], results: [String:LoggedTestResult], collect_reasons: bool) throws -> TestsRunResult {
+        mut scheduler = TestScheduler::create(directories, results, collect_reasons)
         let total_test_count = tests.size()
         // create an empty handler so SIGCHLD is not ignored
         unsafe {
@@ -582,7 +633,6 @@ struct TestScheduler {
             cpp { "if (sigaction(SIGCHLD, &action, NULL) == -1)" }
             cpp { "    return Error::from_errno(errno);" }
         }
-        mut scheduler = TestScheduler::create(directories, collect_reasons)
         // pre-allocate the command buffer to avoid allocating inside a loop
         mut command_buffer: [String] = ["./jakttest/run-one.sh" "" ""]
         while not tests.is_empty() {
@@ -690,6 +740,9 @@ function main(args: [String]) {
 
     mut tests: [Test] = []
     tests.ensure_capacity(parsed_options.files.size())
+    // results dictionary that contains file names and their result (pass/fail/skip)
+    mut results: [String:LoggedTestResult] = [:]
+    results.ensure_capacity(parsed_options.files.size())
 
     // parse all files to collect the actual work we have to do
     for file_name in parsed_options.files.iterator() {
@@ -713,7 +766,9 @@ function main(args: [String]) {
                                 directory_index: 0))
             }
             SkipTest => {
-                eprintln("[ \x1b[33;1mSKIP\x1b[m ] {}", file_name)
+                let result = LoggedTestResult::Skipped
+                eprintln("[ {} ] {}", result.to_colored_string(), file_name)
+                results[file_name] = result
                 skipped_count += 1
             }
         }
@@ -730,7 +785,7 @@ function main(args: [String]) {
         directories.push(path)
     }
 
-    let run_result = TestScheduler::run_tests(tests, directories, collect_reasons: parsed_options.show_reasons)
+    let run_result = TestScheduler::run_tests(tests, directories, results, collect_reasons: parsed_options.show_reasons)
 
     // delete directories
     for dir in directories.iterator() {
@@ -801,6 +856,38 @@ function main(args: [String]) {
         eprintln("==============================")
     }
 
+    // try and show a diff
+    if fs::exists(path: parsed_options.previous_log) {
+        // read the file and construct a result
+        let previous_results = diff::read_log_file(path: parsed_options.previous_log)
+
+        let diff = diff::generate_log_diff(previous: previous_results, now: results)
+
+        if not diff.is_empty() {
+            eprintln("Detected differences from previous log.")
+            eprintln("Legend:")
+            eprintln(" - new files are shown in \x1b[1;94mBLUE\x1b[m")
+            eprintln(" - deleted files are shown in \x1b[1;91mRED\x1b[m")
+            eprintln(" - files with different results are shown in \x1b[1;93mYELLOW\x1b[m")
+            eprintln("==============================")
+
+            for file in diff.keys().iterator() {
+                match diff[file] {
+                    Deleted(result) => eprintln("\x1b[91m{}\x1b[m {}", file, result.to_colored_string())
+                    New(result) => eprintln("\x1b[93m{}\x1b[m {}", file, result.to_colored_string())
+                    Changed(previous, now) => eprintln("\x1b[93m{}\x1b[m {} (previously {})", file, now.to_colored_string()
+                                                       previous.to_colored_string())
+                }
+            }
+
+            eprintln("==============================")
+        }
+    }
+
+    if parsed_options.overwrite_log {
+        diff::write_log_file(results, path: parsed_options.new_log)
+    }
+
     if run_result.failed_count > 0 {
         return 1
     }
@@ -809,14 +896,4 @@ function main(args: [String]) {
 function write_to_file(file_contents: [u8], output_filename: String) throws {
     mut outfile = File::open_for_writing(output_filename)
     outfile.write(file_contents)
-}
-
-function bytes_to_string(anon bytes: [u8]) throws -> String {
-    mut builder = StringBuilder::create()
-
-    for byte in bytes.iterator() {
-        builder.append(byte)
-    }
-
-    return builder.to_string()
 }
