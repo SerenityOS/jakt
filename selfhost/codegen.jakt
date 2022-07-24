@@ -1306,7 +1306,6 @@ struct CodeGenerator {
                 Negate => "-"
                 Dereference => match .program.get_type(expression_type(expr)) {
                     RawPtr => "*"
-                    Reference | MutableReference => ""
                     else => ""
                 }
                 RawAddress => "&"
