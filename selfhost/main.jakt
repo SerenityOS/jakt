@@ -274,18 +274,17 @@ function main(args: [String]) {
     }
 
     if (build_executable or run_executable) {
-        run_compiler(
-            cxx_compiler_path
-            cpp_filename
-            output_filename
-            runtime_path
-            extra_include_paths
-            extra_lib_paths
-            extra_link_libs
-            optimize
-        )
+        let output = run_compiler(
+                                cxx_compiler_path
+                                cpp_filename
+                                output_filename
+                                runtime_path
+                                extra_include_paths
+                                extra_lib_paths
+                                extra_link_libs
+                                optimize)
 
-        if run_executable {
+        if output == 0 and run_executable {
             system(output_filename.c_string())
         }
     }
