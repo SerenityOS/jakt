@@ -798,11 +798,10 @@ struct Lexer {
             ++.index
         }
 
-        let end = .index
-
         let str = .substring(start: start + 1, length: .index)
 
         .index++
+        let end = .index
 
         if delimiter == b'\'' {
             return Token::SingleQuotedString(quote: str, span: .span(start, end))
