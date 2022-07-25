@@ -291,7 +291,7 @@ function main(args: [String]) {
     }
 }
 
-function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_filename: String, runtime_path: String, extra_include_paths: [String], extra_lib_paths: [String], extra_link_libs: [String], optimize: bool) throws {
+function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_filename: String, runtime_path: String, extra_include_paths: [String], extra_lib_paths: [String], extra_link_libs: [String], optimize: bool) throws -> c_int {
     mut file_path = FilePath(path: cxx_compiler_path)
 
     mut color_flag: String = "-fcolor-diagnostics"
@@ -355,7 +355,7 @@ function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_fi
         command += compile_arg
         command += " "
     }
-    system(command.c_string())
+    return system(command.c_string())
 }
 
 function write_to_file(data: String, output_filename: String) throws {
