@@ -19,6 +19,11 @@
 
 namespace Jakt {
 
+bool operator<(char const* characters, String const& string);
+bool operator>=(char const* characters, String const& string);
+bool operator>(char const* characters, String const& string);
+bool operator<=(char const* characters, String const& string);
+
 class StringStorage : public RefCounted<StringStorage> {
 public:
     static ErrorOr<NonnullRefPtr<StringStorage>> create_uninitialized(size_t length, char*& buffer);

@@ -59,6 +59,8 @@ public:
                 append(separator);
             appendff(fmtstr, item);
         }
+
+        return {};
     }
 
     // FIXME: These only exist because we don't support function overloading in Jakt yet.
