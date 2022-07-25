@@ -7,13 +7,7 @@
 #pragma once
 
 #include <Jakt/Assertions.h>
-#include <utility>
-
-#ifndef JAKT_UTILITY_WAS_INCLUDED
-#error "Jakt's <utility> header was not correctly included!"
-#endif
-
-#define AK_DONT_REPLACE_STD
+#include <Jakt/StdLibExtraDetails.h>
 
 namespace Jakt {
 
@@ -28,9 +22,6 @@ constexpr bool is_power_of_two(T value) requires(IsIntegral<T>)
 {
     return value && !((value) & (value - 1));
 }
-
-using std::forward;
-using std::move;
 
 }
 

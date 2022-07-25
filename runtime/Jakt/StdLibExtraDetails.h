@@ -599,6 +599,25 @@ inline constexpr bool IsSameIgnoringCV = IsSame<RemoveCV<T>, RemoveCV<U>>;
 template<typename T, typename... Ts>
 inline constexpr bool IsOneOfIgnoringCV = (IsSameIgnoringCV<T, Ts> || ...);
 
+template<typename T>
+constexpr T&& forward(RemoveReference<T>& param)
+{
+    return static_cast<T&&>(param);
+}
+
+template<typename T>
+constexpr T&& forward(RemoveReference<T>&& param) noexcept
+{
+    static_assert(!IsLvalueReference<T>, "Can't forward an rvalue as an lvalue.");
+    return static_cast<T&&>(param);
+}
+
+template<typename T>
+constexpr T&& move(T& arg)
+{
+    return static_cast<T&&>(arg);
+}
+
 }
 
 namespace Jakt {
@@ -676,4 +695,6 @@ using Detail::IntegerSequence;
 using Detail::IndexSequence;
 
 using Detail::declval;
+using Detail::move;
+using Detail::forward;
 }
