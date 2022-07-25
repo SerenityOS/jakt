@@ -1,0 +1,16 @@
+/// Expect:
+/// - output: "8\n"
+
+function add_number(anon a: &i64, anon b: &i64, anon result: &mut i64) {
+    result = a + b
+}
+
+function double_number(anon n: &mut i64) {
+    add_number(n, n, n)
+}
+
+function main() {
+    mut result = 4
+    double_number(&mut result)
+    println("{}", result)
+}
