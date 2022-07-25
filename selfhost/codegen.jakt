@@ -1323,7 +1323,7 @@ struct CodeGenerator {
                 }
                 TypeCast(cast) => {
                     mut final_type_id = cast.type_id();
-                    yield match cast {
+                    let cast_type = match cast {
                         Fallible => {
                             let ty = .program.get_type(cast.type_id())
                             let type_id = match ty {
@@ -1348,7 +1348,8 @@ struct CodeGenerator {
                             }
                             yield cast_type
                         }
-                    } + "<" + .codegen_type(final_type_id) + ">("
+                    }
+                    yield cast_type + "<" + .codegen_type(final_type_id) + ">("
                 }
                 else => ""
             }
