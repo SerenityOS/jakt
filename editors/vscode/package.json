@@ -86,7 +86,13 @@
 					"description": "The maximum time in milliseconds that the compiler is allowed to take to process a file."
 				}
 			}
-		}
+		},
+		"snippets": [
+			{
+				"language": "jakt",
+				"path": "./snippets/jakt.json"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run lint && npm run compile",

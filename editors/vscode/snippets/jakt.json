@@ -1,0 +1,24 @@
+{
+    "Jakttest output header": {
+        "scope": "jakt",
+        "prefix": "jt",
+        "body": [
+            "/// Expect: selfhost-only",
+            "/// - output: \"$1\"",
+            "",
+            "$0"
+        ],
+        "description": "Jakttest output header"
+    },
+    "Jakttest error header": {
+        "scope": "jakt",
+        "prefix": "jte",
+        "body": [
+            "/// Expect: selfhost-only",
+            "/// - error: \"$1\"",
+            "",
+            "$0"
+        ],
+        "description": "Jakttest error header"
+    }
+}
