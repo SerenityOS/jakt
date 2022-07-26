@@ -156,7 +156,7 @@ boxed enum Type {
     RawPtr(TypeId)
     Reference(TypeId)
     MutableReference(TypeId)
-    Function(params: [TypeId], return_type_id: TypeId)
+    Function(params: [TypeId], can_throw: bool, return_type_id: TypeId)
 
     function equals(this, anon rhs: Type) -> bool {
         if this is Void and rhs is Void {
@@ -297,9 +297,9 @@ boxed enum Type {
                         }
                     }
                 }
-                Function(params, return_type_id) => {
+                Function(params, can_throw, return_type_id) => {
                     match rhs {
-                        Function(params: rhs_params, return_type_id: rhs_return_type_id) => {
+                        Function(params: rhs_params, can_throw: rhs_can_throw, return_type_id: rhs_return_type_id) => {
                             if params.size() != rhs_params.size() {
                                 return false
                             }
@@ -308,7 +308,7 @@ boxed enum Type {
                                     return false
                                 }
                             }
-                            return return_type_id.equals(rhs_return_type_id)
+                            return return_type_id.equals(rhs_return_type_id) and can_throw == rhs_can_throw
                         }
                         else => {
                             return false
@@ -3320,21 +3320,7 @@ struct Typechecker {
         let VOID_TYPE_ID = void_type_id()
         mut return_type_id = VOID_TYPE_ID
         if function_return_type_id.equals(UNKNOWN_TYPE_ID) {
-            if block.statements.is_empty() {
-                return_type_id = VOID_TYPE_ID
-            } else {
-                let last_stmt: CheckedStatement = block.statements.last()!
-                match last_stmt {
-                    CheckedStatement::Return(val) => {
-                        if val.has_value() {
-                            return_type_id = expression_type(expr: val.value())
-                        }
-                    }
-                    else => {
-                        return_type_id = VOID_TYPE_ID
-                    }
-                }
-            }
+            return_type_id = .infer_function_return_type(block)
         } else {
             return_type_id = .resolve_type_var(
                 type_var_type_id: function_return_type_id,
@@ -3987,7 +3973,7 @@ struct Typechecker {
 
                 return .typecheck_generic_resolved_type(name, checked_inner_types, scope_id, span)
             }
-            Function(params, return_type, span) => {
+            Function(params, can_throw, return_type, span) => {
                 let function_name = match name.has_value() {
                     true => name!
                     else => {
@@ -4005,10 +3991,10 @@ struct Typechecker {
                     visibility: Visibility::Public
                     return_type_id: .typecheck_typename(parsed_type: return_type, scope_id, name: None)
                     return_type_span: return_type.span()
-                    params: [] // TODO
+                    params: []
                     generic_params: []
                     block: CheckedBlock(statements: [], scope_id, definitely_returns: false, yielded_type: None)
-                    can_throw: false
+                    can_throw
                     type: FunctionType::Normal
                     linkage: FunctionLinkage::Internal
                     function_scope_id: scope_id
@@ -4023,7 +4009,7 @@ struct Typechecker {
                     param_type_ids.push(.typecheck_typename(parsed_type: param, scope_id, name))
                 }
                 let return_type_id = .typecheck_typename(parsed_type: return_type, scope_id, name)
-                return .find_or_add_type_id(Type::Function(params: param_type_ids, return_type_id))
+                return .find_or_add_type_id(Type::Function(params: param_type_ids, can_throw, return_type_id))
             }
         }
 
@@ -5273,7 +5259,7 @@ struct Typechecker {
             Empty => .infer_function_return_type(block: checked_block)
             else => .typecheck_typename(parsed_type: return_type, scope_id, name: None)
         }
-        let type_id = .find_or_add_type_id(Type::Function(params: param_type_ids, return_type_id))
+        let type_id = .find_or_add_type_id(Type::Function(params: param_type_ids, can_throw, return_type_id))
 
         return CheckedExpression::Function(params: checked_params, can_throw, return_type_id, block: checked_block, span, type_id)
     }
