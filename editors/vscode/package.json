@@ -68,7 +68,13 @@
 					"description": "The path to the jakt compiler executable."
 				}
 			}
-		}
+		},
+		"snippets": [
+			{
+				"language": "jakt",
+				"path": "./snippets/jakt.json"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run lint && npm run compile",
