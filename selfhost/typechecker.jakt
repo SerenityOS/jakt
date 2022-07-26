@@ -4829,6 +4829,10 @@ struct Typechecker {
             return CheckedStatement::Return(val: None, span)
         }
 
+        if expr! is Function {
+            .error("Returning a function is not currently supported", span)
+        }
+
         mut type_hint: TypeId? = None
         if .current_function_id.has_value() {
             type_hint = Some(.get_function(.current_function_id!).return_type_id)
