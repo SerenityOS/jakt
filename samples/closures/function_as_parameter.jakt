@@ -1,0 +1,10 @@
+/// Expect: selfhost-only
+/// - output: "well, hello friends.\n"
+
+function hello(anon who: function() -> String) {
+    println("well, hello {}", who())
+}
+
+function main() {
+    hello(function() -> String => "friends.")
+}

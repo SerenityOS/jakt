@@ -1507,6 +1507,13 @@ struct CodeGenerator {
 
             yield output
         }
+        Function(params, block) => {
+            mut generated_params: [String] = []
+            for param in params.iterator() {
+                generated_params.push(format("{} {}", .codegen_type(param.variable.type_id), param.variable.name))
+            }
+            yield format("[&]({}){}", join(generated_params, separator: ", "), .codegen_block(block))
+        }
         else => {
             todo(format("codegen_expression else: {}", expression))
             yield ""
