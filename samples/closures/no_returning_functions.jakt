@@ -1,0 +1,8 @@
+/// Expect: selfhost-only
+/// - error: "Returning a function is not currently supported\n"
+
+function test() -> function() -> void {
+    return function() {}
+}
+
+function main() {}
