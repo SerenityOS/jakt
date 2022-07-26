@@ -5405,6 +5405,8 @@ struct Typechecker {
         mut final_result_type: TypeId? = None
 
         mut is_optional = false
+        mut seen_none_variant = false
+        mut added_none_variant = false
 
         match type_to_match_on {
             GenericEnumInstance(id, args) => {
@@ -5430,6 +5432,15 @@ struct Typechecker {
                 mut seen_catch_all = false
                 mut catch_all_span: Span? = None
                 mut covered_variants: {String} = {}
+
+                if is_optional {
+                    for variant in enum_.variants.iterator() {
+                        if variant.name() == "None" {
+                            seen_none_variant = true
+                        }
+                    }
+                }
+
                 for case_ in cases.iterator() {
                     for pattern in case_.patterns.iterator() {
                         match pattern {
@@ -5457,6 +5468,10 @@ struct Typechecker {
                                     if v.name() == variant_names[1].0 {
                                         matched_variant = v
                                         variant_index = i
+                                    } else if variant_names[1].0 == "None" and is_optional {
+                                        matched_variant = CheckedEnumVariant::Untyped(name: "None", span: variant_names[1].1)
+                                        variant_index = i
+                                        added_none_variant = true
                                     }
                                     i++
                                 }
@@ -5627,6 +5642,14 @@ struct Typechecker {
                 for variant in enum_variant_names.iterator() {
                     if not covered_variants.contains(variant) {
                         missing_variants.push(variant)
+                    }
+                }
+
+                if is_optional {
+                    if seen_none_variant and not seen_catch_all {
+                        .error("match on optional enum with none variant requires irrefutable else", span)
+                    } else if not added_none_variant {
+                        missing_variants.push("None")
                     }
                 }
 
