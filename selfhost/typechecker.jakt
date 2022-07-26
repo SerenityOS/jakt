@@ -3249,6 +3249,21 @@ struct Typechecker {
         }
     }
 
+    function infer_function_return_type(this, block: CheckedBlock) -> TypeId {
+        if block.statements.is_empty() {
+            return void_type_id()
+        }
+        match block.statements.last()! {
+            Return(val) => {
+                if val.has_value() {
+                    return expression_type(expr: val!)
+                }
+            }
+            else => {}
+        }
+        return void_type_id()
+    }
+
     function typecheck_function(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
         if not parsed_function.generic_parameters.is_empty() and not parsed_function.must_instantiate {
             return
@@ -5249,11 +5264,14 @@ struct Typechecker {
             checked_params.push(.typecheck_parameter(parameter: param, scope_id, first, this_arg_type_id: None, check_scope: None))
             first = false
         }
-        let return_type_id = .typecheck_typename(parsed_type: return_type, scope_id, name: None)
         let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: scope_id, safety_mode)
         mut param_type_ids: [TypeId] = []
         for param in params.iterator() {
             param_type_ids.push(.typecheck_typename(parsed_type: param.variable.parsed_type, scope_id, name: param.variable.name))
+        }
+        let return_type_id = match return_type {
+            Empty => .infer_function_return_type(block: checked_block)
+            else => .typecheck_typename(parsed_type: return_type, scope_id, name: None)
         }
         let type_id = .find_or_add_type_id(Type::Function(params: param_type_ids, return_type_id))
 
