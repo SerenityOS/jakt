@@ -543,3 +543,15 @@ function zero_out(foo: &mut Foo) {
 
 - [ ] (`unsafe`) references and raw pointers bidirectionally convertible
 - [ ] No capture-by-reference in persistent closures
+
+### Closures (first version) feature list:
+
+- [x] Function as parameter to function
+- [] Functions as variables
+- [] No returning functions from functions
+- [] Lambdas cannot throw
+
+### Closures TODO:
+
+- [] Return function from function
+- [] Allow lambdas to throw
