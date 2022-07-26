@@ -6,5 +6,5 @@ function hello(anon who: function() -> String) {
 }
 
 function main() {
-    hello(function() -> String => "friends.")
+    hello(function() => "friends.")
 }
