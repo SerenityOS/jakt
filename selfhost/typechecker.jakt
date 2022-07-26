@@ -4619,7 +4619,7 @@ struct Typechecker {
         let lhs_type = .get_type(lhs_type_id)
 
         .check_that_type_doesnt_contain_reference(type_id: lhs_type_id, span)
-
+        
         match lhs_type {
             GenericInstance(id, args) => {
                 if id.equals(weak_ptr_struct_id) {
@@ -4681,6 +4681,33 @@ struct Typechecker {
         mut module = .current_module()
         let var_id = module.add_variable(checked_var)
         .add_var_to_scope(scope_id, name: var.name, var_id, span: checked_var.definition_span)
+
+        match checked_expr {
+            Function(params, can_throw, return_type_id, block, span, type_id) => {
+                if not .find_function_in_scope(parent_scope_id: scope_id, function_name: var.name).has_value() {
+                    let checked_function = CheckedFunction(
+                        name: var.name
+                        name_span: var.span
+                        visibility: Visibility::Public
+                        return_type_id
+                        return_type_span: None // FIXME: better span here
+                        params
+                        generic_params: []
+                        block
+                        can_throw
+                        type: FunctionType::Normal
+                        linkage: FunctionLinkage::Internal
+                        function_scope_id: scope_id
+                        is_instantiated: false
+                        parsed_function: None
+                    )
+                    let function_id = module.add_function(checked_function)
+                    .add_function_to_scope(parent_scope_id: scope_id, name: var.name, function_id, span)
+                }
+            }
+            else => {}
+        }
+
         return CheckedStatement::VarDecl(var_id, init: checked_expr, span)
     }
 
