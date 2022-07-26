@@ -5398,11 +5398,13 @@ struct Typechecker {
     function typecheck_match(mut this, expr: ParsedExpression, cases: [ParsedMatchCase], span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
         let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
         let subject_type_id = expression_type(checked_expr)
-        let type_to_match_on = .get_type(subject_type_id)
+        mut type_to_match_on = .get_type(subject_type_id)
         mut checked_cases: [CheckedMatchCase] = []
 
         mut generic_inferences: [String: String] = [:]
         mut final_result_type: TypeId? = None
+
+        mut is_optional = false
 
         match type_to_match_on {
             GenericEnumInstance(id, args) => {
@@ -5411,6 +5413,12 @@ struct Typechecker {
                     let generic = enum_.generic_parameters[i].to_string()
                     let argument_type = args[i].to_string()
                     generic_inferences.set(generic, argument_type)
+                }
+            }
+            GenericInstance(id, args) => {
+                if .get_struct(id).name == "Optional" {
+                    type_to_match_on = .get_type(args.first()!)
+                    is_optional = true
                 }
             }
             else => {}
