@@ -1,0 +1,26 @@
+/// Expect: selfhost-only
+/// - output: "PASS, PASS"
+
+enum A {
+    B
+    C
+    None
+}
+
+function main() {
+    let a: A? = None
+    let b: A? = A::None
+
+    let res_a: String = match a {
+        B => "FAIL"
+        None => "FAIL"
+        else => "PASS"
+    }
+
+    let res_b: String = match b {
+        None => "PASS"
+        else => "FAIL"
+    }
+
+    print("{}, {}", res_a, res_b)
+}

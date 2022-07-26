@@ -1,0 +1,20 @@
+/// Expect: selfhost-only
+/// - error: "match on optional enum with none variant requires irrefutable else"
+
+enum A {
+    B
+    C
+    None
+}
+
+function main() {
+    let a: A? = None
+
+    let res_a = match a {
+        B => "FAIL"
+        C => "FAIL"
+        None => "FAIL"
+    }
+
+    println("{}", res_a)
+}

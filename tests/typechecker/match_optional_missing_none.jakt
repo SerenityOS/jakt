@@ -1,0 +1,18 @@
+/// Expect: selfhost-only
+/// - error: "match expression is not exhaustive, missing variants are: None"
+
+enum A {
+    B
+    C
+}
+
+function main() {
+    let a: A? = A::B
+
+    let res_a = match a {
+        B => "FAIL"
+        C => "FAIL"
+    }
+
+    println("{}", res_a)
+}
