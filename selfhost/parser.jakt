@@ -558,7 +558,7 @@ boxed enum ParsedType {
     MutableReference(inner: ParsedType, span: Span)
     RawPtr(inner: ParsedType, span: Span)
     WeakPtr(inner: ParsedType, span: Span)
-    Function(params: [ParsedType], return_type: ParsedType, span: Span)
+    Function(params: [ParsedType], can_throw: bool, return_type: ParsedType, span: Span)
     Empty
 
     function span(this) => match this {
@@ -1766,6 +1766,11 @@ struct Parser {
                 }
             }
 
+            let can_throw = .current() is Throws
+            if can_throw {
+                .index++
+            }
+
             mut return_type = ParsedType::Empty
             match .current() {
                 Arrow => {
@@ -1777,7 +1782,7 @@ struct Parser {
                 }
             }
 
-            yield ParsedType::Function(params: param_types, return_type, span: merge_spans(start, return_type.span()))
+            yield ParsedType::Function(params: param_types, can_throw, return_type, span: merge_spans(start, return_type.span()))
         }
         else => {
             .error("Expected type name", .current().span())
