@@ -3927,6 +3927,9 @@ struct Typechecker {
 
                 return .typecheck_generic_resolved_type(name, checked_inner_types, scope_id, span)
             }
+            Function => {
+                return unknown_type_id()
+            }
         }
 
         // FIXME: This is unreachable but the generated C++ causes a warning.
