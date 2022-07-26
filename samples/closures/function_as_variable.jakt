@@ -1,0 +1,9 @@
+/// Expect: selfhost-only
+/// - output: "PASS\nPASS\n"
+
+function main() {
+    let cb = function() => "PASS"
+    let cb2: function() -> String = function() => "PASS"
+    println("{}", cb())
+    println("{}", cb2())
+}
