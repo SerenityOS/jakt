@@ -1507,12 +1507,16 @@ struct CodeGenerator {
 
             yield output
         }
-        Function(params, block) => {
+        Function(params, can_throw, block, return_type_id) => {
             mut generated_params: [String] = []
             for param in params.iterator() {
                 generated_params.push(format("{} {}", .codegen_type(param.variable.type_id), param.variable.name))
             }
-            yield format("[&]({}){}", join(generated_params, separator: ", "), .codegen_block(block))
+            let return_type = match can_throw {
+                true => format("ErrorOr<{}>", .codegen_type(return_type_id))
+                else => .codegen_type(return_type_id)
+            }
+            yield format("[&]({}) -> {} {}", join(generated_params, separator: ", "), return_type, .codegen_block(block))
         }
         else => {
             todo(format("codegen_expression else: {}", expression))

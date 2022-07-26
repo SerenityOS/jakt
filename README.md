@@ -549,9 +549,8 @@ function zero_out(foo: &mut Foo) {
 - [x] Function as parameter to function
 - [] Functions as variables
 - [] No returning functions from functions
-- [] Lambdas cannot throw
+- [x] Lambdas can throw
 
 ### Closures TODO:
 
 - [] Return function from function
-- [] Allow lambdas to throw

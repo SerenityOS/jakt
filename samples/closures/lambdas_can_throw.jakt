@@ -1,0 +1,13 @@
+/// Expect: selfhost-only
+/// - output: "69\n"
+
+function test(anon cb: function() throws -> String) throws {
+    println("{}", cb())
+}
+
+function main() {
+    test(function() throws {
+        return format("{}", 69)
+    })
+}
+
