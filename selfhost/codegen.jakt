@@ -1527,7 +1527,41 @@ struct CodeGenerator {
                     match_cases
                     type_id
                     all_variants_constant
+                    is_optional: false
                 )
+            }
+            GenericInstance(id, args) => {
+                let struct_ = .program.get_struct(id)
+                if struct_.name == "Optional" {
+                    let arg_type = .program.get_type(args.first()!)
+                    match arg_type {
+                        Enum(enum_id) => {
+                            output += .codegen_enum_match(
+                                enum_: .program.get_enum(enum_id)
+                                expr
+                                match_cases
+                                type_id
+                                all_variants_constant
+                                is_optional: true
+                            )
+                        }
+                        else => {
+                            output += .codegen_generic_match(
+                                expr
+                                cases: match_cases
+                                return_type_id: type_id
+                                all_variants_constant
+                            )
+                        }
+                    }
+                } else {
+                    output += .codegen_generic_match(
+                        expr
+                        cases: match_cases
+                        return_type_id: type_id
+                        all_variants_constant
+                    )
+                }
             }
             else => {
                 output += .codegen_generic_match(
@@ -1635,7 +1669,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_enum_match(mut this, enum_: CheckedEnum, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, all_variants_constant: bool) throws -> String {
+    function codegen_enum_match(mut this, enum_: CheckedEnum, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, all_variants_constant: bool, is_optional: bool) throws -> String {
         mut output = ""
         output += .control_flow_state.choose_control_flow_macro()
 
@@ -1648,19 +1682,46 @@ struct CodeGenerator {
             output += .codegen_function_return_type(function_: .current_function!)
             output += ">{\n"
             output += "auto&& __jakt_match_variant_maybe_deref = " + .codegen_expression(expr) + ";"
-            output += "auto&& __jakt_match_variant = "
+            output += "auto&& __jakt_match_variant_maybe_value = "
             if needs_deref {
                 output += "*"
             }
-            output += "__jakt_match_variant_maybe_deref;\nswitch(__jakt_match_variant.index()) {\n"
+            output += "__jakt_match_variant_maybe_deref;\n"
 
-            mut has_default = false
-            for match_case in match_cases.iterator() {
-                match match_case {
+            mut enum_id: EnumId = EnumId(module: ModuleId(id: 0), id: 0)
+            mut optional_subject_type_id = TypeId(module: ModuleId(id: 0), id: 0)
+            mut should_handle_none = false
+            mut none_body: CheckedMatchBody? = None
+            mut catch_all_body: CheckedMatchBody? = None
+
+            for case_ in match_cases.iterator() {
+                match case_ {
                     EnumVariant(name, args, subject_type_id, index, scope_id, body) => {
+                        if name == "None" {
+                            should_handle_none = true
+                            none_body = body
+                        }
+
+                        optional_subject_type_id = subject_type_id
+
                         let enum_type = .program.get_type(subject_type_id)
-                        let enum_id = match enum_type {
+                        enum_id = match enum_type {
                             Enum(id) => id
+                            GenericInstance(id, args) => {
+                                let arg_type_id = args.first()!
+                                let arg_type = .program.get_type(arg_type_id)
+                                yield match arg_type {
+                                    Enum(id) => {
+                                        optional_subject_type_id = arg_type_id
+                                        yield id
+                                    }
+                                    else => {
+                                        panic("Expected enum type")
+                                        // FIXME: unreachable
+                                        yield EnumId(module: ModuleId(id: 0), id: 0)
+                                    }
+                                }
+                            }
                             else => {
                                 panic("Expected enum type")
                                 // FIXME: unreachable
@@ -1669,18 +1730,49 @@ struct CodeGenerator {
                         }
                         let match_case_enum = .program.get_enum(enum_id)
                         let variant = match_case_enum.variants[index]
+                        if variant.name() == "None" {
+                            should_handle_none = false
+                        }
+                    }
+                    CatchAll(body) => {
+                        catch_all_body = body
+                    }
+                    else => {}
+                }
+            }
+
+            if is_optional {
+                output += "if (__jakt_match_variant_maybe_value.has_value()) {\n"
+                output += "auto&& __jakt_match_variant = __jakt_match_variant_maybe_value.value();"
+            } else {
+                output += "auto&& __jakt_match_variant = __jakt_match_variant_maybe_value;"
+            }
+
+            output += "switch(__jakt_match_variant.index()) {\n"
+
+            mut has_default = false
+            for match_case in match_cases.iterator() {
+                match match_case {
+                    EnumVariant(name, args, subject_type_id, index, scope_id, body) => {
+                        
+                        if should_handle_none and name == "None" {
+                            continue
+                        }
+
+                        let match_case_enum = .program.get_enum(enum_id)
+                        let variant = match_case_enum.variants[index]
                         output += format("case {}: ", index) + "{\n"
                         match variant {
                             Untyped(name) => {
                                 output += format("auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
-                                    .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true),
+                                    .codegen_type_possibly_as_namespace(type_id: optional_subject_type_id, as_namespace: true),
                                     name
                                 )
                             }
                             Typed(name, type_id) => {
                                 output += format(
                                     "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
-                                    .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true),
+                                    .codegen_type_possibly_as_namespace(type_id: optional_subject_type_id, as_namespace: true),
                                     name
                                 )
                                 if not args.is_empty() {
@@ -1730,12 +1822,21 @@ struct CodeGenerator {
                 }
             }
             if not has_default {
-                if enum_.variants.size() != match_cases.size() {
+                if is_optional and enum_.variants.size() != match_cases.size() - 1 {
+                    panic("Inexhaustive match statement")
+                } else if not is_optional and enum_.variants.size() != match_cases.size() {
                     panic("Inexhaustive match statement")
                 }
                 output += "default: VERIFY_NOT_REACHED();"
             }
             output += "}/*switch end*/\n"
+
+            if should_handle_none {
+                output += "} else {\n" + .codegen_match_body(body: none_body!, return_type_id: type_id) + "\n}"
+            } else if not should_handle_none and is_optional {
+                output += "} else {\n" + .codegen_match_body(body: catch_all_body!, return_type_id: type_id) + "\n}"
+            }
+
             output += "}()\n))"
         } else {
             todo("underlying type enum match")
