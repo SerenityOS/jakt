@@ -89,6 +89,7 @@ function find_type_definition_for_type_id(program: CheckedProgram, type_id: Type
         Void => span
         Unknown => span
         JaktString => span
+        Function => span
         GenericInstance(id: struct_id, args) => {
             mut output = span
             if struct_id.equals(array_struct_id) or struct_id.equals(optional_struct_id) or struct_id.equals(range_struct_id) or struct_id.equals(set_struct_id) or struct_id.equals(tuple_struct_id) or struct_id.equals(weak_ptr_struct_id) {
@@ -929,6 +930,16 @@ function get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> 
         CChar => "c_char"
         TypeVariable(name) => name
         Unknown => ""
+        Function(params, return_type_id) => {
+            mut param_names: [String] = []
+            for x in params.iterator() {
+                param_names.push(program.type_name(x))
+            }
+
+            let return_type = program.type_name(return_type_id)
+
+            yield format("function({}) -> {}", join(param_names, separator: ", "), return_type)
+        }
         RawPtr(type_id) => "raw " + get_type_signature(program, type_id)
         Enum(id) => {
             let enum_ = program.get_enum(id)
