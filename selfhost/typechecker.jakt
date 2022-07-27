@@ -1322,12 +1322,12 @@ struct Typechecker {
 
     function dump_type_hint(this, type_id: TypeId, span: Span) throws {
         println("{{\"type\":\"hint\",\"file_id\":{},\"position\":{},\"typename\":\"{}\"}}"
-                span.file_id, span.end, .type_name(type_id))
+                span.file_id.id, span.end, .type_name(type_id))
     }
 
-    function dump_try_hint(this, span: Span) throws {
+    function dump_try_hint( this, span: Span) throws {
         println("{{\"type\":\"try\",\"file_id\":{},\"position\":{}}}"
-                span.file_id, span.start)
+                span.file_id.id, span.start)
     }
 
     function typecheck(mut compiler: Compiler, parsed_namespace: ParsedNamespace) throws -> CheckedProgram {
