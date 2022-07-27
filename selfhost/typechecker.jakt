@@ -1604,6 +1604,7 @@ struct Typechecker {
             Dereference => .get_type(expression_type(expr)) is MutableReference
             else => false
         }
+        MethodCall(expr) => .expression_is_mutable(expr)
         else => false
     }
 
