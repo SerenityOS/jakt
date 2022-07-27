@@ -406,6 +406,24 @@ enum ParsedMatchBody {
     Block(ParsedBlock)
 }
 
+enum ParsedCapture {
+    ByValue(name: String, span: Span)
+    ByReference(name: String, span: Span)
+    ByMutableReference(name: String, span: Span)
+
+    function name(this) => match this {
+        ByValue(name) => name
+        ByReference(name) => name
+        ByMutableReference(name) => name
+    }
+
+    function span(this) => match this {
+        ByValue(span) => span
+        ByReference(span) => span
+        ByMutableReference(span) => span
+    }
+}
+
 boxed enum ParsedExpression {
     Boolean(val: bool, span: Span)
     NumericConstant(val: NumericConstant, span: Span)
@@ -431,7 +449,7 @@ boxed enum ParsedExpression {
     ForcedUnwrap(expr: ParsedExpression, span: Span)
     Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: Span)
     NamespacedVar(name: String, namespace_: [String], span: Span)
-    Function(params: [ParsedParameter], can_throw: bool, return_type: ParsedType, block: ParsedBlock, span: Span)
+    Function(captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, return_type: ParsedType, block: ParsedBlock, span: Span)
     Garbage(Span)
 
     function span(this) => match this {
@@ -2439,10 +2457,71 @@ struct Parser {
         }
     }
 
+    function parse_captures(mut this) throws -> [ParsedCapture] {
+        mut captures: [ParsedCapture] = []
+        match .current() {
+            LSquare => {
+                .index++
+            }
+            else => {
+                return []
+            }
+        }
+
+        while not .eof() {
+            match .current() {
+                RSquare => {
+                    .index++
+                    break
+                }
+                Ampersand => {
+                    .index++
+                    match .current() {
+                        Mut => {
+                            .index++
+                            match .current() {
+                                 Identifier(name) => {
+                                    captures.push(ParsedCapture::ByMutableReference(name, span: .current().span()))
+                                    .index++
+                                }
+                                else => {
+                                    .error(format("Expected identifier, got '{}'", .current()), .current().span())
+                                    .index++
+                                }
+                            }
+                        }
+                        Identifier(name) => {
+                            captures.push(ParsedCapture::ByReference(name, span: .current().span()))
+                            .index++
+                        }
+                        else => {
+                            .error(format("Expected identifier or mut, got '{}'", .current()), .current().span())
+                            .index++
+                        }
+                    }
+                }
+                Identifier(name) => {
+                    captures.push(ParsedCapture::ByValue(name, span: .current().span()))
+                    .index++
+                }
+                Comma | Eol => {
+                    .index++
+                }
+                else => {
+                    .error(format("Unexpected token '{}' in captures list", .current()), .current().span())
+                    .index++
+                }
+            }
+        }
+
+        return captures
+    }
+
     function parse_lambda(mut this) throws -> ParsedExpression {
         let start = .current().span()
         .index++
-        mut params = .parse_function_parameters()
+        let captures = .parse_captures()
+        let params = .parse_function_parameters()
         let can_throw = .current() is Throws
         if can_throw {
             .index++
@@ -2466,7 +2545,7 @@ struct Parser {
             else => .parse_block()
         }
 
-        return ParsedExpression::Function(params, can_throw, return_type, block, span: merge_spans(start, .current().span()))
+        return ParsedExpression::Function(captures, params, can_throw, return_type, block, span: merge_spans(start, .current().span()))
     }
 
     function parse_asterisk(mut this) throws -> ParsedExpression {
