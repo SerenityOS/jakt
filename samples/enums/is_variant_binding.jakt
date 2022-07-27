@@ -1,0 +1,18 @@
+/// Expect: selfhost-only
+/// - output: "5 Hello\n"
+
+enum Foo {
+    Bar(i64)
+    Baz(m: String)
+}
+
+function main() {
+    let foo = Foo::Bar(5)
+    let baz = Foo::Baz(m: "Hello")
+
+    if foo is Foo::Bar(n) {
+        if baz is Foo::Baz(m: different) {
+            println("{} {}", n, different)
+        }
+    }
+}

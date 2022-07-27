@@ -610,6 +610,13 @@ enum CheckedEnumVariant {
     }
 }
 
+struct CheckedEnumVariantBinding {
+    name: String?
+    binding: String
+    type_id: TypeId
+    span: Span
+}
+
 boxed enum CheckedStatement {
     Expression(expr: CheckedExpression, span: Span)
     Defer(statement: CheckedStatement, span: Span)
@@ -819,7 +826,7 @@ enum CheckedUnaryOperator {
     BitwiseNot
     TypeCast(CheckedTypeCast)
     Is(TypeId)
-    IsEnumVariant(name: String, enum_type_id: TypeId)
+    IsEnumVariant(enum_variant: CheckedEnumVariant, bindings: [CheckedEnumVariantBinding], type_id: TypeId)
 }
 
 enum CheckedMatchBody {
@@ -851,6 +858,7 @@ boxed enum CheckedExpression {
     IndexedTuple(expr: CheckedExpression, index: usize, span: Span, type_id: TypeId)
     IndexedStruct(expr: CheckedExpression, index: String, span: Span, type_id: TypeId)
     Match(expr: CheckedExpression, match_cases: [CheckedMatchCase], span: Span, type_id: TypeId, all_variants_constant: bool)
+    EnumVariantArg(expr: CheckedExpression, arg: CheckedEnumVariantBinding, enum_variant: CheckedEnumVariant, span: Span)
     Call(call: CheckedCall, span: Span, type_id: TypeId)
     MethodCall(expr: CheckedExpression, call: CheckedCall, span: Span, type_id: TypeId)
     NamespacedVar(namespaces: [CheckedNamespace], var: CheckedVariable, span: Span)
@@ -921,6 +929,7 @@ function expression_type(anon expr: CheckedExpression) -> TypeId => match expr {
     OptionalSome(type_id) => type_id
     ForcedUnwrap(type_id) => type_id
     Match(type_id) => type_id
+    EnumVariantArg(arg) => arg.type_id
     Block(type_id) => type_id
     Function(type_id) => type_id
     Garbage => builtin(BuiltinType::Void)
@@ -1645,6 +1654,7 @@ struct Typechecker {
         OptionalSome(span) => span
         ForcedUnwrap(span) => span
         Match(span) => span
+        EnumVariantArg(span) => span
         Block(span) => span
         Function(span) => span
         Garbage(span) => span
@@ -2607,7 +2617,7 @@ struct Typechecker {
 
                 let old_ignore_errors = .ignore_errors
                 .ignore_errors = true
-                let block = .typecheck_block(parsed_block: func.block, parent_scope_id: check_scope!, safety_mode: SafetyMode::Safe)
+                let block = .typecheck_block(parsed_block: func.block, parent_scope_id: check_scope!, safety_mode: SafetyMode::Safe, scope_id: None)
                 .ignore_errors = old_ignore_errors
 
                 mut return_type_id: TypeId = builtin(BuiltinType::Void)
@@ -3018,7 +3028,7 @@ struct Typechecker {
 
         let VOID_TYPE_ID = builtin(BuiltinType::Void)
 
-        let block = .typecheck_block(parsed_block: func.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
+        let block = .typecheck_block(parsed_block: func.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe, scope_id: None)
         let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: function_scope_id, name: None)
 
         mut return_type_id = function_return_type_id
@@ -3185,7 +3195,8 @@ struct Typechecker {
             let block = .typecheck_block(
                 parsed_block: parsed_function.block,
                 parent_scope_id: check_scope!,
-                safety_mode: SafetyMode::Safe
+                safety_mode: SafetyMode::Safe,
+                scope_id: None
             )
             .ignore_errors = old_ignore_errors
 
@@ -3368,6 +3379,7 @@ struct Typechecker {
             parsed_function.block
             parent_scope_id: function_scope_id
             safety_mode: SafetyMode::Safe
+            scope_id: None
         )
 
         // Typecheck return type a second time to resolve generics
@@ -3847,9 +3859,17 @@ struct Typechecker {
         return type_id
     }
 
-    function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedBlock {
+    function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode, scope_id: ScopeId?) throws -> CheckedBlock {
         let parent_throws = .get_scope(parent_scope_id).can_throw
-        let block_scope_id = .create_scope(parent_scope_id, can_throw: parent_throws, debug_name: "block")
+
+        // FIXME: For some reason, compiler was complaining when using None coalescing here 
+        mut block_scope_id = ScopeId(module_id: ModuleId(id: 0), id: 0)
+        if scope_id.has_value() {
+            block_scope_id = scope_id!
+        } else {
+            block_scope_id = .create_scope(parent_scope_id, can_throw: parent_throws, debug_name: "block")
+        }
+
         mut checked_block = CheckedBlock(
             statements: []
             scope_id: block_scope_id
@@ -4437,7 +4457,7 @@ struct Typechecker {
 
     function typecheck_statement(mut this, anon statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement => match statement {
         Expression(expr, span) => CheckedStatement::Expression(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint: TypeId::none()), span)
-        UnsafeBlock(block, span) => CheckedStatement::Block(block: .typecheck_block(block, parent_scope_id: scope_id, safety_mode: SafetyMode::Unsafe), span)
+        UnsafeBlock(block, span) => CheckedStatement::Block(block: .typecheck_block(block, parent_scope_id: scope_id, safety_mode: SafetyMode::Unsafe, scope_id: None), span)
         Yield(expr, span) => CheckedStatement::Yield(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint: TypeId::none()), span)
         Return(expr, span) => .typecheck_return(expr, span, scope_id, safety_mode)
         Block(block, span) => .typecheck_block_statement(parsed_block: block, scope_id, safety_mode, span)
@@ -4459,7 +4479,7 @@ struct Typechecker {
 
     function typecheck_guard(mut this, expr: ParsedExpression, else_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
         let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: TypeId::none())
-        let checked_else_block = .typecheck_block(parsed_block: else_block, parent_scope_id: scope_id, safety_mode)
+        let checked_else_block = .typecheck_block(parsed_block: else_block, parent_scope_id: scope_id, safety_mode, scope_id: None)
 
         mut seen_scope_exit = false
         for statement in checked_else_block.statements.iterator() {
@@ -4641,12 +4661,74 @@ struct Typechecker {
     }
 
     function typecheck_if(mut this, condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+        let can_throw = .get_scope(scope_id).can_throw
+
+        match condition {
+            BinaryOp(lhs, op, rhs) => {
+                if op is LogicalAnd {
+                    match lhs {
+                        UnaryOp(expr, op: inner_op) => {
+                            if inner_op is IsEnumVariant {
+                                let intermediate_scope = .create_scope(parent_scope_id: scope_id, can_throw, debug_name: "intermediate_block")
+                                let rhs_if_stmt = ParsedStatement::If(condition: rhs, then_block, else_statement, span)
+                                let lhs_then_block = ParsedBlock(stmts: [rhs_if_stmt])
+                                return .typecheck_if(condition: lhs, then_block: lhs_then_block, else_statement: None, scope_id: intermediate_scope, safety_mode, span)
+                            }
+                        }
+                        BinaryOp(lhs: inner_lhs, op: inner_op rhs: inner_rhs) => {
+                            if inner_op is LogicalAnd {
+                                let joined_rhs_conditions = ParsedExpression::BinaryOp(lhs: inner_rhs, op, rhs, span)
+                                let lhs_condition = ParsedExpression::BinaryOp(lhs: inner_lhs, op, rhs: joined_rhs_conditions, span)
+                                return .typecheck_if(condition: lhs_condition, then_block, else_statement, scope_id, safety_mode, span)
+                            }
+                        }
+                        else => {}
+                    }
+                }
+            }
+            else => {}
+        }
+
         let checked_condition = .typecheck_expression_and_dereference_if_needed(condition, scope_id, safety_mode, type_hint: None, span)
         if not expression_type(checked_condition).equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", condition.span())
         }
+        mut block_scope_id: ScopeId? = None
+        mut block_binding_statements: [CheckedStatement] = []
+        match checked_condition {
+            UnaryOp(expr, op) => match op {
+                IsEnumVariant(enum_variant, bindings, type_id) => {
+                    mut module = .current_module()
+                    let can_throw = .get_scope(scope_id).can_throw
+                    block_scope_id = .create_scope(parent_scope_id: scope_id, can_throw, debug_name: "block")
+                    for binding in bindings.iterator() {
+                        let var_id = module.add_variable(CheckedVariable(
+                            name: binding.binding
+                            type_id: binding.type_id
+                            is_mutable: false
+                            definition_span: enum_variant.span()
+                            type_span: None
+                            visibility: Visibility::Public
+                        ))
+                        .add_var_to_scope(scope_id: block_scope_id!, name: binding.binding, var_id, span: enum_variant.span())
+                        let enum_variant_arg = CheckedExpression::EnumVariantArg(expr, arg: binding, enum_variant, span)
+                        block_binding_statements.push(CheckedStatement::VarDecl(var_id, init: enum_variant_arg, span))
+                    }
+                }
+                else => {}
+            }
+            else => {}
+        }
 
-        let checked_block = .typecheck_block(then_block, parent_scope_id: scope_id, safety_mode)
+        mut checked_block = .typecheck_block(then_block, parent_scope_id: scope_id, safety_mode, scope_id: block_scope_id)
+
+        if block_binding_statements.size() > 0 {
+            for stmt in checked_block.statements.iterator() {
+                block_binding_statements.push(stmt)
+            }
+            checked_block.statements = block_binding_statements
+        }
+
         if checked_block.yielded_type.has_value() {
             .error("An 'if' block is not allowed to yield values", then_block.find_yield_span()!)
         }
@@ -4718,7 +4800,7 @@ struct Typechecker {
         let lhs_type = .get_type(lhs_type_id)
 
         .check_that_type_doesnt_contain_reference(type_id: lhs_type_id, span)
-        
+
         match lhs_type {
             GenericInstance(id, args) => {
                 if id.equals(weak_ptr_struct_id) {
@@ -4817,7 +4899,7 @@ struct Typechecker {
             .error("Condition must be a boolean expression", condition.span())
         }
 
-        let checked_block = .typecheck_block(block, parent_scope_id: scope_id, safety_mode)
+        let checked_block = .typecheck_block(block, parent_scope_id: scope_id, safety_mode, scope_id: None)
         if checked_block.yielded_type.has_value() {
             .error("A ‘while’ block is not allowed to yield values", block.find_yield_span()!)
         }
@@ -4842,7 +4924,7 @@ struct Typechecker {
 
         let catch_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: "catch")
         .add_var_to_scope(scope_id: catch_scope_id, name: error_name, var_id: error_id, span: error_span)
-        let checked_catch_block = .typecheck_block(catch_block, parent_scope_id: catch_scope_id, safety_mode)
+        let checked_catch_block = .typecheck_block(catch_block, parent_scope_id: catch_scope_id, safety_mode, scope_id: None)
 
         return CheckedStatement::Try(stmt: checked_stmt, error_name, catch_block: checked_catch_block, span)
     }
@@ -4864,7 +4946,7 @@ struct Typechecker {
     }
 
     function typecheck_loop(mut this, parsed_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
-        let checked_block = .typecheck_block(parsed_block, parent_scope_id: scope_id, safety_mode)
+        let checked_block = .typecheck_block(parsed_block, parent_scope_id: scope_id, safety_mode, scope_id: None)
         if checked_block.yielded_type.has_value() {
             .error("A ‘loop’ block is not allowed to yield values", parsed_block.find_yield_span()!)
         }
@@ -4888,7 +4970,7 @@ struct Typechecker {
     }
 
     function typecheck_block_statement(mut this, parsed_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
-        let checked_block = .typecheck_block(parsed_block, parent_scope_id: scope_id, safety_mode)
+        let checked_block = .typecheck_block(parsed_block, parent_scope_id: scope_id, safety_mode, scope_id: None)
         if checked_block.yielded_type.has_value() {
             .error("A block used as a statement cannot yield values, as the value cannot be observed in any way", parsed_block.find_yield_span()!)
         }
@@ -5216,7 +5298,7 @@ struct Typechecker {
                                                 else => false
                                             }
                                             if exists {
-                                                operator_is = CheckedUnaryOperator::IsEnumVariant(name, enum_type_id: expr_type_id)
+                                                operator_is = CheckedUnaryOperator::IsEnumVariant(enum_variant: variant, bindings: [], type_id: expr_type_id)
                                                 break
                                             }
                                         }
@@ -5235,6 +5317,37 @@ struct Typechecker {
                         }
                     }
                     yield operator_is
+                }
+                IsEnumVariant(inner, bindings) => {
+                    let old_ignore_errors = .ignore_errors
+                    .ignore_errors = true
+                    let type_id = .typecheck_typename(parsed_type: inner, scope_id, name: None)
+                    .ignore_errors = old_ignore_errors
+                    mut checked_op = CheckedUnaryOperator::Is(type_id)
+                    let expr_type_id = expression_type(checked_expr)
+                    match inner {
+                        NamespacedName(name: variant_name, span) => match .get_type(expression_type(checked_expr)) {
+                            Type::Enum(enum_id) => {
+                                let enum_ = .get_enum(enum_id)
+                                let variant = .get_enum_variant(enum_, variant_name)
+                                if variant.has_value() {
+                                    let checked_enum_variant_bindings = .typecheck_enum_variant_bindings(variant: variant!, bindings, span)
+                                    checked_op = CheckedUnaryOperator::IsEnumVariant(
+                                        enum_variant: variant!, 
+                                        bindings: checked_enum_variant_bindings!,
+                                        type_id: expr_type_id
+                                    )
+                                } else {
+                                    .error(format("Enum variant {} does not exist on {}", variant_name, .type_name(type_id)), span)
+                                }
+                            }
+                            else => {
+                                .error(format("Unknown type or invalid type name: {}", variant_name), span)
+                            }
+                        }
+                        else => {}
+                    }
+                    yield checked_op
                 }
             }
             yield .typecheck_unary_operation(checked_expr, checked_op, span, scope_id, safety_mode)
@@ -5419,7 +5532,7 @@ struct Typechecker {
 
             first = false
         }
-        let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: lambda_scope_id, safety_mode)
+        let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: lambda_scope_id, safety_mode, scope_id: None)
         mut param_type_ids: [TypeId] = []
         for param in params.iterator() {
             param_type_ids.push(.typecheck_typename(parsed_type: param.variable.parsed_type, scope_id, name: param.variable.name))
@@ -5431,6 +5544,49 @@ struct Typechecker {
         let type_id = .find_or_add_type_id(Type::Function(params: param_type_ids, can_throw, return_type_id))
 
         return CheckedExpression::Function(captures: checked_captures, params: checked_params, can_throw, return_type_id, block: checked_block, span, type_id)
+    }
+
+    function get_enum_variant(mut this, enum_: CheckedEnum, variant_name: String) throws -> CheckedEnumVariant? {
+        for variant in enum_.variants.iterator() {
+            if variant.name() == variant_name {
+                return variant
+            }
+        }
+        return None
+    }
+
+    function typecheck_enum_variant_bindings(mut this, variant: CheckedEnumVariant, bindings: [EnumVariantPatternArgument], span: Span) throws -> [CheckedEnumVariantBinding]? {
+        match variant {
+            StructLike(fields) => {
+                mut checked_vars: [CheckedVariable] = []
+                mut checked_enum_variant_bindings: [CheckedEnumVariantBinding] = []
+                for field in fields.iterator() {
+                    checked_vars.push(.get_variable(field))
+                }
+                for binding in bindings.iterator() {
+                    for var in checked_vars.iterator() {
+                        let binding_name = binding.name ?? binding.binding
+                        let type_id = var.type_id
+                        if binding_name == var.name {
+                            checked_enum_variant_bindings.push(CheckedEnumVariantBinding(name: binding.name, binding: binding.binding, type_id, span))
+                            break
+                        }
+                    }
+                }
+                if checked_enum_variant_bindings.size() > 0 {
+                    return checked_enum_variant_bindings
+                }
+            }
+            Typed(type_id) => {
+                if bindings.size() == 1 {
+                    return [CheckedEnumVariantBinding(name: None, binding: bindings[0].binding, type_id, span)]
+                } else {
+                    .error(format("Enum variant ‘{}’ must have exactly one argument", variant.name()), span)
+                }
+            }
+            else => {}
+        }
+        return None
     }
 
     function typecheck_namespaced_var_or_simple_enum_constructor_call(mut this, name: String, namespace_: [String], scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?, span: Span) throws -> CheckedExpression {
@@ -6041,7 +6197,7 @@ struct Typechecker {
         mut result_type = final_result_type
         let checked_match_body = match body {
             Block(block) => {
-                let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: scope_id, safety_mode)
+                let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: scope_id, safety_mode, scope_id: None)
 
                 if not checked_block.definitely_returns and not checked_block.never_returns {
                     let block_type_id = checked_block.yielded_type ?? void_type_id()
