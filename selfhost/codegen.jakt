@@ -2159,7 +2159,7 @@ struct CodeGenerator {
                 if not generic_parameters.is_empty() {
                     mut types: [String] = []
                     for gen_param in generic_parameters.iterator() {
-                        types.push(.codegen_type_possibly_as_namespace(type_id: gen_param, as_namespace: true))
+                        types.push(.codegen_type_possibly_as_namespace(type_id: gen_param, as_namespace: false))
                     }
                     output += format("<{}>", join(types, separator: ", "))
                 }
