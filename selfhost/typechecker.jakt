@@ -5326,7 +5326,7 @@ struct Typechecker {
                     mut checked_op = CheckedUnaryOperator::Is(type_id)
                     let expr_type_id = expression_type(checked_expr)
                     match inner {
-                        NamespacedName(name: variant_name, span) => match .get_type(expression_type(checked_expr)) {
+                        NamespacedName(name: variant_name, span) | Name(name: variant_name, span) => match .get_type(expression_type(checked_expr)) {
                             Type::Enum(enum_id) => {
                                 let enum_ = .get_enum(enum_id)
                                 let variant = .get_enum_variant(enum_, variant_name)

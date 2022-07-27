@@ -10,8 +10,8 @@ function main() {
     let foo = Foo::Bar(5)
     let baz = Foo::Baz(m: "Hello")
 
-    if foo is Foo::Bar(n) {
-        if baz is Foo::Baz(m: different) {
+    if foo is Bar(n) {
+        if baz is Baz(m: different) {
             println("{} {}", n, different)
         }
     }

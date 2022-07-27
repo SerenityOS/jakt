@@ -2668,7 +2668,7 @@ struct Parser {
                     let span = merge_spans(start, .current().span())
                     mut bindings: [EnumVariantPatternArgument] = []
                     mut unary_operator_is: ParsedExpression? = None
-                    if .current() is LParen and parsed_type is NamespacedName {
+                    if .current() is LParen and ((parsed_type is NamespacedName) or (parsed_type is Name)) {
                         bindings = .parse_variant_arguments()
                         unary_operator_is = ParsedExpression::UnaryOp(expr: result, op: UnaryOperator::IsEnumVariant(inner: parsed_type, bindings), span)
                     } else {
