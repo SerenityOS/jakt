@@ -1701,13 +1701,22 @@ struct Parser {
             .index++
             mut parsed_type =  ParsedType::Name(name, span)
             if .current() is LessThan {
-                mut parsed_generics = .parse_generic_parameters()
-                // FIXME: clean this up when ParsedType::GenericType can have [[String:Span]] generic parameters
-                mut generic_parameters: [ParsedType] = []
-                for parsed_generic in parsed_generics.iterator() {
-                    generic_parameters.push(ParsedType::Name(name: parsed_generic.name, span: parsed_generic.span))
+                mut params: [ParsedType] = []
+                if .current() is LessThan {
+                    .index++
+                    while not .current() is GreaterThan and not .eof() {
+                        params.push(.parse_typename())
+                        if .current() is Comma {
+                            .index++
+                        }
+                    }
+                    if .current() is GreaterThan {
+                        .index++
+                    } else {
+                        .error("Expected `>` after type parameters", .current().span())
+                    }
                 }
-                parsed_type = ParsedType::GenericType(name, generic_parameters, span)
+                parsed_type = ParsedType::GenericType(name, generic_parameters: params, span)
             }
 
             if .current() is ColonColon {
