@@ -56,7 +56,7 @@ enum MessageSeverity {
 
 function display_message_with_span_json(anon severity: MessageSeverity, file_name: String, file_contents: [u8], message: String, span: Span) throws
 {
-    println("{{\"type\":\"diagnostics\",\"message\":\"{}\",\"severity\":\"{}\",\"file_id\":{},\"span\":{{\"start\":{},\"end\":{}}}}}"
+    println("{{\"type\":\"diagnostic\",\"message\":\"{}\",\"severity\":\"{}\",\"file_id\":{},\"span\":{{\"start\":{},\"end\":{}}}}}"
         message, severity.name(), span.file_id.id, span.start, span.end)
 }
 
