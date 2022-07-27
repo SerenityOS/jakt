@@ -2440,7 +2440,7 @@ struct CodeGenerator {
         RawPtr(type_id) => .codegen_type(type_id) + "*"
         Reference(type_id) => .codegen_type(type_id) + " const&"
         MutableReference(type_id) => .codegen_type(type_id) + "&"
-        GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
+        GenericResolvedType(id, args) | GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
         Struct(id) => .codegen_struct_type(id, as_namespace)
         Enum(id) => .codegen_enum_type(id, as_namespace)
         GenericEnumInstance(id, args) => .codegen_generic_enum_instance(id, args, as_namespace)
