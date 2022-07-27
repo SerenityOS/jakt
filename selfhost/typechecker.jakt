@@ -13,7 +13,7 @@ import parser { Parser, BinaryOperator, DefinitionLinkage, DefinitionType, Unary
                 ParsedExpression, ParsedFunction, ParsedNamespace, ParsedModuleImport,
                 ParsedExternImport, ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
                 ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
-                ParsedMatchBody, ParsedMatchCase, Visibility, ParsedParameter }
+                ParsedMatchBody, ParsedMatchCase, Visibility, ParsedParameter, ParsedCapture }
 import utility { panic, todo, Span, join, FilePath, FileId }
 import compiler { Compiler }
 import prelude { JaktPrelude }
@@ -501,6 +501,24 @@ struct CheckedParameter {
     variable: CheckedVariable
 }
 
+enum CheckedCapture {
+    ByValue(name: String, span: Span)
+    ByReference(name: String, span: Span)
+    ByMutableReference(name: String, span: Span)
+
+    function name(this) => match this {
+        ByValue(name) => name
+        ByReference(name) => name
+        ByMutableReference(name) => name
+    }
+
+    function span(this) => match this {
+        ByValue(span) => span
+        ByReference(span) => span
+        ByMutableReference(span) => span
+    }
+}
+
 enum FunctionGenericParameter {
     InferenceGuide(TypeId)
     Parameter(TypeId)
@@ -845,7 +863,7 @@ boxed enum CheckedExpression {
     OptionalSome(expr: CheckedExpression, span: Span, type_id: TypeId)
     ForcedUnwrap(expr: CheckedExpression, span: Span, type_id: TypeId)
     Block(block: CheckedBlock, span: Span, type_id: TypeId)
-    Function(params: [CheckedParameter], can_throw: bool, return_type_id: TypeId, block: CheckedBlock, span: Span, type_id: TypeId)
+    Function(captures: [CheckedCapture], params: [CheckedParameter], can_throw: bool, return_type_id: TypeId, block: CheckedBlock, span: Span, type_id: TypeId)
     Garbage(Span)
 
     // FIXME: rewrite this into a FAMF once we can yield None out of a match (https://github.com/SerenityOS/jakt/issues/669)
@@ -5266,7 +5284,7 @@ struct Typechecker {
         Match(expr, cases, span) => .typecheck_match(expr, cases, span, scope_id, safety_mode)
         JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode, type_hint)
         Set(values, span) => .typecheck_set(values, span, scope_id, safety_mode, type_hint)
-        Function(params, can_throw, return_type, block, span) => .typecheck_lambda(params, can_throw, return_type, block, span, scope_id, safety_mode)
+        Function(captures, params, can_throw, return_type, block, span) => .typecheck_lambda(captures, params, can_throw, return_type, block, span, scope_id, safety_mode)
         else => {
             .compiler.panic(format("typechecker needs support for {}", expr))
 
@@ -5274,7 +5292,22 @@ struct Typechecker {
         }
     }
 
-    function typecheck_lambda(mut this, params: [ParsedParameter], can_throw: bool, return_type: ParsedType, block: ParsedBlock, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
+    function typecheck_lambda(mut this, captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, return_type: ParsedType, block: ParsedBlock, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
+        mut checked_captures: [CheckedCapture] = []
+        for capture in captures.iterator() {
+            match .find_var_in_scope(scope_id, var: capture.name()).has_value() { // FIXME: this wants to be a match on Optional instead of boolean
+                true => {
+                    checked_captures.push(match capture {
+                        ByValue(name, span) => CheckedCapture::ByValue(name, span)
+                        ByReference(name, span) => CheckedCapture::ByReference(name, span)
+                        ByMutableReference(name, span) => CheckedCapture::ByMutableReference(name, span)
+                    })
+                }
+                else => {
+                    .error(format("Variable '{}' not found", capture.name()), span)
+                }
+            }
+        }
         mut checked_params: [CheckedParameter] = []
         mut first = true
         for param in params.iterator() {
@@ -5292,7 +5325,7 @@ struct Typechecker {
         }
         let type_id = .find_or_add_type_id(Type::Function(params: param_type_ids, can_throw, return_type_id))
 
-        return CheckedExpression::Function(params: checked_params, can_throw, return_type_id, block: checked_block, span, type_id)
+        return CheckedExpression::Function(captures: checked_captures, params: checked_params, can_throw, return_type_id, block: checked_block, span, type_id)
     }
 
     function typecheck_namespaced_var_or_simple_enum_constructor_call(mut this, name: String, namespace_: [String], scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?, span: Span) throws -> CheckedExpression {
