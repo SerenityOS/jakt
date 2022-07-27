@@ -2062,89 +2062,94 @@ struct CodeGenerator {
                 output += ")"
             }
             else => {
-                let function_id = call.function_id!
-                let function_ = .program.get_function(function_id)
-                let type_module = .program.get_module(function_id.module)
-                if function_.type is ImplicitConstructor or function_.type is ExternalClassConstructor {
-                    let type_id = call.return_type
-                    let type = .program.get_type(type_id)
+                if call.function_id.has_value() {
+                    let function_id = call.function_id!
+                    let function_ = .program.get_function(function_id)
                     let type_module = .program.get_module(function_id.module)
-                    if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))) {
-                        output += type_module.name
-                        output += "::"
-                    }
-                    output += .codegen_namespace_path(call)
-                    match type {
-                        Struct(struct_id) => {
-                            let struct_ = .program.get_struct(struct_id)
-                            if struct_.record_type is Class {
-                                output += call.name
-                                output += "::"
-                                output += "create"
-                            } else {
-                                output += call.name
-                            }
+                    if function_.type is ImplicitConstructor or function_.type is ExternalClassConstructor {
+                        let type_id = call.return_type
+                        let type = .program.get_type(type_id)
+                        let type_module = .program.get_module(function_id.module)
+                        if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))) {
+                            output += type_module.name
+                            output += "::"
                         }
-                        GenericInstance(id, args) => {
-                            let struct_ = .program.get_struct(id)
-                            if struct_.record_type is Class {
-                                output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
-                                output += struct_.name
-                                output += "<"
-                                mut first = true
-                                for arg in args.iterator() {
-                                    if not first {
-                                        output += ", "
-                                    } else {
-                                        first = false
-                                    }
-                                    output += .codegen_type(arg)
-                                }
-                                output += ">::create"
-                            } else {
-                                output += call.name
-                            }
-                        }
-                        else => {
-                            panic("Should be unreachable")
-                        }
-                    }
-                } else if function_.type is ImplicitEnumConstructor {
-                    match .program.get_type(function_.return_type_id) {
-                        Enum(enum_id) => {
-                            let enum_ = .program.get_enum(enum_id)
-                            let enum_type_module = .program.get_module(enum_id.module)
-                            if enum_.is_boxed {
-                                let type_module = .program.get_module(function_id.module)
-                                if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))) {
-                                    output += type_module.name
+                        output += .codegen_namespace_path(call)
+                        match type {
+                            Struct(struct_id) => {
+                                let struct_ = .program.get_struct(struct_id)
+                                if struct_.record_type is Class {
+                                    output += call.name
                                     output += "::"
+                                    output += "create"
+                                } else {
+                                    output += call.name
                                 }
-
-                                output += .codegen_namespace_path(call)
-                                output += "template create<typename "
-                                output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
-                                output += "::" + call.name + ">"
-                            } else {
-                                output += "typename "
-                                output += .codegen_type(call.return_type)
-                                output += "::"
-                                output += call.name
+                            }
+                            GenericInstance(id, args) => {
+                                let struct_ = .program.get_struct(id)
+                                if struct_.record_type is Class {
+                                    output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
+                                    output += struct_.name
+                                    output += "<"
+                                    mut first = true
+                                    for arg in args.iterator() {
+                                        if not first {
+                                            output += ", "
+                                        } else {
+                                            first = false
+                                        }
+                                        output += .codegen_type(arg)
+                                    }
+                                    output += ">::create"
+                                } else {
+                                    output += call.name
+                                }
+                            }
+                            else => {
+                                panic("Should be unreachable")
                             }
                         }
-                        GenericEnumInstance(id) => {
-                            todo("codegen generic enum instance")
+                    } else if function_.type is ImplicitEnumConstructor {
+                        match .program.get_type(function_.return_type_id) {
+                            Enum(enum_id) => {
+                                let enum_ = .program.get_enum(enum_id)
+                                let enum_type_module = .program.get_module(enum_id.module)
+                                if enum_.is_boxed {
+                                    let type_module = .program.get_module(function_id.module)
+                                    if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))) {
+                                        output += type_module.name
+                                        output += "::"
+                                    }
+
+                                    output += .codegen_namespace_path(call)
+                                    output += "template create<typename "
+                                    output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
+                                    output += "::" + call.name + ">"
+                                } else {
+                                    output += "typename "
+                                    output += .codegen_type(call.return_type)
+                                    output += "::"
+                                    output += call.name
+                                }
+                            }
+                            GenericEnumInstance(id) => {
+                                todo("codegen generic enum instance")
+                            }
+                            else => {
+                                panic("constructor expected enum type")
+                            }
                         }
-                        else => {
-                            panic("constructor expected enum type")
+                    } else {
+                        if not (type_module.is_root or type_module.id.id == 0 or function_.linkage is External or (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name))
+                        {
+                            output += type_module.name
+                            output += "::"
                         }
+                        output += .codegen_namespace_path(call)
+                        output += call.name
                     }
                 } else {
-                    if not (type_module.is_root or type_module.id.id == 0 or function_.linkage is External or (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name))
-                    {
-                        output += type_module.name
-                        output += "::"
-                    }
                     output += .codegen_namespace_path(call)
                     output += call.name
                 }
