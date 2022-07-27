@@ -144,6 +144,8 @@ function main(args: [String]) {
         dump_try_hints
     )
 
+    compiler.load_prelude()
+
     let main_file_id = compiler.get_file_id_or_register(file_path)
     let file_is_set = compiler.set_current_file(main_file_id)
     if not file_is_set {
