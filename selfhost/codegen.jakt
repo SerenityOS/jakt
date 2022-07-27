@@ -1507,7 +1507,14 @@ struct CodeGenerator {
 
             yield output
         }
-        Function(params, can_throw, block, return_type_id) => {
+        Function(captures, params, can_throw, block, return_type_id) => {
+            mut generated_captures: [String] = []
+            for capture in captures.iterator() {
+                generated_captures.push(match capture {
+                    ByValue => capture.name()
+                    ByReference | ByMutableReference => format("&{}", capture.name())
+                })
+            }
             mut generated_params: [String] = []
             for param in params.iterator() {
                 generated_params.push(format("{} {}", .codegen_type(param.variable.type_id), param.variable.name))
@@ -1516,7 +1523,7 @@ struct CodeGenerator {
                 true => format("ErrorOr<{}>", .codegen_type(return_type_id))
                 else => .codegen_type(return_type_id)
             }
-            yield format("[&]({}) -> {} {}", join(generated_params, separator: ", "), return_type, .codegen_block(block))
+            yield format("[{}]({}) -> {} {}", join(generated_captures, separator: ", "), join(generated_params, separator: ", "), return_type, .codegen_block(block))
         }
         else => {
             todo(format("codegen_expression else: {}", expression))

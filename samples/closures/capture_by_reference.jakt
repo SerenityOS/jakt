@@ -1,0 +1,16 @@
+/// Expect: selfhost-only
+/// - output: "PASS\n"
+
+function test(cb: function() -> void) {
+    cb()
+}
+
+class Foo {
+    public message: String
+}
+
+function main() {
+    let pass = Foo(message: "PASS")
+    test(cb: function[&pass]() => println(pass.message))
+}
+
