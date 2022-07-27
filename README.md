@@ -550,6 +550,7 @@ function zero_out(foo: &mut Foo) {
 - [x] Functions as variables
 - [x] No returning functions from functions
 - [x] Lambdas can throw
+- [x] Explicit captures
 
 ### Closures TODO:
 

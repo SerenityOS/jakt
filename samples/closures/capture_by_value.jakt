@@ -1,0 +1,11 @@
+/// Expect: selfhost-only
+/// - output: "PASS\n"
+
+function test(cb: function() -> void) {
+    cb()
+}
+
+function main() {
+    let pass = "PASS"
+    test(cb: function[pass]() => println(pass))
+}
