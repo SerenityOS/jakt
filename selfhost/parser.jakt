@@ -1844,19 +1844,17 @@ struct Parser {
         match .current() {
             Identifier(name) => {
                 let var_name = name
-                mut inlay_span: Span? = None
                 let decl_span = .current().span()
 
                 .index++
                 if .current() is Colon {
                     .index++
-                    inlay_span = .current().span()
                 } else {
                     return ParsedVarDecl(
                         name: var_name,
                         parsed_type: ParsedType::Empty,
                         is_mutable,
-                        inlay_span: None
+                        inlay_span: decl_span
                         span: decl_span
                     )
                 }
@@ -1870,7 +1868,7 @@ struct Parser {
                     name: var_name,
                     parsed_type: var_type,
                     is_mutable,
-                    inlay_span,
+                    inlay_span: None,
                     span: decl_span,
                 )
             }
