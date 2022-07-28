@@ -7,19 +7,14 @@ on:
 name: continuous-integration
 
 jobs:
-  test:
+  lint-samples:
     strategy:
       fail-fast: true
       matrix:
-        platform: [windows-latest, macos-latest, ubuntu-latest]
+        platform: [ubuntu-latest]
         style: [default]
-        rust:
-          - stable
 
     runs-on: ${{ matrix.platform }}
-
-    env:
-      RUSTFLAGS: --deny warnings
 
     steps:
       - uses: actions/checkout@v2
@@ -27,33 +22,14 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.rust }}
-          override: true
-          components: rustfmt
-
-      - name: Rustfmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
-
       - name: Lint samples
         run: python ./meta/lint_samples.py
 
-      - name: Test Jakt
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --workspace ${{ matrix.flags }}
-  selfhost:
+  selfhost-linux:
     strategy:
       fail-fast: true
       matrix:
-        platform: [ubuntu-22.04]
+        platform: [ubuntu-latest]
         style: [default]
         rust:
           - stable
@@ -68,46 +44,27 @@ jobs:
           # ninja version to download. Default: 1.10.0
           version: 1.10.0
 
-      - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.rust }}
-          override: true
       - name: Test Jakt Selfhost
-        run: ninja -C jakttest && ./jakttest/build/jakttest
+        run: ninja && ninja -C jakttest && ./jakttest/build/jakttest
 
-      - name: Test bootstrap
-        run: |
-          cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++-14
-          ninja -C build
-
-  clippy:
+  selfhost-macos:
     strategy:
       fail-fast: true
       matrix:
-        platform: [ubuntu-latest]
+        platform: [macos-latest]
         style: [default]
         rust:
           - stable
 
-    runs-on: ubuntu-latest
-
-    env:
-      RUSTFLAGS: --deny warnings
+    runs-on: ${{ matrix.platform }}
 
     steps:
       - uses: actions/checkout@v2
+      - name: Setup Ninja
+        uses: ashutoshvarma/setup-ninja@master
+        with:
+          # ninja version to download. Default: 1.10.0
+          version: 1.10.0
 
-      - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.rust }}
-          override: true
-          components: clippy
-      - name: Clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --all-features
+      - name: Test Jakt Selfhost
+        run: brew install coreutils && ninja && ninja -C jakttest && ./jakttest/build/jakttest
