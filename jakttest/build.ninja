@@ -11,7 +11,7 @@ rule mkdir
     command = mkdir $out
 
 rule jakttest
-    command = cargo run --color always -- -o build --emit-cpp-source-only jakttest.jakt
+    command = ../build/jakt jakttest.jakt > build/jakttest.cpp
 
 rule patch-includes
     command = python3 patch-includes.py $in $out
