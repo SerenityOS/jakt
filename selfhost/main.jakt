@@ -177,35 +177,35 @@ function main(args: [String]) {
     if goto_def.has_value() {
         let index = goto_def!.to_uint()! as! usize;
 
-        let result = ide::find_definition_in_program(program: checked_program, span: Span(file_id: FileId(id: 0uz), start: index, end: index))
+        let result = ide::find_definition_in_program(program: checked_program, span: Span(file_id: FileId(id: 1), start: index, end: index))
 
-        if result.file_id.id == 0 {
+        if result.file_id.id == 1 {
             println("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
         } else {
             let file_path = compiler.get_file_path(result.file_id)
             
-            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, file_path!);
+            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, file_path!.path);
         }
         return 0
     }
     if goto_type_def.has_value() {
         let index = goto_type_def!.to_uint()! as! usize;
 
-        let result = ide::find_type_definition_in_program(program: checked_program, span: Span(file_id: FileId(id: 0uz), start: index, end: index))
+        let result = ide::find_type_definition_in_program(program: checked_program, span: Span(file_id: FileId(id: 1), start: index, end: index))
 
-        if result.file_id.id == 0 {
+        if result.file_id.id == 1 {
             println("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
         } else {
             let file_path = compiler.get_file_path(result.file_id)
 
-            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, file_path!);
+            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, file_path!.path);
         }
         return 0
     }
     if hover.has_value() {
         let index = hover!.to_uint()! as! usize;
         
-        let result = ide::find_typename_in_program(program: checked_program, span: Span(file_id: FileId(id: 0uz), start: index, end: index))
+        let result = ide::find_typename_in_program(program: checked_program, span: Span(file_id: FileId(id: 1), start: index, end: index))
 
         if result.has_value() {
             println("{{\"hover\": \"{}\"}}", result!)
@@ -215,7 +215,7 @@ function main(args: [String]) {
     if completions.has_value() {
         let index = completions!.to_uint()! as! usize;
 
-        let result = ide::find_dot_completions(program: checked_program, span: Span(file_id: FileId(id: 0uz), start: index, end: index))
+        let result = ide::find_dot_completions(program: checked_program, span: Span(file_id: FileId(id: 1), start: index, end: index))
 
         print("{{\"completions\": [");
         mut first = true
