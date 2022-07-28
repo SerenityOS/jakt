@@ -125,7 +125,7 @@ async function goToDefinition(document: TextDocument, jaktOutput: string): Promi
 		const obj = JSON.parse(line);
 		// connection.console.log("going to type definition");
 		// connection.console.log(obj);
-		if (obj.file === '')
+		if (obj.file === '' || obj.file === '__prelude__')
 			return;
 
 		const lineBreaks = findLineBreaks(obj.file ? (await fs.promises.readFile(obj.file)).toString() : document.getText() ?? "");
