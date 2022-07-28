@@ -1,0 +1,16 @@
+/// Expect: selfhost-only
+/// - output: "PASS\n"
+
+function troublemaker() throws -> i64 {
+    throw Error::from_errno(0)
+}
+
+function main() {
+    let opt: i64? = None
+    try {
+        let foo = opt ?? troublemaker()
+        println("FAIL")
+    } catch {
+        println("PASS")
+    }
+}

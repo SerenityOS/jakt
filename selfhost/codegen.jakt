@@ -9,7 +9,7 @@ import parser { BinaryOperator, FunctionLinkage }
 import typechecker {
     BuiltinType, CheckedBlock, CheckedCall, CheckedExpression,
     CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
-    Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId, expression_type,
+    Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId, expression_can_throw, expression_type,
     CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id,
     CheckedVariable }
 import utility { panic, todo, join, prepend_to_each, Span }
@@ -1808,22 +1808,52 @@ struct CodeGenerator {
 
     function codegen_binary_expression(mut this, expression: CheckedExpression, type_id: TypeId, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator) throws -> String {
         if op is NoneCoalescing {
-            let rhs_type = .program.get_type(expression_type(rhs))
+            let rhs_type_id = expression_type(rhs)
+            let rhs_type = .program.get_type(rhs_type_id)
+            let rhs_can_throw = expression_can_throw(rhs)
 
-            mut output = .codegen_expression(lhs)
+            mut output = ""
+
+            if rhs_can_throw {
+                output += "TRY("
+            }
+
+            output += .codegen_expression(lhs)
             match rhs_type {
                 GenericInstance(id, args) => {
                     if .program.get_struct(id).name == "Optional" {
-                        output += ".value_or_lazy_evaluated_optional([&] { return ";
+                        if rhs_can_throw {
+                            output += ".try_value_or_lazy_evaluated_optional";
+                        } else {
+                            output += ".value_or_lazy_evaluated_optional";
+                        }
                     }
                 }
                 else => {
-                    output += ".value_or_lazy_evaluated([&] { return "
+                    if rhs_can_throw {
+                        output += ".try_value_or_lazy_evaluated"
+                    } else {
+                        output += ".value_or_lazy_evaluated"
+                    }
                 }
             }
 
+            if rhs_can_throw {
+                output += "([&]() -> ErrorOr<"
+                output += .codegen_type(rhs_type_id)
+                output += "> { return "
+            } else {
+                output += "([&] { return "
+            }
+
+
             output += .codegen_expression(rhs)
             output += "; })"
+
+            if rhs_can_throw {
+                output += ")"
+            }
+
             return output
         }
 
