@@ -893,6 +893,13 @@ boxed enum CheckedExpression {
     }
 }
 
+function expression_can_throw(anon expr: CheckedExpression) -> bool => match expr {
+    Call(call)
+    | MethodCall(call) => call.callee_throws
+
+    else => false
+}
+
 function expression_type(anon expr: CheckedExpression) -> TypeId => match expr {
     Boolean => builtin(BuiltinType::Bool)
     NumericConstant(type_id) => type_id

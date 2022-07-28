@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2021, Andreas Kling <kling@serenityos.org>
+ * Copyright (c) 2018-2022, Andreas Kling <kling@serenityos.org>
  * Copyright (c) 2021, Daniel Bertalan <dani@danielbertalan.dev>
  *
  * SPDX-License-Identifier: BSD-2-Clause
@@ -9,6 +9,7 @@
 
 #include <Jakt/Assertions.h>
 #include <Jakt/StdLibExtras.h>
+#include <Jakt/Try.h>
 #include <Jakt/Types.h>
 #include <Jakt/kmalloc.h>
 
@@ -25,7 +26,7 @@ namespace Jakt {
 template<typename>
 class Optional;
 
-struct NullOptional {};
+struct NullOptional { };
 
 template<typename T>
 requires(!IsLvalueReference<T>) class [[nodiscard]] Optional<T> {
@@ -225,6 +226,22 @@ public:
         if (m_has_value)
             return value();
         return callback();
+    }
+
+    template<typename Callback>
+    [[nodiscard]] ALWAYS_INLINE ErrorOr<T> try_value_or_lazy_evaluated(Callback callback) const
+    {
+        if (m_has_value)
+            return value();
+        return TRY(callback());
+    }
+
+    template<typename Callback>
+    [[nodiscard]] ALWAYS_INLINE ErrorOr<Optional<T>> try_value_or_lazy_evaluated_optional(Callback callback) const
+    {
+        if (m_has_value)
+            return value();
+        return TRY(callback());
     }
 
     ALWAYS_INLINE T const& operator*() const { return value(); }
