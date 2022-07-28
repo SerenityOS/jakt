@@ -1430,6 +1430,9 @@ struct Parser {
         match .current() {
             LParen => {
                 .index++
+                if .current() is Eol {
+                    .index++
+                }
             }
             else => {
                 .error("Expected '('", .current().span())
@@ -1449,7 +1452,7 @@ struct Parser {
                     .index++
                     break
                 }
-                Comma => {
+                Comma | Eol => {
                     if not parameter_complete and not error {
                         .error("Expected parameter", .current().span())
                         error = true
@@ -1458,6 +1461,10 @@ struct Parser {
                     current_param_requires_label = true
                     current_param_is_mutable = false
                     parameter_complete = false
+
+                    if .current() is Eol {
+                        .index++
+                    }
                 }
                 Anon => {
                     if parameter_complete and not error  {
@@ -1502,6 +1509,11 @@ struct Parser {
                     parameter_complete = true
                 }
                 Identifier(name, span) => {
+                    if parameter_complete and not error {
+                        .error_with_hint("Expected comma or newline before", .current().span(), "Consider adding a comma or newline after this", .previous().span())
+                        error = true
+                    }
+
                     let var_decl = .parse_variable_declaration(is_mutable: current_param_is_mutable)
 
                     params.push(ParsedParameter(

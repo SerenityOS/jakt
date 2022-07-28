@@ -1,0 +1,27 @@
+/// Expect:
+/// - output: "7\n13\n30"
+
+function subtract(
+    x: i64,
+    y: i64
+) {
+    println("{}", x - y)
+}
+
+function add(x: i64, y: i64) {
+    println("{}", x + y)
+}
+
+function multiply(
+    x: i64
+
+    y: i64
+) {
+    println("{}", x * y)
+}
+
+function main() {
+    subtract(x: 10, y: 3)
+    add(x: 10, y: 3)
+    multiply(x: 10, y: 3)
+}
