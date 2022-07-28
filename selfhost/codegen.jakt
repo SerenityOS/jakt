@@ -1589,6 +1589,7 @@ struct CodeGenerator {
         output += .codegen_expression(expr)
         output += ");\n"
 
+        mut has_default = false
         mut first = true
         for case_ in cases.iterator() {
             match case_ {
@@ -1623,6 +1624,8 @@ struct CodeGenerator {
                 }
                 CatchAll(body, marker_span) => {
                     // TODO: Use default statement if all values are constant
+                    has_default = true
+
                     if first {
                         output += "{"
                     } else {
@@ -1647,7 +1650,10 @@ struct CodeGenerator {
         }
         if return_type_id.equals(void_type_id()) or return_type_id.equals(unknown_type_id()) {
             output += "return JaktInternal::ExplicitValue<void>();\n"
+        } else if not has_default {
+            output += "VERIFY_NOT_REACHED();\n"
         }
+
         output += "}()))\n"
 
         return output
