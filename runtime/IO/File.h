@@ -6,10 +6,10 @@
 
 #pragma once
 
+#include <Builtins/Array.h>
 #include <Jakt/Error.h>
 #include <Jakt/RefCounted.h>
 #include <Jakt/String.h>
-#include <Builtins/Array.h>
 #include <stdio.h>
 
 namespace JaktInternal {
@@ -24,6 +24,8 @@ public:
     ErrorOr<Array<u8>> read_all();
 
     ~File();
+
+    static bool exists(String path);
 
 private:
     File();

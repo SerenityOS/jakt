@@ -118,6 +118,8 @@ extern class File {
     public function write(mut this, anon data: [u8]) throws -> usize
 
     public function read_all(mut this) throws -> [u8]
+
+    public function exists(anon path: String) -> bool
 }
 
 extern function abort()

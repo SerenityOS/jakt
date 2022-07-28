@@ -81,4 +81,15 @@ ErrorOr<size_t> File::write(Array<u8> data)
     }
     return nwritten;
 }
+
+bool File::exists(String path)
+{
+    // FIXME: This is a pretty sad-looking function. It could be better, but don't forget about Windows.
+    auto* file = fopen(path.c_string(), "r");
+    if (!file)
+        return false;
+    fclose(file);
+    return true;
+}
+
 }
