@@ -1979,7 +1979,11 @@ struct Typechecker {
         mut imported_module_id = ModuleId(id: 0)
         mut maybe_loaded_module = .program.get_loaded_module(import_.module_name.name)
         if not maybe_loaded_module.has_value() {
-            let file_name = FilePath::make(format("{}{}.jakt", .get_root_path().dirname(), import_.module_name.name))
+            let maybe_file_name = .compiler.search_for_path(import_.module_name.name)
+            let file_name = match maybe_file_name.has_value() {
+                true => maybe_file_name!
+                else => FilePath::make(format("{}{}.jakt", .get_root_path().dirname(), import_.module_name.name))
+            }
 
             let file_id = .compiler.get_file_id_or_register(file_name)
 

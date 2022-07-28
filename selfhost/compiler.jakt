@@ -13,6 +13,7 @@ class Compiler {
     public dump_parser: bool
     public ignore_parser_errors: bool
     public debug_print: bool
+    public include_paths: [String]
     public json_errors: bool
     public dump_type_hints: bool
     public dump_try_hints: bool
@@ -129,5 +130,16 @@ class Compiler {
         let file_name = FilePath::make(module_name)
         let file_contents = JaktPrelude::to_bytes()
         .get_file_id_or_register(file_name)
+    }
+
+    public function search_for_path(this, anon module_name: String) throws -> FilePath? {
+        for include_path in .include_paths.iterator() {
+            let candidate_path = include_path + "/" + module_name + ".jakt"
+            if File::exists(candidate_path) {
+                return FilePath::make(candidate_path)
+            }
+        }
+
+        return None
     }
 }
