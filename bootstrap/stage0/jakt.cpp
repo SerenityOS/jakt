@@ -33262,7 +33262,7 @@ if ((TRY(((file_path)->basename())) == String("g++"))){
 (color_flag = String("-fdiagnostics-color=always"));
 TRY(((extra_flags).push(String("-Wno-literal-suffix"))));
 }
-Array<String> compile_args = (TRY(Array<String>::create_with({cxx_compiler_path, color_flag, String("zipskdfsdflkj"), String("snip"), String("snap"), String("-std=c++20"), String("-Wno-unknown-warning-option"), String("-Wno-trigraphs"), String("-Wno-parentheses-equality"), String("-Wno-unqualified-std-cast-call"), String("-Wno-user-defined-literals"), String("-Wno-deprecated-declarations")})));
+Array<String> compile_args = (TRY(Array<String>::create_with({cxx_compiler_path, color_flag, String("-std=c++20"), String("-Wno-unknown-warning-option"), String("-Wno-trigraphs"), String("-Wno-parentheses-equality"), String("-Wno-unqualified-std-cast-call"), String("-Wno-user-defined-literals"), String("-Wno-deprecated-declarations")})));
 if (optimize){
 TRY(((compile_args).push(String("-O3"))));
 }
