@@ -416,9 +416,9 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
 
 	const lineBreaks = findLineBreaks(text);
 
-	textDocument.jaktInlayHints = [];
-
 	const stdout = await runCompiler(text, "-c --type-hints --try-hints -j" + includeFlagForPath(textDocument.uri), settings);
+
+	textDocument.jaktInlayHints = [];
 
 	const diagnostics: Diagnostic[] = [];
 
