@@ -19,6 +19,7 @@ function usage() => "usage: jakt [-h] [OPTIONS] <filename>"
 function help() -> String{
     mut output = "Flags:\n"
     output += "  -h,--help\t\tPrint this help and exit.\n"
+    output += "  -O\t\tBuild an optimized executable.\n"
     output += "  -dl\t\tPrint debug info for the lexer.\n"
     output += "  -dp\t\tPrint debug info for the parser.\n"
     output += "  -dt\t\tPrint debug info for the typechecker.\n"
@@ -68,6 +69,7 @@ function main(args: [String]) {
         return 0
     }
 
+    let optimize = args_parser.flag(["-O"])
     let lexer_debug = args_parser.flag(["-dl"])
     let parser_debug = args_parser.flag(["-dp"])
     let typechecker_debug = args_parser.flag(["-dt"])
@@ -279,7 +281,9 @@ function main(args: [String]) {
             runtime_path
             extra_include_paths
             extra_lib_paths
-            extra_link_libs)
+            extra_link_libs
+            optimize
+        )
 
         if run_executable {
             system(output_filename.c_string())
@@ -287,7 +291,7 @@ function main(args: [String]) {
     }
 }
 
-function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_filename: String, runtime_path: String, extra_include_paths: [String], extra_lib_paths: [String], extra_link_libs: [String]) throws {
+function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_filename: String, runtime_path: String, extra_include_paths: [String], extra_lib_paths: [String], extra_link_libs: [String], optimize: bool) throws {
     mut file_path = FilePath(path: cxx_compiler_path)
 
     mut color_flag: String = "-fcolor-diagnostics"
@@ -308,6 +312,10 @@ function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_fi
         "-Wno-user-defined-literals"
         "-Wno-deprecated-declarations"  
     ]
+
+    if optimize {
+        compile_args.push("-O3")
+    }
 
     if not extra_flags.is_empty() {
         for flag in extra_flags.iterator() {
