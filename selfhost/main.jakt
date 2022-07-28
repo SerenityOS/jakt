@@ -139,6 +139,7 @@ function main(args: [String]) {
         dump_parser: parser_debug
         ignore_parser_errors: false
         debug_print: debug_print
+        include_paths: extra_include_paths
         json_errors
         dump_type_hints
         dump_try_hints
