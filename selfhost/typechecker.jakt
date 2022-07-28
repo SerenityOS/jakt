@@ -4060,7 +4060,7 @@ struct Typechecker {
                     return_type_span: return_type.span()
                     params: []
                     generic_params: []
-                    block: CheckedBlock(statements: [], scope_id, definitely_returns: false, yielded_type: None)
+                    block: CheckedBlock(statements: [], scope_id, definitely_returns: false, never_returns: false, yielded_type: None)
                     can_throw
                     type: FunctionType::Normal
                     linkage: FunctionLinkage::Internal
