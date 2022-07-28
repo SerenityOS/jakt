@@ -615,7 +615,7 @@ struct TestScheduler {
 }
 
 function does_selfhost_need_update() throws -> bool {
-    let maybe_binary_stat = fs::stat_silencing_enoent(path: "build/main")
+    let maybe_binary_stat = fs::stat_silencing_enoent(path: "build/jakt")
     if not maybe_binary_stat.has_value() {
         return true
     }
@@ -657,7 +657,7 @@ function main(args: [String]) {
 
     if not parsed_options.assume_selfhost_updated and does_selfhost_need_update() {
         eprintln("[ \x1b[1;94mINFO\x1b[m ] Compiling selfhost to match source...")
-        if system("cargo run --color=always selfhost/main.jakt".c_string()) != 0 {
+        if system("ninja".c_string()) != 0 {
             eprintln("[ \x1b[1;31mFATAL\x1b[m ] Compiling selfhost failed!")
             return 1
         }
