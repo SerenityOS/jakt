@@ -12,7 +12,6 @@ patch script that patches the generated C++ from Jakt code to accept the externa
 As a list:
 
 - `ninja` (or `ninja-build` on some package managers)
-- `python` version `3.6+`
 - `clang++`
 
 ## How to run it?
