@@ -2203,8 +2203,8 @@ struct Typechecker {
                     .typecheck_enum_predecl(parsed_record, enum_id, scope_id)
                     enum_index++
                 }
-                else => {
-                    todo(format("typecheck_namespace_predecl: else {}", parsed_record.record_type))
+                Garbage => {
+                    // NOTE: The parser has already complained about this, so we can just ignore it.
                 }
             }
         }
