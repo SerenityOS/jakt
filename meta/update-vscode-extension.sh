@@ -31,9 +31,9 @@ then
     code --uninstall-extension JT.jakt
 fi
 
-# build and install the new version of the compiler
-echo "Building and installing most recent version of jakt compiler"
-cargo install --path .
+# build the new version of the compiler
+echo "Building the most recent version of the jakt compiler"
+cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=RelWithDebInfo && ninja -C build
 
 # build new vsix
 cd ./editors/vscode || error_and_exit "Failed to navigate to vscode directory"
@@ -46,7 +46,10 @@ code --install-extension "$NEW_VSIX_PATH"
 
 if code --list-extensions | grep -q jakt
 then
-    echo "Successfully updated"
+    echo "Successfully updated."
+    echo -e "\033[33m" # Yellow text color
+    echo -e "Make sure you set the \`Jakt Language Server > Compiler: Executable Path\` to \`build/jakt_stage3\`.\n"
+    echo -e "\033[0m" # reset text color
 else
     echo "Something went wrong"
 fi
