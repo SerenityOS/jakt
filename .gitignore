@@ -6,3 +6,4 @@ build
 .vscode/
 .idea/
 jakttest/.ninja_log
+.ninja_log
