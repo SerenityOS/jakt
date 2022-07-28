@@ -1,0 +1,10 @@
+/// Expect:
+/// - error: "Expected comma or newline before"
+
+function add(x: i64, y: i64) {
+    println("{}", x + y)
+}
+
+function main() {
+    add(x: 10 y: 3)
+}

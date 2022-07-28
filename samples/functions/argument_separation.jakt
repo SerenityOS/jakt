@@ -1,0 +1,19 @@
+/// Expect:
+/// - output: "13\n13\n11\n"
+
+function add(x: i64, y: i64) {
+    println("{}", x + y)
+}
+
+function main() {
+    add(
+        x: 10
+        y: 3
+    )
+    add(
+        x: 10
+
+        y: 3
+    )
+    add(x: 5, y: 6)
+}

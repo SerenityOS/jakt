@@ -3098,11 +3098,16 @@ struct Parser {
 
                 if .current() is LParen {
                     .index++
+                    if .current() is Eol {
+                        .index++
+                    }
                 } else {
                     .index = index_reset
                     .error("Expected '('", .current().span())
                     return None
                 }
+
+                mut argument_complete = false
 
                 while  not .eof() {
                     match .current() {
@@ -3111,15 +3116,27 @@ struct Parser {
                             break
                         }
                         Eol | Comma => {
+                            if not argument_complete {
+                                .error("Expected argument", .current().span())
+                            }
                             .index++
+                            argument_complete = false
+
+                            if .current() is Eol {
+                                .index++
+                            }
                         }
                         else => {
+                            if argument_complete {
+                                .error_with_hint("Expected comma or newline before", .current().span(), "Consider adding a comma or newline after this", .previous().span())
+                            }
+
                             let label_span = .current().span()
                             let label = .parse_argument_label()
 
                             let expr = .parse_expression(allow_assignments: false)
-
                             call.args.push((label, label_span, expr))
+                            argument_complete = true
                         }
                     }
                 }
