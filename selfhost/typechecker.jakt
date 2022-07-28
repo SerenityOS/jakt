@@ -1533,7 +1533,6 @@ struct Typechecker {
         )
 
         let tokens = Lexer::lex(compiler: .compiler)
-        .compiler.print_errors()
 
         if .compiler.dump_lexer {
             for token in tokens.iterator() {
@@ -1546,7 +1545,6 @@ struct Typechecker {
         if .compiler.dump_parser {
             println("{:#}", parsed_namespace)
         }
-        .compiler.print_errors()
 
         .compiler.dbg_println(format("before typechecking parsed prelude, modules `{}`", .program.modules))
         .typecheck_module(
@@ -1564,7 +1562,6 @@ struct Typechecker {
         defer .compiler.set_current_file(old_file_id)
 
         let tokens = Lexer::lex(compiler: .compiler)
-        .compiler.print_errors()
 
         if .compiler.dump_lexer {
             for token in tokens.iterator() {
@@ -1577,7 +1574,6 @@ struct Typechecker {
         if .compiler.dump_parser {
             println("{:#}", parsed_namespace)
         }
-        .compiler.print_errors()
 
         return parsed_namespace
     }
