@@ -5693,7 +5693,7 @@ struct Typechecker {
                                 }
 
                                 if not matched_variant.has_value() {
-                                    .error(format("Match case '{}' does not match enum '{}'", variant_names[0].0, enum_.name), span)
+                                    .error(format("Enum '{}' does not contain a variant named '{}'", enum_.name, variant_names[1].0), span)
                                     return CheckedExpression::Match(expr: checked_expr, match_cases: [], span, type_id: unknown_type_id(), all_variants_constant: false)
                                 }
 
