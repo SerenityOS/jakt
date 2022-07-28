@@ -1,0 +1,16 @@
+/// Expect:
+/// - output: "22\n"
+
+namespace Ns {
+    enum Bar {
+        A(i64)
+    }
+}
+
+function main() {
+    let foo = Ns::Bar::A(22);
+
+    match foo {
+        A(i) => println("{}", i)
+    }
+}

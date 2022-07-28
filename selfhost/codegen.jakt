@@ -2623,7 +2623,6 @@ struct CodeGenerator {
             }
             let qualifier = .codegen_namespace_qualifier(scope_id: checked_enum.scope_id)
             if not qualifier.is_empty() {
-                output += "typename "
                 output += qualifier
             }
             output += checked_enum.name

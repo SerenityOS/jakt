@@ -2191,7 +2191,6 @@ pub fn codegen_type_possibly_as_namespace(
                 let qualifier =
                     codegen_namespace_qualifier(project.get_enum(*enum_id).scope_id, project);
                 if !qualifier.is_empty() {
-                    output.push_str("typename ");
                     output.push_str(&qualifier);
                 }
                 output.push_str(&project.get_enum(*enum_id).name);
