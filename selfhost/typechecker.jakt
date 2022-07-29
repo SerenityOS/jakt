@@ -684,7 +684,6 @@ enum NumberConstant {
         Unsigned(value) => value as! usize
         Floating(value) => {
             panic("to_usize on a floating point constant")
-            yield 0uz
         }
     }
 }
@@ -707,7 +706,6 @@ function promote(anon num_const: NumberConstant, type_id: TypeId, program: Check
                 64 => CheckedNumericConstant::U64(value as! u64)
                 else => {
                     panic("Numeric constants can only be 8, 16, 32, or 64 bits long")
-                    yield CheckedNumericConstant::I64(0)
                 }
             }
             else => match bits {
@@ -717,7 +715,6 @@ function promote(anon num_const: NumberConstant, type_id: TypeId, program: Check
                 64 => CheckedNumericConstant::I64(value)
                 else => {
                     panic("Numeric constants can only be 8, 16, 32, or 64 bits long")
-                    yield CheckedNumericConstant::I64(0)
                 }
             }
         }
@@ -729,7 +726,6 @@ function promote(anon num_const: NumberConstant, type_id: TypeId, program: Check
                 64 => CheckedNumericConstant::U64(value)
                 else => {
                     panic("Numeric constants can only be 8, 16, 32, or 64 bits long")
-                    yield CheckedNumericConstant::I64(0)
                 }
             }
             else => match bits {
@@ -739,7 +735,6 @@ function promote(anon num_const: NumberConstant, type_id: TypeId, program: Check
                 64 => CheckedNumericConstant::I64(value as! i64)
                 else => {
                     panic("Numeric constants can only be 8, 16, 32, or 64 bits long")
-                    yield CheckedNumericConstant::I64(0)
                 }
             }
         }
@@ -752,12 +747,10 @@ function promote(anon num_const: NumberConstant, type_id: TypeId, program: Check
                 64 => CheckedNumericConstant::F64(value)
                 else => {
                     panic("Floating numeric constants can only be 8, 16, 32, or 64 bits long")
-                    yield CheckedNumericConstant::I64(0)
                 }
             }
             else => {
                 panic("Floating numeric constant cannot be unsigned")
-                yield CheckedNumericConstant::I64(0)
             }
         }
     }
@@ -1145,7 +1138,6 @@ class CheckedProgram {
         }
 
         .compiler.panic(format("internal error: {} builtin definition not found", name))
-        return StructId(module: ModuleId(id: 0), id: 0)
     }
 
     // Checks given struct id is weak ptr and
@@ -1180,7 +1172,6 @@ class CheckedProgram {
             }
 
             .compiler.panic("should be unreachable")
-            return None // FIXME: control flow analysis
         } else {
             return None
         }
@@ -1442,13 +1433,11 @@ struct Typechecker {
             // Check that the ModuleId is valid
             if parent_scope_id!.module_id.id >= .program.modules.size() {
                 .compiler.panic(format("create_scope: parent_scope_id.module is invalid! No module with id {}.", parent_scope_id!.module_id.id))
-                return .prelude_scope_id()
             }
 
             // Check that ScopeId.id is valid in the module
             if parent_scope_id!.id >= .program.modules[parent_scope_id!.module_id.id].scopes.size() {
                 .compiler.panic(format("create_scope: parent_scope_id.id is invalid! Module {} does not have a scope with id {}.", parent_scope_id!.module_id.id, parent_scope_id!.id))
-                return .prelude_scope_id()
             }
         }
 
@@ -1602,7 +1591,6 @@ struct Typechecker {
             return type_id.value()
         }
         .compiler.panic(format("internal error: {} builtin definition not found", name))
-        return TypeId(module: ModuleId(id: 0), id: 0)
     }
 
     function try_to_promote_constant_expr_to_type(mut this, lhs_type: TypeId, checked_rhs: CheckedExpression, span: Span) throws -> CheckedExpression? {
@@ -1958,8 +1946,6 @@ struct Typechecker {
             Class(fields) => fields
             else => {
                 .compiler.panic("typecheck_struct_fields cannot handle non-structs")
-                let none: [ParsedField] = []
-                yield none
             }
         }
 
@@ -3389,7 +3375,7 @@ struct Typechecker {
 
     function statement_never_returns(this, anon statement: CheckedStatement) => match statement {
         Expression(expr) => match expr {
-            Call(call) => {
+            MethodCall(call) | Call(call) => {
                 mut never_returns = false
                 if call.function_id.has_value() {
                     never_returns = .get_function(call.function_id!).return_type_id.equals(never_type_id())
@@ -3398,6 +3384,7 @@ struct Typechecker {
             }
             else => false
         }
+        Block(block) => block.never_returns
         else => false
     }
 
@@ -4088,7 +4075,6 @@ struct Typechecker {
 
         // FIXME: This is unreachable but the generated C++ causes a warning.
         .compiler.panic("should be unreachable")
-        return unknown_type_id()
     }
 
     function typecheck_generic_resolved_type(mut this, name: String, checked_inner_types: [TypeId], scope_id: ScopeId, span: Span) throws -> TypeId {
@@ -4210,9 +4196,7 @@ struct Typechecker {
             I32 => CheckedNumericConstant::I32(negated_number as! i32)
             I64 => CheckedNumericConstant::I64(negated_number as! i64)
             else => {
-                // FIXME: Unreachable
                 panic("Unreachable")
-                yield CheckedNumericConstant::I64(negated_number as! i64)
             }
         }
 
@@ -5088,7 +5072,6 @@ struct Typechecker {
                 }
                 else => {
                     .compiler.panic("typecheck_call should return `CheckedExpression::Call()`")
-                    yield CheckedExpression::Garbage(span)
                 }
             }
 
@@ -5362,8 +5345,6 @@ struct Typechecker {
         Function(captures, params, can_throw, return_type, block, span) => .typecheck_lambda(captures, params, can_throw, return_type, block, span, scope_id, safety_mode)
         else => {
             .compiler.panic(format("typechecker needs support for {}", expr))
-
-            yield CheckedExpression::Boolean(val: false, span: Span(file_id: .compiler.current_file!, start: 0, end: 0))
         }
     }
 
@@ -5452,8 +5433,6 @@ struct Typechecker {
             Call(call) => call
             else => {
                 .compiler.panic("typecheck_call returned something other than a CheckedCall")
-                // FIXME: Unreachable
-                yield CheckedCall(namespace_: [], name: "", args: [], type_args: [], function_id: None, return_type: builtin(BuiltinType::Void), callee_throws: true)
             }
         }
         if call.function_id.has_value() {
@@ -5594,7 +5573,9 @@ struct Typechecker {
                     }
                     inner_type_id = args[0]
                 }
-                else => panic("expected Set struct")
+                else => {
+                    panic("expected Set struct")
+                }
             }
         }
 
@@ -6020,7 +6001,7 @@ struct Typechecker {
             Block(block) => {
                 let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: scope_id, safety_mode)
 
-                if not checked_block.definitely_returns {
+                if not checked_block.definitely_returns and not checked_block.never_returns {
                     let block_type_id = checked_block.yielded_type ?? void_type_id()
                     let yield_span = block.find_yield_span() ?? span
 
@@ -6037,7 +6018,7 @@ struct Typechecker {
                 }
 
                 mut final_body: CheckedMatchBody? = None
-                if checked_block.yielded_type.has_value() {
+                if checked_block.yielded_type.has_value() and not checked_block.never_returns {
                     final_body = CheckedMatchBody::Expression(CheckedExpression::Block(
                         block: checked_block
                         span

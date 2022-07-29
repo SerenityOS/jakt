@@ -957,7 +957,6 @@ function get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> 
                 Struct => "struct "
                 else => {
                     panic("unreachable: should've been struct")
-                    yield ""
                 }
             } + struct_.name
         }
@@ -1053,7 +1052,6 @@ function get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> 
                 Struct => "struct "
                 ValueEnum | SumEnum => {
                     panic("unreachable: can't be an enum")
-                    yield ""
                 }
                 Garbage => ""
             }
@@ -1197,7 +1195,6 @@ function get_enum_variant_usage_from_type_id_and_name(program: CheckedProgram, t
         panic("unreachable: should have found variant")
     }
     panic("unreachable: should have found enum")
-    return Usage::Typename(type_id)
 }
 
 function enum_variant_fields(program: CheckedProgram, checked_enum_variant: CheckedEnumVariant) throws -> [(String?, TypeId)] {

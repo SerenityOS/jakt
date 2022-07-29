@@ -18,7 +18,7 @@ class Compiler {
     public dump_type_hints: bool
     public dump_try_hints: bool
 
-    public function panic(this, anon message: String) throws {
+    public function panic(this, anon message: String) throws -> never {
         .print_errors()
         utility::panic(message)
     }
@@ -109,7 +109,9 @@ class Compiler {
                 (ErrACCES) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied", .files[file_id.id].path)
                 (ErrFBIG) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: File too big", .files[file_id.id].path)
                 (ErrNAMETOOLONG) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: Name too long", .files[file_id.id].path)
-                else => utility::panic("Incurred unrecognized error while trying to open file")
+                else => {
+                    utility::panic("Incurred unrecognized error while trying to open file")
+                }
             }
 
             .current_file = old_file_id
