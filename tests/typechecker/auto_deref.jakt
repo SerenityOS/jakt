@@ -1,5 +1,5 @@
 /// Expect: selfhost-only
-/// output: "arithmetic 586, boolean true, unary -70, match 1, access 139, index 0, brackets 0"
+/// - output: "arithmetic 586, boolean true, unary -70, match 1, access 139, index 0, brackets 0\n"
 
 function deref_arithmetic_binary(anon foo: &i32) -> i32 {
     return (
