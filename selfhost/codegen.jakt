@@ -10,7 +10,7 @@ import typechecker {
     BuiltinType, CheckedBlock, CheckedCall, CheckedExpression,
     CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
     Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId, expression_can_throw, expression_type,
-    CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id,
+    CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id, never_type_id,
     CheckedVariable }
 import utility { panic, todo, join, prepend_to_each, Span }
 import compiler { Compiler }
@@ -115,7 +115,6 @@ struct CodegenDebugInfo {
         }
 
         panic("Reached end of file and could not find index")
-        return ""
     }
 
     function gather_line_spans(mut this) throws {
@@ -206,7 +205,6 @@ struct CodeGenerator {
         }
 
         panic("Cyclic module imports")
-        return []
     }
 
     function generate(compiler: Compiler, anon program: CheckedProgram, debug_info: bool) throws -> String {
@@ -720,6 +718,10 @@ struct CodeGenerator {
 
         output += .codegen_function_generic_parameters(function_)
 
+        if function_.return_type_id.equals(never_type_id()) {
+            output += "[[noreturn]] "
+        }
+
         if function_.name == "main" {
             output += "ErrorOr<int>"
         } else {
@@ -1225,8 +1227,6 @@ struct CodeGenerator {
                 GenericInstance(id, args) => args[0]
                 else => {
                     panic("Internal error: range expression doesn't have Range type")
-                    // FIXME: panic() should be "noreturn" and this can be removed
-                    yield unknown_type_id()
                 }
             }
             output += "("
@@ -1330,7 +1330,6 @@ struct CodeGenerator {
                                 GenericInstance(args) => args[0]
                                 else => {
                                     panic("Fallible type cast must have Optional result.")
-                                    yield type_id
                                 }
                             }
                             mut cast_type = "dynamic_cast"
@@ -1687,8 +1686,6 @@ struct CodeGenerator {
                             Enum(id) => id
                             else => {
                                 panic("Expected enum type")
-                                // FIXME: unreachable
-                                yield EnumId(module: ModuleId(id: 0), id: 0)
                             }
                         }
                         let match_case_enum = .program.get_enum(enum_id)
@@ -1956,7 +1953,6 @@ struct CodeGenerator {
             Modulo => "checked_mod"
             else => {
                 panic(format("Checked binary operation codegen is not supported for BinaryOperator::{}", op))
-                yield ""
             }
         }
 
@@ -1987,7 +1983,6 @@ struct CodeGenerator {
             ModuloAssign => "checked_mod"
             else => {
                 panic(format("Checked binary operation assignment codegen is not supported for BinaryOperator::{}", op))
-                yield ""
             }
         }
         output += "<"
@@ -2355,8 +2350,7 @@ struct CodeGenerator {
             }
             Block(block) => .codegen_block(block)
             Garbage => {
-                panic("Garbage statement in codegen") // FIXME: panic() should be `noreturn` and no `yield` should be necessary:
-                yield ""
+                panic("Garbage statement in codegen")
             }
             DestructuringAssignment(vars, var_decl) => {
                 mut output = ""
@@ -2491,6 +2485,7 @@ struct CodeGenerator {
         JaktString => "String"
         CChar => "char"
         CInt => "int"
+        Never => "void"
         RawPtr(type_id) => .codegen_type(type_id) + "*"
         Reference(type_id) => .codegen_type(type_id) + " const&"
         MutableReference(type_id) => .codegen_type(type_id) + "&"
@@ -2817,7 +2812,6 @@ struct CodeGenerator {
             }
             else => {
                 panic("internal error: call to a constructor, but not a struct/class type")
-                return ""
             }
         }
         return ""
@@ -2838,6 +2832,9 @@ struct CodeGenerator {
 
         let is_main = function_.name == "main" and not containing_struct.has_value()
 
+        if function_.return_type_id.equals(never_type_id()) {
+            output += "[[noreturn]] "
+        }
         if is_main {
             output += "ErrorOr<int>"
         } else {

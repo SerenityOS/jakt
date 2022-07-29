@@ -157,7 +157,6 @@ function parse_quoted_string(anon quote: String) throws -> String {
                 b'v' => "\x0b"
                 else => {
                     panic(format("Unknown escape character: '{}'", ch))
-                    yield ""
                 }
             }
             builder.append_string(escape)

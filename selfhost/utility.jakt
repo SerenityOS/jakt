@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
-function panic(anon message: String) -> void {
+function panic(anon message: String) -> never {
     eprintln("internal error: {}", message)
     abort()
 }

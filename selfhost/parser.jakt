@@ -2247,7 +2247,9 @@ struct Parser {
 
                         expr_stack.push(ParsedExpression::BinaryOp(lhs, op, rhs, span: new_span))
                     }
-                    else => .compiler.panic("operator is not an operator")
+                    else => {
+                        .compiler.panic("operator is not an operator")
+                    }
                 }
             }
 
@@ -2267,7 +2269,9 @@ struct Parser {
                     let new_span = merge_spans(lhs.span(), rhs.span())
                     expr_stack.push(ParsedExpression::BinaryOp(lhs, op, rhs, span: new_span))
                 }
-                else => .compiler.panic("operator is not an operator")
+                else => {
+                    .compiler.panic("operator is not an operator")
+                }
             }
         }
 
@@ -2410,9 +2414,7 @@ struct Parser {
                 MinusMinus => UnaryOperator::PreDecrement
                 Minus => UnaryOperator::Negate
                 else => {
-                    // FIXME: This is unreachable
                     .compiler.panic("unreachable")
-                    yield UnaryOperator::Negate
                 }
             }
 
