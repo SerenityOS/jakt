@@ -4051,6 +4051,12 @@ struct Typechecker {
                         yield default_name
                     }
                 }
+                mut checked_params: [CheckedParameter] = []
+                mut first = true
+                for param in params.iterator() {
+                    checked_params.push(.typecheck_parameter(parameter: param, scope_id, first, this_arg_type_id: None, check_scope: None))
+                    first = false
+                }
 
                 let checked_function = CheckedFunction(
                     name: function_name
@@ -4058,7 +4064,7 @@ struct Typechecker {
                     visibility: Visibility::Public
                     return_type_id: .typecheck_typename(parsed_type: return_type, scope_id, name: None)
                     return_type_span: return_type.span()
-                    params: []
+                    params: checked_params
                     generic_params: []
                     block: CheckedBlock(statements: [], scope_id, definitely_returns: false, never_returns: false, yielded_type: None)
                     can_throw
@@ -4073,7 +4079,7 @@ struct Typechecker {
                 .add_function_to_scope(parent_scope_id: scope_id, name: checked_function.name, function_id, span)
                 mut param_type_ids: [TypeId] = []
                 for param in params.iterator() {
-                    param_type_ids.push(.typecheck_typename(parsed_type: param, scope_id, name))
+                    param_type_ids.push(.typecheck_typename(parsed_type: param.variable.parsed_type, scope_id, name))
                 }
                 let return_type_id = .typecheck_typename(parsed_type: return_type, scope_id, name)
                 return .find_or_add_type_id(Type::Function(params: param_type_ids, can_throw, return_type_id))
@@ -5362,6 +5368,8 @@ struct Typechecker {
     }
 
     function typecheck_lambda(mut this, captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, return_type: ParsedType, block: ParsedBlock, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
+        let lambda_scope_id = .create_scope(parent_scope_id: scope_id, can_throw, debug_name: "lambda")
+        
         mut checked_captures: [CheckedCapture] = []
         for capture in captures.iterator() {
             match .find_var_in_scope(scope_id, var: capture.name()).has_value() { // FIXME: this wants to be a match on Optional instead of boolean
@@ -5377,13 +5385,18 @@ struct Typechecker {
                 }
             }
         }
+        mut module = .current_module()
         mut checked_params: [CheckedParameter] = []
         mut first = true
         for param in params.iterator() {
-            checked_params.push(.typecheck_parameter(parameter: param, scope_id, first, this_arg_type_id: None, check_scope: None))
+            let checked_param = .typecheck_parameter(parameter: param, scope_id, first, this_arg_type_id: None, check_scope: None)
+            checked_params.push(checked_param)
+            let var_id = module.add_variable(checked_param.variable)
+            .add_var_to_scope(scope_id: lambda_scope_id, name: checked_param.variable.name, var_id, span: checked_param.variable.definition_span)
+
             first = false
         }
-        let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: scope_id, safety_mode)
+        let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: lambda_scope_id, safety_mode)
         mut param_type_ids: [TypeId] = []
         for param in params.iterator() {
             param_type_ids.push(.typecheck_typename(parsed_type: param.variable.parsed_type, scope_id, name: param.variable.name))

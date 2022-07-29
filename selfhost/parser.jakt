@@ -576,7 +576,7 @@ boxed enum ParsedType {
     MutableReference(inner: ParsedType, span: Span)
     RawPtr(inner: ParsedType, span: Span)
     WeakPtr(inner: ParsedType, span: Span)
-    Function(params: [ParsedType], can_throw: bool, return_type: ParsedType, span: Span)
+    Function(params: [ParsedParameter], can_throw: bool, return_type: ParsedType, span: Span)
     Empty
 
     function span(this) => match this {
@@ -1770,28 +1770,8 @@ struct Parser {
         Function => {
             let start = .current().span()
             .index++
-            mut param_types: [ParsedType] = []
 
-            match .current() {
-                LParen => {
-                    .index++
-                }
-                else => {
-                    .error("Expected '('", .current().span())
-                }
-            }
-
-            while not .eof() {
-                match .current() {
-                    RParen => {
-                        .index++
-                        break;
-                    }
-                    else => {
-                        param_types.push(.parse_typename())
-                    }
-                }
-            }
+            let params = .parse_function_parameters()
 
             let can_throw = .current() is Throws
             if can_throw {
@@ -1809,7 +1789,7 @@ struct Parser {
                 }
             }
 
-            yield ParsedType::Function(params: param_types, can_throw, return_type, span: merge_spans(start, return_type.span()))
+            yield ParsedType::Function(params, can_throw, return_type, span: merge_spans(start, return_type.span()))
         }
         else => {
             .error("Expected type name", .current().span())
