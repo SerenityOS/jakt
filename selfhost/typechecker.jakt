@@ -1507,7 +1507,13 @@ struct Typechecker {
         let file_name = FilePath::make(module_name)
         let file_contents = JaktPrelude::to_bytes()
 
-        let old_file_id = .compiler.current_file!
+        let old_file_id = .compiler.current_file
+        let old_file_contents = .compiler.current_file_contents
+        defer {
+            .compiler.current_file = old_file_id
+            .compiler.current_file_contents = old_file_contents
+        }
+
         let file_id = .compiler.get_file_id_or_register(file_name)
 
         // We manually set the compiler's current_file and current_file_contents fields here
@@ -1515,8 +1521,6 @@ struct Typechecker {
 
         .compiler.current_file = file_id
         .compiler.current_file_contents = file_contents
-
-        defer .compiler.set_current_file(old_file_id)
 
         // we are using the root module (so it doesn't have to be optional)
         let prelude_module_id = .create_module(name: module_name, is_root: false)
