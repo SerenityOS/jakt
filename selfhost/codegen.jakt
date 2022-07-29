@@ -1420,15 +1420,15 @@ struct CodeGenerator {
             mut output = ""
             if repeat.has_value() {
                 let repeat_val = repeat.value()
-                output += "(TRY(Array<"
+                output += "(TRY((Array<"
                 output += .codegen_type(inner_type_id)
                 output += ">::filled("
                 output += .codegen_expression(repeat_val)
                 output += ", "
                 output += .codegen_expression(vals[0])
-                output += ")))"
+                output += "))))"
             } else {
-                output += "(TRY(Array<"
+                output += "(TRY((Array<"
                 output += .codegen_type(inner_type_id)
                 output += ">::create_with({"
                 mut first = true
@@ -1441,13 +1441,13 @@ struct CodeGenerator {
 
                     output += .codegen_expression(val)
                 }
-                output += "})))"
+                output += "}))))"
             }
 
             yield output
         }
         JaktDictionary(vals, span, type_id, key_type_id, value_type_id) => {
-            mut output = format("(TRY(Dictionary<{}, {}>::create_with_entries({{",
+            mut output = format("(TRY((Dictionary<{}, {}>::create_with_entries({{",
                 .codegen_type(key_type_id),
                 .codegen_type(value_type_id))
 
@@ -1469,14 +1469,14 @@ struct CodeGenerator {
                 output += "}"
             }
 
-            output += "})))"
+            output += "}))))"
 
             yield output
         }
 
         JaktSet(vals, span, type_id, inner_type_id) => {
             mut output = ""
-            output += format("(TRY(Set<{}>::create_with_values({{", .codegen_type(inner_type_id))
+            output += format("(TRY((Set<{}>::create_with_values({{", .codegen_type(inner_type_id))
             mut first = true
             for value in vals.iterator() {
                 if not first {
@@ -1486,7 +1486,7 @@ struct CodeGenerator {
                 }
                 output += .codegen_expression(value)
             }
-            output += "})))"
+            output += "}))))"
             yield output
         }
         JaktTuple(vals, span, type_id) => {
@@ -1812,7 +1812,7 @@ struct CodeGenerator {
             mut output = ""
 
             if rhs_can_throw {
-                output += "TRY("
+                output += "TRY(("
             }
 
             output += .codegen_expression(lhs)
@@ -1848,7 +1848,7 @@ struct CodeGenerator {
             output += "; })"
 
             if rhs_can_throw {
-                output += ")"
+                output += "))"
             }
 
             return output
@@ -1997,7 +1997,7 @@ struct CodeGenerator {
     function codegen_method_call(mut this, expr: CheckedExpression, call: CheckedCall) throws -> String {
         mut output = ""
         if call.callee_throws {
-            output += "TRY("
+            output += "TRY(("
         }
 
         output += "(("
@@ -2054,7 +2054,7 @@ struct CodeGenerator {
         output += "))"
 
         if call.callee_throws {
-            output += ")"
+            output += "))"
         }
         return output
     }
@@ -2063,7 +2063,7 @@ struct CodeGenerator {
         mut output = ""
 
         if call.callee_throws {
-            output += "TRY("
+            output += "TRY(("
         }
         match call.name {
             "print" | "println" | "eprintln" | "eprint" | "format" => {
@@ -2199,7 +2199,7 @@ struct CodeGenerator {
         }
 
         if call.callee_throws {
-            output += ")"
+            output += "))"
         }
 
         return output
