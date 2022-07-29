@@ -8,11 +8,10 @@
 import parser { BinaryOperator, FunctionLinkage }
 import typechecker {
     BuiltinType, CheckedBlock, CheckedCall, CheckedExpression,
-    CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct, VarId
-    Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId, expression_type,
+    CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
+    Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId, expression_can_throw, expression_type,
     CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id, never_type_id,
-    CheckedEnumVariant, CheckedEnumVariantBinding, CheckedVariable
-}
+    CheckedVariable }
 import utility { panic, todo, join, prepend_to_each, Span }
 import compiler { Compiler }
 

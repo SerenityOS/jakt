@@ -4698,10 +4698,9 @@ struct Typechecker {
         match checked_condition {
             UnaryOp(expr, op) => match op {
                 IsEnumVariant(enum_variant, bindings, type_id) => {
-                    mut module = .current_module()
-                    let can_throw = .get_scope(scope_id).can_throw
                     block_scope_id = .create_scope(parent_scope_id: scope_id, can_throw, debug_name: "block")
                     for binding in bindings.iterator() {
+                        mut module = .current_module()
                         let var_id = module.add_variable(CheckedVariable(
                             name: binding.binding
                             type_id: binding.type_id
@@ -4800,7 +4799,7 @@ struct Typechecker {
         let lhs_type = .get_type(lhs_type_id)
 
         .check_that_type_doesnt_contain_reference(type_id: lhs_type_id, span)
-
+        
         match lhs_type {
             GenericInstance(id, args) => {
                 if id.equals(weak_ptr_struct_id) {

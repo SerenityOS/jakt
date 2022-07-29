@@ -1185,6 +1185,8 @@ struct Parser {
             underlying_type = .parse_typename()
         }
 
+        .skip_newlines()
+
         if .eof() {
             .error("Incomplete enum definition, expected body", .current().span())
             return parsed_enum
@@ -1348,6 +1350,8 @@ struct Parser {
         // Generic parameters
         parsed_struct.generic_parameters = .parse_generic_parameters()
 
+        .skip_newlines()
+
         if .eof() {
             .error("Incomplete struct definition, expected body", .current().span())
             return parsed_struct
@@ -1414,6 +1418,8 @@ struct Parser {
             super_class = .parse_typename()
         }
 
+        .skip_newlines()
+
         if .eof() {
             .error("Incomplete class definition, expected body", .current().span())
             return parsed_class
@@ -1436,6 +1442,9 @@ struct Parser {
                 .error("Expected '('", .current().span())
             }
         }
+
+        .skip_newlines()
+
         mut params: [ParsedParameter] = []
         mut current_param_requires_label = true
         mut current_param_is_mutable = false
@@ -1450,7 +1459,7 @@ struct Parser {
                     .index++
                     break
                 }
-                Comma => {
+                Comma | Eol => {
                     if not parameter_complete and not error {
                         .error("Expected parameter", .current().span())
                         error = true
@@ -2185,8 +2194,11 @@ struct Parser {
 
         mut else_statement: ParsedStatement? = None
 
+        .skip_newlines()
+
         if .current() is Else {
             .index++
+            .skip_newlines()
             match .current() {
                 If => {
                     // This is an `else if`
