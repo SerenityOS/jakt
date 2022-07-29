@@ -1738,6 +1738,35 @@ struct Typechecker {
         return None
     }
 
+    function find_type_scope(this, scope_id: ScopeId, name: String) throws -> (TypeId, ScopeId)? {
+        mut current = scope_id
+
+        loop {
+            let scope = .get_scope(current)
+            let maybe_type = scope.types.get(name)
+            if maybe_type.has_value() {
+                return (maybe_type!, current)
+            }
+            for child_id in scope.children.iterator() {
+                let child_scope = .get_scope(id: child_id)
+                if not child_scope.namespace_name.has_value() {
+                    let maybe_type = child_scope.types.get(name)
+                    if maybe_type.has_value() {
+                        return (maybe_type!, child_id)
+                    }
+                }
+            }
+
+            if scope.parent.has_value() {
+                current = scope.parent.value()
+            } else {
+                break
+            }
+        }
+
+        return None
+    }
+
 
     // Find the namespace in the current scope, or one of its parents,
     // and whether the found scope was an import.
@@ -3928,6 +3957,13 @@ struct Typechecker {
                 }
             }
             Name(name, span) => {
+                let maybe_type_and_scope = .find_type_scope(scope_id, name)
+                if maybe_type_and_scope.has_value() {
+                    if not maybe_type_and_scope!.1.equals(.prelude_scope_id()) {
+                        return maybe_type_and_scope!.0
+                    }
+                }
+
                 return match name {
                     "i8" => builtin(BuiltinType::I8)
                     "i16" => builtin(BuiltinType::I16)
@@ -3947,14 +3983,12 @@ struct Typechecker {
                     "void" => builtin(BuiltinType::Void)
                     "never" => builtin(BuiltinType::Never)
                     else => {
-                        let type_id = .find_type_in_scope(scope_id, name)
-
-                        if type_id.has_value() {
-                            return type_id.value()
-                        } else {
-                            .error(format("Unknown type ‘{}’", name), span)
-                            return unknown_type_id()
+                        if maybe_type_and_scope.has_value() {
+                            return maybe_type_and_scope!.0
                         }
+
+                        .error(format("Unknown type ‘{}’", name), span)
+                        return unknown_type_id()
                     }
                 }
             }
