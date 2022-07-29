@@ -1658,7 +1658,11 @@ struct Typechecker {
         IndexedDictionary(expr) => .expression_is_mutable(expr)
         ForcedUnwrap(expr) => .expression_is_mutable(expr)
         UnaryOp(expr, op) => match op {
-            Dereference => .get_type(expression_type(expr)) is MutableReference
+            Dereference => match .get_type(expression_type(expr)) {
+                MutableReference => true
+                RawPtr => .expression_is_mutable(expr)
+                else => false
+            }
             else => false
         }
         MethodCall(expr) => .expression_is_mutable(expr)
