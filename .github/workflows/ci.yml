@@ -25,14 +25,15 @@ jobs:
       - name: Lint samples
         run: python ./meta/lint_samples.py
 
-  selfhost-linux:
+  selfhost:
     strategy:
       fail-fast: true
       matrix:
-        platform: [ubuntu-latest]
-        style: [default]
-        rust:
-          - stable
+        platform: [ubuntu-22.04]
+        cxx_compiler: [clang++-14]
+        include:
+          - platform: macos-latest
+            cxx_compiler: "$(brew --prefix llvm@14)/bin/clang++"
 
     runs-on: ${{ matrix.platform }}
 
@@ -44,27 +45,16 @@ jobs:
           # ninja version to download. Default: 1.10.0
           version: 1.10.0
 
-      - name: Test Jakt Selfhost
-        run: ninja && ninja -C jakttest && ./jakttest/build/jakttest
+      - name: Install macOS dependencies
+        if: ${{ matrix.platform == 'macos-latest' }}
+        run: brew install coreutils
 
-  selfhost-macos:
-    strategy:
-      fail-fast: true
-      matrix:
-        platform: [macos-latest]
-        style: [default]
-        rust:
-          - stable
+      - name: Build Jakt Selfhost
+        run: |
+          cmake -GNinja -B build -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }} -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
 
-    runs-on: ${{ matrix.platform }}
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Ninja
-        uses: ashutoshvarma/setup-ninja@master
-        with:
-          # ninja version to download. Default: 1.10.0
-          version: 1.10.0
-
-      - name: Test Jakt Selfhost
-        run: brew install coreutils && ninja && ninja -C jakttest && ./jakttest/build/jakttest
+      - name: Test Jakt selfhost
+        run: |
+          ninja -C jakttest
+          ./jakttest/build/jakttest --assume-updated-selfhost --assume-updated
