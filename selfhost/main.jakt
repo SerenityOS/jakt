@@ -28,6 +28,7 @@ function help() -> String{
     output += "  -d\t\tInsert debug statement spans in generated C++ code.\n"
     output += "  --debug-print\t\tOutput debug print.\n"
     output += "  --prettify-cpp-source\t\tRun emitted C++ source through clang-format.\n" // FIXME: Add -p flag to be the same as rust compiler.
+    output += "  -S,--emit-cpp-source-only\t\tWrite the C++ source to file, even when not building/\n"
     output += "  -c,--check-only\t\tOnly check the code for errors.\n"
     output += "  -j,--json-errors\t\tEmit machine-readable (JSON) errors.\n"
     output += "  -H,--type-hints\t\tEmit machine-readable type hints (for IDE integration).\n"
@@ -251,6 +252,7 @@ function main(args: [String]) {
     mut output_filename: String = ""
 
     if (write_source_to_file or build_executable or run_executable) {
+        
         if set_output_filename.has_value() {
             cpp_filename = binary_dir + "/" + set_output_filename! + ".cpp"
             output_filename = binary_dir + "/" + set_output_filename!
