@@ -793,7 +793,7 @@
         },
         {
           "name": "keyword.operator.arithmetic.jakt",
-          "match": "(\\+|\\-|\\*|\\/|\\^|\\~)(=)?"
+          "match": "(\\+|\\-|\\*|\\/|\\^|\\~|\\%)(=)?"
         },
         {
           "name": "keyword.operator.comparison.jakt",
