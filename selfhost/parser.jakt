@@ -1441,6 +1441,9 @@ struct Parser {
                 .error("Expected '('", .current().span())
             }
         }
+
+        .skip_newlines()
+
         mut params: [ParsedParameter] = []
         mut current_param_requires_label = true
         mut current_param_is_mutable = false
@@ -1455,7 +1458,7 @@ struct Parser {
                     .index++
                     break
                 }
-                Comma => {
+                Comma | Eol => {
                     if not parameter_complete and not error {
                         .error("Expected parameter", .current().span())
                         error = true
