@@ -1184,6 +1184,8 @@ struct Parser {
             underlying_type = .parse_typename()
         }
 
+        .skip_newlines()
+
         if .eof() {
             .error("Incomplete enum definition, expected body", .current().span())
             return parsed_enum
@@ -1347,6 +1349,8 @@ struct Parser {
         // Generic parameters
         parsed_struct.generic_parameters = .parse_generic_parameters()
 
+        .skip_newlines()
+
         if .eof() {
             .error("Incomplete struct definition, expected body", .current().span())
             return parsed_struct
@@ -1412,6 +1416,8 @@ struct Parser {
             .index++
             super_class = .parse_typename()
         }
+
+        .skip_newlines()
 
         if .eof() {
             .error("Incomplete class definition, expected body", .current().span())
