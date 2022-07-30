@@ -3449,6 +3449,12 @@ struct Typechecker {
         )
         checked_function.return_type_id = function_return_type_id
 
+        if function_return_type_id.equals(never_type_id()) {
+            // Allow noreturn functions to call throwing functions, they'll just be forced to crash.
+            mut scope = .get_scope(function_scope_id)
+            scope.can_throw = true
+        }
+
         // TODO: Typecheck function block
         let block = .typecheck_block(
             parsed_function.block
