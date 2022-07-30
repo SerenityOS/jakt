@@ -1,6 +1,8 @@
 /// Expect:
-/// - error: "‘yield’ can only be used inside a block"
+/// - error: "A block used as a statement cannot yield values, as the value cannot be observed in any way"
 
 function main() {
-    try yield 1 catch {}
+    try {
+        yield 1
+    } catch {}
 }

@@ -1557,6 +1557,112 @@ struct CodeGenerator {
             }
             yield format("[{}]({}) -> {} {}", join(generated_captures, separator: ", "), join(generated_params, separator: ", "), return_type, .codegen_block(block))
         }
+        TryBlock(stmt, error_name, catch_block, span) => {
+            mut output = ""
+            let try_var = .fresh_var()
+
+            output += "auto "
+            output += try_var
+            output += " = [&]() -> ErrorOr<void> {"
+            let last_control_flow = .control_flow_state
+            .control_flow_state.passes_through_match = false
+            .control_flow_state.passes_through_try = true
+            output += .codegen_statement(statement: stmt)
+            output += ";"
+            output += "return {};"
+            output += "}();\n"
+
+            output += "if ("
+            output += try_var
+            output += ".is_error()) {"
+            if not error_name.is_empty() {
+                output += "auto "
+                output += error_name
+                output += " = "
+                output += try_var
+                output += ".release_error();"
+            }
+            output += .codegen_block(block: catch_block)
+            .control_flow_state = last_control_flow
+            output += "}"
+
+            yield output
+        }
+        Try(expr, catch_block, catch_name, span, type_id, inner_type_id) => {
+            mut output = ""
+            let fresh_var = .fresh_var()
+            let fresh_label = .fresh_label()
+            let is_void = inner_type_id.equals(void_type_id())
+            let try_var = .fresh_var()
+
+            .entered_yieldable_blocks.push((fresh_var, fresh_label))
+
+            let last_control_flow = .control_flow_state
+            .control_flow_state.passes_through_match = false
+            .control_flow_state.passes_through_try = true
+            defer {
+                .control_flow_state = last_control_flow
+            }
+
+            if not is_void {
+                output += "({ Optional<"
+                output += .codegen_type(inner_type_id)
+                output += "> "
+                output += fresh_var
+                output += ";\n"
+            }
+
+            output += "auto "
+            output += try_var
+            output += " = [&]() -> ErrorOr<"
+            output += .codegen_type(inner_type_id)
+            output += "> { return "
+            output += .codegen_expression(expr)
+            if is_void {
+                output += ", ErrorOr<void>{}"
+            }
+            output += "; }();\n"
+
+            if catch_block.has_value() {
+                output += "if ("
+                output += try_var
+                output += ".is_error()) {"
+                if catch_name.has_value() {
+                    output += "auto "
+                    output += catch_name!
+                    output += " = "
+                    output += try_var
+                    output += ".release_error();\n"
+                }
+                output += .codegen_block(block: catch_block!)
+                if not is_void {
+                    output += "} else {"
+                    output += fresh_var
+                    output += " = "
+                    output += try_var
+                    output += ".release_value();\n"
+                }
+                output += "}\n"
+            } else if not is_void {
+                output += "if (!"
+                output += try_var
+                output += ".is_error()) "
+                output += fresh_var
+                output += " = "
+                output += try_var
+                output += ".release_value();\n"
+            }
+
+            if not is_void {
+                output += fresh_var
+                if catch_block.has_value() {
+                    output += ".release_value()"
+                }
+                output += "; })"
+            }
+
+            yield output
+        }
         else => {
             todo(format("codegen_expression else: {}", expression))
             yield ""
@@ -2456,30 +2562,6 @@ struct CodeGenerator {
                 output += "; goto "
                 output += block_end_label
                 output += ";\n"
-
-                yield output
-            }
-            Try(stmt, error_name, catch_block, span) => {
-                mut output = "{"
-                output += "auto _jakt_try_result = [&]() -> ErrorOr<void> {"
-                {
-                    let last_control_flow = .control_flow_state
-                    .control_flow_state.passes_through_match = false
-                    .control_flow_state.passes_through_try = true
-                    output += .codegen_statement(statement: stmt)
-                    output += ";"
-                    output += "return {};"
-                    output += "}();"
-                    output += "if (_jakt_try_result.is_error()) {"
-                    if not error_name.is_empty() {
-                        output += "auto "
-                        output += error_name
-                        output += " = _jakt_try_result.release_error();"
-                    }
-                    output += .codegen_block(block: catch_block)
-                    .control_flow_state = last_control_flow
-                }
-                output += "}}"
 
                 yield output
             }

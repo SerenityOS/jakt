@@ -485,13 +485,6 @@ function find_span_in_statement(program: CheckedProgram, statement: CheckedState
             else => none
         }
         Throw(expr) => find_span_in_expression(program, expr, span)
-        Try(stmt, error_name, catch_block) => {
-            let found = find_span_in_statement(program, statement: stmt, span)
-            if found.has_value() {
-                return found
-            }
-            yield find_span_in_block(program, block: catch_block, span)
-        }
         VarDecl(var_id, init) => {
             let checked_var = program.get_variable(var_id)
             let found = find_span_in_expression(program, expr: init, span)
@@ -777,6 +770,23 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
                 }
             }
             yield none
+        }
+        TryBlock(stmt, error_name, catch_block) => {
+            let found = find_span_in_statement(program, statement: stmt, span)
+            if found.has_value() {
+                return found
+            }
+            yield find_span_in_block(program, block: catch_block, span)
+        }
+        Try(expr, catch_block) => {
+            let found = find_span_in_expression(program, expr, span)
+            if found.has_value() {
+                return found
+            }
+            yield match catch_block.has_value() {
+                true => find_span_in_block(program, block: catch_block!, span),
+                else => none
+            }
         }
         else => none
     }

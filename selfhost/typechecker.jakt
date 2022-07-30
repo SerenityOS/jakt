@@ -705,7 +705,6 @@ boxed enum CheckedStatement {
     Continue(Span)
     Throw(expr: CheckedExpression, span: Span)
     Yield(expr: CheckedExpression, span: Span)
-    Try(stmt: CheckedStatement, error_name: String, catch_block: CheckedBlock, span: Span)
     InlineCpp(lines: [String], span: Span)
     Garbage(Span)
 
@@ -723,7 +722,6 @@ boxed enum CheckedStatement {
         Continue(span) => span
         Throw(span) => span
         Yield(span) => span
-        Try(span) => span
         InlineCpp(span) => span
         Garbage(span) => span
     }
@@ -943,6 +941,8 @@ boxed enum CheckedExpression {
     ForcedUnwrap(expr: CheckedExpression, span: Span, type_id: TypeId)
     Block(block: CheckedBlock, span: Span, type_id: TypeId)
     Function(captures: [CheckedCapture], params: [CheckedParameter], can_throw: bool, return_type_id: TypeId, block: CheckedBlock, span: Span, type_id: TypeId)
+    Try(expr: CheckedExpression, catch_block: CheckedBlock?, catch_name: String?, span: Span, type_id: TypeId, inner_type_id: TypeId)
+    TryBlock(stmt: CheckedStatement, catch_block: CheckedBlock, error_name: String, error_span: Span, span: Span, type_id: TypeId)
     Garbage(Span)
 
     // FIXME: rewrite this into a FAMF once we can yield None out of a match (https://github.com/SerenityOS/jakt/issues/669)
@@ -1008,6 +1008,8 @@ function expression_type(anon expr: CheckedExpression) -> TypeId => match expr {
     EnumVariantArg(arg) => arg.type_id
     Block(type_id) => type_id
     Function(type_id) => type_id
+    Try(type_id) => type_id
+    TryBlock(type_id) => type_id
     Garbage => builtin(BuiltinType::Void)
 }
 
@@ -1703,6 +1705,8 @@ struct Typechecker {
         EnumVariantArg(span) => span
         Block(span) => span
         Function(span) => span
+        Try(span) => span
+        TryBlock(span) => span
         Garbage(span) => span
     }
 
@@ -4103,7 +4107,8 @@ struct Typechecker {
                         mut default_name = ""
                         try {
                             default_name = format("lambda{}", .lambda_count++)
-                        } catch {}
+                        } catch foo {
+                        }
                         yield default_name
                     }
                 }
@@ -4430,7 +4435,6 @@ struct Typechecker {
         InlineCpp(block, span) => .typecheck_inline_cpp(block, span, safety_mode)
         Defer(statement, span) => .typecheck_defer(statement, scope_id, safety_mode, span)
         Loop(block, span) => .typecheck_loop(parsed_block: block, scope_id, safety_mode, span)
-        Try(stmt, error_name, error_span, catch_block, span) => .typecheck_try(stmt, error_name, error_span, catch_block, scope_id, safety_mode, span)
         Throw(expr, span) => .typecheck_throw(expr, scope_id, safety_mode, span)
         While(condition, block, span) => .typecheck_while(condition, block, scope_id, safety_mode, span)
         Continue(span) => CheckedStatement::Continue(span)
@@ -4868,7 +4872,7 @@ struct Typechecker {
         return CheckedStatement::While(condition: checked_condition, block: checked_block, span)
     }
 
-    function typecheck_try(mut this, stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+    function typecheck_try_block(mut this, stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
         let try_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "try")
         let checked_stmt = .typecheck_statement(stmt, scope_id: try_scope_id, safety_mode)
         let error_struct_id = .find_struct_in_prelude("Error")
@@ -4883,11 +4887,59 @@ struct Typechecker {
         mut module = .current_module()
         let error_id = module.add_variable(name: error_decl)
 
-        let catch_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: "catch")
+        let catch_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "catch")
         .add_var_to_scope(scope_id: catch_scope_id, name: error_name, var_id: error_id, span: error_span)
         let checked_catch_block = .typecheck_block(catch_block, parent_scope_id: catch_scope_id, safety_mode)
 
-        return CheckedStatement::Try(stmt: checked_stmt, error_name, catch_block: checked_catch_block, span)
+        return CheckedExpression::TryBlock(stmt: checked_stmt, catch_block: checked_catch_block, error_name, error_span, span, type_id: void_type_id())
+    }
+
+    function typecheck_try(mut this, expr: ParsedExpression, catch_block: ParsedBlock?, catch_name: String?, scope_id: ScopeId, safety_mode: SafetyMode, span: Span, type_hint: TypeId?) throws -> CheckedExpression {
+        let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint)
+        let error_struct_id = .find_struct_in_prelude("Error")
+        mut module = .current_module()
+        mut checked_catch_block: CheckedBlock? = None
+        let expression_type_id = expression_type(checked_expr)
+
+        let optional_struct_id = .find_struct_in_prelude("Optional")
+        let optional_type = Type::GenericInstance(id: optional_struct_id, args: [expression_type_id])
+        let optional_type_id = .find_or_add_type_id(optional_type)
+        mut type_id = optional_type_id
+
+        if catch_block.has_value() {
+            let catch_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "catch")
+            if catch_name.has_value() {
+                let error_struct_id = .find_struct_in_prelude("Error")
+                let error_decl = CheckedVariable(
+                    name: catch_name!
+                    type_id: .get_struct(error_struct_id).type_id
+                    is_mutable: false
+                    definition_span: span
+                    type_span: None
+                    visibility: Visibility::Public
+                )
+                mut module = .current_module()
+                let error_id = module.add_variable(name: error_decl)
+                .add_var_to_scope(scope_id: catch_scope_id, name: catch_name!, var_id: error_id, span)
+            }
+
+            let block = .typecheck_block(catch_block!, parent_scope_id: catch_scope_id, safety_mode)
+            if block.control_flow.always_transfers_control() or block.yielded_type.has_value() {
+                if not (block.yielded_type ?? expression_type_id).equals(expression_type_id) {
+                    .error_with_hint(
+                        message: format("Expected a value of type ‘{}’, but got ‘{}’", .type_name(expression_type_id), .type_name(block.yielded_type!)),
+                        span
+                        hint: format("Expression 'catch' block must either yield the same type as the expression it is catching, or yield nothing"),
+                        hint_span: span
+                    )
+                } else {
+                    type_id = block.yielded_type ?? expression_type_id
+                }
+            }
+            checked_catch_block = block
+        }
+
+        return CheckedExpression::Try(expr: checked_expr, catch_block: checked_catch_block, catch_name, span, type_id, inner_type_id: expression_type_id)
     }
 
     function typecheck_throw(mut this, expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
@@ -5584,8 +5636,10 @@ struct Typechecker {
         JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode, type_hint)
         Set(values, span) => .typecheck_set(values, span, scope_id, safety_mode, type_hint)
         Function(captures, params, can_throw, return_type, block, span) => .typecheck_lambda(captures, params, can_throw, return_type, block, span, scope_id, safety_mode)
-        else => {
-            .compiler.panic(format("typechecker needs support for {}", expr))
+        Try(expr, catch_block, catch_name, span) => .typecheck_try(expr, catch_block, catch_name, scope_id, safety_mode, span, type_hint)
+        TryBlock(stmt, catch_block, error_name, error_span, span) => .typecheck_try_block(stmt, error_name, error_span, catch_block, scope_id, safety_mode, span)
+        Operator => {
+            .compiler.panic("idk how to handle this thing")
         }
     }
 
