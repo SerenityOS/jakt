@@ -679,9 +679,9 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
                                     // can't be duplicate, but I'll leave previous implementation from Rust based
                                     mut names: {String} = {}
                                     let enum_ = program.get_enum(enum_id)
-                                        for variant in enum_.variants.iterator() {
-                                            names.add(variant.name())
-                                        }
+                                    for variant in enum_.variants.iterator() {
+                                        names.add(variant.name())
+                                    }
                                     yield names
                                 }
                                 else => {yield {"else (expression)"}}
@@ -701,10 +701,10 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
                             yield match remaining_cases.is_empty() {
                                 false => {
                                     mut cases_array: [String] = []
-                                        cases_array.ensure_capacity(remaining_cases.size())
-                                        for name in remaining_cases.iterator() {
-                                            cases_array.push(name)
-                                        }
+                                    cases_array.ensure_capacity(remaining_cases.size())
+                                    for name in remaining_cases.iterator() {
+                                        cases_array.push(name)
+                                    }
                                     yield Some(Usage::NameSet(cases_array))
                                 }
                                 else => None
@@ -712,7 +712,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
                         }
                         else => match body {
                             Block(block) => find_span_in_block(program, block, span)
-                                Expression(expr) => find_span_in_expression(program, expr, span)
+                            Expression(expr) => find_span_in_expression(program, expr, span)
                         }
                     }
 
