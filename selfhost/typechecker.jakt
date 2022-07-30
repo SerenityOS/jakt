@@ -547,11 +547,115 @@ struct CheckedVarDecl {
     type_id: TypeId
 }
 
+enum BlockControlFlow {
+    AlwaysReturns
+    AlwaysTransfersControl(might_break: bool)
+    NeverReturns
+    MayReturn
+    // If expressions without 'else' branches may produce these.
+    PartialAlwaysReturns(might_break: bool)
+    PartialAlwaysTransfersControl(might_break: bool)
+    PartialNeverReturns(might_break: bool)
+
+    function unify_with(this, anon second: BlockControlFlow) => match this {
+        NeverReturns => second
+        AlwaysReturns => match second {
+            NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysReturns
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
+            MayReturn => BlockControlFlow::MayReturn
+            PartialAlwaysReturns => BlockControlFlow::AlwaysReturns
+            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
+            PartialNeverReturns(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
+        }
+        AlwaysTransfersControl(might_break: lhs) => match second {
+            NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: lhs or might_break)
+            MayReturn => BlockControlFlow::MayReturn
+            else => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
+        }
+        MayReturn => match second {
+            else => BlockControlFlow::MayReturn
+            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break)
+            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
+            PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break)
+        }
+        PartialAlwaysReturns(might_break: lhs) => match second {
+            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: lhs or might_break)
+            PartialAlwaysTransfersControl(might_break) | PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs or might_break)
+            AlwaysReturns => BlockControlFlow::AlwaysReturns
+            NeverReturns => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: lhs or might_break)
+            MayReturn => BlockControlFlow::PartialAlwaysReturns(might_break: lhs)
+        }
+        PartialAlwaysTransfersControl(might_break: lhs) => match second {
+            PartialAlwaysTransfersControl(might_break) | PartialAlwaysReturns(might_break) | PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs or might_break)
+            AlwaysReturns | NeverReturns => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: lhs or might_break)
+            MayReturn => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs)
+        }
+        PartialNeverReturns(might_break: lhs) => match second {
+            PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break: lhs or might_break)
+            PartialAlwaysTransfersControl(might_break) | PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs or might_break)
+            AlwaysReturns => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: lhs or might_break)
+            MayReturn => BlockControlFlow::PartialNeverReturns(might_break: lhs)
+            NeverReturns => BlockControlFlow::NeverReturns
+        }
+    }
+
+    function updated(this, anon second: BlockControlFlow) => match this {
+        NeverReturns => BlockControlFlow::NeverReturns
+        AlwaysReturns => BlockControlFlow::AlwaysReturns
+        AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
+        MayReturn => second
+        PartialAlwaysTransfersControl | PartialAlwaysReturns | PartialNeverReturns => .unify_with(second)
+    }
+
+    function partial(this) => match this {
+        NeverReturns => BlockControlFlow::PartialNeverReturns(might_break: false)
+        AlwaysReturns => BlockControlFlow::PartialAlwaysReturns(might_break: false)
+        MayReturn => BlockControlFlow::MayReturn
+        AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
+        PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
+        PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break)
+        PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break)
+    }
+
+    function always_transfers_control(this) => match this {
+        AlwaysReturns | AlwaysTransfersControl => true
+        else => false
+    }
+
+    function never_returns(this) => match this {
+        NeverReturns => true
+        else => false
+    }
+
+    function always_returns(this) => match this {
+        AlwaysReturns => true
+        else => false
+    }
+
+    function may_return(this) => match this {
+        MayReturn | PartialAlwaysReturns | PartialAlwaysTransfersControl | PartialNeverReturns => true
+        else => false
+    }
+
+    function may_break(this) => match this {
+        PartialAlwaysReturns(might_break) | PartialAlwaysTransfersControl(might_break) | PartialNeverReturns(might_break) | AlwaysTransfersControl(might_break) => might_break
+        else => false
+    }
+
+    function is_reachable(this) => match this {
+        NeverReturns | AlwaysReturns | AlwaysTransfersControl => false
+        else => true
+    }
+}
+
 struct CheckedBlock {
     statements: [CheckedStatement]
     scope_id: ScopeId
-    definitely_returns: bool
-    never_returns: bool // FIXME: never_returns and definitely_returns should be one bool
+    control_flow: BlockControlFlow
     yielded_type: TypeId?
 }
 
@@ -926,56 +1030,29 @@ function expression_type(anon expr: CheckedExpression) -> TypeId => match expr {
     Garbage => builtin(BuiltinType::Void)
 }
 
-function checked_expression_definitely_returns(anon check_expression: CheckedExpression) -> bool {
-    mut ret = false
-
-    match check_expression {
-        Match(expr, match_cases, span, type_id, all_variants_constant) => {
-            mut case_ret = true
-            for case_ in match_cases.iterator() {
-                match case_ {
-                    EnumVariant(body) => match body {
-                        Block(block) => {
-                            if block.definitely_returns {
-                                continue
-                            }
-                        }
-                        else => {
-                            case_ret = false
-                            break
-                        }
-                    }
-                    Expression(body)  => match body {
-                        Block(block) => {
-                            if block.definitely_returns {
-                                continue
-                            }
-                        }
-                        else => {
-                            case_ret = false
-                            break
-                        }
-                    }
-                    CatchAll(body)  => match body {
-                        Block(block) => {
-                            if block.definitely_returns {
-                                continue
-                            }
-                        }
-                        else => {
-                            case_ret = false
-                            break
-                        }
-                    }
+function checked_expression_control_flow(anon check_expression: CheckedExpression) -> BlockControlFlow => match check_expression {
+    Match(expr, match_cases, span, type_id, all_variants_constant) => {
+        mut control_flow: BlockControlFlow? = None
+        for case_ in match_cases.iterator() {
+            let case_control_flow = match case_ {
+                EnumVariant(body) | Expression(body) | CatchAll(body) => match body {
+                    Block(block) => block.control_flow
+                    Expression(expr) => checked_expression_control_flow(expr)
                 }
             }
-            ret = case_ret
+            if control_flow.has_value() {
+                control_flow = control_flow!.unify_with(case_control_flow)
+            } else {
+                control_flow = case_control_flow
+            }
         }
-        else => {
-            return false
-        }
+        yield control_flow ?? BlockControlFlow::MayReturn
     }
-    return ret
+    MethodCall(type_id) | Call(type_id) => match type_id.equals(never_type_id()) {
+        true => BlockControlFlow::NeverReturns
+        else => BlockControlFlow::MayReturn
+    }
+    else => BlockControlFlow::MayReturn
 }
 
 struct ResolvedNamespace {
@@ -2361,8 +2438,7 @@ struct Typechecker {
                 block: CheckedBlock(
                     statements: []
                     scope_id: block_scope_id
-                    definitely_returns: false
-                    never_returns: false
+                    control_flow: BlockControlFlow::MayReturn
                     yielded_type: TypeId::none()
                 )
                 can_throw: func.can_throw
@@ -2509,8 +2585,7 @@ struct Typechecker {
                 block: CheckedBlock(
                     statements: []
                     scope_id: block_scope_id
-                    definitely_returns: false
-                    never_returns: false
+                    control_flow: BlockControlFlow::MayReturn
                     yielded_type: TypeId::none()
                 )
                 can_throw: func.can_throw
@@ -2802,7 +2877,11 @@ struct Typechecker {
                                 return_type_span: None
                                 params,
                                 generic_params: [],
-                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, never_returns: false, yielded_type: TypeId::none()),
+                                block: CheckedBlock(
+                                    statements: []
+                                    scope_id: block_scope_id
+                                    control_flow: BlockControlFlow::MayReturn
+                                    yielded_type: TypeId::none()),
                                 can_throw: can_function_throw,
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
@@ -2839,7 +2918,11 @@ struct Typechecker {
                                 return_type_span: None,
                                 params: [CheckedParameter(requires_label: false, variable)],
                                 generic_params: [],
-                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, never_returns: false, yielded_type: TypeId::none()),
+                                block: CheckedBlock(
+                                    statements: [],
+                                    scope_id: block_scope_id,
+                                    control_flow: BlockControlFlow::AlwaysReturns,
+                                    yielded_type: TypeId::none()),
                                 can_throw: can_function_throw,
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
@@ -2865,7 +2948,11 @@ struct Typechecker {
                                 return_type_span: None,
                                 params: [],
                                 generic_params: [],
-                                block: CheckedBlock(statements: [], scope_id: block_scope_id, definitely_returns: true, never_returns: false, yielded_type: TypeId::none()),
+                                block: CheckedBlock(
+                                    statements: []
+                                    scope_id: block_scope_id
+                                    control_flow: BlockControlFlow::AlwaysReturns
+                                    yielded_type: TypeId::none()),
                                 can_throw: can_function_throw,
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
@@ -2929,8 +3016,7 @@ struct Typechecker {
                 block: CheckedBlock(
                     statements: []
                     scope_id: block_scope_id
-                    definitely_returns: false
-                    never_returns: false
+                    control_flow: BlockControlFlow::MayReturn
                     yielded_type: TypeId::none()
                 )
                 can_throw: constructor_can_throw
@@ -3041,11 +3127,11 @@ struct Typechecker {
             return_type_id = VOID_TYPE_ID
         }
 
-        if not structure_linkage is External and not return_type_id.equals(VOID_TYPE_ID) and not block.definitely_returns {
+        if not structure_linkage is External and not return_type_id.equals(VOID_TYPE_ID) and not block.control_flow.always_transfers_control() {
             // FIXME: Use better span
-            if return_type_id.equals(never_type_id()) and not block.never_returns {
+            if return_type_id.equals(never_type_id()) and not block.control_flow.never_returns() {
                 .error("Control reaches end of never-returning function", func.name_span)
-            } else if not block.never_returns {
+            } else if not block.control_flow.never_returns() {
                 .error("Control reaches end of non-void function", func.name_span)
             }
         }
@@ -3117,8 +3203,7 @@ struct Typechecker {
             block: CheckedBlock(
                 statements: []
                 scope_id: block_scope_id
-                definitely_returns: false
-                never_returns: false
+                control_flow: BlockControlFlow::MayReturn
                 yielded_type: TypeId::none()
             )
             can_throw: parsed_function.can_throw
@@ -3341,6 +3426,7 @@ struct Typechecker {
         if parsed_function.name == "main" {
             .typecheck_jakt_main(parsed_function)
         }
+
         mut checked_function = .get_function(function_id!)
         let function_scope_id = checked_function.function_scope_id
         let function_linkage = checked_function.linkage
@@ -3397,11 +3483,11 @@ struct Typechecker {
             else => false
         }
 
-        if not external_linkage and not return_type_id.equals(VOID_TYPE_ID) and not block.definitely_returns {
+        if not external_linkage and not return_type_id.equals(VOID_TYPE_ID) and not block.control_flow.always_transfers_control() {
             // FIXME: Use better span
-            if return_type_id.equals(never_type_id()) and not block.never_returns {
+            if return_type_id.equals(never_type_id()) and not block.control_flow.never_returns() {
                 .error("Control reaches end of never-returning function", parsed_function.name_span)
-            } else if not block.never_returns {
+            } else if not block.control_flow.never_returns() {
                 .error("Control reaches end of non-void function", parsed_function.name_span)
             }
         }
@@ -3421,39 +3507,70 @@ struct Typechecker {
             }
             else => false
         }
-        Block(block) => block.never_returns
+        Block(block) => block.control_flow.never_returns()
         else => false
     }
 
-    function statement_definitely_returns(this, anon statement: CheckedStatement) -> bool => match statement {
-        Return | Throw => true
-        // FIXME: CheckedStatement::If branches ugly implementation due to current compiler limitations
-        If(condition, then_block, else_statement) => {
-            mut ret = false
-            let condition_result = match condition {
-                Boolean(val) => {
-                    if val and then_block.definitely_returns {
-                        ret = true
-                    }
-                    yield ret
-                }
-                else => false
-            }
-            if not condition_result and else_statement.has_value(){
-                if then_block.definitely_returns and .statement_definitely_returns(else_statement.value()) {
-                    ret = true
+    function statement_control_flow(this, anon statement: CheckedStatement) -> BlockControlFlow => match statement {
+        Return => BlockControlFlow::AlwaysReturns
+        Throw => BlockControlFlow::AlwaysReturns
+        Break => BlockControlFlow::AlwaysTransfersControl(might_break: true)
+        Continue => BlockControlFlow::AlwaysTransfersControl(might_break: false)
+        Yield(expr) => checked_expression_control_flow(expr).updated(BlockControlFlow::AlwaysTransfersControl(might_break: false))
+        If(condition, then_block, else_statement) => match condition {
+            Boolean(val) => match val {
+                true => then_block.control_flow
+                else => match else_statement.has_value() {
+                    true => .statement_control_flow(else_statement!)
+                    else => BlockControlFlow::MayReturn
                 }
             }
-            yield ret
+            // Note that a missing 'else' branch produces a partial result.
+            else => match then_block.control_flow {
+                NeverReturns => .maybe_statement_control_flow(else_statement, then_block.control_flow)
+                AlwaysReturns => match .maybe_statement_control_flow(else_statement, then_block.control_flow) {
+                    NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysReturns
+                    MayReturn => BlockControlFlow::MayReturn
+                    AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
+                    PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break)
+                    PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break)
+                    PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
+                }
+                MayReturn => BlockControlFlow::MayReturn
+                PartialNeverReturns | PartialAlwaysReturns | PartialAlwaysTransfersControl | AlwaysTransfersControl => .maybe_statement_control_flow(else_statement, then_block.control_flow)
+            }
         }
-        Block(block) => block.definitely_returns
-        Loop(block) => block.definitely_returns
-        While(condition, block) => block.definitely_returns
-        Expression(expr) => match expr {
-            Match() => checked_expression_definitely_returns(expr)
-            else => false
+        Block(block) => block.control_flow
+        // FIXME: While could use more information here.
+        While(block) => match block.control_flow {
+            AlwaysTransfersControl => BlockControlFlow::MayReturn
+            NeverReturns => BlockControlFlow::NeverReturns
+            AlwaysReturns => BlockControlFlow::AlwaysReturns
+            else => BlockControlFlow::MayReturn
         }
-        else => false
+        Loop(block) => match block.control_flow {
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
+            NeverReturns => BlockControlFlow::NeverReturns
+            AlwaysReturns => BlockControlFlow::AlwaysReturns
+            MayReturn => BlockControlFlow::MayReturn
+            else => match block.control_flow.may_break() {
+                true => BlockControlFlow::MayReturn
+                // Loop will always continue, so upgrade partial results to full ones
+                else => match block.control_flow {
+                    PartialAlwaysReturns => BlockControlFlow::AlwaysReturns
+                    PartialNeverReturns => BlockControlFlow::NeverReturns
+                    PartialAlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
+                    else => BlockControlFlow::MayReturn // unreachable, logically.
+                }
+            }
+        }
+        Expression(expr) => checked_expression_control_flow(expr)
+        else => BlockControlFlow::MayReturn
+    }
+
+    function maybe_statement_control_flow(this, anon statement: CheckedStatement?, anon other_branch: BlockControlFlow) -> BlockControlFlow => match statement.has_value() {
+        true => .statement_control_flow(statement!)
+        else => other_branch.partial()
     }
 
     // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
@@ -3853,14 +3970,13 @@ struct Typechecker {
         mut checked_block = CheckedBlock(
             statements: []
             scope_id: block_scope_id
-            definitely_returns: false
-            never_returns: false
+            control_flow: BlockControlFlow::MayReturn
             yielded_type: TypeId::none()
         )
         // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
         mut generic_inferences: [String: String] = [:]
         for parsed_statement in parsed_block.stmts.iterator() {
-            if checked_block.never_returns {
+            if checked_block.control_flow.never_returns() {
                 .error("Unreachable code", parsed_statement.span())
             }
 
@@ -3870,12 +3986,7 @@ struct Typechecker {
                 safety_mode
             )
 
-            if not checked_block.never_returns {
-                checked_block.never_returns = .statement_never_returns(checked_statement)
-            }
-
-            // check that statment definitely returns
-            checked_block.definitely_returns = checked_block.definitely_returns or .statement_definitely_returns(checked_statement)
+            checked_block.control_flow = checked_block.control_flow.updated(.statement_control_flow(checked_statement))
 
             let yield_span: Span? = match parsed_statement {
                 ParsedStatement::Yield(expr) => Some(expr.span())
@@ -4095,7 +4206,11 @@ struct Typechecker {
                     return_type_span: return_type.span()
                     params: checked_params
                     generic_params: []
-                    block: CheckedBlock(statements: [], scope_id, definitely_returns: false, never_returns: false, yielded_type: None)
+                    block: CheckedBlock(
+                        statements: []
+                        scope_id
+                        control_flow: BlockControlFlow::MayReturn
+                        yielded_type: None)
                     can_throw
                     type: FunctionType::Normal
                     linkage: FunctionLinkage::Internal
@@ -4688,7 +4803,7 @@ struct Typechecker {
             for i in 0..vars.size() {
                 mut new_var = vars[i]
                 new_var.parsed_type = ParsedType::Name(name: .type_name(inner_types[i]), span)
-                let init = ParsedExpression::IndexedTuple(expr: ParsedExpression::Var(name: tuple_variable.name, span)  index: i, span)
+                let init = ParsedExpression::IndexedTuple(expr: ParsedExpression::Var(name: tuple_variable.name, span), index: i, span)
                 var_decls.push(.typecheck_var_decl(var: vars[i], init, scope_id, safety_mode, span))
             }
         } else {
@@ -5272,11 +5387,14 @@ struct Typechecker {
                 else => {
                     .error(format("Variable '{}' not found", name), span)
                     yield CheckedExpression::Var(
-                        var: CheckedVariable(name, type_id:
-                            type_hint.value_or(unknown_type_id()), is_mutable:
-                            false, definition_span: span,
+                        var: CheckedVariable(
+                            name,
+                            type_id: type_hint.value_or(unknown_type_id()),
+                            is_mutable: false,
+                            definition_span: span,
                             type_span: None
-                            visibility: Visibility::Public), span
+                            visibility: Visibility::Public),
+                        span
                     )
                 }
             }
@@ -5818,8 +5936,7 @@ struct Typechecker {
                                                     let substituted_type_id = .substitute_typevars_in_type(type_id: matched_field_variable!.type_id, generic_inferences: [:])
                                                     let matched_span = matched_field_variable!.definition_span
                                                     if .dump_type_hints {
-                                                        .dump_type_hint(type_id:
-                                                            matched_field_variable!.type_id, span: arg.span)
+                                                        .dump_type_hint(type_id: matched_field_variable!.type_id, span: arg.span)
                                                     }
 
                                                    let var_id = module.add_variable(CheckedVariable(
@@ -6043,7 +6160,7 @@ struct Typechecker {
             Block(block) => {
                 let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: scope_id, safety_mode)
 
-                if not checked_block.definitely_returns and not checked_block.never_returns {
+                if checked_block.control_flow.may_return() or checked_block.yielded_type.has_value() {
                     let block_type_id = checked_block.yielded_type ?? void_type_id()
                     let yield_span = block.find_yield_span() ?? span
 
@@ -6060,7 +6177,7 @@ struct Typechecker {
                 }
 
                 mut final_body: CheckedMatchBody? = None
-                if checked_block.yielded_type.has_value() and not checked_block.never_returns {
+                if checked_block.yielded_type.has_value() and not checked_block.control_flow.never_returns() {
                     final_body = CheckedMatchBody::Expression(CheckedExpression::Block(
                         block: checked_block
                         span
