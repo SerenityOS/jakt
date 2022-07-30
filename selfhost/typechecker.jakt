@@ -5847,7 +5847,7 @@ struct Typechecker {
                                 }
 
                                 if not matched_variant.has_value() {
-                                    .error(format("Enum '{}' does not contain a variant named '{}'", enum_.name, variant_names[1].0), span)
+                                    .error(format("Enum '{}' does not contain a variant named '{}'", enum_.name, variant_names[1].0), case_.marker_span)
                                     return CheckedExpression::Match(expr: checked_expr, match_cases: [], span, type_id: unknown_type_id(), all_variants_constant: false)
                                 }
 
@@ -5857,7 +5857,7 @@ struct Typechecker {
                                     Untyped(name) => {
                                         covered_variants.add(name)
                                         if not variant_arguments.is_empty() {
-                                            .error(format("Match case '{}' cannot have arguments", name), span)
+                                            .error(format("Match case '{}' cannot have arguments", name), arguments_span)
                                         }
                                     }
                                     Typed(name, type_id, span) => {
