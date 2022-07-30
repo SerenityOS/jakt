@@ -2184,8 +2184,11 @@ struct Parser {
 
         mut else_statement: ParsedStatement? = None
 
+        .skip_newlines()
+
         if .current() is Else {
             .index++
+            .skip_newlines()
             match .current() {
                 If => {
                     // This is an `else if`
