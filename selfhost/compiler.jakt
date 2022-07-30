@@ -36,17 +36,17 @@ class Compiler {
                 let span = error.span()
 
                 if span.file_id.id == idx {
-
-                    // Lazily load file contents
-                    if not file_contents.has_value() {
-                        mut file = File::open_for_reading(file_name)
-                        file_contents = file.read_all()
-                    }
-
                     if .json_errors {
-                        print_error_json(file_name, file_contents: file_contents!, error)
+                        print_error_json(file_name, error)
                     } else {
-                        print_error(file_name, file_contents: file_contents!, error)
+                        // Lazily load file contents
+                        if not file_contents.has_value() {
+                            try {
+                                mut file = File::open_for_reading(file_name)
+                                file_contents = file.read_all()
+                            } catch error {}
+                        }
+                        print_error(file_name, contents: file_contents, error)
                     }
                 }
             }
