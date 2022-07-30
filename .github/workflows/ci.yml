@@ -49,12 +49,23 @@ jobs:
         if: ${{ matrix.platform == 'macos-latest' }}
         run: brew install coreutils
 
-      - name: Build Jakt Selfhost
+      - name: Build Jakt Stage 1 Selfhost
         run: |
-          cmake -GNinja -B build -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }} -DCMAKE_BUILD_TYPE=Release
+          cmake -GNinja -B build -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }} -DCMAKE_BUILD_TYPE=Release -DFINAL_STAGE=1
           cmake --build build
 
-      - name: Test Jakt selfhost
+      - name: Test Jakt Stage 1 selfhost
+        run: |
+          ninja -C jakttest
+          ./jakttest/build/jakttest --assume-updated-selfhost --assume-updated
+
+      - name: Build Jakt Stage 2 Selfhost
+        run: |
+          # Modify CMake cache to set final stage to stage 2
+          cmake -B build -DFINAL_STAGE=2
+          cmake --build build
+
+      - name: Test Jakt Stage 2 selfhost
         run: |
           ninja -C jakttest
           ./jakttest/build/jakttest --assume-updated-selfhost --assume-updated
