@@ -6,8 +6,3 @@ repos:
         entry: meta/lint-commit.sh
         stages: [ commit-msg ]
         language: system
-
-  - repo: https://github.com/doublify/pre-commit-rust
-    rev: v1.0
-    hooks:
-      - id: fmt
