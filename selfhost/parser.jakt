@@ -1450,26 +1450,27 @@ struct Parser {
 
         // Have we already found an error?
         mut error = false
-        mut parameter_complete = false
+        mut parsing_parameter = false
 
         while not .eof() {
             match .current() {
                 RParen => {
+                    if parsing_parameter {
+                        .error("Incomplete parameter", .current().span())
+                        error = true
+                    }
                     .index++
                     break
                 }
                 Comma | Eol => {
-                    if not parameter_complete and not error {
+                    if parsing_parameter and not error {
                         .error("Expected parameter", .current().span())
                         error = true
                     }
                     .index++
-                    current_param_requires_label = true
-                    current_param_is_mutable = false
-                    parameter_complete = false
                 }
                 Anon => {
-                    if parameter_complete and not error  {
+                    if parsing_parameter and not error  {
                         .error("‘anon’ must appear at start of parameter declaration, not the end", .current().span())
                         error = true
                     }
@@ -1483,9 +1484,10 @@ struct Parser {
                     }
                     .index++
                     current_param_requires_label = false
+                    parsing_parameter = true
                 }
                 Mut => {
-                    if parameter_complete and not error  {
+                    if parsing_parameter and current_param_requires_label and not error  {
                         .error("‘mut’ must appear at start of parameter declaration, not the end", .current().span())
                         error = true
                     }
@@ -1495,6 +1497,7 @@ struct Parser {
                     }
                     .index++
                     current_param_is_mutable = true
+                    parsing_parameter = true
                 }
                 This => {
                     params.push(ParsedParameter(
@@ -1508,7 +1511,10 @@ struct Parser {
                         span: .current().span(),
                     ))
                     .index++
-                    parameter_complete = true
+
+                    parsing_parameter = false
+                    current_param_requires_label = true
+                    current_param_is_mutable = false
                 }
                 Identifier(name, span) => {
                     let var_decl = .parse_variable_declaration(is_mutable: current_param_is_mutable)
@@ -1523,7 +1529,10 @@ struct Parser {
                         ),
                         span: .previous().span(),
                     ))
-                    parameter_complete = true
+
+                    parsing_parameter = false
+                    current_param_requires_label = true
+                    current_param_is_mutable = false
                 }
                 else => {
                     // TODO: Find a better way of only reporting the first error.

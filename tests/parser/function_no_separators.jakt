@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "5 9\n"
+
+function add(lhs: i32 rhs: i32) => lhs + rhs
+
+function add_anon(anon lhs: i32 anon rhs: i32) => lhs + rhs
+
+function main() {
+    println("{} {}" add(lhs: 2 rhs: 3) add_anon(4 5))
+}
