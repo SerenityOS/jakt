@@ -10,11 +10,8 @@ jobs:
   lint-samples:
     strategy:
       fail-fast: true
-      matrix:
-        platform: [ubuntu-latest]
-        style: [default]
 
-    runs-on: ${{ matrix.platform }}
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
