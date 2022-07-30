@@ -150,7 +150,7 @@ inline void panic(StringView message)
     VERIFY_NOT_REACHED();
 }
 
-inline void abort()
+[[noreturn]] inline void abort()
 {
     ::abort();
 }

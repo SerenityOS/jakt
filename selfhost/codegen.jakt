@@ -37,12 +37,14 @@ struct ControlFlowState {
     /// Whether `break` and `continue` should use `return ExplicitValueOrControlFlow` instead of
     /// C++'s `break`/`continue`.
     passes_through_match: bool
+    passes_through_try: bool
     match_nest_level: usize
 
     function no_control_flow() -> ControlFlowState {
         return ControlFlowState(
             allowed_exits: AllowedControlExits::Nothing
             passes_through_match: false
+            passes_through_try: false
             match_nest_level: 0
         )
     }
@@ -50,6 +52,7 @@ struct ControlFlowState {
         return ControlFlowState(
             allowed_exits: AllowedControlExits::JustReturn
             passes_through_match: false
+            passes_through_try: false
             match_nest_level: .match_nest_level
         )
     }
@@ -57,6 +60,7 @@ struct ControlFlowState {
         return ControlFlowState(
             allowed_exits: AllowedControlExits::AtLoop
             passes_through_match: false
+            passes_through_try: .passes_through_try
             match_nest_level: 0
         )
     }
@@ -68,6 +72,7 @@ struct ControlFlowState {
         return ControlFlowState(
             allowed_exits: .allowed_exits.allow_return()
             passes_through_match: true
+            passes_through_try: .passes_through_try
             match_nest_level: level
         )
     }
@@ -162,6 +167,15 @@ struct CodeGenerator {
     fresh_var_counter: usize
     fresh_label_counter: usize
 
+    // noreturn functions may not throw, so let them crash instead.
+    function current_error_handler(this) throws -> String {
+        if .current_function.has_value() and .current_function!.return_type_id.equals(never_type_id()) and not .control_flow_state.passes_through_try {
+            return "MUST"
+        }
+
+        return "TRY"
+    }
+
     function fresh_var(mut this) throws => format("__jakt_var_{}", .fresh_var_counter++)
 
     function fresh_label(mut this) throws => format("__jakt_label_{}", .fresh_label_counter++)
@@ -214,6 +228,7 @@ struct CodeGenerator {
             control_flow_state: ControlFlowState(
                 allowed_exits: AllowedControlExits::Nothing
                 passes_through_match: false
+                passes_through_try: false
                 match_nest_level: 0
             )
             entered_yieldable_blocks: []
@@ -1417,7 +1432,9 @@ struct CodeGenerator {
             mut output = ""
             if repeat.has_value() {
                 let repeat_val = repeat.value()
-                output += "(TRY((Array<"
+                output += "("
+                output += .current_error_handler()
+                output += "((Array<"
                 output += .codegen_type(inner_type_id)
                 output += ">::filled("
                 output += .codegen_expression(repeat_val)
@@ -1425,7 +1442,9 @@ struct CodeGenerator {
                 output += .codegen_expression(vals[0])
                 output += "))))"
             } else {
-                output += "(TRY((Array<"
+                output += "("
+                output += .current_error_handler()
+                output += "((Array<"
                 output += .codegen_type(inner_type_id)
                 output += ">::create_with({"
                 mut first = true
@@ -1444,7 +1463,8 @@ struct CodeGenerator {
             yield output
         }
         JaktDictionary(vals, span, type_id, key_type_id, value_type_id) => {
-            mut output = format("(TRY((Dictionary<{}, {}>::create_with_entries({{",
+            mut output = format("({}((Dictionary<{}, {}>::create_with_entries({{",
+                .current_error_handler(),
                 .codegen_type(key_type_id),
                 .codegen_type(value_type_id))
 
@@ -1473,7 +1493,7 @@ struct CodeGenerator {
 
         JaktSet(vals, span, type_id, inner_type_id) => {
             mut output = ""
-            output += format("(TRY((Set<{}>::create_with_values({{", .codegen_type(inner_type_id))
+            output += format("({}((Set<{}>::create_with_values({{", .current_error_handler(), .codegen_type(inner_type_id))
             mut first = true
             for value in vals.iterator() {
                 if not first {
@@ -1810,7 +1830,8 @@ struct CodeGenerator {
             mut output = ""
 
             if rhs_can_throw {
-                output += "TRY(("
+                output += .current_error_handler()
+                output += "(("
             }
 
             output += .codegen_expression(lhs)
@@ -1995,7 +2016,8 @@ struct CodeGenerator {
     function codegen_method_call(mut this, expr: CheckedExpression, call: CheckedCall) throws -> String {
         mut output = ""
         if call.callee_throws {
-            output += "TRY(("
+            output += .current_error_handler()
+            output += "(("
         }
 
         let object = .codegen_expression(expr)
@@ -2054,7 +2076,8 @@ struct CodeGenerator {
         mut output = ""
 
         if call.callee_throws {
-            output += "TRY(("
+            output += .current_error_handler()
+            output += "(("
         }
         match call.name {
             "print" | "println" | "eprintln" | "eprint" | "format" => {
@@ -2424,6 +2447,7 @@ struct CodeGenerator {
                 {
                     let last_control_flow = .control_flow_state
                     .control_flow_state.passes_through_match = false
+                    .control_flow_state.passes_through_try = true
                     output += .codegen_statement(statement: stmt)
                     output += ";"
                     output += "return {};"
@@ -2741,7 +2765,7 @@ struct CodeGenerator {
                         output += param.variable.name
                     }
 
-                    output += format(") {{ auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) {} (", class_name_with_generics)
+                    output += format(") {{ auto o = {}(adopt_nonnull_ref_or_enomem(new (nothrow) {} (", .current_error_handler(), class_name_with_generics)
 
                     first = true
                     for param in function_.params.iterator() {
