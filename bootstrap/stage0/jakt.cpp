@@ -4717,7 +4717,7 @@ span{ forward<_MemberT1>(member_1)}
 {}
 };
 struct Function {
-Array<NonnullRefPtr<parser::ParsedType>> params;
+Array<parser::ParsedParameter> params;
 bool can_throw;
 NonnullRefPtr<parser::ParsedType> return_type;
 utility::Span span;
@@ -7845,6 +7845,7 @@ if ((((this)->current())).has<lexer::Token::Colon>()){
 (((this)->index)++);
 (super_class = TRY((((this)->parse_typename()))));
 }
+((this)->skip_newlines());
 if (((this)->eof())){
 TRY((((this)->error(String("Incomplete class definition, expected body"),((((this)->current())).span())))));
 return (parsed_class);
@@ -7918,6 +7919,7 @@ TRY((((this)->error(String("Invalid enum definition: Value enums must not have a
 (((this)->index)++);
 (underlying_type = TRY((((this)->parse_typename()))));
 }
+((this)->skip_newlines());
 if (((this)->eof())){
 TRY((((this)->error(String("Incomplete enum definition, expected body"),((((this)->current())).span())))));
 return (parsed_enum);
@@ -8771,48 +8773,7 @@ auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::To
 return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<parser::ParsedType>> __jakt_var_54; {
 const utility::Span start = ((((this)->current())).span());
 (((this)->index)++);
-Array<NonnullRefPtr<parser::ParsedType>> param_types = (TRY((Array<NonnullRefPtr<parser::ParsedType>>::create_with({}))));
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedType>>>{
-auto&& __jakt_match_variant_maybe_deref = ((this)->current());auto&& __jakt_match_variant = __jakt_match_variant_maybe_deref;
-switch(__jakt_match_variant.index()) {
-case 8: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LParen>();
-{
-(((this)->index)++);
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-default: {
-{
-TRY((((this)->error(String("Expected '('"),((((this)->current())).span())))));
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-}/*switch end*/
-}()
-));
-while ((!((this)->eof()))){
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedType>>>{
-auto&& __jakt_match_variant_maybe_deref = ((this)->current());auto&& __jakt_match_variant = __jakt_match_variant_maybe_deref;
-switch(__jakt_match_variant.index()) {
-case 9: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::RParen>();
-{
-(((this)->index)++);
-return JaktInternal::LoopBreak{};
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-default: {
-{
-TRY((((param_types).push(TRY((((this)->parse_typename())))))));
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-}/*switch end*/
-}()
-));
-}
+const Array<parser::ParsedParameter> params = TRY((((this)->parse_function_parameters())));
 const bool can_throw = (((this)->current())).has<lexer::Token::Throws>();
 if (can_throw){
 (((this)->index)++);
@@ -8838,7 +8799,7 @@ return JaktInternal::ExplicitValue<void>();
 }/*switch end*/
 }()
 ));
-__jakt_var_54 = TRY((parser::ParsedType::template create<typename parser::ParsedType::Function>(param_types,can_throw,return_type,parser::merge_spans(start,((return_type)->span()))))); goto __jakt_label_54;
+__jakt_var_54 = TRY((parser::ParsedType::template create<typename parser::ParsedType::Function>(params,can_throw,return_type,parser::merge_spans(start,((return_type)->span()))))); goto __jakt_label_54;
 
 }
 __jakt_label_54:; __jakt_var_54.release_value(); }));
@@ -8868,8 +8829,10 @@ const utility::Span start_span = ((((this)->current())).span());
 const NonnullRefPtr<parser::ParsedExpression> condition = TRY((((this)->parse_expression(false))));
 const parser::ParsedBlock then_block = TRY((((this)->parse_block())));
 Optional<NonnullRefPtr<parser::ParsedStatement>> else_statement = JaktInternal::OptionalNone();
+((this)->skip_newlines());
 if ((((this)->current())).has<lexer::Token::Else>()){
 (((this)->index)++);
+((this)->skip_newlines());
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<NonnullRefPtr<parser::ParsedStatement>>>{
 auto&& __jakt_match_variant_maybe_deref = ((this)->current());auto&& __jakt_match_variant = __jakt_match_variant_maybe_deref;
 switch(__jakt_match_variant.index()) {
@@ -9132,6 +9095,7 @@ return JaktInternal::ExplicitValue<void>();
 }/*switch end*/
 }()
 ));
+((this)->skip_newlines());
 Array<parser::ParsedParameter> params = (TRY((Array<parser::ParsedParameter>::create_with({}))));
 bool current_param_requires_label = true;
 bool current_param_is_mutable = false;
@@ -9151,6 +9115,20 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 51: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
+{
+if (((!parameter_complete) && (!error))){
+TRY((((this)->error(String("Expected parameter"),((((this)->current())).span())))));
+(error = true);
+}
+(((this)->index)++);
+(current_param_requires_label = true);
+(current_param_is_mutable = false);
+(parameter_complete = false);
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 54: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Eol>();
 {
 if (((!parameter_complete) && (!error))){
 TRY((((this)->error(String("Expected parameter"),((((this)->current())).span())))));
@@ -9401,6 +9379,7 @@ TRY((((this)->error(String("Incomplete struct definition, expected generic param
 return (parsed_struct);
 }
 (((parsed_struct).generic_parameters) = TRY((((this)->parse_generic_parameters()))));
+((this)->skip_newlines());
 if (((this)->eof())){
 TRY((((this)->error(String("Incomplete struct definition, expected body"),((((this)->current())).span())))));
 return (parsed_struct);
@@ -20371,7 +20350,7 @@ return (TRY((((this)->typecheck_generic_resolved_type(name,checked_inner_types,s
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 12: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Function>();Array<NonnullRefPtr<parser::ParsedType>> const& params = __jakt_match_value.params;
+auto&& __jakt_match_value = __jakt_match_variant.template get<parser::ParsedType::Function>();Array<parser::ParsedParameter> const& params = __jakt_match_value.params;
 bool const& can_throw = __jakt_match_value.can_throw;
 NonnullRefPtr<parser::ParsedType> const& return_type = __jakt_match_value.return_type;
 utility::Span const& span = __jakt_match_value.span;
@@ -20398,21 +20377,39 @@ __jakt_label_114:; __jakt_var_114.release_value(); }));
 }
 }()))
 ;
-const NonnullRefPtr<typechecker::CheckedFunction> checked_function = TRY((typechecker::CheckedFunction::create(function_name,span,typename parser::Visibility::Public(),TRY((((this)->typecheck_typename(return_type,scope_id,JaktInternal::OptionalNone())))),((return_type)->span()),(TRY((Array<typechecker::CheckedParameter>::create_with({})))),(TRY((Array<typechecker::FunctionGenericParameter>::create_with({})))),typechecker::CheckedBlock((TRY((Array<NonnullRefPtr<typechecker::CheckedStatement>>::create_with({})))),scope_id,false,false,JaktInternal::OptionalNone()),can_throw,typename parser::FunctionType::Normal(),typename parser::FunctionLinkage::Internal(),scope_id,false,JaktInternal::OptionalNone())));
+Array<typechecker::CheckedParameter> checked_params = (TRY((Array<typechecker::CheckedParameter>::create_with({}))));
+bool first = true;
+{
+ArrayIterator<parser::ParsedParameter> _magic = ((params).iterator());
+for (;;){
+Optional<parser::ParsedParameter> _magic_value = ((_magic).next());
+if ((!((_magic_value).has_value()))){
+break;
+}
+parser::ParsedParameter param = (_magic_value.value());
+{
+TRY((((checked_params).push(TRY((((this)->typecheck_parameter(param,scope_id,first,JaktInternal::OptionalNone(),JaktInternal::OptionalNone()))))))));
+(first = false);
+}
+
+}
+}
+
+const NonnullRefPtr<typechecker::CheckedFunction> checked_function = TRY((typechecker::CheckedFunction::create(function_name,span,typename parser::Visibility::Public(),TRY((((this)->typecheck_typename(return_type,scope_id,JaktInternal::OptionalNone())))),((return_type)->span()),checked_params,(TRY((Array<typechecker::FunctionGenericParameter>::create_with({})))),typechecker::CheckedBlock((TRY((Array<NonnullRefPtr<typechecker::CheckedStatement>>::create_with({})))),scope_id,false,false,JaktInternal::OptionalNone()),can_throw,typename parser::FunctionType::Normal(),typename parser::FunctionLinkage::Internal(),scope_id,false,JaktInternal::OptionalNone())));
 NonnullRefPtr<typechecker::Module> module = ((this)->current_module());
 const typechecker::FunctionId function_id = TRY((((module)->add_function(checked_function))));
 TRY((((this)->add_function_to_scope(scope_id,((checked_function)->name),function_id,span))));
 Array<typechecker::TypeId> param_type_ids = (TRY((Array<typechecker::TypeId>::create_with({}))));
 {
-ArrayIterator<NonnullRefPtr<parser::ParsedType>> _magic = ((params).iterator());
+ArrayIterator<parser::ParsedParameter> _magic = ((params).iterator());
 for (;;){
-Optional<NonnullRefPtr<parser::ParsedType>> _magic_value = ((_magic).next());
+Optional<parser::ParsedParameter> _magic_value = ((_magic).next());
 if ((!((_magic_value).has_value()))){
 break;
 }
-NonnullRefPtr<parser::ParsedType> param = (_magic_value.value());
+parser::ParsedParameter param = (_magic_value.value());
 {
-TRY((((param_type_ids).push(TRY((((this)->typecheck_typename(param,scope_id,name))))))));
+TRY((((param_type_ids).push(TRY((((this)->typecheck_typename(((((param).variable)).parsed_type),scope_id,name))))))));
 }
 
 }
@@ -20917,6 +20914,7 @@ return (((((this)->program))->get_struct(id)));
 
 ErrorOr<NonnullRefPtr<typechecker::CheckedExpression>> typechecker::Typechecker::typecheck_lambda(const Array<parser::ParsedCapture> captures,const Array<parser::ParsedParameter> params,const bool can_throw,const NonnullRefPtr<parser::ParsedType> return_type,const parser::ParsedBlock block,const utility::Span span,const typechecker::ScopeId scope_id,const typechecker::SafetyMode safety_mode) {
 {
+const typechecker::ScopeId lambda_scope_id = TRY((((this)->create_scope(scope_id,can_throw,String("lambda")))));
 Array<typechecker::CheckedCapture> checked_captures = (TRY((Array<typechecker::CheckedCapture>::create_with({}))));
 {
 ArrayIterator<parser::ParsedCapture> _magic = ((captures).iterator());
@@ -20969,6 +20967,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 
+NonnullRefPtr<typechecker::Module> module = ((this)->current_module());
 Array<typechecker::CheckedParameter> checked_params = (TRY((Array<typechecker::CheckedParameter>::create_with({}))));
 bool first = true;
 {
@@ -20980,14 +20979,17 @@ break;
 }
 parser::ParsedParameter param = (_magic_value.value());
 {
-TRY((((checked_params).push(TRY((((this)->typecheck_parameter(param,scope_id,first,JaktInternal::OptionalNone(),JaktInternal::OptionalNone()))))))));
+const typechecker::CheckedParameter checked_param = TRY((((this)->typecheck_parameter(param,scope_id,first,JaktInternal::OptionalNone(),JaktInternal::OptionalNone()))));
+TRY((((checked_params).push(checked_param))));
+const typechecker::VarId var_id = TRY((((module)->add_variable(((checked_param).variable)))));
+TRY((((this)->add_var_to_scope(lambda_scope_id,((((checked_param).variable)).name),var_id,((((checked_param).variable)).definition_span)))));
 (first = false);
 }
 
 }
 }
 
-const typechecker::CheckedBlock checked_block = TRY((((this)->typecheck_block(block,scope_id,safety_mode))));
+const typechecker::CheckedBlock checked_block = TRY((((this)->typecheck_block(block,lambda_scope_id,safety_mode))));
 Array<typechecker::TypeId> param_type_ids = (TRY((Array<typechecker::TypeId>::create_with({}))));
 {
 ArrayIterator<parser::ParsedParameter> _magic = ((params).iterator());
@@ -33405,6 +33407,7 @@ String output = String("Flags:\n");
 (output += String("  -d\t\tInsert debug statement spans in generated C++ code.\n"));
 (output += String("  --debug-print\t\tOutput debug print.\n"));
 (output += String("  --prettify-cpp-source\t\tRun emitted C++ source through clang-format.\n"));
+(output += String("  -S,--emit-cpp-source-only\t\tWrite the C++ source to file, even when not building/\n"));
 (output += String("  -c,--check-only\t\tOnly check the code for errors.\n"));
 (output += String("  -j,--json-errors\t\tEmit machine-readable (JSON) errors.\n"));
 (output += String("  -H,--type-hints\t\tEmit machine-readable type hints (for IDE integration).\n"));
@@ -33698,3 +33701,4 @@ template<>struct Formatter<ide::Usage> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, ide::Usage const& value)
 { if (m_alternative_form) { JaktInternal::_pretty_print_enabled = true; }return Formatter<StringView>::format(builder, MUST(value.debug_description())); }};
 } // namespace Jakt
+
