@@ -1,0 +1,14 @@
+/// Expect: selfhost-only
+/// - output: "PASS\n"
+
+class A {
+    public function f(this) -> A {
+        println("PASS")
+        return this
+    }
+}
+
+function main() {
+    let a = A()
+    let another_a = a.f()
+}

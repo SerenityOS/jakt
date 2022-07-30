@@ -1252,39 +1252,34 @@ struct CodeGenerator {
         }
         ByteConstant(val) => "'" + val + "'"
         CharacterConstant(val) => "'" + val + "'"
-        Var(var) => var.name
+        Var(var) => match var.name {
+            "this" => "*this"
+            else => var.name
+        }
         IndexedExpression(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
         IndexedDictionary(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
         IndexedTuple(expr, index) => format("(({}).get<{}>())", .codegen_expression(expr), index)
         IndexedStruct(expr, index) => {
             mut output = ""
+            let object = .codegen_expression(expression: expr)
             output += "(("
-            output += .codegen_expression(expression: expr)
+            output += object
             output += ")"
 
-            let is_this = match expr {
-                Var(var) => var.name == "this"
-                else => false
-            }
-
-            if is_this {
-                output += "->"
-            } else {
-                match .program.get_type(expression_type(expr)) {
-                    RawPtr => {
+            match .program.get_type(expression_type(expr)) {
+                RawPtr => {
+                    output += "->"
+                }
+                Struct(struct_id) => {
+                    let structure = .program.get_struct(struct_id)
+                    if structure.record_type is Class and object != "*this" {
                         output += "->"
-                    }
-                    Struct(struct_id) => {
-                        let structure = .program.get_struct(struct_id)
-                        if structure.record_type is Class {
-                            output += "->"
-                        } else {
-                            output += "."
-                        }
-                    }
-                    else => {
+                    } else {
                         output += "."
                     }
+                }
+                else => {
+                    output += "."
                 }
             }
             output += index
@@ -1352,7 +1347,9 @@ struct CodeGenerator {
                 }
                 else => ""
             }
-            output += .codegen_expression(expr)
+
+            let object = .codegen_expression(expr)
+            output += object
             output += match op {
                 PostIncrement => "++"
                 PostDecrement => "--"
@@ -1363,7 +1360,7 @@ struct CodeGenerator {
                         Enum(enum_id) => .program.get_enum(enum_id).is_boxed
                         else => false
                     }
-                    if is_boxed {
+                    if is_boxed and object != "*this"{
                         suffix += "->"
                     } else {
                         suffix += "."
@@ -1662,7 +1659,8 @@ struct CodeGenerator {
         mut output = ""
         output += .control_flow_state.choose_control_flow_macro()
 
-        let needs_deref = enum_.is_boxed or .codegen_expression(expr) == "this"
+        let subject = .codegen_expression(expr)
+        let needs_deref = enum_.is_boxed and subject != "*this"
 
         if enum_.underlying_type_id.equals(void_type_id()) {
             output += "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
@@ -1670,12 +1668,12 @@ struct CodeGenerator {
             output += ", "
             output += .codegen_function_return_type(function_: .current_function!)
             output += ">{\n"
-            output += "auto&& __jakt_match_variant_maybe_deref = " + .codegen_expression(expr) + ";"
             output += "auto&& __jakt_match_variant = "
             if needs_deref {
                 output += "*"
             }
-            output += "__jakt_match_variant_maybe_deref;\nswitch(__jakt_match_variant.index()) {\n"
+            output += .codegen_expression(expr) + ";\n"
+            output += "switch(__jakt_match_variant.index()) {\n"
 
             mut has_default = false
             for match_case in match_cases.iterator() {
@@ -2000,41 +1998,34 @@ struct CodeGenerator {
             output += "TRY(("
         }
 
+        let object = .codegen_expression(expr)
+
         output += "(("
-        output += .codegen_expression(expr)
+        output += object
         output += ")"
 
-        let is_this = match expr {
-            Var(var) => var.name == "this"
-            else => false
-        }
-
-        if is_this {
-            output += "->"
-        } else {
-            match .program.get_type(expression_type(expr)) {
-                RawPtr => {
+        match .program.get_type(expression_type(expr)) {
+            RawPtr => {
+                output += "->"
+            }
+            Struct(id) => {
+                let struct_ = .program.get_struct(id)
+                if struct_.record_type is Class and object != "*this" {
                     output += "->"
-                }
-                Struct(id) => {
-                    let struct_ = .program.get_struct(id)
-                    if struct_.record_type is Class {
-                        output += "->"
-                    } else {
-                        output += "."
-                    }
-                }
-                Enum(id) => {
-                    let enum_ = .program.get_enum(id)
-                    if enum_.is_boxed {
-                        output += "->"
-                    } else {
-                        output += "."
-                    }
-                }
-                else => {
+                } else {
                     output += "."
                 }
+            }
+            Enum(id) => {
+                let enum_ = .program.get_enum(id)
+                if enum_.is_boxed and object != "*this" {
+                    output += "->"
+                } else {
+                    output += "."
+                }
+            }
+            else => {
+                output += "."
             }
         }
 
