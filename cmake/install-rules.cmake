@@ -16,30 +16,33 @@ install(
     COMPONENT Jakt_Development
 )
 
-set(stages stage1 stage2 stage3)
+set(stages 0 1 2)
 foreach (stage IN LISTS stages)
-  set(target_name "jakt_${stage}")
+  if (FINAL_STAGE LESS "${stage}")
+    break()
+  endif()
+  set(target_name "jakt_stage${stage}")
   install(
     TARGETS ${target_name}
     EXPORT JaktTargets
     RUNTIME #
-        DESTINATION "${CMAKE_INSTALL_BINDIR}/${stage}"
+        DESTINATION "${CMAKE_INSTALL_BINDIR}/stage${stage}"
         COMPONENT Jakt_Runtime
     LIBRARY #
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/${stage}"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/stage${stage}"
         COMPONENT Jakt_Runtime
         NAMELINK_COMPONENT Jakt_Development
     ARCHIVE #
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/${stage}"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/stage${stage}"
         COMPONENT Jakt_Development
   )
 endforeach()
 
 # Make a symlink bin/jakt to the final compiler we created
-set(final_stage stage3)
+set(final_stage_target "jakt_stage${FINAL_STAGE}")
 install(CODE "execute_process(COMMAND
                               ${CMAKE_COMMAND} -E create_symlink \
-                                                  ${final_stage}/jakt_${final_stage} \
+                                                  \"stage${FINAL_STAGE}/$<TARGET_FILE_NAME:${final_stage_target}>\" \
                                                   ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/jakt)"
 )
 

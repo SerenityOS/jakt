@@ -7,6 +7,8 @@ project(Jakt
         HOMEPAGE_URL https://github.com/SerenityOS/jakt
         DESCRIPTION "Jakt programming language compiler")
 
+set(FINAL_STAGE "1" CACHE STRING "Compiler stage to stop at, either 1 (default) or 2)")
+
 macro(add_jakt_compiler_flags target)
   target_compile_options("${target}" PRIVATE
     -Wno-unused-local-typedefs
@@ -51,9 +53,9 @@ function(add_jakt_executable compiler executable)
   add_jakt_compiler_flags("${executable}")
 endfunction()
 
-add_executable(jakt_stage1 bootstrap/stage0/jakt.cpp)
-add_jakt_compiler_flags(jakt_stage1)
-target_include_directories(jakt_stage1
+add_executable(jakt_stage0 bootstrap/stage0/jakt.cpp)
+add_jakt_compiler_flags(jakt_stage0)
+target_include_directories(jakt_stage0
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bootstrap/stage0/runtime>
     $<INSTALL_INTERFACE:runtime>
@@ -71,31 +73,33 @@ set(SELFHOST_SOURCES
   selfhost/utility.jakt
 )
 
-add_jakt_executable(jakt_stage1 jakt_stage2
+add_jakt_executable(jakt_stage0 jakt_stage1
   MAIN_SOURCE selfhost/main.jakt
   MODULE_SOURCES ${SELFHOST_SOURCES}
   RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bootstrap/stage0/runtime"
 )
-target_include_directories(jakt_stage2
+target_include_directories(jakt_stage1
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
     $<INSTALL_INTERFACE:runtime>
 )
 
-add_jakt_executable(jakt_stage2 jakt_stage3
-  MAIN_SOURCE selfhost/main.jakt
-  MODULE_SOURCES ${SELFHOST_SOURCES}
-)
-target_include_directories(jakt_stage3
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
-    $<INSTALL_INTERFACE:runtime>
-)
+if (FINAL_STAGE GREATER_EQUAL 2)
+  add_jakt_executable(jakt_stage1 jakt_stage2
+    MAIN_SOURCE selfhost/main.jakt
+    MODULE_SOURCES ${SELFHOST_SOURCES}
+  )
+  target_include_directories(jakt_stage2
+    PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
+      $<INSTALL_INTERFACE:runtime>
+  )
+endif()
 
 add_custom_command(
-  TARGET jakt_stage3
+  TARGET "jakt_stage${FINAL_STAGE}"
   POST_BUILD
-  COMMAND "${CMAKE_COMMAND}" -E create_symlink  $<TARGET_FILE_NAME:jakt_stage3> "${CMAKE_BINARY_DIR}/jakt"
+  COMMAND "${CMAKE_COMMAND}" -E create_symlink  "$<TARGET_FILE_NAME:jakt_stage${FINAL_STAGE}>" "${CMAKE_BINARY_DIR}/jakt"
   VERBATIM
 )
 
