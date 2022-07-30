@@ -264,7 +264,6 @@ boxed enum ParsedStatement {
     Throw(expr: ParsedExpression, span: Span)
     Yield(expr: ParsedExpression, span: Span)
     InlineCpp(block: ParsedBlock, span: Span)
-    Try(stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, span: Span)
     Guard(expr: ParsedExpression, else_block: ParsedBlock, remaining_code: ParsedBlock, span: Span)
     Garbage(Span)
 
@@ -285,7 +284,6 @@ boxed enum ParsedStatement {
         Throw(span) => span
         Yield(span) => span
         InlineCpp(span) => span
-        Try(span) => span
         Guard(span) => span
         Garbage(span) => span
     }
@@ -450,6 +448,8 @@ boxed enum ParsedExpression {
     EnumVariantArg(expr: ParsedExpression, arg: EnumVariantPatternArgument, enum_variant: ParsedType, span: Span)
     NamespacedVar(name: String, namespace_: [String], span: Span)
     Function(captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, return_type: ParsedType, block: ParsedBlock, span: Span)
+    Try(expr: ParsedExpression, catch_block: ParsedBlock?, catch_name: String?, span: Span)
+    TryBlock(stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, span: Span)
     Garbage(Span)
 
     function span(this) => match this {
@@ -481,6 +481,8 @@ boxed enum ParsedExpression {
         IndexedStruct(expr, field, span) => span
         NamespacedVar(name, namespace_, span) => span
         Function(span) => span
+        Try(span) => span
+        TryBlock(span) => span
     }
 
     function precedence(this) => match this {
@@ -2062,7 +2064,6 @@ struct Parser {
             }
             If => .parse_if_statement()
             For => .parse_for_statement()
-            Try => .parse_try_statement()
             LCurly => {
                 let block = .parse_block()
                 yield ParsedStatement::Block(block, span: merge_spans(start, .previous().span()))
@@ -2105,11 +2106,8 @@ struct Parser {
         return ParsedStatement::Guard(expr, else_block, remaining_code, span)
     }
 
-    function parse_try_statement(mut this) throws -> ParsedStatement {
+    function parse_try_block(mut this) throws -> ParsedExpression {
         let start_span = .current().span()
-
-        .index++
-
         let stmt = .parse_statement(inside_block: false)
 
         mut error_name = ""
@@ -2127,7 +2125,7 @@ struct Parser {
         }
 
         let catch_block = .parse_block()
-        return ParsedStatement::Try(stmt, error_name, error_span, catch_block, span: merge_spans(start_span, .previous().span()))
+        return ParsedExpression::TryBlock(stmt, error_name, error_span, catch_block, span: merge_spans(start_span, .previous().span()))
     }
 
     function parse_for_statement(mut this) throws -> ParsedStatement {
@@ -2280,6 +2278,26 @@ struct Parser {
     function parse_operand_base(mut this) throws => match .current() {
         Dot(span) => {
             yield ParsedExpression::Var(name: "this", span)
+        }
+        Try(span) => {
+            .index++
+            yield match .current() {
+                LCurly => .parse_try_block()
+                else => {
+                    let expression = .parse_expression(allow_assignments: true, allow_newlines: true)
+                    mut catch_block: ParsedBlock? = None
+                    mut catch_name: String? = None
+                    if .current() is Catch {
+                        .index++
+                        if .current() is Identifier(name) {
+                            catch_name = name
+                            .index++
+                        }
+                        catch_block = .parse_block()
+                    }
+                    yield ParsedExpression::Try(expr: expression, catch_block, catch_name, span)
+                }
+            }
         }
         QuotedString(quote, span) => {
             .index++
@@ -3437,12 +3455,6 @@ function parsed_statement_equals(anon lhs_statement: ParsedStatement, anon rhs_s
         InlineCpp(block) => parsed_block_equals(lhs_block, block)
         else => false
     }
-    Try(stmt: lhs_stmt, error_name: lhs_error_name, catch_block: lhs_catch_block) => match rhs_statement {
-        Try(stmt: rhs_stmt, error_name: rhs_error_name, catch_block: rhs_catch_block) => {
-            yield lhs_error_name == rhs_error_name and parsed_statement_equals(lhs_stmt, rhs_stmt) and parsed_block_equals(lhs_catch_block, rhs_catch_block)
-        }
-        else => false
-    }
     Guard(expr, else_block) => match rhs_statement {
         Guard(expr: rhs_expr, else_block: rhs_else_block) => parsed_expression_equals(expr, rhs_expr) and parsed_block_equals(else_block, rhs_else_block)
         else => false
@@ -3613,6 +3625,28 @@ function parsed_expression_equals(anon lhs_expression: ParsedExpression, anon rh
             }
             yield lhs_name == rhs_name
         }
+        else => false
+    }
+    Try(expr: lhs_expr, catch_block: lhs_catch_block) => match rhs_expression {
+        Try(expr: rhs_expr, catch_block: rhs_catch_block) => {
+            mut equals = parsed_expression_equals(lhs_expr, rhs_expr)
+            if equals {
+                if lhs_catch_block.has_value() {
+                    if rhs_catch_block.has_value() {
+                        equals = parsed_block_equals(lhs_catch_block!, rhs_catch_block!)
+                    } else {
+                        equals = false
+                    }
+                } else {
+                    equals = not rhs_catch_block.has_value()
+                }
+            }
+            yield equals
+        }
+        else => false
+    }
+    TryBlock(stmt: lhs_stmt, error_name: lhs_error_name, catch_block: lhs_catch_block) => match rhs_expression {
+        TryBlock(stmt: rhs_stmt, error_name: rhs_error_name, catch_block: rhs_catch_block) => parsed_statement_equals(lhs_stmt, rhs_stmt) and (lhs_error_name == rhs_error_name) and parsed_block_equals(lhs_catch_block, rhs_catch_block)
         else => false
     }
     Function => false // FIXME: compare functions

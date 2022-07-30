@@ -1,0 +1,25 @@
+/// Expect: selfhost-only
+/// - output: "123\nPASS\n"
+
+struct Foo {
+    x: usize
+}
+
+function throw_for_fun() throws -> Foo {
+    throw Error::from_errno(123)
+}
+
+function pretend_to_throw_for_fun() throws -> Foo {
+    return Foo(x: 123)
+}
+
+function main() {
+    println("{}", (try pretend_to_throw_for_fun())?.x)
+    try throw_for_fun() catch {
+        println("PASS")
+        return 0
+    }
+
+    println("FAIL")
+    return 1
+}
