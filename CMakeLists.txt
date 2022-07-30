@@ -20,6 +20,10 @@ macro(add_jakt_compiler_flags target)
     -Wno-user-defined-literals
     -Wno-deprecated-declarations
   )
+  if (MSVC)
+    # For clang-cl, which shows up to CMake as MSVC and accepts both kinds of arguments
+    target_compile_options("${target}" PRIVATE /permissive- /utf-8)
+  endif()
   target_compile_features("${target}" PRIVATE cxx_std_20)
 endmacro()
 
