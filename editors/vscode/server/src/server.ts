@@ -219,12 +219,16 @@ interface ExampleSettings {
 	compiler: {
 		executablePath: string;
 	};
+	hints: {
+		showImplicitTry: boolean;
+		showInferredTypes: boolean;
+	};
 }
 
 // The global settings, used when the `workspace/configuration` request is not supported by the client.
 // Please note that this is not the case when using this server with the client provided in this example
 // but could happen with other clients.
-const defaultSettings: ExampleSettings = { maxNumberOfProblems: 1000, compiler: { executablePath: "jakt" } };
+const defaultSettings: ExampleSettings = { maxNumberOfProblems: 1000, compiler: { executablePath: "jakt" }, hints: { showImplicitTry: true, showInferredTypes: true } };
 let globalSettings: ExampleSettings = defaultSettings;
 
 // Cache the settings of all open documents
@@ -462,7 +466,7 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
 				// connection.console.log(diagnostic.message);
 
 				diagnostics.push(diagnostic);
-			} else if (obj.type == "hint") {
+			} else if (obj.type == "hint" && settings.hints.showInferredTypes) {
 				if (!seenTypeHintPositions.has(obj.position)) {
 					seenTypeHintPositions.add(obj.position);
 					const position = convertSpan(obj.position, lineBreaks);
@@ -471,7 +475,7 @@ async function validateTextDocument(textDocument: JaktTextDocument): Promise<voi
 
 					textDocument.jaktInlayHints.push(hint);
 				}
-			} else if (obj.type == "try") {
+			} else if (obj.type == "try" && settings.hints.showImplicitTry) {
 				if (!seenTypeHintPositions.has(obj.position)) {
 					seenTypeHintPositions.add(obj.position);
 					const position = convertSpan(obj.position, lineBreaks);
