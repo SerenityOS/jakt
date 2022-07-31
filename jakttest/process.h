@@ -27,5 +27,4 @@ public:
 ErrorOr<i32> start_background_process(Array<String> args);
 ErrorOr<Optional<ExitPollResult>> poll_process_exit(i32 pid);
 ErrorOr<void> forcefully_kill_process(i32 pid);
-ErrorOr<void> exec(Array<String> args);
 }

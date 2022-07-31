@@ -115,9 +115,6 @@ import extern "process.h" {
         extern function poll_process_exit(pid: i32) throws -> ExitPollResult?
         /// Kills a process by sending SIGKILL to it
         extern function forcefully_kill_process(pid: i32) throws
-
-        /// Calls execvp() with the given argument array.
-        extern function exec(args: [String]) throws
     }
 }
 

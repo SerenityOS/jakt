@@ -64,51 +64,6 @@ static ErrorOr<char**> dup_argv(Array<String> args)
     return argv;
 }
 
-ErrorOr<void> exec(Array<String> args)
-{
-    // this time I don't have to use dup_argv, since
-    // none of the arguments will be deallocated if
-    // the process can be executed(because execvp gets in the way)
-    // We'll just allocate an array of pointers to `args`, plus the NULL pointer.
-    auto const argv_byte_size = (Checked<size_t>(args.size()) + Checked<size_t>(1)) * Checked<size_t>(sizeof(char*));
-    if (argv_byte_size.has_overflow()) {
-        return Error::from_errno(EOVERFLOW);
-    }
-
-    // SAFE: since `execvp` expects `char * const *`, we have to fill the argv
-    // array with pointers.
-    auto argv = reinterpret_cast<char**>(malloc(argv_byte_size.value_unchecked()));
-    if (argv == NULL) {
-        return Error::from_errno(ENOMEM);
-    }
-
-    for (size_t i = 0; i != args.size(); ++i) {
-        // SAFETY: const_cast is safe:
-        // If execvp() succeeds it doesn't return, and the argument strings
-        // can't be modified by us; ownership of this memory has been
-        // transferred to the executed program. Which means that we can cast
-        // them to `char *`; the memory is not touched by whoever passed args
-        // anymore (we're not returning control).
-        //
-        // If it doesn't, these pointers in `argv` become invalid, because the
-        // memory continues to be owned by whoever passed the references to the
-        // strings. These now invalid pointers are not used by this function (or
-        // future paths) once they're invalid; in fact; the memory of `argv` is
-        // released.
-        argv[i] = const_cast<char*>(args[i].c_string());
-    }
-    argv[args.size()] = NULL;
-
-    if (::execvp(argv[0], argv) == -1) {
-        // do not touch again this array. Its pointers are invalid (see safety
-        // comment above `const_cast`).
-        free(argv);
-        return Error::from_errno(errno);
-    }
-
-    VERIFY_NOT_REACHED();
-}
-
 ErrorOr<i32> start_background_process(Array<String> args)
 {
     // We have to fully duplicate argv because execvp wants
