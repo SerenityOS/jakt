@@ -53,8 +53,8 @@ jobs:
 
       - name: Test Jakt Stage 1 selfhost
         run: |
-          ninja -C jakttest
-          ./jakttest/build/jakttest --assume-updated-selfhost --assume-updated
+          ninja -C build jakttest_stage1
+          ./build/jakttest_stage1
 
       - name: Build Jakt Stage 2 Selfhost
         run: |
@@ -64,8 +64,8 @@ jobs:
 
       - name: Test Jakt Stage 2 selfhost
         run: |
-          ninja -C jakttest
-          ./jakttest/build/jakttest --assume-updated-selfhost --assume-updated
+          ninja -C build jakttest_stage2
+          ./build/jakttest_stage2
 
   selfhost-windows:
     strategy:
