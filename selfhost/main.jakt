@@ -78,7 +78,7 @@ function main(args: [String]) {
     let run_executable = args_parser.flag(["-r"])
     let codegen_debug = args_parser.flag(["-d"])
     let debug_print = args_parser.flag(["--debug-print"])
-    let prettify_cpp_source = args_parser.flag(["--prettify-cpp-source"])
+    let prettify_cpp_source = args_parser.flag(["-p", "--prettify-cpp-source"])
     let json_errors = args_parser.flag(["-j","--json-errors"])
     let dump_type_hints = args_parser.flag(["-H", "--type-hints"])
     let dump_try_hints = args_parser.flag(["--try-hints"])
