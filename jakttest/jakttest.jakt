@@ -141,6 +141,7 @@ function print_usage()  {
     eprintln("\t\t\tWill try to use $TMP_DIR or /tmp in UNIX-based systems, or %TEMP% in Windows")
     eprintln("\t--assume-updated-selfhost\t\tAssume selfhost is up to date, i.e don't check it.")
     eprintln("\t--assume-updated\t\tAssume jakttest is up to date, i.e don't check it.")
+    eprintln("\t--no-progress-line\t\tDo not output progress status line.")
 }
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
@@ -239,6 +240,7 @@ struct Options {
     help_wanted: bool
     assume_selfhost_updated: bool
     assume_updated: bool
+    progress_statusline: bool
 
     function from_args(args: [String]) throws -> Options {
         let files: [String] = []
@@ -250,7 +252,8 @@ struct Options {
                               job_count: 0
                               help_wanted: false
                               assume_selfhost_updated: false
-                              assume_updated: false)
+                              assume_updated: false
+                              progress_statusline: true)
 
         mut index = 1uz
         while index != args.size() {
@@ -301,6 +304,12 @@ struct Options {
 
             if args[index] == "--assume-updated" {
                 options.assume_updated = true
+                index++
+                continue
+            }
+
+            if args[index] == "--no-progress-line" {
+                options.progress_statusline = false
                 index++
                 continue
             }
@@ -582,7 +591,7 @@ struct TestScheduler {
                             failed_reasons)
     }
 
-    public function run_tests(mut tests: [Test], directories: [String], collect_reasons: bool) throws -> TestsRunResult {
+    public function run_tests(mut tests: [Test], directories: [String], collect_reasons: bool, progress_statusline: bool) throws -> TestsRunResult {
         let total_test_count = tests.size()
         // create an empty handler so SIGCHLD is not ignored
         unsafe {
@@ -606,12 +615,14 @@ struct TestScheduler {
             command_buffer[2] = test.file_name
             let pid = process::start_background_process(args: command_buffer)
             scheduler.running_tests[pid] = test
-            eprint("\r\x1b[2K[ \x1b[1;31m{}\x1b[m/\x1b[1;32m{}\x1b[m/{} ] Testing {}"
-                    scheduler.failed_count
-                    scheduler.passed_count
-                    total_test_count
-                    test.file_name)
-            unsafe { cpp { "fflush(stderr);" }}
+            if progress_statusline {
+                eprint("\r\x1b[2K[ \x1b[1;31m{}\x1b[m/\x1b[1;32m{}\x1b[m/{} ] Testing {}"
+                        scheduler.failed_count
+                        scheduler.passed_count
+                        total_test_count
+                        test.file_name)
+                unsafe { cpp { "fflush(stderr);" }}
+            }
         }
 
         while not scheduler.running_tests.is_empty() {
@@ -742,7 +753,7 @@ function main(args: [String]) {
         directories.push(path)
     }
 
-    let run_result = TestScheduler::run_tests(tests, directories, collect_reasons: parsed_options.show_reasons)
+    let run_result = TestScheduler::run_tests(tests, directories, collect_reasons: parsed_options.show_reasons, progress_statusline: parsed_options.progress_statusline)
 
     // delete directories
     for dir in directories.iterator() {
