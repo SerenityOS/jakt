@@ -109,18 +109,26 @@ set(JAKTTEST_CPP_SOURCES
 set(JAKTTEST_MAIN_SOURCE jakttest/jakttest.jakt)
 set(JAKTTEST_GENERATED_CPP "jakttest.cpp")
 
-add_jakt_generate_cpp("jakt_stage${FINAL_STAGE}" "${JAKTTEST_GENERATED_CPP}"
-  MODULE_SOURCES ${JAKTTEST_MODULE_SOURCES}
-  MAIN_SOURCE ${JAKTTEST_MAIN_SOURCE})
+function(add_jakttest_from_stage stage_number)
+    set(cpp_output "jakttest_stage${stage_number}.cpp")
+    set(executable "jakttest_stage${stage_number}")
+    add_jakt_generate_cpp("jakt_stage${stage_number}" "${cpp_output}"
+        MODULE_SOURCES ${JAKTTEST_MODULE_SOURCES}
+        MAIN_SOURCE ${JAKTTEST_MAIN_SOURCE})
+    add_executable("${executable}" "${cpp_output}" ${JAKTTEST_CPP_SOURCES})
+    add_jakt_compiler_flags("${executable}")
+    target_include_directories("${executable}"
+      PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
+        $<INSTALL_INTERFACE:runtime>
+        "${CMAKE_CURRENT_SOURCE_DIR}/jakttest"
+    )
+endfunction()
 
-add_executable(jakttest "${JAKTTEST_GENERATED_CPP}" ${JAKTTEST_CPP_SOURCES})
-add_jakt_compiler_flags("jakttest")
-target_include_directories(jakttest
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
-    $<INSTALL_INTERFACE:runtime>
-    "${CMAKE_CURRENT_SOURCE_DIR}/jakttest"
-)
+add_jakttest_from_stage(0)
+add_jakttest_from_stage(1)
+
+add_custom_target(jakttest DEPENDS "jakttest_stage${FINAL_STAGE}")
 
 if (FINAL_STAGE GREATER_EQUAL 2)
   add_jakt_executable(jakt_stage1 jakt_stage2
@@ -132,12 +140,20 @@ if (FINAL_STAGE GREATER_EQUAL 2)
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
       $<INSTALL_INTERFACE:runtime>
   )
+  add_jakttest_from_stage(2)
 endif()
 
 add_custom_command(
   TARGET "jakt_stage${FINAL_STAGE}"
   POST_BUILD
   COMMAND "${CMAKE_COMMAND}" -E create_symlink  "$<TARGET_FILE_NAME:jakt_stage${FINAL_STAGE}>" "${CMAKE_BINARY_DIR}/jakt"
+  VERBATIM
+)
+
+add_custom_command(
+  TARGET "jakttest_stage${FINAL_STAGE}"
+  POST_BUILD
+  COMMAND "${CMAKE_COMMAND}" -E create_symlink "$<TARGET_FILE_NAME:jakttest_stage${FINAL_STAGE}>" "${CMAKE_BINARY_DIR}/jakttest"
   VERBATIM
 )
 
