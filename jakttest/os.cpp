@@ -1,4 +1,5 @@
 // Copyright (c) 2022, Jesús Lapastora <cyber.gsuscode@gmail.com>
+// Copyright (c) 2022, Andrew Kaster <akaster@serenityos.org>
 //
 // SPDX-License-Identifier: BSD-2-Clause
 #include "os.h"
@@ -8,9 +9,17 @@
 #include <Jakt/RefPtr.h>
 #include <Jakt/StringBuilder.h>
 #include <stdlib.h>
+#ifndef _WIN32
 #include <unistd.h>
+#include <signal.h>
+#else
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <sysinfoapi.h>
+#endif
 
 namespace Jakt::os {
+#ifndef _WIN32
 ErrorOr<size_t> get_num_cpus()
 {
     long result = sysconf(_SC_NPROCESSORS_ONLN);
@@ -22,12 +31,39 @@ ErrorOr<size_t> get_num_cpus()
 ErrorOr<String> get_system_temporary_directory()
 {
     auto builder = TRY(StringBuilder::create());
-#ifdef __WIN32
-    TRY(builder.append_c_string(getenv("TEMP")));
-#else
     auto const result = getenv("TMP_DIR");
-    TRY(builder.append_c_string(result == NULL ? "/tmp" : result));
-#endif
+    TRY(builder.append_c_string(result ?: "/tmp"));
     return TRY(builder.to_string());
 }
+ErrorOr<void> ignore_sigchild()
+{
+    struct sigaction action { };
+    action.sa_handler = [](int) {};
+    sigemptyset(&action.sa_mask);
+    sigaddset(&action.sa_mask, SIGCHLD);
+    action.sa_flags = SA_NOCLDSTOP;
+    if (sigaction(SIGCHLD, &action, NULL) == -1)
+        return Error::from_errno(errno);
+    return {};
+}
+#else
+ErrorOr<size_t> get_num_cpus()
+{
+    SYSTEM_INFO sys_info = {};
+    GetSystemInfo(&sys_info);
+    return sys_info.dwNumberOfProcessors;
+}
+
+ErrorOr<String> get_system_temporary_directory()
+{
+    auto builder = TRY(StringBuilder::create());
+    TRY(builder.append_c_string(getenv("TEMP")));
+    return TRY(builder.to_string());
+}
+
+ErrorOr<void> ignore_sigchild()
+{
+    return {};
+}
+#endif
 }

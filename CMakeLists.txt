@@ -117,3 +117,26 @@ add_custom_command(
 if (NOT CMAKE_SKIP_INSTALL_RULES)
   include(cmake/install-rules.cmake)
 endif()
+
+# FIXME: Remove if we decide to use CTest
+option(BUILD_TESTING "Whether to build tests or not, default on" ON)
+
+if (BUILD_TESTING)
+  add_jakt_executable("jakt_stage${FINAL_STAGE}" jakttest
+    MAIN_SOURCE
+      jakttest/jakttest.jakt
+    MODULE_SOURCES
+      jakttest/error.jakt
+      jakttest/lexer.jakt
+      jakttest/parser.jakt
+      jakttest/utility.jakt
+  )
+  target_sources(jakttest PRIVATE
+     jakttest/fs.cpp
+     jakttest/os.cpp
+     jakttest/process.cpp
+  )
+  target_include_directories(jakttest PRIVATE jakttest
+    $<TARGET_PROPERTY:jakt_stage${FINAL_STAGE},INCLUDE_DIRECTORIES>
+  )
+endif()

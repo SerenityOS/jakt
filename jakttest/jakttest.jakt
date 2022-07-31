@@ -11,6 +11,7 @@ import lexer { Lexer }
 import utility { panic }
 
 // needed for sigaction() stuff
+// FIXME: See #1015, needs to be OS-specific
 import extern c "signal.h" {}
 
 import extern "fs.h" {
@@ -125,6 +126,8 @@ import extern "os.h" {
 
         /// Returns %TEMP% in Windows and $TMP_DIR or /tmp in macOS/linux
         extern function get_system_temporary_directory() throws -> String
+
+        extern function ignore_sigchild() throws
     }
 }
 
@@ -520,16 +523,21 @@ struct TestScheduler {
         // Maybe `unsafe inline` blocks that have the same scope as its parent
         // scope could be a solution to this?
         unsafe {
+            cpp { "#ifndef _WIN32" }
             cpp { "sigset_t set;" }
             cpp { "int signal;"   }
             cpp { "sigemptyset(&set);" }
             cpp { "sigaddset(&set, SIGCHLD);" }
+            cpp { "#endif" }
 
             while .free_directories.is_empty() {
                 // wait for sigchld
                 unsafe {
+                    // Blocking on any exiting child is handled within the poll_process_exit method  on win32
+                    cpp { "#ifndef _WIN32" }
                     cpp { "if (sigwait(&set, &signal) > 0)" }
                     cpp { "    return Error::from_errno(errno);" }
+                    cpp { "#endif" }
                 }
                 // check if any test has exited
                 .poll_running_tests()
@@ -564,15 +572,7 @@ struct TestScheduler {
     public function run_tests(mut tests: [Test], directories: [String], collect_reasons: bool) throws -> TestsRunResult {
         let total_test_count = tests.size()
         // create an empty handler so SIGCHLD is not ignored
-        unsafe {
-            cpp { "struct sigaction action{};" }
-            cpp { "action.sa_handler = [](int){};" }
-            cpp { "sigemptyset(&action.sa_mask);" }
-            cpp { "sigaddset(&action.sa_mask, SIGCHLD);" }
-            cpp { "action.sa_flags = SA_NOCLDSTOP;" }
-            cpp { "if (sigaction(SIGCHLD, &action, NULL) == -1)" }
-            cpp { "    return Error::from_errno(errno);" }
-        }
+        os::ignore_sigchild()
         mut scheduler = TestScheduler::create(directories, collect_reasons)
         // pre-allocate the command buffer to avoid allocating inside a loop
         mut command_buffer: [String] = ["./jakttest/run-one.sh" "" ""]

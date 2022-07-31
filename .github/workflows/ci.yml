@@ -52,9 +52,7 @@ jobs:
           cmake --build build
 
       - name: Test Jakt Stage 1
-        run: |
-          ninja -C jakttest
-          ./jakttest/build/jakttest
+        run: ./build/jakttest
 
       - name: Build Jakt Stage 2
         run: |
@@ -63,9 +61,7 @@ jobs:
           cmake --build build
 
       - name: Test Jakt Stage 2
-        run: |
-          ninja -C jakttest
-          ./jakttest/build/jakttest
+        run: ./build/jakttest
 
   selfhost-windows:
     strategy:

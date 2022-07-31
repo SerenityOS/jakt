@@ -1,14 +1,26 @@
 //
 // Copyright (c) 2022, Jesús Lapastora <cyber.gsuscode@gmail.com>
+// Copyright (c) 2022, Andrew Kaster <akaster@serenityos.org>
 //
 // SPDX-License-Identifier: BSD-2-Clause
 #include "process.h"
 #include <Jakt/Assertions.h>
+#include <Jakt/HashMap.h>
+#include <Jakt/RefPtr.h>
+#include <time.h>
+#ifndef _WIN32
 #include <signal.h>
 #include <sys/wait.h>
-#include <time.h>
+#else
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <system_error>
+#include <processthreadsapi.h>
+#endif
 
 namespace Jakt::process {
+
+#ifndef _WIN32
 // Allocates & fills one array, which contains:
 // - the argv array with all the pointers into later offsets of the array, at the front
 // - the string arguments that follow the last argv NULL pointer, terminated by zeroes.
@@ -17,7 +29,7 @@ static ErrorOr<char**> dup_argv(Array<String> args)
 
     // 1. Calculate the total size  of all the pointers + all the strings, accounting
     // for the last NULL pointer and each argument's NUL terminator.
-    auto const argv_size = Checked(args.size()) + Checked(1ul);
+    auto const argv_size = Checked(args.size()) + Checked<size_t>(1ul);
     auto const argv_malloc_size = argv_size * Checked(sizeof(char*));
     // ensure argv malloc size has no overflow because we're going to use it
     // as the offset for the start of the string array.
@@ -112,4 +124,150 @@ ErrorOr<void> forcefully_kill_process(i32 pid)
     }
     return ErrorOr<void> {};
 }
+#else
+
+static ErrorOr<String> join(Array<String> const strings, const String separator)
+{
+    String output = String("");
+    size_t i = 0;
+    ArrayIterator<String> it = strings.iterator();
+    for (;;) {
+        Optional<String> maybe_next = it.next();
+        if (!maybe_next.has_value())
+            break;
+        output += maybe_next.release_value();
+        if (i < strings.size() - 1) {
+            output += separator;
+        }
+        ++i;
+    }
+    return output;
+}
+
+static int last_error_to_errno(DWORD error)
+{
+    // Shh, there's no ::std here
+    return ::std::system_category().default_error_condition(error).value();
+}
+
+// FIXME: encapsulate this data and these methods into a singleton or something
+static HashMap<i32, PROCESS_INFORMATION> s_process_handles;
+static i32 s_next_process_handle = 0;
+
+ErrorOr<i32> start_background_process(Array<String> args)
+{
+    STARTUPINFO si = {};
+    si.cb = sizeof(si);
+    PROCESS_INFORMATION pi = {};
+
+    String command_line_str = TRY(join(args, String(" ")));
+
+    char command_line[MAX_PATH] = {};
+    strncpy(command_line, command_line_str.c_string(), min(MAX_PATH, command_line_str.length()));
+
+    if (!CreateProcess(nullptr, command_line, nullptr, nullptr, TRUE, 0, nullptr, nullptr, &si, &pi))
+        return Error::from_errno(last_error_to_errno(GetLastError()));
+
+    i32 pid = ++s_next_process_handle;
+    (void)TRY(s_process_handles.set(pid, move(pi)));
+
+    return pid;
+}
+
+static ErrorOr<Optional<DWORD>> get_process_status(PROCESS_INFORMATION process)
+{
+    DWORD exit_code = STILL_ACTIVE;
+    if (!GetExitCodeProcess(process.hProcess, &exit_code))
+        return Error::from_errno(last_error_to_errno(GetLastError()));
+    if (exit_code == STILL_ACTIVE)
+        return Optional<DWORD> {};
+
+    CloseHandle(process.hProcess);
+    CloseHandle(process.hThread);
+
+    return Optional<DWORD> { exit_code };
+}
+
+static ErrorOr<Optional<ExitPollResult>> poll_any_process(DWORD timeout = 0)
+{
+    // FIXME: Can we use RegisterWaitForSingleObject here?
+    // Barring that, can probably bookeep this array along with the other static lists
+    auto handles = TRY(Array<HANDLE>::create_empty());
+    TRY(handles.ensure_capacity(s_process_handles.size()));
+
+    for (auto const& element : s_process_handles)
+        MUST(handles.push(element.value.hProcess));
+
+    DWORD ret = WaitForMultipleObjects(handles.size(), handles.unsafe_data(), FALSE, timeout);
+    if (ret == WAIT_FAILED)
+        return Error::from_errno(last_error_to_errno(GetLastError()));
+    if (ret == WAIT_TIMEOUT)
+        return Optional<ExitPollResult> {};
+
+    VERIFY(ret >= WAIT_OBJECT_0);
+
+    size_t index = ret - WAIT_OBJECT_0;
+
+    auto bucket = find_if(s_process_handles.begin(), s_process_handles.end(), [&](auto& element) { return element.value.hProcess == handles[index]; });
+    VERIFY(bucket != s_process_handles.end());
+
+    auto maybe_exit_code = TRY(get_process_status(bucket->value));
+    if (!maybe_exit_code.has_value())
+        return Optional<ExitPollResult> {};
+
+    s_process_handles.remove(bucket->key);
+    return ExitPollResult { static_cast<i32>(maybe_exit_code.value()), bucket->key };
+}
+
+ErrorOr<Optional<ExitPollResult>> poll_process_exit(i32 pid)
+{
+    if (pid == -1) {
+        DWORD timeout_ms = 10000; // 10 seconds
+        return poll_any_process(timeout_ms);
+    }
+
+    auto maybe_process = s_process_handles.get(pid);
+    if (!maybe_process.has_value())
+        return Error::from_errno(ESRCH);
+
+    PROCESS_INFORMATION process_handle = maybe_process.release_value();
+
+    DWORD ret = WaitForSingleObject(process_handle.hProcess, 0);
+    if (ret == WAIT_FAILED)
+         return Error::from_errno(last_error_to_errno(GetLastError()));
+    if (ret == WAIT_TIMEOUT)
+        return Optional<ExitPollResult> {};
+
+    VERIFY(ret == WAIT_OBJECT_0);
+
+    auto maybe_exit_code = TRY(get_process_status(process_handle));
+    if (!maybe_exit_code.has_value())
+        return Optional<ExitPollResult> {};
+
+    s_process_handles.remove(pid);
+    return ExitPollResult { static_cast<i32>(maybe_exit_code.value()), pid };
+}
+
+ErrorOr<void> forcefully_kill_process(i32 pid)
+{
+    auto it = s_process_handles.find(pid);
+    if (it == s_process_handles.end())
+        return Error::from_errno(ESRCH);
+
+    PROCESS_INFORMATION process_handle = it->value;
+
+    if (!TerminateProcess(process_handle.hProcess, 1))
+        return Error::from_errno(last_error_to_errno(GetLastError()));
+
+    constexpr DWORD timeout_ms = 1000;
+    (void)WaitForSingleObject(process_handle.hProcess, timeout_ms);
+
+    CloseHandle(process_handle.hProcess);
+    CloseHandle(process_handle.hThread);
+
+    s_process_handles.remove(pid);
+    return {};
+}
+#endif
+
 }
