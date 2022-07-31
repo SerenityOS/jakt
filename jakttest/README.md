@@ -16,22 +16,22 @@ As a list:
 
 ## How to run it?
 
-If you've never used Jakttest before or you transitioned from a commit older
-than [`c232f03`](https://github.com/SerenityOS/jakt/commit/c232f03570247d947a1bfb6373e6d41b3b9219a7),
-you'll have to first run the following to generate the binary:
+First, make sure that you have the generated build directory:
 
 ```shell
-ninja -C jakttest
+cmake -GNinja -B build -S .
 ```
 
-Once done, Jakttest will try to update automatically, switching the running
-binary on the fly if the executable has been updated, so you always run the
-tests with the correct Jakttest.
+Now make sure `jakttest` is built:
+
+```shell
+ninja -C build jakttest
+```
 
 To run the tests, just use the binary:
 
 ```shell
-./jakttest/build/jakttest
+./build/jakttest
 ```
 
 ## On customizing behavior
@@ -42,7 +42,7 @@ defaults, but you can always customize it. To see them all, check the output
 of:
 
 ```shell
-./jakttest/build/jakttest -h
+./build/jakttest -h
 ```
 
 ## Test format
