@@ -139,8 +139,6 @@ function print_usage()  {
     eprintln("\t-j,--jobs <JOBS>\t\tUse JOBS processes. Defaults to the number of available CPUs.")
     eprintln("\t--temp-dir <DIR>\t\tUse DIR as the temporary directory.")
     eprintln("\t\t\tWill try to use $TMP_DIR or /tmp in UNIX-based systems, or %TEMP% in Windows")
-    eprintln("\t--assume-updated-selfhost\t\tAssume selfhost is up to date, i.e don't check it.")
-    eprintln("\t--assume-updated\t\tAssume jakttest is up to date, i.e don't check it.")
 }
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
@@ -237,8 +235,6 @@ struct Options {
     show_reasons: bool
     job_count: usize
     help_wanted: bool
-    assume_selfhost_updated: bool
-    assume_updated: bool
 
     function from_args(args: [String]) throws -> Options {
         let files: [String] = []
@@ -248,9 +244,7 @@ struct Options {
                               errors
                               show_reasons: false
                               job_count: 0
-                              help_wanted: false
-                              assume_selfhost_updated: false
-                              assume_updated: false)
+                              help_wanted: false)
 
         mut index = 1uz
         while index != args.size() {
@@ -293,18 +287,6 @@ struct Options {
                 continue
             }
 
-            if args[index] == "--assume-updated-selfhost" {
-                options.assume_selfhost_updated = true
-                index++
-                continue
-            }
-
-            if args[index] == "--assume-updated" {
-                options.assume_updated = true
-                index++
-                continue
-            }
-            
             if args[index].length() > 0 and args[index].byte_at(0) == b'-' {
                 options.errors.push(format("Unknown argument: {}", args[index]))
             }
@@ -626,31 +608,6 @@ struct TestScheduler {
     }
 }
 
-function does_selfhost_need_update() throws -> bool {
-    let maybe_binary_stat = fs::stat_silencing_enoent(path: "build/jakt")
-    if not maybe_binary_stat.has_value() {
-        return true
-    }
-    let binary_stat = maybe_binary_stat!
-    if binary_stat.is_executable() and binary_stat.is_regular_file() {
-        // Looks like we've got the binary. Let's check the sources.
-        mut latest_mtime: usize = 0
-        mut selfhost_files: [String] = []
-        get_jakt_files_under(directory: "selfhost", results: selfhost_files)
-        for file in selfhost_files.iterator() {
-            let stat = fs::stat_silencing_enoent(path: file)!
-            let mtime = stat.modified_time()
-            if mtime > latest_mtime {
-                latest_mtime = mtime
-            }
-        }
-
-        return latest_mtime > binary_stat.modified_time()
-    }
-    return true
-}
-
-
 function main(args: [String]) {
     let parsed_options = Options::from_args(args)
 
@@ -666,37 +623,6 @@ function main(args: [String]) {
         print_usage()
         return 1
     }
-
-    if not parsed_options.assume_selfhost_updated and does_selfhost_need_update() {
-        eprintln("[ \x1b[1;94mINFO\x1b[m ] Compiling selfhost to match source...")
-        if system("ninja".c_string()) != 0 {
-            eprintln("[ \x1b[1;31mFATAL\x1b[m ] Compiling selfhost failed!")
-            return 1
-        }
-    }
-
-    if not parsed_options.assume_updated {
-        eprintln("[ \x1b[1;94mINFO\x1b[m ] Running incremental build on Jakttest")
-        let current_binary_stat = fs::stat_silencing_enoent(path: args[0])
-        if system("ninja -C jakttest".c_string()) != 0 {
-            eprintln("[ \x1b[1;31mFATAL\x1b[m ] Compiling new Jakttest failed!")
-            return 1
-        }
-        let latest_binary_stat = fs::stat_silencing_enoent(path: args[0])!
-
-        if not current_binary_stat.has_value() or
-            current_binary_stat!.modified_time() < latest_binary_stat.modified_time() {
-            eprintln("[ \x1b[1;94mINFO\x1b[m ] Jakttest updated; restarting")
-            mut forwarded_args: [String] = args
-            forwarded_args.add_capacity(2)
-            // we know at this point that we have selfhost updated and that we
-            // have updated jakttest, so don't re-check any of them.
-            forwarded_args.push("--assume-updated")
-            forwarded_args.push("--assume-updated-selfhost")
-            process::exec(args: forwarded_args)
-        }
-    }
-
 
     mut skipped_count = 0uz
 
