@@ -44,8 +44,6 @@ function(add_jakt_generate_cpp compiler target_cpp)
     MAIN_DEPENDENCY "${main_source}"
     DEPENDS ${JAKT_TARGET_MODULE_SOURCES}
   )
-#  add_custom_target("generate_${target_source}" DEPENDS "${target_source}")
-  set(JAKT_TARGET_CPP_OUTPUT "${target_source}" PARENT_SCOPE)
 endfunction()
 
 function(add_jakt_executable compiler executable)
@@ -90,10 +88,38 @@ add_jakt_executable(jakt_stage0 jakt_stage1
   MODULE_SOURCES ${SELFHOST_SOURCES}
   RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bootstrap/stage0/runtime"
 )
+
 target_include_directories(jakt_stage1
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
     $<INSTALL_INTERFACE:runtime>
+)
+
+set(JAKTTEST_MODULE_SOURCES
+    jakttest/error.jakt
+    jakttest/lexer.jakt
+    jakttest/utility.jakt
+    jakttest/parser.jakt)
+
+set(JAKTTEST_CPP_SOURCES
+    jakttest/os.cpp
+    jakttest/process.cpp
+    jakttest/fs.cpp)
+
+set(JAKTTEST_MAIN_SOURCE jakttest/jakttest.jakt)
+set(JAKTTEST_GENERATED_CPP "jakttest.cpp")
+
+add_jakt_generate_cpp("jakt_stage${FINAL_STAGE}" "${JAKTTEST_GENERATED_CPP}"
+  MODULE_SOURCES ${JAKTTEST_MODULE_SOURCES}
+  MAIN_SOURCE ${JAKTTEST_MAIN_SOURCE})
+
+add_executable(jakttest "${JAKTTEST_GENERATED_CPP}" ${JAKTTEST_CPP_SOURCES})
+add_jakt_compiler_flags("jakttest")
+target_include_directories(jakttest
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
+    $<INSTALL_INTERFACE:runtime>
+    "${CMAKE_CURRENT_SOURCE_DIR}/jakttest"
 )
 
 if (FINAL_STAGE GREATER_EQUAL 2)
