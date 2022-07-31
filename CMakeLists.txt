@@ -27,33 +27,41 @@ macro(add_jakt_compiler_flags target)
   target_compile_features("${target}" PRIVATE cxx_std_20)
 endmacro()
 
-function(add_jakt_executable compiler executable)
-  cmake_parse_arguments(PARSE_ARGV 2 SELFHOST "" "MAIN_SOURCE;RUNTIME_DIRECTORY" "MODULE_SOURCES")
-  set(main_source "${CMAKE_CURRENT_LIST_DIR}/${SELFHOST_MAIN_SOURCE}" )
+function(add_jakt_generate_cpp compiler target_cpp)
+  cmake_parse_arguments(PARSE_ARGV 2 JAKT_TARGET "" "MAIN_SOURCE" "MODULE_SOURCES")
+  set(main_source "${CMAKE_CURRENT_LIST_DIR}/${JAKT_TARGET_MAIN_SOURCE}" )
   get_filename_component(main_base "${main_source}" NAME_WE)
-  set(cpp_output "${executable}_${main_base}.cpp")
-
-  if (NOT SELFHOST_RUNTIME_DIRECTORY)
-    set(SELFHOST_RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/runtime")
-  endif()
-
   set(binary_tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/jakt_tmp")
 
   add_custom_command(
-    OUTPUT "${cpp_output}"
+    OUTPUT "${target_cpp}"
     COMMAND "${CMAKE_COMMAND}" -E make_directory ${binary_tmp_dir}
-    COMMAND "$<TARGET_FILE:${compiler}>" -S --binary-dir "${binary_tmp_dir}" -R "${SELFHOST_RUNTIME_DIRECTORY}" "${main_source}"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_CURRENT_BINARY_DIR}/jakt_tmp/${main_base}.cpp" "${cpp_output}"
+    COMMAND "$<TARGET_FILE:${compiler}>" -S --binary-dir "${binary_tmp_dir}" "${main_source}"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_CURRENT_BINARY_DIR}/jakt_tmp/${main_base}.cpp" "${target_cpp}"
     COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_CURRENT_BINARY_DIR}/jakt_tmp/${main_base}.cpp"
     VERBATIM
-    COMMENT "Building jakt file ${SELFHOST_MAIN_SOURCE} with ${compiler}"
+    COMMENT "Generating C++ from jakt file ${JAKT_TARGET_MAIN_SOURCE} with ${compiler}"
     MAIN_DEPENDENCY "${main_source}"
-    DEPENDS ${SELFHOST_MODULE_SOURCES}
+    DEPENDS ${JAKT_TARGET_MODULE_SOURCES}
   )
-  add_custom_target("generate_${executable}" DEPENDS "${cpp_output}")
+#  add_custom_target("generate_${target_source}" DEPENDS "${target_source}")
+  set(JAKT_TARGET_CPP_OUTPUT "${target_source}" PARENT_SCOPE)
+endfunction()
 
+function(add_jakt_executable compiler executable)
+  cmake_parse_arguments(PARSE_ARGV 2 JAKT_TARGET "" "MAIN_SOURCE;RUNTIME_DIRECTORY" "MODULE_SOURCES")
+  set(main_source "${CMAKE_CURRENT_LIST_DIR}/${JAKT_TARGET_MAIN_SOURCE}" )
+  get_filename_component(main_base "${main_source}" NAME_WE)
+  set(cpp_output "${executable}_${main_base}.cpp")
+  add_jakt_generate_cpp("${compiler}" "${cpp_output}"  MAIN_SOURCE "${JAKT_TARGET_MAIN_SOURCE}"
+    MODULE_SOURCES ${JAKT_TARGET_MODULE_SOURCES})
+
+  if (NOT JAKT_TARGET_RUNTIME_DIRECTORY)
+    set(JAKT_TARGET_RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/runtime")
+  endif()
+
+  set(binary_tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/jakt_tmp")
   add_executable("${executable}" "${cpp_output}")
-  add_dependencies("${executable}" "generate_${executable}")
   add_jakt_compiler_flags("${executable}")
 endfunction()
 
