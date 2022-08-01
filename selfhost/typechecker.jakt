@@ -6648,7 +6648,7 @@ struct Typechecker {
                 }
 
                 for i in 0..call.args.size() {
-                    if i == callee.params.size() {
+                    if (i + arg_offset) == callee.params.size() {
                         break
                     }
 
