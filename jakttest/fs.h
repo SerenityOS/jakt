@@ -48,4 +48,5 @@ public:
     constexpr size_t is_directory() const { return S_ISDIR(m_mode); }
 };
 ErrorOr<Optional<StatResults>> stat_silencing_enoent(String path);
+ErrorOr<void> chdir(String path);
 }

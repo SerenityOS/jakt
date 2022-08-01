@@ -114,7 +114,7 @@ ErrorOr<i32> start_background_process(Array<String> args)
     // We have to fully duplicate argv because execvp wants
     // *modifiable* arguments (char* const*)
     auto const argv = TRY(dup_argv(args));
-    auto const pid = fork();
+    auto const pid = ::fork();
     if (pid == -1) {
         return Error::from_errno(errno);
     }
@@ -156,5 +156,14 @@ ErrorOr<void> forcefully_kill_process(i32 pid)
         return Error::from_errno(errno);
     }
     return ErrorOr<void> {};
+}
+
+// TODO: use posix_spawn* API functions
+ErrorOr<i32> fork()
+{
+    auto const ret = ::fork();
+    if (ret == -1)
+        return Error::from_errno(errno);
+    return ret;
 }
 }
