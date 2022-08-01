@@ -262,7 +262,12 @@ function main(args: [String]) {
             output_filename = binary_dir + "/" + basename_without_extension
         }
 
-        write_to_file(data: output, output_filename: cpp_filename)
+        try {
+            write_to_file(data: output, output_filename: cpp_filename)
+        } catch error {
+            eprintln("Could not write file: {} ({})", cpp_filename, error);
+            return error.code();
+        }
 
         if prettify_cpp_source {
             mut command = clang_format_path + " -i " + cpp_filename
