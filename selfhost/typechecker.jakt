@@ -6452,6 +6452,9 @@ struct Typechecker {
 
                     type_arg_index += 1
                 }
+                
+                // This will be 0 for functions or 1 for instance methods, because of the `this` ptr
+                mut arg_offset = 0uz
 
                 // If this is a method, let's also add the types we know from our `this` pointer.
                 if this_expr.has_value() {
@@ -6474,17 +6477,13 @@ struct Typechecker {
 
                     if callee.is_static() {
                         .error("Cannot call static method on an instance of an object", span)
+                    } else {
+                        arg_offset = 1uz
                     }
 
                     if callee.is_mutating() and not .expression_is_mutable(this_expr!) {
                         .error("Cannot call mutating method on an immutable object instance", span)
                     }
-                }
-
-                // This will be 0 for functions or 1 for instance methods, because of the `this` ptr
-                let arg_offset = match this_expr.has_value() {
-                    true => 1uz
-                    else => 0uz
                 }
 
                 if not callee.is_instantiated {
