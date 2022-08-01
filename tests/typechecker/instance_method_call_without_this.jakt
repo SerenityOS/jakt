@@ -1,0 +1,15 @@
+/// Expect:
+/// - error: "Cannot call static method on an instance of an object"
+
+struct foo {
+    function a(anon a: i64, anon b: i64, anon c: i64) -> i64 {
+        return a + b + c
+    }
+}
+
+function main() {
+    mut c = foo()
+    let d = c.a(1, 2, 3)
+
+    println("{}", d)
+}
