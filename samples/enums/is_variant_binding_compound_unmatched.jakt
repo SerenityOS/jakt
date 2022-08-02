@@ -1,0 +1,16 @@
+/// Expect: selfhost-only
+/// - output: "did not match\n"
+
+enum Foo {
+    Bar(i64)
+}
+
+function main() {
+    let foo = Foo::Bar(5)
+
+    if foo is Bar(n) and n > 5 {
+        println("{}", n)
+    } else {
+        println("did not match")
+    }
+} 
