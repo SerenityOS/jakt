@@ -1,0 +1,18 @@
+/// Expect: selfhost-only
+/// - error: "Variable 'x' not found"
+
+enum Foo {
+    Bar(i64)
+}
+
+function main() {
+    let foo = Foo::Bar(5)
+    let bar = Foo::Bar(7)
+
+    guard foo is Bar(x) and x > 10 else {
+        println("not matched: {}", x)
+        return 0
+    }
+
+    println("hello there: {}", x)
+}

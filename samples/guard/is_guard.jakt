@@ -1,0 +1,18 @@
+/// Expect: selfhost-only
+/// - output: "hello there: 5\n"
+
+enum Foo {
+    Bar(i64)
+}
+
+function main() {
+    let foo = Foo::Bar(5)
+    let bar = Foo::Bar(7)
+
+    guard foo is Bar(x) else {
+        println("not matched")
+        return -1
+    }
+
+    println("hello there: {}", x)
+}
