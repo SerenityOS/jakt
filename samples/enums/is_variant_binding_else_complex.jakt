@@ -1,0 +1,16 @@
+/// Expect: selfhost-only
+/// - output: "PASS\n"
+
+enum E {
+    A(i64)
+}
+
+function main() {
+    let e = E::A(5)
+
+    if 3 < 5 and e is A(x) and x == 2 and x > 4 {
+        println("FAIL")
+    } else {
+        println("PASS")
+    }
+}
