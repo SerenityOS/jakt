@@ -1,4 +1,4 @@
-# Bootstapping with CMake
+# Bootstrapping with CMake
 
 The included CMakeLists.txt at the top level of the project provides cross-platform build rules for
 auto-bootstrapping the compiler all the way to stage 3.
