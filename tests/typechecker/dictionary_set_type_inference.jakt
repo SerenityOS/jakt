@@ -1,0 +1,9 @@
+/// Expect:
+/// - output: "[\"test\": []]\n"
+
+function main() {
+    mut dict: [String:[String]] = [:]
+    dict["test"] = []
+
+    println("{}", dict)
+}
