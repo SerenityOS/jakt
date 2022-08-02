@@ -1,0 +1,33 @@
+/// Expect: selfhost-only
+/// - output: "PASS\nPASS\n1\nNone\n"
+
+struct Test {
+    x: i32
+
+    function y(this) throws => this
+    function throwing_y(this) throws -> String {
+        throw Error::from_errno(69)
+    }
+}
+
+function main() {
+    mut test: Test? = Test(x: 123)
+    try {
+        println("{}", test?.y()?.throwing_y() ?? "FAIL")
+    } catch err {
+        println("PASS")
+    }
+
+    test = None
+    try {
+        println("{}", test?.y()?.throwing_y() ?? "PASS")
+    } catch err {
+        println("FAIL")
+    }
+
+    mut tuple: (i64, i64, i64)? = (1, 2, 3)
+    println("{}", tuple?.0)
+
+    tuple = None
+    println("{}", tuple?.0)
+}

@@ -952,11 +952,11 @@ boxed enum CheckedExpression {
     JaktDictionary(vals: [(CheckedExpression, CheckedExpression)], span: Span, type_id: TypeId, key_type_id: TypeId, value_type_id: TypeId)
     IndexedExpression(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
     IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
-    IndexedTuple(expr: CheckedExpression, index: usize, span: Span, type_id: TypeId)
-    IndexedStruct(expr: CheckedExpression, index: String, span: Span, type_id: TypeId)
+    IndexedTuple(expr: CheckedExpression, index: usize, span: Span, is_optional: bool, type_id: TypeId)
+    IndexedStruct(expr: CheckedExpression, index: String, span: Span, is_optional: bool, type_id: TypeId)
     Match(expr: CheckedExpression, match_cases: [CheckedMatchCase], span: Span, type_id: TypeId, all_variants_constant: bool)
     Call(call: CheckedCall, span: Span, type_id: TypeId)
-    MethodCall(expr: CheckedExpression, call: CheckedCall, span: Span, type_id: TypeId)
+    MethodCall(expr: CheckedExpression, call: CheckedCall, span: Span, is_optional: bool, type_id: TypeId)
     NamespacedVar(namespaces: [CheckedNamespace], var: CheckedVariable, span: Span)
     Var(var: CheckedVariable, span: Span)
     OptionalNone(span: Span, type_id: TypeId)
@@ -4696,6 +4696,7 @@ struct Typechecker {
                                                 args: [],
                                             type_args: []
                                         ),
+                                        is_optional: false
                                         span: name_span
                                     )
                                     span
@@ -4714,6 +4715,7 @@ struct Typechecker {
                                                 args: [],
                                                 type_args: []
                                             )
+                                            is_optional: false
                                             span: name_span
                                         ),
                                         op: UnaryOperator::LogicalNot,
@@ -4809,7 +4811,11 @@ struct Typechecker {
             for i in 0..vars.size() {
                 mut new_var = vars[i]
                 new_var.parsed_type = ParsedType::Name(name: .type_name(inner_types[i]), span)
-                let init = ParsedExpression::IndexedTuple(expr: ParsedExpression::Var(name: tuple_variable.name, span), index: i, span)
+                let init = ParsedExpression::IndexedTuple(
+                    expr: ParsedExpression::Var(name: tuple_variable.name, span)
+                    index: i
+                    is_optional: false
+                    span)
                 var_decls.push(.typecheck_var_decl(var: vars[i], init, scope_id, safety_mode, span))
             }
         } else {
@@ -5079,12 +5085,61 @@ struct Typechecker {
         return checked_expr
     }
 
-    function typecheck_indexed_struct(mut this, expr: ParsedExpression, field: String, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
+    function typecheck_indexed_struct(mut this, expr: ParsedExpression, field: String, scope_id: ScopeId, is_optional: bool, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
         let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
         let checked_expr_type_id = expression_type(checked_expr)
         let checked_expr_type = .get_type(checked_expr_type_id)
+        let optional_struct_id = .find_struct_in_prelude("Optional")
         match checked_expr_type {
-            Type::GenericInstance(id: struct_id) | Type::Struct(struct_id) => {
+            Type::GenericInstance(id, args) => {
+                mut type_id = checked_expr_type_id
+
+                if is_optional {
+                    if not id.equals(optional_struct_id) {
+                        .error("Optional chaining is only allowed on optional types", span)
+                        return CheckedExpression::IndexedStruct(
+                            expr: checked_expr
+                            index: field
+                            span
+                            is_optional
+                            type_id: unknown_type_id())
+                    }
+
+                    type_id = args[0]
+                }
+
+                match .get_type(type_id) {
+                    GenericInstance(id: struct_id) | Struct(struct_id) => {
+                        let structure = .get_struct(struct_id)
+                        for member_id in structure.fields.iterator() {
+                            let member = .get_variable(member_id)
+
+                            if member.name == field {
+                                mut resolved_type_id = .resolve_type_var(type_var_type_id: member.type_id, scope_id)
+                                if is_optional {
+                                    resolved_type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [resolved_type_id]))
+                                }
+                                // FIXME: Unify with type
+                                .check_member_access(accessor: scope_id, accessee: structure.scope_id, member, span)
+                                return CheckedExpression::IndexedStruct(
+                                    expr: checked_expr
+                                    index: field
+                                    span
+                                    is_optional
+                                    type_id: resolved_type_id)
+                            }
+                        }
+
+                        .error(format("unknown member of struct: {}.{}", structure.name, field), span)
+                    }
+                    else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
+                }
+            }
+            Type::Struct(struct_id) => {
+                if is_optional {
+                    .error("Optional chaining is not allowed on non-optional types", span)
+                }
+
                 let structure = .get_struct(struct_id)
                 for member_id in structure.fields.iterator() {
                     let member = .get_variable(member_id)
@@ -5093,7 +5148,12 @@ struct Typechecker {
                         let resolved_type_id = .resolve_type_var(type_var_type_id: member.type_id, scope_id)
                         // FIXME: Unify with type
                         .check_member_access(accessor: scope_id, accessee: structure.scope_id, member, span)
-                        return CheckedExpression::IndexedStruct(expr: checked_expr, index: field, span, type_id: resolved_type_id)
+                        return CheckedExpression::IndexedStruct(
+                            expr: checked_expr
+                            index: field
+                            span
+                            is_optional
+                            type_id: resolved_type_id)
                     }
                 }
 
@@ -5103,7 +5163,12 @@ struct Typechecker {
         }
 
         // FIXME: Unify with type
-        return CheckedExpression::IndexedStruct(expr: checked_expr, index: field, span, type_id: unknown_type_id())
+        return CheckedExpression::IndexedStruct(
+            expr: checked_expr
+            index: field
+            span
+            is_optional
+            type_id: unknown_type_id())
     }
 
     function check_member_access(mut this, accessor: ScopeId, accessee: ScopeId, member: CheckedVariable, span: Span) throws {
@@ -5164,7 +5229,7 @@ struct Typechecker {
     }
 
     function typecheck_expression(mut this, anon expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression => match expr {
-        IndexedStruct(expr, field, span) => .typecheck_indexed_struct(expr, field, scope_id, safety_mode, span)
+        IndexedStruct(expr, field, span, is_optional) => .typecheck_indexed_struct(expr, field, scope_id, is_optional, safety_mode, span)
         Boolean(val, span) => CheckedExpression::Boolean(val, span)
         NumericConstant(val, span) => {
             // FIXME: better constant support
@@ -5195,15 +5260,40 @@ struct Typechecker {
         Call(call, span) => {
             yield .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: false)
         }
-        MethodCall(expr, call, span) => {
+        MethodCall(expr, call, span, is_optional) => {
             let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
             let checked_expr_type_id = expression_type(checked_expr)
+            mut found_optional = false
 
             let parent_id = match .get_type(checked_expr_type_id) {
                 Struct(id) => StructOrEnumId::Struct(id)
                 Enum(id) => StructOrEnumId::Enum(id)
                 JaktString => StructOrEnumId::Struct(.find_struct_in_prelude("String"))
-                GenericInstance(id) => StructOrEnumId::Struct(id)
+                GenericInstance(id, args) => {
+                    yield match is_optional {
+                        true => {
+                            let optional_struct_id = .find_struct_in_prelude("Optional")
+                            mut struct_id: StructOrEnumId? = None
+                            if not id.equals(optional_struct_id) {
+                                .error(format("Can't use ‘{}’ as an optional type in optional chained call", .get_struct(id).name), span)
+                            } else {
+                                found_optional = true
+                                struct_id = match .get_type(args[0]) {
+                                    Struct(struct_id) | GenericInstance(id: struct_id) => StructOrEnumId::Struct(struct_id)
+                                    Enum(id) | GenericEnumInstance(id) => StructOrEnumId::Enum(id)
+                                    else => {
+                                        .error("Can't use non-struct type as an optional type in optional chained call", span)
+                                        found_optional = false
+                                        yield StructOrEnumId::Struct(optional_struct_id)
+                                    }
+                                }
+                            }
+
+                            yield struct_id ?? StructOrEnumId::Struct(optional_struct_id)
+                        }
+                        else => StructOrEnumId::Struct(id)
+                    }
+                }
                 GenericEnumInstance(id) => StructOrEnumId::Enum(id)
                 else => {
                     .error(message: format("no methods available on value (type: {})", .type_name(type_id: checked_expr_type_id)), span: .expression_span(expression: checked_expr))
@@ -5221,30 +5311,36 @@ struct Typechecker {
                             callee_throws: false,
                         ),
                         span,
+                        is_optional,
                         type_id: unknown_type_id(),
                     )
                 }
+            }
+
+            if is_optional and not found_optional {
+                .error(message: format("Optional chain mismatch: expected optional chain, found {}", .type_name(type_id: checked_expr_type_id)), span: .expression_span(expression: checked_expr))
             }
 
             let checked_call_expr = .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: checked_expr, parent_id, safety_mode, type_hint, must_be_enum_constructor: false)
             let type_id = expression_type(checked_call_expr)
             yield match checked_call_expr {
                 Call(call) => {
-                    let result_type = call.return_type
-                    yield CheckedExpression::MethodCall(expr: checked_expr, call, span, type_id: result_type)
+                    mut result_type = call.return_type
+                    if is_optional {
+                        let optional_struct_id = .find_struct_in_prelude("Optional")
+                        result_type = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [result_type]))
+                }
+                    yield CheckedExpression::MethodCall(
+                        expr: checked_expr
+                        call
+                        span
+                        is_optional
+                        type_id: result_type)
                 }
                 else => {
                     .compiler.panic("typecheck_call should return `CheckedExpression::Call()`")
                 }
             }
-
-            yield .typecheck_generic_arguments_method_call(
-                checked_expr
-                call
-                scope_id
-                span
-                safety_mode
-            )
         }
         Range(from, to, span) => {
             mut checked_from = .typecheck_expression(from, scope_id, safety_mode, type_hint: None)
@@ -5481,27 +5577,57 @@ struct Typechecker {
                 }
             }
         }
-        IndexedTuple(expr, index, span) => {
+        IndexedTuple(expr, index, is_optional, span) => {
             let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
 
             let tuple_struct_id = .find_struct_in_prelude("Tuple")
+            let optional_struct_id = .find_struct_in_prelude("Optional")
             mut expr_type_id = unknown_type_id()
 
             match .get_type(expression_type(checked_expr)) {
                 GenericInstance(id, args) => {
                     if id.equals(tuple_struct_id) {
+                        if is_optional {
+                            .error("Optional chaining is not allowed on a non-optional tuple type", span)
+                        }
                         if (index >= args.size()){
                             .error("Tuple index past the end of the tuple", span)
+                        } else {
+                            expr_type_id = args[index]
                         }
-                        expr_type_id = args[index]
+                    } else if is_optional and id.equals(optional_struct_id) {
+                        let inner_type_id = args[0]
+                        match .get_type(inner_type_id) {
+                            GenericInstance(id, args) => {
+                                if id.equals(tuple_struct_id) {
+                                    if (index >= args.size()){
+                                        .error("Optional-chained tuple index past the end of the tuple", span)
+                                    } else {
+                                        expr_type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [args[index]]))
+                                    }
+                                }
+                            }
+                            else => {
+                                .error("Optional-chained tuple index used on non-tuple value", span)
+                            }
+                        }
                     }
                 }
                 else => {
-                    .error("Tuple index used non-tuple value", span)
+                    if is_optional {
+                        .error("Optional-chained tuple index used on non-tuple value", span)
+                    } else {
+                        .error("Tuple index used on non-tuple value", span)
+                    }
                 }
             }
 
-            yield CheckedExpression::IndexedTuple(expr: checked_expr, index: index, span, type_id: expr_type_id)
+            yield CheckedExpression::IndexedTuple(
+                expr: checked_expr
+                index: index
+                span
+                is_optional
+                type_id: expr_type_id)
         }
         Garbage(span) => CheckedExpression::Garbage(span)
         NamespacedVar(name, namespace_, span) => .typecheck_namespaced_var_or_simple_enum_constructor_call(name, namespace_, scope_id, safety_mode, type_hint, span)
@@ -5757,7 +5883,7 @@ struct Typechecker {
         return CheckedExpression::JaktSet(vals: output, span, type_id, inner_type_id)
     }
 
-    function typecheck_generic_arguments_method_call(mut this, checked_expr: CheckedExpression, call: ParsedCall, scope_id: ScopeId, span: Span, safety_mode: SafetyMode) throws -> CheckedExpression {
+    function typecheck_generic_arguments_method_call(mut this, checked_expr: CheckedExpression, call: ParsedCall, scope_id: ScopeId, span: Span, is_optional: bool, safety_mode: SafetyMode) throws -> CheckedExpression {
         mut checked_args: [(String, CheckedExpression)] = []
         checked_args.ensure_capacity(call.args.size())
         for call_arg in call.args.iterator() {
@@ -5790,6 +5916,7 @@ struct Typechecker {
                 callee_throws: false
             )
             span
+            is_optional
             type_id: unknown_type_id()
         )
     }

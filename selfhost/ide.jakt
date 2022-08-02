@@ -542,6 +542,7 @@ function find_span_in_statement(program: CheckedProgram, statement: CheckedState
         Break | Continue | Garbage => none
     }
 }
+
 function find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, span: Span) throws -> Usage? { 
     let none: Usage? = None
 
@@ -604,13 +605,18 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
             }
             yield none
         }
-        IndexedStruct(expr, index, span: index_span) => {
+        IndexedStruct(expr, index, span: index_span, type_id: known_type_id) => {
             let found = find_span_in_expression(program, expr, span)
             if found.has_value() {
                 return found
             }
             if index_span.contains(span) {
                 let type_id = expression_type(expr)
+                mut result_type: TypeId? = None
+                if not known_type_id.equals(unknown_type_id()) {
+                    result_type = Some(known_type_id)
+                }
+
                 match program.get_type(type_id) {
                     Struct(struct_id) => {
                         let struct_ = program.get_struct(struct_id)
@@ -620,7 +626,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
                                 return Some(Usage::Variable(
                                         span: var.definition_span
                                         name: index
-                                        type_id: var.type_id
+                                        type_id: result_type ?? var.type_id
                                         mutability: Mutability::DoesNotApply
                                         var_type: VarType::Field
                                         visibility: match var.visibility {
