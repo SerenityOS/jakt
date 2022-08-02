@@ -4791,7 +4791,7 @@ struct Typechecker {
                                 parsed_type: ParsedType::Empty
                                 is_mutable: false
                                 inlay_span: None
-                                span
+                                span: binding.span
                             )
                             let enum_variant_arg = ParsedExpression::EnumVariantArg(expr, arg: binding, enum_variant: inner, span)
                             outer_if_stmts.push(ParsedStatement::VarDecl(var, init: enum_variant_arg, span))
