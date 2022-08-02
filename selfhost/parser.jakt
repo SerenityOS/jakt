@@ -268,7 +268,7 @@ boxed enum ParsedStatement {
     Yield(expr: ParsedExpression, span: Span)
     InlineCpp(block: ParsedBlock, span: Span)
     Try(stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, span: Span)
-    Guard(expr: ParsedExpression, else_block: ParsedBlock, span: Span)
+    Guard(expr: ParsedExpression, else_block: ParsedBlock, remaining_code: ParsedBlock, span: Span)
     Garbage(Span)
 
     function span(this) -> Span => match this {
@@ -2123,7 +2123,23 @@ struct Parser {
         }
         let else_block = .parse_block()
 
-        return ParsedStatement::Guard(expr, else_block, span)
+        mut remaining_code = ParsedBlock(stmts: [])
+
+        while not .eof() {
+            match .current() {
+                RCurly => {
+                    return ParsedStatement::Guard(expr, else_block, remaining_code, span)
+                }
+                Semicolon | Eol => {
+                    .index++
+                }
+                else => {
+                    remaining_code.stmts.push(.parse_statement(inside_block: true))
+                }
+            }
+        }
+
+        return ParsedStatement::Guard(expr, else_block, remaining_code, span)
     }
 
     function parse_try_statement(mut this) throws -> ParsedStatement {
