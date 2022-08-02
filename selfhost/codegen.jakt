@@ -1437,7 +1437,11 @@ struct CodeGenerator {
             if enum_variant is StructLike {
                 arg_name = arg.name ?? arg.binding
             }
-            yield format("({}.get<{}::{}>()).{}", var_name, enum_type, variant_name, arg_name)
+            let cpp_deref_operator = match .program.get_enum(enum_variant.enum_id()).is_boxed {
+                true => "->"
+                else => "."
+            }
+            yield format("({}{}get<{}::{}>()).{}", var_name, cpp_deref_operator, enum_type, variant_name, arg_name)
         }
         JaktArray(vals, repeat, span, type_id, inner_type_id) => {
             mut output = ""

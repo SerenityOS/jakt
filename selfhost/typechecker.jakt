@@ -684,10 +684,10 @@ struct CheckedEnum {
 }
 
 enum CheckedEnumVariant {
-    Untyped(name: String, span: Span)
-    Typed(name: String, type_id: TypeId, span: Span)
-    WithValue(name: String, expr: CheckedExpression, span: Span)
-    StructLike(name: String, fields: [VarId], span: Span)
+    Untyped(enum_id: EnumId, name: String, span: Span)
+    Typed(enum_id: EnumId, name: String, type_id: TypeId, span: Span)
+    WithValue(enum_id: EnumId, name: String, expr: CheckedExpression, span: Span)
+    StructLike(enum_id: EnumId, name: String, fields: [VarId], span: Span)
 
     function equals(this, anon other: CheckedEnumVariant) -> bool {
         return match this {
@@ -697,6 +697,13 @@ enum CheckedEnumVariant {
             }
             else => false
         }
+    }
+
+    function enum_id(this) -> EnumId => match this {
+        Untyped(enum_id)
+        | Typed(enum_id)
+        | WithValue(enum_id)
+        | StructLike(enum_id) => enum_id
     }
 
     function span(this) -> Span => match this {
@@ -2821,7 +2828,7 @@ struct Typechecker {
                             )
                         }
 
-                        enum_.variants.push(CheckedEnumVariant::WithValue(name: variant.name, expr, span: variant.span))
+                        enum_.variants.push(CheckedEnumVariant::WithValue(enum_id, name: variant.name, expr, span: variant.span))
                         let var_id = module.add_variable(CheckedVariable(
                             name: variant.name
                             type_id: enum_.type_id
@@ -2873,7 +2880,7 @@ struct Typechecker {
                             let var_id = module.add_variable(checked_var)
                             fields.push(var_id)
                         }
-                        enum_.variants.push(CheckedEnumVariant::StructLike(name: variant.name, fields, span: variant.span))
+                        enum_.variants.push(CheckedEnumVariant::StructLike(enum_id, name: variant.name, fields, span: variant.span))
                         let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
                             let can_function_throw = is_boxed
@@ -2905,7 +2912,7 @@ struct Typechecker {
                     } else if is_typed {
                         let param = variant.params![0]
                         let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id, name: param.name)
-                        enum_.variants.push(CheckedEnumVariant::Typed(name: variant.name, type_id, span: param.span))
+                        enum_.variants.push(CheckedEnumVariant::Typed(enum_id, name: variant.name, type_id, span: param.span))
 
                         let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
@@ -2944,7 +2951,7 @@ struct Typechecker {
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
                         }
                     } else {
-                        enum_.variants.push(CheckedEnumVariant::Untyped(name: variant.name, span: variant.span))
+                        enum_.variants.push(CheckedEnumVariant::Untyped(enum_id, name: variant.name, span: variant.span))
                         let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
                             let can_function_throw = is_boxed
