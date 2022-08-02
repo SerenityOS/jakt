@@ -1,0 +1,20 @@
+/// Expect:
+/// - output: "PASS\n"
+
+boxed enum E {
+    A(i64)
+    B
+}
+
+function get_e() throws -> E {
+    return E::A(5)
+}
+
+function main() {
+    let e = get_e()
+    if e is A(value) {
+        println("PASS")
+    } else {
+        println("FAIL")
+    }
+}
