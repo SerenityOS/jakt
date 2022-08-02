@@ -4592,15 +4592,12 @@ struct Typechecker {
         If(condition, then_block, else_statement, span) => .typecheck_if(condition, then_block, else_statement, scope_id, safety_mode, span)
         Garbage(span) => CheckedStatement::Garbage(span)
         For(iterator_name, name_span, range, block, span) => .typecheck_for(iterator_name,  name_span, range, block, scope_id, safety_mode, span)
-        Guard(expr, else_block, span) => .typecheck_guard(expr, else_block, scope_id, safety_mode, span)
+        Guard(expr, else_block, remaining_code, span) => .typecheck_guard(expr, else_block, remaining_code, scope_id, safety_mode, span)
     }
 
-    function typecheck_guard(mut this, expr: ParsedExpression, else_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
-        let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: TypeId::none())
-        let checked_else_block = .typecheck_block(parsed_block: else_block, parent_scope_id: scope_id, safety_mode)
-
+    function typecheck_guard(mut this, expr: ParsedExpression, else_block: ParsedBlock, remaining_code: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
         mut seen_scope_exit = false
-        for statement in checked_else_block.statements.iterator() {
+        for statement in else_block.stmts.iterator() {
             match statement {
                 Break | Continue | Return | Throw => {
                     seen_scope_exit = true
@@ -4613,9 +4610,26 @@ struct Typechecker {
             .error("Else block of guard must either `return`, `break`, `continue`, or `throw`", span) // FIXME: better span?
         }
 
-        let condition = CheckedExpression::UnaryOp(expr: checked_expr, op: CheckedUnaryOperator::LogicalNot(), span: expr.span(), type_id: builtin(BuiltinType::Bool))
+        // Ensure that we don't use any bindings we shouldn't have access to
+        .typecheck_block(block: else_block, parent_scope_id: scope_id, safety_mode)
 
-        return CheckedStatement::If(condition, then_block: checked_else_block, else_statement: CheckedStatement::none(), span)
+        let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(condition: expr, acc: None, then_block: remaining_code, else_statement: ParsedStatement::Block(block: else_block, span), span)
+        let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: None, span)
+        if not expression_type(checked_condition).equals(builtin(BuiltinType::Bool)) {
+            .error("Condition must be a boolean expression", new_condition.span())
+        }
+
+        let checked_block = .typecheck_block(new_then_block, parent_scope_id: scope_id, safety_mode)
+        if checked_block.yielded_type.has_value() {
+            .error("A 'guard' block is not allowed to yield values", new_then_block.find_yield_span()!)
+        }
+
+        mut checked_else: CheckedStatement? = None
+        if new_else_statement.has_value() {
+            checked_else = .typecheck_statement(new_else_statement!, scope_id, safety_mode)
+        }
+        
+        return CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
     }
 
     function typecheck_for(mut this, iterator_name: String, name_span: Span, range: ParsedExpression, block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
