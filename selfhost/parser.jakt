@@ -432,9 +432,9 @@ boxed enum ParsedExpression {
     SingleQuotedString(val: String, span: Span)
     SingleQuotedByteString(val: String, span: Span)
     Call(call: ParsedCall, span: Span)
-    MethodCall(expr: ParsedExpression, call: ParsedCall, span: Span)
-    IndexedTuple(expr: ParsedExpression, index: usize, span: Span)
-    IndexedStruct(expr: ParsedExpression, field: String, span: Span)
+    MethodCall(expr: ParsedExpression, call: ParsedCall, is_optional: bool, span: Span)
+    IndexedTuple(expr: ParsedExpression, index: usize, is_optional: bool, span: Span)
+    IndexedStruct(expr: ParsedExpression, field: String, is_optional: bool, span: Span)
     Var(name: String, span: Span)
     IndexedExpression(base: ParsedExpression, index: ParsedExpression, span: Span)
     UnaryOp(expr: ParsedExpression, op: UnaryOperator, span: Span)
@@ -2691,14 +2691,26 @@ struct Parser {
                     yield unary_operator_is!
                 }
                 ColonColon => .parse_postfix_colon_colon(start, expr: result)
-                Dot => {
+                QuestionMark | Dot => {
+                    let is_optional = .current() is QuestionMark
+                    if is_optional {
+                        .index++
+                        if not .current() is Dot {
+                            .error("Expected ‘.’ after ‘?’ for optional chaining access", .current().span())
+                        }
+                    }
+
                     .index++
                     yield match .current() {
                         Number(number) => {
                             // Indexing into a tuple
                             .index++
                             let num = number.to_usize()
-                            yield ParsedExpression::IndexedTuple(expr: result, index: num, span: merge_spans(start, end: .previous().span()))
+                            yield ParsedExpression::IndexedTuple(
+                                expr: result
+                                index: num
+                                is_optional
+                                span: merge_spans(start, end: .previous().span()))
                         }
                         Identifier(name) => {
                             // Struct field access or method call
@@ -2708,9 +2720,17 @@ struct Parser {
                                     // NOTE: We step backwards since parse_call() expects to start at the callee identifier.
                                     .index--
                                     let call = .parse_call()
-                                    yield ParsedExpression::MethodCall(expr: result, call: call!, span: merge_spans(start, end: .previous().span()))
+                                    yield ParsedExpression::MethodCall(
+                                        expr: result
+                                        call: call!
+                                        is_optional
+                                        span: merge_spans(start, end: .previous().span()))
                                 }
-                                else => ParsedExpression::IndexedStruct(expr: result, field: name, span: merge_spans(start, end: .current().span()))
+                                else => ParsedExpression::IndexedStruct(
+                                    expr: result
+                                    field: name
+                                    is_optional
+                                    span: merge_spans(start, end: .current().span()))
                             }
                         }
                         else => {
@@ -3493,16 +3513,16 @@ function parsed_expression_equals(anon lhs_expression: ParsedExpression, anon rh
         Call(call: rhs_call) => parsed_call_equals(lhs_call, rhs_call)
         else => false
     }
-    MethodCall(expr: lhs_expr, call: lhs_call) => match rhs_expression {
-        MethodCall(expr: rhs_expr, call: rhs_call) => parsed_expression_equals(lhs_expr, rhs_expr) and parsed_call_equals(lhs_call, rhs_call)
+    MethodCall(expr: lhs_expr, call: lhs_call, is_optional: lhs_optional) => match rhs_expression {
+        MethodCall(expr: rhs_expr, call: rhs_call, is_optional: rhs_optional) => lhs_optional == rhs_optional and parsed_expression_equals(lhs_expr, rhs_expr) and parsed_call_equals(lhs_call, rhs_call)
         else => false
     }
-    IndexedTuple(expr: lhs_expr, index: lhs_index) => match rhs_expression {
-        IndexedTuple(expr: rhs_expr, index: rhs_index) => parsed_expression_equals(lhs_expr, rhs_expr) and lhs_index == rhs_index
+    IndexedTuple(expr: lhs_expr, index: lhs_index, is_optional: lhs_optional) => match rhs_expression {
+        IndexedTuple(expr: rhs_expr, index: rhs_index, is_optional: rhs_optional) => lhs_optional == rhs_optional and parsed_expression_equals(lhs_expr, rhs_expr) and lhs_index == rhs_index
         else => false
     }
-    IndexedStruct(expr: lhs_expr, field: lhs_field) => match rhs_expression {
-        IndexedStruct(expr: rhs_expr, field: rhs_field) => parsed_expression_equals(lhs_expr, rhs_expr) and lhs_field == rhs_field
+    IndexedStruct(expr: lhs_expr, field: lhs_field, is_optional: lhs_optional) => match rhs_expression {
+        IndexedStruct(expr: rhs_expr, field: rhs_field, is_optional: rhs_optional) => lhs_optional == rhs_optional and parsed_expression_equals(lhs_expr, rhs_expr) and lhs_field == rhs_field
         else => false
     }
     Var(name: lhs_name) => match rhs_expression {

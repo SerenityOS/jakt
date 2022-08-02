@@ -1273,8 +1273,11 @@ struct CodeGenerator {
         }
         IndexedExpression(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
         IndexedDictionary(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
-        IndexedTuple(expr, index) => format("(({}).get<{}>())", .codegen_expression(expr), index)
-        IndexedStruct(expr, index) => {
+        IndexedTuple(expr, index, is_optional) => match is_optional {
+            true => format("(({}).map([](auto& _value) {{ return _value.template get<{}>(); }}))", .codegen_expression(expr), index)
+            else => format("(({}).get<{}>())", .codegen_expression(expr), index)
+        }
+        IndexedStruct(expr, index, is_optional) => {
             mut output = ""
             let object = .codegen_expression(expression: expr)
             output += "(("
@@ -1297,13 +1300,19 @@ struct CodeGenerator {
                     output += "."
                 }
             }
-            output += index
+            if is_optional {
+                output += "map([](auto& _value) { return _value."
+                output += index
+                output += "; })"
+            } else {
+                output += index
+            }
             output += ")"
             yield output
         }
         Block(block) => .codegen_block(block)
         Call(call) => .codegen_call(call)
-        MethodCall(expr, call) => .codegen_method_call(expr, call)
+        MethodCall(expr, call, is_optional) => .codegen_method_call(expr, call, is_optional)
         Boolean(val) => match val {
             true => "true"
             else => "false"
@@ -2029,7 +2038,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_method_call(mut this, expr: CheckedExpression, call: CheckedCall) throws -> String {
+    function codegen_method_call(mut this, expr: CheckedExpression, call: CheckedCall, is_optional: bool) throws -> String {
         mut output = ""
         if call.callee_throws {
             output += .current_error_handler()
@@ -2067,6 +2076,10 @@ struct CodeGenerator {
             }
         }
 
+        if is_optional {
+            output += "map([&](auto& _value) { return _value."
+        }
+
         output += call.name
         output += "("
 
@@ -2080,7 +2093,12 @@ struct CodeGenerator {
             output += .codegen_expression(name_and_expr.1)
         }
 
-        output += "))"
+        output += ")"
+
+        if is_optional {
+            output += "; })"
+        }
+        output += ")"
 
         if call.callee_throws {
             output += "))"
