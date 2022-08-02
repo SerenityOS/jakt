@@ -714,6 +714,13 @@ enum CheckedEnumVariant {
     }
 }
 
+struct CheckedEnumVariantBinding {
+    name: String?
+    binding: String
+    type_id: TypeId
+    span: Span
+}
+
 boxed enum CheckedStatement {
     Expression(expr: CheckedExpression, span: Span)
     Defer(statement: CheckedStatement, span: Span)
@@ -923,7 +930,7 @@ enum CheckedUnaryOperator {
     BitwiseNot
     TypeCast(CheckedTypeCast)
     Is(TypeId)
-    IsEnumVariant(name: String, enum_type_id: TypeId)
+    IsEnumVariant(enum_variant: CheckedEnumVariant, bindings: [CheckedEnumVariantBinding], type_id: TypeId)
 }
 
 enum CheckedMatchBody {
@@ -955,6 +962,7 @@ boxed enum CheckedExpression {
     IndexedTuple(expr: CheckedExpression, index: usize, span: Span, type_id: TypeId)
     IndexedStruct(expr: CheckedExpression, index: String, span: Span, type_id: TypeId)
     Match(expr: CheckedExpression, match_cases: [CheckedMatchCase], span: Span, type_id: TypeId, all_variants_constant: bool)
+    EnumVariantArg(expr: CheckedExpression, arg: CheckedEnumVariantBinding, enum_variant: CheckedEnumVariant, span: Span)
     Call(call: CheckedCall, span: Span, type_id: TypeId)
     MethodCall(expr: CheckedExpression, call: CheckedCall, span: Span, type_id: TypeId)
     NamespacedVar(namespaces: [CheckedNamespace], var: CheckedVariable, span: Span)
@@ -1025,6 +1033,7 @@ function expression_type(anon expr: CheckedExpression) -> TypeId => match expr {
     OptionalSome(type_id) => type_id
     ForcedUnwrap(type_id) => type_id
     Match(type_id) => type_id
+    EnumVariantArg(arg) => arg.type_id
     Block(type_id) => type_id
     Function(type_id) => type_id
     Garbage => builtin(BuiltinType::Void)
@@ -1722,6 +1731,7 @@ struct Typechecker {
         OptionalSome(span) => span
         ForcedUnwrap(span) => span
         Match(span) => span
+        EnumVariantArg(span) => span
         Block(span) => span
         Function(span) => span
         Garbage(span) => span
@@ -4761,15 +4771,66 @@ struct Typechecker {
         return .typecheck_statement(rewritten_statement, scope_id, safety_mode)
     }
 
+    function expand_context_for_bindings(mut this, condition: ParsedExpression, acc: ParsedExpression?, then_block: ParsedBlock, span: Span) throws -> (ParsedExpression, ParsedBlock) {
+        match condition {
+            BinaryOp(lhs, op, rhs) => {
+                if op is LogicalAnd {
+                    let (rhs_condition, rhs_then_block) = .expand_context_for_bindings(condition: rhs, acc, then_block, span)
+                    mut accumulated_condition = rhs_condition
+                    return .expand_context_for_bindings(condition: lhs, acc: accumulated_condition, then_block: rhs_then_block, span)
+                }
+            }
+            UnaryOp(expr, op) => {
+                match op {
+                    IsEnumVariant(inner, bindings) => {
+                        let unary_op_single_condition = ParsedExpression::UnaryOp(expr, op: UnaryOperator::Is(inner), span)
+                        mut outer_if_stmts: [ParsedStatement] = []
+                        for binding in bindings.iterator() {
+                            let var = ParsedVarDecl(
+                                name: binding.binding
+                                parsed_type: ParsedType::Empty
+                                is_mutable: false
+                                inlay_span: None
+                                span
+                            )
+                            let enum_variant_arg = ParsedExpression::EnumVariantArg(expr, arg: binding, enum_variant: inner, span)
+                            outer_if_stmts.push(ParsedStatement::VarDecl(var, init: enum_variant_arg, span))
+                        }
+                        mut inner_condition = condition
+                        mut new_then_block = then_block
+                        if acc.has_value() {
+                            inner_condition = acc!
+                            outer_if_stmts.push(ParsedStatement::If(condition: inner_condition, then_block, else_statement: None, span))
+                        } else {
+                            for stmt in then_block.stmts.iterator() {
+                                outer_if_stmts.push(stmt)
+                            }
+                        }
+                        new_then_block = ParsedBlock(stmts: outer_if_stmts)
+                        return .expand_context_for_bindings(condition: unary_op_single_condition, acc: None, then_block: new_then_block, span)
+                    }
+                    else => {}
+                }
+            }
+            else => {}
+        }
+        mut base_condition = condition
+        if acc.has_value() {
+            base_condition = ParsedExpression::BinaryOp(lhs: condition, op: BinaryOperator::LogicalAnd, rhs: acc!, span)
+        }
+        return (base_condition, then_block)
+    }
+
     function typecheck_if(mut this, condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
-        let checked_condition = .typecheck_expression_and_dereference_if_needed(condition, scope_id, safety_mode, type_hint: None, span)
+        let (new_condition, new_then_block) = .expand_context_for_bindings(condition, acc: None, then_block, span)
+        let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: None, span)
         if not expression_type(checked_condition).equals(builtin(BuiltinType::Bool)) {
-            .error("Condition must be a boolean expression", condition.span())
+            .error("Condition must be a boolean expression", new_condition.span())
         }
 
-        let checked_block = .typecheck_block(then_block, parent_scope_id: scope_id, safety_mode)
+        let checked_block = .typecheck_block(new_then_block, parent_scope_id: scope_id, safety_mode)
         if checked_block.yielded_type.has_value() {
-            .error("An 'if' block is not allowed to yield values", then_block.find_yield_span()!)
+            .error("An 'if' block is not allowed to yield values", new_then_block.find_yield_span()!)
         }
 
         mut checked_else: CheckedStatement? = None
@@ -5337,7 +5398,7 @@ struct Typechecker {
                                                 else => false
                                             }
                                             if exists {
-                                                operator_is = CheckedUnaryOperator::IsEnumVariant(name, enum_type_id: expr_type_id)
+                                                operator_is = CheckedUnaryOperator::IsEnumVariant(enum_variant: variant, bindings: [], type_id: expr_type_id)
                                                 break
                                             }
                                         }
@@ -5356,6 +5417,37 @@ struct Typechecker {
                         }
                     }
                     yield operator_is
+                }
+                IsEnumVariant(inner, bindings) => {
+                    let old_ignore_errors = .ignore_errors
+                    .ignore_errors = true
+                    let type_id = .typecheck_typename(parsed_type: inner, scope_id, name: None)
+                    .ignore_errors = old_ignore_errors
+                    mut checked_op = CheckedUnaryOperator::Is(type_id)
+                    let expr_type_id = expression_type(checked_expr)
+                    match inner {
+                        NamespacedName(name: variant_name, span) | Name(name: variant_name, span) => match .get_type(expression_type(checked_expr)) {
+                            Type::Enum(enum_id) => {
+                                let enum_ = .get_enum(enum_id)
+                                let variant = .get_enum_variant(enum_, variant_name)
+                                if variant.has_value() {
+                                    let checked_enum_variant_bindings = .typecheck_enum_variant_bindings(variant: variant!, bindings, span)
+                                    checked_op = CheckedUnaryOperator::IsEnumVariant(
+                                        enum_variant: variant!, 
+                                        bindings: checked_enum_variant_bindings!,
+                                        type_id: expr_type_id
+                                    )
+                                } else {
+                                    .error(format("Enum variant {} does not exist on {}", variant_name, .type_name(type_id)), span)
+                                }
+                            }
+                            else => {
+                                .error(format("Unknown type or invalid type name: {}", variant_name), span)
+                            }
+                        }
+                        else => {}
+                    }
+                    yield checked_op
                 }
             }
             yield .typecheck_unary_operation(checked_expr, checked_op, span, scope_id, safety_mode)
@@ -5506,12 +5598,81 @@ struct Typechecker {
         Garbage(span) => CheckedExpression::Garbage(span)
         NamespacedVar(name, namespace_, span) => .typecheck_namespaced_var_or_simple_enum_constructor_call(name, namespace_, scope_id, safety_mode, type_hint, span)
         Match(expr, cases, span) => .typecheck_match(expr, cases, span, scope_id, safety_mode)
+        EnumVariantArg(expr: inner_expr, arg, enum_variant, span) => {
+            let checked_expr = .typecheck_expression_and_dereference_if_needed(inner_expr, scope_id, safety_mode, type_hint: None, span)
+            mut checked_binding = CheckedEnumVariantBinding(name: "", binding: "", type_id: unknown_type_id(), span)
+            mut checked_enum_variant: CheckedEnumVariant? = None
+            match enum_variant {
+                NamespacedName(name: variant_name, span) | Name(name: variant_name, span) => match .get_type(expression_type(checked_expr)) {
+                    Type::Enum(enum_id) => {
+                        let enum_ = .get_enum(enum_id)
+                        let variant = .get_enum_variant(enum_, variant_name)
+                        if variant.has_value() {
+                            checked_enum_variant = variant
+                            let checked_bindings = .typecheck_enum_variant_bindings(variant: variant!, bindings: [arg], span)
+                            let bindings = checked_bindings!
+                            checked_binding = bindings[0]
+                        } else {
+                            .error(format("Enum variant {} does not exist", variant_name), span)
+                        }
+                    }
+                    else => {
+                        .error(format("Unknown type or invalid type name: {}", variant_name), span)
+                    }
+                }
+                else => {}
+            }
+            yield CheckedExpression::EnumVariantArg(expr: checked_expr, arg: checked_binding, enum_variant: checked_enum_variant!, span)
+        }
         JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode, type_hint)
         Set(values, span) => .typecheck_set(values, span, scope_id, safety_mode, type_hint)
         Function(captures, params, can_throw, return_type, block, span) => .typecheck_lambda(captures, params, can_throw, return_type, block, span, scope_id, safety_mode)
         else => {
             .compiler.panic(format("typechecker needs support for {}", expr))
         }
+    }
+
+    function get_enum_variant(mut this, enum_: CheckedEnum, variant_name: String) throws -> CheckedEnumVariant? {
+        for variant in enum_.variants.iterator() {
+            if variant.name() == variant_name {
+                return variant
+            }
+        }
+        return None
+    }
+
+    function typecheck_enum_variant_bindings(mut this, variant: CheckedEnumVariant, bindings: [EnumVariantPatternArgument], span: Span) throws -> [CheckedEnumVariantBinding]? {
+        match variant {
+            StructLike(fields) => {
+                mut checked_vars: [CheckedVariable] = []
+                mut checked_enum_variant_bindings: [CheckedEnumVariantBinding] = []
+                for field in fields.iterator() {
+                    checked_vars.push(.get_variable(field))
+                }
+                for binding in bindings.iterator() {
+                    for var in checked_vars.iterator() {
+                        let binding_name = binding.name ?? binding.binding
+                        let type_id = var.type_id
+                        if binding_name == var.name {
+                            checked_enum_variant_bindings.push(CheckedEnumVariantBinding(name: binding.name, binding: binding.binding, type_id, span))
+                            break
+                        }
+                    }
+                }
+                if checked_enum_variant_bindings.size() > 0 {
+                    return checked_enum_variant_bindings
+                }
+            }
+            Typed(type_id) => {
+                if bindings.size() == 1 {
+                    return [CheckedEnumVariantBinding(name: None, binding: bindings[0].binding, type_id, span)]
+                } else {
+                    .error(format("Enum variant ‘{}’ must have exactly one argument", variant.name()), span)
+                }
+            }
+            else => {}
+        }
+        return None
     }
 
     function typecheck_lambda(mut this, captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, return_type: ParsedType, block: ParsedBlock, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {

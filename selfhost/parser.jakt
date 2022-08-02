@@ -377,6 +377,7 @@ enum UnaryOperator {
     BitwiseNot
     TypeCast(TypeCast)
     Is(ParsedType)
+    IsEnumVariant(inner: ParsedType, bindings: [EnumVariantPatternArgument])
 }
 
 struct EnumVariantPatternArgument {
@@ -448,6 +449,7 @@ boxed enum ParsedExpression {
     Range(from: ParsedExpression, to: ParsedExpression, span: Span)
     ForcedUnwrap(expr: ParsedExpression, span: Span)
     Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: Span)
+    EnumVariantArg(expr: ParsedExpression, arg: EnumVariantPatternArgument, enum_variant: ParsedType, span: Span)
     NamespacedVar(name: String, namespace_: [String], span: Span)
     Function(captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, return_type: ParsedType, block: ParsedBlock, span: Span)
     Garbage(Span)
@@ -475,6 +477,7 @@ boxed enum ParsedExpression {
         Garbage(span) => span
         MethodCall(expr, call, span) => span
         Match(expr, cases, span) => span
+        EnumVariantArg(span) => span
         IndexedTuple(expr, index, span) => span
         IndexedStruct(expr, field, span) => span
         NamespacedVar(name, namespace_, span) => span
@@ -2677,7 +2680,15 @@ struct Parser {
                     .index++
                     let parsed_type = .parse_typename()
                     let span = merge_spans(start, .current().span())
-                    yield ParsedExpression::UnaryOp(expr: result, op: UnaryOperator::Is(parsed_type), span)
+                    mut bindings: [EnumVariantPatternArgument] = []
+                    mut unary_operator_is: ParsedExpression? = None
+                    if .current() is LParen and ((parsed_type is NamespacedName) or (parsed_type is Name)) {
+                        bindings = .parse_variant_arguments()
+                        unary_operator_is = ParsedExpression::UnaryOp(expr: result, op: UnaryOperator::IsEnumVariant(inner: parsed_type, bindings), span)
+                    } else {
+                        unary_operator_is = ParsedExpression::UnaryOp(expr: result, op: UnaryOperator::Is(parsed_type), span)
+                    }
+                    yield unary_operator_is!
                 }
                 ColonColon => .parse_postfix_colon_colon(start, expr: result)
                 Dot => {
@@ -2964,57 +2975,8 @@ struct Parser {
                 }
             }
 
-            mut variant_arguments: [EnumVariantPatternArgument] = []
-            mut has_parens = false
+            mut variant_arguments = .parse_variant_arguments()
             let arguments_start = .current().span()
-
-            if .current() is LParen {
-                has_parens = true
-                .index++
-
-                while not .eof() {
-                    match .current() {
-                        Identifier(name) => {
-                            let arg_name = name
-                            if .peek(1) is Colon {
-                                .index += 2
-                                match .current() {
-                                    Identifier(name) => {
-                                        let arg_binding = name
-                                        let span = .current().span()
-                                        .index++
-                                        variant_arguments.push(EnumVariantPatternArgument(
-                                            name: Some(arg_name)
-                                            binding: arg_binding
-                                            span))
-                                    }
-                                    else => {
-                                        .error("Expected binding after ‘:’", .current().span())
-                                    }
-                                }
-                            } else {
-                                variant_arguments.push(EnumVariantPatternArgument(
-                                            name: None
-                                            binding: arg_name
-                                            span: .current().span()))
-                                .index++
-                            }
-                        }
-                        Comma => {
-                            .index++
-                        }
-                        RParen => {
-                            .index++
-                            break
-                        }
-                        else => {
-                            .error("Expected pattern argument name", .current().span())
-                            break
-                        }
-                    }
-                }
-            }
-
             let arguments_end = .previous().span()
             let arguments_span = merge_spans(arguments_start, arguments_end)
 
@@ -3029,6 +2991,59 @@ struct Parser {
             .error("Expected pattern or ‘else’", .current().span())
             yield ParsedMatchPattern::CatchAll
         }
+    }
+
+    function parse_variant_arguments(mut this) throws -> [EnumVariantPatternArgument] {
+        mut variant_arguments: [EnumVariantPatternArgument] = []
+        mut has_parens = false
+        if .current() is LParen {
+            has_parens = true
+            .index++
+
+            while not .eof() {
+                match .current() {
+                    Identifier(name) => {
+                        let arg_name = name
+                        if .peek(1) is Colon {
+                            .index += 2
+                            match .current() {
+                                Identifier(name) => {
+                                    let arg_binding = name
+                                    let span = .current().span()
+                                    .index++
+                                    variant_arguments.push(EnumVariantPatternArgument(
+                                        name: Some(arg_name)
+                                        binding: arg_binding
+                                        span))
+                                }
+                                else => {
+                                    .error("Expected binding after ‘:’", .current().span())
+                                }
+                            }
+                        } else {
+                            variant_arguments.push(EnumVariantPatternArgument(
+                                        name: None
+                                        binding: arg_name
+                                        span: .current().span()))
+                            .index++
+                        }
+                    }
+                    Comma => {
+                        .index++
+                    }
+                    RParen => {
+                        .index++
+                        break
+                    }
+                    else => {
+                        .error("Expected pattern argument name", .current().span())
+                        break
+                    }
+                }
+            }
+        }
+
+        return variant_arguments
     }
 
     function parse_call(mut this) throws -> ParsedCall? {
@@ -3596,6 +3611,10 @@ function parsed_expression_equals(anon lhs_expression: ParsedExpression, anon rh
         ForcedUnwrap(expr: rhs_expr) => parsed_expression_equals(lhs_expr, rhs_expr)
         else => false
     }
+    EnumVariantArg(expr: lhs_expr) => match rhs_expression {
+        EnumVariantArg(expr: rhs_expr) =>  parsed_expression_equals(lhs_expr, rhs_expr)
+        else => false
+    }
     NamespacedVar(name: lhs_name, namespace_: lhs_namespace) => match rhs_expression {
         NamespacedVar(name: rhs_name, namespace_: rhs_namespace) => {
             if lhs_namespace.size() != rhs_namespace.size() {
@@ -3657,6 +3676,11 @@ function unary_operator_equals(anon lhs_op: UnaryOperator, anon rhs_op: UnaryOpe
     // FIXME: Compare Types
     Is => match rhs_op {
         Is => true
+        else => false
+    }
+    // FIXME: Compare Types and variant arguments
+    IsEnumVariant => match rhs_op {
+        IsEnumVariant => true
         else => false
     }
 }

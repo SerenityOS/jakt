@@ -1369,7 +1369,8 @@ struct CodeGenerator {
                 PostIncrement => "++"
                 PostDecrement => "--"
                 TypeCast | Is => ")"
-                IsEnumVariant(name, enum_type_id) => {
+                IsEnumVariant(enum_variant, type_id: enum_type_id) => {
+                    let name = enum_variant.name()
                     mut suffix = ")"
                     let is_boxed = match .program.get_type(enum_type_id) {
                         Enum(enum_id) => .program.get_enum(enum_id).is_boxed
@@ -1428,6 +1429,16 @@ struct CodeGenerator {
             yield output + var.name
         }
         Match(expr, match_cases, type_id, all_variants_constant) => .codegen_match(expr, match_cases, type_id, all_variants_constant)
+        EnumVariantArg(expr, arg, enum_variant) => {
+            let var_name = .codegen_expression(expr)
+            let enum_type = .codegen_type_possibly_as_namespace(type_id: expression_type(expr), as_namespace: true)
+            let variant_name = enum_variant.name()
+            mut arg_name = "value"
+            if enum_variant is StructLike {
+                arg_name = arg.name ?? arg.binding
+            }
+            yield format("({}.get<{}::{}>()).{}", var_name, enum_type, variant_name, arg_name)
+        }
         JaktArray(vals, repeat, span, type_id, inner_type_id) => {
             mut output = ""
             if repeat.has_value() {
