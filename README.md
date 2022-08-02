@@ -6,6 +6,8 @@ It currently transpiles to C++.
 
 **NOTE:** The language is under heavy development.
 
+**NOTE** If you're cloning to a Windows PC (not WSL), make sure that your Git client keeps the line endings as `\n`. You can set this as a global config via `git config --global core.autocrlf false`.
+
 ## Usage
 The transpilation to C++ requires `clang`. Make sure you have that installed.
 ```
