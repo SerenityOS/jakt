@@ -4771,13 +4771,13 @@ struct Typechecker {
         return .typecheck_statement(rewritten_statement, scope_id, safety_mode)
     }
 
-    function expand_context_for_bindings(mut this, condition: ParsedExpression, acc: ParsedExpression?, then_block: ParsedBlock, span: Span) throws -> (ParsedExpression, ParsedBlock) {
+    function expand_context_for_bindings(mut this, condition: ParsedExpression, acc: ParsedExpression?, then_block: ParsedBlock, else_statement: ParsedStatement?, span: Span) throws -> (ParsedExpression, ParsedBlock, ParsedStatement?) {
         match condition {
             BinaryOp(lhs, op, rhs) => {
                 if op is LogicalAnd {
-                    let (rhs_condition, rhs_then_block) = .expand_context_for_bindings(condition: rhs, acc, then_block, span)
+                    let (rhs_condition, rhs_then_block, rhs_else_statement) = .expand_context_for_bindings(condition: rhs, acc, then_block, else_statement, span)
                     mut accumulated_condition = rhs_condition
-                    return .expand_context_for_bindings(condition: lhs, acc: accumulated_condition, then_block: rhs_then_block, span)
+                    return .expand_context_for_bindings(condition: lhs, acc: accumulated_condition, then_block: rhs_then_block, else_statement: rhs_else_statement, span)
                 }
             }
             UnaryOp(expr, op) => {
@@ -4798,16 +4798,18 @@ struct Typechecker {
                         }
                         mut inner_condition = condition
                         mut new_then_block = then_block
+                        mut new_else_statement = else_statement
                         if acc.has_value() {
                             inner_condition = acc!
-                            outer_if_stmts.push(ParsedStatement::If(condition: inner_condition, then_block, else_statement: None, span))
+                            outer_if_stmts.push(ParsedStatement::If(condition: inner_condition, then_block, else_statement, span))
+                            new_else_statement = None
                         } else {
                             for stmt in then_block.stmts.iterator() {
                                 outer_if_stmts.push(stmt)
                             }
                         }
                         new_then_block = ParsedBlock(stmts: outer_if_stmts)
-                        return .expand_context_for_bindings(condition: unary_op_single_condition, acc: None, then_block: new_then_block, span)
+                        return .expand_context_for_bindings(condition: unary_op_single_condition, acc: None, then_block: new_then_block, else_statement: new_else_statement, span)
                     }
                     else => {}
                 }
@@ -4818,11 +4820,11 @@ struct Typechecker {
         if acc.has_value() {
             base_condition = ParsedExpression::BinaryOp(lhs: condition, op: BinaryOperator::LogicalAnd, rhs: acc!, span)
         }
-        return (base_condition, then_block)
+        return (base_condition, then_block, else_statement)
     }
 
     function typecheck_if(mut this, condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
-        let (new_condition, new_then_block) = .expand_context_for_bindings(condition, acc: None, then_block, span)
+        let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(condition, acc: None, then_block, else_statement, span)
         let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: None, span)
         if not expression_type(checked_condition).equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", new_condition.span())
@@ -4834,8 +4836,8 @@ struct Typechecker {
         }
 
         mut checked_else: CheckedStatement? = None
-        if else_statement.has_value() {
-            checked_else = .typecheck_statement(else_statement!, scope_id, safety_mode)
+        if new_else_statement.has_value() {
+            checked_else = .typecheck_statement(new_else_statement!, scope_id, safety_mode)
         }
         return CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
     }
