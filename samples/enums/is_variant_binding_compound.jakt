@@ -1,0 +1,14 @@
+/// Expect: selfhost-only
+/// - output: "5\n"
+
+enum Foo {
+    Bar(i64)
+}
+
+function main() {
+    let foo = Foo::Bar(5)
+
+    if foo is Bar(n) and n > 4 and n > 3 and n > 2 and n > 1 {
+        println("{}", n)
+    }
+} 
