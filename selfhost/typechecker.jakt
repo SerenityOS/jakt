@@ -4470,12 +4470,22 @@ struct Typechecker {
                 else => {}
             }
         }
-        if not seen_scope_exit {
-            .error("Else block of guard must either `return`, `break`, `continue`, or `throw`", span) // FIXME: better span?
-        }
 
         // Ensure that we don't use any bindings we shouldn't have access to
-        .typecheck_block(block: else_block, parent_scope_id: scope_id, safety_mode)
+        let checked_else_block = .typecheck_block(block: else_block, parent_scope_id: scope_id, safety_mode)
+
+        if not seen_scope_exit {
+            mut seen_never_returning_statement = false
+            for statement in checked_else_block.statements.iterator() {
+                if .statement_never_returns(statement) {
+                    seen_never_returning_statement = true
+                }
+            }
+            if not seen_never_returning_statement {
+                .error("Else block of guard must either `return`, `break`, `continue`, or `throw`", span) // FIXME: better span?
+            }
+        }
+
 
         let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(condition: expr, acc: None, then_block: remaining_code, else_statement: ParsedStatement::Block(block: else_block, span), span)
         let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: None, span)
