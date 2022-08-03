@@ -1,0 +1,28 @@
+/// Expect:
+/// - output: "PASS\nPASS\nPASS\n"
+
+function main() -> c_int {
+    if true
+        and true {
+        println("PASS")
+    }
+
+    guard true
+        and true else {
+        return 0
+    }
+
+    while true
+        and true {
+        println("PASS")
+        break
+    }
+
+    match true 
+        and true {            
+        true => println("PASS")
+        else => {}
+    }
+
+    return 0
+}
