@@ -3447,21 +3447,6 @@ struct Typechecker {
         checked_function.return_type_id = return_type_id
     }
 
-    function statement_never_returns(this, anon statement: CheckedStatement) => match statement {
-        Expression(expr) => match expr {
-            MethodCall(call) | Call(call) => {
-                mut never_returns = false
-                if call.function_id.has_value() {
-                    never_returns = .get_function(call.function_id!).return_type_id.equals(never_type_id())
-                }
-                yield never_returns
-            }
-            else => false
-        }
-        Block(block) => block.control_flow.never_returns()
-        else => false
-    }
-
     function statement_control_flow(this, anon statement: CheckedStatement) -> BlockControlFlow => match statement {
         Return => BlockControlFlow::AlwaysReturns
         Throw => BlockControlFlow::AlwaysReturns
@@ -4477,16 +4462,8 @@ struct Typechecker {
         // Ensure that we don't use any bindings we shouldn't have access to
         let checked_else_block = .typecheck_block(block: else_block, parent_scope_id: scope_id, safety_mode)
 
-        if not seen_scope_exit {
-            mut seen_never_returning_statement = false
-            for statement in checked_else_block.statements.iterator() {
-                if .statement_never_returns(statement) {
-                    seen_never_returning_statement = true
-                }
-            }
-            if not seen_never_returning_statement {
-                .error("Else block of guard must either `return`, `break`, `continue`, or `throw`", span) // FIXME: better span?
-            }
+        if not seen_scope_exit and checked_else_block.control_flow.may_return() {
+            .error("Else block of guard must either `return`, `break`, `continue`, or `throw`", span) // FIXME: better span?
         }
 
 
