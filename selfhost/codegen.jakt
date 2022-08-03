@@ -928,9 +928,8 @@ struct CodeGenerator {
         let is_generic = not enum_.generic_parameters.is_empty()
         mut template_args_array: [String] = []
         for generic_parameter in enum_.generic_parameters.iterator() {
-            match .program.get_type(generic_parameter) {
-                TypeVariable(name) => template_args_array.push("typename " + name)
-                else => {}
+            if .program.get_type(generic_parameter) is TypeVariable(name) {
+                template_args_array.push("typename " + name)
             }
         }
         mut template_args = join(template_args_array, separator: ", ")
@@ -980,9 +979,8 @@ struct CodeGenerator {
         let is_generic = not enum_.generic_parameters.is_empty()
         mut generic_parameter_names: [String] = []
         for generic_parameter in enum_.generic_parameters.iterator() {
-            match .program.get_type(generic_parameter) {
-                TypeVariable(name) => generic_parameter_names.push(name)
-                else => {}
+            if .program.get_type(generic_parameter) is TypeVariable(name) {
+                generic_parameter_names.push(name)
             }
         }
         mut template_args = join(prepend_to_each(generic_parameter_names, prefix: "typename "), separator: ", ")
@@ -1577,24 +1575,21 @@ struct CodeGenerator {
         mut output = ""
 
         let expr_type = .program.get_type(expression_type(expr))
-        match expr_type {
-            Enum(enum_id) => {
-                output += .codegen_enum_match(
-                    enum_: .program.get_enum(enum_id)
-                    expr
-                    match_cases
-                    type_id
-                    all_variants_constant
-                )
-            }
-            else => {
-                output += .codegen_generic_match(
-                    expr
-                    cases: match_cases
-                    return_type_id: type_id
-                    all_variants_constant
-                )
-            }
+        if expr_type is Enum(enum_id) {
+            output += .codegen_enum_match(
+                enum_: .program.get_enum(enum_id)
+                expr
+                match_cases
+                type_id
+                all_variants_constant
+            )
+        } else {
+            output += .codegen_generic_match(
+                expr
+                cases: match_cases
+                return_type_id: type_id
+                all_variants_constant
+            )
         }
         .control_flow_state = last_control_flow
         return output
@@ -1859,22 +1854,17 @@ struct CodeGenerator {
             }
 
             output += .codegen_expression(lhs)
-            match rhs_type {
-                GenericInstance(id, args) => {
-                    if .program.get_struct(id).name == "Optional" {
-                        if rhs_can_throw {
-                            output += ".try_value_or_lazy_evaluated_optional";
-                        } else {
-                            output += ".value_or_lazy_evaluated_optional";
-                        }
-                    }
+            if rhs_type is GenericInstance(id) and .program.get_struct(id).name == "Optional" {
+                if rhs_can_throw {
+                    output += ".try_value_or_lazy_evaluated_optional";
+                } else {
+                    output += ".value_or_lazy_evaluated_optional";
                 }
-                else => {
-                    if rhs_can_throw {
-                        output += ".try_value_or_lazy_evaluated"
-                    } else {
-                        output += ".value_or_lazy_evaluated"
-                    }
+            } else {
+                if rhs_can_throw {
+                    output += ".try_value_or_lazy_evaluated"
+                } else {
+                    output += ".value_or_lazy_evaluated"
                 }
             }
 
@@ -2720,148 +2710,147 @@ struct CodeGenerator {
         let type_id = function_.return_type_id
         let type_ = .program.get_type(type_id)
 
-        match type_ {
-            Struct(struct_id) => {
-                let structure = .program.get_struct(struct_id)
+        guard type_ is Struct(struct_id) else {
+            // FIXME: This should be a panic(), but `guard` can't end in a call to never-returning function.
+            eprintln("internal error: call to a constructor, but not a struct/class type")
+            return ""
+        }
 
-                if structure.record_type is Class {
-                    mut output = ""
+        let structure = .program.get_struct(struct_id)
 
-                    output += "private:\n"
+        if structure.record_type is Class {
+            mut output = ""
 
-                    output += format("explicit {}(", function_.name)
-                    mut first = true
-                    for param in function_.params.iterator() {
-                        if not first {
-                            output += ", "
-                        } else {
-                            first = false
-                        }
+            output += "private:\n"
 
-                        let param_type_id = param.variable.type_id
-                        output += .codegen_type(param_type_id)
-                        output += "&& a_"
-                        output += param.variable.name
-                    }
-                    output += ")"
-
-                    if not function_.params.is_empty() {
-                        output += ": "
-                        mut first = true
-                        for param in function_.params.iterator() {
-                            if not first {
-                                output += ", "
-                            } else {
-                                first = false
-                            }
-
-                            output += param.variable.name
-                            output += "(move(a_"
-                            output += param.variable.name
-                            output += "))"
-                        }
-                    }
-
-                    output += "{}\n"
-
-                    mut class_name_with_generics = ""
-                    class_name_with_generics += structure.name
-
-                    first = true
-                    for generic_parameter in structure.generic_parameters.iterator() {
-                        if not first {
-                            class_name_with_generics += ", "
-                        } else {
-                            class_name_with_generics += "<"
-                            first = false
-                        }
-
-                        class_name_with_generics += .codegen_type(generic_parameter)
-                    }
-                    if not structure.generic_parameters.is_empty() {
-                        class_name_with_generics += ">"
-                    }
-
-                    output += "public:\n"
-                    output += format("static ErrorOr<NonnullRefPtr<{}>> create", class_name_with_generics)
-                    output += "("
-
-                    first = true
-                    for param in function_.params.iterator() {
-                        if not first {
-                            output += ", "
-                        } else {
-                            first = false
-                        }
-
-                        output += .codegen_type(param.variable.type_id)
-                        output += " "
-                        output += param.variable.name
-                    }
-
-                    output += format(") {{ auto o = {}(adopt_nonnull_ref_or_enomem(new (nothrow) {} (", .current_error_handler(), class_name_with_generics)
-
-                    first = true
-                    for param in function_.params.iterator() {
-                        if not first {
-                            output += ", "
-                        } else {
-                            first = false
-                        }
-
-                        output += "move("
-                        output += param.variable.name
-                        output += ")"
-                    }
-
-                    output += "))); return o; }"
-
-                    return output
+            output += format("explicit {}(", function_.name)
+            mut first = true
+            for param in function_.params.iterator() {
+                if not first {
+                    output += ", "
                 } else {
-                    mut output = ""
-                    output += function_.name
-                    output += "("
+                    first = false
+                }
 
-                    mut first = true
-                    for param in function_.params.iterator() {
-                        if not first {
-                            output += ", "
-                        } else {
-                            first = false
-                        }
+                let param_type_id = param.variable.type_id
+                output += .codegen_type(param_type_id)
+                output += "&& a_"
+                output += param.variable.name
+            }
+            output += ")"
 
-                        output += .codegen_type(param.variable.type_id)
-                        output += " a_"
-                        output += param.variable.name
-                    }
-                    output += ") "
-
-                    if not function_.params.is_empty() {
-                        output += ":"
+            if not function_.params.is_empty() {
+                output += ": "
+                mut first = true
+                for param in function_.params.iterator() {
+                    if not first {
+                        output += ", "
+                    } else {
+                        first = false
                     }
 
-                    first = true
-                    for param in function_.params.iterator() {
-                        if not first {
-                            output += ", "
-                        } else {
-                            first = false
-                        }
-
-                        output += param.variable.name
-                        output += "(a_"
-                        output += param.variable.name
-                        output += ")"
-                    }
-
-                    output += "{}\n"
-
-                    return output
+                    output += param.variable.name
+                    output += "(move(a_"
+                    output += param.variable.name
+                    output += "))"
                 }
             }
-            else => {
-                panic("internal error: call to a constructor, but not a struct/class type")
+
+            output += "{}\n"
+
+            mut class_name_with_generics = ""
+            class_name_with_generics += structure.name
+
+            first = true
+            for generic_parameter in structure.generic_parameters.iterator() {
+                if not first {
+                    class_name_with_generics += ", "
+                } else {
+                    class_name_with_generics += "<"
+                    first = false
+                }
+
+                class_name_with_generics += .codegen_type(generic_parameter)
             }
+            if not structure.generic_parameters.is_empty() {
+                class_name_with_generics += ">"
+            }
+
+            output += "public:\n"
+            output += format("static ErrorOr<NonnullRefPtr<{}>> create", class_name_with_generics)
+            output += "("
+
+            first = true
+            for param in function_.params.iterator() {
+                if not first {
+                    output += ", "
+                } else {
+                    first = false
+                }
+
+                output += .codegen_type(param.variable.type_id)
+                output += " "
+                output += param.variable.name
+            }
+
+            output += format(") {{ auto o = {}(adopt_nonnull_ref_or_enomem(new (nothrow) {} (", .current_error_handler(), class_name_with_generics)
+
+            first = true
+            for param in function_.params.iterator() {
+                if not first {
+                    output += ", "
+                } else {
+                    first = false
+                }
+
+                output += "move("
+                output += param.variable.name
+                output += ")"
+            }
+
+            output += "))); return o; }"
+
+            return output
+        } else {
+            mut output = ""
+            output += function_.name
+            output += "("
+
+            mut first = true
+            for param in function_.params.iterator() {
+                if not first {
+                    output += ", "
+                } else {
+                    first = false
+                }
+
+                output += .codegen_type(param.variable.type_id)
+                output += " a_"
+                output += param.variable.name
+            }
+            output += ") "
+
+            if not function_.params.is_empty() {
+                output += ":"
+            }
+
+            first = true
+            for param in function_.params.iterator() {
+                if not first {
+                    output += ", "
+                } else {
+                    first = false
+                }
+
+                output += param.variable.name
+                output += "(a_"
+                output += param.variable.name
+                output += ")"
+            }
+
+            output += "{}\n"
+
+            return output
         }
         return ""
     }
@@ -2869,9 +2858,8 @@ struct CodeGenerator {
     function codegen_function_in_namespace(mut this, function_: CheckedFunction, containing_struct: TypeId?) throws -> String {
         // Extern generics need to be in the header anyways, so we can't codegen for them.
         if not function_.generic_params.is_empty() {
-            match function_.linkage {
-                External => { return "" }
-                else => {}
+            if function_.linkage is External {
+                return ""
             }
         }
 
