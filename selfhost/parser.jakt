@@ -938,7 +938,7 @@ struct Parser {
                 Identifier(name, span) => {
                     if .peek(1) is Equal {
                         .index += 2
-                        let expr = .parse_expression(allow_assignments: false)
+                        let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
                         variants.push(ValueEnumVariant(name, span, value: expr))
                     } else {
                         .index++
@@ -1613,7 +1613,7 @@ struct Parser {
     function parse_fat_arrow(mut this) throws -> ParsedBlock {
         .index++
         let start = .current().span()
-        let expr = .parse_expression(allow_assignments: false)
+        let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
         let return_statement = ParsedStatement::Return(expr, span: merge_spans(start, .current().span()))
         return ParsedBlock(stmts: [return_statement])
     }
@@ -2024,18 +2024,18 @@ struct Parser {
             }
             Throw => {
                 .index++
-                let expr = .parse_expression(allow_assignments: false)
+                let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
                 yield ParsedStatement::Throw(expr, span: merge_spans(start, .previous().span()))
             }
             While => {
                 .index++
-                let condition = .parse_expression(allow_assignments: false)
+                let condition = .parse_expression(allow_assignments: false, allow_newlines: true)
                 let block = .parse_block()
                 yield ParsedStatement::While(condition, block, span: merge_spans(start, .previous().span()))
             }
             Yield => {
                 .index++
-                let expr = .parse_expression(allow_assignments: false)
+                let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
                 if not inside_block {
                     .error("‘yield’ can only be used inside a block", span: merge_spans(start, end: expr.span()))
                 }
@@ -2045,7 +2045,7 @@ struct Parser {
                 .index++
                 yield match .current() {
                     Eol | Eof | RCurly => ParsedStatement::Return(expr: None, span: .current().span())
-                    else => ParsedStatement::Return(expr: .parse_expression(allow_assignments: false), span: merge_spans(start, .previous().span()))
+                    else => ParsedStatement::Return(expr: .parse_expression(allow_assignments: false, allow_newlines: false), span: merge_spans(start, .previous().span()))
                 }
             }
             Let | Mut => {
@@ -2078,7 +2078,7 @@ struct Parser {
                 let init = match .current() {
                     Equal => {
                         .index++
-                        yield .parse_expression(allow_assignments: false)
+                        yield .parse_expression(allow_assignments: false, allow_newlines: false)
                     }
                     else => {
                         .error("Expected initializer", .current().span())
@@ -2103,7 +2103,7 @@ struct Parser {
             }
             Guard => .parse_guard_statement()
             else => {
-                let expr = .parse_expression(allow_assignments: true)
+                let expr = .parse_expression(allow_assignments: true, allow_newlines: false)
                 yield ParsedStatement::Expression(expr, span: merge_spans(start, .previous().span()))
             }
         }
@@ -2112,7 +2112,7 @@ struct Parser {
     function parse_guard_statement(mut this) throws -> ParsedStatement {
         let span = .current().span()
         .index++
-        let expr = .parse_expression(allow_assignments: false)
+        let expr = .parse_expression(allow_assignments: false, allow_newlines: true)
         match .current() {
             Else => {
                 .index++
@@ -2186,7 +2186,7 @@ struct Parser {
                     return ParsedStatement::Garbage(merge_spans(start_span, .current().span()))
                 }
 
-                let range = .parse_expression(allow_assignments: false)
+                let range = .parse_expression(allow_assignments: false, allow_newlines: false)
                 let block = .parse_block();
 
                 yield ParsedStatement::For(iterator_name, name_span, range, block, span: merge_spans(start_span, .previous().span()))
@@ -2207,7 +2207,7 @@ struct Parser {
         let start_span = .current().span()
         .index++
 
-        let condition = .parse_expression(allow_assignments: false)
+        let condition = .parse_expression(allow_assignments: false, allow_newlines: true)
         let then_block = .parse_block()
 
         mut else_statement: ParsedStatement? = None
@@ -2238,14 +2238,25 @@ struct Parser {
         return ParsedStatement::If(condition, then_block, else_statement, span: merge_spans(start_span, .previous().span()))
     }
 
-    function parse_expression(mut this, allow_assignments: bool) throws -> ParsedExpression {
+    function parse_expression(mut this, allow_assignments: bool, allow_newlines: bool) throws -> ParsedExpression {
         mut expr_stack: [ParsedExpression] = []
         mut last_precedence = 1000000
 
         let lhs = .parse_operand()
         expr_stack.push(lhs)
 
-        while not .eol() {
+        loop {
+            if allow_newlines {
+                if .eof() or .current() is LCurly {
+                    break
+                }
+                .skip_newlines()
+            } else {
+                if .eol() {
+                    break
+                }
+            }
+
             let parsed_operator = .parse_operator(allow_assignments);
 
             if parsed_operator is Garbage {
@@ -2359,7 +2370,7 @@ struct Parser {
             if .peek(1) is LParen {
                 if name == "Some" {
                     .index++
-                    let expr = .parse_expression(allow_assignments: false)
+                    let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
                     return ParsedExpression::OptionalSome(expr, span)
                 }
                 let call = .parse_call()
@@ -2388,7 +2399,7 @@ struct Parser {
             let start_span = .current().span()
             .index++
             
-            mut expr = .parse_expression(allow_assignments: false)
+            mut expr = .parse_expression(allow_assignments: false, allow_newlines: false)
 
             .skip_newlines()
 
@@ -2413,7 +2424,7 @@ struct Parser {
                                 break
                             }
                             else => {
-                                let expr = .parse_expression(allow_assignments: false)
+                                let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
                                 end_span = expr.span()
                                 tuple_exprs.push(expr)
                             }
@@ -2558,7 +2569,7 @@ struct Parser {
         let block = match .current() {
             FatArrow => {
                 .index++
-                let expr = .parse_expression(allow_assignments: true)
+                let expr = .parse_expression(allow_assignments: true, allow_newlines: false)
                 let span = expr.span()
                 yield ParsedBlock(stmts: [ParsedStatement::Return(expr, span)])
             }
@@ -2612,7 +2623,7 @@ struct Parser {
                     .index++
                 }
                 else => {
-                    let expr = .parse_expression(allow_assignments: false)
+                    let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
                     if expr is Garbage {
                         break
                     }
@@ -2645,7 +2656,7 @@ struct Parser {
             result = match .current() {
                 DotDot => {
                     .index++
-                    let to = .parse_expression(allow_assignments: false)
+                    let to = .parse_expression(allow_assignments: false, allow_newlines: false)
                     yield ParsedExpression::Range(from: result, to, span: merge_spans(start, to.span()))
                 }
                 ExclamationPoint => {
@@ -2759,7 +2770,7 @@ struct Parser {
                 LSquare => {
                     // Indexing operation
                     .index++
-                    let index_expr = .parse_expression(allow_assignments: false)
+                    let index_expr = .parse_expression(allow_assignments: false, allow_newlines: false)
                     if .current() is RSquare {
                         .index++
                     } else {
@@ -2897,7 +2908,7 @@ struct Parser {
         mut start = .current().span()
         .index++
 
-        let expr = .parse_expression(allow_assignments: false)
+        let expr = .parse_expression(allow_assignments: false, allow_newlines: true)
         let cases = .parse_match_cases()
 
         return ParsedExpression::Match(expr, cases, span: merge_spans(start, .previous().span()))
@@ -2933,7 +2944,7 @@ struct Parser {
 
             let body = match .current() {
                 LCurly => ParsedMatchBody::Block(.parse_block())
-                else => ParsedMatchBody::Expression(.parse_expression(allow_assignments: false))
+                else => ParsedMatchBody::Expression(.parse_expression(allow_assignments: false, allow_newlines: false))
             }
 
             for pattern in patterns.iterator() {
@@ -3150,7 +3161,7 @@ struct Parser {
                             let label_span = .current().span()
                             let label = .parse_argument_label()
 
-                            let expr = .parse_expression(allow_assignments: false)
+                            let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
 
                             call.args.push((label, label_span, expr))
                         }
@@ -3302,7 +3313,7 @@ struct Parser {
                 Semicolon => {
                     if output.size() == 1 {
                         .index++
-                        fill_size_expr = .parse_expression(allow_assignments: false);
+                        fill_size_expr = .parse_expression(allow_assignments: false, allow_newlines: false)
                     } else {
                         .error("Can't fill an Array with more than one expression", .current().span())
                         .index++
@@ -3323,7 +3334,7 @@ struct Parser {
                     }
                 }
                 else => {
-                    let expr = .parse_expression(allow_assignments: false)
+                    let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
                     if expr is Garbage {
                         break
                     }
@@ -3340,7 +3351,7 @@ struct Parser {
                             .error("Key missing value in dictionary", .current().span())
                             return ParsedExpression::Garbage(.current().span())
                         }
-                        let value = .parse_expression(allow_assignments: false)
+                        let value = .parse_expression(allow_assignments: false, allow_newlines: false)
                         dict_output.push((expr, value))
                     } else if not is_dictionary {
                         output.push(expr)
