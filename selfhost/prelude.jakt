@@ -42,6 +42,15 @@ extern struct Array<T> {
     function last(this) -> T?
 }
 
+extern struct ArraySlice<T> {
+    function is_empty(this) -> bool
+    function contains(this, anon value: T) -> bool
+    function size(this) -> usize
+    function iterator(this) -> ArrayIterator<T>
+    function first(this) -> T?
+    function last(this) -> T?
+}
+
 extern struct String {
     function number(anon number: i64) throws -> String
     function split(this, anon c: c_char) throws -> [String]

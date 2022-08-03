@@ -143,6 +143,34 @@ private:
 };
 
 template<typename T>
+class ArrayIterator {
+    using Storage = ArrayStorage<T>;
+
+public:
+    ArrayIterator(NonnullRefPtr<Storage> storage, size_t offset, size_t size)
+        : m_storage(move(storage))
+        , m_index(offset)
+        , m_size(size)
+    {
+    }
+
+    Optional<T> next()
+    {
+        if (m_index >= m_size) {
+            return {};
+        }
+        auto current = m_storage->at(m_index);
+        ++m_index;
+        return current;
+    }
+
+private:
+    NonnullRefPtr<Storage> m_storage;
+    size_t m_index { 0 };
+    size_t m_size { 0 };
+};
+
+template<typename T>
 class ArraySlice {
 public:
     ArraySlice() = default;
@@ -161,6 +189,11 @@ public:
         VERIFY(m_offset < m_storage->size());
     }
 
+    ArrayIterator<T> iterator() const
+    {
+        return ArrayIterator<T> { *m_storage, m_offset, m_size };
+    }
+
     bool is_empty() const { return size() == 0; }
     size_t size() const
     {
@@ -168,44 +201,42 @@ public:
             return 0;
         if (m_offset >= m_storage->size())
             return 0;
-        size_t available_in_storage = m_storage->size() - m_offset;
-        return max(m_size, available_in_storage);
+
+        return min(m_size, m_storage->size()-m_offset);
     }
 
     T const& at(size_t index) const { return m_storage->at(m_offset + index); }
     T& at(size_t index) { return m_storage->at(m_offset + index); }
-    T const& operator[](size_t index) const { return at(index); }
-    T& operator[](size_t index) { return at(index); }
+    T const& operator[](size_t index) const { return at(m_offset + index); }
+    T& operator[](size_t index) { return at(m_offset + index); }
 
+    bool contains(T const& value) const
+    {
+        for (size_t i = 0; i < m_size; ++i) {
+            if (Traits<T>::equals(at(i), value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    Optional<T> first() const
+    {
+        if (is_empty())
+            return {};
+        return at(0);
+    }
+
+    Optional<T> last() const
+    {
+        if (is_empty())
+            return {};
+        return at(size() - 1);
+    }
 private:
     RefPtr<ArrayStorage<T>> m_storage;
     size_t m_offset { 0 };
     size_t m_size { 0 };
-};
-
-template<typename T>
-class ArrayIterator {
-    using Storage = ArrayStorage<T>;
-
-public:
-    ArrayIterator(NonnullRefPtr<Storage> storage)
-        : m_storage(move(storage))
-    {
-    }
-
-    Optional<T> next()
-    {
-        if (m_index >= m_storage->size()) {
-            return {};
-        }
-        auto current = m_storage->at(m_index);
-        ++m_index;
-        return current;
-    }
-
-private:
-    NonnullRefPtr<Storage> m_storage;
-    size_t m_index { 0 };
 };
 
 template<typename T>
@@ -221,7 +252,7 @@ public:
 
     ArrayIterator<T> iterator() const
     {
-        return ArrayIterator<T> { *m_storage };
+        return ArrayIterator<T> { *m_storage, 0, m_storage->size() };
     }
 
     static ErrorOr<Array> create_empty()
@@ -289,6 +320,11 @@ public:
     {
         TRY(m_storage->add_size(size));
         return {};
+    }
+
+    ArraySlice<T> slice(size_t offset, size_t size) const
+    {
+        return { *m_storage, offset, size };
     }
 
     ArraySlice<T> slice(size_t offset, size_t size)
@@ -360,5 +396,6 @@ private:
 
 namespace Jakt {
 using JaktInternal::Array;
+using JaktInternal::ArraySlice;
 using JaktInternal::ArrayIterator;
 }

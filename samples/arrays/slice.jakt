@@ -1,0 +1,25 @@
+/// Expect:
+/// - output: "slice size: 2\n1\n2\n[1, 2]\nslice first: 1\nslice last: 2\nslice contains 2: true\nslice contains 3: false\narray index 0: 0\nslice index 0: 0\n"
+
+function main() {
+    let x = [1, 2, 3, 4, 5]
+    mut slice = x[0..2]
+    
+    println("slice size: {}", slice.size())
+
+    for y in slice.iterator() {
+        println("{}", y)
+    }
+
+    println("{}", slice)
+
+    println("slice first: {}", slice.first())
+    println("slice last: {}", slice.last())
+
+    println("slice contains 2: {}", slice.contains(2))
+    println("slice contains 3: {}", slice.contains(3))
+
+    slice[0] = 0
+    println("array index 0: {}", x[0])
+    println("slice index 0: {}", slice[0])
+}
