@@ -5878,7 +5878,7 @@ struct Typechecker {
             } else if enum_in_scope.has_value() {
                 next_scope = .get_enum(enum_in_scope!).scope_id
             } else {
-                .compiler.panic(format("Namespace {} not found", ns))
+                .error(format("Namespace ‘{}’ not found", ns), span)
             }
             scopes.push(next_scope)
         }
