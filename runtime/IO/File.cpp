@@ -74,6 +74,9 @@ ErrorOr<size_t> File::read(Array<u8> buffer)
 
 ErrorOr<size_t> File::write(Array<u8> data)
 {
+    if (data.is_empty()) {
+        return 0;
+    }
     auto nwritten = fwrite(data.unsafe_data(), 1, data.size(), m_stdio_file);
     if (nwritten == 0) {
         auto error = ferror(m_stdio_file);
