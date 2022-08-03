@@ -112,6 +112,27 @@ struct Formatter<JaktInternal::Array<T>> : Formatter<StringView> {
 };
 
 template<typename T>
+struct Formatter<JaktInternal::ArraySlice<T>> : Formatter<StringView> {
+    ErrorOr<void> format(FormatBuilder& builder, JaktInternal::ArraySlice<T> const& value)
+    {
+        if (m_alternative_form)
+            JaktInternal::_pretty_print_enabled = true;
+        auto string_builder = TRY(StringBuilder::create());
+        TRY(string_builder.append("["));
+        JaktInternal::_pretty_print_level++;
+        for (size_t i = 0; i < value.size(); ++i) {
+            TRY(JaktInternal::_output_pretty_indent(string_builder));
+            TRY(append_value(string_builder, value[i], m_alternative_form));
+            if (i != value.size() - 1)
+                TRY(string_builder.append(", "));
+        }
+        JaktInternal::_pretty_print_level--;
+        TRY(string_builder.append("]"));
+        return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
+    }
+};
+
+template<typename T>
 struct Formatter<JaktInternal::Set<T>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Set<T> const& set)
     {

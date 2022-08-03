@@ -434,6 +434,7 @@ boxed enum ParsedExpression {
     IndexedStruct(expr: ParsedExpression, field: String, is_optional: bool, span: Span)
     Var(name: String, span: Span)
     IndexedExpression(base: ParsedExpression, index: ParsedExpression, span: Span)
+    IndexedRangeExpression(base: ParsedExpression, from: ParsedExpression, to: ParsedExpression, span: Span)
     UnaryOp(expr: ParsedExpression, op: UnaryOperator, span: Span)
     BinaryOp(lhs: ParsedExpression, op: BinaryOperator, rhs: ParsedExpression, span: Span)
     Operator(op: BinaryOperator, span: Span)
@@ -460,6 +461,7 @@ boxed enum ParsedExpression {
         Call(call, span) => span
         Var(name, span) => span
         IndexedExpression(base, index, span) => span
+        IndexedRangeExpression(base, from, to, span) => span
         UnaryOp(expr, op, span) => span
         BinaryOp(lhs, op, rhs, span) => span
         Operator(op, span) => span
@@ -2726,10 +2728,22 @@ struct Parser {
                     } else {
                         .error("Expected ']'", .current().span())
                     }
-                    yield ParsedExpression::IndexedExpression(
-                        base: result,
-                        index: index_expr,
-                        span: merge_spans(start, .current().span()))
+
+                    yield match(index_expr) {
+                        Range(from, to) => {
+                            yield ParsedExpression::IndexedRangeExpression(
+                                base: result,
+                                from
+                                to
+                                span: merge_spans(start, .current().span()))
+                        }
+                        else => {
+                            yield ParsedExpression::IndexedExpression(
+                                base: result,
+                                index: index_expr,
+                                span: merge_spans(start, .current().span()))
+                        }
+                    }
                 }
                 else => {
                     break
@@ -3484,6 +3498,10 @@ function parsed_expression_equals(anon lhs_expression: ParsedExpression, anon rh
     }
     IndexedExpression(base: lhs_base, index: lhs_index) => match rhs_expression {
         IndexedExpression(base: rhs_base, index: rhs_index) => parsed_expression_equals(lhs_base, rhs_base) and parsed_expression_equals(lhs_index, rhs_index)
+        else => false
+    }
+    IndexedRangeExpression(base: lhs_base, from: lhs_from, to: lhs_to) => match rhs_expression {
+        IndexedRangeExpression(base: rhs_base, from: rhs_from, to: rhs_to) => parsed_expression_equals(lhs_base, rhs_base) and parsed_expression_equals(lhs_from, rhs_from) and parsed_expression_equals(lhs_to, rhs_to)
         else => false
     }
     UnaryOp(expr: lhs_expr, op: lhs_op) => match rhs_expression {
