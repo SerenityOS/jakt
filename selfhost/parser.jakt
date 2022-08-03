@@ -220,11 +220,8 @@ struct ParsedBlock {
 
     function find_yield_span(this) -> Span? {
         for stmt in .stmts.iterator() {
-            match stmt {
-                Yield(expr) => {
-                    return expr.span()
-                }
-                else => { }
+            if stmt is Yield(expr) {
+                return expr.span()
             }
         }
         return None
@@ -767,14 +764,11 @@ struct Parser {
 
     function parse_import(mut this, mut parent: ParsedNamespace) throws  {
         // import . <extern <extern-import> | <module-import>>
-        match .current() {
-            Extern => {
-                .index++
-                parent.add_extern_import(.parse_extern_import())
-            }
-            else => {
-                parent.add_module_import(.parse_module_import())
-            }
+        if .current() is Extern {
+            .index++
+            parent.add_extern_import(.parse_extern_import())
+        } else {
+            parent.add_module_import(.parse_module_import())
         }
     }
 
@@ -794,17 +788,14 @@ struct Parser {
                 import_path_if_extern: None))
 
         
-        match .current() {
-            Identifier(name, span) => {
-                .index++
-                if name == "c" or name == "C" {
-                    parsed_import.is_c = true
-                } else {
-                    .error("Expected 'c' or path after `import extern`"
-                           .current().span())
-                }
+        if .current() is Identifier(name, span) {
+            .index++
+            if name == "c" or name == "C" {
+                parsed_import.is_c = true
+            } else {
+                .error("Expected 'c' or path after `import extern`"
+                       .current().span())
             }
-            else => {}
         }
 
         let import_path = match .current() {
@@ -821,16 +812,13 @@ struct Parser {
 
         if .current() is As {
             .index++
-            match .current() {
-                Identifier(name, span) => {
-                    .index++
-                    parsed_import.assigned_namespace.name = name
-                    parsed_import.assigned_namespace.name_span = span
-                }
-                else => {
-                    .error("Expected name after 'as' keyword to name the extern import"
-                            .current().span())
-                }
+            if .current() is Identifier(name, span) {
+                .index++
+                parsed_import.assigned_namespace.name = name
+                parsed_import.assigned_namespace.name_span = span
+            } else {
+                .error("Expected name after 'as' keyword to name the extern import"
+                        .current().span())
             }
         }
 
@@ -870,15 +858,12 @@ struct Parser {
 
         if .current() is As {
             .index++
-            match .current() {
-                Identifier(name, span) => {
-                    .index++
-                    parsed_import.alias_name = ImportName(name, span)
-                }
-                else => {
-                    .error("Expected name", .current().span())
-                    .index++
-                }
+            if .current() is Identifier(name, span) {
+                .index++
+                parsed_import.alias_name = ImportName(name, span)
+            } else  {
+                .error("Expected name", .current().span())
+                .index++
             }
         }
 
@@ -1030,14 +1015,11 @@ struct Parser {
                         while not .eof() {
                             if .peek(1) is Colon {
                                 mut var_decl = .parse_variable_declaration(is_mutable: false)
-                                match var_decl.parsed_type {
-                                    Name(name, span) => {
-                                        var_decl.inlay_span = span
-                                        if name == partial_enum.name and not is_boxed{
-                                            .error("use 'boxed enum' to make the enum recursive", var_decl.span)
-                                        }
+                                if var_decl.parsed_type is Name(name, span) {
+                                    var_decl.inlay_span = span
+                                    if name == partial_enum.name and not is_boxed{
+                                        .error("use 'boxed enum' to make the enum recursive", var_decl.span)
                                     }
-                                    else => {}
                                 }
                                 var_decls.push(var_decl)
                                 continue
@@ -1153,15 +1135,12 @@ struct Parser {
             return parsed_enum
         }
 
-        match .current() {
-            Token::Identifier(name, span) => {
-                parsed_enum.name = name
-                parsed_enum.name_span = span
-                .index++
-            }
-            else => {
-                .error("Incomplete enum definition, expected name", .current().span())
-            }
+        if .current() is Identifier(name, span) {
+            parsed_enum.name = name
+            parsed_enum.name_span = span
+            .index++
+        } else {
+            .error("Incomplete enum definition, expected name", .current().span())
         }
 
         if .eof() {
@@ -1333,15 +1312,12 @@ struct Parser {
             return parsed_struct
         }
 
-        match .current() {
-            Identifier(name, span) => {
-                .index++
-                parsed_struct.name = name
-                parsed_struct.name_span = span
-            }
-            else => {
-                .error("Incomplete struct definition, expected name", .current().span())
-            }
+        if .current() is Identifier(name, span) {
+            .index++
+            parsed_struct.name = name
+            parsed_struct.name_span = span
+        } else {
+            .error("Incomplete struct definition, expected name", .current().span())
         }
 
         if .eof() {
@@ -1389,15 +1365,12 @@ struct Parser {
             return parsed_class
         }
 
-        match .current() {
-            Identifier(name, span) => {
-                .index++
-                parsed_class.name = name
-                parsed_class.name_span = span
-            }
-            else => {
-                .error("Incomplete class definition, expected name", .current().span())
-            }
+        if .current() is Identifier(name, span) {
+            .index++
+            parsed_class.name = name
+            parsed_class.name_span = span
+        } else {
+            .error("Incomplete class definition, expected name", .current().span())
         }
 
         if .eof() {
@@ -1436,13 +1409,10 @@ struct Parser {
     }
 
     public function parse_function_parameters(mut this) throws -> [ParsedParameter] {
-        match .current() {
-            LParen => {
-                .index++
-            }
-            else => {
-                .error("Expected '('", .current().span())
-            }
+        if .current() is LParen {
+            .index++
+        } else {
+            .error("Expected '('", .current().span())
         }
 
         .skip_newlines()
@@ -1791,14 +1761,11 @@ struct Parser {
             }
 
             mut return_type = ParsedType::Empty
-            match .current() {
-                Arrow => {
-                    .index++
-                    return_type = .parse_typename()
-                }
-                else => {
-                    .error("Expected '->'", .current().span())
-                }
+            if .current() is Arrow {
+                .index++
+                return_type = .parse_typename()
+            } else {
+                .error("Expected '->'", .current().span())
             }
 
             yield ParsedType::Function(params, can_throw, return_type, span: merge_spans(start, return_type.span()))
@@ -1842,38 +1809,34 @@ struct Parser {
     }
 
     function parse_variable_declaration(mut this, is_mutable: bool) throws -> ParsedVarDecl {
-        match .current() {
-            Identifier(name) => {
-                let var_name = name
-                let decl_span = .current().span()
+        if .current() is Identifier(name) {
+            let span = .current().span()
 
+            .index++
+            if .current() is Colon {
                 .index++
-                if .current() is Colon {
-                    .index++
-                } else {
-                    return ParsedVarDecl(
-                        name: var_name,
-                        parsed_type: ParsedType::Empty,
-                        is_mutable,
-                        inlay_span: decl_span
-                        span: decl_span
-                    )
-                }
-
-                let var_type = .parse_typename()
-                if is_mutable and (var_type is Reference or var_type is MutableReference) {
-                    .error("Reference parameter can not be mutable", decl_span)
-                }
-
+            } else {
                 return ParsedVarDecl(
-                    name: var_name,
-                    parsed_type: var_type,
-                    is_mutable,
-                    inlay_span: None,
-                    span: decl_span,
+                    name
+                    parsed_type: ParsedType::Empty
+                    is_mutable
+                    inlay_span: span
+                    span
                 )
             }
-            else => { }
+
+            let parsed_type = .parse_typename()
+            if is_mutable and (parsed_type is Reference or parsed_type is MutableReference) {
+                .error("Reference parameter can not be mutable", span)
+            }
+
+            return ParsedVarDecl(
+                name
+                parsed_type
+                is_mutable
+                inlay_span: None
+                span
+            )
         }
         return ParsedVarDecl(
             name: "",
@@ -2113,13 +2076,10 @@ struct Parser {
         let span = .current().span()
         .index++
         let expr = .parse_expression(allow_assignments: false, allow_newlines: true)
-        match .current() {
-            Else => {
-                .index++
-            }
-            else => {
-                .error("Expected `else` keyword", .current().span())
-            }
+        if .current() is Else {
+            .index++
+        } else {
+            .error("Expected `else` keyword", .current().span())
         }
         let else_block = .parse_block()
 
@@ -2154,13 +2114,10 @@ struct Parser {
 
         if .current() is Catch {
             .index++
-            match .current() {
-                Identifier(name) => {
-                    error_span = .current().span()
-                    error_name = name
-                    .index++
-                }
-                else => { }
+            if .current() is Identifier(name) {
+                error_span = .current().span()
+                error_name = name
+                .index++
             }
         } else {
             .error("Expected ‘catch’", .current().span())
@@ -2490,15 +2447,11 @@ struct Parser {
 
     function parse_captures(mut this) throws -> [ParsedCapture] {
         mut captures: [ParsedCapture] = []
-        match .current() {
-            LSquare => {
-                .index++
-            }
-            else => {
-                return []
-            }
+        guard .current() is LSquare else {
+            return []
         }
-
+        .index++
+        
         while not .eof() {
             match .current() {
                 RSquare => {
@@ -2510,15 +2463,12 @@ struct Parser {
                     match .current() {
                         Mut => {
                             .index++
-                            match .current() {
-                                 Identifier(name) => {
-                                    captures.push(ParsedCapture::ByMutableReference(name, span: .current().span()))
-                                    .index++
-                                }
-                                else => {
-                                    .error(format("Expected identifier, got '{}'", .current()), .current().span())
-                                    .index++
-                                }
+                            if .current() is Identifier(name) {
+                                captures.push(ParsedCapture::ByMutableReference(name, span: .current().span()))
+                                .index++
+                            } else {
+                                .error(format("Expected identifier, got '{}'", .current()), .current().span())
+                                .index++
                             }
                         }
                         Identifier(name) => {
@@ -2794,13 +2744,10 @@ struct Parser {
     function parse_postfix_colon_colon(mut this, start: Span, expr: ParsedExpression) throws -> ParsedExpression {
         .index++
         mut namespace_: [String] = []
-        match expr {
-            Var(name) => {
-                namespace_.push(name)
-            }
-            else => {
-                .error("Expected namespace", expr.span())
-            }
+        if expr is Var(name) {
+            namespace_.push(name)
+        } else {
+            .error("Expected namespace", expr.span())
         }
         if .eof() {
             .error("Incomplete static method call", .current().span())
@@ -2821,13 +2768,10 @@ struct Parser {
                 return ParsedExpression::Call(call: call!, span: merge_spans(expr.span(), .current().span()))
             }
             if .current() is ColonColon {
-                match .previous() {
-                    Identifier(name) => {
-                        namespace_.push(name)
-                    }
-                    else => {
-                        .error("Expected namespace", expr.span())
-                    }
+                if .previous() is Identifier(name) {
+                    namespace_.push(name)
+                } else {
+                    .error("Expected namespace", expr.span())
                 }
                 .index++
                 continue
@@ -3049,23 +2993,19 @@ struct Parser {
 
             while not .eof() {
                 match .current() {
-                    Identifier(name) => {
-                        let arg_name = name
+                    Identifier(name: arg_name) => {
                         if .peek(1) is Colon {
                             .index += 2
-                            match .current() {
-                                Identifier(name) => {
-                                    let arg_binding = name
-                                    let span = .current().span()
-                                    .index++
-                                    variant_arguments.push(EnumVariantPatternArgument(
-                                        name: Some(arg_name)
-                                        binding: arg_binding
-                                        span))
-                                }
-                                else => {
-                                    .error("Expected binding after ‘:’", .current().span())
-                                }
+                            if .current() is Identifier(name: arg_binding) {
+                                let span = .current().span()
+                                .index++
+                                variant_arguments.push(EnumVariantPatternArgument(
+                                    name: Some(arg_name)
+                                    binding: arg_binding
+                                    span)
+                                )
+                            } else {
+                                .error("Expected binding after ‘:’", .current().span())
                             }
                         } else {
                             variant_arguments.push(EnumVariantPatternArgument(
@@ -3101,75 +3041,73 @@ struct Parser {
             type_args: []
         )
 
-        match .current() {
-            Identifier(name) => {
-                call.name = name
-                .index++
+        guard .current() is Identifier(name) else {
+            .error("Expected function call", .current().span())
+            return call
+        }
 
-                // This is to allow the lookahead. Without it, we may see something like
-                // foo < Bar, and think the start of a generic call when it actually isn't.
-                let index_reset = .index
+        call.name = name
+        .index++
 
-                if .current() is LessThan {
-                    // Generic type
-                    .index++
-                    mut inner_types: [ParsedType] = []
+        // This is to allow the lookahead. Without it, we may see something like
+        // foo < Bar, and think the start of a generic call when it actually isn't.
+        let index_reset = .index
 
-                    while not .eof() {
-                        match .current() {
-                            GreaterThan => {
-                                .index++
-                                break
-                            }
-                            Comma | Eol => {
-                                .index++
-                            }
-                            else => {
-                                let index_before = .index
-                                let inner_type = .parse_typename()
-                                if index_before == .index {
-                                    // Can't parse further, this is not a generic call.
-                                    .index = index_reset;
-                                    break
-                                }
-                                inner_types.push(inner_type)
-                            }
-                        }
+        if .current() is LessThan {
+            // Generic type
+            .index++
+            mut inner_types: [ParsedType] = []
+
+            while not .eof() {
+                match .current() {
+                    GreaterThan => {
+                        .index++
+                        break
                     }
-
-                    call.type_args = inner_types
-                }
-
-                if .current() is LParen {
-                    .index++
-                } else {
-                    .index = index_reset
-                    .error("Expected '('", .current().span())
-                    return None
-                }
-
-                while  not .eof() {
-                    match .current() {
-                        RParen => {
-                            .index++
+                    Comma | Eol => {
+                        .index++
+                    }
+                    else => {
+                        let index_before = .index
+                        let inner_type = .parse_typename()
+                        if index_before == .index {
+                            // Can't parse further, this is not a generic call.
+                            .index = index_reset;
                             break
                         }
-                        Eol | Comma => {
-                            .index++
-                        }
-                        else => {
-                            let label_span = .current().span()
-                            let label = .parse_argument_label()
-
-                            let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
-
-                            call.args.push((label, label_span, expr))
-                        }
+                        inner_types.push(inner_type)
                     }
                 }
             }
-            else => {
-                .error("Expected function call", .current().span())
+
+            call.type_args = inner_types
+        }
+
+        if .current() is LParen {
+            .index++
+        } else {
+            .index = index_reset
+            .error("Expected '('", .current().span())
+            return None
+        }
+
+        while not .eof() {
+            match .current() {
+                RParen => {
+                    .index++
+                    break
+                }
+                Eol | Comma => {
+                    .index++
+                }
+                else => {
+                    let label_span = .current().span()
+                    let label = .parse_argument_label()
+
+                    let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
+
+                    call.args.push((label, label_span, expr))
+                }
             }
         }
 
@@ -3190,18 +3128,15 @@ struct Parser {
         mut generic_parameters: [ParsedGenericParameter] = []
         .skip_newlines()
         while not .current() is GreaterThan and not .current() is Garbage {
-            match .current() {
-                Identifier(name, span) => {
-                    generic_parameters.push(ParsedGenericParameter(name, span))
+            if .current() is Identifier(name, span) {
+                generic_parameters.push(ParsedGenericParameter(name, span))
+                .index++
+                if .current() is Comma or .current() is Eol {
                     .index++
-                    if .current() is Comma or .current() is Eol {
-                        .index++
-                    }
                 }
-                else => {
-                    .error("Expected generic parameter name", .current().span())
-                    return generic_parameters
-                }
+            } else {
+                .error("Expected generic parameter name", .current().span())
+                return generic_parameters
             }
         }
 
@@ -3216,20 +3151,11 @@ struct Parser {
     }
 
     function parse_argument_label(mut this) throws -> String {
-        // FIXME: Tidy this up once we can match on tuples:
-        //        match (.current(), .peek(1)) {
-        //            (Name(name), Colon) => ...
-        //        }
-        if not .peek(1) is Colon {
-            return ""
+        if .peek(1) is Colon and .current() is Identifier(name) {
+            .index += 2
+            return name
         }
-        return match .current() {
-            Identifier(name) => {
-                .index += 2
-                yield name
-            }
-            else => ""
-        }
+        return ""
     }
 
     function parse_restricted_visibility_modifier(mut this) throws -> Visibility {
