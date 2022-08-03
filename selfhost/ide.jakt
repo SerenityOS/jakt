@@ -617,28 +617,26 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
                     result_type = Some(known_type_id)
                 }
 
-                match program.get_type(type_id) {
-                    Struct(struct_id) => {
-                        let struct_ = program.get_struct(struct_id)
-                        for field in struct_.fields.iterator() {
-                            let var = program.get_variable(field)
-                            if index == var.name {
-                                return Some(Usage::Variable(
-                                        span: var.definition_span
-                                        name: index
-                                        type_id: result_type ?? var.type_id
-                                        mutability: Mutability::DoesNotApply
-                                        var_type: VarType::Field
-                                        visibility: match var.visibility {
-                                            Public => VarVisibility::Public
-                                            Private => VarVisibility::Private
-                                            Restricted => VarVisibility::Restricted
-                                        }
-                                        struct_type_id: Some(type_id)))
-                            }
+                if program.get_type(type_id) is Struct(struct_id) {
+                    for field in program.get_struct(struct_id).fields.iterator() {
+                        let var = program.get_variable(field)
+                        if index != var.name {
+                            continue
                         }
+                        return Usage::Variable(
+                            span: var.definition_span
+                            name: index
+                            type_id: result_type ?? var.type_id
+                            mutability: Mutability::DoesNotApply
+                            var_type: VarType::Field
+                            visibility: match var.visibility {
+                                Public => VarVisibility::Public
+                                Private => VarVisibility::Private
+                                Restricted => VarVisibility::Restricted
+                            }
+                            struct_type_id: type_id
+                        )
                     }
-                    else => {}
                 }
             }
             yield none
@@ -696,11 +694,8 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
                             mut remaining_cases = all_cases
 
                             for other_case in match_cases.iterator() {
-                                match other_case {
-                                    EnumVariant(name) => {
-                                        remaining_cases.remove(name)
-                                    }
-                                    else => {}
+                                if other_case is EnumVariant(name) {
+                                    remaining_cases.remove(name)
                                 }
                             }
 
