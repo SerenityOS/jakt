@@ -2711,9 +2711,7 @@ struct CodeGenerator {
         let type_ = .program.get_type(type_id)
 
         guard type_ is Struct(struct_id) else {
-            // FIXME: This should be a panic(), but `guard` can't end in a call to never-returning function.
-            eprintln("internal error: call to a constructor, but not a struct/class type")
-            return ""
+            panic("internal error: call to a constructor, but not a struct/class type")
         }
 
         let structure = .program.get_struct(struct_id)
