@@ -196,126 +196,89 @@ boxed enum Type {
         } else {
             match this {
                 TypeVariable(lhs_name) => {
-                    match rhs {
-                        TypeVariable(rhs_name) => {
-                            return lhs_name == rhs_name
-                        }
-                        else => {
-                            return false
-                        }
+                    if rhs is TypeVariable(rhs_name) {
+                        return lhs_name == rhs_name
+                    } else {
+                        return false
                     }
                 }
                 GenericInstance(id: lhs_id, args: lhs_args) => {
-                    match rhs {
-                        GenericInstance(id: rhs_id, args: rhs_args) => {
-                            if lhs_id.equals(rhs_id) and lhs_args.size() == rhs_args.size() {
-                                mut idx = 0uz
-
-                                while idx < lhs_args.size() {
-                                    if not lhs_args[idx].equals(rhs_args[idx]) {
-                                        return false
-                                    }
-                                    idx++
-                                }
-                                return true
-                            }
-                            return false
-                        }
-                        else => {
-                            return false
-                        }
+                    guard rhs is GenericInstance(id: rhs_id, args: rhs_args) 
+                        and lhs_id.equals(rhs_id)
+                        and lhs_args.size() == rhs_args.size() else {
+                        return false
                     }
-                    return false
+                    mut idx = 0uz
+                    while idx < lhs_args.size() {
+                        if not lhs_args[idx].equals(rhs_args[idx]) {
+                            return false
+                        }
+                        idx++
+                    }
+                    return true
                 }
                 GenericEnumInstance(id: lhs_id, args: lhs_args) => {
-                    match rhs {
-                        GenericEnumInstance(id: rhs_id, args: rhs_args) => {
-                            if lhs_id.equals(rhs_id) and lhs_args.size() == rhs_args.size() {
-                                mut idx = 0uz
-
-                                while idx < lhs_args.size() {
-                                    if not lhs_args[idx].equals(rhs_args[idx]) {
-                                        return false
-                                    }
-                                    idx++
-                                }
-                                return true
-                            }
+                    guard rhs is GenericEnumInstance(id: rhs_id, args: rhs_args)
+                        and lhs_id.equals(rhs_id)
+                        and lhs_args.size() == rhs_args.size() else {
+                        return false
+                    }
+                    mut idx = 0uz
+                    while idx < lhs_args.size() {
+                        if not lhs_args[idx].equals(rhs_args[idx]) {
                             return false
                         }
-                        else => {
-                            return false
-                        }
+                        idx++
+                    }
+                    return true
+                }
+                Struct(lhs_id) => {
+                    if rhs is Struct(rhs_id) {
+                        return lhs_id.equals(rhs_id)
                     }
                     return false
                 }
-                Struct(lhs_id) => {
-                    match rhs {
-                        Struct(rhs_id) => {
-                            return lhs_id.equals(rhs_id)
-                        }
-                        else => {
-                            return false
-                        }
-                    }
-                }
                 Enum(lhs_id) => {
-                    match rhs {
-                        Enum(rhs_id) => {
-                            return lhs_id.equals(rhs_id)
-                        }
-                        else => {
-                            return false
-                        }
+                    if rhs is Enum(rhs_id) {
+                        return lhs_id.equals(rhs_id)
+                    } else {
+                        return false
                     }
                 }
                 RawPtr(lhs_id) => {
-                    match rhs {
-                        RawPtr(rhs_id) => {
-                            return lhs_id.equals(rhs_id)
-                        }
-                        else => {
-                            return false
-                        }
+                    if rhs is RawPtr(rhs_id) {
+                        return lhs_id.equals(rhs_id)
+                    } else {
+                        return false
                     }
                 }
                 Reference(lhs_id) => {
-                    match rhs {
-                        Reference(rhs_id) => {
-                            return lhs_id.equals(rhs_id)
-                        }
-                        else => {
-                            return false
-                        }
+                    if rhs is Reference(rhs_id) {
+                        return lhs_id.equals(rhs_id)
+                    } else {
+                        return false
                     }
                 }
                 MutableReference(lhs_id) => {
-                    match rhs {
-                        MutableReference(rhs_id) => {
-                            return lhs_id.equals(rhs_id)
-                        }
-                        else => {
-                            return false
-                        }
+                    if rhs is MutableReference(rhs_id) {
+                        return lhs_id.equals(rhs_id)
+                    } else {
+                        return false
                     }
                 }
                 Function(params, can_throw, return_type_id) => {
-                    match rhs {
-                        Function(params: rhs_params, can_throw: rhs_can_throw, return_type_id: rhs_return_type_id) => {
-                            if params.size() != rhs_params.size() {
-                                return false
-                            }
-                            for i in 0..params.size() {
-                                if not params[i].equals(rhs_params[i]) {
-                                    return false
-                                }
-                            }
-                            return return_type_id.equals(rhs_return_type_id) and can_throw == rhs_can_throw
-                        }
-                        else => {
+                    guard rhs is Function(params: rhs_params, can_throw: rhs_can_throw, return_type_id: rhs_return_type_id)
+                        and params.size() == rhs_params.size()
+                        and return_type_id.equals(rhs_return_type_id)
+                        and can_throw == rhs_can_throw else {
+                        return false
+                    }
+                    for i in 0..params.size() {
+                        if not params[i].equals(rhs_params[i]) {
                             return false
                         }
                     }
+                    return true
                 }
                 else => {
                     return false
@@ -1252,19 +1215,15 @@ class CheckedProgram {
             let inner_type_id = args[0]
             let inner_type = .get_type(inner_type_id)
 
-            match inner_type {
-                Struct(inner_struct_id) => { return inner_struct_id }
-                else => {
-                    panic(
-                        format(
-                            "Internal error: Inner type of WeakPtr is not a struct. It is {}.",
-                            inner_type
-                        )
-                    )
-                }
+            if inner_type is Struct(inner_struct_id) {
+                return inner_struct_id
             }
-
-            .compiler.panic("should be unreachable")
+            panic(
+                format(
+                    "Internal error: Inner type of WeakPtr is not a struct. It is {}.",
+                    inner_type
+                )
+            )
         } else {
             return None
         }
@@ -2705,15 +2664,8 @@ struct Typechecker {
                 mut return_type_id: TypeId = builtin(BuiltinType::Void)
                 if function_return_type_id.equals(unknown_type_id()) {
                     if not block.statements.is_empty() {
-                        let ret = block.statements.last()!
-                        // expression_type
-                        match ret {
-                            Return(val) => {
-                                if val.has_value() {
-                                    return_type_id = .resolve_type_var(type_var_type_id: expression_type(val!), scope_id: method_scope_id)
-                                }
-                            }
-                            else => {}
+                        if block.statements.last()! is Return(val) and val.has_value() {
+                            return_type_id = .resolve_type_var(type_var_type_id: expression_type(val!), scope_id: method_scope_id)
                         }
                     }
                 } else {
@@ -3128,17 +3080,10 @@ struct Typechecker {
         if function_return_type_id.equals(unknown_type_id()) and not block.statements.is_empty() {
             // If the return type is unknown, and the function starts with a return statement,
             // we infer the return type from its expression.
-            match block.statements[0] {
-                Return(val) => {
-                    if val.has_value() {
-                        return_type_id = expression_type(val!)
-                    } else {
-                        return_type_id = VOID_TYPE_ID
-                    }
-                }
-                else => {
-                    return_type_id = VOID_TYPE_ID
-                }
+            if block.statements[0] is Return(val) and val.has_value() {
+                return_type_id = expression_type(val!)
+            } else {
+                return_type_id = VOID_TYPE_ID
             }
         } else if function_return_type_id.equals(unknown_type_id()) {
             return_type_id = VOID_TYPE_ID
@@ -3236,10 +3181,7 @@ struct Typechecker {
         let function_id = current_module.add_function(checked_function)
         let checked_function_scope_id = checked_function.function_scope_id
 
-        let external_linkage = match parsed_function.linkage {
-            FunctionLinkage::External => true
-            else => false
-        }
+        let external_linkage = parsed_function.linkage is External
 
         // Check generic parameters
         for generic_parameter in parsed_function.generic_parameters.iterator() {
@@ -3356,11 +3298,8 @@ struct Typechecker {
 
         let span = parsed_function.name_span
         for substitution in generic_substitutions.iterator() {
-            match .get_type(TypeId::from_string(substitution.0)) {
-                TypeVariable(type_name) => {
-                    .add_type_to_scope(scope_id, type_name, type_id: TypeId::from_string(substitution.1), span)
-                }
-                else => {}
+            if .get_type(TypeId::from_string(substitution.0)) is TypeVariable(type_name) {
+                .add_type_to_scope(scope_id, type_name, type_id: TypeId::from_string(substitution.1), span)
             }
         }
 
@@ -3382,22 +3321,16 @@ struct Typechecker {
         }
 
         if not parsed_function.params.is_empty() {
-            match parsed_function.params[0].variable.parsed_type {
-                ParsedType::JaktArray(inner, span) => {
-                    match inner {
-                        ParsedType::Name(name, span) => {
-                            if (name != "String") {
-                                .error(param_type_error, span)
-                            }
-                        }
-                        else => {
-                            .error(param_type_error, span)
-                        }
+            if parsed_function.params[0].variable.parsed_type is JaktArray(inner, span) {
+                if inner is Name(name, span) {
+                    if (name != "String") {
+                        .error(param_type_error, span)
                     }
+                } else {
+                    .error(param_type_error, span)
                 }
-                else => {
-                    .error(param_type_error, parsed_function.name_span)
-                }
+            } else {
+                .error(param_type_error, parsed_function.name_span)
             }
         }
 
@@ -3419,13 +3352,8 @@ struct Typechecker {
         if block.statements.is_empty() {
             return void_type_id()
         }
-        match block.statements.last()! {
-            Return(val) => {
-                if val.has_value() {
-                    return expression_type(expr: val!)
-                }
-            }
-            else => {}
+        if block.statements.last()! is Return(val) and val.has_value() {
+            return expression_type(expr: val!)
         }
         return void_type_id()
     }
@@ -3501,10 +3429,7 @@ struct Typechecker {
             )
         }
 
-        let external_linkage = match function_linkage {
-            FunctionLinkage::External => true
-            else => false
-        }
+        let external_linkage = function_linkage is External
 
         if not external_linkage and not return_type_id.equals(VOID_TYPE_ID) and not block.control_flow.always_transfers_control() {
             // FIXME: Use better span
@@ -3634,44 +3559,36 @@ struct Typechecker {
                     generic_inferences.set(key: lhs_type_id_string, value: rhs_type_id_string)
                 }
             }
-            GenericEnumInstance(id, args) => {
-                let lhs_enum_id = id
-                let lhs_args = args
-                let rhs_type = .get_type(rhs_type_id)
-                match rhs_type {
-                    GenericEnumInstance(id, args) => {
-                        let rhs_enum_id = id
-                        let rhs_args = args
-                        if lhs_enum_id.equals(rhs_enum_id) {
-                            let lhs_enum = .get_enum(lhs_enum_id)
-                            if lhs_args.size() != rhs_args.size() {
-                                .error(format("mismatched number of generic parameters for {}", lhs_enum.name), span)
-                                return false
-                            }
-
-                            mut idx: usize = 0
-                            while idx < args.size() {
-                                if not .check_types_for_compat(
-                                    lhs_type_id: lhs_args[idx]
-                                    rhs_type_id: rhs_args[idx]
-                                    generic_inferences
-                                    span
-                                ) {
-                                    // FIXME: maybe emit secondary error?
-                                    return false
-                                }
-                                ++idx
-                            }
-                        }
-                    }
-                    else => {
-                        if not rhs_type_id.equals(lhs_type_id) {
-                            .error(
-                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                span
-                            )
+            GenericEnumInstance(id: lhs_enum_id, args: lhs_args) => {
+                if .get_type(rhs_type_id) is GenericEnumInstance(id: rhs_enum_id, args: rhs_args) {
+                    if lhs_enum_id.equals(rhs_enum_id) {
+                        let lhs_enum = .get_enum(lhs_enum_id)
+                        guard lhs_args.size() == rhs_args.size() else {
+                            .error(format("mismatched number of generic parameters for {}", lhs_enum.name), span)
                             return false
                         }
+
+                        mut idx: usize = 0
+                        while idx < lhs_args.size() {
+                            if not .check_types_for_compat(
+                                lhs_type_id: lhs_args[idx]
+                                rhs_type_id: rhs_args[idx]
+                                generic_inferences
+                                span
+                            ) {
+                                // FIXME: maybe emit secondary error?
+                                return false
+                            }
+                            ++idx
+                        }
+                    }
+                } else {
+                    if not rhs_type_id.equals(lhs_type_id) {
+                        .error(
+                            format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                            span
+                        )
+                        return false
                     }
                 }
             }
@@ -3691,53 +3608,49 @@ struct Typechecker {
 
                 let rhs_type = .get_type(rhs_type_id)
 
-                match rhs_type {
-                    GenericInstance(id, args) => {
-                        let rhs_struct_id = id
+                if rhs_type is GenericInstance(id, args) {
+                    let rhs_struct_id = id
 
-                        if lhs_struct_id.equals(rhs_struct_id) {
-                            let rhs_args = args
-                            let lhs_struct = .get_struct(lhs_struct_id)
-                            if lhs_args.size() != rhs_args.size() {
-                                .error(format("mismatched number of generic parameters for {}", lhs_struct.name), span)
+                    if lhs_struct_id.equals(rhs_struct_id) {
+                        let rhs_args = args
+                        let lhs_struct = .get_struct(lhs_struct_id)
+                        guard lhs_args.size() == rhs_args.size() else {
+                            .error(format("mismatched number of generic parameters for {}", lhs_struct.name), span)
+                            return false
+                        }
+
+                        mut idx: usize = 0
+                        while idx < args.size() {
+                            if not .check_types_for_compat(
+                                lhs_type_id: lhs_args[idx]
+                                rhs_type_id: rhs_args[idx]
+                                generic_inferences
+                                span
+                            ) {
+                                // FIXME: maybe emit secondary error?
                                 return false
                             }
-
-                            mut idx: usize = 0
-                            while idx < args.size() {
-                                if not .check_types_for_compat(
-                                    lhs_type_id: lhs_args[idx]
-                                    rhs_type_id: rhs_args[idx]
-                                    generic_inferences
-                                    span
-                                ) {
-                                    // FIXME: maybe emit secondary error?
-                                    return false
-                                }
-                                ++idx
-                            }
-                        } else if (lhs_struct_id.equals(array_struct_id)) {
-                            let array_value_type_id = args[0]
-
-                            if (array_value_type_id.equals(unknown_type_id())) {
-                                return true
-                            }
-                        } else {
-                            .error(
-                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                span
-                            )
-                            return false
+                            ++idx
                         }
+                    } else if (lhs_struct_id.equals(array_struct_id)) {
+                        let array_value_type_id = args[0]
+                        if (array_value_type_id.equals(unknown_type_id())) {
+                            return true
+                        }
+                    } else {
+                        .error(
+                            format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                            span
+                        )
+                        return false
                     }
-                    else => {
-                        if not rhs_type_id.equals(lhs_type_id) {
-                            .error(
-                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                span
-                            )
-                            return false
-                        }
+                } else {
+                    if not rhs_type_id.equals(lhs_type_id) {
+                        .error(
+                            format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                            span
+                        )
+                        return false
                     }
                 }
             }
@@ -3870,27 +3783,23 @@ struct Typechecker {
                     return true
                 }
 
-                let rhs_type = .get_type(rhs_type_id)
-                match rhs_type {
-                    RawPtr(rhs_rawptr_type_id) => {
-                        if not .check_types_for_compat(
-                            lhs_type_id: lhs_rawptr_type_id
-                            rhs_type_id: rhs_rawptr_type_id
-                            generic_inferences
-                            span
-                        ) {
-                            // FIXME: maybe emit secondary error?
-                            return false
-                        }
+                if .get_type(rhs_type_id) is RawPtr(rhs_rawptr_type_id) {
+                    if not .check_types_for_compat(
+                        lhs_type_id: lhs_rawptr_type_id
+                        rhs_type_id: rhs_rawptr_type_id
+                        generic_inferences
+                        span
+                    ) {
+                        // FIXME: maybe emit secondary error?
+                        return false
                     }
-                    else => {
-                        if not rhs_type_id.equals(lhs_type_id) {
-                            .error(
-                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
-                                span
-                            )
-                            return false
-                        }
+                } else {
+                    if not rhs_type_id.equals(lhs_type_id) {
+                        .error(
+                            format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                            span
+                        )
+                        return false
                     }
                 }
             }
@@ -4400,56 +4309,39 @@ struct Typechecker {
 
                 // if an assignment, the LHS must be a mutable variable.
                 if op is NoneCoalescingAssign {
-                    match checked_lhs {
-                        Var(var, span) => {
-                            if not var.is_mutable {
-                                .error_with_hint(message: "left-hand side of ??= must be a mutable variable", span, hint: "This variable isn't marked as mutable", hint_span: var.definition_span)
-                                return unknown_type_id()
-                            }
-                        }
-                        else => {
-                            .error(message: "left-hand side of ??= must be a mutable variable", span)
+                    if checked_lhs is Var(var, span) {
+                        if not var.is_mutable {
+                            .error_with_hint(message: "left-hand side of ??= must be a mutable variable", span, hint: "This variable isn't marked as mutable", hint_span: var.definition_span)
                             return unknown_type_id()
                         }
+                    } else {
+                        .error(message: "left-hand side of ??= must be a mutable variable", span)
+                        return unknown_type_id()
                     }
                 }
 
-                match .get_type(lhs_type_id) {
-                    GenericInstance(id, args) => {
-                        let optional_struct_id = .find_struct_in_prelude("Optional")
-
-                        if id.equals(optional_struct_id) {
-                            // Success: LHS is T? and RHS is T?.
-                            if lhs_type_id.equals(rhs_type_id) {
-                                return lhs_type_id
-                            }
-
-                            // Extract T from Optional<T>.
-                            let inner_type_id = args[0]
-
-                            if inner_type_id.equals(rhs_type_id) {
-                                // Success: LHS is T? and RHS is T.
-                                return inner_type_id
-                            }
-                        } else {
-                            .error_with_hint(format(
-                                "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
-                                .type_name(lhs_type_id),
-                                .type_name(rhs_type_id),
-                            ), span,
-                            "Left side of ?? must be an Optional but isn't",
-                            lhs_span)
-                        }
+                if .get_type(lhs_type_id) is GenericInstance(id, args)
+                    and id.equals(.find_struct_in_prelude("Optional")) {
+                    // Success: LHS is T? and RHS is T?.
+                    if lhs_type_id.equals(rhs_type_id) {
+                        return lhs_type_id
                     }
-                    else => {
-                        .error_with_hint(format(
-                            "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
-                            .type_name(lhs_type_id),
-                            .type_name(rhs_type_id),
-                        ), span,
-                        "Left side of ?? must be an Optional but isn't",
-                        lhs_span)
+
+                    // Extract T from Optional<T>.
+                    let inner_type_id = args[0]
+
+                    if inner_type_id.equals(rhs_type_id) {
+                        // Success: LHS is T? and RHS is T.
+                        return inner_type_id
                     }
+                } else {
+                    .error_with_hint(format(
+                        "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
+                        .type_name(lhs_type_id),
+                        .type_name(rhs_type_id),
+                    ), span,
+                    "Left side of ?? must be an Optional but isn't",
+                    lhs_span)
                 }
 
                 .error(format(
@@ -4483,34 +4375,21 @@ struct Typechecker {
                     .error("Assignment to immutable variable", span)
                     return lhs_type_id
                 }
-                match checked_rhs {
-                    OptionalNone(span, type_id) => {
-                        let lhs_type = .get_type(lhs_type_id)
-                        let optional_struct_id = .find_struct_in_prelude("Optional")
-
-                        match lhs_type {
-                            GenericInstance(id, args) => {
-                                if id.equals(optional_struct_id) {
-                                    return lhs_type_id
-                                }
-                            }
-                            else => {}
-                        }
+                if checked_rhs is OptionalNone(span, type_id) {
+                    if .get_type(lhs_type_id) is GenericInstance(id, args)
+                        and id.equals(.find_struct_in_prelude("Optional")) {
+                        return lhs_type_id
                     }
-                    else => {}
                 }
 
                 let lhs_type = .get_type(lhs_type_id)
-                match lhs_type {
-                    GenericInstance(id, args) => {
-                        if .program.get_struct(id).name == "Optional" and expression_type(checked_rhs).equals(args[0]) {
-                            return lhs_type_id
-                        }
-                        if .program.get_struct(id).name == "WeakPtr" and expression_type(checked_rhs).equals(args[0]) {
-                            return lhs_type_id
-                        }
+                if lhs_type is GenericInstance(id, args) {
+                    if .program.get_struct(id).name == "Optional" and expression_type(checked_rhs).equals(args[0]) {
+                        return lhs_type_id
                     }
-                    else => {}
+                    if .program.get_struct(id).name == "WeakPtr" and expression_type(checked_rhs).equals(args[0]) {
+                        return lhs_type_id
+                    }
                 }
 
                 let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
@@ -4522,27 +4401,12 @@ struct Typechecker {
             AddAssign | SubtractAssign | MultiplyAssign | DivideAssign | ModuloAssign | BitwiseAndAssign | BitwiseOrAssign | BitwiseXorAssign | BitwiseLeftShiftAssign | BitwiseRightShiftAssign => {
                 let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
 
-                match .get_type(lhs_type_id) {
-                    GenericInstance(id, args) => {
-                        if id.equals(weak_ptr_struct_id) {
-                            let inner_type_id = args[0]
-                            match .get_type(inner_type_id) {
-                                Type::Struct(struct_id: lhs_struct_id) => {
-                                    match .get_type(rhs_type_id) {
-                                        Type::Struct(struct_id: rhs_struct_id) => {
-                                            if lhs_struct_id.equals(rhs_struct_id) {
-                                                return lhs_type_id
-                                            }
-                                        }
-                                        else => {}
-                                    }
-                                }
-                                else => {}
-                            }
-                        }
-
-                    }
-                    else => {}
+                if .get_type(lhs_type_id) is GenericInstance(id, args)
+                    and id.equals(weak_ptr_struct_id)
+                    and .get_type(args[0]) is Struct(struct_id: lhs_struct_id)
+                    and .get_type(rhs_type_id) is Struct(struct_id: rhs_struct_id)
+                    and lhs_struct_id.equals(rhs_struct_id) {
+                    return lhs_type_id
                 }
                 if not lhs_type_id.equals(rhs_type_id) {
                     .error(format(
@@ -4869,25 +4733,19 @@ struct Typechecker {
         let checked_tuple_var_decl = .typecheck_statement(statement: var_decl, scope_id, safety_mode)
         mut expr_type_id: TypeId = unknown_type_id()
         mut tuple_var_id = VarId(module: ModuleId(id: 0), id: 0)
-        match checked_tuple_var_decl {
-            VarDecl(var_id, init) => {
-                expr_type_id = expression_type(init)
-                tuple_var_id = var_id
-            }
-            else => {
-                .error("Destructuting assignment should be a variable declaration", span)
-            }
+        if checked_tuple_var_decl is VarDecl(var_id, init) {
+            expr_type_id = expression_type(init)
+            tuple_var_id = var_id
+        } else {
+            .error("Destructuting assignment should be a variable declaration", span)
         }
 
         mut inner_types: [TypeId] = []
         let tuple_type = .get_type(expr_type_id)
-        match tuple_type {
-            GenericInstance(args) => {
-                inner_types = args
-            }
-            else => {
-                .error("Tuple Type should be Generic Instance", span)
-            }
+        if tuple_type is GenericInstance(args) {
+            inner_types = args
+        } else {
+            .error("Tuple Type should be Generic Instance", span)
         }
         let tuple_variable = .program.get_variable(tuple_var_id)
         if vars.size() == inner_types.size() {
@@ -4929,48 +4787,42 @@ struct Typechecker {
 
         .check_that_type_doesnt_contain_reference(type_id: lhs_type_id, span)
         
-        match lhs_type {
-            GenericInstance(id, args) => {
-                if id.equals(weak_ptr_struct_id) {
-                    if not var.is_mutable {
-                        .error("Weak reference must be mutable", var.span)
-                    }
-
-                    if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
-                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
-                    }
-                } else if id.equals(optional_struct_id) {
-                    if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
-                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
-                    }
-                } else {
-                    if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
-                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
-                    }
+        if lhs_type is GenericInstance(id, args) {
+            if id.equals(weak_ptr_struct_id) {
+                if not var.is_mutable {
+                    .error("Weak reference must be mutable", var.span)
+                }
+                if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
+                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
+                }
+            } else if id.equals(optional_struct_id) {
+                if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
+                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
+                }
+            } else {
+                if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
+                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
                 }
             }
-            else => {
-                if lhs_type.is_builtin() {
-                    let number_constant = checked_expr.to_number_constant(program: .program)
+        } else if lhs_type.is_builtin() {
+            let number_constant = checked_expr.to_number_constant(program: .program)
 
-                    mut is_rhs_zero = false
-                    if number_constant.has_value() {
-                        is_rhs_zero = match number_constant! {
-                            Signed(value) => value == 0
-                            Unsigned(value) => value == 0
-                            Floating(value) => value == 0.0
-                        }
-                    }
-
-                    if not (.is_numeric(lhs_type_id) and is_rhs_zero) and (.is_integer(lhs_type_id) ^ .is_integer(rhs_type_id)) {
-                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
-                        return CheckedStatement::Garbage(span)
-                    }
-                } else {
-                    if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
-                        .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
-                    }
+            mut is_rhs_zero = false
+            if number_constant.has_value() {
+                is_rhs_zero = match number_constant! {
+                    Signed(value) => value == 0
+                    Unsigned(value) => value == 0
+                    Floating(value) => value == 0.0
                 }
+            }
+
+            if not (.is_numeric(lhs_type_id) and is_rhs_zero) and (.is_integer(lhs_type_id) ^ .is_integer(rhs_type_id)) {
+                .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
+                return CheckedStatement::Garbage(span)
+            }
+        } else {
+            if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
+                .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), .expression_span(checked_expr))
             }
         }
 
@@ -4991,30 +4843,26 @@ struct Typechecker {
         let var_id = module.add_variable(checked_var)
         .add_var_to_scope(scope_id, name: var.name, var_id, span: checked_var.definition_span)
 
-        match checked_expr {
-            Function(params, can_throw, return_type_id, block, span, type_id) => {
-                if not .find_function_in_scope(parent_scope_id: scope_id, function_name: var.name).has_value() {
-                    let checked_function = CheckedFunction(
-                        name: var.name
-                        name_span: var.span
-                        visibility: Visibility::Public
-                        return_type_id
-                        return_type_span: None // FIXME: better span here
-                        params
-                        generic_params: []
-                        block
-                        can_throw
-                        type: FunctionType::Normal
-                        linkage: FunctionLinkage::Internal
-                        function_scope_id: scope_id
-                        is_instantiated: false
-                        parsed_function: None
-                    )
-                    let function_id = module.add_function(checked_function)
-                    .add_function_to_scope(parent_scope_id: scope_id, name: var.name, function_id, span)
-                }
-            }
-            else => {}
+        if checked_expr is Function(params, can_throw, return_type_id, block, span, type_id) 
+            and not .find_function_in_scope(parent_scope_id: scope_id, function_name: var.name).has_value() {
+            let checked_function = CheckedFunction(
+                name: var.name
+                name_span: var.span
+                visibility: Visibility::Public
+                return_type_id
+                return_type_span: None // FIXME: better span here
+                params
+                generic_params: []
+                block
+                can_throw
+                type: FunctionType::Normal
+                linkage: FunctionLinkage::Internal
+                function_scope_id: scope_id
+                is_instantiated: false
+                parsed_function: None
+            )
+            let function_id = module.add_function(checked_function)
+            .add_function_to_scope(parent_scope_id: scope_id, name: var.name, function_id, span)
         }
 
         return CheckedStatement::VarDecl(var_id, init: checked_expr, span)
@@ -5086,13 +4934,8 @@ struct Typechecker {
         .inside_defer = true
         defer .inside_defer = was_inside_defer
         let checked_statement = .typecheck_statement(statement, scope_id, safety_mode)
-        match checked_statement {
-            Block(block) => {
-                if block.yielded_type.has_value() {
-                    .error("‘yield’ inside ‘defer’ is meaningless", span)
-                }
-            }
-            else => { }
+        if checked_statement is Block(block) and block.yielded_type.has_value() {
+            .error("‘yield’ inside ‘defer’ is meaningless", span)
         }
         return CheckedStatement::Defer(statement: checked_statement, span)
     }
@@ -5112,18 +4955,11 @@ struct Typechecker {
 
         mut strings: [String] = []
         for statement in block.stmts.iterator() {
-            match statement {
-                ParsedStatement::Expression(expr) => {
-                    match expr {
-                        ParsedExpression::QuotedString(val, span) => {
-                            strings.push(val)
-                        }
-                        else => .error("Expected block of strings", span)
-                    }
-                }
-                else => {
-                    .error("Expected block of strings", span)
-                }
+            if statement is Expression(expr)
+                and expr is QuotedString(val, span) {
+                strings.push(val)
+            } else {
+                .error("Expected block of strings", span)
             }
         }
 
@@ -5289,25 +5125,22 @@ struct Typechecker {
         }
         let own_type_id = .current_struct_type_id!
         let type = .get_type(own_type_id)
-        match type {
-            Struct(id) => {
-                mut was_whitelisted = false
-                for whitelisted_type in whitelist.iterator() {
-                    let type_id = .typecheck_typename(parsed_type: whitelisted_type, scope_id: accessee, name: None)
-                    // FIXME: Handle typecheck failure
-                    if type_id.equals(own_type_id) {
-                        // FIXME: A naked `return` would be nicer here
-                        was_whitelisted = true
-                        break
-                    }
-                }
-                if not was_whitelisted {
-                    .error(format("Can't access {} ‘{}’ from ‘{}’, because ‘{}’ is not in the restricted whitelist", accessee_kind, name, .get_struct(id).name, .get_struct(id).name), span)
+        if type is Struct(id) {
+            mut was_whitelisted = false
+            for whitelisted_type in whitelist.iterator() {
+                let type_id = .typecheck_typename(parsed_type: whitelisted_type, scope_id: accessee, name: None)
+                // FIXME: Handle typecheck failure
+                if type_id.equals(own_type_id) {
+                    // FIXME: A naked `return` would be nicer here
+                    was_whitelisted = true
+                    break
                 }
             }
-            else => {
-                .error(format("Can't access {} ‘{}’ from scope ‘{}’, because it is not in the restricted whitelist", accessee_kind, name, .get_scope(accessor).namespace_name), span)
+            if not was_whitelisted {
+                .error(format("Can't access {} ‘{}’ from ‘{}’, because ‘{}’ is not in the restricted whitelist", accessee_kind, name, .get_struct(id).name, .get_struct(id).name), span)
             }
+        } else {
+            .error(format("Can't access {} ‘{}’ from scope ‘{}’, because it is not in the restricted whitelist", accessee_kind, name, .get_scope(accessor).namespace_name), span)
         }
     }
 
@@ -5502,36 +5335,30 @@ struct Typechecker {
 
                     mut operator_is = CheckedUnaryOperator::Is(type_id)
                     if type_id.equals(unknown_type_id()) {
-                        match unchecked_type {
-                            ParsedType::Name(name) => {
-                                // Let's assume it's an enum variant
-                                let expr_type_id = expression_type(checked_expr)
-                                match .get_type(expr_type_id) {
-                                    Type::Enum(enum_id) => {
-                                        let enum_ = .get_enum(enum_id)
-                                        mut exists = false
-                                        for variant in enum_.variants.iterator() {
-                                            exists = match variant {
-                                                StructLike(name: var_name) | Typed(name: var_name) | Untyped(name: var_name) => var_name == name
-                                                else => false
-                                            }
-                                            if exists {
-                                                operator_is = CheckedUnaryOperator::IsEnumVariant(enum_variant: variant, bindings: [], type_id: expr_type_id)
-                                                break
-                                            }
-                                        }
-                                        if not exists {
-                                            .error(format("Enum variant {} does not exist on {}", name, .type_name(expr_type_id)), span)
-                                        }
+                        if unchecked_type is Name(name) {
+                            // Let's assume it's an enum variant
+                            let expr_type_id = expression_type(checked_expr)
+                            if .get_type(expr_type_id) is Enum(enum_id) {
+                                let enum_ = .get_enum(enum_id)
+                                mut exists = false
+                                for variant in enum_.variants.iterator() {
+                                    exists = match variant {
+                                        StructLike(name: var_name) | Typed(name: var_name) | Untyped(name: var_name) => var_name == name
+                                        else => false
                                     }
-                                    else => {
-                                        .error(format("Unknown type or invalid type name: {}", name), span)
+                                    if exists {
+                                        operator_is = CheckedUnaryOperator::IsEnumVariant(enum_variant: variant, bindings: [], type_id: expr_type_id)
+                                        break
                                     }
                                 }
+                                if not exists {
+                                    .error(format("Enum variant {} does not exist on {}", name, .type_name(expr_type_id)), span)
+                                }
+                            } else {
+                                .error(format("Unknown type or invalid type name: {}", name), span)
                             }
-                            else => {
-                                .error("The right-hand side of an `is` operator must be a type name or enum variant", span)
-                            }
+                        } else {
+                            .error("The right-hand side of an `is` operator must be a type name or enum variant", span)
                         }
                     }
                     yield operator_is
@@ -5698,42 +5525,34 @@ struct Typechecker {
             let optional_struct_id = .find_struct_in_prelude("Optional")
             mut expr_type_id = unknown_type_id()
 
-            match .get_type(expression_type(checked_expr)) {
-                GenericInstance(id, args) => {
-                    if id.equals(tuple_struct_id) {
-                        if is_optional {
-                            .error("Optional chaining is not allowed on a non-optional tuple type", span)
-                        }
-                        if (index >= args.size()){
-                            .error("Tuple index past the end of the tuple", span)
-                        } else {
-                            expr_type_id = args[index]
-                        }
-                    } else if is_optional and id.equals(optional_struct_id) {
-                        let inner_type_id = args[0]
-                        match .get_type(inner_type_id) {
-                            GenericInstance(id, args) => {
-                                if id.equals(tuple_struct_id) {
-                                    if (index >= args.size()){
-                                        .error("Optional-chained tuple index past the end of the tuple", span)
-                                    } else {
-                                        expr_type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [args[index]]))
-                                    }
-                                }
-                            }
-                            else => {
-                                .error("Optional-chained tuple index used on non-tuple value", span)
-                            }
-                        }
-                    }
-                }
-                else => {
+            if .get_type(expression_type(checked_expr)) is GenericInstance(id, args) {
+                if id.equals(tuple_struct_id) {
                     if is_optional {
-                        .error("Optional-chained tuple index used on non-tuple value", span)
+                        .error("Optional chaining is not allowed on a non-optional tuple type", span)
+                    }
+                    if (index >= args.size()){
+                        .error("Tuple index past the end of the tuple", span)
                     } else {
-                        .error("Tuple index used on non-tuple value", span)
+                        expr_type_id = args[index]
+                    }
+                } else if is_optional and id.equals(optional_struct_id) {
+                    let inner_type_id = args[0]
+                    if .get_type(inner_type_id) is GenericInstance(id, args) {
+                        if id.equals(tuple_struct_id) {
+                            if (index >= args.size()){
+                                .error("Optional-chained tuple index past the end of the tuple", span)
+                            } else {
+                                expr_type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [args[index]]))
+                            }
+                        }
+                    } else {
+                        .error("Optional-chained tuple index used on non-tuple value", span)
                     }
                 }
+            } else if is_optional {
+                .error("Optional-chained tuple index used on non-tuple value", span)
+            } else {
+                .error("Tuple index used on non-tuple value", span)
             }
 
             yield CheckedExpression::IndexedTuple(
@@ -5953,14 +5772,8 @@ struct Typechecker {
 
         mut inner_hint: TypeId? = None
         if type_hint.has_value() {
-            let full_type = .get_type(type_hint!)
-            match full_type {
-                GenericInstance(id, args) => {
-                    if id.equals(array_struct_id) {
-                        inner_hint = Some(args[0])
-                    }
-                }
-                else => {}
+            if .get_type(type_hint!) is GenericInstance(id, args) and id.equals(array_struct_id) {
+                inner_hint = Some(args[0])
             }
         }
 
@@ -6041,16 +5854,10 @@ struct Typechecker {
         }
 
         if inner_type_id.equals(unknown_type_id()) and type_hint.has_value() and not type_hint!.equals(unknown_type_id()) {
-            match .get_type(type_hint!) {
-                GenericInstance(id, args) => {
-                    if not id.equals(set_struct_id) {
-                        panic("expected Set struct")
-                    }
-                    inner_type_id = args[0]
-                }
-                else => {
-                    panic("expected Set struct")
-                }
+            if .get_type(type_hint!) is GenericInstance(id, args) and id.equals(set_struct_id) {
+                inner_type_id = args[0]
+            } else {
+                panic("expected Set struct")
             }
         }
 
@@ -6113,16 +5920,13 @@ struct Typechecker {
         mut generic_inferences: [String: String] = [:]
         mut final_result_type: TypeId? = None
 
-        match type_to_match_on {
-            GenericEnumInstance(id, args) => {
-                let enum_ = .get_enum(id)
-                for i in 0..enum_.generic_parameters.size() {
-                    let generic = enum_.generic_parameters[i].to_string()
-                    let argument_type = args[i].to_string()
-                    generic_inferences.set(generic, argument_type)
-                }
+        if type_to_match_on is GenericEnumInstance(id, args) {
+            let enum_ = .get_enum(id)
+            for i in 0..enum_.generic_parameters.size() {
+                let generic = enum_.generic_parameters[i].to_string()
+                let argument_type = args[i].to_string()
+                generic_inferences.set(generic, argument_type)
             }
-            else => {}
         }
 
         match type_to_match_on {
@@ -6537,16 +6341,11 @@ struct Typechecker {
 
         mut key_hint: TypeId? = None
         mut value_hint: TypeId? = None
-        if type_hint.has_value() {
-            match .get_type(type_hint!) {
-                GenericInstance(id, args) => {
-                    if id.equals(dictionary_struct_id) {
-                        key_hint = args[0]
-                        value_hint = args[1]
-                    }
-                }
-                else => {}
-            }
+        if type_hint.has_value()
+            and .get_type(type_hint!) is GenericInstance(id, args)
+            and id.equals(dictionary_struct_id) {
+            key_hint = args[0]
+            value_hint = args[1]
         }
 
         for kv_pair in values.iterator() {
@@ -6769,17 +6568,14 @@ struct Typechecker {
                     maybe_this_type_id = type_id
                     let param_type = .get_type(type_id)
 
-                    match param_type {
-                        GenericInstance(id, args) => {
-                            let structure = .get_struct(id)
-                            for i in 0..structure.generic_parameters.size() {
-                                generic_inferences.set(
-                                    structure.generic_parameters[i].to_string()
-                                    args[i].to_string()
-                                )
-                            }
+                    if param_type is GenericInstance(id, args) {
+                        let structure = .get_struct(id)
+                        for i in 0..structure.generic_parameters.size() {
+                            generic_inferences.set(
+                                structure.generic_parameters[i].to_string()
+                                args[i].to_string()
+                            )
                         }
-                        else => {}
                     }
 
                     if callee.is_static() {
@@ -6858,16 +6654,13 @@ struct Typechecker {
                 }
 
                 for generic_typevar in callee.generic_params.iterator() {
-                    match generic_typevar {
-                        Parameter(id) => {
-                            let substitution = generic_inferences.get(id.to_string())
-                            if substitution.has_value() {
-                                generic_arguments.push(TypeId::from_string(substitution!))
-                            } else {
-                                .error("Not all generic parameters have known types", span)
-                            }
+                    if generic_typevar is Parameter(id) {
+                        let substitution = generic_inferences.get(id.to_string())
+                        if substitution.has_value() {
+                            generic_arguments.push(TypeId::from_string(substitution!))
+                        } else {
+                            .error("Not all generic parameters have known types", span)
                         }
-                        else => {}
                     }
                 }
             }
@@ -6922,21 +6715,19 @@ struct Typechecker {
 
         loop {
             let type_var_type = .get_type(current_type_id)
-            match type_var_type {
-                Type::TypeVariable(type_name) => {
-                    let maybe_found_type_id = .find_type_in_scope(scope_id, name: type_name)
-                    if maybe_found_type_id.has_value() {
-                        let found_type_id = maybe_found_type_id.value()
-                        if found_type_id.equals(current_type_id) {
-                            return current_type_id
-                        }
-                        current_type_id = found_type_id
-                    } else {
+            if type_var_type is TypeVariable(type_name) {
+                let maybe_found_type_id = .find_type_in_scope(scope_id, name: type_name)
+                if maybe_found_type_id.has_value() {
+                    let found_type_id = maybe_found_type_id.value()
+                    if found_type_id.equals(current_type_id) {
                         return current_type_id
                     }
-                } else => {
+                    current_type_id = found_type_id
+                } else {
                     return current_type_id
                 }
+            } else {
+                return current_type_id
             }
         }
         return current_type_id
@@ -6956,15 +6747,12 @@ struct Typechecker {
             }
             UnaryOp(expr, op) => {
                 if op is Reference or op is MutableReference {
-                    match expr {
-                        Var(name, span) => {
-                            if name == param.variable.name {
-                                return true
-                            }
-                            .error(format("Wrong parameter name in argument label (got ‘{}’, expected ‘{}’)", name, param.variable.name), span)
-                            return false
+                    if expr is Var(name, span) {
+                        if name == param.variable.name {
+                            return true
                         }
-                        else => {}
+                        .error(format("Wrong parameter name in argument label (got ‘{}’, expected ‘{}’)", name, param.variable.name), span)
+                        return false
                     }
                 }
             }
