@@ -2135,28 +2135,25 @@ struct Parser {
         let start_span = .current().span()
         .index++
 
-        return match .current() {
-            Identifier(name) => {
-                let iterator_name = name
-                let name_span = .current().span()
-                .index++
-                if .current() is In {
-                    .index++
-                } else {
-                    .error("Expected ‘in’", .current().span())
-                    return ParsedStatement::Garbage(merge_spans(start_span, .current().span()))
-                }
-
-                let range = .parse_expression(allow_assignments: false, allow_newlines: false)
-                let block = .parse_block();
-
-                yield ParsedStatement::For(iterator_name, name_span, range, block, span: merge_spans(start_span, .previous().span()))
-            }
-            else => {
-                .error("Expected iterator name", .current().span())
-                yield ParsedStatement::Garbage(merge_spans(start_span, .current().span()))
-            }
+        guard .current() is Identifier(name) else {
+            .error("Expected iterator name", .current().span())
+            return ParsedStatement::Garbage(merge_spans(start_span, .current().span()))
         }
+
+        let iterator_name = name
+        let name_span = .current().span()
+        .index++
+        if .current() is In {
+            .index++
+        } else {
+            .error("Expected ‘in’", .current().span())
+            return ParsedStatement::Garbage(merge_spans(start_span, .current().span()))
+        }
+
+        let range = .parse_expression(allow_assignments: false, allow_newlines: false)
+        let block = .parse_block();
+
+        return ParsedStatement::For(iterator_name, name_span, range, block, span: merge_spans(start_span, .previous().span()))
     }
 
     function parse_if_statement(mut this) throws -> ParsedStatement {
