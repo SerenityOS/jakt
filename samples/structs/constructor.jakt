@@ -1,0 +1,39 @@
+/// Expect:
+/// - output: "EmptyStruct::create;EmptyClass::create;EmptyStructWithArg::create(a);EmptyClassWithArg::create(b);Compiled!\n"
+
+struct EmptyStruct {
+    ctor {
+        print("EmptyStruct::create;")
+        return EmptyStruct()
+    }
+}
+
+struct EmptyStructWithArg {
+    ctor(anon arg : String) {
+        print("EmptyStructWithArg::create({});", arg)
+        return EmptyStructWithArg()
+    }
+}
+
+class EmptyClass {
+    public ctor {
+        print("EmptyClass::create;")
+        return EmptyClass()
+    }
+}
+
+
+class EmptyClassWithArg {
+    public ctor(anon arg : String) {
+        print("EmptyClassWithArg::create({});", arg)
+        return EmptyClassWithArg()
+    }
+}
+
+function main() {
+    let es1 = EmptyStruct()
+    let ec1 = EmptyClass()
+    let es2 = EmptyStructWithArg("a")
+    let ec2 = EmptyClassWithArg("b")
+    println("Compiled!")
+}

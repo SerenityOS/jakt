@@ -184,6 +184,7 @@ struct ParsedRecord {
 
 enum FunctionType {
     Normal
+    ExplicitConstructor
     ImplicitConstructor
     ImplicitEnumConstructor
     ExternalClassConstructor
@@ -668,7 +669,7 @@ struct Parser {
                     .parse_import(parent: &mut parsed_namespace)
                 }
                 Function => {
-                    let parsed_function = .parse_function(FunctionLinkage::Internal, Visibility::Public)
+                    let parsed_function = .parse_function(FunctionLinkage::Internal, Visibility::Public, FunctionType::Normal)
                     parsed_namespace.functions.push(parsed_function)
                 }
                 Struct | Class | Enum | Boxed => {
@@ -709,7 +710,7 @@ struct Parser {
                     .index++
                     match .current() {
                         Function => {
-                            let parsed_function = .parse_function(FunctionLinkage::External, Visibility::Public)
+                            let parsed_function = .parse_function(FunctionLinkage::External, Visibility::Public, FunctionType::Normal)
                             parsed_namespace.functions.push(parsed_function)
                         }
                         Struct => {
@@ -966,7 +967,7 @@ struct Parser {
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_method(function_linkage, visibility)
+                    let parsed_method = .parse_method(function_linkage, visibility, FunctionType::Normal)
 
                     methods.push(parsed_method)
                 }
@@ -1093,7 +1094,7 @@ struct Parser {
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_method(function_linkage, visibility)
+                    let parsed_method = .parse_method(function_linkage, visibility, FunctionType::Normal)
 
                     methods.push(parsed_method)
                 }
@@ -1249,15 +1250,28 @@ struct Parser {
                     last_visibility = .parse_restricted_visibility_modifier()
                     last_visibility_span = span
                 }
-                Identifier => {
+                Identifier(name) => {
                     // Parse a field
                     let visibility = last_visibility ?? default_visibility
                     last_visibility = None
                     last_visibility_span = None
-
-                    let field = .parse_field(visibility)
-
-                    fields.push(field)
+                    match name {
+                        "ctor"  => {
+                            let function_linkage = match definition_linkage {
+                                Internal => FunctionLinkage::Internal
+                                External => FunctionLinkage::External
+                            }
+                            mut ctor = .parse_method(function_linkage, visibility, FunctionType::ExplicitConstructor)
+                            if is_class {
+                                ctor.parsed_function.can_throw = true
+                            }
+                            methods.push(ctor)
+                        }
+                        else => {
+                            let field = .parse_field(visibility)
+                            fields.push(field)
+                        }
+                    }
                 }
                 Function => {
                     // Parse a method
@@ -1271,7 +1285,7 @@ struct Parser {
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_method(function_linkage, visibility)
+                    let parsed_method = .parse_method(function_linkage, visibility, FunctionType::Normal)
 
                     methods.push(parsed_method)
                 }
@@ -1515,7 +1529,7 @@ struct Parser {
         return params
     }
 
-    public function parse_function(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility) throws -> ParsedFunction {
+    public function parse_function(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility, anon type: FunctionType) throws -> ParsedFunction {
         mut parsed_function = ParsedFunction(
             name: "",
             name_span: .empty_span(),
@@ -1526,12 +1540,14 @@ struct Parser {
             return_type: ParsedType::Empty,
             return_type_span: .span(start: 0, end: 0),
             can_throw: false,
-            type: FunctionType::Normal,
+            type: type,
             linkage,
             must_instantiate: false,
         )
 
-        .index++
+        if not type is ExplicitConstructor {
+            .index++
+        }
 
         if .eof() {
             .error("Incomplete function definition", .current().span())
@@ -1552,17 +1568,22 @@ struct Parser {
             .error("Incomplete function", .current().span())
         }
 
-        parsed_function.params = .parse_function_parameters()
+        if not type is ExplicitConstructor or .current() is LParen {
+            parsed_function.params = .parse_function_parameters()
+        }
 
         // NOTE: main() always throws
         mut can_throw = name == "main"
         if .current() is Throws {
+            if type is ExplicitConstructor {
+                .error("Explicit constructor cannot be declared throws", .current().span())
+            }
             can_throw = true
             .index++
         }
         parsed_function.can_throw = can_throw
 
-        if .current() is Arrow {
+        if  not type is ExplicitConstructor and .current() is Arrow {
             .index++
             let start = .current().span()
             parsed_function.return_type = .parse_typename()
@@ -1603,8 +1624,8 @@ struct Parser {
         )
     }
 
-    function parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility) throws -> ParsedMethod {
-        mut parsed_function = .parse_function(linkage, visibility)
+    function parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility, anon type: FunctionType) throws -> ParsedMethod {
+        mut parsed_function = .parse_function(linkage, visibility, type)
 
         if linkage is External {
             parsed_function.must_instantiate = true

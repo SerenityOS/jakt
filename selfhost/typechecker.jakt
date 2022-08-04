@@ -203,7 +203,7 @@ boxed enum Type {
                     }
                 }
                 GenericInstance(id: lhs_id, args: lhs_args) => {
-                    guard rhs is GenericInstance(id: rhs_id, args: rhs_args) 
+                    guard rhs is GenericInstance(id: rhs_id, args: rhs_args)
                         and lhs_id.equals(rhs_id)
                         and lhs_args.size() == rhs_args.size() else {
                         return false
@@ -436,6 +436,10 @@ class CheckedFunction {
     public parsed_function: ParsedFunction?
 
     public function is_static(this) -> bool {
+        if .type is ExplicitConstructor {
+            return true
+        }
+
         if .params.size() < 1 {
             return true
         }
@@ -2956,65 +2960,67 @@ struct Typechecker {
         let module_id = .current_module_id
         .current_struct_type_id = struct_type_id
 
-        let constructor_id = .find_function_in_scope(parent_scope_id: checked_struct_scope_id, function_name: record.name)
-        if constructor_id.has_value() {
-            if record.record_type is Class and record.definition_linkage is External {
-                // XXX: The parser always sets the linkage type of an extern class'
-                //      constructor to External, but we actually want to call the
-                //      class' ::create function, just like we do with a
-                //      ImplicitConstructor class.
-                mut func = .get_function(constructor_id!)
-                func.linkage = FunctionLinkage::External
+        match record.definition_linkage {
+            External => {
+                let constructor_id = .find_function_in_scope(parent_scope_id: checked_struct_scope_id, function_name: record.name)
+                if constructor_id.has_value() {
+                    mut func = .get_function(constructor_id!)
+                    // XXX: The parser always sets the linkage type of an extern class'
+                    //      constructor to External, but we actually want to call the
+                    //      class' ::create function, just like we do with a
+                    //      ImplicitConstructor class.
+                    func.linkage = FunctionLinkage::External
+                }
             }
-        } else if not record.definition_linkage is External {
-            // No constructor found, so let's make one
+            Internal => {
 
-            let constructor_can_throw = record.record_type is Class
-            let function_scope_id = .create_scope(parent_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor({})", record.name))
-            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor-block({})", record.name))
+                let constructor_can_throw = record.record_type is Class
+                let function_scope_id = .create_scope(parent_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor({})", record.name))
+                let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor-block({})", record.name))
 
-            let checked_constructor = CheckedFunction(
-                name: record.name
-                name_span: record.name_span
-                visibility: Visibility::Public
-                return_type_id: struct_type_id
-                return_type_span: None
-                params: []
-                generic_params: []
-                block: CheckedBlock(
-                    statements: []
-                    scope_id: block_scope_id
-                    control_flow: BlockControlFlow::MayReturn
-                    yielded_type: TypeId::none()
+                let checked_constructor = CheckedFunction(
+                    name: record.name
+                    name_span: record.name_span
+                    visibility: Visibility::Public
+                    return_type_id: struct_type_id
+                    return_type_span: None
+                    params: []
+                    generic_params: []
+                    block: CheckedBlock(
+                        statements: []
+                        scope_id: block_scope_id
+                        control_flow: BlockControlFlow::MayReturn
+                        yielded_type: TypeId::none()
+                    )
+                    can_throw: constructor_can_throw
+                    type: FunctionType::ImplicitConstructor
+                    linkage: FunctionLinkage::Internal
+                    function_scope_id
+                    is_instantiated: true
+                    parsed_function: None
                 )
-                can_throw: constructor_can_throw
-                type: FunctionType::ImplicitConstructor
-                linkage: FunctionLinkage::Internal
-                function_scope_id
-                is_instantiated: true
-                parsed_function: None
-            )
 
-            // Internal constructor
-            mut module = .current_module()
-            module.functions.push(checked_constructor)
+                // Internal constructor
+                mut module = .current_module()
+                module.functions.push(checked_constructor)
 
-            mut func = module.functions.last()!
-            for field_id in .get_struct(struct_id).fields.iterator() {
-                let field = .get_variable(field_id)
-                func.params.push(CheckedParameter(
-                    requires_label: true
-                    variable: field
-                ))
+                mut func = module.functions.last()!
+                for field_id in .get_struct(struct_id).fields.iterator() {
+                    let field = .get_variable(field_id)
+                    func.params.push(CheckedParameter(
+                        requires_label: true
+                        variable: field
+                    ))
+                }
+
+                // Add constructor to the struct's scope
+                .add_function_to_scope(
+                    parent_scope_id: checked_struct_scope_id
+                    name: record.name
+                    function_id: FunctionId(module: module_id, id: .current_module().functions.size() - 1)
+                    span: record.name_span
+                )
             }
-
-            // Add constructor to the struct's scope
-            .add_function_to_scope(
-                parent_scope_id: checked_struct_scope_id
-                name: record.name
-                function_id: FunctionId(module: module_id, id: .current_module().functions.size() - 1)
-                span: record.name_span
-            )
         }
 
         for method in record.methods.iterator() {
@@ -3028,13 +3034,14 @@ struct Typechecker {
         mut parent_generic_parameters: [TypeId] = []
         mut scope_id = .prelude_scope_id()
         mut definition_linkage = DefinitionLinkage::Internal
-
+        mut function_return_type_id = unknown_type_id()
         match parent_id {
             Struct(struct_id) => {
                 mut structure = .get_struct(struct_id)
                 parent_generic_parameters = structure.generic_parameters
                 scope_id = structure.scope_id
                 definition_linkage = structure.definition_linkage
+                function_return_type_id = structure.type_id
             }
             Enum(enum_id) => {
                 let enum_ = .get_enum(enum_id)
@@ -3073,7 +3080,9 @@ struct Typechecker {
         let VOID_TYPE_ID = builtin(BuiltinType::Void)
 
         let block = .typecheck_block(parsed_block: func.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
-        let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: function_scope_id, name: None)
+        if not func.type is ExplicitConstructor {
+            function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: function_scope_id, name: None)
+        }
 
         mut return_type_id = function_return_type_id
         if function_return_type_id.equals(unknown_type_id()) and not block.statements.is_empty() {
@@ -3397,6 +3406,12 @@ struct Typechecker {
             // Allow noreturn functions to call throwing functions, they'll just be forced to crash.
             mut scope = .get_scope(function_scope_id)
             scope.can_throw = true
+        }
+
+        if parsed_function.type is ExplicitConstructor {
+            // the constructor body is not allowed to throw even if the constructor itself may due to allocation failure
+            mut scope = .get_scope(function_scope_id)
+            scope.can_throw = false
         }
 
         // TODO: Typecheck function block
@@ -4478,7 +4493,7 @@ struct Typechecker {
         if new_else_statement.has_value() {
             checked_else = .typecheck_statement(new_else_statement!, scope_id, safety_mode)
         }
-        
+
         return CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
     }
 
@@ -4772,7 +4787,7 @@ struct Typechecker {
         let lhs_type = .get_type(lhs_type_id)
 
         .check_that_type_doesnt_contain_reference(type_id: lhs_type_id, span)
-        
+
         if lhs_type is GenericInstance(id, args) {
             if id.equals(weak_ptr_struct_id) {
                 if not var.is_mutable {
@@ -4829,7 +4844,7 @@ struct Typechecker {
         let var_id = module.add_variable(checked_var)
         .add_var_to_scope(scope_id, name: var.name, var_id, span: checked_var.definition_span)
 
-        if checked_expr is Function(params, can_throw, return_type_id, block, span, type_id) 
+        if checked_expr is Function(params, can_throw, return_type_id, block, span, type_id)
             and not .find_function_in_scope(parent_scope_id: scope_id, function_name: var.name).has_value() {
             let checked_function = CheckedFunction(
                 name: var.name
@@ -5664,7 +5679,7 @@ struct Typechecker {
 
     function typecheck_lambda(mut this, captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, return_type: ParsedType, block: ParsedBlock, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
         let lambda_scope_id = .create_scope(parent_scope_id: scope_id, can_throw, debug_name: "lambda")
-        
+
         mut checked_captures: [CheckedCapture] = []
         for capture in captures.iterator() {
             match .find_var_in_scope(scope_id, var: capture.name()).has_value() { // FIXME: this wants to be a match on Optional instead of boolean
@@ -6483,9 +6498,7 @@ struct Typechecker {
     }
 
     function resolve_call(mut this, call: ParsedCall, mut namespaces: [ResolvedNamespace], span: Span, scope_id: ScopeId, must_be_enum_constructor: bool) throws -> FunctionId? {
-        mut callee: FunctionId? = None
         mut current_scope_id = scope_id
-
         for namespace_index in 0..call.namespace_.size() {
             let scope_name = call.namespace_[namespace_index]
             let maybe_ns_scope = .find_namespace_in_scope(scope_id: current_scope_id, name: scope_name)
@@ -6518,14 +6531,22 @@ struct Typechecker {
         let maybe_function_id = .find_function_in_scope(parent_scope_id: current_scope_id, function_name: call.name)
         if maybe_function_id.has_value() {
             let function_id = maybe_function_id!
-            if not must_be_enum_constructor or .get_function(function_id).type is ImplicitEnumConstructor {
+            let func = .get_function(function_id)
+            if func.type is ExplicitConstructor {
+                .error(format("Calling explicit constructor directly: ‘{}’", join(call.namespace_, separator: "::")), span)
+                return None
+            }
+            if (
+                ( not must_be_enum_constructor or func.type is ImplicitEnumConstructor) and
+                not func.type is ImplicitConstructor
+            ) {
                 return function_id
             }
         }
 
         if must_be_enum_constructor {
             .error(format("No such enum constructor ‘{}’", call.name), span)
-            return callee
+            return None
         }
 
         // 2. Look for a struct, class or enum constructor with this name.
@@ -6533,11 +6554,25 @@ struct Typechecker {
         if maybe_struct_id.has_value() {
             let struct_id = maybe_struct_id!
             let structure = .get_struct(struct_id)
-            let maybe_function_id = .find_function_in_scope(parent_scope_id: structure.scope_id, function_name: call.name)
-            if maybe_function_id.has_value() {
-                return maybe_function_id!
+            let maybe_explicit_constructor_id = .find_function_in_scope(parent_scope_id: structure.scope_id, function_name: "ctor")
+            let maybe_implicit_constructor_id = .find_function_in_scope(parent_scope_id: structure.scope_id, function_name: call.name)
+            if maybe_explicit_constructor_id.has_value() {
+                let explicit_constructor = .get_function(maybe_explicit_constructor_id!)
+                if explicit_constructor.type is ExplicitConstructor {
+                    if .scope_can_access(accessor: scope_id, accessee: explicit_constructor.function_scope_id) {
+                        // fixme: can't we assert this?
+                        if maybe_implicit_constructor_id.has_value() {
+                            return maybe_implicit_constructor_id!
+                        }
+                    } else {
+                        return maybe_explicit_constructor_id!
+                    }
+                }
             }
-            return callee
+            // fixme: can't we assert this?
+            if maybe_implicit_constructor_id.has_value() {
+                return maybe_implicit_constructor_id!
+            }
         }
 
         .error(format("Call to unknown function: ‘{}’", call.name), span)
@@ -6617,7 +6652,7 @@ struct Typechecker {
 
                     type_arg_index += 1
                 }
-                
+
                 // This will be 0 for functions or 1 for instance methods, because of the `this` ptr
                 mut arg_offset = 0uz
 

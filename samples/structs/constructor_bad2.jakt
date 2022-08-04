@@ -1,0 +1,11 @@
+/// Expect:
+///  - error: "Explicit constructor cannot be declared throws"
+
+class EmptyClass {
+    ctor(anon arg : String) throws {
+        return EmptyClass()
+    }
+}
+
+function main() {
+}

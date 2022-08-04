@@ -2092,7 +2092,6 @@ struct CodeGenerator {
 
     function codegen_call(mut this, call: CheckedCall) throws -> String {
         mut output = ""
-
         if call.callee_throws {
             output += .current_error_handler()
             output += "(("
@@ -2123,7 +2122,11 @@ struct CodeGenerator {
                     let function_id = call.function_id!
                     let function_ = .program.get_function(function_id)
                     let type_module = .program.get_module(function_id.module)
-                    if function_.type is ImplicitConstructor or function_.type is ExternalClassConstructor {
+                    if (
+                        function_.type is ImplicitConstructor or
+                        function_.type is ExternalClassConstructor or
+                        function_.type is ExplicitConstructor
+                    ) {
                         let type_id = call.return_type
                         let type = .program.get_type(type_id)
                         let type_module = .program.get_module(function_id.module)
@@ -2138,9 +2141,16 @@ struct CodeGenerator {
                                 if struct_.record_type is Class {
                                     output += call.name
                                     output += "::"
-                                    output += "create"
+                                    if function_.type is ExplicitConstructor {
+                                        output += function_.name
+                                    } else {
+                                        output += "create"
+                                    }
                                 } else {
                                     output += call.name
+                                    if function_.type is ExplicitConstructor {
+                                        output += "::" + function_.name
+                                    }
                                 }
                             }
                             GenericInstance(id, args) => {
@@ -2158,9 +2168,17 @@ struct CodeGenerator {
                                         }
                                         output += .codegen_type(arg)
                                     }
-                                    output += ">::create"
+                                    output += ">::"
+                                    if function_.type is ExplicitConstructor {
+                                        output += function_.name
+                                    } else {
+                                        output += "create"
+                                    }
                                 } else {
                                     output += call.name
+                                    if function_.type is ExplicitConstructor {
+                                        output += "::" + function_.name
+                                    }
                                 }
                             }
                             else => {

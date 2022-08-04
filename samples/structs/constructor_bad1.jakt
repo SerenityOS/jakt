@@ -1,0 +1,11 @@
+/// Expect:
+///  - error: "Explicit constructor cannot be declared throws"
+
+struct EmptyStruct {
+    ctor(anon arg : String) throws {
+        return EmptyStruct()
+    }
+}
+
+function main() {
+}
