@@ -1271,7 +1271,7 @@ struct CodeGenerator {
         }
         IndexedExpression(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
         IndexedRangeExpression(expr, from, to) => {
-            yield format("(({}).slice({}, {}-{}))", .codegen_expression(expr), .codegen_expression(from), .codegen_expression(to), .codegen_expression(from))
+            yield format("(({}).slice_range({}, {}))", .codegen_expression(expr), .codegen_expression(from), .codegen_expression(to))
         }
         IndexedDictionary(expr, index) => "((" + .codegen_expression(expr) + ")[" + .codegen_expression(index) + "])"
         IndexedTuple(expr, index, is_optional) => match is_optional {

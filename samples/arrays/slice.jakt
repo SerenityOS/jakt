@@ -1,9 +1,12 @@
 /// Expect:
-/// - output: "slice size: 2\n1\n2\n[1, 2]\nslice first: 1\nslice last: 2\nslice contains 2: true\nslice contains 3: false\narray index 0: 0\nslice index 0: 0\n"
+/// - output: "slice size: 2\n3\n4\n[3, 4]\nslice first: 3\nslice last: 4\nslice contains 4: true\nslice contains 5: false\narray index 0: 1\nslice index 0: 0\n[1, 2, 0, 4]\n"
+
+function start() => 0
+function end() => 4
 
 function main() {
     let x = [1, 2, 3, 4, 5]
-    mut slice = x[0..2]
+    mut slice = x[2..4] 
     
     println("slice size: {}", slice.size())
 
@@ -16,10 +19,12 @@ function main() {
     println("slice first: {}", slice.first())
     println("slice last: {}", slice.last())
 
-    println("slice contains 2: {}", slice.contains(2))
-    println("slice contains 3: {}", slice.contains(3))
+    println("slice contains 4: {}", slice.contains(4))
+    println("slice contains 5: {}", slice.contains(5))
 
     slice[0] = 0
     println("array index 0: {}", x[0])
     println("slice index 0: {}", slice[0])
+ 
+    println("{}", x[start()..end()])
 }

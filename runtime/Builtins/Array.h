@@ -150,13 +150,14 @@ public:
     ArrayIterator(NonnullRefPtr<Storage> storage, size_t offset, size_t size)
         : m_storage(move(storage))
         , m_index(offset)
+        , m_offset(offset)
         , m_size(size)
     {
     }
 
     Optional<T> next()
     {
-        if (m_index >= m_size) {
+        if (m_index >= (m_offset + m_size)) {
             return {};
         }
         auto current = m_storage->at(m_index);
@@ -166,6 +167,7 @@ public:
 
 private:
     NonnullRefPtr<Storage> m_storage;
+    size_t m_offset { 0 };
     size_t m_index { 0 };
     size_t m_size { 0 };
 };
@@ -186,7 +188,7 @@ public:
         , m_size(size)
     {
         VERIFY(m_storage);
-        VERIFY(m_offset < m_storage->size());
+        VERIFY(m_offset + m_size <= m_storage->size());
     }
 
     ArrayIterator<T> iterator() const
@@ -207,8 +209,8 @@ public:
 
     T const& at(size_t index) const { return m_storage->at(m_offset + index); }
     T& at(size_t index) { return m_storage->at(m_offset + index); }
-    T const& operator[](size_t index) const { return at(m_offset + index); }
-    T& operator[](size_t index) { return at(m_offset + index); }
+    T const& operator[](size_t index) const { return at(index); }
+    T& operator[](size_t index) { return at(index); }
 
     bool contains(T const& value) const
     {
@@ -322,12 +324,12 @@ public:
         return {};
     }
 
-    ArraySlice<T> slice(size_t offset, size_t size) const
+    ArraySlice<T> slice_range(size_t from, size_t to) const
     {
-        return { *m_storage, offset, size };
+        return slice(from, to-from);
     }
 
-    ArraySlice<T> slice(size_t offset, size_t size)
+    ArraySlice<T> slice(size_t offset, size_t size) const
     {
         return { *m_storage, offset, size };
     }
