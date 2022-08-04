@@ -77,7 +77,7 @@ function has_jakt_extension(name: String) throws -> bool {
 
 // Traverse directory in a DFS manner ta find files with the .jakt extension
 // and store results into the given array
-function get_jakt_files_under(directory: String, mut results: [String]) throws -> [String] {
+function get_jakt_files_under(directory: String, results: &mut [String]) throws -> [String] {
     mut path_stack: [String] = [directory]
 
     while not path_stack.is_empty() {
@@ -321,9 +321,9 @@ struct Options {
 
         if options.files.is_empty() {
             // find files under samples, tests, and selfhost
-            get_jakt_files_under(directory: "samples",  results: options.files)
-            get_jakt_files_under(directory: "tests",    results: options.files)
-            get_jakt_files_under(directory: "selfhost", results: options.files)
+            get_jakt_files_under(directory: "samples",  results: &mut options.files)
+            get_jakt_files_under(directory: "tests",    results: &mut options.files)
+            get_jakt_files_under(directory: "selfhost", results: &mut options.files)
         }
 
         if options.job_count == 0 {
@@ -636,7 +636,7 @@ function does_selfhost_need_update() throws -> bool {
         // Looks like we've got the binary. Let's check the sources.
         mut latest_mtime: usize = 0
         mut selfhost_files: [String] = []
-        get_jakt_files_under(directory: "selfhost", results: selfhost_files)
+        get_jakt_files_under(directory: "selfhost", results: &mut selfhost_files)
         for file in selfhost_files.iterator() {
             let stat = fs::stat_silencing_enoent(path: file)!
             let mtime = stat.modified_time()
