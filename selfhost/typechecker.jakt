@@ -5354,37 +5354,7 @@ struct Typechecker {
                     }
                     yield operator_is
                 }
-                IsEnumVariant(inner, bindings) => {
-                    let old_ignore_errors = .ignore_errors
-                    .ignore_errors = true
-                    let type_id = .typecheck_typename(parsed_type: inner, scope_id, name: None)
-                    .ignore_errors = old_ignore_errors
-                    mut checked_op = CheckedUnaryOperator::Is(type_id)
-                    let expr_type_id = expression_type(checked_expr)
-                    match inner {
-                        NamespacedName(name: variant_name, span) | Name(name: variant_name, span) => match .get_type(expression_type(checked_expr)) {
-                            Type::Enum(enum_id) => {
-                                let enum_ = .get_enum(enum_id)
-                                let variant = .get_enum_variant(enum_, variant_name)
-                                if variant.has_value() {
-                                    let checked_enum_variant_bindings = .typecheck_enum_variant_bindings(variant: variant!, bindings, span)
-                                    checked_op = CheckedUnaryOperator::IsEnumVariant(
-                                        enum_variant: variant!, 
-                                        bindings: checked_enum_variant_bindings!,
-                                        type_id: expr_type_id
-                                    )
-                                } else {
-                                    .error(format("Enum variant {} does not exist on {}", variant_name, .type_name(type_id)), span)
-                                }
-                            }
-                            else => {
-                                .error(format("Unknown type or invalid type name: {}", variant_name), span)
-                            }
-                        }
-                        else => {}
-                    }
-                    yield checked_op
-                }
+                IsEnumVariant(inner, bindings) => .typecheck_is_enum_variant(checked_expr, inner, bindings, scope_id)
             }
             yield .typecheck_unary_operation(checked_expr, checked_op, span, scope_id, safety_mode)
         }
@@ -5617,6 +5587,37 @@ struct Typechecker {
         else => {
             .compiler.panic(format("typechecker needs support for {}", expr))
         }
+    }
+
+    function typecheck_is_enum_variant(mut this, checked_expr: CheckedExpression, inner: ParsedType, bindings: [EnumVariantPatternArgument], scope_id: ScopeId) throws -> CheckedUnaryOperator {
+        let old_ignore_errors = .ignore_errors
+        .ignore_errors = true
+        let type_id = .typecheck_typename(parsed_type: inner, scope_id, name: None)
+        .ignore_errors = old_ignore_errors
+        mut checked_op = CheckedUnaryOperator::Is(type_id)
+        let expr_type_id = expression_type(checked_expr)
+        match inner {
+            NamespacedName(name: variant_name, span) | Name(name: variant_name, span) => {
+                guard .get_type(expr_type_id) is Enum(enum_id) else {
+                    .error(format("Unknown type or invalid type name: {}", variant_name), span)
+                    return checked_op
+                }
+                let enum_ = .get_enum(enum_id)
+                let variant = .get_enum_variant(enum_, variant_name)
+                guard variant.has_value() else {
+                    .error(format("Enum variant {} does not exist on {}", variant_name, .type_name(type_id)), span)
+                    return checked_op
+                }
+                let checked_enum_variant_bindings = .typecheck_enum_variant_bindings(variant: variant!, bindings, span)
+                checked_op = CheckedUnaryOperator::IsEnumVariant(
+                    enum_variant: variant!,
+                    bindings: checked_enum_variant_bindings!,
+                    type_id: expr_type_id
+                )
+            }
+            else => {}
+        }
+        return checked_op
     }
 
     function get_enum_variant(mut this, enum_: CheckedEnum, variant_name: String) throws -> CheckedEnumVariant? {
