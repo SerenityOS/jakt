@@ -1010,56 +1010,56 @@ struct Parser {
         while not .eof() {
             match .current() {
                 Identifier(name, span) => {
-                    if .peek(1) is LParen {
-                        .index += 2
-
-                        mut var_decls: [ParsedVarDecl] = []
-
-                        while not .eof() {
-                            if .peek(1) is Colon {
-                                mut var_decl = .parse_variable_declaration(is_mutable: false)
-                                if var_decl.parsed_type is Name(name, span) {
-                                    var_decl.inlay_span = span
-                                    if name == partial_enum.name and not is_boxed{
-                                        .error("use 'boxed enum' to make the enum recursive", var_decl.span)
-                                    }
-                                }
-                                var_decls.push(var_decl)
-                                continue
-                            }
-
-                            match .current() {
-                                Identifier | LSquare | LCurly => {
-                                    var_decls.push(ParsedVarDecl(
-                                        name: ""
-                                        parsed_type: .parse_typename()
-                                        is_mutable: false
-                                        inlay_span: None
-                                        span: .current().span()
-                                    ))
-                                }
-                                else => {}
-                            }
-
-                            match .current() {
-                                RParen => {
-                                    .index++
-                                    break
-                                }
-                                Comma | Eol => {
-                                    .index++
-                                }
-                                else => {
-                                    .error(format("Incomplete enum variant defintion, expected `,` or `)`; got `{}`", .current()), .current().span())
-                                    break;
-                                }
-                            }
-                        }
-                        variants.push(SumEnumVariant(name, span, params: var_decls))
-                    } else {
+                    if not .peek(1) is LParen {
                         .index++
                         variants.push(SumEnumVariant(name, span, params: None))
+                        continue
                     }
+                    .index += 2
+
+                    mut var_decls: [ParsedVarDecl] = []
+
+                    while not .eof() {
+                        if .peek(1) is Colon {
+                            mut var_decl = .parse_variable_declaration(is_mutable: false)
+                            if var_decl.parsed_type is Name(name, span) {
+                                var_decl.inlay_span = span
+                                if name == partial_enum.name and not is_boxed{
+                                    .error("use 'boxed enum' to make the enum recursive", var_decl.span)
+                                }
+                            }
+                            var_decls.push(var_decl)
+                            continue
+                        }
+
+                        match .current() {
+                            Identifier | LSquare | LCurly => {
+                                var_decls.push(ParsedVarDecl(
+                                    name: ""
+                                    parsed_type: .parse_typename()
+                                    is_mutable: false
+                                    inlay_span: None
+                                    span: .current().span()
+                                ))
+                            }
+                            else => {}
+                        }
+
+                        match .current() {
+                            RParen => {
+                                .index++
+                                break
+                            }
+                            Comma | Eol => {
+                                .index++
+                            }
+                            else => {
+                                .error(format("Incomplete enum variant defintion, expected `,` or `)`; got `{}`", .current()), .current().span())
+                                break;
+                            }
+                        }
+                    }
+                    variants.push(SumEnumVariant(name, span, params: var_decls))
                 }
                 RCurly => {
                     break
