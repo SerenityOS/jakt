@@ -1812,41 +1812,42 @@ struct Parser {
     }
 
     function parse_variable_declaration(mut this, is_mutable: bool) throws -> ParsedVarDecl {
-        if .current() is Identifier(name) {
-            let span = .current().span()
+        let span = .current().span()
 
-            .index++
-            if .current() is Colon {
-                .index++
-            } else {
-                return ParsedVarDecl(
-                    name
-                    parsed_type: ParsedType::Empty
-                    is_mutable
-                    inlay_span: span
-                    span
-                )
-            }
-
-            let parsed_type = .parse_typename()
-            if is_mutable and (parsed_type is Reference or parsed_type is MutableReference) {
-                .error("Reference parameter can not be mutable", span)
-            }
-
+        guard .current() is Identifier(name) else {
             return ParsedVarDecl(
-                name
-                parsed_type
-                is_mutable
+                name: ""
+                parsed_type: ParsedType::Empty
+                is_mutable: false
                 inlay_span: None
                 span
             )
         }
+
+        .index++
+        if .current() is Colon {
+            .index++
+        } else {
+            return ParsedVarDecl(
+                name
+                parsed_type: ParsedType::Empty
+                is_mutable
+                inlay_span: span
+                span
+            )
+        }
+
+        let parsed_type = .parse_typename()
+        if is_mutable and (parsed_type is Reference or parsed_type is MutableReference) {
+            .error("Reference parameter can not be mutable", span)
+        }
+
         return ParsedVarDecl(
-            name: "",
-            parsed_type: ParsedType::Empty,
-            is_mutable: false,
-            inlay_span: None,
-            span: .current().span(),
+            name
+            parsed_type
+            is_mutable
+            inlay_span: None
+            span
         )
     }
 
