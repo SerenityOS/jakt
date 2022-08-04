@@ -1742,8 +1742,8 @@ struct Typechecker {
         if expected_type!.equals(unknown_type_id()) {
             return found_type
         }
-        let generic_inferences: [String:String] = [:]
-        if .check_types_for_compat(lhs_type_id: expected_type!, rhs_type_id: found_type, generic_inferences, span) {
+        mut generic_inferences: [String:String] = [:]
+        if .check_types_for_compat(lhs_type_id: expected_type!, rhs_type_id: found_type, &mut generic_inferences, span) {
             return found_type
         }
 
@@ -3506,7 +3506,7 @@ struct Typechecker {
     }
 
     // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
-    function check_types_for_compat(mut this, lhs_type_id: TypeId, rhs_type_id: TypeId, mut generic_inferences: [String:String], span: Span) throws -> bool {
+    function check_types_for_compat(mut this, lhs_type_id: TypeId, rhs_type_id: TypeId, generic_inferences: &mut [String:String], span: Span) throws -> bool {
         let lhs_type = .get_type(lhs_type_id)
 
         let lhs_type_id_string = lhs_type_id.to_string()
@@ -3920,7 +3920,7 @@ struct Typechecker {
                     .check_types_for_compat(
                         lhs_type_id: checked_block.yielded_type.value()
                         rhs_type_id: type_
-                        generic_enferences: generic_inferences
+                        &mut generic_inferences
                         span: yield_span.value()
                     )
                 } else {
@@ -6100,7 +6100,14 @@ struct Typechecker {
                                     }
                                 }
 
-                                let checked_tuple = .typecheck_match_body(body: case_.body, scope_id: new_scope_id, safety_mode, generic_inferences, final_result_type, span: case_.marker_span)
+                                let checked_tuple = .typecheck_match_body(
+                                    body: case_.body
+                                    scope_id: new_scope_id
+                                    safety_mode
+                                    &mut generic_inferences
+                                    final_result_type
+                                    span: case_.marker_span
+                                )
                                 let checked_body = checked_tuple.0
                                 final_result_type = checked_tuple.1
 
@@ -6126,7 +6133,14 @@ struct Typechecker {
                                     catch_all_span = case_.marker_span
                                 }
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
-                                let checked_tuple = .typecheck_match_body(body: case_.body, scope_id: new_scope_id, safety_mode, generic_inferences, final_result_type, span: case_.marker_span)
+                                let checked_tuple = .typecheck_match_body(
+                                    body: case_.body
+                                    scope_id: new_scope_id
+                                    safety_mode
+                                    &mut generic_inferences
+                                    final_result_type
+                                    span: case_.marker_span
+                                )
                                 let checked_body = checked_tuple.0
                                 final_result_type = checked_tuple.1
 
@@ -6207,7 +6221,14 @@ struct Typechecker {
                                 // note that this will be fully checked when this match expression is actually instantiated.
 
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant_names))
-                                let checked_tuple = .typecheck_match_body(body: case_.body, scope_id: new_scope_id, safety_mode, generic_inferences, final_result_type, span: case_.marker_span)
+                                let checked_tuple = .typecheck_match_body(
+                                    body: case_.body
+                                    scope_id: new_scope_id
+                                    safety_mode
+                                    &mut generic_inferences
+                                    final_result_type
+                                    span: case_.marker_span
+                                )
                                 let checked_body = checked_tuple.0
                                 final_result_type = checked_tuple.1
 
@@ -6232,7 +6253,14 @@ struct Typechecker {
                                 seen_catch_all = true
 
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
-                                let checked_tuple = .typecheck_match_body(body: case_.body, scope_id: new_scope_id, safety_mode, generic_inferences, final_result_type, span: case_.marker_span)
+                                let checked_tuple = .typecheck_match_body(
+                                    body: case_.body
+                                    scope_id: new_scope_id
+                                    safety_mode
+                                    &mut generic_inferences
+                                    final_result_type
+                                    span: case_.marker_span
+                                )
                                 let checked_body = checked_tuple.0
                                 final_result_type = checked_tuple.1
 
@@ -6259,15 +6287,23 @@ struct Typechecker {
 
                                 // FIXME: In the future, we should really make this a "does it satisfy some trait" check.
                                 //        For now, we just check that the types are equal.
+                                mut generic_inferences: [String:String] = [:]
                                 .check_types_for_compat(
                                     lhs_type_id: expression_type(checked_expression)
                                     rhs_type_id: subject_type_id
-                                    generic_inferences: [:] // FIXME: use correct generic inferences
+                                    &mut generic_inferences // FIXME: use correct generic inferences
                                     span: case_.marker_span
                                 )
 
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-expression({})", expr))
-                                let checked_tuple = .typecheck_match_body(body: case_.body, scope_id: new_scope_id, safety_mode, generic_inferences, final_result_type, span: case_.marker_span)
+                                let checked_tuple = .typecheck_match_body(
+                                    body: case_.body
+                                    scope_id: new_scope_id
+                                    safety_mode
+                                    &mut generic_inferences
+                                    final_result_type
+                                    span: case_.marker_span
+                                )
                                 let checked_body = checked_tuple.0
                                 final_result_type = checked_tuple.1
 
@@ -6294,7 +6330,7 @@ struct Typechecker {
         return CheckedExpression::Match(expr: checked_expr, match_cases: checked_cases, span, type_id: final_result_type ?? void_type_id(), all_variants_constant: true)
     }
 
-    function typecheck_match_body(mut this, body: ParsedMatchBody, scope_id: ScopeId, safety_mode: SafetyMode, generic_inferences: [String: String], final_result_type: TypeId?, span: Span) throws -> (CheckedMatchBody, TypeId?) {
+    function typecheck_match_body(mut this, body: ParsedMatchBody, scope_id: ScopeId, safety_mode: SafetyMode, generic_inferences: &mut [String: String], final_result_type: TypeId?, span: Span) throws -> (CheckedMatchBody, TypeId?) {
         mut result_type = final_result_type
         let checked_match_body = match body {
             Block(block) => {
@@ -6640,7 +6676,7 @@ struct Typechecker {
                     .check_types_for_compat(
                         lhs_type_id: param.variable.type_id
                         rhs_type_id: expression_type(checked_arg)
-                        generic_inferences
+                        &mut generic_inferences
                         span: .expression_span(checked_arg)
                     )
 
@@ -6656,7 +6692,7 @@ struct Typechecker {
                     .check_types_for_compat(
                         lhs_type_id: return_type
                         rhs_type_id: type_hint!
-                        generic_inferences
+                        &mut generic_inferences
                         span
                     )
                     .ignore_errors = old_ignore_errors
@@ -6667,7 +6703,7 @@ struct Typechecker {
                     .check_types_for_compat(
                         lhs_type_id: type_hint!
                         rhs_type_id: return_type
-                        generic_inferences
+                        &mut generic_inferences
                         span
                     )
                 }
