@@ -2187,7 +2187,7 @@ struct Typechecker {
         }
     }
 
-    function typecheck_extern_import(mut this, anon import_: ParsedExternImport, scope_id: ScopeId, mut parent: ParsedNamespace) throws {
+    function typecheck_extern_import(mut this, anon import_: ParsedExternImport, scope_id: ScopeId) throws {
         for f in import_.assigned_namespace.functions.iterator() {
             if not f.linkage is External {
                 .error("Expected all functions in an `import extern` to be be external", f.name_span)
@@ -2223,10 +2223,6 @@ struct Typechecker {
                     record.name_span)
             }
         }
-
-
-        // typecheck the new namespace, adding it to the parent's children
-        parent.add_child_namespace(import_.assigned_namespace)
     }
 
     function typecheck_namespace_imports(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws  {
@@ -2235,7 +2231,7 @@ struct Typechecker {
         }
 
         for extern_import in parsed_namespace.extern_imports.iterator() {
-            .typecheck_extern_import(extern_import, scope_id, parent: parsed_namespace)
+            .typecheck_extern_import(extern_import, scope_id)
         }
     }
 

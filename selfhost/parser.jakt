@@ -665,7 +665,7 @@ struct Parser {
             match .current() {
                 Import => {
                     .index++
-                    .parse_import(parent: parsed_namespace)
+                    .parse_import(parent: &mut parsed_namespace)
                 }
                 Function => {
                     let parsed_function = .parse_function(FunctionLinkage::Internal, Visibility::Public)
@@ -764,18 +764,17 @@ struct Parser {
         }
     }
 
-    function parse_import(mut this, mut parent: ParsedNamespace) throws  {
+    function parse_import(mut this, parent: &mut ParsedNamespace) throws  {
         // import . <extern <extern-import> | <module-import>>
         if .current() is Extern {
             .index++
-            parent.add_extern_import(.parse_extern_import())
+            parent.add_extern_import(.parse_extern_import(parent))
         } else {
             parent.add_module_import(.parse_module_import())
         }
     }
 
-
-    function parse_extern_import(mut this) throws -> ParsedExternImport {
+    function parse_extern_import(mut this, parent: &mut ParsedNamespace) throws -> ParsedExternImport {
         // import extern . [c] "<path>" [as <alias-name>] namespace
         mut parsed_import = ParsedExternImport(
             is_c: false
@@ -835,6 +834,8 @@ struct Parser {
         if .current() is RCurly {
             .index++
         }
+
+        parent.add_child_namespace(parsed_import.assigned_namespace)
 
         return parsed_import
     }
