@@ -1538,11 +1538,10 @@ struct Parser {
             return parsed_function
         }
 
-        let function_name = match .current() {
-            Identifier(name) => name
-            else => { return parsed_function }
+        guard .current() is Identifier(name) else {
+            return parsed_function
         }
-        parsed_function.name = function_name
+        parsed_function.name = name
         parsed_function.name_span = .current().span()
 
         .index++
@@ -1556,7 +1555,7 @@ struct Parser {
         parsed_function.params = .parse_function_parameters()
 
         // NOTE: main() always throws
-        mut can_throw = function_name == "main"
+        mut can_throw = name == "main"
         if .current() is Throws {
             can_throw = true
             .index++
@@ -2766,12 +2765,9 @@ struct Parser {
             .error("Incomplete static method call", .current().span())
         }
         while not .eof() {
-            let current_name = match .current() {
-                Identifier(name) => name
-                else => {
-                    .error("Unsupported static method call", .current().span())
+            guard .current() is Identifier(name: current_name) else {
+                .error("Unsupported static method call", .current().span())
                     return expr
-                }
             }
             .index++
             if .current() is LParen {
