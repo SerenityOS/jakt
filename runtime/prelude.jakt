@@ -29,6 +29,7 @@ extern struct ArraySlice<T> {
     function contains(this, anon value: T) -> bool
     function size(this) -> usize
     function iterator(this) -> ArrayIterator<T>
+    function to_array(this) throws -> Array<T> 
     function first(this) -> T?
     function last(this) -> T?
 }
