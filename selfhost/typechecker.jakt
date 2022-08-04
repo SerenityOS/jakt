@@ -5630,35 +5630,34 @@ struct Typechecker {
     }
 
     function typecheck_enum_variant_bindings(mut this, variant: CheckedEnumVariant, bindings: [EnumVariantPatternArgument], span: Span) throws -> [CheckedEnumVariantBinding]? {
-        match variant {
-            StructLike(fields) => {
-                mut checked_vars: [CheckedVariable] = []
-                mut checked_enum_variant_bindings: [CheckedEnumVariantBinding] = []
-                for field in fields.iterator() {
-                    checked_vars.push(.get_variable(field))
-                }
-                for binding in bindings.iterator() {
-                    for var in checked_vars.iterator() {
-                        let binding_name = binding.name ?? binding.binding
-                        let type_id = var.type_id
-                        if binding_name == var.name {
-                            checked_enum_variant_bindings.push(CheckedEnumVariantBinding(name: binding.name, binding: binding.binding, type_id, span))
-                            break
-                        }
-                    }
-                }
-                if checked_enum_variant_bindings.size() > 0 {
-                    return checked_enum_variant_bindings
+        if variant is Typed(type_id) {
+            if bindings.size() != 1 {
+                .error(format("Enum variant ‘{}’ must have exactly one argument", variant.name()), span)
+                return None
+            }
+            return [CheckedEnumVariantBinding(name: None, binding: bindings[0].binding, type_id, span)]
+        }
+
+        guard variant is StructLike(fields) else {
+            return None
+        }
+        mut checked_vars: [CheckedVariable] = []
+        mut checked_enum_variant_bindings: [CheckedEnumVariantBinding] = []
+        for field in fields.iterator() {
+            checked_vars.push(.get_variable(field))
+        }
+        for binding in bindings.iterator() {
+            for var in checked_vars.iterator() {
+                let binding_name = binding.name ?? binding.binding
+                let type_id = var.type_id
+                if binding_name == var.name {
+                    checked_enum_variant_bindings.push(CheckedEnumVariantBinding(name: binding.name, binding: binding.binding, type_id, span))
+                    break
                 }
             }
-            Typed(type_id) => {
-                if bindings.size() == 1 {
-                    return [CheckedEnumVariantBinding(name: None, binding: bindings[0].binding, type_id, span)]
-                } else {
-                    .error(format("Enum variant ‘{}’ must have exactly one argument", variant.name()), span)
-                }
-            }
-            else => {}
+        }
+        if checked_enum_variant_bindings.size() > 0 {
+            return checked_enum_variant_bindings
         }
         return None
     }
