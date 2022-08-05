@@ -150,7 +150,7 @@ inline void panic(StringView message)
     VERIFY_NOT_REACHED();
 }
 
-inline void abort()
+[[noreturn]] inline void abort()
 {
     ::abort();
 }
@@ -278,18 +278,18 @@ struct LoopContinue { };
 template<typename Value, typename Return>
 struct ExplicitValueOrControlFlow {
     template<typename U>
-    ExplicitValueOrControlFlow(ExplicitValue<U>&& v)
+    ExplicitValueOrControlFlow(ExplicitValue<U>&& v) requires(!IsVoid<Value> && !IsVoid<U>)
         : value(ExplicitValue<Value> { move(v.value) })
     {
     }
 
-    ExplicitValueOrControlFlow(ExplicitValue<void>&&)
+    ExplicitValueOrControlFlow(ExplicitValue<void>&&) requires(IsVoid<Value>)
         : value(ExplicitValue<void> {})
     {
     }
 
     template<typename U>
-    ExplicitValueOrControlFlow(U&& v) requires(!IsVoid<Return>)
+    ExplicitValueOrControlFlow(U&& v) requires(!IsVoid<Return> && !IsSpecializationOf<U, ExplicitValue>)
         : value(Return { forward<U>(v) })
     {
     }
