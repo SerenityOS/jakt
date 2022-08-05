@@ -41,6 +41,8 @@ private:
 template<typename T, typename ErrorType>
 class [[nodiscard]] ErrorOr final : public Variant<T, ErrorType> {
 public:
+    using ResultType = T;
+
     using Variant<T, ErrorType>::Variant;
 
     template<typename U>
@@ -80,6 +82,8 @@ public:
 template<typename ErrorType>
 class [[nodiscard]] ErrorOr<void, ErrorType> {
 public:
+    using ResultType = void;
+
     ErrorOr(ErrorType error)
         : m_error(move(error))
     {

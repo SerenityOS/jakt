@@ -14,6 +14,23 @@
 #include <Jakt/kmalloc.h>
 
 namespace Jakt {
+namespace Detail {
+template<auto condition, typename T>
+struct ConditionallyResultType;
+
+template<typename T>
+struct ConditionallyResultType<true, T> {
+    using Type = typename T::ResultType;
+};
+
+template<typename T>
+struct ConditionallyResultType<false, T> {
+    using Type = T;
+};
+}
+
+template<auto condition, typename T>
+using ConditionallyResultType = typename Detail::ConditionallyResultType<condition, T>::Type;
 
 // NOTE: If you're here because of an internal compiler error in GCC 10.3.0+,
 //       it's because of the following bug:
@@ -250,6 +267,36 @@ public:
     ALWAYS_INLINE T const* operator->() const { return &value(); }
     ALWAYS_INLINE T* operator->() { return &value(); }
 
+    template<typename F, typename MappedType = decltype(declval<F>()(declval<T&>())), auto IsErrorOr = IsSpecializationOf<MappedType, ErrorOr>, typename OptionalType = Optional<ConditionallyResultType<IsErrorOr, MappedType>>>
+    ALWAYS_INLINE Conditional<IsErrorOr, ErrorOr<OptionalType>, OptionalType> map(F&& mapper)
+    {
+        if constexpr (IsErrorOr) {
+            if (m_has_value)
+                return OptionalType { TRY(mapper(value())) };
+            return OptionalType {};
+        } else {
+            if (m_has_value)
+                return OptionalType { mapper(value()) };
+
+            return OptionalType {};
+        }
+    }
+
+    template<typename F, typename MappedType = decltype(declval<F>()(declval<T&>())), auto IsErrorOr = IsSpecializationOf<MappedType, ErrorOr>, typename OptionalType = Optional<ConditionallyResultType<IsErrorOr, MappedType>>>
+    ALWAYS_INLINE Conditional<IsErrorOr, ErrorOr<OptionalType>, OptionalType> map(F&& mapper) const
+    {
+        if constexpr (IsErrorOr) {
+            if (m_has_value)
+                return OptionalType { TRY(mapper(value())) };
+            return OptionalType {};
+        } else {
+            if (m_has_value)
+                return OptionalType { mapper(value()) };
+
+            return OptionalType {};
+        }
+    }
+
 private:
     alignas(T) u8 m_storage[sizeof(T)];
     bool m_has_value { false };
@@ -403,6 +450,36 @@ public:
         if (has_value())
             return Optional<RemoveCVReference<T>>(value());
         return {};
+    }
+
+    template<typename F, typename MappedType = decltype(declval<F>()(declval<T&>())), auto IsErrorOr = IsSpecializationOf<MappedType, ErrorOr>, typename OptionalType = Optional<ConditionallyResultType<IsErrorOr, MappedType>>>
+    ALWAYS_INLINE Conditional<IsErrorOr, ErrorOr<OptionalType>, OptionalType> map(F&& mapper)
+    {
+        if constexpr (IsErrorOr) {
+            if (m_pointer)
+                return OptionalType { TRY(mapper(value())) };
+            return OptionalType {};
+        } else {
+            if (m_pointer)
+                return OptionalType { mapper(value()) };
+
+            return OptionalType {};
+        }
+    }
+
+    template<typename F, typename MappedType = decltype(declval<F>()(declval<T&>())), auto IsErrorOr = IsSpecializationOf<MappedType, ErrorOr>, typename OptionalType = Optional<ConditionallyResultType<IsErrorOr, MappedType>>>
+    ALWAYS_INLINE Conditional<IsErrorOr, ErrorOr<OptionalType>, OptionalType> map(F&& mapper) const
+    {
+        if constexpr (IsErrorOr) {
+            if (m_pointer)
+                return OptionalType { TRY(mapper(value())) };
+            return OptionalType {};
+        } else {
+            if (m_pointer)
+                return OptionalType { mapper(value()) };
+
+            return OptionalType {};
+        }
     }
 
 private:

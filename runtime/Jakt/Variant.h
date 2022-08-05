@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <Jakt/LinearArray.h>
 #include <Jakt/BitCast.h>
+#include <Jakt/LinearArray.h>
 #include <Jakt/StdLibExtras.h>
 #include <Jakt/TypeList.h>
 
@@ -76,28 +76,6 @@ struct Variant<IndexType, InitialIndex> {
     ALWAYS_INLINE static void delete_(IndexType, void*) { }
     ALWAYS_INLINE static void move_(IndexType, void*, void*) { }
     ALWAYS_INLINE static void copy_(IndexType, void const*, void*) { }
-};
-
-template<typename IndexType, typename... Ts>
-struct VisitImpl {
-    template<typename Self, typename Visitor, IndexType CurrentIndex = 0>
-    ALWAYS_INLINE static constexpr decltype(auto) visit(Self& self, IndexType id, void const* data, Visitor&& visitor) requires(CurrentIndex < sizeof...(Ts))
-    {
-        return visit_impl<Self, Visitor, CurrentIndex, Ts...>(self, id, data, forward<Visitor>(visitor));
-    }
-
-    template<typename Self, typename Visitor, IndexType CurrentIndex, typename CurrentType, typename... Rest>
-    ALWAYS_INLINE static constexpr decltype(auto) visit_impl(Self& self, IndexType id, void const* data, Visitor&& visitor) requires(CurrentIndex < sizeof...(Ts))
-    {
-        switch (id) {
-        case CurrentIndex:
-            return visitor(*bit_cast<CopyConst<Self, CurrentType>*>(data));
-        default:
-            if constexpr (CurrentIndex + 1 < sizeof...(Ts))
-                return visit_impl<Self, Visitor, CurrentIndex + 1, Rest...>(self, id, data, forward<Visitor>(visitor));
-            VERIFY_NOT_REACHED();
-        }
-    }
 };
 
 struct VariantNoClearTag {
@@ -302,25 +280,10 @@ public:
         return index_of<T>() == m_index;
     }
 
-    template<typename... Fs>
-    ALWAYS_INLINE decltype(auto) visit(Fs&&... functions)
-    {
-        Visitor<Fs...> visitor { forward<Fs>(functions)... };
-        return VisitHelper::visit(*this, m_index, m_data, move(visitor));
-    }
-
-    template<typename... Fs>
-    ALWAYS_INLINE decltype(auto) visit(Fs&&... functions) const
-    {
-        Visitor<Fs...> visitor { forward<Fs>(functions)... };
-        return VisitHelper::visit(*this, m_index, m_data, move(visitor));
-    }
-
 private:
     static constexpr auto data_size = Detail::integer_sequence_generate_LinearArray<size_t>(0, IntegerSequence<size_t, sizeof(Ts)...>()).max();
     static constexpr auto data_alignment = Detail::integer_sequence_generate_LinearArray<size_t>(0, IntegerSequence<size_t, alignof(Ts)...>()).max();
     using Helper = Detail::Variant<IndexType, 0, Ts...>;
-    using VisitHelper = Detail::VisitImpl<IndexType, Ts...>;
 
     template<typename T_, typename U_>
     friend struct Detail::VariantConstructors;
@@ -336,18 +299,6 @@ private:
         __builtin_memset(m_data, 0, data_size);
         m_index = invalid_index;
     }
-
-    template<typename... Fs>
-    struct Visitor : Fs... {
-        using Types = TypeList<Fs...>;
-
-        Visitor(Fs&&... args)
-            : Fs(forward<Fs>(args))...
-        {
-        }
-
-        using Fs::operator()...;
-    };
 
     // Note: Make sure not to default-initialize!
     //       VariantConstructors::VariantConstructors(T) will set this to the correct value
