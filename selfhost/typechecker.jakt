@@ -4551,6 +4551,9 @@ struct Typechecker {
                 function_id
                 span: parsed_record.name_span
             )
+
+            let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: method_scope_id, name: None)
+            checked_function.return_type_id = function_return_type_id
         }
     }
 
@@ -4796,7 +4799,6 @@ struct Typechecker {
             )
 
             let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: method_scope_id, name: None)
-
             checked_function.return_type_id = function_return_type_id
 
             if is_generic {
