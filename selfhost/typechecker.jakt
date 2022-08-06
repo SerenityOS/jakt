@@ -4030,6 +4030,8 @@ struct Typechecker {
         .typecheck_namespace_imports(parsed_namespace, scope_id)
         .typecheck_namespace_predecl(parsed_namespace, scope_id)
         .typecheck_namespace_fields(parsed_namespace, scope_id)
+        .typecheck_namespace_constructors(parsed_namespace, scope_id)
+        .typecheck_namespace_function_predecl(parsed_namespace, scope_id)
         .typecheck_namespace_declarations(parsed_namespace, scope_id)
     }
 
@@ -4250,13 +4252,54 @@ struct Typechecker {
         }
     }
 
-    function typecheck_namespace_imports(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws  {
+    function typecheck_namespace_imports(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         for module_import in parsed_namespace.module_imports.iterator() {
             .typecheck_module_import(module_import, scope_id)
         }
 
         for extern_import in parsed_namespace.extern_imports.iterator() {
             .typecheck_extern_import(extern_import, scope_id)
+        }
+    }
+
+    function typecheck_namespace_constructors(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
+        let children = .get_scope(id: scope_id).children
+        for i in 0..parsed_namespace.namespaces.size() {
+            let child_namespace = parsed_namespace.namespaces[i]
+            let child_namespace_scope_id = children[i]
+            .typecheck_namespace_constructors(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id)
+        }
+        for record in parsed_namespace.records.iterator() {
+            match record.record_type {
+                Struct | Class => {
+                    let struct_id = .find_struct_in_scope(scope_id, name: record.name)
+                    if not struct_id.has_value() {
+                        .compiler.panic("can't find previously added struct")
+                    }
+                    .typecheck_struct_constructor(parsed_record: record, struct_id: struct_id!, scope_id)
+                }
+                SumEnum | ValueEnum => {
+                    let enum_id = .program.find_enum_in_scope(scope_id, name: record.name)
+                    if not enum_id.has_value() {
+                        .compiler.panic("can't find previously added enum")
+                    }
+                    .typecheck_enum_constructor(parsed_record: record, enum_id: enum_id!, parent_scope_id: scope_id)
+                }
+                else => {}
+            }
+        }
+    }
+
+    function typecheck_namespace_function_predecl(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
+        let children = .get_scope(id: scope_id).children
+        for i in 0..parsed_namespace.namespaces.size() {
+            let child_namespace = parsed_namespace.namespaces[i]
+            let child_namespace_scope_id = children[i]
+            .typecheck_namespace_function_predecl(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id)
+        }
+        
+        for fun in parsed_namespace.functions.iterator() {
+            .typecheck_function_predecl(parsed_function: fun, parent_scope_id: scope_id, this_arg_type_id: None)
         }
     }
 
@@ -4276,12 +4319,13 @@ struct Typechecker {
                 }
             }
         }
+
         // 2. Typecheck subnamespaces
-        for namespce in parsed_namespace.namespaces.iterator() {
+        for namespace_ in parsed_namespace.namespaces.iterator() {
             // Find all predeclarations in namespaces that are children of this namespace
             mut debug_name = "namespace("
-            if namespce.name.has_value() {
-                debug_name += namespce.name!
+            if namespace_.name.has_value() {
+                debug_name += namespace_.name!
             } else {
                 debug_name += "unnamed-namespace"
             }
@@ -4291,12 +4335,13 @@ struct Typechecker {
                 can_throw: false
                 debug_name)
             mut child_scope = .get_scope(namespace_scope_id)
-            child_scope.namespace_name = namespce.name
-            child_scope.import_path_if_extern = namespce.import_path_if_extern
+            child_scope.namespace_name = namespace_.name
+            child_scope.import_path_if_extern = namespace_.import_path_if_extern
             mut parent_scope = .get_scope(scope_id)
             parent_scope.children.push(namespace_scope_id)
-            .typecheck_namespace_predecl(parsed_namespace: namespce, scope_id: namespace_scope_id)
+            .typecheck_namespace_predecl(parsed_namespace: namespace_, scope_id: namespace_scope_id)
         }
+
         // 3. Typecheck struct predeclaration
         struct_index = 0
         enum_index = 0
@@ -4316,24 +4361,6 @@ struct Typechecker {
                     // NOTE: The parser has already complained about this, so we can just ignore it.
                 }
             }
-        }
-
-        for record in parsed_namespace.records.iterator() {
-            match record.record_type {
-                SumEnum | ValueEnum => {
-                    let enum_id = .program.find_enum_in_scope(scope_id, name: record.name)
-                    if not enum_id.has_value() {
-                        .compiler.panic("can't find enum that has been previous added")
-                    }
-                    .typecheck_enum(record, enum_id: enum_id!, parent_scope_id: scope_id)
-                }
-                else => {}
-            }
-        }
-
-        // 4. Typecheck functions
-        for fun in parsed_namespace.functions.iterator() {
-            .typecheck_function_predecl(parsed_function: fun, parent_scope_id: scope_id, this_arg_type_id: None)
         }
     }
 
@@ -4527,8 +4554,79 @@ struct Typechecker {
         }
     }
 
-    function typecheck_struct_predecl(mut this, parsed_record: ParsedRecord, struct_id: StructId, scope_id: ScopeId) throws {
+    function typecheck_struct_constructor(mut this, parsed_record: ParsedRecord, struct_id: StructId, scope_id: ScopeId) throws {
+        let struct_type_id = .find_or_add_type_id(type: Type::Struct(struct_id))
+        .current_struct_type_id = struct_type_id
 
+        let struct_ = .get_struct(struct_id)
+
+        let constructor_id = .find_function_in_scope(parent_scope_id: struct_.scope_id, function_name: parsed_record.name)
+        if constructor_id.has_value() {
+            if parsed_record.record_type is Class and parsed_record.definition_linkage is External {
+                // XXX: The parser always sets the linkage type of an extern class'
+                //      constructor to External, but we actually want to call the
+                //      class' ::create function, just like we do with a
+                //      ImplicitConstructor class.
+                mut func = .get_function(constructor_id!)
+                func.linkage = FunctionLinkage::External
+            }
+        } else if not parsed_record.definition_linkage is External {
+            // No constructor found, so let's make one
+
+            let constructor_can_throw = parsed_record.record_type is Class
+            let function_scope_id = .create_scope(parent_scope_id: struct_.scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor({})", parsed_record.name))
+            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor-block({})", parsed_record.name))
+
+            let checked_constructor = CheckedFunction(
+                name: parsed_record.name
+                name_span: parsed_record.name_span
+                visibility: Visibility::Public
+                return_type_id: struct_type_id
+                return_type_span: None
+                params: []
+                generic_params: []
+                block: CheckedBlock(
+                    statements: []
+                    scope_id: block_scope_id
+                    control_flow: BlockControlFlow::MayReturn
+                    yielded_type: TypeId::none()
+                )
+                can_throw: constructor_can_throw
+                type: FunctionType::ImplicitConstructor
+                linkage: FunctionLinkage::Internal
+                function_scope_id
+                is_instantiated: true
+                parsed_function: None
+                is_comptime: false
+            )
+
+            // Internal constructor
+            mut module = .current_module()
+            module.functions.push(checked_constructor)
+
+            mut func = module.functions.last()!
+            for field_id in .get_struct(struct_id).fields.iterator() {
+                let field = .get_variable(field_id)
+                func.params.push(CheckedParameter(
+                    requires_label: true
+                    variable: field
+                    default_value: None
+                ))
+            }
+
+            // Add constructor to the struct's scope
+            .add_function_to_scope(
+                parent_scope_id: struct_.scope_id
+                name: parsed_record.name
+                function_id: FunctionId(module: .current_module_id, id: .current_module().functions.size() - 1)
+                span: parsed_record.name_span
+            )
+        }
+
+        .current_struct_type_id = None
+    }
+
+    function typecheck_struct_predecl(mut this, parsed_record: ParsedRecord, struct_id: StructId, scope_id: ScopeId) throws {
         let struct_type_id = .find_or_add_type_id(type: Type::Struct(struct_id))
         .current_struct_type_id = struct_type_id
 
@@ -4762,9 +4860,9 @@ struct Typechecker {
         for i in 0..parsed_namespace.namespaces.size() {
             let child_namespace = parsed_namespace.namespaces[i]
             let child_namespace_scope_id = children[i]
-            .typecheck_namespace_declarations(parsed_namespace: child_namespace,
-                scope_id: child_namespace_scope_id)
+            .typecheck_namespace_declarations(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id)
         }
+
         for record in parsed_namespace.records.iterator() {
             match record.record_type {
                 Struct | Class => {
@@ -4773,6 +4871,13 @@ struct Typechecker {
                         .compiler.panic("can't find struct that has been previous added")
                     }
                     .typecheck_struct(record, struct_id: struct_id!, parent_scope_id: scope_id)
+                }
+                SumEnum | ValueEnum => {
+                    let enum_id = .program.find_enum_in_scope(scope_id, name: record.name)
+                    if not enum_id.has_value() {
+                        .compiler.panic("can't find enum that has been previous added")
+                    }
+                    .typecheck_enum(record, enum_id: enum_id!, parent_scope_id: scope_id)
                 }
                 else => {}
             }
@@ -4785,8 +4890,7 @@ struct Typechecker {
         }
     }
 
-    function typecheck_enum(mut this, record: ParsedRecord, enum_id: EnumId, parent_scope_id: ScopeId) throws {
-        mut checked_variants: [CheckedEnumVariant] = []
+    function typecheck_enum_constructor(mut this, record: ParsedRecord, enum_id: EnumId, parent_scope_id: ScopeId) throws {
         mut next_constant_value = 0u64
         mut seen_names: {String} = {}
 
@@ -4990,7 +5094,9 @@ struct Typechecker {
             }
             else => {}
         }
+    }
 
+    function typecheck_enum(mut this, record: ParsedRecord, enum_id: EnumId, parent_scope_id: ScopeId) throws {
         for method in record.methods.iterator() {
             .typecheck_method(
                 func: method.parsed_function
@@ -5005,73 +5111,9 @@ struct Typechecker {
     }
 
     function typecheck_struct(mut this, record: ParsedRecord, struct_id: StructId, parent_scope_id: ScopeId) throws {
-        let checked_struct_scope_id = .get_struct(struct_id).scope_id
         let struct_type_id = .find_or_add_type_id(Type::Struct(struct_id))
-        let module_id = .current_module_id
+
         .current_struct_type_id = struct_type_id
-
-        let constructor_id = .find_function_in_scope(parent_scope_id: checked_struct_scope_id, function_name: record.name)
-        if constructor_id.has_value() {
-            if record.record_type is Class and record.definition_linkage is External {
-                // XXX: The parser always sets the linkage type of an extern class'
-                //      constructor to External, but we actually want to call the
-                //      class' ::create function, just like we do with a
-                //      ImplicitConstructor class.
-                mut func = .get_function(constructor_id!)
-                func.linkage = FunctionLinkage::External
-            }
-        } else if not record.definition_linkage is External {
-            // No constructor found, so let's make one
-
-            let constructor_can_throw = record.record_type is Class
-            let function_scope_id = .create_scope(parent_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor({})", record.name))
-            let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor-block({})", record.name))
-
-            let checked_constructor = CheckedFunction(
-                name: record.name
-                name_span: record.name_span
-                visibility: Visibility::Public
-                return_type_id: struct_type_id
-                return_type_span: None
-                params: []
-                generic_params: []
-                block: CheckedBlock(
-                    statements: []
-                    scope_id: block_scope_id
-                    control_flow: BlockControlFlow::MayReturn
-                    yielded_type: TypeId::none()
-                )
-                can_throw: constructor_can_throw
-                type: FunctionType::ImplicitConstructor
-                linkage: FunctionLinkage::Internal
-                function_scope_id
-                is_instantiated: true
-                parsed_function: None
-                is_comptime: false
-            )
-
-            // Internal constructor
-            mut module = .current_module()
-            module.functions.push(checked_constructor)
-
-            mut func = module.functions.last()!
-            for field_id in .get_struct(struct_id).fields.iterator() {
-                let field = .get_variable(field_id)
-                func.params.push(CheckedParameter(
-                    requires_label: true
-                    variable: field
-                    default_value: None
-                ))
-            }
-
-            // Add constructor to the struct's scope
-            .add_function_to_scope(
-                parent_scope_id: checked_struct_scope_id
-                name: record.name
-                function_id: FunctionId(module: module_id, id: .current_module().functions.size() - 1)
-                span: record.name_span
-            )
-        }
 
         for method in record.methods.iterator() {
             .typecheck_method(func: method.parsed_function, parent_id: StructOrEnumId::Struct(struct_id))
@@ -7406,7 +7448,7 @@ struct Typechecker {
                     if is_optional {
                         let optional_struct_id = .find_struct_in_prelude("Optional")
                         result_type = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [result_type]))
-                }
+                    }
                     yield CheckedExpression::MethodCall(
                         expr: checked_expr
                         call
@@ -8107,6 +8149,7 @@ struct Typechecker {
                 mut seen_catch_all = false
                 mut catch_all_span: Span? = None
                 mut covered_variants: {String} = {}
+
                 for case_ in cases.iterator() {
                     for pattern in case_.patterns.iterator() {
                         match pattern {
@@ -8127,6 +8170,7 @@ struct Typechecker {
                                     .error(format("Match case '{}' does not match enum '{}'", variant_names[0].0, enum_.name), variant_names[0].1)
                                     continue
                                 }
+
                                 mut i = 0uz
                                 mut matched_variant: CheckedEnumVariant? = None
                                 mut variant_index: usize? = None
@@ -8272,6 +8316,7 @@ struct Typechecker {
                                     body: checked_body,
                                     marker_span: matched_variant!.span()
                                 )
+
                                 checked_cases.push(checked_match_case)
                             }
                             CatchAll => {
