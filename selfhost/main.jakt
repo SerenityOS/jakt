@@ -312,6 +312,7 @@ function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_fi
         cxx_compiler_path
         color_flag
         "-std=c++20"
+        "-fno-exceptions"
         "-Wno-unknown-warning-option"
         "-Wno-trigraphs"
         "-Wno-parentheses-equality"

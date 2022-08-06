@@ -11,6 +11,7 @@ set(FINAL_STAGE "1" CACHE STRING "Compiler stage to stop at, either 1 (default) 
 
 macro(add_jakt_compiler_flags target)
   target_compile_options("${target}" PRIVATE
+    -fno-exceptions
     -Wno-unused-local-typedefs
     -Wno-unused-function
     -Wno-unknown-warning-option
