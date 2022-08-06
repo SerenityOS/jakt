@@ -1,0 +1,22 @@
+/// Expect:
+/// - output: "true\n"
+
+struct CheckedVariable {
+    is_mutable: bool
+}
+
+boxed enum Foo {
+    Var(var: CheckedVariable)
+    IndexedStruct(expr: Foo)
+
+    function is_mutable(this) -> bool => match this {
+        Var(var) => var.is_mutable
+        IndexedStruct(expr) => expr.is_mutable()
+    }
+}
+
+function main() {
+    let foo = Foo::IndexedStruct(expr: Foo::Var(var: CheckedVariable(is_mutable: true)))
+
+    println("{}", foo.is_mutable())
+}
