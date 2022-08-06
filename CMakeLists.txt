@@ -7,7 +7,21 @@ project(Jakt
         HOMEPAGE_URL https://github.com/SerenityOS/jakt
         DESCRIPTION "Jakt programming language compiler")
 
+set(NO_SYMLINKS_DEFAULT OFF)
+if (CMAKE_HOST_WIN32)
+  set(NO_SYMLINKS_DEFAULT ON)
+endif()
+
 set(FINAL_STAGE "1" CACHE STRING "Compiler stage to stop at, either 1 (default) or 2)")
+option(NO_SYMLINKS "Use hard links instead of symlinks. Useful for unprivileged Windows users" "${NO_SYMLINKS_DEFAULT}")
+
+if (NO_SYMLINKS)
+  set(LINK_COMMAND create_hardlink)
+  set(LINK_GENEX TARGET_FILE)
+else()
+  set(LINK_COMMAND create_symlink)
+  set(LINK_GENEX TARGET_FILE_NAME)
+endif()
 
 macro(add_jakt_compiler_flags target)
   target_compile_options("${target}" PRIVATE
@@ -110,7 +124,7 @@ endif()
 add_custom_command(
   TARGET "jakt_stage${FINAL_STAGE}"
   POST_BUILD
-  COMMAND "${CMAKE_COMMAND}" -E create_symlink  "$<TARGET_FILE_NAME:jakt_stage${FINAL_STAGE}>" "${CMAKE_BINARY_DIR}/jakt"
+  COMMAND "${CMAKE_COMMAND}" -E ${LINK_COMMAND}  "$<${LINK_GENEX}:jakt_stage${FINAL_STAGE}>" "${CMAKE_BINARY_DIR}/jakt"
   VERBATIM
 )
 
