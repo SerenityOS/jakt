@@ -398,7 +398,7 @@
       "patterns": [
         {
           "name": "meta.function.declaration.jakt",
-          "match": "(?:\\b(public|private)\\s+)?(\\bextern\\s+)?(\\bfunction)\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
+          "match": "(?:\\b(public|private)\\s+)?(\\bextern\\s+)?(\\b(?:function|comptime))\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
           "captures": {
             "1": {
               "name": "storage.modifier.visibility.jakt"
@@ -419,7 +419,7 @@
         },
         {
           "name": "meta.function.argument-list.jakt",
-          "begin": "(?<=function.*?)(\\()",
+          "begin": "(?<=(?:function|comptime).*?)(\\()",
           "beginCaptures": {
             "1": {
               "name": "punctuation.begin.bracket"
@@ -472,7 +472,7 @@
         },
         {
           "name": "meta.function.body.jakt",
-          "begin": "(?<=function.*?)(\\{)",
+          "begin": "(?<=(?:function|comptime).*?)(\\{)",
           "beginCaptures": {
             "1": {
               "name": "punctuation.begin.brace.jakt"
@@ -492,7 +492,7 @@
         },
         {
           "name": "meta.function.generic-arguments.jakt",
-          "begin": "(?<=function\\s+(\\w)*?)(<)",
+          "begin": "(?<=(?:function|comptime)\\s+(\\w)*?)(<)",
           "beginCaptures": {
             "1": {
               "name": "punctuation.begin.angle-bracket.jakt"

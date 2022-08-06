@@ -31,6 +31,7 @@ let s:jakt_syntax_keywords = {
     \ , 'jaktKeyword' :["function"
     \ ,                 "extern"
     \ ,                 "import"
+    \ ,                 "comptime"
     \ ,                ]
     \ , 'jaktException' :["throws"
     \ ,                  ]
