@@ -207,6 +207,7 @@ struct ParsedFunction {
 struct ParsedParameter {
     requires_label: bool
     variable: ParsedVariable
+    default_argument: ParsedExpression?
     span: Span
 }
 
@@ -1500,6 +1501,7 @@ struct Parser {
                             is_mutable: current_param_is_mutable,
                             span: .current().span(),
                         ),
+                        default_argument: None,
                         span: .current().span(),
                     ))
                     .index++
@@ -1507,6 +1509,13 @@ struct Parser {
                 }
                 Identifier(name, span) => {
                     let var_decl = .parse_variable_declaration(is_mutable: current_param_is_mutable)
+
+                    mut default_argument: ParsedExpression? = None
+                    
+                    if .current() is Equal {
+                        .index++
+                        default_argument = .parse_expression(allow_assignments: false, allow_newlines: true)
+                    }
 
                     params.push(ParsedParameter(
                         requires_label: current_param_requires_label,
@@ -1516,6 +1525,7 @@ struct Parser {
                             is_mutable: var_decl.is_mutable,
                             span: .previous().span(),
                         ),
+                        default_argument,
                         span: .previous().span(),
                     ))
                     parameter_complete = true

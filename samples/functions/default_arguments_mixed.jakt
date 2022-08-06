@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "WHF 5 false None\n"
+
+function say(text: String, number: i64 = 5, bl: bool, opt: String?, byte: u8 = b'a') {
+    println("{} {} {} {}", text, number, bl, opt, byte)
+}
+
+function main() {
+    say(text: "WHF", bl: true, opt: None)
+}
