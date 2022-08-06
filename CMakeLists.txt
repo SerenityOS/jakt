@@ -19,7 +19,9 @@ macro(add_jakt_compiler_flags target)
     -Wno-parentheses-equality
     -Wno-unqualified-std-cast-call
     -Wno-user-defined-literals
+    -Wno-return-type
     -Wno-deprecated-declarations
+    -fcolor-diagnostics
   )
   if (MSVC)
     # For clang-cl, which shows up to CMake as MSVC and accepts both kinds of arguments
