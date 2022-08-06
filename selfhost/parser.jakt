@@ -202,6 +202,7 @@ struct ParsedFunction {
     type: FunctionType
     linkage: FunctionLinkage
     must_instantiate: bool
+    is_comptime: bool
 }
 
 struct ParsedParameter {
@@ -669,8 +670,8 @@ struct Parser {
                     .index++
                     .parse_import(parent: &mut parsed_namespace)
                 }
-                Function => {
-                    let parsed_function = .parse_function(FunctionLinkage::Internal, Visibility::Public)
+                Function | Comptime => {
+                    let parsed_function = .parse_function(FunctionLinkage::Internal, Visibility::Public, is_comptime: .current() is Comptime)
                     parsed_namespace.functions.push(parsed_function)
                 }
                 Struct | Class | Enum | Boxed => {
@@ -711,7 +712,7 @@ struct Parser {
                     .index++
                     match .current() {
                         Function => {
-                            let parsed_function = .parse_function(FunctionLinkage::External, Visibility::Public)
+                            let parsed_function = .parse_function(FunctionLinkage::External, Visibility::Public, is_comptime: false)
                             parsed_namespace.functions.push(parsed_function)
                         }
                         Struct => {
@@ -958,17 +959,23 @@ struct Parser {
                     last_visibility_span = span
                     .index++
                 }
-                Function => {
+                Function | Comptime => {
+                    let is_comptime = .current() is Comptime
+
                     let function_linkage = match definition_linkage {
                         Internal => FunctionLinkage::Internal
                         External => FunctionLinkage::External
+                    }
+
+                    if function_linkage is External and is_comptime {
+                        .error("External functions cannot be comptime", .current().span())
                     }
 
                     let visibility = last_visibility ?? Visibility::Public
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_method(function_linkage, visibility)
+                    let parsed_method = .parse_method(function_linkage, visibility, is_comptime)
 
                     methods.push(parsed_method)
                 }
@@ -1085,17 +1092,23 @@ struct Parser {
                     last_visibility_span = span
                     .index++
                 }
-                Function => {
+                Function | Comptime => {
+                    let is_comptime = .current() is Comptime
+
                     let function_linkage = match definition_linkage {
                         Internal => FunctionLinkage::Internal
                         External => FunctionLinkage::External
+                    }
+
+                    if function_linkage is External and is_comptime {
+                        .error("External functions cannot be comptime", .current().span())
                     }
 
                     let visibility = last_visibility ?? Visibility::Public
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_method(function_linkage, visibility)
+                    let parsed_method = .parse_method(function_linkage, visibility, is_comptime)
 
                     methods.push(parsed_method)
                 }
@@ -1261,19 +1274,24 @@ struct Parser {
 
                     fields.push(field)
                 }
-                Function => {
+                Function | Comptime => {
                     // Parse a method
+                    let is_comptime = .current() is Comptime
 
                     let function_linkage = match definition_linkage {
                         Internal => FunctionLinkage::Internal
                         External => FunctionLinkage::External
                     }
 
+                    if function_linkage is External and is_comptime {
+                        .error("External functions cannot be comptime", .current().span())
+                    }
+
                     let visibility = last_visibility ?? default_visibility
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_method(function_linkage, visibility)
+                    let parsed_method = .parse_method(function_linkage, visibility, is_comptime: .current() is Comptime)
 
                     methods.push(parsed_method)
                 }
@@ -1517,7 +1535,7 @@ struct Parser {
         return params
     }
 
-    public function parse_function(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility) throws -> ParsedFunction {
+    public function parse_function(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility, is_comptime: bool) throws -> ParsedFunction {
         mut parsed_function = ParsedFunction(
             name: "",
             name_span: .empty_span(),
@@ -1531,6 +1549,7 @@ struct Parser {
             type: FunctionType::Normal,
             linkage,
             must_instantiate: false,
+            is_comptime
         )
 
         .index++
@@ -1605,8 +1624,8 @@ struct Parser {
         )
     }
 
-    function parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility) throws -> ParsedMethod {
-        mut parsed_function = .parse_function(linkage, visibility)
+    function parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility, is_comptime: bool) throws -> ParsedMethod {
+        mut parsed_function = .parse_function(linkage, visibility, is_comptime)
 
         if linkage is External {
             parsed_function.must_instantiate = true
