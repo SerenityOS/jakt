@@ -1363,33 +1363,41 @@ struct CodeGenerator {
                 }
                 else => ""
             }
-
+            output += "("
             let object = .codegen_expression(expr)
             output += object
             output += match op {
-                PostIncrement => "++"
-                PostDecrement => "--"
-                TypeCast | Is => ")"
+                PostIncrement => "++)"
+                PostDecrement => "--)"
+                TypeCast | Is => "))"
                 IsEnumVariant(enum_variant, type_id: enum_type_id) => {
                     let name = enum_variant.name()
                     mut suffix = ")"
-                    let is_boxed = match .program.get_type(enum_type_id) {
-                        Enum(enum_id) => .program.get_enum(enum_id).is_boxed
-                        else => false
-                    }
+                    let enum_ = .program.get_enum(match .program.get_type(enum_type_id) {
+                        Enum(enum_id) => enum_id
+                        GenericEnumInstance(id) => id
+                        else => {
+                            panic(format("Unexpected type in IsEnumVariant: {}", .program.get_type(enum_type_id)))
+                        }
+                    })
+                    let is_boxed = enum_.is_boxed
                     if is_boxed and object != "*this"{
                         suffix += "->"
                     } else {
                         suffix += "."
                     }
-                    suffix += "has<"
-                    suffix += .codegen_type_possibly_as_namespace(type_id: enum_type_id, as_namespace: true)
-                    suffix += "::"
-                    suffix += name
-                    suffix += ">("
+                    // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
+                    mut variant_index = 0;
+                    for variant in enum_.variants.iterator() {
+                        if variant.name() == name{
+                            break
+                        }
+                        variant_index++
+                    }
+                    suffix += format("index() == {} /* {} */", variant_index, name)
                     yield suffix
                 }
-                else => ""
+                else => ")"
             }
             output += ")"
             yield output
@@ -1729,7 +1737,23 @@ struct CodeGenerator {
         for case_ in cases.iterator() {
             match case_ {
                 EnumVariant(name, args, subject_type_id, scope_id, body) => {
-                    output += "if (__jakt_enum_value.template has<"
+                    let enum_ = .program.get_enum(match .program.get_type(subject_type_id) {
+                        Enum(enum_id) => enum_id
+                        GenericEnumInstance(id) => id
+                        else => {
+                            panic(format("Unexpected type in IsEnumVariant: {}", .program.get_type(subject_type_id)))
+                        }
+                    })
+                    // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
+                    mut variant_index = 0;
+                    for variant in enum_.variants.iterator() {
+                        if variant.name() == name{
+                            break
+                        }
+                        variant_index++
+                    }
+
+                    output += format("if (__jakt_enum_value.index() == {} /* {} */) {{\n", variant_index, name)
 
                     mut variant_type_name = ""
                     let qualifier = .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true)
@@ -1740,8 +1764,6 @@ struct CodeGenerator {
                     }
                     variant_type_name += name
 
-                    output += variant_type_name
-                    output += ">()) {\n"
                     output += "auto& __jakt_match_value = __jakt_enum_value.template get<"
                     output += variant_type_name
                     output += ">();\n"
