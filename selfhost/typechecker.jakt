@@ -2070,7 +2070,7 @@ struct Typechecker {
             let maybe_file_name = .compiler.search_for_path(import_.module_name.name)
             let file_name = match maybe_file_name.has_value() {
                 true => maybe_file_name!
-                else => FilePath::make(format("{}{}.jakt", .get_root_path().dirname(), import_.module_name.name))
+                else => FilePath::make(format("{}/{}.jakt", .get_root_path().dirname(), import_.module_name.name))
             }
 
             let file_id = .compiler.get_file_id_or_register(file_name)

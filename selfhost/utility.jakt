@@ -72,6 +72,10 @@ class FilePath {
 
     public function dirname(this) throws -> String {
         let parts = .split_at_last_slash()
+        if parts.0 == "" {
+            return "."
+        }
+
         return parts.0
     }
 
