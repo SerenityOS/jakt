@@ -19,5 +19,5 @@ build build: mkdir
 # NOTE: pipe `|` is for implicit dependencies, so that ninja considers the target outdated if any
 # of those have changed, even if it's not stated as an input.
 build build/stage0: cxx ./bootstrap/stage0/jakt.cpp
-build build/jakt: stage0 ./selfhost/main.jakt | build/stage0 ./selfhost/codegen.jakt ./selfhost/compiler.jakt ./selfhost/error.jakt ./selfhost/ide.jakt ./selfhost/lexer.jakt ./selfhost/parser.jakt ./selfhost/prelude.jakt ./selfhost/typechecker.jakt ./selfhost/utility.jakt
+build build/jakt: stage0 ./selfhost/main.jakt | build/stage0 ./selfhost/codegen.jakt ./selfhost/compiler.jakt ./selfhost/error.jakt ./selfhost/ide.jakt ./selfhost/lexer.jakt ./selfhost/parser.jakt ./runtime/prelude.jakt ./selfhost/typechecker.jakt ./selfhost/utility.jakt
 default build/jakt

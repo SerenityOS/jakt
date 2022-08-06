@@ -75,9 +75,9 @@ set(SELFHOST_SOURCES
   selfhost/ide.jakt
   selfhost/lexer.jakt
   selfhost/parser.jakt
-  selfhost/prelude.jakt
   selfhost/typechecker.jakt
   selfhost/utility.jakt
+  runtime/prelude.jakt
 )
 
 add_jakt_executable(jakt_stage0 jakt_stage1

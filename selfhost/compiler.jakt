@@ -1,5 +1,4 @@
 import error { JaktError, print_error, print_error_json }
-import prelude { JaktPrelude }
 import utility
 import utility { FilePath, FileId }
 
@@ -130,7 +129,6 @@ class Compiler {
     public function load_prelude(mut this) throws {
         let module_name = "__prelude__"
         let file_name = FilePath::make(module_name)
-        let file_contents = JaktPrelude::to_bytes()
         .get_file_id_or_register(file_name)
     }
 
