@@ -11,7 +11,7 @@ rule mkdir
     command = mkdir $out
 
 rule jakttest
-    command = ../build/jakt jakttest.jakt > build/jakttest.cpp
+    command = ../build/jakt -S -o jakttest jakttest.jakt
 
 rule patch-includes
     command = python3 patch-includes.py $in $out
