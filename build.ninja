@@ -9,7 +9,7 @@ rule cxx
     command = clang++ $cxxflags -o $out -I ./bootstrap/stage0/runtime $in
 
 rule stage0
-    command = ./build/stage0 -b -o jakt $in
+    command = ./build/stage0 -o jakt $in
 
 rule mkdir
     command = mkdir $out

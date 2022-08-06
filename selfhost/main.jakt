@@ -23,7 +23,7 @@ function help() -> String{
     output += "  -dl\t\tPrint debug info for the lexer.\n"
     output += "  -dp\t\tPrint debug info for the parser.\n"
     output += "  -dt\t\tPrint debug info for the typechecker.\n"
-    output += "  -b\t\tBuild an executable file.\n"
+    output += "  -S\t\tOnly output source (do not build).\n"
     output += "  -r\t\tBuild and run an executable file.\n"
     output += "  -d\t\tInsert debug statement spans in generated C++ code.\n"
     output += "  --debug-print\t\tOutput debug print.\n"
@@ -74,7 +74,7 @@ function main(args: [String]) {
     let lexer_debug = args_parser.flag(["-dl"])
     let parser_debug = args_parser.flag(["-dp"])
     let typechecker_debug = args_parser.flag(["-dt"])
-    let build_executable = args_parser.flag(["-b"])
+    let build_executable = not args_parser.flag(["-S"])
     let run_executable = args_parser.flag(["-r"])
     let codegen_debug = args_parser.flag(["-d"])
     let debug_print = args_parser.flag(["--debug-print"])
