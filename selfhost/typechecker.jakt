@@ -16,7 +16,6 @@ import parser { Parser, BinaryOperator, DefinitionLinkage, DefinitionType, Unary
                 ParsedMatchBody, ParsedMatchCase, Visibility, ParsedParameter, ParsedCapture }
 import utility { panic, todo, Span, join, FilePath, FileId, escape_for_quotes }
 import compiler { Compiler }
-import prelude { JaktPrelude }
 
 enum SafetyMode {
     Safe
@@ -3564,10 +3563,16 @@ struct Typechecker {
         return module_id
     }
 
+    private comptime get_prelude_contents() throws -> [u8] {
+        // FIXME: Don't hardcode the relative runtime path.
+        mut file = File::open_for_reading("../runtime/prelude.jakt")
+        return file.read_all()
+    }
+
     function include_prelude(mut this) throws {
         let module_name = "__prelude__"
         let file_name = FilePath::make(module_name)
-        let file_contents = JaktPrelude::to_bytes()
+        let file_contents = get_prelude_contents()
 
         let old_file_id = .compiler.current_file
         let old_file_contents = .compiler.current_file_contents

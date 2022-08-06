@@ -11,7 +11,6 @@ import error { JaktError, print_error}
 import lexer { Token, NumericConstant }
 import utility { panic, todo, FileId, Span, extend_array }
 import compiler { Compiler }
-import prelude { JaktPrelude }
 
 function merge_spans(anon start: Span, anon end: Span) -> Span {
     if start.file_id.id != end.file_id.id {
