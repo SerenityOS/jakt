@@ -464,6 +464,7 @@ class CheckedFunction {
 struct CheckedParameter {
     requires_label: bool
     variable: CheckedVariable
+    default_value: CheckedExpression?
 }
 
 enum CheckedCapture {
@@ -4451,6 +4452,7 @@ struct Typechecker {
                     checked_function.params.push(CheckedParameter(
                         requires_label: param.requires_label
                         variable: checked_variable
+                        default_value: None
                     ))
                 } else {
                     let param_type = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id, name: param.variable.name)
@@ -4467,6 +4469,7 @@ struct Typechecker {
                     checked_function.params.push(CheckedParameter(
                         requires_label: param.requires_label
                         variable: checked_variable
+                        default_value: None
                     ))
                 }
             }
@@ -4591,6 +4594,7 @@ struct Typechecker {
                     checked_function.params.push(CheckedParameter(
                         requires_label: param.requires_label
                         variable: checked_variable
+                        default_value: None
                     ))
 
                     if check_scope.has_value() {
@@ -4612,6 +4616,7 @@ struct Typechecker {
                     checked_function.params.push(CheckedParameter(
                         requires_label: param.requires_label
                         variable: checked_variable
+                        default_value: None
                     ))
 
                     if check_scope.has_value() {
@@ -4803,7 +4808,7 @@ struct Typechecker {
                                 type_span: None
                                 visibility: Visibility::Public
                             )
-                            params.push(CheckedParameter(requires_label: true, variable: checked_var))
+                            params.push(CheckedParameter(requires_label: true, variable: checked_var, default_value: None))
 
                             if .dump_type_hints {
                                 .dump_type_hint(type_id, span: param.span)
@@ -4867,7 +4872,7 @@ struct Typechecker {
                                 visibility: Visibility::Public,
                                 return_type_id: .find_or_add_type_id(Type::Enum(enum_id)),
                                 return_type_span: None,
-                                params: [CheckedParameter(requires_label: false, variable)],
+                                params: [CheckedParameter(requires_label: false, variable, default_value: None)],
                                 generic_params: [],
                                 block: CheckedBlock(
                                     statements: [],
@@ -4991,6 +4996,7 @@ struct Typechecker {
                 func.params.push(CheckedParameter(
                     requires_label: true
                     variable: field
+                    default_value: None
                 ))
             }
 
@@ -5106,9 +5112,27 @@ struct Typechecker {
             visibility: Visibility::Public
         )
 
+        mut checked_default_value: CheckedExpression? = None
+        if parameter.default_argument.has_value() {
+            //FIXME: Get the real safety mode from somewhere, right now it assumes it is safe
+            mut checked_default_value_expr = .typecheck_expression(parameter.default_argument!, scope_id, safety_mode: SafetyMode::Safe, type_hint: type_id)
+            
+            if checked_default_value_expr is OptionalNone(span: expr_span) {
+                checked_default_value_expr = CheckedExpression::OptionalNone(span: expr_span, type_id)
+            }
+            
+            let default_value_type_id = expression_type(checked_default_value_expr)
+            checked_default_value = checked_default_value_expr
+            if not default_value_type_id.equals(type_id) {
+                checked_default_value = None
+                .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(type_id), .type_name(default_value_type_id)), parameter.span)
+            }
+        }
+
         let checked_parameter = CheckedParameter(
             requires_label: parameter.requires_label
             variable
+            default_value: checked_default_value
         )
 
         if check_scope.has_value() {

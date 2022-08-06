@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "WHF\n"
+
+function say(text: String = "WHF") {
+    println("{}", text)
+}
+
+function main() {
+    say()
+}
