@@ -1,0 +1,29 @@
+/// Expect:
+/// - output: "outer: Foo(id: 100)\ninner: Foo(id: 99)\n"
+
+struct Foo {
+    id: usize
+
+    function test(this) {
+        let test = What::Bar
+
+        println("outer: {}", this)
+        println("inner: {}", test.count())
+    }
+}
+
+enum What {
+    Bar
+    Baz
+
+    function count(this) -> Foo {
+        let foo = Foo(id: 99)
+
+        return foo
+    }
+}
+
+function main() {
+    let foo = Foo(id: 100)
+    foo.test()
+}
