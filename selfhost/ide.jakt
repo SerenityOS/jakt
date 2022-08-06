@@ -396,11 +396,11 @@ function find_span_in_enum(program: CheckedProgram, checked_enum: CheckedEnum, s
                 }
             }
             Untyped(name, span: variant_span) => {
-                let number_constant_none: NumberConstant? = None
-                return Some(Usage::EnumVariant(span: variant_span, name, type_id: checked_enum.type_id, variants: [], number_constant: number_constant_none))
+                if variant_span.contains(span) {
+                    return Some(Usage::EnumVariant(span: variant_span, name, type_id: checked_enum.type_id, variants: [], number_constant: None))
+                }
             }
             WithValue(name, expr, span: variant_span) => {
-
                 if variant_span.contains(span) {
                     return Some(Usage::EnumVariant(span: variant_span, name, type_id: checked_enum.type_id, variants: enum_variant_fields(program, checked_enum_variant: variant), number_constant: expr.to_number_constant(program)))
                 }
