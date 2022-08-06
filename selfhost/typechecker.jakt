@@ -8728,35 +8728,20 @@ struct Typechecker {
                     generic_checked_function_to_instantiate = Some(function_id)
                 }
 
-                if callee.params.size() != (call.args.size() + arg_offset) {
-                    .error("Wrong number of arguments", span)
-                }
+                mut resolved_args: [(String, Span, CheckedExpression)] = .resolve_default_params(params: callee.params, args: call.args, scope_id: caller_scope_id, safety_mode, arg_offset, span)
 
-                for i in 0..call.args.size() {
-                    if (i + arg_offset) == callee.params.size() {
-                        break
+                if callee.params.size() == resolved_args.size() + arg_offset {
+                    for i in 0..callee.params.size()-arg_offset {
+                        let (name, span, checked_arg) = resolved_args[i]
+                        .check_types_for_compat(
+                            lhs_type_id: callee.params[i+arg_offset].variable.type_id
+                            rhs_type_id: expression_type(checked_arg)
+                            &mut generic_inferences
+                            span: .expression_span(checked_arg)
+                        )
+
+                        args.push((call.name, checked_arg))
                     }
-
-                    let parsed_label_and_arg = call.args[i]
-                    let param = callee.params[i + arg_offset]
-
-                    if param.requires_label {
-                        .validate_argument_label(param, label: parsed_label_and_arg.0, span: parsed_label_and_arg.1, expr: parsed_label_and_arg.2)
-                    }
-
-                    mut checked_arg = .typecheck_expression(expr: parsed_label_and_arg.2, scope_id: caller_scope_id, safety_mode, type_hint: param.variable.type_id)
-                    let promoted_arg = .try_to_promote_constant_expr_to_type(lhs_type: param.variable.type_id, checked_rhs: checked_arg, span)
-                    checked_arg = promoted_arg ?? checked_arg
-
-                    // FIXME: It's super awkward that we have to pass "generic_inferences" here:
-                    .check_types_for_compat(
-                        lhs_type_id: param.variable.type_id
-                        rhs_type_id: expression_type(checked_arg)
-                        &mut generic_inferences
-                        span: expression_span(checked_arg)
-                    )
-
-                    args.push((call.name, checked_arg))
                 }
 
                 // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
@@ -8927,6 +8912,59 @@ struct Typechecker {
         return checked_call
     }
 
+    function resolve_default_params(mut this, params: [CheckedParameter], args: [(String, Span, ParsedExpression)], scope_id: ScopeId, safety_mode: SafetyMode, arg_offset: usize, span: Span) throws -> [(String, Span, CheckedExpression)] {
+        mut params_with_default_value = 0uz
+
+        for param in params.iterator() {
+            if param.default_value.has_value() {
+                params_with_default_value++
+            }
+        }
+
+        guard args.size() >= params.size() - arg_offset - params_with_default_value and args.size() <= params.size() - arg_offset else {
+            .error("Wrong number of arguments", span)
+            return []
+        }
+
+        mut consumed_arg = 0uz
+        mut resolved_args: [(String, Span, CheckedExpression)] = []
+
+        for i in arg_offset..params.size() {
+            let param = params[i]
+            mut maybe_checked_expr: CheckedExpression? = None
+            if not param.requires_label {
+                guard args.size() > consumed_arg else {
+                    .error(format("Missing argument for function parameter {}", param.variable.name), span)
+                    continue
+                }
+
+                let (name, span, expr) = args[consumed_arg]
+                maybe_checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: param.variable.type_id)
+                consumed_arg++
+            } else {
+                maybe_checked_expr = param.default_value
+
+                if args.size() > consumed_arg {
+                    let (name, span, expr) = args[consumed_arg]
+                    
+                    if .validate_argument_label(param, label: name, span, expr, default_value: maybe_checked_expr) {
+                        maybe_checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: param.variable.type_id)
+                        consumed_arg++
+                    }
+                }
+            }
+            
+            if maybe_checked_expr.has_value() {
+                mut checked_arg = maybe_checked_expr!
+                let promoted_arg = .try_to_promote_constant_expr_to_type(lhs_type: param.variable.type_id, checked_rhs: checked_arg, span)
+                checked_arg = promoted_arg ?? checked_arg
+                resolved_args.push((param.variable.name, span, checked_arg))
+            }
+        }
+
+        return resolved_args
+    }
+
     function resolve_type_var(this, type_var_type_id: TypeId, scope_id: ScopeId) throws -> TypeId {
         mut current_type_id = type_var_type_id
 
@@ -8950,7 +8988,7 @@ struct Typechecker {
         return current_type_id
     }
 
-    function validate_argument_label(mut this, param: CheckedParameter, label: String, span: Span, expr: ParsedExpression) throws -> bool {
+    function validate_argument_label(mut this, param: CheckedParameter, label: String, span: Span, expr: ParsedExpression, default_value: CheckedExpression?) throws -> bool {
         if label == param.variable.name {
             return true
         }
@@ -8959,7 +8997,9 @@ struct Typechecker {
                 if name == param.variable.name {
                     return true
                 }
-                .error(format("Wrong parameter name in argument label (got '{}', expected '{}')", name, param.variable.name), span)
+                if not default_value.has_value() {
+                    .error(format("Wrong parameter name in argument label (got '{}', expected '{}')", name, param.variable.name), span)
+                }
                 return false
             }
             UnaryOp(expr, op) => {
@@ -8968,14 +9008,18 @@ struct Typechecker {
                         if name == param.variable.name {
                             return true
                         }
-                        .error(format("Wrong parameter name in argument label (got ‘{}’, expected ‘{}’)", name, param.variable.name), span)
+                        if not default_value.has_value() {
+                            .error(format("Wrong parameter name in argument label (got ‘{}’, expected ‘{}’)", name, param.variable.name), span)
+                        }
                         return false
                     }
                 }
             }
             else => {}
         }
-        .error(format("Wrong parameter name in argument label (got '{}', expected '{}')", label, param.variable.name), span)
+        if not default_value.has_value() {
+            .error(format("Wrong parameter name in argument label (got '{}', expected '{}')", label, param.variable.name), span)
+        }
         return false
     }
 }
