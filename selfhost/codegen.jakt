@@ -596,7 +596,7 @@ struct CodeGenerator {
                 .current_function = function_
                 defer .current_function = previous_function
 
-                if not function_.type is ImplicitConstructor and not function_.type is ImplicitEnumConstructor {
+                if not function_.type is ImplicitConstructor and not function_.type is ImplicitEnumConstructor and not function_.is_comptime {
                     output += .codegen_function_in_namespace(function_, containing_struct: struct_.type_id)
                     output += "\n"
                 }
@@ -625,7 +625,7 @@ struct CodeGenerator {
                 let previous_function = .current_function
                 .current_function = function_
                 defer .current_function = previous_function
-                if not function_.type is ImplicitConstructor and not function_.type is ImplicitEnumConstructor {
+                if not function_.type is ImplicitConstructor and not function_.type is ImplicitEnumConstructor and not function_.is_comptime {
                     output += .codegen_function_in_namespace(function_, containing_struct: enum_.type_id)
                     output += "\n"
                 }
@@ -2720,6 +2720,10 @@ struct CodeGenerator {
     }
 
     function codegen_function(mut this, anon function_: CheckedFunction) throws -> String {
+        if function_.is_comptime {
+            return ""
+        }
+
         return .codegen_function_in_namespace(function_, containing_struct: None)
     }
 

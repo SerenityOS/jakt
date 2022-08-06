@@ -92,6 +92,7 @@ enum Token {
     False(Span)
     For(Span)
     Function(Span)
+    Comptime(Span)
     If(Span)
     Import(Span)
     In(Span)
@@ -198,6 +199,7 @@ enum Token {
         False(span) => span
         For(span) => span
         Function(span) => span
+        Comptime(span) => span
         If(span) => span
         Import(span) => span
         In(span) => span
@@ -245,6 +247,7 @@ enum Token {
         "false" => Token::False(span)
         "for" => Token::For(span)
         "function" => Token::Function(span)
+        "comptime" => Token::Comptime(span)
         "if" => Token::If(span)
         "import" => Token::Import(span)
         "in" => Token::In(span)

@@ -1,0 +1,15 @@
+/// Expect: selfhost-only
+/// - output: "fibonacci(16) = 987\n"
+
+
+comptime fibonacci(anon value: i64) -> i64 {
+    if value < 2 {
+        return value
+    }
+
+    return fibonacci(value - 1) + fibonacci(value - 2)
+}
+
+function main() {
+    println("fibonacci(16) = {}", fibonacci(16));
+}
