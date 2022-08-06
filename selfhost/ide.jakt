@@ -2,7 +2,7 @@ import parser { BinaryOperator, FunctionLinkage }
 import typechecker {
     BuiltinType, CheckedBlock, CheckedCall, CheckedExpression,
     CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
-    Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId, expression_type,
+    Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId,
     CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id,
     CheckedVariable, NumberConstant, CheckedEnumVariant}
 import utility { panic, todo, join, prepend_to_each, Span }
@@ -604,7 +604,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
                 return found
             }
             if index_span.contains(span) {
-                let type_id = expression_type(expr)
+                let type_id = expr.type()
                 mut result_type: TypeId? = None
                 if not known_type_id.equals(unknown_type_id()) {
                     result_type = Some(known_type_id)

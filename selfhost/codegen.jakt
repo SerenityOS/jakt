@@ -9,7 +9,7 @@ import parser { BinaryOperator, FunctionLinkage }
 import typechecker {
     BuiltinType, CheckedBlock, CheckedCall, CheckedExpression,
     CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
-    Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId, expression_can_throw, expression_type,
+    Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId,
     CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id, never_type_id,
     CheckedVariable }
 import utility { panic, todo, join, prepend_to_each, Span }
@@ -1276,7 +1276,7 @@ struct CodeGenerator {
             output += object
             output += ")"
 
-            match .program.get_type(expression_type(expr)) {
+            match .program.get_type(expr.type()) {
                 RawPtr => {
                     output += "->"
                 }
@@ -1315,7 +1315,7 @@ struct CodeGenerator {
                 PreIncrement => "++"
                 PreDecrement => "--"
                 Negate => "-"
-                Dereference => match .program.get_type(expression_type(expr)) {
+                Dereference => match .program.get_type(expr.type()) {
                     RawPtr => "*"
                     else => ""
                 }
@@ -1440,7 +1440,7 @@ struct CodeGenerator {
         Match(expr, match_cases, type_id, all_variants_constant) => .codegen_match(expr, match_cases, type_id, all_variants_constant)
         EnumVariantArg(expr, arg, enum_variant) => {
             let var_name = .codegen_expression(expr)
-            let enum_type = .codegen_type_possibly_as_namespace(type_id: expression_type(expr), as_namespace: true)
+            let enum_type = .codegen_type_possibly_as_namespace(type_id: expr.type(), as_namespace: true)
             let variant_name = enum_variant.name()
             mut arg_name = "value"
             if enum_variant is StructLike {
@@ -1682,7 +1682,7 @@ struct CodeGenerator {
         .control_flow_state = .control_flow_state.enter_match()
         mut output = ""
 
-        let expr_type = .program.get_type(expression_type(expr))
+        let expr_type = .program.get_type(expr.type())
         if expr_type is Enum(enum_id) {
             output += .codegen_enum_match(
                 enum_: .program.get_enum(enum_id)
@@ -1937,7 +1937,7 @@ struct CodeGenerator {
                 }
             }
             Expression(expr) => {
-                if expression_type(expr).equals(void_type_id()) or (expression_type(expr).equals(unknown_type_id()) and not expr is OptionalNone) {
+                if expr.type().equals(void_type_id()) or (expr.type().equals(unknown_type_id()) and not expr is OptionalNone) {
                     output += "return ("
                     output += .codegen_expression(expr)
                     output += "), JaktInternal::ExplicitValue<void>();\n"
@@ -1964,9 +1964,9 @@ struct CodeGenerator {
 
     function codegen_binary_expression(mut this, expression: CheckedExpression, type_id: TypeId, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator) throws -> String {
         if op is NoneCoalescing {
-            let rhs_type_id = expression_type(rhs)
+            let rhs_type_id = rhs.type()
             let rhs_type = .program.get_type(rhs_type_id)
-            let rhs_can_throw = expression_can_throw(rhs)
+            let rhs_can_throw = rhs.can_throw()
 
             mut output = ""
 
@@ -2163,7 +2163,7 @@ struct CodeGenerator {
         output += object
         output += ")"
 
-        match .program.get_type(expression_type(expr)) {
+        match .program.get_type(expr.type()) {
             RawPtr => {
                 output += "->"
             }
