@@ -26065,7 +26065,7 @@ TRY((((*this).add_function_to_scope(((enum_).scope_id),((variant).name),function
 else if (is_typed){
 const parser::ParsedVarDecl param = (((((variant).params).value()))[static_cast<i64>(0LL)]);
 const typechecker::TypeId type_id = TRY((((*this).typecheck_typename(((param).parsed_type),((enum_).scope_id),((param).name)))));
-TRY((((((enum_).variants)).push(typename typechecker::CheckedEnumVariant::Typed(enum_id,((variant).name),type_id,((param).span))))));
+TRY((((((enum_).variants)).push(typename typechecker::CheckedEnumVariant::Typed(enum_id,((variant).name),type_id,((variant).span))))));
 const Optional<typechecker::FunctionId> maybe_enum_variant_constructor = TRY((((*this).find_function_in_scope(((enum_).scope_id),((variant).name)))));
 if ((!((maybe_enum_variant_constructor).has_value()))){
 const bool can_function_throw = is_boxed;
@@ -32478,7 +32478,7 @@ String output = String("");
 (output += String("auto builder = TRY(StringBuilder::create());\n"));
 (output += String("switch (this->index()) {"));
 {
-Range<size_t> _magic = (((Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((((enum_).variants)).size())})));
+Range<size_t> _magic = (Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((enum_).variants)).size()))});
 for (;;){
 Optional<size_t> _magic_value = ((_magic).next());
 if ((!((_magic_value).has_value()))){
@@ -35975,8 +35975,9 @@ case 0: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typechecker::CheckedEnumVariant::Untyped>();String const& name = __jakt_match_value.name;
 utility::Span const& variant_span = __jakt_match_value.span;
 {
-const Optional<typechecker::NumberConstant> number_constant_none = JaktInternal::OptionalNone();
-return ((typename ide::Usage::EnumVariant(variant_span,name,((checked_enum).type_id),(TRY((Array<Tuple<Optional<String>,typechecker::TypeId>>::create_with({})))),number_constant_none)));
+if (((variant_span).contains(span))){
+return ((typename ide::Usage::EnumVariant(variant_span,name,((checked_enum).type_id),(TRY((Array<Tuple<Optional<String>,typechecker::TypeId>>::create_with({})))),JaktInternal::OptionalNone())));
+}
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -36416,7 +36417,7 @@ const bool optimize = TRY((((args_parser).flag((TRY((Array<String>::create_with(
 const bool lexer_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-dl")}))))))));
 const bool parser_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-dp")}))))))));
 const bool typechecker_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-dt")}))))))));
-const bool build_executable = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-b")}))))))));
+const bool build_executable = (!TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-S")})))))))));
 const bool run_executable = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-r")}))))))));
 const bool codegen_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-d")}))))))));
 const bool debug_print = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("--debug-print")}))))))));
@@ -36634,7 +36635,7 @@ if ((TRY((((file_path)->basename()))) == String("g++"))){
 (color_flag = String("-fdiagnostics-color=always"));
 TRY((((extra_flags).push(String("-Wno-literal-suffix")))));
 }
-Array<String> compile_args = (TRY((Array<String>::create_with({cxx_compiler_path, color_flag, String("-std=c++20"), String("-Wno-unknown-warning-option"), String("-Wno-trigraphs"), String("-Wno-parentheses-equality"), String("-Wno-unqualified-std-cast-call"), String("-Wno-user-defined-literals"), String("-Wno-deprecated-declarations")}))));
+Array<String> compile_args = (TRY((Array<String>::create_with({cxx_compiler_path, color_flag, String("-std=c++20"), String("-fno-exceptions"), String("-Wno-unknown-warning-option"), String("-Wno-trigraphs"), String("-Wno-parentheses-equality"), String("-Wno-unqualified-std-cast-call"), String("-Wno-user-defined-literals"), String("-Wno-deprecated-declarations")}))));
 if (optimize){
 TRY((((compile_args).push(String("-O3")))));
 }
@@ -36752,7 +36753,7 @@ String output = String("Flags:\n");
 (output += String("  -dl\t\tPrint debug info for the lexer.\n"));
 (output += String("  -dp\t\tPrint debug info for the parser.\n"));
 (output += String("  -dt\t\tPrint debug info for the typechecker.\n"));
-(output += String("  -b\t\tBuild an executable file.\n"));
+(output += String("  -S\t\tOnly output source (do not build).\n"));
 (output += String("  -r\t\tBuild and run an executable file.\n"));
 (output += String("  -d\t\tInsert debug statement spans in generated C++ code.\n"));
 (output += String("  --debug-print\t\tOutput debug print.\n"));
