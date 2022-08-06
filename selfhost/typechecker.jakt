@@ -2863,7 +2863,7 @@ struct Typechecker {
                     } else if is_typed {
                         let param = variant.params![0]
                         let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id, name: param.name)
-                        enum_.variants.push(CheckedEnumVariant::Typed(enum_id, name: variant.name, type_id, span: param.span))
+                        enum_.variants.push(CheckedEnumVariant::Typed(enum_id, name: variant.name, type_id, span: variant.span))
 
                         let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
