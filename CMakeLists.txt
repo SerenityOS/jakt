@@ -11,7 +11,6 @@ set(FINAL_STAGE "1" CACHE STRING "Compiler stage to stop at, either 1 (default) 
 
 macro(add_jakt_compiler_flags target)
   target_compile_options("${target}" PRIVATE
-    -fno-exceptions
     -Wno-unused-local-typedefs
     -Wno-unused-function
     -Wno-unknown-warning-option
@@ -25,7 +24,9 @@ macro(add_jakt_compiler_flags target)
   )
   if (MSVC)
     # For clang-cl, which shows up to CMake as MSVC and accepts both kinds of arguments
-    target_compile_options("${target}" PRIVATE /permissive- /utf-8)
+    target_compile_options("${target}" PRIVATE /permissive- /utf-8 /EHsc-)
+  else()
+    target_compile_options("${target}" PRIVATE -fno-exceptions)  
   endif()
   target_compile_features("${target}" PRIVATE cxx_std_20)
 endmacro()
