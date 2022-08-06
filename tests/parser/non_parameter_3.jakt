@@ -1,7 +1,7 @@
 /// Expect:
 /// - error: "Expected parameter\n"
 
-function foo(anon n: i32 = 1) {
+function foo(anon n: i32 != 1) {
     println("{}", n)
 }
 
