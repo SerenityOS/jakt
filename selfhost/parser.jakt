@@ -1973,7 +1973,7 @@ struct Parser {
             }
         }
 
-        .error("Expected complete block", merge_spans(start, .current().span()))
+        .error("Expected complete block", .current().span())
         return block
     }
 
