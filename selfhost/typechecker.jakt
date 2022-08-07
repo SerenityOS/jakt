@@ -8757,7 +8757,7 @@ struct Typechecker {
                             lhs_type_id: callee.params[i+arg_offset].variable.type_id
                             rhs_type_id: expression_type(checked_arg)
                             &mut generic_inferences
-                            span: .expression_span(checked_arg)
+                            span: expression_span(checked_arg)
                         )
 
                         args.push((call.name, checked_arg))
