@@ -512,11 +512,19 @@ A reference is either immutable (default) or mutable.
 
 ### Dereferencing a reference
 
-To "get the value out" of a reference, it must be dereferenced using the `*` operator:
+To "get the value out" of a reference, it must be dereferenced using the `*` operator, however the compiler will automatically dereference references if the dereferencing is the single unambiguous correct use of the reference (in practice, manual dereferencing is only required where the reference is being stored or passed to functions).
 
 ```jakt
 function sum(a: &i64, b: &i64) -> i64 {
+    return a + b
+    // Or with manual dereferencing:
     return *a + *b
+}
+
+function test() {
+    let a = 1
+    let b = 2
+    let c = sum(&a, &b)
 }
 ```
 
@@ -527,6 +535,8 @@ struct Foo {
     x: i64
 }
 function zero_out(foo: &mut Foo) {
+    foo.x = 0
+    // Or with manual dereferencing:
     (*foo).x = 0
 }
 ```
@@ -540,6 +550,7 @@ function zero_out(foo: &mut Foo) {
 - [x] No references in return types
 - [x] No mutable references to immutable values
 - [x] Allow `&foo` and `&mut foo` without argument label for parameters named `foo`
+- [x] Auto-dereference references where applicable
 
 ### References TODO:
 
@@ -557,3 +568,26 @@ function zero_out(foo: &mut Foo) {
 ### Closures TODO:
 
 - [] Return function from function
+
+## Compiletime Execution
+
+Compiletime Function Execution (or CTFE) in Jakt allows the execution of any jakt function at compiletime, provided that the result value
+may be synthesized using its fields - currently this only disallows a few prelude objects that cannot be constructed by their fields (like Iterator objects and StringBuilders).
+
+Any regular Jakt function can be turned into a compiletime function by replacing the `function` keyword in its declaration with the `comptime` keyword, which will force all calls to that specific function to be evaluated at compile time.
+
+### Invocation Restrictions
+
+Comptime functions may only be invoked by constant expressions; this restriction includes the `this` object of methods.
+
+### Throwing in a comptime context 
+
+Throwing behaves the same way as normal error control flow does, if the error leaves the comptime context (by reaching the original callsite), it will be promoted to a compiliation error.
+
+### Side effects
+
+Currently all prelude functions with side effects behave the same as they would in runtime. This allows e.g. pulling in files into the binary; some functions may be changed later to perform more useful actions.
+
+### comptime TODO 
+
+- [ ] Implement execution of all Jakt expressions
