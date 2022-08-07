@@ -3343,7 +3343,48 @@ struct Interpreter {
         // Garbage
         // IndexedExpression
         // Boolean
-        // IndexedStruct
+        IndexedStruct(expr, index) => {
+            let value = match .execute_expression(expr, scope) {
+                Return(value) => {
+                    return StatementResult::Return(value)
+                }
+                Throw(value) => {
+                    return StatementResult::Throw(value)
+                }
+                JustValue(value) => value
+                Continue => {
+                    return StatementResult::Continue
+                }
+                Break => {
+                    return StatementResult::Break
+                }
+            }
+            yield match value.impl {
+                Struct(fields, struct_id)
+                | Class(fields, struct_id) => {
+                    let struct_ = .program.get_struct(struct_id)
+                    mut idx = 0
+                    mut found_index: i64? = None
+                    for field_id in struct_.fields.iterator() {
+                        if .program.get_variable(field_id).name == index {
+                            found_index = idx
+                            break
+                        }
+                        idx += 1
+                    }
+                    if not found_index.has_value() {
+                        .error("Attempted to access a field that does not exist", value.span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+
+                    yield StatementResult::JustValue(fields[found_index!])
+                }
+                else => {
+                    .error("Attempted to access a field on a non-struct/enum type", value.span)
+                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                }
+            }
+        }
         // JaktDictionary
         // NamespacedVar
         NumericConstant(val, span) => StatementResult::JustValue(match val {
