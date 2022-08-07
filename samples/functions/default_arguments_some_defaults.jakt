@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "Hello 5 false World\n"
+
+function say(text: String = "WHF", number: i64 = 5, boolean: bool = false, optional: String? = None) {
+    println("{} {} {} {}", text, number, boolean, optional)
+}
+
+function main() {
+    say(text: "Hello", optional: "World")
+}

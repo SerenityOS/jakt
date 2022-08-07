@@ -4613,10 +4613,30 @@ struct Typechecker {
                         visibility: Visibility::Public
                     )
 
+                    mut checked_default_value: CheckedExpression? = None
+                    if param.default_argument.has_value() {
+                        //FIXME: Get the real safety mode from somewhere, right now it assumes it is safe
+                        mut checked_default_value_expr = .typecheck_expression(param.default_argument!, scope_id, safety_mode: SafetyMode::Safe, type_hint: param_type)
+                        
+                        if checked_default_value_expr is OptionalNone(span: expr_span) {
+                            checked_default_value_expr = CheckedExpression::OptionalNone(span: expr_span, type_id: param_type)
+                        }
+                        
+                        let default_value_type_id = expression_type(checked_default_value_expr)
+                        checked_default_value = checked_default_value_expr
+                        if not default_value_type_id.equals(param_type) {
+                            checked_default_value = None
+                            .error(
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(param_type), .type_name(default_value_type_id))
+                                param.span
+                            )
+                        }
+                    }
+
                     checked_function.params.push(CheckedParameter(
                         requires_label: param.requires_label
                         variable: checked_variable
-                        default_value: None
+                        default_value: checked_default_value
                     ))
 
                     if check_scope.has_value() {

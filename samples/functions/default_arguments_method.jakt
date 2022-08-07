@@ -1,0 +1,13 @@
+/// Expect:
+/// - output: "Well, hello friends. My name is Jane and I am 36 years old.\n"
+
+class Person {
+    public function greet(this, name: String = "Jane", age: i64 = 36) {
+        println("Well, hello friends. My name is {} and I am {} years old.", name, age)
+    }
+}
+
+function main() {
+    let p = Person()
+    p.greet()
+}
