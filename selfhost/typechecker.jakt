@@ -2220,13 +2220,16 @@ struct Interpreter {
             Normal => {
                 mut scope = InterpreterScope(bindings: [:], parent: None);
                 for i in 0..function_to_run.params.size() {
+                    if this_offset != 0 and i == 0 {
+                        continue
+                    }
                     let param_name = function_to_run.params[i].variable.name
                     let param_value = arguments[i]
                     scope.bindings[param_name] = param_value
                 }
 
                 if this_argument.has_value() {
-                    scope.bindings["this"] = this_argument!
+                    scope.bindings.set("this", this_argument!)
                 }
 
                 return match .execute_block(block: function_to_run.block, scope, call_span) {
