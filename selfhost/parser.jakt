@@ -12,9 +12,15 @@ import lexer { Token, NumericConstant }
 import utility { panic, todo, FileId, Span, extend_array }
 import compiler { Compiler }
 
-function merge_spans(anon start: Span, anon end: Span) -> Span {
+function merge_spans(anon start: Span, anon end: Span) throws -> Span {
+    if end.file_id.id == 0 and end.start == 0 and end.end == 0 {
+        return start
+    }
+
     if start.file_id.id != end.file_id.id {
-        panic("cannot merge spans from two different files!")
+        panic(
+            format("cannot merge spans from two different files ({} and {})", start, end)
+        )
     }
 
     return Span(file_id: start.file_id, start: start.start, end: end.end)
