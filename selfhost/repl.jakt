@@ -1,10 +1,9 @@
-import typechecker { Typechecker, Interpreter, LoadedModule, ModuleId, ScopeId, TypeId, CheckedProgram, SafetyMode, InterpreterScope }
+import typechecker { Typechecker, Interpreter, LoadedModule, ModuleId, ScopeId, TypeId, CheckedProgram, SafetyMode, InterpreterScope, CheckedUnaryOperator, CheckedExpression }
 import compiler { Compiler, FilePath }
 import lexer { Lexer }
 import parser { Parser }
 import utility { Span }
 import error { JaktError }
-import codegen { CodeGenerator, CodegenDebugInfo, ControlFlowState, AllowedControlExits }
 
 import extern c "stdio.h" {
     extern function fopen(pathname: raw c_char, mode: raw c_char) -> raw FILE
@@ -88,6 +87,137 @@ struct Editor {
     }
 }
 
+function serialize_unary_operation(anon op: CheckedUnaryOperator, anon expr: String) -> String => match op {
+    PreIncrement => "++" + expr
+    PostIncrement => expr + "++"
+    PreDecrement => "--" + expr
+    PostDecrement => expr + "--"
+    Negate => "-" + expr
+    Dereference => "*" + expr
+    RawAddress => "&raw " + expr
+    Reference => "&" + expr
+    MutableReference => "&mut " + expr
+    LogicalNot => "not " + expr
+    BitwiseNot => "~" + expr
+    else => "(<Unimplemented unary operator> " + expr + ")"
+}
+
+function serialize_ast_node(anon node: CheckedExpression) throws -> String => match node {
+    Boolean(val) => format("{}", val)
+    NumericConstant(val) => match val {
+        I8(value) => format("{}i8", value)
+        I16(value) => format("{}i16", value)
+        I32(value) => format("{}i32", value)
+        I64(value) => format("{}i64", value)
+        U8(value) => format("{}u8", value)
+        U16(value) => format("{}u16", value)
+        U32(value) => format("{}u32", value)
+        U64(value) => format("{}u64", value)
+        F32(value) => format("{}f32", value)
+        F64(value) => format("{}f64", value)
+        USize(value) => format("{}uz", value)
+    }
+    QuotedString(val) => format("\"{}\"", val)
+    ByteConstant(val) => format("b'{}'", val)
+    CharacterConstant(val) => format("'{}'", val)
+    UnaryOp(expr, op) => serialize_unary_operation(op, serialize_ast_node(expr))
+    JaktTuple(vals) => {
+        mut builder = StringBuilder::create()
+        builder.append_string("(")
+        for i in 0..vals.size() {
+            if i != 0 {
+                builder.append_string(", ")
+            }
+            builder.append_string(serialize_ast_node(vals[i]))
+        }
+        builder.append_string(")")
+        yield builder.to_string()
+    }
+    Range(from, to) => format("{}..{}", serialize_ast_node(from), serialize_ast_node(to))
+    JaktArray(vals) => {
+        mut builder = StringBuilder::create()
+        builder.append_string("[")
+        for i in 0..vals.size() {
+            if i != 0 {
+                builder.append_string(", ")
+            }
+            builder.append_string(serialize_ast_node(vals[i]))
+        }
+        builder.append_string("]")
+        yield builder.to_string()
+    }
+    JaktSet(vals) => {
+        mut builder = StringBuilder::create()
+        builder.append_string("{")
+        for i in 0..vals.size() {
+            if i != 0 {
+                builder.append_string(", ")
+            }
+            builder.append_string(serialize_ast_node(vals[i]))
+        }
+        builder.append_string("}")
+        yield builder.to_string()
+    }
+    JaktDictionary(vals) => {
+        mut builder = StringBuilder::create()
+        builder.append_string("[")
+        for i in 0..vals.size() {
+            if i != 0 {
+                builder.append_string(", ")
+            }
+            let val = vals[i]
+            builder.append_string(serialize_ast_node(val.0))
+            builder.append_string(": ")
+            builder.append_string(serialize_ast_node(val.1))
+        }
+        builder.append_string("]")
+        yield builder.to_string()
+    }
+    IndexedExpression(expr, index) => format("{}[{}]", serialize_ast_node(expr), serialize_ast_node(index))
+    IndexedRangeExpression(expr, from, to) => format("{}[{}..{}]", serialize_ast_node(expr), serialize_ast_node(from), serialize_ast_node(to))
+    IndexedDictionary(expr, index) => format("{}[{}]", serialize_ast_node(expr), serialize_ast_node(index))
+    IndexedTuple(expr, index) 
+    | IndexedStruct(expr, index) => format("{}.{}", serialize_ast_node(expr), index)
+    NamespacedVar(namespaces, var) => {
+        mut builder = StringBuilder::create()
+        for namespace_ in namespaces.iterator() {
+            builder.append_string(namespace_.name)
+            builder.append_string("::")
+        }
+        builder.append_string(var.name)
+        yield builder.to_string()
+    }
+    Var(var) => var.name
+    OptionalNone => "None"
+    OptionalSome(expr) => format("Some({})", serialize_ast_node(expr))
+    ForcedUnwrap(expr) => format("{}!", serialize_ast_node(expr))
+    Call(call) => {
+        mut builder = StringBuilder::create()
+
+        for namespace_ in call.namespace_.iterator() {
+            builder.append_string(namespace_.name)
+            builder.append_string("::")
+        }
+        builder.append_string(call.name)
+        builder.append_string("(")
+        for i in 0..call.args.size() {
+            if i != 0 {
+                builder.append_string(", ")
+            }
+            let arg = call.args[i]
+            if not arg.0.is_empty() {
+                builder.append_string(arg.0)
+                builder.append_string(": ")
+            }
+            builder.append_string(serialize_ast_node(arg.1))
+        }
+        builder.append_string(")")
+        yield builder.to_string()
+    }
+    Garbage => "<Garbage>"
+    else => "<Unimplemented>"
+}
+
 function handle_possible_error(compiler: &mut Compiler) throws -> bool {
     compiler.print_errors()
     let has_error = compiler.errors.size() > 0
@@ -158,28 +288,6 @@ function start_repl() throws {
         parent: None
     )
 
-    mut generator = CodeGenerator(
-        compiler
-        program: typechecker.program
-        control_flow_state: ControlFlowState(
-            allowed_exits: AllowedControlExits::Nothing
-            passes_through_match: false
-            passes_through_try: false
-            match_nest_level: 0
-        )
-        entered_yieldable_blocks: []
-        deferred_output: ""
-        current_function: None
-        debug_info: CodegenDebugInfo(
-            compiler
-            line_spans: [:]
-            statement_span_comments: false
-        )
-        namespace_stack: []
-        fresh_var_counter: 0
-        fresh_label_counter: 0
-    )
-
     mut editor = Editor::create(prompt: "> ")
     defer editor.destroy()
 
@@ -217,7 +325,40 @@ function start_repl() throws {
             continue
         }
 
+        if tokens.is_empty() {
+            continue
+        }
+
         mut parser = Parser(index: 0, tokens, compiler)
+
+        let first_token = tokens.first()!
+        if first_token is Function
+            or first_token is Comptime
+            or first_token is Struct
+            or first_token is Class
+            or first_token is Enum
+            or first_token is Boxed
+            or first_token is Namespace {
+
+            let parsed_namespace = try parser.parse_namespace() catch {
+                handle_possible_error(&mut compiler)
+                continue
+            }
+
+            if handle_possible_error(&mut compiler) {
+                continue
+            }
+
+            try typechecker.typecheck_module(parsed_namespace, scope_id: root_scope_id) catch {
+                handle_possible_error(&mut compiler)
+                continue
+            }
+
+            handle_possible_error(&mut compiler)
+
+            continue
+        }
+
         let parsed_statement = try parser.parse_statement(inside_block: true) catch {
             handle_possible_error(&mut compiler)
             continue
@@ -269,8 +410,8 @@ function start_repl() throws {
         }
 
         let output = match result {
-            Return(value) | JustValue(value) => generator.codegen_expression(expr: value.to_checked_expression(interpreter))
-            Throw(value) => "throw " + generator.codegen_expression(expr: value.to_checked_expression(interpreter))
+            Return(value) | JustValue(value) => serialize_ast_node(value.to_checked_expression(interpreter))
+            Throw(value) => "throw " + serialize_ast_node(value.to_checked_expression(interpreter))
             Break | Continue => {
                 continue
             }
