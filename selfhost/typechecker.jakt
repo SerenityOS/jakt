@@ -5860,6 +5860,18 @@ struct Typechecker {
                 )
                 return .find_or_add_type_id(rawptr_type)
             }
+            Reference(ref_type_id) => {
+                let ref_type = Type::Reference(
+                    .substitute_typevars_in_type(type_id: ref_type_id, generic_inferences)
+                )
+                return .find_or_add_type_id(ref_type)
+            }
+            MutableReference(ref_type_id) => {
+                let ref_type = Type::MutableReference(
+                    .substitute_typevars_in_type(type_id: ref_type_id, generic_inferences)
+                )
+                return .find_or_add_type_id(ref_type)
+            }
             else => {
                 return type_id
             }
