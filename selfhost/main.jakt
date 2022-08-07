@@ -13,6 +13,7 @@ import utility { FilePath, ArgsParser, Span }
 import lexer { Lexer }
 import parser { Parser }
 import typechecker { Typechecker }
+import repl { start_repl }
 import ide
 
 function usage() => "usage: jakt [-h] [OPTIONS] <filename>"
@@ -98,6 +99,11 @@ function main(args: [String]) {
     let goto_type_def = args_parser.option(["-t", "--goto-type-def"])
     let hover = args_parser.option(["-e", "--hover"])
     let completions = args_parser.option(["-m", "--completions"])
+
+    if args_parser.flag(["--repl"]) {
+        start_repl()
+        return 0
+    }
 
     let positional_arguments = args_parser.remaining_arguments()
 

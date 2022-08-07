@@ -69,15 +69,16 @@ target_include_directories(jakt_stage0
 )
 
 set(SELFHOST_SOURCES
+  runtime/prelude.jakt
   selfhost/codegen.jakt
   selfhost/compiler.jakt
   selfhost/error.jakt
   selfhost/ide.jakt
   selfhost/lexer.jakt
   selfhost/parser.jakt
+  selfhost/repl.jakt
   selfhost/typechecker.jakt
   selfhost/utility.jakt
-  runtime/prelude.jakt
 )
 
 add_jakt_executable(jakt_stage0 jakt_stage1

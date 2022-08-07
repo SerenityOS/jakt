@@ -6,43 +6,86 @@ import utility { Span }
 import error { JaktError }
 import codegen { CodeGenerator, CodegenDebugInfo, ControlFlowState, AllowedControlExits }
 
-import extern "LibLine/Editor.h" {
-    namespace AK {
-        extern struct String {
-            function characters(this) -> raw c_char
-            function length(this) -> usize
-        }
-        extern struct Error {
-            function code(this) -> i32
-            function string_literal(this) -> String
-        }
-        extern struct ErrorOr<T> {
-            function is_error(this) -> bool
-            function release_value(mut this) -> T
-            function error(this) -> Error
-        }
-        extern struct Result<T> {
-            function is_error(this) -> bool
-            function release_value(mut this) -> T
-        }
-        extern struct NonnullRefPtr<T> {
-            function ptr(this) -> raw T
-        }
-    }
-    namespace Line {
-        extern struct Editor {
-            function try_create() -> AK::ErrorOr<AK::NonnullRefPtr<Editor> >
-            function get_line(mut this, anon prompt: raw c_char) -> AK::Result<AK::String>
-        }
-    }
+import extern c "stdio.h" {
+    extern function fopen(pathname: raw c_char, mode: raw c_char) -> raw FILE
+    extern function fclose(stream: raw FILE) -> raw c_int
+    // Blame windows for this.
+    extern function fgets(s: raw c_char, n: usize, stream: raw FILE) -> raw c_char
 }
 
-function get_line(editor: &mut Line::Editor) throws {
-    let input_string = editor.get_line("> ".c_string()).release_value()
+function null<T>() -> raw T {
+    unsafe {
+        cpp {
+            "return nullptr;"
+        }
+    }
 
-    mut builder = StringBuilder::create()
-    builder.append_c_string(input_string.characters())
-    return builder.to_string()
+    abort()
+}
+
+function allocate<T>(count: usize) -> raw T {
+    unsafe {
+        cpp {
+            "return static_cast<T*>(malloc(count * sizeof(T)));"
+        }
+    }
+
+    abort()
+}
+
+enum LineResult {
+    Line(String)
+    Eof
+}
+
+struct Editor {
+    standard_input_file: raw FILE
+    line_pointer: raw c_char
+    prompt: String
+
+    function create(prompt: String) throws -> Editor {
+        mut std_in = fopen("/dev/stdin".c_string(), "r".c_string())
+        if std_in == null<FILE>() {
+            eprintln("Could not open /dev/stdin for reading")
+            throw Error::from_errno(42)
+        }
+
+        let editor = Editor(
+            standard_input_file: std_in
+            line_pointer: allocate<c_char>(count: 4096)
+            prompt
+        )
+        return editor
+    }
+
+    function get_line(mut this) throws -> LineResult {
+        eprint("{}", .prompt)
+
+        mut builder = StringBuilder::create()
+        unsafe {
+            let c_string = fgets(
+                s: .line_pointer
+                n: 4096
+                stream: .standard_input_file)
+
+            if c_string == null<c_char>() {
+                return LineResult::Eof
+            }
+
+            builder.append_c_string(c_string)
+        }
+
+        return LineResult::Line(builder.to_string())
+    }
+
+    function destroy(mut this) {
+        fclose(stream: .standard_input_file)
+        unsafe {
+            cpp {
+                "free(line_pointer);"
+            }
+        }
+    }
 }
 
 function handle_possible_error(compiler: &mut Compiler) throws -> bool {
@@ -53,7 +96,11 @@ function handle_possible_error(compiler: &mut Compiler) throws -> bool {
     return has_error
 }
 
-function actual_main(anon editor: &mut Line::Editor) throws {
+function is_ascii_upper_case(anon c: u8) -> bool {
+    return c >= 65 && c <= 90
+}
+
+function start_repl() throws {
     mut compiler = Compiler(
         files: []
         file_ids: [:]
@@ -133,6 +180,9 @@ function actual_main(anon editor: &mut Line::Editor) throws {
         fresh_label_counter: 0
     )
 
+    mut editor = Editor::create(prompt: "> ")
+    defer editor.destroy()
+
     loop {
         if not compiler.errors.is_empty() {
             compiler.print_errors()
@@ -140,9 +190,15 @@ function actual_main(anon editor: &mut Line::Editor) throws {
             compiler.errors = arr
         }
 
-        let line = get_line(&mut editor)
+        let line_result = try editor.get_line() catch error {
+            return
+        }
 
-        if line == ".exit" {
+        guard line_result is Line(line) else {
+            break
+        }
+
+        if line == ".exit\n" {
             break
         }
 
@@ -220,19 +276,5 @@ function actual_main(anon editor: &mut Line::Editor) throws {
             }
         }
         println("= {}", output)
-    }
-}
-
-function main() {
-    mut editor_or_error = Line::Editor::try_create()
-    if editor_or_error.is_error() {
-        println("Failed lol")
-        return 1
-    }
-
-    mut editor_nnrp = editor_or_error.release_value()
-    unsafe {
-        mut editor_ptr = editor_nnrp.ptr()
-        actual_main(&mut *editor_ptr)
     }
 }
