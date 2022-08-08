@@ -6,6 +6,12 @@
 
 #include <IO/File.h>
 #include <errno.h>
+#ifdef _WIN32
+#    include <direct.h>
+#else
+#    include <dirent.h>
+#    include <sys/stat.h>
+#endif
 
 namespace JaktInternal {
 
@@ -90,6 +96,17 @@ bool File::exists(String path)
         return false;
     fclose(file);
     return true;
+}
+
+ErrorOr<void> mkdir(String path)
+{
+#ifdef _WIN32
+    if (::mkdir(path.c_string()) == -1)
+#else
+    if (::mkdir(path.c_string(), S_IRWXU) == -1)
+#endif
+        return Error::from_errno(errno);
+    return ErrorOr<void> {};
 }
 
 }

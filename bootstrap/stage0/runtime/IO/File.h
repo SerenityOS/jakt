@@ -32,6 +32,8 @@ private:
 
     FILE* m_stdio_file { nullptr };
 };
+
+ErrorOr<void> mkdir(String path);
 }
 
 namespace Jakt {
