@@ -2092,6 +2092,150 @@ struct Interpreter {
                         panic("Invalid String")
                     }
                 }
+                "length" => match this_argument!.impl {
+                    JaktString(value) => StatementResult::JustValue(Value(impl: ValueImpl::USize(value.length()), span: call_span))
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "hash" => match this_argument!.impl {
+                    JaktString(value) => StatementResult::JustValue(Value(impl: ValueImpl::U32(value.hash()), span: call_span))
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "substring" => match this_argument!.impl {
+                    JaktString(value) => match arguments[0].impl {
+                        USize(start)
+                        | U64(start)
+                        | U32(start)
+                        | U16(start)
+                        | U8(start)
+                        => match arguments[1].impl {
+                            USize(length)
+                            | U64(length)
+                            | U32(length)
+                            | U16(length)
+                            | U8(length)
+                            => {
+                                let result = value.substring(start: start as! usize, length: length as! usize)
+                                yield StatementResult::JustValue(Value(impl: ValueImpl::JaktString(result), span: call_span))
+                            }
+                            else => {
+                                .error("String::substring must be called with unsigned arguments", arguments[1].span)
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        else => {
+                            .error("String::substring must be called with unsigned arguments", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "number" => match arguments[0].impl {
+                    I64(number)
+                    | U32(number)
+                    | I32(number)
+                    | U16(number)
+                    | I16(number)
+                    | U8(number)
+                    | I8(number)
+                    => StatementResult::JustValue(Value(impl: ValueImpl::JaktString(String::number(number as! i64)), span: call_span))
+                    USize() | U64() => {
+                        .error("String::number must not be called with a usize or u64", arguments[0].span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                    else => {
+                        .error("String::number must be called with an integer", arguments[0].span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                }
+                "to_uint" => match this_argument!.impl {
+                    JaktString(value) => {
+                        let result = value.to_uint()
+                        yield StatementResult::JustValue(Value(
+                            impl: match result.has_value() {
+                                true => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::U32(result!), span: call_span))
+                                else => ValueImpl::OptionalNone()
+                            }
+                            span: call_span
+                        ))
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "to_int" => match this_argument!.impl {
+                    JaktString(value) => {
+                        let result = value.to_int()
+                        yield StatementResult::JustValue(Value(
+                            impl: match result.has_value() {
+                                true => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::I32(result!), span: call_span))
+                                else => ValueImpl::OptionalNone()
+                            }
+                            span: call_span
+                        ))
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "is_whitespace" => match this_argument!.impl {
+                    JaktString(value) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(value.is_whitespace()), span: call_span))
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "contains" => match this_argument!.impl {
+                    JaktString(value) => match arguments[0].impl {
+                        JaktString(arg) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(value.contains(arg)), span: call_span))
+                        else => {
+                            .error("String::contains must be called with a string", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "replace" => match this_argument!.impl {
+                    JaktString(value) => match arguments[0].impl {
+                        JaktString(replace) => match arguments[1].impl {
+                            JaktString(with) => StatementResult::JustValue(Value(impl: ValueImpl::JaktString(value.replace(replace, with)), span: call_span))
+                            else => {
+                                .error("String::replace must be called with strings", arguments[1].span)
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        else => {
+                            .error("String::replace must be called with strings", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "byte_at" => match this_argument!.impl {
+                    JaktString(value) => match arguments[0].impl {
+                        USize(index)
+                        | U64(index)
+                        | U32(index)
+                        | U16(index)
+                        | U8(index)
+                        => StatementResult::JustValue(Value(impl: ValueImpl::U8(value.byte_at(index as! usize)), span: call_span))
+                        else => {
+                            .error("String::byte_at must be called with an unsigned integer", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
                 else => {
                     .error(
                         format("Prelude function `String::{}` is not implemented", prelude_function),
