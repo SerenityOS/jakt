@@ -152,8 +152,8 @@ class ArrayIterator {
 public:
     ArrayIterator(NonnullRefPtr<Storage> storage, size_t offset, size_t size)
         : m_storage(move(storage))
-        , m_index(offset)
         , m_offset(offset)
+        , m_index(offset)
         , m_size(size)
     {
     }
