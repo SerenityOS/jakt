@@ -261,6 +261,9 @@ function main(args: [String]) {
                 CInt(ret_val) | I64(ret_val) => {
                     return ret_val
                 }
+                Void => {
+                    return 0
+                }
                 else => {
                     eprintln("Error: Main function must return an integer")
                     return 1
