@@ -35,7 +35,6 @@ protected:
 
 private:
     int m_code { 0 };
-    bool m_syscall { false };
 };
 
 template<typename T, typename ErrorType>
