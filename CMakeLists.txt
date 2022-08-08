@@ -27,6 +27,7 @@ macro(add_jakt_compiler_flags target)
   target_compile_options("${target}" PRIVATE
     -Wno-unused-local-typedefs
     -Wno-unused-function
+    -Wno-unused-variable
     -Wno-unknown-warning-option
     -Wno-trigraphs
     -Wno-parentheses-equality
