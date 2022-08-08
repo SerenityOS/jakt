@@ -12,8 +12,8 @@ import error { JaktError, print_error }
 import utility { FilePath, ArgsParser, Span }
 import lexer { Lexer }
 import parser { Parser }
-import typechecker { Typechecker }
-import repl { start_repl }
+import typechecker { Typechecker, Interpreter, Value, ValueImpl, FunctionId, ResolvedNamespace, ScopeId, ModuleId }
+import repl { REPL, serialize_ast_node }
 import ide
 
 function usage() => "usage: jakt [-h] [OPTIONS] <filename>"
@@ -25,7 +25,8 @@ function help() -> String{
     output += "  -dp\t\tPrint debug info for the parser.\n"
     output += "  -dt\t\tPrint debug info for the typechecker.\n"
     output += "  -S\t\tOnly output source (do not build).\n"
-    output += "  -r\t\tBuild and run an executable file.\n"
+    output += "  -cr, --compile-run\t\tBuild and run an executable file.\n"
+    output += "  -r, --run\t\tRun the given file without compiling it (all positional arguments after the file name will be passed to main).\n"
     output += "  -d\t\tInsert debug statement spans in generated C++ code.\n"
     output += "  --debug-print\t\tOutput debug print.\n"
     output += "  --prettify-cpp-source\t\tRun emitted C++ source through clang-format.\n" // FIXME: Add -p flag to be the same as rust compiler.
@@ -34,6 +35,8 @@ function help() -> String{
     output += "  -j,--json-errors\t\tEmit machine-readable (JSON) errors.\n"
     output += "  -H,--type-hints\t\tEmit machine-readable type hints (for IDE integration).\n"
     output += "  --try-hints\t\tEmit machine-readable try hints (for IDE integration).\n"
+    output += "  --repl\t\tStart a Read-Eval-Print loop session.\n"
+
 
     output += "\nOptions:\n"
     output += "  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\tDefaults to clang-format\n"
@@ -76,7 +79,7 @@ function main(args: [String]) {
     let parser_debug = args_parser.flag(["-dp"])
     let typechecker_debug = args_parser.flag(["-dt"])
     let build_executable = not args_parser.flag(["-S"])
-    let run_executable = args_parser.flag(["-r"])
+    let run_executable = args_parser.flag(["-cr", "--compile-run"])
     let codegen_debug = args_parser.flag(["-d"])
     let debug_print = args_parser.flag(["--debug-print"])
     let prettify_cpp_source = args_parser.flag(["--prettify-cpp-source"])
@@ -100,8 +103,11 @@ function main(args: [String]) {
     let hover = args_parser.option(["-e", "--hover"])
     let completions = args_parser.option(["-m", "--completions"])
 
+    let interpret_run = args_parser.flag(["-r", "--run"])
+
     if args_parser.flag(["--repl"]) {
-        start_repl()
+        mut repl = REPL::create()
+        repl.run()
         return 0
     }
 
@@ -109,19 +115,26 @@ function main(args: [String]) {
 
     mut file_name: String? = None
     mut first_arg = true
+    mut interpreted_main_arguments: [String] = []
 
     for arg in positional_arguments.iterator() {
         if first_arg {
             first_arg = false
             continue
         }
-        if file_name.has_value() {
+
+        if not file_name.has_value() {
+            file_name = arg
+            continue
+        }
+
+        if not interpret_run {
             eprintln("you can only pass one source file")
             eprintln("{}", usage())
             return 1
-        } else {
-            file_name = arg
         }
+
+        interpreted_main_arguments.push(arg)
     }
     if not file_name.has_value() {
         eprintln("you must pass a source file")
@@ -180,6 +193,86 @@ function main(args: [String]) {
         compiler
         parsed_namespace
     )
+
+    if interpret_run {
+        mut interpreter = Interpreter(
+            compiler
+            program: checked_program
+            spans: []
+        )
+
+        // Find the main function
+        let prelude_scope_id = ScopeId(module_id: ModuleId(id: 0), id: 0)
+        mut main_function_id: FunctionId? = None
+        for module in checked_program.modules.iterator() {
+            for scope in module.scopes.iterator() {
+                if not (scope.parent?.equals(prelude_scope_id) ?? false) {
+                    continue
+                }
+
+                for function_ in scope.functions.iterator() {
+                    if function_.0 == "main" {
+                        main_function_id = function_.1
+                        break
+                    }
+                }
+
+                if main_function_id.has_value() {
+                    break
+                }
+            }
+            if main_function_id.has_value() {
+                break
+            }
+        }
+
+        if not main_function_id.has_value() {
+            eprintln("Error: No main function found in program")
+            return 1
+        }
+
+        let namespace_: [ResolvedNamespace] = []
+        let call_span = Span(file_id: FileId(id: 0), start: 0, end: 0)
+        let first_main_param = checked_program.get_function(main_function_id!).params.first()
+        let arguments = match first_main_param.has_value() {
+            true => {
+                mut passed_arguments: [Value] = []
+                for argument in interpreted_main_arguments.iterator() {
+                    passed_arguments.push(Value(impl: ValueImpl::JaktString(argument), span: call_span))
+                }
+                yield [Value(
+                    impl: ValueImpl::JaktArray(values: passed_arguments, type_id: first_main_param!.variable.type_id)
+                    span: call_span
+                )]
+            }
+            else => []
+        }
+
+        let main_result = interpreter.execute(
+            function_to_run_id: main_function_id!
+            namespace_
+            this_argument: None
+            arguments
+            call_span)
+
+        match main_result {
+            Return(x) => match x.impl {
+                // FIXME: I64 should not be accepted here, we're just not performing implicit type conversions in the interpreter.
+                CInt(ret_val) | I64(ret_val) => {
+                    return ret_val
+                }
+                else => {
+                    eprintln("Error: Main function must return an integer")
+                    return 1
+                }
+            }
+
+            Throw(x) => {
+                eprintln("Error: Main function threw: {}", serialize_ast_node(x.to_checked_expression(interpreter)))
+                return 1
+            }
+        }
+    }
 
     if goto_def.has_value() {
         let index = goto_def!.to_uint()! as! usize;

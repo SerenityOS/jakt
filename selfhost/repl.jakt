@@ -1,5 +1,5 @@
 import typechecker { Typechecker, Interpreter, LoadedModule, ModuleId, ScopeId, TypeId, CheckedProgram, SafetyMode, InterpreterScope, CheckedUnaryOperator, CheckedExpression }
-import compiler { Compiler, FilePath }
+import compiler { Compiler, FilePath, FileId }
 import lexer { Lexer }
 import parser { Parser }
 import utility { Span }
@@ -218,204 +218,218 @@ function serialize_ast_node(anon node: CheckedExpression) throws -> String => ma
     else => "<Unimplemented>"
 }
 
-function handle_possible_error(compiler: &mut Compiler) throws -> bool {
-    compiler.print_errors()
-    let has_error = compiler.errors.size() > 0
-    let arr: [JaktError] = []
-    compiler.errors = arr
-    return has_error
-}
+struct REPL {
+    compiler: Compiler
+    typechecker: Typechecker
+    root_scope_id: ScopeId
+    root_interpreter_scope: InterpreterScope
+    file_id: FileId
 
-function is_ascii_upper_case(anon c: u8) -> bool {
-    return c >= 65 && c <= 90
-}
-
-function start_repl() throws {
-    mut compiler = Compiler(
-        files: []
-        file_ids: [:]
-        errors: []
-        current_file: None
-        current_file_contents: []
-        dump_lexer: false
-        dump_parser: false
-        ignore_parser_errors: false
-        debug_print: false
-        include_paths: []
-        json_errors: false
-        dump_type_hints: false
-        dump_try_hints: false
-    )
-
-    compiler.load_prelude()
-    let file_id = compiler.get_file_id_or_register(file: FilePath::make("<repl>"))
-
-    let placeholder_module_id = ModuleId(id: 0)
-
-    mut typechecker = Typechecker(
-        compiler
-        program: CheckedProgram(compiler, modules: [], loaded_modules: [:]),
-        current_module_id: placeholder_module_id,
-        current_struct_type_id: TypeId::none()
-        current_function_id: None
-        inside_defer: false
-        checkidx: 0uz
-        ignore_errors: false
-        dump_type_hints: compiler.dump_type_hints
-        dump_try_hints: compiler.dump_try_hints
-        lambda_count: 0
-    )
-
-    compiler.current_file = file_id
-    typechecker.include_prelude()
-
-    let root_module_name = "<repl>"
-    let root_module_id = typechecker.create_module(name: root_module_name, is_root: true)
-    typechecker.current_module_id = root_module_id
-    typechecker.program.set_loaded_module(
-        module_name: root_module_name
-        loaded_module: LoadedModule(
-            module_id: root_module_id
-            file_id: file_id
+    function create() throws -> REPL {
+        mut compiler = Compiler(
+            files: []
+            file_ids: [:]
+            errors: []
+            current_file: None
+            current_file_contents: []
+            dump_lexer: false
+            dump_parser: false
+            ignore_parser_errors: false
+            debug_print: false
+            include_paths: []
+            json_errors: false
+            dump_type_hints: false
+            dump_try_hints: false
         )
-    )
 
-    let PRELUDE_SCOPE_ID: ScopeId = typechecker.prelude_scope_id()
-    let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: true,  debug_name: "root")
+        compiler.load_prelude()
+        let file_id = compiler.get_file_id_or_register(file: FilePath::make("<repl>"))
 
-    let root_interpreter_scope = InterpreterScope(
-        bindings: [:]
-        parent: None
-    )
+        let placeholder_module_id = ModuleId(id: 0)
 
-    mut editor = Editor::create(prompt: "> ")
-    defer editor.destroy()
-
-    loop {
-        if not compiler.errors.is_empty() {
-            compiler.print_errors()
-            let arr: [JaktError] = []
-            compiler.errors = arr
-        }
-
-        let line_result = try editor.get_line() catch error {
-            return
-        }
-
-        guard line_result is Line(line) else {
-            break
-        }
-
-        if line == ".exit\n" {
-            break
-        }
-
-        mut pos: usize = 0
-        mut bytes_: [u8] = []
-        bytes_.ensure_capacity(line.length())
-        while pos < line.length() {
-            bytes_.push(line.byte_at(pos)) 
-            ++pos
-        }
+        mut typechecker = Typechecker(
+            compiler
+            program: CheckedProgram(compiler, modules: [], loaded_modules: [:]),
+            current_module_id: placeholder_module_id,
+            current_struct_type_id: TypeId::none()
+            current_function_id: None
+            inside_defer: false
+            checkidx: 0uz
+            ignore_errors: false
+            dump_type_hints: compiler.dump_type_hints
+            dump_try_hints: compiler.dump_try_hints
+            lambda_count: 0
+        )
 
         compiler.current_file = file_id
-        compiler.current_file_contents = bytes_
+        typechecker.include_prelude()
 
-        let tokens = try Lexer::lex(compiler) catch {
-            continue
-        }
-
-        if tokens.is_empty() {
-            continue
-        }
-
-        mut parser = Parser(index: 0, tokens, compiler)
-
-        let first_token = tokens.first()!
-        if first_token is Function
-            or first_token is Comptime
-            or first_token is Struct
-            or first_token is Class
-            or first_token is Enum
-            or first_token is Boxed
-            or first_token is Namespace {
-
-            let parsed_namespace = try parser.parse_namespace() catch {
-                handle_possible_error(&mut compiler)
-                continue
-            }
-
-            if handle_possible_error(&mut compiler) {
-                continue
-            }
-
-            try typechecker.typecheck_module(parsed_namespace, scope_id: root_scope_id) catch {
-                handle_possible_error(&mut compiler)
-                continue
-            }
-
-            handle_possible_error(&mut compiler)
-
-            continue
-        }
-
-        let parsed_statement = try parser.parse_statement(inside_block: true) catch {
-            handle_possible_error(&mut compiler)
-            continue
-        }
-
-        if handle_possible_error(&mut compiler) {
-            continue
-        }
-
-        let checked_statement = try typechecker.typecheck_statement(statement: parsed_statement, scope_id: root_scope_id, safety_mode: SafetyMode::Safe) catch {
-            handle_possible_error(&mut compiler)
-            continue
-        }
-
-        if handle_possible_error(&mut compiler) {
-            continue
-        }
-
-        mut interpreter = Interpreter(
-            compiler,
-            program: typechecker.program,
-            spans: []
+        let root_module_name = "<repl>"
+        let root_module_id = typechecker.create_module(name: root_module_name, is_root: true)
+        typechecker.current_module_id = root_module_id
+        typechecker.program.set_loaded_module(
+            module_name: root_module_name
+            loaded_module: LoadedModule(
+                module_id: root_module_id
+                file_id: file_id
+            )
         )
 
-        let result = try interpreter.execute_statement(
-            statement: checked_statement
-            scope: root_interpreter_scope
-            call_span: Span(
-                file_id
-                start: 0
-                end: line.length()
+        let PRELUDE_SCOPE_ID: ScopeId = typechecker.prelude_scope_id()
+        let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: true,  debug_name: "root")
+
+        let root_interpreter_scope = InterpreterScope(
+            bindings: [:]
+            parent: None
+        )
+
+        return REPL(
+            compiler
+            typechecker
+            root_scope_id
+            root_interpreter_scope
+            file_id
+        )
+    }
+
+    function handle_possible_error(mut this) throws -> bool {
+        .compiler.print_errors()
+        let has_error = .compiler.errors.size() > 0
+        let arr: [JaktError] = []
+        .compiler.errors = arr
+        return has_error
+    }
+
+    function run(mut this) throws {
+        mut editor = Editor::create(prompt: "> ")
+        defer editor.destroy()
+
+        loop {
+            if not .compiler.errors.is_empty() {
+                .compiler.print_errors()
+                let arr: [JaktError] = []
+                .compiler.errors = arr
+            }
+
+            let line_result = try editor.get_line() catch error {
+                return
+            }
+
+            guard line_result is Line(line) else {
+                break
+            }
+
+            if line == ".exit\n" {
+                break
+            }
+
+            mut pos: usize = 0
+            mut bytes_: [u8] = []
+            bytes_.ensure_capacity(line.length())
+            while pos < line.length() {
+                bytes_.push(line.byte_at(pos)) 
+                ++pos
+            }
+
+            .compiler.current_file = .file_id
+            .compiler.current_file_contents = bytes_
+
+            let tokens = try Lexer::lex(compiler: .compiler) catch {
+                continue
+            }
+
+            if tokens.is_empty() {
+                continue
+            }
+
+            mut parser = Parser(index: 0, tokens, compiler: .compiler)
+
+            let first_token = tokens.first()!
+            if first_token is Function
+                or first_token is Comptime
+                or first_token is Struct
+                or first_token is Class
+                or first_token is Enum
+                or first_token is Boxed
+                or first_token is Namespace {
+
+                let parsed_namespace = try parser.parse_namespace() catch {
+                    .handle_possible_error()
+                    continue
+                }
+
+                if .handle_possible_error() {
+                    continue
+                }
+
+                try .typechecker.typecheck_module(parsed_namespace, scope_id: .root_scope_id) catch {
+                    .handle_possible_error()
+                    continue
+                }
+
+                .handle_possible_error()
+
+                continue
+            }
+
+            let parsed_statement = try parser.parse_statement(inside_block: true) catch {
+                .handle_possible_error()
+                continue
+            }
+
+            if .handle_possible_error() {
+                continue
+            }
+
+            let checked_statement = try .typechecker.typecheck_statement(statement: parsed_statement, scope_id: .root_scope_id, safety_mode: SafetyMode::Safe) catch {
+                .handle_possible_error()
+                continue
+            }
+
+            if .handle_possible_error() {
+                continue
+            }
+
+            mut interpreter = Interpreter(
+                compiler: .compiler,
+                program: .typechecker.program,
+                spans: []
             )
-        ) catch {
-            handle_possible_error(&mut compiler)
-            continue
-        }
 
-        if handle_possible_error(&mut compiler) {
-            continue
-        }
+            let result = try interpreter.execute_statement(
+                statement: checked_statement
+                scope: .root_interpreter_scope
+                call_span: Span(
+                    file_id: .file_id
+                    start: 0
+                    end: line.length()
+                )
+            ) catch {
+                .handle_possible_error()
+                continue
+            }
 
-        match result {
-            Return(value) | JustValue(value) | Throw(value) => {
-                if value.impl is Void {
+            if .handle_possible_error() {
+                continue
+            }
+
+            match result {
+                Return(value) | JustValue(value) | Throw(value) => {
+                    if value.impl is Void {
+                        continue
+                    }
+                }
+                Break | Continue => {}
+            }
+
+            let output = match result {
+                Return(value) | JustValue(value) => serialize_ast_node(value.to_checked_expression(interpreter))
+                Throw(value) => "throw " + serialize_ast_node(value.to_checked_expression(interpreter))
+                Break | Continue => {
                     continue
                 }
             }
-            Break | Continue => {}
+            println("= {}", output)
         }
-
-        let output = match result {
-            Return(value) | JustValue(value) => serialize_ast_node(value.to_checked_expression(interpreter))
-            Throw(value) => "throw " + serialize_ast_node(value.to_checked_expression(interpreter))
-            Break | Continue => {
-                continue
-            }
-        }
-        println("= {}", output)
     }
 }
