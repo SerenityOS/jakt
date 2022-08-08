@@ -2880,7 +2880,89 @@ struct Interpreter {
                                 }
                             }
                             JaktString(x) => match rhs_value.impl {
-                                JaktString(y) => ValueImpl::Bool(x == y),
+                                JaktString(y) => ValueImpl::Bool(x == y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                NotEqual => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F32(x) => match rhs_value.impl {
+                                F32(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F64(x) => match rhs_value.impl {
+                                F64(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            JaktString(x) => match rhs_value.impl {
+                                JaktString(y) => ValueImpl::Bool(x != y)
                                 else => {
                                     throw Error::from_errno(InterpretError::InvalidType as! i32)
                                 }
@@ -2962,7 +3044,89 @@ struct Interpreter {
                                 }
                             }
                             JaktString(x) => match rhs_value.impl {
-                                JaktString(y) => ValueImpl::Bool(x < y),
+                                JaktString(y) => ValueImpl::Bool(x < y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                LessThanOrEqual => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F32(x) => match rhs_value.impl {
+                                F32(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F64(x) => match rhs_value.impl {
+                                F64(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            JaktString(x) => match rhs_value.impl {
+                                JaktString(y) => ValueImpl::Bool(x <= y)
                                 else => {
                                     throw Error::from_errno(InterpretError::InvalidType as! i32)
                                 }
@@ -3044,7 +3208,537 @@ struct Interpreter {
                                 }
                             }
                             JaktString(x) => match rhs_value.impl {
-                                JaktString(y) => ValueImpl::Bool(x > y),
+                                JaktString(y) => ValueImpl::Bool(x > y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                GreaterThanOrEqual => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F32(x) => match rhs_value.impl {
+                                F32(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F64(x) => match rhs_value.impl {
+                                F64(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            JaktString(x) => match rhs_value.impl {
+                                JaktString(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                BitwiseAnd => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8((x & y) as! u8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16((x & y) as! u16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x & y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x & y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8((x & y) as! i8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16((x & y) as! i16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x & y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x & y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x & y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                BitwiseOr => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8((x | y) as! u8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16((x | y) as! u16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x | y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x | y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8((x | y) as! i8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16((x | y) as! i16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x | y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x | y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x | y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                BitwiseXor => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8((x ^ y) as! u8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16((x ^ y) as! u16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x ^ y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x ^ y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8((x ^ y) as! i8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16((x ^ y) as! i16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x ^ y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x ^ y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x ^ y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                BitwiseLeftShift => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8((x << y) as! u8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16((x << y) as! u16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x << y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x << y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8((x << y) as! i8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16((x << y) as! i16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x << y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x << y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x << y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                BitwiseRightShift => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8((x >> y) as! u8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16((x >> y) as! u16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x >> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x >> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8((x >> y) as! i8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16((x >> y) as! i16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x >> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x >> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x >> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                ArithmeticLeftShift => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8((x <<< y) as! u8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16((x <<< y) as! u16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x <<< y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x <<< y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8((x <<< y) as! i8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16((x <<< y) as! i16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x <<< y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x <<< y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x <<< y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                ArithmeticRightShift => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x >>> y)
                                 else => {
                                     throw Error::from_errno(InterpretError::InvalidType as! i32)
                                 }
