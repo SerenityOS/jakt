@@ -1248,7 +1248,7 @@ struct CodeGenerator {
             yield output
         }
         OptionalNone => "JaktInternal::OptionalNone()"
-        OptionalSome(expr, type_id) => "(" + .codegen_expression(expr) + ")"
+        OptionalSome(expr, type_id) => "static_cast<" + .codegen_type(type_id) + ">(" + .codegen_expression(expr) + ")"
         ForcedUnwrap(expr, type_id) => "(" + .codegen_expression(expr) + ".value())"
         QuotedString(val) => {
             let escaped_value = val.replace(replace: "\n", with: "\\n")
