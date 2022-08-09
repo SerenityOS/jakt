@@ -1,0 +1,12 @@
+/// Expect:
+/// - output: "PASS\n"
+
+comptime some() => Some(123)
+
+function main() {
+    if some()! == 123 {
+        println("PASS")
+    } else {
+        println("FAIL")
+    }
+}

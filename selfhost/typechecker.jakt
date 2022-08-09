@@ -1526,7 +1526,14 @@ struct Value {
         CChar(x) => CheckedExpression::CharacterConstant(val: format("{}", x), span: .span)
         CInt(x)  => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(x as! i32), span: .span, type_id: builtin(BuiltinType::CInt))
         OptionalNone => CheckedExpression::OptionalNone(span: .span, type_id: unknown_type_id())
-        OptionalSome(value) => CheckedExpression::OptionalSome(expr: value.to_checked_expression(interpreter), span: .span, type_id: unknown_type_id())
+        OptionalSome(value) => {
+            let expr = value.to_checked_expression(interpreter)
+            let inner_type_id = expression_type(expr)
+            let optional_struct_id = interpreter.program.find_struct_in_prelude("Optional")
+            let type = Type::GenericInstance(id: optional_struct_id, args: [inner_type_id])
+            let type_id = interpreter.find_or_add_type_id(type)
+            yield CheckedExpression::OptionalSome(expr, span: .span, type_id)
+        }
         Struct(fields, struct_id, constructor)
         | Class(fields, struct_id, constructor) => {
             if not constructor.has_value() {
@@ -4157,8 +4164,14 @@ struct Interpreter {
                 Throw(value) => StatementResult::Throw(value)
             }
         }
-        // OptionalNone
-        // OptionalSome
+        OptionalNone(span) => StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone(), span))
+        OptionalSome(expr, span) => {
+            let result = .execute_expression(expr, scope)
+            if result is JustValue(value) {
+                return StatementResult::JustValue(Value(impl: ValueImpl::OptionalSome(value), span))
+            }
+            return result
+        }
         ForcedUnwrap(expr) => {
             let value = match .execute_expression(expr, scope) {
                 Return(value) => {
