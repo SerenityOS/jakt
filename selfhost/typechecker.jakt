@@ -1528,7 +1528,7 @@ struct Value {
         OptionalNone => CheckedExpression::OptionalNone(span: .span, type_id: unknown_type_id())
         OptionalSome(value) => {
             let expr = value.to_checked_expression(interpreter)
-            let inner_type_id = expression_type(expr)
+            let inner_type_id = expr.type()
             let optional_struct_id = interpreter.program.find_struct_in_prelude("Optional")
             let type = Type::GenericInstance(id: optional_struct_id, args: [inner_type_id])
             let type_id = interpreter.find_or_add_type_id(type)
