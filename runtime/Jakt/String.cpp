@@ -86,7 +86,10 @@ ErrorOr<Array<String>> String::split_limit(char separator, size_t limit, bool ke
     size_t substart = 0;
     for (size_t i = 0; i < length() && (v.size() + 1) != limit; ++i) {
         char ch = c_string()[i];
-        if (ch == separator) {
+        if (separator == '\0') {
+            TRY(v.push(TRY(substring(substart, 1))));
+            substart = i + 1;
+        } else if (ch == separator) {
             size_t sublen = i - substart;
             if (sublen != 0 || keep_empty)
                 TRY(v.push(TRY(substring(substart, sublen))));

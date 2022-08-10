@@ -1,0 +1,8 @@
+/// Expect:
+/// - output: "[\"t\", \"e\", \"s\", \"t\"]\n"
+
+function main() {
+    let str = "test"
+
+    println("{}", str.split('\0'))
+}
