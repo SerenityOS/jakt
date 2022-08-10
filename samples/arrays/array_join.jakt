@@ -1,0 +1,33 @@
+/// Expect:
+/// - output: "A-B\n1--2\nA(id: 1)|A(id: 2)\nFoo::AFoo::B\n23\n"
+
+struct A {
+    id: i64
+}
+
+enum Foo {
+    A
+    B
+}
+
+function main() {
+    let strings = ["A", "B"]
+
+    println("{}", strings.join("-"))
+
+    let ints = [1, 2]
+
+    println("{}", ints.join("--"))
+
+    let structs = [A(id:1), A(id:2)]
+
+    println("{}", structs.join("|"))
+
+    let enums = [Foo::A, Foo::B]
+
+    println("{}", enums.join(""))
+
+    let arr = [1, 2, 3, 4, 5]
+
+    println("{}", arr[1..3].join(""))
+}

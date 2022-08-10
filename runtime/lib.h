@@ -67,6 +67,8 @@ class Set;
 #include <Builtins/Dictionary.h>
 #include <Builtins/Set.h>
 
+#include <Builtins/Array.cpp>
+
 #include <IO/File.h>
 
 #include <IO/File.cpp>
