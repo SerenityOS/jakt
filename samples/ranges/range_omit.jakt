@@ -1,0 +1,43 @@
+/// Expect:
+/// - output: "0..2\n0\n1\n1..9223372036854775807\n[2, 3, 4]\n[1, 2]\n[1, 2, 3, 4]\n1..5\n0..9\n2..2\n0..9223372036854775807\n"
+
+struct B {
+    r: Range<i64>
+    r_omit: Range<i64>
+}
+
+function print_range(anon r: Range<i64>) {
+    println("{}", r)
+}
+
+function build_range(start: i64, end: i64) -> Range<i64> {
+    return start..end
+}
+
+function n() => 2
+
+function main() {
+    let range = 1..2
+    let range_omit_start = ..2
+
+    println("{}", range_omit_start)
+    for i in range_omit_start {
+        println("{}", i)
+    }
+
+    let range_omit_end = 1..
+    println("{}", range_omit_end)
+
+    let arr = [1, 2, 3, 4]
+
+    println("{}", arr[1..])
+    println("{}", arr[..2])
+    println("{}", arr[..])
+
+    print_range(build_range(start: 1, end: 5))
+    print_range(..9)
+
+    let b = B(r: n()..n(), r_omit: ..)
+    println("{}", b.r)
+    println("{}", b.r_omit)
+}

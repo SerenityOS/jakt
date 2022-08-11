@@ -133,7 +133,19 @@ function serialize_ast_node(anon node: CheckedExpression) throws -> String => ma
         builder.append_string(")")
         yield builder.to_string()
     }
-    Range(from, to) => format("{}..{}", serialize_ast_node(from), serialize_ast_node(to))
+    Range(from, to) => {
+        mut from_output = ""
+        if from.has_value() {
+            from_output = serialize_ast_node(from!)
+        }
+
+        mut to_output = ""
+        if to.has_value() {
+            to_output = serialize_ast_node(to!)
+        }
+
+        yield format("{}..{}", from_output, to_output)
+    }
     JaktArray(vals) => {
         mut builder = StringBuilder::create()
         builder.append_string("[")

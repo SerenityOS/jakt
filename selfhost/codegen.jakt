@@ -1239,11 +1239,19 @@ struct CodeGenerator {
             output += "static_cast<"
             output += .codegen_type(index_type)
             output += ">("
-            output += .codegen_expression(from)
+            if from.has_value() {
+                output += .codegen_expression(from!)
+            } else {
+                output += "0LL"
+            }
             output += "),static_cast<"
             output += .codegen_type(index_type)
             output += ">("
-            output += .codegen_expression(to)
+            if to.has_value() {
+                output += .codegen_expression(to!)
+            } else {
+                output += "9223372036854775807LL"
+            }
             output += ")})"
             yield output
         }
