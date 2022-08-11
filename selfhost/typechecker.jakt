@@ -5257,6 +5257,70 @@ struct Typechecker {
         return None
     }
 
+    function typecheck_format(mut this, args: [(String, CheckedExpression)]) throws {
+        guard args[0].1 is QuotedString(val: format_string, span) else{
+            eprintln("Internal Compiler Error: `typecheck_format` called with dynamic format string: `{}`", args[0].1)
+            abort()
+        }
+        
+        mut n_args = 1uz
+        mut index = 0uz
+        mut in_format_specifier = false
+
+        while index < format_string.length() {
+            let current_span = Span(file_id: span.file_id, start: span.start + index + 1, end: span.start + index + 1)
+            if in_format_specifier {
+                guard format_string.byte_at(index) != b'{' else {
+                    .error("Found '{' inside of format specifier", current_span)
+                    return
+                }
+
+                // FIXME: check for valid formatting specifiers, like ':x'
+
+                if format_string.byte_at(index) == b'}' {
+                    in_format_specifier = false
+                }
+
+            } else {
+                guard format_string.byte_at(index) != b'}' else {
+                    guard index + 1 == format_string.length() else {
+                        guard format_string.byte_at(index + 1) == b'}' else {
+                            .error("Unmatched '}' in format string", current_span)
+                            return
+                        }
+                        index+=2
+                        continue
+                    }
+                .error("Unmatched '}' in format string", current_span)
+                    return
+                }
+                guard format_string.byte_at(index) == b'{' else {
+                    index++
+                    continue
+                }
+
+                guard index + 1 != format_string.length() else{
+                    .error("Unmatched '{' in format string", current_span)
+                    return
+                }
+
+                if format_string.byte_at(index + 1) == b'{' {
+                    index++
+                } else {
+                    n_args++
+                    in_format_specifier = true
+                }
+            }
+            index++
+        }
+
+        guard n_args == args.size() else {
+            .error(format("Wrong number of arguments to format (expected: {}, got: {})", n_args - 1, args.size() - 1), span)
+            return
+        }
+
+    }
+
     function typecheck_call(mut this, call: ParsedCall, caller_scope_id: ScopeId, span: Span, this_expr: CheckedExpression?, parent_id: StructOrEnumId?, safety_mode: SafetyMode, type_hint: TypeId?, must_be_enum_constructor: bool) throws -> CheckedExpression {
         mut args: [(String, CheckedExpression)] = []
         mut return_type = builtin(BuiltinType::Void)
@@ -5286,6 +5350,10 @@ struct Typechecker {
                     let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: None)
 
                     args.push((call.name, checked_arg))
+                }
+
+                if args.size() > 0 and args[0].1 is QuotedString {
+                    .typecheck_format(args)
                 }
 
                 if call.name == "format" {

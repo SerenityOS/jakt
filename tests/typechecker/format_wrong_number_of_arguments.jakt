@@ -1,0 +1,4 @@
+/// Expect:
+/// - error: "Wrong number of arguments to format (expected: 2, got: 1)"
+
+function my_format(value: i64) throws => format("value is {} {}", value)

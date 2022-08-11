@@ -1,0 +1,4 @@
+/// Expect:
+/// - error: "Unmatched '{' in format string"
+
+function my_format(value: i64) throws => format("value is {} {", value)
