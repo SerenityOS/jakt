@@ -420,13 +420,13 @@ struct REPL {
                         continue
                     }
                 }
-                Break | Continue => {}
+                Break | Continue | Yield => {}
             }
 
             let output = match result {
                 Return(value) | JustValue(value) => serialize_ast_node(value.to_checked_expression(interpreter))
                 Throw(value) => "throw " + serialize_ast_node(value.to_checked_expression(interpreter))
-                Break | Continue => {
+                Break | Continue | Yield => {
                     continue
                 }
             }
