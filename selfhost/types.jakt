@@ -1,0 +1,1552 @@
+import parser { Parser, BinaryOperator, DefinitionLinkage, DefinitionType, UnaryOperator,
+                FunctionLinkage, FunctionType, ParsedBlock, ParsedCall,
+                ParsedExpression, ParsedFunction, ParsedNamespace, ParsedModuleImport,
+                ParsedExternImport, ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
+                ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
+                ParsedMatchBody, ParsedMatchCase, Visibility, ParsedParameter, ParsedCapture }
+import utility { panic, todo, join, FileId, Span }
+import compiler { Compiler }
+
+enum SafetyMode {
+    Safe
+    Unsafe
+}
+
+struct ModuleId {
+    id: usize
+
+    function equals(this, anon rhs: ModuleId) -> bool {
+        return this.id == rhs.id
+    }
+}
+
+struct VarId {
+    module: ModuleId
+    id: usize
+}
+
+struct FunctionId {
+    module: ModuleId
+    id: usize
+
+    function equals(this, anon rhs: FunctionId) -> bool {
+        return this.module.id == rhs.module.id and this.id == rhs.id
+    }
+}
+
+struct StructId {
+    module: ModuleId
+    id: usize
+
+    function equals(this, anon rhs: StructId) -> bool {
+        return this.module.id == rhs.module.id and this.id == rhs.id
+    }
+}
+
+struct EnumId {
+    module: ModuleId
+    id: usize
+
+    function equals(this, anon rhs: EnumId) -> bool {
+        return this.module.id == rhs.module.id and this.id == rhs.id
+    }
+}
+
+enum StructOrEnumId {
+    Struct(StructId)
+    Enum(EnumId)
+}
+
+struct TypeId {
+    module: ModuleId
+    id: usize
+
+    function none() -> TypeId? => None
+
+    function equals(this, anon rhs: TypeId) -> bool {
+        return this.module.id == rhs.module.id and this.id == rhs.id
+    }
+
+    // FIXME: Remove when we have language support, used as workaround [String:String] <-> [TypeId:TypeId]
+    function to_string(this) throws -> String {
+        return format("{}_{}", .module.id, .id)
+    }
+
+    // FIXME: Remove when we have language support, used as workaround [String:String] <-> [TypeId:TypeId]
+    function from_string(anon type_id_string: String) throws -> TypeId {
+        let parts = type_id_string.split('_')
+        if not (parts.size() == 2) {
+            panic(format("Failed to convert string `{}` to a TypeId: Wrong number of parts. (Wanted 2, got {})", type_id_string, parts.size()))
+        }
+
+        let module_id = parts[0].to_uint()
+        let type_id = parts[1].to_uint()
+        if not module_id.has_value() or not type_id.has_value() {
+            panic(format("Failed to convert string `{}` to a TypeId. (module_id = {} ({}), type_id = {} ({}))", type_id_string, module_id, parts[0], type_id, parts[1]))
+        }
+
+        return TypeId(module: ModuleId(id: module_id.value() as! usize), id: type_id.value() as! usize)
+    }
+}
+
+struct ScopeId {
+    module_id: ModuleId
+    id: usize
+
+    function equals(this, anon other: ScopeId) -> bool {
+        return this.module_id.id == other.module_id.id and this.id == other.id
+    }
+}
+
+enum BuiltinType {
+    Void
+    Bool
+    U8
+    U16
+    U32
+    U64
+    I8
+    I16
+    I32
+    I64
+    F32
+    F64
+    Usize
+    JaktString
+    CChar
+    CInt
+    Unknown
+    Never
+
+    function id(this) => match this {
+        Void => 0uz
+        Bool => 1uz
+        U8 => 2uz
+        U16 => 3uz
+        U32 => 4uz
+        U64 => 5uz
+        I8 => 6uz
+        I16 => 7uz
+        I32 => 8uz
+        I64 => 9uz
+        F32 => 10uz
+        F64 => 11uz
+        Usize => 12uz
+        JaktString => 13uz
+        CChar => 14uz
+        CInt => 15uz
+        Unknown => 16uz
+        Never => 17uz
+    }
+}
+
+boxed enum Type {
+    Void
+    Bool
+    U8
+    U16
+    U32
+    U64
+    I8
+    I16
+    I32
+    I64
+    F32
+    F64
+    Usize
+    JaktString
+    CChar
+    CInt
+    Unknown
+    Never
+    TypeVariable(String)
+    GenericInstance(id: StructId, args: [TypeId])
+    GenericEnumInstance(id: EnumId, args: [TypeId])
+    GenericResolvedType(id: StructId, args: [TypeId])
+    Struct(StructId)
+    Enum(EnumId)
+    RawPtr(TypeId)
+    Reference(TypeId)
+    MutableReference(TypeId)
+    Function(params: [TypeId], can_throw: bool, return_type_id: TypeId)
+
+    function constructor_name(this) => match this {
+        Void => "Void"
+        Bool => "Bool"
+        U8 => "U8"
+        U16 => "U16"
+        U32 => "U32"
+        U64 => "U64"
+        I8 => "I8"
+        I16 => "I16"
+        I32 => "I32"
+        I64 => "I64"
+        F32 => "F32"
+        F64 => "F64"
+        Usize => "Usize"
+        JaktString => "JaktString"
+        CChar => "CChar"
+        CInt => "CInt"
+        Unknown => "Unknown"
+        Never => "Never"
+        TypeVariable => "TypeVariable"
+        GenericInstance => "GenericInstance"
+        GenericEnumInstance => "GenericEnumInstance"
+        GenericResolvedType => "GenericResolvedType"
+        Struct => "Struct"
+        Enum => "Enum"
+        RawPtr => "RawPtr"
+        Reference => "Reference"
+        MutableReference => "MutableReference"
+        Function => "Function"
+    }
+
+    function equals(this, anon rhs: Type) -> bool {
+        if this is Void and rhs is Void {
+            return true
+        } else if this is Bool and rhs is Bool {
+            return true
+        } else if this is U8 and rhs is U8 {
+            return true
+        } else if this is U16 and rhs is U16 {
+            return true
+        } else if this is U32 and rhs is U32 {
+            return true
+        } else if this is U64 and rhs is U64 {
+            return true
+        } else if this is I8 and rhs is I8 {
+            return true
+        } else if this is I16 and rhs is I16 {
+            return true
+        } else if this is I32 and rhs is I32 {
+            return true
+        } else if this is I64 and rhs is I64 {
+            return true
+        } else if this is F32 and rhs is F32 {
+            return true
+        } else if this is F64 and rhs is F64 {
+            return true
+        } else if this is Usize and rhs is Usize {
+            return true
+        } else if this is JaktString and rhs is JaktString {
+            return true
+        } else if this is CChar and rhs is CChar {
+            return true
+        } else if this is CInt and rhs is CInt {
+            return true
+        } else {
+            match this {
+                TypeVariable(lhs_name) => {
+                    if rhs is TypeVariable(rhs_name) {
+                        return lhs_name == rhs_name
+                    } else {
+                        return false
+                    }
+                }
+                GenericInstance(id: lhs_id, args: lhs_args) => {
+                    guard rhs is GenericInstance(id: rhs_id, args: rhs_args) 
+                        and lhs_id.equals(rhs_id)
+                        and lhs_args.size() == rhs_args.size() else {
+                        return false
+                    }
+                    mut idx = 0uz
+                    while idx < lhs_args.size() {
+                        if not lhs_args[idx].equals(rhs_args[idx]) {
+                            return false
+                        }
+                        idx++
+                    }
+                    return true
+                }
+                GenericEnumInstance(id: lhs_id, args: lhs_args) => {
+                    guard rhs is GenericEnumInstance(id: rhs_id, args: rhs_args)
+                        and lhs_id.equals(rhs_id)
+                        and lhs_args.size() == rhs_args.size() else {
+                        return false
+                    }
+                    mut idx = 0uz
+                    while idx < lhs_args.size() {
+                        if not lhs_args[idx].equals(rhs_args[idx]) {
+                            return false
+                        }
+                        idx++
+                    }
+                    return true
+                }
+                Struct(lhs_id) => {
+                    if rhs is Struct(rhs_id) {
+                        return lhs_id.equals(rhs_id)
+                    }
+                    return false
+                }
+                Enum(lhs_id) => {
+                    if rhs is Enum(rhs_id) {
+                        return lhs_id.equals(rhs_id)
+                    } else {
+                        return false
+                    }
+                }
+                RawPtr(lhs_id) => {
+                    if rhs is RawPtr(rhs_id) {
+                        return lhs_id.equals(rhs_id)
+                    } else {
+                        return false
+                    }
+                }
+                Reference(lhs_id) => {
+                    if rhs is Reference(rhs_id) {
+                        return lhs_id.equals(rhs_id)
+                    } else {
+                        return false
+                    }
+                }
+                MutableReference(lhs_id) => {
+                    if rhs is MutableReference(rhs_id) {
+                        return lhs_id.equals(rhs_id)
+                    } else {
+                        return false
+                    }
+                }
+                Function(params, can_throw, return_type_id) => {
+                    guard rhs is Function(params: rhs_params, can_throw: rhs_can_throw, return_type_id: rhs_return_type_id)
+                        and params.size() == rhs_params.size()
+                        and return_type_id.equals(rhs_return_type_id)
+                        and can_throw == rhs_can_throw else {
+                        return false
+                    }
+                    for i in 0..params.size() {
+                        if not params[i].equals(rhs_params[i]) {
+                            return false
+                        }
+                    }
+                    return true
+                }
+                else => {
+                    return false
+                }
+            }
+            return false
+        }
+    }
+
+    function is_builtin(this) -> bool => match this {
+        Void | Bool | U8 | U16 | U32 | U64 | I8 | I16 | I32 | I64 | F32 | F64 | Usize | JaktString | CChar | CInt => true
+        else => false
+    }
+
+    function get_bits(this) -> i64 => match this {
+        U8 | I8 | CChar => 8
+        U16 | I16 => 16
+        U32 | I32 | CInt => 32
+        U64 | I64 | Usize => 64
+        F32 => 32
+        F64 => 64
+        else => 0
+    }
+
+    function is_signed(this) -> bool => match this {
+        I8 | I16 | I32 | I64 | CChar | CInt => true
+        U8 | U16 | U32 | U64 | Usize => false
+        F32 | F64 => true
+        else => false
+    }
+
+    function min(this) -> i64 => match this {
+        CChar => -128
+        CInt => -2147483648
+        I8 => -128
+        I16 => -32768
+        I32 => -2147483648
+        I64 => -9223372036854775807 - 1
+        U8 | U16 | U32 | U64 | Usize => 0
+        else => 0
+    }
+
+    function max(this) -> u64 => match this {
+        CChar => 127u64
+        CInt => 2147483647u64
+        I8 => 127u64
+        I16 => 32767u64
+        I32 => 2147483647u64
+        I64 => 9223372036854775807u64
+        U8 => 255u64
+        U16 => 65535u64
+        U32 => 4294967295u64
+        U64 => 18446744073709551615u64
+        // FIXME: Don't assume that usize is 64-bit
+        Usize => 18446744073709551615u64
+        else => 0u64
+    }
+}
+
+// FIXME: This could be part of Type
+function flip_signedness(type: Type) throws -> TypeId => match type {
+    I8 => builtin(BuiltinType::U8)
+    I16 => builtin(BuiltinType::U16)
+    I32 => builtin(BuiltinType::U32)
+    I64 => builtin(BuiltinType::U64)
+    U8 => builtin(BuiltinType::I8)
+    U16 => builtin(BuiltinType::I16)
+    U32 => builtin(BuiltinType::I32)
+    U64 => builtin(BuiltinType::I64)
+    else => builtin(BuiltinType::Unknown)
+}
+
+class Scope {
+    public namespace_name: String?
+    public vars: [String: VarId]
+    public structs: [String: StructId]
+    public functions: [String: FunctionId]
+    public enums: [String: EnumId]
+    public types: [String: TypeId]
+    public imports: [String: ModuleId] // FIXME: Span
+    public parent: ScopeId?
+    public children: [ScopeId]
+    public can_throw: bool
+    public import_path_if_extern: String?
+
+    public debug_name: String
+}
+
+class Module {
+    public id: ModuleId
+    public name: String
+    public functions: [CheckedFunction]
+    public structures: [CheckedStruct]
+    public enums: [CheckedEnum]
+    public scopes: [Scope]
+    public types: [Type]
+    public variables: [CheckedVariable]
+    public imports: [ModuleId]
+
+    public is_root: bool
+
+    public function new_type_variable(mut this) throws -> TypeId {
+        let new_id = .types.size()
+
+        .types.push(Type::TypeVariable(format("T{}", new_id)))
+
+        return TypeId(module: .id, id: new_id)
+    }
+
+    public function next_function_id(this) -> FunctionId {
+        return FunctionId(module: .id, id: .functions.size())
+    }
+
+    public function add_function(mut this, checked_function: CheckedFunction) throws -> FunctionId {
+        let new_id = .next_function_id()
+
+        .functions.push(checked_function)
+
+        return new_id
+    }
+
+    public function add_variable(mut this, anon checked_variable: CheckedVariable) throws -> VarId {
+        let new_id = .variables.size()
+
+        .variables.push(checked_variable)
+
+        return VarId(module: .id, id: new_id)
+    }
+}
+
+struct LoadedModule {
+    module_id: ModuleId
+    file_id: FileId
+}
+
+struct CheckedNamespace {
+    name: String
+    scope: ScopeId
+}
+
+class CheckedFunction {
+    public name: String
+    public name_span: Span
+    public visibility: Visibility
+    public return_type_id: TypeId
+    public return_type_span: Span?
+    public params: [CheckedParameter]
+    public generic_params: [FunctionGenericParameter]
+    public block: CheckedBlock
+    public can_throw: bool
+    public type: FunctionType
+    public linkage: FunctionLinkage
+    public function_scope_id: ScopeId
+    public is_instantiated: bool
+    public parsed_function: ParsedFunction?
+    public is_comptime: bool
+
+    public function is_static(this) -> bool {
+        if .params.size() < 1 {
+            return true
+        }
+
+        return .params[0].variable.name != "this"
+    }
+
+    public function is_mutating(this) -> bool {
+        if .params.size() < 1 {
+            return false
+        }
+
+        let first_param_variable = .params[0].variable
+
+        return first_param_variable.name == "this" and first_param_variable.is_mutable
+    }
+
+    public function to_parsed_function(this) -> ParsedFunction {
+        if not .parsed_function.has_value() {
+            panic("to_parsed_function() called on a synthetic function")
+        }
+        return .parsed_function!
+    }
+}
+
+struct CheckedParameter {
+    requires_label: bool
+    variable: CheckedVariable
+    default_value: CheckedExpression?
+}
+
+enum CheckedCapture {
+    ByValue(name: String, span: Span)
+    ByReference(name: String, span: Span)
+    ByMutableReference(name: String, span: Span)
+
+    function name(this) => match this {
+        ByValue(name) => name
+        ByReference(name) => name
+        ByMutableReference(name) => name
+    }
+
+    function span(this) => match this {
+        ByValue(span) => span
+        ByReference(span) => span
+        ByMutableReference(span) => span
+    }
+}
+
+enum FunctionGenericParameter {
+    InferenceGuide(TypeId)
+    Parameter(TypeId)
+
+    function type_id(this) => match this {
+        InferenceGuide(id) => id
+        Parameter(id) => id
+    }
+}
+
+struct CheckedVariable {
+    name: String
+    type_id: TypeId
+    is_mutable: bool
+    definition_span: Span
+    type_span: Span?
+    visibility: Visibility
+}
+
+struct CheckedVarDecl {
+    name: String
+    is_mutable: bool
+    span: Span
+    type_id: TypeId
+}
+
+enum BlockControlFlow {
+    AlwaysReturns
+    AlwaysTransfersControl(might_break: bool)
+    NeverReturns
+    MayReturn
+    // If expressions without 'else' branches may produce these.
+    PartialAlwaysReturns(might_break: bool)
+    PartialAlwaysTransfersControl(might_break: bool)
+    PartialNeverReturns(might_break: bool)
+
+    function unify_with(this, anon second: BlockControlFlow) => match this {
+        NeverReturns => second
+        AlwaysReturns => match second {
+            NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysReturns
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
+            MayReturn => BlockControlFlow::MayReturn
+            PartialAlwaysReturns => BlockControlFlow::AlwaysReturns
+            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
+            PartialNeverReturns(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
+        }
+        AlwaysTransfersControl(might_break: lhs) => match second {
+            NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: lhs or might_break)
+            MayReturn => BlockControlFlow::MayReturn
+            else => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
+        }
+        MayReturn => match second {
+            else => BlockControlFlow::MayReturn
+            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break)
+            PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
+            PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break)
+        }
+        PartialAlwaysReturns(might_break: lhs) => match second {
+            PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: lhs or might_break)
+            PartialAlwaysTransfersControl(might_break) | PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs or might_break)
+            AlwaysReturns => BlockControlFlow::AlwaysReturns
+            NeverReturns => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: lhs or might_break)
+            MayReturn => BlockControlFlow::PartialAlwaysReturns(might_break: lhs)
+        }
+        PartialAlwaysTransfersControl(might_break: lhs) => match second {
+            PartialAlwaysTransfersControl(might_break) | PartialAlwaysReturns(might_break) | PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs or might_break)
+            AlwaysReturns | NeverReturns => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: lhs or might_break)
+            MayReturn => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs)
+        }
+        PartialNeverReturns(might_break: lhs) => match second {
+            PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break: lhs or might_break)
+            PartialAlwaysTransfersControl(might_break) | PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs or might_break)
+            AlwaysReturns => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: lhs or might_break)
+            MayReturn => BlockControlFlow::PartialNeverReturns(might_break: lhs)
+            NeverReturns => BlockControlFlow::NeverReturns
+        }
+    }
+
+    function updated(this, anon second: BlockControlFlow) => match this {
+        NeverReturns => BlockControlFlow::NeverReturns
+        AlwaysReturns => BlockControlFlow::AlwaysReturns
+        AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
+        MayReturn => second
+        PartialAlwaysTransfersControl | PartialAlwaysReturns | PartialNeverReturns => .unify_with(second)
+    }
+
+    function partial(this) => match this {
+        NeverReturns => BlockControlFlow::PartialNeverReturns(might_break: false)
+        AlwaysReturns => BlockControlFlow::PartialAlwaysReturns(might_break: false)
+        MayReturn => BlockControlFlow::MayReturn
+        AlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
+        PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
+        PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break)
+        PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break)
+    }
+
+    function always_transfers_control(this) => match this {
+        AlwaysReturns | AlwaysTransfersControl => true
+        else => false
+    }
+
+    function never_returns(this) => match this {
+        NeverReturns => true
+        else => false
+    }
+
+    function always_returns(this) => match this {
+        AlwaysReturns => true
+        else => false
+    }
+
+    function may_return(this) => match this {
+        MayReturn | PartialAlwaysReturns | PartialAlwaysTransfersControl | PartialNeverReturns => true
+        else => false
+    }
+
+    function may_break(this) => match this {
+        PartialAlwaysReturns(might_break) | PartialAlwaysTransfersControl(might_break) | PartialNeverReturns(might_break) | AlwaysTransfersControl(might_break) => might_break
+        else => false
+    }
+
+    function is_reachable(this) => match this {
+        NeverReturns | AlwaysReturns | AlwaysTransfersControl => false
+        else => true
+    }
+}
+
+struct CheckedBlock {
+    statements: [CheckedStatement]
+    scope_id: ScopeId
+    control_flow: BlockControlFlow
+    yielded_type: TypeId?
+}
+
+struct CheckedStruct {
+    name: String
+    name_span: Span
+    generic_parameters: [TypeId]
+    fields: [VarId]
+    scope_id: ScopeId
+    definition_linkage: DefinitionLinkage
+    record_type: RecordType
+    type_id: TypeId
+}
+
+struct CheckedEnum {
+    name: String
+    name_span: Span
+    generic_parameters: [TypeId]
+    variants: [CheckedEnumVariant]
+    scope_id: ScopeId
+    definition_linkage: DefinitionLinkage
+    record_type: RecordType
+    underlying_type_id: TypeId
+    type_id: TypeId
+    is_boxed: bool
+}
+
+enum CheckedEnumVariant {
+    Untyped(enum_id: EnumId, name: String, span: Span)
+    Typed(enum_id: EnumId, name: String, type_id: TypeId, span: Span)
+    WithValue(enum_id: EnumId, name: String, expr: CheckedExpression, span: Span)
+    StructLike(enum_id: EnumId, name: String, fields: [VarId], span: Span)
+
+    function equals(this, anon other: CheckedEnumVariant) -> bool {
+        return match this {
+            Untyped(name: this_name) => match other {
+                Untyped(name: other_name) => this_name == other_name
+                else => false
+            }
+            else => false
+        }
+    }
+
+    function enum_id(this) -> EnumId => match this {
+        Untyped(enum_id)
+        | Typed(enum_id)
+        | WithValue(enum_id)
+        | StructLike(enum_id) => enum_id
+    }
+
+    function span(this) -> Span => match this {
+        Untyped(span) => span
+        Typed(span) => span
+        WithValue(span) => span
+        StructLike(span)  => span
+    }
+
+    function name(this) -> String => match this {
+        Untyped(name) => name
+        Typed(name) => name
+        WithValue(name) => name
+        StructLike(name)  => name
+    }
+}
+
+struct CheckedEnumVariantBinding {
+    name: String?
+    binding: String
+    type_id: TypeId
+    span: Span
+}
+
+boxed enum CheckedStatement {
+    Expression(expr: CheckedExpression, span: Span)
+    Defer(statement: CheckedStatement, span: Span)
+    DestructuringAssignment(vars: [CheckedStatement], var_decl: CheckedStatement, span: Span)
+    VarDecl(var_id: VarId, init: CheckedExpression, span: Span)
+    If(condition: CheckedExpression, then_block: CheckedBlock, else_statement: CheckedStatement?, span: Span)
+    Block(block: CheckedBlock, span: Span)
+    Loop(block: CheckedBlock, span: Span)
+    While(condition: CheckedExpression, block: CheckedBlock, span: Span)
+    Return(val: CheckedExpression?, span: Span?)
+    Break(Span)
+    Continue(Span)
+    Throw(expr: CheckedExpression, span: Span)
+    Yield(expr: CheckedExpression, span: Span)
+    InlineCpp(lines: [String], span: Span)
+    Garbage(Span)
+
+    function span(this) => match this {
+        Expression(span) => Some(span)
+        Defer(span) => span
+        DestructuringAssignment(span) => span
+        VarDecl(span) => span
+        If(span) => span
+        Block(span) => span
+        Loop(span) => span
+        While(span) => span
+        Return(span) => span
+        Break(span) => span
+        Continue(span) => span
+        Throw(span) => span
+        Yield(span) => span
+        InlineCpp(span) => span
+        Garbage(span) => span
+    }
+
+    function none() -> CheckedStatement? => None
+}
+
+enum NumberConstant {
+    Signed(i64)
+    Unsigned(u64)
+    Floating(f64)
+
+    function can_fit_number(this, type_id: TypeId, program: CheckedProgram) -> bool {
+        let type_ = program.get_type(type_id)
+
+        return match this {
+            Signed(value) => match type_ {
+                I64 => true
+                U64 | Usize => value >= 0
+                else => program.is_integer(type_id) and value >= type_.min() and value <= (type_.max() as! i64)
+            }
+            Unsigned(value) => match type_ {
+                U64 | Usize => true
+                else => program.is_integer(type_id) and value <= type_.max()
+            }
+            Floating(value) => match type_ {
+                F32 => {
+                    todo("Implement casting f32 to f64")
+                    yield false
+                }
+                F64 => true
+                else => false
+            }
+        }
+    }
+
+    function to_usize(this) -> usize => match this {
+        Signed(value) => value as! usize
+        Unsigned(value) => value as! usize
+        Floating(value) => {
+            panic("to_usize on a floating point constant")
+        }
+    }
+
+    function promote(this, type_id: TypeId, program: CheckedProgram) -> CheckedNumericConstant? {
+        if not .can_fit_number(type_id, program) {
+            return None
+        }
+
+        let bits = program.get_bits(type_id)
+        let is_signed = program.is_signed(type_id)
+        let new_constant = match this {
+            Signed(value) => match is_signed {
+                false => match bits {
+                    8 => CheckedNumericConstant::U8(value as! u8)
+                    16 => CheckedNumericConstant::U16(value as! u16)
+                    32 => CheckedNumericConstant::U32(value as! u32)
+                    64 => CheckedNumericConstant::U64(value as! u64)
+                    else => {
+                        panic("Numeric constants can only be 8, 16, 32, or 64 bits long")
+                    }
+                }
+                else => match bits {
+                    8 => CheckedNumericConstant::I8(value as! i8)
+                    16 => CheckedNumericConstant::I16(value as! i16)
+                    32 => CheckedNumericConstant::I32(value as! i32)
+                    64 => CheckedNumericConstant::I64(value)
+                    else => {
+                        panic("Numeric constants can only be 8, 16, 32, or 64 bits long")
+                    }
+                }
+            }
+            Unsigned(value) => match is_signed {
+                false => match bits {
+                    8 => CheckedNumericConstant::U8(value as! u8)
+                    16 => CheckedNumericConstant::U16(value as! u16)
+                    32 => CheckedNumericConstant::U32(value as! u32)
+                    64 => CheckedNumericConstant::U64(value)
+                    else => {
+                        panic("Numeric constants can only be 8, 16, 32, or 64 bits long")
+                    }
+                }
+                else => match bits {
+                    8 => CheckedNumericConstant::I8(value as! i8)
+                    16 => CheckedNumericConstant::I16(value as! i16)
+                    32 => CheckedNumericConstant::I32(value as! i32)
+                    64 => CheckedNumericConstant::I64(value as! i64)
+                    else => {
+                        panic("Numeric constants can only be 8, 16, 32, or 64 bits long")
+                    }
+                }
+            }
+            Floating(value) => match is_signed {
+                true => match bits {
+                    32 => {
+                        todo("Add conversion from f64 to f32")
+                        yield CheckedNumericConstant::I64(0)
+                    }
+                    64 => CheckedNumericConstant::F64(value)
+                    else => {
+                        panic("Floating numeric constants can only be 8, 16, 32, or 64 bits long")
+                    }
+                }
+                else => {
+                    panic("Floating numeric constant cannot be unsigned")
+                }
+            }
+        }
+
+        return new_constant
+    }
+}
+
+enum CheckedNumericConstant {
+    I8(i8)
+    I16(i16)
+    I32(i32)
+    I64(i64)
+    U8(u8)
+    U16(u16)
+    U32(u32)
+    U64(u64)
+    USize(u64)
+    F32(f32)
+    F64(f64)
+
+    // FIXME: make this into a FAMF (fat arrow match function) once we can yield `None` out of the match (https://github.com/SerenityOS/jakt/issues/669)
+    //          or once we can cast f32 to f64
+    function number_constant(this) -> NumberConstant? {
+        match this {
+            I8(value) => { return NumberConstant::Signed(value as! i64) }
+            I16(value) => { return NumberConstant::Signed(value as! i64) }
+            I32(value) => { return NumberConstant::Signed(value as! i64) }
+            I64(value) => { return NumberConstant::Signed(value as! i64) }
+            U8(value) => { return NumberConstant::Unsigned(value as! u64) }
+            U16(value) => { return NumberConstant::Unsigned(value as! u64) }
+            U32(value) => { return NumberConstant::Unsigned(value as! u64) }
+            U64(value) => { return NumberConstant::Unsigned(value as! u64) }
+            USize(value) => { return NumberConstant::Unsigned(value as! u64) }
+
+            // FIXME: add a case for F32 once we can cast f32 to f64
+
+            F64(value) => { return NumberConstant::Floating(value) }
+            else => {}
+        }
+
+        return None
+    }
+}
+
+enum CheckedTypeCast {
+    Fallible(TypeId)
+    Infallible(TypeId)
+
+    function type_id(this) -> TypeId => match this {
+        Fallible(type_id) => type_id
+        Infallible(type_id) => type_id
+    }
+}
+
+enum CheckedUnaryOperator {
+    PreIncrement
+    PostIncrement
+    PreDecrement
+    PostDecrement
+    Negate
+    Dereference
+    RawAddress
+    Reference
+    MutableReference
+    LogicalNot
+    BitwiseNot
+    TypeCast(CheckedTypeCast)
+    Is(TypeId)
+    IsEnumVariant(enum_variant: CheckedEnumVariant, bindings: [CheckedEnumVariantBinding], type_id: TypeId)
+}
+
+enum CheckedMatchBody {
+    Expression(CheckedExpression)
+    Block(CheckedBlock)
+}
+
+enum CheckedMatchCase {
+    EnumVariant(name: String, args: [EnumVariantPatternArgument], subject_type_id: TypeId, index: usize, scope_id: ScopeId, body: CheckedMatchBody, marker_span: Span)
+    Expression(expression: CheckedExpression, body: CheckedMatchBody, marker_span: Span)
+    CatchAll(body: CheckedMatchBody, marker_span: Span)
+}
+
+boxed enum CheckedExpression {
+    Boolean(val: bool, span: Span)
+    NumericConstant(val: CheckedNumericConstant, span: Span, type_id: TypeId)
+    QuotedString(val: String, span: Span)
+    ByteConstant(val: String, span: Span)
+    CharacterConstant(val: String, span: Span)
+    UnaryOp(expr: CheckedExpression, op: CheckedUnaryOperator, span: Span, type_id: TypeId)
+    BinaryOp(lhs: CheckedExpression, op: BinaryOperator, rhs: CheckedExpression, span: Span, type_id: TypeId)
+    JaktTuple(vals: [CheckedExpression], span: Span, type_id: TypeId)
+    Range(from: CheckedExpression, to: CheckedExpression, span: Span, type_id: TypeId)
+    JaktArray(vals: [CheckedExpression], repeat: CheckedExpression?, span: Span, type_id: TypeId, inner_type_id: TypeId)
+    JaktSet(vals: [CheckedExpression], span: Span, type_id: TypeId, inner_type_id: TypeId)
+    JaktDictionary(vals: [(CheckedExpression, CheckedExpression)], span: Span, type_id: TypeId, key_type_id: TypeId, value_type_id: TypeId)
+    IndexedExpression(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
+    IndexedRangeExpression(expr: CheckedExpression, from: CheckedExpression, to: CheckedExpression, span: Span, type_id: TypeId)
+    IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
+    IndexedTuple(expr: CheckedExpression, index: usize, span: Span, is_optional: bool, type_id: TypeId)
+    IndexedStruct(expr: CheckedExpression, index: String, span: Span, is_optional: bool, type_id: TypeId)
+    Match(expr: CheckedExpression, match_cases: [CheckedMatchCase], span: Span, type_id: TypeId, all_variants_constant: bool)
+    EnumVariantArg(expr: CheckedExpression, arg: CheckedEnumVariantBinding, enum_variant: CheckedEnumVariant, span: Span)
+    Call(call: CheckedCall, span: Span, type_id: TypeId)
+    MethodCall(expr: CheckedExpression, call: CheckedCall, span: Span, is_optional: bool, type_id: TypeId)
+    NamespacedVar(namespaces: [CheckedNamespace], var: CheckedVariable, span: Span)
+    Var(var: CheckedVariable, span: Span)
+    OptionalNone(span: Span, type_id: TypeId)
+    OptionalSome(expr: CheckedExpression, span: Span, type_id: TypeId)
+    ForcedUnwrap(expr: CheckedExpression, span: Span, type_id: TypeId)
+    Block(block: CheckedBlock, span: Span, type_id: TypeId)
+    Function(captures: [CheckedCapture], params: [CheckedParameter], can_throw: bool, return_type_id: TypeId, block: CheckedBlock, span: Span, type_id: TypeId)
+    Try(expr: CheckedExpression, catch_block: CheckedBlock?, catch_name: String?, span: Span, type_id: TypeId, inner_type_id: TypeId)
+    TryBlock(stmt: CheckedStatement, catch_block: CheckedBlock, error_name: String, error_span: Span, span: Span, type_id: TypeId)
+    Garbage(Span)
+
+    // FIXME: rewrite this into a FAMF once we can yield None out of a match (https://github.com/SerenityOS/jakt/issues/669)
+    function to_number_constant(this, program: CheckedProgram) -> NumberConstant? {
+        match this {
+            NumericConstant(val, span, type_id) => { return val.number_constant() }
+            UnaryOp(expr, op, span, type_id) => {
+                match op {
+                    TypeCast(cast) => {
+                        if not cast is Infallible {
+                            return None
+                        }
+                        if not program.is_integer(type_id) and not program.is_floating(type_id) {
+                            return None
+                        }
+                        match expr {
+                            NumericConstant(val, span: span_, type_id: type_id_) => { return val.number_constant() }
+                            else => {}
+                        }
+                    }
+                    else => {}
+                }
+            }
+            else => {}
+        }
+        return None
+    }
+
+    function span(this) -> Span => match this {
+        Boolean(span) => span
+        NumericConstant(span) => span
+        QuotedString(span) => span
+        ByteConstant(span) => span
+        CharacterConstant(span) => span
+        UnaryOp(span) => span
+        BinaryOp(span) => span
+        JaktTuple(span) => span
+        Range(span) => span
+        JaktArray(span) => span
+        JaktDictionary(span) => span
+        JaktSet(span) => span
+        IndexedExpression(span) => span
+        IndexedRangeExpression(span) => span
+        IndexedDictionary(span) => span
+        IndexedTuple(span) => span
+        IndexedStruct(span) => span
+        Call(span) => span
+        MethodCall(span) => span
+        NamespacedVar(span) => span
+        Var(span) => span
+        OptionalNone(span) => span
+        OptionalSome(span) => span
+        ForcedUnwrap(span) => span
+        Match(span) => span
+        EnumVariantArg(span) => span
+        Block(span) => span
+        Function(span) => span
+        Try(span) => span
+        TryBlock(span) => span
+        Garbage(span) => span
+    }
+
+    function is_mutable(this, program: CheckedProgram) -> bool => match this {
+        Var(var) => var.is_mutable
+        IndexedStruct(expr) => expr.is_mutable(program)
+        IndexedExpression(expr) => expr.is_mutable(program)
+        IndexedTuple(expr) => expr.is_mutable(program)
+        IndexedDictionary(expr) => expr.is_mutable(program)
+        ForcedUnwrap(expr) => expr.is_mutable(program)
+        UnaryOp(expr, op) => match op {
+            Dereference => match program.get_type(expr.type()) {
+                MutableReference => true
+                RawPtr => expr.is_mutable(program)
+                else => false
+            }
+            else => false
+        }
+        MethodCall(expr) => expr.is_mutable(program)
+        else => false
+    }
+
+    function can_throw(this) -> bool => match this {
+        Call(call) | MethodCall(call) => call.callee_throws
+
+        else => false
+    }
+
+    function type(this) -> TypeId => match this {
+        Boolean => builtin(BuiltinType::Bool)
+        NumericConstant(type_id) => type_id
+        QuotedString => builtin(BuiltinType::JaktString)
+        ByteConstant => builtin(BuiltinType::U8)
+        CharacterConstant => builtin(BuiltinType::CChar)
+        UnaryOp(type_id) => type_id
+        BinaryOp(type_id) => type_id
+        JaktTuple(type_id) => type_id
+        Range(type_id) => type_id
+        JaktArray(type_id) => type_id
+        JaktDictionary(type_id) => type_id
+        JaktSet(type_id) => type_id
+        IndexedExpression(type_id) => type_id
+        IndexedRangeExpression(type_id) => type_id
+        IndexedDictionary(type_id) => type_id
+        IndexedTuple(type_id) => type_id
+        IndexedStruct(type_id) => type_id
+        Call(type_id) => type_id
+        MethodCall(type_id) => type_id
+        NamespacedVar(var) => var.type_id
+        Var(var) => var.type_id
+        OptionalNone(type_id) => type_id
+        OptionalSome(type_id) => type_id
+        ForcedUnwrap(type_id) => type_id
+        Match(type_id) => type_id
+        EnumVariantArg(arg) => arg.type_id
+        Block(type_id) => type_id
+        Function(type_id) => type_id
+        Try(type_id) => type_id
+        TryBlock(type_id) => type_id
+        Garbage => builtin(BuiltinType::Void)
+    }
+
+    function control_flow(this) -> BlockControlFlow => match this {
+        Match(expr, match_cases, span, type_id, all_variants_constant) => {
+            mut control_flow: BlockControlFlow? = None
+            for case_ in match_cases.iterator() {
+                let case_control_flow = match case_ {
+                    EnumVariant(body) | Expression(body) | CatchAll(body) => match body {
+                        Block(block) => block.control_flow
+                        Expression(expr) => expr.control_flow()
+                    }
+                }
+                if control_flow.has_value() {
+                    control_flow = control_flow!.unify_with(case_control_flow)
+                } else {
+                    control_flow = case_control_flow
+                }
+            }
+            yield control_flow ?? BlockControlFlow::MayReturn
+        }
+        MethodCall(type_id) | Call(type_id) => match type_id.equals(never_type_id()) {
+            true => BlockControlFlow::NeverReturns
+            else => BlockControlFlow::MayReturn
+        }
+        else => BlockControlFlow::MayReturn
+    }
+}
+
+struct ResolvedNamespace {
+    name: String
+    generic_parameters: [TypeId]?
+}
+
+struct CheckedCall {
+    namespace_: [ResolvedNamespace]
+    name: String,
+    args: [(String, CheckedExpression)]
+    type_args: [TypeId]
+    function_id: FunctionId?
+    return_type: TypeId
+    callee_throws: bool
+}
+
+function unknown_type_id() -> TypeId => builtin(BuiltinType::Unknown)
+function void_type_id() -> TypeId => builtin(BuiltinType::Void)
+function never_type_id() -> TypeId => builtin(BuiltinType::Never)
+
+function builtin(anon builtin: BuiltinType) -> TypeId {
+    return TypeId(module: ModuleId(id: 0), id: builtin.id())
+}
+
+// This is the "result" object produced by type-checking.
+class CheckedProgram {
+    public compiler: Compiler
+    public modules: [Module]
+    public loaded_modules: [String: LoadedModule]
+
+    public function get_module(this, anon id: ModuleId) -> Module => .modules[id.id]
+    public function get_function(this, anon id: FunctionId) -> CheckedFunction => .modules[id.module.id].functions[id.id]
+    public function get_variable(this, anon id: VarId) -> CheckedVariable => .modules[id.module.id].variables[id.id]
+    public function get_type(this, anon id: TypeId) -> Type => .modules[id.module.id].types[id.id]
+    public function get_enum(this, anon id: EnumId) -> CheckedEnum => .modules[id.module.id].enums[id.id]
+    public function get_struct(this, anon id: StructId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
+    public function get_scope(this, anon id: ScopeId) throws -> Scope {
+        let max_scope = .modules[id.module_id.id].scopes.size() - 1
+        if id.id > max_scope {
+            .compiler.panic(format("scope_id {} does not exist in module", id))
+        }
+
+        return .modules[id.module_id.id].scopes[id.id]
+    }
+
+    public function prelude_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 0), id: 0)
+
+    public function set_loaded_module(mut this, module_name: String, loaded_module: LoadedModule) throws {
+        .loaded_modules.set(
+            key: module_name
+            value: loaded_module
+        )
+    }
+    public function get_loaded_module(this, anon module_name: String) -> LoadedModule? {
+        return .loaded_modules.get(module_name)
+    }
+
+    public function find_var_in_scope(this, scope_id: ScopeId, var: String) throws -> CheckedVariable? {
+        mut current_scope_id = scope_id
+        loop {
+            let scope = .get_scope(current_scope_id)
+            let maybe_var = scope.vars.get(var)
+            if maybe_var.has_value() {
+                return .get_variable(maybe_var!)
+            }
+            if not scope.parent.has_value() {
+                break
+            }
+            current_scope_id = scope.parent!
+        }
+        return None
+    }
+
+    public function find_enum_in_scope(this, scope_id: ScopeId, name: String) throws -> EnumId? {
+        mut current = scope_id
+
+        loop {
+            let scope = .get_scope(current)
+            let maybe_enum = scope.enums.get(name)
+            if maybe_enum.has_value() {
+                return maybe_enum
+            }
+            for child_id in scope.children.iterator() {
+                let child_scope = .get_scope(id: child_id)
+                if not child_scope.namespace_name.has_value() {
+                    let maybe_enum = child_scope.enums.get(name)
+                    if maybe_enum.has_value() {
+                        return maybe_enum
+                    }
+                }
+            }
+
+            if scope.parent.has_value() {
+                current = scope.parent.value()
+            } else {
+                break
+            }
+        }
+
+        return None
+    }
+
+    public function is_integer(this, anon type_id: TypeId) -> bool {
+        let type = .get_type(type_id)
+
+        return match type {
+            I8 | I16 | I32 | I64 | U8 | U16 | U32 | U64 | Usize | CInt | CChar => true
+            else => false
+        }
+    }
+
+    public function is_floating(this, anon type_id: TypeId) -> bool {
+        let type = .get_type(type_id)
+
+        return match type {
+            F32 | F64 => true
+            else => false
+        }
+    }
+
+    public function is_numeric(this, anon type_id: TypeId) -> bool {
+        return .is_integer(type_id) or .is_floating(type_id)
+    }
+
+    public function is_string(this, anon type_id: TypeId) -> bool => .get_type(type_id) is JaktString
+
+    public function get_bits(this, anon type_id: TypeId) => .get_type(type_id).get_bits()
+
+    public function is_signed(this, anon type_id: TypeId) => .get_type(type_id).is_signed()
+
+    public function find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? {
+        mut current_scope_id = Some(scope_id)
+        while current_scope_id.has_value() {
+            let scope = .get_scope(id: current_scope_id!)
+            let maybe_scope = scope.structs.get(name)
+            if maybe_scope.has_value() {
+                return maybe_scope
+            }
+            for child_id in scope.children.iterator() {
+                let child_scope = .get_scope(id: child_id)
+                if not child_scope.namespace_name.has_value() {
+                    let maybe_scope = child_scope.structs.get(name)
+                    if maybe_scope.has_value() {
+                        return maybe_scope
+                    }
+                }
+            }
+            current_scope_id = scope.parent
+        }
+        return None
+    }
+
+    public function find_struct_in_prelude(this, anon name: String) throws -> StructId {
+        // start at the prelude scope id
+        let scope_id = .prelude_scope_id()
+        let struct_id = .find_struct_in_scope(scope_id, name)
+        if struct_id.has_value() {
+            return struct_id.value()
+        }
+
+        .compiler.panic(format("internal error: {} builtin definition not found", name))
+    }
+
+    public function find_namespace_in_scope(this, scope_id: ScopeId, anon name: String) throws -> (ScopeId, bool)? {
+        mut current = scope_id;
+
+        loop {
+            let scope = .get_scope(current)
+
+            for child in scope.children.iterator() {
+                let child_scope = .get_scope(child)
+                if child_scope.namespace_name.has_value() {
+                    if name == child_scope.namespace_name.value() {
+                        return (child, false)
+                    }
+                }
+            }
+
+            for child_id in scope.children.iterator() {
+                let child_scope = .get_scope(id: child_id)
+                if not child_scope.namespace_name.has_value() {
+                    for scope in .get_scope(child_id).children.iterator() {
+                        let descendant_scope = .get_scope(scope)
+                        if descendant_scope.namespace_name.has_value() {
+                            if name == descendant_scope.namespace_name.value() {
+                                return (scope, false)
+                            }
+                        }
+                    }
+                }
+            }
+
+            if scope.parent.has_value() {
+                current = scope.parent.value()
+            } else {
+                break
+            }
+        }
+
+        // if we do not find it then check imports
+        let module_id = scope_id.module_id
+
+        let search_scope_id = ScopeId(module_id: module_id, id: 0)
+        let search_scope = .get_scope(search_scope_id)
+        let search_imports = search_scope.imports
+        let maybe_import: ModuleId? = search_imports.get(name)
+        if maybe_import.has_value() {
+            let import_module_id: ModuleId = maybe_import!
+            let import_scope_id = ScopeId(module_id: import_module_id, id: 0)
+            return (import_scope_id, true)
+        }
+
+        return None
+    }
+
+    public function find_function_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> FunctionId? {
+        mut visited: [ScopeId] = []
+        mut queue: [ScopeId] = [parent_scope_id]
+        mut scope_id = Some(parent_scope_id)
+        while not queue.is_empty() {
+            let scope_id = queue.pop()!
+            {
+                mut was_visited = false
+                for visited_id in visited.iterator() {
+                    if visited_id.equals(scope_id) {
+                        was_visited = true
+                        break
+                    }
+                }
+                if was_visited {
+                    continue
+                }
+            }
+            visited.push(scope_id)
+            let scope = .get_scope(id: scope_id)
+            let maybe_function = scope.functions.get(function_name)
+            if maybe_function.has_value() {
+                return maybe_function
+            }
+            // search inside inline namespaces
+            for child_scope_id in scope.children.iterator() {
+                let scope = .get_scope(id: child_scope_id)
+                if not scope.namespace_name.has_value() {
+                    queue.push(child_scope_id)
+                }
+            }
+            if scope.parent.has_value() {
+                let parent = scope.parent!
+                if parent.equals(scope_id) {
+                    .compiler.panic(format("Scope {} is its own parent!", scope_id))
+                }
+                queue.push(parent)
+            }
+        }
+        return None
+    }
+
+    // Checks given struct id is weak ptr and
+    //  validates args are compatible with weak ptr type
+    // Returns the inner struct id if given struct is weak ptr
+    public function check_and_extract_weak_ptr(this, struct_id: StructId, args: [TypeId]) throws -> StructId? {
+        let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
+
+        if struct_id.equals(weak_ptr_struct_id) {
+            if (args.size() != 1) {
+                .compiler.panic(
+                    format(
+                        "Internal error: Generic type is WeakPtr but there are not exactly 1 type parameter. There are {} parameters.",
+                        args.size()
+                    )
+                )
+            }
+
+            let inner_type_id = args[0]
+            let inner_type = .get_type(inner_type_id)
+
+            if inner_type is Struct(inner_struct_id) {
+                return inner_struct_id
+            }
+            panic(
+                format(
+                    "Internal error: Inner type of WeakPtr is not a struct. It is {}.",
+                    inner_type
+                )
+            )
+        } else {
+            return None
+        }
+    }
+
+    public function type_name(this, anon type_id: TypeId) throws -> String {
+        let type = .get_type(type_id)
+
+        return match type {
+            Never => "never"
+            F32 => "f32"
+            F64 => "f64"
+            I8 => "i8"
+            I16 => "i16"
+            I32 => "i32"
+            I64 => "i64"
+            U8 => "u8"
+            U16 => "u16"
+            U32 => "u32"
+            U64 => "u64"
+            Usize => "usize"
+            CChar => "c_char"
+            CInt => "c_int"
+            Bool => "bool"
+            Void => "void"
+            Unknown => "unknown"
+            JaktString => "String"
+            Function(params, return_type_id) => {
+                mut param_names: [String] = []
+                for x in params.iterator() {
+                    param_names.push(.type_name(x))
+                }
+
+                let return_type = .type_name(return_type_id)
+
+                yield format("function({}) -> {}", join(param_names, separator: ", "), return_type)
+            }
+            Enum(id) => .get_enum(id).name
+            Struct(id) => .get_struct(id).name
+            GenericEnumInstance(id, args) => {
+                mut output = format("enum {}", .get_enum(id).name)
+
+                output += "<"
+                mut first = true
+                for arg in args.iterator() {
+                    if not first {
+                        output += ", "
+                    } else {
+                        first = false
+                    }
+
+                    output += .type_name(arg)
+                }
+
+                output += ">"
+
+                yield output
+            }
+            GenericInstance(id, args) => {
+
+                let array_struct_id = .find_struct_in_prelude("Array")
+                let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
+                let optional_struct_id = .find_struct_in_prelude("Optional")
+                let range_struct_id = .find_struct_in_prelude("Range")
+                let set_struct_id = .find_struct_in_prelude("Set")
+                let tuple_struct_id = .find_struct_in_prelude("Tuple")
+                let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
+
+                mut output = ""
+
+                if id.equals(array_struct_id) {
+                    output = format("[{}]", .type_name(args[0]))
+                } else if id.equals(dictionary_struct_id) {
+                    output = format("[{}:{}]", .type_name(args[0]), .type_name(args[1]))
+                } else if id.equals(optional_struct_id) {
+                    output = format("{}?", .type_name(args[0]))
+                } else if id.equals(range_struct_id) {
+                    output = format("{}..{}", .type_name(args[0]), .type_name(args[0]))
+                } else if id.equals(set_struct_id) {
+                    output = format("{{{}}}", .type_name(args[0]))
+                } else if id.equals(tuple_struct_id) {
+                    output = "("
+                    mut first = true
+                    for arg in args.iterator() {
+                        if not first {
+                            output += ", "
+                        } else {
+                            first = false
+                        }
+                        output += .type_name(arg)
+                    }
+                    output += ")"
+                } else if id.equals(weak_ptr_struct_id) {
+                    output = format("weak {}?", .type_name(args[0]))
+                } else {
+                    let structure = .get_struct(id)
+                    output = structure.name
+                    output += "<"
+                    mut first = true
+                    for arg in args.iterator() {
+                        if not first {
+                            output += ", "
+                        } else {
+                            first = false
+                        }
+                        output += .type_name(arg)
+                    }
+                    output += ">"
+                }
+
+                yield output
+            }
+            GenericResolvedType(id, args) => {
+                mut output = .get_struct(id).name
+                mut first = true
+                output += "<"
+                for arg in args.iterator() {
+                    if not first {
+                        output += ", "
+                    } else {
+                        first = false
+                    }
+                    output += .type_name(type_id)
+                }
+                output += ">"
+
+                yield output
+            }
+            TypeVariable(name) => name
+            RawPtr(type_id) => format("raw {}", .type_name(type_id))
+            Reference(type_id) => format("&{}", .type_name(type_id))
+            MutableReference(type_id) => format("&mut {}", .type_name(type_id))
+        }
+    }
+}

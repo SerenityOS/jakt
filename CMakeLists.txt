@@ -74,10 +74,12 @@ set(SELFHOST_SOURCES
   selfhost/compiler.jakt
   selfhost/error.jakt
   selfhost/ide.jakt
+  selfhost/interpreter.jakt
   selfhost/lexer.jakt
   selfhost/parser.jakt
   selfhost/repl.jakt
   selfhost/typechecker.jakt
+  selfhost/types.jakt
   selfhost/utility.jakt
 )
 

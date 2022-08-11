@@ -12,7 +12,9 @@ import error { JaktError, print_error }
 import utility { FilePath, ArgsParser, Span }
 import lexer { Lexer }
 import parser { Parser }
-import typechecker { Typechecker, Interpreter, Value, ValueImpl, FunctionId, ResolvedNamespace, ScopeId, ModuleId }
+import typechecker { Typechecker }
+import interpreter { Interpreter, Value, ValueImpl }
+import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId }
 import repl { REPL, serialize_ast_node }
 import ide
 

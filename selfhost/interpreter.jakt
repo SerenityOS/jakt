@@ -1,0 +1,2990 @@
+import types {
+    BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedExpression, CheckedMatchBody,
+    CheckedNumericConstant, CheckedProgram, CheckedStatement, EnumId, EnumVariantPatternArgument,
+    FunctionId, ModuleId, ResolvedNamespace, ScopeId, Span, StructId, Type, TypeId, VarId, builtin,
+    unknown_type_id,
+}
+import utility { escape_for_quotes, panic }
+import error { JaktError, Message }
+import compiler { Compiler }
+
+enum InterpretError : i32 {
+    CallToExternalFunction = 42i32
+    MismatchingArguments
+    InvalidThisArgument
+    InvalidType
+    UnknownVariable
+    Unimplemented
+}
+
+boxed enum ValueImpl {
+    Void
+    Bool(bool)
+    U8(u8)
+    U16(u16)
+    U32(u32)
+    U64(u64)
+    I8(i8)
+    I16(i16)
+    I32(i32)
+    I64(i64)
+    F32(f32)
+    F64(f64)
+    USize(usize)
+    JaktString(String)
+    CChar(c_char)
+    CInt(c_int)
+    Struct(fields: [Value], struct_id: StructId, constructor: FunctionId?)
+    Class(fields: [Value], struct_id: StructId, constructor: FunctionId?)
+    Enum(fields: [Value], enum_id: EnumId, constructor: FunctionId)
+    JaktArray(values: [Value], type_id: TypeId)
+    RawPtr(ValueImpl)
+    OptionalSome(value: Value)
+    OptionalNone
+    JaktTuple(fields: [Value], type_id: TypeId)
+
+    function copy(this) throws => match this {
+        Void => ValueImpl::Void
+        Bool(x) => ValueImpl::Bool(x)
+        U8(x) => ValueImpl::U8(x)
+        U16(x) => ValueImpl::U16(x)
+        U32(x) => ValueImpl::U32(x)
+        U64(x) => ValueImpl::U64(x)
+        I8(x) => ValueImpl::I8(x)
+        I16(x) => ValueImpl::I16(x)
+        I32(x) => ValueImpl::I32(x)
+        I64(x) => ValueImpl::I64(x)
+        F32(x) => ValueImpl::F32(x)
+        F64(x) => ValueImpl::F64(x)
+        USize(x) => ValueImpl::USize(x)
+        JaktString(x) => ValueImpl::JaktString(x)
+        CChar(x) => ValueImpl::CChar(x)
+        CInt(x) => ValueImpl::CInt(x)
+        Struct(fields, struct_id, constructor) => {
+            mut fields_copy: [Value] = [];
+            for field in fields.iterator() {
+                fields_copy.push(field.copy());
+            }
+            yield ValueImpl::Struct(fields: fields_copy, struct_id, constructor)
+        }
+        Class(fields, struct_id, constructor) => ValueImpl::Class(fields, struct_id, constructor)
+        Enum(fields, enum_id, constructor) => {
+            mut fields_copy: [Value] = [];
+            for field in fields.iterator() {
+                fields_copy.push(field.copy());
+            }
+            yield ValueImpl::Enum(fields: fields_copy, enum_id, constructor)
+        }
+        JaktArray(values, type_id) => {
+            mut values_copy: [Value] = [];
+            for value in values.iterator() {
+                values_copy.push(value.copy());
+            }
+            yield ValueImpl::JaktArray(values: values_copy, type_id)
+        }
+        RawPtr(value) => ValueImpl::RawPtr(value)
+        OptionalSome(value) => ValueImpl::OptionalSome(value: value.copy())
+        OptionalNone => ValueImpl::OptionalNone
+        JaktTuple(fields, type_id) => {
+            mut values_copy: [Value] = [];
+            for value in fields.iterator() {
+                values_copy.push(value.copy());
+            }
+            yield ValueImpl::JaktTuple(fields: values_copy, type_id)
+        }
+    }
+}
+
+struct Value {
+    impl: ValueImpl
+    span: Span
+
+    function copy(this) throws => Value(impl: .impl.copy(), span: .span)
+    function to_checked_expression(this, anon mut interpreter: Interpreter) throws -> CheckedExpression => match .impl {
+        Void => {
+            interpreter.error("Cannot convert void to expression", .span)
+            throw Error::from_errno(InterpretError::InvalidType as! i32)
+        }
+        Bool(x)  => CheckedExpression::Boolean(val: x, span: .span)
+        U8(x)    => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(x), span: .span, type_id: builtin(BuiltinType::U8))
+        U16(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U16(x), span: .span, type_id: builtin(BuiltinType::U16))
+        U32(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U32(x), span: .span, type_id: builtin(BuiltinType::U32))
+        U64(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(x), span: .span, type_id: builtin(BuiltinType::U64))
+        I8(x)    => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I8(x), span: .span, type_id: builtin(BuiltinType::I8))
+        I16(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I16(x), span: .span, type_id: builtin(BuiltinType::I16))
+        I32(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(x), span: .span, type_id: builtin(BuiltinType::I32))
+        I64(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I64(x), span: .span, type_id: builtin(BuiltinType::I64))
+        F32(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F32(x), span: .span, type_id: builtin(BuiltinType::F32))
+        F64(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F64(x), span: .span, type_id: builtin(BuiltinType::F64))
+        USize(x) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(x as! u64), span: .span, type_id: builtin(BuiltinType::Usize))
+        JaktString(x) => CheckedExpression::QuotedString(val: escape_for_quotes(x), span: .span)
+        CChar(x) => CheckedExpression::CharacterConstant(val: format("{}", x), span: .span)
+        CInt(x)  => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(x as! i32), span: .span, type_id: builtin(BuiltinType::CInt))
+        OptionalNone => CheckedExpression::OptionalNone(span: .span, type_id: unknown_type_id())
+        OptionalSome(value) => {
+            let expr = value.to_checked_expression(interpreter)
+            let inner_type_id = expr.type()
+            let optional_struct_id = interpreter.program.find_struct_in_prelude("Optional")
+            let type = Type::GenericInstance(id: optional_struct_id, args: [inner_type_id])
+            let type_id = interpreter.find_or_add_type_id(type)
+            yield CheckedExpression::OptionalSome(expr, span: .span, type_id)
+        }
+        JaktTuple(fields, type_id) => {
+            mut vals: [CheckedExpression] = []
+            for field in fields.iterator() {
+                vals.push(field.to_checked_expression(interpreter))
+            }
+            yield CheckedExpression::JaktTuple(vals, span: .span, type_id)
+        }
+        Struct(fields, struct_id, constructor)
+        | Class(fields, struct_id, constructor) => {
+            if not constructor.has_value() {
+                interpreter.error_with_hint(
+                    "Cannot convert struct to expression without constructor", .span,
+                    "Given struct cannot be created from its contents in any known way", .span)
+                throw Error::from_errno(InterpretError::InvalidType as! i32)
+            }
+
+            mut materialised_fields: [CheckedExpression] = []
+            for field in fields.iterator() {
+                materialised_fields.push(field.to_checked_expression(interpreter))
+            }
+
+            let struct_ = interpreter.program.get_struct(struct_id)
+            mut reversed_namespace: [ResolvedNamespace] = []
+            mut scope_id: ScopeId? = struct_.scope_id
+            while scope_id.has_value() {
+                let scope = interpreter.program.get_scope(scope_id!)
+                if scope.namespace_name.has_value() {
+                    reversed_namespace.push(ResolvedNamespace(name: scope.namespace_name!, generic_parameters: None))
+                }
+                scope_id = scope.parent
+            }
+            mut namespace_: [ResolvedNamespace] = []
+            for i in reversed_namespace.size()..0 {
+                namespace_.push(reversed_namespace[i - 1])
+            }
+
+            let name = struct_.name
+            mut args: [(String, CheckedExpression)] = []
+            for i in 0..materialised_fields.size() {
+                let arg = materialised_fields[i]
+                let label = interpreter.program.get_variable(struct_.fields[i]).name
+                args.push((label, arg))
+            }
+
+            let callee = interpreter.program.get_function(constructor!)
+
+            let call = CheckedCall(
+                namespace_
+                name
+                args
+                type_args: []
+                function_id: constructor
+                return_type: struct_.type_id
+                callee_throws: callee.can_throw
+            )
+
+            yield CheckedExpression::Call(
+                call
+                span: .span
+                type_id: struct_.type_id
+            )
+        }
+        Enum(fields, enum_id, constructor) => {
+            mut materialised_fields: [CheckedExpression] = []
+            for field in fields.iterator() {
+                materialised_fields.push(field.to_checked_expression(interpreter))
+            }
+
+            let enum_ = interpreter.program.get_enum(enum_id)
+            mut reversed_namespace: [ResolvedNamespace] = []
+            mut scope_id: ScopeId? = enum_.scope_id
+            while scope_id.has_value() {
+                let scope = interpreter.program.get_scope(scope_id!)
+                if scope.namespace_name.has_value() {
+                    reversed_namespace.push(ResolvedNamespace(name: scope.namespace_name!, generic_parameters: None))
+                }
+                scope_id = scope.parent
+            }
+            mut namespace_: [ResolvedNamespace] = []
+            for i in reversed_namespace.size()..0 {
+                namespace_.push(reversed_namespace[i - 1])
+            }
+
+            // FIXME: Fill these in.
+            namespace_.push(ResolvedNamespace(name: enum_.name, generic_parameters: None))
+
+            let name = enum_.name
+            mut args: [(String, CheckedExpression)] = []
+            for i in 0..materialised_fields.size() {
+                let arg = materialised_fields[i]
+                // FIXME: Fill this thing
+                // let label = interpreter.program.get_variable(enum_.fields[i]).name
+                args.push(("", arg))
+            }
+
+            let callee = interpreter.program.get_function(constructor)
+
+            let call = CheckedCall(
+                namespace_
+                name: callee.name
+                args
+                type_args: []
+                function_id: constructor
+                return_type: enum_.type_id
+                callee_throws: callee.can_throw
+            )
+
+            yield CheckedExpression::Call(
+                call
+                span: .span
+                type_id: enum_.type_id
+            )
+        }
+        JaktArray(values, type_id) => {
+            mut vals: [CheckedExpression] = []
+            for value in values.iterator() {
+                vals.push(value.to_checked_expression(interpreter))
+            }
+
+            let inner_type_id = match interpreter.program.get_type(type_id) {
+                GenericInstance(args) => args[0]
+                else => {
+                    panic("Expected generic instance of Array while materialising an array")
+                }
+            }
+
+            yield CheckedExpression::JaktArray(
+                vals
+                repeat: None
+                span: .span
+                type_id
+                inner_type_id
+            )
+        }
+        else => {
+            interpreter.error(
+                format("Cannot materialise the type {}", .impl)
+                .span
+            )
+            throw Error::from_errno(InterpretError::Unimplemented as! i32);
+        }
+    }
+}
+
+class InterpreterScope {
+    public bindings: [String:Value]
+    public parent: InterpreterScope?
+    public type_bindings: [String:TypeId]
+
+    public function must_get(this, anon name: String) throws -> Value {
+        if .bindings.contains(name) {
+            return .bindings[name]
+        }
+
+        mut scope = .parent
+        while scope.has_value() {
+            if scope!.bindings.contains(name) {
+                return scope!.bindings[name]
+            }
+            scope = scope!.parent
+        }
+
+        // How did this pass typecheck?
+        panic(format("Could not find binding for {}", name))
+    }
+
+    public function map_type(this, anon id: TypeId) throws -> TypeId {
+        let name = id.to_string()
+        if .type_bindings.contains(name) {
+            return .type_bindings[name]
+        }
+
+        mut scope = .parent
+        while scope.has_value() {
+            if scope!.type_bindings.contains(name) {
+                return scope!.type_bindings[name]
+            }
+            scope = scope!.parent
+        }
+
+        return id
+    }
+}
+
+enum ExecutionResult {
+    Return(Value)
+    Throw(Value)
+}
+
+enum StatementResult {
+    Return(Value)
+    Throw(Value)
+    // Yield(Value)
+    Continue
+    Break
+    JustValue(Value)
+}
+
+struct Interpreter {
+    compiler: Compiler
+    program: CheckedProgram
+    spans: [Span]
+
+    function enter_span(mut this, anon span: Span) throws {
+        .spans.push(span)
+    }
+    
+    function leave_span(mut this) {
+        .spans.pop()
+    }
+
+    function get_prelude_function(this, anon scope_id: ScopeId) throws -> bool {
+        mut current_scope_id = scope_id
+        let prelude_scope_id = .program.prelude_scope_id()
+        loop {
+            if current_scope_id.equals(prelude_scope_id) {
+                return true
+            }
+
+            let scope = .program.get_scope(current_scope_id)
+            if scope.parent.has_value() {
+                current_scope_id = scope.parent!
+                continue
+            }
+
+            return false
+        }
+    }
+
+    function find_or_add_type_id(mut this, anon type: Type) throws -> TypeId {
+
+        for module in .program.modules.iterator() {
+            for id in 0..module.types.size() {
+                if module.types[id].equals(type) {
+                    return TypeId(module: module.id, id)
+                }
+            }
+        }
+
+        .program.modules[0].types.push(type)
+
+        return TypeId(module: ModuleId(id: 0), id: .program.modules[0].types.size() - 1)
+    }
+
+    function call_prelude_function(mut this, anon prelude_function: String, anon namespace_: [ResolvedNamespace], this_argument: Value?, arguments: [Value], call_span: Span) throws -> StatementResult {
+        if namespace_.size() != 1 {
+            return match prelude_function {
+                "format" => {
+                    let format_string = match arguments[0].impl {
+                        JaktString(x) => x
+                        else => {
+                            .error(
+                                format("Expected string as first argument to format, got {}", arguments[0].impl),
+                                call_span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32);
+                        }
+                    }
+                    yield StatementResult::JustValue(
+                        Value(
+                            impl: ValueImpl::JaktString(
+                                match arguments.size() {
+                                    1uz => format(format_string)
+                                    2uz => match arguments[1].impl {
+                                        Bool(x)
+                                        | U8(x)
+                                        | U16(x)
+                                        | U32(x)
+                                        | U64(x)
+                                        | I8(x)
+                                        | I16(x)
+                                        | I32(x)
+                                        | I64(x)
+                                        | F32(x)
+                                        | F64(x)
+                                        | USize(x)
+                                        | JaktString(x)
+                                        | CChar(x)
+                                        | CInt(x)
+                                        => format(format_string, x)
+                                        else => {
+                                            .error(format("comptime format can only format primitves, got {}", arguments[1].impl), call_span)
+                                            throw Error::from_errno(InterpretError::InvalidType as! i32);
+                                        }
+                                    }
+                                    else => {
+                                        .error(format("comptime format accepts at most two arguments, but got {}", arguments.size()), call_span)
+                                        throw Error::from_errno(InterpretError::InvalidType as! i32);
+                                    }
+                                }
+                            )
+                            span: call_span
+                        )
+                    )
+                }
+                "println" | "eprintln" | "print" | "eprint" => {
+                    let format_string = match arguments[0].impl {
+                        JaktString(x) => x
+                        else => {
+                            .error(format( "println expects a string as its first argument, but got {}", arguments[0].impl), call_span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32);
+                        }
+                    }
+                    match arguments.size() {
+                        1uz => match prelude_function {
+                            "println" => println(format_string)
+                            "eprintln" => eprintln(format_string)
+                            "print" => print(format_string)
+                            else => eprint(format_string)
+                        }
+                        2uz => match arguments[1].impl {
+                            Bool(x)
+                            | U8(x)
+                            | U16(x)
+                            | U32(x)
+                            | U64(x)
+                            | I8(x)
+                            | I16(x)
+                            | I32(x)
+                            | I64(x)
+                            | F32(x)
+                            | F64(x)
+                            | USize(x)
+                            | JaktString(x)
+                            | CChar(x)
+                            | CInt(x)
+                            => match prelude_function {
+                                "println" => println(format_string, x)
+                                "eprintln" => eprintln(format_string, x)
+                                "print" => print(format_string, x)
+                                else => eprint(format_string, x)
+                            }
+                            else => {
+                                .error(format( "comptime format can only format primitves, got {}", arguments[1].impl), call_span)
+                                throw Error::from_errno(InterpretError::InvalidType as! i32);
+                            }
+                        }
+                        else => {
+                            .error(format("comptime format accepts at most two arguments, but got {}", arguments.size()), call_span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32);
+                        }
+                    }
+
+                    yield StatementResult::JustValue(
+                        Value(
+                            impl: ValueImpl::Void
+                            span: call_span
+                        )
+                    )
+                }
+                else => {
+                    .error(
+                        format("Prelude function {}::{} is not implemented yet", namespace_, prelude_function),
+                        call_span
+                    )
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+            }
+        }
+        
+        return match namespace_[0].name {
+            "Error" => match prelude_function {
+                "from_errno" => {
+                    let err = arguments[0]
+                    let error_struct_id = .program.find_struct_in_prelude("Error")
+                    let error_struct = .program.get_struct(error_struct_id)
+                    let scope = .program.get_scope(error_struct.scope_id)
+                    let constructor = scope.functions.get("from_errno")
+                    yield StatementResult::JustValue(
+                        Value(
+                            impl: ValueImpl::Struct(
+                                fields: [
+                                    err
+                                ],
+                                struct_id: error_struct_id
+                                constructor: constructor!
+                            )
+                            span: call_span
+                        )
+                    )
+                }
+                else => {
+                    .error(
+                        format("Prelude function `Error::{}` is not implemented", prelude_function),
+                        call_span
+                    )
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+            }
+            "File" => match prelude_function {
+                "open_for_reading" => {
+                    let requested_path = match arguments[0].impl {
+                        JaktString(x) => x
+                        else => {
+                            .error(
+                                format("Prelude function `File::{}` expects a string as its first argument, but got {}", prelude_function, arguments[0].impl),
+                                call_span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    let base_path = .program.compiler.get_file_path(call_span.file_id)!.dirname()
+                    let path_string = base_path + "/" + requested_path
+                    let path = Value(
+                        impl: ValueImpl::JaktString(path_string)
+                        span: call_span
+                    )
+                    if not File::exists(path_string) {
+                        // FIXME: This should `return StatementResult::Throw(...)`, but we currently can't put strings in Error, so the output result looks vague and unhelpful.
+                        .error(
+                            format("Prelude function `File::{}` could not find file at path {}", prelude_function, path_string),
+                            call_span
+                        )
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                    let file_struct_id = .program.find_struct_in_prelude("File")
+                    let file_struct = .program.get_struct(file_struct_id)
+                    let scope = .program.get_scope(file_struct.scope_id)
+                    let constructor = scope.functions.get("open_for_reading")
+                    yield StatementResult::JustValue(
+                        Value(
+                            impl: ValueImpl::Struct(
+                                fields: [
+                                    path
+                                ],
+                                struct_id: file_struct_id
+                                constructor: constructor!
+                            )
+                            span: call_span
+                        )
+                    )
+                }
+                "read_all" => {
+                    let path = match this_argument!.impl {
+                        Struct(fields) => match fields[0].impl {
+                            JaktString(x) => x
+                            else => {
+                                panic("invalid type for File::read_all")
+                            }
+                        }
+                        else => {
+                            .error(
+                                format("Prelude function `File::read_all` expects a `File` as its this argument, but got {}", this_argument!.impl),
+                                call_span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    mut file = File::open_for_reading(path)
+                    mut result_values: [Value] = []
+                    for byte in file.read_all().iterator() {
+                        result_values.push(Value(
+                            impl: ValueImpl::U8(byte)
+                            span: call_span
+                        ))
+                    }
+                    let array_struct_id = .program.find_struct_in_prelude("Array")
+
+                    yield StatementResult::JustValue(
+                        Value(
+                            impl: ValueImpl::JaktArray(
+                                values: result_values
+                                type_id: .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [builtin(BuiltinType::U8)]))
+                            )
+                            span: call_span
+                        )
+                    )
+                }
+                else => {
+                    .error(
+                        format("Prelude function `File::{}` is not implemented", prelude_function),
+                        call_span
+                    )
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+            }
+            "StringBuilder" => match prelude_function {
+                "create" => {
+                    let string_builder_struct_id = .program.find_struct_in_prelude("StringBuilder")
+                    yield StatementResult::JustValue(
+                        Value(
+                            impl: ValueImpl::Struct(
+                                fields: [Value(impl: ValueImpl::JaktString(""), span: call_span)],
+                                struct_id: string_builder_struct_id,
+                                constructor: None
+                            )
+                            span: call_span
+                        )
+                    )
+                }
+                "append" | "append_string" | "append_code_point" => {
+                    mut (fields, current_string) = match this_argument!.impl {
+                        Struct(fields) => match fields[0].impl {
+                            JaktString(value) => (fields, value)
+                            else => {
+                                panic("Invalid use of prelude StringBuilder")
+                            }
+                        }
+                        else => {
+                            .error(
+                                format("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument", prelude_function),
+                                call_span
+                            )
+                            throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                        }
+                    }
+
+                    mut builder = StringBuilder::create()
+                    builder.append_string(current_string)
+                    match prelude_function {
+                        "append" => builder.append(match arguments[0].impl {
+                            U8(value) => value
+                            else => {
+                                .error(format("Invalid use of StringBuilder::append({})", arguments[0].impl), call_span)
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        })
+                        "append_string" => builder.append_string(match arguments[0].impl {
+                            JaktString(value) => value
+                            else => {
+                                .error("Invalid use of StringBuilder::append_string()", call_span)
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        })
+                        "append_code_point" => builder.append_code_point(match arguments[0].impl {
+                            U32(value) => value
+                            else => {
+                                .error("Invalid use of StringBuilder::append_code_point()", call_span)
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        })
+                        else => {
+                            abort()
+                        }
+                    }
+
+                    fields[0] = Value(
+                        impl: ValueImpl::JaktString(builder.to_string())
+                        span: call_span
+                    )
+
+                    yield StatementResult::JustValue(
+                        Value(impl: ValueImpl::Void, span: call_span)
+                    )
+                }
+                "to_string" => match this_argument!.impl {
+                    Struct(fields) => StatementResult::JustValue(fields[0])
+                    else => {
+                        .error(
+                            format("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument", prelude_function),
+                            call_span
+                        )
+                        throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    }
+                }
+                else => {
+                    .error(
+                        format("Prelude function `StringBuilder::{}` is not implemented", prelude_function),
+                        call_span
+                    )
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+            }
+            "Array" => match prelude_function {
+                "iterator" => match this_argument!.impl {
+                    JaktArray => {
+                        let struct_id = .program.find_struct_in_prelude("ArrayIterator")
+                        yield StatementResult::JustValue(
+                            Value(
+                                impl: ValueImpl::Struct(
+                                    fields: [
+                                        this_argument!
+                                        Value(
+                                            impl: ValueImpl::USize(0uz)
+                                            span: call_span
+                                        )
+                                    ]
+                                    struct_id
+                                    constructor: None
+                                )
+                                span: call_span
+                            )
+                        )
+                    }
+                    else => {
+                        panic("Invalid use of Array::iterator()")
+                    }
+                }
+                else => {
+                    .error(
+                        format("Prelude function `Array::{}` is not implemented", prelude_function),
+                        call_span
+                    )
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+            }
+            "ArrayIterator" => match prelude_function {
+                "next" => match this_argument!.impl {
+                    Struct(fields) => {
+                        let index = match fields[1].impl {
+                            USize(value) => value
+                            else => {
+                                panic("Invalid ArrayIterator index configuration")
+                            }
+                        }
+                        mut mutable_fields = fields
+                        yield StatementResult::JustValue(match fields[0].impl {
+                            JaktArray(values) => match values.size() > index {
+                                true => {
+                                    mutable_fields[1] = Value(
+                                        impl: ValueImpl::USize(index + 1)
+                                        span: call_span
+                                    )
+                                    yield Value(impl: ValueImpl::OptionalSome(value: values[index]), span: call_span)
+                                }
+                                else => Value(impl: ValueImpl::OptionalNone, span: call_span)
+                            }
+                            else => {
+                                panic("Invalid ArrayIterator configuration")
+                            }
+                        })
+                    }
+                    else => {
+                        panic("Invalid ArrayIterator configuration")
+                    }
+                }
+                else => {
+                    .error(
+                        format("Prelude function `ArrayIterator::{}` is not implemented", prelude_function),
+                        call_span
+                    )
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+            }
+            "String" => match prelude_function {
+                "is_empty" => match this_argument!.impl {
+                    JaktString(value) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(value.is_empty()), span: call_span))
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "length" => match this_argument!.impl {
+                    JaktString(value) => StatementResult::JustValue(Value(impl: ValueImpl::USize(value.length()), span: call_span))
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "hash" => match this_argument!.impl {
+                    JaktString(value) => StatementResult::JustValue(Value(impl: ValueImpl::U32(value.hash()), span: call_span))
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "substring" => match this_argument!.impl {
+                    JaktString(value) => match arguments[0].impl {
+                        USize(start)
+                        | U64(start)
+                        | U32(start)
+                        | U16(start)
+                        | U8(start)
+                        => match arguments[1].impl {
+                            USize(length)
+                            | U64(length)
+                            | U32(length)
+                            | U16(length)
+                            | U8(length)
+                            => {
+                                let result = value.substring(start: start as! usize, length: length as! usize)
+                                yield StatementResult::JustValue(Value(impl: ValueImpl::JaktString(result), span: call_span))
+                            }
+                            else => {
+                                .error("String::substring must be called with unsigned arguments", arguments[1].span)
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        else => {
+                            .error("String::substring must be called with unsigned arguments", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "number" => match arguments[0].impl {
+                    I64(number)
+                    | U32(number)
+                    | I32(number)
+                    | U16(number)
+                    | I16(number)
+                    | U8(number)
+                    | I8(number)
+                    => StatementResult::JustValue(Value(impl: ValueImpl::JaktString(String::number(number as! i64)), span: call_span))
+                    USize() | U64() => {
+                        .error("String::number must not be called with a usize or u64", arguments[0].span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                    else => {
+                        .error("String::number must be called with an integer", arguments[0].span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                }
+                "to_uint" => match this_argument!.impl {
+                    JaktString(value) => {
+                        let result = value.to_uint()
+                        yield StatementResult::JustValue(Value(
+                            impl: match result.has_value() {
+                                true => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::U32(result!), span: call_span))
+                                else => ValueImpl::OptionalNone()
+                            }
+                            span: call_span
+                        ))
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "to_int" => match this_argument!.impl {
+                    JaktString(value) => {
+                        let result = value.to_int()
+                        yield StatementResult::JustValue(Value(
+                            impl: match result.has_value() {
+                                true => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::I32(result!), span: call_span))
+                                else => ValueImpl::OptionalNone()
+                            }
+                            span: call_span
+                        ))
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "is_whitespace" => match this_argument!.impl {
+                    JaktString(value) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(value.is_whitespace()), span: call_span))
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "contains" => match this_argument!.impl {
+                    JaktString(value) => match arguments[0].impl {
+                        JaktString(arg) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(value.contains(arg)), span: call_span))
+                        else => {
+                            .error("String::contains must be called with a string", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "replace" => match this_argument!.impl {
+                    JaktString(value) => match arguments[0].impl {
+                        JaktString(replace) => match arguments[1].impl {
+                            JaktString(with) => StatementResult::JustValue(Value(impl: ValueImpl::JaktString(value.replace(replace, with)), span: call_span))
+                            else => {
+                                .error("String::replace must be called with strings", arguments[1].span)
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        else => {
+                            .error("String::replace must be called with strings", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "byte_at" => match this_argument!.impl {
+                    JaktString(value) => match arguments[0].impl {
+                        USize(index)
+                        | U64(index)
+                        | U32(index)
+                        | U16(index)
+                        | U8(index)
+                        => StatementResult::JustValue(Value(impl: ValueImpl::U8(value.byte_at(index as! usize)), span: call_span))
+                        else => {
+                            .error("String::byte_at must be called with an unsigned integer", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                else => {
+                    .error(
+                        format("Prelude function `String::{}` is not implemented", prelude_function),
+                        call_span
+                    )
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+            }
+
+            "Optional" => match prelude_function {
+                "has_value" => match this_argument!.impl {
+                    OptionalSome => StatementResult::JustValue(Value(impl: ValueImpl::Bool(true), span: call_span))
+                    OptionalNone => StatementResult::JustValue(Value(impl: ValueImpl::Bool(false), span: call_span))
+                    else => {
+                        panic("Invalid Optional configuration")
+                    }
+                }
+                else => {
+                    .error(
+                        format("Prelude function `Optional::{}` is not implemented", prelude_function),
+                        call_span
+                    )
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+            }
+            else => {
+                .error(
+                    format("Prelude function `{}::{}` is not implemented", namespace_[0].name, prelude_function),
+                    call_span
+                )
+                throw Error::from_errno(InterpretError::Unimplemented as! i32)
+            }
+        }
+    }
+
+    function execute(mut this, anon function_to_run_id: FunctionId, mut namespace_: [ResolvedNamespace]?, this_argument: Value?, arguments: [Value], call_span: Span, type_bindings: [String:TypeId] = [:]) throws -> ExecutionResult {
+        let function_to_run = .program.get_function(function_to_run_id)
+        .enter_span(call_span)
+        defer .leave_span()
+
+        mut is_prelude_function = false
+
+        if function_to_run.linkage is External {
+            // If this is a prelude function, run it manually
+            let function_scope = .program.get_scope(function_to_run.function_scope_id)
+            
+            if not .get_prelude_function(function_to_run.function_scope_id) {
+                .error(
+                    format("Cannot call external function '{}'", function_to_run.name)
+                    call_span
+                )
+                throw Error::from_errno(InterpretError::CallToExternalFunction as! i32)
+            }
+
+            is_prelude_function = true
+        }
+
+        if function_to_run.is_static() == this_argument.has_value() {
+            mut expected = "did not expect"
+            if not function_to_run.is_static() {
+                expected = "expected"
+            }
+
+            mut not_provided = " not"
+            if this_argument.has_value() {
+                not_provided = ""
+            }
+
+            .compiler.errors.push(JaktError::Message(
+                message: format("function call {} a this argument, yet one was{} provided", expected, not_provided),
+                span: function_to_run.name_span
+            ));
+            throw Error::from_errno(InterpretError::InvalidThisArgument as! i32)
+        }
+
+        mut this_offset = 0uz
+        if this_argument.has_value() {
+            this_offset = 1
+        }
+
+        if function_to_run.params.size() - this_offset != arguments.size() {
+            .compiler.errors.push(JaktError::Message(
+                message: format("Function called with wrong number of arguments, expected {} but got {}", function_to_run.params.size(), arguments.size()),
+                span: call_span
+            ));
+            throw Error::from_errno(InterpretError::MismatchingArguments as! i32)
+        }
+
+        if is_prelude_function {
+            if this_argument.has_value() and (not namespace_.has_value() or namespace_!.is_empty()) {
+                mut effective_namespace: [ResolvedNamespace] = []
+                match this_argument!.impl {
+                    JaktString => {
+                        let generic_parameters: [TypeId] = []
+                        effective_namespace.push(ResolvedNamespace(name: "String", generic_parameters))
+                    }
+                    JaktArray(type_id) => {
+                        let generic_parameters = match .program.get_type(id: type_id) {
+                            GenericInstance(args) => args
+                            else => {
+                                .error("Attempted to call a prelude function on a non-generic array", call_span)
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        effective_namespace.push(ResolvedNamespace(name: "Array", generic_parameters))
+                    }
+                    Struct(struct_id) | Class(struct_id) => {
+                        let generic_parameters: [TypeId] = []
+                        effective_namespace.push(
+                            ResolvedNamespace(name: .program.get_struct(struct_id).name, generic_parameters))
+                    }
+                    Enum(enum_id) => {
+                        let generic_parameters: [TypeId] = []
+                        effective_namespace.push(
+                            ResolvedNamespace(name: .program.get_enum(enum_id).name, generic_parameters))
+                    }
+                    OptionalNone | OptionalSome => {
+                        // FIXME: We should have these at this point.
+                        let generic_parameters: [TypeId] = []
+                        effective_namespace.push(ResolvedNamespace(name: "Optional", generic_parameters))
+                    }
+                    else => {
+                        .error("Attempted to call an instance method on a non-struct/enum type", call_span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                }
+
+                namespace_ = effective_namespace
+            }
+
+            return match .call_prelude_function(function_to_run.name, namespace_!, this_argument, arguments, call_span) {
+                JustValue(value) | Return(value) => ExecutionResult::Return(value)
+                Throw(value) => ExecutionResult::Throw(value)
+                Continue | Break => {
+                    panic("Invalid control flow")
+                }
+            }
+        }
+
+        match function_to_run.type {
+            Normal => {
+                mut scope = InterpreterScope(bindings: [:], parent: None, type_bindings);
+                for i in 0..function_to_run.params.size() {
+                    if this_offset != 0 and i == 0 {
+                        continue
+                    }
+                    let param_name = function_to_run.params[i].variable.name
+                    let param_value = arguments[i]
+                    scope.bindings[param_name] = param_value
+                }
+
+                if this_argument.has_value() {
+                    scope.bindings.set("this", this_argument!)
+                }
+
+                return match .execute_block(block: function_to_run.block, scope, call_span) {
+                    Return(value) | JustValue(value) => ExecutionResult::Return(value)
+                    Throw(value) => ExecutionResult::Throw(value)
+                    Continue | Break => {
+                        panic("Invalid control flow")
+                    }
+                }
+            }
+            ImplicitConstructor => {
+                let result_type = .program.get_type(function_to_run.return_type_id)
+                match result_type {
+                    Struct(struct_id) | GenericInstance(id: struct_id) => {
+                        let struct_ = .program.get_struct(struct_id)
+                        let constructor = function_to_run_id
+                        let impl = match struct_.record_type {
+                            Struct => ValueImpl::Struct(
+                                fields: arguments
+                                struct_id
+                                constructor
+                            )
+                            Class => ValueImpl::Class(
+                                fields: arguments
+                                struct_id
+                                constructor
+                            )
+                            else => {
+                                .error(
+                                    format("Cannot create instance of non-struct type {}", struct_.name),
+                                    call_span
+                                )
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        return ExecutionResult::Return(Value(
+                            impl
+                            span: call_span
+                        )) 
+                    }
+                    else => {
+                        .error(
+                            format("Implicit constructor can only return a struct or a generic instance"),
+                            call_span
+                        )
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                }
+            }
+            ImplicitEnumConstructor => {
+                let result_type = .program.get_type(function_to_run.return_type_id)
+                match result_type {
+                    Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
+                        let enum_ = .program.get_enum(enum_id)
+                        let constructor = function_to_run_id
+                        let impl = ValueImpl::Enum(
+                            fields: arguments
+                            enum_id
+                            constructor
+                        )
+                        return ExecutionResult::Return(Value(
+                            impl
+                            span: call_span
+                        )) 
+                    }
+                    else => {
+                        .error(
+                            format("Implicit enum constructor can only return an enum or a generic instance of one"),
+                            call_span
+                        )
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                }
+            }
+            else => {
+                .error(
+                    format("Function type {} is not implemented", function_to_run.type),
+                    call_span
+                )
+                throw Error::from_errno(InterpretError::Unimplemented as! i32)
+            }
+        }
+    }
+
+    function execute_statement(mut this, statement: CheckedStatement, mut scope: InterpreterScope, call_span: Span) throws -> StatementResult {
+        match statement {
+            Expression(expr) => {
+                return .execute_expression(expr, scope)
+            }
+            Defer(span) => .error("defer statement not implemented", span)
+            DestructuringAssignment(span) => .error("destructuring assignment not implemented", span)
+            VarDecl(var_id, init, span) => {
+                match .execute_expression(init, scope) {
+                    Return(value) => {
+                        return StatementResult::Return(value)
+                    }
+                    Throw(value) => {
+                        return StatementResult::Throw(value)
+                    }
+                    JustValue(var_value) => {
+                        scope.bindings[.program.get_variable(id: var_id).name] = var_value
+                    }
+                    Continue => {
+                        return StatementResult::Continue
+                    }
+                    Break => {
+                        return StatementResult::Break
+                    }
+                }
+            }
+            If(condition, then_block, else_statement, span) => {
+                let cond = match .execute_expression(expr: condition, scope) {
+                    JustValue(value) => match value.impl {
+                        Bool(x) => x
+                        else => {
+                            .error(
+                                format("if condition must be a boolean, but got {}", value.impl),
+                                span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    Return(value) => {
+                        return StatementResult::Return(value)
+                    }
+                    Throw(value) => {
+                        return StatementResult::Throw(value)
+                    }
+                    Continue => {
+                        return StatementResult::Continue
+                    }
+                    Break => {
+                        return StatementResult::Break
+                    }
+                }
+
+                let block = match cond {
+                    true => Some(then_block)
+                    else => match else_statement.has_value() {
+                        true => Some(CheckedBlock(
+                            statements: [else_statement!]
+                            scope_id: then_block.scope_id
+                            control_flow: BlockControlFlow::MayReturn
+                            yielded_type: None))
+                        else => None
+                    }
+                }
+
+                if block.has_value() {
+                    return match .execute_block(block: block!, scope, call_span: span) {
+                        Return(value) => StatementResult::Return(value)
+                        Throw(value) => StatementResult::Throw(value)
+                        JustValue => StatementResult::JustValue(Value(impl: ValueImpl::Void, span))
+                        Continue => StatementResult::Continue
+                        Break => StatementResult::Break
+                    }
+                }
+            }
+            Block(block, span) => {
+                let new_scope = InterpreterScope(bindings: [:], parent: Some(scope), type_bindings: [:])
+                return .execute_block(block, scope: new_scope, call_span: span)
+            }
+            Loop(block, span) => {
+                loop {
+                    match .execute_block(block, scope, call_span: span) {
+                        Return(value) => {
+                            return StatementResult::Return(value)
+                        }
+                        Throw(value) => {
+                            return StatementResult::Throw(value)
+                        }
+                        Continue => {
+                            continue
+                        }
+                        Break => {
+                            break
+                        }
+                        else => {}
+                    }
+                }
+            }
+            While(span) => .error("while statement not implemented", span)
+            Return(val) => {
+                if val.has_value() {
+                    return match .execute_expression(val!, scope) {
+                        Return(value) => StatementResult::Return(value)
+                        Throw(value) => StatementResult::Throw(value)
+                        JustValue(value) => StatementResult::Return(value)
+                        Continue => StatementResult::Continue
+                        Break => StatementResult::Break
+                    }
+                }
+                return StatementResult::Return(Value(impl: ValueImpl::Void, span: call_span))
+            }
+            Break => {
+                return StatementResult::Break
+            }
+            Continue => {
+                return StatementResult::Continue
+            }
+            Throw(expr) => match .execute_expression(expr, scope) {
+                Return(value) | JustValue(value) | Throw(value) => {
+                    return StatementResult::Throw(value)
+                }
+                Continue => {
+                    return StatementResult::Continue
+                }
+                Break => {
+                    return StatementResult::Break
+                }
+            }
+            Yield(span) => .error("yield statement not implemented", span)
+            InlineCpp(span) => .error("Cannot run inline cpp at compile time", span)
+            Garbage(span) => .error("Cannot run invalid statements at compile time", span)
+        }
+
+        return StatementResult::JustValue(Value(impl: ValueImpl::Void, span: call_span))
+    }
+
+    function execute_block(mut this, block: CheckedBlock, mut scope: InterpreterScope, call_span: Span) throws -> StatementResult {
+        for statement in block.statements.iterator() {
+            .enter_span(statement.span() ?? call_span)
+            match .execute_statement(statement, scope, call_span) {
+                Return(value) => {
+                    return StatementResult::Return(value)
+                }
+                Throw(value) => {
+                    return StatementResult::Throw(value)
+                }
+                Continue => {
+                    return StatementResult::Continue
+                }
+                Break => {
+                    return StatementResult::Break
+                }
+                JustValue => {}
+            }
+            defer .leave_span()
+        }
+
+        return StatementResult::JustValue(Value(impl: ValueImpl::Void, span: call_span))
+    }
+
+    function error(mut this, anon message: String, anon span: Span) throws -> void {
+        .compiler.errors.push(JaktError::Message(
+            message: message,
+            span: span
+        ))
+
+        // FIXME: This shouldn't be necessary
+        .compiler.print_errors()
+    }
+
+    function error_with_hint(mut this, anon message: String, anon span: Span, anon hint_message: String, anon hint_span: Span) throws -> void {
+        .compiler.errors.push(JaktError::MessageWithHint(
+            message,
+            span,
+            hint: hint_message,
+            hint_span,
+        ))
+
+        // FIXME: This shouldn't be necessary
+        .compiler.print_errors()
+    }
+
+    function execute_expression(mut this, anon expr: CheckedExpression, anon scope: InterpreterScope) throws -> StatementResult => match expr {
+        BinaryOp(lhs, op, rhs, span) => {
+            let lhs_value = match .execute_expression(lhs, scope) {
+                Return(value) => {
+                    return StatementResult::Return(value)
+                }
+                Throw(value) => {
+                    return StatementResult::Throw(value)
+                }
+                JustValue(value) => value
+                Continue => {
+                    return StatementResult::Continue
+                }
+                Break => {
+                    return StatementResult::Break
+                }
+            }
+            let rhs_value = match .execute_expression(rhs, scope) {
+                Return(value) => {
+                    return StatementResult::Return(value)
+                }
+                Throw(value) => {
+                    return StatementResult::Throw(value)
+                }
+                JustValue(value) => value
+                Continue => {
+                    return StatementResult::Continue
+                }
+                Break => {
+                    return StatementResult::Break
+                }
+            }
+            yield match op {
+                Add => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8(x + y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16(x + y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x + y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x + y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8(x + y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16(x + y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x + y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x + y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F32(x) => match rhs_value.impl {
+                                F32(y) => ValueImpl::F32(x + y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F64(x) => match rhs_value.impl {
+                                F64(y) => ValueImpl::F64(x + y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x + y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            JaktString(x) => match rhs_value.impl {
+                                JaktString(y) => ValueImpl::JaktString(x + y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                Subtract => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8(x - y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16(x - y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x - y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x - y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8(x - y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16(x - y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x - y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x - y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F32(x) => match rhs_value.impl {
+                                F32(y) => ValueImpl::F32(x - y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F64(x) => match rhs_value.impl {
+                                F64(y) => ValueImpl::F64(x - y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x - y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                Multiply => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8(x * y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16(x * y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x * y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x * y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8(x * y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16(x * y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x * y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x * y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F32(x) => match rhs_value.impl {
+                                F32(y) => ValueImpl::F32(x * y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F64(x) => match rhs_value.impl {
+                                F64(y) => ValueImpl::F64(x * y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x * y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                Divide => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8(x / y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16(x / y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x / y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x / y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8(x / y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16(x / y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x / y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x / y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F32(x) => match rhs_value.impl {
+                                F32(y) => ValueImpl::F32(x / y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F64(x) => match rhs_value.impl {
+                                F64(y) => ValueImpl::F64(x / y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x / y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                Equal => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::Bool(x == y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::Bool(x == y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::Bool(x == y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::Bool(x == y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::Bool(x == y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::Bool(x == y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::Bool(x == y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::Bool(x == y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F32(x) => match rhs_value.impl {
+                                F32(y) => ValueImpl::Bool(x == y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F64(x) => match rhs_value.impl {
+                                F64(y) => ValueImpl::Bool(x == y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::Bool(x == y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            JaktString(x) => match rhs_value.impl {
+                                JaktString(y) => ValueImpl::Bool(x == y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                NotEqual => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F32(x) => match rhs_value.impl {
+                                F32(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F64(x) => match rhs_value.impl {
+                                F64(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            JaktString(x) => match rhs_value.impl {
+                                JaktString(y) => ValueImpl::Bool(x != y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                LessThan => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::Bool(x < y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::Bool(x < y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::Bool(x < y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::Bool(x < y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::Bool(x < y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::Bool(x < y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::Bool(x < y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::Bool(x < y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F32(x) => match rhs_value.impl {
+                                F32(y) => ValueImpl::Bool(x < y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F64(x) => match rhs_value.impl {
+                                F64(y) => ValueImpl::Bool(x < y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::Bool(x < y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            JaktString(x) => match rhs_value.impl {
+                                JaktString(y) => ValueImpl::Bool(x < y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                LessThanOrEqual => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F32(x) => match rhs_value.impl {
+                                F32(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F64(x) => match rhs_value.impl {
+                                F64(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            JaktString(x) => match rhs_value.impl {
+                                JaktString(y) => ValueImpl::Bool(x <= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                GreaterThan => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::Bool(x > y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::Bool(x > y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::Bool(x > y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::Bool(x > y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::Bool(x > y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::Bool(x > y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::Bool(x > y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::Bool(x > y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F32(x) => match rhs_value.impl {
+                                F32(y) => ValueImpl::Bool(x > y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F64(x) => match rhs_value.impl {
+                                F64(y) => ValueImpl::Bool(x > y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::Bool(x > y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            JaktString(x) => match rhs_value.impl {
+                                JaktString(y) => ValueImpl::Bool(x > y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                GreaterThanOrEqual => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F32(x) => match rhs_value.impl {
+                                F32(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            F64(x) => match rhs_value.impl {
+                                F64(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            JaktString(x) => match rhs_value.impl {
+                                JaktString(y) => ValueImpl::Bool(x >= y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                BitwiseAnd => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8((x & y) as! u8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16((x & y) as! u16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x & y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x & y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8((x & y) as! i8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16((x & y) as! i16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x & y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x & y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x & y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                BitwiseOr => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8((x | y) as! u8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16((x | y) as! u16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x | y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x | y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8((x | y) as! i8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16((x | y) as! i16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x | y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x | y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x | y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                BitwiseXor => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8((x ^ y) as! u8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16((x ^ y) as! u16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x ^ y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x ^ y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8((x ^ y) as! i8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16((x ^ y) as! i16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x ^ y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x ^ y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x ^ y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                BitwiseLeftShift => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8((x << y) as! u8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16((x << y) as! u16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x << y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x << y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8((x << y) as! i8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16((x << y) as! i16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x << y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x << y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x << y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                BitwiseRightShift => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8((x >> y) as! u8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16((x >> y) as! u16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x >> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x >> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8((x >> y) as! i8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16((x >> y) as! i16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x >> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x >> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x >> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                ArithmeticLeftShift => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8((x <<< y) as! u8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16((x <<< y) as! u16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x <<< y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x <<< y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8((x <<< y) as! i8)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16((x <<< y) as! i16)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x <<< y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x <<< y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x <<< y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                ArithmeticRightShift => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            U8(x) => match rhs_value.impl {
+                                U8(y) => ValueImpl::U8(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U16(x) => match rhs_value.impl {
+                                U16(y) => ValueImpl::U16(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U32(x) => match rhs_value.impl {
+                                U32(y) => ValueImpl::U32(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            U64(x) => match rhs_value.impl {
+                                U64(y) => ValueImpl::U64(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I8(x) => match rhs_value.impl {
+                                I8(y) => ValueImpl::I8(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I16(x) => match rhs_value.impl {
+                                I16(y) => ValueImpl::I16(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I32(x) => match rhs_value.impl {
+                                I32(y) => ValueImpl::I32(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            I64(x) => match rhs_value.impl {
+                                I64(y) => ValueImpl::I64(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            USize(x) => match rhs_value.impl {
+                                USize(y) => ValueImpl::USize(x >>> y)
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                LogicalOr => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            Bool(x) => match rhs_value.impl {
+                                Bool(y) => ValueImpl::Bool(x or y),
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                LogicalAnd => StatementResult::JustValue(
+                    Value(
+                        impl: match lhs_value.impl {
+                            Bool(x) => match rhs_value.impl {
+                                Bool(y) => ValueImpl::Bool(x and y),
+                                else => {
+                                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                                }
+                            }
+                            else => {
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        span
+                    )
+                )
+                else => {
+                    .error(
+                        format("Unimplemented binary operator '{}'", op),
+                        span
+                    )
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+            }
+        }
+        UnaryOp(expr, op, span) => {
+            let value = match .execute_expression(expr, scope) {
+                Return(value) => {
+                    return StatementResult::Return(value)
+                }
+                Throw(value) => {
+                    return StatementResult::Throw(value)
+                }
+                JustValue(value) => value
+                Continue => {
+                    return StatementResult::Continue
+                }
+                Break => {
+                    return StatementResult::Break
+                }
+            }
+            yield match op {
+                LogicalNot => match value.impl {
+                    Bool(value) => StatementResult::JustValue(Value(
+                        impl: ValueImpl::Bool(not value)
+                        span
+                    ))
+                    else => {
+                        .error(
+                            format("Invalid type for unary operator"),
+                            span
+                        )
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                }
+                else => {
+                    .error(
+                        format("Unimplemented unary operator '{}'", op),
+                        span
+                    )
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+            }
+        }
+        // Range
+        Call(call, span) => {
+            if not call.function_id.has_value() {
+                mut arguments: [Value] = []
+                for arg in call.args.iterator() {
+                    arguments.push(match .execute_expression(arg.1, scope) {
+                        Return(value) => {
+                            return StatementResult::Return(value)
+                        }
+                        Throw(value) => {
+                            return StatementResult::Throw(value)
+                        }
+                        JustValue(value) => value
+                        Continue => {
+                            return StatementResult::Continue
+                        }
+                        Break => {
+                            return StatementResult::Break
+                        }
+                    })
+                }
+
+                return .call_prelude_function(
+                    prelude_function: call.name
+                    namespace_: []
+                    this_argument: None
+                    arguments
+                    call_span: span
+                )
+            }
+
+            let function_to_run = .program.get_function(id: call.function_id!)
+            mut this_argument: Value? = None
+            mut arguments: [Value] = []
+            for arg in call.args.iterator() {
+                arguments.push(match .execute_expression(arg.1, scope) {
+                    Return(value) => {
+                        return StatementResult::Return(value)
+                    }
+                    Throw(value) => {
+                        return StatementResult::Throw(value)
+                    }
+                    JustValue(value) => value
+                    Continue => {
+                        return StatementResult::Continue
+                    }
+                    Break => {
+                        return StatementResult::Break
+                    }
+                })
+            }
+
+            mut type_bindings: [String:TypeId] = [:]
+            for i in 0..function_to_run.generic_params.size() {
+                let param = function_to_run.generic_params[i]
+                guard param is Parameter else {
+                    continue
+                }
+
+                type_bindings.set(
+                    param.type_id().to_string()
+                    call.type_args[i]
+                )
+            }
+
+            yield match .execute(call.function_id!, namespace_: Some(call.namespace_), this_argument, arguments, call_span: span, type_bindings) {
+                Return(value) => StatementResult::JustValue(value)
+                Throw(value) => StatementResult::Throw(value)
+            }
+        }
+        MethodCall(expr, call, span) => {
+            let this_argument = match .execute_expression(expr, scope) {
+                Return(value) => {
+                    return StatementResult::Return(value)
+                }
+                Throw(value) => {
+                    return StatementResult::Throw(value)
+                }
+                JustValue(value) => value
+                Continue => {
+                    return StatementResult::Continue
+                }
+                Break => {
+                    return StatementResult::Break
+                }
+            }
+
+            mut effective_namespace: [ResolvedNamespace] = []
+            match this_argument.impl {
+                JaktString => {
+                    let generic_parameters: [TypeId] = []
+                    effective_namespace.push(ResolvedNamespace(name: "String", generic_parameters))
+                }
+                JaktArray(type_id) => {
+                    let generic_parameters = match .program.get_type(id: type_id) {
+                        GenericInstance(args) => args
+                        else => {
+                            .error("Attempted to call a prelude function on a non-generic array", this_argument.span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    effective_namespace.push(ResolvedNamespace(name: "Array", generic_parameters))
+                }
+                Struct(struct_id) | Class(struct_id) => {
+                    let generic_parameters: [TypeId] = []
+                    effective_namespace.push(
+                        ResolvedNamespace(name: .program.get_struct(struct_id).name, generic_parameters))
+                }
+                Enum(enum_id) => {
+                    let generic_parameters: [TypeId] = []
+                    effective_namespace.push(
+                        ResolvedNamespace(name: .program.get_enum(enum_id).name, generic_parameters))
+                }
+                OptionalNone | OptionalSome => {
+                    // FIXME: We should have these at this point.
+                    let generic_parameters: [TypeId] = []
+                    effective_namespace.push(ResolvedNamespace(name: "Optional", generic_parameters))
+                }
+                else => {
+                    .error("Attempted to call an instance method on a non-struct/enum type", this_argument.span)
+                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                }
+            }
+
+            if not call.function_id.has_value() {
+                mut arguments: [Value] = []
+                for arg in call.args.iterator() {
+                    arguments.push(match .execute_expression(arg.1, scope) {
+                        Return(value) => {
+                            return StatementResult::Return(value)
+                        }
+                        Throw(value) => {
+                            return StatementResult::Throw(value)
+                        }
+                        JustValue(value) => value
+                        Continue => {
+                            return StatementResult::Continue
+                        }
+                        Break => {
+                            return StatementResult::Break
+                        }
+                    })
+                }
+
+                return .call_prelude_function(
+                    prelude_function: call.name
+                    namespace_: effective_namespace
+                    this_argument
+                    arguments
+                    call_span: span
+                )
+            }
+
+            let function_to_run = .program.get_function(id: call.function_id!)
+            mut arguments: [Value] = []
+            for arg in call.args.iterator() {
+                arguments.push(match .execute_expression(arg.1, scope) {
+                    Return(value) => {
+                        return StatementResult::Return(value)
+                    }
+                    Throw(value) => {
+                        return StatementResult::Throw(value)
+                    }
+                    JustValue(value) => value
+                    Continue => {
+                        return StatementResult::Continue
+                    }
+                    Break => {
+                        return StatementResult::Break
+                    }
+                })
+            }
+
+            yield match .execute(call.function_id!, namespace_: Some(call.namespace_), this_argument, arguments, call_span: span) {
+                Return(value) => StatementResult::JustValue(value)
+                Throw(value) => StatementResult::Throw(value)
+            }
+        }
+        OptionalNone(span) => StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone(), span))
+        OptionalSome(expr, span) => {
+            let result = .execute_expression(expr, scope)
+            if result is JustValue(value) {
+                return StatementResult::JustValue(Value(impl: ValueImpl::OptionalSome(value), span))
+            }
+            return result
+        }
+        ForcedUnwrap(expr) => {
+            let value = match .execute_expression(expr, scope) {
+                Return(value) => {
+                    return StatementResult::Return(value)
+                }
+                Throw(value) => {
+                    return StatementResult::Throw(value)
+                }
+                JustValue(value) => value
+                Continue => {
+                    return StatementResult::Continue
+                }
+                Break => {
+                    return StatementResult::Break
+                }
+            }
+
+            if value.impl is OptionalNone {
+                .error("Attempted to unwrap an optional value that was None", value.span)
+                throw Error::from_errno(InterpretError::InvalidType as! i32)
+            }
+
+            yield match value.impl {
+                OptionalSome(value) => StatementResult::JustValue(value)
+                else => {
+                    .error("Invalid type for unwrap", value.span)
+                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                }
+            }
+        }
+        // Block
+        ByteConstant(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::U8(val.byte_at(0)), span: span))
+        // IndexedDictionary
+        Var(var) => StatementResult::JustValue(scope.must_get(var.name))
+        // Garbage
+        // IndexedExpression
+        // Boolean
+        IndexedStruct(expr, index) => {
+            let value = match .execute_expression(expr, scope) {
+                Return(value) => {
+                    return StatementResult::Return(value)
+                }
+                Throw(value) => {
+                    return StatementResult::Throw(value)
+                }
+                JustValue(value) => value
+                Continue => {
+                    return StatementResult::Continue
+                }
+                Break => {
+                    return StatementResult::Break
+                }
+            }
+            yield match value.impl {
+                Struct(fields, struct_id)
+                | Class(fields, struct_id) => {
+                    let struct_ = .program.get_struct(struct_id)
+                    mut idx = 0
+                    mut found_index: i64? = None
+                    for field_id in struct_.fields.iterator() {
+                        if .program.get_variable(field_id).name == index {
+                            found_index = idx
+                            break
+                        }
+                        idx += 1
+                    }
+                    if not found_index.has_value() {
+                        .error("Attempted to access a field that does not exist", value.span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+
+                    yield StatementResult::JustValue(fields[found_index!])
+                }
+                else => {
+                    .error("Attempted to access a field on a non-struct/enum type", value.span)
+                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                }
+            }
+        }
+        // JaktDictionary
+        // NamespacedVar
+        NumericConstant(val, span) => StatementResult::JustValue(match val {
+            I8(x) => Value(impl: ValueImpl::I8(x), span: span)
+            I16(x) => Value(impl: ValueImpl::I16(x), span: span)
+            I32(x) => Value(impl: ValueImpl::I32(x), span: span)
+            I64(x) => Value(impl: ValueImpl::I64(x), span: span)
+            U8(x) => Value(impl: ValueImpl::U8(x), span: span)
+            U16(x) => Value(impl: ValueImpl::U16(x), span: span)
+            U32(x) => Value(impl: ValueImpl::U32(x), span: span)
+            U64(x) => Value(impl: ValueImpl::U64(x), span: span)
+            USize(x) => Value(impl: ValueImpl::USize(x as! usize), span: span)
+            F32(x) => Value(impl: ValueImpl::F32(x), span: span)
+            F64(x) => Value(impl: ValueImpl::F64(x), span: span)
+        })
+        QuotedString(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::JaktString(val), span: span))
+        CharacterConstant(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::CChar(val.byte_at(0) as! c_char), span: span))
+        // JaktArray
+        // IndexedTuple
+        // Match
+        // JaktTuple
+        // JaktSet
+        else => {
+            .error(format("expression not implemented: {}", expr), expr.span())
+            throw Error::from_errno(InterpretError::Unimplemented as! i32)
+        }
+    }
+}
