@@ -281,6 +281,7 @@ struct REPL {
         let root_interpreter_scope = InterpreterScope(
             bindings: [:]
             parent: None
+            type_bindings: [:]
         )
 
         return REPL(
