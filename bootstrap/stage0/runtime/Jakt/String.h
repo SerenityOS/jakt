@@ -126,7 +126,7 @@ public:
     template<typename T = unsigned>
     Optional<T> to_uint(TrimWhitespace = TrimWhitespace::Yes) const;
 
-    [[nodiscard]] bool is_whitespace() const;
+    [[nodiscard]] bool is_whitespace() const { return StringUtils::is_whitespace(*this); }
 
     [[nodiscard]] bool equals_ignoring_case(StringView) const;
 
