@@ -1,0 +1,11 @@
+enum test {
+    Range(test: i64)
+    Other(test: i64)
+}
+
+function main() {
+    let a = test::Range(test: 1)
+
+    println("{}", a is Other)
+    println("{}", a is Range)
+}
