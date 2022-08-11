@@ -4148,19 +4148,26 @@ struct Typechecker {
             let checked_base = .typecheck_expression_and_dereference_if_needed(base, scope_id, safety_mode, type_hint: None, span)
             let checked_index = .typecheck_expression_and_dereference_if_needed(index, scope_id, safety_mode, type_hint: None, span)
 
-            let array_struct_id = .find_struct_in_prelude("Array")
-            let array_slice_struct_id = .find_struct_in_prelude("ArraySlice")
-            let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
-            mut expr_type_id = unknown_type_id()
-
             yield match .get_type(checked_base.type()) {
                 GenericInstance(id, args) => {
+                    let array_struct_id = .find_struct_in_prelude("Array")
+                    let array_slice_struct_id = .find_struct_in_prelude("ArraySlice")
+                    let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
+
                     mut result = CheckedExpression::Garbage(span)
                     if id.equals(array_struct_id) or id.equals(array_slice_struct_id) {
-                        if .is_integer(checked_index.type()) {
-                            result = CheckedExpression::IndexedExpression(expr: checked_base, index: checked_index, span, type_id: args[0])
+                        if .is_integer(checked_index.type()) or checked_index is Range {
+                            let type_id = match checked_index {
+                                Range => {
+                                    let array_slice_struct_id = .find_struct_in_prelude("ArraySlice")
+
+                                    yield .find_or_add_type_id(Type::GenericInstance(id: array_slice_struct_id, args))
+                                } else => args[0]
+                            }
+
+                            result = CheckedExpression::IndexedExpression(expr: checked_base, index: checked_index, span, type_id: type_id)
                         } else {
-                            .error("Index is not an integer", span)
+                            .error("Index must be an Integer or a Range", span)
                         }
                     } else if id.equals(dictionary_struct_id) {
                         result = CheckedExpression::IndexedDictionary(expr: checked_base, index: checked_index, span, type_id: args[1])
@@ -4169,34 +4176,6 @@ struct Typechecker {
                 }
                 else => {
                     .error("Index used on value that cannot be indexed", span)
-                    yield CheckedExpression::Garbage(span)
-                }
-            }
-        }
-        IndexedRangeExpression(base, from, to, span) => {
-            let checked_base = .typecheck_expression_and_dereference_if_needed(base, scope_id, safety_mode, type_hint: None, span)
-
-            let (checked_from, checked_to, type_id) = .typecheck_range(from, to, scope_id, safety_mode, span)
-
-            let array_struct_id = .find_struct_in_prelude("Array")
-            let array_slice_struct_id = .find_struct_in_prelude("ArraySlice")
-
-            yield match .get_type(checked_base.type()) {
-                GenericInstance(id, args) => {
-                    mut result = CheckedExpression::Garbage(span)
-                    if id.equals(array_struct_id) {
-                        if .is_integer(checked_from.type()) and .is_integer(checked_to.type()) {
-                            let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_slice_struct_id, args))
-
-                            result = CheckedExpression::IndexedRangeExpression(expr: checked_base, from: checked_from, to: checked_to, span, type_id)
-                        } else {
-                            .error("Range is not integers", span)
-                        }
-                    }
-                    yield result
-                }
-                else => {
-                    .error("Index range used on value that cannot be indexed", span)
                     yield CheckedExpression::Garbage(span)
                 }
             }

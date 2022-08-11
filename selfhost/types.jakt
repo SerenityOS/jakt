@@ -962,12 +962,11 @@ boxed enum CheckedExpression {
     UnaryOp(expr: CheckedExpression, op: CheckedUnaryOperator, span: Span, type_id: TypeId)
     BinaryOp(lhs: CheckedExpression, op: BinaryOperator, rhs: CheckedExpression, span: Span, type_id: TypeId)
     JaktTuple(vals: [CheckedExpression], span: Span, type_id: TypeId)
-    Range(from: CheckedExpression, to: CheckedExpression, span: Span, type_id: TypeId)
+    Range(from: CheckedExpression?, to: CheckedExpression?, span: Span, type_id: TypeId)
     JaktArray(vals: [CheckedExpression], repeat: CheckedExpression?, span: Span, type_id: TypeId, inner_type_id: TypeId)
     JaktSet(vals: [CheckedExpression], span: Span, type_id: TypeId, inner_type_id: TypeId)
     JaktDictionary(vals: [(CheckedExpression, CheckedExpression)], span: Span, type_id: TypeId, key_type_id: TypeId, value_type_id: TypeId)
     IndexedExpression(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
-    IndexedRangeExpression(expr: CheckedExpression, from: CheckedExpression, to: CheckedExpression, span: Span, type_id: TypeId)
     IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
     IndexedTuple(expr: CheckedExpression, index: usize, span: Span, is_optional: bool, type_id: TypeId)
     IndexedStruct(expr: CheckedExpression, index: String, span: Span, is_optional: bool, type_id: TypeId)
@@ -1026,7 +1025,6 @@ boxed enum CheckedExpression {
         JaktDictionary(span) => span
         JaktSet(span) => span
         IndexedExpression(span) => span
-        IndexedRangeExpression(span) => span
         IndexedDictionary(span) => span
         IndexedTuple(span) => span
         IndexedStruct(span) => span
@@ -1085,7 +1083,6 @@ boxed enum CheckedExpression {
         JaktDictionary(type_id) => type_id
         JaktSet(type_id) => type_id
         IndexedExpression(type_id) => type_id
-        IndexedRangeExpression(type_id) => type_id
         IndexedDictionary(type_id) => type_id
         IndexedTuple(type_id) => type_id
         IndexedStruct(type_id) => type_id

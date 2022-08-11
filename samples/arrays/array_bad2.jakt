@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Index is not an integer"
+/// - error: "Index must be an integer or a range"
 
 function main() {
     let x = [1, 2, 3]
