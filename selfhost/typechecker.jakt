@@ -4019,33 +4019,32 @@ struct Typechecker {
                     .ignore_errors = old_ignore_errors
 
                     mut operator_is = CheckedUnaryOperator::Is(type_id)
-                    if type_id.equals(unknown_type_id()) {
-                        if unchecked_type is Name(name) {
-                            // Let's assume it's an enum variant
-                            let expr_type_id = checked_expr.type()
-                            if .get_type(expr_type_id) is Enum(enum_id) {
-                                let enum_ = .get_enum(enum_id)
-                                mut exists = false
-                                for variant in enum_.variants.iterator() {
-                                    exists = match variant {
-                                        StructLike(name: var_name) | Typed(name: var_name) | Untyped(name: var_name) => var_name == name
-                                        else => false
-                                    }
-                                    if exists {
-                                        operator_is = CheckedUnaryOperator::IsEnumVariant(enum_variant: variant, bindings: [], type_id: expr_type_id)
-                                        break
-                                    }
+                    if unchecked_type is Name(name) {
+                        // Let's assume it's an enum variant
+                        let expr_type_id = checked_expr.type()
+                        if .get_type(expr_type_id) is Enum(enum_id) {
+                            let enum_ = .get_enum(enum_id)
+                            mut exists = false
+                            for variant in enum_.variants.iterator() {
+                                exists = match variant {
+                                    StructLike(name: var_name) | Typed(name: var_name) | Untyped(name: var_name) => var_name == name
+                                    else => false
                                 }
-                                if not exists {
-                                    .error(format("Enum variant {} does not exist on {}", name, .type_name(expr_type_id)), span)
+                                if exists {
+                                    operator_is = CheckedUnaryOperator::IsEnumVariant(enum_variant: variant, bindings: [], type_id: expr_type_id)
+                                    break
                                 }
-                            } else {
-                                .error(format("Unknown type or invalid type name: {}", name), span)
                             }
-                        } else {
-                            .error("The right-hand side of an `is` operator must be a type name or enum variant", span)
+                            if not exists and type_id.equals(unknown_type_id()) {
+                                .error(format("Enum variant {} does not exist on {}", name, .type_name(expr_type_id)), span)
+                            }
+                        } else if type_id.equals(unknown_type_id()) {
+                            .error(format("Unknown type or invalid type name: {}", name), span)
                         }
+                    } else {
+                        .error("The right-hand side of an `is` operator must be a type name or enum variant", span)
                     }
+
                     yield operator_is
                 }
                 IsEnumVariant(inner, bindings) => .typecheck_is_enum_variant(checked_expr, inner, bindings, scope_id)

@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Unknown type"
+/// - error: "Unknown type or invalid type name: Bar"
 
 enum Foo<T> {
     Bar
