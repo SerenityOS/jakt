@@ -448,7 +448,7 @@ boxed enum ParsedExpression {
     JaktDictionary(values: [(ParsedExpression, ParsedExpression)], span: Span)
     Set(values: [ParsedExpression], span: Span)
     JaktTuple(values: [ParsedExpression], span: Span)
-    Range(from: ParsedExpression, to: ParsedExpression, span: Span)
+    Range(from: ParsedExpression?, to: ParsedExpression?, span: Span)
     ForcedUnwrap(expr: ParsedExpression, span: Span)
     Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: Span)
     EnumVariantArg(expr: ParsedExpression, arg: EnumVariantPatternArgument, enum_variant: ParsedType, span: Span)
@@ -2487,6 +2487,7 @@ struct Parser {
         Ampersand => .parse_ampersand()
         Asterisk => .parse_asterisk()
         Function => .parse_lambda()
+        DotDot => .parse_range()
         else => {
             let span = .current().span()
             .index++
@@ -2603,6 +2604,22 @@ struct Parser {
         return ParsedExpression::UnaryOp(expr, op: UnaryOperator::Reference, span: merge_spans(start, expr.span()))
     }
 
+    function parse_range(mut this) throws -> ParsedExpression {
+        let start = .current().span()
+
+        .index++
+
+        mut to: ParsedExpression? = None
+        match .current() {
+            RSquare | Eol | Comma | RParen => {}
+            else => {
+                to = .parse_expression(allow_assignments: false, allow_newlines: false)
+            }
+        }
+        
+        return ParsedExpression::Range(from: None, to, span: merge_spans(start, .current().span()))
+    }
+
     function parse_set_literal(mut this) throws -> ParsedExpression {
         let start = .current().span()
 
@@ -2641,7 +2658,6 @@ struct Parser {
         return ParsedExpression::Set(values: output, span: merge_spans(start, .tokens[end].span()))
     }
     
-
     function parse_operand(mut this) throws -> ParsedExpression {
         .skip_newlines()
         let start = .current().span()
@@ -2656,8 +2672,18 @@ struct Parser {
             result = match .current() {
                 DotDot => {
                     .index++
-                    let to = .parse_expression(allow_assignments: false, allow_newlines: false)
-                    yield ParsedExpression::Range(from: result, to, span: merge_spans(start, to.span()))
+
+                    mut to: ParsedExpression? = None
+                    mut span_end = .current().span()
+                    match .current() {
+                        RSquare | Eol | Comma | RParen => {}
+                        else => {
+                            to = .parse_expression(allow_assignments: false, allow_newlines: false)
+                            span_end = to!.span()
+                        }
+                    }
+
+                    yield ParsedExpression::Range(from: result, to, span: merge_spans(start, span_end))
                 }
                 ExclamationPoint => {
                     .index++
@@ -3614,7 +3640,20 @@ function parsed_expression_equals(anon lhs_expression: ParsedExpression, anon rh
         else => false
     }
     Range(from: lhs_from, to: lhs_to) => match rhs_expression {
-        Range(from: rhs_from, to: rhs_to) => parsed_expression_equals(lhs_from, rhs_from) and parsed_expression_equals(lhs_to, rhs_to)
+        Range(from: rhs_from, to: rhs_to) => {
+            mut equal = false
+            if lhs_from.has_value() == rhs_from.has_value() {
+                if lhs_to.has_value() == rhs_to.has_value() {
+                    if lhs_from.has_value() && lhs_to.has_value() {
+                        equal = parsed_expression_equals(lhs_from!, rhs_from!) and parsed_expression_equals(lhs_to!, rhs_to!)
+                    } else {
+                        equal = true;
+                    }
+                }
+            }
+
+            yield equal;
+        }
         else => false
     }
     ForcedUnwrap(expr: lhs_expr) => match rhs_expression {

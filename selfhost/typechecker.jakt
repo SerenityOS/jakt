@@ -3823,45 +3823,6 @@ struct Typechecker {
         }
     }
 
-    function typecheck_range(mut this, from: ParsedExpression, to: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> (CheckedExpression, CheckedExpression, TypeId) {
-        mut checked_from = .typecheck_expression(from, scope_id, safety_mode, type_hint: None)
-        mut checked_to = .typecheck_expression(to, scope_id, safety_mode, type_hint: None)
-
-        mut from_type = checked_from.type()
-        mut to_type = checked_to.type()
-
-        // If the range starts or ends at a constant number, we try promoting the constant to the
-        // type of the other end. This makes ranges like `0..array.size()` (as the 0 becomes 0uz).
-        let promoted_to = .try_to_promote_constant_expr_to_type(lhs_type: from_type, checked_rhs: checked_to, span)
-        if promoted_to.has_value() {
-            checked_to = promoted_to!
-            to_type = checked_to.type()
-        }
-        let promoted_from = .try_to_promote_constant_expr_to_type(lhs_type: to_type, checked_rhs: checked_from, span)
-        if promoted_from.has_value() {
-            checked_from = promoted_from!
-            from_type = checked_from.type()
-        }
-
-        let from_span = checked_from.span()
-        let to_span = checked_to.span()
-
-        let values_type_id = .unify(lhs: from_type, lhs_span: from_span, rhs: to_type, rhs_span: from_span)
-        if not values_type_id.has_value() {
-            .error("Range values differ in types", span)
-        }
-
-        let range_struct_id = .find_struct_in_prelude("Range")
-        let range_type = Type::GenericInstance(
-            id: range_struct_id,
-            args: [values_type_id.value_or(unknown_type_id())]
-        )
-
-        let type_id = .find_or_add_type_id(range_type)
-
-        return (checked_from, checked_to, type_id)
-    }
-
     function typecheck_expression(mut this, anon expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression => match expr {
         IndexedStruct(expr, field, span, is_optional) => .typecheck_indexed_struct(expr, field, scope_id, is_optional, safety_mode, span)
         Boolean(val, span) => CheckedExpression::Boolean(val, span)
@@ -3977,7 +3938,63 @@ struct Typechecker {
             }
         }
         Range(from, to, span) => {
-            let (checked_from, checked_to, type_id) = .typecheck_range(from, to, scope_id, safety_mode, span)
+            mut checked_from: CheckedExpression? = None
+            mut from_type = unknown_type_id();
+            mut from_span = span
+
+            if from.has_value() {
+                checked_from = .typecheck_expression(from!, scope_id, safety_mode, type_hint: None)
+                from_type = checked_from!.type()
+                from_span = checked_from!.span()
+            }
+
+            mut checked_to: CheckedExpression? = None
+            mut to_type = unknown_type_id();
+            mut to_span = span
+
+            if to.has_value() {
+                checked_to = .typecheck_expression(to!, scope_id, safety_mode, type_hint: None)
+                to_type = checked_to!.type()
+                to_span = checked_to!.span()
+            }
+
+            if checked_to.has_value() {
+                // If the range starts or ends at a constant number, we try promoting the constant to the
+                // type of the other end. This makes ranges like `0..array.size()` (as the 0 becomes 0uz).
+                let promoted_to = .try_to_promote_constant_expr_to_type(lhs_type: from_type, checked_rhs: checked_to!, span)
+                if promoted_to.has_value() {
+                    checked_to = promoted_to!
+                    to_type = checked_to!.type()
+                }
+            }
+
+            if checked_from.has_value() {
+                let promoted_from = .try_to_promote_constant_expr_to_type(lhs_type: to_type, checked_rhs: checked_from!, span)
+                if promoted_from.has_value() {
+                    checked_from = promoted_from!
+                    from_type = checked_from!.type()
+                }
+            }
+            
+            mut values_type_id: TypeId? = None
+            if from.has_value() and to.has_value() {
+                values_type_id = .unify(lhs: from_type, lhs_span: from_span, rhs: to_type, rhs_span: from_span)
+                if not values_type_id.has_value() {
+                    .error("Range values differ in types", span)
+                }
+            } else if from.has_value() {
+                values_type_id = from_type
+            } else if to.has_value() {
+                values_type_id = to_type
+            }
+
+            let range_struct_id = .find_struct_in_prelude("Range")
+            let range_type = Type::GenericInstance(
+                id: range_struct_id,
+                args: [values_type_id.value_or(builtin(BuiltinType::I64))]
+            )
+
+            let type_id = .find_or_add_type_id(range_type)
 
             yield CheckedExpression::Range(from: checked_from, to: checked_to, span, type_id)
         }
@@ -4167,7 +4184,7 @@ struct Typechecker {
 
                             result = CheckedExpression::IndexedExpression(expr: checked_base, index: checked_index, span, type_id: type_id)
                         } else {
-                            .error("Index must be an Integer or a Range", span)
+                            .error("Index must be an integer or a range", span)
                         }
                     } else if id.equals(dictionary_struct_id) {
                         result = CheckedExpression::IndexedDictionary(expr: checked_base, index: checked_index, span, type_id: args[1])

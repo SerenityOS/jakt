@@ -153,6 +153,23 @@ struct Formatter<JaktInternal::Set<T>> : Formatter<StringView> {
     }
 };
 
+template<typename T>
+struct Formatter<JaktInternal::Range<T>> : Formatter<StringView> {
+    ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Range<T> const& range)
+    {
+        if (m_alternative_form)
+            JaktInternal::_pretty_print_enabled = true;
+        auto string_builder = TRY(StringBuilder::create());
+        JaktInternal::_pretty_print_level++;
+        TRY(JaktInternal::_output_pretty_indent(string_builder));
+        TRY(append_value(string_builder, range.start, m_alternative_form));
+        TRY(string_builder.append(".."));
+        TRY(append_value(string_builder, range.end, m_alternative_form));
+        JaktInternal::_pretty_print_level--;
+        return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
+    }
+};
+
 template<typename K, typename V>
 struct Formatter<JaktInternal::Dictionary<K, V>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Dictionary<K, V> const& dict)
