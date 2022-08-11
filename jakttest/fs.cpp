@@ -90,4 +90,11 @@ ErrorOr<Optional<StatResults>> stat_silencing_enoent(String path)
     }
     return Optional<StatResults>(StatResults(st.st_mtim.tv_sec, st.st_mode));
 }
+
+ErrorOr<void> chdir(String target)
+{
+    if (::chdir(target.c_string()) == -1)
+        return Error::from_errno(errno);
+    return ErrorOr<void>{};
+}
 }

@@ -47,11 +47,12 @@ import extern "fs.h" {
         // StatResults.exists to false.
         extern function stat_silencing_enoent(path: String) throws -> StatResults?
 
-
+        // Changes the current working directory of the running process
+        extern function chdir(path: String) throws
     }
 }
 
-// FIXME: These three functions should be under a `namespace fs`, but due to
+// FIXME: These four functions should be under a `namespace fs`, but due to
 // #1008 it will ignore the stuff from the import extern if I do.
 
 function is_directory(path: String) throws -> bool {
@@ -63,6 +64,24 @@ function mkdir_if_not_present(path: String) throws {
     let stat = fs::stat_silencing_enoent(path)
     if not stat.has_value() or not stat!.is_directory() {
         fs::mkdir(path)
+    }
+}
+
+function path_components(path: String) throws -> [String] {
+    mut components = path.split('/')
+    if path.byte_at(0) == b'/' {
+        components[0] = "/" + components[0]
+    }
+    return components
+}
+
+function mkdir_with_parents_if_not_present(path: String) throws {
+    mut built_path = ""
+    // FIXME: windows compatibility?
+    for component in path_components(path).iterator() {
+        built_path += component
+        built_path += "/"
+        mkdir_if_not_present(path: built_path)
     }
 }
 
@@ -116,8 +135,12 @@ import extern "process.h" {
         /// Kills a process by sending SIGKILL to it
         extern function forcefully_kill_process(pid: i32) throws
 
+        /// Wrapper around fork(2).
+        extern function fork() throws -> i32
+
         /// Calls execvp() with the given argument array.
-        extern function exec(args: [String]) throws
+        extern function exec(args: [String]) throws -> never
+
     }
 }
 
@@ -128,7 +151,55 @@ import extern "os.h" {
 
         /// Returns %TEMP% in Windows and $TMP_DIR or /tmp in macOS/linux
         extern function get_system_temporary_directory() throws -> String
+
+        /// Wrapper around read(2), returns None if the read would have blocked.
+        extern function read_nonblocking(fd: i32, mut buffer: raw u8, max_len: usize) throws -> usize?
+
+        /// Wrapper around write(2), returns None if the write would have blocked.
+        extern function write_nonblocking(fd: i32, buffer: raw u8, max_len: usize) throws -> usize?
+
+        /// Wrapper around dup2(2).
+        extern function dup2(old: i32, replace_with: i32) throws
+
+
+        /// Wrapper around close(2).
+        extern function close(fd: i32) throws -> i32
+
+        struct RawPipe {
+            read_end: i32
+            write_end: i32
+        }
+
+        /// Wrapper around pipe(2). Also marks the pipe file descriptors as non blocking
+        extern function pipe_nonblocking() throws -> RawPipe
     }
+}
+
+import extern "libc_wrappers.h" {
+    namespace libc {
+        extern function malloc(size: usize) throws -> raw u8
+        // NOTE: the `mut` there is so Jakt doesn't see it as free(const *)
+        extern function free(mut ptr: raw u8)
+        // Wrapper around realpath(3).
+        extern function realpath(anon path: String) throws -> String
+        // Wrapper around dirname(3).
+        extern function dirname(anon path: String) throws -> String
+
+        // Wrapper around basename(3).
+        extern function base_name(anon path: String) throws -> String
+    }
+}
+
+import extern "jakt_helpers.h" {
+    extern function get_array_unsafe_pointer<T>(anon array: [T]) -> raw T
+    extern struct Queue<T> {
+        public function pop(mut this) -> T?
+        public function push(mut this, anon value: T) throws
+        public function ensure_capacity(mut this, anon capacity: usize) throws
+        public function is_empty(this) -> bool
+        public function size(this) -> usize
+    }
+    extern function create_queue<T>() throws -> Queue<T>
 }
 
 function print_usage()  {
@@ -145,7 +216,7 @@ function print_usage()  {
 
 function compare_test(bytes: [u8], expected: String) throws -> bool {
     // first, build up the content to compare to
-    mut builder = StringBuilder::create()
+    mut builder: StringBuilder = StringBuilder::create()
     for b in bytes.iterator() {
         builder.append(b)
     }
@@ -232,7 +303,7 @@ function usize_from_ascii_digits(anon digits: String) -> usize? {
 
 struct Options {
     files: [String]
-    temp_dir: String
+    artifacts_directory: String
     errors: [String]
     show_reasons: bool
     job_count: usize
@@ -244,7 +315,7 @@ struct Options {
         let files: [String] = []
         let errors: [String] = []
         mut options = Options(files
-                              temp_dir: ""
+                              artifacts_directory: ""
                               errors
                               show_reasons: false
                               job_count: 0
@@ -282,13 +353,13 @@ struct Options {
                 continue
             }
 
-            if args[index] == "--temp-dir" {
+            if args[index] == "--artifacts-dir" {
                 index++
                 if index == args.size() {
-                    options.errors.push("Used --temp-dir without an argument")
+                    options.errors.push("Used --artifacts-dir without an argument")
                     break
                 }
-                options.temp_dir = args[index]
+                options.artifacts_directory = args[index]
                 index++
                 continue
             }
@@ -315,8 +386,8 @@ struct Options {
             index++
         }
 
-        if options.temp_dir.is_empty() {
-            options.temp_dir = os::get_system_temporary_directory() + "/jakttest"
+        if options.artifacts_directory.is_empty() {
+            options.artifacts_directory = os::get_system_temporary_directory() + "/jakttest"
         }
 
         if options.files.is_empty() {
@@ -334,31 +405,124 @@ struct Options {
     }
 }
 
-enum TestStage {
-    TranspileJakt
-    CompileCpp
-    TestRun
+class PipeOutput {
+    buffer: [u8]
+    wrote_count: usize
+    fd: i32
 
-    function equals(this, anon other: TestStage) => match this {
-        TranspileJakt => other is TranspileJakt
-        CompileCpp => other is CompileCpp
-        TestRun => other is TestRun
+    public function init(fd: i32, buffer: [u8]) throws => 
+        PipeOutput(
+            buffer
+            wrote_count: 0
+            fd)
+
+    function finished_writing(this) => .wrote_count == .buffer.size()
+
+    public function execute_write(mut this) throws {
+        if .finished_writing() {
+            return
+        }
+
+        // NOTE: mut because codegen prepends const to the type, so pointer
+        // variables of the type `raw T` declared with `let` end up being const T *
+        // as their type.
+        mut write_ptr = get_array_unsafe_pointer(.buffer)
+        let written_count = os::write_nonblocking(fd: .fd, buffer: write_ptr, max_len: .buffer.size() - .wrote_count)
+
+        if written_count.has_value() {
+            .wrote_count += written_count!
+            // since we've finished writing, we'll close the file
+            // descriptor so that the reading end can get a "read 0"
+            if .finished_writing() {
+                os::close(fd: .fd)
+            }
+        }
+
     }
 
-    function to_string(this) => match this {
-        TranspileJakt => "Jakt transpilation to C++"
-        CompileCpp => "Clang++ compilation of generated C++ source"
-        TestRun => "Test binary run"
+    public function release(this) throws -> [u8] {
+        if not .finished_writing() {
+            os::close(fd: .fd)
+        }
+        return .buffer
+    }
+}
+
+// raw buffer size: usize = 4096 (4KiB)
+
+class CollectedReader {
+    collected_buffer: [u8]
+    raw_buffer: raw u8
+    raw_buffer_read: u16
+    fd: i32
+
+    public function init(fd: i32) throws -> CollectedReader {
+        // NOTE: mut so codegen does not declare it as const u8 *
+        mut raw_buffer = libc::malloc(size: 4096)
+        return CollectedReader(
+            collected_buffer: []
+            raw_buffer
+            raw_buffer_read: 0
+            fd)
     }
 
-    function from_exit_code(exit_code: i32) => match exit_code {
-        0i32 => Some(TestStage::TestRun)
-        1i32 => Some(TestStage::TestRun)
-        2i32 => Some(TestStage::CompileCpp)
-        3i32 => Some(TestStage::TranspileJakt)
-        else => {
-            let nothing: TestStage? = None
-            yield nothing
+    // collect the read buffer into the collected buffer
+    public function collect_read(mut this) throws {
+        .collected_buffer.ensure_capacity(.collected_buffer.size() + .raw_buffer_read as! usize)
+        for i in 0...raw_buffer_read {
+            mut byte: u8 = 0
+            // SAFE: index is within read bounds
+            unsafe { cpp { "byte = this->raw_buffer[i];" } }
+            .collected_buffer.push(byte)
+        }
+    }
+
+    // tries reading into the raw buffer by calling read(2).
+    public function execute_read(mut this) throws {
+        if .raw_buffer_read == 4096 {
+            return
+        }
+        let bytes_read = os::read_nonblocking(fd: .fd, buffer: .raw_buffer, max_len: (4096u16 - .raw_buffer_read) as! usize)
+        if not bytes_read.has_value() {
+            return
+        }
+        // NOTE: the conversion is safe, we'll never read more than 4096 bytes per call,
+        // so it will fit inside a u16.
+        .raw_buffer_read += bytes_read! as! u16
+    }
+
+
+    public function release(mut this) throws -> [u8] {
+        .collect_read()
+        os::close(fd: .fd)
+        libc::free(ptr: .raw_buffer)
+        return .collected_buffer
+    }
+}
+
+enum RunStage {
+    TranspileJakt(stdout: CollectedReader, stderr: CollectedReader)
+    CompileCpp(stdin: PipeOutput, stderr: CollectedReader, binary_path: String)
+    TestRun(stdout: CollectedReader, stderr: CollectedReader)
+
+    function poll(mut this) throws {
+        match this {
+            TranspileJakt(stdout: stdout_, stderr: stderr_)
+                | TestRun(stdout: stdout_, stderr: stderr_) => {
+                mut stdout = stdout_
+                mut stderr = stderr_
+                stdout.collect_read()
+                stderr.collect_read()
+                stdout.execute_read()
+                stderr.execute_read()
+            }
+            CompileCpp(stdin: stdin_, stderr: stderr_) => {
+                mut stdin = stdin_
+                mut stderr = stderr_
+                stderr.collect_read()
+                stderr.execute_read()
+                stdin.execute_write()
+            }
         }
     }
 }
@@ -367,17 +531,6 @@ enum ResultKind {
     Okay
     CompileError
     RuntimeError
-
-    function output_filename(this) => match this {
-        Okay => "runtest.out"
-        RuntimeError => "runtest.err"
-        CompileError => "compile_jakt.err"
-    }
-
-    function to_stage(this) => match this {
-        Okay | RuntimeError => TestStage::TestRun
-        CompileError => TestStage::TranspileJakt
-    }
 }
 
 struct ExpectedResult {
@@ -386,244 +539,559 @@ struct ExpectedResult {
 }
 
 
-struct Test {
+struct RunningTest {
     result: ExpectedResult
     file_name: String
-    directory_index: usize
+    stage: RunStage
 }
 
 struct TestsRunResult {
     passed_count: usize
     failed_count: usize
-    failed_reasons: [String:TestFailedReason]?
-}
-
-enum TestFailedReason {
-    CompilerErrorUnmatched(had: String, expected: String)
-    ClangError(String)
-    StderrUnmatched(had: String, expected: String)
-    StdoutUnmatched(had: String, expected: String)
-    ErroredAtEarlierStage(failed_stage: String, error: String)
-    AbruptExit(i32)
 }
 
 enum TestExitedResult {
     Passed
-    Failed(file: String)
+    NeedsCompilation(file: String, result: ExpectedResult, generated_cpp: [u8])
+    NeedsRunning(file: String, result: ExpectedResult, binary_path: String)
+    Failed(file: String, reason: String?)
 }
 
+struct CompileCppTask {
+    target_binary_path: String
+    jakt_file: String
+    generated_cpp: [u8]
+    result: ExpectedResult
+}
+
+struct RunTestTask {
+    binary_path: String
+    jakt_file: String
+    result: ExpectedResult
+}
+
+struct RunJaktTask {
+    result: ExpectedResult
+    jakt_file: String
+}
 
 // A test scheduler that has its process rate limited by
-// the number of directories it has available.
+// the number of jobs specified.
 struct TestScheduler {
-    running_tests: [i32:Test]
-    free_directories: [usize]
-    directories: [String]
+    // schedule state
+    running_tests: [i32:RunningTest]
+    run_jakt_tasks: Queue<RunJaktTask>
+    run_test_tasks: Queue<RunTestTask>
+    compile_cpp_tasks: Queue<CompileCppTask>
+    
+    // configuration
+    artifacts_directory: String
+    max_job_count: u8
+    // This parameter helps get test run and jakt codegen jobs through,
+    // preventing C++ compilation jobs (the bottleneck of Jakt compilation)
+    // from filling the job pool and preventing progress from being done.
+    min_non_compilation_job_count: u8
+    show_reasons: bool
+
+    // counters
     passed_count: usize
     failed_count: usize
-    failed_reasons: [String:TestFailedReason]?
-    // TODO: timeout
+    total_test_count: usize
+
+    // TODO: timeout?
+
+    function start_transpile_jakt(mut this, task: RunJaktTask) throws {
+        let stdout_pipe = os::pipe_nonblocking()
+        let stderr_pipe = os::pipe_nonblocking()
+        let pid = process::fork()
+        if pid == 0i32 {
+            os::close(fd: stderr_pipe.read_end)
+            os::close(fd: stdout_pipe.read_end)
+
+            // 1 == stdout
+            os::dup2(old: stdout_pipe.write_end, replace_with: 1)
+            // 2 == stderr
+            os::dup2(old: stderr_pipe.write_end, replace_with: 2)
+
+            process::exec(args: ["./build/jakt" task.jakt_file])
+        } else {
+            os::close(fd: stdout_pipe.write_end)
+            os::close(fd: stderr_pipe.write_end)
+            let stdout = CollectedReader::init(fd: stdout_pipe.read_end)
+            let stderr = CollectedReader::init(fd: stderr_pipe.read_end)
+
+            .running_tests.set(pid, 
+                RunningTest(
+                    result: task.result
+                    file_name: task.jakt_file
+                    stage: RunStage::TranspileJakt(stdout, stderr)))
+        }
+    }
+    function start_test_binary(mut this, task: RunTestTask) throws  {
+        let stdout_pipe = os::pipe_nonblocking()
+        let stderr_pipe = os::pipe_nonblocking()
+        // FIXME: `binary_real_path` and `test_directory` are only used in the
+        // forked branch, but since their respective functions can fail, their
+        // errors must be handled before we fork, otherwise the child will
+        // return from the function and continue executing the scheduler's work.
+        let test_directory = libc::dirname(task.jakt_file)
+        let binary_real_path = libc::realpath(task.binary_path)
+        let pid = process::fork()
+        if pid == 0i32 {
+            os::close(fd: stderr_pipe.read_end)
+            os::close(fd: stdout_pipe.read_end)
+
+            // 1 == stdout
+            os::dup2(old: stdout_pipe.write_end, replace_with: 1)
+            // 2 == stderr
+            os::dup2(old: stderr_pipe.write_end, replace_with: 2)
+
+            // FIXME: must.
+            try {
+                fs::chdir(path: test_directory)
+            } catch {
+                panic("Change directory must not fail")
+            }
+
+            process::exec(args: [binary_real_path])
+        } else {
+            os::close(fd: stdout_pipe.write_end)
+            os::close(fd: stderr_pipe.write_end)
+            let stdout = CollectedReader::init(fd: stdout_pipe.read_end)
+            let stderr = CollectedReader::init(fd: stderr_pipe.read_end)
+
+            .running_tests.set(pid, 
+                RunningTest(
+                    result: task.result
+                    file_name: task.jakt_file
+                    stage: RunStage::TestRun(stdout, stderr)))
+        }
+    }
+
+    function start_clang_execution(
+            mut this
+            task: CompileCppTask) throws 
+    {
+        let stderr_pipe = os::pipe_nonblocking()
+        let stdin_pipe = os::pipe_nonblocking()
+
+        let pid = process::fork()
+
+        if pid == 0i32 {
+            os::close(fd: stderr_pipe.read_end)
+            os::close(fd: stdin_pipe.write_end)
+
+            // 0 == stdin
+            os::dup2(old: 0, replace_with: stdin_pipe.read_end)
+            // 2 == stderr
+            os::dup2(old: stderr_pipe.write_end, replace_with: 2)
+
+            process::exec(args: [
+                // TODO: cxx_compiler_path
+                "clang++"
+                // TODO: color_flag
+                "-std=c++20"
+                "-Wno-unknown-warning-option"
+                "-Wno-trigraphs"
+                "-Wno-parentheses-equality"
+                "-Wno-unqualified-std-cast-call"
+                "-Wno-user-defined-literals"
+                "-Wno-deprecated-declarations"
+                // tell it the language since we're giving it input over stdin
+                "-x" "c++"
+                "-o" task.target_binary_path
+                "-"
+            ])
+        } else {
+            os::close(fd: stderr_pipe.write_end)
+            os::close(fd: stdin_pipe.read_end)
+
+            let stdin = PipeOutput::init(fd: stdin_pipe.write_end, buffer: task.generated_cpp)
+            let stderr = CollectedReader::init(fd: stderr_pipe.read_end)
+
+            .running_tests.set(pid,
+                RunningTest(result: task.result, file_name: task.jakt_file, stage: RunStage::CompileCpp(
+                        stdin, stderr, binary_path: task.target_binary_path)))
+        }
+    }
+
+    function check_jakt_transpiled_result(
+        this
+        exited_with_failure: bool
+        result: ExpectedResult
+        jakt_file: String
+        output: [u8]
+        error: [u8]) throws -> TestExitedResult 
+    {
+        println("")
+        let should_have_had_failure = result.kind is CompileError
+        if not should_have_had_failure and exited_with_failure {
+            if .show_reasons {
+                let stderr_file_name = get_jakt_error_file_path(prefix: .artifacts_directory, jakt_file)
+                let stdout_file_name = get_jakt_output_file_path(prefix: .artifacts_directory, jakt_file)
+                write_to_file(file_contents: error, output_filename: stderr_file_name)
+                write_to_file(file_contents: output, output_filename: stdout_file_name)
+                let reason = format("Compiling Jakt failed when expecting it to succeed.\nDumped stderr into {} and generated code into {}", stderr_file_name, stdout_file_name)
+
+                return TestExitedResult::Failed(file: jakt_file, reason)
+            } else {
+                return TestExitedResult::Failed(file: jakt_file, reason: None)
+            }
+        } else if should_have_had_failure and not exited_with_failure {
+            if .show_reasons {
+                let stderr_file_name = get_jakt_error_file_path(prefix: .artifacts_directory, jakt_file)
+                let stdout_file_name = get_jakt_output_file_path(prefix: .artifacts_directory, jakt_file)
+                write_to_file(file_contents: error, output_filename: stderr_file_name)
+                write_to_file(file_contents: output, output_filename: stdout_file_name)
+
+                let reason = format("Compiling Jakt succeeded when expecting it to fail.\nDumped stderr into {} and generated code into {}", stderr_file_name, stdout_file_name)
+                return TestExitedResult::Failed(file: jakt_file, reason)
+            } else {
+                return TestExitedResult::Failed(file: jakt_file, reason: None)
+            }
+        } else if should_have_had_failure and exited_with_failure {
+            let found_error = compare_error(bytes: output, expected: result.output)
+            if not found_error {
+                if .show_reasons {
+                    let stderr_file_name = get_jakt_error_file_path(prefix: .artifacts_directory, jakt_file)
+                    write_to_file(file_contents: error, output_filename: stderr_file_name)
+                    mut builder = StringBuilder::create()
+                    builder.append_string("Jakt compiler errored but expected error message was not found.\n")
+                    builder.append_string("Expected: '")
+                    builder.append_string(result.output)
+                    builder.append_string("'\n")
+                    builder.append_string(format("Error output has been dumped to {}.", stderr_file_name))
+                    let reason = builder.to_string()
+                    return TestExitedResult::Failed(file: jakt_file, reason)
+                } else {
+                    return TestExitedResult::Failed(file: jakt_file, reason: None)
+                }
+            } else {
+                return TestExitedResult::Passed // no more processing, since the test file was expected to not compile.
+            }
+        } else {
+            // not should_have_had_failure and not exited_with_failure
+            return TestExitedResult::NeedsCompilation(file: jakt_file, result, generated_cpp: output)
+        }
+    }
+
+    function check_cpp_compile_result(
+        this
+        exited_with_failure: bool
+        generated_cpp: [u8]
+        error: [u8]
+        result: ExpectedResult
+        jakt_file: String
+        binary_path: String) throws -> TestExitedResult 
+    {
+        if exited_with_failure {
+            if .show_reasons {
+                let cpp_output_file = get_jakt_output_file_path(prefix: .artifacts_directory, jakt_file)
+                let stderr_file_name = get_cpp_error_file_path(prefix: .artifacts_directory, jakt_file)
+                write_to_file(file_contents: generated_cpp, output_filename: cpp_output_file)
+                write_to_file(file_contents: error, output_filename: stderr_file_name)
+
+                mut builder = StringBuilder::create()
+                builder.append_string("C++ compilation of generated code failed.\n")
+                builder.append_string(format("Error output dumped into {}.\n", stderr_file_name))
+                builder.append_string(format("Generated code dumped into {}.\n", cpp_output_file))
+                let reason = builder.to_string()
+                return TestExitedResult::Failed(file: jakt_file, reason)
+            } else {
+                return TestExitedResult::Failed(file: jakt_file, reason: None)
+            }
+        } else {
+            return TestExitedResult::NeedsRunning(file: jakt_file, result, binary_path)
+        }
+    }
+
+    function check_test_run_result(
+        this
+        exited_with_failure: bool
+        result: ExpectedResult
+        output: [u8]
+        error: [u8]
+        jakt_file: String) throws -> TestExitedResult
+    {
+        let should_have_had_failure = result.kind is RuntimeError
+        if should_have_had_failure != exited_with_failure {
+            if .show_reasons {
+                let output_filename = get_test_run_output_file_path(prefix: .artifacts_directory, jakt_file)
+                let error_filename = get_test_run_error_file_path(prefix: .artifacts_directory, jakt_file)
+                write_to_file(file_contents: output, output_filename)
+                write_to_file(file_contents: error, output_filename: error_filename)
+                mut builder = StringBuilder::create()
+                builder.append_string("Test run should have ")
+                if should_have_had_failure {
+                    builder.append_string( "failed but succeeded instead.\n")
+                } else {
+                    builder.append_string( "succeeded but failed instead.\n")
+                }
+                builder.append_string( format("Test output dumped into {}.\n", output_filename))
+                builder.append_string( format("Test error output dumped into {}.\n", error_filename))
+                let reason = builder.to_string()
+                return TestExitedResult::Failed(file: jakt_file, reason)
+            } else {
+                return TestExitedResult::Failed(file: jakt_file, reason: None)
+            }
+        } else  {
+            let bytes = match should_have_had_failure {
+                true => error
+                else => output
+            }
+            let output_matches = compare_test(bytes, expected: result.output)
+            if not output_matches {
+                if .show_reasons {
+                    let (output_name, output_filename) = match should_have_had_failure {
+                        true => ("error output", get_test_run_error_file_path(prefix: .artifacts_directory, jakt_file))
+                        else => ("output", get_test_run_output_file_path(prefix: .artifacts_directory, jakt_file))
+                    }
+                    write_to_file(file_contents: bytes, output_filename)
+                    mut builder = StringBuilder::create()
+                    builder.append_string(format("Test {} did not match the expected {}.\n", output_name, output_name))
+                    builder.append_string( format("Test {} dumped into {}.\n", output_name, output_filename))
+                    let reason = builder.to_string()
+                    return TestExitedResult::Failed(file: jakt_file, reason)
+                }
+            } else {
+                return TestExitedResult::Passed
+            }
+        }
+    }
 
 
     /// Returns whether the test that the exited process was running has passed
     /// or not
-    function on_test_exited(mut this, pid: i32, exit_code: i32) throws -> TestExitedResult {
-        let test = .running_tests[pid]
-        .free_directories.push(test.directory_index)
-        .running_tests.remove(pid)
-        let maybe_stage = TestStage::from_exit_code(exit_code)
-
-        // unknown exit code. Assume that the job exited abruptly.
-        if not maybe_stage.has_value() {
-            if .failed_reasons.has_value() {
-                .failed_reasons![test.file_name] = TestFailedReason::AbruptExit(exit_code)
+    function check_test_result(this, test: RunningTest, exit_code: i32) throws -> TestExitedResult {
+        let exited_with_failure = exit_code != 0
+        match test.stage {
+            TranspileJakt(stdout: stdout_, stderr: stderr_) => {
+                mut stdout = stdout_
+                mut stderr = stderr_
+                let output = stdout.release()
+                let error  = stderr.release()
+                let should_have_had_failure = test.result.kind is CompileError
+                return .check_jakt_transpiled_result(
+                    exited_with_failure
+                    result: test.result
+                    jakt_file: test.file_name
+                    output
+                    error)
             }
-            return TestExitedResult::Failed(file: test.file_name)
-        }
-        let stage = maybe_stage!
-
-        if stage is CompileCpp {
-            if .failed_reasons.has_value() {
-                let path = format("{}/compile_cpp.err",
-                    .directories[test.directory_index])
-                mut file = File::open_for_reading(path)
-                let had = bytes_to_string(file.read_all())
-                .failed_reasons![test.file_name] = TestFailedReason::ClangError(had)
+            CompileCpp(stdin: stdin_, stderr: stderr_, binary_path) => {
+                mut stdin = stdin_
+                mut stderr = stderr_
+                let generated_cpp = stdin.release()
+                let error = stderr.release()
+                return .check_cpp_compile_result(
+                    exited_with_failure
+                    generated_cpp
+                    error
+                    result: test.result
+                    jakt_file: test.file_name
+                    binary_path)
             }
-            return TestExitedResult::Failed(file: test.file_name)
-        }
-
-        // check the exit code before anything
-        let expected_stage = test.result.kind.to_stage()
-
-
-        if not stage.equals(expected_stage) {
-            if .failed_reasons.has_value() {
-
-                if not (stage is TranspileJakt) {
-                    panic("unreachable: Since clang++ errors and other codes get handled otherwise, only thing that could fail before its expected stage is Jakt to C++.")
-                }
-
-                let file_to_check = format("{}/compile_jakt.err"
-                                           .directories[test.directory_index])
-
-                mut file = File::open_for_reading(file_to_check)
-                let error = bytes_to_string(file.read_all())
-
-                .failed_reasons![test.file_name] = 
-                    TestFailedReason::ErroredAtEarlierStage(
-                        failed_stage: stage.to_string()
-                        error)
-
+            TestRun(stdout: stdout_, stderr: stderr_) => {
+                mut stdout = stdout_
+                mut stderr = stderr_
+                let output = stdout.release()
+                let error  = stderr.release()
+                return .check_test_run_result(
+                    exited_with_failure
+                    result: test.result
+                    output
+                    error
+                    jakt_file: test.file_name)
             }
-            return TestExitedResult::Failed(file: test.file_name)
         }
-
-        // check the test result
-        let file_to_check = format("{}/{}"
-                            .directories[test.directory_index]
-                            test.result.kind.output_filename())
-
-
-        mut file = File::open_for_reading(file_to_check)
-        let output = file.read_all()
-        let expected = test.result.output
-
-
-        let passed_test = match test.result.kind {
-            Okay => compare_test(bytes: output, expected)
-            RuntimeError | CompileError => compare_error(bytes: output, expected)
-        }
-
-        if not passed_test {
-            if .failed_reasons.has_value() {
-                .failed_reasons![test.file_name] = match test.result.kind {
-                    Okay => 
-                        TestFailedReason::StdoutUnmatched(
-                            had: bytes_to_string(output)
-                            expected)
-                    RuntimeError => 
-                        TestFailedReason::StderrUnmatched(
-                            had: bytes_to_string(output)
-                            expected)
-                    CompileError => 
-                        TestFailedReason::CompilerErrorUnmatched(
-                            had: bytes_to_string(output)
-                            expected)
-                }
-            }
-            return TestExitedResult::Failed(file: test.file_name)
-        }
-        return TestExitedResult::Passed
     }
 
     function poll_running_tests(mut this) throws {
         mut exited = process::poll_process_exit(pid: -1i32)
         while exited.has_value() {
-            match .on_test_exited(pid: exited!.pid(), exit_code: exited!.exit_code()) {
+            let pid = exited!.pid()
+            let test = .running_tests[pid]
+            match .check_test_result(test, exit_code: exited!.exit_code()) {
                 Passed => {
                     .passed_count++
                 }
-                Failed(file) => {
-                    eprintln("\r\x1b[2K[ \x1b[31;1mFAIL\x1b[m ] {}", file)
+                Failed(file, reason) => {
+                    pretty_print_failed_test(file)
+                    if reason.has_value() {
+                        pretty_print_failed_reason(reason!)
+                    }
                     .failed_count++
                 }
+                NeedsCompilation(file: jakt_file, result, generated_cpp) => {
+                    let binary_path = get_test_binary_file_path(prefix: .artifacts_directory, jakt_file)
+                    .compile_cpp_tasks.push(
+                        CompileCppTask(
+                            target_binary_path: binary_path
+                            jakt_file
+                            generated_cpp
+                            result: test.result))
+                }
+                NeedsRunning(file: jakt_file, result, binary_path) => {
+                    .run_test_tasks.push(
+                        RunTestTask(
+                            binary_path
+                            jakt_file
+                            result))
+                }
             }
+            .running_tests.remove(pid)
             exited = process::poll_process_exit(pid: -1i32)
         }
     }
 
-    function wait_for_free_directory(mut this) throws -> usize {
-        // NOTE: `unsafe` creates its own scope (because variables *can* be
-        // created inside an unsafe block) but in turn the C++ generated is not
-        // inline, it's inside a block. Since we're using `set` to initialize it
-        // once, we can't separate initialization to a separate `unsafe` block.
-        // Maybe `unsafe inline` blocks that have the same scope as its parent
-        // scope could be a solution to this?
-        unsafe {
-            cpp { "sigset_t set;" }
-            cpp { "int signal;"   }
-            cpp { "sigemptyset(&set);" }
-            cpp { "sigaddset(&set, SIGCHLD);" }
+    function create(tests: [RunJaktTask], max_job_count: u8, show_reasons: bool, artifacts_directory: String) throws -> TestScheduler {
+        mut running_tests: [i32:RunningTest] = [:]
+        running_tests.ensure_capacity(max_job_count as! usize)
 
-            while .free_directories.is_empty() {
-                // wait for sigchld
-                unsafe {
-                    cpp { "if (sigwait(&set, &signal) > 0)" }
-                    cpp { "    return Error::from_errno(errno);" }
+        // leave a 25% always free to run faster jobs
+        let min_non_compilation_job_count = max_job_count / 4
+
+        mut run_jakt_tasks =  create_queue<RunJaktTask>()
+        run_jakt_tasks.ensure_capacity(tests.size())
+
+        for test in tests.iterator() {
+            run_jakt_tasks.push(test)
+        }
+
+
+        return TestScheduler(
+            running_tests
+            run_jakt_tasks
+            run_test_tasks: create_queue<RunTestTask>()
+            compile_cpp_tasks: create_queue<CompileCppTask>()
+            artifacts_directory
+            max_job_count
+            min_non_compilation_job_count
+            show_reasons
+            passed_count: 0
+            failed_count: 0
+            total_test_count: tests.size())
+    }
+
+    // FIXME: consider using epoll()
+    function poll_readers_and_writers(mut this) throws {
+        for test in .running_tests.iterator() {
+            test.1.stage.poll()
+        }
+    }
+
+    public function run(mut this) throws -> TestsRunResult {
+        // create an empty handler so SIGCHLD is not ignored
+        unsafe { cpp {
+            "struct sigaction action{};"
+            "action.sa_handler = [](int){};"
+            "sigemptyset(&action.sa_mask);"
+            "sigaddset(&action.sa_mask, SIGCHLD);"
+            "action.sa_flags = SA_NOCLDSTOP;"
+            "if (sigaction(SIGCHLD, &action, NULL) == -1)"
+            "    return Error::from_errno(errno);"
+        } }
+        // NOTE: everything has to be under unsafe because the cpp needs to be
+        // always inside an unsafe black, which makes anything that needs
+        // inline cpp be entirely under an unsafe block, otherwise those C++
+        // variables that were created are not usable in the outside.
+        unsafe {
+            // prepare our mask for sigwait().
+            cpp {
+                "sigset_t set;"
+                "int signal;" // unused by us since there's only one signal to
+                              // catch, but required as a parameter by
+                              // sigwait().
+                "sigemptyset(&set);"
+                "sigaddset(&set, SIGCHLD);"
+            }
+
+            while .has_something_to_run() or .has_unfinished_stages() {
+                // wait for a job to complete
+                while .running_tests.size() == .max_job_count as! usize {
+                    cpp {
+                        "if (sigwait(&set, &signal) > 0)"
+                        "    return Error::from_errno(errno);"
+                    }
+                    .poll_running_tests()
                 }
-                // check if any test has exited
+
+                .poll_readers_and_writers()
+
+                // - avoid launching compilation jobs if we have faster stuff available,
+                //   since clang jobs are the heaviest.
+                // - prioritize running test files over running jakt files
+                // since they are the last stage, and we want to relieve our load
+                // as soon as possible.
+                // - keep our queues at a minimum
+                if not .compile_cpp_tasks.is_empty() {
+                    let nothing_else_to_run = .run_test_tasks.is_empty() and .run_jakt_tasks.is_empty()
+                    let has_free_nonreserved_slot = .free_job_count() > .min_non_compilation_job_count
+
+                    if has_free_nonreserved_slot or nothing_else_to_run or .compile_cpp_tasks.size() >= .max_job_count as! usize {
+                        let task = .compile_cpp_tasks.pop()!
+                        .start_clang_execution(task)
+                        .print_progress_line(message: "Compiling C++ generated from", file: task.jakt_file)
+                        continue
+                    }
+                } 
+                if not .run_test_tasks.is_empty() and .run_jakt_tasks.size() < .max_job_count as! usize {
+                    let task = .run_test_tasks.pop()!
+                    .start_test_binary(task)
+                    .print_progress_line(message: "Running test", file: task.jakt_file)
+                } else {
+                    let task = .run_jakt_tasks.pop()!
+                    .start_transpile_jakt(task)
+                    .print_progress_line(message: "Compiling Jakt", file: task.jakt_file)
+                }
+            }
+            while not .running_tests.is_empty() {
+                cpp {
+                    "if (sigwait(&set, &signal) > 0)"
+                    "    return Error::from_errno(errno);"
+                }
+                .poll_readers_and_writers()
                 .poll_running_tests()
             }
+
         }
-        return .free_directories.pop()!
+
+
+        // remove the status line
+        eprint("\r\x1b[K")
+
+        return TestsRunResult(passed_count: .passed_count
+                              failed_count: .failed_count)
+    }
+    
+    function has_unfinished_stages(this) -> bool {
+        for test in .running_tests.iterator() {
+            if not test.1.result.kind is CompileError and not test.1.stage is TestRun {
+                return true
+            }
+        }
+        return false
     }
 
-    function create(directories: [String], collect_reasons: bool) throws -> TestScheduler {
-        mut running_tests: [i32:Test] = [:]
-        running_tests.ensure_capacity(directories.size())
-        mut free_directories: [usize] = []
-        free_directories.ensure_capacity(directories.size())
-        for i in 0..directories.size() {
-            free_directories.push(i)
-        }
-
-        mut failed_reasons: [String:TestFailedReason]? = None
-        if collect_reasons {
-            let dict: [String:TestFailedReason] = [:]
-            failed_reasons = dict
-        }
-
-        return TestScheduler(running_tests
-                            free_directories
-                            directories
-                            passed_count: 0
-                            failed_count: 0
-                            failed_reasons)
-    }
-
-    public function run_tests(mut tests: [Test], directories: [String], collect_reasons: bool) throws -> TestsRunResult {
-        let total_test_count = tests.size()
-        // create an empty handler so SIGCHLD is not ignored
-        unsafe {
-            cpp { "struct sigaction action{};" }
-            cpp { "action.sa_handler = [](int){};" }
-            cpp { "sigemptyset(&action.sa_mask);" }
-            cpp { "sigaddset(&action.sa_mask, SIGCHLD);" }
-            cpp { "action.sa_flags = SA_NOCLDSTOP;" }
-            cpp { "if (sigaction(SIGCHLD, &action, NULL) == -1)" }
-            cpp { "    return Error::from_errno(errno);" }
-        }
-        mut scheduler = TestScheduler::create(directories, collect_reasons)
-        // pre-allocate the command buffer to avoid allocating inside a loop
-        mut command_buffer: [String] = ["./jakttest/run-one.sh" "" ""]
-        while not tests.is_empty() {
-            let dir_index = scheduler.wait_for_free_directory()
-            mut test = tests.pop()!
-            test.directory_index = dir_index
-            let directory = scheduler.directories[test.directory_index]
-            command_buffer[1] = directory
-            command_buffer[2] = test.file_name
-            let pid = process::start_background_process(args: command_buffer)
-            scheduler.running_tests[pid] = test
-            eprint("\r\x1b[2K[ \x1b[1;31m{}\x1b[m/\x1b[1;32m{}\x1b[m/{} ] Testing {}"
-                    scheduler.failed_count
-                    scheduler.passed_count
-                    total_test_count
-                    test.file_name)
-            unsafe { cpp { "fflush(stderr);" }}
-        }
-
-        while not scheduler.running_tests.is_empty() {
-            scheduler.poll_running_tests()
-        }
-        eprint("\r\x1b[2K")
+    function print_progress_line(this, message: String, file: String) {
+        let reset_line = "\r\x1b[K"
+        let reset = "\x1b[m"
+        let bold = "\x1b[1m"
+        let red = "\x1b[31m"
+        let green = "\x1b[32m"
+        eprint("{}[ {}{}{}{}/{}{}{}{}/{} ] {} {}"
+            reset_line
+            bold red, .failed_count reset
+            bold green, .passed_count reset
+            .total_test_count
+            message
+            file)
         unsafe { cpp { "fflush(stderr);" }}
-
-        return TestsRunResult(passed_count: scheduler.passed_count
-                              failed_count: scheduler.failed_count
-                              failed_reasons: scheduler.failed_reasons)
     }
+
+    function free_job_count(this) -> u8 => .max_job_count - .running_tests.size() as! u8
+
+    function has_something_to_run(this) -> bool => not (.run_jakt_tasks.is_empty() and .run_test_tasks.is_empty() and .compile_cpp_tasks.is_empty())
 }
 
 function does_selfhost_need_update() throws -> bool {
@@ -649,6 +1117,7 @@ function does_selfhost_need_update() throws -> bool {
     }
     return true
 }
+
 
 
 function main(args: [String]) {
@@ -700,118 +1169,55 @@ function main(args: [String]) {
 
     mut skipped_count = 0uz
 
-    mut tests: [Test] = []
+    mut tests: [RunJaktTask] = []
     tests.ensure_capacity(parsed_options.files.size())
 
+    mut directories_to_create: {String} = {}
+
     // parse all files to collect the actual work we have to do
-    for file_name in parsed_options.files.iterator() {
-        mut file = File::open_for_reading(file_name)
+    for jakt_file in parsed_options.files.iterator() {
+        mut file = File::open_for_reading(jakt_file)
         let contents = file.read_all()
         let result = Parser::parse(input: contents)
         match result {
             SuccessTest(output) => {
-                tests.push(Test(result: ExpectedResult(kind: ResultKind::Okay, output)
-                                file_name
-                                directory_index: 0))
+                tests.push(RunJaktTask(result: ExpectedResult(kind: ResultKind::Okay, output)
+                                jakt_file))
             }
             CompileErrorTest(output) => {
-                tests.push(Test(result: ExpectedResult(kind: ResultKind::CompileError, output)
-                                file_name
-                                directory_index: 0))
+                tests.push(RunJaktTask(result: ExpectedResult(kind: ResultKind::CompileError, output)
+                                jakt_file))
             }
             RuntimeErrorTest(output) => {
-                tests.push(Test(result: ExpectedResult(kind: ResultKind::RuntimeError, output)
-                                file_name
-                                directory_index: 0))
+                tests.push(RunJaktTask(result: ExpectedResult(kind: ResultKind::RuntimeError, output)
+                                jakt_file))
             }
             SkipTest => {
-                eprintln("[ \x1b[33;1mSKIP\x1b[m ] {}", file_name)
+                eprintln("[ \x1b[33;1mSKIP\x1b[m ] {}", jakt_file)
                 skipped_count += 1
-            }
-        }
-    }
-
-    // TODO: wrap logic in a TestScheduler class
-
-    mut directories: [String] = []
-    directories.ensure_capacity(parsed_options.job_count as! usize)
-    mkdir_if_not_present(path: parsed_options.temp_dir)
-    for i in 0..parsed_options.job_count {
-        let path = format("{}/jakttest-tmp-{}",  parsed_options.temp_dir, i)
-        mkdir_if_not_present(path)
-        directories.push(path)
-    }
-
-    let run_result = TestScheduler::run_tests(tests, directories, collect_reasons: parsed_options.show_reasons)
-
-    // delete directories
-    for dir in directories.iterator() {
-        for file in fs::list_directory(path: dir) {
-            if file == "." or file == ".." {
                 continue
             }
-            fs::unlink(path: dir + "/" + file)
         }
-        fs::rmdir(path: dir)
+
+        directories_to_create.add(libc::dirname(jakt_file))
     }
-    fs::rmdir(path: parsed_options.temp_dir)
+
+    // prepare our artifacts directory so its structure mirrors the test source tree
+    mkdir_with_parents_if_not_present(path: parsed_options.artifacts_directory)
+    for dir in directories_to_create.iterator() {
+        let real_dir = parsed_options.artifacts_directory + "/" + dir
+        mkdir_with_parents_if_not_present(path: real_dir)
+    }
+
+    mut scheduler = TestScheduler::create(tests, max_job_count: parsed_options.job_count as! u8, show_reasons: parsed_options.show_reasons, artifacts_directory: parsed_options.artifacts_directory)
+    let run_result = scheduler.run()
+
 
     println("==============================")
     println("{} passed" , run_result.passed_count)
     println("{} failed" run_result.failed_count)
     println("{} skipped", skipped_count)
     println("==============================")
-
-    if run_result.failed_reasons.has_value() and run_result.failed_count > 0 {
-        eprintln("Showing why tests failed:")
-        let reasons = run_result.failed_reasons!
-        mut is_first = true
-        for file in reasons.keys().iterator() {
-            if not is_first {
-                eprintln("----------------------------------------")
-            }
-            eprintln("\x1b[1m{}\x1b[m:", file)
-            mut output = ""
-            match reasons[file] {
-                CompilerErrorUnmatched(had, expected) => {
-                    output += format("Could not find error \"{}\" in error output:\n", expected)
-                    output += had
-                }
-                ClangError(error) => {
-                    output += "Could not compile generated C++ code into a binary:\n"
-                    output += error
-                }
-                StdoutUnmatched(had, expected) => {
-                    output += "Could not match test stdout:\n"
-                    output += "Expected:\n"
-                    output += expected
-                    output += "\nGot:\n"
-                    output += had
-                }
-                StderrUnmatched(had, expected) => {
-                    output += "Could not match test stderr:\n"
-                    output += "Expected:\n"
-                    output += expected
-                    output += "\nGot:"
-                    output += had
-                }
-                ErroredAtEarlierStage(failed_stage, error) => {
-                    output += "Test failed at an earlier stage than expected:\n"
-                    output +=  failed_stage + " failed with output:\n"
-                    output += error
-                }
-                AbruptExit(exit_code) => {
-                    output += "Test job exited with an unexpected code.\n"
-                    output += format("Exit code: {}", exit_code)
-                }
-            }
-
-            for line in output.split('\n').iterator() {
-                eprintln("\x1b[1;0m|\x1b[m\t{}", line)
-            }
-        }
-        eprintln("==============================")
-    }
 
     if run_result.failed_count > 0 {
         return 1
@@ -832,3 +1238,44 @@ function bytes_to_string(anon bytes: [u8]) throws -> String {
 
     return builder.to_string()
 }
+
+function pretty_print_failed_test(anon file_name: String) throws {
+    let red = "\x1b[31m"
+    let bold = "\x1b[1m"
+    let reset = "\x1b[m"
+    let reset_line = "\r\x1b[K"
+    eprintln("{}[{}{} FAIL {}] {}",
+              reset_line red bold reset,
+              file_name)
+}
+
+function pretty_print_failed_reason(anon reason: String) throws {
+    let bold = "\x1b[1m"
+    let reset = "\x1b[m"
+    for line in reason.split('\n').iterator() {
+        eprintln("{}{}|{}\t{}", 
+            reset bold reset,
+            line)
+    }
+}
+
+
+// FIXME: needs adjustments for windows paths
+
+function get_jakt_error_file_path(prefix: String, jakt_file: String) throws -> String =>
+    format("{}/{}/{}.err", prefix, libc::dirname(jakt_file), libc::base_name(jakt_file))
+
+function get_jakt_output_file_path(prefix: String, jakt_file: String) throws -> String =>
+    format("{}/{}/output.{}.cpp", prefix, libc::dirname(jakt_file), libc::base_name(jakt_file))
+
+function get_test_binary_file_path(prefix: String, jakt_file: String) throws -> String =>
+    format("{}/{}/{}.bin.out", prefix, libc::dirname(jakt_file), libc::base_name(jakt_file))
+
+function get_cpp_error_file_path(prefix: String, jakt_file: String) throws -> String =>
+    format("{}/{}/clang.{}.err", prefix, libc::dirname(jakt_file), libc::base_name(jakt_file))
+
+function get_test_run_output_file_path(prefix: String, jakt_file: String) throws -> String =>
+    format("{}/{}/{}.run.out", prefix, libc::dirname(jakt_file), libc::base_name(jakt_file))
+
+function get_test_run_error_file_path(prefix: String, jakt_file: String) throws -> String =>
+    format("{}/{}/{}.run.err", prefix, libc::dirname(jakt_file), libc::base_name(jakt_file))
