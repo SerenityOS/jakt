@@ -321,7 +321,7 @@ enum ExecutionResult {
 enum StatementResult {
     Return(Value)
     Throw(Value)
-    // Yield(Value)
+    Yield(Value)
     Continue
     Break
     JustValue(Value)
@@ -1047,7 +1047,7 @@ struct Interpreter {
             return match .call_prelude_function(function_to_run.name, namespace_!, this_argument, arguments, call_span) {
                 JustValue(value) | Return(value) => ExecutionResult::Return(value)
                 Throw(value) => ExecutionResult::Throw(value)
-                Continue | Break => {
+                Continue | Break | Yield => {
                     panic("Invalid control flow")
                 }
             }
@@ -1072,7 +1072,7 @@ struct Interpreter {
                 return match .execute_block(block: function_to_run.block, scope, call_span) {
                     Return(value) | JustValue(value) => ExecutionResult::Return(value)
                     Throw(value) => ExecutionResult::Throw(value)
-                    Continue | Break => {
+                    Continue | Break | Yield => {
                         panic("Invalid control flow")
                     }
                 }
@@ -1175,6 +1175,9 @@ struct Interpreter {
                     Break => {
                         return StatementResult::Break
                     }
+                    Yield => {
+                        panic("Invalid control flow")
+                    }
                 }
             }
             If(condition, then_block, else_statement, span) => {
@@ -1201,6 +1204,9 @@ struct Interpreter {
                     Break => {
                         return StatementResult::Break
                     }
+                    Yield => {
+                        panic("Invalid control flow")
+                    }
                 }
 
                 let block = match cond {
@@ -1222,6 +1228,9 @@ struct Interpreter {
                         JustValue => StatementResult::JustValue(Value(impl: ValueImpl::Void, span))
                         Continue => StatementResult::Continue
                         Break => StatementResult::Break
+                        Yield => {
+                            panic("Invalid control flow")
+                        }
                     }
                 }
             }
@@ -1244,7 +1253,10 @@ struct Interpreter {
                         Break => {
                             break
                         }
-                        else => {}
+                        JustValue => {}
+                        Yield => {
+                            panic("Invalid control flow")
+                        }
                     }
                 }
             }
@@ -1257,6 +1269,9 @@ struct Interpreter {
                         JustValue(value) => StatementResult::Return(value)
                         Continue => StatementResult::Continue
                         Break => StatementResult::Break
+                        Yield => {
+                            panic("Invalid control flow")
+                        }
                     }
                 }
                 return StatementResult::Return(Value(impl: ValueImpl::Void, span: call_span))
@@ -1266,6 +1281,26 @@ struct Interpreter {
             }
             Continue => {
                 return StatementResult::Continue
+            }
+            Yield(expr) => match .execute_expression(expr, scope) {
+                JustValue(value) => {
+                    return StatementResult::Yield(value)
+                }
+                Throw(value) => {
+                    return StatementResult::Throw(value)
+                }
+                Return(value) => {
+                    return StatementResult::Return(value)
+                }
+                Continue => {
+                    return StatementResult::Continue
+                }
+                Break => {
+                    return StatementResult::Break
+                }
+                Yield => {
+                    panic("Invalid control flow")
+                }
             }
             Throw(expr) => match .execute_expression(expr, scope) {
                 Return(value) | JustValue(value) | Throw(value) => {
@@ -1277,8 +1312,10 @@ struct Interpreter {
                 Break => {
                     return StatementResult::Break
                 }
+                Yield => {
+                    panic("Invalid control flow")
+                }
             }
-            Yield(span) => .error("yield statement not implemented", span)
             InlineCpp(span) => .error("Cannot run inline cpp at compile time", span)
             Garbage(span) => .error("Cannot run invalid statements at compile time", span)
         }
@@ -1303,6 +1340,9 @@ struct Interpreter {
                     return StatementResult::Break
                 }
                 JustValue => {}
+                Yield(value) => {
+                    return StatementResult::Yield(value)
+                }
             }
             defer .leave_span()
         }
@@ -1348,6 +1388,9 @@ struct Interpreter {
                 Break => {
                     return StatementResult::Break
                 }
+                Yield(expr) => {
+                    panic("Invalid control flow")
+                }
             }
             let rhs_value = match .execute_expression(rhs, scope) {
                 Return(value) => {
@@ -1362,6 +1405,9 @@ struct Interpreter {
                 }
                 Break => {
                     return StatementResult::Break
+                }
+                Yield(expr) => {
+                    panic("Invalid control flow")
                 }
             }
             yield match op {
@@ -2671,6 +2717,9 @@ struct Interpreter {
                 Break => {
                     return StatementResult::Break
                 }
+                Yield(expr) => {
+                    panic("Invalid control flow")
+                }
             }
             yield match op {
                 LogicalNot => match value.impl {
@@ -2714,6 +2763,9 @@ struct Interpreter {
                         Break => {
                             return StatementResult::Break
                         }
+                        Yield(expr) => {
+                            panic("Invalid control flow")
+                        }
                     })
                 }
 
@@ -2743,6 +2795,9 @@ struct Interpreter {
                     }
                     Break => {
                         return StatementResult::Break
+                    }
+                    Yield(expr) => {
+                        panic("Invalid control flow")
                     }
                 })
             }
@@ -2779,6 +2834,9 @@ struct Interpreter {
                 }
                 Break => {
                     return StatementResult::Break
+                }
+                Yield(expr) => {
+                    panic("Invalid control flow")
                 }
             }
 
@@ -2836,6 +2894,9 @@ struct Interpreter {
                         Break => {
                             return StatementResult::Break
                         }
+                        Yield(expr) => {
+                            panic("Invalid control flow")
+                        }
                     })
                 }
 
@@ -2864,6 +2925,9 @@ struct Interpreter {
                     }
                     Break => {
                         return StatementResult::Break
+                    }
+                    Yield(expr) => {
+                        panic("Invalid control flow")
                     }
                 })
             }
@@ -2896,6 +2960,9 @@ struct Interpreter {
                 Break => {
                     return StatementResult::Break
                 }
+                Yield(expr) => {
+                    panic("Invalid control flow")
+                }
             }
 
             if value.impl is OptionalNone {
@@ -2911,7 +2978,7 @@ struct Interpreter {
                 }
             }
         }
-        // Block
+        Block(block, span) => .execute_block(block, scope, call_span: span)
         ByteConstant(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::U8(val.byte_at(0)), span: span))
         // IndexedDictionary
         Var(var) => StatementResult::JustValue(scope.must_get(var.name))
@@ -2932,6 +2999,9 @@ struct Interpreter {
                 }
                 Break => {
                     return StatementResult::Break
+                }
+                Yield(expr) => {
+                    panic("Invalid control flow")
                 }
             }
             yield match value.impl {
@@ -2979,7 +3049,119 @@ struct Interpreter {
         CharacterConstant(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::CChar(val.byte_at(0) as! c_char), span: span))
         // JaktArray
         // IndexedTuple
-        // Match
+        Match(expr, match_cases, all_variants_constant) => {
+            let (fields, enum_id, constructor) = match .execute_expression(expr, scope) {
+                JustValue(value) => match value.impl {
+                    Enum(fields,  enum_id, constructor) => (fields, enum_id, constructor)
+                    else => {
+                        .error("Attempted to match on a non-enum type", value.span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                }
+                Return(value) => {
+                    return StatementResult::Return(value)
+                }
+                Throw(value) => {
+                    return StatementResult::Throw(value)
+                }
+                Continue => {
+                    return StatementResult::Continue
+                }
+                Break => {
+                    return StatementResult::Break
+                }
+                Yield => {
+                    panic("Invalid control flow")
+                }
+            }
+
+            let constructor_name = .program.get_function(constructor).name
+
+            mut catch_all_case: CheckedMatchBody? = None
+            mut found_body: CheckedMatchBody? = None
+            mut found_args: [EnumVariantPatternArgument]? = None
+            mut found_variant_index: usize? = None
+            mut span: Span? = None
+
+            for match_case in match_cases.iterator() {
+                match match_case {
+                    EnumVariant(name, args, index, body, marker_span) => {
+                        if name != constructor_name {
+                            continue
+                        }
+
+                        // A match!
+                        found_body = body
+                        found_args = args
+                        found_variant_index = index
+                        span = marker_span
+                        break
+                    }
+                    Expression(marker_span) => {
+                        .error("Value matches are not implemented yet", marker_span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                    CatchAll(body, marker_span) => {
+                        catch_all_case = body
+                        span = marker_span
+                        continue
+                    }
+                }
+            }
+
+            found_body = found_body ?? catch_all_case!
+            let empty_args: [EnumVariantPatternArgument] = []
+            found_args = found_args ?? empty_args
+
+            mut new_scope = InterpreterScope(bindings: [:], parent: scope, type_bindings: [:])
+            if found_variant_index.has_value() and not found_args!.is_empty() {
+                let variant = .program.get_enum(enum_id).variants[found_variant_index!]
+                match variant {
+                    Untyped => {}
+                    WithValue => {}
+                    Typed => {
+                        new_scope.bindings.set(
+                            found_args![0].binding
+                            fields[0]
+                        )
+                    }
+                    StructLike(fields: variant_fields) => {
+                        mut i = 0
+                        for var_id in variant_fields.iterator() {
+                            let field = .program.get_variable(var_id)
+                            for arg in found_args!.iterator() {
+                                let matched_name = arg.name ?? arg.binding
+                                if matched_name == field.name {
+                                    new_scope.bindings.set(
+                                        arg.binding
+                                        fields[i]
+                                    )
+                                    break
+                                }
+                            }
+                            i += 1
+                        }
+                    }
+                }
+            }
+
+            yield match found_body! {
+                Expression(expr) => {
+                    let result = .execute_expression(expr, scope: new_scope)
+                    yield match result {
+                        Yield(value) => StatementResult::JustValue(value)
+                        Continue | Break | JustValue | Return | Throw => result
+                    }
+                }
+                Block(block) => {
+                    let result = .execute_block(block, scope: new_scope, call_span: span!)
+                    yield match result {
+                        Yield(value) => StatementResult::JustValue(value)
+                        Continue | Break | JustValue | Return | Throw => result
+                    }
+                }
+            }
+        }
         // JaktTuple
         // JaktSet
         else => {

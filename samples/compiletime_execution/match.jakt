@@ -1,0 +1,23 @@
+/// Expect: selfhost-only
+/// - output: "32\n32\n42\n"
+
+enum SomeEnum {
+    A(i32)
+    B(
+        x: i32
+        y: i32
+    )
+    C
+}
+
+comptime match_some_enum(anon x: SomeEnum) => match x {
+    A(a) => a
+    B(x: y) => y
+    C => 42i32
+}
+
+function main() {
+    println("{}", match_some_enum(SomeEnum::A(32i32)))
+    println("{}", match_some_enum(SomeEnum::B(x: 32i32, y: 64i32)))
+    println("{}", match_some_enum(SomeEnum::C))
+}
