@@ -3,6 +3,7 @@
 #include <Jakt/Checked.h>
 #include <Jakt/Error.h>
 #include <Jakt/RefCounted.h>
+#include <Builtins/Range.h>
 #include <initializer_list>
 #include <stdlib.h>
 
@@ -239,6 +240,7 @@ public:
 
     T const& operator[](size_t index) const { return at(index); }
     T& operator[](size_t index) { return at(index); }
+    ArraySlice<T> operator[](Range<i64> range) const { return slice_range(range.start, range.end); }
 
     ErrorOr<void> ensure_capacity(size_t capacity)
     {

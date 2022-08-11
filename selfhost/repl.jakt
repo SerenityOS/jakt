@@ -174,7 +174,6 @@ function serialize_ast_node(anon node: CheckedExpression) throws -> String => ma
         yield builder.to_string()
     }
     IndexedExpression(expr, index) => format("{}[{}]", serialize_ast_node(expr), serialize_ast_node(index))
-    IndexedRangeExpression(expr, from, to) => format("{}[{}..{}]", serialize_ast_node(expr), serialize_ast_node(from), serialize_ast_node(to))
     IndexedDictionary(expr, index) => format("{}[{}]", serialize_ast_node(expr), serialize_ast_node(index))
     IndexedTuple(expr, index) 
     | IndexedStruct(expr, index) => format("{}.{}", serialize_ast_node(expr), index)
