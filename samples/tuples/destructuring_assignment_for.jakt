@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "1, Hello\n2, World\n"
+
+function main() {
+    mut list = [("Hello", 1), ("World", 2)]
+
+    for (word, idx) in list.iterator() {
+        println("{}, {}" idx, word)
+    }
+}
