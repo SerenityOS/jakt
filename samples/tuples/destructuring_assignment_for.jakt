@@ -2,9 +2,9 @@
 /// - output: "1, Hello\n2, World\n"
 
 function main() {
-    mut list = [("Hello", 1), ("World", 2)]
+    mut list = [(1, "Hello"), (2, "World")]
 
-    for (word, idx) in list.iterator() {
+    for (idx, word) in list.iterator() {
         println("{}, {}" idx, word)
     }
 }
