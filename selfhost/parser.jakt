@@ -2178,7 +2178,7 @@ struct Parser {
                 iterator_name = tuple_var_name
             }
             else => {
-                .error("Expected iterator name", .current().span())
+                .error("Expected iterator name or destructuring pattern", .current().span())
                 return ParsedStatement::Garbage(merge_spans(start_span, .current().span()))
             }
         }
