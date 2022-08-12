@@ -1217,8 +1217,10 @@ struct CodeGenerator {
         output += format("struct Formatter<{}> : Formatter<StringView>", qualified_name)
         output += "{\n"
         output += format("ErrorOr<void> format(FormatBuilder& builder, {} const& value)\n", qualified_name)
-        output += "{ if (m_alternative_form) { JaktInternal::_pretty_print_enabled = true; }"
-        output += "return Formatter<StringView>::format(builder, MUST(value.debug_description())); }"
+        output += "{ bool previous_pretty_print; if (m_alternative_form) { previous_pretty_print = JaktInternal::_pretty_print_enabled; JaktInternal::_pretty_print_enabled = true; }"
+        output += "ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));"
+        output += "JaktInternal::_pretty_print_enabled = previous_pretty_print;"
+        output += "return format_error; }"
 
         return output + "};\n"
     }

@@ -94,8 +94,12 @@ template<typename T>
 struct Formatter<JaktInternal::Array<T>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Array<T> const& value)
     {
-        if (m_alternative_form)
+        bool previous_pretty_print;
+        if (m_alternative_form) {
+            previous_pretty_print = JaktInternal::_pretty_print_enabled;
             JaktInternal::_pretty_print_enabled = true;
+        }
+        
         auto string_builder = TRY(StringBuilder::create());
         TRY(string_builder.append("["));
         JaktInternal::_pretty_print_level++;
@@ -107,6 +111,11 @@ struct Formatter<JaktInternal::Array<T>> : Formatter<StringView> {
         }
         JaktInternal::_pretty_print_level--;
         TRY(string_builder.append("]"));
+
+        if (m_alternative_form) {
+            JaktInternal::_pretty_print_enabled = previous_pretty_print;
+        }
+
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
@@ -115,8 +124,12 @@ template<typename T>
 struct Formatter<JaktInternal::ArraySlice<T>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::ArraySlice<T> const& value)
     {
-        if (m_alternative_form)
+        bool previous_pretty_print;
+        if (m_alternative_form) {
+            previous_pretty_print = JaktInternal::_pretty_print_enabled;
             JaktInternal::_pretty_print_enabled = true;
+        }
+
         auto string_builder = TRY(StringBuilder::create());
         TRY(string_builder.append("["));
         JaktInternal::_pretty_print_level++;
@@ -128,6 +141,11 @@ struct Formatter<JaktInternal::ArraySlice<T>> : Formatter<StringView> {
         }
         JaktInternal::_pretty_print_level--;
         TRY(string_builder.append("]"));
+
+        if (m_alternative_form) {
+            JaktInternal::_pretty_print_enabled = previous_pretty_print;
+        }
+
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
@@ -136,8 +154,12 @@ template<typename T>
 struct Formatter<JaktInternal::Set<T>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Set<T> const& set)
     {
-        if (m_alternative_form)
+        bool previous_pretty_print;
+        if (m_alternative_form) {
+            previous_pretty_print = JaktInternal::_pretty_print_enabled;
             JaktInternal::_pretty_print_enabled = true;
+        }
+
         auto string_builder = TRY(StringBuilder::create());
         TRY(string_builder.append("{"));
         auto iter = set.iterator();
@@ -149,6 +171,11 @@ struct Formatter<JaktInternal::Set<T>> : Formatter<StringView> {
                 TRY(string_builder.append(", "));
         }
         TRY(string_builder.append("}"));
+
+        if (m_alternative_form) {
+            JaktInternal::_pretty_print_enabled = previous_pretty_print;
+        }
+
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
@@ -157,8 +184,12 @@ template<typename T>
 struct Formatter<JaktInternal::Range<T>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Range<T> const& range)
     {
-        if (m_alternative_form)
+        bool previous_pretty_print;
+        if (m_alternative_form) {
+            previous_pretty_print = JaktInternal::_pretty_print_enabled;
             JaktInternal::_pretty_print_enabled = true;
+        }
+
         auto string_builder = TRY(StringBuilder::create());
         JaktInternal::_pretty_print_level++;
         TRY(JaktInternal::_output_pretty_indent(string_builder));
@@ -166,6 +197,11 @@ struct Formatter<JaktInternal::Range<T>> : Formatter<StringView> {
         TRY(string_builder.append(".."));
         TRY(append_value(string_builder, range.end, m_alternative_form));
         JaktInternal::_pretty_print_level--;
+
+        if (m_alternative_form) {
+            JaktInternal::_pretty_print_enabled = previous_pretty_print;
+        }
+
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
@@ -174,8 +210,12 @@ template<typename K, typename V>
 struct Formatter<JaktInternal::Dictionary<K, V>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Dictionary<K, V> const& dict)
     {
-        if (m_alternative_form)
+        bool previous_pretty_print;
+        if (m_alternative_form) {
+            previous_pretty_print = JaktInternal::_pretty_print_enabled;
             JaktInternal::_pretty_print_enabled = true;
+        }
+
         auto string_builder = TRY(StringBuilder::create());
         TRY(string_builder.append("["));
         auto iter = dict.iterator();
@@ -192,6 +232,11 @@ struct Formatter<JaktInternal::Dictionary<K, V>> : Formatter<StringView> {
         }
         JaktInternal::_pretty_print_level--;
         TRY(string_builder.append("]"));
+
+        if (m_alternative_form) {
+            JaktInternal::_pretty_print_enabled = previous_pretty_print;
+        }
+
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
@@ -200,8 +245,12 @@ template<typename... Ts>
 struct Formatter<Jakt::Tuple<Ts...>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, Jakt::Tuple<Ts...> const& tuple)
     {
-        if (m_alternative_form)
+        bool previous_pretty_print;
+        if (m_alternative_form) {
+            previous_pretty_print = JaktInternal::_pretty_print_enabled;
             JaktInternal::_pretty_print_enabled = true;
+        }
+
         auto string_builder = TRY(StringBuilder::create());
         TRY(string_builder.append("("));
         if constexpr (sizeof...(Ts) > 0) {
@@ -225,8 +274,12 @@ struct Formatter<Jakt::Tuple<Ts...>> : Formatter<StringView> {
             }));
             JaktInternal::_pretty_print_level--;
         }
-
         TRY(string_builder.append(")"));
+
+        if (m_alternative_form) {
+            JaktInternal::_pretty_print_enabled = previous_pretty_print;
+        }
+
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
