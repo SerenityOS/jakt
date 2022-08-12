@@ -41,6 +41,8 @@ Null pointers are not possible in safe mode, but pointers can be wrapped in `Opt
 
 Note that **weak** pointers must always be wrapped in `Optional`. There is no **weak T**, only **weak T?**.
 
+Additionally, there are the reference types (see below) `&T` and `&mut T`, providing safe non-null pointers.
+
 ## Math safety
 
 - [x] Integer overflow (both signed and unsigned) is a runtime error.
@@ -385,21 +387,46 @@ There are two built-in casting operators in **Jakt**.
 - `as! T`: Returns a `T`, aborts the program if the source value isn't convertible to `T`.
 
 The `as` cast can do these things (note that the implementation may not agree yet):
-- Casts to the same type are infallible and pointless, so might be forbidden in the future.
-- If both types are primitive, a safe conversion is done.
-    - Integer casts will fail if the value is out of range. This means that promotion casts like i32 -> i64 are infallible.
-    - Float -> Integer casts truncate the decimal point (?)
-    - Integer -> Float casts resolve to the closest value to the integer representable by the floating-point type (?). If the integer value is too large, they resolve to infinity (?)
-    - Any primitive -> bool will create `true` for any value except 0, which is `false`.
-    - bool -> any primitive will do `false -> 0` and `true -> 1`, even for floats.
-- If the types are two different pointer types (see above), the cast is essentially a no-op. A cast to `T` will increment the reference count as expected; that's the preferred way of creating a strong reference from a weak reference. A cast from and to `raw T` is unsafe.
-- If the types are part of the same type hierarchy (i.e. one is a child type of another):
-    - A child can be cast to its parent infallibly.
-    - A parent can be cast to a child, but this will check the type at runtime and fail if the object was not of the child type or one of its subtypes.
-- If the types are incompatible, a user-defined cast is attempted to be used. The details here are not decided yet.
-- If nothing works, the cast will not even compile.
+- [ ] Casts to the same type are infallible and pointless, so might be forbidden in the future.
+- [ ] If both types are primitive, a safe conversion is done.
+    - [ ] Integer casts will fail if the value is out of range. This means that promotion casts like i32 -> i64 are infallible.
+    - [ ] Float -> Integer casts truncate the decimal point, if the float is a normal numeric value. If the float is any NaN or either Infinity, the cast fails.
+    - [ ] Integer -> Float casts resolve to the closest value to the integer representable by the floating-point type. If the integer value is not exactly representable, the cast fails.
+    - [ ] Any primitive -> bool will create `true` for any value except 0, which is `false`.
+    - [ ] bool -> any primitive will do `false -> 0` and `true -> 1`, even for floats.
+- If the types are two different pointer types of the same underlying type `T`, the cast is generally allowed and infallible.
+    - [ ] A cast to `T` from any pointer type, if `T` is reference counted, will increment the reference count as expected; that's the preferred way of creating a strong reference from a weak or temporary reference.
+    - [ ] A cast to `T` from any pointer type, if `T` is *not* reference counted, will copy the value.
+    - [ ] Casts from `&T` to `&mut T` is forbidden. The other way around is allowed.
+    - [ ] A cast from and to `raw T` is unsafe but infallible.
+    - [ ] A cast to `&T` or `&mut T` is allowed for orthagonality, but has the same effect as directly taking the reference with the `&` or `&mut` operators, respectively. It is not decided yet whether this is possible for anything except bound names, i.e. temporary values.
+    - [ ] Whether casts from `&T` or `&mut T` are allowed is not currently decided.
+    - [ ] Casts between infallible pointer types can happen alongside casts within the contained type, if the pointer type doesn't change or is cast strictly upwards on the pointer type hierarchy. This hierarchy goes (from bottom to top) `&mut T` -> `&T` -> `T`.
+- If the types are part of the same type hierarchy (i.e. one is a child type of another), casts are possible according to these rules. Note that this also goes if the types are the same pointer type and the contained type is part of the same type hierarchy (which applies recursively), so `&mut A` and `&mut B` are part of the same type hierarchy if `A` and `B` are.
+    - [ ] A child can be cast to its parent infallibly.
+    - [ ] A parent can be cast to a child, but this will check the type at runtime and fail if the object was not of the child type or one of its subtypes.
+- [ ] If the types are incompatible, a user-defined cast is attempted to be used. The details here are not decided yet, but it will involve implementing some generic trait.
+- If nothing works, the cast will not compile.
 
-Additional casts are available in the standard library. Two important ones are `as_saturated` and `as_truncated`, which cast integral values while saturating to the boundaries or truncating bits, respectively.
+Some examples of possible and not possible casts. The left side shows the data type of a `value`, not the `value` itself. If the equivalent expression doesn't compile, the cast of course also doesn't compile.
+```
+u32 as? u16  // might not succeed
+u16 as! i32  // infallible
+f32 as? u32  // normally truncates, but values like NaN cause failure
+u64 as! bool // only false if the value is 0
+A as! B      // infallible assuming A is a subclass of B
+&mut A as! A // creates a copy assuming A is a struct type; equivalent to (*value)
+i32 as! &i32 // equivalent to (&value)
+B as? A      // fallible depending on what the instance actually is
+A as! &mut B // equivalent to (&mut (value as! B))
+A as! raw A  // only allowed in unsafe contexts
+```
+
+Additional casts are available in the standard library:
+- `as_saturated` casts integral values, saturating to the boundaries of the new type.
+    - [ ] Casting floats to integral types with this cast will round and convert the infinities and other out-of-range values to the largest or smallest value the integral type provides. Casting from NaN aborts the program, as `as_saturated` is an infallible cast.
+    - [ ] Casting integral types to floats will round non-representable integers to the closest floating-point representation.
+- `as_truncated` casts integral values, truncating bits and therefore automatically overflowing too large values. It does not support floating-point types as truncation is more or less meaningless here.
 
 ## Traits
 
