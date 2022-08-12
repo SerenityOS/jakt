@@ -9,7 +9,7 @@
 
 import error { JaktError, print_error}
 import lexer { Token, NumericConstant }
-import utility { panic, todo, FileId, Span, extend_array }
+import utility { panic, todo, FileId, Span, extend_array, join }
 import compiler { Compiler }
 
 function merge_spans(anon start: Span, anon end: Span) throws -> Span {
@@ -1836,14 +1836,8 @@ struct Parser {
                 }
             }
         }
-        // FIXME: This seams to be unreacheable but is still required
-        return [ParsedVarDecl(
-            name: "",
-            parsed_type: ParsedType::Empty,
-            is_mutable: false,
-            inlay_span: None,
-            span: .current().span(),
-        )]
+        
+        return []
     }
 
     function parse_variable_declaration(mut this, is_mutable: bool) throws -> ParsedVarDecl {
@@ -2166,14 +2160,30 @@ struct Parser {
         let start_span = .current().span()
         .index++
 
-        guard .current() is Identifier(name) else {
-            .error("Expected iterator name", .current().span())
-            return ParsedStatement::Garbage(merge_spans(start_span, .current().span()))
+        mut iterator_name = ""
+        mut destructured_var_decls: [ParsedVarDecl] = []
+        
+        match .current() {
+            Identifier(name) => {
+                iterator_name = name
+                .index++
+            }
+            LParen => {
+                destructured_var_decls = .parse_destructuring_assignment(is_mutable: false)
+                mut tuple_var_name = ""
+                for var in destructured_var_decls.iterator() {
+                    tuple_var_name += var.name
+                    tuple_var_name += "__"
+                }
+                iterator_name = tuple_var_name
+            }
+            else => {
+                .error("Expected iterator name", .current().span())
+                return ParsedStatement::Garbage(merge_spans(start_span, .current().span()))
+            }
         }
 
-        let iterator_name = name
         let name_span = .current().span()
-        .index++
         if .current() is In {
             .index++
         } else {
@@ -2182,7 +2192,28 @@ struct Parser {
         }
 
         let range = .parse_expression(allow_assignments: false, allow_newlines: false)
-        let block = .parse_block();
+        mut block = .parse_block();
+
+        if destructured_var_decls.size() > 0 {
+            mut tuple_var_name = "jakt__"
+            tuple_var_name += iterator_name
+            mut tuple_var_decl = ParsedVarDecl(
+                name: tuple_var_name,
+                parsed_type: ParsedType::Empty,
+                is_mutable: false,
+                inlay_span: None,
+                span: .current().span(),
+            )
+            let init = ParsedExpression::Var(name: iterator_name, span: merge_spans(start_span, .previous().span()))
+            let var_decl = ParsedStatement::VarDecl(var: tuple_var_decl, init, span: merge_spans(start_span, .previous().span()))
+            let destructured_vars_stmt = ParsedStatement::DestructuringAssignment(vars: destructured_var_decls, var_decl, span: merge_spans(start_span, .previous().span()))
+            mut block_stmts: [ParsedStatement] = []
+            block_stmts.push(destructured_vars_stmt)
+            for stmt in block.stmts.iterator() {
+                block_stmts.push(stmt)
+            }
+            block.stmts = block_stmts
+        }
 
         return ParsedStatement::For(iterator_name, name_span, range, block, span: merge_spans(start_span, .previous().span()))
     }
