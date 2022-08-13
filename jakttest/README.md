@@ -5,16 +5,11 @@ It's also written in Jakt.
 
 ## Build dependencies
 
-To build Jakttest you should use the `ninja` build system which will use the provided `build.ninja` file.
-It needs the same `clang++` that is required to build any other Jakt file, and `python` 3.6+ to run the
-patch script that patches the generated C++ from Jakt code to accept the external C++ code.
+Jakttest is built along with Jakt and therefore needs the same dependencies.
+See [Jakt's build instructions](../documentation/cmake-bootstrap.md) for more
+information.
 
-As a list:
-
-- `ninja` (or `ninja-build` on some package managers)
-- `clang++`
-
-## How to run it?
+## Running Jakttest
 
 First, make sure that you have the generated build directory:
 
