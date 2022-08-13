@@ -31,7 +31,7 @@ function help() -> String{
     output += "  -r, --run\t\t\t\tRun the given file without compiling it (all positional arguments after the file name will be passed to main).\n"
     output += "  -d\t\t\t\t\tInsert debug statement spans in generated C++ code.\n"
     output += "  --debug-print\t\t\t\tOutput debug print.\n"
-    output += "  --prettify-cpp-source\t\t\tRun emitted C++ source through clang-format.\n" // FIXME: Add -p flag to be the same as rust compiler.
+    output += "  -p --prettify-cpp-source\t\tRun emitted C++ source through clang-format.\n"
     output += "  -S,--emit-cpp-source-only\t\tWrite the C++ source to file, even when not building/\n"
     output += "  -c,--check-only\t\t\tOnly check the code for errors.\n"
     output += "  -j,--json-errors\t\t\tEmit machine-readable (JSON) errors.\n"
@@ -84,7 +84,7 @@ function main(args: [String]) {
     let run_executable = args_parser.flag(["-cr", "--compile-run"])
     let codegen_debug = args_parser.flag(["-d"])
     let debug_print = args_parser.flag(["--debug-print"])
-    let prettify_cpp_source = args_parser.flag(["--prettify-cpp-source"])
+    let prettify_cpp_source = args_parser.flag(["-p", "--prettify-cpp-source"])
     let json_errors = args_parser.flag(["-j","--json-errors"])
     let dump_type_hints = args_parser.flag(["-H", "--type-hints"])
     let dump_try_hints = args_parser.flag(["--try-hints"])
