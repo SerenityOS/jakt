@@ -1,3 +1,18 @@
+;;; jakt-mode.el --- A major-mode for editing Jakt source code -*-lexical-binding: t-*-
+
+;; Url: https://github.com/SerenityOS/jakt
+;; Keywords: languages
+;; Package-Requires: ((emacs "25.1"))
+
+;; This file is distributed under the terms of the BSD 2-Clause
+;; "Simplified" license.
+
+;;; Commentary:
+
+;; This package implements a major-mode for editing Jakt source code.
+
+;;; Code:
+
 (defvar jakt-mode-syntax-table nil "Syntax table for `jakt-mode`.")
 
 (setq jakt-mode-syntax-table
@@ -101,3 +116,5 @@
   (setq-local indent-line-function #'jakt-indent-line))
 
 (provide 'jakt-mode)
+
+;;; jakt-mode.el ends here
