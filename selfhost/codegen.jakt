@@ -2333,7 +2333,7 @@ struct CodeGenerator {
                             }
                         }
                     } else {
-                        if not (type_module.is_root or type_module.id.id == 0 or function_.linkage is External or (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name))
+                        if not (type_module.is_root or type_module.is_prelude() or function_.linkage is External or (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name))
                         {
                             output += type_module.name
                             output += "::"
@@ -2649,7 +2649,7 @@ struct CodeGenerator {
         mut output = ""
         let type_module = .program.get_module(id.module)
         // For prelude generic instances prefix with "JaktInternal::" so that there aren't naming clashes
-        if type_module.id.id == 0 {
+        if type_module.is_prelude() {
             output += "JaktInternal::"
         } else if not type_module.is_root {
             output += type_module.name
