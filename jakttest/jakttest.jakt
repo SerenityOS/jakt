@@ -135,7 +135,7 @@ function print_usage()  {
     eprintln("usage: jakttest [OPTIONS...] <temp-dir> [<path> ...]")
     eprintln("OPTIONS:")
     eprintln("\t-h\t\tShow this message and exit.")
-    eprintln("\t--show-reasons\t\tShow the reasons why tests that fail do so.")
+    eprintln("\t--hide-reasons\t\tHide the reasons why tests that fail do so.")
     eprintln("\t-j,--jobs <JOBS>\t\tUse JOBS processes. Defaults to the number of available CPUs.")
     eprintln("\t--temp-dir <DIR>\t\tUse DIR as the temporary directory.")
     eprintln("\t\t\tWill try to use $TMP_DIR or /tmp in UNIX-based systems, or %TEMP% in Windows")
@@ -152,7 +152,6 @@ function compare_test(bytes: [u8], expected: String) throws -> bool {
 
     if builder_output != expected {
         // TODO: return more information about expected/parsed
-        // for --show-reason flag
         return false
     }
     return true
@@ -181,7 +180,6 @@ function compare_error(bytes: [u8], expected: String) throws -> bool {
 
     if not builder_output.contains(stripped_expected) {
         // TODO: return more information about expected/parsed
-        // for --show-reason flag
         return false
     }
     return true
@@ -242,7 +240,7 @@ struct Options {
         mut options = Options(files
                               temp_dir: ""
                               errors
-                              show_reasons: false
+                              show_reasons: true
                               job_count: 0
                               help_wanted: false)
 
@@ -270,9 +268,9 @@ struct Options {
                 continue
             }
 
-            if args[index] == "--show-reasons" {
+            if args[index] == "--hide-reasons" {
                 index++
-                options.show_reasons = true
+                options.show_reasons = false
                 continue
             }
 
