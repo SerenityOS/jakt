@@ -138,6 +138,7 @@ function extend_array<T>(mut target: [T], extend_with: [T]) throws {
 struct ArgsParser {
     args: [String]
     removed_indices: [usize]
+    definitely_positional_args: [String]
 
     function flag(mut this, anon names: [String]) throws -> bool {
         for i in 0...args.size() {
@@ -193,7 +194,18 @@ struct ArgsParser {
     }
 
     function from_args(anon args: [String]) throws -> ArgsParser {
-        return ArgsParser (args, removed_indices: [])
+        mut parser = ArgsParser(args, removed_indices: [], definitely_positional_args: [])
+        mut i = 0uz
+        for arg in parser.args.iterator() {
+            if arg == "--" {
+                parser.definitely_positional_args = parser.args[(i+1)..parser.args.size()].to_array()
+                parser.args = parser.args[0..i].to_array()
+                break
+            }
+            i += 1
+        }
+
+        return parser
     }
 
     function remaining_arguments(this) throws -> [String] {
@@ -203,6 +215,10 @@ struct ArgsParser {
             if not .removed_indices.contains(i) {
                 remaining.push(.args[i])
             }
+        }
+
+        for arg in .definitely_positional_args.iterator() {
+            remaining.push(arg)
         }
 
         return remaining
