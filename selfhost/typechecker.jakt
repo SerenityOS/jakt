@@ -5471,11 +5471,11 @@ struct Typechecker {
         let in_comptime_function = .current_function_id.has_value() and .get_function(.current_function_id.value()).is_comptime
 
         if not in_comptime_function and resolved_function_id.has_value() and .get_function(resolved_function_id!).is_comptime {
-            mut interpreter = Interpreter(compiler: .compiler, program: .program, spans: [])
+            mut interpreter = Interpreter::create(compiler: .compiler, program: .program, spans: [])
             let function_ = .program.get_function(generic_checked_function_to_instantiate ?? resolved_function_id!)
             mut call_args: [Value] = []
             mut this_argument: Value? = None
-            mut eval_scope = InterpreterScope(bindings: [:], parent: None, type_bindings: [:])
+            mut eval_scope = InterpreterScope::create()
 
             for entry in generic_inferences.iterator() {
                 let (key, value) = entry
