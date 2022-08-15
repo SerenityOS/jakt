@@ -4836,7 +4836,7 @@ struct Typechecker {
                                     index: variant_index!,
                                     scope_id: new_scope_id,
                                     body: checked_body,
-                                    marker_span: matched_variant!.span()
+                                    marker_span: case_.marker_span
                                 )
 
                                 checked_cases.push(checked_match_case)
