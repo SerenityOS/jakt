@@ -238,7 +238,7 @@ function main(args: [String]) {
         let first_main_param = checked_program.get_function(main_function_id!).params.first()
         let arguments = match first_main_param.has_value() {
             true => {
-                mut passed_arguments: [Value] = []
+                mut passed_arguments: [Value] = [Value(impl: ValueImpl::JaktString(file_name!), span: call_span)]
                 for argument in interpreted_main_arguments.iterator() {
                     passed_arguments.push(Value(impl: ValueImpl::JaktString(argument), span: call_span))
                 }
