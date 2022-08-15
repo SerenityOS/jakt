@@ -23,6 +23,10 @@ class JsonParser {
     input: String
     index: usize
 
+    public function construct(input: String) throws -> JsonParser {
+        return JsonParser(input, index: 0)
+    }
+
     function eof(this) -> bool {
         return .index >= .input.length()
     }
@@ -339,7 +343,7 @@ class JsonParser {
 }
 
 function parse_json(input: String) throws -> JsonValue {
-    mut parser = JsonParser(input, index: 0)
+    mut parser = JsonParser::construct(input)
     return parser.parse()
 }
 

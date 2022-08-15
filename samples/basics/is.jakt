@@ -2,11 +2,11 @@
 /// - output: "OK\nOK\n"
 
 class Foo {
-    x: i64
+    public x: i64
 }
 
 class Bar {
-    y: i64
+    public y: i64
 }
 
 function main() {

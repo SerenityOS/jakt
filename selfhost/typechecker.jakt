@@ -1088,7 +1088,7 @@ struct Typechecker {
             let function_scope_id = .create_scope(parent_scope_id: struct_.scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor({})", parsed_record.name))
             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: constructor_can_throw, debug_name: format("generated-constructor-block({})", parsed_record.name))
 
-            let checked_constructor = CheckedFunction(
+            mut checked_constructor = CheckedFunction(
                 name: parsed_record.name
                 name_span: parsed_record.name_span
                 visibility: Visibility::Public
@@ -1118,6 +1118,10 @@ struct Typechecker {
             mut func = module.functions.last()!
             for field_id in .get_struct(struct_id).fields.iterator() {
                 let field = .get_variable(field_id)
+                if field.visibility is Private {
+                    checked_constructor.visibility = Visibility::Private
+                }
+                
                 func.params.push(CheckedParameter(
                     requires_label: true
                     variable: field
