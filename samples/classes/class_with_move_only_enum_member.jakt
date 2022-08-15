@@ -6,7 +6,7 @@ enum E {
 }
 
 class C {
-    e: E
+    public e: E
 }
 
 function main() {

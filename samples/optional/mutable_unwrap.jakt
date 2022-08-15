@@ -2,7 +2,7 @@
 /// - output: "2\n"
 
 class Foo {
-    x: i64
+    public x: i64
 
     public function set(mut this, value: i64) {
         this.x = value
