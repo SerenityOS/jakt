@@ -420,6 +420,7 @@ class Module {
     public imports: [ModuleId]
 
     public is_root: bool
+    public function is_prelude(this) -> bool => .id.id == 0
 
     public function new_type_variable(mut this) throws -> TypeId {
         let new_id = .types.size()
