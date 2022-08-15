@@ -1,0 +1,16 @@
+/// Expect:
+/// - output: "0..4\n"
+
+enum Foo {
+    Range
+
+    function test()  {
+        let r = 0..4
+
+        println("{}", r)
+    }
+}
+
+function main() {
+    Foo::test()
+}

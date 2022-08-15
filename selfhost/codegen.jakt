@@ -2648,7 +2648,10 @@ struct CodeGenerator {
         // FIXME: Handle WeakPtr
         mut output = ""
         let type_module = .program.get_module(id.module)
-        if not (type_module.is_root or type_module.id.id == 0) {
+        // For prelude generic instances prefix with "JaktInternal::" so that there aren't naming clashes
+        if type_module.id.id == 0 {
+            output += "JaktInternal::"
+        } else if not type_module.is_root {
             output += type_module.name
             output += "::"
         }
