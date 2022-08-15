@@ -162,6 +162,7 @@ struct CodeGenerator {
     entered_yieldable_blocks: [(String, String)] // label, variable name
     deferred_output: String
     current_function: CheckedFunction?
+    inside_defer: bool
     debug_info: CodegenDebugInfo
     namespace_stack: [String]
     fresh_var_counter: usize
@@ -169,7 +170,7 @@ struct CodeGenerator {
 
     // noreturn functions may not throw, so let them crash instead.
     function current_error_handler(this) throws -> String {
-        if .current_function.has_value() and .current_function!.return_type_id.equals(never_type_id()) and not .control_flow_state.passes_through_try {
+        if .inside_defer or (.current_function.has_value() and .current_function!.return_type_id.equals(never_type_id()) and not .control_flow_state.passes_through_try) {
             return "MUST"
         }
 
@@ -234,6 +235,7 @@ struct CodeGenerator {
             entered_yieldable_blocks: []
             deferred_output: ""
             current_function: None
+            inside_defer: false
             //TODO: use program.loaded_modules
             debug_info: CodegenDebugInfo(
                 compiler
@@ -2458,18 +2460,21 @@ struct CodeGenerator {
             }
             Expression(expr) => .codegen_expression(expr) + ";"
             Defer(statement) => {
-                // NOTE: We let the preprocessor generate a unique name for the RAII helper.
                 mut output = ""
-                output += "\n#define __SCOPE_GUARD_NAME __scope_guard_ ## __COUNTER__\n"
-                output += "ScopeGuard __SCOPE_GUARD_NAME ([&] \n"
-                output += "#undef __SCOPE_GUARD_NAME\n{"
-                {
-                    let last_control_flow = .control_flow_state
-                    .control_flow_state.passes_through_match = false
-                    output += .codegen_statement(statement)
-                    output += "});"
-                    .control_flow_state = last_control_flow
-                }
+                output += "ScopeGuard "
+                output += .fresh_var()
+                output += "([&] {\n"
+                let last_control_flow = .control_flow_state
+                let old_inside_defer = .inside_defer
+
+                .control_flow_state.passes_through_match = false
+                .inside_defer = true
+
+                output += .codegen_statement(statement)
+                output += "});"
+
+                .control_flow_state = last_control_flow
+                .inside_defer = old_inside_defer
                 yield output
             }
             Return(val) => match val.has_value() {
