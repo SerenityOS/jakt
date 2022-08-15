@@ -12,14 +12,14 @@ import error { JaktError, print_error }
 import utility { FilePath, ArgsParser, Span }
 import lexer { Lexer }
 import parser { Parser }
-import typechecker { Typechecker }
 import interpreter { Interpreter, Value, ValueImpl }
+import typechecker { Typechecker }
 import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId }
 import repl { REPL, serialize_ast_node }
 import ide
 
 function usage() => "usage: jakt [-h] [OPTIONS] <filename>"
-function help() -> String{
+function help() -> String {
     mut output = "Flags:\n"
     output += "  -h,--help\t\t\t\tPrint this help and exit.\n"
     output += "  -O\t\t\t\t\tBuild an optimized executable.\n"
@@ -197,7 +197,7 @@ function main(args: [String]) {
     )
 
     if interpret_run {
-        mut interpreter = Interpreter(
+        mut interpreter = Interpreter::create(
             compiler
             program: checked_program
             spans: []

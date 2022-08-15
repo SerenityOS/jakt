@@ -289,11 +289,7 @@ struct REPL {
         let PRELUDE_SCOPE_ID: ScopeId = typechecker.prelude_scope_id()
         let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: true,  debug_name: "root")
 
-        let root_interpreter_scope = InterpreterScope(
-            bindings: [:]
-            parent: None
-            type_bindings: [:]
-        )
+        let root_interpreter_scope = InterpreterScope::create()
 
         return REPL(
             compiler
@@ -402,7 +398,7 @@ struct REPL {
                 continue
             }
 
-            mut interpreter = Interpreter(
+            mut interpreter = Interpreter::create(
                 compiler: .compiler,
                 program: .typechecker.program,
                 spans: []
