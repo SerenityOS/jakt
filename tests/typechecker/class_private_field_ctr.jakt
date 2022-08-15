@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Can't access field ‘muda_amount’, because it is marked private\n"
+/// - error: "Can't access constructor ‘GoodEncapsulation’, because it is marked private\n"
 
 class GoodEncapsulation {
     muda_amount: u32
@@ -8,7 +8,4 @@ class GoodEncapsulation {
 
 function main() {
     let encapsulated = GoodEncapsulation(muda_amount: 20, ora_amount: 9001)
-    // This is okay!
-    encapsulated.ora_amount
-    encapsulated.muda_amount
 }
