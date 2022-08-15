@@ -3777,11 +3777,11 @@ struct Typechecker {
         match member.visibility {
             Private => {
                 if not .scope_can_access(accessor, accessee) {
-                    .error(format("Can't access variable ‘{}’ from scope {}, because it is marked private", member.name, .get_scope(accessor).namespace_name), span)
+                    .error(format("Can't access field ‘{}’, because it is marked private", member.name), span)
                 }
             }
             Restricted(whitelist, span) => {
-                .check_restricted_access(accessor, accessee_kind: "variable", accessee, name: member.name, whitelist, span)
+                .check_restricted_access(accessor, accessee_kind: "field", accessee, name: member.name, whitelist, span)
             }
             else => {}
         }
@@ -3791,7 +3791,15 @@ struct Typechecker {
         match method.visibility {
             Private => {
                 if not .scope_can_access(accessor, accessee) {
-                    .error(format("Can't access function ‘{}’ from scope {}, because it is marked private", method.name, .get_scope(accessor).namespace_name), span)
+                    if not method.type is Normal {
+                        .error_with_hint(format("Can't access constructor ‘{}’, because it is marked private", method.name)
+                            span
+                            hint: "Private constructors are created if any fields are private"
+                            span
+                        )
+                    } else {
+                        .error(format("Can't access method ‘{}’, because it is marked private", method.name), span)
+                    }
                 }
             }
             Restricted(whitelist, span) => {
