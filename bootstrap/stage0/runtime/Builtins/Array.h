@@ -347,11 +347,11 @@ public:
         VERIFY(m_offset < m_storage->size());
     }
 
-    ErrorOr<Array<T>> to_array()
+    ErrorOr<Array<T>> to_array() const
     {
         auto array = TRY(Array<T>::create_empty());
-        TRY(array.ensure_capacity(m_size));
-        for (size_t i = 0; i < m_size; ++i) {
+        TRY(array.ensure_capacity(size()));
+        for (size_t i = 0; i < size(); ++i) {
             TRY(array.push(at(i)));
         }
             
