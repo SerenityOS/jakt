@@ -1,0 +1,37 @@
+/// Expect:
+/// - output: "true\n"
+
+enum Bar {
+    Y
+    Z
+}
+
+struct Foo {
+    x: Bar
+
+    function equals(this, other: Foo) => match .x {
+        Y => match other.x {
+            Y => true
+            else => false
+        }
+        Z => match other.x {
+            Z => true
+            else => false
+        }
+    } 
+}
+
+function equals_out<T>(anon a: T?, anon b: T?) -> bool {
+    if a.has_value() and b.has_value() {
+        return a!.equals(other: b!)
+    }
+
+    return not a.has_value() and not b.has_value()
+}
+
+function main() {
+    let a = Some(Foo(x: Bar::Y))
+    let b = Some(Foo(x: Bar::Y))
+
+    println("{}", equals_out(a, b))
+}

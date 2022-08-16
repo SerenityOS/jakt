@@ -91,7 +91,7 @@ struct Typechecker {
         )
 
         let PRELUDE_SCOPE_ID: ScopeId = typechecker.prelude_scope_id()
-        let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: false,  debug_name: "root")
+        let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: false, debug_name: "root")
         typechecker.typecheck_module(parsed_namespace, scope_id: root_scope_id)
 
         return typechecker.program
@@ -2583,10 +2583,10 @@ struct Typechecker {
         }
 
         if checked_block.yielded_type.has_value() {
-             checked_block.yielded_type = Some(.substitute_typevars_in_type(
-                 type_id: checked_block.yielded_type.value()
-                 generic_inferences
-             ))
+            checked_block.yielded_type = Some(.substitute_typevars_in_type(
+                type_id: checked_block.yielded_type.value()
+                generic_inferences
+            ))
         }
 
         return checked_block
@@ -3873,9 +3873,9 @@ struct Typechecker {
             mut found_optional = false
 
             let parent_id = match .get_type(checked_expr_type_id) {
-                Struct(id) => StructOrEnumId::Struct(id)
-                Enum(id) => StructOrEnumId::Enum(id)
-                JaktString => StructOrEnumId::Struct(.find_struct_in_prelude("String"))
+                Struct(id) => Some(StructOrEnumId::Struct(id))
+                Enum(id) => Some(StructOrEnumId::Enum(id))
+                JaktString => Some(StructOrEnumId::Struct(.find_struct_in_prelude("String")))
                 GenericInstance(id, args) => {
                     yield match is_optional {
                         true => {
@@ -3896,31 +3896,17 @@ struct Typechecker {
                                 }
                             }
 
-                            yield struct_id ?? StructOrEnumId::Struct(optional_struct_id)
+                            yield Some(struct_id ?? StructOrEnumId::Struct(optional_struct_id))
                         }
-                        else => StructOrEnumId::Struct(id)
+                        else => Some(StructOrEnumId::Struct(id))
                     }
                 }
-                GenericEnumInstance(id) => StructOrEnumId::Enum(id)
+                GenericEnumInstance(id) => Some(StructOrEnumId::Enum(id))
                 else => {
                     .error(message: format("no methods available on value (type: {})", .type_name(type_id: checked_expr_type_id)), span: checked_expr.span())
-                    mut checked_args: [(String, CheckedExpression)] = []
+                    let none: StructOrEnumId? = None
 
-                    return CheckedExpression::MethodCall(
-                        expr: checked_expr,
-                        call: CheckedCall(
-                            namespace_: [],
-                            name: call.name,
-                            args: checked_args,
-                            type_args: [],
-                            function_id: None,
-                            return_type: unknown_type_id(),
-                            callee_throws: false,
-                        ),
-                        span,
-                        is_optional,
-                        type_id: unknown_type_id(),
-                    )
+                    yield none
                 }
             }
 
@@ -5307,7 +5293,26 @@ struct Typechecker {
                     for type_arg in call.type_args.iterator() {
                         checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id: caller_scope_id, name: None))
                     }
-                    return CheckedExpression::Call(call: CheckedCall(namespace_: resolved_namespaces, name: call.name, args, type_args: checked_type_args, function_id: resolved_function_id, return_type, callee_throws), span, type_id: return_type)
+
+                    for arg in call.args.iterator() {
+                        let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: None)
+
+                        args.push((call.name, checked_arg))
+                    }
+
+                    return CheckedExpression::Call(
+                        call: CheckedCall(
+                            namespace_: resolved_namespaces,
+                            name: call.name,
+                            args,
+                            type_args: checked_type_args,
+                            function_id: resolved_function_id,
+                            return_type,
+                            callee_throws
+                        ),
+                        span,
+                        type_id: return_type
+                    )
                 }
                 let function_id = resolved_function_id!
                 let callee = .get_function(function_id)
