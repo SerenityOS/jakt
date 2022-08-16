@@ -492,7 +492,6 @@ struct Lexer {
 
             if end - start >= 6 and string.substring(start: 0, length: 6) == "__jakt" {
                 .error("reserved identifier name", span)
-                return Token::Garbage(span)
             }
 
             return Token::from_keyword_or_identifier(string, span)
