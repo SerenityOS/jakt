@@ -370,7 +370,6 @@ struct Typechecker {
     }
 
     function find_or_add_type_id(mut this, anon type: Type) throws -> TypeId {
-
         for module in .program.modules.iterator() {
             for id in 0..module.types.size() {
                 if module.types[id].equals(type) {
@@ -4661,21 +4660,21 @@ struct Typechecker {
                 for case_ in cases.iterator() {
                     for pattern in case_.patterns.iterator() {
                         match pattern {
-                            EnumVariant(variant_name, variant_arguments, arguments_span) => {
-                                mut variant_names = variant_name
+                            EnumVariant(variant_names, variant_arguments, arguments_span) => {
+                                mut variant_names_ = variant_names
 
-                                if variant_names.size() == 1 {
-                                    let temp = variant_names[0]
-                                    variant_names = [
-                                        (enum_.name, variant_names[0].1)
+                                if variant_names_.size() == 1 {
+                                    let temp = variant_names_[0]
+                                    variant_names_ = [
+                                        (enum_.name, variant_names_[0].1)
                                         temp
                                     ]
                                 }
-                                if variant_names.is_empty() {
+                                if variant_names_.is_empty() {
                                     continue
                                 }
-                                if variant_names[0].0 != enum_.name {
-                                    .error(format("Match case '{}' does not match enum '{}'", variant_names[0].0, enum_.name), variant_names[0].1)
+                                if variant_names_[0].0 != enum_.name {
+                                    .error(format("Match case '{}' does not match enum '{}'", variant_names_[0].0, enum_.name), variant_names_[0].1)
                                     continue
                                 }
 
@@ -4683,7 +4682,7 @@ struct Typechecker {
                                 mut matched_variant: CheckedEnumVariant? = None
                                 mut variant_index: usize? = None
                                 for v in enum_.variants.iterator() {
-                                    if v.name() == variant_names[1].0 {
+                                    if v.name() == variant_names_[1].0 {
                                         matched_variant = v
                                         variant_index = i
                                     }
@@ -4691,11 +4690,11 @@ struct Typechecker {
                                 }
 
                                 if not matched_variant.has_value() {
-                                    .error(format("Enum '{}' does not contain a variant named '{}'", enum_.name, variant_names[1].0), case_.marker_span)
+                                    .error(format("Enum '{}' does not contain a variant named '{}'", enum_.name, variant_names_[1].0), case_.marker_span)
                                     return CheckedExpression::Match(expr: checked_expr, match_cases: [], span, type_id: unknown_type_id(), all_variants_constant: false)
                                 }
 
-                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant_names))
+                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant_names_))
                                 mut module = .current_module()
                                 match matched_variant! {
                                     Untyped(name) => {
@@ -4816,7 +4815,7 @@ struct Typechecker {
                                 final_result_type = checked_tuple.1
 
                                 let checked_match_case = CheckedMatchCase::EnumVariant(
-                                    name: variant_names[1].0,
+                                    name: variant_names_[1].0,
                                     args: variant_arguments,
                                     subject_type_id,
                                     index: variant_index!,
@@ -4906,9 +4905,7 @@ struct Typechecker {
                 for case_ in cases.iterator() {
                     for pattern in case_.patterns.iterator() {
                         match pattern {
-                            EnumVariant(variant_name, variant_arguments, arguments_span) => {
-                                mut variant_names = variant_name
-
+                            EnumVariant(variant_names, variant_arguments, arguments_span) => {
                                 if is_value_match {
                                     .error(
                                         "Cannot have an enum match case in a match expression containing value matches"

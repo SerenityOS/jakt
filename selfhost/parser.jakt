@@ -215,6 +215,18 @@ struct ParsedParameter {
     variable: ParsedVariable
     default_argument: ParsedExpression?
     span: Span
+
+    function equals(this, anon rhs_param: ParsedParameter) -> bool {
+        guard .requires_label == rhs_param.requires_label and .variable.equals(rhs_param.variable) else {
+            return false
+        }
+
+        if .default_argument.has_value() and rhs_param.default_argument.has_value() {
+            return .default_argument!.equals(rhs_param.default_argument!)
+        }
+
+        return not .default_argument.has_value() and not rhs_param.default_argument.has_value()
+    }
 }
 
 struct ParsedGenericParameter {
@@ -231,10 +243,7 @@ struct ParsedBlock {
         }
 
         for x in 0..(.stmts.size()) {
-            let lhs_statement = .stmts[x]
-            let rhs_statement = rhs_block.stmts[x]
-            let are_statements_equal = .stmts[x].equals(rhs_block.stmts[x])
-            if not are_statements_equal {
+            if not .stmts[x].equals(rhs_block.stmts[x]) {
                 return false
             }
         }
@@ -556,19 +565,33 @@ enum UnaryOperator {
         MutableReference => rhs_op is MutableReference
         LogicalNot => rhs_op is LogicalNot
         BitwiseNot => rhs_op is BitwiseNot
-        // FIXME: Compare Types
-        TypeCast => match rhs_op {
-            TypeCast => true
+        TypeCast(lhs_type_cast) => match rhs_op {
+            TypeCast(rhs_type_cast) => lhs_type_cast.parsed_type().equals(rhs_type_cast.parsed_type())
             else => false
         }
-        // FIXME: Compare Types
-        Is => match rhs_op {
-            Is => true
+        Is(lhs_type) => match rhs_op {
+            Is(rhs_type) => lhs_type.equals(rhs_type)
             else => false
         }
-        // FIXME: Compare Types and variant arguments
-        IsEnumVariant => match rhs_op {
-            IsEnumVariant => true
+        IsEnumVariant(inner: lhs_inner_type, bindings: lhs_bindings) => match rhs_op {
+            IsEnumVariant(inner: rhs_inner_type, bindings: rhs_bindings) => {
+                mut equal = false
+                if lhs_inner_type.equals(rhs_inner_type) and lhs_bindings.size() == rhs_bindings.size() {
+                    mut bindings_equal = true
+                    for i in ..lhs_bindings.size() {
+                        if not lhs_bindings[i].equals(rhs_bindings[i]) {
+                            bindings_equal = false
+                            break
+                        }
+                    }
+
+                    if bindings_equal {
+                        equal = true
+                    }
+                }
+
+                yield equal
+            }
             else => false
         }
     }
@@ -578,22 +601,78 @@ struct EnumVariantPatternArgument {
     name: String?
     binding: String
     span: Span
+
+    function equals(this, anon rhs_variant_pattern_argument: EnumVariantPatternArgument) -> bool {
+        if .binding != rhs_variant_pattern_argument.binding {
+            return false
+        }
+
+        if .name.has_value() and rhs_variant_pattern_argument.name.has_value() {
+            return .name! == rhs_variant_pattern_argument.name!
+        }
+
+        return not .name.has_value() and not rhs_variant_pattern_argument.name.has_value()
+    }
 }
 
 enum ParsedMatchPattern {
     EnumVariant(
-        variant_name: [(String, Span)]
+        variant_names: [(String, Span)]
         variant_arguments: [EnumVariantPatternArgument]
         arguments_span: Span
     )
     Expression(ParsedExpression)
     CatchAll
+
+    function equals(this, anon rhs_parsed_match_pattern: ParsedMatchPattern) -> bool => match this {
+        EnumVariant(variant_names: lhs_variant_names, variant_arguments: lhs_variant_arguments) => match rhs_parsed_match_pattern {
+            EnumVariant(variant_names: rhs_variant_names, variant_arguments: rhs_variant_arguments) => {
+                guard lhs_variant_names.size() == rhs_variant_names.size() and lhs_variant_arguments.size() == rhs_variant_arguments.size() else {
+                    return false
+                }
+
+                for i in ..lhs_variant_names.size() {
+                    if lhs_variant_names[i].0 != rhs_variant_names[i].0 {
+                        return false
+                    }
+                }
+
+                for i in ..lhs_variant_arguments.size() {
+                    if not lhs_variant_arguments[i].equals(rhs_variant_arguments[i]) {
+                        return false
+                    }
+                }
+
+                return true
+            }
+            else => false
+        }
+        Expression(lhs_parsed_expression) => match rhs_parsed_match_pattern {
+            Expression(rhs_parsed_expression) => lhs_parsed_expression.equals(rhs_parsed_expression)
+            else => false
+        }
+        CatchAll => rhs_parsed_match_pattern is CatchAll
+    }
 }
 
 struct ParsedMatchCase {
     patterns: [ParsedMatchPattern]
     marker_span: Span
     body: ParsedMatchBody
+
+    function equals(this, anon rhs_match_case: ParsedMatchCase) -> bool {
+        guard .patterns.size() == rhs_match_case.patterns.size() else {
+            return false
+        }
+
+        for i in ..(.patterns.size()) {
+            if not .patterns[i].equals(rhs_match_case.patterns[i]) {
+                return false
+            }
+        }
+
+        return true
+    }
 }
 
 enum ParsedMatchBody {
@@ -871,7 +950,7 @@ boxed enum ParsedExpression {
                     }
                 }
 
-                yield equal;
+                yield equal
             }
             else => false
         }
@@ -879,9 +958,21 @@ boxed enum ParsedExpression {
             ForcedUnwrap(expr: rhs_expr) => lhs_expr.equals(rhs_expr)
             else => false
         }
-        Match(expr: lhs_expr) => match rhs_expression {
-            // FIXME: compare MachedCases as well
-            ForcedUnwrap(expr: rhs_expr) => lhs_expr.equals(rhs_expr)
+        Match(expr: lhs_expr, cases: lhs_cases) => match rhs_expression {
+            Match(expr: rhs_expr, cases: rhs_cases) => {
+                guard lhs_expr.equals(rhs_expr) and lhs_cases.size() == rhs_cases.size() else {
+                    return false
+                }
+
+                // FIXME: cases should probably be sorted before being compared
+                for i in ..lhs_cases.size() {
+                    if not lhs_cases[i].equals(rhs_cases[i]) {
+                        return false
+                    }
+                }
+
+                return true
+            }
             else => false
         }
         EnumVariantArg(expr: lhs_expr) => match rhs_expression {
@@ -924,7 +1015,31 @@ boxed enum ParsedExpression {
             TryBlock(stmt: rhs_stmt, error_name: rhs_error_name, catch_block: rhs_catch_block) => lhs_stmt.equals(rhs_stmt) and (lhs_error_name == rhs_error_name) and lhs_catch_block.equals(rhs_catch_block)
             else => false
         }
-        Function => false // FIXME: compare functions
+        Function(captures: lhs_captures, params: lhs_params, can_throw: lsh_can_throw, return_type: lhs_return_type) => match rhs_expression {
+            Function(captures: rhs_captures, params: rhs_params, can_throw: rsh_can_throw, return_type: rhs_return_type) => {
+                guard lhs_return_type.equals(rhs_return_type) and 
+                    lsh_can_throw == rsh_can_throw and
+                    lhs_captures.size() == rhs_captures.size() and
+                    lhs_params.size() == rhs_params.size() else {
+                    return false
+                }
+
+                for i in ..lhs_captures.size() {
+                    if not (lhs_captures[i].name() == rhs_captures[i].name()) {
+                        return false
+                    }
+                }
+
+                for i in ..lhs_params.size() {
+                    if not lhs_params[i].equals(rhs_params[i]) {
+                        return false
+                    }
+                }
+
+                return true
+            }
+            else => false
+        }
         Garbage => rhs_expression is Garbage
     }
 }
@@ -958,6 +1073,12 @@ struct ParsedVariable {
     parsed_type: ParsedType
     is_mutable: bool
     span: Span
+
+    function equals(this, anon rhs_parsed_varible: ParsedVariable) -> bool {
+        return .name == rhs_parsed_varible.name and 
+        .parsed_type.equals(rhs_parsed_varible.parsed_type) and 
+        .is_mutable ==  rhs_parsed_varible.is_mutable
+    }
 }
 
 struct ParsedCall {
@@ -1017,6 +1138,23 @@ boxed enum ParsedType {
         WeakPtr(inner, span) => span
         Function(span) => span
         Empty => Span(file_id: FileId(id: 0uz), start: 0, end: 0) // FIXME: For some reason we can't see `empty_span()` here.
+    }
+
+    function equals(this, anon rhs_parsed_type: ParsedType) -> bool => match this {
+        Name => rhs_parsed_type is Name
+        NamespacedName => rhs_parsed_type is NamespacedName
+        GenericType => rhs_parsed_type is GenericType
+        JaktArray => rhs_parsed_type is JaktArray
+        Dictionary => rhs_parsed_type is Dictionary
+        JaktTuple => rhs_parsed_type is JaktTuple
+        Set => rhs_parsed_type is Set
+        Optional => rhs_parsed_type is Optional
+        Reference => rhs_parsed_type is Reference
+        MutableReference => rhs_parsed_type is MutableReference
+        RawPtr => rhs_parsed_type is RawPtr
+        WeakPtr => rhs_parsed_type is WeakPtr
+        Function => rhs_parsed_type is Function
+        Empty => rhs_parsed_type is Empty
     }
 }
 
@@ -3447,13 +3585,13 @@ struct Parser {
 
         Identifier(name) => {
             let pattern_start_index = .index
-            mut variant_name: [(String, Span)] = []
+            mut variant_names: [(String, Span)] = []
 
             while not .eof() {
                 match .current() {
                     Identifier(name) => {
                         .index++
-                        variant_name.push((name, .current().span()))
+                        variant_names.push((name, .current().span()))
                     }
                     ColonColon => {
                         .index++
@@ -3470,7 +3608,7 @@ struct Parser {
             let arguments_span = merge_spans(arguments_start, arguments_end)
 
             yield ParsedMatchPattern::EnumVariant(
-                variant_name
+                variant_names
                 variant_arguments
                 arguments_span
             )
