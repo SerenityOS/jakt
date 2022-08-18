@@ -618,7 +618,6 @@ struct Typechecker {
             imported_module_id = maybe_loaded_module!.module_id
         }
 
-
         mut current_module_imports = .current_module().imports
         current_module_imports.push(imported_module_id)
 
@@ -963,13 +962,7 @@ struct Typechecker {
                 is_comptime: func.is_comptime
             )
 
-            module.functions.push(checked_function)
-
-            let function_id = FunctionId(
-                module: .current_module_id
-                id: .current_module().functions.size() - 1
-            )
-
+            let function_id = module.add_function(checked_function)
             mut generic_parameters: [FunctionGenericParameter] = []
 
             for generic_parameter in func.generic_parameters.iterator() {
@@ -1091,7 +1084,7 @@ struct Typechecker {
 
             // Internal constructor
             mut module = .current_module()
-            module.functions.push(checked_constructor)
+            let function_id = module.add_function(checked_function: checked_constructor)
 
             mut func = module.functions.last()!
             for field_id in .get_struct(struct_id).fields.iterator() {
@@ -1111,7 +1104,7 @@ struct Typechecker {
             .add_function_to_scope(
                 parent_scope_id: struct_.scope_id
                 name: parsed_record.name
-                function_id: FunctionId(module: .current_module_id, id: .current_module().functions.size() - 1)
+                function_id: function_id
                 span: parsed_record.name_span
             )
         }
@@ -1191,11 +1184,7 @@ struct Typechecker {
                 is_comptime: method.parsed_function.is_comptime
             )
 
-            module.functions.push(checked_function)
-            let function_id = FunctionId(
-                module: .current_module_id
-                id: .current_module().functions.size() - 1
-            )
+            let function_id = module.add_function(checked_function)
             let previous_index = .current_function_id
             .current_function_id = function_id
 
@@ -1284,7 +1273,7 @@ struct Typechecker {
             .add_function_to_scope(
                 parent_scope_id: struct_scope_id
                 name: func.name
-                function_id: FunctionId(module: .current_module_id, id: .current_module().functions.size() - 1)
+                function_id: function_id
                 span: parsed_record.name_span
             )
 
