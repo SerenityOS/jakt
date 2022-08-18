@@ -454,7 +454,7 @@ struct CodeGenerator {
                 for dependency in inner_dependencies.iterator() {
                     dependencies.push(dependency)
                 }
-            }   
+            }
         }
 
         dependencies.push(struct_.type_id.to_string())
@@ -802,7 +802,7 @@ struct CodeGenerator {
             mut first = true
             for generic_parameter in struct_.generic_parameters.iterator() {
                 if first {
-                    first = false                
+                    first = false
                 } else {
                     output += ","
                 }
@@ -1110,12 +1110,13 @@ struct CodeGenerator {
         mut output = "ErrorOr<String> debug_description() const { "
         output += "auto builder = MUST(StringBuilder::create());"
         output += format("TRY(builder.append(\"{}(\"));", struct_.name)
-        output += "JaktInternal::_pretty_print_level++;\n"
+        output += "{\n"
+        output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
 
         mut i = 0uz
         for field in struct_.fields.iterator() {
             let field_var = .program.get_variable(field)
-            output += "TRY(JaktInternal::_output_pretty_indent(builder));"
+            output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));"
             output += format("TRY(builder.append(\"{}: \"));", field_var.name)
             output += "TRY(builder.appendff(\""
             if .program.is_string(field_var.type_id) {
@@ -1139,7 +1140,7 @@ struct CodeGenerator {
             i++
         }
 
-        output += "JaktInternal::_pretty_print_level--;\n"
+        output += "}\n"
         output += "TRY(builder.append(\")\"));"
         output += "return builder.to_string();"
         output += " }"
@@ -1162,10 +1163,11 @@ struct CodeGenerator {
             match variant {
                 StructLike(fields) => {
                     output += "TRY(builder.append(\"(\"));\n"
-                    output += "JaktInternal::_pretty_print_level++;\n"
+                    output += "{\n";
+                    output += "JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"
                     mut i = 0uz
                     for field in fields.iterator() {
-                        output += "TRY(JaktInternal::_output_pretty_indent(builder));\n"
+                        output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));\n"
                         let var = .program.get_variable(field)
                         if .program.is_string(var.type_id){
                             output += format("TRY(builder.appendff(\"{}: \\\"{{}}\\\"\", that.{}));\n", var.name, var.name)
@@ -1177,7 +1179,7 @@ struct CodeGenerator {
                         }
                         i++
                     }
-                    output += "JaktInternal::_pretty_print_level--;\n"
+                    output += "}\n"
                     output += "TRY(builder.append(\")\"));\n"
                 }
                 Typed(type_id) => {
@@ -1218,10 +1220,9 @@ struct CodeGenerator {
         output += format("template<{}>", template_args)
         output += format("struct Formatter<{}> : Formatter<StringView>", qualified_name)
         output += "{\n"
-        output += format("ErrorOr<void> format(FormatBuilder& builder, {} const& value)\n", qualified_name)
-        output += "{ bool previous_pretty_print; if (m_alternative_form) { previous_pretty_print = JaktInternal::_pretty_print_enabled; JaktInternal::_pretty_print_enabled = true; }"
+        output += format("ErrorOr<void> format(FormatBuilder& builder, {} const& value) {{\n", qualified_name)
+        output += "JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };"
         output += "ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));"
-        output += "JaktInternal::_pretty_print_enabled = previous_pretty_print;"
         output += "return format_error; }"
 
         return output + "};\n"
@@ -1886,7 +1887,7 @@ struct CodeGenerator {
                                         as_namespace: true,
                                     ),
                                     name)
-                                
+
                                 if not args.is_empty() {
                                     for arg in args.iterator() {
                                         let var = .program.find_var_in_scope(scope_id, var: arg.binding)!
@@ -2484,7 +2485,7 @@ struct CodeGenerator {
                         true => "return {};"
                         else => "return;"
                     }
-                }   
+                }
             }
             Loop(block) => {
                 mut output = ""
@@ -2671,7 +2672,7 @@ struct CodeGenerator {
             output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
             output += struct_.name
 
-            output += ">" 
+            output += ">"
         } else {
             let struct_ = .program.get_struct(id)
 
