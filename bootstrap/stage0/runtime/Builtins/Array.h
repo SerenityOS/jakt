@@ -240,7 +240,9 @@ public:
 
     T const& operator[](size_t index) const { return at(index); }
     T& operator[](size_t index) { return at(index); }
-    ArraySlice<T> operator[](Range<i64> range) const { return slice_range(range.start, range.end); }
+
+    template<Integral U>
+    ArraySlice<T> operator[](Range<U> range) const { return slice_range(range.start, range.end); }
 
     ErrorOr<void> ensure_capacity(size_t capacity)
     {

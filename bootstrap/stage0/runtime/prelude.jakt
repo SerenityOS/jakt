@@ -110,6 +110,7 @@ extern struct Set<V> {
 }
 
 extern struct Range<T> {
+    function Range<U>(anon start: U, anon end: U) -> Range<U>
     function next(mut this) -> T?
     function inclusive(this) -> Range<T>
     function exclusive(this) -> Range<T>
