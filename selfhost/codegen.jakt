@@ -10,7 +10,7 @@ import typechecker {
     BuiltinType, CheckedBlock, CheckedCall, CheckedExpression,
     CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
     Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId,
-    CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id, never_type_id,
+    CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id, never_type_id, builtin,
     CheckedVariable }
 import utility { panic, todo, join, prepend_to_each, Span }
 import compiler { Compiler }
@@ -3060,8 +3060,7 @@ struct CodeGenerator {
         if is_main {
             output += "return 0;\n"
         } else {
-            // FIXME: This should check if the id is BuiltinType::Void, but the baseline compiler chokes on that.
-            if function_.can_throw and function_.return_type_id.id == 0 {
+            if function_.can_throw and function_.return_type_id.equals(builtin(BuiltinType::Void)) {
                 output += "return {};\n"
             }
         }
