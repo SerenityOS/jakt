@@ -57,6 +57,7 @@
 #include <Jakt/StringUtils.cpp>
 #include <Jakt/StringView.cpp>
 #include <Jakt/kmalloc.cpp>
+#include <Jakt/PrettyPrint.cpp>
 
 namespace JaktInternal {
 template<typename T>

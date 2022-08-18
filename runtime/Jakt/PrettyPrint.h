@@ -1,20 +1,29 @@
 #pragma once
 
 #include <Jakt/Error.h>
+#include <Jakt/Noncopyable.h>
 
-namespace JaktInternal {
+namespace JaktInternal::PrettyPrint {
 
-static thread_local inline int _pretty_print_level = 0;
-static thread_local inline bool _pretty_print_enabled = false;
+struct ScopedEnable {
+    AK_MAKE_NONCOPYABLE(ScopedEnable);
+    AK_MAKE_NONMOVABLE(ScopedEnable);
+public:
+    ScopedEnable(bool should_enable);
 
-ErrorOr<void> _output_pretty_indent(auto& builder) {
-    if (_pretty_print_enabled) {
-        if(_pretty_print_level > 0)
-            TRY(builder.appendff("\n{:{}}", "", _pretty_print_level * 2));
-        else
-            TRY(builder.append('\n'));
-    }
-    return {};
-}
+    ~ScopedEnable();
+private:
+    bool m_previous_enabled;
+};
+
+struct ScopedLevelIncrease {
+    AK_MAKE_NONCOPYABLE(ScopedLevelIncrease);
+    AK_MAKE_NONMOVABLE(ScopedLevelIncrease);
+public:
+    ScopedLevelIncrease();
+    ~ScopedLevelIncrease();
+};
+
+ErrorOr<void> output_indentation(auto& builder);
 
 }
