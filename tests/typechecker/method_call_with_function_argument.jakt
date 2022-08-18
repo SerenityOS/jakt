@@ -1,0 +1,16 @@
+/// Expect:
+/// - output: "2\n"
+
+struct Hello {
+    x: i64
+
+    function adder(this, anon inner: function(anon x: i64) -> i64) -> i64 {
+        return inner(.x)
+    }
+}
+
+function main() {
+    let a = Hello(x: 1)
+
+    println("{}", a.adder(function(x: i64) => x + 1))
+}
