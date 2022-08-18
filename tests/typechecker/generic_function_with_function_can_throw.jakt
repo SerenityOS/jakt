@@ -1,0 +1,17 @@
+/// Expect:
+/// - error: "Function can throw mismatch: expected ‘Yes’, but got ‘No’"
+
+function find<T>(anon arr: [T], anon cb: function(a: T, b: T) throws -> bool) -> T? {
+    for i in 0..arr.size() {
+        if cb(a: arr[i], b: 0) {
+            return i
+        }
+    }
+    return None
+}
+
+function main() {
+    mut arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    
+    println("{}", find(arr, function(a: i64, b: i64) => a == 5).value_or(-1))
+}
