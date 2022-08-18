@@ -2125,6 +2125,7 @@ struct Typechecker {
     // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
     function check_types_for_compat(mut this, lhs_type_id: TypeId, rhs_type_id: TypeId, generic_inferences: &mut [String:String], span: Span) throws -> bool {
         let lhs_type = .get_type(lhs_type_id)
+        let rhs_type = .get_type(rhs_type_id)
 
         let lhs_type_id_string = lhs_type_id.to_string()
         let rhs_type_id_string = rhs_type_id.to_string()
@@ -2144,7 +2145,6 @@ struct Typechecker {
                 if seen_type_id_string.has_value() {
                     // We've seen this type variable assigned something before
                     // we should error if it's incompatible.
-
                     if seen_type_id_string.value() != rhs_type_id_string {
                         .error(
                             format(
@@ -2193,6 +2193,72 @@ struct Typechecker {
                     }
                 }
             }
+            Function(params: lhs_params, can_throw: lhs_can_throw, return_type_id: lhs_return_type_id) => {
+                guard rhs_type is Function(params: rhs_params, can_throw: rhs_can_throw, return_type_id: rhs_return_type_id) else {
+                    .error(
+                        format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                        span
+                    )
+                    return false
+                }
+
+                if not (lhs_can_throw == rhs_can_throw) {
+                    let lhs_throw = match lhs_can_throw {
+                        true => "Yes"
+                        else => "No"
+                    }
+
+                    let rhs_throw = match rhs_can_throw {
+                        true => "Yes"
+                        else => "No"
+                    }
+
+                    .error(
+                        format("Function can throw mismatch: expected ‘{}’, but got ‘{}’", lhs_throw, rhs_throw)
+                        span
+                    )
+                }
+
+                if not (lhs_params.size() == rhs_params.size()) {
+                    .error(
+                        format("Function parameter count mismatch: expected ‘{}’, but got ‘{}’", lhs_params.size(), rhs_params.size())
+                        span
+                    )
+                    return false
+                }
+
+                if not .check_types_for_compat(
+                    lhs_type_id: lhs_return_type_id
+                    rhs_type_id: rhs_return_type_id
+                    generic_inferences
+                    span
+                ) {
+                    .error_with_hint(
+                        format("Function type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                        span
+                        format("The return types differ: expected ‘{}’, but got ‘{}’", .type_name(lhs_return_type_id), .type_name(rhs_return_type_id))
+                        hint_span: span
+                    )
+                    return false
+                }
+
+                for i in ..lhs_params.size() {
+                    if not .check_types_for_compat(
+                        lhs_type_id: lhs_params[i]
+                        rhs_type_id: rhs_params[i]
+                        generic_inferences
+                        span
+                    ) {
+                        .error_with_hint(
+                            format("Function type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                            span
+                            format("The parameter types differ at argument {}: expected ‘{}’, but got ‘{}’", (i + 1), .type_name(lhs_params[i]), .type_name(rhs_params[i]))
+                            hint_span: span
+                        )
+                        return false
+                    }
+                }
+            }
             GenericInstance(id, args) => {
                 let lhs_struct_id = id
                 let lhs_args = args
@@ -2206,8 +2272,6 @@ struct Typechecker {
                         }
                     }
                 }
-
-                let rhs_type = .get_type(rhs_type_id)
 
                 if rhs_type is GenericInstance(id, args) {
                     let rhs_struct_id = id
@@ -2502,6 +2566,17 @@ struct Typechecker {
                 )
                 return .find_or_add_type_id(ref_type)
             }
+            Function(params, can_throw, return_type_id) => {
+                mut new_params:[TypeId] = []
+                new_params.ensure_capacity(params.size())
+                for param in params.iterator() {
+                    new_params.push(.substitute_typevars_in_type(type_id: param, generic_inferences))
+                }
+
+                let return_type_substitute = .substitute_typevars_in_type(type_id: return_type_id, generic_inferences)
+
+                return .find_or_add_type_id(Type::Function(params: new_params, can_throw, return_type_id: return_type_substitute))
+            }
             else => {
                 return type_id
             }
@@ -2768,6 +2843,7 @@ struct Typechecker {
                 mut module = .current_module()
                 let function_id = module.add_function(checked_function)
                 .add_function_to_scope(parent_scope_id: scope_id, name: checked_function.name, function_id, span)
+
                 mut param_type_ids: [TypeId] = []
                 for param in params.iterator() {
                     param_type_ids.push(.typecheck_typename(parsed_type: param.variable.parsed_type, scope_id, name))
@@ -2782,7 +2858,6 @@ struct Typechecker {
     }
 
     function typecheck_generic_resolved_type(mut this, name: String, checked_inner_types: [TypeId], scope_id: ScopeId, span: Span) throws -> TypeId {
-
         let struct_id = .find_struct_in_scope(scope_id, name)
         if struct_id.has_value() {
             return .find_or_add_type_id(Type::GenericInstance(id: struct_id!, args: checked_inner_types))
