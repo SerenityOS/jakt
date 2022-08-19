@@ -397,7 +397,13 @@ function main(args: [String]) {
         )
 
         if run_executable and compiler_status == 0 {
-            system(output_filename.c_string())
+            return system(output_filename.c_string())
+        } else {
+            if compiler_status == 0 {
+                return 0
+            } else {
+                return 1
+            }
         }
     }
 }
