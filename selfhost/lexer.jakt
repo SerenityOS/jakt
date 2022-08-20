@@ -306,6 +306,8 @@ enum NumericConstant {
     USize(u64)
     F32(f32)
     F64(f64)
+    UnknownSigned(i64)
+    UnknownUnsigned(u64)
 
     public function to_usize(this) => match this {
         I8(num) => num as! usize
@@ -317,6 +319,8 @@ enum NumericConstant {
         U32(num) => num as! usize
         U64(num) => num as! usize
         USize(num) => num as! usize
+        UnknownSigned(num) => num as! usize
+        UnknownUnsigned(num) => num as! usize
         // FIXME: handle floats properly - if the function is used at all?
         else =>  0 as! usize
     }
@@ -1044,9 +1048,9 @@ struct Lexer {
             None => {
                 let n = number as? i64
                 if n.has_value() {
-                    return Token::Number(number: NumericConstant::I64(n!), span)
+                    return Token::Number(number: NumericConstant::UnknownSigned(n!), span)
                 }
-                return Token::Number(number: NumericConstant::U64(number), span)
+                return Token::Number(number: NumericConstant::UnknownUnsigned(number), span)
             }
             U8 => {
                 let n = number as? u8

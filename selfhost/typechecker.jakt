@@ -322,28 +322,6 @@ struct Typechecker {
         .compiler.panic(format("internal error: {} builtin definition not found", name))
     }
 
-    function try_to_promote_constant_expr_to_type(mut this, lhs_type: TypeId, checked_rhs: CheckedExpression, span: Span) throws -> CheckedExpression? {
-        if not .is_integer(lhs_type) {
-            return None
-        }
-
-        let rhs_constant_opt = checked_rhs.to_number_constant(program: .program)
-        if not rhs_constant_opt.has_value() {
-            return None
-        }
-        let rhs_constant = rhs_constant_opt!
-
-        let result = rhs_constant.promote(type_id: lhs_type, program: .program)
-        if not result.has_value() {
-            let type = .get_type(lhs_type)
-            .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type.min(), type.max(), .type_name(lhs_type)), span)
-            return None
-        }
-        let new_constant = result!
-
-        return CheckedExpression::NumericConstant(val: new_constant, span, type_id: lhs_type)
-    }
-
     function unify(mut this, lhs: TypeId, lhs_span: Span, rhs: TypeId, rhs_span: Span) throws -> TypeId? {
         // FIXME: Add more unification logic
         if lhs.id != rhs.id {
@@ -3410,11 +3388,6 @@ struct Typechecker {
             lhs_type_id = rhs_type_id
         }
 
-        let promoted_rhs = .try_to_promote_constant_expr_to_type(lhs_type: lhs_type_id, checked_rhs: checked_expr, span: init.span())
-        if promoted_rhs.has_value() {
-            checked_expr = promoted_rhs!
-        }
-
         let weak_ptr_struct_id = .find_struct_in_prelude("WeakPtr")
         let optional_struct_id = .find_struct_in_prelude("Optional")
 
@@ -3835,11 +3808,172 @@ struct Typechecker {
         }
     }
 
+    function infer_signed_int(mut this, val: i64, span: Span, type_hint: TypeId?) throws -> CheckedExpression {
+        mut expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I64(val), span, type_id: builtin(BuiltinType::I64))
+        if type_hint.has_value() {
+            let hint = type_hint!
+
+            if hint.equals(builtin(BuiltinType::I8)) {
+                let builtin_typeid = builtin(BuiltinType::I8)
+                let type_ = .get_type(builtin_typeid)
+                if val < type_.min() or val > (type_.max() as! i64) {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I8(val as! i8), span, type_id: builtin(BuiltinType::I8))
+                }
+            } else if hint.equals(builtin(BuiltinType::I16)) {
+                let builtin_typeid = builtin(BuiltinType::I16)
+                let type_ = .get_type(builtin_typeid)
+                if val < type_.min() or val > (type_.max() as! i64) {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I16(val as! i16), span, type_id: builtin(BuiltinType::I16))
+                }
+            } else if hint.equals(builtin(BuiltinType::I32)) {
+                let builtin_typeid = builtin(BuiltinType::I32)
+                let type_ = .get_type(builtin_typeid)
+                if val < type_.min() or val > (type_.max() as! i64) {
+                        .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(val as! i32), span, type_id: builtin(BuiltinType::I32))
+                }
+            } else if hint.equals(builtin(BuiltinType::U8)) {
+                let builtin_typeid = builtin(BuiltinType::U8)
+                let type_ = .get_type(builtin_typeid)
+                if val < type_.min() or val > (type_.max() as! i64) {
+                        .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val as! u8), span, type_id: builtin(BuiltinType::U8))
+                }
+            } else if hint.equals(builtin(BuiltinType::U16)) {
+                let builtin_typeid = builtin(BuiltinType::U16)
+                let type_ = .get_type(builtin_typeid)
+                if val < type_.min() or val > (type_.max() as! i64) {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U16(val as! u16), span, type_id: builtin(BuiltinType::U16))
+                }
+            } else if hint.equals(builtin(BuiltinType::U32)) {
+                let builtin_typeid = builtin(BuiltinType::U32)
+                let type_ = .get_type(builtin_typeid)
+                if val < type_.min() or val > (type_.max() as! i64) {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U32(val as! u32), span, type_id: builtin(BuiltinType::U32))
+                }
+            } else if hint.equals(builtin(BuiltinType::U64)) {
+                let builtin_typeid = builtin(BuiltinType::Usize)
+                let type_ = .get_type(builtin_typeid)
+                if val < 0 {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(val as! u64), span, type_id: builtin(BuiltinType::U64))
+                }
+            } else if hint.equals(builtin(BuiltinType::Usize)) {
+                let builtin_typeid = builtin(BuiltinType::Usize)
+                let type_ = .get_type(builtin_typeid)
+                if val < 0 {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val as! u64), span, type_id: builtin(BuiltinType::Usize))
+                }
+            } else if hint.equals(builtin(BuiltinType::CInt)) {
+                let builtin_typeid = builtin(BuiltinType::CInt)
+                let type_ = .get_type(builtin_typeid)
+                if val < 0 {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val as! u64), span, type_id: builtin(BuiltinType::CInt))
+                }
+            } else if hint.equals(builtin(BuiltinType::CChar)) {
+                let builtin_typeid = builtin(BuiltinType::CChar)
+                let type_ = .get_type(builtin_typeid)
+                if val < 0 or val > 255 {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val as! u8), span, type_id: builtin(BuiltinType::CChar))
+                }
+            }
+        }
+        return expr
+    }
+
+    function infer_unsigned_int(mut this, val: u64, span: Span, type_hint: TypeId?) throws -> CheckedExpression {
+        mut expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(val), span, type_id: builtin(BuiltinType::U64))
+        if type_hint.has_value() {
+            let hint = type_hint!
+
+            if hint.equals(builtin(BuiltinType::I8)) {
+                let builtin_typeid = builtin(BuiltinType::I8)
+                let type_ = .get_type(builtin_typeid)
+                if type_.max() < val {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I8(val as! i8), span, type_id: builtin(BuiltinType::I8))
+                }
+            } else if hint.equals(builtin(BuiltinType::I16)) {
+                let builtin_typeid = builtin(BuiltinType::I16)
+                let type_ = .get_type(builtin_typeid)
+                if type_.max() < val {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I16(val as! i16), span, type_id: builtin(BuiltinType::I16))
+                }
+            } else if hint.equals(builtin(BuiltinType::I32)) {
+                let builtin_typeid = builtin(BuiltinType::I32)
+                let type_ = .get_type(builtin_typeid)
+                if type_.max() < val {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(val as! i32), span, type_id: builtin(BuiltinType::I32))
+                }
+            } else if hint.equals(builtin(BuiltinType::U8)) {
+                let builtin_typeid = builtin(BuiltinType::U8)
+                let type_ = .get_type(builtin_typeid)
+                if type_.max() < val {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val as! u8), span, type_id: builtin(BuiltinType::U8))
+                }
+            } else if hint.equals(builtin(BuiltinType::U16)) {
+                let builtin_typeid = builtin(BuiltinType::U16)
+                let type_ = .get_type(builtin_typeid)
+                if type_.max() < val {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U16(val as! u16), span, type_id: builtin(BuiltinType::U16))
+                }
+            } else if hint.equals(builtin(BuiltinType::U32)) {
+                let builtin_typeid = builtin(BuiltinType::U32)
+                let type_ = .get_type(builtin_typeid)
+                if type_.max() < val {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U32(val as! u32), span, type_id: builtin(BuiltinType::U32))
+                }
+            } else if hint.equals(builtin(BuiltinType::U64)) {
+                expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(val as! u64), span, type_id: builtin(BuiltinType::U64))
+            } else if hint.equals(builtin(BuiltinType::Usize)) {
+                expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val as! u64), span, type_id: builtin(BuiltinType::Usize))
+            } else if hint.equals(builtin(BuiltinType::CInt)) {
+                expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val as! u64), span, type_id: builtin(BuiltinType::CInt))
+            } else if hint.equals(builtin(BuiltinType::CChar)) {
+                let builtin_typeid = builtin(BuiltinType::CChar)
+                let type_ = .get_type(builtin_typeid)
+                if val > 255 {
+                    .error_with_hint("Integer promotion failed", span, format("Cannot fit value into range [{}, {}] of type {}.", type_.min(), type_.max(), .type_name(builtin_typeid)), span)
+                } else {
+                    expr = CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(val as! u8), span, type_id: builtin(BuiltinType::CChar))
+                }
+            }
+        }
+        return expr
+    }
+
     function typecheck_expression(mut this, anon expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression => match expr {
         IndexedStruct(expr, field, span, is_optional) => .typecheck_indexed_struct(expr, field, scope_id, is_optional, safety_mode, span)
         Boolean(val, span) => CheckedExpression::Boolean(val, span)
         NumericConstant(val, span) => {
-            // FIXME: better constant support
             yield match val {
                 I8(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I8(val), span, type_id: builtin(BuiltinType::I8))
                 I16(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I16(val), span, type_id: builtin(BuiltinType::I16))
@@ -3852,6 +3986,8 @@ struct Typechecker {
                 USize(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val), span, type_id: builtin(BuiltinType::Usize))
                 F32(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F32(val), span, type_id: builtin(BuiltinType::F32))
                 F64(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F64(val), span, type_id: builtin(BuiltinType::F64))
+                UnknownSigned(val) => .infer_signed_int(val, span, type_hint)
+                UnknownUnsigned(val) => .infer_unsigned_int(val, span, type_hint)
             }
         }
         SingleQuotedString(val, span) => CheckedExpression::CharacterConstant(val, span)
@@ -3937,10 +4073,10 @@ struct Typechecker {
         }
         Range(from, to, span) => {
             mut checked_from: CheckedExpression? = None
-            mut from_type = unknown_type_id();
+            mut from_type: TypeId? = None;
             mut from_span = span
 
-            if from.has_value() {
+            if from.has_value() and not from! is NumericConstant(val: UnknownSigned) and not from! is NumericConstant(val: UnknownUnsigned) {
                 checked_from = .typecheck_expression(from!, scope_id, safety_mode, type_hint: None)
                 from_type = checked_from!.type()
                 from_span = checked_from!.span()
@@ -3951,32 +4087,21 @@ struct Typechecker {
             mut to_span = span
 
             if to.has_value() {
-                checked_to = .typecheck_expression(to!, scope_id, safety_mode, type_hint: None)
+                checked_to = .typecheck_expression(to!, scope_id, safety_mode, type_hint: from_type)
                 to_type = checked_to!.type()
                 to_span = checked_to!.span()
             }
 
-            if checked_to.has_value() {
-                // If the range starts or ends at a constant number, we try promoting the constant to the
-                // type of the other end. This makes ranges like `0..array.size()` (as the 0 becomes 0uz).
-                let promoted_to = .try_to_promote_constant_expr_to_type(lhs_type: from_type, checked_rhs: checked_to!, span)
-                if promoted_to.has_value() {
-                    checked_to = promoted_to!
-                    to_type = checked_to!.type()
-                }
+            if from.has_value() and (from! is NumericConstant(val: UnknownSigned) or from! is NumericConstant(val: UnknownUnsigned)) {
+                // recheck the first value with the hint we get from the rhs
+                checked_from = .typecheck_expression(from!, scope_id, safety_mode, type_hint: to_type)
+                from_type = checked_from!.type()
+                from_span = checked_from!.span()
             }
 
-            if checked_from.has_value() {
-                let promoted_from = .try_to_promote_constant_expr_to_type(lhs_type: to_type, checked_rhs: checked_from!, span)
-                if promoted_from.has_value() {
-                    checked_from = promoted_from!
-                    from_type = checked_from!.type()
-                }
-            }
-            
             mut values_type_id: TypeId? = None
             if from.has_value() and to.has_value() {
-                values_type_id = .unify(lhs: from_type, lhs_span: from_span, rhs: to_type, rhs_span: from_span)
+                values_type_id = .unify(lhs: from_type!, lhs_span: from_span, rhs: to_type, rhs_span: from_span)
                 if not values_type_id.has_value() {
                     .error("Range values differ in types", span)
                 }
@@ -4071,11 +4196,6 @@ struct Typechecker {
             let lhs_type = checked_lhs.type()
 
             mut checked_rhs = .typecheck_expression_and_dereference_if_needed(rhs, scope_id, safety_mode, type_hint: lhs_type, span)
-
-            let promoted_rhs = .try_to_promote_constant_expr_to_type(lhs_type, checked_rhs, span)
-            if promoted_rhs.has_value() {
-                checked_rhs = promoted_rhs!
-            }
 
             let output_type = .typecheck_binary_operation(checked_lhs, op, checked_rhs, scope_id, span)
 
@@ -5609,8 +5729,6 @@ struct Typechecker {
             
             if maybe_checked_expr.has_value() {
                 mut checked_arg = maybe_checked_expr!
-                let promoted_arg = .try_to_promote_constant_expr_to_type(lhs_type: param.variable.type_id, checked_rhs: checked_arg, span)
-                checked_arg = promoted_arg ?? checked_arg
                 resolved_args.push((param.variable.name, span, checked_arg))
             }
         }
