@@ -16,7 +16,7 @@ jakt file.jakt
 ```
 
 ## Building
-See [here](../documentation/cmake-bootstrap.md).
+See [here](documentation/cmake-bootstrap.md).
 
 ## Goals
 
