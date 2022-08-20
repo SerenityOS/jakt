@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "good\n"
+
+function main() {
+    let x = 0x10u8;
+
+    match x {
+        0x10 => println("good")
+        else => println("bad")
+    }
+}
