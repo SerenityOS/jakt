@@ -15,6 +15,9 @@ jakt file.jakt
 ./build/file
 ```
 
+## Building
+See [here](../documentation/cmake-bootstrap.md).
+
 ## Goals
 
 1. Memory safety
