@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "match expression is not exhaustive, missing variants are: X"
+/// - error: "Match expression is not exhaustive, missing variants are: X"
 
 enum Foo {
     X
