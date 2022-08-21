@@ -1,0 +1,33 @@
+/// Expect:
+/// - output: "None\nNone\n"
+
+enum Foo {
+    Bar
+    Baz
+}
+
+function main() {
+    let a = Foo::Baz
+
+    let b = match a {
+        Bar => {
+            yield Some(2)
+        }
+        Baz => {
+            yield None
+        }
+    }
+
+    println("{}", b)
+
+    let c:i64? = match a {
+        Bar => {
+            yield 2
+        }
+        Baz => {
+            yield None
+        }
+    }
+
+    println("{}", c)
+}

@@ -664,6 +664,7 @@ struct CheckedBlock {
     scope_id: ScopeId
     control_flow: BlockControlFlow
     yielded_type: TypeId?
+    yielded_none: bool
 }
 
 struct CheckedStruct {

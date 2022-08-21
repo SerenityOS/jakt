@@ -952,6 +952,7 @@ struct Typechecker {
                     scope_id: block_scope_id
                     control_flow: BlockControlFlow::MayReturn
                     yielded_type: TypeId::none()
+                    yielded_none: false
                 )
                 can_throw: func.can_throw
                 type: func.type
@@ -1072,6 +1073,7 @@ struct Typechecker {
                     scope_id: block_scope_id
                     control_flow: BlockControlFlow::MayReturn
                     yielded_type: TypeId::none()
+                    yielded_none: false
                 )
                 can_throw: constructor_can_throw
                 type: FunctionType::ImplicitConstructor
@@ -1174,6 +1176,7 @@ struct Typechecker {
                     scope_id: block_scope_id
                     control_flow: BlockControlFlow::MayReturn
                     yielded_type: TypeId::none()
+                    yielded_none: false
                 )
                 can_throw: func.can_throw
                 type: func.type
@@ -1485,7 +1488,9 @@ struct Typechecker {
                                     statements: []
                                     scope_id: block_scope_id
                                     control_flow: BlockControlFlow::MayReturn
-                                    yielded_type: TypeId::none()),
+                                    yielded_type: TypeId::none()
+                                    yielded_none: false
+                                ),
                                 can_throw: can_function_throw,
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
@@ -1527,7 +1532,9 @@ struct Typechecker {
                                     statements: [],
                                     scope_id: block_scope_id,
                                     control_flow: BlockControlFlow::AlwaysReturns,
-                                    yielded_type: TypeId::none()),
+                                    yielded_type: TypeId::none()
+                                    yielded_none: false
+                                ),
                                 can_throw: can_function_throw,
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
@@ -1558,7 +1565,9 @@ struct Typechecker {
                                     statements: []
                                     scope_id: block_scope_id
                                     control_flow: BlockControlFlow::AlwaysReturns
-                                    yielded_type: TypeId::none()),
+                                    yielded_type: TypeId::none()
+                                    yielded_none: false
+                                ),
                                 can_throw: can_function_throw,
                                 type: FunctionType::ImplicitEnumConstructor,
                                 linkage: FunctionLinkage::Internal,
@@ -1762,6 +1771,7 @@ struct Typechecker {
                 scope_id: block_scope_id
                 control_flow: BlockControlFlow::MayReturn
                 yielded_type: TypeId::none()
+                yielded_none: false
             )
             can_throw: parsed_function.can_throw
             type: FunctionType::Normal
@@ -2573,7 +2583,7 @@ struct Typechecker {
         return type_id
     }
 
-    function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedBlock {
+    function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode, yield_type_hint: TypeId? = None) throws -> CheckedBlock {
         let parent_throws = .get_scope(parent_scope_id).can_throw
         let block_scope_id = .create_scope(parent_scope_id, can_throw: parent_throws, debug_name: "block")
         mut checked_block = CheckedBlock(
@@ -2581,6 +2591,7 @@ struct Typechecker {
             scope_id: block_scope_id
             control_flow: BlockControlFlow::MayReturn
             yielded_type: TypeId::none()
+            yielded_none: false
         )
         // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
         mut generic_inferences: [String: String] = [:]
@@ -2593,6 +2604,7 @@ struct Typechecker {
                 statement: parsed_statement
                 scope_id: block_scope_id
                 safety_mode
+                type_hint: yield_type_hint
             )
 
             checked_block.control_flow = checked_block.control_flow.updated(.statement_control_flow(checked_statement))
@@ -2605,9 +2617,15 @@ struct Typechecker {
                 CheckedStatement::Yield(expr) => Some(expr)
                 else => None
             }
+
             if yield_span.has_value() and checked_yield_expression.has_value() {
                 let type_var_type_id = checked_yield_expression!.type()
                 let type_ = .resolve_type_var(type_var_type_id , scope_id: block_scope_id)
+
+                if checked_yield_expression! is OptionalNone {
+                    checked_block.yielded_none = true
+                }
+
                 if checked_block.yielded_type.has_value() {
                     // TODO check types for compat
                     .check_types_for_compat(
@@ -2820,7 +2838,9 @@ struct Typechecker {
                         statements: []
                         scope_id
                         control_flow: BlockControlFlow::MayReturn
-                        yielded_type: None)
+                        yielded_type: None
+                        yielded_none: false
+                    )
                     can_throw
                     type: FunctionType::Normal
                     linkage: FunctionLinkage::Internal
@@ -3116,10 +3136,10 @@ struct Typechecker {
         return type_id
     }
 
-    function typecheck_statement(mut this, anon statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement => match statement {
+    function typecheck_statement(mut this, anon statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId? = None) throws -> CheckedStatement => match statement {
         Expression(expr, span) => CheckedStatement::Expression(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint: TypeId::none()), span)
         UnsafeBlock(block, span) => CheckedStatement::Block(block: .typecheck_block(block, parent_scope_id: scope_id, safety_mode: SafetyMode::Unsafe), span)
-        Yield(expr, span) => CheckedStatement::Yield(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint: TypeId::none()), span)
+        Yield(expr, span) => CheckedStatement::Yield(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint: type_hint), span)
         Return(expr, span) => .typecheck_return(expr, span, scope_id, safety_mode)
         Block(block, span) => .typecheck_block_statement(parsed_block: block, scope_id, safety_mode, span)
         InlineCpp(block, span) => .typecheck_inline_cpp(block, span, safety_mode)
@@ -4274,7 +4294,15 @@ struct Typechecker {
             yield CheckedExpression::BinaryOp(lhs: checked_lhs, op, rhs: checked_rhs, span, type_id: output_type)
         }
         OptionalNone(span) => {
-            yield CheckedExpression::OptionalNone(span, type_id: unknown_type_id())
+            mut type_hint_unwrapped = type_hint
+            if type_hint.has_value() and .get_type(type_hint!) is GenericInstance(id, args) {
+                let optional_struct_id = .find_struct_in_prelude("Optional")
+                if id.equals(optional_struct_id) {
+                    type_hint_unwrapped = args[0]
+                }
+            }
+
+            yield CheckedExpression::OptionalNone(span, type_id: type_hint_unwrapped ?? unknown_type_id())
         }
         OptionalSome(expr, span) => {
             let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
@@ -4433,7 +4461,7 @@ struct Typechecker {
         }
         Garbage(span) => CheckedExpression::Garbage(span)
         NamespacedVar(name, namespace_, span) => .typecheck_namespaced_var_or_simple_enum_constructor_call(name, namespace_, scope_id, safety_mode, type_hint, span)
-        Match(expr, cases, span) => .typecheck_match(expr, cases, span, scope_id, safety_mode)
+        Match(expr, cases, span) => .typecheck_match(expr, cases, span, scope_id, safety_mode, type_hint)
         EnumVariantArg(expr: inner_expr, arg, enum_variant, span) => {
             let checked_expr = .typecheck_expression_and_dereference_if_needed(inner_expr, scope_id, safety_mode, type_hint: None, span)
             mut checked_binding = CheckedEnumVariantBinding(name: "", binding: "", type_id: unknown_type_id(), span)
@@ -5232,7 +5260,7 @@ struct Typechecker {
         mut result_type = final_result_type
         let checked_match_body = match body {
             Block(block) => {
-                let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: scope_id, safety_mode)
+                let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: scope_id, safety_mode, yield_type_hint: final_result_type)
 
                 if checked_block.control_flow.may_return() or checked_block.yielded_type.has_value() {
                     let block_type_id = checked_block.yielded_type ?? void_type_id()
