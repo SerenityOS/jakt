@@ -5,7 +5,7 @@ import types {
     EnumVariantPatternArgument, FunctionId, ModuleId, ResolvedNamespace, ScopeId, Span, StructId,
     Type, TypeId, VarId, builtin, unknown_type_id,
 }
-import utility { escape_for_quotes, panic }
+import utility { escape_for_quotes, interpret_escapes, panic }
 import error { JaktError, Message }
 import compiler { Compiler }
 
@@ -4555,7 +4555,7 @@ class Interpreter {
             F32(x) => Value(impl: ValueImpl::F32(x), span: span)
             F64(x) => Value(impl: ValueImpl::F64(x), span: span)
         })
-        QuotedString(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::JaktString(val), span: span))
+        QuotedString(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::JaktString(interpret_escapes(val)), span: span))
         CharacterConstant(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::CChar(val.byte_at(0) as! c_char), span: span))
         JaktArray(vals, repeat, span, type_id) => match repeat.has_value() {
             true => {

@@ -240,3 +240,41 @@ function escape_for_quotes(anon s: String) throws -> String {
 
     return builder.to_string()
 }
+
+function interpret_escapes(anon s: String) throws -> String {
+    mut builder = StringBuilder::create()
+    mut in_escape = false
+    for i in 0..s.length() {
+        let c = s.byte_at(i)
+        match c {
+            b'\\' => {
+                if in_escape {
+                    builder.append(b'\\')
+                    in_escape = false
+                } else {
+                    in_escape = true
+                }
+            }
+            b'"' | b'\'' => {
+                if in_escape {
+                    builder.append(c)
+                    in_escape = false
+                }
+            }
+            b'n' => {
+                if in_escape {
+                    builder.append(b'\n')
+                    in_escape = false
+                } else {
+                    builder.append(c)
+                }
+            }
+            else => {
+                builder.append(c)
+                in_escape = false
+            }
+        }
+    }
+
+    return builder.to_string()
+}
