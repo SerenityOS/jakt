@@ -60,6 +60,12 @@ struct ImportRestrictions {
     )
 }
 
+enum NumericOrStringValue {
+    StringValue(String)
+    SignedNumericValue(i64)
+    UnsignedNumericValue(u64)
+}
+
 struct Typechecker {
     compiler: Compiler
     program: CheckedProgram
@@ -5697,6 +5703,38 @@ struct Typechecker {
             type_id: expr_type_id)
     }
 
+    fn typecheck_comptime_index(mut this, expr: ParsedExpression, index: ParsedExpression, scope_id: ScopeId, is_optional: bool, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
+        let checked_index = .typecheck_expression(index, scope_id, safety_mode, type_hint: None)
+        mut interpreter = Interpreter::create(compiler: .compiler, program: .program, spans: [])
+        mut scope = InterpreterScope::create()
+
+        let index_result = try interpreter.execute_expression(expr: checked_index, scope) catch error {
+            .error(format("Index expression evaluation failed: {}", error), span)
+            return CheckedExpression::Garbage(span)
+        }
+
+        let index_constant = match index_result {
+            JustValue(value) => match value.impl {
+                JaktString(val) => NumericOrStringValue::StringValue(val)
+                U8(val) | U16(val) | U32(val) | U64(val) | USize(val) => NumericOrStringValue::UnsignedNumericValue(val as! u64)
+                I8(val) | I16(val) | I32(val) | I64(val) => NumericOrStringValue::SignedNumericValue(val as! i64)
+                else => {
+                    .error(format("Index expression evaluation failed: expected numeric or string type, found {}", value.impl), span)
+                    return CheckedExpression::Garbage(span)
+                }
+            }
+            else => {
+                .error(format("Index expression evaluation returned an invalid object {}", index_result), span)
+                return CheckedExpression::Garbage(span)
+            }
+        }
+
+        return match index_constant {
+            StringValue(val) => .typecheck_indexed_struct(expr, field: val, scope_id, is_optional, safety_mode, span)
+            UnsignedNumericValue(val) | SignedNumericValue(val) => .typecheck_indexed_tuple(expr, index: val as! usize, scope_id, is_optional, safety_mode, span)
+        }
+    }
+
     fn check_member_access(mut this, accessor: ScopeId, accessee: ScopeId, member: CheckedVariable, span: Span) throws {
         match member.visibility {
             Private => {
@@ -5969,6 +6007,7 @@ struct Typechecker {
         type_hint: TypeId?
     ) throws -> CheckedExpression => match expr {
         IndexedStruct(expr, field_name, span, is_optional) => .typecheck_indexed_struct(expr, field_name, scope_id, is_optional, safety_mode, span)
+        ComptimeIndex(expr, index, span, is_optional) => .typecheck_comptime_index(expr, index, scope_id, is_optional, safety_mode, span)
         Boolean(val, span) => {
             .unify_with_type(found_type: builtin(BuiltinType::Bool), expected_type: type_hint, span)
             yield CheckedExpression::Boolean(val, span)
