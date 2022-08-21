@@ -786,7 +786,7 @@
       "patterns": [
         {
           "name": "keyword.operator.logic.jakt",
-          "match": "\\b(not|and|or)\\b"
+          "match": "\\b(not|and|or|is)\\b"
         },
         {
           "name": "keyword.operator.arithmetic.jakt",
