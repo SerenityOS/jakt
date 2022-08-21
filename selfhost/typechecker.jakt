@@ -4825,14 +4825,18 @@ struct Typechecker {
         )
     }
 
-    function typecheck_match(mut this, expr: ParsedExpression, cases: [ParsedMatchCase], span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
+    function typecheck_match(mut this, expr: ParsedExpression, cases: [ParsedMatchCase], span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
         let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
         let subject_type_id = checked_expr.type()
         let type_to_match_on = .get_type(subject_type_id)
         mut checked_cases: [CheckedMatchCase] = []
 
         mut generic_inferences: [String: String] = [:]
+
         mut final_result_type: TypeId? = None
+        if type_hint.has_value() and not type_hint!.equals(unknown_type_id()) and not .get_type(type_hint!) is TypeVariable {
+            final_result_type = type_hint
+        }
 
         if type_to_match_on is GenericEnumInstance(id, args) {
             let enum_ = .get_enum(id)
@@ -4975,7 +4979,7 @@ struct Typechecker {
                                                         .dump_type_hint(type_id: matched_field_variable!.type_id, span: arg.span)
                                                     }
 
-                                                   let var_id = module.add_variable(CheckedVariable(
+                                                    let var_id = module.add_variable(CheckedVariable(
                                                         name: arg.binding
                                                         type_id: substituted_type_id
                                                         is_mutable: false
@@ -5077,12 +5081,10 @@ struct Typechecker {
                             }
                         }
 
-                        .error(format("match expression is not exhaustive, missing variants are: {}", str_missing_values.to_string()), span)
+                        .error(format("Match expression is not exhaustive, missing variants are: {}", str_missing_values.to_string()), span)
                     }
-                } else {
-                    if seen_catch_all {
-                        .error("all variants are covered, but an irrefutable pattern is also present", span)
-                    }
+                } else if seen_catch_all {
+                    .error("All variants are covered, but an irrefutable pattern is also present", span)
                 }
             }
             Void => {
@@ -5177,7 +5179,6 @@ struct Typechecker {
                                 is_value_match = true
 
                                 let checked_expression = .typecheck_expression(expr, scope_id, safety_mode, type_hint: Some(subject_type_id))
-
                                 if not checked_expression.to_number_constant(program: .program).has_value() {
                                     all_variants_constant = false
                                 }

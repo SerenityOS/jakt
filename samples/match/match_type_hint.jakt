@@ -1,0 +1,18 @@
+/// Expect:
+/// - output: "2\n"
+
+enum Foo {
+    Bar
+    Baz
+}
+
+function main() {
+    let a = Foo::Bar
+
+    let b: i32? = match a {
+        Bar => 2
+        Baz => None
+    }
+
+    println("{}", b.value_or(0i32))
+}
