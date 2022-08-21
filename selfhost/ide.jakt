@@ -788,6 +788,18 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
                 else => none
             }
         }
+        Range(from, to) => {
+            if from.has_value() {
+                let found = find_span_in_expression(program, expr: from!, span)
+                if found.has_value() {
+                    return found
+                }
+            }
+            if to.has_value() {
+                return find_span_in_expression(program, expr: to!, span)
+            } 
+            yield none
+        }
         else => none
     }
 }
