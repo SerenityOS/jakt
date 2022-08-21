@@ -1,0 +1,8 @@
+/// Expect:
+/// - output: "2\n"
+
+function main() {
+    let foo: i32? = 2
+
+    println("{}", foo!)
+}
