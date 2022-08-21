@@ -4038,6 +4038,14 @@ struct Typechecker {
         IndexedStruct(expr, field, span, is_optional) => .typecheck_indexed_struct(expr, field, scope_id, is_optional, safety_mode, span)
         Boolean(val, span) => CheckedExpression::Boolean(val, span)
         NumericConstant(val, span) => {
+            mut type_hint_unwrapped = type_hint
+            if type_hint.has_value() and .get_type(type_hint!) is GenericInstance(id, args) {
+                let optional_struct_id = .find_struct_in_prelude("Optional")
+                if id.equals(optional_struct_id) {
+                    type_hint_unwrapped = args[0]
+                }
+            }
+
             yield match val {
                 I8(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I8(val), span, type_id: builtin(BuiltinType::I8))
                 I16(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I16(val), span, type_id: builtin(BuiltinType::I16))
@@ -4050,8 +4058,8 @@ struct Typechecker {
                 USize(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(val), span, type_id: builtin(BuiltinType::Usize))
                 F32(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F32(val), span, type_id: builtin(BuiltinType::F32))
                 F64(val) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F64(val), span, type_id: builtin(BuiltinType::F64))
-                UnknownSigned(val) => .infer_signed_int(val, span, type_hint)
-                UnknownUnsigned(val) => .infer_unsigned_int(val, span, type_hint)
+                UnknownSigned(val) => .infer_signed_int(val, span, type_hint: type_hint_unwrapped)
+                UnknownUnsigned(val) => .infer_unsigned_int(val, span, type_hint: type_hint_unwrapped)
             }
         }
         SingleQuotedString(val, span) => CheckedExpression::CharacterConstant(val, span)
