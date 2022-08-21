@@ -2440,7 +2440,10 @@ struct CodeGenerator {
             output += block_label
             output += ":; "
             output += block_var
-            output += ".release_value(); })"
+            if not block.yielded_none {
+                output += ".release_value()"
+            }
+            output += "; })"
         }
 
         return output
