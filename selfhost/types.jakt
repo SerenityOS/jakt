@@ -1455,6 +1455,7 @@ boxed enum CheckedExpression {
         Var(var) => var.is_mutable
         IndexedStruct(expr) => expr.is_mutable(program)
         IndexedExpression(expr) => expr.is_mutable(program)
+        ComptimeIndex(expr) => expr.is_mutable(program)
         IndexedTuple(expr) => expr.is_mutable(program)
         IndexedDictionary(expr) => expr.is_mutable(program)
         ForcedUnwrap(expr) => expr.is_mutable(program)
