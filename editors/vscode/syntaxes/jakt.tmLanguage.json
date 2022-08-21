@@ -522,13 +522,10 @@
           "include": "#this"
         },
         {
-          "match": "\\b(mut)\\s+(this)\\b",
+          "match": "\\b(mut)\\b",
           "captures": {
             "1": {
               "name": "storage.modifier.mut.argument.jakt"
-            },
-            "2": {
-              "name": "variable.language.this.jakt"
             }
           }
         },
