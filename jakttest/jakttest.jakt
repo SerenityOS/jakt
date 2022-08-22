@@ -128,6 +128,9 @@ import extern "os.h" {
         extern function get_system_temporary_directory() throws -> String
 
         extern function ignore_sigchild() throws
+
+        /// Returns "./jakttest/run_once.sh" on Unix, and a complex PowerShell invocation on windows
+        extern function get_script_execution_string() throws -> String
     }
 }
 
@@ -148,7 +151,9 @@ function compare_test(bytes: [u8], expected: String) throws -> bool {
         builder.append(b)
     }
 
-    let builder_output = builder.to_string()
+    mut builder_output = builder.to_string()
+    // Strip windows newlines
+    builder_output = builder_output.replace(replace: "\r", with: "")
 
     if builder_output != expected {
         // TODO: return more information about expected/parsed
@@ -573,7 +578,8 @@ struct TestScheduler {
         os::ignore_sigchild()
         mut scheduler = TestScheduler::create(directories, collect_reasons)
         // pre-allocate the command buffer to avoid allocating inside a loop
-        mut command_buffer: [String] = ["./jakttest/run-one.sh" "" ""]
+        let run_once_script = os::get_script_execution_string()
+        mut command_buffer: [String] = [run_once_script "" ""]
         while not tests.is_empty() {
             let dir_index = scheduler.wait_for_free_directory()
             mut test = tests.pop()!

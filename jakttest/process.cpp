@@ -162,8 +162,8 @@ ErrorOr<i32> start_background_process(Array<String> args)
 
     String command_line_str = TRY(join(args, String(" ")));
 
-    char command_line[MAX_PATH] = {};
-    strncpy(command_line, command_line_str.c_string(), min(MAX_PATH, command_line_str.length()));
+    char command_line[4096] = {};
+    strncpy(command_line, command_line_str.c_string(), min(sizeof(command_line) - 1, command_line_str.length()));
 
     if (!CreateProcess(nullptr, command_line, nullptr, nullptr, TRUE, 0, nullptr, nullptr, &si, &pi))
         return Error::from_errno(last_error_to_errno(GetLastError()));
@@ -190,6 +190,9 @@ static ErrorOr<Optional<DWORD>> get_process_status(PROCESS_INFORMATION process)
 
 static ErrorOr<Optional<ExitPollResult>> poll_any_process(DWORD timeout = 0)
 {
+    if (s_process_handles.is_empty())
+        return Optional<ExitPollResult> {};
+
     // FIXME: Can we use RegisterWaitForSingleObject here?
     // Barring that, can probably bookeep this array along with the other static lists
     auto handles = TRY(Array<HANDLE>::create_empty());
@@ -215,8 +218,10 @@ static ErrorOr<Optional<ExitPollResult>> poll_any_process(DWORD timeout = 0)
     if (!maybe_exit_code.has_value())
         return Optional<ExitPollResult> {};
 
-    s_process_handles.remove(bucket->key);
-    return ExitPollResult { static_cast<i32>(maybe_exit_code.value()), bucket->key };
+    auto pid = bucket->key;
+    auto removed = s_process_handles.remove(bucket->key);
+    VERIFY(removed);
+    return ExitPollResult { static_cast<i32>(maybe_exit_code.value()), pid };
 }
 
 ErrorOr<Optional<ExitPollResult>> poll_process_exit(i32 pid)
@@ -244,7 +249,8 @@ ErrorOr<Optional<ExitPollResult>> poll_process_exit(i32 pid)
     if (!maybe_exit_code.has_value())
         return Optional<ExitPollResult> {};
 
-    s_process_handles.remove(pid);
+    auto removed = s_process_handles.remove(pid);
+    VERIFY(removed);
     return ExitPollResult { static_cast<i32>(maybe_exit_code.value()), pid };
 }
 
@@ -265,7 +271,8 @@ ErrorOr<void> forcefully_kill_process(i32 pid)
     CloseHandle(process_handle.hProcess);
     CloseHandle(process_handle.hThread);
 
-    s_process_handles.remove(pid);
+    auto removed = s_process_handles.remove(pid);
+    VERIFY(removed);
     return {};
 }
 #endif
