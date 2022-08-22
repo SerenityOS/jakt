@@ -1,0 +1,12 @@
+/// Expect:
+/// - error: "Unreachable code\n"
+
+function foo() -> bool {
+    return true
+    return false
+}
+
+function main() {
+    foo()
+}
+

@@ -3429,8 +3429,6 @@ struct Parser {
                 }
                 else => {
                     break
-                    // FIXME: This is unreachable.
-                    yield result
                 }
             }
         }
@@ -3486,8 +3484,6 @@ struct Parser {
                 span: merge_spans(start, .current().span())
             )
         }
-        // FIXME: This is not reachable, so a return should not be required.
-        return ParsedExpression::Garbage(.current().span())
     }
 
     function parse_operator(mut this, allow_assignments: bool) throws -> ParsedExpression {

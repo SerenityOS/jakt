@@ -14,8 +14,6 @@ enum Foo {
                 return format("anon:{}", id)
             }
         }
-
-        return None
     }
 
     function name(this) throws {

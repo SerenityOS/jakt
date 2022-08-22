@@ -14,7 +14,6 @@ function test_continue() -> i64 {
             }
         }
     }
-    return -1 // TODO: control flow analysis sholud know that we never get here.
 }
 
 function test_break() -> i64 {

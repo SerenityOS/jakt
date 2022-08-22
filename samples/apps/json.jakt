@@ -167,8 +167,6 @@ class JsonParser {
 
     function parse_failure(this, error_message: String) throws -> JsonValue {
         throw Error::from_errno(9001)
-        // FIXME: The compiler should notice that we can't get here and allow omitting the return.
-        return JsonValue::Null
     }
 
     function parse_array(mut this) throws -> JsonValue {
@@ -266,7 +264,6 @@ class JsonParser {
             else => {
                 // FIXME: "Unexpected number"
                 throw Error::from_errno(9017)
-                return 1.0
             }
         }
     }
