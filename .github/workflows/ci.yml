@@ -73,7 +73,12 @@ jobs:
      - run: git config --global core.autocrlf false
      - uses: actions/checkout@v2
      - name: Configure CMake
-       run: cmake -B build -G "Visual Studio 17 2022" -A x64 -T ClangCL -DFINAL_STAGE=2
+       run: cmake -B build -G "Visual Studio 17 2022" -A x64 -T ClangCL -DFINAL_STAGE=1
 
-     - name: Build Jakt Stage 2 Selfhost
+     - name: Build Jakt Stage 1 Selfhost
        run: cmake --build build --config Release
+
+     - name: Test Jakt Stage 1
+       run: |
+         ls -l build
+         .\build\Release\jakttest.exe
