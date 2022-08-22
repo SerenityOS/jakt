@@ -1523,7 +1523,6 @@ struct CodeGenerator {
 
             yield output
         }
-
         JaktSet(vals, span, type_id, inner_type_id) => {
             mut output = ""
             output += format("({}((Set<{}>::create_with_values({{", .current_error_handler(), .codegen_type(inner_type_id))

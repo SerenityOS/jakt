@@ -2611,6 +2611,7 @@ struct Typechecker {
 
             let yield_span: Span? = match parsed_statement {
                 ParsedStatement::Yield(expr) => Some(expr.span())
+                ParsedStatement::Guard(expr) => Some(expr.span())
                 else => None
             }
             let checked_yield_expression: CheckedExpression? = match checked_statement {
@@ -3183,15 +3184,34 @@ struct Typechecker {
         }
 
         let checked_block = .typecheck_block(new_then_block, parent_scope_id: scope_id, safety_mode)
-        if checked_block.yielded_type.has_value() {
-            .error("A 'guard' block is not allowed to yield values", new_then_block.find_yield_span()!)
-        }
-
         mut checked_else: CheckedStatement? = None
         if new_else_statement.has_value() {
             checked_else = .typecheck_statement(new_else_statement!, scope_id, safety_mode)
         }
-        
+
+        if checked_block.yielded_type.has_value() {
+            return CheckedStatement::Yield(
+                expr: CheckedExpression::Match(
+                    expr: checked_condition,
+                    match_cases: [
+                        CheckedMatchCase::Expression(
+                            expression: CheckedExpression::Boolean(val: true, span)
+                            body: CheckedMatchBody::Expression(CheckedExpression::Block(block: checked_block, span, type_id: checked_block.yielded_type!))
+                            marker_span: span
+                        ),
+                        CheckedMatchCase::CatchAll(
+                            body: CheckedMatchBody::Block(checked_else_block)
+                            marker_span: span
+                        )
+                    ]
+                    span
+                    type_id: checked_block.yielded_type!
+                    all_variants_constant: false
+                ),
+                span
+            )
+        }
+
         return CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
     }
 
