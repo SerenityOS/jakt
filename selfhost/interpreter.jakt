@@ -1,9 +1,8 @@
 import types {
-    BinaryOperator, BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedEnum, CheckedEnumVariant
-    CheckedExpression, CheckedMatchBody, CheckedNumericConstant, CheckedParameter, CheckedProgram, CheckedStatement
-    CheckedStringLiteral, CheckedVariable, CheckedVisibility, EnumId, EnumVariantPatternArgument, FunctionId
-    GenericInferences, ModuleId, ResolvedNamespace, Scope, ScopeId, Span, StringLiteral, StructId, Type, TypeId
-    Value, ValueImpl, VarId, builtin, unknown_type_id
+    BinaryOperator, BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedEnum, CheckedEnumVariant, CheckedExpression,
+    CheckedField, CheckedMatchBody, CheckedNumericConstant, CheckedParameter, CheckedProgram, CheckedStatement, CheckedStringLiteral,
+    CheckedVariable, CheckedVisibility, EnumId, EnumVariantPatternArgument, FunctionId, GenericInferences, ModuleId, NumericOrStringValue,
+    ResolvedNamespace, Scope, ScopeId, Span, StringLiteral, StructId, Type, TypeId, Value, ValueImpl, VarId, builtin, unknown_type_id
 }
 import utility { escape_for_quotes, interpret_escapes, panic }
 import error { JaktError }
@@ -13,6 +12,7 @@ enum InterpretError : i32 {
     CallToExternalFunction = 42i32
     MismatchingArguments
     InvalidThisArgument
+    InvalidOperation
     InvalidType
     UnknownVariable
     Unimplemented
@@ -687,7 +687,8 @@ class InterpreterScope {
         }
 
         // How did this pass typecheck?
-        panic(format("Could not find binding for {}", name))
+        // panic(format("Could not find binding for {}", name))
+        throw Error::from_errno(InterpretError::UnknownVariable as! i32);
     }
 
     public fn set(mut this, anon name: String, anon value: Value) throws {
@@ -706,7 +707,7 @@ class InterpreterScope {
         }
 
         // How did this pass typecheck?
-        panic(format("Could not find binding for {}", name))
+        throw Error::from_errno(InterpretError::UnknownVariable as! i32);
     }
 
     public fn map_type(this, anon id: TypeId) throws -> TypeId {
@@ -802,6 +803,257 @@ class Interpreter {
     public fn leave_span(mut this) {
         // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
         let dummy = .spans.pop()
+    }
+
+    public fn perform_final_interpretation_pass(mut this, statement: CheckedStatement, scope: InterpreterScope) throws -> CheckedStatement => match statement {
+        Expression(expr, span) => CheckedStatement::Expression(expr: .perform_final_interpretation_expr_pass(expr, scope), span)
+        Defer(statement, span) => CheckedStatement::Defer(statement: .perform_final_interpretation_pass(statement, scope), span)
+        DestructuringAssignment(vars, var_decl, span) => CheckedStatement::DestructuringAssignment(vars: vars, var_decl: .perform_final_interpretation_pass(statement: var_decl, scope), span)
+        VarDecl(var_id, init, span) => CheckedStatement::VarDecl(var_id, init: .perform_final_interpretation_expr_pass(expr: init, scope), span)
+        If(condition, then_block, else_statement, span) => {
+            let new_condition = .perform_final_interpretation_expr_pass(expr: condition, scope)
+            mut then_statements: [CheckedStatement] = []
+            for statement in then_block.statements.iterator() {
+                then_statements.push(.perform_final_interpretation_pass(statement, scope))
+            }
+            let new_then_block = CheckedBlock(
+                statements: then_statements
+                scope_id: then_block.scope_id
+                control_flow: then_block.control_flow
+                yielded_type: then_block.yielded_type
+                yielded_none: then_block.yielded_none
+            )
+            let new_else_statement = match else_statement.has_value() {
+                true => Some(.perform_final_interpretation_pass(statement: else_statement!, scope))
+                else => None
+            }
+            yield CheckedStatement::If(
+                condition: new_condition
+                then_block: new_then_block
+                else_statement: new_else_statement
+                span)
+        }
+        Block(block, span) => {
+            mut statements: [CheckedStatement] = []
+            for statement in block.statements.iterator() {
+                statements.push(.perform_final_interpretation_pass(statement, scope))
+            }
+            let new_block = CheckedBlock(
+                statements: statements
+                scope_id: block.scope_id
+                control_flow: block.control_flow
+                yielded_type: block.yielded_type
+                yielded_none: block.yielded_none
+            )
+            yield CheckedStatement::Block(block: new_block, span)
+        }
+        Loop(block, span) => {
+            mut statements: [CheckedStatement] = []
+            for statement in block.statements.iterator() {
+                statements.push(.perform_final_interpretation_pass(statement, scope))
+            }
+            let new_block = CheckedBlock(
+                statements: statements
+                scope_id: block.scope_id
+                control_flow: block.control_flow
+                yielded_type: block.yielded_type
+                yielded_none: block.yielded_none
+            )
+            yield CheckedStatement::Loop(block: new_block, span)
+        }
+        While(condition, block, span) => {
+            let new_condition = .perform_final_interpretation_expr_pass(expr: condition, scope)
+            mut statements: [CheckedStatement] = []
+            for statement in block.statements.iterator() {
+                statements.push(.perform_final_interpretation_pass(statement, scope))
+            }
+            let new_block = CheckedBlock(
+                statements: statements
+                scope_id: block.scope_id
+                control_flow: block.control_flow
+                yielded_type: block.yielded_type
+                yielded_none: block.yielded_none
+            )
+            yield CheckedStatement::While(
+                condition: new_condition
+                block: new_block
+                span)
+        }
+        Return(val, span) => match val.has_value() {
+            true => CheckedStatement::Return(val: .perform_final_interpretation_expr_pass(expr: val!, scope), span)
+            else => statement
+        }
+        Break | Continue | InlineCpp | Garbage => statement
+        Throw(expr, span) => CheckedStatement::Throw(expr: .perform_final_interpretation_expr_pass(expr, scope), span)
+        Yield(expr, span) => CheckedStatement::Yield(expr: .perform_final_interpretation_expr_pass(expr, scope), span)
+    }
+
+    public function perform_final_interpretation_expr_pass(mut this, expr: CheckedExpression, scope: InterpreterScope) throws  -> CheckedExpression => match expr {
+        ComptimeIndex(expr, index, is_optional, span) => {
+            let index_result = .execute_expression(expr: index, scope)
+
+            let index_constant = match index_result {
+                JustValue(value) => match value.impl {
+                    JaktString(val) => NumericOrStringValue::StringValue(val)
+                    U8(val) | U16(val) | U32(val) | U64(val) | USize(val) => NumericOrStringValue::UnsignedNumericValue(val as! u64)
+                    I8(val) | I16(val) | I32(val) | I64(val) => NumericOrStringValue::SignedNumericValue(val as! i64)
+                    else => {
+                        .error(format("Index expression evaluation failed: expected numeric or string type, found {}", value.impl), span)
+                        return CheckedExpression::Garbage(span)
+                    }
+                }
+                else => {
+                    .error(format("Index expression evaluation returned an invalid object {}", index_result), span)
+                    return CheckedExpression::Garbage(span)
+                }
+            }
+
+            match index_constant {
+                StringValue(field) => {
+                    let checked_expr_type_id = scope.map_type(expr.type())
+                    let checked_expr_type = .program.get_type(checked_expr_type_id)
+                    let optional_struct_id = .program.find_struct_in_prelude("Optional")
+                    match checked_expr_type {
+                        Type::GenericInstance(id, args) => {
+                            mut type_id = checked_expr_type_id
+
+                            if is_optional {
+                                if not id.equals(optional_struct_id) {
+                                    .error("Optional chaining is only allowed on optional types", span)
+                                    throw Error::from_errno(InterpretError::InvalidOperation as! i32)
+                                }
+
+                                type_id = args[0]
+                            }
+
+                            match .program.get_type(type_id) {
+                                GenericInstance(id: struct_id) | Struct(struct_id) => {
+                                    let structure = .program.get_struct(struct_id)
+                                    for member_id in structure.fields.iterator() {
+                                        let member = .program.get_variable(member_id.variable_id)
+
+                                        if member.name == field {
+                                            mut resolved_type_id = scope.map_type(member.type_id)
+                                            if is_optional {
+                                                resolved_type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [resolved_type_id]))
+                                            }
+                                            // FIXME: Check access perms
+                                            return CheckedExpression::IndexedStruct(
+                                                expr
+                                                index: field
+                                                span
+                                                is_optional
+                                                type_id: resolved_type_id)
+                                        }
+                                    }
+
+                                    .error(format("unknown member of struct: {}.{}", structure.name, field), span)
+                                    throw Error::from_errno(InterpretError::InvalidOperation as! i32)
+                                }
+                                else => {
+                                    .error(format("Member field access on value of non-struct type ‘{}’", .program.type_name(checked_expr_type_id)), span)
+                                    throw Error::from_errno(InterpretError::InvalidOperation as! i32)
+                                }
+                            }
+                        }
+                        Type::Struct(struct_id) => {
+                            if is_optional {
+                                .error("Optional chaining is not allowed on non-optional types", span)
+                                throw Error::from_errno(InterpretError::InvalidOperation as! i32)
+                            }
+
+                            let structure = .program.get_struct(struct_id)
+                            for member_id in structure.fields {
+                                let member = .program.get_variable(member_id.variable_id)
+
+                                if member.name == field {
+                                    let resolved_type_id = scope.map_type(member.type_id)
+                                    // FIXME: Check access perms
+                                    return CheckedExpression::IndexedStruct(
+                                        expr
+                                        index: field
+                                        span
+                                        is_optional
+                                        type_id: resolved_type_id)
+                                }
+                            }
+
+                            .error(format("unknown member of struct: {}.{}", structure.name, field), span)
+                            throw Error::from_errno(InterpretError::InvalidOperation as! i32)
+                        }
+                        else => {
+                            .error(format("Member field access on value of non-struct type ‘{}’", .program.type_name(checked_expr_type_id)), span)
+                            throw Error::from_errno(InterpretError::InvalidOperation as! i32)
+                        }
+                    }
+                }
+                UnsignedNumericValue(val) | SignedNumericValue(val) => {
+                    .error("Unimplemented expression", span)
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+            }
+        }
+        UnaryOp(expr, op, span, type_id) => CheckedExpression::UnaryOp(
+            expr: .perform_final_interpretation_expr_pass(expr, scope),
+            op: op,
+            span: span,
+            type_id: type_id
+        )
+        BinaryOp(lhs, op, rhs, span, type_id) => CheckedExpression::BinaryOp(
+            lhs: .perform_final_interpretation_expr_pass(expr: lhs, scope),
+            op: op,
+            rhs: .perform_final_interpretation_expr_pass(expr: rhs, scope),
+            span: span,
+            type_id: type_id
+        )
+        Call(call, span, type_id) => {
+            mut new_args: [(String, CheckedExpression)] = []
+            for arg in call.args.iterator() {
+                new_args.push((
+                    arg.0,
+                    .perform_final_interpretation_expr_pass(expr: arg.1, scope)
+                ))
+            }
+            yield CheckedExpression::Call(
+                call: CheckedCall(
+                    namespace_: call.namespace_
+                    name: call.name
+                    args: new_args
+                    type_args: call.type_args
+                    function_id: call.function_id
+                    return_type: call.return_type
+                    callee_throws: call.callee_throws
+                )
+                span
+                type_id
+            )
+        }
+        MethodCall(expr, call, span, is_optional, type_id) => {
+            mut new_args: [(String, CheckedExpression)] = []
+            for arg in call.args.iterator() {
+                new_args.push((
+                    arg.0,
+                    .perform_final_interpretation_expr_pass(expr: arg.1, scope)
+                ))
+            }
+            yield CheckedExpression::MethodCall(
+                expr: .perform_final_interpretation_expr_pass(expr, scope)
+                call: CheckedCall(
+                    namespace_: call.namespace_
+                    name: call.name
+                    args: new_args
+                    type_args: call.type_args
+                    function_id: call.function_id
+                    return_type: call.return_type
+                    callee_throws: call.callee_throws
+                )
+                span
+                is_optional
+                type_id
+            )
+        }
+        // FIXME: Implement the rest
+        else => expr
     }
 
     public fn get_prelude_function(this, anon scope_id: ScopeId) throws -> bool {
@@ -6425,6 +6677,13 @@ class Interpreter {
                 ))
             }
 
+            mut statements: [CheckedStatement] = []
+            for statement in block.statements.iterator() {
+                statements.push(.perform_final_interpretation_pass(
+                    statement
+                    scope: InterpreterScope::create(parent: scope, bindings: resolved_captures)))
+            }
+
             yield StatementResult::JustValue(Value(
                 impl: ValueImpl::Function(
                     captures: resolved_captures,
@@ -6437,7 +6696,13 @@ class Interpreter {
                         type_id
                         generic_inferences: type_map
                         module_id: type_id.module)
-                    block
+                    block: CheckedBlock(
+                        statements
+                        scope_id: block.scope_id
+                        control_flow: block.control_flow
+                        yielded_type: block.yielded_type
+                        yielded_none: block.yielded_none
+                    )
                     can_throw
                     checked_params
                 )
@@ -6662,6 +6927,7 @@ class Interpreter {
                 panic("Expected SumEnumVariant to be an enum")
             }
         }
+
         let typed_variant_constructor = .program.find_function_in_scope(
             parent_scope_id: .program.get_enum(sum_enum_variant_enum_id).scope_id
             function_name: "Typed")!
@@ -6837,8 +7103,8 @@ class Interpreter {
                         GenericInstance(args) => {
                             mut i = 0
                             mut result: [Value] = []
-                            for generic_parameter in subject_struct.generic_parameters.iterator() {
-                                let name = match .program.get_type(generic_parameter) {
+                            for generic_parameter in subject_struct.generic_parameters {
+                                let name = match .program.get_type(generic_parameter.type_id) {
                                     TypeVariable(name) => name
                                     else => {
                                         panic("Unknown kind of generic parameter in struct definition")
@@ -6858,9 +7124,14 @@ class Interpreter {
                         else => []
                     }
                     type: tuple_type
-                    span)
+                    span
+                )
 
-                let record_type_fields = .reflect_fields(fields: subject_struct.fields, span, scope)
+                mut reflected_fields: [VarId] = []
+                for field in subject_struct.fields {
+                    reflected_fields.push(field.variable_id)
+                }
+                let record_type_fields = .reflect_fields(fields: reflected_fields, span, scope)
 
                 let field_struct_id = match .program.find_reflected_primitive("Field") {
                     Struct(id) => id
@@ -6951,8 +7222,8 @@ class Interpreter {
                         GenericInstance(args) => {
                             mut i = 0
                             mut result: [Value] = []
-                            for generic_parameter in subject_enum.generic_parameters.iterator() {
-                                let name = match .program.get_type(generic_parameter) {
+                            for generic_parameter in subject_enum.generic_parameters {
+                                let name = match .program.get_type(generic_parameter.type_id) {
                                     TypeVariable(name) => name
                                     else => {
                                         panic("Unknown kind of generic parameter in struct definition")

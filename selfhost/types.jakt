@@ -1410,6 +1410,7 @@ boxed enum CheckedExpression {
     IndexedTuple(expr: CheckedExpression, index: usize, span: Span, is_optional: bool, type_id: TypeId)
     IndexedStruct(expr: CheckedExpression, index: String, span: Span, is_optional: bool, type_id: TypeId)
     IndexedCommonEnumMember(expr: CheckedExpression, index: String, span: Span, is_optional: bool, type_id: TypeId)
+    ComptimeIndex(expr: CheckedExpression, index: CheckedExpression, is_optional: bool, span: Span)
     Match(expr: CheckedExpression, match_cases: [CheckedMatchCase], span: Span, type_id: TypeId, all_variants_constant: bool)
     EnumVariantArg(expr: CheckedExpression, arg: CheckedEnumVariantBinding, enum_variant: CheckedEnumVariant, span: Span)
     Call(call: CheckedCall, span: Span, type_id: TypeId)
@@ -1487,6 +1488,7 @@ boxed enum CheckedExpression {
         NamespacedVar(var) => var.type_id
         Var(var) => var.type_id
         Garbage => builtin(BuiltinType::Void)
+        ComptimeIndex => builtin(BuiltinType::Void) // FIXME
         else(type_id) => type_id
     }
 
@@ -1898,6 +1900,20 @@ class CheckedProgram {
                 return IterationDecision::Continue
             }
         )
+    }
+
+    public fn find_function_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> FunctionId? {
+        let results = .find_functions_with_name_in_scope(parent_scope_id, function_name)
+        if not results.has_value() {
+            return None
+        }
+
+        let functions = results.value()
+        if functions.size() != 1 {
+            .compiler.panic(format("internal error: found multiple (or no) functions with name '{}'", function_name))
+        }
+
+        return functions[0]
     }
 
     public fn find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> [FunctionId]? {
@@ -2494,4 +2510,10 @@ struct Value {
             else => this
         }
     }
+}
+
+enum NumericOrStringValue {
+    StringValue(String)
+    SignedNumericValue(i64)
+    UnsignedNumericValue(u64)
 }

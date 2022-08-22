@@ -5709,8 +5709,13 @@ struct Typechecker {
         mut scope = InterpreterScope::from_runtime_scope(scope_id, program: .program)
 
         let index_result = try interpreter.execute_expression(expr: checked_index, scope) catch error {
-            .error(format("Index expression evaluation failed: {}", error), span)
-            return CheckedExpression::Garbage(span)
+            // We can't run this yet, do it later.
+            return CheckedExpression::ComptimeIndex(
+                expr: .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
+                index: checked_index
+                is_optional
+                span
+            )
         }
 
         let index_constant = match index_result {
@@ -5730,7 +5735,7 @@ struct Typechecker {
         }
 
         return match index_constant {
-            StringValue(val) => .typecheck_indexed_struct(expr, field: val, scope_id, is_optional, safety_mode, span)
+            StringValue(val) => .typecheck_indexed_struct(expr, field_name: val, scope_id, is_optional, safety_mode, span)
             UnsignedNumericValue(val) | SignedNumericValue(val) => .typecheck_indexed_tuple(expr, index: val as! usize, scope_id, is_optional, safety_mode, span)
         }
     }
