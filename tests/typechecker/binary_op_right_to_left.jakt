@@ -1,0 +1,7 @@
+/// Expect: 
+/// - output: "98\n"
+
+function main() {
+    let x = 80 + 18i16;
+    println("{}", x)
+}
