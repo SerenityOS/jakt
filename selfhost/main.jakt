@@ -12,9 +12,9 @@ import error { JaktError, print_error }
 import utility { FilePath, ArgsParser, Span }
 import lexer { Lexer }
 import parser { Parser }
-import interpreter { Interpreter, Value, ValueImpl }
+import interpreter { Interpreter, InterpreterScope, value_to_checked_expression }
 import typechecker { Typechecker }
-import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId }
+import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId, Value, ValueImpl }
 import repl { REPL, serialize_ast_node }
 import ide
 
@@ -273,7 +273,7 @@ function main(args: [String]) {
             }
 
             Throw(x) => {
-                eprintln("Error: Main function threw: {}", serialize_ast_node(x.to_checked_expression(interpreter)))
+                eprintln("Error: Main function threw: {}", serialize_ast_node(value_to_checked_expression(x, interpreter)))
                 return 1
             }
         }
