@@ -4,7 +4,6 @@
 struct Iter {
     function next(this) throws -> i64? {
         throw Error::from_errno(1i32)
-        return None
     }
 }
 

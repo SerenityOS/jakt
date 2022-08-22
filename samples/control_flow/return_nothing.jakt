@@ -6,10 +6,8 @@ function foo() {
         println("PASS")
         return
     }
-    println("FAIL")
 }
 
 function main() {
     foo()
-    
 }

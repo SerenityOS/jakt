@@ -23,8 +23,6 @@ function eval(anon ast: AST) -> i64 {
             }
         }
     }
-
-    return 0
 }
 
 function main() {

@@ -324,7 +324,6 @@ function find_span_in_program(program: CheckedProgram, span: Span) throws -> Usa
 
         return find_span_in_scope(program, scope, span)
     }
-
     return None
 }
 
@@ -1217,7 +1216,7 @@ function get_enum_variant_usage_from_type_id_and_name(program: CheckedProgram, t
         }
         panic("unreachable: should have found variant")
     }
-    panic("unreachable: should have found enum")
+    panic("unreachable: should have found variant")
 }
 
 function enum_variant_fields(program: CheckedProgram, checked_enum_variant: CheckedEnumVariant) throws -> [(String?, TypeId)] {

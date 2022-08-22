@@ -16,8 +16,6 @@ function test_continue() -> bool {
             }
             else => {}
         }
-        println("test_continue: must be unreachable")
-        return false
     }
     return true
 }
@@ -34,8 +32,6 @@ function test_break() -> bool {
             }
             else => {}
         }
-        println("test_break: must be unreachable")
-        return false
     }
     return true
 }
@@ -48,5 +44,4 @@ function main() {
     } else {
         println("Something happened. Check above log and codegen code.")
     }
-
 }

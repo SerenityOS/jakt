@@ -2096,7 +2096,10 @@ struct Typechecker {
             else => BlockControlFlow::MayReturn
         }
         Loop(block) => match block.control_flow {
-            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
+            AlwaysTransfersControl(might_break) => match might_break {
+                false => BlockControlFlow::AlwaysTransfersControl(might_break)
+                else => BlockControlFlow::MayReturn
+            }
             NeverReturns => BlockControlFlow::NeverReturns
             AlwaysReturns => BlockControlFlow::AlwaysReturns
             MayReturn => BlockControlFlow::MayReturn
@@ -2595,7 +2598,7 @@ struct Typechecker {
         // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
         mut generic_inferences: [String: String] = [:]
         for parsed_statement in parsed_block.stmts.iterator() {
-            if checked_block.control_flow.never_returns() {
+            if not checked_block.control_flow.is_reachable() {
                 .error("Unreachable code", parsed_statement.span())
             }
 
@@ -2605,7 +2608,6 @@ struct Typechecker {
                 safety_mode
                 type_hint: yield_type_hint
             )
-
             checked_block.control_flow = checked_block.control_flow.updated(.statement_control_flow(checked_statement))
 
             let yield_span: Span? = match parsed_statement {
@@ -2861,9 +2863,6 @@ struct Typechecker {
                 return .find_or_add_type_id(Type::Function(params: param_type_ids, can_throw, return_type_id))
             }
         }
-
-        // FIXME: This is unreachable but the generated C++ causes a warning.
-        .compiler.panic("should be unreachable")
     }
 
     function typecheck_generic_resolved_type(mut this, name: String, checked_inner_types: [TypeId], scope_id: ScopeId, span: Span) throws -> TypeId {

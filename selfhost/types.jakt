@@ -325,7 +325,6 @@ boxed enum Type {
                     return false
                 }
             }
-            return false
         }
     }
 
@@ -577,11 +576,12 @@ enum BlockControlFlow {
         AlwaysTransfersControl(might_break: lhs) => match second {
             NeverReturns | AlwaysReturns => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
             AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: lhs or might_break)
-            MayReturn => BlockControlFlow::MayReturn
+            MayReturn => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
             else => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
         }
         MayReturn => match second {
             else => BlockControlFlow::MayReturn
+            AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
             PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break)
             PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
             PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break)
@@ -592,7 +592,7 @@ enum BlockControlFlow {
             AlwaysReturns => BlockControlFlow::AlwaysReturns
             NeverReturns => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
             AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break: lhs or might_break)
-            MayReturn => BlockControlFlow::PartialAlwaysReturns(might_break: lhs)
+            MayReturn => BlockControlFlow::MayReturn
         }
         PartialAlwaysTransfersControl(might_break: lhs) => match second {
             PartialAlwaysTransfersControl(might_break) | PartialAlwaysReturns(might_break) | PartialNeverReturns(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break: lhs or might_break)
@@ -626,6 +626,14 @@ enum BlockControlFlow {
         PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
         PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break)
         PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break)
+    }
+
+    function definitive(this) => match this {
+        NeverReturns => BlockControlFlow::NeverReturns
+        AlwaysReturns => BlockControlFlow::AlwaysReturns
+        AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
+        MayReturn => BlockControlFlow::MayReturn
+        else => BlockControlFlow::MayReturn
     }
 
     function always_transfers_control(this) => match this {
@@ -1047,9 +1055,9 @@ boxed enum CheckedExpression {
                     }
                 }
                 if control_flow.has_value() {
-                    control_flow = control_flow!.unify_with(case_control_flow)
+                    control_flow = control_flow!.unify_with(case_control_flow.definitive())
                 } else {
-                    control_flow = case_control_flow
+                    control_flow = case_control_flow.definitive()
                 }
             }
             yield control_flow ?? BlockControlFlow::MayReturn
