@@ -4,6 +4,7 @@ import lexer { Lexer }
 import parser { Parser }
 import utility { Span }
 import error { JaktError }
+import interpreter { value_to_checked_expression }
 
 import extern c "stdio.h" {
     extern function fopen(pathname: raw c_char, mode: raw c_char) -> raw FILE
@@ -431,8 +432,8 @@ struct REPL {
             }
 
             let output = match result {
-                Return(value) | JustValue(value) => serialize_ast_node(value.to_checked_expression(interpreter))
-                Throw(value) => "throw " + serialize_ast_node(value.to_checked_expression(interpreter))
+                Return(value) | JustValue(value) => serialize_ast_node(value_to_checked_expression(value, interpreter)),
+                Throw(value) => "throw " + serialize_ast_node(value_to_checked_expression(value, interpreter))
                 Break | Continue | Yield => {
                     continue
                 }

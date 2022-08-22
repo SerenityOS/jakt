@@ -395,6 +395,7 @@ function flip_signedness(type: Type) throws -> TypeId => match type {
 class Scope {
     public namespace_name: String?
     public vars: [String: VarId]
+    public comptime_bindings: [String: Value]
     public structs: [String: StructId]
     public functions: [String: FunctionId]
     public enums: [String: EnumId]
@@ -1092,6 +1093,43 @@ class CheckedProgram {
     public modules: [Module]
     public loaded_modules: [String: LoadedModule]
 
+    public function create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String, module_id: ModuleId) throws -> ScopeId {
+        // Check that parent_scope_id is a valid ScopeId
+        if parent_scope_id.has_value() {
+            // Check that the ModuleId is valid
+            if parent_scope_id!.module_id.id >= .modules.size() {
+                .compiler.panic(format("create_scope: parent_scope_id.module is invalid! No module with id {}.", parent_scope_id!.module_id.id))
+            }
+
+            // Check that ScopeId.id is valid in the module
+            if parent_scope_id!.id >= .modules[parent_scope_id!.module_id.id].scopes.size() {
+                .compiler.panic(format("create_scope: parent_scope_id.id is invalid! Module {} does not have a scope with id {}.", parent_scope_id!.module_id.id, parent_scope_id!.id))
+            }
+        }
+
+        let none_string: String? = None
+
+        let scope = Scope(
+            namespace_name: none_string
+            vars: [:]
+            comptime_bindings: [:]
+            structs: [:]
+            functions: [:]
+            enums: [:]
+            types: [:]
+            imports: [:]
+            parent: parent_scope_id
+            children: []
+            can_throw
+            import_path_if_extern: None
+            debug_name
+        )
+
+        .modules[module_id.id].scopes.push(scope)
+
+        return ScopeId(module_id, id: .modules[module_id.id].scopes.size() - 1)
+    }
+
     public function get_module(this, anon id: ModuleId) -> Module => .modules[id.id]
     public function get_function(this, anon id: FunctionId) -> CheckedFunction => .modules[id.module.id].functions[id.id]
     public function get_variable(this, anon id: VarId) -> CheckedVariable => .modules[id.module.id].variables[id.id]
@@ -1126,6 +1164,22 @@ class CheckedProgram {
             let maybe_var = scope.vars.get(var)
             if maybe_var.has_value() {
                 return .get_variable(maybe_var!)
+            }
+            if not scope.parent.has_value() {
+                break
+            }
+            current_scope_id = scope.parent!
+        }
+        return None
+    }
+
+    public function find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String) throws -> Value? {
+        mut current_scope_id = scope_id
+        loop {
+            let scope = .get_scope(current_scope_id)
+            let maybe_var = scope.comptime_bindings.get(name)
+            if maybe_var.has_value() {
+                return maybe_var
             }
             if not scope.parent.has_value() {
                 break
@@ -1596,5 +1650,204 @@ class CheckedProgram {
             }
         }
         return type_id
+    }
+}
+
+boxed enum ValueImpl {
+    Void
+    Bool(bool)
+    U8(u8)
+    U16(u16)
+    U32(u32)
+    U64(u64)
+    I8(i8)
+    I16(i16)
+    I32(i32)
+    I64(i64)
+    F32(f32)
+    F64(f64)
+    USize(usize)
+    JaktString(String)
+    CChar(c_char)
+    CInt(c_int)
+    Struct(fields: [Value], struct_id: StructId, constructor: FunctionId?)
+    Class(fields: [Value], struct_id: StructId, constructor: FunctionId?)
+    Enum(fields: [Value], enum_id: EnumId, constructor: FunctionId)
+    JaktArray(values: [Value], type_id: TypeId)
+    JaktDictionary(keys: [Value], values: [Value], type_id: TypeId)
+    RawPtr(ValueImpl)
+    OptionalSome(value: Value)
+    OptionalNone
+    JaktTuple(fields: [Value], type_id: TypeId)
+    Function(captures: [String:Value], params: [String:(TypeId, CheckedExpression?)], return_type_id: TypeId, type_id: TypeId, block: CheckedBlock, can_throw: bool, checked_params: [CheckedParameter])
+
+    function copy(this) throws => match this {
+        Void => ValueImpl::Void
+        Bool(x) => ValueImpl::Bool(x)
+        U8(x) => ValueImpl::U8(x)
+        U16(x) => ValueImpl::U16(x)
+        U32(x) => ValueImpl::U32(x)
+        U64(x) => ValueImpl::U64(x)
+        I8(x) => ValueImpl::I8(x)
+        I16(x) => ValueImpl::I16(x)
+        I32(x) => ValueImpl::I32(x)
+        I64(x) => ValueImpl::I64(x)
+        F32(x) => ValueImpl::F32(x)
+        F64(x) => ValueImpl::F64(x)
+        USize(x) => ValueImpl::USize(x)
+        JaktString(x) => ValueImpl::JaktString(x)
+        CChar(x) => ValueImpl::CChar(x)
+        CInt(x) => ValueImpl::CInt(x)
+        Struct(fields, struct_id, constructor) => {
+            mut fields_copy: [Value] = [];
+            for field in fields.iterator() {
+                fields_copy.push(field.copy());
+            }
+            yield ValueImpl::Struct(fields: fields_copy, struct_id, constructor)
+        }
+        Class(fields, struct_id, constructor) => ValueImpl::Class(fields, struct_id, constructor)
+        Enum(fields, enum_id, constructor) => {
+            mut fields_copy: [Value] = [];
+            for field in fields.iterator() {
+                fields_copy.push(field.copy());
+            }
+            yield ValueImpl::Enum(fields: fields_copy, enum_id, constructor)
+        }
+        JaktArray(values, type_id) => {
+            mut values_copy: [Value] = [];
+            for value in values.iterator() {
+                values_copy.push(value.copy());
+            }
+            yield ValueImpl::JaktArray(values: values_copy, type_id)
+        }
+        JaktDictionary(keys, values, type_id) => {
+            mut values_copy: [Value] = []
+            for value in values.iterator() {
+                values_copy.push(value.copy())
+            }
+            mut keys_copy: [Value] = []
+            for key in keys.iterator() {
+                keys_copy.push(key.copy())
+            }
+            yield ValueImpl::JaktDictionary(keys: keys_copy, values: values_copy, type_id)
+        }
+        RawPtr(value) => ValueImpl::RawPtr(value)
+        OptionalSome(value) => ValueImpl::OptionalSome(value: value.copy())
+        OptionalNone => ValueImpl::OptionalNone
+        JaktTuple(fields, type_id) => {
+            mut values_copy: [Value] = [];
+            for value in fields.iterator() {
+                values_copy.push(value.copy());
+            }
+            yield ValueImpl::JaktTuple(fields: values_copy, type_id)
+        }
+        Function(captures, params, can_throw, return_type_id, type_id, block, checked_params) => ValueImpl::Function(captures, params, return_type_id, type_id, block, can_throw, checked_params)
+    }
+
+    function equals(this, anon other: ValueImpl) => match this {
+        Void => other is Void
+        Bool(x) => match other { Bool(y) => x == y else => false }
+        U8(x) => match other { U8(y) => x == y else => false }
+        U16(x) => match other { U16(y) => y == x else => false }
+        U32(x) => match other { U32(y) => y == x else => false }
+        U64(x) => match other { U64(y) => y == x else => false }
+        I8(x) => match other { I8(y) => y == x else => false }
+        I16(x) => match other { I16(y) => y == x else => false }
+        I32(x) => match other { I32(y) => y == x else => false }
+        I64(x) => match other { I64(y) => y == x else => false }
+        F32(x) => match other { F32(y) => y == x else => false }
+        F64(x) => match other { F64(y) => y == x else => false }
+        USize(x) => match other { USize(y) => y == x else => false }
+        JaktString(x) => match other { JaktString(y) => y == x else => false }
+        CChar(x) => match other { CChar(y) => y == x else => false }
+        CInt(x) => match other { CInt(y) => y == x else => false }
+        else => false
+    }
+}
+
+struct Value {
+    impl: ValueImpl
+    span: Span
+
+    function copy(this) throws => Value(impl: .impl.copy(), span: .span)
+    function type_name(this) => match .impl {
+        Void => "void"
+        Bool => "bool"
+        U8 => "u8"
+        U16 => "u16"
+        U32 => "u32"
+        U64 => "u64"
+        I8 => "i18"
+        I16 => "i16"
+        I32 => "i32"
+        I64 => "i64"
+        F32 => "f32"
+        F64 => "f64"
+        USize => "usize"
+        JaktString => "String"
+        CChar => "c_char"
+        CInt => "c_int"
+        Struct => "struct <T>"
+        Class => "class <T>"
+        Enum => "enum <T>"
+        JaktArray => "Array"
+        JaktDictionary => "Dictionary"
+        RawPtr => "raw <T>"
+        OptionalSome => "Some"
+        OptionalNone => "None"
+        JaktTuple => "Tuple"
+        Function => "Function"
+    }
+    function cast(this, anon expected: Value, span: Span) throws -> Value => match .impl {
+        U8(value) => match expected.impl {
+            U16 => Value(impl: ValueImpl::U16(value as! u16), span: span)
+            U32 => Value(impl: ValueImpl::U32(value as! u32), span: span)
+            U64 => Value(impl: ValueImpl::U64(value as! u64), span: span)
+            USize => Value(impl: ValueImpl::USize(value as! usize), span: span)
+            else => this
+        }
+        U16(value) => match expected.impl {
+            U32 => Value(impl: ValueImpl::U32(value as! u32), span: span)
+            U64 => Value(impl: ValueImpl::U64(value as! u64), span: span)
+            USize => Value(impl: ValueImpl::USize(value as! usize), span: span)
+            else => this 
+        }
+        U32(value) => match expected.impl {
+            U64 => Value(impl: ValueImpl::U64(value as! u64), span: span)
+            USize => Value(impl: ValueImpl::USize(value as! usize), span: span)
+            else => this
+        }
+        U64(value) => match expected.impl {
+            USize => Value(impl: ValueImpl::USize(value as! usize), span: span)
+            else => this
+        }
+        I8(value) => match expected.impl {
+            I16 => Value(impl: ValueImpl::I16(value as! i16), span: span)
+            I32 => Value(impl: ValueImpl::I32(value as! i32), span: span)
+            I64 => Value(impl: ValueImpl::I64(value as! i64), span: span)
+            else => this
+        }
+        I16(value) => match expected.impl {
+            I32 => Value(impl: ValueImpl::I32(value as! i32), span: span)
+            I64 => Value(impl: ValueImpl::I64(value as! i64), span: span)
+            else => this
+        }
+        I32(value) => match expected.impl {
+            I64 => Value(impl: ValueImpl::I64(value as! i64), span: span)
+            else => this
+        }
+        I64(value) => match expected.impl {
+            USize => Value(impl: ValueImpl::USize(value as! usize), span: span) // yuck
+            else => this
+        }
+        USize(value) => match expected.impl {
+            U64 => Value(impl: ValueImpl::U64(value as! u64), span: span)
+            else => this
+        }
+        OptionalSome => this
+        else => match expected.impl {
+            OptionalSome | OptionalNone => Value(impl: ValueImpl::OptionalSome(value: this), span: span)
+            else => this
+        }
     }
 }

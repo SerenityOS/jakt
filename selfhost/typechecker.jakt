@@ -20,12 +20,12 @@ import types {
     CheckedNamespace, CheckedNumericConstant, CheckedParameter, CheckedProgram, CheckedStatement, CheckedStruct,
     CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, EnumId, FunctionGenericParameter, FunctionId,
     LoadedModule, Module, ModuleId, NumberConstant, ResolvedNamespace, SafetyMode, Scope, ScopeId, StructId,
-    StructOrEnumId, Type, TypeId, VarId, builtin, flip_signedness, never_type_id, unknown_type_id, void_type_id,
+    StructOrEnumId, Type, TypeId, VarId, Value, builtin, flip_signedness, never_type_id, unknown_type_id, void_type_id,
 }
 import types
 import utility { panic, todo, Span, join, FilePath, FileId, escape_for_quotes }
 import compiler { Compiler }
-import interpreter { Interpreter, InterpreterScope, Value, ExecutionResult }
+import interpreter { Interpreter, InterpreterScope, ExecutionResult, value_to_checked_expression }
 
 struct Typechecker {
     compiler: Compiler
@@ -105,6 +105,8 @@ struct Typechecker {
     function get_scope(this, anon id: ScopeId) throws => .program.get_scope(id)
     function find_var_in_scope(this, scope_id: ScopeId, var: String) throws -> CheckedVariable? => .program.find_var_in_scope(scope_id, var)
 
+    function find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String) throws -> Value? => .program.find_comptime_binding_in_scope(scope_id, name)
+
     function get_root_path(this) throws -> FilePath {
         let file_id = .program.get_loaded_module("Root Module")!.file_id
 
@@ -146,41 +148,7 @@ struct Typechecker {
     function is_floating(this, anon type_id: TypeId) => .program.is_floating(type_id)
     function is_numeric(this, anon type_id: TypeId) => .program.is_numeric(type_id)
 
-    function create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String) throws -> ScopeId {
-        // Check that parent_scope_id is a valid ScopeId
-        if parent_scope_id.has_value() {
-            // Check that the ModuleId is valid
-            if parent_scope_id!.module_id.id >= .program.modules.size() {
-                .compiler.panic(format("create_scope: parent_scope_id.module is invalid! No module with id {}.", parent_scope_id!.module_id.id))
-            }
-
-            // Check that ScopeId.id is valid in the module
-            if parent_scope_id!.id >= .program.modules[parent_scope_id!.module_id.id].scopes.size() {
-                .compiler.panic(format("create_scope: parent_scope_id.id is invalid! Module {} does not have a scope with id {}.", parent_scope_id!.module_id.id, parent_scope_id!.id))
-            }
-        }
-
-        let none_string: String? = None
-
-        let scope = Scope(
-            namespace_name: none_string
-            vars: [:]
-            structs: [:]
-            functions: [:]
-            enums: [:]
-            types: [:]
-            imports: [:]
-            parent: parent_scope_id
-            children: []
-            can_throw
-            import_path_if_extern: None
-            debug_name
-        )
-
-        .program.modules[.current_module_id.id].scopes.push(scope)
-
-        return ScopeId(module_id: .current_module_id, id: .program.modules[.current_module_id.id].scopes.size() - 1)
-    }
+    function create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String) throws -> ScopeId => .program.create_scope(parent_scope_id, can_throw, debug_name, module_id: .current_module_id)
 
     function create_module(mut this, name: String, is_root: bool) throws -> ModuleId {
         let new_id = .program.modules.size()
@@ -347,19 +315,7 @@ struct Typechecker {
         return .substitute_typevars_in_type(type_id: found_type, generic_inferences)
     }
 
-    function find_or_add_type_id(mut this, anon type: Type) throws -> TypeId {
-        for module in .program.modules.iterator() {
-            for id in 0..module.types.size() {
-                if module.types[id].equals(type) {
-                    return TypeId(module: module.id, id)
-                }
-            }
-        }
-
-        .program.modules[.current_module_id.id].types.push(type)
-
-        return TypeId(module: .current_module_id, id: .current_module().types.size() - 1)
-    }
+    function find_or_add_type_id(mut this, anon type: Type) throws -> TypeId => .program.find_or_add_type_id(type, module_id: .current_module_id)
 
     function find_type_in_scope(this, scope_id: ScopeId, name: String) throws -> TypeId? {
         mut current = scope_id
@@ -501,6 +457,21 @@ struct Typechecker {
             }
         }
         scope.vars.set(key: name, value: var_id)
+        return true
+    }
+
+    function add_comptime_binding_to_scope(mut this, scope_id: ScopeId, name: String, value: Value, span: Span) throws -> bool {
+        mut scope = .get_scope(scope_id)
+        for existing in scope.comptime_bindings.iterator() {
+            if name == existing.0 {
+                .error_with_hint(
+                    message: format("Redefinition of comptime variable ‘{}’", name)
+                    span
+                    hint: "previous definition here"
+                    hint_span: existing.1.span)
+            }
+        }
+        scope.comptime_bindings.set(key: name, value)
         return true
     }
 
@@ -3758,6 +3729,51 @@ struct Typechecker {
             type_id: unknown_type_id())
     }
 
+    function typecheck_indexed_tuple(mut this, expr: ParsedExpression, index: usize, scope_id: ScopeId, is_optional: bool, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
+        let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
+
+        let tuple_struct_id = .find_struct_in_prelude("Tuple")
+        let optional_struct_id = .find_struct_in_prelude("Optional")
+        mut expr_type_id = unknown_type_id()
+
+        if .get_type(checked_expr.type()) is GenericInstance(id, args) {
+            if id.equals(tuple_struct_id) {
+                if is_optional {
+                    .error("Optional chaining is not allowed on a non-optional tuple type", span)
+                }
+                if (index >= args.size()){
+                    .error("Tuple index past the end of the tuple", span)
+                } else {
+                    expr_type_id = args[index]
+                }
+            } else if is_optional and id.equals(optional_struct_id) {
+                let inner_type_id = args[0]
+                if .get_type(inner_type_id) is GenericInstance(id, args) {
+                    if id.equals(tuple_struct_id) {
+                        if (index >= args.size()){
+                            .error("Optional-chained tuple index past the end of the tuple", span)
+                        } else {
+                            expr_type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [args[index]]))
+                        }
+                    }
+                } else {
+                    .error("Optional-chained tuple index used on non-tuple value", span)
+                }
+            }
+        } else if is_optional {
+            .error("Optional-chained tuple index used on non-tuple value", span)
+        } else {
+            .error("Tuple index used on non-tuple value", span)
+        }
+
+        return CheckedExpression::IndexedTuple(
+            expr: checked_expr
+            index: index
+            span
+            is_optional
+            type_id: expr_type_id)
+    }
+
     function check_member_access(mut this, accessor: ScopeId, accessee: ScopeId, member: CheckedVariable, span: Span) throws {
         match member.visibility {
             Private => {
@@ -4523,7 +4539,7 @@ struct Typechecker {
                     })
                 }
                 else => {
-                    .error(format("Variable '{}' not found", capture.name()), span)
+                        .error(format("Variable '{}' not found", capture.name()), span)
                 }
             }
         }
@@ -5639,7 +5655,7 @@ struct Typechecker {
             let function_ = .program.get_function(generic_checked_function_to_instantiate ?? resolved_function_id!)
             mut call_args: [Value] = []
             mut this_argument: Value? = None
-            mut eval_scope = InterpreterScope::create()
+            mut eval_scope = InterpreterScope::from_runtime_scope(scope_id: caller_scope_id, program: .program)
 
             for entry in generic_inferences.iterator() {
                 let (key, value) = entry
@@ -5707,6 +5723,7 @@ struct Typechecker {
             }
 
             mut result: ExecutionResult? = None
+            mut invocation_scope = InterpreterScope::create(type_bindings)
             try {
                 result = interpreter.execute(
                     function_to_run: resolved_function_id!
@@ -5714,7 +5731,7 @@ struct Typechecker {
                     this_argument: this_argument
                     arguments: call_args
                     call_span: span
-                    invocation_scope: InterpreterScope::create(type_bindings)
+                    invocation_scope
                 )
             } catch error {
                 .error(format("Compiletime call failed: {}", error), span)
@@ -5722,7 +5739,7 @@ struct Typechecker {
             }
 
             return match result! {
-                Return(x) => x.to_checked_expression(interpreter)
+                Return(x) => value_to_checked_expression(x, interpreter)
                 Throw(x) => {
                     .error(
                         format("Compiletime call failed: {}", x)

@@ -3,7 +3,7 @@ import types {
     CheckedMatchBody, CheckedNumericConstant, CheckedProgram, CheckedStatement, EnumId,
     BinaryOperator, CheckedEnumVariant, CheckedVariable, Visibility, CheckedParameter,
     EnumVariantPatternArgument, FunctionId, ModuleId, ResolvedNamespace, ScopeId, Span, StructId,
-    Type, TypeId, VarId, builtin, unknown_type_id,
+    Scope, Type, TypeId, VarId, Value, ValueImpl, builtin, unknown_type_id,
 }
 import utility { escape_for_quotes, interpret_escapes, panic }
 import error { JaktError, Message }
@@ -18,541 +18,357 @@ enum InterpretError : i32 {
     Unimplemented
 }
 
-boxed enum ValueImpl {
-    Void
-    Bool(bool)
-    U8(u8)
-    U16(u16)
-    U32(u32)
-    U64(u64)
-    I8(i8)
-    I16(i16)
-    I32(i32)
-    I64(i64)
-    F32(f32)
-    F64(f64)
-    USize(usize)
-    JaktString(String)
-    CChar(c_char)
-    CInt(c_int)
-    Struct(fields: [Value], struct_id: StructId, constructor: FunctionId?)
-    Class(fields: [Value], struct_id: StructId, constructor: FunctionId?)
-    Enum(fields: [Value], enum_id: EnumId, constructor: FunctionId)
-    JaktArray(values: [Value], type_id: TypeId)
-    JaktDictionary(keys: [Value], values: [Value], type_id: TypeId)
-    RawPtr(ValueImpl)
-    OptionalSome(value: Value)
-    OptionalNone
-    JaktTuple(fields: [Value], type_id: TypeId)
-    Function(captures: [String:Value], params: [String:(TypeId, CheckedExpression?)], return_type_id: TypeId, type_id: TypeId, block: CheckedBlock, can_throw: bool, checked_params: [CheckedParameter])
-
-    function copy(this) throws => match this {
-        Void => ValueImpl::Void
-        Bool(x) => ValueImpl::Bool(x)
-        U8(x) => ValueImpl::U8(x)
-        U16(x) => ValueImpl::U16(x)
-        U32(x) => ValueImpl::U32(x)
-        U64(x) => ValueImpl::U64(x)
-        I8(x) => ValueImpl::I8(x)
-        I16(x) => ValueImpl::I16(x)
-        I32(x) => ValueImpl::I32(x)
-        I64(x) => ValueImpl::I64(x)
-        F32(x) => ValueImpl::F32(x)
-        F64(x) => ValueImpl::F64(x)
-        USize(x) => ValueImpl::USize(x)
-        JaktString(x) => ValueImpl::JaktString(x)
-        CChar(x) => ValueImpl::CChar(x)
-        CInt(x) => ValueImpl::CInt(x)
-        Struct(fields, struct_id, constructor) => {
-            mut fields_copy: [Value] = [];
-            for field in fields.iterator() {
-                fields_copy.push(field.copy());
-            }
-            yield ValueImpl::Struct(fields: fields_copy, struct_id, constructor)
-        }
-        Class(fields, struct_id, constructor) => ValueImpl::Class(fields, struct_id, constructor)
-        Enum(fields, enum_id, constructor) => {
-            mut fields_copy: [Value] = [];
-            for field in fields.iterator() {
-                fields_copy.push(field.copy());
-            }
-            yield ValueImpl::Enum(fields: fields_copy, enum_id, constructor)
-        }
-        JaktArray(values, type_id) => {
-            mut values_copy: [Value] = [];
-            for value in values.iterator() {
-                values_copy.push(value.copy());
-            }
-            yield ValueImpl::JaktArray(values: values_copy, type_id)
-        }
-        JaktDictionary(keys, values, type_id) => {
-            mut values_copy: [Value] = []
-            for value in values.iterator() {
-                values_copy.push(value.copy())
-            }
-            mut keys_copy: [Value] = []
-            for key in keys.iterator() {
-                keys_copy.push(key.copy())
-            }
-            yield ValueImpl::JaktDictionary(keys: keys_copy, values: values_copy, type_id)
-        }
-        RawPtr(value) => ValueImpl::RawPtr(value)
-        OptionalSome(value) => ValueImpl::OptionalSome(value: value.copy())
-        OptionalNone => ValueImpl::OptionalNone
-        JaktTuple(fields, type_id) => {
-            mut values_copy: [Value] = [];
-            for value in fields.iterator() {
-                values_copy.push(value.copy());
-            }
-            yield ValueImpl::JaktTuple(fields: values_copy, type_id)
-        }
-        Function(captures, params, can_throw, return_type_id, type_id, block, checked_params) => ValueImpl::Function(captures, params, return_type_id, type_id, block, can_throw, checked_params)
+function cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interpreter: Interpreter, saturating: bool = false) throws -> Value {
+    let type = interpreter.program.get_type(type_id)
+    let is_optional = match type {
+        GenericInstance(id) => id.equals(interpreter.program.find_struct_in_prelude("Optional"))
+        else => false
     }
 
-    function equals(this, anon other: ValueImpl) => match this {
-        Void => other is Void
-        Bool(x) => match other { Bool(y) => x == y else => false }
-        U8(x) => match other { U8(y) => x == y else => false }
-        U16(x) => match other { U16(y) => y == x else => false }
-        U32(x) => match other { U32(y) => y == x else => false }
-        U64(x) => match other { U64(y) => y == x else => false }
-        I8(x) => match other { I8(y) => y == x else => false }
-        I16(x) => match other { I16(y) => y == x else => false }
-        I32(x) => match other { I32(y) => y == x else => false }
-        I64(x) => match other { I64(y) => y == x else => false }
-        F32(x) => match other { F32(y) => y == x else => false }
-        F64(x) => match other { F64(y) => y == x else => false }
-        USize(x) => match other { USize(y) => y == x else => false }
-        JaktString(x) => match other { JaktString(y) => y == x else => false }
-        CChar(x) => match other { CChar(y) => y == x else => false }
-        CInt(x) => match other { CInt(y) => y == x else => false }
-        else => false
+    return match type {
+        U8 => match this_value.impl {
+            U16(value) => Value(impl: ValueImpl::U8(value as! u8), span: this_value.span)
+            U32(value) => Value(impl: ValueImpl::U8(value as! u8), span: this_value.span)
+            U64(value) => Value(impl: ValueImpl::U8(value as! u8), span: this_value.span)
+            USize(value) => Value(impl: ValueImpl::U8(value as! u8), span: this_value.span)
+            else => match is_optional {
+                true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
+                else => this_value
+            }
+        }
+        U16 => match this_value.impl {
+            U8(value) => Value(impl: ValueImpl::U16(value as! u16), span: this_value.span)
+            U32(value) => Value(impl: ValueImpl::U16(value as! u16), span: this_value.span)
+            U64(value) => Value(impl: ValueImpl::U16(value as! u16), span: this_value.span)
+            USize(value) => Value(impl: ValueImpl::U16(value as! u16), span: this_value.span)
+            else => match is_optional {
+                true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
+                else => this_value
+            }
+        }
+        U32 => match this_value.impl {
+            U8(value) => Value(impl: ValueImpl::U32(value as! u32), span: this_value.span)
+            U16(value) => Value(impl: ValueImpl::U32(value as! u32), span: this_value.span)
+            U64(value) => Value(impl: ValueImpl::U32(value as! u32), span: this_value.span)
+            USize(value) => Value(impl: ValueImpl::U32(value as! u32), span: this_value.span)
+            else => match is_optional {
+                true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
+                else => this_value
+            }
+        }
+        U64 => match this_value.impl {
+            U8(value) => Value(impl: ValueImpl::U64(value as! u64), span: this_value.span)
+            U16(value) => Value(impl: ValueImpl::U64(value as! u64), span: this_value.span)
+            U32(value) => Value(impl: ValueImpl::U64(value as! u64), span: this_value.span)
+            USize(value) => Value(impl: ValueImpl::U64(value as! u64), span: this_value.span)
+            else => match is_optional {
+                true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
+                else => this_value
+            }
+        }
+        I8 => match this_value.impl {
+            I16(value) => Value(impl: ValueImpl::I8(value as! i8), span: this_value.span)
+            I32(value) => Value(impl: ValueImpl::I8(value as! i8), span: this_value.span)
+            I64(value) => Value(impl: ValueImpl::I8(value as! i8), span: this_value.span)
+            else => match is_optional {
+                true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
+                else => this_value
+            }
+        }
+        I16 => match this_value.impl {
+            I8(value) => Value(impl: ValueImpl::I16(value as! i16), span: this_value.span)
+            I32(value) => Value(impl: ValueImpl::I16(value as! i16), span: this_value.span)
+            I64(value) => Value(impl: ValueImpl::I16(value as! i16), span: this_value.span)
+            else => match is_optional {
+                true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
+                else => this_value
+            }
+        }
+        I32 => match this_value.impl {
+            I8(value) => Value(impl: ValueImpl::I32(value as! i32), span: this_value.span)
+            I16(value) => Value(impl: ValueImpl::I32(value as! i32), span: this_value.span)
+            I64(value) => Value(impl: ValueImpl::I32(value as! i32), span: this_value.span)
+            else => match is_optional {
+                true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
+                else => this_value
+            }
+        }
+        I64 => match this_value.impl {
+            I8(value) => Value(impl: ValueImpl::I64(value as! i64), span: this_value.span)
+            I16(value) => Value(impl: ValueImpl::I64(value as! i64), span: this_value.span)
+            I32(value) => Value(impl: ValueImpl::I64(value as! i64), span: this_value.span)
+            else => match is_optional {
+                true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
+                else => this_value
+            }
+        }
+        Usize => match this_value.impl {
+            U64(value) => Value(impl: ValueImpl::USize(value as! usize), span: this_value.span)
+            else => match is_optional {
+                true => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
+                else => this_value
+            }
+        }
+        else => match is_optional {
+            true => match this_value.impl {
+                OptionalSome | OptionalNone => this_value
+                else => Value(impl: ValueImpl::OptionalSome(value: this_value), span: this_value.span),
+            }
+            else => this_value
+        }
     }
 }
 
-struct Value {
-    impl: ValueImpl
-    span: Span
-
-    function copy(this) throws => Value(impl: .impl.copy(), span: .span)
-    function type_name(this) => match .impl {
-        Void => "void"
-        Bool => "bool"
-        U8 => "u8"
-        U16 => "u16"
-        U32 => "u32"
-        U64 => "u64"
-        I8 => "i18"
-        I16 => "i16"
-        I32 => "i32"
-        I64 => "i64"
-        F32 => "f32"
-        F64 => "f64"
-        USize => "usize"
-        JaktString => "String"
-        CChar => "c_char"
-        CInt => "c_int"
-        Struct => "struct <T>"
-        Class => "class <T>"
-        Enum => "enum <T>"
-        JaktArray => "Array"
-        JaktDictionary => "Dictionary"
-        RawPtr => "raw <T>"
-        OptionalSome => "Some"
-        OptionalNone => "None"
-        JaktTuple => "Tuple"
-        Function => "Function"
+function value_to_checked_expression(anon this_value: Value, anon mut interpreter: Interpreter) throws -> CheckedExpression => match this_value.impl {
+    Void => {
+        interpreter.error("Cannot convert void to expression", this_value.span)
+        throw Error::from_errno(InterpretError::InvalidType as! i32)
     }
-    function cast(this, anon expected: Value, span: Span) throws -> Value => match .impl {
-        U8(value) => match expected.impl {
-            U16 => Value(impl: ValueImpl::U16(value as! u16), span: span)
-            U32 => Value(impl: ValueImpl::U32(value as! u32), span: span)
-            U64 => Value(impl: ValueImpl::U64(value as! u64), span: span)
-            USize => Value(impl: ValueImpl::USize(value as! usize), span: span)
-            else => this
-        }
-        U16(value) => match expected.impl {
-            U32 => Value(impl: ValueImpl::U32(value as! u32), span: span)
-            U64 => Value(impl: ValueImpl::U64(value as! u64), span: span)
-            USize => Value(impl: ValueImpl::USize(value as! usize), span: span)
-            else => this 
-        }
-        U32(value) => match expected.impl {
-            U64 => Value(impl: ValueImpl::U64(value as! u64), span: span)
-            USize => Value(impl: ValueImpl::USize(value as! usize), span: span)
-            else => this
-        }
-        U64(value) => match expected.impl {
-            USize => Value(impl: ValueImpl::USize(value as! usize), span: span)
-            else => this
-        }
-        I8(value) => match expected.impl {
-            I16 => Value(impl: ValueImpl::I16(value as! i16), span: span)
-            I32 => Value(impl: ValueImpl::I32(value as! i32), span: span)
-            I64 => Value(impl: ValueImpl::I64(value as! i64), span: span)
-            else => this
-        }
-        I16(value) => match expected.impl {
-            I32 => Value(impl: ValueImpl::I32(value as! i32), span: span)
-            I64 => Value(impl: ValueImpl::I64(value as! i64), span: span)
-            else => this
-        }
-        I32(value) => match expected.impl {
-            I64 => Value(impl: ValueImpl::I64(value as! i64), span: span)
-            else => this
-        }
-        I64(value) => match expected.impl {
-            USize => Value(impl: ValueImpl::USize(value as! usize), span: span) // yuck
-            else => this
-        }
-        USize(value) => match expected.impl {
-            U64 => Value(impl: ValueImpl::U64(value as! u64), span: span)
-            else => this
-        }
-        OptionalSome => this
-        else => match expected.impl {
-            OptionalSome | OptionalNone => Value(impl: ValueImpl::OptionalSome(value: this), span: span)
-            else => this
-        }
+    Bool(x)  => CheckedExpression::Boolean(val: x, span: this_value.span)
+    U8(x)    => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(x), span: this_value.span, type_id: builtin(BuiltinType::U8))
+    U16(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U16(x), span: this_value.span, type_id: builtin(BuiltinType::U16))
+    U32(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U32(x), span: this_value.span, type_id: builtin(BuiltinType::U32))
+    U64(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(x), span: this_value.span, type_id: builtin(BuiltinType::U64))
+    I8(x)    => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I8(x), span: this_value.span, type_id: builtin(BuiltinType::I8))
+    I16(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I16(x), span: this_value.span, type_id: builtin(BuiltinType::I16))
+    I32(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(x), span: this_value.span, type_id: builtin(BuiltinType::I32))
+    I64(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I64(x), span: this_value.span, type_id: builtin(BuiltinType::I64))
+    F32(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F32(x), span: this_value.span, type_id: builtin(BuiltinType::F32))
+    F64(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F64(x), span: this_value.span, type_id: builtin(BuiltinType::F64))
+    USize(x) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(x as! u64), span: this_value.span, type_id: builtin(BuiltinType::Usize))
+    JaktString(x) => CheckedExpression::QuotedString(val: escape_for_quotes(x), span: this_value.span)
+    CChar(x) => CheckedExpression::CharacterConstant(val: format("{}", x), span: this_value.span)
+    CInt(x)  => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(x as! i32), span: this_value.span, type_id: builtin(BuiltinType::CInt))
+    OptionalNone => CheckedExpression::OptionalNone(span: this_value.span, type_id: unknown_type_id())
+    OptionalSome(value) => {
+        let expr = value_to_checked_expression(value, interpreter)
+        let inner_type_id = expr.type()
+        let optional_struct_id = interpreter.program.find_struct_in_prelude("Optional")
+        let type = Type::GenericInstance(id: optional_struct_id, args: [inner_type_id])
+        let type_id = interpreter.find_or_add_type_id(type)
+        yield CheckedExpression::OptionalSome(expr, span: this_value.span, type_id)
     }
-
-    function cast_to_type(this, anon type_id: TypeId, interpreter: Interpreter, saturating: bool = false) throws -> Value {
-        let type = interpreter.program.get_type(type_id)
-        let is_optional = match type {
-            GenericInstance(id) => id.equals(interpreter.program.find_struct_in_prelude("Optional"))
-            else => false
+    JaktTuple(fields, type_id) => {
+        mut vals: [CheckedExpression] = []
+        for field in fields.iterator() {
+            vals.push(value_to_checked_expression(field, interpreter))
         }
-
-        return match type {
-            U8 => match .impl {
-                U16(value) => Value(impl: ValueImpl::U8(value as! u8), span: .span)
-                U32(value) => Value(impl: ValueImpl::U8(value as! u8), span: .span)
-                U64(value) => Value(impl: ValueImpl::U8(value as! u8), span: .span)
-                USize(value) => Value(impl: ValueImpl::U8(value as! u8), span: .span)
-                else => match is_optional {
-                    true => Value(impl: ValueImpl::OptionalSome(value: this), span: .span),
-                    else => this
-                }
-            }
-            U16 => match .impl {
-                U8(value) => Value(impl: ValueImpl::U16(value as! u16), span: .span)
-                U32(value) => Value(impl: ValueImpl::U16(value as! u16), span: .span)
-                U64(value) => Value(impl: ValueImpl::U16(value as! u16), span: .span)
-                USize(value) => Value(impl: ValueImpl::U16(value as! u16), span: .span)
-                else => match is_optional {
-                    true => Value(impl: ValueImpl::OptionalSome(value: this), span: .span),
-                    else => this
-                }
-            }
-            U32 => match .impl {
-                U8(value) => Value(impl: ValueImpl::U32(value as! u32), span: .span)
-                U16(value) => Value(impl: ValueImpl::U32(value as! u32), span: .span)
-                U64(value) => Value(impl: ValueImpl::U32(value as! u32), span: .span)
-                USize(value) => Value(impl: ValueImpl::U32(value as! u32), span: .span)
-                else => match is_optional {
-                    true => Value(impl: ValueImpl::OptionalSome(value: this), span: .span),
-                    else => this
-                }
-            }
-            U64 => match .impl {
-                U8(value) => Value(impl: ValueImpl::U64(value as! u64), span: .span)
-                U16(value) => Value(impl: ValueImpl::U64(value as! u64), span: .span)
-                U32(value) => Value(impl: ValueImpl::U64(value as! u64), span: .span)
-                USize(value) => Value(impl: ValueImpl::U64(value as! u64), span: .span)
-                else => match is_optional {
-                    true => Value(impl: ValueImpl::OptionalSome(value: this), span: .span),
-                    else => this
-                }
-            }
-            I8 => match .impl {
-                I16(value) => Value(impl: ValueImpl::I8(value as! i8), span: .span)
-                I32(value) => Value(impl: ValueImpl::I8(value as! i8), span: .span)
-                I64(value) => Value(impl: ValueImpl::I8(value as! i8), span: .span)
-                else => match is_optional {
-                    true => Value(impl: ValueImpl::OptionalSome(value: this), span: .span),
-                    else => this
-                }
-            }
-            I16 => match .impl {
-                I8(value) => Value(impl: ValueImpl::I16(value as! i16), span: .span)
-                I32(value) => Value(impl: ValueImpl::I16(value as! i16), span: .span)
-                I64(value) => Value(impl: ValueImpl::I16(value as! i16), span: .span)
-                else => match is_optional {
-                    true => Value(impl: ValueImpl::OptionalSome(value: this), span: .span),
-                    else => this
-                }
-            }
-            I32 => match .impl {
-                I8(value) => Value(impl: ValueImpl::I32(value as! i32), span: .span)
-                I16(value) => Value(impl: ValueImpl::I32(value as! i32), span: .span)
-                I64(value) => Value(impl: ValueImpl::I32(value as! i32), span: .span)
-                else => match is_optional {
-                    true => Value(impl: ValueImpl::OptionalSome(value: this), span: .span),
-                    else => this
-                }
-            }
-            I64 => match .impl {
-                I8(value) => Value(impl: ValueImpl::I64(value as! i64), span: .span)
-                I16(value) => Value(impl: ValueImpl::I64(value as! i64), span: .span)
-                I32(value) => Value(impl: ValueImpl::I64(value as! i64), span: .span)
-                else => match is_optional {
-                    true => Value(impl: ValueImpl::OptionalSome(value: this), span: .span),
-                    else => this
-                }
-            }
-            Usize => match .impl {
-                U64(value) => Value(impl: ValueImpl::USize(value as! usize), span: .span)
-                else => match is_optional {
-                    true => Value(impl: ValueImpl::OptionalSome(value: this), span: .span),
-                    else => this
-                }
-            }
-            else => match is_optional {
-                true => match .impl {
-                    OptionalSome | OptionalNone => this
-                    else => Value(impl: ValueImpl::OptionalSome(value: this), span: .span),
-                }
-                else => this
-            }
-        }
+        yield CheckedExpression::JaktTuple(vals, span: this_value.span, type_id)
     }
-
-    function to_checked_expression(this, anon mut interpreter: Interpreter) throws -> CheckedExpression => match .impl {
-        Void => {
-            interpreter.error("Cannot convert void to expression", .span)
+    Struct(fields, struct_id, constructor)
+    | Class(fields, struct_id, constructor) => {
+        if not constructor.has_value() {
+            interpreter.error_with_hint(
+                "Cannot convert struct to expression without constructor", this_value.span,
+                "Given struct cannot be created from its contents in any known way", this_value.span)
             throw Error::from_errno(InterpretError::InvalidType as! i32)
         }
-        Bool(x)  => CheckedExpression::Boolean(val: x, span: .span)
-        U8(x)    => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U8(x), span: .span, type_id: builtin(BuiltinType::U8))
-        U16(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U16(x), span: .span, type_id: builtin(BuiltinType::U16))
-        U32(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U32(x), span: .span, type_id: builtin(BuiltinType::U32))
-        U64(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::U64(x), span: .span, type_id: builtin(BuiltinType::U64))
-        I8(x)    => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I8(x), span: .span, type_id: builtin(BuiltinType::I8))
-        I16(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I16(x), span: .span, type_id: builtin(BuiltinType::I16))
-        I32(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(x), span: .span, type_id: builtin(BuiltinType::I32))
-        I64(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I64(x), span: .span, type_id: builtin(BuiltinType::I64))
-        F32(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F32(x), span: .span, type_id: builtin(BuiltinType::F32))
-        F64(x)   => CheckedExpression::NumericConstant(val: CheckedNumericConstant::F64(x), span: .span, type_id: builtin(BuiltinType::F64))
-        USize(x) => CheckedExpression::NumericConstant(val: CheckedNumericConstant::USize(x as! u64), span: .span, type_id: builtin(BuiltinType::Usize))
-        JaktString(x) => CheckedExpression::QuotedString(val: escape_for_quotes(x), span: .span)
-        CChar(x) => CheckedExpression::CharacterConstant(val: format("{}", x), span: .span)
-        CInt(x)  => CheckedExpression::NumericConstant(val: CheckedNumericConstant::I32(x as! i32), span: .span, type_id: builtin(BuiltinType::CInt))
-        OptionalNone => CheckedExpression::OptionalNone(span: .span, type_id: unknown_type_id())
-        OptionalSome(value) => {
-            let expr = value.to_checked_expression(interpreter)
-            let inner_type_id = expr.type()
-            let optional_struct_id = interpreter.program.find_struct_in_prelude("Optional")
-            let type = Type::GenericInstance(id: optional_struct_id, args: [inner_type_id])
-            let type_id = interpreter.find_or_add_type_id(type)
-            yield CheckedExpression::OptionalSome(expr, span: .span, type_id)
+
+        mut materialised_fields: [CheckedExpression] = []
+        for field in fields.iterator() {
+            materialised_fields.push(value_to_checked_expression(field, interpreter))
         }
-        JaktTuple(fields, type_id) => {
-            mut vals: [CheckedExpression] = []
-            for field in fields.iterator() {
-                vals.push(field.to_checked_expression(interpreter))
+
+        let struct_ = interpreter.program.get_struct(struct_id)
+        mut reversed_namespace: [ResolvedNamespace] = []
+        mut scope_id: ScopeId? = struct_.scope_id
+        while scope_id.has_value() {
+            let scope = interpreter.program.get_scope(scope_id!)
+            if scope.namespace_name.has_value() {
+                reversed_namespace.push(ResolvedNamespace(name: scope.namespace_name!, generic_parameters: None))
             }
-            yield CheckedExpression::JaktTuple(vals, span: .span, type_id)
+            scope_id = scope.parent
         }
-        Struct(fields, struct_id, constructor)
-        | Class(fields, struct_id, constructor) => {
-            if not constructor.has_value() {
-                interpreter.error_with_hint(
-                    "Cannot convert struct to expression without constructor", .span,
-                    "Given struct cannot be created from its contents in any known way", .span)
-                throw Error::from_errno(InterpretError::InvalidType as! i32)
-            }
-
-            mut materialised_fields: [CheckedExpression] = []
-            for field in fields.iterator() {
-                materialised_fields.push(field.to_checked_expression(interpreter))
-            }
-
-            let struct_ = interpreter.program.get_struct(struct_id)
-            mut reversed_namespace: [ResolvedNamespace] = []
-            mut scope_id: ScopeId? = struct_.scope_id
-            while scope_id.has_value() {
-                let scope = interpreter.program.get_scope(scope_id!)
-                if scope.namespace_name.has_value() {
-                    reversed_namespace.push(ResolvedNamespace(name: scope.namespace_name!, generic_parameters: None))
-                }
-                scope_id = scope.parent
-            }
-            mut namespace_: [ResolvedNamespace] = []
-            for i in reversed_namespace.size()..0 {
-                namespace_.push(reversed_namespace[i - 1])
-            }
-
-            let name = struct_.name
-            mut args: [(String, CheckedExpression)] = []
-            for i in 0..materialised_fields.size() {
-                let arg = materialised_fields[i]
-                let label = interpreter.program.get_variable(struct_.fields[i]).name
-                args.push((label, arg))
-            }
-
-            let callee = interpreter.program.get_function(constructor!)
-
-            let call = CheckedCall(
-                namespace_
-                name
-                args
-                type_args: []
-                function_id: constructor
-                return_type: struct_.type_id
-                callee_throws: callee.can_throw
-            )
-
-            yield CheckedExpression::Call(
-                call
-                span: .span
-                type_id: struct_.type_id
-            )
+        mut namespace_: [ResolvedNamespace] = []
+        for i in reversed_namespace.size()..0 {
+            namespace_.push(reversed_namespace[i - 1])
         }
-        Enum(fields, enum_id, constructor) => {
-            mut materialised_fields: [CheckedExpression] = []
-            for field in fields.iterator() {
-                materialised_fields.push(field.to_checked_expression(interpreter))
-            }
 
-            let enum_ = interpreter.program.get_enum(enum_id)
-            mut reversed_namespace: [ResolvedNamespace] = []
-            mut scope_id: ScopeId? = enum_.scope_id
-            while scope_id.has_value() {
-                let scope = interpreter.program.get_scope(scope_id!)
-                if scope.namespace_name.has_value() {
-                    reversed_namespace.push(ResolvedNamespace(name: scope.namespace_name!, generic_parameters: None))
-                }
-                scope_id = scope.parent
-            }
-            mut namespace_: [ResolvedNamespace] = []
-            for i in reversed_namespace.size()..0 {
-                namespace_.push(reversed_namespace[i - 1])
-            }
-
-            // FIXME: Fill these in.
-            namespace_.push(ResolvedNamespace(name: enum_.name, generic_parameters: None))
-
-            let name = enum_.name
-            mut args: [(String, CheckedExpression)] = []
-            for i in 0..materialised_fields.size() {
-                let arg = materialised_fields[i]
-                // FIXME: Fill this thing
-                // let label = interpreter.program.get_variable(enum_.fields[i]).name
-                args.push(("", arg))
-            }
-
-            let callee = interpreter.program.get_function(constructor)
-
-            let call = CheckedCall(
-                namespace_
-                name: callee.name
-                args
-                type_args: []
-                function_id: constructor
-                return_type: enum_.type_id
-                callee_throws: callee.can_throw
-            )
-
-            yield CheckedExpression::Call(
-                call
-                span: .span
-                type_id: enum_.type_id
-            )
+        let name = struct_.name
+        mut args: [(String, CheckedExpression)] = []
+        for i in 0..materialised_fields.size() {
+            let arg = materialised_fields[i]
+            let label = interpreter.program.get_variable(struct_.fields[i]).name
+            args.push((label, arg))
         }
-        JaktArray(values, type_id) => {
-            mut vals: [CheckedExpression] = []
-            for value in values.iterator() {
-                vals.push(value.to_checked_expression(interpreter))
-            }
 
-            let inner_type_id = match interpreter.program.get_type(type_id) {
-                GenericInstance(args) => args[0]
-                else => {
-                    panic("Expected generic instance of Array while materialising an array")
-                }
-            }
+        let callee = interpreter.program.get_function(constructor!)
 
-            yield CheckedExpression::JaktArray(
-                vals
-                repeat: None
-                span: .span
-                type_id
-                inner_type_id
-            )
+        let call = CheckedCall(
+            namespace_
+            name
+            args
+            type_args: []
+            function_id: constructor
+            return_type: struct_.type_id
+            callee_throws: callee.can_throw
+        )
+
+        yield CheckedExpression::Call(
+            call
+            span: this_value.span
+            type_id: struct_.type_id
+        )
+    }
+    Enum(fields, enum_id, constructor) => {
+        mut materialised_fields: [CheckedExpression] = []
+        for field in fields.iterator() {
+            materialised_fields.push(value_to_checked_expression(field, interpreter))
         }
-        JaktDictionary(keys, values, type_id) => {
-            mut vals: [(CheckedExpression, CheckedExpression)] = []
-            for i in 0..keys.size() {
-                vals.push((
-                    keys[i].to_checked_expression(interpreter),
-                    values[i].to_checked_expression(interpreter)
-                ))
-            }
 
-            let (key_type_id, value_type_id) = match interpreter.program.get_type(type_id) {
-                GenericInstance(args) => (args[0], args[1])
-                else => {
-                    panic("Expected generic instance of Dictionary while materialising an array")
-                }
+        let enum_ = interpreter.program.get_enum(enum_id)
+        mut reversed_namespace: [ResolvedNamespace] = []
+        mut scope_id: ScopeId? = enum_.scope_id
+        while scope_id.has_value() {
+            let scope = interpreter.program.get_scope(scope_id!)
+            if scope.namespace_name.has_value() {
+                reversed_namespace.push(ResolvedNamespace(name: scope.namespace_name!, generic_parameters: None))
             }
-
-            yield CheckedExpression::JaktDictionary(
-                vals
-                span: .span
-                type_id
-                key_type_id
-                value_type_id
-            )
+            scope_id = scope.parent
         }
-        Function(captures, can_throw, return_type_id, type_id, block, checked_params) => {
-            // As all the captures are compiletime objects, we can simply inline them as assignments inside the block :P
-            mut statements: [CheckedStatement] = []
-            for capture in captures.iterator() {
-                let value = capture.1.to_checked_expression(interpreter)
-                let var_id = interpreter.program.get_module(id: type_id.module).add_variable(CheckedVariable(
-                    name: capture.0
-                    type_id: value.type()
-                    is_mutable: false
-                    definition_span: .span
-                    type_span: None
-                    visibility: Visibility::Public
-                ))
-                statements.push(CheckedStatement::VarDecl(
-                    var_id
-                    init: value
-                    span: .span
-                ))
-            }
-
-            // Then append all the statements in the block
-            for statement in block.statements.iterator() {
-                statements.push(statement)
-            }
-
-            let new_block = CheckedBlock(
-                statements
-                scope_id: block.scope_id
-                control_flow: block.control_flow
-                yielded_type: block.yielded_type
-            )
-
-            yield CheckedExpression::Function(
-                captures: []
-                params: checked_params
-                can_throw
-                return_type_id
-                block: new_block
-                span: .span
-                type_id
-            )
+        mut namespace_: [ResolvedNamespace] = []
+        for i in reversed_namespace.size()..0 {
+            namespace_.push(reversed_namespace[i - 1])
         }
-        else => {
-            interpreter.error(
-                format("Cannot materialise the type {}", .impl)
-                .span
-            )
-            throw Error::from_errno(InterpretError::Unimplemented as! i32);
+
+        // FIXME: Fill these in.
+        namespace_.push(ResolvedNamespace(name: enum_.name, generic_parameters: None))
+
+        let name = enum_.name
+        mut args: [(String, CheckedExpression)] = []
+        for i in 0..materialised_fields.size() {
+            let arg = materialised_fields[i]
+            // FIXME: Fill this thing
+            // let label = interpreter.program.get_variable(enum_.fields[i]).name
+            args.push(("", arg))
         }
+
+        let callee = interpreter.program.get_function(constructor)
+
+        let call = CheckedCall(
+            namespace_
+            name: callee.name
+            args
+            type_args: []
+            function_id: constructor
+            return_type: enum_.type_id
+            callee_throws: callee.can_throw
+        )
+
+        yield CheckedExpression::Call(
+            call
+            span: this_value.span
+            type_id: enum_.type_id
+        )
+    }
+    JaktArray(values, type_id) => {
+        mut vals: [CheckedExpression] = []
+        for value in values.iterator() {
+            vals.push(value_to_checked_expression(value, interpreter))
+        }
+
+        let inner_type_id = match interpreter.program.get_type(type_id) {
+            GenericInstance(args) => args[0]
+            else => {
+                panic("Expected generic instance of Array while materialising an array")
+            }
+        }
+
+        yield CheckedExpression::JaktArray(
+            vals
+            repeat: None
+            span: this_value.span
+            type_id
+            inner_type_id
+        )
+    }
+    JaktDictionary(keys, values, type_id) => {
+        mut vals: [(CheckedExpression, CheckedExpression)] = []
+        for i in 0..keys.size() {
+            vals.push((
+                value_to_checked_expression(keys[i], interpreter),
+                value_to_checked_expression(values[i], interpreter)
+            ))
+        }
+
+        let (key_type_id, value_type_id) = match interpreter.program.get_type(type_id) {
+            GenericInstance(args) => (args[0], args[1])
+            else => {
+                panic("Expected generic instance of Dictionary while materialising an array")
+            }
+        }
+
+        yield CheckedExpression::JaktDictionary(
+            vals
+            span: this_value.span
+            type_id
+            key_type_id
+            value_type_id
+        )
+    }
+    Function(captures, can_throw, return_type_id, type_id, block, checked_params) => {
+        // As all the captures are compiletime objects, we can simply inline them as assignments inside the block :P
+        let parent_scope = interpreter.program.get_scope(block.scope_id)
+        let inherited_scope_id = interpreter.program.create_scope(
+            parent_scope_id: block.scope_id
+            can_throw: parent_scope.can_throw
+            debug_name: format("synthetic({})", parent_scope.debug_name)
+            module_id: type_id.module)
+
+        mut inherited_scope = interpreter.program.get_scope(inherited_scope_id)
+        mut statements: [CheckedStatement] = []
+        for capture in captures.iterator() {
+            let value = value_to_checked_expression(capture.1, interpreter)
+            let var_id = interpreter.program.get_module(id: type_id.module).add_variable(CheckedVariable(
+                name: capture.0
+                type_id: value.type()
+                is_mutable: false
+                definition_span: this_value.span
+                type_span: None
+                visibility: Visibility::Public
+            ))
+            statements.push(CheckedStatement::VarDecl(
+                var_id
+                init: value
+                span: this_value.span
+            ))
+
+            inherited_scope.comptime_bindings.set(capture.0, capture.1)
+        }
+
+        // Then append all the statements in the block
+        for statement in block.statements.iterator() {
+            statements.push(statement)
+        }
+
+        let new_block = CheckedBlock(
+            statements
+            scope_id: inherited_scope_id
+            control_flow: block.control_flow
+            yielded_type: block.yielded_type
+            yielded_none: block.yielded_none
+        )
+
+        for param in checked_params.iterator() {
+            println("Param: {}", interpreter.program.type_name(param.variable.type_id))
+        }
+
+        yield CheckedExpression::Function(
+            captures: []
+            params: checked_params
+            can_throw
+            return_type_id
+            block: new_block
+            span: this_value.span
+            type_id
+        )
+    }
+    else => {
+        interpreter.error(
+            format("Cannot materialise the type {}", this_value.impl)
+            this_value.span
+        )
+        throw Error::from_errno(InterpretError::Unimplemented as! i32);
     }
 }
 
@@ -573,6 +389,29 @@ class InterpreterScope {
         type_bindings
         defers: []
     )
+
+    public function from_runtime_scope(scope_id: ScopeId, program: CheckedProgram, parent: InterpreterScope? = None) throws -> InterpreterScope {
+        mut bindings: [String:Value] = [:]
+        mut current_id: ScopeId? = scope_id
+        while current_id.has_value() {
+            let scope = program.get_scope(current_id!)
+            for pair in scope.comptime_bindings.iterator() {
+                if bindings.contains(pair.0) {
+                    continue
+                }
+
+                bindings.set(pair.0, pair.1)
+            }
+            current_id = scope.parent
+        }
+
+        return InterpreterScope(
+            bindings
+            parent
+            type_bindings: [:]
+            defers: []
+        )
+    }
 
     public function must_get(this, anon name: String) throws -> Value {
         if .bindings.contains(name) {
@@ -845,7 +684,7 @@ class Interpreter {
 
                     let output_type_id = type_bindings.get(function_.generic_params[0].type_id().to_string())
                     yield StatementResult::JustValue(
-                        arguments[0].cast_to_type(output_type_id!, interpreter: this, saturating: true)
+                        cast_value_to_type(arguments[0], output_type_id!, interpreter: this, saturating: true)
                     )
                 }
                 "unchecked_mul" => {
@@ -1827,7 +1666,7 @@ class Interpreter {
                 }
 
                 return match .execute_block(block: function_to_run.block, scope, call_span) {
-                    Return(value) | JustValue(value) => ExecutionResult::Return(value.cast_to_type(function_to_run.return_type_id, interpreter: this))
+                    Return(value) | JustValue(value) => ExecutionResult::Return(cast_value_to_type(value, function_to_run.return_type_id, interpreter: this))
                     Throw(value) => ExecutionResult::Throw(value)
                     Continue | Break | Yield => {
                         panic("Invalid control flow")
@@ -3725,8 +3564,8 @@ class Interpreter {
     public function execute_expression(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match .current_function_id.has_value() { 
         false => .execute_expression_without_cast(expr, scope)
         else => match .execute_expression_without_cast(expr, scope) {
-            Return(value) => StatementResult::Return(value.cast_to_type(.program.get_function(.current_function_id!).return_type_id, interpreter: this))
-            JustValue(value) => StatementResult::JustValue(value.cast_to_type(expr.type(), interpreter: this))
+            Return(value) => StatementResult::Return(cast_value_to_type(value, .program.get_function(.current_function_id!).return_type_id, interpreter: this))
+            JustValue(value) => StatementResult::JustValue(cast_value_to_type(value, expr.type(), interpreter: this))
             Throw(value) => StatementResult::Throw(value)
             Yield(value) => StatementResult::Yield(value)
             Break => StatementResult::Break
@@ -4003,12 +3842,12 @@ class Interpreter {
                     }
                 })
                 TypeCast(cast) => match cast {
-                    Infallible(type_id) => StatementResult::JustValue(value.cast_to_type(type_id, interpreter: this))
+                    Infallible(type_id) => StatementResult::JustValue(cast_value_to_type(value, type_id, interpreter: this))
                     Fallible(type_id) => {
                         // FIXME: Actually implement this :)
                         yield StatementResult::JustValue(
                             Value(
-                                impl: ValueImpl::OptionalSome(value: value.cast_to_type(type_id, interpreter: this))
+                                impl: ValueImpl::OptionalSome(value: cast_value_to_type(value, type_id, interpreter: this))
                                 span
                             )
                         )
