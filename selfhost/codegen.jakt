@@ -1639,6 +1639,9 @@ struct CodeGenerator {
             output += ")"
             yield output
         }
+        ComptimeIndex() => {
+            panic("Internal error: ComptimeIndex should have been replaced by now")
+        }
         Block(block) => .codegen_block(block)
         Call(call) => .codegen_call(call)
         MethodCall(expr, call, is_optional) => .codegen_method_call(expr, call, is_optional)
