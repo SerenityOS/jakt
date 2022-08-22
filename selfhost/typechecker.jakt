@@ -4303,14 +4303,24 @@ struct Typechecker {
             yield .typecheck_unary_operation(checked_expr, checked_op, span, scope_id, safety_mode)
         }
         BinaryOp(lhs, op, rhs, span) => {
-            let checked_lhs = .typecheck_expression_and_dereference_if_needed(lhs, scope_id, safety_mode, type_hint: None, span)
-            let lhs_type = checked_lhs.type()
+            mut checked_lhs: CheckedExpression? = None
+            mut checked_rhs: CheckedExpression? = None
+            if lhs is NumericConstant(val: UnknownSigned) or lhs is NumericConstant(val: UnknownUnsigned) {
+                // If we have a constant on the lhs, infer starting the the right:
+                checked_rhs = .typecheck_expression_and_dereference_if_needed(rhs, scope_id, safety_mode, type_hint: None, span)
+                let hint = checked_rhs!.type()
 
-            mut checked_rhs = .typecheck_expression_and_dereference_if_needed(rhs, scope_id, safety_mode, type_hint: lhs_type, span)
+                checked_lhs = .typecheck_expression_and_dereference_if_needed(lhs, scope_id, safety_mode, type_hint: hint, span)
+            } else {
+                checked_lhs = .typecheck_expression_and_dereference_if_needed(lhs, scope_id, safety_mode, type_hint: None, span)
+                let hint = checked_lhs!.type()
 
-            let output_type = .typecheck_binary_operation(checked_lhs, op, checked_rhs, scope_id, span)
+                checked_rhs = .typecheck_expression_and_dereference_if_needed(rhs, scope_id, safety_mode, type_hint: hint, span)
+            }
 
-            yield CheckedExpression::BinaryOp(lhs: checked_lhs, op, rhs: checked_rhs, span, type_id: output_type)
+            let output_type = .typecheck_binary_operation(checked_lhs: checked_lhs!, op, checked_rhs: checked_rhs!, scope_id, span)
+
+            yield CheckedExpression::BinaryOp(lhs: checked_lhs!, op, rhs: checked_rhs!, span, type_id: output_type)
         }
         OptionalNone(span) => {
             mut type_hint_unwrapped = type_hint
