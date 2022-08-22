@@ -125,7 +125,7 @@ endif()
 add_custom_command(
   TARGET "jakt_stage${FINAL_STAGE}"
   POST_BUILD
-  COMMAND "${CMAKE_COMMAND}" -E ${LINK_COMMAND}  "$<${LINK_GENEX}:jakt_stage${FINAL_STAGE}>" "${CMAKE_BINARY_DIR}/jakt"
+  COMMAND "${CMAKE_COMMAND}" -E ${LINK_COMMAND}  "$<${LINK_GENEX}:jakt_stage${FINAL_STAGE}>" "${CMAKE_BINARY_DIR}/jakt${CMAKE_EXECUTABLE_SUFFIX}"
   VERBATIM
 )
 
