@@ -12,6 +12,10 @@ import extern c "fcntl.h"  {
     extern function close(fd: i32) -> i32
 }
 
+// FIXME: Windows-only, for open/read/close (#1015)
+import extern c "io.h" {
+}
+
 function main() {
     // NOTE: that zero is O_RDONLY.
     let fd = open(path: "import_extern_text.txt".c_string(),  flags: 0)
