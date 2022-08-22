@@ -9,4 +9,5 @@ namespace Jakt::os {
     ErrorOr<size_t> get_num_cpus();
     ErrorOr<String> get_system_temporary_directory();
     ErrorOr<void> ignore_sigchild();
+    ErrorOr<String> get_script_execution_string();
 }

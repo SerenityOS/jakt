@@ -16,6 +16,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <sysinfoapi.h>
+#include <direct.h>
 #endif
 
 namespace Jakt::os {
@@ -46,6 +47,11 @@ ErrorOr<void> ignore_sigchild()
         return Error::from_errno(errno);
     return {};
 }
+
+ErrorOr<String> get_script_execution_string()
+{
+    return String("./jakttest/run-one.sh");
+}
 #else
 ErrorOr<size_t> get_num_cpus()
 {
@@ -64,6 +70,15 @@ ErrorOr<String> get_system_temporary_directory()
 ErrorOr<void> ignore_sigchild()
 {
     return {};
+}
+
+ErrorOr<String> get_script_execution_string()
+{
+    char path[MAX_PATH];
+    char* cwd = getcwd(path, sizeof(path));
+    VERIFY(cwd != nullptr);
+    return String::formatted("powershell.exe -ExecutionPolicy RemoteSigned "
+                            "-File ./jakttest/run-one.ps1 {}", cwd);
 }
 #endif
 }
