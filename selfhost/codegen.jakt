@@ -2646,6 +2646,28 @@ struct CodeGenerator {
         Enum(id) => .codegen_enum_type(id, as_namespace)
         GenericEnumInstance(id, args) => .codegen_generic_enum_instance(id, args, as_namespace)
         TypeVariable(name) => name
+        Function(params, can_throw, return_type_id) => {
+            mut output = "Function<"
+            if can_throw {
+                output += "ErrorOr<"
+            }
+            output += .codegen_type(return_type_id)
+            if can_throw {
+                output += ">"
+            }
+            output += "("
+            mut first = true
+            for param in params.iterator() {
+                if first {
+                    first = false
+                } else {
+                    output += ", "
+                }
+                output += .codegen_type(param)
+            }
+            output += ")>"
+            yield output
+        }
         else => {
             // The RBC uses 'auto' here but we probably want to improve in the future
             yield "auto"
