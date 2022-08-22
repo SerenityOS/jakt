@@ -627,6 +627,22 @@ class InterpreterScope {
         return id
     }
 
+    function type_map_for_substitution_helper(this, map: &mut [String:String]) throws {
+        if .parent.has_value() {
+            .parent!.type_map_for_substitution_helper(map)
+        }
+
+        for pair in .type_bindings.iterator() {
+            map.set(pair.0, pair.1.to_string())
+        }
+    }
+
+    public function type_map_for_substitution(this) throws -> [String:String] {
+        mut map: [String:String] = [:]
+        .type_map_for_substitution_helper(&mut map)
+        return map
+    }
+
     public function perform_defers(mut this, mut interpreter: Interpreter, span: Span) throws {
         while not .defers.is_empty() {
             let deferred = .defers.pop()
@@ -4603,7 +4619,10 @@ class Interpreter {
                 yield StatementResult::JustValue(Value(
                     impl: ValueImpl::JaktArray(
                         values: [value_to_repeat; count]
-                        type_id
+                        type_id: .program.substitute_typevars_in_type(
+                            type_id
+                            generic_inferences: scope.type_map_for_substitution()
+                            module_id: type_id.module)
                     )
                     span: span
                 ))
@@ -4634,7 +4653,10 @@ class Interpreter {
                 yield StatementResult::JustValue(Value(
                     impl: ValueImpl::JaktArray(
                         values
-                        type_id
+                        type_id: .program.substitute_typevars_in_type(
+                            type_id
+                            generic_inferences: scope.type_map_for_substitution()
+                            module_id: type_id.module)
                     )
                     span: span
                 ))
@@ -4893,20 +4915,52 @@ class Interpreter {
             }
 
             // Next, resolve the parameters
+            let type_map = scope.type_map_for_substitution()
             mut resolved_params: [String:(TypeId, CheckedExpression?)] = [:]
+            mut checked_params: [CheckedParameter] = []
             for param in params.iterator() {
-                resolved_params.set(param.variable.name, (param.variable.type_id, param.default_value))
+                let param_type_id = .program.substitute_typevars_in_type(
+                    type_id: param.variable.type_id
+                    generic_inferences: type_map
+                    module_id: param.variable.type_id.module)
+
+                resolved_params.set(
+                    param.variable.name
+                    (
+                        param_type_id,
+                        param.default_value
+                    )
+                )
+
+                checked_params.push(CheckedParameter(
+                    requires_label: param.requires_label
+                    variable: CheckedVariable(
+                        name: param.variable.name
+                        type_id: param_type_id
+                        is_mutable: param.variable.is_mutable
+                        definition_span: param.variable.definition_span
+                        type_span: param.variable.type_span
+                        visibility: param.variable.visibility
+                    )
+                    default_value: param.default_value
+                ))
             }
 
             yield StatementResult::JustValue(Value(
                 impl: ValueImpl::Function(
                     captures: resolved_captures,
                     params: resolved_params
-                    return_type_id
-                    type_id
+                    return_type_id: .program.substitute_typevars_in_type(
+                        type_id: return_type_id
+                        generic_inferences: type_map
+                        module_id: return_type_id.module)
+                    type_id: .program.substitute_typevars_in_type(
+                        type_id
+                        generic_inferences: type_map
+                        module_id: type_id.module)
                     block
                     can_throw
-                    checked_params: params
+                    checked_params
                 )
                 span
             ))

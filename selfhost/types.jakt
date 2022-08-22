@@ -1481,4 +1481,120 @@ class CheckedProgram {
             MutableReference(type_id) => format("&mut {}", .type_name(type_id))
         }
     }
+
+    public function find_or_add_type_id(mut this, anon type: Type, module_id: ModuleId) throws -> TypeId {
+        for module in .modules.iterator() {
+            for id in 0..module.types.size() {
+                if module.types[id].equals(type) {
+                    return TypeId(module: module.id, id)
+                }
+            }
+        }
+
+        .modules[module_id.id].types.push(type)
+
+        return TypeId(module: module_id, id: .modules[module_id.id].types.size() - 1)
+    }
+
+    // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
+    public function substitute_typevars_in_type(mut this, type_id: TypeId , generic_inferences: [String: String], module_id: ModuleId) throws -> TypeId {
+        mut result = .substitute_typevars_in_type_helper(type_id, generic_inferences, module_id)
+
+        loop {
+            let fixed_point = .substitute_typevars_in_type_helper(type_id, generic_inferences, module_id)
+
+            if fixed_point.equals(result) {
+                break
+            } else {
+                result = fixed_point
+            }
+        }
+        return result
+    }
+
+    // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
+    function substitute_typevars_in_type_helper(mut this, type_id: TypeId , generic_inferences: [String: String], module_id: ModuleId) throws -> TypeId {
+        let type_ = .get_type(type_id)
+
+        match type_ {
+            TypeVariable() => {
+                let replacment_type_id_string = generic_inferences.get(type_id.to_string())
+                if replacment_type_id_string.has_value() {
+                    return TypeId::from_string(replacment_type_id_string.value())
+                }
+            }
+            GenericInstance(id, args) => {
+                mut new_args:[TypeId] = []
+                new_args.ensure_capacity(args.size())
+                for arg in args.iterator() {
+                    new_args.push(.substitute_typevars_in_type(type_id: arg, generic_inferences, module_id))
+                }
+
+                return .find_or_add_type_id(Type::GenericInstance(id, args: new_args), module_id)
+            }
+            GenericEnumInstance(id, args) => {
+                mut new_args:[TypeId] = []
+                new_args.ensure_capacity(args.size())
+                for arg in args.iterator() {
+                    new_args.push(.substitute_typevars_in_type(type_id: arg, generic_inferences, module_id))
+                }
+                return .find_or_add_type_id(Type::GenericEnumInstance(id, args: new_args), module_id)
+            }
+            Struct(struct_id) => {
+                let struct_ = .get_struct(struct_id)
+                if not struct_.generic_parameters.is_empty() {
+                    mut new_args:[TypeId] = []
+                    new_args.ensure_capacity(struct_.generic_parameters.size())
+                    for arg in struct_.generic_parameters.iterator() {
+                        new_args.push(.substitute_typevars_in_type(type_id: arg, generic_inferences, module_id))
+                    }
+                    return .find_or_add_type_id(Type::GenericInstance(id: struct_id, args: new_args), module_id)
+                }
+            }
+            Enum(enum_id) => {
+                let enum_ = .get_enum(enum_id)
+                if not enum_.generic_parameters.is_empty() {
+                    mut new_args:[TypeId] = []
+                    new_args.ensure_capacity(enum_.generic_parameters.size())
+                    for arg in enum_.generic_parameters.iterator() {
+                        new_args.push(.substitute_typevars_in_type(type_id: arg, generic_inferences, module_id))
+                    }
+                    return .find_or_add_type_id(Type::GenericEnumInstance(id: enum_id, args: new_args), module_id)
+                }
+            }
+            RawPtr(rawptr_type_id) => {
+                let rawptr_type = Type::RawPtr(
+                    .substitute_typevars_in_type(type_id: rawptr_type_id, generic_inferences, module_id)
+                )
+                return .find_or_add_type_id(rawptr_type, module_id)
+            }
+            Reference(ref_type_id) => {
+                let ref_type = Type::Reference(
+                    .substitute_typevars_in_type(type_id: ref_type_id, generic_inferences, module_id)
+                )
+                return .find_or_add_type_id(ref_type, module_id)
+            }
+            MutableReference(ref_type_id) => {
+                let ref_type = Type::MutableReference(
+                    .substitute_typevars_in_type(type_id: ref_type_id, generic_inferences, module_id)
+                )
+                return .find_or_add_type_id(ref_type, module_id)
+            }
+            Function(params, can_throw, return_type_id) => {
+                mut new_params:[TypeId] = []
+                new_params.ensure_capacity(params.size())
+                for param in params.iterator() {
+                    new_params.push(.substitute_typevars_in_type(type_id: param, generic_inferences, module_id))
+                }
+
+                let return_type_substitute = .substitute_typevars_in_type(type_id: return_type_id, generic_inferences, module_id)
+
+                return .find_or_add_type_id(Type::Function(params: new_params, can_throw, return_type_id: return_type_substitute), module_id)
+            }
+            else => {
+                return type_id
+            }
+        }
+        return type_id
+    }
 }
