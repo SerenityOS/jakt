@@ -2688,14 +2688,7 @@ struct Typechecker {
             Function(params, can_throw, return_type, span) => {
                 let function_name = match name.has_value() {
                     true => name!
-                    else => {
-                        mut default_name = ""
-                        try {
-                            default_name = format("lambda{}", .lambda_count++)
-                        } catch foo {
-                        }
-                        yield default_name
-                    }
+                    else => (try format("lambda{}", .lambda_count++)) ?? ""
                 }
                 mut checked_params: [CheckedParameter] = []
                 mut first = true
@@ -2730,14 +2723,17 @@ struct Typechecker {
                 )
                 mut module = .current_module()
                 let function_id = module.add_function(checked_function)
-                .add_function_to_scope(parent_scope_id: scope_id, name: checked_function.name, function_id, span)
 
                 mut param_type_ids: [TypeId] = []
-                for param in params.iterator() {
-                    param_type_ids.push(.typecheck_typename(parsed_type: param.variable.parsed_type, scope_id, name))
+                for param in checked_function.params.iterator() {
+                    param_type_ids.push(param.variable.type_id)
                 }
-                let return_type_id = .typecheck_typename(parsed_type: return_type, scope_id, name)
-                return .find_or_add_type_id(Type::Function(params: param_type_ids, can_throw, return_type_id))
+
+                return .find_or_add_type_id(Type::Function(
+                    params: param_type_ids
+                    can_throw
+                    return_type_id: checked_function.return_type_id
+                    pseudo_function_id: function_id))
             }
         }
 
@@ -3432,30 +3428,6 @@ struct Typechecker {
         mut module = .current_module()
         let var_id = module.add_variable(checked_var)
         .add_var_to_scope(scope_id, name: var.name, var_id, span: checked_var.definition_span)
-
-        if checked_expr is Function(captures, params, can_throw, return_type_id, block, span, type_id)
-            and not .find_function_in_scope(parent_scope_id: scope_id, function_name: var.name).has_value() {
-            let checked_function = CheckedFunction(
-                name: var.name
-                name_span: var.span
-                visibility: Visibility::Public
-                return_type_id
-                return_type_span: None // FIXME: better span here
-                params
-                generic_params: []
-                block
-                can_throw
-                type: FunctionType::Normal
-                linkage: FunctionLinkage::Internal
-                function_scope_id: scope_id
-                is_instantiated: false
-                parsed_function: None
-                is_comptime: false
-                is_closure: not captures.is_empty()
-            )
-            let function_id = module.add_function(checked_function)
-            .add_function_to_scope(parent_scope_id: scope_id, name: var.name, function_id, span)
-        }
 
         return CheckedStatement::VarDecl(var_id, init: checked_expr, span)
     }
@@ -4526,23 +4498,35 @@ struct Typechecker {
     }
 
     function typecheck_lambda(mut this, captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, return_type: ParsedType, block: ParsedBlock, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
-        let lambda_scope_id = .create_scope(parent_scope_id: scope_id, can_throw, debug_name: "lambda")
-        
-        mut checked_captures: [CheckedCapture] = []
-        for capture in captures.iterator() {
-            match .find_var_in_scope(scope_id, var: capture.name()).has_value() { // FIXME: this wants to be a match on Optional instead of boolean
-                true => {
-                    checked_captures.push(match capture {
-                        ByValue(name, span) => CheckedCapture::ByValue(name, span)
-                        ByReference(name, span) => CheckedCapture::ByReference(name, span)
-                        ByMutableReference(name, span) => CheckedCapture::ByMutableReference(name, span)
-                    })
-                }
-                else => {
-                        .error(format("Variable '{}' not found", capture.name()), span)
-                }
+        let synthetic_type = ParsedType::Function(
+            params
+            can_throw
+            return_type
+            span
+        )
+
+        mut type_id = .typecheck_typename(parsed_type: synthetic_type, scope_id, name: None)
+        mut (return_type_id, pseudo_function_id) = match .get_type(type_id) {
+            Function(return_type_id, pseudo_function_id) => (return_type_id, pseudo_function_id)
+            else => {
+                .compiler.panic("Expected the just-checked function to be of a function type")
             }
         }
+        
+        let lambda_scope_id = .create_scope(parent_scope_id: scope_id, can_throw, debug_name: "lambda")
+        mut checked_captures: [CheckedCapture] = []
+        for capture in captures.iterator() {
+            if .find_var_in_scope(scope_id, var: capture.name()).has_value() {
+                checked_captures.push(match capture {
+                    ByValue(name, span) => CheckedCapture::ByValue(name, span)
+                    ByReference(name, span) => CheckedCapture::ByReference(name, span)
+                    ByMutableReference(name, span) => CheckedCapture::ByMutableReference(name, span)
+                })
+            } else {
+                .error(format("Variable '{}' not found", capture.name()), span)
+            }
+        }
+
         mut module = .current_module()
         mut checked_params: [CheckedParameter] = []
         mut first = true
@@ -4554,18 +4538,44 @@ struct Typechecker {
 
             first = false
         }
-        let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: lambda_scope_id, safety_mode)
-        mut param_type_ids: [TypeId] = []
-        for param in params.iterator() {
-            param_type_ids.push(.typecheck_typename(parsed_type: param.variable.parsed_type, scope_id, name: param.variable.name))
-        }
-        let return_type_id = match return_type {
-            Empty => .infer_function_return_type(block: checked_block)
-            else => .typecheck_typename(parsed_type: return_type, scope_id, name: None)
-        }
-        let type_id = .find_or_add_type_id(Type::Function(params: param_type_ids, can_throw, return_type_id))
 
-        return CheckedExpression::Function(captures: checked_captures, params: checked_params, can_throw, return_type_id, block: checked_block, span, type_id)
+        let previous_function_id = .current_function_id
+        .current_function_id = pseudo_function_id
+        defer {
+            .current_function_id = previous_function_id
+        }
+
+        let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: lambda_scope_id, safety_mode)
+
+        if return_type_id.equals(unknown_type_id())
+            and not checked_block.statements.is_empty() {
+
+            if checked_block.statements.last()! is Return(val)
+                and val.has_value() {
+
+                return_type_id = .resolve_type_var(type_var_type_id: val!.type(), scope_id: lambda_scope_id)
+                type_id = match .get_type(type_id) {
+                    Function(params, can_throw, pseudo_function_id) => .find_or_add_type_id(Type::Function(
+                        params
+                        can_throw
+                        return_type_id
+                        pseudo_function_id
+                    ))
+                    else => {
+                        .compiler.panic("Expected the just-checked function to be of a function type")
+                    }
+                }
+            }
+        }
+
+        return CheckedExpression::Function(
+            captures: checked_captures
+            params: checked_params
+            can_throw
+            return_type_id
+            block: checked_block
+            span
+            type_id)
     }
 
     function typecheck_namespaced_var_or_simple_enum_constructor_call(mut this, name: String, namespace_: [String], scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?, span: Span) throws -> CheckedExpression {
@@ -5392,7 +5402,13 @@ struct Typechecker {
             .error(format("Not a namespace, enum, class, or struct: ‘{}’", join(call.namespace_, separator: "::")), span)
         }
 
-        // 1. Look for a function with this name.
+        // 1. Look for a variable in the current scope with this name.
+        let maybe_var = .find_var_in_scope(scope_id: current_scope_id, var: call.name)
+        if maybe_var.has_value() and .get_type(maybe_var!.type_id) is Function(pseudo_function_id) {
+            return pseudo_function_id
+        }
+
+        // 2. Look for a function with this name.
         let maybe_function_id = .find_function_in_scope(parent_scope_id: current_scope_id, function_name: call.name)
         if maybe_function_id.has_value() {
             let function_id = maybe_function_id!
@@ -5406,7 +5422,7 @@ struct Typechecker {
             return callee
         }
 
-        // 2. Look for a struct, class or enum constructor with this name.
+        // 3. Look for a struct, class or enum constructor with this name.
         let maybe_struct_id = .find_struct_in_scope(scope_id: current_scope_id, name: call.name)
         if maybe_struct_id.has_value() {
             let struct_id = maybe_struct_id!

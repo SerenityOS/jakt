@@ -168,7 +168,7 @@ boxed enum Type {
     RawPtr(TypeId)
     Reference(TypeId)
     MutableReference(TypeId)
-    Function(params: [TypeId], can_throw: bool, return_type_id: TypeId)
+    Function(params: [TypeId], can_throw: bool, return_type_id: TypeId, pseudo_function_id: FunctionId)
 
     function constructor_name(this) => match this {
         Void => "Void"
@@ -1634,16 +1634,65 @@ class CheckedProgram {
                 )
                 return .find_or_add_type_id(ref_type, module_id)
             }
-            Function(params, can_throw, return_type_id) => {
+            Function(params, can_throw, return_type_id, pseudo_function_id) => {
                 mut new_params:[TypeId] = []
                 new_params.ensure_capacity(params.size())
+                mut is_different = false
                 for param in params.iterator() {
-                    new_params.push(.substitute_typevars_in_type(type_id: param, generic_inferences, module_id))
+                    let new_param = .substitute_typevars_in_type(type_id: param, generic_inferences, module_id)
+                    is_different = is_different or not new_param.equals(param)
+                    new_params.push(new_param)
                 }
 
                 let return_type_substitute = .substitute_typevars_in_type(type_id: return_type_id, generic_inferences, module_id)
+                is_different = is_different or not return_type_substitute.equals(return_type_id)
 
-                return .find_or_add_type_id(Type::Function(params: new_params, can_throw, return_type_id: return_type_substitute), module_id)
+                if not is_different {
+                    return type_id
+                }
+
+                let previous_function = .get_function(pseudo_function_id)
+
+                mut replacement_params: [CheckedParameter] = []
+                for i in 0uz..previous_function.params.size() {
+                    let param = previous_function.params[i]
+                    let new_param = CheckedParameter(
+                        requires_label: param.requires_label
+                        variable: CheckedVariable(
+                            name: param.variable.name
+                            type_id: new_params[i]
+                            is_mutable: param.variable.is_mutable
+                            definition_span: param.variable.definition_span
+                            type_span: param.variable.type_span
+                            visibility: param.variable.visibility
+                        )
+                        default_value: param.default_value
+                    )
+                    replacement_params.push(new_param)
+                }
+                
+                let new_function = CheckedFunction(
+                    name: previous_function.name
+                    name_span: previous_function.name_span
+                    visibility: previous_function.visibility
+                    return_type_id: return_type_substitute
+                    return_type_span: previous_function.return_type_span
+                    params: replacement_params
+                    generic_params: previous_function.generic_params
+                    block: previous_function.block
+                    can_throw
+                    type: previous_function.type
+                    linkage: previous_function.linkage
+                    function_scope_id: previous_function.function_scope_id
+                    is_instantiated: previous_function.is_instantiated
+                    parsed_function: previous_function.parsed_function
+                    is_comptime: previous_function.is_comptime
+                    is_closure: previous_function.is_closure
+                )
+
+                let new_function_id = .modules[module_id.id].add_function(checked_function: new_function)
+
+                return .find_or_add_type_id(Type::Function(params: new_params, can_throw, return_type_id: return_type_substitute, pseudo_function_id: new_function_id), module_id)
             }
             else => {
                 return type_id
