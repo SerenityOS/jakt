@@ -3539,12 +3539,12 @@ struct Parser {
         .skip_newlines()
 
         while not .eof() and not .current() is RCurly {
+            let marker_span = .current().span()
             let pattern_start_index = .index
             let patterns = .parse_match_patterns()
 
             .skip_newlines()
 
-            let marker_span = .current().span()
             if .current() is FatArrow {
                 .index++
             } else {
