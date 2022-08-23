@@ -779,6 +779,8 @@ class Interpreter {
     public compiler: Compiler
     public program: CheckedProgram
     public spans: [Span]
+    public reflected_type_cache: [String:Value]
+    public seen_reflected_types: {String}
     public current_function_id: FunctionId?
 
     public fn create(compiler: Compiler, program: CheckedProgram, spans: [Span]) throws -> Interpreter {
@@ -786,6 +788,8 @@ class Interpreter {
             compiler
             program
             spans
+            reflected_type_cache: [:]
+            seen_reflected_types: {}
             current_function_id: None
         )
     }
@@ -6477,9 +6481,565 @@ class Interpreter {
                 span
             ))
         }
+        Reflect(type: type_id, span) => StatementResult::JustValue(.reflect_type(type_id, span, scope))
         else => {
             .error(format("expression not implemented: {}", expr), expr.span())
             throw Error::from_errno(InterpretError::Unimplemented as! i32)
         }
+    }
+
+    public function array_type_of_struct(mut this, anon struct_id: StructId) throws -> TypeId {
+        let array_struct_id = .program.find_struct_in_prelude("Array")
+        let type = Type::GenericInstance(
+            id: array_struct_id
+            args: [
+                .program.get_struct(struct_id).type_id
+            ]
+        )
+        return .find_or_add_type_id(type)
+    }
+
+    public function array_value_of_type(mut this, values: [Value], type: TypeId, span: Span) throws -> Value {
+        let array_struct_id = .program.find_struct_in_prelude("Array")
+        let array_type = Type::GenericInstance(
+            id: array_struct_id
+            args: [type]
+        )
+        let array_type_id = .find_or_add_type_id(array_type)
+
+        return Value(
+            impl: ValueImpl::JaktArray(
+                values
+                type_id: array_type_id
+            )
+            span
+        )
+    }
+
+    public function tuple_type(mut this, anon members: [TypeId]) throws -> TypeId {
+        let tuple_struct_id = .program.find_struct_in_prelude("Tuple")
+        let type = Type::GenericInstance(
+            id: tuple_struct_id
+            args: members
+        )
+        return .find_or_add_type_id(type)
+    }
+
+    public function tuple_value(mut this, members: [Value], type: TypeId, span: Span) throws -> Value {
+        return Value(
+            impl: ValueImpl::JaktTuple(
+                fields: members
+                type_id: type
+            )
+            span
+        )
+    }
+
+    public function string_value(mut this, anon string: String, span: Span) throws -> Value => Value(
+        impl: ValueImpl::JaktString(string)
+        span
+    )
+
+    public function reflect_methods(mut this, span: Span) throws -> Value {
+        let method_struct_id = match .program.find_reflected_primitive("Method") {
+            Struct(id) => id
+            else => {
+                panic("Expected Method to be a struct")
+            }
+        }
+
+        let method_struct_constructor = .program.find_function_in_scope(
+            parent_scope_id: .program.get_struct(method_struct_id).scope_id
+            function_name: "Method")!
+        
+        // FIXME: Fill this in.
+        mut method_values: [Value] = []
+        return Value(
+            impl: ValueImpl::JaktArray(
+                values: method_values
+                type_id: .array_type_of_struct(method_struct_id)
+            )
+            span
+        )
+    }
+
+    public function reflect_fields(mut this, fields: [VarId], span: Span, scope: InterpreterScope) throws -> [Value] {
+        let field_struct_id = match .program.find_reflected_primitive("Field") {
+            Struct(id) => id
+            else => {
+                panic("Expected Field to be a struct")
+            }
+        }
+        let field_struct_constructor = .program.find_function_in_scope(
+            parent_scope_id: .program.get_struct(field_struct_id).scope_id
+            function_name: "Field")!
+
+        let visibility_enum_id = match .program.find_reflected_primitive("Visibility") {
+            Enum(id) => id
+            else => {
+                panic("Expected Visibility to be an enum")
+            }
+        }
+
+        let visibility_public_constructor = .program.find_function_in_scope(
+            parent_scope_id: .program.get_enum(visibility_enum_id).scope_id
+            function_name: "Public")!
+        let visibility_private_constructor = .program.find_function_in_scope(
+            parent_scope_id: .program.get_enum(visibility_enum_id).scope_id
+            function_name: "Private")!
+
+        let variable_declaration_struct_id = match .program.find_reflected_primitive("VariableDeclaration") {
+            Struct(id) => id
+            else => {
+                panic("Expected VariableDeclaration to be a struct")
+            }
+        }
+
+        let variable_declaration_struct_constructor = .program.find_function_in_scope(
+            parent_scope_id: .program.get_struct(variable_declaration_struct_id).scope_id
+            function_name: "VariableDeclaration")!
+
+        mut record_type_fields: [Value] = []
+        for var_id in fields.iterator() {
+            let field = .program.get_variable(var_id)
+            let variable = Value(
+                impl: ValueImpl::Struct(
+                    fields: [
+                        // name:
+                        Value(
+                            impl: ValueImpl::JaktString(field.name)
+                            span
+                        )
+                        // type:
+                        .reflect_type(type_id: field.type_id, span, scope)
+                        // is_mutable:
+                        Value(
+                            impl: ValueImpl::Bool(field.is_mutable)
+                            span
+                        )
+                    ]
+                    struct_id: variable_declaration_struct_id
+                    constructor: variable_declaration_struct_constructor
+                )
+                span
+            )
+            let field_value = Value(
+                impl: ValueImpl::Struct(
+                    fields: [
+                        // variable:
+                        variable
+                        // visibility:
+                        Value(
+                            impl: ValueImpl::Enum(
+                                fields: []
+                                enum_id: visibility_enum_id
+                                constructor: match field.visibility {
+                                    Public => visibility_public_constructor
+                                    Private => visibility_private_constructor
+                                    else => {
+                                        panic("Not implemented")
+                                    }
+                                }
+                            )
+                            span
+                        )
+                    ]
+                    struct_id: field_struct_id
+                    constructor: field_struct_constructor
+                )
+                span
+            )
+            record_type_fields.push(field_value)
+        }
+
+        return record_type_fields
+    }
+
+    public function reflect_sum_enum_variants(mut this, subject_enum: CheckedEnum, span: Span, scope: InterpreterScope) throws -> [Value] {
+        let sum_enum_variant_enum_id = match .program.find_reflected_primitive("SumEnumVariant") {
+            Enum(id) => id
+            else => {
+                panic("Expected SumEnumVariant to be an enum")
+            }
+        }
+        let typed_variant_constructor = .program.find_function_in_scope(
+            parent_scope_id: .program.get_enum(sum_enum_variant_enum_id).scope_id
+            function_name: "Typed")!
+        let struct_like_variant_constructor = .program.find_function_in_scope(
+            parent_scope_id: .program.get_enum(sum_enum_variant_enum_id).scope_id
+            function_name: "StructLike")!
+        let untyped_variant_constructor = .program.find_function_in_scope(
+            parent_scope_id: .program.get_enum(sum_enum_variant_enum_id).scope_id
+            function_name: "Untyped")!
+        let field_struct_id = match .program.find_reflected_primitive("Field") {
+            Struct(id) => id
+            else => {
+                panic("Expected Field to be a struct")
+            }
+        }
+
+        mut result: [Value] = []
+        for variant in subject_enum.variants.iterator() {
+            match variant {
+                Typed(name, type_id) => {
+                    let type_value = .reflect_type(type_id: type_id, span, scope)
+                    let variant_value = Value(
+                        impl: ValueImpl::Enum(
+                            fields: [
+                                // name:
+                                .string_value(name, span)
+                                // type:
+                                type_value
+                            ]
+                            enum_id: sum_enum_variant_enum_id
+                            constructor: typed_variant_constructor
+                        )
+                        span
+                    )
+                    result.push(variant_value)
+                }
+                Untyped(name) => {
+                    let variant_value = Value(
+                        impl: ValueImpl::Enum(
+                            fields: [
+                                // name:
+                                .string_value(name, span)
+                            ]
+                            enum_id: sum_enum_variant_enum_id
+                            constructor: untyped_variant_constructor
+                        )
+                        span
+                    )
+                    result.push(variant_value)
+                }
+                StructLike(name, fields) => {
+                    let reflected_fields = .reflect_fields(fields, span, scope)
+                    let variant_value = Value(
+                        impl: ValueImpl::Enum(
+                            fields: [
+                                // name:
+                                .string_value(name, span)
+                                // fields:
+                                .array_value_of_type(
+                                    values: reflected_fields
+                                    type: .array_type_of_struct(field_struct_id)
+                                    span)
+                            ]
+                            enum_id: sum_enum_variant_enum_id
+                            constructor: struct_like_variant_constructor
+                        )
+                        span
+                    )
+                    result.push(variant_value)
+                }
+                else => {}
+            }            
+        }
+
+        return result
+    }
+
+    public function reflect_type(mut this, type_id: TypeId, span: Span, scope: InterpreterScope) throws -> Value {
+        let mapped_type_id = scope.map_type(type_id)
+        let mapped_type_key = mapped_type_id.to_string()
+
+        if .seen_reflected_types.contains(mapped_type_key) {
+            .error("Recursive type definition not currently supported with reflection", span)
+            throw Error::from_errno(InterpretError::Unimplemented as! i32)
+        }
+
+        if .reflected_type_cache.contains(mapped_type_key) {
+            return .reflected_type_cache.get(mapped_type_key)!
+        }
+
+        .seen_reflected_types.add(mapped_type_key)
+        defer .seen_reflected_types.remove(mapped_type_key)
+
+        let type = .program.get_type(mapped_type_id)
+        let reflected_enum_id = match .program.find_reflected_primitive("Type") {
+            Enum(id) => id
+            else => {
+                panic("Expected Reflect::Type to be an enum")
+            }
+        }
+        let reflected_enum = .program.get_enum(reflected_enum_id)
+        mut fields: [Value] = []
+        let constructor = match type {
+            Void | I8 | I16 | I32 | I64 | U8 | U16 | U32 | U64 | Usize | JaktString | CChar | CInt | Bool | Unknown | Never => {
+                let constructor = .program.find_function_in_scope(
+                    parent_scope_id: .program.get_enum(reflected_enum_id).scope_id
+                    function_name: type.constructor_name())
+
+                if not constructor.has_value() {
+                    .error("Attempted to access a variant that does not exist", span)
+                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                }
+
+                yield constructor!
+            }
+            TypeVariable(name) => {
+                let constructor = .program.find_function_in_scope(
+                    parent_scope_id: .program.get_enum(reflected_enum_id).scope_id
+                    function_name: "TypeVariable")
+
+                if not constructor.has_value() {
+                    .error("Attempted to access a variant that does not exist", span)
+                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                }
+
+                fields = [.string_value(name, span)]
+                yield constructor!
+            }
+            RawPtr(type_id) | Reference(type_id) | MutableReference(type_id) => {
+                let constructor = .program.find_function_in_scope(
+                    parent_scope_id: .program.get_enum(reflected_enum_id).scope_id
+                    function_name: type.constructor_name())!
+
+                fields = [.reflect_type(type_id, span, scope)]
+                yield constructor
+            }
+            GenericInstance(id: struct_id) | Struct(struct_id) => {
+                let subject_struct = .program.get_struct(struct_id)
+
+                let constructor = .program.find_function_in_scope(
+                    parent_scope_id: .program.get_enum(reflected_enum_id).scope_id
+                    function_name: "StructureOrEnum")
+
+                if not constructor.has_value() {
+                    .error("Attempted to access a variant that does not exist", span)
+                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                }
+
+                let record_struct_id = match .program.find_reflected_primitive("Record") {
+                    Struct(id) => id
+                    else => {
+                        panic("Expected Record to be a struct")
+                    }
+                }
+                let record_struct_constructor = .program.find_function_in_scope(
+                    parent_scope_id: .program.get_struct(record_struct_id).scope_id
+                    function_name: "Record")!
+
+                let record_type_enum_id = match .program.find_reflected_primitive("RecordType") {
+                    Enum(id) => id
+                    else => {
+                        panic("Expected RecordType to be an enum")
+                    }
+                }
+                let record_type_struct_constructor = .program.find_function_in_scope(
+                    parent_scope_id: .program.get_enum(record_type_enum_id).scope_id
+                    function_name: "Struct")!
+
+                let methods = .reflect_methods(span)
+                let tuple_type = .tuple_type([builtin(BuiltinType::JaktString), reflected_enum.type_id])
+                let generic_parameters = .array_value_of_type(
+                    values: match type {
+                        GenericInstance(args) => {
+                            mut i = 0
+                            mut result: [Value] = []
+                            for generic_parameter in subject_struct.generic_parameters.iterator() {
+                                let name = match .program.get_type(generic_parameter) {
+                                    TypeVariable(name) => name
+                                    else => {
+                                        panic("Unknown kind of generic parameter in struct definition")
+                                    }
+                                }
+                                result.push(.tuple_value(
+                                    members: [
+                                        .string_value(name, span)
+                                        .reflect_type(type_id: args[i], span, scope)
+                                    ]
+                                    type: tuple_type
+                                    span))
+                                i += 1
+                            }
+                            yield result
+                        }
+                        else => []
+                    }
+                    type: tuple_type
+                    span)
+
+                let record_type_fields = .reflect_fields(fields: subject_struct.fields, span, scope)
+
+                let field_struct_id = match .program.find_reflected_primitive("Field") {
+                    Struct(id) => id
+                    else => {
+                        panic("Expected Field to be a struct")
+                    }
+                }
+
+                fields = [
+                    Value(
+                        impl: ValueImpl::Struct(
+                            fields: [
+                                // name:
+                                .string_value(subject_struct.name, span)
+                                methods
+                                generic_parameters
+                                // record_type:
+                                Value(
+                                    impl: ValueImpl::Enum(
+                                        fields: [
+                                            Value(
+                                                impl: ValueImpl::JaktArray(
+                                                    values: record_type_fields
+                                                    type_id: .array_type_of_struct(field_struct_id)
+                                                )
+                                                span
+                                            )
+                                        ]
+                                        enum_id: record_type_enum_id
+                                        constructor: record_type_struct_constructor
+                                    )
+                                    span
+                                )
+                            ]
+                            struct_id: record_struct_id
+                            constructor: record_struct_constructor
+                        )
+                        span
+                    )
+                ]
+
+                yield constructor!
+            }
+            GenericEnumInstance(id: enum_id) | Enum(enum_id) => {
+                let subject_enum = .program.get_enum(enum_id)
+
+                let constructor = .program.find_function_in_scope(
+                    parent_scope_id: .program.get_enum(reflected_enum_id).scope_id
+                    function_name: "StructureOrEnum")
+
+                if not constructor.has_value() {
+                    .error("Attempted to access a variant that does not exist", span)
+                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                }
+
+                let record_struct_id = match .program.find_reflected_primitive("Record") {
+                    Struct(id) => id
+                    else => {
+                        panic("Expected Record to be a struct")
+                    }
+                }
+                let record_struct_constructor = .program.find_function_in_scope(
+                    parent_scope_id: .program.get_struct(record_struct_id).scope_id
+                    function_name: "Record")!
+
+                let record_type_enum_id = match .program.find_reflected_primitive("RecordType") {
+                    Enum(id) => id
+                    else => {
+                        panic("Expected RecordType to be an enum")
+                    }
+                }
+
+                let is_value_enum = subject_enum.underlying_type_id.equals(unknown_type_id())
+
+                let record_type_struct_constructor = match is_value_enum {
+                    true => .program.find_function_in_scope(
+                        parent_scope_id: .program.get_enum(record_type_enum_id).scope_id
+                        function_name: "ValueEnum")!
+                    else => .program.find_function_in_scope(
+                        parent_scope_id: .program.get_enum(record_type_enum_id).scope_id
+                        function_name: "SumEnum")!
+                }
+
+                let methods = .reflect_methods(span)
+                let tuple_type = .tuple_type([builtin(BuiltinType::JaktString), reflected_enum.type_id])
+                let generic_parameters = .array_value_of_type(
+                    values: match type {
+                        GenericInstance(args) => {
+                            mut i = 0
+                            mut result: [Value] = []
+                            for generic_parameter in subject_enum.generic_parameters.iterator() {
+                                let name = match .program.get_type(generic_parameter) {
+                                    TypeVariable(name) => name
+                                    else => {
+                                        panic("Unknown kind of generic parameter in struct definition")
+                                    }
+                                }
+                                result.push(.tuple_value(
+                                    members: [
+                                        .string_value(name, span)
+                                        .reflect_type(type_id: args[i], span, scope)
+                                    ]
+                                    type: tuple_type
+                                    span))
+                                i += 1
+                            }
+                            yield result
+                        }
+                        else => []
+                    }
+                    type: tuple_type
+                    span)
+
+                mut record_type_fields: [Value] = []
+                if is_value_enum {
+                    .error("Unimplemented reflected type: value enum", span)
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                } else {
+                    record_type_fields = .reflect_sum_enum_variants(subject_enum, span, scope)
+                }
+
+                let field_struct_id = match .program.find_reflected_primitive("Field") {
+                    Struct(id) => id
+                    else => {
+                        panic("Expected Field to be a struct")
+                    }
+                }
+
+                fields = [
+                    Value(
+                        impl: ValueImpl::Struct(
+                            fields: [
+                                // name:
+                                .string_value(subject_enum.name, span)
+                                methods
+                                generic_parameters
+                                // record_type:
+                                Value(
+                                    impl: ValueImpl::Enum(
+                                        fields: [
+                                            Value(
+                                                impl: ValueImpl::JaktArray(
+                                                    values: record_type_fields
+                                                    type_id: .array_type_of_struct(field_struct_id)
+                                                )
+                                                span
+                                            )
+                                        ]
+                                        enum_id: record_type_enum_id
+                                        constructor: record_type_struct_constructor
+                                    )
+                                    span
+                                )
+                            ]
+                            struct_id: record_struct_id
+                            constructor: record_struct_constructor
+                        )
+                        span
+                    )
+                ]
+
+                yield constructor!
+            }
+            else => {
+                .error(format("Type reflection not implemented: {}", type), span)
+                throw Error::from_errno(InterpretError::Unimplemented as! i32)
+            }
+        }
+
+        let result = Value(
+            impl: ValueImpl::Enum(
+                fields
+                enum_id: reflected_enum_id
+                constructor
+            )
+            span
+        )
+
+        .reflected_type_cache.set(mapped_type_key, result)
+        return result
     }
 }

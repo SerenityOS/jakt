@@ -178,3 +178,114 @@ extern fn as_saturated<U, T>(anon input: T) -> U
 extern fn as_truncated<U, T>(anon input: T) -> U
 extern fn unchecked_add<T>(anon a: T, anon b: T) -> T
 extern fn unchecked_mul<T>(anon a: T, anon b: T) -> T
+
+namespace Reflect {
+    struct Span {
+        start: usize
+        end: usize
+        file: String
+    }
+    enum Visibility {
+        Public
+        Private
+        // Restricted(whitelist: [Reflect::Type])
+    }
+    struct VariableDeclaration {
+        name: String
+        type: Reflect::Type
+        is_mutable: bool
+    }
+    struct Field {
+        variable: Reflect::VariableDeclaration
+        visibility: Reflect::Visibility
+        // comptime setter<T, U>(this) throws {
+        //     let name = .variable.name
+        //     return fn[name](anon s: &mut T, anon value: U) throws {
+        //         Reflect::Internal::set_field(name, s, value)
+        //     }
+        // }
+    }
+    struct Method {
+        function: Reflect::Function
+        visibility: Reflect::Visibility
+    }
+    struct Function {
+        name: String
+        // parameters: [Reflect::Parameter]
+        generic_parameters: [String]
+        // block: Reflect::Block
+        return_type: Reflect::Type
+        can_throw: bool
+        type: Reflect::Type
+        is_comptime: bool
+    }
+    enum SumEnumVariant {
+        StructLike(name: String, fields: [Reflect::Field])
+        Typed(name: String, type: Reflect::Type)
+        Untyped(name: String)
+    }
+    enum RecordType {
+        Struct(fields: [Reflect::Field])
+        Class(fields: [Reflect::Field])
+        // ValueEnum(underlying_type: Reflect::Type, variants: [Reflect::ValueEnumVariant])
+        SumEnum(is_boxed: bool, variants: Reflect::SumEnumVariant)
+    }
+    struct Record {
+        name: String
+        methods: [Reflect::Method]
+        generic_mappings: [(String, Reflect::Type)]
+        record_type: Reflect::RecordType
+    }
+    enum Type {
+        Void
+        Bool
+        U8
+        U16
+        U32
+        U64
+        I8
+        I16
+        I32
+        I64
+        F32
+        F64
+        Usize
+        JaktString
+        CChar
+        CInt
+        Unknown
+        Never
+        StructureOrEnum(Reflect::Record)
+        TypeVariable(String)
+        RawPtr(Reflect::Type)
+        Reference(Reflect::Type)
+        MutableReference(Reflect::Type)
+
+        fn name(this) throws => match this {
+            Void => "void"
+            Bool => "bool"
+            U8 => "u8"
+            U16 => "u16"
+            U32 => "u32"
+            U64 => "u64"
+            I8 => "i8"
+            I16 => "i16"
+            I32 => "i32"
+            I64 => "i64"
+            F32 => "f32"
+            F64 => "f64"
+            Usize => "usize"
+            JaktString => "String"
+            CChar => "c_char"
+            CInt => "c_int"
+            Unknown => "unknown"
+            Never => "never"
+            StructureOrEnum(record) => format("struct {}", record.name)
+            TypeVariable(name) => format("{}", name)
+            RawPtr(type) => format("raw {}", type.name())
+            Reference(type) => format("& {}", type.name())
+            MutableReference(type) => format("&mut {}", type.name())
+        }
+    }
+}
+
