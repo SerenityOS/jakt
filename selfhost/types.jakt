@@ -477,6 +477,7 @@ class CheckedFunction {
     public is_instantiated: bool
     public parsed_function: ParsedFunction?
     public is_comptime: bool
+    public is_closure: bool
 
     public function is_static(this) -> bool {
         if .params.size() < 1 {

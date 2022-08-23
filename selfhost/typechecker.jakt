@@ -960,6 +960,7 @@ struct Typechecker {
                 is_instantiated: not is_generic or is_extern
                 parsed_function: func
                 is_comptime: func.is_comptime
+                is_closure: false
             )
 
             let function_id = module.add_function(checked_function)
@@ -1081,6 +1082,7 @@ struct Typechecker {
                 is_instantiated: true
                 parsed_function: None
                 is_comptime: false
+                is_closure: false
             )
 
             // Internal constructor
@@ -1184,6 +1186,7 @@ struct Typechecker {
                 is_instantiated: not is_generic or is_extern
                 parsed_function: method.parsed_function
                 is_comptime: method.parsed_function.is_comptime
+                is_closure: false
             )
 
             let function_id = module.add_function(checked_function)
@@ -1497,6 +1500,7 @@ struct Typechecker {
                                 is_instantiated: true
                                 parsed_function: None
                                 is_comptime: false
+                                is_closure: false
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
@@ -1541,6 +1545,7 @@ struct Typechecker {
                                 is_instantiated: true
                                 parsed_function: None
                                 is_comptime: false
+                                is_closure: false
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
@@ -1574,6 +1579,7 @@ struct Typechecker {
                                 is_instantiated: true
                                 parsed_function: None
                                 is_comptime: false
+                                is_closure: false
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
@@ -1779,6 +1785,7 @@ struct Typechecker {
             is_instantiated: not is_generic
             parsed_function
             is_comptime: parsed_function.is_comptime
+            is_closure: false
         )
         // FIXME: We can't return a `mut Foo` from a function right now, but assigning anything to a `mut` variable makes it mutable.
         //        AKA, working around one bug with another bug. :^)
@@ -2848,6 +2855,7 @@ struct Typechecker {
                     is_instantiated: false
                     parsed_function: None
                     is_comptime: false
+                    is_closure: false
                 )
                 mut module = .current_module()
                 let function_id = module.add_function(checked_function)
@@ -3554,7 +3562,7 @@ struct Typechecker {
         let var_id = module.add_variable(checked_var)
         .add_var_to_scope(scope_id, name: var.name, var_id, span: checked_var.definition_span)
 
-        if checked_expr is Function(params, can_throw, return_type_id, block, span, type_id) 
+        if checked_expr is Function(captures, params, can_throw, return_type_id, block, span, type_id)
             and not .find_function_in_scope(parent_scope_id: scope_id, function_name: var.name).has_value() {
             let checked_function = CheckedFunction(
                 name: var.name
@@ -3572,6 +3580,7 @@ struct Typechecker {
                 is_instantiated: false
                 parsed_function: None
                 is_comptime: false
+                is_closure: not captures.is_empty()
             )
             let function_id = module.add_function(checked_function)
             .add_function_to_scope(parent_scope_id: scope_id, name: var.name, function_id, span)
@@ -3733,7 +3742,7 @@ struct Typechecker {
             return CheckedStatement::Return(val: None, span)
         }
 
-        if expr! is Function {
+        if not (.current_function_id.has_value() and .get_function(.current_function_id!).is_comptime) and expr! is Function {
             .error("Returning a function is not currently supported", span)
         }
 
@@ -5707,16 +5716,17 @@ struct Typechecker {
             .dump_try_hint(span)
         }
 
+        let function_call = CheckedCall(
+            namespace_: resolved_namespaces
+            name: call.name
+            args
+            type_args: generic_arguments
+            function_id: resolved_function_id
+            return_type
+            callee_throws
+        )
         let checked_call = CheckedExpression::Call(
-            call: CheckedCall(
-                namespace_: resolved_namespaces
-                name: call.name
-                args
-                type_args: generic_arguments
-                function_id: resolved_function_id
-                return_type
-                callee_throws
-            )
+            call: function_call
             span
             type_id: return_type
         )
@@ -5724,6 +5734,7 @@ struct Typechecker {
         let in_comptime_function = .current_function_id.has_value() and .get_function(.current_function_id.value()).is_comptime
 
         if not in_comptime_function and resolved_function_id.has_value() and .get_function(resolved_function_id!).is_comptime {
+            let resolved_function = .get_function(resolved_function_id!)
             mut interpreter = Interpreter::create(compiler: .compiler, program: .program, spans: [])
             let function_ = .program.get_function(generic_checked_function_to_instantiate ?? resolved_function_id!)
             mut call_args: [Value] = []
@@ -5784,6 +5795,17 @@ struct Typechecker {
                 call_args.push(evaluated_value)
             }
 
+
+            mut type_bindings: [String:TypeId] = [:]
+            for i in 0uz..resolved_function.generic_params.size() {
+                let param = resolved_function.generic_params[i]
+
+                type_bindings.set(
+                    param.type_id().to_string()
+                    function_call.type_args[i]
+                )
+            }
+
             mut result: ExecutionResult? = None
             try {
                 result = interpreter.execute(
@@ -5792,6 +5814,7 @@ struct Typechecker {
                     this_argument: this_argument
                     arguments: call_args
                     call_span: span
+                    invocation_scope: InterpreterScope::create(type_bindings)
                 )
             } catch error {
                 .error(format("Compiletime call failed: {}", error), span)
