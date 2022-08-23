@@ -1499,6 +1499,9 @@ struct CodeGenerator {
     }
 
     fn codegen_expression(mut this, anon expression: CheckedExpression) throws -> String => match expression {
+        Reflect(span) => {
+            panic(format("Unexpected reflect expression at {}", span))
+        }
         Range(from, to, type_id) => {
             mut output = ""
             let type = .program.get_type(type_id)

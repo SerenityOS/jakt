@@ -1041,6 +1041,7 @@ boxed enum ParsedExpression {
     Function(captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, is_fat_arrow: bool, return_type: ParsedType, block: ParsedBlock, span: Span)
     Try(expr: ParsedExpression, catch_block: ParsedBlock?, catch_name: String?, span: Span)
     TryBlock(stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, span: Span)
+    Reflect(type: ParsedType, span: Span)
     Garbage(Span)
 
     fn span(this) => match this {
@@ -1332,6 +1333,10 @@ boxed enum ParsedExpression {
 
                 return true
             }
+            else => false
+        }
+        Reflect(type) => match rhs_expression {
+            Reflect(type: rhs_type) => type.equals(rhs_type)
             else => false
         }
         Garbage => rhs_expression is Garbage
@@ -4216,6 +4221,13 @@ struct Parser {
             let expr = .parse_operand()
             let span = merge_spans(start, expr.span())
             yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::BitwiseNot, span)
+        }
+        Reflect(span) => {
+            let start = .current().span()
+            .index++
+            let type = .parse_typename()
+            let span = merge_spans(start, type.span())
+            yield ParsedExpression::Reflect(type, span)
         }
         Identifier(name, span) => {
             if .peek(1) is LParen {

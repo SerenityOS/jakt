@@ -6196,6 +6196,20 @@ struct Typechecker {
 
             yield CheckedExpression::Range(from: checked_from, to: checked_to, span, type_id)
         }
+        Reflect(type, span) => {
+            let reflected_type_enum_id = match .program.find_reflected_primitive(primitive: "Type") {
+                Enum(id) => id
+                else => {
+                    .compiler.panic("unreachable")
+                }
+            }
+
+            let reflected_type = .typecheck_typename(parsed_type: type, scope_id, name: None)
+            yield CheckedExpression::Reflect(
+                type: reflected_type
+                span
+                type_id: .find_or_add_type_id(Type::Enum(enum_id: reflected_type_enum_id)))
+        }
         UnaryOp(expr, op, span) => {
             let checked_expr = match op {
                 Dereference => .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)

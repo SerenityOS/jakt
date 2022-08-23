@@ -1423,6 +1423,7 @@ boxed enum CheckedExpression {
     Function(captures: [CheckedCapture], params: [CheckedParameter], can_throw: bool, return_type_id: TypeId, block: CheckedBlock, span: Span, type_id: TypeId, pseudo_function_id: FunctionId?)
     Try(expr: CheckedExpression, catch_block: CheckedBlock?, catch_name: String?, span: Span, type_id: TypeId, inner_type_id: TypeId)
     TryBlock(stmt: CheckedStatement, catch_block: CheckedBlock, error_name: String, error_span: Span, span: Span, type_id: TypeId)
+    Reflect(type: TypeId, span: Span, type_id: TypeId)
     Garbage(Span)
 
     fn to_number_constant(this, program: CheckedProgram) -> NumberConstant? => match this {
@@ -1850,6 +1851,27 @@ class CheckedProgram {
                 return IterationDecision::Continue
             }
         ) ?? false
+    }
+
+    public fn find_reflected_primitive(this, anon primitive: String) throws -> StructOrEnumId {
+        let scope_id = .prelude_scope_id()
+        let maybe_namespace = .find_namespace_in_scope(scope_id, "Reflect")
+        if not maybe_namespace.has_value() {
+            .compiler.panic(format("internal error: builtin namespace 'Reflect' not found"))
+        }
+
+        let reflect_namespace_scope_id = maybe_namespace!.0
+        let enum_id = .find_enum_in_scope(scope_id: reflect_namespace_scope_id, name: primitive)
+        if enum_id.has_value() {
+            return StructOrEnumId::Enum(enum_id!)
+        }
+
+        let struct_id = .find_struct_in_scope(scope_id: reflect_namespace_scope_id, name: primitive)
+        if struct_id.has_value() {
+            return StructOrEnumId::Struct(struct_id!)
+        }
+
+        .compiler.panic(format("internal error: definition for reflect builtin '{}' not found", primitive))
     }
 
     public fn find_namespace_in_scope(
