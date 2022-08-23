@@ -681,7 +681,9 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
                                     }
                                     yield names
                                 }
-                                else => {yield {"else (expression)"}}
+                                else => {
+                                    yield {format("else ({})", program.type_name(type_id))}
+                                }
                             }
 
                             mut remaining_cases = all_cases
