@@ -3,6 +3,7 @@
 #include <Jakt/Checked.h>
 #include <Jakt/Error.h>
 #include <Jakt/RefCounted.h>
+#include <Jakt/Tuple.h>
 #include <Builtins/Range.h>
 #include <initializer_list>
 #include <stdlib.h>
@@ -147,6 +148,37 @@ private:
 };
 
 template<typename T>
+class ArrayIteratorIndexed {
+    using Storage = ArrayStorage<T>;
+
+public:
+    ArrayIteratorIndexed(NonnullRefPtr<Storage> storage, size_t offset, size_t size)
+        : m_storage(move(storage))
+        , m_offset(offset)
+        , m_index(offset)
+        , m_size(size)
+    {
+    }
+
+    Optional<Tuple<size_t, T>> next()
+    {
+        if (m_index >= (m_offset + m_size)) {
+            return {};
+        }
+        auto current = m_storage->at(m_index);
+        ++m_index;
+
+        return Tuple{(m_index-1), current};
+    }
+
+private:
+    NonnullRefPtr<Storage> m_storage;
+    size_t m_offset { 0 };
+    size_t m_index { 0 };
+    size_t m_size { 0 };
+};
+
+template<typename T>
 class ArrayIterator {
     using Storage = ArrayStorage<T>;
 
@@ -190,6 +222,11 @@ public:
     ArrayIterator<T> iterator() const
     {
         return ArrayIterator<T> { *m_storage, 0, m_storage->size() };
+    }
+
+    ArrayIteratorIndexed<T> enumerate() const
+    {
+        return ArrayIteratorIndexed<T> { *m_storage, 0, m_storage->size() };
     }
 
     static ErrorOr<Array> create_empty()
@@ -363,6 +400,11 @@ public:
     ArrayIterator<T> iterator() const
     {
         return ArrayIterator<T> { *m_storage, m_offset, m_size };
+    }
+
+    ArrayIteratorIndexed<T> enumerate() const
+    {
+        return ArrayIteratorIndexed<T> { *m_storage, 0, m_storage->size() };
     }
 
     bool is_empty() const { return size() == 0; }

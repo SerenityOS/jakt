@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "0, a\n1, b\n2, c\n3, d\n"
+
+function main() {
+    mut list = ["a", "b", "c", "d"]
+
+    for (idx, word) in list.enumerate() {
+        println("{}, {}" idx, word)
+    }
+}

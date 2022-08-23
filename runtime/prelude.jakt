@@ -5,8 +5,14 @@ extern struct Optional<T> {
     function Optional<S>(anon x: S) -> Optional<S>
 }
 
+extern struct Tuple {}
+
 extern struct ArrayIterator<T> {
     function next(mut this) -> T?
+}
+
+extern struct ArrayIteratorIndexed<T> {
+    function next(mut this) -> (usize, T)?
 }
 
 extern struct Array<T> {
@@ -20,6 +26,7 @@ extern struct Array<T> {
     function push(mut this, anon value: T) throws
     function pop(mut this) -> T?
     function iterator(this) -> ArrayIterator<T>
+    function enumerate(this) -> ArrayIteratorIndexed<T>
     function first(this) -> T?
     function last(this) -> T?
 }
@@ -29,6 +36,7 @@ extern struct ArraySlice<T> {
     function contains(this, anon value: T) -> bool
     function size(this) -> usize
     function iterator(this) -> ArrayIterator<T>
+    function enumerate(this) -> ArrayIteratorIndexed<T>
     function to_array(this) throws -> Array<T> 
     function first(this) -> T?
     function last(this) -> T?
@@ -68,8 +76,6 @@ extern struct WeakPtr<T> {
     function has_value(this) -> bool
     function clear(mut this)
 }
-
-extern struct Tuple {}
 
 extern struct DictionaryIterator<K, V> {
     function next(mut this) -> (K, V)?
