@@ -1,7 +1,7 @@
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedExpression, CheckedEnum,
     CheckedMatchBody, CheckedNumericConstant, CheckedProgram, CheckedStatement, EnumId,
-    BinaryOperator, CheckedEnumVariant,
+    BinaryOperator, CheckedEnumVariant, CheckedVariable, Visibility, CheckedParameter,
     EnumVariantPatternArgument, FunctionId, ModuleId, ResolvedNamespace, ScopeId, Span, StructId,
     Type, TypeId, VarId, builtin, unknown_type_id,
 }
@@ -44,6 +44,7 @@ boxed enum ValueImpl {
     OptionalSome(value: Value)
     OptionalNone
     JaktTuple(fields: [Value], type_id: TypeId)
+    Function(captures: [String:Value], params: [String:(TypeId, CheckedExpression?)], return_type_id: TypeId, type_id: TypeId, block: CheckedBlock, can_throw: bool, checked_params: [CheckedParameter])
 
     function copy(this) throws => match this {
         Void => ValueImpl::Void
@@ -105,6 +106,7 @@ boxed enum ValueImpl {
             }
             yield ValueImpl::JaktTuple(fields: values_copy, type_id)
         }
+        Function(captures, params, can_throw, return_type_id, type_id, block, checked_params) => ValueImpl::Function(captures, params, return_type_id, type_id, block, can_throw, checked_params)
     }
 
     function equals(this, anon other: ValueImpl) => match this {
@@ -159,6 +161,7 @@ struct Value {
         OptionalSome => "Some"
         OptionalNone => "None"
         JaktTuple => "Tuple"
+        Function => "Function"
     }
     function cast(this, anon expected: Value, span: Span) throws -> Value => match .impl {
         U8(value) => match expected.impl {
@@ -499,6 +502,48 @@ struct Value {
                 type_id
                 key_type_id
                 value_type_id
+            )
+        }
+        Function(captures, can_throw, return_type_id, type_id, block, checked_params) => {
+            // As all the captures are compiletime objects, we can simply inline them as assignments inside the block :P
+            mut statements: [CheckedStatement] = []
+            for capture in captures.iterator() {
+                let value = capture.1.to_checked_expression(interpreter)
+                let var_id = interpreter.program.get_module(id: type_id.module).add_variable(CheckedVariable(
+                    name: capture.0
+                    type_id: value.type()
+                    is_mutable: false
+                    definition_span: .span
+                    type_span: None
+                    visibility: Visibility::Public
+                ))
+                statements.push(CheckedStatement::VarDecl(
+                    var_id
+                    init: value
+                    span: .span
+                ))
+            }
+
+            // Then append all the statements in the block
+            for statement in block.statements.iterator() {
+                statements.push(statement)
+            }
+
+            let new_block = CheckedBlock(
+                statements
+                scope_id: block.scope_id
+                control_flow: block.control_flow
+                yielded_type: block.yielded_type
+            )
+
+            yield CheckedExpression::Function(
+                captures: []
+                params: checked_params
+                can_throw
+                return_type_id
+                block: new_block
+                span: .span
+                type_id
             )
         }
         else => {
@@ -1614,7 +1659,7 @@ class Interpreter {
         }
     }
 
-    public function execute(mut this, anon function_to_run_id: FunctionId, mut namespace_: [ResolvedNamespace]?, this_argument: Value?, arguments: [Value], call_span: Span, type_bindings: [String:TypeId] = [:]) throws -> ExecutionResult {
+    public function execute(mut this, anon function_to_run_id: FunctionId, mut namespace_: [ResolvedNamespace]?, this_argument: Value?, arguments: [Value], call_span: Span, invocation_scope: InterpreterScope? = None) throws -> ExecutionResult {
         let function_to_run = .program.get_function(function_to_run_id)
         .enter_span(call_span)
         let old_function_id = .current_function_id
@@ -1725,7 +1770,18 @@ class Interpreter {
                 namespace_ = effective_namespace
             }
 
-            return match .call_prelude_function(function_to_run.name, namespace_!, this_argument, arguments, call_span, type_bindings) {
+            mut type_bindings: [String:TypeId] = [:]
+            if invocation_scope.has_value() {
+                type_bindings = invocation_scope!.type_bindings
+            }
+            return match .call_prelude_function(
+                function_to_run.name,
+                namespace_!,
+                this_argument,
+                arguments,
+                call_span,
+                type_bindings
+            ) {
                 JustValue(value) | Return(value) => ExecutionResult::Return(value)
                 Throw(value) => ExecutionResult::Throw(value)
                 Continue | Break | Yield => {
@@ -1736,7 +1792,7 @@ class Interpreter {
 
         match function_to_run.type {
             Normal => {
-                mut scope = InterpreterScope::create(type_bindings)
+                mut scope = InterpreterScope::create(parent: invocation_scope)
                 defer {
                     scope.perform_defers(interpreter: this, span: call_span)
                 }
@@ -4093,6 +4149,13 @@ class Interpreter {
             }
 
             let function_to_run = .program.get_function(id: call.function_id!)
+            if function_to_run.is_closure {
+                .error(
+                    format("Cannot call a closure (nyi)"),
+                    span
+                )
+                throw Error::from_errno(InterpretError::Unimplemented as! i32)
+            }
             mut this_argument: Value? = None
             mut arguments: [Value] = []
             for arg in call.args.iterator() {
@@ -4119,9 +4182,6 @@ class Interpreter {
             mut type_bindings: [String:TypeId] = [:]
             for i in 0..function_to_run.generic_params.size() {
                 let param = function_to_run.generic_params[i]
-                guard param is Parameter else {
-                    continue
-                }
 
                 type_bindings.set(
                     param.type_id().to_string()
@@ -4129,7 +4189,17 @@ class Interpreter {
                 )
             }
 
-            yield match .execute(call.function_id!, namespace_: Some(call.namespace_), this_argument, arguments, call_span: span, type_bindings) {
+            let empty_bindings: [String:Value] = [:]
+            yield match .execute(
+                call.function_id!
+                namespace_: Some(call.namespace_)
+                this_argument
+                arguments
+                call_span: span
+                invocation_scope: InterpreterScope::create(
+                    type_bindings
+                )
+            ) {
                 Return(value) => StatementResult::JustValue(value)
                 Throw(value) => StatementResult::Throw(value)
             }
@@ -4807,6 +4877,40 @@ class Interpreter {
         }
         // JaktTuple
         // JaktSet
+        Function(captures, params, return_type_id, type_id, block, span, can_throw) => {
+            // First, resolve the captures
+            mut resolved_captures: [String:Value] = [:]
+            for capture in captures.iterator() {
+                let name = capture.name()
+                guard capture is ByValue else {
+                    .error(
+                        format("Cannot capture by reference in a comptime function (nyi)"),
+                        span)
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+
+                resolved_captures.set(name, scope.must_get(name))
+            }
+
+            // Next, resolve the parameters
+            mut resolved_params: [String:(TypeId, CheckedExpression?)] = [:]
+            for param in params.iterator() {
+                resolved_params.set(param.variable.name, (param.variable.type_id, param.default_value))
+            }
+
+            yield StatementResult::JustValue(Value(
+                impl: ValueImpl::Function(
+                    captures: resolved_captures,
+                    params: resolved_params
+                    return_type_id
+                    type_id
+                    block
+                    can_throw
+                    checked_params: params
+                )
+                span
+            ))
+        }
         TryBlock(stmt, catch_block, error_name, span) => {
             match .execute_statement(statement: stmt, scope, call_span: span) {
                 JustValue => {}
