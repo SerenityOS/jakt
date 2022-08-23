@@ -1,0 +1,14 @@
+/// Expect:
+/// - output: "bar\n"
+
+function main() {
+    let x = 42
+
+    let y = match x {
+        0..30 => "foo"
+        30..100 => "bar"
+        else => "baz"
+    }
+
+    println("{}", y)
+}
