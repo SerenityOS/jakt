@@ -1,3 +1,6 @@
+/// Expect:
+/// - output: "false\ntrue\n"
+
 enum test {
     Range(test: i64)
     Other(test: i64)
