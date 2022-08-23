@@ -1805,8 +1805,24 @@ struct CodeGenerator {
                     if not first {
                         output += "else "
                     }
-                    output += "if (__jakt_enum_value == "
-                    output += .codegen_expression(expression)
+                    if expression is Range(from, to) {
+                        output += "if (__jakt_enum_value"
+                        if from.has_value() {
+                            output += " >= "
+                            output += .codegen_expression(from!)
+                        }
+                        
+                        if to.has_value() {
+                            if from.has_value() {
+                                output += "&& __jakt_enum_value "
+                            }
+                            output += "< "
+                            output += .codegen_expression(to!)
+                        }
+                    } else {
+                        output += "if (__jakt_enum_value == "
+                        output += .codegen_expression(expression)
+                    }
                     output += ") {\n"
                     output += .codegen_match_body(body, return_type_id)
                     output += "}\n"

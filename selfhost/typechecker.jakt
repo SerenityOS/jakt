@@ -5179,11 +5179,28 @@ struct Typechecker {
                                     all_variants_constant = false
                                 }
 
+                                mut expression_type = checked_expression.type()
+
+                                if checked_expression is Range(from, to) {
+                                    guard from.has_value() or to.has_value() else {
+                                        .error(
+                                            "There has to be at least a 'from', or a 'to' in a range expression"
+                                            expr.span()
+                                        )
+                                        continue
+                                    }
+                                    if from.has_value() {
+                                        expression_type = from!.type()
+                                    } else if to.has_value() {
+                                        expression_type = to!.type()
+                                    }
+                                }
+
                                 // FIXME: In the future, we should really make this a "does it satisfy some trait" check.
                                 //        For now, we just check that the types are equal.
                                 mut generic_inferences: [String:String] = [:]
                                 .check_types_for_compat(
-                                    lhs_type_id: checked_expression.type()
+                                    lhs_type_id: expression_type
                                     rhs_type_id: subject_type_id
                                     &mut generic_inferences // FIXME: use correct generic inferences
                                     span: case_.marker_span
