@@ -7,6 +7,8 @@ project(Jakt
         HOMEPAGE_URL https://github.com/SerenityOS/jakt
         DESCRIPTION "Jakt programming language compiler")
 
+include(GNUInstallDirs)
+
 set(NO_SYMLINKS_DEFAULT OFF)
 if (CMAKE_HOST_WIN32)
   set(NO_SYMLINKS_DEFAULT ON)
@@ -23,65 +25,15 @@ else()
   set(LINK_GENEX TARGET_FILE_NAME)
 endif()
 
-macro(add_jakt_compiler_flags target)
-  target_compile_options("${target}" PRIVATE
-    -Wno-unused-local-typedefs
-    -Wno-unused-function
-    -Wno-unused-variable
-    -Wno-unknown-warning-option
-    -Wno-trigraphs
-    -Wno-parentheses-equality
-    -Wno-unqualified-std-cast-call
-    -Wno-user-defined-literals
-    -Wno-return-type
-    -Wno-deprecated-declarations
-    -fcolor-diagnostics
-  )
-  if (MSVC)
-    # For clang-cl, which shows up to CMake as MSVC and accepts both kinds of arguments
-    target_compile_options("${target}" PRIVATE /permissive- /utf-8 /EHsc-)
-  else()
-    target_compile_options("${target}" PRIVATE -fno-exceptions)  
-  endif()
-  target_compile_features("${target}" PRIVATE cxx_std_20)
-endmacro()
-
-function(add_jakt_executable compiler executable)
-  cmake_parse_arguments(PARSE_ARGV 2 SELFHOST "" "MAIN_SOURCE;RUNTIME_DIRECTORY" "MODULE_SOURCES")
-  set(main_source "${CMAKE_CURRENT_LIST_DIR}/${SELFHOST_MAIN_SOURCE}" )
-  get_filename_component(main_base "${main_source}" NAME_WE)
-  set(cpp_output "${executable}_${main_base}.cpp")
-
-  if (NOT SELFHOST_RUNTIME_DIRECTORY)
-    set(SELFHOST_RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/runtime")
-  endif()
-
-  set(binary_tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/jakt_tmp")
-
-  add_custom_command(
-    OUTPUT "${cpp_output}"
-    COMMAND "${CMAKE_COMMAND}" -E make_directory ${binary_tmp_dir}
-    COMMAND "$<TARGET_FILE:${compiler}>" -S --binary-dir "${binary_tmp_dir}" -R "${SELFHOST_RUNTIME_DIRECTORY}" "${main_source}"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_CURRENT_BINARY_DIR}/jakt_tmp/${main_base}.cpp" "${cpp_output}"
-    COMMAND "${CMAKE_COMMAND}" -E remove "${CMAKE_CURRENT_BINARY_DIR}/jakt_tmp/${main_base}.cpp"
-    VERBATIM
-    COMMENT "Building jakt file ${SELFHOST_MAIN_SOURCE} with ${compiler}"
-    MAIN_DEPENDENCY "${main_source}"
-    DEPENDS ${SELFHOST_MODULE_SOURCES}
-  )
-  add_custom_target("generate_${executable}" DEPENDS "${cpp_output}")
-
-  add_executable("${executable}" "${cpp_output}")
-  add_dependencies("${executable}" "generate_${executable}")
-  add_jakt_compiler_flags("${executable}")
-endfunction()
+include(cmake/jakt-executable.cmake)
 
 add_executable(jakt_stage0 bootstrap/stage0/jakt.cpp)
+add_executable(Jakt::jakt_stage0 ALIAS jakt_stage0)
 add_jakt_compiler_flags(jakt_stage0)
 target_include_directories(jakt_stage0
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bootstrap/stage0/runtime>
-    $<INSTALL_INTERFACE:runtime>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
 )
 
 set(SELFHOST_SOURCES
@@ -99,27 +51,24 @@ set(SELFHOST_SOURCES
   selfhost/utility.jakt
 )
 
-add_jakt_executable(jakt_stage0 jakt_stage1
+add_jakt_executable(jakt_stage1
+  COMPILER jakt_stage0
   MAIN_SOURCE selfhost/main.jakt
   MODULE_SOURCES ${SELFHOST_SOURCES}
-  RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bootstrap/stage0/runtime"
+  RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/runtime"
 )
-target_include_directories(jakt_stage1
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
-    $<INSTALL_INTERFACE:runtime>
-)
+target_include_directories(jakt_stage1 PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>)
+add_executable(Jakt::jakt_stage1 ALIAS jakt_stage1)
 
 if (FINAL_STAGE GREATER_EQUAL 2)
-  add_jakt_executable(jakt_stage1 jakt_stage2
+  add_jakt_executable(jakt_stage2
+    COMPILER jakt_stage1
     MAIN_SOURCE selfhost/main.jakt
     MODULE_SOURCES ${SELFHOST_SOURCES}
+    RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/runtime"
   )
-  target_include_directories(jakt_stage2
-    PUBLIC
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
-      $<INSTALL_INTERFACE:runtime>
-  )
+  target_include_directories(jakt_stage2 PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>)
+  add_executable(Jakt::jakt_stage2 ALIAS jakt_stage2)
 endif()
 
 add_custom_command(
@@ -134,10 +83,11 @@ if (NOT CMAKE_SKIP_INSTALL_RULES)
 endif()
 
 # FIXME: Remove if we decide to use CTest
-option(BUILD_TESTING "Whether to build tests or not, default on" ON)
+option(JAKT_BUILD_TESTING "Whether to build tests or not, default on" ON)
 
-if (BUILD_TESTING)
-  add_jakt_executable("jakt_stage${FINAL_STAGE}" jakttest
+if (JAKT_BUILD_TESTING)
+  add_jakt_executable(jakttest
+    COMPILER "jakt_stage${FINAL_STAGE}"
     MAIN_SOURCE
       jakttest/jakttest.jakt
     MODULE_SOURCES
