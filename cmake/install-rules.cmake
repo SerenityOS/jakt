@@ -16,6 +16,12 @@ install(
     COMPONENT Jakt_Development
 )
 
+install(
+    FILES cmake/jakt-executable.cmake
+    DESTINATION "${Jakt_INSTALL_CMAKEDIR}"
+    COMPONENT Jakt_Development
+)
+
 set(stages 0 1 2)
 foreach (stage IN LISTS stages)
   if (FINAL_STAGE LESS "${stage}")
