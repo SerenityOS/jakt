@@ -5881,7 +5881,7 @@ struct Typechecker {
                 return false
             }
             UnaryOp(expr, op) => {
-                if op is Reference or op is MutableReference {
+                if op is Reference or op is MutableReference or op is Dereference {
                     if expr is Var(name, span) {
                         if name == param.variable.name {
                             return true
