@@ -608,10 +608,6 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
             yielded_none: block.yielded_none
         )
 
-        for param in checked_params {
-            println("Param: {}", interpreter.program.type_name(param.variable.type_id))
-        }
-
         yield CheckedExpression::Function(
             captures: []
             params: checked_params
