@@ -4400,8 +4400,10 @@ struct Typechecker {
                         if variant.has_value() {
                             checked_enum_variant = variant
                             let checked_bindings = .typecheck_enum_variant_bindings(variant: variant!, bindings: [arg], span)
-                            let bindings = checked_bindings!
-                            checked_binding = bindings[0]
+                            if checked_bindings.has_value() {
+                                let bindings = checked_bindings!
+                                checked_binding = bindings[0]
+                            }
                         } else {
                             .error(format("Enum variant {} does not exist", variant_name), span)
                         }
@@ -4412,7 +4414,11 @@ struct Typechecker {
                 }
                 else => {}
             }
-            yield CheckedExpression::EnumVariantArg(expr: checked_expr, arg: checked_binding, enum_variant: checked_enum_variant!, span)
+            mut output = CheckedExpression::Garbage(span)
+            if checked_enum_variant.has_value() {
+                output = CheckedExpression::EnumVariantArg(expr: checked_expr, arg: checked_binding, enum_variant: checked_enum_variant!, span)
+            }
+            yield output
         }
         JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode, type_hint)
         Set(values, span) => .typecheck_set(values, span, scope_id, safety_mode, type_hint)
