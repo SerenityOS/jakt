@@ -1,0 +1,15 @@
+/// Expect:
+/// - output: "5\n"
+
+function bar(a: i64) -> i64 {
+    return a
+}
+
+function foo(a: &i64) -> i64 {
+    return bar(*a)
+}
+
+function main() {
+    let a = 5
+    println("{}", foo(&a))
+}
