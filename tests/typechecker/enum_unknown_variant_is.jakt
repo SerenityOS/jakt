@@ -1,0 +1,14 @@
+/// Expect:
+/// - error: "does not exist\n"
+
+enum Foo {
+    Bar(i64)
+}
+
+function main() {
+    let x = Foo::Bar(100)
+
+    if x is Baz(y) {
+
+    }
+}
