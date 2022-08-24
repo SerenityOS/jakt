@@ -4998,7 +4998,8 @@ struct Typechecker {
                                     var: ParsedVarDecl(
                                         name: "_magic_value",
                                         parsed_type: ParsedType::Empty,
-                                        is_mutable: true, // FIXME: This binding should be made mutable only if the loop variable is.
+                                        // FIXME: Figure out whether the loop variable should be mutable
+                                        is_mutable: false,
                                         inlay_span: None,
                                         span: name_span
                                     ),
@@ -5057,15 +5058,15 @@ struct Typechecker {
                                     is_mutable: true,
                                     inlay_span: name_span,
                                     span: name_span
-                                    ),
-                                    init: ParsedExpression::ForcedUnwrap(
-                                        expr: ParsedExpression::Var(
-                                            name: "_magic_value",
-                                            span: name_span
-                                        )
+                                ),
+                                init: ParsedExpression::ForcedUnwrap(
+                                    expr: ParsedExpression::Var(
+                                        name: "_magic_value",
                                         span: name_span
                                     )
-                                    span
+                                    span: name_span
+                                )
+                                span
                             ),
                             ParsedStatement::Block(block, span)
                             ]
