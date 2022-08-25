@@ -4004,7 +4004,7 @@ class Interpreter {
             }
 
             let function_to_run = .program.get_function(id: call.function_id!)
-            if function_to_run.is_closure {
+            if function_to_run.type is Closure {
                 .error(
                     format("Cannot call a closure (nyi)"),
                     span
