@@ -2282,15 +2282,24 @@ struct CodeGenerator {
                     let function_id = call.function_id!
                     let function_ = .program.get_function(function_id)
                     let type_module = .program.get_module(function_id.module)
+
                     if function_.type is ImplicitConstructor or function_.type is ExternalClassConstructor {
                         let type_id = call.return_type
                         let type = .program.get_type(type_id)
-                        let type_module = .program.get_module(function_id.module)
-                        if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))) {
+
+                        if not (
+                            type_module.is_root or 
+                            type_module.is_prelude() or 
+                            function_.linkage is External or 
+                            function_.type is Expression or
+                            function_.type is Closure or 
+                            (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name)
+                        ) {
                             output += type_module.name
                             output += "::"
                         }
                         output += .codegen_namespace_path(call)
+
                         match type {
                             Struct(struct_id) => {
                                 let struct_ = .program.get_struct(struct_id)
@@ -2343,12 +2352,17 @@ struct CodeGenerator {
                                 let enum_ = .program.get_enum(enum_id)
                                 let enum_type_module = .program.get_module(enum_id.module)
                                 if enum_.is_boxed {
-                                    let type_module = .program.get_module(function_id.module)
-                                    if not (type_module.is_root or type_module.id.equals(ModuleId(id: 0))) {
+                                    if not (
+                                        type_module.is_root or 
+                                        type_module.is_prelude() or 
+                                        function_.linkage is External or 
+                                        function_.type is Expression or
+                                        function_.type is Closure or 
+                                        (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name)
+                                    ) {
                                         output += type_module.name
                                         output += "::"
                                     }
-
                                     output += .codegen_namespace_path(call)
                                     output += "template create<typename "
                                     output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
@@ -2368,8 +2382,14 @@ struct CodeGenerator {
                             }
                         }
                     } else {
-                        if not (type_module.is_root or type_module.is_prelude() or function_.linkage is External or (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name))
-                        {
+                        if not (
+                            type_module.is_root or 
+                            type_module.is_prelude() or 
+                            function_.linkage is External or 
+                            function_.type is Expression or
+                            function_.type is Closure or 
+                            (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name)
+                        ) {
                             output += type_module.name
                             output += "::"
                         }

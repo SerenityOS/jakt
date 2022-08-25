@@ -6,3 +6,7 @@ function use_cool_things() {
     b::something_cool()
     b::something_else_cool()
 }
+
+function call_function(anon a: function(anon x: i64) -> i64) -> i64 {
+    return a(1)
+}

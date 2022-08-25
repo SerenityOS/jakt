@@ -931,7 +931,6 @@ struct Typechecker {
                 is_instantiated: not is_generic or is_extern
                 parsed_function: func
                 is_comptime: func.is_comptime
-                is_closure: false
                 is_virtual: false
                 is_override: false
             )
@@ -1055,7 +1054,6 @@ struct Typechecker {
                 is_instantiated: true
                 parsed_function: None
                 is_comptime: false
-                is_closure: false
                 is_virtual: false
                 is_override: false
             )
@@ -1215,7 +1213,6 @@ struct Typechecker {
                 is_instantiated: not is_generic or is_extern
                 parsed_function: method.parsed_function
                 is_comptime: method.parsed_function.is_comptime
-                is_closure: false
                 is_virtual: method.is_virtual
                 is_override: method.is_override
             )
@@ -1538,7 +1535,6 @@ struct Typechecker {
                                 is_instantiated: true
                                 parsed_function: None
                                 is_comptime: false
-                                is_closure: false
                                 is_virtual: false
                                 is_override: false
                             )
@@ -1585,7 +1581,6 @@ struct Typechecker {
                                 is_instantiated: true
                                 parsed_function: None
                                 is_comptime: false
-                                is_closure: false
                                 is_virtual: false
                                 is_override: false
                             )
@@ -1621,7 +1616,6 @@ struct Typechecker {
                                 is_instantiated: true
                                 parsed_function: None
                                 is_comptime: false
-                                is_closure: false
                                 is_virtual: false
                                 is_override: false
                             )
@@ -1854,7 +1848,6 @@ struct Typechecker {
             is_instantiated: not is_generic
             parsed_function
             is_comptime: parsed_function.is_comptime
-            is_closure: false
             is_virtual: false
             is_override: false
         )
@@ -2875,13 +2868,12 @@ struct Typechecker {
                         yielded_none: false
                     )
                     can_throw
-                    type: FunctionType::Normal
+                    type: FunctionType::Expression
                     linkage: FunctionLinkage::Internal
                     function_scope_id: scope_id
                     is_instantiated: false
                     parsed_function: None
                     is_comptime: false
-                    is_closure: false
                     is_virtual: false
                     is_override: false
                 )

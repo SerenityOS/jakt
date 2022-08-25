@@ -192,6 +192,8 @@ enum FunctionType {
     ImplicitConstructor
     ImplicitEnumConstructor
     ExternalClassConstructor
+    Expression
+    Closure
 }
 
 struct ParsedFunction {
