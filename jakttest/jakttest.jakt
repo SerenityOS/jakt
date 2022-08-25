@@ -183,14 +183,41 @@ function compare_error(bytes: [u8], expected: String) throws -> bool {
     let builder_output = builder.to_string()
     let stripped_expected = strip_line_breaks(expected)
 
-    // println("builder output: {}", builder_output)
-    // println("stripped_expected: {}", stripped_expected)
-
     if not builder_output.contains(stripped_expected) {
         // TODO: return more information about expected/parsed
         return false
     }
     return true
+}
+
+function compare_error_exact(bytes: [u8], expected: String, expected_result: ExpectedResult) throws -> TestFailedReason? {
+    mut builder = StringBuilder::create()
+
+    for b in bytes.iterator() {
+        if b == 0xd {
+            // skip
+        } else if b == 0xa {
+            builder.append(b'\\')
+            builder.append(b'n')
+        } else {
+            builder.append(b)
+        }
+    }
+
+    let builder_output = builder.to_string()
+    let stripped_expected = strip_line_breaks(expected)
+
+    guard builder_output.contains(stripped_expected) else {
+        return TestFailedReason::CompilerErrorUnmatched(had: bytes_to_string(bytes), expected: expected_result)
+    }
+
+    // 7 is the length of "Error: "
+    let stripped_error_line_len = 7 + stripped_expected.length()
+    let stripped_rest = builder_output.substring(start: stripped_error_line_len, length: builder_output.length() - stripped_error_line_len)
+    guard not stripped_rest.contains("Error: ") else {
+        return TestFailedReason::CompilerErrorNotUnique(had: bytes_to_string(bytes), unique_error: expected)
+    }
+    return None
 }
 
 function strip_line_breaks(anon input: String) throws -> String {
@@ -369,7 +396,7 @@ enum TestStage {
 
 enum ResultKind {
     Okay
-    CompileError
+    CompileError(is_exact: bool)
     RuntimeError
 
     function to_stage(this) => match this {
@@ -397,6 +424,7 @@ struct TestsRunResult {
 
 enum TestFailedReason {
     CompilerErrorUnmatched(had: String, expected: ExpectedResult)
+    CompilerErrorNotUnique(had: String, unique_error: String)
     StderrUnmatched(had: String, expected: ExpectedResult)
     StdoutUnmatched(had: String, expected: ExpectedResult)
     ExpectedError(had: String, expected: ExpectedResult)
@@ -440,16 +468,30 @@ struct TestScheduler {
             return TestExitedResult::Failed(file: test.file_name)
         }
 
+
+
         let stage = maybe_stage!
+
 
         // check the test results
         let (result_output, error_output) = test_outputs(directory: .directories[test.directory_index], stage)
 
         let expected = test.result.output
 
+        let expected_stage = test.result.kind.to_stage()
+
+        mut failed_reason: TestFailedReason? = None
+
         let passed_test = match test.result.kind {
             Okay => compare_test(bytes: result_output, expected)
-            RuntimeError | CompileError => compare_error(bytes: error_output, expected)
+            RuntimeError => compare_error(bytes: error_output, expected)
+            CompileError(is_exact) => match is_exact {
+                false => compare_error(bytes: error_output, expected)
+                else => {
+                    failed_reason = compare_error_exact(bytes: error_output, expected, expected_result: test.result)
+                    yield not failed_reason.has_value()
+                }
+            }
         }
 
         if not passed_test {
@@ -457,6 +499,7 @@ struct TestScheduler {
             let expected_stage = test.result.kind.to_stage()
 
             if not stage.equals(expected_stage) {
+                eprintln("expected stage doesn't match exited stage")
                 if .failed_reasons.has_value() {
                     if stage.to_order() < expected_stage.to_order() {
                         .failed_reasons![test.file_name] = TestFailedReason::ErroredAtEarlierStage(
@@ -464,7 +507,7 @@ struct TestScheduler {
                             expected: test.result
                             failed_stage: stage.to_string()
                         )
-                    } else if stage is TestRun and result_output.size() > 0 {
+                    } else if stage is TestRun and not result_output.is_empty() {
                         .failed_reasons![test.file_name] = TestFailedReason::ExpectedError(
                             had: bytes_to_string(result_output)
                             expected: test.result
@@ -480,19 +523,23 @@ struct TestScheduler {
 
                 return TestExitedResult::Failed(file: test.file_name)
             } else if .failed_reasons.has_value() {
-                .failed_reasons![test.file_name] = match test.result.kind {
-                    Okay => TestFailedReason::StdoutUnmatched(
-                                had: bytes_to_string(result_output)
-                                expected: test.result
-                            )
-                    RuntimeError => TestFailedReason::StderrUnmatched(
-                                had: bytes_to_string(error_output)
-                                expected: test.result
-                            )
-                    CompileError => TestFailedReason::CompilerErrorUnmatched(
-                                had: bytes_to_string(error_output)
-                                expected: test.result
-                            )
+                if failed_reason.has_value() {
+                    .failed_reasons![test.file_name] = failed_reason!
+                } else {
+                    .failed_reasons![test.file_name] = match test.result.kind {
+                        Okay => TestFailedReason::StdoutUnmatched(
+                                    had: bytes_to_string(result_output)
+                                    expected: test.result
+                                )
+                        RuntimeError => TestFailedReason::StderrUnmatched(
+                                    had: bytes_to_string(error_output)
+                                    expected: test.result
+                                )
+                        CompileError => TestFailedReason::CompilerErrorUnmatched(
+                                    had: bytes_to_string(error_output)
+                                    expected: test.result
+                                )
+                    }
                 }
             }
 
@@ -665,8 +712,8 @@ function main(args: [String]) {
                                 file_name
                                 directory_index: 0))
             }
-            CompileErrorTest(output) => {
-                tests.push(Test(result: ExpectedResult(kind: ResultKind::CompileError, output)
+            CompileErrorTest(output, is_exact) => {
+                tests.push(Test(result: ExpectedResult(kind: ResultKind::CompileError(is_exact), output)
                                 file_name
                                 directory_index: 0))
             }
@@ -737,6 +784,10 @@ function main(args: [String]) {
             match reasons[file] {
                 CompilerErrorUnmatched(had, expected) => {
                     output += format("Could not find error \"{}\" in error output:\n", expected)
+                    output += had
+                }
+                CompilerErrorNotUnique(had, unique_error) => {
+                    output += format("Error \"{}\" was not unique:\n", unique_error)
                     output += had
                 }
                 StdoutUnmatched(had, expected) => {
