@@ -77,14 +77,34 @@ struct ControlFlowState {
         )
     }
     function is_match_nested(this) => .match_nest_level != 0
-    function choose_control_flow_macro(this) -> String {
+    function wrap_resolve_match_lambda(this, lambda_expr: String) throws -> String {
+        mut output = StringBuilder::create()
+        output.append_string("({\n")
+        output.append_string("auto &&__jakt_value = ")
+        output.append_string(lambda_expr)
+        output.append_string(";\n")
+
+        output.append_string("if (__jakt_value.is_return())\n")
+        output.append_string("\treturn __jakt_value.release_return();")
         if are_loop_exits_allowed(.allowed_exits) {
-            if .is_match_nested() {
-                return "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH"
-            }
-            return "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP"
+            let is_match_nested = .is_match_nested()
+            output.append_string("if (__jakt_value.is_loop_break())\n")
+            output.append_string(match is_match_nested {
+                true => "\treturn JaktInternal::LoopBreak{};\n"
+                // NOTE: 'break' might not work correctly if we're inside a switch statement.
+                else => "\tbreak;\n"
+            })
+
+            output.append_string("if (__jakt_value.is_loop_continue())\n")
+            output.append_string(match is_match_nested {
+                true => "\treturn JaktInternal::LoopContinue{};\n"
+                else => "\tcontinue;\n"
+            })
         }
-        return "JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY"
+        output.append_string("__jakt_value.release_value();\n")
+
+        output.append_string("})")
+        return output.to_string()
     }
 }
 
@@ -1737,7 +1757,7 @@ struct CodeGenerator {
     }
 
     function codegen_generic_match(mut this, expr: CheckedExpression, cases: [CheckedMatchCase], return_type_id: TypeId, all_variants_constant: bool) throws -> String {
-        mut output = ""
+        mut lambda_expr = ""
 
         mut is_generic_enum: bool = false
         for case_ in cases.iterator() {
@@ -1748,22 +1768,20 @@ struct CodeGenerator {
         }
         let match_values_all_constant = all_variants_constant and not is_generic_enum
 
-        output += .control_flow_state.choose_control_flow_macro()
-
         // TODO: Use switch statement if all values are constant
-        output += format(
-            "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<{},{}>"
+        lambda_expr += format(
+            "([&]() -> JaktInternal::ExplicitValueOrControlFlow<{},{}>"
             .codegen_type(return_type_id)
             .codegen_function_return_type(function_: .current_function!)
         ) + "{\n"
 
         if is_generic_enum {
-            output += "auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer("
+            lambda_expr += "auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer("
         } else {
-            output += "auto __jakt_enum_value = ("
+            lambda_expr += "auto __jakt_enum_value = ("
         }
-        output += .codegen_expression(expr)
-        output += ");\n"
+        lambda_expr += .codegen_expression(expr)
+        lambda_expr += ");\n"
 
         mut has_default = false
         mut first = true
@@ -1786,7 +1804,7 @@ struct CodeGenerator {
                         variant_index++
                     }
 
-                    output += format("if (__jakt_enum_value.index() == {} /* {} */) {{\n", variant_index, name)
+                    lambda_expr += format("if (__jakt_enum_value.index() == {} /* {} */) {{\n", variant_index, name)
 
                     mut variant_type_name = ""
                     let qualifier = .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true)
@@ -1797,20 +1815,20 @@ struct CodeGenerator {
                     }
                     variant_type_name += name
 
-                    output += "auto& __jakt_match_value = __jakt_enum_value.template get<"
-                    output += variant_type_name
-                    output += ">();\n"
+                    lambda_expr += "auto& __jakt_match_value = __jakt_enum_value.template get<"
+                    lambda_expr += variant_type_name
+                    lambda_expr += ">();\n"
 
                     for arg in args.iterator() {
-                        output += "auto& "
-                        output += arg.binding
-                        output += " = __jakt_match_value."
-                        output += arg.name ?? "value"
-                        output += ";\n"
+                        lambda_expr += "auto& "
+                        lambda_expr += arg.binding
+                        lambda_expr += " = __jakt_match_value."
+                        lambda_expr += arg.name ?? "value"
+                        lambda_expr += ";\n"
                     }
 
-                    output += .codegen_match_body(body, return_type_id)
-                    output += "}\n"
+                    lambda_expr += .codegen_match_body(body, return_type_id)
+                    lambda_expr += "}\n"
                 }
                 CatchAll(has_arguments, body, marker_span) => {
                     if has_arguments {
@@ -1821,73 +1839,72 @@ struct CodeGenerator {
                     has_default = true
 
                     if first {
-                        output += "{"
+                        lambda_expr += "{"
                     } else {
-                        output += "else {\n"
+                        lambda_expr += "else {\n"
                     }
-                    output += .codegen_match_body(body, return_type_id)
-                    output += "}\n"
+                    lambda_expr += .codegen_match_body(body, return_type_id)
+                    lambda_expr += "}\n"
                 }
                 Expression(expression, body, marker_span) => {
                     // TODO: Use case statement if all values are constant
                     if not first {
-                        output += "else "
+                        lambda_expr += "else "
                     }
                     if expression is Range(from, to) {
-                        output += "if (__jakt_enum_value"
+                        lambda_expr += "if (__jakt_enum_value"
                         if from.has_value() {
-                            output += " >= "
-                            output += .codegen_expression(from!)
+                            lambda_expr += " >= "
+                            lambda_expr += .codegen_expression(from!)
                         }
                         
                         if to.has_value() {
                             if from.has_value() {
-                                output += "&& __jakt_enum_value "
+                                lambda_expr += "&& __jakt_enum_value "
                             }
-                            output += "< "
-                            output += .codegen_expression(to!)
+                            lambda_expr += "< "
+                            lambda_expr += .codegen_expression(to!)
                         }
                     } else {
-                        output += "if (__jakt_enum_value == "
-                        output += .codegen_expression(expression)
+                        lambda_expr += "if (__jakt_enum_value == "
+                        lambda_expr += .codegen_expression(expression)
                     }
-                    output += ") {\n"
-                    output += .codegen_match_body(body, return_type_id)
-                    output += "}\n"
+                    lambda_expr += ") {\n"
+                    lambda_expr += .codegen_match_body(body, return_type_id)
+                    lambda_expr += "}\n"
                 }
             }
             first = false
         }
         if return_type_id.equals(void_type_id()) or return_type_id.equals(unknown_type_id()) {
-            output += "return JaktInternal::ExplicitValue<void>();\n"
+            lambda_expr += "return JaktInternal::ExplicitValue<void>();\n"
         } else if not has_default {
-            output += "VERIFY_NOT_REACHED();\n"
+            lambda_expr += "VERIFY_NOT_REACHED();\n"
         }
 
-        output += "}()))\n"
+        lambda_expr += "}())\n"
 
-        return output
+        return .control_flow_state.wrap_resolve_match_lambda(lambda_expr)
     }
 
     function codegen_enum_match(mut this, enum_: CheckedEnum, expr: CheckedExpression, match_cases: [CheckedMatchCase], type_id: TypeId, all_variants_constant: bool) throws -> String {
-        mut output = ""
-        output += .control_flow_state.choose_control_flow_macro()
+        mut lambda_expr = ""
 
         let subject = .codegen_expression(expr)
         let needs_deref = enum_.is_boxed and subject != "*this"
 
         if enum_.underlying_type_id.equals(void_type_id()) {
-            output += "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
-            output += .codegen_type(type_id)
-            output += ", "
-            output += .codegen_function_return_type(function_: .current_function!)
-            output += ">{\n"
-            output += "auto&& __jakt_match_variant = "
+            lambda_expr += "(([&]() -> JaktInternal::ExplicitValueOrControlFlow<"
+            lambda_expr += .codegen_type(type_id)
+            lambda_expr += ", "
+            lambda_expr += .codegen_function_return_type(function_: .current_function!)
+            lambda_expr += ">{\n"
+            lambda_expr += "auto&& __jakt_match_variant = "
             if needs_deref {
-                output += "*"
+                lambda_expr += "*"
             }
-            output += .codegen_expression(expr) + ";\n"
-            output += "switch(__jakt_match_variant.index()) {\n"
+            lambda_expr += .codegen_expression(expr) + ";\n"
+            lambda_expr += "switch(__jakt_match_variant.index()) {\n"
 
             mut has_default = false
             for match_case in match_cases.iterator() {
@@ -1902,16 +1919,16 @@ struct CodeGenerator {
                         }
                         let match_case_enum = .program.get_enum(enum_id)
                         let variant = match_case_enum.variants[index]
-                        output += format("case {}: ", index) + "{\n"
+                        lambda_expr += format("case {}: ", index) + "{\n"
                         match variant {
                             Untyped(name) => {
-                                output += format("auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
+                                lambda_expr += format("auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
                                     .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true),
                                     name
                                 )
                             }
                             Typed(name, type_id) => {
-                                output += format(
+                                lambda_expr += format(
                                     "auto&& __jakt_match_value = __jakt_match_variant.template get<typename {}::{}>();\n",
                                     .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true),
                                     name
@@ -1919,11 +1936,11 @@ struct CodeGenerator {
                                 if not args.is_empty() {
                                     let arg = args[0]
                                     let var = .program.find_var_in_scope(scope_id, var: arg.binding)!
-                                    output += format("{} const& {} = __jakt_match_value.value;\n", .codegen_type(var.type_id), arg.binding)
+                                    lambda_expr += format("{} const& {} = __jakt_match_value.value;\n", .codegen_type(var.type_id), arg.binding)
                                 }
                             }
                             StructLike(name, fields) => {
-                                output += format(
+                                lambda_expr += format(
                                     "auto&& __jakt_match_value = __jakt_match_variant.template get<{}::{}>();",
                                     .codegen_type_possibly_as_namespace(
                                         type_id: subject_type_id,
@@ -1934,12 +1951,12 @@ struct CodeGenerator {
                                 if not args.is_empty() {
                                     for arg in args.iterator() {
                                         let var = .program.find_var_in_scope(scope_id, var: arg.binding)!
-                                        output += .codegen_type(var.type_id)
-                                        output += " const& "
-                                        output += arg.binding
-                                        output += " = __jakt_match_value."
-                                        output += arg.name.value_or(arg.binding)
-                                        output += ";\n"
+                                        lambda_expr += .codegen_type(var.type_id)
+                                        lambda_expr += " const& "
+                                        lambda_expr += arg.binding
+                                        lambda_expr += " = __jakt_match_value."
+                                        lambda_expr += arg.name.value_or(arg.binding)
+                                        lambda_expr += ";\n"
                                     }
                                 }
                             }
@@ -1947,15 +1964,15 @@ struct CodeGenerator {
                                 todo(format("codegen_enum_match match variant else: {}", variant))
                             }
                         }
-                        output += .codegen_match_body(body, return_type_id: type_id)
-                        output += "};/*case end*/\n"
+                        lambda_expr += .codegen_match_body(body, return_type_id: type_id)
+                        lambda_expr += "};/*case end*/\n"
                     }
                     CatchAll(body) => {
                         has_default = true
 
-                        output += "default: {\n"
-                        output += .codegen_match_body(body, return_type_id: type_id)
-                        output += "};/*case end*/\n"
+                        lambda_expr += "default: {\n"
+                        lambda_expr += .codegen_match_body(body, return_type_id: type_id)
+                        lambda_expr += "};/*case end*/\n"
                     }
                     else => {
                         panic("Matching enum subject with non-enum value")
@@ -1966,16 +1983,16 @@ struct CodeGenerator {
                 if enum_.variants.size() != match_cases.size() {
                     panic("Inexhaustive match statement")
                 }
-                output += "default: VERIFY_NOT_REACHED();"
+                lambda_expr += "default: VERIFY_NOT_REACHED();"
             }
-            output += "}/*switch end*/\n"
-            output += "}()\n))"
+            lambda_expr += "}/*switch end*/\n"
+            lambda_expr += "}()\n))"
         } else {
             todo("underlying type enum match")
             // FIXME: underlying type enum match
         }
 
-        return output
+        return .control_flow_state.wrap_resolve_match_lambda(lambda_expr)
     }
 
     function codegen_match_body(mut this, body: CheckedMatchBody, return_type_id: TypeId) throws -> String {
