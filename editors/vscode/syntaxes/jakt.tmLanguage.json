@@ -531,13 +531,19 @@
         },
         {
           "name": "meta.argument.jakt",
-          "begin": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)",
+          "begin": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)\\s*(&)?\\s*(\\bmut\\b)?",
           "beginCaptures": {
             "1": {
               "name": "variable.parameter.jakt"
             },
             "2": {
               "name": "punctuation.colon.jakt"
+            },
+            "3": {
+              "name": "keyword.reference.jakt"
+            },
+            "4": {
+              "name": "storage.modifier.mut.argument.jakt"
             }
           },
           "end": "$|(,)|(?:(?=\\)))",
@@ -562,13 +568,19 @@
       "patterns": [
         {
           "name": "meta.parameter.jakt",
-          "begin": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)(?!\\:)",
+          "begin": "\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)(?!\\:)\\s*(&)?\\s*(\\bmut\\b)?",
           "beginCaptures": {
             "1": {
               "name": "variable.parameter.name.jakt"
             },
             "2": {
               "name": "punctuation.colon.jakt"
+            },
+            "3": {
+              "name": "keyword.reference.jakt"
+            },
+            "4": {
+              "name": "storage.modifier.mut.argument.jakt"
             }
           },
           "end": "$|(,)|(?=\\))",
@@ -582,6 +594,18 @@
               "include": "$self"
             }
           ]
+        },
+        {
+          "match": "\\b(mut)\\b",
+          "captures": {
+            "1": {
+              "name": "storage.modifier.mut.argument.jakt"
+            }
+          }
+        },
+        {
+          "name": "keyword.reference.jakt",
+          "match": "&"
         },
         {
           "name": "punctuation.comma.jakt",
