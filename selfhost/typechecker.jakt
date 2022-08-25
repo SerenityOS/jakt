@@ -2303,6 +2303,10 @@ struct Typechecker {
         let lhs_type = .get_type(lhs_type_id)
         let rhs_type = .get_type(rhs_type_id)
 
+        if lhs_type is Unknown or rhs_type is Unknown {
+            return true
+        }
+
         let lhs_type_id_string = lhs_type_id.to_string()
         let rhs_type_id_string = rhs_type_id.to_string()
 
@@ -3372,7 +3376,11 @@ struct Typechecker {
         //     1- Must respond to .next(); the mutability of the iterator is inferred from .next()'s signature
         //     2- The result of .next() must be an Optional.
 
+        // Ignore errors here to avoid duplicated errors
+        let old_ignore_errors = .ignore_errors
+        .ignore_errors = true
         let iterable_expr = .typecheck_expression(range, scope_id, safety_mode, type_hint: None)
+        .ignore_errors = old_ignore_errors
         mut iterable_should_be_mutable = false
 
         let iterable_type = .program.get_type(iterable_expr.type())
@@ -3936,6 +3944,8 @@ struct Typechecker {
 
                         .error(format("unknown member of struct: {}.{}", structure.name, field), span)
                     }
+                    // do not error if the type is unknown
+                    Unknown => {}
                     else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
                 }
             }
@@ -3962,6 +3972,7 @@ struct Typechecker {
 
                 .error(format("unknown member of struct: {}.{}", structure.name, field), span)
             }
+            Unknown => {}
             else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
         }
 
@@ -4317,6 +4328,8 @@ struct Typechecker {
                     }
                 }
                 GenericEnumInstance(id) => Some(StructOrEnumId::Enum(id))
+                // do not output an error if the type is unknown
+                Unknown => None
                 else => {
                     .error(message: format("no methods available on value (type: {})", .type_name(type_id: checked_expr_type_id)), span: checked_expr.span())
                     let none: StructOrEnumId? = None
@@ -4329,24 +4342,55 @@ struct Typechecker {
                 .error(message: format("Optional chain mismatch: expected optional chain, found {}", .type_name(type_id: checked_expr_type_id)), span: checked_expr.span())
             }
 
-            let checked_call_expr = .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: checked_expr, parent_id, safety_mode, type_hint, must_be_enum_constructor: false)
-            let type_id = checked_call_expr.type()
-            yield match checked_call_expr {
-                Call(call) => {
-                    mut result_type = call.return_type
-                    if is_optional {
-                        let optional_struct_id = .find_struct_in_prelude("Optional")
-                        result_type = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [result_type]))
+            yield match parent_id.has_value() {
+                true => {
+                    let checked_call_expr = .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: checked_expr, parent_id, safety_mode, type_hint, must_be_enum_constructor: false)
+                    let type_id = checked_call_expr.type()
+                    yield match checked_call_expr {
+                        Call(call) => {
+                            mut result_type = call.return_type
+                            if is_optional {
+                                let optional_struct_id = .find_struct_in_prelude("Optional")
+                                result_type = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [result_type]))
+                            }
+                            yield CheckedExpression::MethodCall(
+                                expr: checked_expr
+                                call
+                                span
+                                is_optional
+                                type_id: result_type)
+                        }
+                        else => {
+                            .compiler.panic("typecheck_call should return `CheckedExpression::Call()`")
+                        }
                     }
-                    yield CheckedExpression::MethodCall(
-                        expr: checked_expr
-                        call
-                        span
-                        is_optional
-                        type_id: result_type)
                 }
                 else => {
-                    .compiler.panic("typecheck_call should return `CheckedExpression::Call()`")
+                    // run the typechecker through the arguments without
+                    // expecting anything
+                    mut args: [(String, CheckedExpression)] = []
+                    args.ensure_capacity(call.args.size())
+                    for triple in call.args.iterator() {
+                        let (name, span, arg) = triple
+                        args.push((name, .typecheck_expression(
+                                    arg
+                                    scope_id
+                                    safety_mode
+                                    type_hint: None)))
+                    }
+                    yield CheckedExpression::MethodCall(
+                    expr: checked_expr
+                    call: CheckedCall(
+                        namespace_: []
+                        name: call.name
+                        args
+                        type_args: []
+                        function_id: None
+                        return_type: unknown_type_id()
+                        callee_throws: false)
+                    span
+                    is_optional
+                    type_id: unknown_type_id())
                 }
             }
         }
@@ -5811,7 +5855,7 @@ struct Typechecker {
                     for arg in call.args.iterator() {
                         let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: None)
 
-                        args.push((call.name, checked_arg))
+                        args.push((arg.0, checked_arg))
                     }
 
                     return CheckedExpression::Call(
@@ -5821,11 +5865,11 @@ struct Typechecker {
                             args,
                             type_args: checked_type_args,
                             function_id: resolved_function_id,
-                            return_type,
+                            return_type: unknown_type_id(),
                             callee_throws
                         ),
                         span,
-                        type_id: return_type
+                        type_id: unknown_type_id()
                     )
                 }
 
