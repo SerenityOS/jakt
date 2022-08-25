@@ -2727,18 +2727,21 @@ struct CodeGenerator {
         // FIXME: Handle WeakPtr
         mut output = ""
         let type_module = .program.get_module(id.module)
+
+        mut namespace_ = ""
         // For prelude generic instances prefix with "JaktInternal::" so that there aren't naming clashes
         if type_module.is_prelude() {
-            output += "JaktInternal::"
+            namespace_ += "JaktInternal::"
         } else if not type_module.is_root {
-            output += type_module.name
-            output += "::"
+            namespace_ += type_module.name
+            namespace_ += "::"
         }
 
         let inner_weak_ptr_struct_id = .program.check_and_extract_weak_ptr(struct_id: id, args)
 
         if inner_weak_ptr_struct_id.has_value() {
             output += "WeakPtr<"
+            output += namespace_
 
             let inner_struct_id = inner_weak_ptr_struct_id.value()
             let struct_ = .program.get_struct(inner_struct_id)
@@ -2753,6 +2756,7 @@ struct CodeGenerator {
             if acquired_by_ref {
                 output += "NonnullRefPtr<"
             }
+            output += namespace_
             output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
             output += struct_.name
             output += "<"
