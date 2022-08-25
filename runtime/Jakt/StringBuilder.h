@@ -137,6 +137,19 @@ struct Formatter<JaktInternal::ArraySlice<T>> : Formatter<StringView> {
 };
 
 template<typename T>
+struct Formatter<JaktInternal::ArrayIterator<T>> : Formatter<StringView> {
+    ErrorOr<void> format(FormatBuilder& builder, JaktInternal::ArrayIterator<T> const& value)
+    {
+        JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };
+
+        auto string_builder = TRY(StringBuilder::create());
+        TRY(string_builder.append("ArrayIterator"));
+
+        return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
+    }
+};
+
+template<typename T>
 struct Formatter<JaktInternal::Set<T>> : Formatter<StringView> {
     ErrorOr<void> format(FormatBuilder& builder, JaktInternal::Set<T> const& set)
     {
@@ -156,6 +169,19 @@ struct Formatter<JaktInternal::Set<T>> : Formatter<StringView> {
         }
         TRY(string_builder.append("}"));
 
+        return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
+    }
+};
+
+template<typename T>
+struct Formatter<JaktInternal::SetIterator<T>> : Formatter<StringView> {
+    ErrorOr<void> format(FormatBuilder& builder, JaktInternal::SetIterator<T> const& value)
+    {
+        JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };
+
+        auto string_builder = TRY(StringBuilder::create());
+        TRY(string_builder.append("SetIterator"));
+        
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
@@ -203,6 +229,19 @@ struct Formatter<JaktInternal::Dictionary<K, V>> : Formatter<StringView> {
         }
         TRY(string_builder.append("]"));
 
+        return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
+    }
+};
+
+template<typename K, typename V>
+struct Formatter<JaktInternal::DictionaryIterator<K, V>> : Formatter<StringView> {
+    ErrorOr<void> format(FormatBuilder& builder, JaktInternal::DictionaryIterator<K, V> const& value)
+    {
+        JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };
+
+        auto string_builder = TRY(StringBuilder::create());
+        TRY(string_builder.append("DictionaryIterator"));
+        
         return Formatter<StringView>::format(builder, TRY(string_builder.to_string()));
     }
 };
