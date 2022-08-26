@@ -3317,7 +3317,8 @@ struct Typechecker {
 
         let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(condition: expr, acc: None, then_block: remaining_code, else_statement: ParsedStatement::Block(block: else_block, span), span)
         let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: None, span)
-        if not checked_condition.type().equals(builtin(BuiltinType::Bool)) {
+        if not checked_condition.type().equals(builtin(BuiltinType::Bool)) and
+            not checked_condition.type().equals(unknown_type_id()) {
             .error("Condition must be a boolean expression", new_condition.span())
         }
 
@@ -3406,6 +3407,9 @@ struct Typechecker {
                     }
                 }
             }
+            // accept unknown type since we don't know what the expression could
+            // have been.
+            Unknown => {}
             else => {
                 .error("Iterator must have a .next() method", name_span)
             }
@@ -3571,7 +3575,8 @@ struct Typechecker {
     function typecheck_if(mut this, condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
         let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(condition, acc: None, then_block, else_statement, span)
         let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: None, span)
-        if not checked_condition.type().equals(builtin(BuiltinType::Bool)) {
+        if not checked_condition.type().equals(builtin(BuiltinType::Bool)) and
+            not checked_condition.type().equals(unknown_type_id()) {
             .error("Condition must be a boolean expression", new_condition.span())
         }
 
@@ -3716,7 +3721,8 @@ struct Typechecker {
 
     function typecheck_while(mut this, condition: ParsedExpression, block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
         let checked_condition = .typecheck_expression_and_dereference_if_needed(condition, scope_id, safety_mode, type_hint: None, span)
-        if not checked_condition.type().equals(builtin(BuiltinType::Bool)) {
+        if not checked_condition.type().equals(builtin(BuiltinType::Bool)) and
+            not checked_condition.type().equals(unknown_type_id()) {
             .error("Condition must be a boolean expression", condition.span())
         }
 
@@ -3972,6 +3978,7 @@ struct Typechecker {
 
                 .error(format("unknown member of struct: {}.{}", structure.name, field), span)
             }
+            // do not error if the type is unknown
             Unknown => {}
             else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
         }
@@ -4589,6 +4596,8 @@ struct Typechecker {
                     }
                     yield inner_type_id
                 }
+                // forward unknown type id without registering an error
+                Unknown => unknown_type_id()
                 else => {
                     .error("Forced unwrap only works on Optional", span)
                     yield unknown_type_id()
