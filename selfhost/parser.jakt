@@ -164,8 +164,8 @@ struct SumEnumVariant {
     params: [ParsedVarDecl]?
 }
 enum RecordType {
-    Struct(fields: [ParsedField])
-    Class(fields: [ParsedField], super_class: ParsedType?)
+    Struct(fields: [ParsedField], super_type: ParsedType?)
+    Class(fields: [ParsedField], super_type: ParsedType?)
     ValueEnum(underlying_type: ParsedType, variants: [ValueEnumVariant])
     SumEnum(is_boxed: bool, variants: [SumEnumVariant])
     Garbage
@@ -1927,7 +1927,8 @@ struct Parser {
         let fields_methods = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Public, is_class: false)
 
         parsed_struct.methods = fields_methods.1
-        parsed_struct.record_type = RecordType::Struct(fields: fields_methods.0)
+        let super_type: ParsedType? = None
+        parsed_struct.record_type = RecordType::Struct(fields: fields_methods.0, super_type)
 
         return parsed_struct
     }
@@ -1941,7 +1942,7 @@ struct Parser {
             methods: [],
             record_type: RecordType::Garbage
         )
-        mut super_class: ParsedType? = None
+        mut super_type: ParsedType? = None
         if .current() is Class {
             .index++
         } else {
@@ -1979,7 +1980,7 @@ struct Parser {
         // Super class
         if .current() is Colon {
             .index++
-            super_class = .parse_typename()
+            super_type = .parse_typename()
         }
 
         .skip_newlines()
@@ -1992,7 +1993,7 @@ struct Parser {
         let fields_methods = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Private, is_class: true)
 
         parsed_class.methods = fields_methods.1
-        parsed_class.record_type = RecordType::Class(fields: fields_methods.0, super_class)
+        parsed_class.record_type = RecordType::Class(fields: fields_methods.0, super_type)
 
         return parsed_class
     }

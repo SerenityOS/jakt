@@ -1086,6 +1086,20 @@ struct Typechecker {
         .current_struct_type_id = None
     }
 
+    function is_class(this, anon type_id: TypeId) -> bool {
+        guard .get_type(type_id) is Struct(struct_id) else {
+            return false
+        }
+        return .get_struct(struct_id).record_type is Class
+    }
+
+    function is_struct(this, anon type_id: TypeId) -> bool {
+        guard .get_type(type_id) is Struct(struct_id) else {
+            return false
+        }
+        return .get_struct(struct_id).record_type is Struct
+    }
+
     function typecheck_struct_predecl(mut this, parsed_record: ParsedRecord, struct_id: StructId, scope_id: ScopeId) throws {
         let struct_type_id = .find_or_add_type_id(type: Type::Struct(struct_id))
         .current_struct_type_id = struct_type_id
@@ -1099,6 +1113,32 @@ struct Typechecker {
             Internal => false
         }
 
+        mut super_type_id: TypeId? = None
+
+        match parsed_record.record_type {
+            Class(super_type) => match super_type.has_value() {
+                true => {
+                    super_type_id = .typecheck_typename(parsed_type: super_type!, scope_id, name: None)
+                    if not .is_class(super_type_id!) {
+                        .error("Class can only inherit from another class", super_type!.span())
+                    }
+                }
+                else => {}
+            }
+            Struct(super_type) => match super_type.has_value() {
+                true => {
+                    super_type_id = .typecheck_typename(parsed_type: super_type!, scope_id, name: None)
+                    if not .is_struct(super_type_id!) {
+                        .error("Struct can only inherit from another struct", super_type!.span())
+                    }
+                }
+                else => {}
+            }
+            else => {
+                panic("Expected Struct or Class in typecheck_struct_predecl")
+            }
+        }
+
         mut module = .current_module()
         module.structures[struct_id.id] = CheckedStruct(
             name: parsed_record.name
@@ -1109,6 +1149,7 @@ struct Typechecker {
             definition_linkage: parsed_record.definition_linkage
             record_type: parsed_record.record_type
             type_id: struct_type_id
+            super_type_id
         )
 
         mut generic_parameters: [TypeId] = module.structures[struct_id.id].generic_parameters
@@ -1309,6 +1350,7 @@ struct Typechecker {
             definition_linkage: parsed_record.definition_linkage
             record_type: parsed_record.record_type
             type_id: struct_type_id
+            super_type_id: None
         ))
     }
 
@@ -5393,7 +5435,7 @@ struct Typechecker {
         )
     }
 
-    function resolve_call(mut this, call: ParsedCall, mut namespaces: [ResolvedNamespace], span: Span, scope_id: ScopeId, must_be_enum_constructor: bool) throws -> FunctionId? {
+    function resolve_call(mut this, call: ParsedCall, mut namespaces: [ResolvedNamespace], span: Span, scope_id: ScopeId, must_be_enum_constructor: bool, ignore_errors: bool) throws -> FunctionId? {
         mut callee: FunctionId? = None
         mut current_scope_id = scope_id
 
@@ -5457,7 +5499,9 @@ struct Typechecker {
             return callee
         }
 
-        .error(format("Call to unknown function: ‘{}’", call.name), span)
+        if not ignore_errors {
+            .error(format("Call to unknown function: ‘{}’", call.name), span)
+        }
 
         return None
     }
@@ -5479,10 +5523,43 @@ struct Typechecker {
 
         let callee_scope_id = match parent_id.has_value() {
             true => match parent_id! {
-                Struct(id) => .get_struct(id).scope_id
-                Enum(id) => .get_enum(id).scope_id
+                Struct(id) => {
+                    mut struct_ = .get_struct(id)
+                    mut scope_id = struct_.scope_id
+                    while not resolved_function_id.has_value() {
+                        resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor, ignore_errors: true)
+                        if resolved_function_id.has_value() {
+                            break
+                        }
+                        if struct_.super_type_id.has_value() {
+                            let parent_type_id = struct_.super_type_id!
+                            guard .get_type(parent_type_id) is Struct(struct_id) else {
+                                panic("internal error: could not find parent struct/class for struct/class")
+                            }
+                            struct_ = .get_struct(struct_id)
+                            scope_id = struct_.scope_id
+                        } else {
+                            .error(format("Could not find `{}`", call.name), span)
+                            break
+                        }
+                    }
+                    yield scope_id
+                }
+                Enum(id) => {
+                    let scope_id = .get_enum(id).scope_id
+                    resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor, ignore_errors: false)
+                    yield scope_id
+                }
             }
-            else => caller_scope_id
+            else => {
+                match call.name {
+                    "print" | "println" | "eprintln" | "eprint" | "format" => {}
+                    else => {
+                        resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id: caller_scope_id, must_be_enum_constructor, ignore_errors: false)
+                    }
+                }
+                yield caller_scope_id
+            }
         }
 
         match call.name {
@@ -5499,7 +5576,6 @@ struct Typechecker {
                 }
             }
             else => {
-                resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id: callee_scope_id, must_be_enum_constructor)
                 if not resolved_function_id.has_value() {
                     mut checked_type_args: [TypeId] = []
                     for type_arg in call.type_args.iterator() {
