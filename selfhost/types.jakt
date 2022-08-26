@@ -678,6 +678,7 @@ struct CheckedStruct {
     definition_linkage: DefinitionLinkage
     record_type: RecordType
     type_id: TypeId
+    super_type_id: TypeId?
 }
 
 struct CheckedEnum {
