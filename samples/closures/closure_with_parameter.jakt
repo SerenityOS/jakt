@@ -1,4 +1,4 @@
-/// Expect: selfhost-only
+/// Expect:
 /// - output: "5\n"
 
 function find(anon arr: [i64], anon cb: function(a: i64) -> bool) -> i64? {

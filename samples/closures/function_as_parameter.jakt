@@ -1,4 +1,4 @@
-/// Expect: selfhost-only
+/// Expect:
 /// - output: "well, hello friends.\n"
 
 function hello(anon who: function() -> String) {

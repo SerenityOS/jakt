@@ -1,4 +1,4 @@
-/// Expect: selfhost-only
+/// Expect:
 /// - output: "69\n"
 
 function test(anon cb: function() throws -> String) throws {

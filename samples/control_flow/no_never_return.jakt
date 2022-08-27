@@ -1,4 +1,4 @@
-/// Expect: selfhost-only
+/// Expect:
 /// - error: "Control reaches end of never-returning function\n"
 
 function test() -> never {

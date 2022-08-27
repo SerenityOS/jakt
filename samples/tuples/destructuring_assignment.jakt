@@ -1,4 +1,4 @@
-/// Expect: selfhost-only
+/// Expect:
 /// - output: "1 hello\n"
 
 function foo() -> (i64, String) {

@@ -1,4 +1,4 @@
-/// Expect: selfhost-only
+/// Expect:
 /// - output: "123\nPASS\n"
 
 struct Foo {
