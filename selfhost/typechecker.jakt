@@ -1815,7 +1815,6 @@ struct Typechecker {
 
         // Check generic parameters
         for generic_parameter in parsed_function.generic_parameters.iterator() {
-
             current_module.types.push(Type::TypeVariable(generic_parameter.name))
 
             let type_var_type_id = TypeId(
@@ -2848,7 +2847,7 @@ struct Typechecker {
                         return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id)
                     }
                     else => {
-                        .error("Dereference of a non-pointer value", span)
+                        .error(format("Dereference of a non-pointer type `{}`", .type_name(expr_type_id)), span)
                     }
                 }
             }
@@ -5469,8 +5468,15 @@ struct Typechecker {
 
         // 1. Look for a variable in the current scope with this name.
         let maybe_var = .find_var_in_scope(scope_id: current_scope_id, var: call.name)
-        if maybe_var.has_value() and .get_type(maybe_var!.type_id) is Function(pseudo_function_id) {
-            return pseudo_function_id
+        if maybe_var.has_value()  {
+            let inner_type = match .get_type(maybe_var!.type_id) {
+                Reference(type_id) | MutableReference(type_id) => type_id
+                else => maybe_var!.type_id
+            }
+
+            if .get_type(inner_type) is Function(pseudo_function_id) {
+                return pseudo_function_id
+            }
         }
 
         // 2. Look for a function with this name.
