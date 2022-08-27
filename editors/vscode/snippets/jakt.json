@@ -3,7 +3,7 @@
         "scope": "jakt",
         "prefix": "jt",
         "body": [
-            "/// Expect: selfhost-only",
+            "/// Expect:",
             "/// - output: \"$1\"",
             "",
             "$0"
@@ -14,7 +14,7 @@
         "scope": "jakt",
         "prefix": "jte",
         "body": [
-            "/// Expect: selfhost-only",
+            "/// Expect:",
             "/// - error: \"$1\"",
             "",
             "$0"

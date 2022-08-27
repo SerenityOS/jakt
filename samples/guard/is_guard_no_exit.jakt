@@ -1,4 +1,4 @@
-/// Expect: selfhost-only
+/// Expect:
 //  - error: "Else block of guard must either `return`, `break`, `continue`, or `throw`"
 
 enum Foo {

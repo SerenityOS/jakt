@@ -1,4 +1,4 @@
-/// Expect: selfhost-only
+/// Expect:
 /// - output: "PASS\n"
 
 import extern c "stdlib.h"  {

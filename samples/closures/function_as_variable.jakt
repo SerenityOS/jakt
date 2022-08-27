@@ -1,4 +1,4 @@
-/// Expect: selfhost-only
+/// Expect:
 /// - output: "PASS\nPASS\n"
 
 function main() {

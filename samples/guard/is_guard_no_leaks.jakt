@@ -1,4 +1,4 @@
-/// Expect: selfhost-only
+/// Expect:
 /// - error: "Variable 'x' not found"
 
 enum Foo {

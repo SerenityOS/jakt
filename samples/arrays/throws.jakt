@@ -1,4 +1,4 @@
-/// Expect: selfhost-only
+/// Expect:
 /// - error: "Array initialization inside non-throwing scope\n"
 
 function a() -> [u8] => []

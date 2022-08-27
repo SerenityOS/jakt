@@ -1,4 +1,4 @@
-/// Expect: selfhost-only
+/// Expect:
 /// - output: "PASS\n"
 
 function test(cb: function() -> void) {

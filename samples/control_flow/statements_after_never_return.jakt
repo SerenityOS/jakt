@@ -1,4 +1,4 @@
-/// Expect: selfhost-only
+/// Expect:
 /// - error: "Unreachable code\n"
 
 function main() {

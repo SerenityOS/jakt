@@ -1,4 +1,4 @@
-/// Expect: selfhost-only
+/// Expect:
 /// - output: "32\n32\n42\n"
 
 enum SomeEnum {
