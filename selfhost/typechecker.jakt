@@ -2992,9 +2992,14 @@ struct Typechecker {
                     return lhs_type_id
                 }
                 if checked_rhs is OptionalNone(span, type_id) {
-                    if .get_type(lhs_type_id) is GenericInstance(id, args)
-                        and id.equals(.find_struct_in_prelude("Optional")) {
-                        return lhs_type_id
+                    if .get_type(lhs_type_id) is GenericInstance(id, args) {
+                        if id.equals(.find_struct_in_prelude("Optional")) {
+                            return lhs_type_id
+                        } else if not id.equals(.find_struct_in_prelude("WeakPtr")) {
+                            .error("Cannot assign None to a non-optional type", span)
+                        }
+                    } else {
+                        .error("Cannot assign None to a non-optional type", span)
                     }
                 }
 
@@ -3415,6 +3420,16 @@ struct Typechecker {
 
         .check_that_type_doesnt_contain_reference(type_id: lhs_type_id, span)
         
+        if checked_expr is OptionalNone(span, type_id) {
+            if lhs_type is GenericInstance(id, args) {
+                if not (id.equals(optional_struct_id) or id.equals(weak_ptr_struct_id)) {
+                    .error("Cannot assign None to a non-optional type", span)
+                }
+            } else {
+                .error("Cannot assign None to a non-optional type", span)
+            }
+        }
+
         if lhs_type is GenericInstance(id, args) {
             if id.equals(weak_ptr_struct_id) {
                 if not var.is_mutable {

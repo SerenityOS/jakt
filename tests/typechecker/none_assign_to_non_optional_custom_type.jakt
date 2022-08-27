@@ -1,0 +1,10 @@
+/// Expect:
+/// - error: "Cannot assign None to a non-optional type"
+
+class Test {
+}
+
+function main() {
+    mut x: Test = Test()
+    x = None
+}
