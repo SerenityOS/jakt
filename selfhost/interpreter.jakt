@@ -3,7 +3,7 @@ import types {
     CheckedMatchBody, CheckedNumericConstant, CheckedProgram, CheckedStatement, EnumId,
     BinaryOperator, CheckedEnumVariant, CheckedVariable, Visibility, CheckedParameter,
     EnumVariantPatternArgument, FunctionId, ModuleId, ResolvedNamespace, ScopeId, Span, StructId,
-    Scope, Type, TypeId, VarId, Value, ValueImpl, builtin, unknown_type_id,
+    GenericInferences, Scope, Type, TypeId, VarId, Value, ValueImpl, builtin, unknown_type_id,
 }
 import utility { escape_for_quotes, interpret_escapes, panic }
 import error { JaktError, Message }
@@ -476,10 +476,10 @@ class InterpreterScope {
         }
     }
 
-    public function type_map_for_substitution(this) throws -> [String:String] {
+    public function type_map_for_substitution(this) throws -> GenericInferences {
         mut map: [String:String] = [:]
         .type_map_for_substitution_helper(&mut map)
-        return map
+        return GenericInferences(values: map)
     }
 
     public function perform_defers(mut this, mut interpreter: Interpreter, span: Span) throws {

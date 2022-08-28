@@ -21,7 +21,8 @@ import types {
     CheckedNamespace, CheckedNumericConstant, CheckedParameter, CheckedProgram, CheckedStatement, CheckedStruct,
     CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, EnumId, FunctionGenericParameter, FunctionId,
     LoadedModule, Module, ModuleId, NumberConstant, ResolvedNamespace, SafetyMode, Scope, ScopeId, StructId,
-    StructOrEnumId, Type, TypeId, VarId, Value, builtin, flip_signedness, never_type_id, unknown_type_id, void_type_id,
+    GenericInferences, StructOrEnumId, Type, TypeId, VarId, Value,
+    builtin, flip_signedness, never_type_id, unknown_type_id, void_type_id,
 }
 import types
 import utility { panic, todo, Span, join, FilePath, FileId, escape_for_quotes }
@@ -40,6 +41,7 @@ struct Typechecker {
     dump_type_hints: bool
     dump_try_hints: bool
     lambda_count: u64
+    generic_inferences: GenericInferences
 
     function type_name(this, anon type_id: TypeId) throws => .program.type_name(type_id)
 
@@ -75,6 +77,7 @@ struct Typechecker {
             dump_type_hints: compiler.dump_type_hints
             dump_try_hints: compiler.dump_try_hints
             lambda_count: 0
+            generic_inferences: GenericInferences(values: [:])
         )
 
         typechecker.include_prelude()
@@ -292,13 +295,11 @@ struct Typechecker {
     }
 
     function unify(mut this, lhs: TypeId, lhs_span: Span, rhs: TypeId, rhs_span: Span) throws -> TypeId? {
-        // FIXME: Add more unification logic
-        if lhs.id != rhs.id {
-            .error("types incompatible ", rhs_span)
+        if not .check_types_for_compat(lhs_type_id: lhs, rhs_type_id: rhs, generic_inferences: &mut .generic_inferences, span: lhs_span) {
             return None
-        } else {
-            return lhs
         }
+
+        return .substitute_typevars_in_type(type_id: lhs, generic_inferences: .generic_inferences)
     }
 
     function unify_with_type(mut this, found_type: TypeId, expected_type: TypeId?, span: Span) throws -> TypeId {
@@ -308,12 +309,11 @@ struct Typechecker {
         if expected_type!.equals(unknown_type_id()) {
             return found_type
         }
-        mut generic_inferences: [String:String] = [:]
-        if .check_types_for_compat(lhs_type_id: expected_type!, rhs_type_id: found_type, &mut generic_inferences, span) {
+        if .check_types_for_compat(lhs_type_id: expected_type!, rhs_type_id: found_type, generic_inferences: &mut .generic_inferences, span) {
             return found_type
         }
 
-        return .substitute_typevars_in_type(type_id: found_type, generic_inferences)
+        return .substitute_typevars_in_type(type_id: found_type, generic_inferences: .generic_inferences)
     }
 
     function find_or_add_type_id(mut this, anon type: Type) throws -> TypeId => .program.find_or_add_type_id(type, module_id: .current_module_id)
@@ -1105,6 +1105,11 @@ struct Typechecker {
     }
 
     function typecheck_struct_predecl(mut this, parsed_record: ParsedRecord, struct_id: StructId, scope_id: ScopeId) throws {
+        let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: true)
+        defer {
+            .generic_inferences.restore(old_generic_inferences)
+        }
+
         let struct_type_id = .find_or_add_type_id(type: Type::Struct(struct_id))
         .current_struct_type_id = struct_type_id
 
@@ -1279,13 +1284,12 @@ struct Typechecker {
                         
                         let default_value_type_id = checked_default_value_expr.type()
                         checked_default_value = checked_default_value_expr
-                        if not default_value_type_id.equals(param_type) {
-                            checked_default_value = None
-                            .error(
-                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(param_type), .type_name(default_value_type_id))
-                                param.span
-                            )
-                        }
+                        .check_types_for_compat(
+                            lhs_type_id: param_type
+                            rhs_type_id: default_value_type_id
+                            generic_inferences: &mut .generic_inferences
+                            span: param.span
+                        )
                     }
 
                     checked_function.params.push(CheckedParameter(
@@ -1782,9 +1786,13 @@ struct Typechecker {
             
             let default_value_type_id = checked_default_value_expr.type()
             checked_default_value = checked_default_value_expr
-            if not default_value_type_id.equals(type_id) {
+            if not .check_types_for_compat(
+                lhs_type_id: type_id
+                rhs_type_id: default_value_type_id
+                generic_inferences: &mut .generic_inferences
+                span: checked_default_value_expr.span()
+            ) {
                 checked_default_value = None
-                .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(type_id), .type_name(default_value_type_id)), parameter.span)
             }
         }
 
@@ -1958,7 +1966,7 @@ struct Typechecker {
         }
     }
 
-    function typecheck_and_specialize_generic_function(mut this, function_id: FunctionId, generic_arguments: [TypeId], parent_scope_id: ScopeId, this_type_id: TypeId?, generic_substitutions: [String: String]) throws {
+    function typecheck_and_specialize_generic_function(mut this, function_id: FunctionId, generic_arguments: [TypeId], parent_scope_id: ScopeId, this_type_id: TypeId?, generic_substitutions: GenericInferences) throws {
         mut checked_function = .get_function(function_id)
         mut module = .current_module()
 
@@ -2188,7 +2196,14 @@ struct Typechecker {
     }
 
     // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
-    function check_types_for_compat(mut this, lhs_type_id: TypeId, rhs_type_id: TypeId, generic_inferences: &mut [String:String], span: Span) throws -> bool {
+    function check_types_for_compat(mut this, lhs_type_id: TypeId, rhs_type_id: TypeId, generic_inferences: &mut GenericInferences, span: Span) throws -> bool {
+        if lhs_type_id.equals(rhs_type_id)
+            or lhs_type_id.equals(unknown_type_id())
+            or rhs_type_id.equals(unknown_type_id()) {
+
+            return true
+        }
+
         let lhs_type = .get_type(lhs_type_id)
         let rhs_type = .get_type(rhs_type_id)
 
@@ -2199,22 +2214,26 @@ struct Typechecker {
         let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
         let array_struct_id = .find_struct_in_prelude("Array")
 
-        if lhs_type_id.equals(unknown_type_id()) or rhs_type_id.equals(unknown_type_id()) {
-            return true
-        }
-
         match lhs_type {
-            TypeVariable() => {
+            TypeVariable => {
                 // If the call expects a generic type variable, let's see if we've already seen it
-                let seen_type_id_string = generic_inferences.get(lhs_type_id_string)
+                mut seen_type_id_string = generic_inferences.get(lhs_type_id_string)
                 if seen_type_id_string.has_value() {
+                    let seen_type_id = TypeId::from_string(seen_type_id_string!)
+                    if .get_type(seen_type_id) is TypeVariable {
+                        return .check_types_for_compat(
+                            lhs_type_id: seen_type_id
+                            rhs_type_id: lhs_type_id
+                            generic_inferences
+                            span)
+                    }
                     // We've seen this type variable assigned something before
                     // we should error if it's incompatible.
                     if seen_type_id_string.value() != rhs_type_id_string {
                         .error(
                             format(
                                 "Type mismatch: expected ‘{}’, but got ‘{}’"
-                                .type_name(TypeId::from_string(seen_type_id_string.value()))
+                                .type_name(seen_type_id)
                                 .type_name(rhs_type_id)
                             )
                             span
@@ -2552,7 +2571,7 @@ struct Typechecker {
                 }
             }
             else => {
-                if not rhs_type_id.equals(lhs_type_id) {
+                if generic_inferences.map(rhs_type_id_string) != generic_inferences.map(lhs_type_id_string) {
                     .error(
                         format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                         span
@@ -2591,7 +2610,7 @@ struct Typechecker {
         return false
     }
 
-    function substitute_typevars_in_type(mut this, type_id: TypeId , generic_inferences: [String: String]) throws -> TypeId => .program.substitute_typevars_in_type(type_id, generic_inferences, module_id: .current_module_id)
+    function substitute_typevars_in_type(mut this, type_id: TypeId , generic_inferences: GenericInferences) throws -> TypeId => .program.substitute_typevars_in_type(type_id, generic_inferences, module_id: .current_module_id)
 
     function typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode, yield_type_hint: TypeId? = None) throws -> CheckedBlock {
         let parent_throws = .get_scope(parent_scope_id).can_throw
@@ -2603,8 +2622,6 @@ struct Typechecker {
             yielded_type: TypeId::none()
             yielded_none: false
         )
-        // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
-        mut generic_inferences: [String: String] = [:]
         for parsed_statement in parsed_block.stmts.iterator() {
             if checked_block.control_flow.never_returns() {
                 .error("Unreachable code", parsed_statement.span())
@@ -2642,7 +2659,7 @@ struct Typechecker {
                     .check_types_for_compat(
                         lhs_type_id: checked_block.yielded_type.value()
                         rhs_type_id: type_
-                        &mut generic_inferences
+                        generic_inferences: &mut .generic_inferences
                         span: yield_span.value()
                     )
                 } else {
@@ -2656,7 +2673,7 @@ struct Typechecker {
         if checked_block.yielded_type.has_value() {
             checked_block.yielded_type = Some(.substitute_typevars_in_type(
                 type_id: checked_block.yielded_type.value()
-                generic_inferences
+                generic_inferences: .generic_inferences
             ))
         }
 
@@ -2825,6 +2842,12 @@ struct Typechecker {
                 }
                 mut checked_params: [CheckedParameter] = []
                 mut first = true
+
+                let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
+                defer {
+                    .generic_inferences.restore(old_generic_inferences)
+                }
+
                 for param in params.iterator() {
                     checked_params.push(.typecheck_parameter(parameter: param, scope_id, first, this_arg_type_id: None, check_scope: None))
                     first = false
@@ -3122,7 +3145,8 @@ struct Typechecker {
                     and lhs_struct_id.equals(rhs_struct_id) {
                     return lhs_type_id
                 }
-                if not lhs_type_id.equals(rhs_type_id) {
+                let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
+                if not result.has_value() {
                     .error(format(
                         "Assignment between incompatible types (‘{}’ and ‘{}’)",
                         .type_name(lhs_type_id),
@@ -3134,7 +3158,8 @@ struct Typechecker {
                 }
             }
             Add | Subtract | Multiply | Divide | Modulo => {
-                if not lhs_type_id.equals(rhs_type_id) {
+                let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
+                if not result.has_value() {
                     .error(format(
                         "Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)",
                         .type_name(lhs_type_id),
@@ -4661,6 +4686,11 @@ struct Typechecker {
             span
         )
 
+        let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
+        defer {
+            .generic_inferences.restore(old_generic_inferences)
+        }
+
         mut type_id = .typecheck_typename(parsed_type: synthetic_type, scope_id, name: None)
         mut (return_type_id, pseudo_function_id) = match .get_type(type_id) {
             Function(return_type_id, pseudo_function_id) => (return_type_id, pseudo_function_id)
@@ -4979,7 +5009,10 @@ struct Typechecker {
         let type_to_match_on = .get_type(subject_type_id)
         mut checked_cases: [CheckedMatchCase] = []
 
-        mut generic_inferences: [String: String] = [:]
+        let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
+        defer {
+            .generic_inferences.restore(old_generic_inferences)
+        }
 
         mut final_result_type: TypeId? = None
         if type_hint.has_value() and not type_hint!.equals(unknown_type_id()) and not .get_type(type_hint!) is TypeVariable {
@@ -4991,7 +5024,9 @@ struct Typechecker {
             for i in 0..enum_.generic_parameters.size() {
                 let generic = enum_.generic_parameters[i].to_string()
                 let argument_type = args[i].to_string()
-                generic_inferences.set(generic, argument_type)
+                if generic != argument_type {
+                    .generic_inferences.set(generic, argument_type)
+                }
             }
         }
 
@@ -5057,7 +5092,7 @@ struct Typechecker {
                                                 let variant_argument = variant_arguments[0]
                                                 let variable_type_id = .substitute_typevars_in_type(
                                                     type_id
-                                                    generic_inferences
+                                                    generic_inferences: .generic_inferences
                                                 )
                                                 let var_id = module.add_variable(CheckedVariable(
                                                     name: variant_argument.binding
@@ -5121,7 +5156,7 @@ struct Typechecker {
 
                                             match matched_field_variable.has_value() {
                                                 true => {
-                                                    let substituted_type_id = .substitute_typevars_in_type(type_id: matched_field_variable!.type_id, generic_inferences: [:])
+                                                    let substituted_type_id = .substitute_typevars_in_type(type_id: matched_field_variable!.type_id, generic_inferences: .generic_inferences)
                                                     let matched_span = matched_field_variable!.definition_span
                                                     if .dump_type_hints {
                                                         .dump_type_hint(type_id: matched_field_variable!.type_id, span: arg.span)
@@ -5152,7 +5187,7 @@ struct Typechecker {
                                     body: case_.body
                                     scope_id: new_scope_id
                                     safety_mode
-                                    &mut generic_inferences
+                                    generic_inferences: &mut .generic_inferences
                                     final_result_type
                                     span: case_.marker_span
                                 )
@@ -5186,7 +5221,7 @@ struct Typechecker {
                                     body: case_.body
                                     scope_id: new_scope_id
                                     safety_mode
-                                    &mut generic_inferences
+                                    generic_inferences: &mut .generic_inferences
                                     final_result_type
                                     span: case_.marker_span
                                 )
@@ -5270,7 +5305,7 @@ struct Typechecker {
                                     body: case_.body
                                     scope_id: new_scope_id
                                     safety_mode
-                                    &mut generic_inferences
+                                    generic_inferences: &mut .generic_inferences
                                     final_result_type
                                     span: case_.marker_span
                                 )
@@ -5302,7 +5337,7 @@ struct Typechecker {
                                     body: case_.body
                                     scope_id: new_scope_id
                                     safety_mode
-                                    &mut generic_inferences
+                                    generic_inferences: &mut .generic_inferences
                                     final_result_type
                                     span: case_.marker_span
                                 )
@@ -5348,11 +5383,10 @@ struct Typechecker {
 
                                 // FIXME: In the future, we should really make this a "does it satisfy some trait" check.
                                 //        For now, we just check that the types are equal.
-                                mut generic_inferences: [String:String] = [:]
                                 .check_types_for_compat(
                                     lhs_type_id: expression_type
                                     rhs_type_id: subject_type_id
-                                    &mut generic_inferences // FIXME: use correct generic inferences
+                                    generic_inferences: &mut .generic_inferences
                                     span: case_.marker_span
                                 )
 
@@ -5361,7 +5395,7 @@ struct Typechecker {
                                     body: case_.body
                                     scope_id: new_scope_id
                                     safety_mode
-                                    &mut generic_inferences
+                                    generic_inferences: &mut .generic_inferences
                                     final_result_type
                                     span: case_.marker_span
                                 )
@@ -5391,7 +5425,7 @@ struct Typechecker {
         return CheckedExpression::Match(expr: checked_expr, match_cases: checked_cases, span, type_id: final_result_type ?? void_type_id(), all_variants_constant: true)
     }
 
-    function typecheck_match_body(mut this, body: ParsedMatchBody, scope_id: ScopeId, safety_mode: SafetyMode, generic_inferences: &mut [String: String], final_result_type: TypeId?, span: Span) throws -> (CheckedMatchBody, TypeId?) {
+    function typecheck_match_body(mut this, body: ParsedMatchBody, scope_id: ScopeId, safety_mode: SafetyMode, generic_inferences: &mut GenericInferences, final_result_type: TypeId?, span: Span) throws -> (CheckedMatchBody, TypeId?) {
         mut result_type = final_result_type
         let checked_match_body = match body {
             Block(block) => {
@@ -5629,8 +5663,12 @@ struct Typechecker {
         mut resolved_namespaces: [ResolvedNamespace] = []
         mut resolved_function_id: FunctionId? = None
         mut maybe_this_type_id: TypeId? = None
-        mut generic_inferences: [String:String] = [:]
         mut generic_checked_function_to_instantiate: FunctionId? = None
+
+        let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
+        defer {
+            .generic_inferences.restore(old_generic_inferences)
+        }
 
         for name in call.namespace_.iterator() {
             resolved_namespaces.push(ResolvedNamespace(name, generic_parameters: None))
@@ -5737,7 +5775,9 @@ struct Typechecker {
                         | Parameter(id) => id
                     }
 
-                    generic_inferences.set(typevar_type_id.to_string(), checked_type.to_string())
+                    if not typevar_type_id.equals(checked_type) {
+                        .generic_inferences.set(typevar_type_id.to_string(), checked_type.to_string())
+                    }
 
                     type_arg_index += 1
                 }
@@ -5754,7 +5794,11 @@ struct Typechecker {
                     if param_type is GenericInstance(id, args) {
                         let structure = .get_struct(id)
                         for i in 0..structure.generic_parameters.size() {
-                            generic_inferences.set(
+                            if structure.generic_parameters[i].equals(args[i]) {
+                                continue
+                            }
+
+                            .generic_inferences.set(
                                 structure.generic_parameters[i].to_string()
                                 args[i].to_string()
                             )
@@ -5784,7 +5828,7 @@ struct Typechecker {
                         .check_types_for_compat(
                             lhs_type_id: callee.params[i+arg_offset].variable.type_id
                             rhs_type_id: checked_arg.type()
-                            &mut generic_inferences
+                            generic_inferences: &mut .generic_inferences
                             span: checked_arg.span()
                         )
 
@@ -5801,25 +5845,25 @@ struct Typechecker {
                     .check_types_for_compat(
                         lhs_type_id: return_type
                         rhs_type_id: type_hint!
-                        &mut generic_inferences
+                        generic_inferences: &mut .generic_inferences
                         span
                     )
                     .ignore_errors = old_ignore_errors
                 }
-                return_type = .substitute_typevars_in_type(type_id: return_type, generic_inferences)
+                return_type = .substitute_typevars_in_type(type_id: return_type, generic_inferences: .generic_inferences)
 
                 if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
                     .check_types_for_compat(
                         lhs_type_id: type_hint!
                         rhs_type_id: return_type
-                        &mut generic_inferences
+                        generic_inferences: &mut .generic_inferences
                         span
                     )
                 }
 
                 for generic_typevar in callee.generic_params.iterator() {
                     if generic_typevar is Parameter(id) {
-                        let substitution = generic_inferences.get(id.to_string())
+                        let substitution = .generic_inferences.get(id.to_string())
                         if substitution.has_value() {
                             generic_arguments.push(TypeId::from_string(substitution!))
                         } else {
@@ -5832,7 +5876,7 @@ struct Typechecker {
 
         return_type = .substitute_typevars_in_type(
             type_id: return_type,
-            generic_inferences,
+            generic_inferences: .generic_inferences,
         )
 
         if callee_throws and not .get_scope(caller_scope_id).can_throw {
@@ -5843,7 +5887,7 @@ struct Typechecker {
             // Clear the generic parameters and typecheck in the fully specialized scope.
 
             if maybe_this_type_id.has_value() {
-                maybe_this_type_id = .substitute_typevars_in_type(type_id: maybe_this_type_id!, generic_inferences)
+                maybe_this_type_id = .substitute_typevars_in_type(type_id: maybe_this_type_id!, generic_inferences: .generic_inferences)
             }
 
             .typecheck_and_specialize_generic_function(
@@ -5851,7 +5895,7 @@ struct Typechecker {
                 generic_arguments,
                 parent_scope_id: callee_scope_id,
                 this_type_id: maybe_this_type_id,
-                generic_substitutions: generic_inferences
+                generic_substitutions: .generic_inferences
             )
         }
 
@@ -5884,7 +5928,7 @@ struct Typechecker {
             mut this_argument: Value? = None
             mut eval_scope = InterpreterScope::from_runtime_scope(scope_id: caller_scope_id, program: .program)
 
-            for entry in generic_inferences.iterator() {
+            for entry in .generic_inferences.iterator() {
                 let (key, value) = entry
                 eval_scope.type_bindings.set(key, TypeId::from_string(value))
             }
