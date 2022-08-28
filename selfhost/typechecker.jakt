@@ -2178,7 +2178,7 @@ struct Typechecker {
                 }
             }
             GenericEnumInstance(id: lhs_enum_id, args: lhs_args) => {
-                if .get_type(rhs_type_id) is GenericEnumInstance(id: rhs_enum_id, args: rhs_args) {
+                if rhs_type is GenericEnumInstance(id: rhs_enum_id, args: rhs_args) {
                     if lhs_enum_id.equals(rhs_enum_id) {
                         let lhs_enum = .get_enum(lhs_enum_id)
                         guard lhs_args.size() == rhs_args.size() else {
@@ -2340,7 +2340,7 @@ struct Typechecker {
                 if lhs_type_id.equals(rhs_type_id) {
                     return true
                 }
-                let rhs_type = .get_type(rhs_type_id)
+
                 match rhs_type {
                     GenericEnumInstance(id, args) => {
                         if enum_id.equals(id) {
@@ -2398,7 +2398,7 @@ struct Typechecker {
                 if lhs_type_id.equals(rhs_type_id) {
                     return true
                 }
-                let rhs_type = .get_type(rhs_type_id)
+
                 match rhs_type {
                     GenericInstance(id, args) => {
                         if not lhs_struct_id.equals(id) {
@@ -2465,7 +2465,7 @@ struct Typechecker {
                     return true
                 }
 
-                if .get_type(rhs_type_id) is RawPtr(rhs_rawptr_type_id) {
+                if rhs_type is RawPtr(rhs_rawptr_type_id) {
                     if not .check_types_for_compat(
                         lhs_type_id: lhs_rawptr_type_id
                         rhs_type_id: rhs_rawptr_type_id
@@ -2481,6 +2481,19 @@ struct Typechecker {
                             format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                             span
                         )
+                        return false
+                    }
+                }
+            }
+            Reference(lhs_inner_type_id) => {
+                if rhs_type is Reference(rhs_inner_type_id) {
+                    if not .check_types_for_compat(
+                        lhs_type_id: lhs_inner_type_id
+                        rhs_type_id: rhs_inner_type_id
+                        generic_inferences
+                        span
+                    ) {
+                        // FIXME: maybe emit secondary error?
                         return false
                     }
                 }
