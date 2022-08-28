@@ -7,6 +7,57 @@ import parser { Parser, BinaryOperator, DefinitionLinkage, DefinitionType, Unary
 import utility { panic, todo, join, FileId, Span }
 import compiler { Compiler }
 
+struct GenericInferences {
+    values: [String:String]
+
+    function set(mut this, anon key: String, anon value: String) throws {
+        if key == value {
+            println("Warning: Generic parameter {} is being bound to itself", key)
+            abort()
+        }
+
+        let mapped_value = .map(value)
+        if key == mapped_value {
+            return
+        }
+
+        .values[key] = mapped_value
+    }
+
+    function get(this, anon key: String) -> String? {
+        return .values.get(key)
+    }
+
+    function map(this, anon type: String) -> String {
+        mut mapped = .values.get(type)
+        mut final_mapped_result = mapped
+        while mapped.has_value() {
+            final_mapped_result = mapped
+            mapped = .values.get(mapped!)
+        }
+        return final_mapped_result ?? type
+    }
+
+    function iterator(this) => .values.iterator()
+
+    function perform_checkpoint(mut this, reset: bool = true) throws -> [String:String] {
+        let result = .values
+        .values = [:]
+
+        if not reset {
+            for entry in result.iterator() {
+                .values[entry.0] = entry.1
+            }
+        }
+
+        return result
+    }
+
+    function restore(mut this, anon checkpoint: [String:String]) {
+        .values = checkpoint
+    }
+}
+
 enum SafetyMode {
     Safe
     Unsafe
@@ -1554,7 +1605,7 @@ class CheckedProgram {
     }
 
     // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
-    public function substitute_typevars_in_type(mut this, type_id: TypeId , generic_inferences: [String: String], module_id: ModuleId) throws -> TypeId {
+    public function substitute_typevars_in_type(mut this, type_id: TypeId , generic_inferences: GenericInferences, module_id: ModuleId) throws -> TypeId {
         mut result = .substitute_typevars_in_type_helper(type_id, generic_inferences, module_id)
 
         loop {
@@ -1570,7 +1621,7 @@ class CheckedProgram {
     }
 
     // FIXME: Use [TypeId: TypeID] without TypeId.to_string()/TypeId::from_string() workaround
-    function substitute_typevars_in_type_helper(mut this, type_id: TypeId , generic_inferences: [String: String], module_id: ModuleId) throws -> TypeId {
+    function substitute_typevars_in_type_helper(mut this, type_id: TypeId , generic_inferences: GenericInferences, module_id: ModuleId) throws -> TypeId {
         let type_ = .get_type(type_id)
 
         match type_ {

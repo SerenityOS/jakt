@@ -1,4 +1,4 @@
-import typechecker { Typechecker, Interpreter, LoadedModule, ModuleId, ScopeId, TypeId, CheckedProgram, SafetyMode, InterpreterScope, CheckedUnaryOperator, CheckedExpression }
+import typechecker { Typechecker, Interpreter, LoadedModule, ModuleId, ScopeId, TypeId, CheckedProgram, SafetyMode, InterpreterScope, CheckedUnaryOperator, CheckedExpression, GenericInferences }
 import compiler { Compiler, FilePath, FileId }
 import lexer { Lexer }
 import parser { Parser }
@@ -271,6 +271,7 @@ struct REPL {
             dump_type_hints: compiler.dump_type_hints
             dump_try_hints: compiler.dump_try_hints
             lambda_count: 0
+            generic_inferences: GenericInferences(values: [:])
         )
 
         compiler.current_file = file_id
