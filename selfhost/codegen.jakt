@@ -1307,6 +1307,14 @@ struct CodeGenerator {
                         output += "."
                     }
                 }
+                GenericInstance(id) => {
+                    let structure = .program.get_struct(id)
+                    if structure.record_type is Class and object != "*this" {
+                        output += "->"
+                    } else {
+                        output += "."
+                    }
+                }
                 else => {
                     output += "."
                 }
