@@ -8,14 +8,19 @@ function(add_jakt_compiler_flags target)
     -Wno-unused-local-typedefs
     -Wno-unused-function
     -Wno-unused-variable
-    -Wno-unknown-warning-option
+    -Wno-unused-parameter
+    -Wno-unused-but-set-variable
+    -Wno-unused-result
+    -Wno-implicit-fallthrough # !!
     -Wno-trigraphs
     -Wno-parentheses-equality
     -Wno-unqualified-std-cast-call
     -Wno-user-defined-literals
     -Wno-return-type
     -Wno-deprecated-declarations
-    -fcolor-diagnostics
+    -Wno-unknown-warning-option
+    -Wno-unused-command-line-argument
+    -fdiagnostics-color=always
   )
   if (MSVC)
     # For clang-cl, which shows up to CMake as MSVC and accepts both kinds of arguments

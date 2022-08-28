@@ -22,7 +22,7 @@ file_cwd=$(dirname $file)
 $(build/jakt $2 -B $temp_dir -o output -S 2>$temp_dir/compile_jakt.err) || exit 3
 
 # Compile C++ code
-clang++ -fcolor-diagnostics \
+clang++ -fdiagnostics-color=always \
     -std=c++20 \
     -Wno-unknown-warning-option \
     -Wno-trigraphs \
