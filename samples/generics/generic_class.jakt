@@ -1,0 +1,12 @@
+/// Expect:
+/// - output: "100\n"
+
+class Foo<T> {
+    public x: T
+}
+
+function main() {
+    let f = Foo(x: 100);
+
+    println("{}", f.x);
+}
