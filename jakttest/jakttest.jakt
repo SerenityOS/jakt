@@ -54,7 +54,6 @@ import extern "fs.h" {
 
 // FIXME: These three functions should be under a `namespace fs`, but due to
 // #1008 it will ignore the stuff from the import extern if I do.
-
 function is_directory(path: String) throws -> bool {
     let stat = fs::stat_silencing_enoent(path)
     return stat.has_value() and stat!.is_directory()
@@ -67,6 +66,10 @@ function mkdir_if_not_present(path: String) throws {
     }
 }
 
+function path_exists(path: String) throws -> bool {
+    let stat = fs::stat_silencing_enoent(path)
+    return stat.has_value()
+}
 
 function has_jakt_extension(name: String) throws -> bool {
     if name.length() < 5 {
@@ -83,6 +86,7 @@ function get_jakt_files_under(directory: String, results: &mut [String]) throws 
 
     while not path_stack.is_empty() {
         let current = path_stack.pop()!
+
         for child_name in fs::list_directory(path: current) {
             // avoid going back or re-visiting the same dir
             if child_name == ".." or child_name == "." {
@@ -100,7 +104,6 @@ function get_jakt_files_under(directory: String, results: &mut [String]) throws 
 
     return results
 }
-
 
 import extern "process.h" {
     namespace process {
@@ -295,7 +298,13 @@ struct Options {
             }
 
             // positional argument: file path
-            options.files.push(args[index])
+            if is_directory(path: args[index]) {
+                get_jakt_files_under(directory: args[index], results: &mut options.files)
+            } else if path_exists(path: args[index]) {
+                options.files.push(args[index])
+            } else {
+                options.errors.push(format("File/ Directory isn't readable: {}", args[index]))
+            }
 
             index++
         }
@@ -619,7 +628,7 @@ function main(args: [String]) {
 
     if not parsed_options.errors.is_empty() {
         for error in parsed_options.errors.iterator() {
-            eprintln("Error: {}.", error)
+            eprintln("Error: {}", error)
         }
         print_usage()
         return 1
