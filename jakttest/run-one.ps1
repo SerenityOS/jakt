@@ -28,7 +28,7 @@ if ($jakt_process.ExitCode -ne 0) {
 	exit 3
 }
 
-$clang_args = @( "-fcolor-diagnostics",
+$clang_args = @( "-fdiagnostics-color=always",
     "--target=x86_64-pc-windows-msvc",
     "-std=c++20",
     "-Wno-unknown-warning-option",

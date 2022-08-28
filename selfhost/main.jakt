@@ -411,16 +411,19 @@ function main(args: [String]) {
 function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_filename: String, runtime_path: String, extra_include_paths: [String], extra_lib_paths: [String], extra_link_libs: [String], optimize: bool) throws -> c_int {
     mut file_path = FilePath(path: cxx_compiler_path)
 
-    mut color_flag: String = "-fcolor-diagnostics"
     mut extra_flags: [String] = []
     if file_path.basename() == "g++" {
-        color_flag = "-fdiagnostics-color=always"
         extra_flags.push("-Wno-literal-suffix")
+        extra_flags.push("-Wno-unused-parameter")
+        extra_flags.push("-Wno-unused-but-set-variable")
+        extra_flags.push("-Wno-unused-result")
+        extra_flags.push("-Wno-implicit-fallthrough")
+        extra_flags.push("-Wno-unused-command-line-argument")
     }
 
     mut compile_args = [
         cxx_compiler_path
-        color_flag
+        "-fdiagnostics-color=always"
         "-std=c++20"
         "-fno-exceptions"
         "-Wno-unknown-warning-option"

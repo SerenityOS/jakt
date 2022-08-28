@@ -5,7 +5,7 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 # Allow package maintainers to freely override the path for the configs
-set(Jakt_INSTALL_CMAKEDIR "${CMAKE_INSTALL_DATADIR}/${package}"
+set(Jakt_INSTALL_CMAKEDIR "${CMAKE_INSTALL_DATADIR}/Jakt"
     CACHE PATH "CMake package config location relative to the install prefix")
 mark_as_advanced(Jakt_INSTALL_CMAKEDIR)
 
