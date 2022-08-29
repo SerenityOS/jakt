@@ -1301,6 +1301,13 @@ struct Typechecker {
                 }
             }
 
+            if checked_function.is_virtual and checked_function.is_static() {
+                .error("Functions cannot be both virtual and static", checked_function.name_span)
+            }
+            if checked_function.is_override and checked_function.is_static() {
+                .error("Functions cannot be both override and static", checked_function.name_span)
+            }
+
             .add_function_to_scope(
                 parent_scope_id: struct_scope_id
                 name: func.name
