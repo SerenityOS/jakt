@@ -858,12 +858,8 @@ struct CodeGenerator {
                     class_name_with_generics += ">"
                 }
 
-                if struct_.super_type_id.has_value() {
-                    let super_struct_type = .program.get_type(struct_.super_type_id!)
-                    guard super_struct_type is Struct(struct_id) else {
-                        panic("internal error: expected super struct during codegen of class/struct")
-                    }
-                    let super_struct = .program.get_struct(struct_id)
+                if struct_.super_struct_id.has_value() {
+                    let super_struct = .program.get_struct(struct_.super_struct_id!)
                     output += format("class {}: public {} {{\n", struct_.name, super_struct.name)
                 } else {
                     output += format("class {} : public RefCounted<{}>, public Weakable<{}> {{\n", struct_.name, class_name_with_generics, class_name_with_generics)
