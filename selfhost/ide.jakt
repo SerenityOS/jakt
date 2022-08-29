@@ -823,10 +823,10 @@ function get_function_signature(program: CheckedProgram, function_id: FunctionId
 
     mut generic_parameters = ""
     mut is_first_param = true
-    if not checked_function.generic_params.is_empty() {
+    if not checked_function.generics.params.is_empty() {
         generic_parameters += "<"
 
-        for parameter in checked_function.generic_params.iterator() {
+        for parameter in checked_function.generics.params.iterator() {
             let generic_type = match parameter {
                 InferenceGuide(type_id) => {
                     yield program.type_name(type_id)

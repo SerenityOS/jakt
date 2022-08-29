@@ -695,10 +695,10 @@ struct CodeGenerator {
     function codegen_function_generic_parameters(mut this, function_: CheckedFunction) throws -> String {
         mut output = ""
 
-        if not function_.generic_params.is_empty() {
+        if not function_.generics.params.is_empty() {
             output += "template <"
             mut first = true
-            for generic_parameter in function_.generic_params.iterator() {
+            for generic_parameter in function_.generics.params.iterator() {
                 if first {
                     first = false
                 } else {
@@ -720,7 +720,7 @@ struct CodeGenerator {
     function codegen_function_predecl(mut this, function_: CheckedFunction) throws -> String {
         mut output = ""
 
-        if not function_.generic_params.is_empty() and function_.linkage is External {
+        if not function_.generics.params.is_empty() and function_.linkage is External {
             return ""
         }
 
@@ -3033,7 +3033,7 @@ struct CodeGenerator {
 
     function codegen_function_in_namespace(mut this, function_: CheckedFunction, containing_struct: TypeId?) throws -> String {
         // Extern generics need to be in the header anyways, so we can't codegen for them.
-        if not function_.generic_params.is_empty() {
+        if not function_.generics.params.is_empty() {
             if function_.linkage is External {
                 return ""
             }

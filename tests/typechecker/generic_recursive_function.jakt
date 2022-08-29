@@ -1,0 +1,18 @@
+/// Expect:
+/// - output: "103\ng\n"
+
+function recurse<T>(anon i: T) -> T {
+    if i > 100 {
+        return i
+    }
+
+    return recurse(i+3)
+}
+
+function main() {
+    let a = recurse(1)
+    let b = recurse('a')
+
+    println("{}", a)
+    println("{}", b)
+}
