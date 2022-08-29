@@ -733,7 +733,7 @@ boxed enum ParsedExpression {
     JaktTuple(values: [ParsedExpression], span: Span)
     Range(from: ParsedExpression?, to: ParsedExpression?, span: Span)
     ForcedUnwrap(expr: ParsedExpression, span: Span)
-    Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: Span)
+    Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: Span, marker_span: Span)
     EnumVariantArg(expr: ParsedExpression, arg: EnumVariantPatternArgument, enum_variant: ParsedType, span: Span)
     NamespacedVar(name: String, namespace_: [String], span: Span)
     Function(captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, return_type: ParsedType, block: ParsedBlock, span: Span)
@@ -3557,7 +3557,12 @@ struct Parser {
         let expr = .parse_expression(allow_assignments: false, allow_newlines: true)
         let cases = .parse_match_cases()
 
-        return ParsedExpression::Match(expr, cases, span: merge_spans(start, .previous().span()))
+        return ParsedExpression::Match(
+            expr
+            cases
+            span: merge_spans(start, .previous().span())
+            marker_span: start
+        )
     }
 
     function parse_match_cases(mut this) throws -> [ParsedMatchCase] {
