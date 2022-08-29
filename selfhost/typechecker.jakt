@@ -17,7 +17,7 @@ import parser { Parser, BinaryOperator, DefinitionLinkage, DefinitionType, Unary
                 ParsedMethod }
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant,
-    CheckedEnumVariantBinding, CheckedExpression, CheckedFunction, CheckedMatchBody, CheckedMatchCase,
+    CheckedEnumVariantBinding, CheckedExpression, CheckedFunction, FunctionGenerics, CheckedMatchBody, CheckedMatchCase,
     CheckedNamespace, CheckedNumericConstant, CheckedParameter, CheckedProgram, CheckedStatement, CheckedStruct,
     CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, EnumId, FunctionGenericParameter, FunctionId,
     LoadedModule, Module, ModuleId, NumberConstant, ResolvedNamespace, SafetyMode, Scope, ScopeId, StructId,
@@ -854,8 +854,6 @@ struct Typechecker {
 
         .add_enum_to_scope(scope_id, name: parsed_record.name, enum_id, span: parsed_record.name_span)
 
-        let is_extern = parsed_record.definition_linkage is External
-
         let underlying_type_id = match parsed_record.record_type {
             ValueEnum(underlying_type) => .typecheck_typename(parsed_type: underlying_type, scope_id, name: None)
             else => builtin(BuiltinType::Void)
@@ -895,6 +893,7 @@ struct Typechecker {
             .add_type_to_scope(scope_id: enum_scope_id, type_name: gen_parameter.name, type_id: parameter_type_id, span: gen_parameter.span)
         }
 
+        let is_extern = parsed_record.definition_linkage is External
         for method in parsed_record.methods.iterator() {
             let func = method.parsed_function
             let method_scope_id = .create_scope(
@@ -907,6 +906,7 @@ struct Typechecker {
                 can_throw: func.can_throw
                 debug_name: format("method-block({}::{})", parsed_record.name, func.name)
             )
+
             let is_generic = not parsed_record.generic_parameters.is_empty() or not func.generic_parameters.is_empty()
 
             mut checked_function = CheckedFunction(
@@ -916,7 +916,11 @@ struct Typechecker {
                 return_type_id: unknown_type_id()
                 return_type_span: None
                 params: []
-                generic_params: []
+                generics: FunctionGenerics(
+                    base_params: []
+                    params: []
+                    specializations: []
+                )
                 block: CheckedBlock(
                     statements: []
                     scope_id: block_scope_id
@@ -959,7 +963,7 @@ struct Typechecker {
                 }
             }
 
-            checked_function.generic_params = generic_parameters
+            checked_function.generics.params = generic_parameters
 
             for param in func.params.iterator() {
                 if param.variable.name == "this" {
@@ -972,7 +976,7 @@ struct Typechecker {
                         visibility: Visibility::Public
                     )
 
-                    checked_function.params.push(CheckedParameter(
+                    checked_function.add_param(CheckedParameter(
                         requires_label: param.requires_label
                         variable: checked_variable
                         default_value: None
@@ -989,7 +993,7 @@ struct Typechecker {
                         visibility: Visibility::Public
                     )
 
-                    checked_function.params.push(CheckedParameter(
+                    checked_function.add_param(CheckedParameter(
                         requires_label: param.requires_label
                         variable: checked_variable
                         default_value: None
@@ -1039,7 +1043,11 @@ struct Typechecker {
                 return_type_id: struct_type_id
                 return_type_span: None
                 params: []
-                generic_params: []
+                generics: FunctionGenerics(
+                    base_params: []
+                    params: []
+                    specializations: []
+                )
                 block: CheckedBlock(
                     statements: []
                     scope_id: block_scope_id
@@ -1068,8 +1076,8 @@ struct Typechecker {
                 if field.visibility is Private {
                     checked_constructor.visibility = Visibility::Private
                 }
-                
-                func.params.push(CheckedParameter(
+
+                func.add_param(CheckedParameter(
                     requires_label: true
                     variable: field
                     default_value: None
@@ -1114,11 +1122,6 @@ struct Typechecker {
         let struct_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("struct({})", parsed_record.name))
 
         .add_struct_to_scope(scope_id, name: parsed_record.name, struct_id, span: parsed_record.name_span)
-
-        let is_extern = match parsed_record.definition_linkage {
-            External => true
-            Internal => false
-        }
 
         mut super_struct_id: StructId? = None
 
@@ -1183,6 +1186,7 @@ struct Typechecker {
             .add_type_to_scope(scope_id: struct_scope_id, type_name: gen_parameter.name, type_id: parameter_type_id, span: gen_parameter.span)
         }
 
+        let is_extern = parsed_record.definition_linkage is External
         for method in parsed_record.methods.iterator() {
             let func = method.parsed_function
 
@@ -1198,7 +1202,11 @@ struct Typechecker {
                 return_type_id: unknown_type_id()
                 return_type_span: func.return_type_span
                 params: []
-                generic_params: []
+                generics: FunctionGenerics(
+                    base_params: []
+                    params: []
+                    specializations: []
+                )
                 block: CheckedBlock(
                     statements: []
                     scope_id: block_scope_id
@@ -1233,7 +1241,7 @@ struct Typechecker {
                     id: .current_module().types.size() - 1
                 )
 
-                checked_function.generic_params.push(FunctionGenericParameter::Parameter(type_var_type_id))
+                checked_function.generics.params.push(FunctionGenericParameter::Parameter(type_var_type_id))
                 .add_type_to_scope(scope_id: method_scope_id, type_name: gen_parameter.name, type_id: type_var_type_id, span: gen_parameter.span)
             }
 
@@ -1248,7 +1256,7 @@ struct Typechecker {
                         visibility: Visibility::Public
                     )
 
-                    checked_function.params.push(CheckedParameter(
+                    checked_function.add_param(CheckedParameter(
                         requires_label: param.requires_label
                         variable: checked_variable
                         default_value: None
@@ -1289,7 +1297,7 @@ struct Typechecker {
                         )
                     }
 
-                    checked_function.params.push(CheckedParameter(
+                    checked_function.add_param(CheckedParameter(
                         requires_label: param.requires_label
                         variable: checked_variable
                         default_value: checked_default_value
@@ -1514,13 +1522,17 @@ struct Typechecker {
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
                             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
                             let checked_function = CheckedFunction(
-                                name: variant.name,
-                                name_span: variant.span,
-                                visibility: Visibility::Public,
-                                return_type_id: .find_or_add_type_id(Type::Enum(enum_id)),
+                                name: variant.name
+                                name_span: variant.span
+                                visibility: Visibility::Public
+                                return_type_id: .find_or_add_type_id(Type::Enum(enum_id))
                                 return_type_span: None
-                                params,
-                                generic_params: [],
+                                params
+                                generics: FunctionGenerics(
+                                    base_params: params
+                                    params: []
+                                    specializations: []
+                                )
                                 block: CheckedBlock(
                                     statements: []
                                     scope_id: block_scope_id
@@ -1528,9 +1540,9 @@ struct Typechecker {
                                     yielded_type: TypeId::none()
                                     yielded_none: false
                                 ),
-                                can_throw: can_function_throw,
-                                type: FunctionType::ImplicitEnumConstructor,
-                                linkage: FunctionLinkage::Internal,
+                                can_throw: can_function_throw
+                                type: FunctionType::ImplicitEnumConstructor
+                                linkage: FunctionLinkage::Internal
                                 function_scope_id
                                 is_instantiated: true
                                 parsed_function: None
@@ -1559,24 +1571,30 @@ struct Typechecker {
                                 type_span: None
                                 visibility: Visibility::Public
                             )
+                            let param = CheckedParameter(requires_label: false, variable, default_value: None)
+
                             let checked_function = CheckedFunction(
-                                name: variant.name,
-                                name_span: variant.span,
-                                visibility: Visibility::Public,
-                                return_type_id: .find_or_add_type_id(Type::Enum(enum_id)),
-                                return_type_span: None,
-                                params: [CheckedParameter(requires_label: false, variable, default_value: None)],
-                                generic_params: [],
+                                name: variant.name
+                                name_span: variant.span
+                                visibility: Visibility::Public
+                                return_type_id: .find_or_add_type_id(Type::Enum(enum_id))
+                                return_type_span: None
+                                params: [param]
+                                generics: FunctionGenerics(
+                                    base_params: [param]
+                                    params: []
+                                    specializations: []
+                                )
                                 block: CheckedBlock(
                                     statements: [],
-                                    scope_id: block_scope_id,
-                                    control_flow: BlockControlFlow::AlwaysReturns,
+                                    scope_id: block_scope_id
+                                    control_flow: BlockControlFlow::AlwaysReturns
                                     yielded_type: TypeId::none()
                                     yielded_none: false
                                 ),
-                                can_throw: can_function_throw,
-                                type: FunctionType::ImplicitEnumConstructor,
-                                linkage: FunctionLinkage::Internal,
+                                can_throw: can_function_throw
+                                type: FunctionType::ImplicitEnumConstructor
+                                linkage: FunctionLinkage::Internal
                                 function_scope_id
                                 is_instantiated: true
                                 parsed_function: None
@@ -1595,13 +1613,17 @@ struct Typechecker {
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
                             let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor-block({}::{})", enum_.name, variant.name))
                             let checked_function = CheckedFunction(
-                                name: variant.name,
-                                name_span: variant.span,
-                                visibility: Visibility::Public,
-                                return_type_id: .find_or_add_type_id(Type::Enum(enum_id)),
-                                return_type_span: None,
-                                params: [],
-                                generic_params: [],
+                                name: variant.name
+                                name_span: variant.span
+                                visibility: Visibility::Public
+                                return_type_id: .find_or_add_type_id(Type::Enum(enum_id))
+                                return_type_span: None
+                                params: []
+                                generics: FunctionGenerics(
+                                    base_params: []
+                                    params: []
+                                    specializations: []
+                                )
                                 block: CheckedBlock(
                                     statements: []
                                     scope_id: block_scope_id
@@ -1609,9 +1631,9 @@ struct Typechecker {
                                     yielded_type: TypeId::none()
                                     yielded_none: false
                                 ),
-                                can_throw: can_function_throw,
-                                type: FunctionType::ImplicitEnumConstructor,
-                                linkage: FunctionLinkage::Internal,
+                                can_throw: can_function_throw
+                                type: FunctionType::ImplicitEnumConstructor
+                                linkage: FunctionLinkage::Internal
                                 function_scope_id
                                 is_instantiated: true
                                 parsed_function: None
@@ -1808,23 +1830,29 @@ struct Typechecker {
                 span: parameter.variable.span,
             )
         }
+
         return checked_parameter
     }
 
-    function typecheck_function_predecl(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId, this_arg_type_id: TypeId?) throws {
+    function typecheck_function_predecl(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId, this_arg_type_id: TypeId?, mut generics: FunctionGenerics? = None) throws {
         let function_scope_id = .create_scope(parent_scope_id, can_throw: parsed_function.can_throw, debug_name: format("function({})", parsed_function.name))
         let scope_debug_name = format("function-block({})", parsed_function.name)
         let block_scope_id = .create_scope(parent_scope_id: function_scope_id, can_throw: parsed_function.can_throw, debug_name: scope_debug_name)
         let module_id = .current_module_id.id
 
-        let is_generic_function = not parsed_function.generic_parameters.is_empty()
-        let is_generic = match this_arg_type_id.has_value() {
-            true => match .get_type(this_arg_type_id!) {
-                GenericInstance => true
-                else => is_generic_function
-            }
-            else => is_generic_function
+        mut base_definition = false
+        if not generics.has_value() {
+            generics = FunctionGenerics(
+                base_params: []
+                params: []
+                specializations: []
+            )
+
+            base_definition = true
         }
+
+        let is_generic_function = not parsed_function.generic_parameters.is_empty()
+        let is_generic = is_generic_function or (this_arg_type_id.has_value() and .get_type(this_arg_type_id!) is GenericInstance)
 
         mut checked_function = CheckedFunction(
             name: parsed_function.name
@@ -1833,7 +1861,7 @@ struct Typechecker {
             return_type_id: unknown_type_id()
             return_type_span: parsed_function.return_type_span
             params: []
-            generic_params: []
+            generics: generics!
             block: CheckedBlock(
                 statements: []
                 scope_id: block_scope_id
@@ -1845,12 +1873,13 @@ struct Typechecker {
             type: FunctionType::Normal
             linkage: parsed_function.linkage
             function_scope_id
-            is_instantiated: not is_generic
+            is_instantiated: not is_generic or not base_definition
             parsed_function
             is_comptime: parsed_function.is_comptime
             is_virtual: false
             is_override: false
         )
+
         // FIXME: We can't return a `mut Foo` from a function right now, but assigning anything to a `mut` variable makes it mutable.
         //        AKA, working around one bug with another bug. :^)
         mut current_module = .current_module()
@@ -1865,14 +1894,19 @@ struct Typechecker {
         }
 
         // Check generic parameters
+        mut i = 0
         for generic_parameter in parsed_function.generic_parameters.iterator() {
-            current_module.types.push(Type::TypeVariable(generic_parameter.name))
-
-            let type_var_type_id = TypeId(
+            mut type_var_type_id = TypeId(
                 module: current_module.id
-                id: current_module.types.size() - 1
+                id: current_module.types.size()
             )
-            checked_function.generic_params.push(FunctionGenericParameter::Parameter(type_var_type_id))
+
+            if base_definition {
+                current_module.types.push(Type::TypeVariable(generic_parameter.name))
+                checked_function.generics.params.push(FunctionGenericParameter::Parameter(type_var_type_id))
+            } else if checked_function.generics.params[i] is Parameter(var_type_id) {
+                type_var_type_id = var_type_id
+            }
 
             if not parsed_function.must_instantiate or external_linkage {
                 .add_type_to_scope(
@@ -1891,13 +1925,21 @@ struct Typechecker {
                     span: generic_parameter.span
                 )
             }
+
+            i++
         }
 
         // Check parameters
         mut first = true
         mut module = .current_module()
         for parameter in parsed_function.params.iterator() {
-            checked_function.params.push(.typecheck_parameter(parameter, scope_id: checked_function_scope_id, first, this_arg_type_id, check_scope))
+            let checked_param = .typecheck_parameter(parameter, scope_id: checked_function_scope_id, first, this_arg_type_id, check_scope)
+
+            checked_function.params.push(checked_param)
+            if base_definition {
+                checked_function.generics.base_params.push(checked_param)
+            }
+
             first = false
         }
 
@@ -1956,6 +1998,8 @@ struct Typechecker {
 
     function typecheck_and_specialize_generic_function(mut this, function_id: FunctionId, generic_arguments: [TypeId], parent_scope_id: ScopeId, this_type_id: TypeId?, generic_substitutions: GenericInferences) throws {
         mut checked_function = .get_function(function_id)
+        checked_function.generics.specializations.push(generic_arguments)
+
         mut module = .current_module()
 
         let function_id = module.next_function_id()
@@ -1968,7 +2012,8 @@ struct Typechecker {
         if parsed_function.generic_parameters.size() != generic_arguments.size() {
             .error(
                 format("Generic function {} expects {} generic arguments, but {} were given",
-                    parsed_function.name, parsed_function.generic_parameters.size(), generic_arguments.size()),
+                    parsed_function.name, parsed_function.generic_parameters.size(), generic_arguments.size()
+                ) 
                 parsed_function.name_span
             )
         }
@@ -1981,13 +2026,13 @@ struct Typechecker {
         }
 
         parsed_function.must_instantiate = true
+        checked_function.is_instantiated = true
 
         .current_function_id = Some(function_id)
-        .typecheck_function_predecl(parsed_function, parent_scope_id: scope_id, this_arg_type_id: this_type_id)
+        .typecheck_function_predecl(parsed_function, parent_scope_id: scope_id, this_arg_type_id: this_type_id, generics: checked_function.generics)
         .typecheck_function(parsed_function, parent_scope_id: scope_id)
         .current_function_id = None
 
-        checked_function.is_instantiated = true
         checked_function.function_scope_id = scope_id
     }
 
@@ -2859,7 +2904,11 @@ struct Typechecker {
                     return_type_id: .typecheck_typename(parsed_type: return_type, scope_id, name: None)
                     return_type_span: return_type.span()
                     params: checked_params
-                    generic_params: []
+                    generics: FunctionGenerics(
+                        base_params: checked_params
+                        params: []
+                        specializations: []
+                    )
                     block: CheckedBlock(
                         statements: []
                         scope_id
@@ -2871,7 +2920,7 @@ struct Typechecker {
                     type: FunctionType::Expression
                     linkage: FunctionLinkage::Internal
                     function_scope_id: scope_id
-                    is_instantiated: false
+                    is_instantiated: true
                     parsed_function: None
                     is_comptime: false
                     is_virtual: false
@@ -5643,7 +5692,7 @@ struct Typechecker {
         return None
     }
 
-    function typecheck_call(mut this, call: ParsedCall, caller_scope_id: ScopeId, span: Span, this_expr: CheckedExpression?, parent_id: StructOrEnumId?, safety_mode: SafetyMode, type_hint: TypeId?, must_be_enum_constructor: bool) throws -> CheckedExpression {
+    function typecheck_call(mut this, call: ParsedCall, caller_scope_id: ScopeId, span: Span, this_expr: CheckedExpression?, parent_id: StructOrEnumId?, safety_mode: SafetyMode, mut type_hint: TypeId?, must_be_enum_constructor: bool) throws -> CheckedExpression {
         mut args: [(String, CheckedExpression)] = []
         mut return_type = builtin(BuiltinType::Void)
         mut generic_arguments: [TypeId] = []
@@ -5740,8 +5789,14 @@ struct Typechecker {
                         type_id: return_type
                     )
                 }
+
                 let function_id = resolved_function_id!
                 let callee = .get_function(function_id)
+
+                if callee.is_instantiated {
+                    .generic_inferences.perform_checkpoint(reset: true)
+                }
+
                 callee_throws = callee.can_throw
                 return_type = callee.return_type_id
                 let scope_containing_callee = .get_scope(callee.function_scope_id).parent!
@@ -5752,13 +5807,13 @@ struct Typechecker {
                 mut type_arg_index = 0uz
                 for parsed_type in call.type_args.iterator() {
                     let checked_type = .typecheck_typename(parsed_type, scope_id: caller_scope_id, name: None)
-                    if callee.generic_params.size() <= type_arg_index {
+                    if callee.generics.params.size() <= type_arg_index {
                         .error("Trying to access generic parameter out of bounds", parsed_type.span())
                         continue
                     }
 
                     // Find the associated type variable for this parameter, we'll use it in substitution
-                    let typevar_type_id = match callee.generic_params[type_arg_index] {
+                    let typevar_type_id = match callee.generics.params[type_arg_index] {
                         InferenceGuide(id)
                         | Parameter(id) => id
                     }
@@ -5804,17 +5859,14 @@ struct Typechecker {
                     }
                 }
 
-                if not callee.is_instantiated {
-                    generic_checked_function_to_instantiate = Some(function_id)
-                }
+                mut resolved_args: [(String, Span, CheckedExpression)] = .resolve_default_params(params: callee.generics.base_params, args: call.args, scope_id: caller_scope_id, safety_mode, arg_offset, span)
 
-                mut resolved_args: [(String, Span, CheckedExpression)] = .resolve_default_params(params: callee.params, args: call.args, scope_id: caller_scope_id, safety_mode, arg_offset, span)
-
-                if callee.params.size() == resolved_args.size() + arg_offset {
-                    for i in 0..callee.params.size()-arg_offset {
+                if callee.generics.base_params.size() == resolved_args.size() + arg_offset {
+                    for i in 0..callee.generics.base_params.size()-arg_offset {
                         let (name, span, checked_arg) = resolved_args[i]
+
                         .check_types_for_compat(
-                            lhs_type_id: callee.params[i+arg_offset].variable.type_id
+                            lhs_type_id: callee.generics.base_params[i+arg_offset].variable.type_id
                             rhs_type_id: checked_arg.type()
                             generic_inferences: &mut .generic_inferences
                             span: checked_arg.span()
@@ -5841,15 +5893,22 @@ struct Typechecker {
                 return_type = .substitute_typevars_in_type(type_id: return_type, generic_inferences: .generic_inferences)
 
                 if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
+                    let old_ignore_errors = .ignore_errors
+                    if callee.is_instantiated {
+                        // If this is a possible respecialization of a generic function that is the child of a specialized version of that function
+                        // allow an error here, if it is not a respecialization we will recheck
+                        .ignore_errors = true
+                    }
                     .check_types_for_compat(
                         lhs_type_id: type_hint!
                         rhs_type_id: return_type
                         generic_inferences: &mut .generic_inferences
                         span
                     )
+                    .ignore_errors = old_ignore_errors
                 }
 
-                for generic_typevar in callee.generic_params.iterator() {
+                for generic_typevar in callee.generics.params.iterator() {
                     if generic_typevar is Parameter(id) {
                         let substitution = .generic_inferences.get(id.to_string())
                         if substitution.has_value() {
@@ -5857,6 +5916,19 @@ struct Typechecker {
                         } else {
                             .error("Not all generic parameters have known types", span)
                         }
+                    }
+                }
+
+                if not callee.is_instantiated or (not callee.linkage is External and not callee.generics.is_specialized_for_types(types: generic_arguments)) {
+                    generic_checked_function_to_instantiate = Some(function_id)
+                } else if callee.is_instantiated {
+                    if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
+                        .check_types_for_compat(
+                            lhs_type_id: type_hint!
+                            rhs_type_id: return_type
+                            generic_inferences: &mut .generic_inferences
+                            span
+                        )
                     }
                 }
             }
@@ -5873,7 +5945,6 @@ struct Typechecker {
 
         if generic_checked_function_to_instantiate.has_value() {
             // Clear the generic parameters and typecheck in the fully specialized scope.
-
             if maybe_this_type_id.has_value() {
                 maybe_this_type_id = .substitute_typevars_in_type(type_id: maybe_this_type_id!, generic_inferences: .generic_inferences)
             }
@@ -5972,8 +6043,8 @@ struct Typechecker {
 
 
             mut type_bindings: [String:TypeId] = [:]
-            for i in 0uz..resolved_function.generic_params.size() {
-                let param = resolved_function.generic_params[i]
+            for i in 0uz..resolved_function.generics.params.size() {
+                let param = resolved_function.generics.params[i]
 
                 type_bindings.set(
                     param.type_id().to_string()

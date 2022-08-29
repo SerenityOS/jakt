@@ -682,7 +682,7 @@ class Interpreter {
                         parent_scope_id: .program.prelude_scope_id()
                         function_name: "as_saturated")!)
 
-                    let output_type_id = type_bindings.get(function_.generic_params[0].type_id().to_string())
+                    let output_type_id = type_bindings.get(function_.generics.params[0].type_id().to_string())
                     yield StatementResult::JustValue(
                         cast_value_to_type(arguments[0], output_type_id!, interpreter: this, saturating: true)
                     )
@@ -4035,8 +4035,8 @@ class Interpreter {
             }
 
             mut type_bindings: [String:TypeId] = [:]
-            for i in 0..function_to_run.generic_params.size() {
-                let param = function_to_run.generic_params[i]
+            for i in 0..function_to_run.generics.params.size() {
+                let param = function_to_run.generics.params[i]
 
                 type_bindings.set(
                     param.type_id().to_string()

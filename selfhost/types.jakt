@@ -519,7 +519,7 @@ class CheckedFunction {
     public return_type_id: TypeId
     public return_type_span: Span?
     public params: [CheckedParameter]
-    public generic_params: [FunctionGenericParameter]
+    public generics: FunctionGenerics
     public block: CheckedBlock
     public can_throw: bool
     public type: FunctionType
@@ -549,11 +549,56 @@ class CheckedFunction {
         return first_param_variable.name == "this" and first_param_variable.is_mutable
     }
 
+    public function add_param(mut this, anon checked_param: CheckedParameter) throws {
+        .params.push(checked_param)
+        .generics.base_params.push(checked_param)
+    }
+
+    public function set_params(mut this, anon checked_params: [CheckedParameter]) throws {
+        .params = checked_params
+        .generics.base_params = checked_params
+    }
+
+    public function is_specialized_for_types(this, types: [TypeId]) -> bool {
+        return .generics.is_specialized_for_types(types)
+    }
+
     public function to_parsed_function(this) -> ParsedFunction {
         if not .parsed_function.has_value() {
             panic("to_parsed_function() called on a synthetic function")
         }
         return .parsed_function!
+    }
+}
+
+class FunctionGenerics {
+    public base_params: [CheckedParameter]
+    public params: [FunctionGenericParameter]
+    public specializations: [[TypeId]]
+
+    public function is_specialized_for_types(this, types: [TypeId]) -> bool {
+        if types.size() == 0 {
+            return true
+        }
+
+        for specialization in .specializations.iterator() {
+            mut matched = true
+
+            if types.size() == specialization.size() {
+                for i in ..types.size() {
+                    if not types[i].equals(specialization[i]) {
+                        matched = false
+                        break
+                    }
+                }
+            }
+
+            if matched {
+                return true
+            }
+        }
+
+        return false
     }
 }
 
@@ -1739,7 +1784,7 @@ class CheckedProgram {
                     return_type_id: return_type_substitute
                     return_type_span: previous_function.return_type_span
                     params: replacement_params
-                    generic_params: previous_function.generic_params
+                    generics: previous_function.generics
                     block: previous_function.block
                     can_throw
                     type: previous_function.type
