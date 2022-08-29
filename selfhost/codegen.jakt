@@ -742,6 +742,10 @@ struct CodeGenerator {
         if function_.name == "main" {
             output += "ErrorOr<int>"
         } else {
+            if function_.is_virtual {
+                output += "virtual "
+            }
+
             if function_.is_static() and not function_.linkage is External {
                 output += "static "
             }
@@ -779,12 +783,15 @@ struct CodeGenerator {
             output += param.variable.name
         }
         output += ")"
-
+        
         if not function_.is_static() and not function_.is_mutating() {
-            output += " const;"
-        } else {
-            output += ";"
+            output += " const"
+        } 
+        if function_.is_override {
+            output += " override"
         }
+
+        output += ";"
 
         output += "\n"
 

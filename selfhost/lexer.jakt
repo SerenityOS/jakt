@@ -104,6 +104,7 @@ enum Token {
     Namespace(Span)
     Not(Span)
     Or(Span)
+    Override(Span)
     Private(Span)
     Public(Span)
     Raw(Span)
@@ -116,6 +117,7 @@ enum Token {
     True(Span)
     Try(Span)
     Unsafe(Span)
+    Virtual(Span)
     Weak(Span)
     While(Span)
     Yield(Span)
@@ -211,6 +213,7 @@ enum Token {
         Namespace(span) => span
         Not(span) => span
         Or(span) => span
+        Override(span) => span
         Private(span) => span
         Public(span) => span
         Raw(span) => span
@@ -224,6 +227,7 @@ enum Token {
         Try(span) => span
         Unsafe(span) => span
         Weak(span) => span
+        Virtual(span) => span
         While(span) => span
         Yield(span) => span
         Guard(span) => span
@@ -259,6 +263,7 @@ enum Token {
         "namespace" => Token::Namespace(span)
         "not" => Token::Not(span)
         "or" => Token::Or(span)
+        "override" => Token::Override(span)
         "private" => Token::Private(span)
         "public" => Token::Public(span)
         "raw" => Token::Raw(span)
@@ -271,6 +276,7 @@ enum Token {
         "true" => Token::True(span)
         "try" => Token::Try(span)
         "unsafe" => Token::Unsafe(span)
+        "virtual" => Token::Virtual(span)
         "weak" => Token::Weak(span)
         "while" => Token::While(span)
         "yield" => Token::Yield(span)

@@ -479,6 +479,8 @@ class CheckedFunction {
     public parsed_function: ParsedFunction?
     public is_comptime: bool
     public is_closure: bool
+    public is_virtual: bool
+    public is_override: bool
 
     public function is_static(this) -> bool {
         if .params.size() < 1 {
@@ -1689,6 +1691,8 @@ class CheckedProgram {
                     parsed_function: previous_function.parsed_function
                     is_comptime: previous_function.is_comptime
                     is_closure: previous_function.is_closure
+                    is_virtual: previous_function.is_virtual
+                    is_override: previous_function.is_override
                 )
 
                 let new_function_id = .modules[module_id.id].add_function(checked_function: new_function)
