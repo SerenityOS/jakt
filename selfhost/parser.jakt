@@ -1066,6 +1066,8 @@ struct ParsedMethod {
     // FIXME: It would be nice to extend the ParsedVarDecl struct instead.
     parsed_function: ParsedFunction
     visibility: Visibility
+    is_virtual: bool
+    is_override: bool
 }
 
 struct ParsedVariable {
@@ -1541,7 +1543,7 @@ struct Parser {
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_method(function_linkage, visibility, is_comptime)
+                    let parsed_method = .parse_method(function_linkage, visibility, is_virtual: false, is_override: false, is_comptime)
 
                     methods.push(parsed_method)
                 }
@@ -1674,7 +1676,7 @@ struct Parser {
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_method(function_linkage, visibility, is_comptime)
+                    let parsed_method = .parse_method(function_linkage, visibility, is_virtual: false, is_override: false, is_comptime)
 
                     methods.push(parsed_method)
                 }
@@ -1789,6 +1791,8 @@ struct Parser {
         // This gets reset after each loop. If someone doesn't consume it, we error out.
         mut last_visibility: Visibility? = None
         mut last_visibility_span: Span? = None
+        mut last_virtual = false
+        mut last_override = false
 
         // Have we already found an error?
         mut error = false;
@@ -1836,6 +1840,12 @@ struct Parser {
                     last_visibility = None
                     last_visibility_span = None
 
+                    if last_virtual or last_override {
+                        .error("Fields cannot be ‘virtual’ or ‘override’", .current().span())
+                    }
+                    last_virtual = false
+                    last_override = false
+
                     let field = .parse_field(visibility)
 
                     fields.push(field)
@@ -1857,9 +1867,22 @@ struct Parser {
                     last_visibility = None
                     last_visibility_span = None
 
-                    let parsed_method = .parse_method(function_linkage, visibility, is_comptime: .current() is Comptime)
+                    let is_virtual = last_virtual
+                    let is_override = last_override
+                    last_virtual = false
+                    last_override = false
+
+                    let parsed_method = .parse_method(function_linkage, visibility, is_virtual, is_override, is_comptime: .current() is Comptime)
 
                     methods.push(parsed_method)
+                }
+                Virtual => {
+                    last_virtual = true
+                    .index++
+                }
+                Override => {
+                    last_override = true
+                    .index++
                 }
                 else => {
                     // TODO: Find a better way of only reporting the first error.
@@ -2200,7 +2223,7 @@ struct Parser {
         )
     }
 
-    function parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility, is_comptime: bool) throws -> ParsedMethod {
+    function parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility, is_virtual: bool, is_override: bool, is_comptime: bool) throws -> ParsedMethod {
         mut parsed_function = .parse_function(linkage, visibility, is_comptime)
 
         if linkage is External {
@@ -2208,8 +2231,10 @@ struct Parser {
         }
 
         return ParsedMethod(
-            parsed_function,
-            visibility,
+            parsed_function
+            visibility
+            is_virtual
+            is_override
         )
     }
 

@@ -13,7 +13,8 @@ import parser { Parser, BinaryOperator, DefinitionLinkage, DefinitionType, Unary
                 ParsedExpression, ParsedFunction, ParsedNamespace, ParsedModuleImport,
                 ParsedExternImport, ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
                 ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
-                ParsedMatchBody, ParsedMatchCase, Visibility, ParsedParameter, ParsedCapture }
+                ParsedMatchBody, ParsedMatchCase, Visibility, ParsedParameter, ParsedCapture,
+                ParsedMethod }
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant,
     CheckedEnumVariantBinding, CheckedExpression, CheckedFunction, CheckedMatchBody, CheckedMatchCase,
@@ -931,6 +932,8 @@ struct Typechecker {
                 parsed_function: func
                 is_comptime: func.is_comptime
                 is_closure: false
+                is_virtual: false
+                is_override: false
             )
 
             let function_id = module.add_function(checked_function)
@@ -1053,6 +1056,8 @@ struct Typechecker {
                 parsed_function: None
                 is_comptime: false
                 is_closure: false
+                is_virtual: false
+                is_override: false
             )
 
             // Internal constructor
@@ -1206,6 +1211,8 @@ struct Typechecker {
                 parsed_function: method.parsed_function
                 is_comptime: method.parsed_function.is_comptime
                 is_closure: false
+                is_virtual: method.is_virtual
+                is_override: method.is_override
             )
 
             let function_id = module.add_function(checked_function)
@@ -1521,6 +1528,8 @@ struct Typechecker {
                                 parsed_function: None
                                 is_comptime: false
                                 is_closure: false
+                                is_virtual: false
+                                is_override: false
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
@@ -1566,6 +1575,8 @@ struct Typechecker {
                                 parsed_function: None
                                 is_comptime: false
                                 is_closure: false
+                                is_virtual: false
+                                is_override: false
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
@@ -1600,6 +1611,8 @@ struct Typechecker {
                                 parsed_function: None
                                 is_comptime: false
                                 is_closure: false
+                                is_virtual: false
+                                is_override: false
                             )
                             let function_id = module.add_function(checked_function)
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
@@ -1630,7 +1643,26 @@ struct Typechecker {
 
         .current_struct_type_id = struct_type_id
 
+        mut all_virtuals: [String: CheckedFunction] = [:]
+        mut super_struct_id = .get_struct(struct_id).super_struct_id
+        while super_struct_id.has_value() {
+            let super_struct = .get_struct(super_struct_id!)
+            let scope = .get_scope(super_struct.scope_id)
+            for function_tuple in scope.functions.iterator() {
+                let function_ = .get_function(function_tuple.1)
+                if function_.is_virtual {
+                    all_virtuals[function_.name] = function_
+                }
+            }
+            super_struct_id = super_struct.super_struct_id
+        }
+
         for method in record.methods.iterator() {
+            if method.is_override {
+                if not all_virtuals.contains(method.parsed_function.name) {
+                    .error("Missing virtual for override", method.parsed_function.name_span)
+                }
+            }
             .typecheck_method(func: method.parsed_function, parent_id: StructOrEnumId::Struct(struct_id))
         }
 
@@ -1806,6 +1838,8 @@ struct Typechecker {
             parsed_function
             is_comptime: parsed_function.is_comptime
             is_closure: false
+            is_virtual: false
+            is_override: false
         )
         // FIXME: We can't return a `mut Foo` from a function right now, but assigning anything to a `mut` variable makes it mutable.
         //        AKA, working around one bug with another bug. :^)
@@ -2812,6 +2846,8 @@ struct Typechecker {
                     parsed_function: None
                     is_comptime: false
                     is_closure: false
+                    is_virtual: false
+                    is_override: false
                 )
                 mut module = .current_module()
                 let function_id = module.add_function(checked_function)
