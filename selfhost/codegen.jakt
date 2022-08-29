@@ -1302,15 +1302,7 @@ struct CodeGenerator {
                 RawPtr => {
                     output += "->"
                 }
-                Struct(struct_id) => {
-                    let structure = .program.get_struct(struct_id)
-                    if structure.record_type is Class and object != "*this" {
-                        output += "->"
-                    } else {
-                        output += "."
-                    }
-                }
-                GenericInstance(id) => {
+                Struct(id) | GenericInstance(id) => {
                     let structure = .program.get_struct(id)
                     if structure.record_type is Class and object != "*this" {
                         output += "->"
