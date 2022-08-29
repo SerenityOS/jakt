@@ -388,7 +388,6 @@ struct Typechecker {
         if maybe_scope_id.has_value() {
             let existing_struct_id = maybe_scope_id!
             let definition_span = .get_struct(existing_struct_id).name_span
-
             .error_with_hint(
                 format("redefinition of struct/class {}", name)
                 span
@@ -1113,23 +1112,31 @@ struct Typechecker {
             Internal => false
         }
 
-        mut super_type_id: TypeId? = None
+        mut super_struct_id: StructId? = None
 
         match parsed_record.record_type {
-            Class(super_type) => match super_type.has_value() {
+            Class(super_type: super_parsed_type) => match super_parsed_type.has_value() {
                 true => {
-                    super_type_id = .typecheck_typename(parsed_type: super_type!, scope_id, name: None)
-                    if not .is_class(super_type_id!) {
-                        .error("Class can only inherit from another class", super_type!.span())
+                    let super_type_id = .typecheck_typename(parsed_type: super_parsed_type!, scope_id, name: None)
+                    let super_type = .get_type(super_type_id)
+                    
+                    if super_type is Struct(struct_id) {
+                        super_struct_id = struct_id
+                    } else {
+                        .error("Class can only inherit from another class", super_parsed_type!.span())
                     }
                 }
                 else => {}
             }
-            Struct(super_type) => match super_type.has_value() {
+            Struct(super_type: super_parsed_type) => match super_parsed_type.has_value() {
                 true => {
-                    super_type_id = .typecheck_typename(parsed_type: super_type!, scope_id, name: None)
-                    if not .is_struct(super_type_id!) {
-                        .error("Struct can only inherit from another struct", super_type!.span())
+                    let super_type_id = .typecheck_typename(parsed_type: super_parsed_type!, scope_id, name: None)
+                    let super_type = .get_type(super_type_id)
+                    
+                    if super_type is Struct(struct_id) {
+                        super_struct_id = struct_id
+                    } else {
+                        .error("Struct can only inherit from another struct", super_parsed_type!.span())
                     }
                 }
                 else => {}
@@ -1149,7 +1156,7 @@ struct Typechecker {
             definition_linkage: parsed_record.definition_linkage
             record_type: parsed_record.record_type
             type_id: struct_type_id
-            super_type_id
+            super_struct_id
         )
 
         mut generic_parameters: [TypeId] = module.structures[struct_id.id].generic_parameters
@@ -1350,7 +1357,7 @@ struct Typechecker {
             definition_linkage: parsed_record.definition_linkage
             record_type: parsed_record.record_type
             type_id: struct_type_id
-            super_type_id: None
+            super_struct_id: None
         ))
     }
 
@@ -2450,6 +2457,11 @@ struct Typechecker {
                         }
                     }
                     else => {
+                        let rhs_type = .get_type(rhs_type_id)
+                        if .is_subclass_of(ancestor_type_id: lhs_type_id, child_type_id: rhs_type_id) {
+                            return true
+                        }
+                        
                         if not rhs_type_id.equals(lhs_type_id) {
                             .error(
                                 format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
@@ -2510,6 +2522,32 @@ struct Typechecker {
         }
 
         return true
+    }
+
+    function is_subclass_of(this, ancestor_type_id: TypeId, child_type_id: TypeId) -> bool {
+        let ancestor_type = .get_type(ancestor_type_id)
+        let child_type = .get_type(child_type_id)
+
+        guard ancestor_type is Struct(ancestor_struct_id) else { return false }
+        guard child_type is Struct(child_struct_id) else { return false }
+
+        mut ancestor_struct = .get_struct(ancestor_struct_id)
+
+        mut current_struct_id = child_struct_id
+
+        loop {
+            let current_struct = .get_struct(current_struct_id)
+            if current_struct.super_struct_id.has_value() {
+                if ancestor_struct_id.equals(current_struct.super_struct_id!) {
+                    return true
+                }
+                current_struct_id = current_struct.super_struct_id!
+            } else {
+                return false
+            }
+        }
+
+        return false
     }
 
     function substitute_typevars_in_type(mut this, type_id: TypeId , generic_inferences: [String: String]) throws -> TypeId => .program.substitute_typevars_in_type(type_id, generic_inferences, module_id: .current_module_id)
@@ -5565,12 +5603,9 @@ struct Typechecker {
                         if resolved_function_id.has_value() {
                             break
                         }
-                        if struct_.super_type_id.has_value() {
-                            let parent_type_id = struct_.super_type_id!
-                            guard .get_type(parent_type_id) is Struct(struct_id) else {
-                                panic("internal error: could not find parent struct/class for struct/class")
-                            }
-                            struct_ = .get_struct(struct_id)
+                        if struct_.super_struct_id.has_value() {
+                            let parent_struct_id = struct_.super_struct_id!
+                            struct_ = .get_struct(parent_struct_id)
                             scope_id = struct_.scope_id
                         } else {
                             .error(format("Could not find `{}`", call.name), span)
