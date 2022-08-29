@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "PASS\n"
+
+struct A<T> {
+    public function test(this, anon x: T) => x
+}
+
+function main() {
+    let instance: A<String> = A()
+    println("{}", instance.test("PASS"))
+}
