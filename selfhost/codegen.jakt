@@ -2326,6 +2326,17 @@ struct CodeGenerator {
                                     output += ">::create"
                                 } else {
                                     output += call.name
+                                    output += "<"
+                                    mut first = true
+                                    for arg in args.iterator() {
+                                        if not first {
+                                            output += ", "
+                                        } else {
+                                            first = false
+                                        }
+                                        output += .codegen_type(arg)
+                                    }
+                                    output += ">"
                                 }
                             }
                             else => {
