@@ -1,0 +1,23 @@
+/// Expect:
+/// - output: "OK\n"
+
+function unreachable(anon message: String) -> never {
+    eprintln("unreachable code: {}", message)
+    abort()
+}
+
+enum Foo {
+    Bar
+    Baz
+}
+
+function main() {
+    let foo = Foo::Bar
+
+    // String and never branches are compatible
+    let message = match foo {
+        Bar => "OK"
+        Baz => unreachable("foo can't be baz")
+    }
+    println("{}", message)
+}
