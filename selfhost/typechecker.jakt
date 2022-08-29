@@ -4610,7 +4610,7 @@ struct Typechecker {
         }
         Garbage(span) => CheckedExpression::Garbage(span)
         NamespacedVar(name, namespace_, span) => .typecheck_namespaced_var_or_simple_enum_constructor_call(name, namespace_, scope_id, safety_mode, type_hint, span)
-        Match(expr, cases, span) => .typecheck_match(expr, cases, span, scope_id, safety_mode, type_hint)
+        Match(expr, cases, marker_span) => .typecheck_match(expr, cases, span: marker_span, scope_id, safety_mode, type_hint)
         EnumVariantArg(expr: inner_expr, arg, enum_variant, span) => {
             let checked_expr = .typecheck_expression_and_dereference_if_needed(inner_expr, scope_id, safety_mode, type_hint: None, span)
             mut checked_binding = CheckedEnumVariantBinding(name: "", binding: "", type_id: unknown_type_id(), span)
