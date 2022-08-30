@@ -457,6 +457,13 @@ struct CodeGenerator {
             }
         }
 
+        mut super_struct_id = struct_.super_struct_id
+        while super_struct_id.has_value() {
+            let super_struct = .program.get_struct(super_struct_id!)
+            dependencies.push(super_struct.type_id.to_string())
+            super_struct_id = super_struct.super_struct_id
+        }
+
         dependencies.push(struct_.type_id.to_string())
         // The struct's fields are also dependencies.
         for field in struct_.fields.iterator() {
