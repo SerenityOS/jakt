@@ -1,0 +1,24 @@
+/// Expect:
+/// - error: "Missing virtual for override\n"
+
+class Parent {
+    public function greet(this) {
+        println("greeting from the parent")
+    }
+}
+
+class Child: Parent {
+    public override function greet(this) {
+        println("greeting from the child")
+    }
+}
+
+function use_parent(anon parent: Parent) {
+    parent.greet()
+}
+
+function main() {
+    let child = Child()
+
+    use_parent(child)
+}
