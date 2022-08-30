@@ -1,7 +1,6 @@
 /// Expect:
 /// - output: "not_cool\n"
 
-
 import b
 
 function main() {

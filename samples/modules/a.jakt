@@ -10,3 +10,9 @@ function use_cool_things() {
 function call_function(anon a: function(anon x: i64) -> i64) -> i64 {
     return a(1)
 }
+
+function module_local_call() => 2
+
+function adder<T>(x: T) -> T {
+    return x + module_local_call()
+}

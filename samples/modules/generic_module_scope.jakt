@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "4\n"
+
+import a
+
+function main() {
+    let x = a::adder(x: 2)
+
+    println("{}", x)
+}
