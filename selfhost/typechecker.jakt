@@ -1673,6 +1673,8 @@ struct Typechecker {
                 if not all_virtuals.contains(method.parsed_function.name) {
                     .error("Missing virtual for override", method.parsed_function.name_span)
                 }
+            } else if all_virtuals.contains(method.parsed_function.name) {
+                .error("Missing override keyword on function that is virtual", method.parsed_function.name_span)
             }
             .typecheck_method(func: method.parsed_function, parent_id: StructOrEnumId::Struct(struct_id))
         }
