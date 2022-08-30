@@ -1102,6 +1102,7 @@ struct Typechecker {
                 return_type_span: None
                 params: []
                 generics: FunctionGenerics(
+                    base_scope_id: method_scope_id
                     base_params: []
                     params: []
                     specializations: []
@@ -1251,6 +1252,7 @@ struct Typechecker {
                 return_type_span: None
                 params: []
                 generics: FunctionGenerics(
+                    base_scope_id: function_scope_id
                     base_params: []
                     params: []
                     specializations: []
@@ -1411,6 +1413,7 @@ struct Typechecker {
                 return_type_span: func.return_type_span
                 params: []
                 generics: FunctionGenerics(
+                    base_scope_id: method_scope_id
                     base_params: []
                     params: []
                     specializations: []
@@ -1740,6 +1743,7 @@ struct Typechecker {
                                 return_type_span: None
                                 params
                                 generics: FunctionGenerics(
+                                    base_scope_id: function_scope_id
                                     base_params: params
                                     params: []
                                     specializations: []
@@ -1793,6 +1797,7 @@ struct Typechecker {
                                 return_type_span: None
                                 params: [param]
                                 generics: FunctionGenerics(
+                                    base_scope_id: function_scope_id
                                     base_params: [param]
                                     params: []
                                     specializations: []
@@ -1833,6 +1838,7 @@ struct Typechecker {
                                 return_type_span: None
                                 params: []
                                 generics: FunctionGenerics(
+                                    base_scope_id: function_scope_id
                                     base_params: []
                                     params: []
                                     specializations: []
@@ -2057,6 +2063,7 @@ struct Typechecker {
         mut base_definition = false
         if not generics.has_value() {
             generics = FunctionGenerics(
+                base_scope_id: function_scope_id
                 base_params: []
                 params: []
                 specializations: []
@@ -2221,7 +2228,7 @@ struct Typechecker {
             return
         }
         mut parsed_function = checked_function.to_parsed_function()
-        let scope_id = .create_scope(parent_scope_id, can_throw: parsed_function.can_throw, debug_name: format("function-specialization({})", parsed_function.name))
+        let scope_id = .create_scope(parent_scope_id: checked_function.generics.base_scope_id, can_throw: parsed_function.can_throw, debug_name: format("function-specialization({})", parsed_function.name))
 
         if parsed_function.generic_parameters.size() != generic_arguments.size() {
             .error(
@@ -3106,6 +3113,7 @@ struct Typechecker {
                 return_type_span: return_type.span()
                 params: checked_params
                 generics: FunctionGenerics(
+                    base_scope_id: scope_id
                     base_params: checked_params
                     params: []
                     specializations: []
