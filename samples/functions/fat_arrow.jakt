@@ -1,10 +1,12 @@
 /// Expect:
-/// - output: "Well, hello friends.\n5\n"
+/// - output: "Well, hello friends.\n5\nGoodbye friends.\n"
 
 function greet() => println("Well, hello friends.")
 function num() -> i64 => 5
+function str() => "Hello friends."
 
 function main() {
     greet()
     println("{}", num())
+    println("{}", str().replace(replace: "Hello", with: "Goodbye"))
 }

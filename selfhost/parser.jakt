@@ -208,6 +208,7 @@ struct ParsedFunction {
     linkage: FunctionLinkage
     must_instantiate: bool
     is_comptime: bool
+    is_fat_arrow: bool
 }
 
 struct ParsedParameter {
@@ -2149,6 +2150,7 @@ struct Parser {
             linkage,
             must_instantiate: false,
             is_comptime
+            is_fat_arrow: false
         )
 
         .index++
@@ -2195,6 +2197,7 @@ struct Parser {
 
         if .current() is FatArrow {
             parsed_function.block = .parse_fat_arrow()
+            parsed_function.is_fat_arrow = true
         } else {
             parsed_function.block = .parse_block()
         }
