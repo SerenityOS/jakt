@@ -7,9 +7,7 @@ function foo<T>(anon x: T, anon y: T) -> T {
 }
 
 // Make sure type inference kinda works
-function bar<T>(anon x: T) {
-    return x + 1
-}
+function bar<T>(anon x: T) => x + 1
 
 // Make sure we can access struct members
 struct Test {
