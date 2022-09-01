@@ -398,7 +398,7 @@
       "patterns": [
         {
           "name": "meta.function.declaration.jakt",
-          "match": "(?:\\b(public|private)\\s+)?(\\bextern\\s+)?(\\b(?:function|comptime))\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
+          "match": "(?:\\b(public|private)\\s+)?(\\bextern\\s+)?(?:(\\boverride\\b)\\s+|(\\bvirtual\\b)\\s+)?(\\b(?:function|comptime))\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
           "captures": {
             "1": {
               "name": "storage.modifier.visibility.jakt"
@@ -407,13 +407,16 @@
               "name": "storage.modifier.linkage.jakt"
             },
             "3": {
-              "name": "keyword.function.jakt"
+              "name": "storage.modifier.specifier.override.jakt"
             },
             "4": {
-              "name": "entity.name.function"
+              "name": "storage.modifier.specifier.virtual.jakt"
             },
             "5": {
-              "name": "punctuation.begin.bracket"
+              "name": "keyword.function.jakt"
+            },
+            "6": {
+              "name": "entity.name.function"
             }
           }
         },
