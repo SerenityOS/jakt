@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "[1, 2, 3, 4]\n"
+
+function main() {
+    mut arr = [1, 2, 3, 4]
+    let slice = arr[..]
+    arr.push(5)
+
+    println("{}", slice)
+}
