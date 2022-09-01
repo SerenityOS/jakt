@@ -67,9 +67,7 @@ struct Parser {
         .index++
         return Span(start, end: .index - 1)
     }
-
-
-
+    
     function parse_test(mut this) throws -> ParsedTest {
         while not .is_eof() {
             if not .lex_literal("///") {
