@@ -345,15 +345,24 @@ enum TestStage {
         TestRun => "Test binary run"
     }
 
-    function from_exit_code(exit_code: i32) => match exit_code {
-        0i32 => Some(TestStage::TestRun)
-        1i32 => Some(TestStage::TestRun)
-        2i32 => Some(TestStage::CompileCpp)
-        3i32 => Some(TestStage::TranspileJakt)
-        else => {
-            let nothing: TestStage? = None
-            yield nothing
-        }
+    function to_order(this) => match this {
+        TranspileJakt => 1
+        CompileCpp => 2
+        TestRun => 3
+    }
+
+    function output_filenames(this) => match this {
+        TranspileJakt => ("", "compile_jakt.err")
+        CompileCpp => ("", "compile_cpp.err")
+        TestRun => ("runtest.out", "runtest.err")
+    }
+
+    function from_exit_code(exit_code: i32) -> TestStage? => match exit_code {
+        0i32 => TestStage::TestRun
+        1i32 => TestStage::TestRun
+        2i32 => TestStage::CompileCpp
+        3i32 => TestStage::TranspileJakt
+        else => None
     }
 }
 
@@ -361,12 +370,6 @@ enum ResultKind {
     Okay
     CompileError
     RuntimeError
-
-    function output_filename(this) => match this {
-        Okay => "runtest.out"
-        RuntimeError => "runtest.err"
-        CompileError => "compile_jakt.err"
-    }
 
     function to_stage(this) => match this {
         Okay | RuntimeError => TestStage::TestRun
@@ -378,7 +381,6 @@ struct ExpectedResult {
     kind: ResultKind
     output: String
 }
-
 
 struct Test {
     result: ExpectedResult
@@ -393,11 +395,12 @@ struct TestsRunResult {
 }
 
 enum TestFailedReason {
-    CompilerErrorUnmatched(had: String, expected: String)
-    ClangError(String)
-    StderrUnmatched(had: String, expected: String)
-    StdoutUnmatched(had: String, expected: String)
-    ErroredAtEarlierStage(failed_stage: String, error: String)
+    CompilerErrorUnmatched(had: String, expected: ExpectedResult)
+    StderrUnmatched(had: String, expected: ExpectedResult)
+    StdoutUnmatched(had: String, expected: ExpectedResult)
+    ExpectedError(had: String, expected: ExpectedResult)
+    ErroredAtEarlierStage(had: String, expected: ExpectedResult, failed_stage: String)
+    ErroredAtLaterStage(had: String, expected: ExpectedResult, failed_stage: String)
     AbruptExit(i32)
 }
 
@@ -405,7 +408,6 @@ enum TestExitedResult {
     Passed
     Failed(file: String)
 }
-
 
 // A test scheduler that has its process rate limited by
 // the number of directories it has available.
@@ -425,90 +427,106 @@ struct TestScheduler {
         let test = .running_tests[pid]
         .free_directories.push(test.directory_index)
         .running_tests.remove(pid)
+
         let maybe_stage = TestStage::from_exit_code(exit_code)
 
         // unknown exit code. Assume that the job exited abruptly.
-        if not maybe_stage.has_value() {
+        guard maybe_stage.has_value() else {
             if .failed_reasons.has_value() {
                 .failed_reasons![test.file_name] = TestFailedReason::AbruptExit(exit_code)
             }
+
             return TestExitedResult::Failed(file: test.file_name)
         }
+
         let stage = maybe_stage!
 
-        if stage is CompileCpp {
-            if .failed_reasons.has_value() {
-                let path = format("{}/compile_cpp.err",
-                    .directories[test.directory_index])
-                mut file = File::open_for_reading(path)
-                let had = bytes_to_string(file.read_all())
-                .failed_reasons![test.file_name] = TestFailedReason::ClangError(had)
-            }
-            return TestExitedResult::Failed(file: test.file_name)
-        }
+        // check the test results
+        let output = test_outputs(directory: .directories[test.directory_index], stage)
+        let result_output = output.0
+        let error_output = output.1
 
-        // check the exit code before anything
-        let expected_stage = test.result.kind.to_stage()
-
-
-        if not stage.equals(expected_stage) {
-            if .failed_reasons.has_value() {
-
-                if not (stage is TranspileJakt) {
-                    panic("unreachable: Since clang++ errors and other codes get handled otherwise, only thing that could fail before its expected stage is Jakt to C++.")
-                }
-
-                let file_to_check = format("{}/compile_jakt.err"
-                                           .directories[test.directory_index])
-
-                mut file = File::open_for_reading(file_to_check)
-                let error = bytes_to_string(file.read_all())
-
-                .failed_reasons![test.file_name] = 
-                    TestFailedReason::ErroredAtEarlierStage(
-                        failed_stage: stage.to_string()
-                        error)
-
-            }
-            return TestExitedResult::Failed(file: test.file_name)
-        }
-
-        // check the test result
-        let file_to_check = format("{}/{}"
-                            .directories[test.directory_index]
-                            test.result.kind.output_filename())
-
-
-        mut file = File::open_for_reading(file_to_check)
-        let output = file.read_all()
         let expected = test.result.output
 
-
         let passed_test = match test.result.kind {
-            Okay => compare_test(bytes: output, expected)
-            RuntimeError | CompileError => compare_error(bytes: output, expected)
+            Okay => compare_test(bytes: result_output, expected)
+            RuntimeError | CompileError => compare_error(bytes: error_output, expected)
         }
 
         if not passed_test {
-            if .failed_reasons.has_value() {
+            // check the exit code before anything
+            let expected_stage = test.result.kind.to_stage()
+
+            if not stage.equals(expected_stage) {
+                if .failed_reasons.has_value() {
+                    if stage.to_order() < expected_stage.to_order() {
+                        .failed_reasons![test.file_name] = TestFailedReason::ErroredAtEarlierStage(
+                            had: bytes_to_string(error_output)
+                            expected: test.result
+                            failed_stage: stage.to_string()
+                        )
+                    } else if stage is TestRun and result_output.size() > 0 {
+                        .failed_reasons![test.file_name] = TestFailedReason::ExpectedError(
+                            had: bytes_to_string(result_output)
+                            expected: test.result
+                        )
+                    } else {
+                        .failed_reasons![test.file_name] = TestFailedReason::ErroredAtLaterStage(
+                            had: bytes_to_string(error_output)
+                            expected: test.result
+                            failed_stage: stage.to_string()
+                        )
+                    }
+                }
+
+                return TestExitedResult::Failed(file: test.file_name)
+            } else if .failed_reasons.has_value() {
                 .failed_reasons![test.file_name] = match test.result.kind {
-                    Okay => 
-                        TestFailedReason::StdoutUnmatched(
-                            had: bytes_to_string(output)
-                            expected)
-                    RuntimeError => 
-                        TestFailedReason::StderrUnmatched(
-                            had: bytes_to_string(output)
-                            expected)
-                    CompileError => 
-                        TestFailedReason::CompilerErrorUnmatched(
-                            had: bytes_to_string(output)
-                            expected)
+                    Okay => TestFailedReason::StdoutUnmatched(
+                                had: bytes_to_string(result_output)
+                                expected: test.result
+                            )
+                    RuntimeError => TestFailedReason::StderrUnmatched(
+                                had: bytes_to_string(error_output)
+                                expected: test.result
+                            )
+                    CompileError => TestFailedReason::CompilerErrorUnmatched(
+                                had: bytes_to_string(error_output)
+                                expected: test.result
+                            )
                 }
             }
+
             return TestExitedResult::Failed(file: test.file_name)
         }
+
         return TestExitedResult::Passed
+    }
+
+    function test_outputs(directory: String, stage: TestStage) throws -> ([u8], [u8]) {
+        let output_filename = stage.output_filenames().0
+        mut result_output: [u8] = []
+        if not output_filename.is_empty() {
+            let file_to_check = format("{}/{}"
+                                       directory, output_filename)
+            if path_exists(path: file_to_check) {
+                mut file = File::open_for_reading(file_to_check)
+                result_output = file.read_all()
+            }
+        }
+
+        let error_filename = stage.output_filenames().1
+        mut error_output: [u8] = []
+        if not error_filename.is_empty() {
+            let file_to_check = format("{}/{}"
+                                       directory, error_filename)
+            if path_exists(path: file_to_check) {
+                mut file = File::open_for_reading(file_to_check)
+                error_output = file.read_all()
+            }
+        }
+
+        return (result_output, error_output)
     }
 
     function poll_running_tests(mut this) throws {
@@ -668,7 +686,6 @@ function main(args: [String]) {
     }
 
     // TODO: wrap logic in a TestScheduler class
-
     mut directories: [String] = []
     directories.ensure_capacity(parsed_options.job_count as! usize)
     mkdir_if_not_present(path: parsed_options.temp_dir)
@@ -713,28 +730,50 @@ function main(args: [String]) {
                     output += format("Could not find error \"{}\" in error output:\n", expected)
                     output += had
                 }
-                ClangError(error) => {
-                    output += "Could not compile generated C++ code into a binary:\n"
-                    output += error
-                }
                 StdoutUnmatched(had, expected) => {
                     output += "Could not match test stdout:\n"
                     output += "Expected:\n"
-                    output += expected
+                    output += expected.output
                     output += "\nGot:\n"
                     output += had
                 }
                 StderrUnmatched(had, expected) => {
                     output += "Could not match test stderr:\n"
                     output += "Expected:\n"
-                    output += expected
-                    output += "\nGot:"
+                    output += expected.output
+                    output += "\nGot:\n"
                     output += had
                 }
-                ErroredAtEarlierStage(failed_stage, error) => {
+                ExpectedError(had, expected) => {
+                    output += "Test successfully executed when error was expected:\n"
+                    output += "Expected Error:\n"
+                    output += expected.output
+                    output += "\nGot Output:\n"
+                    output += had
+                }
+                ErroredAtEarlierStage(had, expected, failed_stage) => {
+                    let output_type = match expected.kind {
+                        Okay => "success"
+                        CompileError | RuntimeError => "error"
+                    }
+
                     output += "Test failed at an earlier stage than expected:\n"
                     output +=  failed_stage + " failed with output:\n"
-                    output += error
+                    output += had + "\n"
+                    output += expected.kind.to_stage().to_string() + " expected with " + output_type + " output:\n"
+                    output += expected.output
+                }
+                ErroredAtLaterStage(had, expected, failed_stage) => {
+                    let output_type = match expected.kind {
+                        Okay => "success"
+                        CompileError | RuntimeError => "error"
+                    }
+
+                    output += "Test failed at a later stage than expected:\n"
+                    output +=  failed_stage + " failed with output:\n"
+                    output += had + "\n"
+                    output += expected.kind.to_stage().to_string() + " expected with " + output_type + " output:\n"
+                    output += expected.output
                 }
                 AbruptExit(exit_code) => {
                     output += "Test job exited with an unexpected code.\n"
@@ -752,11 +791,6 @@ function main(args: [String]) {
     if run_result.failed_count > 0 {
         return 1
     }
-}
-
-function write_to_file(file_contents: [u8], output_filename: String) throws {
-    mut outfile = File::open_for_writing(output_filename)
-    outfile.write(file_contents)
 }
 
 function bytes_to_string(anon bytes: [u8]) throws -> String {
