@@ -264,7 +264,7 @@ public:
 
     ArraySlice<T> slice_range(size_t from, size_t to) const
     {
-        return slice(from, to-from);
+        return slice(from, to - from);
     }
 
     ArraySlice<T> slice(size_t offset, size_t size) const;
@@ -347,6 +347,9 @@ public:
     {
         VERIFY(m_storage);
         VERIFY(m_offset < m_storage->size());
+
+        if (m_offset + m_size >= m_storage->size())
+            m_size = m_storage->size() - m_offset;
     }
 
     ErrorOr<Array<T>> to_array() const
@@ -356,13 +359,13 @@ public:
         for (size_t i = 0; i < size(); ++i) {
             TRY(array.push(at(i)));
         }
-            
+
         return array;
     }
 
     ArrayIterator<T> iterator() const
     {
-        return ArrayIterator<T> { *m_storage, m_offset, m_size };
+        return ArrayIterator<T> { *m_storage, m_offset, size() };
     }
 
     bool is_empty() const { return size() == 0; }
@@ -370,10 +373,10 @@ public:
     {
         if (!m_storage)
             return 0;
-        if (m_offset >= m_storage->size())
+        if (m_offset + m_size > m_storage->size())
             return 0;
 
-        return min(m_size, m_storage->size()-m_offset);
+        return m_size;
     }
 
     T const& at(size_t index) const { return m_storage->at(m_offset + index); }
@@ -404,6 +407,7 @@ public:
             return {};
         return at(size() - 1);
     }
+
 private:
     RefPtr<ArrayStorage<T>> m_storage;
     size_t m_offset { 0 };
@@ -425,6 +429,6 @@ ArraySlice<T> Array<T>::slice(size_t offset, size_t size)
 
 namespace Jakt {
 using JaktInternal::Array;
-using JaktInternal::ArraySlice;
 using JaktInternal::ArrayIterator;
+using JaktInternal::ArraySlice;
 }
