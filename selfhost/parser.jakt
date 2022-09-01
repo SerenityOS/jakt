@@ -3347,8 +3347,8 @@ struct Parser {
                             yield TypeCast::Fallible(.parse_typename())
                         }
                         else => {
-                            .error("Invalid cast syntax", cast_span)
-                            yield TypeCast::Fallible(ParsedType::Empty)
+                            .error_with_hint("Invalid cast syntax", cast_span, "Use `as!` for an infallible cast, or `as?` for a fallible cast", .previous().span())
+                            yield TypeCast::Fallible(.parse_typename())
                         }
                     }
                     let span = merge_spans(start, merge_spans(cast_span, .current().span()))

@@ -1,0 +1,9 @@
+/// Expect:
+/// - error: "Invalid cast syntax"
+
+function main() {
+    let arr = [0]
+    for i in 1..(arr.size() as u8) { 
+        println("hello world")
+    }
+}
