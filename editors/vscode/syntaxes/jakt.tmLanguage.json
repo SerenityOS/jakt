@@ -875,6 +875,24 @@
           }
         },
         {
+          "name": "constant.numeric.float.jakt",
+          "match": "\\b(?<!\\$|\\.)[0-9](?:[0-9]|_)*((?:[f](?:32|64)))\\b(?!\\$)",
+          "captures": {
+            "1": {
+              "name": "storage.type.numeric.jakt"
+            }
+          }
+        },
+        {
+          "name": "constant.numeric.float.jakt",
+          "match": "\\b(?<!\\$|\\.)[0-9](?:[0-9]|_)*(?:\\.)(?:[0-9]|_)*((?:[f](?:32|64)))?\\b(?!\\$)",
+          "captures": {
+            "1": {
+              "name": "storage.type.numeric.jakt"
+            }
+          }
+        },
+        {
           "name": "constant.numeric.jakt",
           "match": "\\b(?<!\\$)[0-9][0-9_]*(n|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
           "captures": {
