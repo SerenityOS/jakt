@@ -41,3 +41,11 @@ If you want to enable optimizations, be sure to set [CMAKE_BUILD_TYPE](https://c
 
 The CMakeLists have an option for what the final stage of the compiler should be, that defaults to stage 1. If you want to build the stage 2 compiler
 for validation, set the CMake cache variable `FINAL_STAGE` to `2`.
+
+## Supported Platforms
+
+Jakt is known to compile with clang >=13 on Linux, macOS and Windows. g++ also works, provided the version is >=10.2.
+
+MSVC is not supported, however clang-cl.exe and clang.exe do work and clang-cl is used in CI.
+
+On MSYS2, g++ may error out with a "string table overflow" error. In that case, re-configure the build directory with -DCMAKE_BUILD_TYPE=MinSizeRel to get the -Os flag. Do note that using WSL2 or clang directly on windows is a more supported build platform. Maintainers will be reluctant to merge runtime or jakttest patches for MSYS2 quirks to keep the number of supported platfoms under control.
