@@ -260,6 +260,15 @@ struct ParsedBlock {
         return None
     }
 
+    function find_yield_keyword_span(this) -> Span? {
+        for stmt in .stmts.iterator() {
+            if stmt is Yield(expr) {
+                return stmt.span()
+            }
+        }
+        return None
+    }
+
     function span(this, parser: Parser) throws -> Span? {
         mut start: usize? = None
         mut end: usize = 0
