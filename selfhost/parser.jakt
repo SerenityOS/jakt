@@ -1107,10 +1107,8 @@ struct ParsedCall {
             return false
         }
         for i in 0..(.args.size()) {
-            let lhs_str = .args[i].0
-            let rhs_str = rhs_parsed_call.args[i].0
-            let lhs_expr = .args[i].2
-            let rhs_expr = rhs_parsed_call.args[i].2
+            let (lhs_str, _, lhs_expr) = .args[i]
+            let (rhs_str, __, rhs_expr) = rhs_parsed_call.args[i]
             if (lhs_str != rhs_str) or (not lhs_expr.equals(rhs_expr)) {
                 return false
             }
@@ -1195,7 +1193,7 @@ struct Parser {
         return Span(file_id: .compiler.current_file!, start, end)
     }
 
-    function empty_span(this) -> Span => .span(start: 0, end: 0)
+    function empty_span(this) => .span(start: 0, end: 0)
 
     function error(mut this, anon message: String, anon span: Span) throws {
         if not .compiler.ignore_parser_errors {
@@ -1770,18 +1768,18 @@ struct Parser {
         }
 
         if underlying_type.has_value() {
-            let variants_methods = .parse_value_enum_body(partial_enum: parsed_enum, definition_linkage)
-            parsed_enum.methods = variants_methods.1
+            let (variants, methods) = .parse_value_enum_body(partial_enum: parsed_enum, definition_linkage)
+            parsed_enum.methods = methods
             parsed_enum.record_type = RecordType::ValueEnum(
                 underlying_type: underlying_type!
-                variants: variants_methods.0
+                variants
             )
         } else {
-            let variants_methods = .parse_sum_enum_body(partial_enum: parsed_enum, definition_linkage, is_boxed)
-            parsed_enum.methods = variants_methods.1
+            let (variants, methods) = .parse_sum_enum_body(partial_enum: parsed_enum, definition_linkage, is_boxed)
+            parsed_enum.methods = methods
             parsed_enum.record_type = RecordType::SumEnum(
                 is_boxed: is_boxed,
-                variants: variants_methods.0
+                variants
             )
         }
 
@@ -1957,11 +1955,11 @@ struct Parser {
             return parsed_struct
         }
 
-        let fields_methods = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Public, is_class: false)
+        let (fields, methods) = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Public, is_class: false)
 
-        parsed_struct.methods = fields_methods.1
+        parsed_struct.methods = methods
         let super_type: ParsedType? = None
-        parsed_struct.record_type = RecordType::Struct(fields: fields_methods.0, super_type)
+        parsed_struct.record_type = RecordType::Struct(fields, super_type)
 
         return parsed_struct
     }
@@ -2023,10 +2021,10 @@ struct Parser {
             return parsed_class
         }
 
-        let fields_methods = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Private, is_class: true)
+        let (fields, methods) = .parse_struct_class_body(definition_linkage, default_visibility: Visibility::Private, is_class: true)
 
-        parsed_class.methods = fields_methods.1
-        parsed_class.record_type = RecordType::Class(fields: fields_methods.0, super_type)
+        parsed_class.methods = methods
+        parsed_class.record_type = RecordType::Class(fields, super_type)
 
         return parsed_class
     }

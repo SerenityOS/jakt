@@ -442,9 +442,7 @@ struct TestScheduler {
         let stage = maybe_stage!
 
         // check the test results
-        let output = test_outputs(directory: .directories[test.directory_index], stage)
-        let result_output = output.0
-        let error_output = output.1
+        let (result_output, error_output) = test_outputs(directory: .directories[test.directory_index], stage)
 
         let expected = test.result.output
 
@@ -504,22 +502,19 @@ struct TestScheduler {
     }
 
     function test_outputs(directory: String, stage: TestStage) throws -> ([u8], [u8]) {
-        let output_filename = stage.output_filenames().0
+        let (output_filename, error_filename) = stage.output_filenames()
         mut result_output: [u8] = []
         if not output_filename.is_empty() {
-            let file_to_check = format("{}/{}"
-                                       directory, output_filename)
+            let file_to_check = format("{}/{}", directory, output_filename)
             if path_exists(path: file_to_check) {
                 mut file = File::open_for_reading(file_to_check)
                 result_output = file.read_all()
             }
         }
 
-        let error_filename = stage.output_filenames().1
         mut error_output: [u8] = []
         if not error_filename.is_empty() {
-            let file_to_check = format("{}/{}"
-                                       directory, error_filename)
+            let file_to_check = format("{}/{}", directory, error_filename)
             if path_exists(path: file_to_check) {
                 mut file = File::open_for_reading(file_to_check)
                 error_output = file.read_all()

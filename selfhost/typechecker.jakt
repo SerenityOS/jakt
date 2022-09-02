@@ -4971,17 +4971,14 @@ struct Typechecker {
     function typecheck_generic_arguments_method_call(mut this, checked_expr: CheckedExpression, call: ParsedCall, scope_id: ScopeId, span: Span, is_optional: bool, safety_mode: SafetyMode) throws -> CheckedExpression {
         mut checked_args: [(String, CheckedExpression)] = []
         checked_args.ensure_capacity(call.args.size())
-        for call_arg in call.args.iterator() {
-            let name: String = call_arg.0
-            let expr: ParsedExpression = call_arg.2
+        for (name, _, expr) in call.args.iterator() {
             let checked_arg_expr = .typecheck_expression(
                 expr
                 scope_id
                 safety_mode
                 type_hint: None
             )
-            let checked_arg: (String, CheckedExpression) = (name, checked_arg_expr)
-            checked_args.push(checked_arg)
+            checked_args.push((name, checked_arg_expr))
         }
 
         mut checked_type_args: [TypeId] = []
@@ -5186,7 +5183,7 @@ struct Typechecker {
                                     }
                                 }
 
-                                let checked_tuple = .typecheck_match_body(
+                                let (checked_body, result_type) = .typecheck_match_body(
                                     body: case_.body
                                     scope_id: new_scope_id
                                     safety_mode
@@ -5194,8 +5191,7 @@ struct Typechecker {
                                     final_result_type
                                     span: case_.marker_span
                                 )
-                                let checked_body = checked_tuple.0
-                                final_result_type = checked_tuple.1
+                                final_result_type = result_type
 
                                 let checked_match_case = CheckedMatchCase::EnumVariant(
                                     name: variant_names_[1].0,
@@ -5220,7 +5216,7 @@ struct Typechecker {
                                     catch_all_span = case_.marker_span
                                 }
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
-                                let checked_tuple = .typecheck_match_body(
+                                let (checked_body, result_type) = .typecheck_match_body(
                                     body: case_.body
                                     scope_id: new_scope_id
                                     safety_mode
@@ -5228,8 +5224,7 @@ struct Typechecker {
                                     final_result_type
                                     span: case_.marker_span
                                 )
-                                let checked_body = checked_tuple.0
-                                final_result_type = checked_tuple.1
+                                final_result_type = result_type
 
                                 let checked_match_case = CheckedMatchCase::CatchAll(
                                     body: checked_body
@@ -5304,7 +5299,7 @@ struct Typechecker {
                                 // note that this will be fully checked when this match expression is actually instantiated.
 
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant_names))
-                                let checked_tuple = .typecheck_match_body(
+                                let (checked_body, result_type) = .typecheck_match_body(
                                     body: case_.body
                                     scope_id: new_scope_id
                                     safety_mode
@@ -5312,8 +5307,7 @@ struct Typechecker {
                                     final_result_type
                                     span: case_.marker_span
                                 )
-                                let checked_body = checked_tuple.0
-                                final_result_type = checked_tuple.1
+                                final_result_type = result_type
 
                                 let checked_match_case = CheckedMatchCase::EnumVariant(
                                     name: variant_names.last()!.0
@@ -5336,7 +5330,7 @@ struct Typechecker {
                                 seen_catch_all = true
 
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
-                                let checked_tuple = .typecheck_match_body(
+                                let (checked_body, result_type) = .typecheck_match_body(
                                     body: case_.body
                                     scope_id: new_scope_id
                                     safety_mode
@@ -5344,8 +5338,7 @@ struct Typechecker {
                                     final_result_type
                                     span: case_.marker_span
                                 )
-                                let checked_body = checked_tuple.0
-                                final_result_type = checked_tuple.1
+                                final_result_type = result_type
 
                                 let checked_match_case = CheckedMatchCase::CatchAll(
                                     body: checked_body
@@ -5394,7 +5387,7 @@ struct Typechecker {
                                 )
 
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-expression({})", expr))
-                                let checked_tuple = .typecheck_match_body(
+                                let (checked_body, result_type) = .typecheck_match_body(
                                     body: case_.body
                                     scope_id: new_scope_id
                                     safety_mode
@@ -5402,8 +5395,7 @@ struct Typechecker {
                                     final_result_type
                                     span: case_.marker_span
                                 )
-                                let checked_body = checked_tuple.0
-                                final_result_type = checked_tuple.1
+                                final_result_type = result_type
 
                                 let checked_match_case = CheckedMatchCase::Expression(
                                     expression: checked_expression
@@ -5502,9 +5494,7 @@ struct Typechecker {
             value_hint = args[1]
         }
 
-        for kv_pair in values.iterator() {
-            let key = kv_pair.0
-            let value = kv_pair.1
+        for (key, value) in values.iterator() {
             let checked_key = .typecheck_expression(key, scope_id, safety_mode, type_hint: key_hint)
             let current_key_type_id = checked_key.type()
 
@@ -5588,8 +5578,7 @@ struct Typechecker {
             let scope_name = call.namespace_[namespace_index]
             let maybe_ns_scope = .find_namespace_in_scope(scope_id: current_scope_id, name: scope_name)
             if maybe_ns_scope.has_value() {
-                let scope_id = maybe_ns_scope!.0
-                let is_import = maybe_ns_scope!.1
+                let (scope_id, is_import) = maybe_ns_scope!
                 if is_import {
                     namespaces[namespace_index].name = .program.modules[scope_id.module_id.id].name
                 }
