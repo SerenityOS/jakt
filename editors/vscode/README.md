@@ -18,7 +18,7 @@ export JAKT_INSTALL=$PWD/install
 
 In the root jakt directory:
 ```
-> cmake -GNinja -DCMAKE_CXX_COMPILER=clang++-14 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$JAKT_INSTALL
+> cmake --build build -GNinja -DCMAKE_CXX_COMPILER=clang++-14 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$JAKT_INSTALL
 > cmake --build build -- install
 ```
 
