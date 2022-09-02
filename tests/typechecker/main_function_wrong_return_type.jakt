@@ -1,0 +1,11 @@
+/// Expect:
+/// - error: "Main function must return c_int"
+
+enum Foo {
+    A
+}
+
+function main() {
+    let x = Foo::A()
+    return x
+}

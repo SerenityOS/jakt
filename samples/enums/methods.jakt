@@ -16,7 +16,7 @@ enum Foo {
         }
     }
 
-    function name(this) throws {
+    function name(this) throws -> String? {
         return this.name_impl()
     }
 }

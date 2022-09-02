@@ -1,0 +1,11 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘i32’, but got ‘String’"
+
+function foo<T>() -> T {
+    let y: String = "5123"
+    return y
+}
+
+function main() {
+    let x = foo<i32>()
+}

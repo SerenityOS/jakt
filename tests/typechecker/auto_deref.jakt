@@ -47,8 +47,8 @@ function deref_match(anon foo: &i32) -> i32 {
 }
 
 struct Foo {
-    function const_method(this) => 69
-    function mutable_method(mut this) => 69 + 1
+    function const_method(this) => 69i32
+    function mutable_method(mut this) => 69i32 + 1i32
 }
 
 function deref_access(anon foo: &mut Foo) -> i32 {

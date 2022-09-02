@@ -1,0 +1,11 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘void’, but got ‘String’"
+
+function foo() {
+    let y: String = "5123"
+    return y
+}
+
+function main() {
+    let x = foo()
+}

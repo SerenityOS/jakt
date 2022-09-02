@@ -1,0 +1,13 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘i32’, but got ‘void’"
+
+class C {
+    public function give_c() -> i32 {
+        let foo = true
+        return
+    }
+}
+
+function main() {
+    println("{}", C::give_c())
+}

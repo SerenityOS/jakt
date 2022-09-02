@@ -84,7 +84,7 @@ struct ParsedExternImport {
 
     function get_name(this) -> String => .assigned_namespace.name!
 
-    function is_equivalent_to(this, anon other: ParsedExternImport) throws {
+    function is_equivalent_to(this, anon other: ParsedExternImport) throws -> bool {
         return .is_c and other.is_c and .get_path() == other.get_path() and .get_name() == other.get_name()
     }
 }

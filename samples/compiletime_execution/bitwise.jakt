@@ -1,9 +1,7 @@
 /// Expect:
 /// - output: "PASS\n"
 
-comptime bitwise() {
-    return ((0x123 ^ 0x456) << 12) | (0x789 & 0xabc)
-}
+comptime bitwise() => ((0x123 ^ 0x456) << 12) | (0x789 & 0xabc)
 
 function main() {
     if bitwise() == 0x575288 {

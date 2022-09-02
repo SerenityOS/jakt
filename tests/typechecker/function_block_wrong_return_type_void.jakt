@@ -1,0 +1,14 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘i64’, but got ‘void’"
+
+function foo(anon x: i64) -> i64 {
+    if x == 6 {
+        return 4
+    } else {
+        return
+    }
+}
+
+function main() {
+    let x = foo(7)
+}

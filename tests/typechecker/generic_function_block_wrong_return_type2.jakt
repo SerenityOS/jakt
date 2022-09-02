@@ -1,10 +1,10 @@
 /// Expect:
-/// - output: "4\n"
+/// - error: "Type mismatch: expected ‘i64?’, but got ‘usize’"
 
 function find<T>(anon arr: [T], anon cb: function(a: T) -> bool) -> T? {
     for i in 0..arr.size() {
         if cb(a: arr[i]) {
-            return i as! i64
+            return i
         }
     }
     return None

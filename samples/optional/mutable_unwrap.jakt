@@ -8,7 +8,7 @@ class Foo {
         this.x = value
     }
 
-    public function get(this) {
+    public function get(this) -> i64 {
         return this.x
     }
 }

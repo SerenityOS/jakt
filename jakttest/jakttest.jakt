@@ -81,7 +81,7 @@ function has_jakt_extension(name: String) throws -> bool {
 
 // Traverse directory in a DFS manner ta find files with the .jakt extension
 // and store results into the given array
-function get_jakt_files_under(directory: String, results: &mut [String]) throws -> [String] {
+function get_jakt_files_under(directory: String, results: &mut [String]) throws {
     mut path_stack: [String] = [directory]
 
     while not path_stack.is_empty() {
@@ -101,8 +101,6 @@ function get_jakt_files_under(directory: String, results: &mut [String]) throws 
             }
         }
     }
-
-    return results
 }
 
 import extern "process.h" {

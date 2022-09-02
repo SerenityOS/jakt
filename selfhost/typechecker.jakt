@@ -1729,18 +1729,31 @@ struct Typechecker {
         .current_function_id = method_id
 
         let VOID_TYPE_ID = builtin(BuiltinType::Void)
+        mut function_return_type_id = .typecheck_typename(
+            parsed_type: func.return_type,
+            scope_id: function_scope_id,
+            name: None
+        )
 
-        let block = .typecheck_block(parsed_block: func.block, parent_scope_id: function_scope_id, safety_mode: SafetyMode::Safe)
-        let function_return_type_id = .typecheck_typename(parsed_type: func.return_type, scope_id: function_scope_id, name: None)
+        if not func.is_fat_arrow and func.return_type is Empty {
+             function_return_type_id = VOID_TYPE_ID
+        }
+
+        checked_function.return_type_id = function_return_type_id
+
+        let block = .typecheck_block(
+            parsed_block: func.block,
+            parent_scope_id: function_scope_id,
+            safety_mode: SafetyMode::Safe
+        )
 
         mut return_type_id = function_return_type_id
         if function_return_type_id.equals(unknown_type_id()) and not block.statements.is_empty() {
-            // If the return type is unknown, and the function starts with a return statement,
+            // If the return type is unknown and function is a fat arrow function,
             // we infer the return type from its expression.
-            if block.statements[0] is Return(val) and val.has_value() {
-                return_type_id = val!.type()
-            } else {
-                return_type_id = VOID_TYPE_ID
+            // The only statement in fat arrow function block.statements is a Return statement.
+            if func.is_fat_arrow {
+                return_type_id = .infer_function_return_type(block)
             }
         } else if function_return_type_id.equals(unknown_type_id()) {
             return_type_id = VOID_TYPE_ID
@@ -1929,9 +1942,16 @@ struct Typechecker {
             )
             .ignore_errors = old_ignore_errors
 
-            let return_type_id = match function_return_type_id.equals(unknown_type_id()) {
-                true => .infer_function_return_type(block)
-                else => .resolve_type_var(type_var_type_id: function_return_type_id, scope_id: parent_scope_id)
+            mut return_type_id = function_return_type_id
+            if function_return_type_id.equals(unknown_type_id()) {
+                // If the return type is unknown and function is a fat arrow function,
+                // we infer the return type from its expression.
+                // The only statement in fat arrow function block.statements is a Return statement.
+                if parsed_function.is_fat_arrow {
+                    return_type_id = .infer_function_return_type(block)
+                }
+            } else {
+                return_type_id = .resolve_type_var(type_var_type_id: function_return_type_id, scope_id: parent_scope_id)
             }
 
             checked_function.block = block
@@ -2107,14 +2127,15 @@ struct Typechecker {
             name: None
         )
 
-        // Infer return type if necessary
-        // If the return type is unknown, and the function starts with a return statement,
-        // we infer the return type from its expression.
-        let UNKNOWN_TYPE_ID = unknown_type_id()
         let VOID_TYPE_ID = void_type_id()
         mut return_type_id = VOID_TYPE_ID
-        if function_return_type_id.equals(UNKNOWN_TYPE_ID) {
-            return_type_id = .infer_function_return_type(block)
+        if function_return_type_id.equals(unknown_type_id()) {
+            // If the return type is unknown and function is a fat arrow function,
+            // we infer the return type from its expression.
+            // The only statement in fat arrow function block.statements is a Return statement.
+            if parsed_function.is_fat_arrow {
+                return_type_id = .infer_function_return_type(block)
+            }
         } else {
             return_type_id = .resolve_type_var(
                 type_var_type_id: function_return_type_id,
@@ -3759,7 +3780,30 @@ struct Typechecker {
         if .inside_defer {
             .error("‘return’ is not allowed inside ‘defer’", span)
         }
+
+        mut type_hint: TypeId? = None
+        if .current_function_id.has_value() {
+            type_hint = Some(.get_function(.current_function_id!).return_type_id)
+        }
+
         if not expr.has_value() {
+            // Return expression is empty, so we try to return void
+
+            if type_hint.has_value() and not type_hint!.equals(void_type_id()){
+                // We didn't expect to return void
+                .error(
+                    format("Type mismatch: expected ‘{}’, but got ‘{}’",
+                    .type_name(type_hint!),
+                    .type_name(void_type_id())
+                    ),
+                span)
+            }
+
+            if (.current_function_id.has_value() and .get_function(.current_function_id!).name == "main") {
+                // We can't return void in the `main` function
+                .error("Main function must return c_int", span)
+            }
+
             return CheckedStatement::Return(val: None, span)
         }
 
@@ -3767,12 +3811,28 @@ struct Typechecker {
             .error("Returning a function is not currently supported", span)
         }
 
-        mut type_hint: TypeId? = None
-        if .current_function_id.has_value() {
-            type_hint = Some(.get_function(.current_function_id!).return_type_id)
+        let checked_expr = .typecheck_expression(expr!, scope_id, safety_mode, type_hint)
+
+        if .current_function_id.has_value() and .get_function(.current_function_id!).name == "main" {
+            // Even without a type_hint, "main" function has a c_int return type, we can only return an integer
+            if not .is_integer(checked_expr.type()) {
+                .error("Main function must return c_int", checked_expr.span())
+            }
         }
 
-        let checked_expr = .typecheck_expression(expr!, scope_id, safety_mode, type_hint)
+        if not type_hint.has_value()
+        or .get_type(checked_expr.type()) is TypeVariable {
+            return CheckedStatement::Return(val: checked_expr, span)
+        }
+
+
+        // Check if what we are returning is compatible with what we expected to return
+        .check_types_for_compat(
+            lhs_type_id: type_hint!,
+            rhs_type_id: checked_expr.type(),
+            generic_inferences: &mut .generic_inferences,
+            span)
+
         return CheckedStatement::Return(val: checked_expr, span)
     }
 
