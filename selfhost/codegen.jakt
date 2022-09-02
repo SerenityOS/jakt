@@ -521,8 +521,7 @@ struct CodeGenerator {
             }
         }
 
-        for name_and_struct_id in scope.structs.iterator() {
-            let struct_id = name_and_struct_id.1
+        for (_, struct_id) in scope.structs.iterator() {
             if not struct_id.module.equals(current_module.id) {
                 continue
             }
@@ -534,8 +533,7 @@ struct CodeGenerator {
             output += "\n"
         }
 
-        for name_and_enum_id in scope.enums.iterator() {
-            let enum_id = name_and_enum_id.1
+        for (_, enum_id) in scope.enums.iterator() {
             if not enum_id.module.equals(current_module.id) {
                 continue
             }
@@ -562,8 +560,7 @@ struct CodeGenerator {
             }
         }
 
-        for name_and_function_id in scope.functions.iterator() {
-            let function_id = name_and_function_id.1
+        for (_, function_id) in scope.functions.iterator() {
             if not function_id.module.equals(current_module.id) {
                 continue
             }
@@ -582,8 +579,7 @@ struct CodeGenerator {
             output += "\n"
         }
 
-        for name_and_struct_id in scope.structs.iterator() {
-            let struct_id = name_and_struct_id.1
+        for (_, struct_id) in scope.structs.iterator() {
             if not struct_id.module.equals(current_module.id) {
                 continue
             }
@@ -598,8 +594,7 @@ struct CodeGenerator {
             }
 
             let scope = .program.get_scope(struct_.scope_id)
-            for name_and_function_id in scope.functions.iterator() {
-                let function_id = name_and_function_id.1
+            for (_, function_id) in scope.functions.iterator() {
                 let function_ = .program.get_function(function_id)
                 let previous_function = .current_function
                 .current_function = function_
@@ -612,8 +607,7 @@ struct CodeGenerator {
             }
         }
 
-        for name_and_enum_id in scope.enums.iterator() {
-            let enum_id = name_and_enum_id.1
+        for (_, enum_id) in scope.enums.iterator() {
             if not enum_id.module.equals(current_module.id) {
                 continue
             }
@@ -628,8 +622,7 @@ struct CodeGenerator {
             }
 
             let scope = .program.get_scope(enum_.scope_id)
-            for name_and_function_id in scope.functions.iterator() {
-                let function_id = name_and_function_id.1
+            for (_, function_id) in scope.functions.iterator() {
                 let function_ = .program.get_function(function_id)
                 let previous_function = .current_function
                 .current_function = function_
@@ -653,8 +646,7 @@ struct CodeGenerator {
             output += scope.namespace_name!
             output += " {\n"
         }
-        for name_and_struct_id in scope.structs.iterator() {
-            let struct_id = name_and_struct_id.1
+        for (_, struct_id) in scope.structs.iterator() {
             if not struct_id.module.equals(current_module.id) {
                 continue
             }
@@ -663,8 +655,7 @@ struct CodeGenerator {
             output += "\n"
         }
 
-        for name_and_enum_id in scope.enums.iterator() {
-            let enum_id = name_and_enum_id.1
+        for (_, enum_id) in scope.enums.iterator() {
             if not enum_id.module.equals(current_module.id) {
                 continue
             }
@@ -677,8 +668,7 @@ struct CodeGenerator {
             output += .codegen_namespace_predecl(scope: .program.get_scope(child), current_module)
         }
 
-        for name_and_function_id in scope.functions.iterator() {
-            let function_id = name_and_function_id.1
+        for (_, function_id) in scope.functions.iterator() {
             if not function_id.module.equals(current_module.id) {
                 continue
             }
@@ -1522,10 +1512,7 @@ struct CodeGenerator {
                 .codegen_type(value_type_id))
 
             mut first = true
-            for val in vals.iterator() {
-                let key = val.0
-                let value = val.1
-
+            for (key, value) in vals.iterator() {
                 if not first {
                     output += ", "
                 } else {
@@ -2240,13 +2227,13 @@ struct CodeGenerator {
         output += "("
 
         mut first = true
-        for name_and_expr in call.args.iterator() {
+        for (_, expr) in call.args.iterator() {
             if first {
                 first = false
             } else {
                 output += ","
             }
-            output += .codegen_expression(name_and_expr.1)
+            output += .codegen_expression(expr)
         }
 
         output += ")"
@@ -2282,7 +2269,7 @@ struct CodeGenerator {
                 output += helper
                 output += "("
                 for i in 0..call.args.size() {
-                    let expr = call.args[i].1
+                    let (_, expr) = call.args[i]
                     output += .codegen_expression(expr)
                     if i != call.args.size() - 1 {
                         output += ","
@@ -2479,13 +2466,11 @@ struct CodeGenerator {
         output += "}\n"
 
         if block.yielded_type.has_value() {
-            let block_tuple = .entered_yieldable_blocks.pop()!
-            let block_var = block_tuple.0
-            let block_label = block_tuple.1
+            let (var, label) = .entered_yieldable_blocks.pop()!
 
-            output += block_label
+            output += label
             output += ":; "
-            output += block_var
+            output += var
             if not block.yielded_none {
                 output += ".release_value()"
             }
@@ -2635,15 +2620,13 @@ struct CodeGenerator {
                     panic("Must be in a block to yield")
                 }
 
-                let block_tuple = .entered_yieldable_blocks.last()!
-                let block_var_name = block_tuple.0
-                let block_end_label = block_tuple.1
+                let (var_name, end_label) = .entered_yieldable_blocks.last()!
 
-                output += block_var_name
+                output += var_name
                 output += " = "
                 output += .codegen_expression(expr)
                 output += "; goto "
-                output += block_end_label
+                output += end_label
                 output += ";\n"
 
                 yield output

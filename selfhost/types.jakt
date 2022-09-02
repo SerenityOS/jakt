@@ -45,8 +45,8 @@ struct GenericInferences {
         .values = [:]
 
         if not reset {
-            for entry in result.iterator() {
-                .values[entry.0] = entry.1
+            for (key, value) in result.iterator() {
+                .values[key] = value
             }
         }
 

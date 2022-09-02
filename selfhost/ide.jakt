@@ -560,8 +560,8 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
         }
         Block(block) => find_span_in_block(program, block, span)
         Call(call, span: call_span) => {
-            for arg in call.args.iterator() {
-                let found = find_span_in_expression(program, expr: arg.1, span)
+            for (_, expr) in call.args.iterator() {
+                let found = find_span_in_expression(program, expr, span)
                 if found.has_value() {
                     return found
                 }
@@ -572,9 +572,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
             yield none
         }
         JaktDictionary(vals) => {
-            for item in vals.iterator() {
-                let key = item.0
-                let value = item.1
+            for (key, value) in vals.iterator() {
                 mut found = find_span_in_expression(program, expr: key, span)
                 if found.has_value() {
                     return found
@@ -726,8 +724,8 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
             if found.has_value() {
                 return found
             }
-            for arg in call.args.iterator() {
-                found = find_span_in_expression(program, expr: arg.1, span)
+            for (_, expr) in call.args.iterator() {
+                found = find_span_in_expression(program, expr, span)
                 if found.has_value() {
                     return found
                 }
@@ -1103,19 +1101,19 @@ function get_enum_variant_signature(program: CheckedProgram, name: String, type_
     if not variants.is_empty() {
         output += "("
         mut first = true
-        for variant in variants.iterator() {
+        for (variant_name, variant_type_id) in variants.iterator() {
             if first {
                 first = false
             } else {
                 output += ", "
             }
 
-            if variant.0.has_value() {
-                output += variant.0!
+            if variant_name.has_value() {
+                output += variant_name!
                 output += ": "
             }
 
-            output += program.type_name(type_id: variant.1)
+            output += program.type_name(type_id: variant_type_id)
         }
         output += ")"
     }

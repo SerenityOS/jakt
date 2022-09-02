@@ -4345,8 +4345,8 @@ class Interpreter {
         JaktDictionary(vals, span, type_id) => {
             mut keys: [Value] = []
             mut values: [Value] = []
-            for value in vals.iterator() {
-                let key = match .execute_expression(value.0, scope) {
+            for (k, v) in vals.iterator() {
+                let key = match .execute_expression(k, scope) {
                     Return(value) => {
                         return StatementResult::Return(value)
                     }
@@ -4364,7 +4364,7 @@ class Interpreter {
                         panic("Invalid control flow")
                     }
                 }
-                let val = match .execute_expression(value.1, scope) {
+                let val = match .execute_expression(v, scope) {
                     Return(value) => {
                         return StatementResult::Return(value)
                     }
