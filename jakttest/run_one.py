@@ -28,12 +28,12 @@ def main():
     parser.add_argument("temp_dir", help="Temporary directory to use")
     parser.add_argument("test_file", help="The test file to run")
     parser.add_argument(
-        "--jakt-binary", help="The path to the jakt binary", default="build/jakt"
+        "--jakt-binary", help="The path to the jakt binary", default="build/bin/jakt"
     )
     parser.add_argument(
         "--jakt-lib-dir",
         help="The path to the jakt library directory",
-        default="build/runtime",
+        default="build/lib",
     )
     args = parser.parse_args()
 
