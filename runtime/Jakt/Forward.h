@@ -80,4 +80,7 @@ class WeakPtr;
 template<typename T, typename ErrorType = Error>
 class [[nodiscard]] ErrorOr;
 
+template<typename T, typename = void>
+struct Formatter;
+
 }

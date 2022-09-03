@@ -1,6 +1,6 @@
 
-cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
-
+cmake_minimum_required(VERSION 3.16..3.21)
+cmake_policy(SET CMP0091 NEW)
 project(Jakt
         VERSION 0.0.1
         LANGUAGES CXX
@@ -32,12 +32,14 @@ if (is_multi_config)
 endif()
 
 function(apply_output_rules target)
-  set_property(TARGET ${target} PROPERTY "ARCHIVE_OUTPUT_DIRECTORY" "${CMAKE_CURRENT_BINARY_DIR}/${in_build_prefix}lib")
-  set_property(TARGET ${target} PROPERTY "LIBRARY_OUTPUT_DIRECTORY" "${CMAKE_CURRENT_BINARY_DIR}/${in_build_prefix}lib")
-  set_property(TARGET ${target} PROPERTY "RUNTIME_OUTPUT_DIRECTORY" "${CMAKE_CURRENT_BINARY_DIR}/${in_build_prefix}bin")
+  set_property(TARGET ${target} PROPERTY "ARCHIVE_OUTPUT_DIRECTORY" "${Jakt_BINARY_DIR}/${in_build_prefix}lib")
+  set_property(TARGET ${target} PROPERTY "LIBRARY_OUTPUT_DIRECTORY" "${Jakt_BINARY_DIR}/${in_build_prefix}lib")
+  set_property(TARGET ${target} PROPERTY "RUNTIME_OUTPUT_DIRECTORY" "${Jakt_BINARY_DIR}/${in_build_prefix}bin")
 endfunction()
 
 include(cmake/jakt-executable.cmake)
+
+add_subdirectory(runtime)
 
 add_executable(jakt_stage0 bootstrap/stage0/jakt.cpp)
 add_executable(Jakt::jakt_stage0 ALIAS jakt_stage0)
@@ -92,6 +94,7 @@ if (FINAL_STAGE GREATER_EQUAL 2)
   add_executable(Jakt::jakt_stage2 ALIAS jakt_stage2)
   apply_output_rules(jakt_stage2)
 endif()
+add_executable(Jakt::jakt ALIAS jakt_stage${FINAL_STAGE})
 
 # Link runtime into build directory(ies) for relative pathing usage
 #    Note: "If a sequential execution of multiple commands is required, use multiple execute_process() calls with a single COMMAND argument."
@@ -121,7 +124,6 @@ option(JAKT_BUILD_TESTING "Whether to build tests or not, default on" ON)
 
 if (JAKT_BUILD_TESTING)
   add_jakt_executable(jakttest
-    COMPILER "jakt_stage${FINAL_STAGE}"
     MAIN_SOURCE
       jakttest/jakttest.jakt
     MODULE_SOURCES

@@ -32,8 +32,11 @@ clang++ -fdiagnostics-color=always \
     -Wno-deprecated-declarations \
     -Iruntime \
     -DJAKT_CONTINUE_ON_PANIC \
+    -Lbuild/lib64 \
+    -Lbuild/lib \
     -o $temp_dir/output \
-    $temp_dir/output.cpp 2>$temp_dir/compile_cpp.err || exit 2
+    $temp_dir/output.cpp \
+    -ljakt_runtime 2>$temp_dir/compile_cpp.err || exit 2
 
 # Run the executable inside the parent directory of the test file
 cd $file_cwd

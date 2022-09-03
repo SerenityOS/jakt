@@ -50,15 +50,6 @@
 #include <Jakt/kmalloc.h>
 #include <Jakt/kstdio.h>
 
-#include <Jakt/Format.cpp>
-#include <Jakt/GenericLexer.cpp>
-#include <Jakt/String.cpp>
-#include <Jakt/StringBuilder.cpp>
-#include <Jakt/StringUtils.cpp>
-#include <Jakt/StringView.cpp>
-#include <Jakt/kmalloc.cpp>
-#include <Jakt/PrettyPrint.cpp>
-
 namespace JaktInternal {
 template<typename T>
 class Set;
@@ -69,8 +60,6 @@ class Set;
 #include <Builtins/Set.h>
 
 #include <IO/File.h>
-
-#include <IO/File.cpp>
 
 using f32 = float;
 using f64 = double;

@@ -44,10 +44,12 @@ $clang_args = @( "-fdiagnostics-color=always",
     "-fno-exceptions",
     "-O0",
     "-Iruntime",
+    "-L.\build\Release\lib",
     "-DJAKT_CONTINUE_ON_PANIC",
     "-o",
     "$temp_dir/output.exe",
-    "$temp_dir\output.cpp"
+    "$temp_dir\output.cpp",
+    "-ljakt_runtime"
 )
 
 $clang_process = Start-Process clang++ -ArgumentList $clang_args -RedirectStandardError "$temp_dir\compile_cpp.err" -PassThru -Wait -NoNewWindow

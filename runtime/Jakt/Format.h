@@ -24,7 +24,7 @@ class TypeErasedFormatParams;
 class FormatParser;
 class FormatBuilder;
 
-template<typename T, typename = void>
+template<typename T, typename>
 struct Formatter {
     using __no_formatter_defined = void;
 };
@@ -591,6 +591,14 @@ struct Formatter<ErrorOr<T, ErrorType>> : Formatter<FormatString> {
         if (error_or.is_error())
             return Formatter<FormatString>::format(builder, "{}", error_or.error());
         return Formatter<FormatString>::format(builder, "{{{}}}", error_or.value());
+    }
+};
+
+template<typename T>
+struct Formatter<RefPtr<T>> : Formatter<const T*> {
+    ErrorOr<void> format(FormatBuilder& builder, RefPtr<T> const& value)
+    {
+        return Formatter<const T*>::format(builder, value.ptr());
     }
 };
 

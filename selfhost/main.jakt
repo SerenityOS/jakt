@@ -129,7 +129,9 @@ function main(args: [String]) {
     }
 
     let current_executable_path = FilePath::make(File::current_executable_path())
-    let default_runtime_path = FilePath::make(current_executable_path.dirname()).dirname() + "/include/runtime"
+    let execution_root = FilePath::make(current_executable_path.dirname()).dirname()
+    let default_runtime_path = execution_root  + "/include/runtime"
+    let builtin_libpath = [execution_root + "/lib", execution_root + "/lib64"]
 
     let optimize = args_parser.flag(["-O"])
     let lexer_debug = args_parser.flag(["-dl"])
@@ -510,14 +512,24 @@ function main(args: [String]) {
     }
 
     if (build_executable or run_executable) {
+
+        mut lib_paths = builtin_libpath
+        for path in  extra_lib_paths.iterator() {
+            lib_paths.push(path)
+        }
+        mut link_libs = ["jakt_runtime"]
+        for path in extra_link_libs.iterator() {
+            link_libs.push(path)
+        }
+
         let compiler_status = run_compiler(
             cxx_compiler_path
             cpp_filename
             output_filename
             runtime_path
             extra_include_paths
-            extra_lib_paths
-            extra_link_libs
+            lib_paths
+            link_libs
             optimize
         )
 
@@ -533,7 +545,7 @@ function main(args: [String]) {
     }
 }
 
-function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_filename: String, runtime_path: String, extra_include_paths: [String], extra_lib_paths: [String], extra_link_libs: [String], optimize: bool) throws -> c_int {
+function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_filename: String, runtime_path: String, extra_include_paths: [String], lib_paths: [String], link_libs: [String], optimize: bool) throws -> c_int {
     mut file_path = FilePath(path: cxx_compiler_path)
 
     mut extra_flags: [String] = []
@@ -583,25 +595,25 @@ function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_fi
             compile_args.push(path)
         }
     }
-    if not extra_lib_paths.is_empty() {
-        compile_args.add_capacity(extra_lib_paths.size() * 2)
-        for path in extra_lib_paths.iterator() {
-            compile_args.push("-L")
-            compile_args.push(path)
-        }
+    compile_args.add_capacity(lib_paths.size() * 2)
+    for path in lib_paths.iterator() {
+        compile_args.push("-L")
+        compile_args.push(path)
     }
-    if not extra_link_libs.is_empty() {
-        compile_args.add_capacity(extra_link_libs.size())
-        for path in extra_link_libs.iterator() {
-            compile_args.push("-l" + path)
-        }
+    compile_args.add_capacity(link_libs.size())
+    for path in link_libs.iterator() {
+        compile_args.push("-l" + path)
     }
     mut command = ""
     for compile_arg in compile_args.iterator() {
         command += compile_arg
         command += " "
     }
-    return system(command.c_string())
+    let compiler_result = system(command.c_string())
+    if (compiler_result != 0) {
+        eprintln("Failed to compile {} with command line\r\n{}", output_filename, command)
+    }
+    return compiler_result
 }
 
 function write_to_file(data: String, output_filename: String) throws {
