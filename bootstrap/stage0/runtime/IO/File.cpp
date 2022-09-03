@@ -7,6 +7,22 @@
 #include <IO/File.h>
 #include <errno.h>
 
+#if defined(AK_OS_MACOS)
+#   include <mach-o/dyld.h>
+#elif defined(_WIN32)
+#   ifndef NOMINMAX
+#       define NOMINMAX
+#   endif
+#   ifndef WIN32_LEAN_AND_MEAN
+#       define WIN32_LEAN_AND_MEAN
+#   endif
+#   include <Windows.h>
+#   ifdef Yield
+#       undef Yield
+#   endif
+#   include <libloaderapi.h>
+#endif
+
 namespace JaktInternal {
 
 File::File()
@@ -90,6 +106,38 @@ bool File::exists(String path)
         return false;
     fclose(file);
     return true;
+}
+
+ErrorOr<String> File::current_executable_path()
+{
+    char path[4096] {};
+#ifdef _WIN32
+    DWORD ret = GetModuleFileName(nullptr, path, sizeof(path));
+    if (ret < 0) 
+        return Error::from_errno(GetLastError());
+#else
+    const char* path_to_readlink = nullptr;
+#  ifdef AK_OS_MACOS
+    uint32_t size = sizeof(path);
+    auto os_ret = _NSGetExecutablePath(path, &size);
+    if (os_ret != 0) {
+        return Error::from_errno(ENAMETOOLONG);
+    }
+    path_to_readlink = path;
+#  elif defined(AK_OS_BSD_GENERIC)
+#   error "TODO: Implement current_executable_path using sysctl(KERN_PROC_PATHNAME) for non-macOS BSDs"
+#  else
+    // Linux, Serenity, non-BSD unix, etc
+    path_to_readlink = "/proc/self/exe";
+#endif
+    ssize_t ret = readlink(path_to_readlink, path, sizeof(path) -1 );
+
+    // Ignore if wasn't a a symlink
+    if (ret == -1 && errno != EINVAL)
+        return Error::from_errno(errno);
+#endif
+    path[sizeof(path) - 1] = '\0';
+    return String(path);
 }
 
 }
