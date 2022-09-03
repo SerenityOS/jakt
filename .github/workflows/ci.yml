@@ -52,7 +52,7 @@ jobs:
           cmake --build build
 
       - name: Test Jakt Stage 1
-        run: ./build/jakttest
+        run: ./build/bin/jakttest
 
       - name: Build Jakt Stage 2
         run: |
@@ -61,7 +61,7 @@ jobs:
           cmake --build build
 
       - name: Test Jakt Stage 2
-        run: ./build/jakttest
+        run: ./build/bin/jakttest
 
   selfhost-windows:
     strategy:
@@ -81,4 +81,4 @@ jobs:
      - name: Test Jakt Stage 1
        run: |
          ls -l build
-         .\build\Release\jakttest.exe
+         .\build\Release\bin\jakttest.exe

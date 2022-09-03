@@ -17,13 +17,15 @@ $file = $Args[2]
 $jakt_args = @("$file",
     "-B",
     "$temp_dir",
+    "-R",
+    ".\runtime",
     "-o",
     "output",
     "-S"
 )
 
 # Generate C++ code
-$jakt_process = Start-Process .\build\jakt.exe -ArgumentList $jakt_args -RedirectStandardError "$temp_dir\compile_jakt.err" -PassThru -Wait -NoNewWindow
+$jakt_process = Start-Process .\build\Release\bin\jakt.exe -ArgumentList $jakt_args -RedirectStandardError "$temp_dir\compile_jakt.err" -PassThru -Wait -NoNewWindow
 if ($jakt_process.ExitCode -ne 0) {
 	exit 3
 }

@@ -32,14 +32,14 @@ foreach (stage IN LISTS stages)
     TARGETS ${target_name}
     EXPORT JaktTargets
     RUNTIME #
-        DESTINATION "${CMAKE_INSTALL_BINDIR}/stage${stage}"
+        DESTINATION "${CMAKE_INSTALL_BINDIR}"
         COMPONENT Jakt_Runtime
     LIBRARY #
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/stage${stage}"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}"
         COMPONENT Jakt_Runtime
         NAMELINK_COMPONENT Jakt_Development
     ARCHIVE #
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/stage${stage}"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}"
         COMPONENT Jakt_Development
   )
 endforeach()
@@ -66,7 +66,7 @@ install(
 # Make a symlink bin/jakt to the final compiler we created, but install it after the real targets
 # to make sure that if we're using hardlinks, the link can actually be created
 set(final_stage_target "jakt_stage${FINAL_STAGE}")
-set(final_stage_install_target "stage${FINAL_STAGE}/$<TARGET_FILE_NAME:${final_stage_target}>")
+set(final_stage_install_target "$<TARGET_FILE_NAME:${final_stage_target}>")
 if (NO_SYMLINKS)
     set(final_stage_install_target "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${final_stage_install_target}")
 endif()
