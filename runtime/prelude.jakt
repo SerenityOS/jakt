@@ -131,6 +131,7 @@ extern class File {
     public function read_all(mut this) throws -> [u8]
 
     public function exists(anon path: String) -> bool
+    public function current_executable_path() throws -> String
 }
 
 extern function abort() -> never

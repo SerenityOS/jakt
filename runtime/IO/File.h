@@ -26,6 +26,7 @@ public:
     ~File();
 
     static bool exists(String path);
+    static ErrorOr<String> current_executable_path();
 
 private:
     File();
