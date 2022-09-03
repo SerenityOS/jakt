@@ -7,3 +7,6 @@ build
 .idea/
 jakttest/.ninja_log
 .ninja_log
+cmake_install.cmake
+CMakeFiles/
+

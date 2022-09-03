@@ -19,7 +19,7 @@ file=$2
 file_cwd=$(dirname $file)
 
 # Generate C++ code into 
-$(build/jakt $2 -B $temp_dir -o output -S 2>$temp_dir/compile_jakt.err) || exit 3
+$(build/bin/jakt $2 -B $temp_dir -o output -S 2>$temp_dir/compile_jakt.err) || exit 3
 
 # Compile C++ code
 clang++ -fdiagnostics-color=always \
