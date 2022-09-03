@@ -26,6 +26,18 @@ else()
   set(LINK_GENEX TARGET_FILE_NAME)
 endif()
 
+set(in_build_prefix "")
+get_cmake_property(is_multi_config GENERATOR_IS_MULTI_CONFIG)
+if (is_multi_config)
+  set(in_build_prefix "$<CONFIG>/")
+endif()
+
+function(apply_output_rules target)
+  set_property(TARGET ${target} PROPERTY "ARCHIVE_OUTPUT_DIRECTORY" "${CMAKE_BINARY_DIR}/${in_build_prefix}lib")
+  set_property(TARGET ${target} PROPERTY "LIBRARY_OUTPUT_DIRECTORY" "${CMAKE_BINARY_DIR}/${in_build_prefix}lib")
+  set_property(TARGET ${target} PROPERTY "RUNTIME_OUTPUT_DIRECTORY" "${CMAKE_BINARY_DIR}/${in_build_prefix}bin")
+endfunction()
+
 include(cmake/jakt-executable.cmake)
 
 add_subdirectory(runtime)
@@ -40,6 +52,7 @@ target_include_directories(jakt_stage0
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
 )
 target_link_libraries(jakt_stage0 PRIVATE Jakt::jakt_runtime Jakt::jakt_main)
+apply_output_rules(jakt_stage0)
 
 set(SELFHOST_SOURCES
   selfhost/codegen.jakt
@@ -93,6 +106,7 @@ target_include_directories(jakt_stage1 PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>)
 add_executable(Jakt::jakt_stage1 ALIAS jakt_stage1)
+apply_output_rules(jakt_stage1)
 
 if (FINAL_STAGE GREATER_EQUAL 2)
   add_jakt_executable(jakt_stage2
@@ -101,14 +115,30 @@ if (FINAL_STAGE GREATER_EQUAL 2)
     MODULE_SOURCES ${SELFHOST_SOURCES}
     RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/runtime"
   )
-  target_include_directories(jakt_stage2 PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>)
+  target_include_directories(jakt_stage2 PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
+  )
   add_executable(Jakt::jakt_stage2 ALIAS jakt_stage2)
+  apply_output_rules(jakt_stage2)
+endif()
+
+# Link runtime into build directory(ies) for relative pathing usage
+#    Note: "If a sequential execution of multiple commands is required, use multiple execute_process() calls with a single COMMAND argument."
+if (CMAKE_CONFIGURATION_TYPES)
+  foreach (build_type IN LISTS CMAKE_CONFIGURATION_TYPES)
+    execute_process(COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/${build_type}/include")
+    execute_process(COMMAND "${CMAKE_COMMAND}" -E ${LINK_COMMAND} "${CMAKE_CURRENT_SOURCE_DIR}/runtime" "${CMAKE_CURRENT_BINARY_DIR}/${build_type}/include/runtime")
+  endforeach()
+else()
+  execute_process(COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/include")
+  execute_process(COMMAND "${CMAKE_COMMAND}" -E ${LINK_COMMAND}  "${CMAKE_CURRENT_SOURCE_DIR}/runtime" "${CMAKE_CURRENT_BINARY_DIR}/include/runtime")
 endif()
 
 add_custom_command(
   TARGET "jakt_stage${FINAL_STAGE}"
   POST_BUILD
-  COMMAND "${CMAKE_COMMAND}" -E ${LINK_COMMAND}  "$<${LINK_GENEX}:jakt_stage${FINAL_STAGE}>" "${CMAKE_CURRENT_BINARY_DIR}/jakt${CMAKE_EXECUTABLE_SUFFIX}"
+  COMMAND "${CMAKE_COMMAND}" -E ${LINK_COMMAND}  "$<${LINK_GENEX}:jakt_stage${FINAL_STAGE}>" "$<TARGET_FILE_DIR:jakt_stage${FINAL_STAGE}>/jakt${CMAKE_EXECUTABLE_SUFFIX}"
   VERBATIM
 )
 add_executable(Jakt::jakt ALIAS jakt_stage${FINAL_STAGE})
@@ -142,4 +172,5 @@ if (JAKT_BUILD_TESTING)
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/jakttest>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/jakttest>
   )
+  apply_output_rules(jakttest)
 endif()
