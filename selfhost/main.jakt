@@ -128,6 +128,9 @@ function main(args: [String]) {
         return 0
     }
 
+    let current_executable_path = FilePath::make(File::current_executable_path())
+    let default_runtime_path = FilePath::make(current_executable_path.dirname()).dirname() + "/include/runtime"
+
     let optimize = args_parser.flag(["-O"])
     let lexer_debug = args_parser.flag(["-dl"])
     let parser_debug = args_parser.flag(["-dp"])
@@ -144,7 +147,7 @@ function main(args: [String]) {
     let write_source_to_file = args_parser.flag(["-S", "--emit-cpp-source-only"])
 
     let clang_format_path = args_parser.option(["-F", "--clang-format-path"]) ?? "clang-format"
-    let runtime_path = args_parser.option(["-R", "--runtime-path"]) ?? "runtime"
+    let runtime_path = args_parser.option(["-R", "--runtime-path"]) ?? default_runtime_path
     let binary_dir = args_parser.option(["-B", "--binary-dir"]) ?? "build"
     let dot_clang_format_path = args_parser.option(["-D", "--dot-clang-format-path"])
     let cxx_compiler_path = args_parser.option(["-C", "--cxx-compiler-path"]) ?? "clang++"
