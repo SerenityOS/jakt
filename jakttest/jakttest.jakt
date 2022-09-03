@@ -628,9 +628,9 @@ struct TestScheduler {
             run_once_script
             "jakttest/run_one.py"
             "--jakt-binary"
-            String::format("{}/jakt", build_dir)
+            String::format("{}/bin/jakt", build_dir)
             "--jakt-lib-dir"
-            String::format("{}/runtime", build_dir)
+            String::format("{}/lib", build_dir)
             ""
             ""
         ]
