@@ -115,7 +115,7 @@ class FilePath {
         let last_slash = FilePath::last_slash(.path)
 
         if last_slash.has_value() {
-            let dir = .path.substring(start: 0, length: (last_slash! + 1)) 
+            let dir = .path.substring(start: 0, length: (last_slash!))
             let base = .path.substring(start: (last_slash! + 1), length: (len - last_slash! - 1))
             return (dir, base)
         }
