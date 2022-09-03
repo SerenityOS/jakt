@@ -50,6 +50,7 @@ import path = require("path");
 
 import util = require("node:util");
 import { TextEncoder } from "node:util";
+import { fileURLToPath } from "node:url";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const exec = util.promisify(require("node:child_process").exec);
@@ -57,10 +58,10 @@ const exec = util.promisify(require("node:child_process").exec);
 const tmpFile = tmp.fileSync();
 
 function includeFlagForPath(file_path: string): string {
-    const protocol_end = file_path.indexOf("://");
-    if (protocol_end == -1) return " -I " + file_path;
-    // Not protocol.length + 3, include the last '/'
-    return " -I " + path.dirname(file_path.slice(protocol_end + 2));
+    if (file_path.startsWith("file://")) {
+        return " -I " + path.dirname(fileURLToPath(file_path));   
+    }
+    return " -I " + file_path;
 }
 
 connection.onInitialize((params: InitializeParams) => {
