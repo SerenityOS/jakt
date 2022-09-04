@@ -512,7 +512,7 @@ struct Typechecker {
 
     function typecheck_struct_fields(mut this, record: ParsedRecord, struct_id: StructId) throws {
         mut structure = .get_struct(struct_id)
-
+        guard structure.fields.size() == 0 else { return }
         let checked_struct_scope_id = .get_struct(struct_id).scope_id
         let struct_type_id = .find_or_add_type_id(Type::Struct(struct_id))
         .current_struct_type_id = struct_type_id
@@ -1326,7 +1326,8 @@ struct Typechecker {
                 if not check_scope.has_value() {
                     .compiler.panic("Generic method with generic parameters must have a check scope")
                 }
-
+                // Note: This ensures struct members exists before typechecking the block
+                .typecheck_struct_fields(record: parsed_record, struct_id: struct_id)
                 let old_ignore_errors = .ignore_errors
                 .ignore_errors = true
                 let block = .typecheck_block(parsed_block: func.block, parent_scope_id: check_scope!, safety_mode: SafetyMode::Safe)
