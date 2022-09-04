@@ -1120,7 +1120,7 @@ struct ParsedCall {
 boxed enum ParsedType {
     Name(name: String, span: Span)
     NamespacedName(name: String, namespaces: [String], params: [ParsedType], span: Span)
-    GenericType(name: String, generic_parameters: [ParsedType], span: Span), // FIXME: tuple should be dictionary
+    GenericType(name: String, generic_parameters: [ParsedType], span: Span)
     JaktArray(inner: ParsedType, span: Span)
     Dictionary(key: ParsedType, value: ParsedType, span: Span)
     JaktTuple(types: [ParsedType], span: Span)
@@ -1262,11 +1262,7 @@ struct Parser {
                             .index++
                             yield Some((name, span))
                         }
-                        else => {
-                            //FIXME: We should just be able to write `yield None` and have the compiler infer its type
-                            let tuple_none: (String, Span)? = None
-                            yield tuple_none
-                        }
+                        else => None
                     }
                     if .current() is LCurly {
                         .index++

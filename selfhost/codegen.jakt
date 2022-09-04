@@ -293,7 +293,6 @@ struct CodeGenerator {
                 output += "}\n"
             }
         }
-        // FIXME: module sorting
         for idx in sorted_modules.size()..0 {
             let i = sorted_modules[idx - 1].id
             if i == 0 {

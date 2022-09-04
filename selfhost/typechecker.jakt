@@ -3973,9 +3973,7 @@ struct Typechecker {
                 let type_id = .typecheck_typename(parsed_type: whitelisted_type, scope_id: accessee, name: None)
                 // FIXME: Handle typecheck failure
                 if type_id.equals(own_type_id) {
-                    // FIXME: A naked `return` would be nicer here
-                    was_whitelisted = true
-                    break
+                    return
                 }
             }
             if not was_whitelisted {
@@ -5252,17 +5250,7 @@ struct Typechecker {
 
                 if missing_variants.size() > 0 {
                     if not seen_catch_all {
-                        mut str_missing_values = StringBuilder::create()
-
-                        // FIXME: replace this block with missing_variants.join(", ") when it is available
-                        for i in 0..missing_variants.size() {
-                            str_missing_values.append_c_string(missing_variants[i].c_string())
-                            if i < missing_variants.size() - 1 {
-                                str_missing_values.append_c_string(", ".c_string())
-                            }
-                        }
-
-                        .error(format("Match expression is not exhaustive, missing variants are: {}", str_missing_values.to_string()), span)
+                        .error(format("Match expression is not exhaustive, missing variants are: {}", join(missing_variants, separator: ", ")), span)
                     }
                 } else if seen_catch_all {
                     .error("All variants are covered, but an irrefutable pattern is also present", span)
