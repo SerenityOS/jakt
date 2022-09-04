@@ -2056,17 +2056,14 @@ struct CodeGenerator {
             return output
         }
 
-        if op is Assign and lhs is IndexedDictionary {
-            return match lhs {
-                IndexedDictionary(expr, index) => format(
-                    "{}({}.set({}, {}))"
-                    .current_error_handler()
-                    .codegen_expression(expr)
-                    .codegen_expression(index)
-                    .codegen_expression(rhs)
-                )
-                else => "" // FIXME: unreachable
-            }
+        if op is Assign and lhs is IndexedDictionary(expr, index) {
+            return format(
+                "{}({}.set({}, {}))"
+                .current_error_handler()
+                .codegen_expression(expr)
+                .codegen_expression(index)
+                .codegen_expression(rhs)
+            )
         }
 
         if .program.is_integer(type_id) {
