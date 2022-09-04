@@ -22,7 +22,7 @@ import types {
     CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, EnumId, FunctionGenericParameter, FunctionId,
     LoadedModule, Module, ModuleId, NumberConstant, ResolvedNamespace, SafetyMode, Scope, ScopeId, StructId,
     GenericInferences, StructOrEnumId, Type, TypeId, VarId, Value,
-    builtin, flip_signedness, never_type_id, unknown_type_id, void_type_id,
+    builtin, never_type_id, unknown_type_id, void_type_id,
 }
 import types
 import utility { panic, todo, Span, join, FilePath, FileId, escape_for_quotes }
@@ -3022,7 +3022,7 @@ struct Typechecker {
         }
 
         // Flipping the sign on a small enough unsigned constant is fine. We'll change the type to the signed variant.
-        let flipped_sign_type = flip_signedness(type: .get_type(type_id))
+        let flipped_sign_type = .get_type(type_id).flip_signedness()
 
         let constant = match expr {
             NumericConstant(val) => val
