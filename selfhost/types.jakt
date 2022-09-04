@@ -427,19 +427,18 @@ boxed enum Type {
         Usize => 18446744073709551615u64
         else => 0u64
     }
-}
 
-// FIXME: This could be part of Type
-function flip_signedness(type: Type) throws -> TypeId => match type {
-    I8 => builtin(BuiltinType::U8)
-    I16 => builtin(BuiltinType::U16)
-    I32 => builtin(BuiltinType::U32)
-    I64 => builtin(BuiltinType::U64)
-    U8 => builtin(BuiltinType::I8)
-    U16 => builtin(BuiltinType::I16)
-    U32 => builtin(BuiltinType::I32)
-    U64 => builtin(BuiltinType::I64)
-    else => builtin(BuiltinType::Unknown)
+    function flip_signedness(this) throws -> TypeId => match this {
+        I8 => builtin(BuiltinType::U8)
+        I16 => builtin(BuiltinType::U16)
+        I32 => builtin(BuiltinType::U32)
+        I64 => builtin(BuiltinType::U64)
+        U8 => builtin(BuiltinType::I8)
+        U16 => builtin(BuiltinType::I16)
+        U32 => builtin(BuiltinType::I32)
+        U64 => builtin(BuiltinType::I64)
+        else => builtin(BuiltinType::Unknown)
+    }
 }
 
 class Scope {
