@@ -932,27 +932,21 @@ enum CheckedNumericConstant {
     F32(f32)
     F64(f64)
 
-    // FIXME: make this into a FAMF (fat arrow match function) once we can yield `None` out of the match (https://github.com/SerenityOS/jakt/issues/669)
-    //          or once we can cast f32 to f64
-    function number_constant(this) -> NumberConstant? {
-        match this {
-            I8(value) => { return NumberConstant::Signed(value as! i64) }
-            I16(value) => { return NumberConstant::Signed(value as! i64) }
-            I32(value) => { return NumberConstant::Signed(value as! i64) }
-            I64(value) => { return NumberConstant::Signed(value as! i64) }
-            U8(value) => { return NumberConstant::Unsigned(value as! u64) }
-            U16(value) => { return NumberConstant::Unsigned(value as! u64) }
-            U32(value) => { return NumberConstant::Unsigned(value as! u64) }
-            U64(value) => { return NumberConstant::Unsigned(value as! u64) }
-            USize(value) => { return NumberConstant::Unsigned(value as! u64) }
+    function number_constant(this) -> NumberConstant? => match this {
+        I8(value) =>  NumberConstant::Signed(value as! i64)
+        I16(value) =>  NumberConstant::Signed(value as! i64)
+        I32(value) =>  NumberConstant::Signed(value as! i64)
+        I64(value) =>  NumberConstant::Signed(value as! i64)
+        U8(value) =>  NumberConstant::Unsigned(value as! u64)
+        U16(value) =>  NumberConstant::Unsigned(value as! u64)
+        U32(value) =>  NumberConstant::Unsigned(value as! u64)
+        U64(value) =>  NumberConstant::Unsigned(value as! u64)
+        USize(value) =>  NumberConstant::Unsigned(value as! u64)
 
-            // FIXME: add a case for F32 once we can cast f32 to f64
+        // FIXME: add a case for F32 once we can cast f32 to f64
 
-            F64(value) => { return NumberConstant::Floating(value) }
-            else => {}
-        }
-
-        return None
+        F64(value) =>  NumberConstant::Floating(value)
+        else => None
     }
 }
 
@@ -1026,30 +1020,25 @@ boxed enum CheckedExpression {
     TryBlock(stmt: CheckedStatement, catch_block: CheckedBlock, error_name: String, error_span: Span, span: Span, type_id: TypeId)
     Garbage(Span)
 
-    // FIXME: rewrite this into a FAMF once we can yield None out of a match (https://github.com/SerenityOS/jakt/issues/669)
-    function to_number_constant(this, program: CheckedProgram) -> NumberConstant? {
-        match this {
-            NumericConstant(val, span, type_id) => { return val.number_constant() }
-            UnaryOp(expr, op, span, type_id) => {
-                match op {
-                    TypeCast(cast) => {
-                        if not cast is Infallible {
-                            return None
-                        }
-                        if not program.is_integer(type_id) and not program.is_floating(type_id) {
-                            return None
-                        }
-                        match expr {
-                            NumericConstant(val, span: span_, type_id: type_id_) => { return val.number_constant() }
-                            else => {}
-                        }
-                    }
-                    else => {}
-                }
+    function to_number_constant(this, program: CheckedProgram) -> NumberConstant? => match this {
+        NumericConstant(val, span, type_id) => val.number_constant()
+        UnaryOp(expr, op, span, type_id) => {
+            mut result: NumberConstant? = None
+            guard op is TypeCast(cast) else {
+                return None
             }
-            else => {}
+            if not cast is Infallible {
+                result = None
+            }
+            if not program.is_integer(type_id) and not program.is_floating(type_id) {
+                result = None
+            }
+            if expr is NumericConstant(val) {
+                result = val.number_constant()
+            }
+            yield result
         }
-        return None
+        else => None
     }
 
     function span(this) -> Span => match this {
