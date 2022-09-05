@@ -2168,6 +2168,7 @@ struct Parser {
         }
 
         guard .current() is Identifier(name) else {
+            .error("Incomplete function definition", .current().span())
             return parsed_function
         }
         parsed_function.name = name

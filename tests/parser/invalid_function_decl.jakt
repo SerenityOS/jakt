@@ -1,0 +1,5 @@
+/// Expect:
+/// - error: "Incomplete function definition"
+
+comptime function foo() {}
+
