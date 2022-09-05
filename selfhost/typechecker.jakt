@@ -5860,50 +5860,7 @@ struct Typechecker {
                 }
             }
         }
-        IndexedTuple(expr, index, is_optional, span) => {
-            let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
-
-            let tuple_struct_id = .find_struct_in_prelude("Tuple")
-            let optional_struct_id = .find_struct_in_prelude("Optional")
-            mut expr_type_id = unknown_type_id()
-
-            if .get_type(checked_expr.type()) is GenericInstance(id, args) {
-                if id.equals(tuple_struct_id) {
-                    if is_optional {
-                        .error("Optional chaining is not allowed on a non-optional tuple type", span)
-                    }
-                    if (index >= args.size()){
-                        .error("Tuple index past the end of the tuple", span)
-                    } else {
-                        expr_type_id = args[index]
-                    }
-                } else if is_optional and id.equals(optional_struct_id) {
-                    let inner_type_id = args[0]
-                    if .get_type(inner_type_id) is GenericInstance(id, args) {
-                        if id.equals(tuple_struct_id) {
-                            if (index >= args.size()){
-                                .error("Optional-chained tuple index past the end of the tuple", span)
-                            } else {
-                                expr_type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [args[index]]))
-                            }
-                        }
-                    } else {
-                        .error("Optional-chained tuple index used on non-tuple value", span)
-                    }
-                }
-            } else if is_optional {
-                .error("Optional-chained tuple index used on non-tuple value", span)
-            } else {
-                .error("Tuple index used on non-tuple value", span)
-            }
-
-            yield CheckedExpression::IndexedTuple(
-                expr: checked_expr
-                index: index
-                span
-                is_optional
-                type_id: expr_type_id)
-        }
+        IndexedTuple(expr, index, is_optional, span) => .typecheck_indexed_tuple(expr, index, scope_id, is_optional, safety_mode, span)
         Garbage(span) => CheckedExpression::Garbage(span)
         NamespacedVar(name, namespace_, span) => .typecheck_namespaced_var_or_simple_enum_constructor_call(name, namespace_, scope_id, safety_mode, type_hint, span)
         Match(expr, cases, marker_span) => .typecheck_match(expr, cases, span: marker_span, scope_id, safety_mode, type_hint)
