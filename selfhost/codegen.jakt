@@ -721,6 +721,10 @@ struct CodeGenerator {
             return ""
         }
 
+        if function_.is_comptime {
+            return ""
+        }
+
         // FIXME: for now, just exit early if we're a constructor
         if function_.type is ImplicitConstructor {
             return ""
