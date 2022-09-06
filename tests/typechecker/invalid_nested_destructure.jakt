@@ -1,0 +1,8 @@
+/// Expect:
+/// - error: "Destructure inner types sould have same size as tuple being destructured"
+
+function main() {
+    let a = (1, (1, 2, 3))
+
+    let (b, (c, d)) = a
+}

@@ -13,8 +13,9 @@ import parser {
     NumericConstant, ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression, ParsedExternImport, ParsedField
     ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedMethod, ParsedModuleImport, ParsedName
     ParsedNameWithGenericParameters, ParsedNamespace, ParsedParameter, ParsedRecord, ParsedStatement, ParsedTrait
-    ParsedType, ParsedVarDecl, Parser, RecordType, TypeCast, UnaryOperator, Visibility
+    ParsedType, ParsedVarDecl, Parser, RecordType, TypeCast, UnaryOperator, Visibility, DestructuringDeclarationType
 }
+
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant
     CheckedEnumVariantBinding, CheckedExpression, CheckedField, CheckedFunction, CheckedGenericParameter
@@ -48,6 +49,7 @@ struct Typechecker {
     dump_type_hints: bool
     dump_try_hints: bool
     lambda_count: u64
+    destructure_count: u64
     generic_inferences: GenericInferences
 
     function type_name(this, anon type_id: TypeId) throws => .program.type_name(type_id)
@@ -84,6 +86,7 @@ struct Typechecker {
             dump_type_hints: compiler.dump_type_hints
             dump_try_hints: compiler.dump_try_hints
             lambda_count: 0
+            destructure_count: 0
             generic_inferences: GenericInferences(values: [:])
         )
 
@@ -4333,7 +4336,7 @@ struct Typechecker {
         Continue(span) => CheckedStatement::Continue(span)
         Break(span) => CheckedStatement::Break(span)
         VarDecl(var, init, span) => .typecheck_var_decl(var, init, scope_id, safety_mode, span)
-        DestructuringAssignment(vars, var_decl, span) => .typecheck_destructuring_assignment(vars, var_decl, scope_id, safety_mode, span)
+        DestructuringAssignment(destructure, expr, declaration_type, span) => .typecheck_destructuring_assignment(destructure, expr, declaration_type, scope_id, safety_mode, span)
         If(condition, then_block, else_statement, span) => .typecheck_if(condition, then_block, else_statement, scope_id, safety_mode, span)
         Garbage(span) => CheckedStatement::Garbage(span)
         For(iterator_name, name_span, range, block, span) => .typecheck_for(iterator_name,  name_span, range, block, scope_id, safety_mode, span)
@@ -4726,42 +4729,170 @@ struct Typechecker {
         return CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
     }
 
-    function typecheck_destructuring_assignment(mut this, vars: [ParsedVarDecl], var_decl: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
-        mut var_decls: [CheckedStatement] = []
-        let checked_tuple_var_decl = .typecheck_statement(statement: var_decl, scope_id, safety_mode)
-        mut expr_type_id: TypeId = unknown_type_id()
-        mut tuple_var_id = VarId(module: ModuleId(id: 0), id: 0)
-        if checked_tuple_var_decl is VarDecl(var_id, init) {
-            expr_type_id = init.type()
-            tuple_var_id = var_id
+    function typecheck_destructured_tuple(mut this, expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> (CheckedExpression, CheckedVariable?, CheckedStatement?) {
+        mut checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
+        mut tuple_variable: CheckedVariable? = None
+        mut checked_var_decl: CheckedStatement? = None
+
+        let var_decl = ParsedVarDecl(
+            name: format("destructure{}", .destructure_count++),
+            parsed_type: ParsedType::Empty,
+            is_mutable: false,
+            inlay_span: None,
+            span
+        )
+
+        checked_var_decl = .typecheck_var_decl(var: var_decl, init: expr, scope_id, safety_mode, span)
+        if checked_var_decl! is VarDecl(var_id) {
+            tuple_variable = .program.get_variable(var_id)
         } else {
-            .error("Destructuting assignment should be a variable declaration", span)
+            .error("Invalid var declaration", span)
         }
 
-        mut inner_types: [TypeId] = []
-        let tuple_type = .get_type(expr_type_id)
-        if tuple_type is GenericInstance(args) {
-            inner_types = args
-        } else {
-            .error("Tuple Type should be Generic Instance", span)
+        return (checked_expr, tuple_variable, checked_var_decl)
+    }
+
+    function typecheck_destructuring_assignment(mut this, destructure: ParsedExpression, expr: ParsedExpression, declaration_type: DestructuringDeclarationType, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+        mut var_assignments: [CheckedExpression] = []
+        mut var_declarations: [CheckedStatement] = []
+
+        guard destructure is Destructure(values) else {
+            .error("Missing Destructure", span)
+
+            return CheckedStatement::DestructuringDeclarationAssignment(vars: var_declarations, var_decl: None, span)
         }
-        let tuple_variable = .program.get_variable(tuple_var_id)
-        if vars.size() == inner_types.size() {
+
+        let (checked_expr, tuple_variable, checked_var_decl) = .typecheck_destructured_tuple(expr, scope_id, safety_mode, span)
+        
+        if tuple_variable.has_value() {
+            mut inner_types: [TypeId] = []
+            let tuple_type = .get_type(checked_expr.type())
+            if tuple_type is GenericInstance(args) {
+                inner_types = args
+            } else {
+                .error("Tuple being destructured should be Generic Instance", span)
+            }
+
+            let tuple_expression = ParsedExpression::Var(name: tuple_variable!.name, span)
+
+            if declaration_type is Assign {
+                var_assignments = .collect_destructuring_assignments(var_assignments, tuple_expression, checked_expr, vars: values, var_types: inner_types, scope_id, safety_mode, span)
+            } else {
+                let is_mutable = match declaration_type {
+                    DestructuringDeclarationType::Mutable => true
+                    else => false
+                }
+
+                var_declarations = .collect_destructuring_declarations(var_declarations, tuple_expression, checked_expr, vars: values, var_types: inner_types, is_mutable, scope_id, safety_mode, span)
+            }
+        }
+
+        if declaration_type is Assign {
+            return CheckedStatement::DestructuringAssignment(vars: var_assignments, var_decl: checked_var_decl, span)
+        }
+
+        return CheckedStatement::DestructuringDeclarationAssignment(vars: var_declarations, var_decl: checked_var_decl, span)
+    }
+
+    function collect_destructuring_assignments(mut this, mut var_assignments: [CheckedExpression], tuple_expression: ParsedExpression, checked_expr: CheckedExpression, vars: [ParsedExpression], var_types: [TypeId], scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> [CheckedExpression] {
+        if vars.size() == var_types.size() {
             for i in 0..vars.size() {
-                mut new_var = vars[i]
-                new_var.parsed_type = ParsedType::Name(name: .type_name(inner_types[i]), span)
-                let init = ParsedExpression::IndexedTuple(
-                    expr: ParsedExpression::Var(name: tuple_variable.name, span)
-                    index: i
-                    is_optional: false
-                    span)
-                var_decls.push(.typecheck_var_decl(var: vars[i], init, scope_id, safety_mode, span))
+                match vars[i] {
+                    Var(span: var_span) | IndexedStruct(span: var_span) => {
+                        let expr = ParsedExpression::BinaryOp(
+                            lhs: vars[i]
+                            op: BinaryOperator::Assign
+                            rhs: ParsedExpression::IndexedTuple(
+                                expr: tuple_expression
+                                index: i
+                                is_optional: false
+                                span: var_span
+                            )
+                            span: var_span
+                        )
+
+                        var_assignments.push(.typecheck_expression(expr, scope_id, safety_mode, type_hint: checked_expr.type()))
+                    }
+                    Destructure(values: inner_vars, span: tuple_span) => {
+                        let inner_tuple_expression = ParsedExpression::IndexedTuple(
+                            expr: tuple_expression
+                            index: i
+                            is_optional: false
+                            span: tuple_span
+                        )
+
+                        mut inner_types: [TypeId] = []
+                        let tuple_type = .get_type(var_types[i])
+                        if .get_type(var_types[i]) is GenericInstance(args) {
+                            inner_types = args
+                        } else {
+                            .error("Tuple being destructured should be Generic Instance", span)
+                        }
+
+                        var_assignments = .collect_destructuring_assignments(var_assignments, tuple_expression: inner_tuple_expression, checked_expr, vars: inner_vars, var_types: inner_types, scope_id, safety_mode, span: tuple_span)
+                    }
+                    else => {
+                        .error(format("Unable to destructure into type: {}", .type_name(var_types[i])), span)
+                    }
+                }
             }
         } else {
-            .error("Tuple inner types sould have same size as tuple members", span)
+            .error("Destructure inner types sould have same size as tuple being destructured", span)
         }
 
-        return CheckedStatement::DestructuringAssignment(vars: var_decls, var_decl: checked_tuple_var_decl, span)
+        return var_assignments
+    }
+
+    function collect_destructuring_declarations(mut this, mut var_declarations: [CheckedStatement], tuple_expression: ParsedExpression, checked_expr: CheckedExpression, vars: [ParsedExpression], var_types: [TypeId], is_mutable: bool, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> [CheckedStatement] {
+        if vars.size() == var_types.size() {
+            for i in 0..vars.size() {
+                match vars[i] {
+                    Var(name, span: var_span) => {
+                        let parsed_var_decl = ParsedVarDecl(
+                            name: name,
+                            parsed_type: ParsedType::Empty,
+                            is_mutable,
+                            inlay_span: None,
+                            span: var_span
+                        )
+
+                        let init = ParsedExpression::IndexedTuple(
+                            expr: tuple_expression
+                            index: i
+                            is_optional: false
+                            span: var_span
+                        )
+
+                        var_declarations.push(.typecheck_var_decl(var: parsed_var_decl, init, scope_id, safety_mode, span))
+                    }
+                    Destructure(values: inner_vars, span: tuple_span) => {
+                        let inner_tuple_expression = ParsedExpression::IndexedTuple(
+                            expr: tuple_expression
+                            index: i
+                            is_optional: false
+                            span: tuple_span
+                        )
+
+                        mut inner_types: [TypeId] = []
+                        let tuple_type = .get_type(var_types[i])
+                        if .get_type(var_types[i]) is GenericInstance(args) {
+                            inner_types = args
+                        } else {
+                            .error("Tuple being destructured should be Generic Instance", span)
+                        }
+
+                        var_declarations = .collect_destructuring_declarations(var_declarations, tuple_expression: inner_tuple_expression, checked_expr, vars: inner_vars, var_types: inner_types, is_mutable, scope_id, safety_mode, span: tuple_span)
+                    }
+                    else => {
+                        .error(format("Unable to destructure into type: {}", .type_name(var_types[i])), span)
+                    }
+                }           
+            }
+        } else {
+            .error("Destructure inner types sould have same size as tuple being destructured", span)
+        }
+
+        return var_declarations
     }
 
     function typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
@@ -5901,6 +6032,9 @@ struct Typechecker {
         Function(captures, params, can_throw, is_fat_arrow, return_type, block, span) => .typecheck_lambda(captures, params, can_throw, is_fat_arrow, return_type, block, span, scope_id, safety_mode)
         Try(expr, catch_block, catch_name, span) => .typecheck_try(expr, catch_block, catch_name, scope_id, safety_mode, span, type_hint)
         TryBlock(stmt, catch_block, error_name, error_span, span) => .typecheck_try_block(stmt, error_name, error_span, catch_block, scope_id, safety_mode, span)
+        Destructure => {
+            .compiler.panic("Destructure expression not typechecked individually")
+        }
         Operator => {
             .compiler.panic("idk how to handle this thing")
         }

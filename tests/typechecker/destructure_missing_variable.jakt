@@ -1,0 +1,8 @@
+/// Expect:
+/// - error: "Variable 'bar' not found"
+
+function main() {
+    mut foo = 0
+
+    (foo, bar) = (1, 2)
+}

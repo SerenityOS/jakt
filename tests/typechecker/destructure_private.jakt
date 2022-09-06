@@ -1,0 +1,19 @@
+/// Expect:
+/// - error: "Can't access field ‘x’, because it is marked private"
+
+class TestClass {
+    x: i64
+    y: i64
+
+    public function make(x: i64, y: i64) throws -> TestClass {
+        return TestClass(x, y)
+    }
+}
+
+function main() {
+    let tuple = (8, 9)
+
+    let test_class = TestClass::make(x: 6, y: 7)
+
+    (test_class.x, test_class.y) = tuple
+}

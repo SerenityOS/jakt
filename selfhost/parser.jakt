@@ -327,6 +327,12 @@ struct ParsedRecord {
     record_type: RecordType
 }
 
+enum DestructuringDeclarationType {
+    Immutable
+    Mutable
+    Assign
+}
+
 enum FunctionType {
     Normal
     ImplicitConstructor
@@ -492,7 +498,7 @@ boxed enum ParsedStatement {
     Expression(expr: ParsedExpression, span: Span)
     Defer(statement: ParsedStatement, span: Span)
     UnsafeBlock(block: ParsedBlock, span: Span)
-    DestructuringAssignment(vars: [ParsedVarDecl], var_decl: ParsedStatement, span: Span)
+    DestructuringAssignment(destructure: ParsedExpression, expr: ParsedExpression, declaration_type: DestructuringDeclarationType, span: Span)
     VarDecl(var: ParsedVarDecl, init: ParsedExpression, span: Span)
     If(condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, span: Span)
     Block(block: ParsedBlock, span: Span)
@@ -525,18 +531,13 @@ boxed enum ParsedStatement {
             VarDecl(var: rhs_var, init: rhs_init) => lhs_var.equals(rhs_var) and lhs_init.equals(rhs_init)
             else => false
         }
-        DestructuringAssignment(vars: lhs_vars, var_decl: lhs_var_decl) => match rhs_statement {
-            DestructuringAssignment(vars: rhs_vars, var_decl: rhs_var_decl) => {
-                if lhs_vars.size() != rhs_vars.size() {
+        DestructuringAssignment(destructure: lhs_destructure, expr: lhs_expr) => match rhs_statement {
+            DestructuringAssignment(destructure: rhs_destructure, expr: rhs_expr) => {
+                if not lhs_destructure.equals(rhs_destructure) {
                     return false
                 }
-                for i in 0..lhs_vars.size() {
-                    if not lhs_vars[i].equals(rhs_vars[i]) {
-                        return false
-                    }
-                }
 
-                if not lhs_var_decl.equals(rhs_var_decl) {
+                if not lhs_expr.equals(rhs_expr) {
                     return false
                 }
 
@@ -926,6 +927,7 @@ boxed enum ParsedExpression {
     JaktDictionary(values: [(ParsedExpression, ParsedExpression)], span: Span)
     Set(values: [ParsedExpression], span: Span)
     JaktTuple(values: [ParsedExpression], span: Span)
+    Destructure(values: [ParsedExpression], span: Span)
     Range(from: ParsedExpression?, to: ParsedExpression?, span: Span)
     ForcedUnwrap(expr: ParsedExpression, span: Span)
     Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: Span, marker_span: Span)
@@ -1106,6 +1108,20 @@ boxed enum ParsedExpression {
         }
         JaktTuple(values: lhs_values) => match rhs_expression {
             JaktTuple(values: rhs_values) => {
+                if not lhs_values.size() == rhs_values.size() {
+                    return false
+                }
+                for i in 0..lhs_values.size() {
+                    if not lhs_values[i].equals(rhs_values[i]) {
+                        return false
+                    }
+                }
+                yield true
+            }
+            else => false
+        }
+        Destructure(values: lhs_values) => match rhs_expression {
+            Destructure(values: rhs_values) => {
                 if not lhs_values.size() == rhs_values.size() {
                     return false
                 }
@@ -1452,11 +1468,12 @@ enum Visibility {
 
 struct Parser {
     index: usize
+    iterator_count: u64
     tokens: [Token]
     compiler: Compiler
 
     function parse(compiler: Compiler, tokens: [Token]) throws -> ParsedNamespace {
-        mut parser = Parser(index: 0, tokens, compiler)
+        mut parser = Parser(index: 0, iterator_count: 0, tokens, compiler)
         return parser.parse_namespace()
     }
 
@@ -3314,25 +3331,16 @@ struct Parser {
 
                 mut vars: [ParsedVarDecl] = []
                 mut is_destructuring_assingment = false
-                mut tuple_var_name = ""
-                mut tuple_var_decl = ParsedVarDecl(
-                    name: "",
-                    parsed_type: ParsedType::Empty,
-                    is_mutable: is_mutable,
-                    inlay_span: None,
-                    span: .current().span(),
-                )
 
+                mut destructure: ParsedExpression? = None
+                mut var_decl: ParsedVarDecl? = None
+                
                 if .current() is LParen {
-                    vars = .parse_destructuring_assignment(is_mutable)
-                    for var in vars {
-                        tuple_var_name += var.name
-                        tuple_var_name += "_"
-                    }
-                    tuple_var_decl.name = tuple_var_name
+                    destructure = .parse_operand_base()
+
                     is_destructuring_assingment = true
                 } else {
-                    tuple_var_decl = .parse_variable_declaration(is_mutable)
+                    var_decl = .parse_variable_declaration(is_mutable)
                 }
 
                 let init = match .current() {
@@ -3346,13 +3354,24 @@ struct Parser {
                     }
                 }
 
-                mut return_statement = ParsedStatement::VarDecl(var: tuple_var_decl, init, span: merge_spans(start, .previous().span()))
-
+                mut return_statement: ParsedStatement? = None
                 if is_destructuring_assingment {
-                    let old_return_statement = return_statement
-                    return_statement = ParsedStatement::DestructuringAssignment(vars, var_decl: old_return_statement, span: merge_spans(start, .previous().span()))
+                    if destructure.has_value() and destructure! is Destructure {
+                        let declaration_type = match is_mutable {
+                            true => DestructuringDeclarationType::Mutable
+                            else => DestructuringDeclarationType::Immutable
+                        }
+
+                        return_statement = ParsedStatement::DestructuringAssignment(destructure: destructure!, expr: init, declaration_type, span: merge_spans(start, .previous().span()))
+                    } else {
+                        .error("Invalid destructure", merge_spans(start, .previous().span()))
+                        return_statement = ParsedStatement::Garbage(merge_spans(start, .previous().span()))
+                    }                    
+                } else {
+                    return_statement = ParsedStatement::VarDecl(var: var_decl!, init, span: merge_spans(start, .previous().span()))
                 }
-                yield return_statement
+
+                yield return_statement!
             }
             If => .parse_if_statement()
             For => .parse_for_statement()
@@ -3363,7 +3382,16 @@ struct Parser {
             Guard => .parse_guard_statement()
             else => {
                 let expr = .parse_expression(allow_assignments: true, allow_newlines: false)
-                yield ParsedStatement::Expression(expr, span: merge_spans(start, .previous().span()))
+
+                mut statement: ParsedStatement? = None
+                // FIXME: This is probably not the ideal spot to rewrite an assingment into a Destructure as a DestructuringAssignment but I can't find a better one currently
+                if expr is BinaryOp(lhs, op, rhs) and op is Assign and lhs is Destructure {
+                    statement = ParsedStatement::DestructuringAssignment(destructure: lhs, expr: rhs, declaration_type: DestructuringDeclarationType::Assign, span: merge_spans(start, .previous().span()))
+                } else {
+                    statement = ParsedStatement::Expression(expr, span: merge_spans(start, .previous().span()))
+                }
+
+                yield statement!
             }
         }
     }
@@ -3424,8 +3452,9 @@ struct Parser {
         let start_span = .current().span()
         .index++
 
+        mut destructure: ParsedExpression? = None
+        mut is_destructuring_assingment = false
         mut iterator_name = ""
-        mut destructured_var_decls: [ParsedVarDecl] = []
 
         match .current() {
             Identifier(name) => {
@@ -3433,13 +3462,8 @@ struct Parser {
                 .index++
             }
             LParen => {
-                destructured_var_decls = .parse_destructuring_assignment(is_mutable: false)
-                mut tuple_var_name = ""
-                for var in destructured_var_decls {
-                    tuple_var_name += var.name
-                    tuple_var_name += "__"
-                }
-                iterator_name = tuple_var_name
+                destructure = .parse_operand_base()
+                is_destructuring_assingment = true
             }
             else => {
                 .error("Expected iterator name or destructuring pattern", .current().span())
@@ -3458,23 +3482,28 @@ struct Parser {
         let range = .parse_expression(allow_assignments: false, allow_newlines: false)
         mut block = .parse_block();
 
-        if destructured_var_decls.size() > 0 {
-            mut tuple_var_name = "jakt__"
-            tuple_var_name += iterator_name
-            mut tuple_var_decl = ParsedVarDecl(
-                name: tuple_var_name,
-                parsed_type: ParsedType::Empty,
-                is_mutable: false,
-                inlay_span: None,
-                span: .current().span(),
-            )
-            let init = ParsedExpression::Var(name: iterator_name, span: merge_spans(start_span, .previous().span()))
-            let var_decl = ParsedStatement::VarDecl(var: tuple_var_decl, init, span: merge_spans(start_span, .previous().span()))
-            let destructured_vars_stmt = ParsedStatement::DestructuringAssignment(vars: destructured_var_decls, var_decl, span: merge_spans(start_span, .previous().span()))
-            mut block_stmts: [ParsedStatement] = []
-            block_stmts.push(destructured_vars_stmt)
-            block_stmts.push_values(block.stmts)
-            block.stmts = block_stmts
+        if is_destructuring_assingment {
+            if destructure.has_value() and destructure! is Destructure(values) {
+                iterator_name = format("iterator{}", .iterator_count++)
+                let init = ParsedExpression::Var(name: iterator_name, span: merge_spans(start_span, .previous().span()))
+
+                let destructured_vars_stmt = ParsedStatement::DestructuringAssignment(
+                    destructure: destructure!
+                    expr: init
+                    declaration_type: DestructuringDeclarationType::Immutable
+                    span: merge_spans(start_span, .previous().span())
+                )
+                
+                mut block_stmts: [ParsedStatement] = []
+                block_stmts.push(destructured_vars_stmt)
+                for stmt in block.stmts.iterator() {
+                    block_stmts.push(stmt)
+                }
+
+                block.stmts = block_stmts
+            } else {
+                .error("Invalid destructure", merge_spans(start_span, .previous().span()))
+            }
         }
 
         return ParsedStatement::For(iterator_name, name_span, range, block, span: merge_spans(start_span, .previous().span()))
@@ -3707,37 +3736,8 @@ struct Parser {
                     .index++
                 }
                 Comma => {
-                    // We have a tuple
-                    .index++
-
-                    mut tuple_exprs: [ParsedExpression] = [expr]
-                    mut end_span = start_span
-
-                    while not .eof() {
-                        match .current() {
-                            Eol | Comma => {
-                                .index++
-                            }
-                            RParen => {
-                                .index++
-                                break
-                            }
-                            else => {
-                                let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
-                                end_span = expr.span()
-                                tuple_exprs.push(expr)
-                            }
-                        }
-                    }
-
-                    if .eof() {
-                        .error("Expected ')'", .current().span());
-                    }
-
-                    expr = ParsedExpression::JaktTuple(
-                        values: tuple_exprs,
-                        span: merge_spans(start_span, end_span)
-                    )
+                    // We have a tuple or destructure
+                    expr = .parse_tuple_or_destructure(expr, start_span)
                 }
                 else => {
                     .error("Expected ')'", .current().span())
@@ -4021,6 +4021,66 @@ struct Parser {
         LiteralSuffix::F32 => NumericConstant::F32(f64_to_f32(number))
         LiteralSuffix::F64 => NumericConstant::F64(number)
         else => None
+    }
+
+    function update_tuple_to_destructure(mut this, mut expr: ParsedExpression) throws -> ParsedExpression
+    {
+        if expr is JaktTuple(values, span) {
+            mut new_values: [ParsedExpression] = []
+            for i in ..values.size() {
+                if values[i] is JaktTuple {
+                    new_values.push(.update_tuple_to_destructure(expr: values[i]))
+                } else {
+                    new_values.push(values[i])
+                }
+            }
+
+            expr = ParsedExpression::Destructure(
+                values: new_values
+                span
+            )
+        }
+
+        return expr
+    }
+
+    function parse_tuple_or_destructure(mut this, expr: ParsedExpression, start_span: Span) throws -> ParsedExpression {
+        .index++
+
+        mut tuple_exprs: [ParsedExpression] = [expr]
+        mut end_span = start_span
+
+        while not .eof() {
+            match .current() {
+                Eol | Comma => {
+                    .index++
+                }
+                RParen => {
+                    .index++
+                    break
+                }
+                else => {
+                    let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
+                    end_span = expr.span()
+                    tuple_exprs.push(expr)
+                }
+            }
+        }
+
+        if .eof() {
+            .error("Expected ')'", .current().span());
+        }
+
+        mut expr = ParsedExpression::JaktTuple(
+            values: tuple_exprs,
+            span: merge_spans(start_span, end_span)
+        )
+
+        if .current() is Equal or .current() is In {
+            expr = .update_tuple_to_destructure(expr)
+        }
+
+        return expr
     }
 
     function parse_captures(mut this) throws -> [ParsedCapture] {

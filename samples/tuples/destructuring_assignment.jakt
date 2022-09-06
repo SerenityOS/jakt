@@ -1,11 +1,42 @@
 /// Expect:
-/// - output: "1 hello\n"
+/// - output: "1 hello\n1 hello\n2, 3, 4\nTest(a: 1, b: 2, c: 3)\n"
 
 function foo() -> (i64, String) {
     return (1, "hello")
 }
 
+struct Test {
+    a: i64
+    b: i64
+    c: i64
+}
+
 function main() {
     let (x1, x2) = foo()
+
     println("{} {}", x1, x2)
+
+    mut bar = 0
+    mut baz = ""
+
+    (bar, baz) = foo()
+
+    println("{} {}", bar, baz)
+
+    let tuple = (1, 2, 3)
+
+    mut (a, b, c) = tuple
+    a++
+    b++
+    c++
+
+    println("{}, {}, {}", a, b, c)
+
+    let nested_tuple = (1, (2, 3))
+
+    mut test = Test(a: 5, b: 6, c: 7)
+
+    (test.a, (test.b, test.c)) = nested_tuple
+
+    println("{}", test)
 }

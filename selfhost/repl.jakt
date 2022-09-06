@@ -250,6 +250,7 @@ struct REPL {
             dump_type_hints: compiler.dump_type_hints
             dump_try_hints: compiler.dump_try_hints
             lambda_count: 0
+            destructure_count: 0
             generic_inferences: GenericInferences(values: [:])
         )
 
@@ -331,7 +332,7 @@ struct REPL {
                 continue
             }
 
-            mut parser = Parser(index: 0, tokens, compiler: .compiler)
+            mut parser = Parser(index: 0, iterator_count: 0, tokens, compiler: .compiler)
 
             let first_token = tokens.first()!
             if first_token is Function

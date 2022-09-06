@@ -2979,7 +2979,21 @@ struct CodeGenerator {
             }
             DestructuringAssignment(vars, var_decl) => {
                 mut output = ""
-                output += .codegen_statement(statement: var_decl)
+                if var_decl.has_value() {
+                    output += .codegen_statement(statement: var_decl!)
+                }
+
+                for v in vars.iterator() {
+                    output += .codegen_expression(expression: v)
+                    output += ";"
+                }
+                yield output
+            }
+            DestructuringDeclarationAssignment(vars, var_decl) => {
+                mut output = ""
+                if var_decl.has_value() {
+                    output += .codegen_statement(statement: var_decl!)
+                }
 
                 for v in vars {
                     output += .codegen_statement(statement: v)

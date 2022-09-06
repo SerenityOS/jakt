@@ -2768,7 +2768,7 @@ class Interpreter {
                 scope.defer_statement(statement)
             }
             DestructuringAssignment(vars, var_decl) => {
-                guard var_decl is VarDecl(var_id, init) else {
+                guard var_decl! is VarDecl(var_id, init) else {
                     panic("expected vardecl")
                 }
                 match .execute_expression(init, scope) {
@@ -2793,7 +2793,7 @@ class Interpreter {
                 }
 
                 for var in vars {
-                    guard var is VarDecl(var_id, init) else {
+                    guard var is Var(var_id, init) else {
                         panic("expected vardecl")
                     }
                     match .execute_expression(init, scope) {
@@ -2818,6 +2818,7 @@ class Interpreter {
                     }
                 }
             }
+            DestructuringDeclarationAssignment(span) => .error("destructuring declaration assignment not implemented", span)
             VarDecl(var_id, init, span) => {
                 match .execute_expression(init, scope) {
                     Return(value) => {

@@ -610,14 +610,23 @@ function find_span_in_statement(program: CheckedProgram, statement: CheckedState
             }
             yield find_span_in_block(program, block, span)
         }
-        DestructuringAssignment(vars, var_decl) => {
+        DestructuringAssignment(vars) => {
+            for var in vars {
+                let found = find_span_in_expression(program, expr: var, span)
+                if found.has_value() {
+                    return found
+                }
+            }
+            yield none
+        }
+        DestructuringDeclarationAssignment(vars) => {
             for var in vars {
                 let found = find_span_in_statement(program, statement: var, span)
                 if found.has_value() {
                     return found
                 }
             }
-            yield find_span_in_statement(program, statement: var_decl, span)
+            yield none
         }
         Yield(expr) => find_span_in_expression(program, expr, span)
         Break | Continue | Garbage => none

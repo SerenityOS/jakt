@@ -1,10 +1,16 @@
 /// Expect:
-/// - output: "1, Hello\n2, World\n"
+/// - output: "1, Hello\n2, World\n1, Hello-3\n2, World-4\n"
 
 function main() {
     mut list = [(1, "Hello"), (2, "World")]
 
     for (idx, word) in list {
         println("{}, {}" idx, word)
+    }
+
+    mut nested_list = [(1, ("Hello", 3)), (2, ("World", 4))]
+
+    for (idx, (word, count)) in nested_list.iterator() {
+        println("{}, {}-{}" idx, word, count)
     }
 }

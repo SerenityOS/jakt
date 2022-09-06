@@ -1,0 +1,9 @@
+/// Expect:
+/// - error: "Assignment to immutable variable"
+
+function main() {
+    mut foo = 0
+    let bar = 0
+
+    (foo, bar) = (1, 2)
+}
