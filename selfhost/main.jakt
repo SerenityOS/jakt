@@ -9,7 +9,7 @@
 import compiler { Compiler, FileId }
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
-import utility { FilePath, ArgsParser, Span }
+import utility { FilePath, ArgsParser, Span, escape_for_quotes }
 import lexer { Lexer }
 import parser { Parser }
 import interpreter { Interpreter, InterpreterScope, value_to_checked_expression }
@@ -289,7 +289,7 @@ function main(args: [String]) {
         } else {
             let file_path = compiler.get_file_path(result.file_id)
             
-            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, file_path!.path);
+            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, escape_for_quotes(file_path!.path));
         }
         return 0
     }
@@ -303,7 +303,7 @@ function main(args: [String]) {
         } else {
             let file_path = compiler.get_file_path(result.file_id)
 
-            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, file_path!.path);
+            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, escape_for_quotes(file_path!.path));
         }
         return 0
     }
