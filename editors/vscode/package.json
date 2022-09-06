@@ -114,7 +114,8 @@
 		"esbuild": "^0.14.42",
 		"eslint": "^8.13.0",
 		"mocha": "^9.2.1",
-		"typescript": "^4.7.2"
+		"typescript": "^4.7.2",
+		"vsce": "^2.11.0"
 	},
 	"dependencies": {
 		"@types/vscode": "^1.67.0",

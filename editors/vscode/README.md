@@ -29,8 +29,7 @@ In the editors/vscode directory:
 
 To create the package
 ```
-> npm install vsce -g
-> vsce package
+> npx vsce package
 ```
 
 Then install vscode by switching to the Extensions section on the left, then the `...` at the top middle and choose "Install from VSIX..." and choose the package you just created.
