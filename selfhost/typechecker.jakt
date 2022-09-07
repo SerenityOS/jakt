@@ -4734,19 +4734,28 @@ struct Typechecker {
         mut tuple_variable: CheckedVariable? = None
         mut checked_var_decl: CheckedStatement? = None
 
-        let var_decl = ParsedVarDecl(
-            name: format("destructure{}", .destructure_count++),
-            parsed_type: ParsedType::Empty,
-            is_mutable: false,
-            inlay_span: None,
-            span
-        )
-
-        checked_var_decl = .typecheck_var_decl(var: var_decl, init: expr, scope_id, safety_mode, span)
-        if checked_var_decl! is VarDecl(var_id) {
-            tuple_variable = .program.get_variable(var_id)
+        if checked_expr is Var(var) {
+            let maybe_var = .find_var_in_scope(scope_id, var: var.name)
+            if maybe_var.has_value() {
+                tuple_variable = maybe_var!
+            } else {
+                .error(format("Variable `{}` not found", var.name), span)
+            }
         } else {
-            .error("Invalid var declaration", span)
+            let var_decl = ParsedVarDecl(
+                name: format("destructure{}", .destructure_count++),
+                parsed_type: ParsedType::Empty,
+                is_mutable: false,
+                inlay_span: None,
+                span
+            )
+
+            checked_var_decl = .typecheck_var_decl(var: var_decl, init: expr, scope_id, safety_mode, span)
+            if checked_var_decl! is VarDecl(var_id) {
+                tuple_variable = .program.get_variable(var_id)
+            } else {
+                .compiler.panic(format("Internal destructure variable `{}` not found", var_decl.name))
+            }
         }
 
         return (checked_expr, tuple_variable, checked_var_decl)
