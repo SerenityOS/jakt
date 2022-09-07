@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "52\n42\n${13+29 :d}\n52\n5555555500000000\n"
+
+function main() {
+    let interpolate_this = 13
+    println(format("{:o}", 42))
+    println("${interpolate_this + 29:d}")
+    println("${{13+29 :d}}")
+    println("${interpolate_this + 29 :o}")
+    println("${0x55555555:hex-dump}")
+}

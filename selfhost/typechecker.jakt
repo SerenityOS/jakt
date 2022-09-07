@@ -4176,15 +4176,32 @@ struct Typechecker {
                 UnknownUnsigned(val) => .infer_unsigned_int(val, span, type_hint: type_hint_unwrapped)
             }
         }
+        FormatExpression(expr, format_specifier, span) => {
+            //FIXME: parse the format specifier and typecheck the value expression
+            yield .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
+        }
         SingleQuotedString(val, span) => CheckedExpression::CharacterConstant(val, span)
         SingleQuotedByteString(val, span) => CheckedExpression::ByteConstant(val, span)
         QuotedString(val, span) => {
             if .dump_try_hints {
                 .dump_try_hint(span)
             }
-        
+
             .unify_with_type(found_type: builtin(BuiltinType::JaktString), expected_type: type_hint, rhs_span: span)
             yield CheckedExpression::QuotedString(val, span)
+        }
+        InterpolatedString(format_string, interpolated_expressions, span) => {
+            if .dump_try_hints {
+                .dump_try_hint(span)
+            }
+
+            .unify_with_type(found_type: builtin(BuiltinType::JaktString), expected_type: type_hint, rhs_span: span)
+
+            mut checked_format_expressions: [CheckedExpression] = []
+            for expression in interpolated_expressions.iterator() {
+                checked_format_expressions.push(.typecheck_expression(expression, scope_id, safety_mode, type_hint: None))
+            }
+            yield CheckedExpression::InterpolatedString(format_string, interpolated_expressions: checked_format_expressions, span)
         }
         Call(call, span) => {
             yield .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: false)

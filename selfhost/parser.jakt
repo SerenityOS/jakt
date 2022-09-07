@@ -26,6 +26,10 @@ function merge_spans(anon start: Span, anon end: Span) throws -> Span {
     return Span(file_id: start.file_id, start: start.start, end: end.end)
 }
 
+function escape_curly_braces_for_format_string(anon string: String) throws -> String {
+    return string.replace(replace: "{", with: "{{").replace(replace: "}" with: "}}")
+}
+
 enum DefinitionLinkage {
     Internal
     External
@@ -711,7 +715,9 @@ enum ParsedCapture {
 boxed enum ParsedExpression {
     Boolean(val: bool, span: Span)
     NumericConstant(val: NumericConstant, span: Span)
+    FormatExpression(expr: ParsedExpression, format_specifier: String, span:Span)
     QuotedString(val: String, span: Span)
+    InterpolatedString(format_string: String, interpolated_expressions: [ParsedExpression], span: Span)
     SingleQuotedString(val: String, span: Span)
     SingleQuotedByteString(val: String, span: Span)
     Call(call: ParsedCall, span: Span)
@@ -742,7 +748,9 @@ boxed enum ParsedExpression {
     function span(this) => match this {
         Boolean(val, span) => span
         NumericConstant(val, span) => span
+        FormatExpression(span) => span
         QuotedString(val, span) => span
+        InterpolatedString(format_string, interpolated_expressions, span) => span
         SingleQuotedString(val, span) => span
         SingleQuotedByteString(val, span) => span
         Call(call, span) => span
@@ -827,8 +835,23 @@ boxed enum ParsedExpression {
             NumericConstant(val: rhs_val) => lhs_val.to_usize() == rhs_val.to_usize()
             else => false
         }
+        FormatExpression(expr: lhs_expr, format_specifier: lhs_fmt_specifier) => match rhs_expression {
+            FormatExpression(expr: rhs_expr, format_specifier: rhs_fmt_specifier) => lhs_expr.equals(rhs_expr) && lhs_fmt_specifier == rhs_fmt_specifier
+            else => false
+        }
         QuotedString(val: lhs_val) => match rhs_expression {
             QuotedString(val: rhs_val) => lhs_val == rhs_val
+            else => false
+        }
+        InterpolatedString(format_string: lhs_val, interpolated_expressions: lhs_exprs) => match rhs_expression {
+            InterpolatedString(format_string: rhs_val, interpolated_expressions: rhs_exprs ) => {
+                if not (lhs_val == rhs_val) { return false }
+                if not (lhs_exprs.size() == rhs_exprs.size()) { return false }
+                for expr_index in 0..lhs_exprs.size() {
+                    if not lhs_exprs[expr_index].equals(rhs_exprs[expr_index]) { return false }
+                }
+                return true
+            }
             else => false
         }
         SingleQuotedString(val: lhs_val) => match rhs_expression {
@@ -1380,7 +1403,7 @@ struct Parser {
 
         let import_path = match .current() {
             QuotedString(quote) => {
-                .index++
+                .index+=2
                 yield quote
             }
             else => {
@@ -2936,6 +2959,132 @@ struct Parser {
         return expr_stack[0]
     }
 
+    function parse_quoted_string(mut this) throws -> ParsedExpression {
+        let start_span = .current().span()
+        mut string_nesting_level:u64 = 0
+        mut interpolation_nesting_level:u64 = 0
+
+        mut string_contents = StringBuilder::create()
+        mut interpolated_expressions: [ParsedExpression] = []
+        mut just_exited_iterpolated_block = false
+        mut is_interpolated_string = false
+
+        while(not .eof()){
+            match .current() {
+                DoubleQuote(span) => {
+                    ++.index
+                    if string_nesting_level == 1 and interpolation_nesting_level == 0 {
+                        break
+                    } else if string_nesting_level <= 1 {
+                        .error(format("Unexpected token {}", .previous()), .previous().span())
+                        return ParsedExpression::Garbage(.previous().span())
+                    } else {
+                        --string_nesting_level
+                    }
+                }
+                QuotedString(quote, span) => {
+                    ++string_nesting_level
+                    ++.index
+                    mut escaped = quote
+                    if is_interpolated_string {
+                        escaped = escape_curly_braces_for_format_string(quote)
+                    }
+                    string_contents.append_string(escaped)
+                }
+                DollarLCurly => {
+                    if not is_interpolated_string {
+                        is_interpolated_string = true
+                        // this is the first interpolated block, so we need to retroactively
+                        // escape all braces we encountered so far
+                         mut format_string_so_far = escape_curly_braces_for_format_string(string_contents.to_string())
+                        string_contents.clear()
+                        string_contents.append_string(format_string_so_far)
+                    }
+
+                    let start_index = .index
+                    ++.index
+                    ++interpolation_nesting_level
+                    if .peek(steps: 0) is RCurly {
+                        .error("Empty expression in interpolated block", .current().span())
+                        return ParsedExpression::Garbage(.current().span())
+                    }
+                    let expression = .parse_expression(allow_assignments: false, allow_newlines: false)
+
+                    mut format_specifier = ""
+                    if .current() is Colon {
+                        format_specifier += ":"
+                        ++.index
+                        format_specifier += .parse_format_specifier()
+                    }
+                    string_contents.append(b'{')
+                    string_contents.append_string(format_specifier)
+                    string_contents.append(b'}')
+
+                    let span = .span(start: start_index, end: .current().span().end)
+                    let format_expression = ParsedExpression::FormatExpression(expr: expression, format_specifier: format_specifier, span)
+                    interpolated_expressions.push(format_expression)
+                }
+                RCurly => {
+                    ++.index
+                    --interpolation_nesting_level
+                    --string_nesting_level
+                    just_exited_iterpolated_block = true
+                }
+                else => {
+
+                    .error(format("Unexpected token {}", .current()), .current().span())
+                    return ParsedExpression::Garbage(.current().span())
+                }
+            }
+        }
+
+        let string = string_contents.to_string()
+        if not is_interpolated_string {
+            return ParsedExpression::QuotedString(val: string, span: .previous().span())
+        }
+
+        let span = merge_spans(start: start_span, end: .previous().span())
+        return ParsedExpression::InterpolatedString(format_string: string, interpolated_expressions, span)
+    }
+
+    function parse_format_specifier(mut this) throws -> String{
+        // A format specifier is everything that follows an interpolated
+        // expression to allow for simple format specifiers to be declared
+        // directly, we just take the verbatim spans of any tokens until the
+        // closing RCurly, however the lexer chokes on some expressions (e.g.
+        // ".2f") so we also allow to specify the  format in a QuotedString to
+        // be able to represent arbitrary specifiers.
+        // FIXME: Ideally we could either lex the format specifier as a seperate
+        // token which is imposible for now since we don't know when the
+        // expression ended while lexing or we would not throw errors in the
+        // lexer and just let it yield Garbage tokens we could actually use here
+        mut token_string = StringBuilder::create()
+        while not .current() is RCurly {
+            match .current() {
+                RCurly => { break }
+                QuotedString(quote) => {
+                    token_string.append_string(quote)
+                    if not .peek(steps: 1) is DoubleQuote {
+                        .error("Unexpected Token. Expected \", got: {}", .current().span())
+                    }
+                    .index += 2
+                    break
+                }
+                else => {
+                    // FIXME: there is currently no better way to convert tokens back to a string
+                    // and while lexing it is impossible to determine where the expression ends
+                    // and the format specifier starts
+                    let span = .current().span()
+                    for char_ in .compiler.current_file_contents[span.start..span.end].iterator() {
+                        token_string.append(char_)
+                    }
+                    ++.index
+                }
+            }
+        }
+        return token_string.to_string()
+    }
+
     function parse_operand_base(mut this) throws => match .current() {
         Dot(span) => {
             yield ParsedExpression::Var(name: "this", span)
@@ -2961,8 +3110,17 @@ struct Parser {
             }
         }
         QuotedString(quote, span) => {
+            yield .parse_quoted_string()
+        }
+        DoubleQuote(span) => {
+            ++.index
+            .error("Unexpected Quote", span)
+            yield ParsedExpression::Garbage(span)
+        }
+        DollarLCurly(span) => {
             .index++
-            yield ParsedExpression::QuotedString(val: quote, span)
+            .error("Unexpected String Interpolation", span)
+            yield ParsedExpression::Garbage(span)
         }
         SingleQuotedString(quote, span) => {
             .index++

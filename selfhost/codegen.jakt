@@ -1276,6 +1276,15 @@ struct CodeGenerator {
             let escaped_value = val.replace(replace: "\n", with: "\\n")
             yield "String(\"" + escaped_value + "\")"
         }
+        InterpolatedString(format_string, interpolated_expressions, span) => {
+            mut parameter_list = ""
+            for expression in interpolated_expressions.iterator() {
+                parameter_list += ","
+                parameter_list += .codegen_expression(expression)
+            }
+            let escaped_value = format_string.replace(replace: "\n", with: "\\n")
+            yield "TRY(String::formatted(\"" + escaped_value + "\"" + parameter_list + "))"
+        }
         ByteConstant(val) => "'" + val + "'"
         CharacterConstant(val) => "'" + val + "'"
         Var(var) => match var.name {

@@ -4411,6 +4411,21 @@ class Interpreter {
             F64(x) => Value(impl: ValueImpl::F64(x), span: span)
         })
         QuotedString(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::JaktString(interpret_escapes(val)), span: span))
+        InterpolatedString(format_string, interpolated_expressions, span) => {
+            mut format_args: [Value] = [Value(impl: ValueImpl::JaktString(format_string), span:span)]
+            for format_expression in interpolated_expressions.iterator() {
+                let expression_result = .execute_expression_without_cast(format_expression, scope)
+                guard expression_result is JustValue(value) else {
+                    .error(
+                        format("Unexpected expression result in string interpolation. Got: {}", expression_result),
+                        span: format_expression.span()
+                    )
+                    throw Error::from_errno(InterpretError::InvalidType as! i32);
+                }
+                format_args.push(value)
+            }
+            return .call_prelude_function("format", [], this_argument: None, arguments: format_args, call_span: span, type_bindings: [:])
+        }
         CharacterConstant(val, span) => StatementResult::JustValue(Value(impl: ValueImpl::CChar(val.byte_at(0) as! c_char), span: span))
         JaktArray(vals, repeat, span, type_id) => match repeat.has_value() {
             true => {

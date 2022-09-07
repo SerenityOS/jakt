@@ -1,0 +1,6 @@
+/// Expect:
+/// - error: "Empty expression in interpolated block"
+
+function main() {
+    println("${}")
+}
