@@ -18,6 +18,12 @@ class ArrayStorage : public RefCounted<ArrayStorage<T>> {
 public:
     ArrayStorage() { }
 
+    ~ArrayStorage()
+    {
+        shrink(0);
+        free(m_elements);
+    }
+
     bool is_empty() const { return m_size == 0; }
     size_t size() const { return m_size; }
     size_t capacity() const { return m_capacity; }
