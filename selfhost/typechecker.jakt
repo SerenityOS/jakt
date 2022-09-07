@@ -4276,9 +4276,81 @@ struct Typechecker {
             if .dump_try_hints {
                 .dump_try_hint(span)
             }
-        
+
             .unify_with_type(found_type: builtin(BuiltinType::JaktString), expected_type: type_hint, rhs_span: span)
             yield CheckedExpression::QuotedString(val, span)
+        }
+        TemplateLiteral(call, interpolated_expressions, span) => {
+            let evaluated_comptime_call = .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: false)
+
+            let signature_error = "Function returned by tag function must have signature '(expressions: [JaktValue])'"
+            match evaluated_comptime_call {
+                Function(params, span: function_span) => {
+                    if params.size() != 1 {
+                        .error_with_hint(
+                            signature_error, span,
+                            "Wrong number of arguments", function_span
+                        )
+                    }
+                    let jakt_value_type_id = .find_type_in_prelude("JaktValue")
+                    let array_struct = .find_struct_in_prelude("Array")
+                    let param_type_id = .get_type(params[0].variable.type_id)
+                    mut signature_ok = false
+                    if param_type_id is GenericInstance(id, args) {
+                        if id.equals(array_struct) and args.size() == 1 and args[0].equals(jakt_value_type_id) {
+                            signature_ok = true
+                        }
+                    }
+                    if not signature_ok {
+                        .error_with_hint(
+                                signature_error, span
+                                format("first parameter expects a {} instead", .type_name(params[0].variable.type_id)), params[0].variable.definition_span
+                            )
+                    }
+                    if params[0].requires_label and params[0].variable.name != "expressions" {
+                        .error_with_hint(
+                            signature_error, span,
+                            format("parameter named '{}' instead", params[0].variable.name), function_span
+                        )
+                    }
+                }
+                else(span: function_span) => {
+                    .error_with_hint(
+                        "Tag function is not a comptime or did not return a function", span,
+                        format("Did return a {}", evaluated_comptime_call), function_span
+                    )
+                }
+            }
+
+            mut checked_format_expressions: [CheckedExpression] = []
+            for expression in interpolated_expressions.iterator() {
+                // make sure we only get passed expressions we can later use to generate
+                // JaktValue instances
+                let checked_expression = .typecheck_expression(expression, scope_id, safety_mode, type_hint: None)
+                let result_type = .get_type(checked_expression.type())
+                mut result_type_is_usable = false
+
+                if result_type.is_builtin() or result_type is Void or result_type is RawPtr {
+                    result_type_is_usable = true
+                }else if result_type is GenericInstance(id) {
+                    if id.equals(.find_struct_in_prelude("Array"))
+                    or id.equals(.find_struct_in_prelude("Dictionary"))
+                    or id.equals(.find_struct_in_prelude("Optional"))
+                    or id.equals(.find_struct_in_prelude("Set")) {
+                        result_type_is_usable = true
+                    }
+                }
+
+                if not result_type_is_usable {
+                    println("{}", result_type)
+                    .error("Can not use the result of this expression in a template literal", checked_expression.span())
+                }
+
+                checked_format_expressions.push(checked_expression)
+            }
+            yield CheckedExpression::TemplateLiteral(runtime_function: evaluated_comptime_call, arguments: checked_format_expressions, span)
+
+
         }
         Call(call, span) => {
             yield .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: false)

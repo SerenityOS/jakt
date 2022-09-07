@@ -1,0 +1,14 @@
+/// Expect:
+/// - output: "42\n${13+29}\nThose can be nested\n123\n[123i64: {\"set\"}]\n"
+
+function main() {
+    let interpolate_this = 13
+    println(`${ interpolate_this + 29 }`)
+    println(`${{13+29}}`)
+    println(`${ `Those can be ${"nested"}` }`)
+    println(`${ 123u8 }`)
+    let complex_type = [
+        123: {"set"},
+    ]
+    println(`${ complex_type }`)
+}

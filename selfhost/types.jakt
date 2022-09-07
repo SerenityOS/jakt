@@ -984,6 +984,7 @@ boxed enum CheckedExpression {
     Boolean(val: bool, span: Span)
     NumericConstant(val: CheckedNumericConstant, span: Span, type_id: TypeId)
     QuotedString(val: String, span: Span)
+    TemplateLiteral(runtime_function: CheckedExpression, arguments:[CheckedExpression], span: Span)
     ByteConstant(val: String, span: Span)
     CharacterConstant(val: String, span: Span)
     UnaryOp(expr: CheckedExpression, op: CheckedUnaryOperator, span: Span, type_id: TypeId)
@@ -1065,6 +1066,10 @@ boxed enum CheckedExpression {
     function type(this) -> TypeId => match this {
         Boolean => builtin(BuiltinType::Bool)
         QuotedString => builtin(BuiltinType::JaktString)
+        TemplateLiteral(runtime_function) => match runtime_function {
+            CheckedExpression::Function(return_type_id) => return_type_id
+            else => unknown_type_id()
+        }
         ByteConstant => builtin(BuiltinType::U8)
         CharacterConstant => builtin(BuiltinType::CChar)
         EnumVariantArg(arg) => arg.type_id

@@ -19,9 +19,11 @@ enum Token {
     SingleQuotedString(quote: String, span: Span)
     SingleQuotedByteString(quote: String, span: Span)
     QuotedString(quote: String, span: Span)
+    TemplateLiteralString(quote: String, span: Span)
     Number(number: NumericConstant, span: Span)
     Identifier(name: String, span: Span)
     Semicolon(Span)
+    Backtick(span: Span)
     Colon(Span)
     ColonColon(Span)
     LParen(Span)
@@ -61,6 +63,7 @@ enum Token {
     Caret(Span)
     CaretEqual(Span)
     Dollar(Span)
+    DollarLCurly(Span)
     Tilde(Span)
     ForwardSlash(Span)
     ExclamationPoint(Span)
@@ -271,8 +274,20 @@ struct Lexer {
     compiler: Compiler
     comment_contents: [u8]?
 
+    string_nesting_level: u64
+    interpolation_nesting_level: u64
+    did_just_end_template_block: bool
+
     function lex(compiler: Compiler) throws -> [Token] {
-        mut lexer = Lexer(index: 0, input: compiler.current_file_contents, compiler, comment_contents: None)
+        mut lexer = Lexer(
+            index: 0,
+            input: compiler.current_file_contents,
+            compiler,
+            comment_contents: None,
+            string_nesting_level: 0,
+            interpolation_nesting_level: 0,
+            did_just_end_template_block: false
+        )
         mut tokens: [Token] = []
 
         for token in lexer {
@@ -324,6 +339,10 @@ struct Lexer {
             builder.append(.input[i])
         }
         return builder.to_string()
+    }
+
+    function unescaped_interpolation_start_next(this) -> bool {
+        return .peek() == b'$' and .peek_ahead(steps:1) == b'{' and .peek_ahead(steps:2) != b'{'
     }
 
     function lex_character_constant_or_name(mut this) throws -> Token {
@@ -684,11 +703,12 @@ struct Lexer {
         return suffix
     }
 
-
-    function lex_quoted_string(mut this, delimiter: u8) throws -> Token {
+    function lex_quoted_string(mut this, delimiter: u8, consume_first_token: bool, consume_final_quote: bool) throws -> Token {
+        let span_start = .index
+        if consume_first_token {
+            ++.index
+        }
         let start = .index
-
-        ++.index
 
         if .eof() {
             .error("unexpected eof", .span(start, end: start))
@@ -696,8 +716,9 @@ struct Lexer {
         }
 
         mut escaped = false
+        mut at_start_of_interpolated_block = delimiter == b'`' and .unescaped_interpolation_start_next()
 
-        while not .eof() and (escaped or .peek() != delimiter) {
+        while not .eof() and (escaped or ((.peek() != delimiter) and (not at_start_of_interpolated_block))) {
             // Ignore a standalone carriage return
             if .peek() == b'\r' or .peek() == b'\n' {
                 ++.index
@@ -705,23 +726,35 @@ struct Lexer {
             }
 
             if not escaped and .peek() == b'\\' {
+                if .peek_ahead(steps: 1) == b'$' {
+                    ++.index
+                }
                 escaped = true
             } else {
                 escaped = false
             }
             ++.index
+            at_start_of_interpolated_block = delimiter == b'`' and .unescaped_interpolation_start_next()
         }
 
-        let str = .substring(start: start + 1, length: .index)
-
-        .index++
-        let end = .index
-
-        if delimiter == b'\'' {
-            return Token::SingleQuotedString(quote: str, span: .span(start, end))
+        if .eof() {
+            .error("unexpected eof", .span(start: .index, end: .index))
+            return Token::Garbage(.span(start: .index, end: .index))
         }
 
-        return Token::QuotedString(quote: str, span: .span(start, end))
+        let str = .substring(start: start, length: .index)
+
+        if consume_final_quote {
+            ++.index
+        }
+        let span_end = .index
+
+        return match delimiter {
+            b'\'' => Token::SingleQuotedString(quote: str, span: .span(start: span_start, end: span_end))
+            b'`' => Token::TemplateLiteralString(quote: str, span: .span(start: span_start, end: span_end))
+            else => Token::QuotedString(quote: str, span: .span(start: span_start, end: span_end))
+
+        }
     }
 
     function lex_plus(mut this) -> Token {
@@ -909,7 +942,49 @@ struct Lexer {
         return builder.to_string()
     }
 
+
+    function lex_dollar(mut this) throws -> Token {
+        if .peek_ahead(steps: 1) == b'{' and .string_nesting_level > 0 {
+            .index += 2
+            ++.interpolation_nesting_level
+            return Token::DollarLCurly(span: .span(start: .index-2, end: .index))
+        }
+        return Token::Dollar(.span(start: .index, end: ++.index))
+    }
+
+    function lex_rcurly(mut this) -> Token {
+        let start = .index
+        if .interpolation_nesting_level > 0 {
+            --.interpolation_nesting_level
+            .did_just_end_template_block = true
+        }
+        return Token::RCurly(.span(start, end: ++.index))
+    }
+
+    function lex_backtick(mut this)throws -> Token {
+        let start = .index
+        if .string_nesting_level == .interpolation_nesting_level {
+            ++.string_nesting_level
+            return .lex_quoted_string(delimiter: b'`', consume_first_token: true, consume_final_quote: false)
+        }
+
+        if .string_nesting_level == (.interpolation_nesting_level + 1) {
+            --.string_nesting_level
+            return Token::Backtick(span: .span(start, end: ++.index))
+        }
+
+        let span = .span(start, end: ++.index)
+        .error("unmatched '}' in interpolated string", span)
+        return Token::Garbage(span)
+    }
+
     function next(mut this) throws -> Token? {
+
+        if .did_just_end_template_block {
+            .did_just_end_template_block = false
+            return .lex_quoted_string(delimiter: b'`', consume_first_token: false, consume_final_quote: false)
+        }
+
         // Consume whitespace until a character is encountered or Eof is
         // reached. For Eof return a token.
         loop {
@@ -940,7 +1015,7 @@ struct Lexer {
             b'[' => Token::LSquare(.span(start, end: ++.index))
             b']' => Token::RSquare(.span(start, end: ++.index))
             b'{' => Token::LCurly(.span(start, end: ++.index))
-            b'}' => Token::RCurly(.span(start, end: ++.index))
+            b'}' => .lex_rcurly()
             b'<' => .lex_less_than()
             b'>' => .lex_greater_than()
             b'.' => .lex_dot()
@@ -958,11 +1033,12 @@ struct Lexer {
             b'%' => .lex_percent_sign()
             b'!' => .lex_exclamation_point()
             b'&' => .lex_ampersand()
-            b'$' => Token::Dollar(.span(start, end: ++.index))
+            b'$' => .lex_dollar()
             b'=' => .lex_equals()
             b'\n' => Token::Eol(comment: .consume_comment_contents(), span: .span(start, end: ++.index))
-            b'\'' => .lex_quoted_string(delimiter: b'\'')
-            b'\"' => .lex_quoted_string(delimiter: b'"')
+            b'\'' => .lex_quoted_string(delimiter: b'\'', consume_first_token: true, consume_final_quote: true)
+            b'\"' => .lex_quoted_string(delimiter: b'\"', consume_first_token: true, consume_final_quote: true)
+            b'`' => .lex_backtick()
             b'b' => .lex_character_constant_or_name()
             b'c' => .lex_character_constant_or_name()
             else => .lex_number_or_name()

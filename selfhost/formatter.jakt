@@ -80,6 +80,7 @@ enum State {
         seen_start: bool
     )
     FunctionTypeContext(seen_final_type: bool)
+    TemplateLiteral
 
     function name(this) throws => match this {
         Toplevel => "toplevel"
@@ -95,6 +96,7 @@ enum State {
         GenericCallTypeParams => "generic call type params"
         TypeContext(open_parens, open_curlies, open_squares, open_angles, seen_start) => format("type context (p{} c{} s{} a{} s:{})", open_parens, open_curlies, open_squares, open_angles, seen_start)
         FunctionTypeContext => "function type context"
+        TemplateLiteral => "template literal"
     }
 }
 
@@ -108,6 +110,7 @@ struct FormattedToken {
         SingleQuotedString(quote) => format("'{}'", quote)
         SingleQuotedByteString(quote) => format("b'{}'", quote)
         QuotedString(quote) => format("\"{}\"", quote)
+        TemplateLiteralString(quote) => format("{}", quote)
         Number(number) => match number {
             I8(number) => format("{}i8", number)
             I16(number) => format("{}i16", number)
@@ -124,6 +127,7 @@ struct FormattedToken {
         }
         Identifier(name) => name
         Semicolon => ";"
+        Backtick => "`"
         Colon => ":"
         ColonColon => "::"
         LParen => "("
@@ -163,6 +167,7 @@ struct FormattedToken {
         Caret => "^"
         CaretEqual => "^="
         Dollar => "$"
+        DollarLCurly => "${"
         Tilde => "~"
         ForwardSlash => "/"
         ExclamationPoint => "!"
@@ -1564,6 +1569,15 @@ struct Stage0 {
                         preceding_trivia: []
                     )
                 }
+                TemplateLiteralString => {
+                    .push_state(State::TemplateLiteral)
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: [b'`']
+                    )
+                }
                 else => FormattedToken(
                     token
                     indent: .indent
@@ -2267,6 +2281,51 @@ struct Stage0 {
                     .pop_state()
                     .index -= 1
                     return .next_impl(reconsume: true)
+                }
+            }
+            TemplateLiteral => match token {
+                DollarLCurly => {
+                    .push_state(State::StatementContext(
+                        open_parens: 0
+                        open_curlies: 0
+                        open_squares: 0
+                        allow_eol: 0
+                        inserted_comma: false
+                        expression_mode: ExpressionMode::AtExpressionStart
+                        dedents_on_open_curly: 0
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                Backtick => {
+                    .pop_state()
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                RCurly => {
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: [b' ']
+                    )
+                }
+                else => {
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
                 }
             }
         }

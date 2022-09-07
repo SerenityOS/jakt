@@ -1,0 +1,97 @@
+/// Expect:
+/// - output: "{\"123\": \"foo\",\n\"float\": 12.5,\n\"array\": [{\"can\": \"contain a set\"}],\n\"dict\": {\"This\": [\"Contains a set\"]}\n}\n"
+
+
+function to_json_representation(anon jakt_value: JaktValue) throws -> String => match jakt_value {
+    Void => ""
+    JaktNone => "null"
+    Bool(value) => format("{}", value)
+    U8(value) => format("{}", value)
+    U16(value) => format("{}", value)
+    U32(value) => format("{}", value)
+    U64(value) => format("{}", value)
+    I8(value) => format("{}", value)
+    I16(value) => format("{}", value)
+    I32(value) => format("{}", value)
+    I64(value) => format("{}", value)
+    F32(value) => format("{}", value)
+    F64(value) => format("{}", value)
+    USize(value) => format("{}", value)
+    JaktString(value) => format("\"{}\"", value)
+    CChar(value) => format("{:c}", value)
+    CInt(value) => format("{}", value)
+    JaktArray(value) => {
+        mut array_representation = "["
+        mut first = true
+        for entry in value.iterator() {
+            if not first {
+                array_representation += ", "
+            } else {
+                first = false
+            }
+            array_representation += format("{}", to_json_representation(entry))
+        }
+        array_representation += "]"
+        return array_representation
+    }
+    JaktDictionary(value) => {
+        mut dict_representation = "{{"
+        mut first = true
+        for (key, entry) in value.iterator() {
+            if not first {
+                dict_representation += ", "
+            } else {
+                first = false
+            }
+            dict_representation += format("{}: {}", to_json_representation(key), to_json_representation(entry))
+        }
+        dict_representation += "}}"
+        return dict_representation
+    }
+    JaktSet(value) => {
+        // serialize sets as arrays
+        mut set_representation = "["
+        mut first = true
+        for entry in value.iterator() {
+            if not first {
+                set_representation += ", "
+            } else {
+                first = false
+            }
+            set_representation += format("{}", to_json_representation(entry))
+        }
+        set_representation += "]"
+        return set_representation
+    }
+    JaktOptional(value) => to_json_representation(value)
+    else => "undefined"
+}
+
+comptime json(anon quotes: [String]) throws -> function (expressions) -> String {
+    // imagine we do a syntax check with dummy placeholders here, how cool would that be :)
+    return function [quotes](anon expressions: [JaktValue])  throws  -> String {
+        mut formatted_string_builder = StringBuilder::create()
+
+        for part_index in 0..expressions.size() {
+            formatted_string_builder.append_string(quotes[part_index])
+            formatted_string_builder.append_string(value: to_json_representation(expressions[part_index]))
+        }
+        formatted_string_builder.append_string(quotes[expressions.size()])
+
+        return formatted_string_builder.to_string()
+    }
+}
+
+
+function main() {
+    let string = "foo"
+    let number = 42
+    let float_ = 12.5f64
+    let dict = ["This":  {"Contains a set" }]
+    let array = [["can": "contain a set"]]
+    println(json`{"${ 123 }": ${ string },
+"float": ${ float_ },
+"array": ${ array },
+"dict": ${ dict }
+}`)
+}

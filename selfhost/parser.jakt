@@ -702,6 +702,7 @@ boxed enum ParsedExpression {
     Boolean(val: bool, span: Span)
     NumericConstant(val: NumericConstant, span: Span)
     QuotedString(val: String, span: Span)
+    TemplateLiteral(call: ParsedCall, interpolated_expressions: [ParsedExpression], span: Span)
     SingleQuotedString(val: String, span: Span)
     SingleQuotedByteString(val: String, span: Span)
     Call(call: ParsedCall, span: Span)
@@ -791,6 +792,18 @@ boxed enum ParsedExpression {
         }
         QuotedString(val: lhs_val) => match rhs_expression {
             QuotedString(val: rhs_val) => lhs_val == rhs_val
+            else => false
+        }
+        TemplateLiteral(call: lhs_call, interpolated_expressions: lhs_exprs) => match rhs_expression {
+            TemplateLiteral(call: rhs_call, interpolated_expressions: rhs_exprs ) => {
+                if not (lhs_call.equals(rhs_call)) { return false }
+
+                if not (lhs_exprs.size() == rhs_exprs.size()) { return false }
+                for expr_index in 0..lhs_exprs.size() {
+                    if not lhs_exprs[expr_index].equals(rhs_exprs[expr_index]) { return false }
+                }
+                return true
+            }
             else => false
         }
         SingleQuotedString(val: lhs_val) => match rhs_expression {
@@ -2882,6 +2895,76 @@ struct Parser {
         return expr_stack[0]
     }
 
+    function parse_template_literal(mut this, tag_function: String?) throws -> ParsedExpression {
+        let start_span = .current().span()
+        mut string_nesting_level:u64 = 0
+        mut interpolation_nesting_level:u64 = 0
+
+        mut interpolated_expressions: [ParsedExpression] = []
+        mut quotes: [ParsedExpression] = []
+        mut just_exited_iterpolated_block = false
+
+        while(not .eof()){
+            match .current() {
+                Backtick(span) => {
+                    ++.index
+                    if string_nesting_level == 1 and interpolation_nesting_level == 0 {
+                        break
+                    } else if string_nesting_level <= 1 {
+                        .error(format("Unexpected token {}", .previous()), .previous().span())
+                        return ParsedExpression::Garbage(.previous().span())
+                    } else {
+                        --string_nesting_level
+                    }
+                }
+                TemplateLiteralString(quote, span) => {
+                    ++string_nesting_level
+                    ++.index
+                    let escaped = quote.replace(replace: "{", with: "{{").replace(replace: "}" with: "}}").replace(replace: "\"", with: "\\\"")
+                    mut parsed_quote = ParsedExpression::QuotedString(val: escaped, span: .current().span())
+                    quotes.push(parsed_quote)
+                }
+                DollarLCurly => {
+                    let start_index = .index
+                    ++.index
+                    ++interpolation_nesting_level
+                    if .peek(steps: 0) is RCurly {
+                        .error("Empty expression in interpolated block", .current().span())
+                        return ParsedExpression::Garbage(.current().span())
+                    }
+                    let expression = .parse_expression(allow_assignments: false, allow_newlines: false)
+
+                    let span = .span(start: start_index, end: .current().span().end)
+                    interpolated_expressions.push(expression)
+                }
+                RCurly => {
+                    ++.index
+                    --interpolation_nesting_level
+                    --string_nesting_level
+                    just_exited_iterpolated_block = true
+                }
+                else => {
+
+                    .error(format("Unexpected token {}", .current()), .current().span())
+                    return ParsedExpression::Garbage(.current().span())
+                }
+            }
+        }
+
+        let span = merge_spans(start: start_span, end: .previous().span())
+
+        let quotes_array = ParsedExpression::JaktArray(values: quotes, fill_size: None, span: span)
+        mut call_args = [("quotes", start_span, quotes_array)]
+        mut call = ParsedCall(
+            namespace_: []
+            name: tag_function ?? "interpolate_string"
+            args: call_args
+            type_args: []
+        )
+
+        return ParsedExpression::TemplateLiteral(call, interpolated_expressions, span)
+    }
+
     function parse_operand_base(mut this) throws => match .current() {
         Dot(span) => {
             yield ParsedExpression::Var(name: "this", span)
@@ -2907,7 +2990,7 @@ struct Parser {
             }
         }
         QuotedString(quote, span) => {
-            .index++
+            ++.index
             yield ParsedExpression::QuotedString(val: quote, span)
         }
         SingleQuotedString(quote, span) => {
@@ -2917,6 +3000,17 @@ struct Parser {
         SingleQuotedByteString(quote, span) => {
             .index++
             yield ParsedExpression::SingleQuotedByteString(val: quote, span)
+        }
+        TemplateLiteralString(quote, span) => .parse_template_literal(tag_function: None)
+        Backtick(span) => {
+            ++.index
+            .error("Unexpected Backtick", span)
+            yield ParsedExpression::Garbage(span)
+        }
+        DollarLCurly(span) => {
+            .index++
+            .error("Unexpected Interpolation", span)
+            yield ParsedExpression::Garbage(span)
         }
         Number(number, span) => {
             .index++
@@ -2970,6 +3064,10 @@ struct Parser {
                     }
                 }
                 return ParsedExpression::Call(call: call!, span)
+            }
+            if .peek(1) is TemplateLiteralString {
+                ++.index
+                return .parse_template_literal(tag_function: name)
             }
             .index++
             if name == "None" {

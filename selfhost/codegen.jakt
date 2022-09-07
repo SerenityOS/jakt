@@ -1280,6 +1280,23 @@ struct CodeGenerator {
             let escaped_value = val.replace(replace: "\n", with: "\\n")
             yield "String(\"" + escaped_value + "\")"
         }
+        TemplateLiteral(runtime_function, arguments, span) => {
+            mut function_call = StringBuilder::create()
+
+            // let runtime_function_name = .fresh_var()
+            function_call.append_string("TRY(")
+            function_call.append_string(.codegen_expression(runtime_function))
+            function_call.append_string("(TRY((Array<NonnullRefPtr<JaktValue>>::create_with({")
+            mut parameter_list: [String] = []
+            //
+            for argument in arguments.iterator() {
+                let wrapped_value = .codegen_jakttype(expr: argument)
+                parameter_list.push(wrapped_value)
+            }
+            function_call.append_string(join(parameter_list, separator: ", "))
+            function_call.append_string("})))))")
+            yield function_call.to_string()
+        }
         ByteConstant(val) => "'" + val + "'"
         CharacterConstant(val) => "'" + val + "'"
         Var(var) => match var.name {
@@ -2266,6 +2283,74 @@ struct CodeGenerator {
             output += "))"
         }
         return output
+    }
+
+    function codegen_jakttype(mut this, expr: CheckedExpression) throws -> String {
+
+        let jakttype_constructor_and_value = match expr {
+            Boolean(val) => (.jakttypeconstructor_for_typeid(builtin(BuiltinType::Bool)), .codegen_expression(expr))
+            QuotedString(val) =>  ("JaktValue::template create<typename JaktValue_Details::JaktString>", .codegen_expression(expr))
+            TemplateLiteral(runtime_function) => match runtime_function {
+                Function(return_type_id) => (.jakttypeconstructor_for_typeid(return_type_id), .codegen_expression(expr))
+                else => ("JaktValue::template create<typename JaktValue_Details::Unknown>", "")
+            }
+            ByteConstant(val) => ("JaktValue::template create<typename JaktValue_Details::U8>", .codegen_expression(expr))
+            CharacterConstant(val) => ("JaktValue::template create<typename JaktValue_Details::CChar>", .codegen_expression(expr))
+            JaktTuple => ("JaktValue::template create<typename JaktValue_Details::Unknown>", "")
+            Range => ("JaktValue::template create<typename JaktValue_Details::Unknown>", "")
+            JaktArray => ("JaktValue::template create<typename JaktValue_Details::JaktArray>", .codegen_expression(expr))
+            JaktSet => ("JaktValue::template create<typename JaktValue_Details::JaktSet>", .codegen_expression(expr))
+            JaktDictionary => ("JaktValue::template create<typename JaktValue_Details::JaktDictionary>", .codegen_expression(expr))
+            Var(var) =>  (.jakttypeconstructor_for_typeid(var.type_id), .codegen_expression(expr))
+            NamespacedVar(var) => (.jakttypeconstructor_for_typeid(var.type_id), .codegen_expression(expr))
+            Garbage => ("JaktValue::template create<typename JaktValue_Details::Unknown>", "")
+            EnumVariantArg => ("JaktValue::template create<typename JaktValue_Details::Unknown>", "")
+            else(type_id) => (.jakttypeconstructor_for_typeid(type_id), .codegen_expression(expr))
+        }
+        return format("TRY(({}({})))", jakttype_constructor_and_value.0, jakttype_constructor_and_value.1)
+    }
+
+    function jakttypeconstructor_for_typeid(this, anon type_id: TypeId) throws -> String {
+
+        let array_struct_id = .program.find_struct_in_prelude("Array")
+        let dictionary_struct_id = .program.find_struct_in_prelude("Dictionary")
+        let optional_struct_id = .program.find_struct_in_prelude("Optional")
+        let range_struct_id = .program.find_struct_in_prelude("Range")
+        let set_struct_id = .program.find_struct_in_prelude("Set")
+
+        return match .program.get_type(type_id) {
+            Void => "JaktValue::template create<typename JaktValue_Details::Void>"
+            Bool => "JaktValue::template create<typename JaktValue_Details::Bool>"
+            U8 => "JaktValue::template create<typename JaktValue_Details::U8>"
+            U16 => "JaktValue::template create<typename JaktValue_Details::U16>"
+            U32 => "JaktValue::template create<typename JaktValue_Details::U32>"
+            U64 => "JaktValue::template create<typename JaktValue_Details::U64>"
+            I8 => "JaktValue::template create<typename JaktValue_Details::I8>"
+            I16 => "JaktValue::template create<typename JaktValue_Details::I16>"
+            I32 => "JaktValue::template create<typename JaktValue_Details::I32>"
+            I64 => "JaktValue::template create<typename JaktValue_Details::I64>"
+            F32 => "JaktValue::template create<typename JaktValue_Details::F32>"
+            F64 => "JaktValue::template create<typename JaktValue_Details::F64>"
+            Usize => "JaktValue::template create<typename JaktValue_Details::USize>"
+            JaktString => "JaktValue::template create<typename JaktValue_Details::JaktString>"
+            CChar => "JaktValue::template create<typename JaktValue_Details::CChar>"
+            CInt => "JaktValue::template create<typename JaktValue_Details::CInt>"
+            RawPtr => "JaktValue::template create<typename JaktValue_Details::RawPtr>"
+            GenericInstance(id, args) => {
+                if id.equals(array_struct_id) {
+                    return "JaktValue::template create"
+                } else if id.equals(dictionary_struct_id) {
+                    return "JaktValue::template create"
+                } else if id.equals(optional_struct_id) {
+                    return "JaktValue::template create"
+                } else if id.equals(set_struct_id) {
+                    return "JaktValue::template create"
+                } else {
+                    return "JaktValue::template create<typename JaktValue_Details::Unknown>"
+                }
+            }
+            else => "JaktValue::template create<typename JaktValue_Details::Unknown>"
+        }
     }
 
     function codegen_call(mut this, call: CheckedCall) throws -> String {

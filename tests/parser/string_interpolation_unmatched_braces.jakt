@@ -1,0 +1,7 @@
+/// Expect:
+/// - error: "unexpected eof"
+
+function main() {
+    let test = 123
+    println(`${test`)
+}
