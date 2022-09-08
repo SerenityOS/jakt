@@ -538,6 +538,12 @@ struct Stage0 {
                         preceding_trivia: []
                     )
                 }
+                Comma => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: [b' ']
+                    preceding_trivia: []
+                )
                 else => FormattedToken(
                     token
                     indent: .indent
