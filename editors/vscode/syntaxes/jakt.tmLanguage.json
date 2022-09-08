@@ -941,6 +941,30 @@
           ]
         },
         {
+          "name": "string.quoted.templateliteral.jakt",
+          "begin": "(`)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.begin.quote.backtick.jakt"
+            }
+          },
+          "end": "(`)",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.end.quote.backtick.jakt"
+            }
+          },
+          "patterns": [
+            {
+              "name": "constant.character.escape.jakt",
+              "match": "\\\\."
+            },
+            {
+              "include": "#interpolation"
+            }
+          ]
+        },
+        {
           "name": "string.quoted.single.jakt",
           "begin": "(')",
           "beginCaptures": {
@@ -958,6 +982,30 @@
             {
               "name": "constant.character.escape.jakt",
               "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "interpolation": {
+      "patterns": [
+        {
+          "name": "meta.block.interpolated.jakt",
+          "begin": "(\\$\\{)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.start.interpolation.jakt"
+            }
+          },
+          "end": "(\\})",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.end.interpolation.jakt"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#expressions"
             }
           ]
         }
