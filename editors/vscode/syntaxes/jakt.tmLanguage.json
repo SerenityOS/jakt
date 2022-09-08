@@ -937,6 +937,9 @@
             {
               "name": "constant.character.escape.jakt",
               "match": "\\\\."
+            },
+            {
+              "include": "#interpolation"
             }
           ]
         },
@@ -960,6 +963,41 @@
               "match": "\\\\."
             }
           ]
+        }
+      ]
+    },
+    "interpolation": {
+      "patterns": [
+        {
+          "name": "meta.block.interpolated.jakt",
+          "begin": "(\\$\\{)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.start.interpolation.jakt"
+            }
+          },
+          "end": "(\\})",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.end.interpolation.jakt"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#expressions"
+            },
+            {
+              "include": "#formatspecifier"
+            }
+          ]
+        }
+      ]
+    },
+    "formatspecifier": {
+      "patterns": [
+        {
+          "match": "\\:[^\\}]+",
+          "name": "constant.character.format.jakt"
         }
       ]
     }
