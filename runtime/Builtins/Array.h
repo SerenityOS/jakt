@@ -390,6 +390,16 @@ public:
     T const& operator[](size_t index) const { return at(index); }
     T& operator[](size_t index) { return at(index); }
 
+    template<Integral U>
+    ArraySlice<T> operator[](Range<U> range) const { return slice_range(range.start, range.end); }
+
+    ArraySlice<T> slice_range(size_t from, size_t to) const
+    {
+        return slice(from + m_offset, to - from + m_offset);
+    }
+
+    ArraySlice<T> slice(size_t offset, size_t size) const;
+
     bool contains(T const& value) const
     {
         for (size_t i = 0; i < m_size; ++i) {
@@ -428,6 +438,12 @@ ArraySlice<T> Array<T>::slice(size_t offset, size_t size) const
 
 template<typename T>
 ArraySlice<T> Array<T>::slice(size_t offset, size_t size)
+{
+    return { *m_storage, offset, size };
+}
+
+template<typename T>
+ArraySlice<T> ArraySlice<T>::slice(size_t offset, size_t size) const
 {
     return { *m_storage, offset, size };
 }
