@@ -3530,6 +3530,10 @@ struct Typechecker {
         mut checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode, type_hint: lhs_type_id)
         let rhs_type_id = checked_expr.type()
 
+        if rhs_type_id.equals(void_type_id()) {
+            .error("Cannot assign `void` to a variable", checked_expr.span())
+        }
+
         if lhs_type_id.equals(unknown_type_id()) and not rhs_type_id.equals(unknown_type_id()) {
             lhs_type_id = rhs_type_id
         }

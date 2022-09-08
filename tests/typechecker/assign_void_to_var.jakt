@@ -1,0 +1,8 @@
+/// Expect:
+/// - error: "Cannot assign `void` to a variable"
+
+function main() {
+    let x = match true {
+        else => {}
+    }
+}
