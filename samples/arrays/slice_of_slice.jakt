@@ -1,0 +1,21 @@
+/// Expect:
+/// - output: "21\n"
+
+function slices(anon s: ArraySlice<i64>, mut total: i64) {
+    total += s[0]
+
+    if s.size() > 1 {
+        return slices(s[1..], total)
+    }
+
+    return total
+}
+
+function main() {
+    let arr = [1, 2, 3, 4, 5, 6]
+    mut total = 0
+
+    total = slices(arr[..], total)
+
+    println("{}", total)
+}
