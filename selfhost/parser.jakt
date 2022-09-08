@@ -3588,7 +3588,7 @@ struct Parser {
 
             let body = match .current() {
                 LCurly => ParsedMatchBody::Block(.parse_block())
-                else => ParsedMatchBody::Expression(.parse_expression(allow_assignments: false, allow_newlines: false))
+                else => ParsedMatchBody::Expression(.parse_expression(allow_assignments: false, allow_newlines: true))
             }
 
             for pattern in patterns.iterator() {
@@ -3652,6 +3652,7 @@ struct Parser {
             mut variant_names: [(String, Span)] = []
 
             while not .eof() {
+                .skip_newlines()
                 match .current() {
                     Identifier(name) => {
                         .index++
@@ -3692,6 +3693,7 @@ struct Parser {
             .index++
 
             while not .eof() {
+                .skip_newlines()
                 match .current() {
                     Identifier(name: arg_name) => {
                         if .peek(1) is Colon {

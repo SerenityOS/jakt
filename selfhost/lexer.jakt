@@ -70,7 +70,7 @@ enum Token {
     Comma(Span)
     Dot(Span)
     DotDot(Span)
-    Eol(Span)
+    Eol(comment: String?, span: Span)
     Eof(Span)
     FatArrow(Span)
     Arrow(Span)
@@ -373,9 +373,10 @@ struct Lexer {
     index: usize
     input: [u8]
     compiler: Compiler
+    comment_contents: [u8]?
 
     function lex(compiler: Compiler) throws -> [Token] {
-        mut lexer = Lexer(index: 0, input: compiler.current_file_contents, compiler)
+        mut lexer = Lexer(index: 0, input: compiler.current_file_contents, compiler, comment_contents: None)
         mut tokens: [Token] = []
 
         for token in lexer {
@@ -862,14 +863,27 @@ struct Lexer {
         if .peek() != b'/' {
             return Token::ForwardSlash(.span(start, end: .index))
         }
+
+        if .comment_contents.has_value() {
+            .index--
+            return Token::Eol(
+                comment: .consume_comment_contents()
+                span: .span(start, end: .index)
+            )
+        }
+
         // We're in a comment, swallow to end of line.
+        .index++
+        let comment_start_index = .index
         while not .eof() {
             let c = .peek()
             .index++
             if c == b'\n' {
+                .index--
                 break
             }
         }
+        .comment_contents = .input[comment_start_index...index].to_array()
         return .next() ?? Token::Eof(.span(start: .index, end: .index))
     }
 
@@ -984,6 +998,21 @@ struct Lexer {
         }
     }
 
+    function consume_comment_contents(mut this) throws -> String? {
+        if not .comment_contents.has_value() {
+            return None
+        }
+
+        let contents = .comment_contents!
+        .comment_contents = None
+        mut builder = StringBuilder::create()
+        for c in contents.iterator() {
+            builder.append(c)
+        }
+
+        return builder.to_string()
+    }
+
     function next(mut this) throws -> Token? {
         // Consume whitespace until a character is encountered or Eof is
         // reached. For Eof return a token.
@@ -1035,7 +1064,7 @@ struct Lexer {
             b'&' => .lex_ampersand()
             b'$' => Token::Dollar(.span(start, end: ++.index))
             b'=' => .lex_equals()
-            b'\n' => Token::Eol(.span(start, end: ++.index))
+            b'\n' => Token::Eol(comment: .consume_comment_contents(), span: .span(start, end: ++.index))
             b'\'' => .lex_quoted_string(delimiter: b'\'')
             b'\"' => .lex_quoted_string(delimiter: b'"')
             b'b' => .lex_character_constant_or_name()

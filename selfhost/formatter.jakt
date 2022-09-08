@@ -1,0 +1,2654 @@
+import compiler { Compiler }
+import lexer { Lexer, Token }
+
+function concat<T>(anon xs: [T], anon y: T) throws -> [T] {
+    mut ys: [T] = []
+    for x in xs.iterator() {
+        ys.push(x)
+    }
+    ys.push(y)
+    return ys
+}
+
+function init<T>(anon xs: [T]) throws -> [T] => xs[..xs.size() - 1].to_array()
+
+function collapse<T>(anon x: Optional<T>?) -> T? => match x.has_value() {
+    true => x!
+    else => None
+}
+
+enum Entity {
+    Struct
+    Enum
+    Namespace
+    Function(arrow: bool, indented: bool)
+
+    function from_token(token: &Token) -> Entity => match token {
+        Struct | Class => Entity::Struct
+        Enum => Entity::Enum
+        Namespace => Entity::Namespace
+        Comptime | Function => Entity::Function(arrow: false, indented: false)
+        else => Entity::Struct
+    }
+}
+
+enum ExpressionMode {
+    OutsideExpression
+    AtExpressionStart
+    InExpression
+}
+
+enum State {
+    Toplevel(
+        open_parens: usize
+        open_curlies: usize
+        open_squares: usize
+    )
+    Import(is_extern: bool)
+    ImportList(emitted_comma: bool)
+    EntityDeclaration(
+        entity: Entity
+        accept_generics: bool
+        has_generics: bool
+        generic_nesting: usize
+    )
+    ParameterList(open_parens: usize)
+    RestrictionList
+    EntityDefinition(entity: Entity)
+    StatementContext(
+        open_parens: usize
+        open_curlies: usize
+        open_squares: usize
+        allow_eol: usize?
+        inserted_comma: bool
+        expression_mode: ExpressionMode
+        dedents_on_open_curly: usize
+    )
+    MatchPattern(
+        open_parens: usize
+        allow_multiple: bool
+    )
+    VariableDeclaration(
+        open_parens: usize
+    )
+    GenericCallTypeParams(open_angles: usize)
+    TypeContext(
+        open_parens: usize
+        open_curlies: usize
+        open_squares: usize
+        open_angles: usize
+        seen_start: bool
+    )
+    FunctionTypeContext(seen_final_type: bool)
+
+    function name(this) throws => match this {
+        Toplevel => "toplevel"
+        Import => "import"
+        ImportList => "import list"
+        EntityDeclaration => "entity declaration"
+        ParameterList => "parameter list"
+        RestrictionList => "restriction list"
+        EntityDefinition => "entity definition"
+        StatementContext => "statement context"
+        MatchPattern => "match pattern"
+        VariableDeclaration => "variable declaration"
+        GenericCallTypeParams => "generic call type params"
+        TypeContext(open_parens, open_curlies, open_squares, open_angles, seen_start) => format("type context (p{} c{} s{} a{} s:{})", open_parens, open_curlies, open_squares, open_angles, seen_start)
+        FunctionTypeContext => "function type context"
+    }
+}
+
+struct FormattedToken {
+    token: Token
+    indent: usize
+    trailing_trivia: [u8]
+    preceding_trivia: [u8]
+
+    function token_text(this) throws -> String => match .token {
+        SingleQuotedString(quote) => format("'{}'", quote)
+        SingleQuotedByteString(quote) => format("b'{}'", quote)
+        QuotedString(quote) => format("\"{}\"", quote)
+        Number(number) => match number {
+            I8(number) => format("{}i8", number)
+            I16(number) => format("{}i16", number)
+            I32(number) => format("{}i32", number)
+            I64(number) => format("{}i64", number)
+            U8(number) => format("{}u8", number)
+            U16(number) => format("{}u16", number)
+            U32(number) => format("{}u32", number)
+            U64(number) => format("{}u64", number)
+            USize(number) => format("{}uz", number)
+            F32(number) => format("{}f32", number)
+            F64(number) => format("{}f64", number)
+            UnknownUnsigned(number) | UnknownSigned(number) => format("{}", number)
+        }
+        Identifier(name) => name
+        Semicolon => ";"
+        Colon => ":"
+        ColonColon => "::"
+        LParen => "("
+        RParen => ")"
+        LCurly => "{"
+        RCurly => "}"
+        LSquare => "["
+        RSquare => "]"
+        PercentSign => "%"
+        Plus => "+"
+        Minus => "-"
+        Equal => "="
+        PlusEqual => "+="
+        PlusPlus => "++"
+        MinusEqual => "-="
+        MinusMinus => "--"
+        AsteriskEqual => "*="
+        ForwardSlashEqual => "/="
+        PercentSignEqual => "%="
+        NotEqual => "!="
+        DoubleEqual => "=="
+        GreaterThan => ">"
+        GreaterThanOrEqual => ">="
+        LessThan => "<"
+        LessThanOrEqual => "<="
+        LeftArithmeticShift => "<<<"
+        LeftShift => "<<"
+        LeftShiftEqual => "<<="
+        RightShift => ">>"
+        RightArithmeticShift => ">>>"
+        RightShiftEqual => ">>="
+        Asterisk => "*"
+        Ampersand => "&"
+        AmpersandEqual => "&="
+        Pipe => "|"
+        PipeEqual => "|="
+        Caret => "^"
+        CaretEqual => "^="
+        Dollar => "$"
+        Tilde => "~"
+        ForwardSlash => "/"
+        ExclamationPoint => "!"
+        QuestionMark => "?"
+        QuestionMarkQuestionMark => "??"
+        QuestionMarkQuestionMarkEqual => "??="
+        Comma => ","
+        Dot => "."
+        DotDot => ".."
+        Eol => ""
+        Eof => ""
+        FatArrow => "=>"
+        Arrow => "->"
+        And => "and"
+        Anon => "anon"
+        As => "as"
+        Boxed => "boxed"
+        Break => "break"
+        Catch => "catch"
+        Class => "class"
+        Continue => "continue"
+        Cpp => "cpp"
+        Defer => "defer"
+        Else => "else"
+        Enum => "enum"
+        Extern => "extern"
+        False => "false"
+        For => "for"
+        Function => "function"
+        Comptime => "comptime"
+        If => "if"
+        Import => "import"
+        In => "in"
+        Is => "is"
+        Let => "let"
+        Loop => "loop"
+        Match => "match"
+        Mut => "mut"
+        Namespace => "namespace"
+        Not => "not"
+        Or => "or"
+        Private => "private"
+        Public => "public"
+        Raw => "raw"
+        Return => "return"
+        Restricted => "restricted"
+        Struct => "struct"
+        This => "this"
+        Throw => "throw"
+        Throws => "throws"
+        True => "true"
+        Try => "try"
+        Unsafe => "unsafe"
+        Weak => "weak"
+        While => "while"
+        Yield => "yield"
+        Guard => "guard"
+        Override => "override"
+        Virtual => "virtual"
+        Garbage => "<?>"
+    }
+}
+
+struct Stage0 {
+    tokens: [Token]
+    index: usize
+    states: [State]
+    indent: usize
+    already_seen_enclosure_in_current_line: bool
+    dedents_to_skip: [usize]
+
+    function create(mut compiler: Compiler, source: [u8]) throws -> Stage0 {
+        let old_file_contents = compiler.current_file_contents
+        compiler.current_file_contents = source
+        defer {
+            compiler.current_file_contents = old_file_contents
+        }
+
+        let tokens = Lexer::lex(compiler)
+        return Stage0(
+            tokens
+            index: 0uz
+            states: [State::Toplevel(
+                open_parens: 0
+                open_curlies: 0
+                open_squares: 0
+            )]
+            indent: 0uz
+            already_seen_enclosure_in_current_line: false
+            dedents_to_skip: [0uz]
+        )
+    }
+
+    function for_tokens(tokens: [Token]) throws -> Stage0 {
+        return Stage0(
+            tokens
+            index: 0uz
+            states: [State::Toplevel(
+                open_parens: 0
+                open_curlies: 0
+                open_squares: 0
+            )]
+            indent: 0uz
+            already_seen_enclosure_in_current_line: false
+            dedents_to_skip: [0uz]
+        )
+    }
+
+    private function peek(this, offset: i64 = 0) -> Token {
+        let effective_index = match offset {
+            0 => .index
+            else => (.index as! i64 + offset - 1) as! usize
+        }
+        if effective_index >= .tokens.size() {
+            return Token::Eof(.tokens.last()!.span())
+        }
+
+        return .tokens[effective_index]
+    }
+    private function consume(mut this) -> Token => .tokens[.index++]
+    function state(this) -> State => .states.last()!
+    private function push_state(mut this, anon state: State) throws {
+        .states.push(state)
+    }
+    private function pop_state(mut this) {
+        .states.pop()
+    }
+    private function replace_state(mut this, anon state: State) throws {
+        .states.pop()
+        .states.push(state)
+    }
+
+    private function to_array(anon x: String) throws -> [u8] {
+        mut res: [u8] = []
+        for i in 0..x.length() {
+            res.push(x.byte_at(i))
+        }
+        return res
+    }
+
+    function next(mut this) throws -> FormattedToken? {
+        return .next_impl(reconsume: false)
+        // mut res = .next_impl(reconsume: false)
+        // if not res.has_value() { return res }
+        // return FormattedToken(
+        //     token: res!.token
+        //     indent: res!.indent
+        //     trailing_trivia: Stage0::to_array(format("<?{}?>", .state().name()))
+        //     preceding_trivia: res!.preceding_trivia
+        // )
+    }
+
+    function next_impl(mut this, reconsume: bool) throws -> FormattedToken? {
+        if .index >= .tokens.size() {
+            return None
+        }
+
+        if .states.is_empty() and .index < .tokens.size() {
+            abort()
+        }
+
+        let token = .consume()
+        mut indent_change = 0
+        if not reconsume {
+            if (not .already_seen_enclosure_in_current_line) and (
+                token is LParen or token is LCurly or token is LSquare
+            ) {
+                .already_seen_enclosure_in_current_line = true
+                .dedents_to_skip.push(0uz)
+                indent_change = 1
+            } else if token is Eol {
+                .already_seen_enclosure_in_current_line = false
+            }
+
+            if token is LParen or token is LCurly or token is LSquare {
+                .dedents_to_skip[.dedents_to_skip.size() - 1]++
+            }
+
+            if token is RParen or token is RCurly or token is RSquare {
+                // Immediately dedent to the previous level instead of deferring the change.
+                if .dedents_to_skip.last()! == 1uz {
+                    if .dedents_to_skip.size() > 1uz {
+                        .dedents_to_skip.pop()
+                    }
+                    .indent -= 1
+                    .already_seen_enclosure_in_current_line = false
+                } else if .dedents_to_skip.last()! > 0 {
+                    .dedents_to_skip[.dedents_to_skip.size() - 1] -= 1
+                }
+            }
+        }
+
+        defer {
+            if indent_change > 0 {
+                .indent += indent_change as! usize
+            } else if indent_change < 0 {
+                .indent -= (-indent_change) as! usize
+            }
+        }
+
+        // eprintln()
+        // eprintln(
+        //     "Token: {}, indent: {}",
+        //     FormattedToken(token, indent: 0, trailing_trivia: [], preceding_trivia: []).token_text(),
+        //     .indent
+        // )
+        // for state in .states.iterator() {
+        //     eprintln("- State: {}", state)
+        // }
+        // eprintln()
+
+        return match .state() {
+            Toplevel(open_parens, open_curlies, open_squares) => match token {
+                Enum | Class | Struct | Function | Comptime | Namespace => {
+                    .push_state(State::EntityDeclaration(
+                        entity: Entity::from_token(&token)
+                        accept_generics: not token is Namespace
+                        has_generics: false
+                        generic_nesting: 0uz
+                    ))
+
+                    mut trailing_trivia: [u8] = []
+                    if token is Namespace or not .peek() is LessThan {
+                        trailing_trivia.push(b' ')
+                    }
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia
+                        preceding_trivia: []
+                    )
+                }
+                LSquare => {
+                    .replace_state(State::Toplevel(
+                        open_parens: open_parens
+                        open_curlies: open_curlies
+                        open_squares: open_squares + 1
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                RSquare => {
+                    if open_squares == 0 {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::Toplevel(
+                        open_parens: open_parens
+                        open_curlies: open_curlies
+                        open_squares: open_squares - 1
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                LParen => {
+                    .replace_state(State::Toplevel(
+                        open_parens: open_parens + 1
+                        open_curlies: open_curlies
+                        open_squares: open_squares
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                RParen => {
+                    if open_parens == 0 {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::Toplevel(
+                        open_parens: open_parens - 1
+                        open_curlies: open_curlies
+                        open_squares: open_squares
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                LCurly => {
+                    .replace_state(State::Toplevel(
+                        open_parens: open_parens
+                        open_curlies: open_curlies + 1
+                        open_squares: open_squares
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: [b' ']
+                    )
+                }
+                RCurly => {
+                    if open_curlies == 0 {
+                        .pop_state()
+                        .index -= 1
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::Toplevel(
+                        open_parens: open_parens
+                        open_curlies: open_curlies - 1
+                        open_squares: open_squares
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Colon => {
+                    .push_state(State::TypeContext(
+                        open_parens: 0
+                        open_curlies: 0
+                        open_squares: 0
+                        open_angles: 0
+                        seen_start: true
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                Import => {
+                    .push_state(State::Import(
+                        is_extern: .peek() is Extern
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                Public | Private | Virtual | Override | Extern | Boxed => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: [b' ']
+                    preceding_trivia: []
+                )
+                Restricted => {
+                    .push_state(State::RestrictionList)
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                else => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: []
+                    preceding_trivia: []
+                )
+            }
+            Import(is_extern) => match token {
+                Extern => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: [b' ']
+                    preceding_trivia: []
+                )
+                Identifier => {
+                    if not is_extern and not .peek() is LCurly {
+                        .pop_state()
+                    }
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                LCurly => {
+                    if is_extern {
+                        .push_state(State::Toplevel(
+                            open_parens: 0
+                            open_curlies: 0
+                            open_squares: 0
+                        ))
+                    } else {
+                        .push_state(State::ImportList(emitted_comma: true))
+                    }
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                RCurly => {
+                    .pop_state()
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: [b' ']
+                    )
+                }
+                Comma => {
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: match .peek() {
+                            else => [b' ']
+                            Eol => []
+                        }
+                        preceding_trivia: []
+                    )
+                }
+                else => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: [b' ']
+                    preceding_trivia: []
+                )
+            }
+            ImportList(emitted_comma) => match token {
+                RCurly => {
+                    .pop_state()
+                    .index--
+                    return .next_impl(reconsume: true)
+                }
+                Comma => {
+                    .replace_state(State::ImportList(emitted_comma: true))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                Eol => {
+                    // Drop Eols, we'll regenerate them if needed.
+                    return .next()
+                }
+                else => {
+                    if not emitted_comma {
+                        .replace_state(State::ImportList(emitted_comma: true))
+                        .index--
+                        return FormattedToken(
+                            token: Token::Comma(span: token.span())
+                            indent: .indent
+                            trailing_trivia: [b' ']
+                            preceding_trivia: []
+                        )
+                    }
+                    .replace_state(State::ImportList(emitted_comma: false))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+            }
+            EntityDeclaration(entity, accept_generics, has_generics, generic_nesting) => match token {
+                LessThan => {
+                    if accept_generics {
+                        .replace_state(State::EntityDeclaration(
+                            entity
+                            accept_generics
+                            has_generics: true
+                            generic_nesting: generic_nesting + 1
+                        ))
+                    }
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                GreaterThan => {
+                    if accept_generics {
+                        if generic_nesting > 1 {
+                            .replace_state(State::EntityDeclaration(
+                                entity
+                                accept_generics: accept_generics
+                                has_generics
+                                generic_nesting: generic_nesting - 1
+                            ))
+                        } else {
+                            .replace_state(State::EntityDefinition(entity))
+                        }
+                    }
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Identifier => {
+                    if generic_nesting == 0 and not .peek() is LessThan and not has_generics {
+                        .replace_state(State::EntityDefinition(entity))
+                    }
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Comma => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: [b' ']
+                    preceding_trivia: []
+                )
+                RCurly => {
+                    .pop_state()
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Eol => {
+                    .pop_state()
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Public | Private | Virtual | Override => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: [b' ']
+                    preceding_trivia: []
+                )
+                Restricted => {
+                    .push_state(State::RestrictionList)
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                else => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: []
+                    preceding_trivia: []
+                )
+            }
+            EntityDefinition(entity) => match entity {
+                Enum | Struct | Namespace => match token {
+                    RCurly => {
+                        .pop_state()
+
+                        yield FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: []
+                            preceding_trivia: []
+                        )
+                    }
+                    LCurly => {
+                        .push_state(State::Toplevel(
+                            open_parens: 0
+                            open_curlies: 0
+                            open_squares: 0
+                        ))
+                        yield FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: []
+                            preceding_trivia: [b' ']
+                        )
+                    }
+                    Colon => FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                    Equal => FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: [b' ']
+                    )
+                    else => FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                Function(arrow, indented) => match token {
+                    FatArrow => {
+                        let next_is_eol = .peek() is Eol
+
+                        .replace_state(State::EntityDefinition(
+                            entity: Entity::Function(arrow: true, indented: next_is_eol)
+                        ))
+                        if next_is_eol {
+                            if not .already_seen_enclosure_in_current_line {
+                                .already_seen_enclosure_in_current_line = true
+                                .dedents_to_skip.push(0uz)
+                            }
+                            indent_change += 1
+                            .dedents_to_skip[.dedents_to_skip.size() - 1] += 1
+                        }
+
+                        mut eols_allowed: usize = 0
+                        if next_is_eol {
+                            eols_allowed = 1
+                        }
+
+                        .push_state(State::StatementContext(
+                            open_parens: 0
+                            open_curlies: 0
+                            open_squares: 0
+                            allow_eol: eols_allowed
+                            inserted_comma: false
+                            expression_mode: ExpressionMode::AtExpressionStart
+                            dedents_on_open_curly: 0
+                        ))
+
+                        yield FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: [b' ']
+                            preceding_trivia: [b' ']
+                        )
+                    }
+                    Arrow => {
+                        .push_state(State::TypeContext(
+                            open_parens: 0
+                            open_curlies: 0
+                            open_squares: 0
+                            open_angles: 0
+                            seen_start: false
+                        ))
+                        yield FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: [b' ']
+                            preceding_trivia: [b' ']
+                        )
+                    }
+                    LParen => {
+                        .push_state(State::ParameterList(
+                            open_parens: 0
+                        ))
+                        yield FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: []
+                            preceding_trivia: []
+                        )
+                    }
+                    RParen => FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: match .peek() {
+                            Throws => [b' ']
+                            else => []
+                        }
+                        preceding_trivia: []
+                    )
+                    LCurly => {
+                        .push_state(State::StatementContext(
+                            open_parens: 0
+                            open_curlies: 0
+                            open_squares: 0
+                            allow_eol: None
+                            inserted_comma: false
+                            expression_mode: ExpressionMode::OutsideExpression
+                            dedents_on_open_curly: 0
+                        ))
+                        yield FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: []
+                            preceding_trivia: [b' ']
+                        )
+                    }
+                    RCurly => {
+                        .pop_state()
+
+                        yield FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: []
+                            preceding_trivia: []
+                        )
+                    }
+                    Eol => {
+                        .pop_state()
+                        if indented {
+                            if .dedents_to_skip.last()! == 1uz {
+                                if .dedents_to_skip.size() > 1uz {
+                                    .dedents_to_skip.pop()
+                                }
+                                indent_change -= 1
+                            } else if .dedents_to_skip.last()! > 0 {
+                                .dedents_to_skip[.dedents_to_skip.size() - 1] -= 1
+                            }
+                        }
+                        yield FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: []
+                            preceding_trivia: []
+                        )
+                    }
+                    else => FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+            }
+            StatementContext(open_parens, open_curlies, open_squares, allow_eol, inserted_comma, expression_mode, dedents_on_open_curly) => match token {
+                Let => {
+                    .push_state(State::VariableDeclaration(
+                        open_parens: 0
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                Mut => {
+                    if expression_mode is OutsideExpression {
+                        .push_state(State::VariableDeclaration(
+                            open_parens: 0
+                        ))
+                    }
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                Match | For | While | If | Try | Loop | Guard | Defer => {
+                    let added_indent = match token {
+                        Match | For | While | If | Guard => 1uz
+                        else => 0uz
+                    }
+                    .replace_state(State::StatementContext(
+                        open_parens
+                        open_curlies
+                        open_squares
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::AtExpressionStart
+                        dedents_on_open_curly: dedents_on_open_curly + added_indent
+                    ))
+                    indent_change += (added_indent as! i64)
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                Catch | Else => {
+                    .replace_state(State::StatementContext(
+                        open_parens
+                        open_curlies
+                        open_squares
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::OutsideExpression
+                        dedents_on_open_curly
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: match .peek() {
+                            else => [b' ']
+                            Eol | FatArrow => []
+                        }
+                        preceding_trivia: match .peek(offset: -1) {
+                            else => [b' ']
+                            Eol => []
+                        }
+                    )
+                }
+                Eol => {
+                    if (allow_eol.has_value() and allow_eol! == 0)
+                        and open_parens + open_curlies + open_squares == 0 {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+
+                    mut new_allow_eol: usize? = allow_eol
+                    if allow_eol.has_value() and allow_eol! > 0 {
+                        new_allow_eol = allow_eol! - 1
+                    }
+
+                    .replace_state(State::StatementContext(
+                        open_parens
+                        open_curlies
+                        open_squares
+                        allow_eol: new_allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::OutsideExpression
+                        dedents_on_open_curly
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Function => {
+                    .push_state(State::FunctionTypeContext(
+                        seen_final_type: false
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                Comma => {
+                    .replace_state(State::StatementContext(
+                        open_parens
+                        open_curlies
+                        open_squares
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::AtExpressionStart
+                        dedents_on_open_curly
+                    ))
+
+                    yield match .peek() {
+                        Eol => FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: []
+                            preceding_trivia: []
+                        )
+                        else => FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: [b' ']
+                            preceding_trivia: []
+                        )
+                    }
+                }
+                Return | Throw | Yield => match .peek() {
+                    Semicolon | Eol => {
+                        .replace_state(State::StatementContext(
+                            open_parens
+                            open_curlies
+                            open_squares
+                            allow_eol
+                            inserted_comma
+                            expression_mode: ExpressionMode::OutsideExpression
+                            dedents_on_open_curly
+                        ))
+                        yield FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: []
+                            preceding_trivia: []
+                        )
+                    }
+                    else => {
+                        .replace_state(State::StatementContext(
+                            open_parens
+                            open_curlies
+                            open_squares
+                            allow_eol
+                            inserted_comma
+                            expression_mode: ExpressionMode::AtExpressionStart
+                            dedents_on_open_curly
+                        ))
+
+                        yield FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: [b' ']
+                            preceding_trivia: []
+                        )
+                    }
+                }
+                FatArrow => {
+                    .replace_state(State::StatementContext(
+                        open_parens
+                        open_curlies
+                        open_squares
+                        allow_eol
+                        inserted_comma
+                        expression_mode: match .peek() {
+                            LCurly => ExpressionMode::OutsideExpression
+                            else => ExpressionMode::AtExpressionStart
+                        }
+                        dedents_on_open_curly
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: [b' ']
+                    )
+                }
+                LSquare => {
+                    .replace_state(State::StatementContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies
+                        open_squares: open_squares + 1
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::AtExpressionStart
+                        dedents_on_open_curly
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                RSquare => {
+                    if open_squares == 0 {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::StatementContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies
+                        open_squares: open_squares - 1
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::AtExpressionStart
+                        dedents_on_open_curly
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                LParen => {
+                    .replace_state(State::StatementContext(
+                        open_parens: open_parens + 1
+                        open_curlies: open_curlies
+                        open_squares: open_squares
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::AtExpressionStart
+                        dedents_on_open_curly
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                RParen => {
+                    if open_parens == 0 {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::StatementContext(
+                        open_parens: open_parens - 1
+                        open_curlies: open_curlies
+                        open_squares: open_squares
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::InExpression
+                        dedents_on_open_curly
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                LCurly => {
+                    mut dedented = 0uz
+                    if dedents_on_open_curly > 0 {
+                        .indent -= 1
+                        dedented = 1
+                    }
+                    .replace_state(State::StatementContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies + 1
+                        open_squares: open_squares
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::AtExpressionStart
+                        dedents_on_open_curly: dedents_on_open_curly - dedented
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: match expression_mode {
+                            else => match .peek() {
+                                else => [b' ']
+                                Eol | RCurly => []
+                            }
+                            AtExpressionStart => []
+                        }
+                        preceding_trivia: match .peek(offset: -1) {
+                            else => [b' ']
+                            Else | Try | Catch | Equal | FatArrow | Loop | Defer => []
+                        }
+                    )
+                }
+                RCurly => {
+                    if open_curlies == 0 {
+                        .pop_state()
+                        .index -= 1
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::StatementContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies - 1
+                        open_squares: open_squares
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::InExpression
+                        dedents_on_open_curly
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: match expression_mode {
+                            else => match .peek(offset: -1) {
+                                else => [b' ']
+                                Eol | LCurly => []
+                            }
+                            InExpression => []
+                        }
+                    )
+                }
+                Not => {
+                    .replace_state(State::StatementContext(
+                        open_parens
+                        open_curlies
+                        open_squares
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::AtExpressionStart
+                        dedents_on_open_curly
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                Colon => {
+                    .replace_state(State::StatementContext(
+                        open_parens
+                        open_curlies
+                        open_squares
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::AtExpressionStart
+                        dedents_on_open_curly
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: match .peek() {
+                            else => [b' ']
+                            RSquare => []
+                        }
+                        preceding_trivia: []
+                    )
+                }
+                // Shared unary and binary ops
+                Minus
+                | Asterisk
+                => {
+                    .replace_state(State::StatementContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies
+                        open_squares: open_squares
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::AtExpressionStart
+                        dedents_on_open_curly
+                    ))
+
+                    let trivia = match expression_mode {
+                        else => [b' ']
+                        AtExpressionStart => []
+                    }
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: trivia
+                        preceding_trivia: trivia
+                    )
+                }
+                // Binary ops
+                PercentSign
+                | Plus
+                | Equal
+                | Pipe
+                | PlusEqual
+                | MinusEqual
+                | AsteriskEqual
+                | ForwardSlashEqual
+                | PercentSignEqual
+                | NotEqual
+                | DoubleEqual
+                | GreaterThan
+                | GreaterThanOrEqual
+                | LessThan
+                | LessThanOrEqual
+                | LeftArithmeticShift
+                | LeftShift
+                | RightShift
+                | LeftShiftEqual
+                | RightArithmeticShift
+                | RightShiftEqual
+                | AmpersandEqual
+                | PipeEqual
+                | Caret
+                | CaretEqual
+                | ForwardSlash
+                | QuestionMarkQuestionMark
+                | QuestionMarkQuestionMarkEqual
+                | And
+                | In
+                | Or
+                => {
+                    .replace_state(State::StatementContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies
+                        open_squares: open_squares
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::AtExpressionStart
+                        dedents_on_open_curly
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: [b' ']
+                    )
+                }
+                Is => {
+                    .push_state(State::MatchPattern(
+                        open_parens: 0
+                        allow_multiple: false
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: [b' ']
+                    )
+                }
+                As => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: match .peek() {
+                        else => [b' ']
+                        QuestionMark | ExclamationPoint => []
+                    }
+                    preceding_trivia: [b' ']
+                )
+                QuestionMark | ExclamationPoint => match .peek(offset: -1) {
+                    As => {
+                        .push_state(State::TypeContext(
+                            open_parens: 0
+                            open_curlies: 0
+                            open_squares: 0
+                            open_angles: 0
+                            seen_start: false
+                        ))
+
+                        yield FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: [b' ']
+                            preceding_trivia: []
+                        )
+                    }
+                    else => FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Identifier => {
+                    if .peek(offset: -1) is Identifier and not inserted_comma {
+                        // Insert a fake comma
+                        .index--
+                        .replace_state(State::StatementContext(
+                            open_parens: open_parens
+                            open_curlies: open_curlies
+                            open_squares: open_squares
+                            allow_eol
+                            inserted_comma: true
+                            expression_mode: ExpressionMode::InExpression
+                            dedents_on_open_curly
+                        ))
+                        return FormattedToken(
+                            token: Token::Comma(span: token.span())
+                            indent: .indent
+                            trailing_trivia: [b' ']
+                            preceding_trivia: []
+                        )
+                    }
+                    .replace_state(State::StatementContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies
+                        open_squares: open_squares
+                        allow_eol
+                        inserted_comma: false
+                        expression_mode: ExpressionMode::InExpression
+                        dedents_on_open_curly
+                    ))
+
+                    if .peek() is LParen {
+                        // This is a call, but we don't need to worry about it, just get out.
+                        return FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: []
+                            preceding_trivia: []
+                        )
+                    }
+                    if not .peek() is LessThan {
+                        return FormattedToken(
+                            token
+                            indent: .indent
+                            trailing_trivia: []
+                            preceding_trivia: []
+                        )
+                    }
+                    // Scan forward, we can't guarantee full detection of generic calls as they need an infinite theoretical lookahead
+                    // to distinguish between a generic call and just LessThan/GreaterThan.
+                    // So we just look ahead for a balaned pair of LT/GT, followed immediately by an open paren.
+                    mut open_angles = 1
+                    mut lookahead_index = 2
+                    while open_angles > 0 {
+                        match .peek(offset: lookahead_index++) {
+                            LessThan => { open_angles += 1 }
+                            GreaterThan => { open_angles -= 1 }
+                            Eol
+                            | PercentSign
+                            | Plus
+                            | Minus
+                            | Equal
+                            | PlusEqual
+                            | MinusEqual
+                            | AsteriskEqual
+                            | ForwardSlashEqual
+                            | PercentSignEqual
+                            | NotEqual
+                            | DoubleEqual
+                            | GreaterThanOrEqual
+                            | LessThanOrEqual
+                            | LeftArithmeticShift
+                            | LeftShift
+                            | RightShift
+                            | LeftShiftEqual
+                            | RightArithmeticShift
+                            | RightShiftEqual
+                            | Asterisk
+                            | AmpersandEqual
+                            | Pipe
+                            | PipeEqual
+                            | Caret
+                            | CaretEqual
+                            | ForwardSlash
+                            | QuestionMarkQuestionMark
+                            | QuestionMarkQuestionMarkEqual
+                            | And
+                            | In
+                            | Is
+                            | Or => { break }
+                            else => {}
+                        }
+                    }
+                    if open_angles == 0 and .peek(offset: lookahead_index) is LParen {
+                        .push_state(State::GenericCallTypeParams(
+                            open_angles: 0
+                        ))
+                    }
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                else => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: []
+                    preceding_trivia: []
+                )
+            }
+            GenericCallTypeParams(open_angles) => match token {
+                LessThan => {
+                    .push_state(State::TypeContext(
+                        open_parens: 0
+                        open_curlies: 0
+                        open_squares: 0
+                        open_angles: 0
+                        seen_start: false
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                GreaterThan => {
+                    if open_angles <= 1 {
+                        .pop_state()
+                    } else {
+                        .replace_state(State::GenericCallTypeParams(
+                            open_angles: open_angles - 1
+                        ))
+                    }
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Comma => {
+                    .push_state(State::TypeContext(
+                        open_parens: 0
+                        open_curlies: 0
+                        open_squares: 0
+                        open_angles: 0
+                        seen_start: false
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                else => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: []
+                    preceding_trivia: []
+                )
+            }
+            VariableDeclaration(open_parens) => match token {
+                Colon => {
+                    .push_state(State::TypeContext(
+                        open_parens: 0
+                        open_curlies: 0
+                        open_squares: 0
+                        open_angles: 0
+                        seen_start: false
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                LParen => {
+                    .replace_state(State::VariableDeclaration(
+                        open_parens: open_parens + 1
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                RParen => {
+                    if open_parens == 0 {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+                    .replace_state(State::VariableDeclaration(
+                        open_parens: open_parens - 1
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Equal => {
+                    .pop_state()
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: [b' ']
+                    )
+                }
+                Comma => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: [b' ']
+                    preceding_trivia: []
+                )
+                else => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: []
+                    preceding_trivia: []
+                )
+            }
+            RestrictionList => match token {
+                Comma => {
+                    .push_state(State::TypeContext(
+                        open_parens: 0
+                        open_curlies: 0
+                        open_squares: 0
+                        open_angles: 0
+                        seen_start: false
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                RParen => {
+                    .pop_state()
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                else => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: []
+                    preceding_trivia: []
+                )
+            }
+            ParameterList(open_parens) => match token {
+                Anon | Mut => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: [b' ']
+                    preceding_trivia: []
+                )
+                Colon => {
+                    .push_state(State::TypeContext(
+                        open_parens: 0
+                        open_curlies: 0
+                        open_squares: 0
+                        open_angles: 0
+                        seen_start: false
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                Comma => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: [b' ']
+                    preceding_trivia: []
+                )
+                Equal => {
+                    .push_state(State::StatementContext(
+                        open_parens: 0
+                        open_curlies: 0
+                        open_squares: 0
+                        allow_eol: 0uz
+                        inserted_comma: false
+                        expression_mode: ExpressionMode::AtExpressionStart
+                        dedents_on_open_curly: 0
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: [b' ']
+                    )
+                }
+                LParen => {
+                    .replace_state(State::ParameterList(
+                        open_parens: open_parens + 1
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                RParen => {
+                    if open_parens == 0 {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::ParameterList(
+                        open_parens: open_parens - 1
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                else => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: []
+                    preceding_trivia: []
+                )
+            }
+            TypeContext(open_parens, open_curlies, open_squares, open_angles, seen_start) => match token {
+                LessThan => {
+                    .replace_state(State::TypeContext(
+                        open_parens
+                        open_curlies
+                        open_squares
+                        open_angles: open_angles + 1
+                        seen_start
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                GreaterThan => {
+                    if open_angles == 0 {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::TypeContext(
+                        open_parens
+                        open_curlies
+                        open_squares
+                        open_angles: open_angles - 1
+                        seen_start
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Eol => {
+                    if open_parens + open_curlies + open_squares + open_angles == 0 {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                LSquare => {
+                    if seen_start {
+                        .index--
+                        .pop_state()
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::TypeContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies
+                        open_squares: open_squares + 1
+                        open_angles: open_angles
+                        seen_start: true
+                    ))
+
+                    .push_state(State::TypeContext(
+                        open_parens: 0
+                        open_curlies: 0
+                        open_squares: 0
+                        open_angles: 0
+                        seen_start: false
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                RSquare => {
+                    if open_squares == 0 {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::TypeContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies
+                        open_squares: open_squares - 1
+                        open_angles: open_angles
+                        seen_start
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                LParen => {
+                    if seen_start {
+                        .index--
+                        .pop_state()
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::TypeContext(
+                        open_parens: open_parens + 1
+                        open_curlies: open_curlies
+                        open_squares: open_squares
+                        open_angles: open_angles
+                        seen_start: true
+                    ))
+
+                    .push_state(State::TypeContext(
+                        open_parens: 0
+                        open_curlies: 0
+                        open_squares: 0
+                        open_angles: 0
+                        seen_start: false
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                RParen => {
+                    if open_parens == 0 {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::TypeContext(
+                        open_parens: open_parens - 1
+                        open_curlies: open_curlies
+                        open_squares: open_squares
+                        open_angles: open_angles
+                        seen_start
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                LCurly => {
+                    if seen_start {
+                        .index--
+                        .pop_state()
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::TypeContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies + 1
+                        open_squares: open_squares
+                        open_angles: open_angles
+                        seen_start: true
+                    ))
+
+                    .push_state(State::TypeContext(
+                        open_parens: 0
+                        open_curlies: 0
+                        open_squares: 0
+                        open_angles: 0
+                        seen_start: false
+                    ))
+
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                RCurly => {
+                    if open_curlies == 0 {
+                        .pop_state()
+                        .index -= 1
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::TypeContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies - 1
+                        open_squares: open_squares
+                        open_angles: open_angles
+                        seen_start
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Raw | Mut => {
+                    .replace_state(State::TypeContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies
+                        open_squares: open_squares
+                        open_angles: open_angles
+                        seen_start: true
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                Ampersand => {
+                    .replace_state(State::TypeContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies
+                        open_squares: open_squares
+                        open_angles: open_angles
+                        seen_start: true
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Function => {
+                    .replace_state(State::TypeContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies
+                        open_squares: open_squares
+                        open_angles: open_angles
+                        seen_start: true
+                    ))
+                    .push_state(State::FunctionTypeContext(seen_final_type: false))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                Comma => {
+                    if open_angles + open_parens == 0 {
+                        .index--
+                        .pop_state()
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .push_state(State::TypeContext(
+                        open_parens: 0
+                        open_curlies: 0
+                        open_squares: 0
+                        open_angles: 0
+                        seen_start: false
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
+                Identifier => {
+                    .replace_state(State::TypeContext(
+                        open_parens: open_parens
+                        open_curlies: open_curlies
+                        open_squares: open_squares
+                        open_angles: open_angles
+                        seen_start: true
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Equal | Arrow | FatArrow => {
+                    .pop_state()
+                    .index--
+                    return .next_impl(reconsume: true)
+                }
+                else => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: []
+                    preceding_trivia: []
+                )
+            }
+            FunctionTypeContext(seen_final_type) => match token {
+                Arrow => {
+                    if seen_final_type {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::FunctionTypeContext(
+                        seen_final_type: true
+                    ))
+                    .push_state(State::TypeContext(
+                        open_parens: 0
+                        open_curlies: 0
+                        open_squares: 0
+                        open_angles: 0
+                        seen_start: false
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: [b' ']
+                    )
+                }
+                LParen => {
+                    if seen_final_type {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .push_state(State::ParameterList(
+                        open_parens: 0
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                RParen => {
+                    if seen_final_type {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: match .peek() {
+                            Throws => [b' ']
+                            else => []
+                        }
+                        preceding_trivia: []
+                    )
+                }
+                Throws => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: [b' ']
+                    preceding_trivia: [b' ']
+                )
+                else => {
+                    if seen_final_type {
+                        .pop_state()
+                        .index--
+                        return .next_impl(reconsume: true)
+                    }
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+            }
+            MatchPattern(open_parens, allow_multiple) => match token {
+                LParen => {
+                    .replace_state(State::MatchPattern(
+                        open_parens: open_parens + 1
+                        allow_multiple
+                    ))
+                    .push_state(State::StatementContext(
+                        open_parens: 0
+                        open_curlies: 0
+                        open_squares: 0
+                        allow_eol: 0
+                        inserted_comma: false
+                        expression_mode: ExpressionMode::OutsideExpression
+                        dedents_on_open_curly: 0
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                RParen => {
+                    if open_parens == 0 {
+                        .pop_state()
+                        .index -= 1
+                        return .next_impl(reconsume: true)
+                    }
+
+                    .replace_state(State::MatchPattern(
+                        open_parens: open_parens - 1
+                        allow_multiple
+                    ))
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Eol => {
+                    if not allow_multiple {
+                        .pop_state()
+                        .index -= 1
+                        return .next_impl(reconsume: true)
+                    }
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
+                Identifier => FormattedToken(
+                    token
+                    indent: .indent
+                    trailing_trivia: []
+                    preceding_trivia: []
+                )
+                Pipe => {
+                    if not allow_multiple {
+                        .pop_state()
+                        .index -= 1
+                        return .next_impl(reconsume: true)
+                    }
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: [b' ']
+                    )
+                }
+                else => {
+                    .pop_state()
+                    .index -= 1
+                    return .next_impl(reconsume: true)
+                }
+            }
+        }
+    }
+}
+
+enum BreakablePoint {
+    Paren(point: usize, length: usize)
+    Curly(point: usize, length: usize)
+    Square(point: usize, length: usize)
+    Logical(point: usize, length: usize)
+
+    function point(this) -> usize => match this {
+        Paren(point)
+        | Curly(point)
+        | Square(point)
+        | Logical(point)
+        => point
+    }
+
+    function length(this) -> usize => match this {
+        Paren(length)
+        | Curly(length)
+        | Square(length)
+        | Logical(length)
+        => length
+    }
+}
+
+struct ReflowState {
+    token: FormattedToken
+    state: State
+    enclosures_to_ignore: usize
+}
+
+struct Formatter {
+    token_provider: Stage0
+    current_line: [ReflowState]
+    current_line_length: usize
+    max_allowed_line_length: usize
+    breakable_points_in_current_line: [BreakablePoint]
+    tokens_to_reflow: [ReflowState]
+    replace_commas_in_enclosure: [Token?]
+    enclosures_to_ignore: usize
+    in_if_expr: bool
+    empty_line_count: usize
+
+    function for_tokens(tokens: [Token], max_allowed_line_length: usize = 120uz) throws -> Formatter {
+        let none: Token? = None
+        return Formatter(
+            token_provider: Stage0::for_tokens(tokens)
+            current_line: []
+            current_line_length: 0
+            max_allowed_line_length
+            breakable_points_in_current_line: []
+            tokens_to_reflow: []
+            replace_commas_in_enclosure: [none]
+            enclosures_to_ignore: 0
+            in_if_expr: false
+            empty_line_count: 0
+        )
+    }
+
+    private function token_length(this, token: FormattedToken) throws -> usize {
+        mut length = token.preceding_trivia.size()
+        match token.token {
+            Eol(comment) => {
+                if comment.has_value() {
+                    mut next_char = b' '
+                    if comment!.length() != 0 {
+                        next_char = comment!.byte_at(0)
+                    }
+                    let space = match next_char {
+                        b' ' | b'\t' | b'/' => 0uz
+                        else => 1uz
+                    }
+                    length += space
+                    length += comment!.length()
+                }
+            }
+            else => {
+                length += token.token_text().length()
+            }
+        }
+        length += token.trailing_trivia.size()
+        return length
+    }
+
+    private function fixup_tokens_to_reflow(mut this) throws {
+        if this.tokens_to_reflow.is_empty() {
+            return
+        }
+
+        mut i = 0uz
+        mut j = .tokens_to_reflow.size() - 1uz
+        while i < j {
+            let a = .tokens_to_reflow[i]
+            .tokens_to_reflow[i] = .tokens_to_reflow[j]
+            .tokens_to_reflow[j] = a
+
+            i += 1
+            j -= 1
+        }
+    }
+    private function to_array(anon s: String) throws -> [u8] {
+        mut result: [u8] = []
+        for i in 0..s.length() {
+            result.push(s.byte_at(i))
+        }
+        return result
+    }
+
+    function fixup_closing_enclosures(this, line: &mut [ReflowState]) throws {
+        if line.is_empty() {
+            return
+        }
+
+        // No trivia if we start with this token.
+        line[0].token.preceding_trivia = []
+
+        mut enclosure_run_length = 0uz
+        for i in (line.size() - 1)..0uz {
+            match line[i].token.token {
+                RParen | RCurly | RSquare => {
+                    enclosure_run_length += 1
+                }
+                else => {
+                    for j in 0..enclosure_run_length {
+                        line[i - j].token = FormattedToken(
+                            token: line[i - j].token.token
+                            indent: line[i - enclosure_run_length].token.indent
+                            trailing_trivia: line[i - j].token.trailing_trivia
+                            preceding_trivia: line[i - j].token.preceding_trivia
+                        )
+                    }
+                    enclosure_run_length = 0
+                }
+            }
+        }
+        for j in 0..enclosure_run_length {
+            line[j].token = FormattedToken(
+                token: line[j].token.token
+                indent: line[enclosure_run_length].token.indent
+                trailing_trivia: line[j].token.trailing_trivia
+                preceding_trivia: line[j].token.preceding_trivia
+            )
+        }
+
+        // for j in 0..line.size() {
+        //     line[j].token.trailing_trivia = Formatter::to_array(format("<?{}?>\n", line[j].state.name()))
+        // }
+    }
+
+    private function pick_breaking_point_index(this) -> usize {
+        // Leftmost point.
+        return 0
+    }
+
+    private function should_ignore_state(anon state: State) -> bool {
+        return state is TypeContext or state is VariableDeclaration
+    }
+
+    function next(mut this) throws -> [FormattedToken]? {
+        let reflown_token = .tokens_to_reflow.pop()
+        mut maybe_next_underlying_token = reflown_token?.token ?? .token_provider.next()
+        mut current_state = reflown_token?.state ?? .token_provider.state()
+
+        guard maybe_next_underlying_token.has_value() else {
+            if .current_line.is_empty() {
+                return None
+            }
+            let line = .current_line
+            .current_line = []
+            .breakable_points_in_current_line = []
+            .current_line_length = 0
+            .enclosures_to_ignore = 0
+            mut result: [FormattedToken] = []
+            for state in line.iterator() {
+                result.push(state.token)
+            }
+
+            return result
+        }
+        mut next_underlying_token = maybe_next_underlying_token!.token
+        mut accepted_at_least_one_token = false
+        while not next_underlying_token is Eof and not next_underlying_token is Eol {
+            let projected_added_length = .token_length(token: maybe_next_underlying_token!)
+            match next_underlying_token {
+                LParen | LCurly | LSquare => {
+                    if .in_if_expr and next_underlying_token is LCurly {
+                        .in_if_expr = false
+                    }
+                    accepted_at_least_one_token = true
+                    .current_line.push(ReflowState(
+                        token: maybe_next_underlying_token!
+                        state: current_state
+                        enclosures_to_ignore: .enclosures_to_ignore
+                    ))
+                    .current_line_length += projected_added_length
+                    if not Formatter::should_ignore_state(current_state) {
+                        .breakable_points_in_current_line.push(match next_underlying_token {
+                            LParen => BreakablePoint::Paren(point: .current_line.size(), length: .current_line_length)
+                            LCurly => BreakablePoint::Curly(point: .current_line.size(), length: .current_line_length)
+                            LSquare => BreakablePoint::Square(point: .current_line.size(), length: .current_line_length)
+                            else => {
+                                abort() // unreachable
+                            }
+                        })
+                        let none: Token? = None
+                        .replace_commas_in_enclosure.push(none)
+                    } else {
+                        .enclosures_to_ignore += 1
+                    }
+                }
+                RParen | RCurly | RSquare => {
+                    mut ignore = false
+                    if .enclosures_to_ignore > 0 {
+                        .enclosures_to_ignore -= 1
+                        ignore = true
+                    }
+
+                    if not ignore and not Formatter::should_ignore_state(current_state) {
+                        let replacement = collapse(.replace_commas_in_enclosure.pop()) ?? next_underlying_token
+                        let new_token = FormattedToken(
+                            token: replacement
+                            indent: maybe_next_underlying_token!.indent
+                            trailing_trivia: maybe_next_underlying_token!.trailing_trivia
+                            preceding_trivia: maybe_next_underlying_token!.preceding_trivia
+                        )
+                        .current_line.push(ReflowState(
+                            token: new_token
+                            state: current_state
+                            enclosures_to_ignore: .enclosures_to_ignore
+                        ))
+                        .current_line_length += .token_length(token: new_token)
+                        if replacement is Eol {
+                            .tokens_to_reflow.push(ReflowState(
+                                token: maybe_next_underlying_token!
+                                state: current_state
+                                enclosures_to_ignore: .enclosures_to_ignore
+                            ))
+                            let none: Token? = None
+                            .replace_commas_in_enclosure.push(none)
+                            break
+                        }
+                    } else {
+                        .current_line.push(ReflowState(
+                            token: maybe_next_underlying_token!
+                            state: current_state
+                            enclosures_to_ignore: .enclosures_to_ignore
+                        ))
+                        .current_line_length += .token_length(token: maybe_next_underlying_token!)
+                    }
+                    accepted_at_least_one_token = true
+                }
+                Comma => {
+                    accepted_at_least_one_token = true
+                    if not Formatter::should_ignore_state(current_state) {
+                        let replacement = collapse(.replace_commas_in_enclosure.last()) ?? next_underlying_token
+                        let new_token = FormattedToken(
+                            token: replacement
+                            indent: maybe_next_underlying_token!.indent
+                            trailing_trivia: maybe_next_underlying_token!.trailing_trivia
+                            preceding_trivia: maybe_next_underlying_token!.preceding_trivia
+                        )
+                        .current_line.push(ReflowState(
+                            token: new_token
+                            state: current_state
+                            enclosures_to_ignore: .enclosures_to_ignore
+                        ))
+                        .current_line_length += .token_length(token: new_token)
+
+                        if replacement is Eol {
+                            break
+                        }
+                    } else {
+                        .current_line.push(ReflowState(
+                            token: maybe_next_underlying_token!
+                            state: current_state
+                            enclosures_to_ignore: .enclosures_to_ignore
+                        ))
+                        .current_line_length += .token_length(token: maybe_next_underlying_token!)
+                    }
+                }
+                else => {
+                    if next_underlying_token is If {
+                        .in_if_expr = true
+                    }
+
+                    let real_line_length = .current_line_length + projected_added_length + maybe_next_underlying_token!.indent
+                    let most_desirable_breaking_point_index = .pick_breaking_point_index()
+
+                    if accepted_at_least_one_token
+                        and real_line_length > .max_allowed_line_length
+                        and not .breakable_points_in_current_line.is_empty()
+                        and .breakable_points_in_current_line[most_desirable_breaking_point_index].point() < .current_line.size()
+                        and not Formatter::should_ignore_state(current_state) {
+                        let newline = Token::Eol(
+                            comment: None
+                            span: next_underlying_token.span()
+                        )
+
+                        // Break at the last breakable point in the current line.
+                        let breakable_point = .breakable_points_in_current_line[most_desirable_breaking_point_index]
+                        if not .replace_commas_in_enclosure.is_empty() {
+                            .replace_commas_in_enclosure[.replace_commas_in_enclosure.size() - 1] = newline
+                        }
+                        let point = breakable_point.point()
+                        .tokens_to_reflow = .current_line[point..].to_array()
+                        .tokens_to_reflow.push(ReflowState(
+                            token: maybe_next_underlying_token!
+                            state: current_state
+                            enclosures_to_ignore: .enclosures_to_ignore
+                        ))
+                        .fixup_tokens_to_reflow()
+
+                        let final_state = .current_line[point].state
+                        .enclosures_to_ignore = .current_line[point].enclosures_to_ignore
+                        .current_line = .current_line[0..point].to_array()
+
+                        .current_line.push(ReflowState(
+                            token: FormattedToken(
+                                token: newline
+                                indent: maybe_next_underlying_token!.indent
+                                trailing_trivia: []
+                                preceding_trivia: []
+                            )
+                            state: final_state
+                            enclosures_to_ignore: .enclosures_to_ignore
+                        ))
+                        .current_line_length = 0
+                        break
+                    }
+
+                    accepted_at_least_one_token = true
+                    .current_line.push(ReflowState(
+                        token: maybe_next_underlying_token!
+                        state: current_state
+                        enclosures_to_ignore: .enclosures_to_ignore
+                    ))
+                    .current_line_length += projected_added_length
+
+                    if .in_if_expr and (next_underlying_token is And or next_underlying_token is Or) {
+                        .breakable_points_in_current_line.push(
+                            BreakablePoint::Logical(point: .current_line.size(), length: .current_line_length)
+                        )
+                    }
+                }
+            }
+
+            if .tokens_to_reflow.is_empty() {
+                maybe_next_underlying_token = .token_provider.next()
+                current_state = .token_provider.state()
+            } else {
+                let reflown_token = .tokens_to_reflow.pop()
+                maybe_next_underlying_token = reflown_token?.token
+                current_state = reflown_token?.state ?? current_state
+            }
+            if not maybe_next_underlying_token.has_value() {
+                break
+            }
+
+            next_underlying_token = maybe_next_underlying_token!.token
+        }
+
+        let allowed_empty_lines_in_state: usize = match current_state {
+            TypeContext | ImportList | ParameterList => 0
+            Toplevel => 2
+            else => 1
+        }
+
+        mut line = .current_line
+        .current_line = []
+        .breakable_points_in_current_line = []
+        .current_line_length = 0
+        .enclosures_to_ignore = 0
+
+        if line.is_empty() or not line.last()!.token.token is Eol {
+            line.push(ReflowState(
+                token: maybe_next_underlying_token!
+                state: current_state
+                enclosures_to_ignore: .enclosures_to_ignore
+            ))
+        }
+
+        if line.size() == 1 {
+            match line.last()!.token.token {
+                Eol(comment) => {
+                    if .empty_line_count >= allowed_empty_lines_in_state and not comment.has_value() {
+                        // Collapse more than |allowed_empty_lines_in_state| consecutive empty lines.
+                        return .next()
+                    }
+
+                    if comment.has_value() {
+                        .empty_line_count = 0
+                    } else {
+                        .empty_line_count += 1
+                    }
+                }
+                else => {
+                    .empty_line_count = 0
+                }
+            }
+        } else {
+            .empty_line_count = 0
+        }
+
+        if line.size() > 1 {
+            // Drop the trailing trivia of the token before EoL.
+            line[line.size() - 2].token.trailing_trivia = []
+        }
+        // As well as all the trivia of the EoL token itself
+        line[line.size() - 1].token.preceding_trivia = []
+        line[line.size() - 1].token.trailing_trivia = []
+
+        .fixup_closing_enclosures(&mut line)
+
+        mut result: [FormattedToken] = []
+        for state in line.iterator() {
+            result.push(state.token)
+        }
+
+        return result
+    }
+}

@@ -9,6 +9,7 @@
 import compiler { Compiler, FileId }
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
+import formatter { Formatter }
 import utility { FilePath, ArgsParser, Span, escape_for_quotes }
 import lexer { Lexer }
 import parser { Parser }
@@ -54,6 +55,14 @@ function help() -> String {
     output += "  -t,--goto-type-def INDEX\t\tReturn the span for the type definition at index.\n"
     output += "  -e,--hover INDEX\t\t\tReturn the type of element at index.\n"
     output += "  -m,--completions INDEX\t\tReturn dot completions at index.\n"
+    return output
+}
+
+function indent(anon level: usize) throws -> String {
+    mut output = ""
+    for i in 0uz..level {
+        output += "    "
+    }
     return output
 }
 
@@ -106,6 +115,8 @@ function main(args: [String]) {
     let completions = args_parser.option(["-m", "--completions"])
 
     let interpret_run = args_parser.flag(["-r", "--run"])
+
+    let format = args_parser.flag(["-f", "--format"])
 
     if args_parser.flag(["--repl"]) {
         mut repl = REPL::create()
@@ -183,6 +194,56 @@ function main(args: [String]) {
         for token in tokens.iterator() {
             println("token: {}", token)
         }
+    }
+
+    if format {
+        mut on_new_line = true
+        for formatted_line in Formatter::for_tokens(tokens) {
+            for formatted_token in formatted_line.iterator() {
+                for byte in formatted_token.preceding_trivia.iterator() {
+                    print("{:c}", byte)
+                }
+
+                match formatted_token.token {
+                    Eol(comment) => {
+                        if comment.has_value() {
+                            mut next_char = b' '
+                            if comment!.length() != 0 {
+                                next_char = comment!.byte_at(0)
+                            }
+                            let space = match next_char {
+                                b' ' | b'\t' | b'/' => ""
+                                else => " "
+                            }
+                            let lhs_space = match on_new_line {
+                                true => indent(formatted_token.indent)
+                                else => " "
+                            }
+
+                            print("{}//{}{}", lhs_space, space, comment!)
+                        }
+                        on_new_line = true
+                    }
+                    else => {
+                        if on_new_line {
+                            // println("(indent: {})", formatted_token.indent)
+                            print(indent(formatted_token.indent))
+                        }
+                        print("{}", formatted_token.token_text())
+                        on_new_line = false
+                    }
+                }
+
+                for byte in formatted_token.trailing_trivia.iterator() {
+                    print("{:c}", byte)
+                }
+
+                if formatted_token.token is Eol {
+                    println()
+                }
+            }
+        }
+        return 0
     }
 
     let parsed_namespace = Parser::parse(compiler, tokens)

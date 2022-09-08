@@ -41,6 +41,7 @@ set(SELFHOST_SOURCES
   selfhost/codegen.jakt
   selfhost/compiler.jakt
   selfhost/error.jakt
+  selfhost/formatter.jakt
   selfhost/ide.jakt
   selfhost/interpreter.jakt
   selfhost/lexer.jakt

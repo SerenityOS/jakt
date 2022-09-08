@@ -114,7 +114,7 @@ struct CodegenDebugInfo {
         while line_index < .line_spans[file_idx].size() {
             if span.start >= .line_spans[file_idx][line_index].start and span.start <= .line_spans[file_idx][line_index].end {
                 let column_index = span.start - .line_spans[file_idx][line_index].start
-                return format("{}:{}:{}", .compiler.get_file_path(span.file_id)!.path, line_index+1, column_index+1)
+                return format("{} \"{}\"", line_index+1, .compiler.get_file_path(span.file_id)!.path)
             }
             line_index += 1
         }
@@ -2486,7 +2486,12 @@ struct CodeGenerator {
 
     function codegen_statement(mut this, statement: CheckedStatement) throws -> String {
         mut add_newline = true
-        mut output = match statement {
+        mut output = ""
+        if .debug_info.statement_span_comments and statement.span().has_value() and add_newline {
+            output += format("\n#line {}\n", .debug_info.span_to_source_location(statement.span()!))
+        }
+
+        output += match statement {
             Throw(expr) => "return " + .codegen_expression(expr) + ";"
             Continue => match .control_flow_state.passes_through_match {
                 true => "return JaktInternal::LoopContinue{};"
@@ -2526,10 +2531,10 @@ struct CodeGenerator {
             }
             Loop(block) => {
                 mut output = ""
-                output += "for (;;)"
                 if .debug_info.statement_span_comments and statement.span().has_value() {
-                    output += format(" /* {} */ ", .debug_info.span_to_source_location(statement.span()!))
+                    output += format("\n#line {}\n", .debug_info.span_to_source_location(statement.span()!))
                 }
+                output += "for (;;)"
                 add_newline = false
                 let last_control_flow = .control_flow_state
                 .control_flow_state = last_control_flow.enter_loop()
@@ -2540,13 +2545,12 @@ struct CodeGenerator {
             }
             While(condition, block) => {
                 mut output = ""
+                if .debug_info.statement_span_comments and statement.span().has_value() {
+                    output += format("\n#line {}\n", .debug_info.span_to_source_location(statement.span()!))
+                }
                 output += "while ("
                 output += .codegen_expression(expression: condition)
                 output += ")"
-
-                if .debug_info.statement_span_comments and statement.span().has_value() {
-                    output += format(" /* {} */ ", .debug_info.span_to_source_location(statement.span()!))
-                }
 
                 {
                     let last_control_flow = .control_flow_state
@@ -2598,13 +2602,14 @@ struct CodeGenerator {
                 yield output
             }
             If(condition, then_block, else_statement) => {
-                mut output = "if ("
-                output += .codegen_expression(condition)
-                output += ")"
+                mut output = ""
 
                 if .debug_info.statement_span_comments and statement.span().has_value() {
-                    output += format(" /* {} */ ", .debug_info.span_to_source_location(statement.span()!))
+                    output += format("\n#line {}\n", .debug_info.span_to_source_location(statement.span()!))
                 }
+                output += "if ("
+                output += .codegen_expression(condition)
+                output += ")"
 
                 output += .codegen_block(block: then_block)
 
@@ -2635,10 +2640,6 @@ struct CodeGenerator {
 
                 yield output
             }
-        }
-
-        if .debug_info.statement_span_comments and statement.span().has_value() and add_newline {
-            output += format(" /* {} */", .debug_info.span_to_source_location(statement.span()!))
         }
 
         if add_newline {
