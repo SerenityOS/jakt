@@ -59,7 +59,7 @@ const tmpFile = tmp.fileSync();
 
 function includeFlagForPath(file_path: string): string {
     if (file_path.startsWith("file://")) {
-        return " -I " + path.dirname(fileURLToPath(file_path));   
+        return " -I " + path.dirname(fileURLToPath(file_path));
     }
     return " -I " + file_path;
 }
@@ -95,6 +95,7 @@ connection.onInitialize((params: InitializeParams) => {
             definitionProvider: true,
             typeDefinitionProvider: true,
             hoverProvider: true,
+            documentFormattingProvider: true,
         },
     };
     if (hasWorkspaceFolderCapability) {
@@ -624,6 +625,35 @@ connection.onCompletion(
         return [];
     }
 );
+
+connection.onDocumentFormatting(async (params) => {
+    console.time("onDocumentFormatting");
+    const document = documents.get(params.textDocument.uri);
+    const settings = await getDocumentSettings(params.textDocument.uri);
+
+    const text = document?.getText();
+
+    if (typeof text == "string") {
+        const stdout = await runCompiler(
+            text,
+            "-f " + includeFlagForPath(params.textDocument.uri),
+            settings
+        );
+        const formatted = stdout;
+        console.timeEnd("onDocumentFormatting");
+        return [
+            {
+                range: {
+                    start: { line: 0, character: 0 },
+                    end: { line: document!.lineCount, character: 0 },
+                },
+                newText: formatted,
+            },
+        ];
+    }
+    console.timeEnd("onDocumentFormatting");
+    return [];
+});
 
 // This handler resolves additional information for the item selected in
 // the completion list.
