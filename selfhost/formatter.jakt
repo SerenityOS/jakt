@@ -1419,7 +1419,7 @@ struct Stage0 {
                         preceding_trivia: []
                     )
                 }
-                Identifier => {
+                Identifier | Number => {
                     if .peek(offset: -1) is Identifier and not inserted_comma {
                         // Insert a fake comma
                         .index--
