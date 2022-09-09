@@ -324,7 +324,7 @@ struct Stage0 {
             abort()
         }
 
-        let token = .consume()
+        mut token = .consume()
         mut indent_change = 0
         if not reconsume {
             if (not .already_seen_enclosure_in_current_line) and (
@@ -584,7 +584,7 @@ struct Stage0 {
                     yield FormattedToken(
                         token
                         indent: .indent
-                        trailing_trivia: [b' ']
+                        trailing_trivia: []
                         preceding_trivia: []
                     )
                 }
@@ -594,7 +594,7 @@ struct Stage0 {
                         token
                         indent: .indent
                         trailing_trivia: []
-                        preceding_trivia: [b' ']
+                        preceding_trivia: []
                     )
                 }
                 Comma => {
@@ -635,19 +635,53 @@ struct Stage0 {
                     return .next()
                 }
                 else => {
-                    if not emitted_comma {
-                        .replace_state(State::ImportList(emitted_comma: true))
-                        .index--
-                        return FormattedToken(
-                            token: Token::Comma(span: token.span())
-                            indent: .indent
-                            trailing_trivia: [b' ']
-                            preceding_trivia: []
-                        )
+                    mut collection: [String] = []
+                    mut output = ""
+                    let span = token.span()
+                    while not token is RCurly {
+                        if token is Identifier(name) {
+                            collection.push(name)
+                        }
+                        token = .consume()
                     }
-                    .replace_state(State::ImportList(emitted_comma: false))
+                    bubble_sort(collection)
+                    mut first = true
+                    mut overflow = false
+                    mut current_len = 0uz
+                    let indent_amount = 4uz
+                    for item in collection.iterator() {
+                        if (current_len + item.length() + 2) > (120 - indent_amount) {
+                            overflow = true
+                            output += "\n"
+                            for i in 0..indent_amount {
+                                output += " "
+                            }
+                            current_len = indent_amount
+                        } else if not first {
+                            output += ", "
+                            current_len += 2
+                        } else {
+                            first = false
+                        }
+                        output += item
+                        current_len += item.length()
+                    }
+
+                    if overflow {
+                        for i in 0..indent_amount {
+                            output = " " + output
+                        }
+                        output = "\n" + output
+                        output += "\n"
+                    } else {
+                        output = " " + output + " "
+                    }
+
+                    .pop_state()
+                    .index--
+
                     yield FormattedToken(
-                        token
+                        token: Token::Identifier(name: output, span )
                         indent: .indent
                         trailing_trivia: []
                         preceding_trivia: []
@@ -2656,5 +2690,21 @@ struct Formatter {
         }
 
         return result
+    }
+}
+
+function bubble_sort(anon mut values: [String]) {
+    mut i = 0
+    while i < values.size() as! i64 - 1 {
+        mut j = 0
+        while j < (values.size() as! i64) - i - 1 {
+            if values[j] > values[j + 1] {
+                let tmp = values[j]
+                values[j] = values[j + 1]
+                values[j + 1] = tmp
+            }
+            ++j
+        }
+        ++i
     }
 }
