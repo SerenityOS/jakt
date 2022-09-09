@@ -361,6 +361,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
             block: new_block
             span: this_value.span
             type_id
+            pseudo_function_id: None
         )
     }
     else => {

@@ -1022,7 +1022,7 @@ boxed enum CheckedExpression {
     OptionalSome(expr: CheckedExpression, span: Span, type_id: TypeId)
     ForcedUnwrap(expr: CheckedExpression, span: Span, type_id: TypeId)
     Block(block: CheckedBlock, span: Span, type_id: TypeId)
-    Function(captures: [CheckedCapture], params: [CheckedParameter], can_throw: bool, return_type_id: TypeId, block: CheckedBlock, span: Span, type_id: TypeId)
+    Function(captures: [CheckedCapture], params: [CheckedParameter], can_throw: bool, return_type_id: TypeId, block: CheckedBlock, span: Span, type_id: TypeId, pseudo_function_id: FunctionId?)
     Try(expr: CheckedExpression, catch_block: CheckedBlock?, catch_name: String?, span: Span, type_id: TypeId, inner_type_id: TypeId)
     TryBlock(stmt: CheckedStatement, catch_block: CheckedBlock, error_name: String, error_span: Span, span: Span, type_id: TypeId)
     Garbage(Span)

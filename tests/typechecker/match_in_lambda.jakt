@@ -1,0 +1,26 @@
+/// Expect:
+/// - output: "OK\n"
+
+enum Test {
+    A(message: String)
+    B(message: String)
+}
+
+function pass(item: Test, check: &function(anon item: Test) -> String) -> String {
+    return check(item)
+}
+
+function main() {
+    let test = Test::A(message: "OK")
+
+    let ret = pass(item: test, check: &function(anon item: Test) -> String {
+        let message_a: String = match item {
+            A(message) => message
+            B(message) => message
+        }
+
+        return message_a
+    })
+
+    println("{}", ret)
+}

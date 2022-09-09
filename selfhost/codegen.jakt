@@ -1566,7 +1566,7 @@ struct CodeGenerator {
 
             yield output
         }
-        Function(captures, params, can_throw, block, return_type_id) => {
+        Function(captures, params, can_throw, block, return_type_id, pseudo_function_id) => {
             mut generated_captures: [String] = []
             for capture in captures.iterator() {
                 generated_captures.push(match capture {
@@ -1582,7 +1582,21 @@ struct CodeGenerator {
                 true => format("ErrorOr<{}>", .codegen_type(return_type_id))
                 else => .codegen_type(return_type_id)
             }
-            yield format("[{}]({}) -> {} {}", join(generated_captures, separator: ", "), join(generated_params, separator: ", "), return_type, .codegen_block(block))
+
+            mut block_output = ""
+            if pseudo_function_id.has_value() {
+                let function_ = .program.get_function(pseudo_function_id!)
+
+                let previous_function = .current_function
+                .current_function = function_
+                defer .current_function = previous_function
+
+                block_output = .codegen_block(block)
+            } else {
+                block_output = .codegen_block(block)
+            }
+
+            yield format("[{}]({}) -> {} {}", join(generated_captures, separator: ", "), join(generated_params, separator: ", "), return_type, block_output)
         }
         TryBlock(stmt, error_name, catch_block, span) => {
             mut output = ""
