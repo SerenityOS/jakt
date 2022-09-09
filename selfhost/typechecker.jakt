@@ -19,7 +19,7 @@ import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant,
     CheckedEnumVariantBinding, CheckedExpression, CheckedFunction, FunctionGenerics, CheckedMatchBody, CheckedMatchCase,
     CheckedNamespace, CheckedNumericConstant, CheckedParameter, CheckedProgram, CheckedStatement, CheckedStruct,
-    CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, EnumId, FunctionGenericParameter, FunctionId,
+    CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, EnumId, FieldRecord, FunctionGenericParameter, FunctionId,
     LoadedModule, Module, ModuleId, NumberConstant, ResolvedNamespace, SafetyMode, Scope, ScopeId, StructId,
     GenericInferences, StructOrEnumId, Type, TypeId, VarId, Value,
     builtin, never_type_id, unknown_type_id, void_type_id,
@@ -108,6 +108,32 @@ struct Typechecker {
     function get_struct(this, anon id: StructId) => .program.get_struct(id)
     function get_scope(this, anon id: ScopeId) throws => .program.get_scope(id)
     function find_var_in_scope(this, scope_id: ScopeId, var: String) throws -> CheckedVariable? => .program.find_var_in_scope(scope_id, var)
+
+    function lookup_struct_field(this, struct_id: StructId, name: String) throws -> FieldRecord? {
+        mut chain: [StructId] = []
+        mut current = Some(struct_id)
+
+        chain.push(current!)
+
+        while current.has_value() {
+            let parent = .get_struct(current!).super_struct_id
+            if parent.has_value() {
+                chain.push(parent!)
+            }
+            current = parent
+        }
+
+        for current_struct_id in chain.iterator() {
+            for field_id in .get_struct(current_struct_id).fields.iterator() {
+                let field = .get_variable(field_id)
+                if field.name == name {
+                    return FieldRecord(struct_id: current_struct_id, field_id)
+                }
+            }
+        }
+
+        return None
+    }
 
     function find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String) throws -> Value? => .program.find_comptime_binding_in_scope(scope_id, name)
 
@@ -1013,6 +1039,27 @@ struct Typechecker {
         }
     }
 
+    function struct_inheritance_chain(this, struct_id: StructId) throws -> [StructId] {
+        mut chain: [StructId] = []
+        mut current = Some(struct_id)
+
+        chain.push(current!)
+
+        while current.has_value() {
+            let parent = .get_struct(current!).super_struct_id
+            if parent.has_value() {
+                chain.push(parent!)
+            }
+            current = parent
+        }
+
+        mut reverse_chain: [StructId] = []
+        for i in 0..chain.size() {
+            reverse_chain.push(chain[chain.size() - 1 - i])
+        }
+        return reverse_chain
+    }
+
     function typecheck_struct_constructor(mut this, parsed_record: ParsedRecord, struct_id: StructId, scope_id: ScopeId) throws {
         let struct_type_id = .find_or_add_type_id(type: Type::Struct(struct_id))
         .current_struct_type_id = struct_type_id
@@ -1070,18 +1117,22 @@ struct Typechecker {
             mut module = .current_module()
             let function_id = module.add_function(checked_function: checked_constructor)
 
-            mut func = module.functions.last()!
-            for field_id in .get_struct(struct_id).fields.iterator() {
-                let field = .get_variable(field_id)
-                if field.visibility is Private {
-                    checked_constructor.visibility = Visibility::Private
-                }
+            let inheritance_chain = .struct_inheritance_chain(struct_id)
 
-                func.add_param(CheckedParameter(
-                    requires_label: true
-                    variable: field
-                    default_value: None
-                ))
+            mut func = module.functions.last()!
+            for field_struct_id in inheritance_chain.iterator() {
+                for field_id in .get_struct(field_struct_id).fields.iterator() {
+                    let field = .get_variable(field_id)
+                    if field.visibility is Private {
+                        checked_constructor.visibility = Visibility::Private
+                    }
+
+                    func.add_param(CheckedParameter(
+                        requires_label: true
+                        variable: field
+                        default_value: None
+                    ))
+                }
             }
 
             // Add constructor to the struct's scope
@@ -3894,20 +3945,19 @@ struct Typechecker {
                 }
 
                 let structure = .get_struct(struct_id)
-                for member_id in structure.fields.iterator() {
-                    let member = .get_variable(member_id)
 
-                    if member.name == field {
-                        let resolved_type_id = .resolve_type_var(type_var_type_id: member.type_id, scope_id)
-                        // FIXME: Unify with type
-                        .check_member_access(accessor: scope_id, accessee: structure.scope_id, member, span)
-                        return CheckedExpression::IndexedStruct(
-                            expr: checked_expr
-                            index: field
-                            span
-                            is_optional
-                            type_id: resolved_type_id)
-                    }
+                let field_record = .lookup_struct_field(struct_id, name: field)
+                if field_record.has_value() {
+                    let member = .get_variable(field_record!.field_id)
+                    let resolved_type_id = .resolve_type_var(type_var_type_id: member.type_id, scope_id)
+                    // FIXME: Unify with type
+                    .check_member_access(accessor: scope_id, accessee: .get_struct(field_record!.struct_id).scope_id, member, span)
+                    return CheckedExpression::IndexedStruct(
+                        expr: checked_expr
+                        index: field
+                        span
+                        is_optional
+                        type_id: resolved_type_id)
                 }
 
                 .error(format("unknown member of struct: {}.{}", structure.name, field), span)

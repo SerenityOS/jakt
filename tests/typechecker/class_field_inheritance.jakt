@@ -1,0 +1,19 @@
+/// Expect:
+/// - output: "1 2\n"
+
+class Grandparent {
+    public a: i64
+}
+
+class Parent : Grandparent {
+    public b: i64
+}
+
+class Child : Parent {
+
+}
+
+function main() {
+    let child = Child(a: 1, b: 2)
+    println("{} {}", child.a, child.b)
+}
