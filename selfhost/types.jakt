@@ -773,6 +773,11 @@ struct CheckedBlock {
     yielded_none: bool
 }
 
+struct FieldRecord {
+    struct_id: StructId
+    field_id: VarId
+}
+
 struct CheckedStruct {
     name: String
     name_span: Span

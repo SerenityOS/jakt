@@ -2959,19 +2959,30 @@ struct CodeGenerator {
 
             if not function_.params.is_empty() {
                 output += ": "
-                mut first = true
-                for param in function_.params.iterator() {
-                    if not first {
-                        output += ", "
-                    } else {
-                        first = false
-                    }
 
-                    output += param.variable.name
-                    output += "(move(a_"
-                    output += param.variable.name
-                    output += "))"
+                mut initializers: [String] = []
+
+                let parent_constructor_parameter_count = function_.params.size() - structure.fields.size()
+                if parent_constructor_parameter_count > 0 {
+                    mut parent_initializer = ""
+                    parent_initializer += .program.get_struct(structure.super_struct_id!).name
+                    parent_initializer += "("
+
+                    mut strings: [String] = []
+                    for param in function_.params[0..parent_constructor_parameter_count].iterator() {
+                        strings.push("move(a_" + param.variable.name + ")")
+                    }
+                    parent_initializer += join(strings, separator: ", ")
+
+                    parent_initializer += ")"
+                    initializers.push(parent_initializer)
                 }
+
+                for i in parent_constructor_parameter_count..function_.params.size() {
+                    let param = function_.params[i]
+                    initializers.push(param.variable.name + "(move(a_" + param.variable.name + "))")
+                }
+                output += join(initializers, separator: ", ")
             }
 
             output += "{}\n"
