@@ -96,6 +96,7 @@ connection.onInitialize((params: InitializeParams) => {
             typeDefinitionProvider: true,
             hoverProvider: true,
             documentFormattingProvider: true,
+            documentRangeFormattingProvider: true,
         },
     };
     if (hasWorkspaceFolderCapability) {
@@ -647,6 +648,40 @@ connection.onDocumentFormatting(async (params) => {
                     start: { line: 0, character: 0 },
                     end: { line: document!.lineCount, character: 0 },
                 },
+                newText: formatted,
+            },
+        ];
+    }
+    console.timeEnd("onDocumentFormatting");
+    return [];
+});
+
+connection.onDocumentRangeFormatting(async (params) => {
+    console.time("onDocumentFormatting");
+    const document = documents.get(params.textDocument.uri);
+    const settings = await getDocumentSettings(params.textDocument.uri);
+
+    const text = document?.getText();
+
+    const lineBreaks = findLineBreaks(text ?? "");
+
+    if (typeof text == "string") {
+        const stdout = await runCompiler(
+            text,
+            `--format-range ${
+                convertPosition(params.range.start, text)
+            }:${
+                convertPosition(params.range.end, text)
+            } -f ${
+                includeFlagForPath(params.textDocument.uri)
+            }`,
+            settings
+        );
+        const formatted = stdout;
+        console.timeEnd("onDocumentFormatting");
+        return [
+            {
+                range: params.range,
                 newText: formatted,
             },
         ];

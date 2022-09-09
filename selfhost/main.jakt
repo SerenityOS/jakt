@@ -66,6 +66,49 @@ function indent(anon level: usize) throws -> String {
     return output
 }
 
+struct FormatRange {
+    start: usize
+    end: usize
+}
+function parse_format_range(anon range: String, anon input_file_length: usize) throws -> FormatRange? {
+    // range: <start-offset>:<end-offset>
+    // {start,end}-offset: usize
+
+    let parts = range.split(':')
+    if parts.is_empty() {
+        return FormatRange(
+            start: 0
+            end: input_file_length
+        )
+    }
+
+    let start_input = parts[0].to_uint()
+    if not start_input.has_value() {
+        return None
+    }
+
+    let start = start_input! as! usize
+    let end = match parts.size() {
+        1 => input_file_length
+        2 => {
+            let end_input = parts[1].to_uint()
+            if not end_input.has_value() {
+                return None
+            }
+
+            yield end_input! as! usize
+        }
+        else => {
+            return None
+        }
+    }
+
+    return FormatRange(
+        start
+        end
+    )
+}
+
 function main(args: [String]) {
     if args.size() <= 1 {
         eprintln("{}", usage())
@@ -117,6 +160,7 @@ function main(args: [String]) {
     let interpret_run = args_parser.flag(["-r", "--run"])
 
     let format = args_parser.flag(["-f", "--format"])
+    let input_format_range = args_parser.option(["-fr", "--format-range"]) ?? ""
 
     if args_parser.flag(["--repl"]) {
         mut repl = REPL::create()
@@ -142,7 +186,11 @@ function main(args: [String]) {
         }
 
         if not interpret_run {
-            eprintln("you can only pass one source file")
+            eprintln(
+                "Extra unknown argument '{}', you can only pass one source file (was '{}')"
+                arg
+                file_name
+            )
             eprintln("{}", usage())
             return 1
         }
@@ -196,10 +244,23 @@ function main(args: [String]) {
         }
     }
 
+    let format_range = parse_format_range(
+        range: input_format_range
+        input_file_length: compiler.current_file_contents.size()
+    )
+    if not format_range.has_value() {
+        eprintln("invalid format range '{}', expected <start>(:<end>?)", input_format_range)
+        return 1
+    }
+
     if format {
         mut on_new_line = true
         for formatted_line in Formatter::for_tokens(tokens) {
             for formatted_token in formatted_line.iterator() {
+                if not formatted_token.token.span().is_in_offset_range(start: format_range!.start, end: format_range!.end) {
+                    continue
+                }
+
                 for byte in formatted_token.preceding_trivia.iterator() {
                     print("{:c}", byte)
                 }
