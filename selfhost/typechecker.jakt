@@ -4809,7 +4809,8 @@ struct Typechecker {
             return_type_id
             block: checked_block
             span
-            type_id)
+            type_id
+            pseudo_function_id)
     }
 
     function typecheck_namespaced_var_or_simple_enum_constructor_call(mut this, name: String, namespace_: [String], scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?, span: Span) throws -> CheckedExpression {
