@@ -352,10 +352,13 @@ public:
         , m_size(size)
     {
         VERIFY(m_storage);
-        VERIFY(m_offset < m_storage->size());
 
-        if (m_offset + m_size >= m_storage->size())
+        if (m_offset >= m_storage->size()) {
+            m_offset = 0;
+            m_size = 0;
+        } else if (m_offset + m_size >= m_storage->size()) {
             m_size = m_storage->size() - m_offset;
+        }
     }
 
     ErrorOr<Array<T>> to_array() const
