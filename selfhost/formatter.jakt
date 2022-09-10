@@ -1386,6 +1386,7 @@ struct Stage0 {
                 | RightArithmeticShift
                 | RightShiftEqual
                 | AmpersandEqual
+                | Ampersand
                 | PipeEqual
                 | Caret
                 | CaretEqual
