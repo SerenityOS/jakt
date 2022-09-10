@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Can't access method ‘cant_touch’, because it is marked private\n"
+/// - error: "Can't access method `cant_touch`, because it is marked private\n"
 
 class GoodEncapsulation {
     function cant_touch(this) {}

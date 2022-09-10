@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Function can throw mismatch: expected ‘Yes’, but got ‘No’"
+/// - error: "Function can throw mismatch: expected `Yes`, but got `No`"
 
 function find<T>(anon arr: [T], anon cb: function(a: T, b: T) throws -> bool) -> T? {
     for i in 0..arr.size() {

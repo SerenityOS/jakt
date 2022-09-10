@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Can't access method ‘private_static_function’, because it is marked private\n"
+/// - error: "Can't access method `private_static_function`, because it is marked private\n"
 
 class Foo {
     function private_static_function() {}

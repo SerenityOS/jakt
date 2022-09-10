@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Not a namespace, enum, class, or struct: ‘NS’\n"
+/// - error: "Not a namespace, enum, class, or struct: `NS`\n"
 
 function main() {
     NS::foo()
