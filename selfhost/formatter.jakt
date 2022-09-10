@@ -1327,6 +1327,7 @@ struct Stage0 {
                 // Shared unary and binary ops
                 Minus
                 | Asterisk
+                | Ampersand
                 => {
                     .replace_state(State::StatementContext(
                         open_parens: open_parens
