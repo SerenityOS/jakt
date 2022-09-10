@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Function parameter count mismatch: expected ‘2’, but got ‘3’"
+/// - error: "Function parameter count mismatch: expected `2`, but got `3`"
 
 function find<T>(anon arr: [T], anon cb: function(a: T, b: T) -> bool) -> T? {
     for i in 0..arr.size() {

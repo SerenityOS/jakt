@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Redefinition of variable ‘x’\n"
+/// - error: "Redefinition of variable `x`\n"
 
 function main() {
     let x = 10

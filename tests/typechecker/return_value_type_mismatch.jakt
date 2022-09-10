@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Type mismatch: expected ‘u64’, but got ‘String’\n"
+/// - error: "Type mismatch: expected `u64`, but got `String`\n"
 
 function foo() -> u64 {
     return "Foo"

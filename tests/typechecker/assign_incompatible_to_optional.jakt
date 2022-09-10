@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Assignment between incompatible types (‘Foo?’ and ‘i64’)\n"
+/// - error: "Assignment between incompatible types (`Foo?` and `i64`)\n"
 
 class Foo {
 }

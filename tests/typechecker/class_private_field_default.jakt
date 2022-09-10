@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Can't access field ‘muda_amount’, because it is marked private\n"
+/// - error: "Can't access field `muda_amount`, because it is marked private\n"
 
 class GoodEncapsulation {
     muda_amount: u32

@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Type mismatch: expected ‘String’, but got ‘u64’\n"
+/// - error: "Type mismatch: expected `String`, but got `u64`\n"
 
 function main() {
     let foo: u64 = 0

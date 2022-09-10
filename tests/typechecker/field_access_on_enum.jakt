@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Member field access on value of non-struct type ‘E’"
+/// - error: "Member field access on value of non-struct type `E`"
 
 enum E {
     A

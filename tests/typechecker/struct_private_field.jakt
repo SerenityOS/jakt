@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Can't access field ‘age’, because it is marked private\n"
+/// - error: "Can't access field `age`, because it is marked private\n"
 
 struct WeirdEncapsulation {
     private age: i32

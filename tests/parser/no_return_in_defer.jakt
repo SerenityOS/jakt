@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "‘return’ is not allowed inside ‘defer’"
+/// - error: "`return` is not allowed inside `defer`"
 
 function main() {
     defer {
