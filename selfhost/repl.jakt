@@ -218,7 +218,7 @@ struct REPL {
     root_interpreter_scope: InterpreterScope
     file_id: FileId
 
-    function create(target_triple: String? = None) throws -> REPL {
+    function create(runtime_path: Path, target_triple: String? = None) throws -> REPL {
         mut compiler = Compiler(
             files: []
             file_ids: [:]
@@ -229,6 +229,7 @@ struct REPL {
             dump_parser: false
             ignore_parser_errors: false
             debug_print: false
+            std_include_path: runtime_path
             include_paths: []
             json_errors: false
             dump_type_hints: false

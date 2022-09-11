@@ -289,7 +289,7 @@ function main(args: [String]) {
     } as! usize
 
     if args_parser.flag(["--repl"]) {
-        mut repl = REPL::create(target_triple)
+        mut repl = REPL::create(runtime_path: Path::from_parts([runtime_path, "jaktlib"]), target_triple)
         repl.run()
         return 0
     }
@@ -356,6 +356,8 @@ function main(args: [String]) {
         dump_parser: parser_debug
         ignore_parser_errors: false
         debug_print: debug_print
+        // FIXME: Case sensitivity on win/mac requires this path be named different than the jakt cpp lib
+        std_include_path: Path::from_parts([runtime_path, "jaktlib"])
         include_paths: extra_include_paths
         json_errors
         dump_type_hints
