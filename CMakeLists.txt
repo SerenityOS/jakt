@@ -106,10 +106,17 @@ else()
   )
 endif()
 
+# FIXME: STDLIB target needed
+set(SELFHOST_STDLIB_SOURCES
+  jakt__libc__io.cpp
+  jakt__arguments.cpp
+)
+
 add_jakt_executable(jakt_stage1
   COMPILER jakt_stage0
   MAIN_SOURCE selfhost/main.jakt
   MODULE_SOURCES ${SELFHOST_SOURCES}
+  STDLIB_SOURCES ${SELFHOST_STDLIB_SOURCES}
   RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/runtime"
 )
 
@@ -124,6 +131,7 @@ if (FINAL_STAGE GREATER_EQUAL 2)
     COMPILER jakt_stage1
     MAIN_SOURCE selfhost/main.jakt
     MODULE_SOURCES ${SELFHOST_SOURCES}
+    STDLIB_SOURCES ${SELFHOST_STDLIB_SOURCES}
     RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/runtime"
   )
   target_include_directories(jakt_stage2 PUBLIC

@@ -11,7 +11,7 @@ set -e
 # Next, use that to build the selfhost
 rm -fr selfhost_build
 mkdir selfhost_build
-build/main --binary-dir selfhost_build -S -T unknown-unknown-unknown-unknown --runtime-library-path "$JAKT_RUNTIME_DIR" selfhost/main.jakt
+build/main --binary-dir selfhost_build -S -T unknown-unknown-unknown-unknown --runtime-library-path "$JAKT_RUNTIME_DIR" --runtime-path runtime selfhost/main.jakt
 
 # Now copy all the things
 rm -fr bootstrap/temp

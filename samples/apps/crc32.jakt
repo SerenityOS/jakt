@@ -1,6 +1,8 @@
 /// Expect:
 /// - stderr: "usage: crc32 <path>\n"
 
+import jakt::libc::io { fopen, fclose, fgetc, feof }
+
 function make_lookup_table() throws -> [u32] {
     mut data = [0u32; 256]
     for i in 0..data.size() {
