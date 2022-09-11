@@ -132,7 +132,8 @@ class Compiler {
         .get_file_id_or_register(file_name)
     }
 
-    public function search_for_path(this, anon module_name: String) throws -> FilePath? {
+    public function search_for_path(this, anon input_module_name: String) throws -> FilePath? {
+        let module_name = input_module_name.replace(replace: "::", with: "/")
         for include_path in .include_paths.iterator() {
             let candidate_path = include_path + "/" + module_name + ".jakt"
             if File::exists(candidate_path) {

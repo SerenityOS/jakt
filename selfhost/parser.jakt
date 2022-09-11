@@ -1371,18 +1371,37 @@ struct Parser {
             alias_name: None
             import_list: [])
 
-        parsed_import.module_name = match .current() {
-            Identifier(name, span) => ImportName(name, span)
-            else => { 
-                .error("Expected module name", .current().span())
-                return parsed_import
-            }
-        }
-        .index++
-
-        if .eol() {
+        guard .current() is Identifier(name: current_name, span: current_span) else {
+            .error("Expected module name", .current().span())
             return parsed_import
         }
+        .index++
+        // WTB: Mutable guard bindings
+        mut module_name: String = current_name
+        mut module_span: Span = current_span
+
+        if .eol() {
+            parsed_import.module_name = ImportName(name: module_name, span: module_span)
+            return parsed_import
+        }
+
+        while (.current() is ColonColon) {
+            .index++
+            module_name += "::"
+            match .current() {
+                Identifier(name, span) => {
+                    module_name += name
+                    module_span = merge_spans(module_span, span)
+                    .index++
+                }
+                As | LCurly => { break }
+                else => {
+                    .error("Expected module name fragment", .current().span())
+                    return parsed_import
+                }
+            }
+        }
+        parsed_import.module_name = ImportName(name: module_name, span: module_span)
 
         if .current() is As {
             .index++
