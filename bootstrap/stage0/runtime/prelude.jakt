@@ -138,13 +138,3 @@ extern function as_saturated<U, T>(anon input: T) -> U
 extern function as_truncated<U, T>(anon input: T) -> U
 extern function unchecked_add<T>(anon a: T, anon b: T) -> T
 extern function unchecked_mul<T>(anon a: T, anon b: T) -> T
-
-// FIXME: Remove from prelude once extern C functions are working again
-extern struct FILE {}
-
-extern function fopen(anon str: raw c_char, anon mode: raw c_char) -> raw FILE
-extern function fgetc(anon mut file: raw FILE) -> c_int
-extern function fclose(anon mut file: raw FILE) -> c_int
-extern function feof(anon mut file: raw FILE) -> c_int
-extern function putchar(anon ch: c_int) -> c_int
-extern function system(anon command: raw c_char) -> c_int

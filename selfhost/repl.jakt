@@ -6,12 +6,7 @@ import utility { Span }
 import error { JaktError }
 import interpreter { value_to_checked_expression }
 
-import extern c "stdio.h" {
-    extern function fopen(pathname: raw c_char, mode: raw c_char) -> raw FILE
-    extern function fclose(stream: raw FILE) -> raw c_int
-    // Blame windows for this.
-    extern function fgets(s: raw c_char, n: usize, stream: raw FILE) -> raw c_char
-}
+import Standard::libc::io { fopen, fclose, fgets, FILE }
 
 function null<T>() -> raw T {
     unsafe {
