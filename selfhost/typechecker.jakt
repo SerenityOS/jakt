@@ -743,9 +743,10 @@ struct Typechecker {
 
             let original_current_module_id = .current_module_id
 
-            imported_module_id = .create_module(name: module_name, is_root: false, path: file_name.to_string())
+            let sanitized_module_name = module_name.replace(replace: ":", with: "_")
+            imported_module_id = .create_module(name: sanitized_module_name, is_root: false, path: file_name.to_string())
             .program.set_loaded_module(
-                module_name: module_name
+                module_name: sanitized_module_name
                 loaded_module: LoadedModule(
                     module_id: imported_module_id
                     file_id
@@ -753,7 +754,7 @@ struct Typechecker {
 
             .current_module_id = imported_module_id
 
-            let imported_scope_id = .create_scope(parent_scope_id: .root_scope_id(), can_throw: false, debug_name: format("module({})", module_name))
+            let imported_scope_id = .create_scope(parent_scope_id: .root_scope_id(), can_throw: false, debug_name: format("module({})", sanitized_module_name))
             .typecheck_module(parsed_namespace: parsed_namespace!, scope_id: imported_scope_id)
 
             .current_module_id = original_current_module_id

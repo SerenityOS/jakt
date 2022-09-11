@@ -81,6 +81,7 @@ install(DIRECTORY "runtime"
         COMPONENT Jakt_Development
         FILES_MATCHING PATTERN "*.h"
                        PATTERN "*.cpp"
+                       PATTERN "*.jakt"
                        PATTERN "utility"
 )
 

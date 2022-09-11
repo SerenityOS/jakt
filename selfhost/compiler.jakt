@@ -13,6 +13,7 @@ class Compiler {
     public dump_parser: bool
     public ignore_parser_errors: bool
     public debug_print: bool
+    public std_include_path: Path
     public include_paths: [String]
     public json_errors: bool
     public dump_type_hints: bool
@@ -143,8 +144,20 @@ class Compiler {
         builder.append(get_path_separator())
         let separator = builder.to_string()
         let module_name = input_module_name.replace(replace: "::", with: separator)
+
+        // Note: Checking this after the replacement!
+        let standard_module_name = "jakt"
+
         for include_path in .include_paths.iterator() {
             let candidate_path = Path::from_parts([include_path, module_name + ".jakt"])
+            if candidate_path.exists() {
+                return candidate_path
+            }
+        }
+
+        if module_name.starts_with(standard_module_name) {
+            let std_module_name_path = module_name.substring(start: standard_module_name.length() + 1, length: module_name.length() - (standard_module_name.length() + 1))
+            let candidate_path = Path::from_parts([.std_include_path.to_string(), std_module_name_path + ".jakt"])
             if candidate_path.exists() {
                 return candidate_path
             }
