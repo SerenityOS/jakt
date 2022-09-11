@@ -127,13 +127,13 @@ struct TypeId {
     function from_string(anon type_id_string: String) throws -> TypeId {
         let parts = type_id_string.split('_')
         if not (parts.size() == 2) {
-            panic(format("Failed to convert string `{}` to a TypeId: Wrong number of parts. (Wanted 2, got {})", type_id_string, parts.size()))
+            panic(format("Failed to convert string ‘{}’ to a TypeId: Wrong number of parts. (Wanted 2, got {})", type_id_string, parts.size()))
         }
 
         let module_id = parts[0].to_uint()
         let type_id = parts[1].to_uint()
         if not module_id.has_value() or not type_id.has_value() {
-            panic(format("Failed to convert string `{}` to a TypeId. (module_id = {} ({}), type_id = {} ({}))", type_id_string, module_id, parts[0], type_id, parts[1]))
+            panic(format("Failed to convert string ‘{}’ to a TypeId. (module_id = {} ({}), type_id = {} ({}))", type_id_string, module_id, parts[0], type_id, parts[1]))
         }
 
         return TypeId(module: ModuleId(id: module_id.value() as! usize), id: type_id.value() as! usize)
