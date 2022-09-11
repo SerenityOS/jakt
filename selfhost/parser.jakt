@@ -1637,7 +1637,7 @@ struct Parser {
                                 .index++
                             }
                             else => {
-                                .error(format("Incomplete enum variant defintion, expected `,` or `)`; got `{}`", .current()), .current().span())
+                                .error(format("Incomplete enum variant defintion, expected `,` or `)`; got ‘{}’", .current()), .current().span())
                                 break;
                             }
                         }

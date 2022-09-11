@@ -249,7 +249,7 @@ struct Typechecker {
             println("{:#}", parsed_namespace)
         }
 
-        .compiler.dbg_println(format("before typechecking parsed prelude, modules `{}`", .program.modules))
+        .compiler.dbg_println(format("before typechecking parsed prelude, modules ‘{}’", .program.modules))
         .typecheck_module(
             parsed_namespace
             scope_id: prelude_scope_id
@@ -3008,7 +3008,7 @@ struct Typechecker {
                         return CheckedExpression::UnaryOp(expr: checked_expr, op: checked_op, span, type_id)
                     }
                     else => {
-                        .error(format("Dereference of a non-pointer type `{}`", .type_name(expr_type_id)), span)
+                        .error(format("Dereference of a non-pointer type ‘{}’", .type_name(expr_type_id)), span)
                     }
                 }
             }
@@ -5715,7 +5715,7 @@ struct Typechecker {
                             struct_ = .get_struct(parent_struct_id)
                             scope_id = struct_.scope_id
                         } else {
-                            .error(format("Could not find `{}`", call.name), span)
+                            .error(format("Could not find ‘{}’", call.name), span)
                             break
                         }
                     }

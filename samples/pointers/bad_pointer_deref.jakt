@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Dereference of a non-pointer type `i64`"
+/// - error: "Dereference of a non-pointer type ‘i64’"
 
 function main() {
     let x = 4
