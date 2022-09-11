@@ -1,7 +1,7 @@
 import error { JaktError, print_error, print_error_json }
 import utility
 import utility { FileId }
-import path { Path }
+import path { Path, get_path_separator }
 
 class Compiler {
     public files: [Path]
@@ -136,14 +136,19 @@ class Compiler {
         .get_file_id_or_register(file_name)
     }
 
-    public function search_for_path(this, anon module_name: String) throws -> Path? {
+    public function search_for_path(this, anon input_module_name: String) throws -> Path? {
+        // FIXME: Need a better way to convert u8 to a String.
+        //        https://discord.com/channels/830522505605283862/976984180313452604/1035127640807448616
+        mut builder = StringBuilder::create()
+        builder.append(get_path_separator())
+        let separator = builder.to_string()
+        let module_name = input_module_name.replace(replace: "::", with: separator)
         for include_path in .include_paths.iterator() {
-            let candidate_path = include_path + "/" + module_name + ".jakt"
-            if File::exists(candidate_path) {
-                return Path::from_string(candidate_path)
+            let candidate_path = Path::from_parts([include_path, module_name + ".jakt"])
+            if candidate_path.exists() {
+                return candidate_path
             }
         }
-
         return None
     }
 }
