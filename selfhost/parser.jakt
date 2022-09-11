@@ -1664,6 +1664,30 @@ struct Parser {
             return parsed_import
         }
 
+        if not .current() is LCurly {
+            mut module_name: String = parsed_import.module_name.literal_name()
+            mut module_span: Span = parsed_import.module_name.span()
+
+            while (.current() is ColonColon) {
+                .index++
+                module_name += "::"
+                match .current() {
+                    Identifier(name, span) => {
+                        module_name += name
+                        module_span = merge_spans(module_span, span)
+                        .index++
+                    }
+                    As | LCurly => { break }
+                    else => {
+                        .error("Expected module name fragment", .current().span())
+                        return parsed_import
+                    }
+                }
+            }
+
+            parsed_import.module_name = ImportName::Literal(name: module_name, span: module_span)
+        }
+
         if .current() is As {
             .index++
             if .current() is Identifier(name, span) {
