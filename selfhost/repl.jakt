@@ -7,12 +7,7 @@ import error { JaktError }
 import interpreter { value_to_checked_expression }
 import path { Path }
 
-import extern c "stdio.h" {
-    extern function fopen(pathname: raw c_char, mode: raw c_char) -> raw FILE
-    extern function fclose(stream: raw FILE) -> raw c_int
-    // Blame windows for this.
-    extern function fgets(s: raw c_char, n: usize, stream: raw FILE) -> raw c_char
-}
+import jakt::libc::io { fopen, fclose, fgets, FILE }
 
 enum LineResult {
     Line(String)
@@ -25,7 +20,7 @@ struct Editor {
     prompt: String
 
     function create(prompt: String) throws -> Editor {
-        mut std_in = fopen("/dev/stdin".c_string(), "r".c_string())
+        mut std_in = fopen(pathname: "/dev/stdin".c_string(), mode: "r".c_string())
         if std_in == null<FILE>() {
             eprintln("Could not open /dev/stdin for reading")
             throw Error::from_errno(42)

@@ -6,11 +6,14 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
+import jakt::libc::io { system }
+import jakt::arguments { ArgsParser }
+
 import compiler { Compiler, FileId }
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
 import formatter { Formatter }
-import utility { ArgsParser, Span, escape_for_quotes, join }
+import utility { Span, escape_for_quotes, join}
 import lexer { Lexer }
 import parser { Parser }
 import interpreter { Interpreter, InterpreterScope, value_to_checked_expression }

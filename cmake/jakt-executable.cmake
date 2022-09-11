@@ -47,11 +47,16 @@ function(add_jakt_compiler_flags target)
 endfunction()
 
 function(add_jakt_executable executable)
-  cmake_parse_arguments(PARSE_ARGV 1 JAKT_EXECUTABLE "" "MAIN_SOURCE;RUNTIME_DIRECTORY;COMPILER" "MODULE_SOURCES;INCLUDES")
+  cmake_parse_arguments(PARSE_ARGV 1 JAKT_EXECUTABLE "" "MAIN_SOURCE;RUNTIME_DIRECTORY;COMPILER" "MODULE_SOURCES;STDLIB_SOURCES;INCLUDES")
   set(main_source "${CMAKE_CURRENT_LIST_DIR}/${JAKT_EXECUTABLE_MAIN_SOURCE}" )
+  set(runtime_path "${CMAKE_CURRENT_LIST_DIR}/runtime" )
   get_filename_component(main_base "${main_source}" NAME_WE)
 
   list(APPEND cpp_files "Root Module.cpp")
+  foreach (file ${JAKT_EXECUTABLE_STDLIB_SOURCES})
+      list(APPEND cpp_files "${file}")
+  endforeach()
+
   foreach(module_source ${JAKT_EXECUTABLE_MODULE_SOURCES})
     get_filename_component(module_base "${module_source}" NAME_WE)
     list(APPEND cpp_files "${module_base}.cpp")
@@ -83,6 +88,7 @@ function(add_jakt_executable executable)
       $<$<CONFIG:Release>:-O>
       -T "${JAKT_TARGET}"
       --binary-dir "${binary_tmp_dir}"
+      --runtime-path "${runtime_path}"
       -I "$<JOIN:${JAKT_EXECUTABLE_COMPILER_INCLUDES},;-I>"
       "${main_source}"
     VERBATIM
@@ -98,6 +104,7 @@ function(add_jakt_executable executable)
     target_sources("${executable}" PRIVATE "${file}")
     set_source_files_properties("${file}" PROPERTIES GENERATED TRUE)
   endforeach()
+
   add_jakt_compiler_flags("${executable}")
 
   target_link_libraries("${executable}" PRIVATE Jakt::jakt_main)
