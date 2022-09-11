@@ -248,6 +248,7 @@ struct CodeGenerator {
         )
         mut output = ""
         output += "#include <lib.h>\n"
+        output += "#ifdef _WIN32\nextern \"C\" __cdecl void SetConsoleOutputCP(unsigned long code_page);\nconst unsigned long CP_UTF8 = 65001;\n#endif\n"
         let sorted_modules = generator.topologically_sort_modules()
         for idx in sorted_modules.size()..0 {
             let i = sorted_modules[idx - 1].id
@@ -3140,7 +3141,14 @@ struct CodeGenerator {
         }
 
         output += " {\n"
-
+        if is_main {
+            output += "\n
+            #ifdef _WIN32
+            SetConsoleOutputCP(CP_UTF8);
+            // Enable buffering to prevent VS from chopping up UTF-8 byte sequences
+            setvbuf(stdout, nullptr, _IOFBF, 1000);
+            #endif\n"
+        }
         // FIXME: Panic if function type is unknown, and this isn't `main()`
 
         let last_control_flow = .control_flow_state
