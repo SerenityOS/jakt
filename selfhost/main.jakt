@@ -222,6 +222,7 @@ function main(args: [String]) {
         dump_parser: parser_debug
         ignore_parser_errors: false
         debug_print: debug_print
+        std_include_path: runtime_path + "/Standard"
         include_paths: extra_include_paths
         json_errors
         dump_type_hints

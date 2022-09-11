@@ -1,0 +1,110 @@
+// Copyright (c) 2022, JT <jt@serenityos.org>
+// Copyright (c) 2022, Andreas Kling <kling@serenityos.org>
+//
+// SPDX-License-Identifier: BSD-2-Clause
+
+struct ArgsParser {
+    args: [String]
+    removed_indices: [usize]
+    definitely_positional_args: [String]
+
+    function flag(mut this, anon names: [String]) throws -> bool {
+        for i in 0...args.size() {
+            for name in names.iterator() {
+                if .args[i] == name {
+                    .removed_indices.push(i)
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
+    function option(mut this, anon names: [String]) throws -> String? {
+        for i in 1...args.size() {
+            for name in names.iterator() {
+                if .args[i] == name {
+                    if .args.size() <= i+1 {
+                        eprintln("The option '{}' requires a value, but none was supplied", name)
+                        throw Error::from_errno(200)
+                    }
+
+                    .removed_indices.push(i)
+                    .removed_indices.push(i+1)
+
+                    return .args[i+1]
+                }
+            }
+        }
+
+        return None
+    }
+
+    function option_multiple(mut this, anon names: [String]) throws -> [String]
+    {
+        mut result: [String] = []
+        for i in 1...args.size() {
+            for name in names.iterator() {
+                if .args[i] == name {
+                    if .args.size() <= i + 1 {
+                        eprintln("The option '{}' requires a value, but none was supplied", name)
+                        throw Error::from_errno(200)
+                    }
+
+                    .removed_indices.push(i)
+                    .removed_indices.push(i + 1)
+                    result.push(.args[i + 1])
+                }
+            }
+        }
+        return result
+    }
+
+    function from_args(anon args: [String]) throws -> ArgsParser {
+        mut parser = ArgsParser(args, removed_indices: [], definitely_positional_args: [])
+        mut i = 0uz
+        for arg in parser.args.iterator() {
+            if arg == "--" {
+                parser.definitely_positional_args = parser.args[(i+1)..parser.args.size()].to_array()
+                parser.args = parser.args[0..i].to_array()
+                break
+            }
+            i += 1
+        }
+
+        return parser
+    }
+
+    function remaining_arguments(this) throws -> [String] {
+        mut remaining : [String] = []
+
+        for i in 0...args.size() {
+            if not .removed_indices.contains(i) {
+                remaining.push(.args[i])
+            }
+        }
+
+        for arg in .definitely_positional_args.iterator() {
+            remaining.push(arg)
+        }
+
+        return remaining
+    }
+
+}
+
+function escape_for_quotes(anon s: String) throws -> String {
+    mut builder = StringBuilder::create()
+    for i in 0..s.length() {
+        let c = s.byte_at(i)
+        match c {
+            b'"' =>  { builder.append_string("\\\"") }
+            b'\\' => { builder.append_string("\\\\") }
+            b'\n' => { builder.append_string("\\n") }
+            else =>  { builder.append(c) }
+        }
+    }
+
+    return builder.to_string()
+}

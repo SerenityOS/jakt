@@ -248,6 +248,7 @@ struct REPL {
             dump_parser: false
             ignore_parser_errors: false
             debug_print: false
+            std_include_path: ""
             include_paths: []
             json_errors: false
             dump_type_hints: false

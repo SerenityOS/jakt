@@ -12,6 +12,7 @@ class Compiler {
     public dump_parser: bool
     public ignore_parser_errors: bool
     public debug_print: bool
+    public std_include_path: String
     public include_paths: [String]
     public json_errors: bool
     public dump_type_hints: bool
@@ -134,6 +135,14 @@ class Compiler {
 
     public function search_for_path(this, anon input_module_name: String) throws -> FilePath? {
         let module_name = input_module_name.replace(replace: "::", with: "/")
+        // Note: Checking this after the replacement!
+        let standard_module_name = "Standard/"
+        if module_name.length() > standard_module_name.length() and standard_module_name == module_name.substring(start: 0, length: standard_module_name.length()) {
+            let candidate_path = .std_include_path + "/" + module_name.substring(start: standard_module_name.length(), length: module_name.length() - standard_module_name.length()) + ".jakt"
+            if File::exists(candidate_path) {
+                return FilePath::make(candidate_path)
+            }
+        }
         for include_path in .include_paths.iterator() {
             let candidate_path = include_path + "/" + module_name + ".jakt"
             if File::exists(candidate_path) {
