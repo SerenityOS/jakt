@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Expected `->`, `=>` or `{`"
+/// - error: "Expected ‘->’, ‘=>’ or ‘{’"
 function foo() throws i64 {
     return 5
 }

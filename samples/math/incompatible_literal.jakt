@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Binary arithmetic operation between incompatible types (`u8` and `u16`)\n"
+/// - error: "Binary arithmetic operation between incompatible types (‘u8’ and ‘u16’)\n"
 
 function main() {
     let x: u8 = 12;

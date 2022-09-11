@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Function type mismatch: expected `function(T, T) -> bool`, but got `function(i64, i32) -> bool"
+/// - error: "Function type mismatch: expected ‘function(T, T) -> bool’, but got ‘function(i64, i32) -> bool"
 
 function find<T>(anon arr: [T], anon cb: function(a: T, b: T) -> bool) -> T? {
     for i in 0..arr.size() {

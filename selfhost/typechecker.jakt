@@ -426,7 +426,7 @@ struct Typechecker {
         if found_type_id.has_value() and not found_type_id!.equals(type_id) {
             // FIXME: Show hint of the original definition, once we store the name span.
             .error(
-                format("Redefinition of type `{}`", type_name)
+                format("Redefinition of type ‘{}’", type_name)
                 span
             )
             return false
@@ -440,7 +440,7 @@ struct Typechecker {
         for existing_function in scope.functions.iterator() {
             if name == existing_function.0 {
                 let function_ = .get_function(existing_function.1)
-                .error_with_hint(message: format("Redefinition of function `{}`", name), span, hint: "previous definition here", hint_span: function_.name_span)
+                .error_with_hint(message: format("Redefinition of function ‘{}’", name), span, hint: "previous definition here", hint_span: function_.name_span)
                 return false
             }
         }
@@ -453,7 +453,7 @@ struct Typechecker {
         for existing_var in scope.vars.iterator() {
             if name == existing_var.0 {
                 let variable_ = .get_variable(existing_var.1)
-                .error_with_hint(message: format("Redefinition of variable `{}`", name), span, hint: "previous definition here", hint_span: variable_.definition_span)
+                .error_with_hint(message: format("Redefinition of variable ‘{}’", name), span, hint: "previous definition here", hint_span: variable_.definition_span)
             }
         }
         scope.vars.set(key: name, value: var_id)
@@ -465,7 +465,7 @@ struct Typechecker {
         for existing in scope.comptime_bindings.iterator() {
             if name == existing.0 {
                 .error_with_hint(
-                    message: format("Redefinition of comptime variable `{}`", name)
+                    message: format("Redefinition of comptime variable ‘{}’", name)
                     span
                     hint: "previous definition here"
                     hint_span: existing.1.span)
@@ -1988,7 +1988,7 @@ struct Typechecker {
         if contains_reference {
             .error(
                 format(
-                    "Reference type `{}` not usable in this context"
+                    "Reference type ‘{}’ not usable in this context"
                     .type_name(type_id)
                 )
                 span
@@ -2277,7 +2277,7 @@ struct Typechecker {
                     if seen_type_id_string.value() != rhs_type_id_string {
                         .error(
                             format(
-                                "Type mismatch: expected `{}`, but got `{}`"
+                                "Type mismatch: expected ‘{}’, but got ‘{}’"
                                 .type_name(seen_type_id)
                                 .type_name(rhs_type_id)
                             )
@@ -2315,7 +2315,7 @@ struct Typechecker {
                 } else {
                     if not rhs_type_id.equals(lhs_type_id) {
                         .error(
-                            format("Type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                            format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                             span
                         )
                         return false
@@ -2325,7 +2325,7 @@ struct Typechecker {
             Function(params: lhs_params, can_throw: lhs_can_throw, return_type_id: lhs_return_type_id) => {
                 guard rhs_type is Function(params: rhs_params, can_throw: rhs_can_throw, return_type_id: rhs_return_type_id) else {
                     .error(
-                        format("Type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                        format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                         span
                     )
                     return false
@@ -2343,14 +2343,14 @@ struct Typechecker {
                     }
 
                     .error(
-                        format("Function can throw mismatch: expected `{}`, but got `{}`", lhs_throw, rhs_throw)
+                        format("Function can throw mismatch: expected ‘{}’, but got ‘{}’", lhs_throw, rhs_throw)
                         span
                     )
                 }
 
                 if not (lhs_params.size() == rhs_params.size()) {
                     .error(
-                        format("Function parameter count mismatch: expected `{}`, but got `{}`", lhs_params.size(), rhs_params.size())
+                        format("Function parameter count mismatch: expected ‘{}’, but got ‘{}’", lhs_params.size(), rhs_params.size())
                         span
                     )
                     return false
@@ -2363,9 +2363,9 @@ struct Typechecker {
                     span
                 ) {
                     .error_with_hint(
-                        format("Function type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                        format("Function type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                         span
-                        format("The return types differ: expected `{}`, but got `{}`", .type_name(lhs_return_type_id), .type_name(rhs_return_type_id))
+                        format("The return types differ: expected ‘{}’, but got ‘{}’", .type_name(lhs_return_type_id), .type_name(rhs_return_type_id))
                         hint_span: span
                     )
                     return false
@@ -2379,9 +2379,9 @@ struct Typechecker {
                         span
                     ) {
                         .error_with_hint(
-                            format("Function type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                            format("Function type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                             span
-                            format("The parameter types differ at argument {}: expected `{}`, but got `{}`", (i + 1), .type_name(lhs_params[i]), .type_name(rhs_params[i]))
+                            format("The parameter types differ at argument {}: expected ‘{}’, but got ‘{}’", (i + 1), .type_name(lhs_params[i]), .type_name(rhs_params[i]))
                             hint_span: span
                         )
                         return false
@@ -2433,7 +2433,7 @@ struct Typechecker {
                         }
                     } else {
                         .error(
-                            format("Type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                            format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                             span
                         )
                         return false
@@ -2441,7 +2441,7 @@ struct Typechecker {
                 } else {
                     if not rhs_type_id.equals(lhs_type_id) {
                         .error(
-                            format("Type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                            format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                             span
                         )
                         return false
@@ -2483,7 +2483,7 @@ struct Typechecker {
                             if seen_type_id_string.value() != lhs_type_id_string {
                                 .error(
                                     format(
-                                        "Type mismatch: expected `{}`, but got `{}`"
+                                        "Type mismatch: expected ‘{}’, but got ‘{}’"
                                         .type_name(lhs_type_id)
                                         .type_name(TypeId::from_string(seen_type_id_string.value()))
                                     )
@@ -2498,7 +2498,7 @@ struct Typechecker {
                     else => {
                         if not rhs_type_id.equals(lhs_type_id) {
                             .error(
-                                format("Type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                                 span
                             )
                             return false
@@ -2514,7 +2514,7 @@ struct Typechecker {
                 match rhs_type {
                     GenericInstance(id, args) => {
                         if not lhs_struct_id.equals(id) {
-                            .error(format("Type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
+                            .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
                             return false
                         }
 
@@ -2549,7 +2549,7 @@ struct Typechecker {
                             if seen_type_id_string.value() != lhs_type_id_string {
                                 .error(
                                     format(
-                                        "Type mismatch: expected `{}`, but got `{}`"
+                                        "Type mismatch: expected ‘{}’, but got ‘{}’"
                                         .type_name(TypeId::from_string(seen_type_id_string.value()))
                                         .type_name(rhs_type_id)
                                     )
@@ -2569,7 +2569,7 @@ struct Typechecker {
                         
                         if not rhs_type_id.equals(lhs_type_id) {
                             .error(
-                                format("Type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                                format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                                 span
                             )
                             return false
@@ -2595,7 +2595,7 @@ struct Typechecker {
                 } else {
                     if not rhs_type_id.equals(lhs_type_id) {
                         .error(
-                            format("Type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                            format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                             span
                         )
                         return false
@@ -2618,7 +2618,7 @@ struct Typechecker {
             else => {
                 if generic_inferences.map(rhs_type_id_string) != generic_inferences.map(lhs_type_id_string) {
                     .error(
-                        format("Type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                        format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
                         span
                     )
                     return false
@@ -2797,7 +2797,7 @@ struct Typechecker {
                             return maybe_type_and_scope!.0
                         }
 
-                        .error(format("Unknown type `{}`", name), span)
+                        .error(format("Unknown type ‘{}’", name), span)
                         return unknown_type_id()
                     }
                 }
@@ -3046,7 +3046,7 @@ struct Typechecker {
         if raw_number > (max_signed + 1) or not negated_number_constant.can_fit_number(type_id: flipped_sign_type, program: .program) {
             .error(
                 format(
-                    "Negative literal -{} too small for type `{}`"
+                    "Negative literal -{} too small for type ‘{}’"
                     raw_number
                     .type_name(flipped_sign_type)
                 )
@@ -3112,7 +3112,7 @@ struct Typechecker {
                     }
                 } else {
                     .error_with_hint(format(
-                        "None coalescing (??) with incompatible types (`{}` and `{}`)",
+                        "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
                         .type_name(lhs_type_id),
                         .type_name(rhs_type_id),
                     ), span,
@@ -3121,7 +3121,7 @@ struct Typechecker {
                 }
 
                 .error(format(
-                    "None coalescing (??) with incompatible types (`{}` and `{}`)",
+                    "None coalescing (??) with incompatible types (‘{}’ and ‘{}’)",
                     .type_name(lhs_type_id),
                     .type_name(rhs_type_id),
                 ), span)
@@ -3175,7 +3175,7 @@ struct Typechecker {
 
                 let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
                 if not result.has_value() {
-                    .error(format("Assignment between incompatible types (`{}` and `{}`)", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
+                    .error(format("Assignment between incompatible types (‘{}’ and ‘{}’)", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
                 }
                 return result.value_or(lhs_type_id)
             }
@@ -3192,7 +3192,7 @@ struct Typechecker {
                 let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
                 if not result.has_value() {
                     .error(format(
-                        "Assignment between incompatible types (`{}` and `{}`)",
+                        "Assignment between incompatible types (‘{}’ and ‘{}’)",
                         .type_name(lhs_type_id),
                         .type_name(rhs_type_id),
                     ), span)
@@ -3205,7 +3205,7 @@ struct Typechecker {
                 let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
                 if not result.has_value() {
                     .error(format(
-                        "Binary arithmetic operation between incompatible types (`{}` and `{}`)",
+                        "Binary arithmetic operation between incompatible types (‘{}’ and ‘{}’)",
                         .type_name(lhs_type_id),
                         .type_name(rhs_type_id),
                     ),
@@ -3602,15 +3602,15 @@ struct Typechecker {
                     .error("Weak reference must be mutable", var.span)
                 }
                 if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
-                    .error(format("Type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
+                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
                 }
             } else if id.equals(optional_struct_id) {
                 if not lhs_type_id.equals(rhs_type_id) and not args[0].equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
-                    .error(format("Type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
+                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
                 }
             } else {
                 if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
-                    .error(format("Type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
+                    .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
                 }
             }
         } else if lhs_type.is_builtin() {
@@ -3626,12 +3626,12 @@ struct Typechecker {
             }
 
             if not (.is_numeric(lhs_type_id) and is_rhs_zero) and (.is_integer(lhs_type_id) ^ .is_integer(rhs_type_id)) {
-                .error(format("Type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
+                .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
                 return CheckedStatement::Garbage(span)
             }
         } else {
             if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id()) {
-                .error(format("Type mismatch: expected `{}`, but got `{}`", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
+                .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
             }
         }
 
@@ -3663,7 +3663,7 @@ struct Typechecker {
 
         let checked_block = .typecheck_block(block, parent_scope_id: scope_id, safety_mode)
         if checked_block.yielded_type.has_value() {
-            .error("A `while` block is not allowed to yield values", block.find_yield_span()!)
+            .error("A ‘while’ block is not allowed to yield values", block.find_yield_span()!)
         }
 
         return CheckedStatement::While(condition: checked_condition, block: checked_block, span)
@@ -3724,7 +3724,7 @@ struct Typechecker {
             if block.control_flow.always_transfers_control() or block.yielded_type.has_value() {
                 if not (block.yielded_type ?? expression_type_id).equals(expression_type_id) {
                     .error_with_hint(
-                        message: format("Expected a value of type `{}`, but got `{}`", .type_name(expression_type_id), .type_name(block.yielded_type!)),
+                        message: format("Expected a value of type ‘{}’, but got ‘{}’", .type_name(expression_type_id), .type_name(block.yielded_type!)),
                         span
                         hint: format("Expression 'catch' block must either yield the same type as the expression it is catching, or yield nothing"),
                         hint_span: span
@@ -3758,7 +3758,7 @@ struct Typechecker {
     function typecheck_loop(mut this, parsed_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
         let checked_block = .typecheck_block(parsed_block, parent_scope_id: scope_id, safety_mode)
         if checked_block.yielded_type.has_value() {
-            .error("A `loop` block is not allowed to yield values", parsed_block.find_yield_span()!)
+            .error("A ‘loop’ block is not allowed to yield values", parsed_block.find_yield_span()!)
         }
         return CheckedStatement::Loop(block: checked_block, span)
     }
@@ -3769,7 +3769,7 @@ struct Typechecker {
         defer .inside_defer = was_inside_defer
         let checked_statement = .typecheck_statement(statement, scope_id, safety_mode)
         if checked_statement is Block(block) and block.yielded_type.has_value() {
-            .error("`yield` inside `defer` is meaningless", span)
+            .error("‘yield’ inside ‘defer’ is meaningless", span)
         }
         return CheckedStatement::Defer(statement: checked_statement, span)
     }
@@ -3802,7 +3802,7 @@ struct Typechecker {
 
     function typecheck_return(mut this, expr: ParsedExpression?, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
         if .inside_defer {
-            .error("`return` is not allowed inside `defer`", span)
+            .error("‘return’ is not allowed inside ‘defer’", span)
         }
         if not expr.has_value() {
             return CheckedStatement::Return(val: None, span)
@@ -3885,7 +3885,7 @@ struct Typechecker {
 
                         .error(format("unknown member of struct: {}.{}", structure.name, field), span)
                     }
-                    else => .error(format("Member field access on value of non-struct type `{}`", .type_name(checked_expr_type_id)), span)
+                    else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
                 }
             }
             Type::Struct(struct_id) => {
@@ -3912,7 +3912,7 @@ struct Typechecker {
 
                 .error(format("unknown member of struct: {}.{}", structure.name, field), span)
             }
-            else => .error(format("Member field access on value of non-struct type `{}`", .type_name(checked_expr_type_id)), span)
+            else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
         }
 
         // FIXME: Unify with type
@@ -3973,7 +3973,7 @@ struct Typechecker {
         match member.visibility {
             Private => {
                 if not .scope_can_access(accessor, accessee) {
-                    .error(format("Can't access field `{}`, because it is marked private", member.name), span)
+                    .error(format("Can't access field ‘{}’, because it is marked private", member.name), span)
                 }
             }
             Restricted(whitelist, span) => {
@@ -3988,13 +3988,13 @@ struct Typechecker {
             Private => {
                 if not .scope_can_access(accessor, accessee) {
                     if not method.type is Normal {
-                        .error_with_hint(format("Can't access constructor `{}`, because it is marked private", method.name)
+                        .error_with_hint(format("Can't access constructor ‘{}’, because it is marked private", method.name)
                             span
                             hint: "Private constructors are created if any fields are private"
                             span
                         )
                     } else {
-                        .error(format("Can't access method `{}`, because it is marked private", method.name), span)
+                        .error(format("Can't access method ‘{}’, because it is marked private", method.name), span)
                     }
                 }
             }
@@ -4007,7 +4007,7 @@ struct Typechecker {
 
     function check_restricted_access(mut this, accessor: ScopeId, accessee_kind: String, accessee: ScopeId, name: String, whitelist: [ParsedType], span: Span) throws {
         if not .current_struct_type_id.has_value() {
-            .error(format("Can't access {} `{}` from scope `{}`, because `{}` is not in the restricted whitelist", accessee_kind, name, .get_scope(accessor).namespace_name, .get_scope(accessor).namespace_name), span)
+            .error(format("Can't access {} ‘{}’ from scope ‘{}’, because ‘{}’ is not in the restricted whitelist", accessee_kind, name, .get_scope(accessor).namespace_name, .get_scope(accessor).namespace_name), span)
             return
         }
         let own_type_id = .current_struct_type_id!
@@ -4022,10 +4022,10 @@ struct Typechecker {
                 }
             }
             if not was_whitelisted {
-                .error(format("Can't access {} `{}` from `{}`, because `{}` is not in the restricted whitelist", accessee_kind, name, .get_struct(id).name, .get_struct(id).name), span)
+                .error(format("Can't access {} ‘{}’ from ‘{}’, because ‘{}’ is not in the restricted whitelist", accessee_kind, name, .get_struct(id).name, .get_struct(id).name), span)
             }
         } else {
-            .error(format("Can't access {} `{}` from scope `{}`, because it is not in the restricted whitelist", accessee_kind, name, .get_scope(accessor).namespace_name), span)
+            .error(format("Can't access {} ‘{}’ from scope ‘{}’, because it is not in the restricted whitelist", accessee_kind, name, .get_scope(accessor).namespace_name), span)
         }
     }
 
@@ -4247,7 +4247,7 @@ struct Typechecker {
                             let optional_struct_id = .find_struct_in_prelude("Optional")
                             mut struct_id: StructOrEnumId? = None
                             if not id.equals(optional_struct_id) {
-                                .error(format("Can't use `{}` as an optional type in optional chained call", .get_struct(id).name), span)
+                                .error(format("Can't use ‘{}’ as an optional type in optional chained call", .get_struct(id).name), span)
                             } else {
                                 found_optional = true
                                 struct_id = match .get_type(args[0]) {
@@ -4694,7 +4694,7 @@ struct Typechecker {
     function typecheck_enum_variant_bindings(mut this, variant: CheckedEnumVariant, bindings: [EnumVariantPatternArgument], span: Span) throws -> [CheckedEnumVariantBinding]? {
         if variant is Typed(type_id) {
             if bindings.size() != 1 {
-                .error(format("Enum variant `{}` must have exactly one argument", variant.name()), span)
+                .error(format("Enum variant ‘{}’ must have exactly one argument", variant.name()), span)
                 return None
             }
             return [CheckedEnumVariantBinding(name: None, binding: bindings[0].binding, type_id, span)]
@@ -4823,7 +4823,7 @@ struct Typechecker {
             } else if enum_in_scope.has_value() {
                 next_scope = .get_enum(enum_in_scope!).scope_id
             } else {
-                .error(format("Namespace `{}` not found", ns), span)
+                .error(format("Namespace ‘{}’ not found", ns), span)
             }
             scopes.push(next_scope)
         }
@@ -5131,7 +5131,7 @@ struct Typechecker {
                                         covered_variants.add(name)
                                         if not variant_arguments.is_empty() {
                                             if variant_arguments.size() != 1 {
-                                                .error(format("Match case `{}` must have exactly one argument", name), span)
+                                                .error(format("Match case ‘{}’ must have exactly one argument", name), span)
                                             } else {
                                                 let variant_argument = variant_arguments[0]
                                                 let variable_type_id = .substitute_typevars_in_type(
@@ -5632,7 +5632,7 @@ struct Typechecker {
                 continue
             }
 
-            .error(format("Not a namespace, enum, class, or struct: `{}`", join(call.namespace_, separator: "::")), span)
+            .error(format("Not a namespace, enum, class, or struct: ‘{}’", join(call.namespace_, separator: "::")), span)
         }
 
         // 1. Look for a variable in the current scope with this name.
@@ -5658,7 +5658,7 @@ struct Typechecker {
         }
 
         if must_be_enum_constructor {
-            .error(format("No such enum constructor `{}`", call.name), span)
+            .error(format("No such enum constructor ‘{}’", call.name), span)
             return callee
         }
 
@@ -5675,7 +5675,7 @@ struct Typechecker {
         }
 
         if not ignore_errors {
-            .error(format("Call to unknown function: `{}`", call.name), span)
+            .error(format("Call to unknown function: ‘{}’", call.name), span)
         }
 
         return None
@@ -6167,7 +6167,7 @@ struct Typechecker {
                             return true
                         }
                         if not default_value.has_value() {
-                            .error(format("Wrong parameter name in argument label (got `{}`, expected `{}`)", name, param.variable.name), span)
+                            .error(format("Wrong parameter name in argument label (got ‘{}’, expected ‘{}’)", name, param.variable.name), span)
                         }
                         return false
                     }

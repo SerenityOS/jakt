@@ -141,15 +141,15 @@ Try to keep error messages short and clear, while still providing enough informa
 
 Capitalize the start of the first word of each error message that is displayed to the user. Do not end the message with a period.
 
-Type names and code excerpts should be wrapped in backticks.
+Type names and code excerpts should be wrapped in ‘ `'LEFT SINGLE QUOTATION MARK' (U+2018)` and ’ `'RIGHT SINGLE QUOTATION MARK' (U+2019)`.
 
 If there is a category for the error, follow it with a colon and space, and begin the rest of the message with a lowercase letter. For internal errors, the category is "Internal error".
 
 ##### Right:
 
 ```
-"Type mismatch: expected `String`, but got `i64`"
-"Binary arithmetic operation between incompatible types (`String` and `i64`)"
+"Type mismatch: expected ‘String’, but got ‘i64’"
+"Binary arithmetic operation between incompatible types (‘String’ and ‘i64’)"
 "Internal error: expression stack empty"
 ```
 

@@ -1269,7 +1269,7 @@ struct Parser {
                     if .current() is LCurly {
                         .index++
                     } else {
-                        .error("Expected `{`", .current().span())
+                        .error("Expected ‘{’", .current().span())
                     }
                     mut namespace_ = .parse_namespace()
                     if .current() is RCurly {
@@ -1718,7 +1718,7 @@ struct Parser {
         if .current() is Enum {
             .index++
         } else {
-            .error("Expected `enum` keyword", .current().span())
+            .error("Expected ‘enum’ keyword", .current().span())
             return parsed_enum
         }
 
@@ -1788,7 +1788,7 @@ struct Parser {
         if .current() is LCurly {
             .index++
         } else {
-            .error("Expected `{`", .current().span())
+            .error("Expected ‘{’", .current().span())
         }
 
         mut fields: [ParsedField] = []
@@ -1847,7 +1847,7 @@ struct Parser {
                     last_visibility_span = None
 
                     if last_virtual or last_override {
-                        .error("Fields cannot be `virtual` or `override`", .current().span())
+                        .error("Fields cannot be ‘virtual’ or ‘override’", .current().span())
                     }
                     last_virtual = false
                     last_override = false
@@ -1902,9 +1902,9 @@ struct Parser {
             }
         }
         if is_class {
-            .error("Incomplete class body, expected `}`", .current().span())
+            .error("Incomplete class body, expected ‘}’", .current().span())
         } else {
-            .error("Incomplete struct body, expected `}`", .current().span())
+            .error("Incomplete struct body, expected ‘}’", .current().span())
         }
         return (fields, methods)
     }
@@ -2062,15 +2062,15 @@ struct Parser {
                 }
                 Anon => {
                     if parameter_complete and not error  {
-                        .error("`anon` must appear at start of parameter declaration, not the end", .current().span())
+                        .error("‘anon’ must appear at start of parameter declaration, not the end", .current().span())
                         error = true
                     }
                     if current_param_is_mutable and not error  {
-                        .error("`anon` must appear before `mut`", .current().span())
+                        .error("‘anon’ must appear before ‘mut’", .current().span())
                         error = true
                     }
                     if not current_param_requires_label and not error  {
-                        .error("`anon` cannot appear multiple times in one parameter declaration", .current().span())
+                        .error("‘anon’ cannot appear multiple times in one parameter declaration", .current().span())
                         error = true
                     }
                     .index++
@@ -2078,11 +2078,11 @@ struct Parser {
                 }
                 Mut => {
                     if parameter_complete and not error  {
-                        .error("`mut` must appear at start of parameter declaration, not the end", .current().span())
+                        .error("‘mut’ must appear at start of parameter declaration, not the end", .current().span())
                         error = true
                     }
                     if current_param_is_mutable and not error  {
-                        .error("`mut` cannot appear multiple times in one parameter declaration", .current().span())
+                        .error("‘mut’ cannot appear multiple times in one parameter declaration", .current().span())
                         error = true
                     }
                     .index++
@@ -2542,7 +2542,7 @@ struct Parser {
             }
             types.push(type)
         }
-        .error("Expected `)`", .current().span())
+        .error("Expected ‘)’", .current().span())
         return ParsedType::Empty
     }
 
@@ -2628,7 +2628,7 @@ struct Parser {
                 .index++
                 let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
                 if not inside_block {
-                    .error("`yield` can only be used inside a block", span: merge_spans(start, end: expr.span()))
+                    .error("‘yield’ can only be used inside a block", span: merge_spans(start, end: expr.span()))
                 }
                 yield ParsedStatement::Yield(expr, span: merge_spans(start, .previous().span()))
             }
@@ -2744,7 +2744,7 @@ struct Parser {
                 .index++
             }
         } else {
-            .error("Expected `catch`", .current().span())
+            .error("Expected ‘catch’", .current().span())
         }
 
         let catch_block = .parse_block()
@@ -2782,7 +2782,7 @@ struct Parser {
         if .current() is In {
             .index++
         } else {
-            .error("Expected `in`", .current().span())
+            .error("Expected ‘in’", .current().span())
             return ParsedStatement::Garbage(merge_spans(start_span, .current().span()))
         }
 
@@ -2815,7 +2815,7 @@ struct Parser {
 
     function parse_if_statement(mut this) throws -> ParsedStatement {
         if not .current() is If {
-            .error("Expected `if` statement", .current().span())
+            .error("Expected ‘if’ statement", .current().span())
             return ParsedStatement::Garbage(span: .current().span())
         }
 
@@ -2845,7 +2845,7 @@ struct Parser {
                     else_statement = ParsedStatement::Block(block, span: merge_spans(start_span, .previous().span()))
                 }
                 else => {
-                    .error("`else` missing `if` or block", .previous().span())
+                    .error("‘else’ missing ‘if’ or block", .previous().span())
                 }
             }
         }
@@ -3252,7 +3252,7 @@ struct Parser {
         let start = .current().span()
 
         if not .current() is LCurly {
-            .error("Expected `{`", .current().span())
+            .error("Expected ‘{’", .current().span())
             return ParsedExpression::Garbage(.current().span())
         }
         .index++
@@ -3280,7 +3280,7 @@ struct Parser {
 
         let end = .index - 1
         if end >= .tokens.size() or not .tokens[end] is RCurly {
-            .error("Expected `}` to close the set", .tokens[end].span())
+            .error("Expected ‘}’ to close the set", .tokens[end].span())
         }
 
         return ParsedExpression::Set(values: output, span: merge_spans(start, .tokens[end].span()))
@@ -3377,7 +3377,7 @@ struct Parser {
                     if is_optional {
                         .index++
                         if not .current() is Dot {
-                            .error("Expected `.` after `?` for optional chaining access", .current().span())
+                            .error("Expected ‘.’ after ‘?’ for optional chaining access", .current().span())
                         }
                     }
 
@@ -3567,7 +3567,7 @@ struct Parser {
         .skip_newlines()
 
         if not .current() is LCurly {
-            .error("Expected `{`", .current().span())
+            .error("Expected ‘{’", .current().span())
             return cases
         }
 
@@ -3584,7 +3584,7 @@ struct Parser {
             if .current() is FatArrow {
                 .index++
             } else {
-                .error("Expected `=>`", .current().span())
+                .error("Expected ‘=>’", .current().span())
             }
 
             .skip_newlines()
@@ -3613,7 +3613,7 @@ struct Parser {
         .skip_newlines()
 
         if not .current() is RCurly {
-            .error("Expected `}`", .current().span())
+            .error("Expected ‘}’", .current().span())
         }
 
         .index++
@@ -3683,7 +3683,7 @@ struct Parser {
         }
 
         else => {
-            .error("Expected pattern or `else`", .current().span())
+            .error("Expected pattern or ‘else’", .current().span())
             yield ParsedMatchPattern::CatchAll
         }
     }
@@ -3710,7 +3710,7 @@ struct Parser {
                                     span)
                                 )
                             } else {
-                                .error("Expected binding after `:`", .current().span())
+                                .error("Expected binding after ‘:’", .current().span())
                             }
                         } else {
                             variant_arguments.push(EnumVariantPatternArgument(
@@ -3871,7 +3871,7 @@ struct Parser {
         if .current() is LParen {
             .index++
         } else {
-            .error("Expected `(`", .current().span())
+            .error("Expected ‘(’", .current().span())
         }
 
         mut whitelist: [ParsedType] = []
@@ -3912,7 +3912,7 @@ struct Parser {
         if .current() is RParen {
             .index++
         } else {
-            .error("Expected `)`", .current().span())
+            .error("Expected ‘)’", .current().span())
         }
 
         return Visibility::Restricted(whitelist, span: restricted_span)
@@ -3923,7 +3923,7 @@ struct Parser {
         let start = .current().span()
 
         if not .current() is LSquare {
-            .error("Expected `[`", .current().span());
+            .error("Expected ‘[’", .current().span());
             return ParsedExpression::Garbage(.current().span())
         }
         .index++
@@ -3958,7 +3958,7 @@ struct Parser {
                             is_dictionary = true
                             break
                         } else {
-                            .error("Expected `]`", .current().span())
+                            .error("Expected ‘]’", .current().span())
                         }
                     } else {
                         .error("Missing key in dictionary literal", .current().span())
@@ -3993,7 +3993,7 @@ struct Parser {
 
         let end = .index - 1
         if end >= .tokens.size() or not .tokens[end] is RSquare {
-            .error("Expected `]` to close the array", .tokens[end].span())
+            .error("Expected ‘]’ to close the array", .tokens[end].span())
         }
 
         if is_dictionary {

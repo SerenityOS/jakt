@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Reference type `&i64` not usable in this context"
+/// - error: "Reference type ‘&i64’ not usable in this context"
 
 function foo() -> &i64 {
     let x = 1

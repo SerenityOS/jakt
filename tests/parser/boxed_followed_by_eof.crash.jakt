@@ -1,4 +1,4 @@
 /// Expect:
-/// - error: "Expected `enum` keyword"
+/// - error: "Expected ‘enum’ keyword"
 
 boxed
