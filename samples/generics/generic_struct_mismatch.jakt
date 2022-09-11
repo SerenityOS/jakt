@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Type mismatch: expected `Foo<i64>`, but got `Bar<i64>`\n"
+/// - error: "Type mismatch: expected ‘Foo<i64>’, but got ‘Bar<i64>’\n"
 
 struct Foo<T> {
     x: T

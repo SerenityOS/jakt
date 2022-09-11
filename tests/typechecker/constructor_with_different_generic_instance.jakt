@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Type mismatch: expected `B`, but got `[unknown]`"
+/// - error: "Type mismatch: expected ‘B’, but got ‘[unknown]’"
 
 class B {
 }

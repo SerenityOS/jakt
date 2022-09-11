@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Negative literal -9223372036854775809 too small for type `i64`"
+/// - error: "Negative literal -9223372036854775809 too small for type ‘i64’"
 
 function main() {
     let too_small_i64 = -9_223_372_036_854_775_809;

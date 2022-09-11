@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "The return types differ: expected `bool`, but got `i32`"
+/// - error: "The return types differ: expected ‘bool’, but got ‘i32’"
 
 function find<T>(anon arr: [T], anon cb: function(a: T, b: T) -> bool) -> T? {
     for i in 0..arr.size() {

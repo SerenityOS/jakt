@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Can't access method `parts`, because it is marked private\n"
+/// - error: "Can't access method ‘parts’, because it is marked private\n"
 
 struct WeirdEncapsulation {
     private function parts(this) {}

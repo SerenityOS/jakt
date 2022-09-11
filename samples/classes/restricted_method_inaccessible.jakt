@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Can't access function `get_secret` from `C`, because `C` is not in the restricted whitelist\n"
+/// - error: "Can't access function ‘get_secret’ from ‘C’, because ‘C’ is not in the restricted whitelist\n"
 
 class Limited {
     restricted(A) function get_secret() => "Shhhh! Don't tell anyone!"

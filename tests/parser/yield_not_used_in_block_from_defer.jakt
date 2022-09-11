@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "`yield` can only be used inside a block"
+/// - error: "‘yield’ can only be used inside a block"
 
 function main() {
     defer yield 1
