@@ -1,0 +1,13 @@
+/// Expect:
+/// - output: "(Foo::A, 1)\n"
+
+enum Foo {
+    A
+    B
+}
+
+function main() {
+    let tuple = (Foo::A, 1)
+
+    println("{}", tuple)
+}

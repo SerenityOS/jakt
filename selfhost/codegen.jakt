@@ -2293,6 +2293,7 @@ struct CodeGenerator {
                 output += ")"
             }
             else => {
+                mut close_enum_type_wrapper = false
                 if call.function_id.has_value() {
                     let function_id = call.function_id!
                     let function_ = .program.get_function(function_id)
@@ -2383,10 +2384,14 @@ struct CodeGenerator {
                                     output += .codegen_type_possibly_as_namespace(type_id: call.return_type, as_namespace: true)
                                     output += "::" + call.name + ">"
                                 } else {
+                                    output += " " + .codegen_type(call.return_type)
+                                    output += " { "
                                     output += "typename "
                                     output += .codegen_type(call.return_type)
                                     output += "::"
                                     output += call.name
+
+                                    close_enum_type_wrapper = true
                                 }
                             }
                             GenericEnumInstance(id) => {
@@ -2432,6 +2437,10 @@ struct CodeGenerator {
                 }
 
                 output += format("({})", join(arguments, separator: ","))
+
+                if close_enum_type_wrapper {
+                    output += " } "
+                }
             }
         }
 
