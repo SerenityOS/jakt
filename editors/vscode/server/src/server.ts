@@ -144,7 +144,7 @@ async function goToDefinition(
                 ? (await fs.promises.readFile(obj.file)).toString()
                 : document.getText() ?? ""
         );
-        const uri = obj.file ? "file:/" + obj.file : document.uri;
+        const uri = obj.file ? "file://" + obj.file : document.uri;
         // connection.console.log(uri);
 
         console.timeEnd("onDefinition");
