@@ -7,9 +7,9 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
 import error { JaktError, print_error }
-import lexer { Lexer, NumericConstant }
+import lexer { Lexer }
 import parser { Parser, BinaryOperator, DefinitionLinkage, UnaryOperator,
-                FunctionLinkage, FunctionType, ParsedBlock, ParsedCall,
+                FunctionLinkage, FunctionType, NumericConstant, ParsedBlock, ParsedCall,
                 ParsedExpression, ParsedFunction, ParsedNamespace, ParsedModuleImport,
                 ParsedExternImport, ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
                 ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
@@ -861,7 +861,6 @@ struct Typechecker {
                 .error("imported extern function is not allowed to have a body"
                         f.name_span)
             }
-
         }
 
         for record in import_.assigned_namespace.records.iterator() {

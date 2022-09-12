@@ -8,9 +8,69 @@
 
 
 import error { JaktError, print_error}
-import lexer { Token, NumericConstant }
+import lexer { Token, LiteralPrefix, LiteralSuffix }
 import utility { panic, todo, FileId, Span, extend_array, join }
 import compiler { Compiler }
+
+enum NumericConstant {
+    I8(i8)
+    I16(i16)
+    I32(i32)
+    I64(i64)
+    U8(u8)
+    U16(u16)
+    U32(u32)
+    U64(u64)
+    USize(u64)
+    F32(f32)
+    F64(f64)
+    UnknownSigned(i64)
+    UnknownUnsigned(u64)
+
+    public function to_usize(this) => match this {
+        I8(num) => num as! usize
+        I16(num) => num as! usize
+        I32(num) => num as! usize
+        I64(num) => num as! usize
+        U8(num) => num as! usize
+        U16(num) => num as! usize
+        U32(num) => num as! usize
+        U64(num) => num as! usize
+        USize(num) => num as! usize
+        UnknownSigned(num) => num as! usize
+        UnknownUnsigned(num) => num as! usize
+        // FIXME: handle floats properly - if the function is used at all?
+        else =>  0 as! usize
+    }
+}
+
+// A simple function to convert integers to floats. T is intended
+// to be either f32 or f64.
+// FIXME: Remove when a more general conversion is in place
+function u64_to_float<T>(anon number: u64) -> T {
+    mut float_value: T = 0
+
+    unsafe {
+        cpp {
+            "float_value = number;"
+        }
+    }
+
+    return float_value
+}
+
+// FIXME: Remove when a more general conversion is in place
+function f64_to_f32(anon number: f64) -> f32 {
+    mut f32_value: f32 = 0
+
+    unsafe {
+        cpp {
+            "f32_value = (f32)number;"
+        }
+    }
+
+    return f32_value
+}
 
 function merge_spans(anon start: Span, anon end: Span) throws -> Span {
     if end.file_id.id == 0 and end.start == 0 and end.end == 0 {
@@ -204,7 +264,6 @@ struct ParsedNamespace {
         }
     }
 }
-
 
 struct ValueEnumVariant {
     name: String
@@ -3139,10 +3198,7 @@ struct Parser {
             .index++
             yield ParsedExpression::SingleQuotedByteString(val: quote, span)
         }
-        Number(number, span) => {
-            .index++
-            yield ParsedExpression::NumericConstant(val: number, span)
-        }
+        Number(prefix, number, suffix, span) => .parse_number(prefix, number, suffix, span)
         True(span) => {
             .index++
             yield ParsedExpression::Boolean(val: true, span)
@@ -3290,6 +3346,241 @@ struct Parser {
             .error("Unsupported expression", span)
             yield ParsedExpression::Garbage(span)
         }
+    }
+
+    function parse_number(mut this, prefix: LiteralPrefix, number: String, mut suffix: LiteralSuffix, span: Span) throws -> ParsedExpression {
+        .index++
+        mut total = 0u64
+
+        if not prefix is None {
+            match prefix {
+                Hexadecimal => {
+                    if number.length() == 0 {
+                        .error(format("Could not parse hexadecimal number due to no digits"), span)
+                        return ParsedExpression::Garbage(span)
+                    }
+
+                    for i in ..number.length() {
+                        let byte = number.byte_at(i)
+
+                        if byte != b'_' {
+                            mut offset: u8 = 0
+                            if (byte >= b'a' and byte <= b'z') {
+                                offset = 39
+                            } else if (byte >= b'A' and byte <= b'Z') {
+                                offset = 7
+                            }
+                            let value = byte - offset
+                            let digit: u64 = as_saturated(value - b'0')
+                            total = total * 16 + digit
+                        }
+                    }
+                }
+                Octal => {
+                    if number.length() == 0 {
+                        .error(format("Could not parse octal number due to no digits"), span)
+                        return ParsedExpression::Garbage(span)
+                    }
+
+                    for i in ..number.length() {
+                        let byte = number.byte_at(i)
+
+                        if byte != b'_' {
+                            let digit: u64 = as_saturated(byte - b'0')
+                            total = total * 8 + digit
+                        }
+                    }
+                }
+                Binary => {
+                    if number.length() == 0 {
+                        .error(format("Could not parse binary number due to no digits"), span)
+                        return ParsedExpression::Garbage(span)
+                    }
+
+                    for i in ..number.length() {
+                        let byte = number.byte_at(i)
+
+                        if byte != b'_' {
+                            let digit: u64 = as_saturated(byte - b'0')
+                            total = total * 2 + digit
+                        }
+                    }                    
+                }
+                None => {}
+            }
+
+            let constant_value = .make_integer_numeric_constant(number: total, suffix, span)
+            if constant_value.has_value() {
+                return ParsedExpression::NumericConstant(val: constant_value!, span)
+            }
+
+            return ParsedExpression::Garbage(span)
+        }
+
+        mut number_too_large = false
+        mut floating = false
+
+        mut fraction_nominator: u64 = 0
+        mut fraction_denominator: u64 = 1
+
+        if number.length() == 0 {
+            .error(format("Could not parse number due to no digits"), span)
+            return ParsedExpression::Garbage(span)
+        }
+
+        for i in ..number.length() {
+            let byte = number.byte_at(i)
+
+            if byte != b'_' {
+                if byte == b'.' {
+                    floating = true
+                    continue
+                }
+
+                let digit: u64 = as_saturated(byte - b'0')
+
+                if floating {
+                    fraction_nominator = fraction_nominator * 10u64 + digit
+                    fraction_denominator *= 10u64
+                } else {
+                    // NOTE: We use unchecked arithmetic here to see if the number is too large
+                    //       for our u64 storage type.
+                    let old_total = total
+                    total = unchecked_add(unchecked_mul(total, 10u64), digit)
+                    if total < old_total {
+                        number_too_large = true
+                    }
+                }
+            }
+        }
+
+        if number_too_large {
+            .error(format("Integer literal too large"), span)
+            return ParsedExpression::Garbage(span)
+        }
+
+        if floating and suffix is None {
+            suffix = LiteralSuffix::F64
+        } 
+
+        // Sanity check for float numbers with an integer suffix
+        let is_float_suffix = match suffix {
+            LiteralSuffix::F32 | LiteralSuffix::F64 => true
+            else => false
+        }
+        if floating and not is_float_suffix {
+            // FIXME: Provide better error handling
+            return ParsedExpression::Garbage(span)
+        }
+
+        let constant_value = match suffix {
+            LiteralSuffix::F32 | LiteralSuffix::F64 => {
+                let number: f64 = u64_to_float<f64>(total) + u64_to_float<f64>(fraction_nominator)/u64_to_float<f64>(fraction_denominator)
+                yield .make_float_numeric_constant(number, suffix, span)
+            }
+            else => .make_integer_numeric_constant(number: total, suffix, span)
+        }
+
+        if constant_value.has_value() {
+            return ParsedExpression::NumericConstant(val: constant_value!, span)
+        }
+
+        return ParsedExpression::Garbage(span)
+    }
+
+    function make_integer_numeric_constant(mut this, number: u64, suffix: LiteralSuffix, span: Span) throws -> NumericConstant? {
+        // FIXME: consider unifying with make_float_numeric_constant() to a single function
+        match suffix {
+            None => {
+                let n = number as? i64
+                if n.has_value() {
+                    return NumericConstant::UnknownSigned(n!)
+                }
+                return NumericConstant::UnknownUnsigned(number)
+            }
+            U8 => {
+                let n = number as? u8
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return NumericConstant::U64(number)
+                }
+                return NumericConstant::U8(n!)
+            }
+            U16 => {
+                let n = number as? u16
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return NumericConstant::U64(number)
+                }
+                return NumericConstant::U16(n!)
+            }
+            U32 => {
+                let n = number as? u32
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return NumericConstant::U64(number)
+                }
+                return NumericConstant::U32(n!)
+            }
+            U64 => {
+                let n = number as? u64
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return NumericConstant::U64(number)
+                }
+                return NumericConstant::U64(n!)
+            }
+            UZ => {
+                let n = number as? usize
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return NumericConstant::U64(number)
+                }
+                return NumericConstant::USize(n! as! u64)
+            }
+            I8 => {
+                let n = number as? i8
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return NumericConstant::U64(number)
+                }
+                return NumericConstant::I8(n!)
+            }
+            I16 => {
+                let n = number as? i16
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return NumericConstant::U64(number)
+                }
+                return NumericConstant::I16(n!)
+            }
+            I32 => {
+                let n = number as? i32
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return NumericConstant::U64(number)
+                }
+                return NumericConstant::I32(n!)
+            }
+            I64 => {
+                let n = number as? i64
+                if not n.has_value() {
+                    .error(format("Number {} cannot fit in integer type {}", number, suffix), span)
+                    return NumericConstant::U64(number)
+                }
+                return NumericConstant::I64(n!)
+            }
+            else => {}
+        }
+
+        return None
+    }
+
+    function make_float_numeric_constant(mut this, number: f64, suffix: LiteralSuffix, span: Span) throws -> NumericConstant? => match suffix {
+        // FIXME: consider unifying with make_integer_numeric_constant() to a single function
+        LiteralSuffix::F32 => NumericConstant::F32(f64_to_f32(number))
+        LiteralSuffix::F64 => NumericConstant::F64(number)
+        else => None
     }
 
     function parse_captures(mut this) throws -> [ParsedCapture] {
@@ -3551,10 +3842,15 @@ struct Parser {
 
                     .index++
                     yield match .current() {
-                        Number(number) => {
+                        Number(prefix, number, suffix, span) => {
+                            let numeric_constant = .parse_number(prefix, number, suffix, span)
+                            guard numeric_constant is NumericConstant(val) else {
+                                .error("Invalid Numeric Constant", span)
+                                return expr
+                            }
+
                             // Indexing into a tuple
-                            .index++
-                            let num = number.to_usize()
+                            let num = val.to_usize()
                             yield ParsedExpression::IndexedTuple(
                                 expr: result
                                 index: num

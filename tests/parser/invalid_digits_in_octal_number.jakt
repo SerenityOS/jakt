@@ -1,5 +1,9 @@
 /// Expect:
-/// - error: "Could not parse octal number"
+/// - error: "Could not parse octal number due to no digits"
 
 // Octal number must not contain any digits other than 0-7
-0o78
+function main() {
+    let octal = 0o8
+
+    println("{}", octal)
+}
