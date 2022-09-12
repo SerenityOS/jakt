@@ -108,20 +108,7 @@ struct FormattedToken {
         SingleQuotedString(quote) => format("'{}'", quote)
         SingleQuotedByteString(quote) => format("b'{}'", quote)
         QuotedString(quote) => format("\"{}\"", quote)
-        Number(number) => match number {
-            I8(number) => format("{}i8", number)
-            I16(number) => format("{}i16", number)
-            I32(number) => format("{}i32", number)
-            I64(number) => format("{}i64", number)
-            U8(number) => format("{}u8", number)
-            U16(number) => format("{}u16", number)
-            U32(number) => format("{}u32", number)
-            U64(number) => format("{}u64", number)
-            USize(number) => format("{}uz", number)
-            F32(number) => format("{}f32", number)
-            F64(number) => format("{}f64", number)
-            UnknownUnsigned(number) | UnknownSigned(number) => format("{}", number)
-        }
+        Number(prefix, number, suffix) => format("{}{}{}", prefix.to_string(), number, suffix.to_string())
         Identifier(name) => name
         Semicolon => ";"
         Colon => ":"
