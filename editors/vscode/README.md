@@ -7,7 +7,8 @@ There are no pre-packaged versions of this extension, as changes to language and
 ## Build instructions
 
 Pick a location to install jakt. This should be a local directory, not a global install directory.
-```
+
+```bash
 # For example:
 export JAKT_INSTALL=~/.local
 # or
@@ -17,19 +18,25 @@ export JAKT_INSTALL=$PWD/install
 ```
 
 In the root jakt directory:
-```
-> cmake --build build -GNinja -DCMAKE_CXX_COMPILER=clang++-14 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$JAKT_INSTALL
-> cmake --build build -- install
+
+```bash
+# Configure the cmake project to use clang
+cmake -S . -B build -GNinja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$JAKT_INSTALL
+
+# Run the build inside the build directory
+cmake --build build -- install
 ```
 
 In the editors/vscode directory:
-```
-> npm install
+
+```bash
+npm install
 ```
 
 To create the package
-```
-> npx vsce package
+
+```bash
+npx vsce package
 ```
 
 Then install vscode by switching to the Extensions section on the left, then the `...` at the top middle and choose "Install from VSIX..." and choose the package you just created.
