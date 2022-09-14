@@ -1,5 +1,5 @@
 /// Expect:
-/// - output: "1\n2\n3\n2\n2\n4\n2\n"
+/// - output: "1\n2\n3\n2\n2\n4\n2\n2\n2\n4\n2\n"
 
 function generic_value_match<T>(anon x: T) -> i64 {
     return match x {
@@ -30,6 +30,16 @@ enum Y {
     C
 }
 
+function generic_val_infer<T>(anon x: T) -> i64 {
+    let val = match x {
+        A(y) => y
+        B => 2
+        C => 3
+    }
+
+    return val
+}
+
 function main() {
     println("{}", generic_value_match(3));
     println("{}", generic_value_match(2));
@@ -40,4 +50,10 @@ function main() {
 
     println("{}", generic_enum_match(Y::A(4)))
     println("{}", generic_enum_match(Y::B))
+
+    println("{}", generic_val_infer(X::A(2)))
+    println("{}", generic_val_infer(X::B))
+
+    println("{}", generic_val_infer(Y::A(4)))
+    println("{}", generic_val_infer(Y::B))
 }

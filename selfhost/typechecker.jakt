@@ -6860,7 +6860,7 @@ struct Typechecker {
                     let block_type_id = checked_block.yielded_type ?? void_type_id()
                     let yield_span = block.find_yield_span() ?? span
 
-                    if result_type.has_value() {
+                    if result_type.has_value() and not result_type!.equals(unknown_type_id()) {
                         .check_types_for_compat(
                             lhs_type_id: result_type!
                             rhs_type_id: block_type_id
@@ -6887,7 +6887,7 @@ struct Typechecker {
             }
             Expression(expr) => {
                 let checked_expression = .typecheck_expression(expr, scope_id, safety_mode, type_hint: result_type)
-                if result_type.has_value() {
+                if result_type.has_value() and not result_type!.equals(unknown_type_id()) {
                     .check_types_for_compat(
                         lhs_type_id: result_type!
                         rhs_type_id: checked_expression.type()

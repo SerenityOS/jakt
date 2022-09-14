@@ -2283,7 +2283,7 @@ struct CodeGenerator {
                 }
             }
             Expression(expr) => {
-                if expr.type().equals(void_type_id()) or (expr.type().equals(unknown_type_id()) and not expr is OptionalNone) {
+                if expr.type().equals(void_type_id()) or (expr.type().equals(unknown_type_id()) and return_type_id.equals(unknown_type_id()) and not expr is OptionalNone) {
                     output += "return ("
                     output += .codegen_expression(expr)
                     output += "), JaktInternal::ExplicitValue<void>();\n"
