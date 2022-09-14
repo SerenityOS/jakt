@@ -2047,24 +2047,6 @@ struct CodeGenerator {
         for case_ in cases {
             match case_ {
                 EnumVariant(name, args, subject_type_id, scope_id, body) => {
-                    let enum_ = .program.get_enum(match .program.get_type(subject_type_id) {
-                        Enum(enum_id) => enum_id
-                        GenericEnumInstance(id) => id
-                        else => {
-                            panic(format("Unexpected type in IsEnumVariant: {}", .program.get_type(subject_type_id)))
-                        }
-                    })
-                    // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
-                    mut variant_index = 0;
-                    for variant in enum_.variants {
-                        if variant.name() == name{
-                            break
-                        }
-                        variant_index++
-                    }
-
-                    output += format("if (__jakt_enum_value.index() == {} /* {} */) {{\n", variant_index, name)
-
                     mut variant_type_name = ""
                     let qualifier = .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true)
                     if not qualifier.is_empty() {
@@ -2073,6 +2055,31 @@ struct CodeGenerator {
                         variant_type_name += ">::"
                     }
                     variant_type_name += name
+
+                    let enum_id: EnumId? = match .program.get_type(subject_type_id) {
+                        Enum(enum_id) => enum_id
+                        GenericEnumInstance(id) => id
+                        else => None
+                    }
+
+                    if enum_id.has_value() {
+                        let enum_ = .program.get_enum(enum_id!)
+
+                        // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
+                        mut variant_index = 0;
+                        for variant in enum_.variants {
+                            if variant.name() == name {
+                                break
+                            }
+                            variant_index++
+                        }
+
+                        output += format("if (__jakt_enum_value.index() == {} /* {} */) {{\n", variant_index, name)
+                    } else {
+                        output += "if (__jakt_enum_value.template has<"
+                        output += variant_type_name
+                        output += ">()) {\n"
+                    }
 
                     output += "auto& __jakt_match_value = __jakt_enum_value.template get<"
                     output += variant_type_name
