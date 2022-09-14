@@ -422,24 +422,7 @@ boxed enum ParsedStatement {
     }
 
     function span(this) -> Span => match this {
-        Expression(span) => span
-        Defer(span) => span
-        UnsafeBlock(span) => span
-        DestructuringAssignment(span) => span
-        VarDecl(span) => span
-        If(span) => span
-        Block(span) => span
-        Loop(span) => span
-        While(span) => span
-        For(span) => span
-        Break(span) => span
-        Continue(span) => span
-        Return(span) => span
-        Throw(span) => span
-        Yield(span) => span
-        InlineCpp(span) => span
-        Guard(span) => span
-        Garbage(span) => span
+        else(span) => span
     }
 }
 
@@ -747,35 +730,7 @@ boxed enum ParsedExpression {
     Garbage(Span)
 
     function span(this) => match this {
-        Boolean(val, span) => span
-        NumericConstant(val, span) => span
-        QuotedString(val, span) => span
-        SingleQuotedString(val, span) => span
-        SingleQuotedByteString(val, span) => span
-        Call(call, span) => span
-        Var(name, span) => span
-        IndexedExpression(base, index, span) => span
-        UnaryOp(expr, op, span) => span
-        BinaryOp(lhs, op, rhs, span) => span
-        Operator(op, span) => span
-        OptionalSome(expr, span) => span
-        OptionalNone(span) => span
-        JaktArray(values, fill_size, span) => span
-        JaktDictionary(values, span) => span
-        Set(span) => span
-        JaktTuple(values, span) => span
-        Range(from, to, span) => span
-        ForcedUnwrap(expr, span) => span
-        Garbage(span) => span
-        MethodCall(expr, call, span) => span
-        Match(expr, cases, span) => span
-        EnumVariantArg(span) => span
-        IndexedTuple(expr, index, span) => span
-        IndexedStruct(expr, field, span) => span
-        NamespacedVar(name, namespace_, span) => span
-        Function(span) => span
-        Try(span) => span
-        TryBlock(span) => span
+        else(span) => span
     }
 
     function precedence(this) => match this {
@@ -1141,20 +1096,8 @@ boxed enum ParsedType {
     Empty
 
     function span(this) => match this {
-        Name(name, span) => span
-        NamespacedName(name, namespaces, params, span) => span
-        GenericType(name, generic_parameters, span) => span
-        JaktArray(inner, span) => span
-        Dictionary(key, value, span) => span
-        JaktTuple(types, span) => span
-        Set(inner, span) => span
-        Optional(inner, span) => span
-        Reference(span) => span
-        MutableReference(span) => span
-        RawPtr(inner, span) => span
-        WeakPtr(inner, span) => span
-        Function(span) => span
         Empty => Span(file_id: FileId(id: 0uz), start: 0, end: 0) // FIXME: For some reason we can't see `empty_span()` here.
+        else(span) => span
     }
 
     function equals(this, anon rhs_parsed_type: ParsedType) -> bool => match this {

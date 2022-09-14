@@ -867,20 +867,7 @@ boxed enum CheckedStatement {
 
     function span(this) => match this {
         Expression(span) => Some(span)
-        Defer(span) => span
-        DestructuringAssignment(span) => span
-        VarDecl(span) => span
-        If(span) => span
-        Block(span) => span
-        Loop(span) => span
-        While(span) => span
-        Return(span) => span
-        Break(span) => span
-        Continue(span) => span
-        Throw(span) => span
-        Yield(span) => span
-        InlineCpp(span) => span
-        Garbage(span) => span
+        else(span) => span
     }
 
     function none() -> CheckedStatement? => None
@@ -1047,36 +1034,7 @@ boxed enum CheckedExpression {
     }
 
     function span(this) -> Span => match this {
-        Boolean(span) => span
-        NumericConstant(span) => span
-        QuotedString(span) => span
-        ByteConstant(span) => span
-        CharacterConstant(span) => span
-        UnaryOp(span) => span
-        BinaryOp(span) => span
-        JaktTuple(span) => span
-        Range(span) => span
-        JaktArray(span) => span
-        JaktDictionary(span) => span
-        JaktSet(span) => span
-        IndexedExpression(span) => span
-        IndexedDictionary(span) => span
-        IndexedTuple(span) => span
-        IndexedStruct(span) => span
-        Call(span) => span
-        MethodCall(span) => span
-        NamespacedVar(span) => span
-        Var(span) => span
-        OptionalNone(span) => span
-        OptionalSome(span) => span
-        ForcedUnwrap(span) => span
-        Match(span) => span
-        EnumVariantArg(span) => span
-        Block(span) => span
-        Function(span) => span
-        Try(span) => span
-        TryBlock(span) => span
-        Garbage(span) => span
+        else(span) => span
     }
 
     function is_mutable(this, program: CheckedProgram) -> bool => match this {
@@ -1106,35 +1064,14 @@ boxed enum CheckedExpression {
 
     function type(this) -> TypeId => match this {
         Boolean => builtin(BuiltinType::Bool)
-        NumericConstant(type_id) => type_id
         QuotedString => builtin(BuiltinType::JaktString)
         ByteConstant => builtin(BuiltinType::U8)
         CharacterConstant => builtin(BuiltinType::CChar)
-        UnaryOp(type_id) => type_id
-        BinaryOp(type_id) => type_id
-        JaktTuple(type_id) => type_id
-        Range(type_id) => type_id
-        JaktArray(type_id) => type_id
-        JaktDictionary(type_id) => type_id
-        JaktSet(type_id) => type_id
-        IndexedExpression(type_id) => type_id
-        IndexedDictionary(type_id) => type_id
-        IndexedTuple(type_id) => type_id
-        IndexedStruct(type_id) => type_id
-        Call(type_id) => type_id
-        MethodCall(type_id) => type_id
+        EnumVariantArg(arg) => arg.type_id
         NamespacedVar(var) => var.type_id
         Var(var) => var.type_id
-        OptionalNone(type_id) => type_id
-        OptionalSome(type_id) => type_id
-        ForcedUnwrap(type_id) => type_id
-        Match(type_id) => type_id
-        EnumVariantArg(arg) => arg.type_id
-        Block(type_id) => type_id
-        Function(type_id) => type_id
-        Try(type_id) => type_id
-        TryBlock(type_id) => type_id
         Garbage => builtin(BuiltinType::Void)
+        else(type_id) => type_id
     }
 
     function control_flow(this) -> BlockControlFlow => match this {
