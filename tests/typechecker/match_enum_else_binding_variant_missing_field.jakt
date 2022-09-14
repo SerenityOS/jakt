@@ -1,0 +1,19 @@
+/// Expect:
+/// - error: "Match case argument 'x' for struct-like enum variant 'D' cannot be anon"
+
+enum Foo {
+    A(x: i64)
+    B(x: i64)
+    C(x: i64)
+    D(y: i64)
+}
+
+function main() {
+    let a = Foo::A(x: 1)
+
+    let matched_a = match a {
+        else(x) => x
+    }
+
+    println("{}", matched_a)
+}

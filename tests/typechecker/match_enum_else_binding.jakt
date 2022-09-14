@@ -1,0 +1,18 @@
+/// Expect:
+/// - output: "3\n3\n3\n"
+
+enum Foo {
+    A(x: i64)
+    B(x: i64)
+    C(x: i64)
+}
+
+function match_else(anon a: Foo) -> i64 => match a {
+    else(x) => x
+}
+
+function main() {
+    println("{}", match_else(Foo::A(x: 3)))
+    println("{}", match_else(Foo::B(x: 3)))
+    println("{}", match_else(Foo::C(x: 3)))
+}

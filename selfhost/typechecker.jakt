@@ -3334,6 +3334,7 @@ struct Typechecker {
                             marker_span: span
                         ),
                         CheckedMatchCase::CatchAll(
+                            has_arguments: false
                             body: CheckedMatchBody::Block(checked_else_block)
                             marker_span: span
                         )
@@ -5097,6 +5098,142 @@ struct Typechecker {
         )
     }
 
+    function typecheck_match_variant(mut this, case_: ParsedMatchCase, subject_type_id: TypeId, variant_index: usize, final_result_type: TypeId?, variant: CheckedEnumVariant, variant_arguments: [EnumVariantPatternArgument], arguments_span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> (String?, CheckedMatchCase, TypeId?) {
+        mut covered_name: String? = None
+
+        let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant.name()))
+        mut module = .current_module()
+        match variant {
+            Untyped(name) => {
+                covered_name = name
+
+                if not variant_arguments.is_empty() {
+                    .error(format("Match case '{}' cannot have arguments", name), arguments_span)
+                }
+            }
+            Typed(name, type_id, span) => {
+                covered_name = name
+
+                if not variant_arguments.is_empty() {
+                    if variant_arguments.size() != 1 {
+                        .error(format("Match case ‘{}’ must have exactly one argument", name), span)
+                    } else {
+                        let variant_argument = variant_arguments[0]
+                        let variable_type_id = .substitute_typevars_in_type(
+                            type_id
+                            generic_inferences: .generic_inferences
+                        )
+                        let var_id = module.add_variable(CheckedVariable(
+                            name: variant_argument.binding
+                            type_id: variable_type_id
+                            is_mutable: false
+                            definition_span: span
+                            type_span: None
+                            visibility: Visibility::Public
+                        ))
+                        .add_var_to_scope(scope_id: new_scope_id, name: variant_argument.binding, var_id, span)
+                    }
+                }
+            }
+            StructLike(name, fields) => {
+                covered_name = name
+
+                mut field_variables: [CheckedVariable] = []
+                for var_id in fields.iterator() {
+                    field_variables.push(.program.get_variable(var_id))
+                }
+                mut seen_names: {String} = {}
+                for arg in variant_arguments.iterator() {
+                    if not arg.name.has_value() {
+                        mut found_field_name = false
+                        mut field_names: [String] = []
+                        for var in field_variables.iterator() {
+                            field_names.push(var.name)
+                            if var.name == arg.binding {
+                                found_field_name = true
+                            }
+                        }
+                        if not found_field_name {
+                            mut unused_field_names: [String] = []
+                            for field_name in field_names.iterator() {
+                                if seen_names.contains(field_name) {
+                                    continue
+                                }
+                                unused_field_names.push(field_name)
+                            }
+                            .error_with_hint(
+                                format("Match case argument '{}' for struct-like enum variant '{}' cannot be anon", arg.binding, name)
+                                arg.span
+                                format("Available arguments for '{}' are: {}\n", name, join(unused_field_names, separator: ", "))
+                                arg.span
+                            )
+                            continue
+                        }
+                    }
+                    let arg_name = arg.name ?? arg.binding
+                    if seen_names.contains(arg_name) {
+                        .error(format("Match case argument '{}' is already defined", arg_name), arg.span)
+                        continue
+                    }
+                    seen_names.add(arg_name)
+                    mut matched_field_variable: CheckedVariable? = None
+                    for var in field_variables.iterator() {
+                        if var.name == arg_name {
+                            matched_field_variable = var
+                        }
+                    }
+
+                    match matched_field_variable.has_value() {
+                        true => {
+                            let substituted_type_id = .substitute_typevars_in_type(type_id: matched_field_variable!.type_id, generic_inferences: .generic_inferences)
+                            let matched_span = matched_field_variable!.definition_span
+                            if .dump_type_hints {
+                                .dump_type_hint(type_id: matched_field_variable!.type_id, span: arg.span)
+                            }
+
+                            let var_id = module.add_variable(CheckedVariable(
+                                name: arg.binding
+                                type_id: substituted_type_id
+                                is_mutable: false
+                                definition_span: matched_span
+                                type_span: None
+                                visibility: Visibility::Public
+                            ))
+                            .add_var_to_scope(scope_id: new_scope_id, name: arg.binding, var_id, span: matched_span)
+                        }
+                        else => {
+                            .error(format("Match case argument '{}' does not exist in struct-like enum variant '{}'", arg_name, name), arg.span)
+                        }
+                    }
+                }
+            }
+            else => {
+                todo(format("implement {} match case for matched variant", variant.name()))
+            }
+        }
+
+        let (checked_body, result_type) = .typecheck_match_body(
+            body: case_.body
+            scope_id: new_scope_id
+            safety_mode
+            generic_inferences: &mut .generic_inferences
+            final_result_type
+            span: case_.marker_span
+        )
+
+        let checked_match_case = CheckedMatchCase::EnumVariant(
+            name: variant.name()
+            args: variant_arguments
+            subject_type_id
+            index: variant_index
+            scope_id: new_scope_id
+            body: checked_body
+            marker_span: case_.marker_span
+        )
+
+        return (covered_name, checked_match_case, result_type)
+    }
+
     function typecheck_match(mut this, expr: ParsedExpression, cases: [ParsedMatchCase], span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
         let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
         let subject_type_id = checked_expr.type()
@@ -5128,6 +5265,7 @@ struct Typechecker {
             Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
                 let enum_ = .get_enum(enum_id)
                 mut seen_catch_all = false
+                mut expanded_catch_all = false
                 mut catch_all_span: Span? = None
                 mut covered_variants: {String} = {}
 
@@ -5144,9 +5282,11 @@ struct Typechecker {
                                         temp
                                     ]
                                 }
+
                                 if variant_names_.is_empty() {
                                     continue
                                 }
+
                                 if variant_names_[0].0 != enum_.name {
                                     .error(format("Match case '{}' does not match enum '{}'", variant_names_[0].0, enum_.name), variant_names_[0].1)
                                     continue
@@ -5165,166 +5305,109 @@ struct Typechecker {
 
                                 if not matched_variant.has_value() {
                                     .error(format("Enum '{}' does not contain a variant named '{}'", enum_.name, variant_names_[1].0), case_.marker_span)
+
                                     return CheckedExpression::Match(expr: checked_expr, match_cases: [], span, type_id: unknown_type_id(), all_variants_constant: false)
                                 }
 
-                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant_names_))
-                                mut module = .current_module()
-                                match matched_variant! {
-                                    Untyped(name) => {
-                                        covered_variants.add(name)
-                                        if not variant_arguments.is_empty() {
-                                            .error(format("Match case '{}' cannot have arguments", name), arguments_span)
-                                        }
-                                    }
-                                    Typed(name, type_id, span) => {
-                                        covered_variants.add(name)
-                                        if not variant_arguments.is_empty() {
-                                            if variant_arguments.size() != 1 {
-                                                .error(format("Match case ‘{}’ must have exactly one argument", name), span)
-                                            } else {
-                                                let variant_argument = variant_arguments[0]
-                                                let variable_type_id = .substitute_typevars_in_type(
-                                                    type_id
-                                                    generic_inferences: .generic_inferences
-                                                )
-                                                let var_id = module.add_variable(CheckedVariable(
-                                                    name: variant_argument.binding
-                                                    type_id: variable_type_id
-                                                    is_mutable: false
-                                                    definition_span: span
-                                                    type_span: None
-                                                    visibility: Visibility::Public
-                                                ))
-                                                .add_var_to_scope(scope_id: new_scope_id, name: variant_argument.binding, var_id, span)
-                                            }
-                                        }
-                                    }
-                                    StructLike(name, fields) => {
-                                        covered_variants.add(name)
-
-                                        mut field_variables: [CheckedVariable] = []
-                                        for var_id in fields.iterator() {
-                                            field_variables.push(.program.get_variable(var_id))
-                                        }
-                                        mut seen_names: {String} = {}
-                                        for arg in variant_arguments.iterator() {
-                                            if not arg.name.has_value() {
-                                                mut found_field_name = false
-                                                mut field_names: [String] = []
-                                                for var in field_variables.iterator() {
-                                                    field_names.push(var.name)
-                                                    if var.name == arg.binding {
-                                                        found_field_name = true
-                                                    }
-                                                }
-                                                if not found_field_name {
-                                                    mut unused_field_names: [String] = []
-                                                    for field_name in field_names.iterator() {
-                                                        if seen_names.contains(field_name) {
-                                                            continue
-                                                        }
-                                                        unused_field_names.push(field_name)
-                                                    }
-                                                    .error_with_hint(
-                                                        format("Match case argument '{}' for struct-like enum variant cannot be anon", arg.binding)
-                                                        arg.span
-                                                        format("Available arguments are: {}\n", join(unused_field_names, separator: ", "))
-                                                        arg.span
-                                                    )
-                                                    continue
-                                                }
-                                            }
-                                            let arg_name = arg.name ?? arg.binding
-                                            if seen_names.contains(arg_name) {
-                                                .error(format("match case argument '{}' is already defined", arg_name), arg.span)
-                                                continue
-                                            }
-                                            seen_names.add(arg_name)
-                                            mut matched_field_variable: CheckedVariable? = None
-                                            for var in field_variables.iterator() {
-                                                if var.name == arg_name {
-                                                    matched_field_variable = var
-                                                }
-                                            }
-
-                                            match matched_field_variable.has_value() {
-                                                true => {
-                                                    let substituted_type_id = .substitute_typevars_in_type(type_id: matched_field_variable!.type_id, generic_inferences: .generic_inferences)
-                                                    let matched_span = matched_field_variable!.definition_span
-                                                    if .dump_type_hints {
-                                                        .dump_type_hint(type_id: matched_field_variable!.type_id, span: arg.span)
-                                                    }
-
-                                                    let var_id = module.add_variable(CheckedVariable(
-                                                        name: arg.binding
-                                                        type_id: substituted_type_id
-                                                        is_mutable: false
-                                                        definition_span: matched_span
-                                                        type_span: None
-                                                        visibility: Visibility::Public
-                                                    ))
-                                                    .add_var_to_scope(scope_id: new_scope_id, name: arg.binding, var_id, span)
-                                                }
-                                                else => {
-                                                    .error(format("Match case argument '{}' does not exist in struct-like enum variant '{}'", arg_name, name), arg.span)
-                                                }
-                                            }
-                                        }
-                                    }
-                                    else => {
-                                        todo(format("implement {} match case for matched variant", matched_variant))
-                                    }
+                                let (covered_name, checked_match_case, result_type) = .typecheck_match_variant(
+                                    case_
+                                    subject_type_id
+                                    variant_index: variant_index!
+                                    final_result_type
+                                    variant: matched_variant!
+                                    variant_arguments
+                                    arguments_span
+                                    scope_id
+                                    safety_mode
+                                )
+                                if covered_name.has_value() {
+                                    covered_variants.add(covered_name!)
                                 }
 
-                                let (checked_body, result_type) = .typecheck_match_body(
-                                    body: case_.body
-                                    scope_id: new_scope_id
-                                    safety_mode
-                                    generic_inferences: &mut .generic_inferences
-                                    final_result_type
-                                    span: case_.marker_span
-                                )
                                 final_result_type = result_type
-
-                                let checked_match_case = CheckedMatchCase::EnumVariant(
-                                    name: variant_names_[1].0,
-                                    args: variant_arguments,
-                                    subject_type_id,
-                                    index: variant_index!,
-                                    scope_id: new_scope_id,
-                                    body: checked_body,
-                                    marker_span: case_.marker_span
-                                )
 
                                 checked_cases.push(checked_match_case)
                             }
-                            CatchAll => {
-                                if seen_catch_all {
-                                    .error(
-                                        "Multiple catch-all cases in match are not allowed"
-                                        case_.marker_span
-                                    )
-                                } else {
-                                    seen_catch_all = true
-                                    catch_all_span = case_.marker_span
-                                }
-                                let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
-                                let (checked_body, result_type) = .typecheck_match_body(
-                                    body: case_.body
-                                    scope_id: new_scope_id
-                                    safety_mode
-                                    generic_inferences: &mut .generic_inferences
-                                    final_result_type
-                                    span: case_.marker_span
-                                )
-                                final_result_type = result_type
+                            CatchAll(variant_arguments, arguments_span) => {
+                                if variant_arguments.size() == 0 {
+                                    if seen_catch_all {
+                                        .error(
+                                            "Multiple catch-all cases in match are not allowed"
+                                            case_.marker_span
+                                        )
+                                    } else {
+                                        seen_catch_all = true
+                                        catch_all_span = case_.marker_span
+                                    }
 
-                                let checked_match_case = CheckedMatchCase::CatchAll(
-                                    body: checked_body
-                                    marker_span: case_.marker_span
-                                )
-                                checked_cases.push(checked_match_case)
+                                    let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
+                                    let (checked_body, result_type) = .typecheck_match_body(
+                                        body: case_.body
+                                        scope_id: new_scope_id
+                                        safety_mode
+                                        generic_inferences: &mut .generic_inferences
+                                        final_result_type
+                                        span: case_.marker_span
+                                    )
+                                    final_result_type = result_type
+
+                                    let checked_match_case = CheckedMatchCase::CatchAll(
+                                        has_arguments: false
+                                        body: checked_body
+                                        marker_span: case_.marker_span
+                                    )
+
+                                    checked_cases.push(checked_match_case)
+                                }
+                            }
+                            else => {}
+                        }
+                    }
+                }
+
+                for case_ in cases.iterator() {
+                    for pattern in case_.patterns.iterator() {
+                        match pattern {
+                            CatchAll(variant_arguments, arguments_span) => {
+                                if variant_arguments.size() > 0 {
+                                    if seen_catch_all {
+                                        .error(
+                                            "Multiple catch-all cases in match are not allowed"
+                                            case_.marker_span
+                                        )
+                                    } else {
+                                        seen_catch_all = true
+                                        catch_all_span = case_.marker_span
+                                    }
+
+                                    mut i = 0uz
+                                    for variant in enum_.variants.iterator() {
+                                        if not covered_variants.contains(variant.name()) {
+                                            expanded_catch_all = true
+
+                                            let (covered_name, checked_match_case, result_type) = .typecheck_match_variant(
+                                                case_
+                                                subject_type_id
+                                                variant_index: i
+                                                final_result_type
+                                                variant
+                                                variant_arguments
+                                                arguments_span
+                                                scope_id
+                                                safety_mode
+                                            )
+                                            if covered_name.has_value() {
+                                                covered_variants.add(covered_name!)
+                                            }
+
+                                            final_result_type = result_type
+
+                                            checked_cases.push(checked_match_case)
+                                        }
+
+                                        i++
+                                    }
+                                }
                             }
                             else => {}
                         }
@@ -5348,7 +5431,7 @@ struct Typechecker {
                     if not seen_catch_all {
                         .error(format("Match expression is not exhaustive, missing variants are: {}", join(missing_variants, separator: ", ")), span)
                     }
-                } else if seen_catch_all {
+                } else if seen_catch_all and not expanded_catch_all {
                     .error("All variants are covered, but an irrefutable pattern is also present", span)
                 }
             }
@@ -5381,7 +5464,6 @@ struct Typechecker {
 
                                 // We don't know what the enum type is, but we have the type var for it, so generate a generic enum match.
                                 // note that this will be fully checked when this match expression is actually instantiated.
-
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant_names))
                                 let (checked_body, result_type) = .typecheck_match_body(
                                     body: case_.body
@@ -5404,7 +5486,7 @@ struct Typechecker {
                                 )
                                 checked_cases.push(checked_match_case)
                             }
-                            CatchAll => {
+                            CatchAll(variant_arguments) => {
                                 if seen_catch_all {
                                     .error(
                                         "Cannot have multiple catch-all match cases"
@@ -5413,6 +5495,8 @@ struct Typechecker {
                                 }
                                 seen_catch_all = true
 
+                                // FIXME: bindings shouldn't be allowed for generic else but we can't just put an error here as the generic version
+                                // is typechecked with ignore errors
                                 let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
                                 let (checked_body, result_type) = .typecheck_match_body(
                                     body: case_.body
@@ -5425,9 +5509,11 @@ struct Typechecker {
                                 final_result_type = result_type
 
                                 let checked_match_case = CheckedMatchCase::CatchAll(
+                                    has_arguments: variant_arguments.size() != 0
                                     body: checked_body
                                     marker_span: case_.marker_span
                                 )
+
                                 checked_cases.push(checked_match_case)
                             }
                             Expression(expr) => {
@@ -5488,6 +5574,7 @@ struct Typechecker {
                                 )
                                 checked_cases.push(checked_match_case)
                             }
+                            else => {}
                         }
                     }
                 }

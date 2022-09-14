@@ -1,0 +1,24 @@
+/// Expect:
+/// - output: "I found an A 1\nJust 2\n"
+
+enum Foo {
+    A(x: i64)
+    B(x: i64)
+    C(x: i64)
+}
+
+function main() {
+    let a = Foo::A(x: 1)
+
+    match a {
+        else(x) => println("Just {}", x)
+        A(x) => println("I found an A {}", x)
+    }
+
+    let b = Foo::B(x: 2)
+
+    match b {
+        else(x) => println("Just {}", x)
+        A(x) => println("I found an A {}", x)
+    }
+}
