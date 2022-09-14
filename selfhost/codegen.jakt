@@ -1812,7 +1812,11 @@ struct CodeGenerator {
                     output += .codegen_match_body(body, return_type_id)
                     output += "}\n"
                 }
-                CatchAll(body, marker_span) => {
+                CatchAll(has_arguments, body, marker_span) => {
+                    if has_arguments {
+                        panic("Bindings aren't allowed in generic else")
+                    }
+
                     // TODO: Use default statement if all values are constant
                     has_default = true
 

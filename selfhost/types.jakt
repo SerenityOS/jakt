@@ -990,7 +990,7 @@ enum CheckedMatchBody {
 enum CheckedMatchCase {
     EnumVariant(name: String, args: [EnumVariantPatternArgument], subject_type_id: TypeId, index: usize, scope_id: ScopeId, body: CheckedMatchBody, marker_span: Span)
     Expression(expression: CheckedExpression, body: CheckedMatchBody, marker_span: Span)
-    CatchAll(body: CheckedMatchBody, marker_span: Span)
+    CatchAll(has_arguments: bool, body: CheckedMatchBody, marker_span: Span)
 }
 
 boxed enum CheckedExpression {

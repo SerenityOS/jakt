@@ -1,0 +1,20 @@
+/// Expect:
+/// - error: "Bindings aren't allowed in generic else"
+
+enum Foo {
+    A(x: i64)
+    B(x: i64)
+    C(x: i64)
+}
+
+function match_generic<T>(a: T) -> i64 {
+    return match a {
+        else(x) => x
+    }
+}
+
+function main() {
+    let a = Foo::A(x: 1)
+
+    println("{}", match_generic(a))
+}

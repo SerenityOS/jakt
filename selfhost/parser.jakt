@@ -634,7 +634,11 @@ enum ParsedMatchPattern {
         arguments_span: Span
     )
     Expression(ParsedExpression)
-    CatchAll
+    CatchAll(
+        variant_arguments: [EnumVariantPatternArgument]
+        arguments_span: Span
+    )
+    Invalid
 
     function equals(this, anon rhs_parsed_match_pattern: ParsedMatchPattern) -> bool => match this {
         EnumVariant(variant_names: lhs_variant_names, variant_arguments: lhs_variant_arguments) => match rhs_parsed_match_pattern {
@@ -664,6 +668,7 @@ enum ParsedMatchPattern {
             else => false
         }
         CatchAll => rhs_parsed_match_pattern is CatchAll
+        Invalid => rhs_parsed_match_pattern is Invalid
     }
 }
 
@@ -1739,7 +1744,6 @@ struct Parser {
             .error("Incomplete enum definition, expected generic parameters or underlying type or body", .current().span())
             return parsed_enum
         }
-
 
         if .current() is LessThan {
             parsed_enum.generic_parameters = .parse_generic_parameters()
@@ -3647,11 +3651,19 @@ struct Parser {
 
         Else => {
             .index++
-            yield ParsedMatchPattern::CatchAll
+
+            mut variant_arguments = .parse_variant_arguments()
+            let arguments_start = .current().span()
+            let arguments_end = .previous().span()
+            let arguments_span = merge_spans(arguments_start, arguments_end)
+
+            yield ParsedMatchPattern::CatchAll(
+                variant_arguments
+                arguments_span
+            )
         }
 
-        Identifier(name) => {
-            let pattern_start_index = .index
+        Identifier => {
             mut variant_names: [(String, Span)] = []
 
             while not .eof() {
@@ -3684,7 +3696,7 @@ struct Parser {
 
         else => {
             .error("Expected pattern or ‘else’", .current().span())
-            yield ParsedMatchPattern::CatchAll
+            yield ParsedMatchPattern::Invalid
         }
     }
 
