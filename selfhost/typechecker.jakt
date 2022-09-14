@@ -2979,6 +2979,8 @@ struct Typechecker {
         .check_that_type_doesnt_contain_reference(type_id: function_return_type_id, span: parsed_function.return_type_span)
 
         if not parsed_function.generic_parameters.is_empty() {
+            let previous_function_id = .current_function_id
+            .current_function_id = function_id
             let old_ignore_errors = .ignore_errors
             .ignore_errors = true
             let block = .typecheck_block(
@@ -2987,6 +2989,7 @@ struct Typechecker {
                 safety_mode: SafetyMode::Safe
             )
             .ignore_errors = old_ignore_errors
+            .current_function_id = previous_function_id
 
             let return_type_id = match function_return_type_id.equals(unknown_type_id()) {
                 true => .infer_function_return_type(block)
