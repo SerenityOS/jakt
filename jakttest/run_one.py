@@ -39,6 +39,10 @@ def main():
         "--target-triple",
         help="The target triple of the host platform",
     )
+    parser.add_argument(
+        "--cpp-include",
+        help="Additional include path",
+    )
     args = parser.parse_args()
 
     # Since we're running the output binary from a different
@@ -48,16 +52,21 @@ def main():
     jakt_binary = Path(args.jakt_binary).resolve()
     jakt_lib_dir = Path(args.jakt_lib_dir).resolve()
     target_triple = args.target_triple
+    cpp_include = ""
+    if args.cpp_include and not args.cpp_include == "none":
+        cpp_include = f"-I{Path(test_file.parent, args.cpp_include)}"
 
     # clear the temp directory
     for f in os.listdir(temp_dir):
         os.remove(temp_dir / f)
 
+    runtime_path_for_stdlib = str(Path("./runtime").resolve())
+
     # Generate C++ code, exit with status == 3 on failure
     with open(temp_dir / "compile_jakt.err", "w") as stderr:
         try:
             subprocess.run(
-                [jakt_binary, test_file, "-B", temp_dir, "-S"],
+                [jakt_binary, test_file, "-B", temp_dir, "-S", "-R", runtime_path_for_stdlib],
                 check=True,
                 stderr=stderr,
                 cwd=test_file.parent,
@@ -71,7 +80,7 @@ def main():
             subprocess.run(
                 [
                     "clang++",
-                    f"--target={target_triple}"
+                    f"--target={target_triple}",
                     "-fdiagnostics-color=always",
                     "-std=c++20",
                     "-Wno-unknown-warning-option",
@@ -81,6 +90,7 @@ def main():
                     "-Wno-user-defined-literals",
                     "-Wno-deprecated-declarations",
                     "-Iruntime",
+                    cpp_include,
                     "-DJAKT_CONTINUE_ON_PANIC",
                     "-o",
                     temp_dir / "output",
