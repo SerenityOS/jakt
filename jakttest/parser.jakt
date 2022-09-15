@@ -6,9 +6,9 @@ import error { JaktError }
 import utility { panic, todo, Span }
 
 enum ParsedTest {
-    SuccessTest(String),
-    CompileErrorTest(String),
-    RuntimeErrorTest(String),
+    SuccessTest(output: String, cppincludes: String)
+    CompileErrorTest(output: String, cppincludes: String)
+    RuntimeErrorTest(output: String, cppincludes: String)
     SkipTest
     NoExpectOrSkip
 }
@@ -68,48 +68,76 @@ struct Parser {
         .index++
         return Span(start, end: .index - 1)
     }
-    
+
     function parse_test(mut this) throws -> ParsedTest {
+        if not .lex_literal("///") {
+            .index++
+            return ParsedTest::NoExpectOrSkip
+        }
+        .skip_whitespace()
+        if not .lex_literal("Expect:") {
+            return ParsedTest::NoExpectOrSkip
+        }
+
+        .skip_whitespace()
+
+        if .lex_literal("Skip") {
+            return ParsedTest::SkipTest
+        }
+
+        if .lex_literal("selfhost-only") {
+            .skip_whitespace()
+        }
+        if .is_eof() or .current() != b'\n' {
+            return ParsedTest::NoExpectOrSkip
+        }
+        .index++
+        return .parse_test_information()
+    }
+
+    function parse_test_information(mut this) throws -> ParsedTest {
+        mut success_test = false
+        mut runtime_error = false
+        mut compile_error = false
+        mut has_cppincludes = false
+        mut output = ""
+        mut cppincludes = ""
+
         while not .is_eof() {
             if not .lex_literal("///") {
-                .index++
-                continue
+                break
             }
             .skip_whitespace()
-            if not .lex_literal("Expect:") {
-                continue
-            }
-
-            .skip_whitespace()
-
-            if .lex_literal("Skip") {
-                return ParsedTest::SkipTest
-            }
-
-            if .lex_literal("selfhost-only") {
-                .skip_whitespace()
-            }
-            if .is_eof() or .current() != b'\n' {
-                continue
-            }
-            .index++
-            if not .lex_literal("///") {
-                continue
-            }
-            .skip_whitespace()
-            if .is_eof() or .current() != b'-' {
-                continue
+            guard .current() == b'-' and not .is_eof() else {
+                break
             }
             .index++
             .skip_whitespace()
 
-
-            let is_error = not .lex_literal("output")
-            let compile_error = .lex_literal("error")
-            let runtime_error = .lex_literal("stderr")
-            if is_error and not (compile_error or runtime_error) {
-                continue
+            if not success_test {
+                success_test = .lex_literal("output")
             }
+            if not compile_error {
+                compile_error = .lex_literal("error")
+            }
+            if not runtime_error {
+                runtime_error = .lex_literal("stderr")
+            }
+
+            if (success_test as! u8 + compile_error as! u8 + runtime_error as! u8) > 1 {
+                eprintln("Too many test directives")
+                return ParsedTest::NoExpectOrSkip
+            }
+            let expect_output = success_test or compile_error or runtime_error
+
+            if not has_cppincludes {
+                has_cppincludes =  .lex_literal("cppincludes")
+            }
+
+            guard success_test or compile_error or runtime_error or has_cppincludes else {
+                return ParsedTest::NoExpectOrSkip
+            }
+
             .skip_whitespace()
             if .is_eof() or .current() != b':' {
                 continue
@@ -118,7 +146,7 @@ struct Parser {
             .skip_whitespace()
             let quoted_string_span = .lex_quoted_string()
             if not quoted_string_span.has_value() {
-                return ParsedTest::SkipTest
+                return ParsedTest::NoExpectOrSkip
             }
 
             // create the string
@@ -128,15 +156,27 @@ struct Parser {
                 builder.append(.input[i])
             }
 
-            let output = parse_quoted_string(builder.to_string())
+            let parsed_string = parse_quoted_string(builder.to_string())
+            .skip_whitespace()
+            .index++
 
-            if is_error and runtime_error {
-                return ParsedTest::RuntimeErrorTest(output)
-            } else if is_error and compile_error {
-                return ParsedTest::CompileErrorTest(output)
-            } else {
-                return ParsedTest::SuccessTest(output)
+            if output.is_empty() and expect_output {
+                output = parsed_string
+                continue
             }
+            else if not has_cppincludes {
+                panic("Unexpected token state in parse_test_information")
+            }
+            cppincludes = parsed_string
+        }
+        if success_test {
+            return ParsedTest::SuccessTest(output, cppincludes)
+        }
+        if compile_error {
+            return ParsedTest::CompileErrorTest(output, cppincludes)
+        }
+        if runtime_error {
+            return ParsedTest::RuntimeErrorTest(output, cppincludes)
         }
         return ParsedTest::NoExpectOrSkip
     }

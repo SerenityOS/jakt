@@ -37,7 +37,7 @@ import extern "fs.h" {
 
         // Create a directory
         extern function mkdir(path: String) throws
-        
+
         // Remove a directory
         extern function rmdir(path: String) throws
 
@@ -402,6 +402,7 @@ struct Test {
     result: ExpectedResult
     file_name: String
     directory_index: usize
+    cppincludes: String
 }
 
 struct TestsRunResult {
@@ -633,6 +634,8 @@ struct TestScheduler {
             String::format("{}/lib", build_dir)
             "--target-triple"
             ___jakt_get_target_triple_string()
+            "--cpp-include"
+            "None" // A sentinel value is passed here because Windows shell does not allow empty arguments
             ""
             ""
         ]
@@ -641,8 +644,12 @@ struct TestScheduler {
             mut test = tests.pop()!
             test.directory_index = dir_index
             let directory = scheduler.directories[test.directory_index]
+            if test.cppincludes.length() > 0 {
+                command_buffer[command_buffer.size() - 3] = test.cppincludes
+            }
             command_buffer[command_buffer.size() - 2] = directory
             command_buffer[command_buffer.size() - 1] = test.file_name
+
             let pid = process::start_background_process(args: command_buffer)
             scheduler.running_tests[pid] = test
             eprint("\r\x1b[2K[ \x1b[1;31m{}\x1b[m/\x1b[1;32m{}\x1b[m/{} ] Testing {}"
@@ -693,20 +700,23 @@ function main(args: [String]) {
         let contents = file.read_all()
         let result = Parser::parse(input: contents)
         match result {
-            SuccessTest(output) => {
+            SuccessTest(output, cppincludes) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::Okay, output)
                                 file_name
-                                directory_index: 0))
+                                directory_index: 0
+                                cppincludes))
             }
-            CompileErrorTest(output) => {
+            CompileErrorTest(output, cppincludes) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::CompileError, output)
                                 file_name
-                                directory_index: 0))
+                                directory_index: 0
+                                cppincludes))
             }
-            RuntimeErrorTest(output) => {
+            RuntimeErrorTest(output, cppincludes) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::RuntimeError, output)
                                 file_name
-                                directory_index: 0))
+                                directory_index: 0
+                                cppincludes))
             }
             SkipTest => {
                 eprintln("[ \x1b[33;1mSKIP\x1b[m ] {}", file_name)
