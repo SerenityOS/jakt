@@ -1,0 +1,9 @@
+/// Expect: Skip
+
+import extern "Hello.h" {
+    extern function get_hello() -> String
+
+    extern class Printer {
+        public function print_something() -> void
+    }
+}

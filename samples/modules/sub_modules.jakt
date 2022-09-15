@@ -1,10 +1,14 @@
 /// Expect:
-/// - output: "something_cool\nsomething_else_cool\nnot_cool\n"
+/// - output: "something_cool\nsomething_else_cool\nnot_cool\nprinted\nHello\n"
+/// - cppincludes: "subfolder"
 
 import a
 import b
+import subfolder::submodule { get_hello, Printer }
 
 function main() {
     a::use_cool_things()
     b::not_cool()
+    Printer::print_something()
+    println("{}", get_hello())
 }
