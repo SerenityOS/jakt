@@ -37,7 +37,7 @@ import extern "fs.h" {
 
         // Create a directory
         extern function mkdir(path: String) throws
-        
+
         // Remove a directory
         extern function rmdir(path: String) throws
 
@@ -387,6 +387,7 @@ struct Test {
     result: ExpectedResult
     file_name: String
     directory_index: usize
+    cppincludes: String
 }
 
 struct TestsRunResult {
@@ -602,7 +603,7 @@ struct TestScheduler {
         scheduler.failed_count = starting_failed_tests
         // pre-allocate the command buffer to avoid allocating inside a loop
         let run_once_script = os::get_script_execution_string()
-        mut command_buffer: [String] = [run_once_script "" ""]
+        mut command_buffer: [String] = [run_once_script "" "" ""]
         while not tests.is_empty() {
             let dir_index = scheduler.wait_for_free_directory()
             mut test = tests.pop()!
@@ -610,6 +611,7 @@ struct TestScheduler {
             let directory = scheduler.directories[test.directory_index]
             command_buffer[1] = directory
             command_buffer[2] = test.file_name
+            command_buffer[3] = test.cppincludes
             let pid = process::start_background_process(args: command_buffer)
             scheduler.running_tests[pid] = test
             eprint("\r\x1b[2K[ \x1b[1;31m{}\x1b[m/\x1b[1;32m{}\x1b[m/{} ] Testing {}"
@@ -660,20 +662,23 @@ function main(args: [String]) {
         let contents = file.read_all()
         let result = Parser::parse(input: contents)
         match result {
-            SuccessTest(output) => {
+            SuccessTest(output, cppincludes) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::Okay, output)
                                 file_name
-                                directory_index: 0))
+                                directory_index: 0
+                                cppincludes))
             }
-            CompileErrorTest(output) => {
+            CompileErrorTest(output, cppincludes) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::CompileError, output)
                                 file_name
-                                directory_index: 0))
+                                directory_index: 0
+                                cppincludes))
             }
-            RuntimeErrorTest(output) => {
+            RuntimeErrorTest(output, cppincludes) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::RuntimeError, output)
                                 file_name
-                                directory_index: 0))
+                                directory_index: 0
+                                cppincludes))
             }
             SkipTest => {
                 eprintln("[ \x1b[33;1mSKIP\x1b[m ] {}", file_name)
@@ -698,7 +703,7 @@ function main(args: [String]) {
 
     let run_result = TestScheduler::run_tests(
         tests, directories,
-        collect_reasons: parsed_options.show_reasons 
+        collect_reasons: parsed_options.show_reasons
         starting_failed_tests: bad_formatted_tests.size()
         total_test_count: skipped_count + bad_formatted_tests.size() + tests.size())
 

@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: BSD-2-Clause
 
-# run-one.sh <temp-dir> <file>
+# run-one.sh <temp-dir> <file> <cpp_options>
 # NOTE: we need this because selfhost doesn't yet have a way to specify
 # build directories, and it doesn't use temporary directories for
 # temporary building (i.e building and running)
@@ -15,14 +15,17 @@ set -e
 # working directory, we need the full path of the binary.
 temp_dir=$(realpath $1)
 file=$2
+cpp_options=$3
 
 file_cwd=$(dirname $file)
+arr=($(echo $cpp_options | tr " " "\n"))
+cpp_options=${arr[@]/#/-I$file_cwd/}
 
 # Generate C++ code into 
 $(build/jakt $2 -B $temp_dir -o output -S 2>$temp_dir/compile_jakt.err) || exit 3
 
 # Compile C++ code
-clang++ -fdiagnostics-color=always \
+clang++ -fdiagnostics-color=always -v \
     -std=c++20 \
     -Wno-unknown-warning-option \
     -Wno-trigraphs \
@@ -31,6 +34,7 @@ clang++ -fdiagnostics-color=always \
     -Wno-user-defined-literals \
     -Wno-deprecated-declarations \
     -Iruntime \
+    ${cpp_options[@]} \
     -DJAKT_CONTINUE_ON_PANIC \
     -o $temp_dir/output \
     $temp_dir/output.cpp 2>$temp_dir/compile_cpp.err || exit 2

@@ -13,6 +13,10 @@ cd $Args[0]
 # working directory, we need the full path of the binary.
 $temp_dir = resolve-path $Args[1]
 $file = $Args[2]
+$cppincludes = $Args[3]
+if ($cppincludes) {
+    $cppincludes = $cppincludes.Split().ForEach({ "-I" + (Get-Item $file).DirectoryName + "\" + $_ })
+}
 
 $jakt_args = @("$file",
     "-B",
@@ -40,8 +44,11 @@ $clang_args = @( "-fdiagnostics-color=always",
     "-Wno-unknown-attributes",
     "-fuse-ld=lld",
     "-fno-exceptions",
-    "-O0",
-    "-Iruntime",
+    "-O0")
+if ($cppincludes) {
+    $clang_args += $cppincludes
+}
+$clang_args += @("-Iruntime",
     "-DJAKT_CONTINUE_ON_PANIC",
     "-o",
     "$temp_dir/output.exe",
