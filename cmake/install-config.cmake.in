@@ -1,2 +1,4 @@
 include("${CMAKE_CURRENT_LIST_DIR}/JaktTargets.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/jakt-executable.cmake")
+
+add_executable(Jakt::jakt ALIAS Jakt::jakt_stage@FINAL_STAGE@)

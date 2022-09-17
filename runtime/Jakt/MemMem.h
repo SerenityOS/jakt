@@ -8,6 +8,7 @@
 
 #include <Jakt/Assertions.h>
 #include <Jakt/LinearArray.h>
+#include <Jakt/Optional.h>
 #include <Jakt/Span.h>
 #include <Jakt/Types.h>
 
