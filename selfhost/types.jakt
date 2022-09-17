@@ -1,4 +1,4 @@
-import parser { Parser, BinaryOperator, DefinitionLinkage, DefinitionType, UnaryOperator,
+import parser { Parser, BinaryOperator, DefinitionLinkage, UnaryOperator,
                 FunctionLinkage, FunctionType, ParsedBlock, ParsedCall,
                 ParsedExpression, ParsedFunction, ParsedNamespace, ParsedModuleImport,
                 ParsedExternImport, ParsedType, ParsedStatement, ParsedVarDecl, RecordType,

@@ -8,13 +8,13 @@
 
 import error { JaktError, print_error }
 import lexer { Lexer, NumericConstant }
-import parser {
-    BinaryOperator, DefinitionLinkage, EnumVariantPatternArgument, FunctionLinkage, FunctionType, ParsedBlock
-    ParsedCall, ParsedCapture, ParsedExpression, ParsedExternImport, ParsedField, ParsedFunction, ParsedMatchBody
-    ParsedMatchCase, ParsedMethod, ParsedModuleImport, ParsedNamespace, ParsedParameter, ParsedRecord
-    ParsedStatement, ParsedType, ParsedVarDecl, Parser, RecordType, TypeCast, UnaryOperator, Visibility
-    VisibilityRestriction
-}
+import parser { Parser, BinaryOperator, DefinitionLinkage, UnaryOperator,
+                FunctionLinkage, FunctionType, ParsedBlock, ParsedCall,
+                ParsedExpression, ParsedFunction, ParsedNamespace, ParsedModuleImport,
+                ParsedExternImport, ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
+                ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
+                ParsedMatchBody, ParsedMatchCase, Visibility, ParsedParameter, ParsedCapture,
+                ParsedMethod }
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant,
     CheckedEnumVariantBinding, CheckedExpression, CheckedFunction, FunctionGenerics, CheckedMatchBody, CheckedMatchCase,

@@ -6,7 +6,7 @@ import types {
     GenericInferences, Scope, Type, TypeId, VarId, Value, ValueImpl, builtin, unknown_type_id,
 }
 import utility { escape_for_quotes, interpret_escapes, panic }
-import error { JaktError, Message }
+import error { JaktError }
 import compiler { Compiler }
 
 enum InterpretError : i32 {
