@@ -658,7 +658,7 @@ connection.onDocumentFormatting(async (params) => {
 });
 
 connection.onDocumentRangeFormatting(async (params) => {
-    console.time("onDocumentFormatting");
+    console.time("onDocumentRangeFormatting");
     const document = documents.get(params.textDocument.uri);
     const settings = await getDocumentSettings(params.textDocument.uri);
 
@@ -687,7 +687,7 @@ connection.onDocumentRangeFormatting(async (params) => {
             },
         ];
     }
-    console.timeEnd("onDocumentFormatting");
+    console.timeEnd("onDocumentRangeFormatting");
     return [];
 });
 
