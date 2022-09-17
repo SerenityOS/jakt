@@ -1,5 +1,6 @@
 
-cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16..3.21)
+cmake_policy(SET CMP0091 NEW)
 
 project(Jakt
         VERSION 0.0.1
@@ -26,6 +27,8 @@ else()
 endif()
 
 include(cmake/jakt-executable.cmake)
+
+add_subdirectory(runtime)
 
 add_executable(jakt_stage0 bootstrap/stage0/jakt.cpp)
 add_executable(Jakt::jakt_stage0 ALIAS jakt_stage0)
@@ -78,6 +81,7 @@ add_custom_command(
   COMMAND "${CMAKE_COMMAND}" -E ${LINK_COMMAND}  "$<${LINK_GENEX}:jakt_stage${FINAL_STAGE}>" "${CMAKE_CURRENT_BINARY_DIR}/jakt${CMAKE_EXECUTABLE_SUFFIX}"
   VERBATIM
 )
+add_executable(Jakt::jakt ALIAS jakt_stage${FINAL_STAGE})
 
 if (NOT CMAKE_SKIP_INSTALL_RULES)
   include(cmake/install-rules.cmake)
@@ -88,7 +92,6 @@ option(JAKT_BUILD_TESTING "Whether to build tests or not, default on" ON)
 
 if (JAKT_BUILD_TESTING)
   add_jakt_executable(jakttest
-    COMPILER "jakt_stage${FINAL_STAGE}"
     MAIN_SOURCE
       jakttest/jakttest.jakt
     MODULE_SOURCES

@@ -3,6 +3,7 @@
 #include <Jakt/Checked.h>
 #include <Jakt/Error.h>
 #include <Jakt/RefCounted.h>
+#include <Jakt/RefPtr.h>
 #include <Builtins/Range.h>
 #include <initializer_list>
 #include <stdlib.h>

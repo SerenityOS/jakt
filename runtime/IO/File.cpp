@@ -5,6 +5,7 @@
  */
 
 #include <IO/File.h>
+#include <Jakt/RefPtr.h>
 #include <errno.h>
 
 namespace JaktInternal {

@@ -50,15 +50,6 @@
 #include <Jakt/kmalloc.h>
 #include <Jakt/kstdio.h>
 
-#include <Jakt/Format.cpp>
-#include <Jakt/GenericLexer.cpp>
-#include <Jakt/String.cpp>
-#include <Jakt/StringBuilder.cpp>
-#include <Jakt/StringUtils.cpp>
-#include <Jakt/StringView.cpp>
-#include <Jakt/kmalloc.cpp>
-#include <Jakt/PrettyPrint.cpp>
-
 namespace JaktInternal {
 template<typename T>
 class Set;
@@ -69,8 +60,6 @@ class Set;
 #include <Builtins/Set.h>
 
 #include <IO/File.h>
-
-#include <IO/File.cpp>
 
 using f32 = float;
 using f64 = double;
@@ -416,18 +405,4 @@ using JaktInternal::unchecked_mul;
 // We place main in a separate namespace to ensure it has access to the same identifiers as other functions
 namespace Jakt {
 ErrorOr<int> main(Array<String>);
-}
-
-int main(int argc, char** argv)
-{
-    auto args = MUST(Jakt::Array<Jakt::String>::create_empty());
-    for (int i = 0; i < argc; ++i) {
-        MUST(args.push(MUST(Jakt::String::copy(Jakt::StringView(argv[i])))));
-    }
-    auto result = Jakt::main(move(args));
-    if (result.is_error()) {
-        warnln("Runtime error: {}", result.error());
-        return 1;
-    }
-    return result.value();
 }

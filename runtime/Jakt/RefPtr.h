@@ -15,7 +15,6 @@
 #    include <Jakt/Assertions.h>
 #    include <Jakt/Atomic.h>
 #    include <Jakt/Error.h>
-#    include <Jakt/Format.h>
 #    include <Jakt/NonnullRefPtr.h>
 #    include <Jakt/StdLibExtras.h>
 #    include <Jakt/Traits.h>
@@ -283,14 +282,6 @@ private:
     }
 
     T* m_ptr { nullptr };
-};
-
-template<typename T>
-struct Formatter<RefPtr<T>> : Formatter<const T*> {
-    ErrorOr<void> format(FormatBuilder& builder, RefPtr<T> const& value)
-    {
-        return Formatter<const T*>::format(builder, value.ptr());
-    }
 };
 
 template<typename T>
