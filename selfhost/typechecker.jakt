@@ -653,16 +653,16 @@ struct Typechecker {
                 key: import_name
                 value: imported_module_id) // FIXME: Add span and should this be alias span if there is an alias?
         } else {
-
             let import_scope_id = ScopeId(module_id: imported_module_id, id: 0)
             for imported_name in import_.import_list.iterator() {
-
+                mut found = false
                 // if it is a function, add function to scope
                 let maybe_function_id = .find_function_in_scope(
                     parent_scope_id: import_scope_id
                     function_name: imported_name.name
                 )
                     if maybe_function_id.has_value() {
+                        found = true
                         // NOTE: what should we do if this returns false? error is already created in the function itself and rust compiler goes on
                         .add_function_to_scope(
                             parent_scope_id: scope_id
@@ -678,6 +678,7 @@ struct Typechecker {
                     name: imported_name.name
                 )
                     if maybe_enum_id.has_value() {
+                        found = true
                         // NOTE: what should we do if this returns false? error is already created in the enum itself and rust compiler goes on
                         .add_enum_to_scope(
                             parent_scope_id: scope_id
@@ -693,6 +694,7 @@ struct Typechecker {
                     name: imported_name.name
                 )
                     if maybe_type_id.has_value() {
+                        found = true
                         // NOTE: what should we do if this returns false? error is already created in the type itself and rust compiler goes on
                         .add_type_to_scope(
                             parent_scope_id: scope_id
@@ -708,6 +710,7 @@ struct Typechecker {
                     name: imported_name.name
                 )
                     if maybe_struct_id.has_value() {
+                        found = true
                         // NOTE: what should we do if this returns false? error is already created in the struct itself and rust compiler goes on
                         .add_struct_to_scope(
                             parent_scope_id: scope_id
@@ -716,6 +719,13 @@ struct Typechecker {
                             span: imported_name.span
                         )
                     }
+
+                if not found {
+                    .error(
+                        format("Imported name '{}' not found in module '{}'", imported_name.name, import_.module_name.name)
+                        imported_name.span
+                    )
+                }
             }
         }
     }
