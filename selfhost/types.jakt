@@ -678,11 +678,11 @@ enum BlockControlFlow {
             else => BlockControlFlow::AlwaysTransfersControl(might_break: lhs)
         }
         MayReturn => match second {
-            else => BlockControlFlow::MayReturn
             AlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
             PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break)
             PartialAlwaysTransfersControl(might_break) => BlockControlFlow::PartialAlwaysTransfersControl(might_break)
             PartialNeverReturns(might_break) => BlockControlFlow::PartialNeverReturns(might_break)
+            else => BlockControlFlow::MayReturn
         }
         PartialAlwaysReturns(might_break: lhs) => match second {
             PartialAlwaysReturns(might_break) => BlockControlFlow::PartialAlwaysReturns(might_break: lhs or might_break)

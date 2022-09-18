@@ -3595,27 +3595,6 @@ class Interpreter {
                 }
             }
             let value = match op {
-                else => {
-                    let rhs_value = match .execute_expression(rhs, scope) {
-                        Return(value) => {
-                            return StatementResult::Return(value)
-                        }
-                        Throw(value) => {
-                            return StatementResult::Throw(value)
-                        }
-                        JustValue(value) => value
-                        Continue => {
-                            return StatementResult::Continue
-                        }
-                        Break => {
-                            return StatementResult::Break
-                        }
-                        Yield(expr) => {
-                            panic("Invalid control flow")
-                        }
-                    }.cast(lhs_value, span)
-                    yield .execute_binary_operator(lhs_value, rhs_value, op, span, scope)
-                }
                 NoneCoalescing | NoneCoalescingAssign => StatementResult::JustValue(match lhs_value.impl {
                     OptionalNone => match .execute_expression(rhs, scope) {
                         Return(value) => {
@@ -3667,6 +3646,27 @@ class Interpreter {
                         throw Error::from_errno(InterpretError::InvalidType as! i32)
                     }
                 })
+                else => {
+                    let rhs_value = match .execute_expression(rhs, scope) {
+                        Return(value) => {
+                            return StatementResult::Return(value)
+                        }
+                        Throw(value) => {
+                            return StatementResult::Throw(value)
+                        }
+                        JustValue(value) => value
+                        Continue => {
+                            return StatementResult::Continue
+                        }
+                        Break => {
+                            return StatementResult::Break
+                        }
+                        Yield(expr) => {
+                            panic("Invalid control flow")
+                        }
+                    }.cast(lhs_value, span)
+                    yield .execute_binary_operator(lhs_value, rhs_value, op, span, scope)
+                }
             }
 
             match value {
