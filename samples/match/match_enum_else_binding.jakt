@@ -11,14 +11,14 @@ function main() {
     let a = Foo::A(x: 1)
 
     match a {
-        else(x) => println("Just {}", x)
         A(x) => println("I found an A {}", x)
+        else(x) => println("Just {}", x)
     }
 
     let b = Foo::B(x: 2)
 
     match b {
-        else(x) => println("Just {}", x)
         A(x) => println("I found an A {}", x)
+        else(x) => println("Just {}", x)
     }
 }

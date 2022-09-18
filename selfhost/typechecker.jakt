@@ -5269,6 +5269,8 @@ struct Typechecker {
                 mut catch_all_span: Span? = None
                 mut covered_variants: {String} = {}
 
+                let case_count = cases.size()
+                mut current_case_index = 0uz
                 for case_ in cases.iterator() {
                     for pattern in case_.patterns.iterator() {
                         match pattern {
@@ -5329,17 +5331,45 @@ struct Typechecker {
                                 checked_cases.push(checked_match_case)
                             }
                             CatchAll(variant_arguments, arguments_span) => {
-                                if variant_arguments.size() == 0 {
-                                    if seen_catch_all {
-                                        .error(
-                                            "Multiple catch-all cases in match are not allowed"
-                                            case_.marker_span
-                                        )
-                                    } else {
-                                        seen_catch_all = true
-                                        catch_all_span = case_.marker_span
-                                    }
+                                if current_case_index != case_count - 1 {
+                                    .error("Match else case is only allowed as the last case", case_.marker_span)
+                                }
 
+                                if seen_catch_all {
+                                    .error("Multiple catch-all cases in match are not allowed", case_.marker_span)
+                                } else {
+                                    seen_catch_all = true
+                                }
+
+                                if variant_arguments.size() > 0 {
+                                    mut variant_index = 0uz
+                                    for variant in enum_.variants.iterator() {
+                                        if not covered_variants.contains(variant.name()) {
+                                            expanded_catch_all = true
+
+                                            let (covered_name, checked_match_case, result_type) = .typecheck_match_variant(
+                                                case_
+                                                subject_type_id
+                                                variant_index
+                                                final_result_type
+                                                variant
+                                                variant_arguments
+                                                arguments_span
+                                                scope_id
+                                                safety_mode
+                                            )
+                                            if covered_name.has_value() {
+                                                covered_variants.add(covered_name!)
+                                            }
+
+                                            final_result_type = result_type
+
+                                            checked_cases.push(checked_match_case)
+                                        }
+
+                                        variant_index++
+                                    }
+                                } else {
                                     let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
                                     let (checked_body, result_type) = .typecheck_match_body(
                                         body: case_.body
@@ -5363,55 +5393,8 @@ struct Typechecker {
                             else => {}
                         }
                     }
-                }
 
-                for case_ in cases.iterator() {
-                    for pattern in case_.patterns.iterator() {
-                        match pattern {
-                            CatchAll(variant_arguments, arguments_span) => {
-                                if variant_arguments.size() > 0 {
-                                    if seen_catch_all {
-                                        .error(
-                                            "Multiple catch-all cases in match are not allowed"
-                                            case_.marker_span
-                                        )
-                                    } else {
-                                        seen_catch_all = true
-                                        catch_all_span = case_.marker_span
-                                    }
-
-                                    mut i = 0uz
-                                    for variant in enum_.variants.iterator() {
-                                        if not covered_variants.contains(variant.name()) {
-                                            expanded_catch_all = true
-
-                                            let (covered_name, checked_match_case, result_type) = .typecheck_match_variant(
-                                                case_
-                                                subject_type_id
-                                                variant_index: i
-                                                final_result_type
-                                                variant
-                                                variant_arguments
-                                                arguments_span
-                                                scope_id
-                                                safety_mode
-                                            )
-                                            if covered_name.has_value() {
-                                                covered_variants.add(covered_name!)
-                                            }
-
-                                            final_result_type = result_type
-
-                                            checked_cases.push(checked_match_case)
-                                        }
-
-                                        i++
-                                    }
-                                }
-                            }
-                            else => {}
-                        }
-                    }
+                    current_case_index++
                 }
 
                 mut enum_variant_names: [String] = []
@@ -5445,6 +5428,8 @@ struct Typechecker {
 
                 mut all_variants_constant = true
 
+                let case_count = cases.size()
+                mut current_case_index = 0uz
                 for case_ in cases.iterator() {
                     for pattern in case_.patterns.iterator() {
                         match pattern {
@@ -5487,13 +5472,15 @@ struct Typechecker {
                                 checked_cases.push(checked_match_case)
                             }
                             CatchAll(variant_arguments) => {
-                                if seen_catch_all {
-                                    .error(
-                                        "Cannot have multiple catch-all match cases"
-                                        case_.marker_span
-                                    )
+                                if current_case_index != case_count - 1 {
+                                    .error("Match else case is only allowed as the last case", case_.marker_span)
                                 }
-                                seen_catch_all = true
+
+                                if seen_catch_all {
+                                    .error("Multiple catch-all cases in match are not allowed", case_.marker_span)
+                                } else {
+                                    seen_catch_all = true
+                                }
 
                                 // FIXME: bindings shouldn't be allowed for generic else but we can't just put an error here as the generic version
                                 // is typechecked with ignore errors
@@ -5577,6 +5564,8 @@ struct Typechecker {
                             else => {}
                         }
                     }
+
+                    current_case_index++
                 }
 
                 if is_value_match and not seen_catch_all {
