@@ -1,0 +1,18 @@
+/// Expect:
+/// - output: "1\n"
+
+enum Foo {
+    Bar(i64)
+    Baz(m: String)
+}
+
+function main() {
+    let foo = Foo::Baz(m: "Hello")
+
+    let result = match true {
+        (foo is Baz(m: n) and n == "Hello") => 1
+        else => 2
+    }
+
+    println("{}", result)
+}
