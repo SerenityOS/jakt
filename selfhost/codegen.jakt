@@ -1725,7 +1725,7 @@ struct CodeGenerator {
                 all_variants_constant
             )
         } else {
-            output += .codegen_generic_match(
+            output += .codegen_generic_or_value_match(
                 expr
                 cases: match_cases
                 return_type_id: type_id
@@ -1736,7 +1736,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_generic_match(mut this, expr: CheckedExpression, cases: [CheckedMatchCase], return_type_id: TypeId, all_variants_constant: bool) throws -> String {
+    function codegen_generic_or_value_match(mut this, expr: CheckedExpression, cases: [CheckedMatchCase], return_type_id: TypeId, all_variants_constant: bool) throws -> String {
         mut output = ""
 
         mut is_generic_enum: bool = false
@@ -1811,22 +1811,8 @@ struct CodeGenerator {
 
                     output += .codegen_match_body(body, return_type_id)
                     output += "}\n"
-                }
-                CatchAll(has_arguments, body, marker_span) => {
-                    if has_arguments {
-                        panic("Bindings aren't allowed in generic else")
-                    }
 
-                    // TODO: Use default statement if all values are constant
-                    has_default = true
-
-                    if first {
-                        output += "{"
-                    } else {
-                        output += "else {\n"
-                    }
-                    output += .codegen_match_body(body, return_type_id)
-                    output += "}\n"
+                    first = false
                 }
                 Expression(expression, body, marker_span) => {
                     // TODO: Use case statement if all values are constant
@@ -1854,10 +1840,35 @@ struct CodeGenerator {
                     output += ") {\n"
                     output += .codegen_match_body(body, return_type_id)
                     output += "}\n"
+
+                    first = false
                 }
+                else => {}
             }
-            first = false
         }
+
+        for case_ in cases.iterator() {
+            match case_ {
+                CatchAll(has_arguments, body, marker_span) => {
+                    if has_arguments {
+                        panic("Bindings aren't allowed in generic else")
+                    }
+
+                    // TODO: Use default statement if all values are constant
+                    has_default = true
+
+                    if first {
+                        output += "{"
+                    } else {
+                        output += "else {\n"
+                    }
+                    output += .codegen_match_body(body, return_type_id)
+                    output += "}\n"
+                }
+                else => {}
+            }
+        }
+
         if return_type_id.equals(void_type_id()) or return_type_id.equals(unknown_type_id()) {
             output += "return JaktInternal::ExplicitValue<void>();\n"
         } else if not has_default {
