@@ -1,0 +1,11 @@
+/// Expect:
+/// - error: "Match else case is only allowed as the last case\n"
+
+function main() {
+    let a = 1
+
+    match a {
+        else => false
+        1 => true
+    }
+}
