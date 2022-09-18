@@ -1,0 +1,15 @@
+/// Expect:
+/// - output: "true\n"
+
+enum Foo {
+    Bar(i64)
+    Baz(m: String)
+}
+
+function match_foo(foo: Foo) => foo is Baz(m: n) and n == "Hello"
+
+function main() {
+    let foo = Foo::Baz(m: "Hello")
+
+    println("{}", match_foo(foo))
+}
