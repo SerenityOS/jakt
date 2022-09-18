@@ -5,11 +5,15 @@ const unsigned long CP_UTF8 = 65001;
 #endif
 #include <stdio.h>
 namespace Jakt {
+namespace Standard::arguments {
+struct ArgsParser;
+static ErrorOr<String> escape_for_quotes(const String s);
+
+}
 namespace utility {
 struct Span;
 struct FileId;
 class FilePath;
-struct ArgsParser;
 static ErrorOr<String> interpret_escapes(const String s);
 
 static ErrorOr<JaktInternal::Array<String>> append_to_each(const JaktInternal::Array<String> strings, const String suffix);
@@ -820,6 +824,10 @@ template <typename T>
 static ErrorOr<JaktInternal::Array<T>> init(const JaktInternal::Array<T> xs);
 
 }
+namespace Standard::libc::io {
+extern int system(const char* command);
+
+}
 namespace repl {
 struct Editor;
 struct REPL;
@@ -917,8 +925,6 @@ static ErrorOr<String> get_function_signature(const NonnullRefPtr<types::Checked
 
 }
 struct FormatRange;
-static ErrorOr<void> write_to_file(const String data, const String output_filename);
-
 static ErrorOr<int> run_compiler(const String cxx_compiler_path, const String cpp_filename, const String output_filename, const String runtime_path, const JaktInternal::Array<String> extra_include_paths, const JaktInternal::Array<String> extra_lib_paths, const JaktInternal::Array<String> extra_link_libs, const bool optimize);
 
 static String help();
@@ -929,19 +935,12 @@ static ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(const Str
 
 static ErrorOr<String> indent(const size_t level);
 
-namespace utility {
-struct FileId {
-  public:
-size_t id;bool equals(const utility::FileId rhs) const;
-FileId(size_t a_id) :id(a_id){}
+static ErrorOr<void> write_to_file(const String data, const String output_filename);
 
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("FileId("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}", id));
-}
-TRY(builder.append(")"));return builder.to_string(); }};struct ArgsParser {
+namespace Standard::arguments {
+struct ArgsParser {
   public:
-JaktInternal::Array<String> args;JaktInternal::Array<size_t> removed_indices;JaktInternal::Array<String> definitely_positional_args;static ErrorOr<utility::ArgsParser> from_args(const JaktInternal::Array<String> args);
+JaktInternal::Array<String> args;JaktInternal::Array<size_t> removed_indices;JaktInternal::Array<String> definitely_positional_args;static ErrorOr<Standard::arguments::ArgsParser> from_args(const JaktInternal::Array<String> args);
 ErrorOr<JaktInternal::Array<String>> option_multiple(const JaktInternal::Array<String> names);
 ErrorOr<bool> flag(const JaktInternal::Array<String> names);
 ArgsParser(JaktInternal::Array<String> a_args, JaktInternal::Array<size_t> a_removed_indices, JaktInternal::Array<String> a_definitely_positional_args) :args(a_args), removed_indices(a_removed_indices), definitely_positional_args(a_definitely_positional_args){}
@@ -953,6 +952,260 @@ JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("args: "));TRY(builder.appendff("{}, ", args));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("removed_indices: "));TRY(builder.appendff("{}, ", removed_indices));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("definitely_positional_args: "));TRY(builder.appendff("{}", definitely_positional_args));
+}
+TRY(builder.append(")"));return builder.to_string(); }};static ErrorOr<String> escape_for_quotes(const String s) {
+{
+StringBuilder builder = TRY((StringBuilder::create()));
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((s).length()))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t i = (_magic_value.value());
+{
+const u8 c = ((s).byte_at(i));
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<String>>{
+auto __jakt_enum_value = (c);
+if (__jakt_enum_value == '"') {
+{
+TRY((((builder).append_string(String("\\\"")))));
+}
+return JaktInternal::ExplicitValue<void>();
+}
+else if (__jakt_enum_value == '\\') {
+{
+TRY((((builder).append_string(String("\\\\")))));
+}
+return JaktInternal::ExplicitValue<void>();
+}
+else if (__jakt_enum_value == '\n') {
+{
+TRY((((builder).append_string(String("\\n")))));
+}
+return JaktInternal::ExplicitValue<void>();
+}
+else {
+{
+TRY((((builder).append(c))));
+}
+return JaktInternal::ExplicitValue<void>();
+}
+return JaktInternal::ExplicitValue<void>();
+}()))
+;
+}
+
+}
+}
+
+return (TRY((((builder).to_string()))));
+}
+}
+
+ErrorOr<Standard::arguments::ArgsParser> Standard::arguments::ArgsParser::from_args(const JaktInternal::Array<String> args) {
+{
+Standard::arguments::ArgsParser parser = Standard::arguments::ArgsParser(args,(TRY((Array<size_t>::create_with({})))),(TRY((Array<String>::create_with({})))));
+size_t i = static_cast<size_t>(0ULL);
+{
+JaktInternal::ArrayIterator<String> _magic = ((((parser).args)).iterator());
+for (;;){
+JaktInternal::Optional<String> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+String arg = (_magic_value.value());
+{
+if ((arg == String("--"))){
+(((parser).definitely_positional_args) = TRY((((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))),static_cast<size_t>(((((parser).args)).size()))})])).to_array()))));
+(((parser).args) = TRY((((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(i)})])).to_array()))));
+break;
+}
+({auto& _jakt_ref = i;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
+}
+
+}
+}
+
+return (parser);
+}
+}
+
+ErrorOr<JaktInternal::Array<String>> Standard::arguments::ArgsParser::option_multiple(const JaktInternal::Array<String> names) {
+{
+JaktInternal::Array<String> result = (TRY((Array<String>::create_with({}))));
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(1ULL)),static_cast<size_t>(((((*this).args)).size()))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t i = (_magic_value.value());
+{
+{
+JaktInternal::ArrayIterator<String> _magic = ((names).iterator());
+for (;;){
+JaktInternal::Optional<String> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+String name = (_magic_value.value());
+{
+if ((((((*this).args))[i]) == name)){
+if ((((((*this).args)).size()) <= (JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))))){
+warnln(String("The option '{}' requires a value, but none was supplied"),name);
+return Error::from_errno(static_cast<i32>(200));
+}
+TRY((((((*this).removed_indices)).push(i))));
+TRY((((((*this).removed_indices)).push((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))))));
+TRY((((result).push(((((*this).args))[(JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))])))));
+}
+}
+
+}
+}
+
+}
+
+}
+}
+
+return (result);
+}
+}
+
+ErrorOr<bool> Standard::arguments::ArgsParser::flag(const JaktInternal::Array<String> names) {
+{
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).args)).size()))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t i = (_magic_value.value());
+{
+{
+JaktInternal::ArrayIterator<String> _magic = ((names).iterator());
+for (;;){
+JaktInternal::Optional<String> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+String name = (_magic_value.value());
+{
+if ((((((*this).args))[i]) == name)){
+TRY((((((*this).removed_indices)).push(i))));
+return (true);
+}
+}
+
+}
+}
+
+}
+
+}
+}
+
+return (false);
+}
+}
+
+ErrorOr<JaktInternal::Array<String>> Standard::arguments::ArgsParser::remaining_arguments() const {
+{
+JaktInternal::Array<String> remaining = (TRY((Array<String>::create_with({}))));
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).args)).size()))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t i = (_magic_value.value());
+{
+if ((!(((((*this).removed_indices)).contains(i))))){
+TRY((((remaining).push(((((*this).args))[i])))));
+}
+}
+
+}
+}
+
+{
+JaktInternal::ArrayIterator<String> _magic = ((((*this).definitely_positional_args)).iterator());
+for (;;){
+JaktInternal::Optional<String> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+String arg = (_magic_value.value());
+{
+TRY((((remaining).push(arg))));
+}
+
+}
+}
+
+return (remaining);
+}
+}
+
+ErrorOr<JaktInternal::Optional<String>> Standard::arguments::ArgsParser::option(const JaktInternal::Array<String> names) {
+{
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(1ULL)),static_cast<size_t>(((((*this).args)).size()))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t i = (_magic_value.value());
+{
+{
+JaktInternal::ArrayIterator<String> _magic = ((names).iterator());
+for (;;){
+JaktInternal::Optional<String> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+String name = (_magic_value.value());
+{
+if ((((((*this).args))[i]) == name)){
+if ((((((*this).args)).size()) <= (JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))))){
+warnln(String("The option '{}' requires a value, but none was supplied"),name);
+return Error::from_errno(static_cast<i32>(200));
+}
+TRY((((((*this).removed_indices)).push(i))));
+TRY((((((*this).removed_indices)).push((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))))));
+return (((((*this).args))[(JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))]));
+}
+}
+
+}
+}
+
+}
+
+}
+}
+
+return (JaktInternal::OptionalNone());
+}
+}
+
+}
+namespace utility {
+struct FileId {
+  public:
+size_t id;bool equals(const utility::FileId rhs) const;
+FileId(size_t a_id) :id(a_id){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("FileId("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}", id));
 }
 TRY(builder.append(")"));return builder.to_string(); }};struct Span {
   public:
@@ -1250,7 +1503,7 @@ ErrorOr<JaktInternal::Tuple<String,String>> utility::FilePath::split_at_last_sla
 const size_t len = ((((*this).path)).length());
 const JaktInternal::Optional<size_t> last_slash = utility::FilePath::last_slash(((*this).path));
 if (((last_slash).has_value())){
-const String dir = TRY((((((*this).path)).substring(static_cast<size_t>(0ULL),(JaktInternal::checked_add<size_t>((last_slash.value()),static_cast<size_t>(1ULL)))))));
+const String dir = TRY((((((*this).path)).substring(static_cast<size_t>(0ULL),(last_slash.value())))));
 const String base = TRY((((((*this).path)).substring((JaktInternal::checked_add<size_t>((last_slash.value()),static_cast<size_t>(1ULL))),(JaktInternal::checked_sub<size_t>((JaktInternal::checked_sub<size_t>(len,(last_slash.value()))),static_cast<size_t>(1ULL)))))));
 return ((Tuple{dir, base}));
 }
@@ -1315,223 +1568,8 @@ return (String(""));
 }
 }
 
-ErrorOr<utility::ArgsParser> utility::ArgsParser::from_args(const JaktInternal::Array<String> args) {
-{
-utility::ArgsParser parser = utility::ArgsParser(args,(TRY((Array<size_t>::create_with({})))),(TRY((Array<String>::create_with({})))));
-size_t i = static_cast<size_t>(0ULL);
-{
-JaktInternal::ArrayIterator<String> _magic = ((((parser).args)).iterator());
-for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-String arg = (_magic_value.value());
-{
-if ((arg == String("--"))){
-(((parser).definitely_positional_args) = TRY((((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))),static_cast<size_t>(((((parser).args)).size()))})])).to_array()))));
-(((parser).args) = TRY((((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(i)})])).to_array()))));
-break;
-}
-({auto& _jakt_ref = i;_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
-}
-
-}
-}
-
-return (parser);
-}
-}
-
-ErrorOr<JaktInternal::Array<String>> utility::ArgsParser::option_multiple(const JaktInternal::Array<String> names) {
-{
-JaktInternal::Array<String> result = (TRY((Array<String>::create_with({}))));
-{
-JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(1ULL)),static_cast<size_t>(((((*this).args)).size()))});
-for (;;){
-JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-size_t i = (_magic_value.value());
-{
-{
-JaktInternal::ArrayIterator<String> _magic = ((names).iterator());
-for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-String name = (_magic_value.value());
-{
-if ((((((*this).args))[i]) == name)){
-if ((((((*this).args)).size()) <= (JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))))){
-warnln(String("The option '{}' requires a value, but none was supplied"),name);
-return Error::from_errno(static_cast<i32>(200));
-}
-TRY((((((*this).removed_indices)).push(i))));
-TRY((((((*this).removed_indices)).push((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))))));
-TRY((((result).push(((((*this).args))[(JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))])))));
-}
-}
-
-}
-}
-
-}
-
-}
-}
-
-return (result);
-}
-}
-
-ErrorOr<bool> utility::ArgsParser::flag(const JaktInternal::Array<String> names) {
-{
-{
-JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).args)).size()))});
-for (;;){
-JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-size_t i = (_magic_value.value());
-{
-{
-JaktInternal::ArrayIterator<String> _magic = ((names).iterator());
-for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-String name = (_magic_value.value());
-{
-if ((((((*this).args))[i]) == name)){
-TRY((((((*this).removed_indices)).push(i))));
-return (true);
-}
-}
-
-}
-}
-
-}
-
-}
-}
-
-return (false);
-}
-}
-
-ErrorOr<JaktInternal::Array<String>> utility::ArgsParser::remaining_arguments() const {
-{
-JaktInternal::Array<String> remaining = (TRY((Array<String>::create_with({}))));
-{
-JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).args)).size()))});
-for (;;){
-JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-size_t i = (_magic_value.value());
-{
-if ((!(((((*this).removed_indices)).contains(i))))){
-TRY((((remaining).push(((((*this).args))[i])))));
-}
-}
-
-}
-}
-
-{
-JaktInternal::ArrayIterator<String> _magic = ((((*this).definitely_positional_args)).iterator());
-for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-String arg = (_magic_value.value());
-{
-TRY((((remaining).push(arg))));
-}
-
-}
-}
-
-return (remaining);
-}
-}
-
-ErrorOr<JaktInternal::Optional<String>> utility::ArgsParser::option(const JaktInternal::Array<String> names) {
-{
-{
-JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(1ULL)),static_cast<size_t>(((((*this).args)).size()))});
-for (;;){
-JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-size_t i = (_magic_value.value());
-{
-{
-JaktInternal::ArrayIterator<String> _magic = ((names).iterator());
-for (;;){
-JaktInternal::Optional<String> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-String name = (_magic_value.value());
-{
-if ((((((*this).args))[i]) == name)){
-if ((((((*this).args)).size()) <= (JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL))))){
-warnln(String("The option '{}' requires a value, but none was supplied"),name);
-return Error::from_errno(static_cast<i32>(200));
-}
-TRY((((((*this).removed_indices)).push(i))));
-TRY((((((*this).removed_indices)).push((JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))))));
-return (((((*this).args))[(JaktInternal::checked_add<size_t>(i,static_cast<size_t>(1ULL)))]));
-}
-}
-
-}
-}
-
-}
-
-}
-}
-
-return (JaktInternal::OptionalNone());
-}
-}
-
 }
 namespace error {
-namespace MessageSeverity_Details {
-struct Hint {};
-struct Error {};
-}
-struct MessageSeverity : public Variant<MessageSeverity_Details::Hint, MessageSeverity_Details::Error> {
-using Variant<MessageSeverity_Details::Hint, MessageSeverity_Details::Error>::Variant;
-    using Hint = MessageSeverity_Details::Hint;
-    using Error = MessageSeverity_Details::Error;
-ErrorOr<String> debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* Hint */: {
-[[maybe_unused]] auto const& that = this->template get<MessageSeverity::Hint>();
-TRY(builder.append("MessageSeverity::Hint"));
-break;}
-case 1 /* Error */: {
-[[maybe_unused]] auto const& that = this->template get<MessageSeverity::Error>();
-TRY(builder.append("MessageSeverity::Error"));
-break;}
-}
-return builder.to_string();
-}ErrorOr<String> ansi_color_code() const;
-ErrorOr<String> name() const;
-};
 namespace JaktError_Details {
 struct Message {
 String message;
@@ -1599,6 +1637,29 @@ break;}
 }
 return builder.to_string();
 }utility::Span span() const;
+};
+namespace MessageSeverity_Details {
+struct Hint {};
+struct Error {};
+}
+struct MessageSeverity : public Variant<MessageSeverity_Details::Hint, MessageSeverity_Details::Error> {
+using Variant<MessageSeverity_Details::Hint, MessageSeverity_Details::Error>::Variant;
+    using Hint = MessageSeverity_Details::Hint;
+    using Error = MessageSeverity_Details::Error;
+ErrorOr<String> debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* Hint */: {
+[[maybe_unused]] auto const& that = this->template get<MessageSeverity::Hint>();
+TRY(builder.append("MessageSeverity::Hint"));
+break;}
+case 1 /* Error */: {
+[[maybe_unused]] auto const& that = this->template get<MessageSeverity::Error>();
+TRY(builder.append("MessageSeverity::Error"));
+break;}
+}
+return builder.to_string();
+}ErrorOr<String> ansi_color_code() const;
+ErrorOr<String> name() const;
 };
 static ErrorOr<void> print_error_json(const String file_name,const error::JaktError error) {
 {
@@ -1831,16 +1892,16 @@ namespace compiler {
 class Compiler : public RefCounted<Compiler>, public Weakable<Compiler> {
   public:
 virtual ~Compiler() = default;
-JaktInternal::Array<NonnullRefPtr<utility::FilePath>> files;JaktInternal::Dictionary<String,utility::FileId> file_ids;JaktInternal::Array<error::JaktError> errors;JaktInternal::Optional<utility::FileId> current_file;JaktInternal::Array<u8> current_file_contents;bool dump_lexer;bool dump_parser;bool ignore_parser_errors;bool debug_print;JaktInternal::Array<String> include_paths;bool json_errors;bool dump_type_hints;bool dump_try_hints;ErrorOr<void> load_prelude();
+JaktInternal::Array<NonnullRefPtr<utility::FilePath>> files;JaktInternal::Dictionary<String,utility::FileId> file_ids;JaktInternal::Array<error::JaktError> errors;JaktInternal::Optional<utility::FileId> current_file;JaktInternal::Array<u8> current_file_contents;bool dump_lexer;bool dump_parser;bool ignore_parser_errors;bool debug_print;String std_include_path;JaktInternal::Array<String> include_paths;bool json_errors;bool dump_type_hints;bool dump_try_hints;ErrorOr<void> load_prelude();
 ErrorOr<JaktInternal::Optional<NonnullRefPtr<utility::FilePath>>> get_file_path(const utility::FileId file_id) const;
 bool set_current_file(const utility::FileId file_id);
-ErrorOr<JaktInternal::Optional<NonnullRefPtr<utility::FilePath>>> search_for_path(const String module_name) const;
+ErrorOr<JaktInternal::Optional<NonnullRefPtr<utility::FilePath>>> search_for_path(const String input_module_name) const;
 ErrorOr<utility::FileId> get_file_id_or_register(const NonnullRefPtr<utility::FilePath> file);
 JaktInternal::Optional<utility::FileId> current_file_id() const;
 protected:
-explicit Compiler(JaktInternal::Array<NonnullRefPtr<utility::FilePath>>&& a_files, JaktInternal::Dictionary<String,utility::FileId>&& a_file_ids, JaktInternal::Array<error::JaktError>&& a_errors, JaktInternal::Optional<utility::FileId>&& a_current_file, JaktInternal::Array<u8>&& a_current_file_contents, bool&& a_dump_lexer, bool&& a_dump_parser, bool&& a_ignore_parser_errors, bool&& a_debug_print, JaktInternal::Array<String>&& a_include_paths, bool&& a_json_errors, bool&& a_dump_type_hints, bool&& a_dump_try_hints): files(move(a_files)), file_ids(move(a_file_ids)), errors(move(a_errors)), current_file(move(a_current_file)), current_file_contents(move(a_current_file_contents)), dump_lexer(move(a_dump_lexer)), dump_parser(move(a_dump_parser)), ignore_parser_errors(move(a_ignore_parser_errors)), debug_print(move(a_debug_print)), include_paths(move(a_include_paths)), json_errors(move(a_json_errors)), dump_type_hints(move(a_dump_type_hints)), dump_try_hints(move(a_dump_try_hints)){}
+explicit Compiler(JaktInternal::Array<NonnullRefPtr<utility::FilePath>>&& a_files, JaktInternal::Dictionary<String,utility::FileId>&& a_file_ids, JaktInternal::Array<error::JaktError>&& a_errors, JaktInternal::Optional<utility::FileId>&& a_current_file, JaktInternal::Array<u8>&& a_current_file_contents, bool&& a_dump_lexer, bool&& a_dump_parser, bool&& a_ignore_parser_errors, bool&& a_debug_print, String&& a_std_include_path, JaktInternal::Array<String>&& a_include_paths, bool&& a_json_errors, bool&& a_dump_type_hints, bool&& a_dump_try_hints): files(move(a_files)), file_ids(move(a_file_ids)), errors(move(a_errors)), current_file(move(a_current_file)), current_file_contents(move(a_current_file_contents)), dump_lexer(move(a_dump_lexer)), dump_parser(move(a_dump_parser)), ignore_parser_errors(move(a_ignore_parser_errors)), debug_print(move(a_debug_print)), std_include_path(move(a_std_include_path)), include_paths(move(a_include_paths)), json_errors(move(a_json_errors)), dump_type_hints(move(a_dump_type_hints)), dump_try_hints(move(a_dump_try_hints)){}
 public:
-static ErrorOr<NonnullRefPtr<Compiler>> create(JaktInternal::Array<NonnullRefPtr<utility::FilePath>> files, JaktInternal::Dictionary<String,utility::FileId> file_ids, JaktInternal::Array<error::JaktError> errors, JaktInternal::Optional<utility::FileId> current_file, JaktInternal::Array<u8> current_file_contents, bool dump_lexer, bool dump_parser, bool ignore_parser_errors, bool debug_print, JaktInternal::Array<String> include_paths, bool json_errors, bool dump_type_hints, bool dump_try_hints) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Compiler (move(files), move(file_ids), move(errors), move(current_file), move(current_file_contents), move(dump_lexer), move(dump_parser), move(ignore_parser_errors), move(debug_print), move(include_paths), move(json_errors), move(dump_type_hints), move(dump_try_hints)))); return o; }
+static ErrorOr<NonnullRefPtr<Compiler>> create(JaktInternal::Array<NonnullRefPtr<utility::FilePath>> files, JaktInternal::Dictionary<String,utility::FileId> file_ids, JaktInternal::Array<error::JaktError> errors, JaktInternal::Optional<utility::FileId> current_file, JaktInternal::Array<u8> current_file_contents, bool dump_lexer, bool dump_parser, bool ignore_parser_errors, bool debug_print, String std_include_path, JaktInternal::Array<String> include_paths, bool json_errors, bool dump_type_hints, bool dump_try_hints) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Compiler (move(files), move(file_ids), move(errors), move(current_file), move(current_file_contents), move(dump_lexer), move(dump_parser), move(ignore_parser_errors), move(debug_print), move(std_include_path), move(include_paths), move(json_errors), move(dump_type_hints), move(dump_try_hints)))); return o; }
 JaktInternal::Optional<NonnullRefPtr<utility::FilePath>> current_file_path() const;
 [[noreturn]] ErrorOr<void> panic(const String message) const;
 ErrorOr<void> print_errors() const;
@@ -1856,6 +1917,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("dump_parser: "));TRY(builder.appendff("{}, ", dump_parser));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("ignore_parser_errors: "));TRY(builder.appendff("{}, ", ignore_parser_errors));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("debug_print: "));TRY(builder.appendff("{}, ", debug_print));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("std_include_path: "));TRY(builder.appendff("\"{}\", ", std_include_path));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("include_paths: "));TRY(builder.appendff("{}, ", include_paths));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("json_errors: "));TRY(builder.appendff("{}, ", json_errors));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("dump_type_hints: "));TRY(builder.appendff("{}, ", dump_type_hints));
@@ -1925,8 +1987,16 @@ return (true);
 }
 }
 
-ErrorOr<JaktInternal::Optional<NonnullRefPtr<utility::FilePath>>> compiler::Compiler::search_for_path(const String module_name) const {
+ErrorOr<JaktInternal::Optional<NonnullRefPtr<utility::FilePath>>> compiler::Compiler::search_for_path(const String input_module_name) const {
 {
+const String module_name = TRY((((input_module_name).replace(String("::"),String("/")))));
+const String standard_module_name = String("Standard/");
+if (((((module_name).length()) > ((standard_module_name).length())) && (standard_module_name == TRY((((module_name).substring(static_cast<size_t>(0ULL),((standard_module_name).length())))))))){
+const String candidate_path = (((((*this).std_include_path) + String("/")) + TRY((((module_name).substring(((standard_module_name).length()),(JaktInternal::checked_sub<size_t>(((module_name).length()),((standard_module_name).length())))))))) + String(".jakt"));
+if (File::exists(candidate_path)){
+return (TRY((utility::FilePath::make(candidate_path))));
+}
+}
 {
 JaktInternal::ArrayIterator<String> _magic = ((((*this).include_paths)).iterator());
 for (;;){
@@ -2053,50 +2123,7 @@ outln(String("{}"),message);
 
 }
 namespace lexer {
-struct Lexer {
-  public:
-size_t index;JaktInternal::Array<u8> input;NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Optional<JaktInternal::Array<u8>> comment_contents;ErrorOr<lexer::Token> lex_quoted_string(const u8 delimiter);
-ErrorOr<JaktInternal::Optional<lexer::Token>> next();
-ErrorOr<JaktInternal::Optional<String>> consume_comment_contents();
-bool is_whitespace(const u8 ch) const;
-ErrorOr<lexer::Token> lex_character_constant_or_name();
-lexer::Token lex_dot();
-ErrorOr<lexer::Token> make_integer_token(const u64 number, const lexer::LiteralSuffix suffix, const utility::Span span);
-ErrorOr<lexer::Token> lex_forward_slash();
-lexer::Token lex_question_mark();
-u8 peek_behind(const size_t steps) const;
-u8 peek_ahead(const size_t steps) const;
-lexer::Token lex_asterisk();
-u8 peek() const;
-lexer::Token lex_percent_sign();
-ErrorOr<lexer::Token> lex_number_or_name();
-lexer::Token lex_minus();
-bool eof() const;
-lexer::Token lex_ampersand();
-utility::Span span(const size_t start, const size_t end) const;
-lexer::Token lex_plus();
-lexer::Token lex_exclamation_point();
-JaktInternal::Optional<lexer::LiteralSuffix> consume_numeric_literal_suffix();
-lexer::Token lex_colon();
-Lexer(size_t a_index, JaktInternal::Array<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::Array<u8>> a_comment_contents) :index(a_index), input(a_input), compiler(a_compiler), comment_contents(a_comment_contents){}
-
-ErrorOr<void> error(const String message, const utility::Span span);
-ErrorOr<String> substring(const size_t start, const size_t length) const;
-lexer::Token lex_greater_than();
-lexer::Token lex_pipe();
-lexer::Token lex_caret();
-ErrorOr<lexer::Token> lex_number();
-lexer::Token lex_less_than();
-lexer::Token lex_equals();
-static ErrorOr<JaktInternal::Array<lexer::Token>> lex(const NonnullRefPtr<compiler::Compiler> compiler);
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("Lexer("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("index: "));TRY(builder.appendff("{}, ", index));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("input: "));TRY(builder.appendff("{}, ", input));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("compiler: "));TRY(builder.appendff("{}, ", *compiler));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("comment_contents: "));TRY(builder.appendff("{}", comment_contents));
-}
-TRY(builder.append(")"));return builder.to_string(); }};namespace NumericConstant_Details {
+namespace NumericConstant_Details {
 struct I8{
 i8 value;
 template<typename... Args>
@@ -3574,7 +3601,50 @@ break;}
 }
 return builder.to_string();
 }};
-static bool is_ascii_alphanumeric(const u8 c) {
+struct Lexer {
+  public:
+size_t index;JaktInternal::Array<u8> input;NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Optional<JaktInternal::Array<u8>> comment_contents;ErrorOr<lexer::Token> lex_quoted_string(const u8 delimiter);
+ErrorOr<JaktInternal::Optional<lexer::Token>> next();
+ErrorOr<JaktInternal::Optional<String>> consume_comment_contents();
+bool is_whitespace(const u8 ch) const;
+ErrorOr<lexer::Token> lex_character_constant_or_name();
+lexer::Token lex_dot();
+ErrorOr<lexer::Token> make_integer_token(const u64 number, const lexer::LiteralSuffix suffix, const utility::Span span);
+ErrorOr<lexer::Token> lex_forward_slash();
+lexer::Token lex_question_mark();
+u8 peek_behind(const size_t steps) const;
+u8 peek_ahead(const size_t steps) const;
+lexer::Token lex_asterisk();
+u8 peek() const;
+lexer::Token lex_percent_sign();
+ErrorOr<lexer::Token> lex_number_or_name();
+lexer::Token lex_minus();
+bool eof() const;
+lexer::Token lex_ampersand();
+utility::Span span(const size_t start, const size_t end) const;
+lexer::Token lex_plus();
+lexer::Token lex_exclamation_point();
+JaktInternal::Optional<lexer::LiteralSuffix> consume_numeric_literal_suffix();
+lexer::Token lex_colon();
+Lexer(size_t a_index, JaktInternal::Array<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::Array<u8>> a_comment_contents) :index(a_index), input(a_input), compiler(a_compiler), comment_contents(a_comment_contents){}
+
+ErrorOr<void> error(const String message, const utility::Span span);
+ErrorOr<String> substring(const size_t start, const size_t length) const;
+lexer::Token lex_greater_than();
+lexer::Token lex_pipe();
+lexer::Token lex_caret();
+ErrorOr<lexer::Token> lex_number();
+lexer::Token lex_less_than();
+lexer::Token lex_equals();
+static ErrorOr<JaktInternal::Array<lexer::Token>> lex(const NonnullRefPtr<compiler::Compiler> compiler);
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("Lexer("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("index: "));TRY(builder.appendff("{}, ", index));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("input: "));TRY(builder.appendff("{}, ", input));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("compiler: "));TRY(builder.appendff("{}, ", *compiler));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("comment_contents: "));TRY(builder.appendff("{}", comment_contents));
+}
+TRY(builder.append(")"));return builder.to_string(); }};static bool is_ascii_alphanumeric(const u8 c) {
 {
 return ((lexer::is_ascii_alpha(c) || lexer::is_ascii_digit(c)));
 }
@@ -5541,7 +5611,20 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 
 }
 namespace parser {
-namespace Visibility_Details {
+struct ParsedVarDecl {
+  public:
+String name;NonnullRefPtr<parser::ParsedType> parsed_type;bool is_mutable;JaktInternal::Optional<utility::Span> inlay_span;utility::Span span;ParsedVarDecl(String a_name, NonnullRefPtr<parser::ParsedType> a_parsed_type, bool a_is_mutable, JaktInternal::Optional<utility::Span> a_inlay_span, utility::Span a_span) :name(a_name), parsed_type(a_parsed_type), is_mutable(a_is_mutable), inlay_span(a_inlay_span), span(a_span){}
+
+bool equals(const parser::ParsedVarDecl rhs_var_decl) const;
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedVarDecl("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("parsed_type: "));TRY(builder.appendff("{}, ", parsed_type));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_mutable: "));TRY(builder.appendff("{}, ", is_mutable));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("inlay_span: "));TRY(builder.appendff("{}, ", inlay_span));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}", span));
+}
+TRY(builder.append(")"));return builder.to_string(); }};namespace Visibility_Details {
 struct Public {};
 struct Private {};
 struct Restricted {
@@ -5685,93 +5768,18 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_comptime: "));TRY(builder.appendff("{}, ", is_comptime));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_fat_arrow: "));TRY(builder.appendff("{}", is_fat_arrow));
 }
-TRY(builder.append(")"));return builder.to_string(); }};struct ParsedNamespace {
+TRY(builder.append(")"));return builder.to_string(); }};struct ParsedMethod {
   public:
-JaktInternal::Optional<String> name;JaktInternal::Optional<utility::Span> name_span;JaktInternal::Array<parser::ParsedFunction> functions;JaktInternal::Array<parser::ParsedRecord> records;JaktInternal::Array<parser::ParsedNamespace> namespaces;JaktInternal::Array<parser::ParsedModuleImport> module_imports;JaktInternal::Array<parser::ParsedExternImport> extern_imports;JaktInternal::Optional<String> import_path_if_extern;ErrorOr<void> add_child_namespace(const parser::ParsedNamespace namespace_);
-ParsedNamespace(JaktInternal::Optional<String> a_name, JaktInternal::Optional<utility::Span> a_name_span, JaktInternal::Array<parser::ParsedFunction> a_functions, JaktInternal::Array<parser::ParsedRecord> a_records, JaktInternal::Array<parser::ParsedNamespace> a_namespaces, JaktInternal::Array<parser::ParsedModuleImport> a_module_imports, JaktInternal::Array<parser::ParsedExternImport> a_extern_imports, JaktInternal::Optional<String> a_import_path_if_extern) :name(a_name), name_span(a_name_span), functions(a_functions), records(a_records), namespaces(a_namespaces), module_imports(a_module_imports), extern_imports(a_extern_imports), import_path_if_extern(a_import_path_if_extern){}
+parser::ParsedFunction parsed_function;parser::Visibility visibility;bool is_virtual;bool is_override;ParsedMethod(parser::ParsedFunction a_parsed_function, parser::Visibility a_visibility, bool a_is_virtual, bool a_is_override) :parsed_function(a_parsed_function), visibility(a_visibility), is_virtual(a_is_virtual), is_override(a_is_override){}
 
-bool is_equivalent_to(const parser::ParsedNamespace other) const;
-ErrorOr<void> add_extern_import(const parser::ParsedExternImport import_);
-ErrorOr<void> merge_with(const parser::ParsedNamespace namespace_);
-ErrorOr<void> add_module_import(const parser::ParsedModuleImport import_);
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedNamespace("));{
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedMethod("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("{}, ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name_span: "));TRY(builder.appendff("{}, ", name_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("functions: "));TRY(builder.appendff("{}, ", functions));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("records: "));TRY(builder.appendff("{}, ", records));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("namespaces: "));TRY(builder.appendff("{}, ", namespaces));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("module_imports: "));TRY(builder.appendff("{}, ", module_imports));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("extern_imports: "));TRY(builder.appendff("{}, ", extern_imports));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("import_path_if_extern: "));TRY(builder.appendff("{}", import_path_if_extern));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("parsed_function: "));TRY(builder.appendff("{}, ", parsed_function));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("visibility: "));TRY(builder.appendff("{}, ", visibility));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_virtual: "));TRY(builder.appendff("{}, ", is_virtual));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_override: "));TRY(builder.appendff("{}", is_override));
 }
-TRY(builder.append(")"));return builder.to_string(); }};struct ParsedExternImport {
-  public:
-bool is_c;parser::ParsedNamespace assigned_namespace;ErrorOr<bool> is_equivalent_to(const parser::ParsedExternImport other) const;
-ParsedExternImport(bool a_is_c, parser::ParsedNamespace a_assigned_namespace) :is_c(a_is_c), assigned_namespace(a_assigned_namespace){}
-
-String get_name() const;
-String get_path() const;
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedExternImport("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_c: "));TRY(builder.appendff("{}, ", is_c));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("assigned_namespace: "));TRY(builder.appendff("{}", assigned_namespace));
-}
-TRY(builder.append(")"));return builder.to_string(); }};struct ParsedVarDecl {
-  public:
-String name;NonnullRefPtr<parser::ParsedType> parsed_type;bool is_mutable;JaktInternal::Optional<utility::Span> inlay_span;utility::Span span;ParsedVarDecl(String a_name, NonnullRefPtr<parser::ParsedType> a_parsed_type, bool a_is_mutable, JaktInternal::Optional<utility::Span> a_inlay_span, utility::Span a_span) :name(a_name), parsed_type(a_parsed_type), is_mutable(a_is_mutable), inlay_span(a_inlay_span), span(a_span){}
-
-bool equals(const parser::ParsedVarDecl rhs_var_decl) const;
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedVarDecl("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("parsed_type: "));TRY(builder.appendff("{}, ", parsed_type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_mutable: "));TRY(builder.appendff("{}, ", is_mutable));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("inlay_span: "));TRY(builder.appendff("{}, ", inlay_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}", span));
-}
-TRY(builder.append(")"));return builder.to_string(); }};struct ParsedField {
-  public:
-parser::ParsedVarDecl var_decl;parser::Visibility visibility;ParsedField(parser::ParsedVarDecl a_var_decl, parser::Visibility a_visibility) :var_decl(a_var_decl), visibility(a_visibility){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedField("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("var_decl: "));TRY(builder.appendff("{}, ", var_decl));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("visibility: "));TRY(builder.appendff("{}", visibility));
-}
-TRY(builder.append(")"));return builder.to_string(); }};namespace TypeCast_Details {
-struct Fallible{
-NonnullRefPtr<parser::ParsedType> value;
-template<typename... Args>
-Fallible(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct Infallible{
-NonnullRefPtr<parser::ParsedType> value;
-template<typename... Args>
-Infallible(Args&&... args): value { forward<Args>(args)... } {}
-};
-}
-struct TypeCast : public Variant<TypeCast_Details::Fallible, TypeCast_Details::Infallible> {
-using Variant<TypeCast_Details::Fallible, TypeCast_Details::Infallible>::Variant;
-    using Fallible = TypeCast_Details::Fallible;
-    using Infallible = TypeCast_Details::Infallible;
-ErrorOr<String> debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* Fallible */: {
-[[maybe_unused]] auto const& that = this->template get<TypeCast::Fallible>();
-TRY(builder.append("TypeCast::Fallible"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 1 /* Infallible */: {
-[[maybe_unused]] auto const& that = this->template get<TypeCast::Infallible>();
-TRY(builder.append("TypeCast::Infallible"));
-TRY(builder.appendff("({})", that.value));
-break;}
-}
-return builder.to_string();
-}NonnullRefPtr<parser::ParsedType> parsed_type() const;
-};
-namespace ParsedType_Details {
+TRY(builder.append(")"));return builder.to_string(); }};namespace ParsedType_Details {
 struct Name {
 String name;
 utility::Span span;
@@ -6133,6 +6141,193 @@ return builder.to_string();
 }bool equals(const NonnullRefPtr<parser::ParsedType> rhs_parsed_type) const;
 utility::Span span() const;
 };
+namespace RecordType_Details {
+struct Struct {
+JaktInternal::Array<parser::ParsedField> fields;
+JaktInternal::Optional<NonnullRefPtr<parser::ParsedType>> super_type;
+template<typename _MemberT0, typename _MemberT1>
+Struct(_MemberT0&& member_0, _MemberT1&& member_1):
+fields{ forward<_MemberT0>(member_0)},
+super_type{ forward<_MemberT1>(member_1)}
+{}
+};
+struct Class {
+JaktInternal::Array<parser::ParsedField> fields;
+JaktInternal::Optional<NonnullRefPtr<parser::ParsedType>> super_type;
+template<typename _MemberT0, typename _MemberT1>
+Class(_MemberT0&& member_0, _MemberT1&& member_1):
+fields{ forward<_MemberT0>(member_0)},
+super_type{ forward<_MemberT1>(member_1)}
+{}
+};
+struct ValueEnum {
+NonnullRefPtr<parser::ParsedType> underlying_type;
+JaktInternal::Array<parser::ValueEnumVariant> variants;
+template<typename _MemberT0, typename _MemberT1>
+ValueEnum(_MemberT0&& member_0, _MemberT1&& member_1):
+underlying_type{ forward<_MemberT0>(member_0)},
+variants{ forward<_MemberT1>(member_1)}
+{}
+};
+struct SumEnum {
+bool is_boxed;
+JaktInternal::Array<parser::SumEnumVariant> variants;
+template<typename _MemberT0, typename _MemberT1>
+SumEnum(_MemberT0&& member_0, _MemberT1&& member_1):
+is_boxed{ forward<_MemberT0>(member_0)},
+variants{ forward<_MemberT1>(member_1)}
+{}
+};
+struct Garbage {};
+}
+struct RecordType : public Variant<RecordType_Details::Struct, RecordType_Details::Class, RecordType_Details::ValueEnum, RecordType_Details::SumEnum, RecordType_Details::Garbage> {
+using Variant<RecordType_Details::Struct, RecordType_Details::Class, RecordType_Details::ValueEnum, RecordType_Details::SumEnum, RecordType_Details::Garbage>::Variant;
+    using Struct = RecordType_Details::Struct;
+    using Class = RecordType_Details::Class;
+    using ValueEnum = RecordType_Details::ValueEnum;
+    using SumEnum = RecordType_Details::SumEnum;
+    using Garbage = RecordType_Details::Garbage;
+ErrorOr<String> debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* Struct */: {
+[[maybe_unused]] auto const& that = this->template get<RecordType::Struct>();
+TRY(builder.append("RecordType::Struct"));
+TRY(builder.append("("));
+{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("fields: {}", that.fields));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("super_type: {}", that.super_type));
+}
+TRY(builder.append(")"));
+break;}
+case 1 /* Class */: {
+[[maybe_unused]] auto const& that = this->template get<RecordType::Class>();
+TRY(builder.append("RecordType::Class"));
+TRY(builder.append("("));
+{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("fields: {}", that.fields));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("super_type: {}", that.super_type));
+}
+TRY(builder.append(")"));
+break;}
+case 2 /* ValueEnum */: {
+[[maybe_unused]] auto const& that = this->template get<RecordType::ValueEnum>();
+TRY(builder.append("RecordType::ValueEnum"));
+TRY(builder.append("("));
+{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("underlying_type: {}", that.underlying_type));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("variants: {}", that.variants));
+}
+TRY(builder.append(")"));
+break;}
+case 3 /* SumEnum */: {
+[[maybe_unused]] auto const& that = this->template get<RecordType::SumEnum>();
+TRY(builder.append("RecordType::SumEnum"));
+TRY(builder.append("("));
+{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("is_boxed: {}", that.is_boxed));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("variants: {}", that.variants));
+}
+TRY(builder.append(")"));
+break;}
+case 4 /* Garbage */: {
+[[maybe_unused]] auto const& that = this->template get<RecordType::Garbage>();
+TRY(builder.append("RecordType::Garbage"));
+break;}
+}
+return builder.to_string();
+}String record_type_name() const;
+};
+struct ParsedVariable {
+  public:
+String name;NonnullRefPtr<parser::ParsedType> parsed_type;bool is_mutable;utility::Span span;bool equals(const parser::ParsedVariable rhs_parsed_varible) const;
+ParsedVariable(String a_name, NonnullRefPtr<parser::ParsedType> a_parsed_type, bool a_is_mutable, utility::Span a_span) :name(a_name), parsed_type(a_parsed_type), is_mutable(a_is_mutable), span(a_span){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedVariable("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("parsed_type: "));TRY(builder.appendff("{}, ", parsed_type));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_mutable: "));TRY(builder.appendff("{}, ", is_mutable));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}", span));
+}
+TRY(builder.append(")"));return builder.to_string(); }};struct ParsedCall {
+  public:
+JaktInternal::Array<String> namespace_;String name;JaktInternal::Array<JaktInternal::Tuple<String,utility::Span,NonnullRefPtr<parser::ParsedExpression>>> args;JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> type_args;ParsedCall(JaktInternal::Array<String> a_namespace_, String a_name, JaktInternal::Array<JaktInternal::Tuple<String,utility::Span,NonnullRefPtr<parser::ParsedExpression>>> a_args, JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> a_type_args) :namespace_(a_namespace_), name(a_name), args(a_args), type_args(a_type_args){}
+
+bool equals(const parser::ParsedCall rhs_parsed_call) const;
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedCall("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("namespace_: "));TRY(builder.appendff("{}, ", namespace_));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("args: "));TRY(builder.appendff("{}, ", args));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_args: "));TRY(builder.appendff("{}", type_args));
+}
+TRY(builder.append(")"));return builder.to_string(); }};struct ImportName {
+  public:
+String name;utility::Span span;ImportName(String a_name, utility::Span a_span) :name(a_name), span(a_span){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ImportName("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}", span));
+}
+TRY(builder.append(")"));return builder.to_string(); }};struct SumEnumVariant {
+  public:
+String name;utility::Span span;JaktInternal::Optional<JaktInternal::Array<parser::ParsedVarDecl>> params;SumEnumVariant(String a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::Array<parser::ParsedVarDecl>> a_params) :name(a_name), span(a_span), params(a_params){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("SumEnumVariant("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}, ", span));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("params: "));TRY(builder.appendff("{}", params));
+}
+TRY(builder.append(")"));return builder.to_string(); }};namespace TypeCast_Details {
+struct Fallible{
+NonnullRefPtr<parser::ParsedType> value;
+template<typename... Args>
+Fallible(Args&&... args): value { forward<Args>(args)... } {}
+};
+struct Infallible{
+NonnullRefPtr<parser::ParsedType> value;
+template<typename... Args>
+Infallible(Args&&... args): value { forward<Args>(args)... } {}
+};
+}
+struct TypeCast : public Variant<TypeCast_Details::Fallible, TypeCast_Details::Infallible> {
+using Variant<TypeCast_Details::Fallible, TypeCast_Details::Infallible>::Variant;
+    using Fallible = TypeCast_Details::Fallible;
+    using Infallible = TypeCast_Details::Infallible;
+ErrorOr<String> debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* Fallible */: {
+[[maybe_unused]] auto const& that = this->template get<TypeCast::Fallible>();
+TRY(builder.append("TypeCast::Fallible"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 1 /* Infallible */: {
+[[maybe_unused]] auto const& that = this->template get<TypeCast::Infallible>();
+TRY(builder.append("TypeCast::Infallible"));
+TRY(builder.appendff("({})", that.value));
+break;}
+}
+return builder.to_string();
+}NonnullRefPtr<parser::ParsedType> parsed_type() const;
+};
 namespace UnaryOperator_Details {
 struct PreIncrement {};
 struct PostIncrement {};
@@ -6255,19 +6450,7 @@ break;}
 return builder.to_string();
 }bool equals(const parser::UnaryOperator rhs_op) const;
 };
-struct ParsedCall {
-  public:
-JaktInternal::Array<String> namespace_;String name;JaktInternal::Array<JaktInternal::Tuple<String,utility::Span,NonnullRefPtr<parser::ParsedExpression>>> args;JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> type_args;ParsedCall(JaktInternal::Array<String> a_namespace_, String a_name, JaktInternal::Array<JaktInternal::Tuple<String,utility::Span,NonnullRefPtr<parser::ParsedExpression>>> a_args, JaktInternal::Array<NonnullRefPtr<parser::ParsedType>> a_type_args) :namespace_(a_namespace_), name(a_name), args(a_args), type_args(a_type_args){}
-
-bool equals(const parser::ParsedCall rhs_parsed_call) const;
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedCall("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("namespace_: "));TRY(builder.appendff("{}, ", namespace_));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("args: "));TRY(builder.appendff("{}, ", args));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_args: "));TRY(builder.appendff("{}", type_args));
-}
-TRY(builder.append(")"));return builder.to_string(); }};namespace BinaryOperator_Details {
+namespace BinaryOperator_Details {
 struct Add {};
 struct Subtract {};
 struct Multiply {};
@@ -7308,401 +7491,7 @@ return builder.to_string();
 utility::Span span() const;
 i64 precedence() const;
 };
-struct ValueEnumVariant {
-  public:
-String name;utility::Span span;JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> value;ValueEnumVariant(String a_name, utility::Span a_span, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_value) :name(a_name), span(a_span), value(a_value){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ValueEnumVariant("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}, ", span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("value: "));TRY(builder.appendff("{}", value));
-}
-TRY(builder.append(")"));return builder.to_string(); }};struct ParsedMethod {
-  public:
-parser::ParsedFunction parsed_function;parser::Visibility visibility;bool is_virtual;bool is_override;ParsedMethod(parser::ParsedFunction a_parsed_function, parser::Visibility a_visibility, bool a_is_virtual, bool a_is_override) :parsed_function(a_parsed_function), visibility(a_visibility), is_virtual(a_is_virtual), is_override(a_is_override){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedMethod("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("parsed_function: "));TRY(builder.appendff("{}, ", parsed_function));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("visibility: "));TRY(builder.appendff("{}, ", visibility));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_virtual: "));TRY(builder.appendff("{}, ", is_virtual));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_override: "));TRY(builder.appendff("{}", is_override));
-}
-TRY(builder.append(")"));return builder.to_string(); }};struct Parser {
-  public:
-size_t index;JaktInternal::Array<lexer::Token> tokens;NonnullRefPtr<compiler::Compiler> compiler;ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::ValueEnumVariant>,JaktInternal::Array<parser::ParsedMethod>>> parse_value_enum_body(const parser::ParsedRecord partial_enum, const parser::DefinitionLinkage definition_linkage);
-ErrorOr<parser::ParsedMethod> parse_method(const parser::FunctionLinkage linkage, const parser::Visibility visibility, const bool is_virtual, const bool is_override, const bool is_comptime);
-ErrorOr<NonnullRefPtr<parser::ParsedStatement>> parse_statement(const bool inside_block);
-ErrorOr<String> parse_argument_label();
-ErrorOr<NonnullRefPtr<parser::ParsedType>> parse_type_shorthand_array_or_dictionary();
-ErrorOr<parser::ParsedBlock> parse_fat_arrow();
-ErrorOr<NonnullRefPtr<parser::ParsedType>> parse_typename();
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_range();
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_match_expression();
-ErrorOr<void> error_with_hint(const String message, const utility::Span span, const String hint, const utility::Span hint_span);
-ErrorOr<parser::ParsedField> parse_field(const parser::Visibility visibility);
-ErrorOr<parser::ParsedRecord> parse_class(const parser::DefinitionLinkage definition_linkage);
-bool eof() const;
-ErrorOr<parser::ParsedRecord> parse_enum(const parser::DefinitionLinkage definition_linkage, const bool is_boxed);
-utility::Span span(const size_t start, const size_t end) const;
-ErrorOr<JaktInternal::Array<parser::ParsedVarDecl>> parse_destructuring_assignment(const bool is_mutable);
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_operand_base();
-ErrorOr<parser::ParsedFunction> parse_function(const parser::FunctionLinkage linkage, const parser::Visibility visibility, const bool is_comptime);
-static ErrorOr<parser::ParsedNamespace> parse(const NonnullRefPtr<compiler::Compiler> compiler, const JaktInternal::Array<lexer::Token> tokens);
-ErrorOr<parser::ParsedModuleImport> parse_module_import();
-ErrorOr<parser::ParsedBlock> parse_block();
-ErrorOr<NonnullRefPtr<parser::ParsedType>> parse_type_longhand();
-ErrorOr<NonnullRefPtr<parser::ParsedType>> parse_type_shorthand();
-ErrorOr<void> error(const String message, const utility::Span span);
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_operator(const bool allow_assignments);
-ErrorOr<NonnullRefPtr<parser::ParsedStatement>> parse_for_statement();
-ErrorOr<JaktInternal::Array<parser::ParsedParameter>> parse_function_parameters();
-ErrorOr<JaktInternal::Optional<parser::ParsedCall>> parse_call();
-ErrorOr<JaktInternal::Array<parser::ParsedMatchCase>> parse_match_cases();
-ErrorOr<parser::ParsedRecord> parse_struct(const parser::DefinitionLinkage definition_linkage);
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_array_or_dictionary_literal();
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_operand();
-void skip_newlines();
-bool eol() const;
-ErrorOr<parser::ParsedMatchPattern> parse_match_pattern();
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_lambda();
-ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::ParsedField>,JaktInternal::Array<parser::ParsedMethod>>> parse_struct_class_body(const parser::DefinitionLinkage definition_linkage, const parser::Visibility default_visibility, const bool is_class);
-ErrorOr<parser::ParsedExternImport> parse_extern_import(parser::ParsedNamespace& parent);
-ErrorOr<JaktInternal::Array<parser::EnumVariantPatternArgument>> parse_variant_arguments();
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_set_literal();
-ErrorOr<parser::ParsedNamespace> parse_namespace();
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_ampersand();
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_asterisk();
-ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedMethod>>> parse_sum_enum_body(const parser::ParsedRecord partial_enum, const parser::DefinitionLinkage definition_linkage, const bool is_boxed);
-ErrorOr<NonnullRefPtr<parser::ParsedType>> parse_type_shorthand_tuple();
-ErrorOr<JaktInternal::Array<parser::ParsedCapture>> parse_captures();
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_postfix_colon_colon(const utility::Span start, const NonnullRefPtr<parser::ParsedExpression> expr);
-Parser(size_t a_index, JaktInternal::Array<lexer::Token> a_tokens, NonnullRefPtr<compiler::Compiler> a_compiler) :index(a_index), tokens(a_tokens), compiler(a_compiler){}
-
-ErrorOr<void> parse_import(parser::ParsedNamespace& parent);
-ErrorOr<NonnullRefPtr<parser::ParsedStatement>> parse_if_statement();
-ErrorOr<NonnullRefPtr<parser::ParsedType>> parse_type_shorthand_set();
-ErrorOr<NonnullRefPtr<parser::ParsedStatement>> parse_guard_statement();
-ErrorOr<parser::ParsedVarDecl> parse_variable_declaration(const bool is_mutable);
-lexer::Token current() const;
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_expression(const bool allow_assignments, const bool allow_newlines);
-ErrorOr<parser::Visibility> parse_restricted_visibility_modifier();
-lexer::Token peek(const size_t steps) const;
-ErrorOr<parser::ParsedRecord> parse_record(const parser::DefinitionLinkage definition_linkage);
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_try_block();
-utility::Span empty_span() const;
-ErrorOr<JaktInternal::Array<parser::ParsedMatchPattern>> parse_match_patterns();
-lexer::Token previous() const;
-ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_operand_postfix_operator(const utility::Span start, const NonnullRefPtr<parser::ParsedExpression> expr);
-ErrorOr<JaktInternal::Array<parser::ParsedGenericParameter>> parse_generic_parameters();
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("Parser("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("index: "));TRY(builder.appendff("{}, ", index));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("tokens: "));TRY(builder.appendff("{}, ", tokens));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("compiler: "));TRY(builder.appendff("{}", *compiler));
-}
-TRY(builder.append(")"));return builder.to_string(); }};namespace DefinitionLinkage_Details {
-struct Internal {};
-struct External {};
-}
-struct DefinitionLinkage : public Variant<DefinitionLinkage_Details::Internal, DefinitionLinkage_Details::External> {
-using Variant<DefinitionLinkage_Details::Internal, DefinitionLinkage_Details::External>::Variant;
-    using Internal = DefinitionLinkage_Details::Internal;
-    using External = DefinitionLinkage_Details::External;
-ErrorOr<String> debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* Internal */: {
-[[maybe_unused]] auto const& that = this->template get<DefinitionLinkage::Internal>();
-TRY(builder.append("DefinitionLinkage::Internal"));
-break;}
-case 1 /* External */: {
-[[maybe_unused]] auto const& that = this->template get<DefinitionLinkage::External>();
-TRY(builder.append("DefinitionLinkage::External"));
-break;}
-}
-return builder.to_string();
-}};
-struct ImportName {
-  public:
-String name;utility::Span span;ImportName(String a_name, utility::Span a_span) :name(a_name), span(a_span){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ImportName("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}", span));
-}
-TRY(builder.append(")"));return builder.to_string(); }};namespace ParsedCapture_Details {
-struct ByValue {
-String name;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-ByValue(_MemberT0&& member_0, _MemberT1&& member_1):
-name{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct ByReference {
-String name;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-ByReference(_MemberT0&& member_0, _MemberT1&& member_1):
-name{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct ByMutableReference {
-String name;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-ByMutableReference(_MemberT0&& member_0, _MemberT1&& member_1):
-name{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-}
-struct ParsedCapture : public Variant<ParsedCapture_Details::ByValue, ParsedCapture_Details::ByReference, ParsedCapture_Details::ByMutableReference> {
-using Variant<ParsedCapture_Details::ByValue, ParsedCapture_Details::ByReference, ParsedCapture_Details::ByMutableReference>::Variant;
-    using ByValue = ParsedCapture_Details::ByValue;
-    using ByReference = ParsedCapture_Details::ByReference;
-    using ByMutableReference = ParsedCapture_Details::ByMutableReference;
-ErrorOr<String> debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* ByValue */: {
-[[maybe_unused]] auto const& that = this->template get<ParsedCapture::ByValue>();
-TRY(builder.append("ParsedCapture::ByValue"));
-TRY(builder.append("("));
-{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\"", that.name));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-}
-TRY(builder.append(")"));
-break;}
-case 1 /* ByReference */: {
-[[maybe_unused]] auto const& that = this->template get<ParsedCapture::ByReference>();
-TRY(builder.append("ParsedCapture::ByReference"));
-TRY(builder.append("("));
-{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\"", that.name));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-}
-TRY(builder.append(")"));
-break;}
-case 2 /* ByMutableReference */: {
-[[maybe_unused]] auto const& that = this->template get<ParsedCapture::ByMutableReference>();
-TRY(builder.append("ParsedCapture::ByMutableReference"));
-TRY(builder.append("("));
-{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\"", that.name));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-}
-TRY(builder.append(")"));
-break;}
-}
-return builder.to_string();
-}String name() const;
-utility::Span span() const;
-};
-struct ParsedVariable {
-  public:
-String name;NonnullRefPtr<parser::ParsedType> parsed_type;bool is_mutable;utility::Span span;bool equals(const parser::ParsedVariable rhs_parsed_varible) const;
-ParsedVariable(String a_name, NonnullRefPtr<parser::ParsedType> a_parsed_type, bool a_is_mutable, utility::Span a_span) :name(a_name), parsed_type(a_parsed_type), is_mutable(a_is_mutable), span(a_span){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedVariable("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("parsed_type: "));TRY(builder.appendff("{}, ", parsed_type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_mutable: "));TRY(builder.appendff("{}, ", is_mutable));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}", span));
-}
-TRY(builder.append(")"));return builder.to_string(); }};struct ParsedParameter {
-  public:
-bool requires_label;parser::ParsedVariable variable;JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> default_argument;utility::Span span;bool equals(const parser::ParsedParameter rhs_param) const;
-ParsedParameter(bool a_requires_label, parser::ParsedVariable a_variable, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_default_argument, utility::Span a_span) :requires_label(a_requires_label), variable(a_variable), default_argument(a_default_argument), span(a_span){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedParameter("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("requires_label: "));TRY(builder.appendff("{}, ", requires_label));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("variable: "));TRY(builder.appendff("{}, ", variable));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("default_argument: "));TRY(builder.appendff("{}, ", default_argument));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}", span));
-}
-TRY(builder.append(")"));return builder.to_string(); }};namespace RecordType_Details {
-struct Struct {
-JaktInternal::Array<parser::ParsedField> fields;
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedType>> super_type;
-template<typename _MemberT0, typename _MemberT1>
-Struct(_MemberT0&& member_0, _MemberT1&& member_1):
-fields{ forward<_MemberT0>(member_0)},
-super_type{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Class {
-JaktInternal::Array<parser::ParsedField> fields;
-JaktInternal::Optional<NonnullRefPtr<parser::ParsedType>> super_type;
-template<typename _MemberT0, typename _MemberT1>
-Class(_MemberT0&& member_0, _MemberT1&& member_1):
-fields{ forward<_MemberT0>(member_0)},
-super_type{ forward<_MemberT1>(member_1)}
-{}
-};
-struct ValueEnum {
-NonnullRefPtr<parser::ParsedType> underlying_type;
-JaktInternal::Array<parser::ValueEnumVariant> variants;
-template<typename _MemberT0, typename _MemberT1>
-ValueEnum(_MemberT0&& member_0, _MemberT1&& member_1):
-underlying_type{ forward<_MemberT0>(member_0)},
-variants{ forward<_MemberT1>(member_1)}
-{}
-};
-struct SumEnum {
-bool is_boxed;
-JaktInternal::Array<parser::SumEnumVariant> variants;
-template<typename _MemberT0, typename _MemberT1>
-SumEnum(_MemberT0&& member_0, _MemberT1&& member_1):
-is_boxed{ forward<_MemberT0>(member_0)},
-variants{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Garbage {};
-}
-struct RecordType : public Variant<RecordType_Details::Struct, RecordType_Details::Class, RecordType_Details::ValueEnum, RecordType_Details::SumEnum, RecordType_Details::Garbage> {
-using Variant<RecordType_Details::Struct, RecordType_Details::Class, RecordType_Details::ValueEnum, RecordType_Details::SumEnum, RecordType_Details::Garbage>::Variant;
-    using Struct = RecordType_Details::Struct;
-    using Class = RecordType_Details::Class;
-    using ValueEnum = RecordType_Details::ValueEnum;
-    using SumEnum = RecordType_Details::SumEnum;
-    using Garbage = RecordType_Details::Garbage;
-ErrorOr<String> debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* Struct */: {
-[[maybe_unused]] auto const& that = this->template get<RecordType::Struct>();
-TRY(builder.append("RecordType::Struct"));
-TRY(builder.append("("));
-{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("fields: {}", that.fields));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("super_type: {}", that.super_type));
-}
-TRY(builder.append(")"));
-break;}
-case 1 /* Class */: {
-[[maybe_unused]] auto const& that = this->template get<RecordType::Class>();
-TRY(builder.append("RecordType::Class"));
-TRY(builder.append("("));
-{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("fields: {}", that.fields));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("super_type: {}", that.super_type));
-}
-TRY(builder.append(")"));
-break;}
-case 2 /* ValueEnum */: {
-[[maybe_unused]] auto const& that = this->template get<RecordType::ValueEnum>();
-TRY(builder.append("RecordType::ValueEnum"));
-TRY(builder.append("("));
-{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("underlying_type: {}", that.underlying_type));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("variants: {}", that.variants));
-}
-TRY(builder.append(")"));
-break;}
-case 3 /* SumEnum */: {
-[[maybe_unused]] auto const& that = this->template get<RecordType::SumEnum>();
-TRY(builder.append("RecordType::SumEnum"));
-TRY(builder.append("("));
-{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("is_boxed: {}", that.is_boxed));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("variants: {}", that.variants));
-}
-TRY(builder.append(")"));
-break;}
-case 4 /* Garbage */: {
-[[maybe_unused]] auto const& that = this->template get<RecordType::Garbage>();
-TRY(builder.append("RecordType::Garbage"));
-break;}
-}
-return builder.to_string();
-}String record_type_name() const;
-};
-struct ParsedGenericParameter {
-  public:
-String name;utility::Span span;ParsedGenericParameter(String a_name, utility::Span a_span) :name(a_name), span(a_span){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedGenericParameter("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}", span));
-}
-TRY(builder.append(")"));return builder.to_string(); }};namespace ParsedMatchBody_Details {
-struct Expression{
-NonnullRefPtr<parser::ParsedExpression> value;
-template<typename... Args>
-Expression(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct Block{
-parser::ParsedBlock value;
-template<typename... Args>
-Block(Args&&... args): value { forward<Args>(args)... } {}
-};
-}
-struct ParsedMatchBody : public Variant<ParsedMatchBody_Details::Expression, ParsedMatchBody_Details::Block> {
-using Variant<ParsedMatchBody_Details::Expression, ParsedMatchBody_Details::Block>::Variant;
-    using Expression = ParsedMatchBody_Details::Expression;
-    using Block = ParsedMatchBody_Details::Block;
-ErrorOr<String> debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* Expression */: {
-[[maybe_unused]] auto const& that = this->template get<ParsedMatchBody::Expression>();
-TRY(builder.append("ParsedMatchBody::Expression"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 1 /* Block */: {
-[[maybe_unused]] auto const& that = this->template get<ParsedMatchBody::Block>();
-TRY(builder.append("ParsedMatchBody::Block"));
-TRY(builder.appendff("({})", that.value));
-break;}
-}
-return builder.to_string();
-}};
-struct ParsedMatchCase {
-  public:
-JaktInternal::Array<parser::ParsedMatchPattern> patterns;utility::Span marker_span;parser::ParsedMatchBody body;bool equals(const parser::ParsedMatchCase rhs_match_case) const;
-ParsedMatchCase(JaktInternal::Array<parser::ParsedMatchPattern> a_patterns, utility::Span a_marker_span, parser::ParsedMatchBody a_body) :patterns(a_patterns), marker_span(a_marker_span), body(a_body){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedMatchCase("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("patterns: "));TRY(builder.appendff("{}, ", patterns));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("marker_span: "));TRY(builder.appendff("{}, ", marker_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("body: "));TRY(builder.appendff("{}", body));
-}
-TRY(builder.append(")"));return builder.to_string(); }};namespace ParsedStatement_Details {
+namespace ParsedStatement_Details {
 struct Expression {
 NonnullRefPtr<parser::ParsedExpression> expr;
 utility::Span span;
@@ -8159,6 +7948,121 @@ return builder.to_string();
 }bool equals(const NonnullRefPtr<parser::ParsedStatement> rhs_statement) const;
 utility::Span span() const;
 };
+struct ParsedParameter {
+  public:
+bool requires_label;parser::ParsedVariable variable;JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> default_argument;utility::Span span;bool equals(const parser::ParsedParameter rhs_param) const;
+ParsedParameter(bool a_requires_label, parser::ParsedVariable a_variable, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_default_argument, utility::Span a_span) :requires_label(a_requires_label), variable(a_variable), default_argument(a_default_argument), span(a_span){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedParameter("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("requires_label: "));TRY(builder.appendff("{}, ", requires_label));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("variable: "));TRY(builder.appendff("{}, ", variable));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("default_argument: "));TRY(builder.appendff("{}, ", default_argument));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}", span));
+}
+TRY(builder.append(")"));return builder.to_string(); }};struct ParsedNamespace {
+  public:
+JaktInternal::Optional<String> name;JaktInternal::Optional<utility::Span> name_span;JaktInternal::Array<parser::ParsedFunction> functions;JaktInternal::Array<parser::ParsedRecord> records;JaktInternal::Array<parser::ParsedNamespace> namespaces;JaktInternal::Array<parser::ParsedModuleImport> module_imports;JaktInternal::Array<parser::ParsedExternImport> extern_imports;JaktInternal::Optional<String> import_path_if_extern;ErrorOr<void> add_child_namespace(const parser::ParsedNamespace namespace_);
+ParsedNamespace(JaktInternal::Optional<String> a_name, JaktInternal::Optional<utility::Span> a_name_span, JaktInternal::Array<parser::ParsedFunction> a_functions, JaktInternal::Array<parser::ParsedRecord> a_records, JaktInternal::Array<parser::ParsedNamespace> a_namespaces, JaktInternal::Array<parser::ParsedModuleImport> a_module_imports, JaktInternal::Array<parser::ParsedExternImport> a_extern_imports, JaktInternal::Optional<String> a_import_path_if_extern) :name(a_name), name_span(a_name_span), functions(a_functions), records(a_records), namespaces(a_namespaces), module_imports(a_module_imports), extern_imports(a_extern_imports), import_path_if_extern(a_import_path_if_extern){}
+
+bool is_equivalent_to(const parser::ParsedNamespace other) const;
+ErrorOr<void> add_extern_import(const parser::ParsedExternImport import_);
+ErrorOr<void> merge_with(const parser::ParsedNamespace namespace_);
+ErrorOr<void> add_module_import(const parser::ParsedModuleImport import_);
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedNamespace("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("{}, ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name_span: "));TRY(builder.appendff("{}, ", name_span));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("functions: "));TRY(builder.appendff("{}, ", functions));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("records: "));TRY(builder.appendff("{}, ", records));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("namespaces: "));TRY(builder.appendff("{}, ", namespaces));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("module_imports: "));TRY(builder.appendff("{}, ", module_imports));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("extern_imports: "));TRY(builder.appendff("{}, ", extern_imports));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("import_path_if_extern: "));TRY(builder.appendff("{}", import_path_if_extern));
+}
+TRY(builder.append(")"));return builder.to_string(); }};namespace ParsedCapture_Details {
+struct ByValue {
+String name;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1>
+ByValue(_MemberT0&& member_0, _MemberT1&& member_1):
+name{ forward<_MemberT0>(member_0)},
+span{ forward<_MemberT1>(member_1)}
+{}
+};
+struct ByReference {
+String name;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1>
+ByReference(_MemberT0&& member_0, _MemberT1&& member_1):
+name{ forward<_MemberT0>(member_0)},
+span{ forward<_MemberT1>(member_1)}
+{}
+};
+struct ByMutableReference {
+String name;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1>
+ByMutableReference(_MemberT0&& member_0, _MemberT1&& member_1):
+name{ forward<_MemberT0>(member_0)},
+span{ forward<_MemberT1>(member_1)}
+{}
+};
+}
+struct ParsedCapture : public Variant<ParsedCapture_Details::ByValue, ParsedCapture_Details::ByReference, ParsedCapture_Details::ByMutableReference> {
+using Variant<ParsedCapture_Details::ByValue, ParsedCapture_Details::ByReference, ParsedCapture_Details::ByMutableReference>::Variant;
+    using ByValue = ParsedCapture_Details::ByValue;
+    using ByReference = ParsedCapture_Details::ByReference;
+    using ByMutableReference = ParsedCapture_Details::ByMutableReference;
+ErrorOr<String> debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* ByValue */: {
+[[maybe_unused]] auto const& that = this->template get<ParsedCapture::ByValue>();
+TRY(builder.append("ParsedCapture::ByValue"));
+TRY(builder.append("("));
+{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("name: \"{}\"", that.name));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("span: {}", that.span));
+}
+TRY(builder.append(")"));
+break;}
+case 1 /* ByReference */: {
+[[maybe_unused]] auto const& that = this->template get<ParsedCapture::ByReference>();
+TRY(builder.append("ParsedCapture::ByReference"));
+TRY(builder.append("("));
+{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("name: \"{}\"", that.name));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("span: {}", that.span));
+}
+TRY(builder.append(")"));
+break;}
+case 2 /* ByMutableReference */: {
+[[maybe_unused]] auto const& that = this->template get<ParsedCapture::ByMutableReference>();
+TRY(builder.append("ParsedCapture::ByMutableReference"));
+TRY(builder.append("("));
+{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("name: \"{}\"", that.name));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("span: {}", that.span));
+}
+TRY(builder.append(")"));
+break;}
+}
+return builder.to_string();
+}String name() const;
+utility::Span span() const;
+};
 struct ParsedModuleImport {
   public:
 parser::ImportName module_name;JaktInternal::Optional<parser::ImportName> alias_name;JaktInternal::Array<parser::ImportName> import_list;ParsedModuleImport(parser::ImportName a_module_name, JaktInternal::Optional<parser::ImportName> a_alias_name, JaktInternal::Array<parser::ImportName> a_import_list) :module_name(a_module_name), alias_name(a_alias_name), import_list(a_import_list){}
@@ -8173,7 +8077,38 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("alias_name: "));TRY(builder.appendff("{}, ", alias_name));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("import_list: "));TRY(builder.appendff("{}", import_list));
 }
-TRY(builder.append(")"));return builder.to_string(); }};struct ParsedRecord {
+TRY(builder.append(")"));return builder.to_string(); }};struct ValueEnumVariant {
+  public:
+String name;utility::Span span;JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> value;ValueEnumVariant(String a_name, utility::Span a_span, JaktInternal::Optional<NonnullRefPtr<parser::ParsedExpression>> a_value) :name(a_name), span(a_span), value(a_value){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ValueEnumVariant("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}, ", span));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("value: "));TRY(builder.appendff("{}", value));
+}
+TRY(builder.append(")"));return builder.to_string(); }};namespace DefinitionLinkage_Details {
+struct Internal {};
+struct External {};
+}
+struct DefinitionLinkage : public Variant<DefinitionLinkage_Details::Internal, DefinitionLinkage_Details::External> {
+using Variant<DefinitionLinkage_Details::Internal, DefinitionLinkage_Details::External>::Variant;
+    using Internal = DefinitionLinkage_Details::Internal;
+    using External = DefinitionLinkage_Details::External;
+ErrorOr<String> debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* Internal */: {
+[[maybe_unused]] auto const& that = this->template get<DefinitionLinkage::Internal>();
+TRY(builder.append("DefinitionLinkage::Internal"));
+break;}
+case 1 /* External */: {
+[[maybe_unused]] auto const& that = this->template get<DefinitionLinkage::External>();
+TRY(builder.append("DefinitionLinkage::External"));
+break;}
+}
+return builder.to_string();
+}};
+struct ParsedRecord {
   public:
 String name;utility::Span name_span;JaktInternal::Array<parser::ParsedGenericParameter> generic_parameters;parser::DefinitionLinkage definition_linkage;JaktInternal::Array<parser::ParsedMethod> methods;parser::RecordType record_type;ParsedRecord(String a_name, utility::Span a_name_span, JaktInternal::Array<parser::ParsedGenericParameter> a_generic_parameters, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Array<parser::ParsedMethod> a_methods, parser::RecordType a_record_type) :name(a_name), name_span(a_name_span), generic_parameters(a_generic_parameters), definition_linkage(a_definition_linkage), methods(a_methods), record_type(a_record_type){}
 
@@ -8186,15 +8121,59 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("methods: "));TRY(builder.appendff("{}, ", methods));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("record_type: "));TRY(builder.appendff("{}", record_type));
 }
-TRY(builder.append(")"));return builder.to_string(); }};struct SumEnumVariant {
+TRY(builder.append(")"));return builder.to_string(); }};struct ParsedExternImport {
   public:
-String name;utility::Span span;JaktInternal::Optional<JaktInternal::Array<parser::ParsedVarDecl>> params;SumEnumVariant(String a_name, utility::Span a_span, JaktInternal::Optional<JaktInternal::Array<parser::ParsedVarDecl>> a_params) :name(a_name), span(a_span), params(a_params){}
+bool is_c;parser::ParsedNamespace assigned_namespace;ErrorOr<bool> is_equivalent_to(const parser::ParsedExternImport other) const;
+ParsedExternImport(bool a_is_c, parser::ParsedNamespace a_assigned_namespace) :is_c(a_is_c), assigned_namespace(a_assigned_namespace){}
 
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("SumEnumVariant("));{
+String get_name() const;
+String get_path() const;
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedExternImport("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}, ", span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("params: "));TRY(builder.appendff("{}", params));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_c: "));TRY(builder.appendff("{}, ", is_c));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("assigned_namespace: "));TRY(builder.appendff("{}", assigned_namespace));
+}
+TRY(builder.append(")"));return builder.to_string(); }};namespace ParsedMatchBody_Details {
+struct Expression{
+NonnullRefPtr<parser::ParsedExpression> value;
+template<typename... Args>
+Expression(Args&&... args): value { forward<Args>(args)... } {}
+};
+struct Block{
+parser::ParsedBlock value;
+template<typename... Args>
+Block(Args&&... args): value { forward<Args>(args)... } {}
+};
+}
+struct ParsedMatchBody : public Variant<ParsedMatchBody_Details::Expression, ParsedMatchBody_Details::Block> {
+using Variant<ParsedMatchBody_Details::Expression, ParsedMatchBody_Details::Block>::Variant;
+    using Expression = ParsedMatchBody_Details::Expression;
+    using Block = ParsedMatchBody_Details::Block;
+ErrorOr<String> debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* Expression */: {
+[[maybe_unused]] auto const& that = this->template get<ParsedMatchBody::Expression>();
+TRY(builder.append("ParsedMatchBody::Expression"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 1 /* Block */: {
+[[maybe_unused]] auto const& that = this->template get<ParsedMatchBody::Block>();
+TRY(builder.append("ParsedMatchBody::Block"));
+TRY(builder.appendff("({})", that.value));
+break;}
+}
+return builder.to_string();
+}};
+struct ParsedMatchCase {
+  public:
+JaktInternal::Array<parser::ParsedMatchPattern> patterns;utility::Span marker_span;parser::ParsedMatchBody body;bool equals(const parser::ParsedMatchCase rhs_match_case) const;
+ParsedMatchCase(JaktInternal::Array<parser::ParsedMatchPattern> a_patterns, utility::Span a_marker_span, parser::ParsedMatchBody a_body) :patterns(a_patterns), marker_span(a_marker_span), body(a_body){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedMatchCase("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("patterns: "));TRY(builder.appendff("{}, ", patterns));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("marker_span: "));TRY(builder.appendff("{}, ", marker_span));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("body: "));TRY(builder.appendff("{}", body));
 }
 TRY(builder.append(")"));return builder.to_string(); }};namespace ParsedMatchPattern_Details {
 struct EnumVariant {
@@ -8276,7 +8255,98 @@ break;}
 return builder.to_string();
 }bool equals(const parser::ParsedMatchPattern rhs_parsed_match_pattern) const;
 };
-static ErrorOr<utility::Span> merge_spans(const utility::Span start,const utility::Span end) {
+struct Parser {
+  public:
+size_t index;JaktInternal::Array<lexer::Token> tokens;NonnullRefPtr<compiler::Compiler> compiler;ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::ValueEnumVariant>,JaktInternal::Array<parser::ParsedMethod>>> parse_value_enum_body(const parser::ParsedRecord partial_enum, const parser::DefinitionLinkage definition_linkage);
+ErrorOr<parser::ParsedMethod> parse_method(const parser::FunctionLinkage linkage, const parser::Visibility visibility, const bool is_virtual, const bool is_override, const bool is_comptime);
+ErrorOr<NonnullRefPtr<parser::ParsedStatement>> parse_statement(const bool inside_block);
+ErrorOr<String> parse_argument_label();
+ErrorOr<NonnullRefPtr<parser::ParsedType>> parse_type_shorthand_array_or_dictionary();
+ErrorOr<parser::ParsedBlock> parse_fat_arrow();
+ErrorOr<NonnullRefPtr<parser::ParsedType>> parse_typename();
+ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_range();
+ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_match_expression();
+ErrorOr<void> error_with_hint(const String message, const utility::Span span, const String hint, const utility::Span hint_span);
+ErrorOr<parser::ParsedField> parse_field(const parser::Visibility visibility);
+ErrorOr<parser::ParsedRecord> parse_class(const parser::DefinitionLinkage definition_linkage);
+bool eof() const;
+ErrorOr<parser::ParsedRecord> parse_enum(const parser::DefinitionLinkage definition_linkage, const bool is_boxed);
+utility::Span span(const size_t start, const size_t end) const;
+ErrorOr<JaktInternal::Array<parser::ParsedVarDecl>> parse_destructuring_assignment(const bool is_mutable);
+ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_operand_base();
+ErrorOr<parser::ParsedFunction> parse_function(const parser::FunctionLinkage linkage, const parser::Visibility visibility, const bool is_comptime);
+static ErrorOr<parser::ParsedNamespace> parse(const NonnullRefPtr<compiler::Compiler> compiler, const JaktInternal::Array<lexer::Token> tokens);
+ErrorOr<parser::ParsedModuleImport> parse_module_import();
+ErrorOr<parser::ParsedBlock> parse_block();
+ErrorOr<NonnullRefPtr<parser::ParsedType>> parse_type_longhand();
+ErrorOr<NonnullRefPtr<parser::ParsedType>> parse_type_shorthand();
+ErrorOr<void> error(const String message, const utility::Span span);
+ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_operator(const bool allow_assignments);
+ErrorOr<NonnullRefPtr<parser::ParsedStatement>> parse_for_statement();
+ErrorOr<JaktInternal::Array<parser::ParsedParameter>> parse_function_parameters();
+ErrorOr<JaktInternal::Optional<parser::ParsedCall>> parse_call();
+ErrorOr<JaktInternal::Array<parser::ParsedMatchCase>> parse_match_cases();
+ErrorOr<parser::ParsedRecord> parse_struct(const parser::DefinitionLinkage definition_linkage);
+ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_array_or_dictionary_literal();
+ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_operand();
+void skip_newlines();
+bool eol() const;
+ErrorOr<parser::ParsedMatchPattern> parse_match_pattern();
+ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_lambda();
+ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::ParsedField>,JaktInternal::Array<parser::ParsedMethod>>> parse_struct_class_body(const parser::DefinitionLinkage definition_linkage, const parser::Visibility default_visibility, const bool is_class);
+ErrorOr<parser::ParsedExternImport> parse_extern_import(parser::ParsedNamespace& parent);
+ErrorOr<JaktInternal::Array<parser::EnumVariantPatternArgument>> parse_variant_arguments();
+ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_set_literal();
+ErrorOr<parser::ParsedNamespace> parse_namespace();
+ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_ampersand();
+ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_asterisk();
+ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedMethod>>> parse_sum_enum_body(const parser::ParsedRecord partial_enum, const parser::DefinitionLinkage definition_linkage, const bool is_boxed);
+ErrorOr<NonnullRefPtr<parser::ParsedType>> parse_type_shorthand_tuple();
+ErrorOr<JaktInternal::Array<parser::ParsedCapture>> parse_captures();
+ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_postfix_colon_colon(const utility::Span start, const NonnullRefPtr<parser::ParsedExpression> expr);
+Parser(size_t a_index, JaktInternal::Array<lexer::Token> a_tokens, NonnullRefPtr<compiler::Compiler> a_compiler) :index(a_index), tokens(a_tokens), compiler(a_compiler){}
+
+ErrorOr<void> parse_import(parser::ParsedNamespace& parent);
+ErrorOr<NonnullRefPtr<parser::ParsedStatement>> parse_if_statement();
+ErrorOr<NonnullRefPtr<parser::ParsedType>> parse_type_shorthand_set();
+ErrorOr<NonnullRefPtr<parser::ParsedStatement>> parse_guard_statement();
+ErrorOr<parser::ParsedVarDecl> parse_variable_declaration(const bool is_mutable);
+lexer::Token current() const;
+ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_expression(const bool allow_assignments, const bool allow_newlines);
+ErrorOr<parser::Visibility> parse_restricted_visibility_modifier();
+lexer::Token peek(const size_t steps) const;
+ErrorOr<parser::ParsedRecord> parse_record(const parser::DefinitionLinkage definition_linkage);
+ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_try_block();
+utility::Span empty_span() const;
+ErrorOr<JaktInternal::Array<parser::ParsedMatchPattern>> parse_match_patterns();
+lexer::Token previous() const;
+ErrorOr<NonnullRefPtr<parser::ParsedExpression>> parse_operand_postfix_operator(const utility::Span start, const NonnullRefPtr<parser::ParsedExpression> expr);
+ErrorOr<JaktInternal::Array<parser::ParsedGenericParameter>> parse_generic_parameters();
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("Parser("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("index: "));TRY(builder.appendff("{}, ", index));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("tokens: "));TRY(builder.appendff("{}, ", tokens));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("compiler: "));TRY(builder.appendff("{}", *compiler));
+}
+TRY(builder.append(")"));return builder.to_string(); }};struct ParsedField {
+  public:
+parser::ParsedVarDecl var_decl;parser::Visibility visibility;ParsedField(parser::ParsedVarDecl a_var_decl, parser::Visibility a_visibility) :var_decl(a_var_decl), visibility(a_visibility){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedField("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("var_decl: "));TRY(builder.appendff("{}, ", var_decl));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("visibility: "));TRY(builder.appendff("{}", visibility));
+}
+TRY(builder.append(")"));return builder.to_string(); }};struct ParsedGenericParameter {
+  public:
+String name;utility::Span span;ParsedGenericParameter(String a_name, utility::Span a_span) :name(a_name), span(a_span){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ParsedGenericParameter("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}", span));
+}
+TRY(builder.append(")"));return builder.to_string(); }};static ErrorOr<utility::Span> merge_spans(const utility::Span start,const utility::Span end) {
 {
 if (((((((end).file_id)).id) == static_cast<size_t>(0ULL)) && ((((end).start) == static_cast<size_t>(0ULL)) && (((end).end) == static_cast<size_t>(0ULL))))){
 return (start);
@@ -9831,27 +9901,58 @@ return (TRY((((parser).parse_namespace()))));
 ErrorOr<parser::ParsedModuleImport> parser::Parser::parse_module_import() {
 {
 parser::ParsedModuleImport parsed_import = parser::ParsedModuleImport(parser::ImportName(String(""),((*this).empty_span())),JaktInternal::OptionalNone(),(TRY((Array<parser::ImportName>::create_with({})))));
-(((parsed_import).module_name) = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::ImportName, ErrorOr<parser::ParsedModuleImport>>{
+if (((((*this).current())).index() == 4 /* Identifier */)){
+const String current_name = (((*this).current()).get<lexer::Token::Identifier>()).name;
+const utility::Span current_span = (((*this).current()).get<lexer::Token::Identifier>()).span;
+((((*this).index)++));
+String module_name = current_name;
+utility::Span module_span = current_span;
+if (((*this).eol())){
+(((parsed_import).module_name) = parser::ImportName(module_name,module_span));
+return (parsed_import);
+}
+while (((((*this).current())).index() == 7 /* ColonColon */)){
+((((*this).index)++));
+(module_name += String("::"));
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<parser::ParsedModuleImport>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();String const& name = __jakt_match_value.name;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(parser::ImportName(name,span));
+{
+(module_name += name);
+(module_span = TRY((parser::merge_spans(module_span,span))));
+((((*this).index)++));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 60: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::As>();
+{
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 10: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
+{
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-TRY((((*this).error(String("Expected module name"),((((*this).current())).span())))));
+TRY((((*this).error(String("Expected module name fragment"),((((*this).current())).span())))));
 return (parsed_import);
 }
+return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 }/*switch end*/
 }()
-)));
-((((*this).index)++));
-if (((*this).eol())){
-return (parsed_import);
+));
 }
+(((parsed_import).module_name) = parser::ImportName(module_name,module_span));
 if (((((*this).current())).index() == 60 /* As */)){
 ((((*this).index)++));
 if (((((*this).current())).index() == 4 /* Identifier */)){
@@ -9919,6 +10020,12 @@ return JaktInternal::ExplicitValue<void>();
 ));
 }
 return (parsed_import);
+}
+else {
+TRY((((*this).error(String("Expected module name"),((((*this).current())).span())))));
+return (parsed_import);
+}
+
 }
 }
 
@@ -15200,41 +15307,6 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 
 }
 namespace types {
-class FunctionGenerics : public RefCounted<FunctionGenerics>, public Weakable<FunctionGenerics> {
-  public:
-virtual ~FunctionGenerics() = default;
-JaktInternal::Array<types::CheckedParameter> base_params;JaktInternal::Array<types::FunctionGenericParameter> params;JaktInternal::Array<JaktInternal::Array<types::TypeId>> specializations;protected:
-explicit FunctionGenerics(JaktInternal::Array<types::CheckedParameter>&& a_base_params, JaktInternal::Array<types::FunctionGenericParameter>&& a_params, JaktInternal::Array<JaktInternal::Array<types::TypeId>>&& a_specializations): base_params(move(a_base_params)), params(move(a_params)), specializations(move(a_specializations)){}
-public:
-static ErrorOr<NonnullRefPtr<FunctionGenerics>> create(JaktInternal::Array<types::CheckedParameter> base_params, JaktInternal::Array<types::FunctionGenericParameter> params, JaktInternal::Array<JaktInternal::Array<types::TypeId>> specializations) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) FunctionGenerics (move(base_params), move(params), move(specializations)))); return o; }
-bool is_specialized_for_types(const JaktInternal::Array<types::TypeId> types) const;
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("FunctionGenerics("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("base_params: "));TRY(builder.appendff("{}, ", base_params));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("params: "));TRY(builder.appendff("{}, ", params));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("specializations: "));TRY(builder.appendff("{}", specializations));
-}
-TRY(builder.append(")"));return builder.to_string(); }};namespace SafetyMode_Details {
-struct Safe {};
-struct Unsafe {};
-}
-struct SafetyMode : public Variant<SafetyMode_Details::Safe, SafetyMode_Details::Unsafe> {
-using Variant<SafetyMode_Details::Safe, SafetyMode_Details::Unsafe>::Variant;
-    using Safe = SafetyMode_Details::Safe;
-    using Unsafe = SafetyMode_Details::Unsafe;
-ErrorOr<String> debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* Safe */: {
-[[maybe_unused]] auto const& that = this->template get<SafetyMode::Safe>();
-TRY(builder.append("SafetyMode::Safe"));
-break;}
-case 1 /* Unsafe */: {
-[[maybe_unused]] auto const& that = this->template get<SafetyMode::Unsafe>();
-TRY(builder.append("SafetyMode::Unsafe"));
-break;}
-}
-return builder.to_string();
-}};
 struct ModuleId {
   public:
 size_t id;ModuleId(size_t a_id) :id(a_id){}
@@ -15254,23 +15326,28 @@ JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("module: "));TRY(builder.appendff("{}, ", module));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}", id));
 }
-TRY(builder.append(")"));return builder.to_string(); }};struct VarId {
+TRY(builder.append(")"));return builder.to_string(); }};struct EnumId {
   public:
-types::ModuleId module;size_t id;VarId(types::ModuleId a_module, size_t a_id) :module(a_module), id(a_id){}
+types::ModuleId module;size_t id;bool equals(const types::EnumId rhs) const;
+EnumId(types::ModuleId a_module, size_t a_id) :module(a_module), id(a_id){}
 
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("VarId("));{
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("EnumId("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("module: "));TRY(builder.appendff("{}, ", module));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}", id));
 }
-TRY(builder.append(")"));return builder.to_string(); }};struct FieldRecord {
+TRY(builder.append(")"));return builder.to_string(); }};struct TypeId {
   public:
-types::StructId struct_id;types::VarId field_id;FieldRecord(types::StructId a_struct_id, types::VarId a_field_id) :struct_id(a_struct_id), field_id(a_field_id){}
+types::ModuleId module;size_t id;ErrorOr<String> to_string() const;
+static JaktInternal::Optional<types::TypeId> none();
+bool equals(const types::TypeId rhs) const;
+TypeId(types::ModuleId a_module, size_t a_id) :module(a_module), id(a_id){}
 
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("FieldRecord("));{
+static ErrorOr<types::TypeId> from_string(const String type_id_string);
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("TypeId("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("struct_id: "));TRY(builder.appendff("{}, ", struct_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("field_id: "));TRY(builder.appendff("{}", field_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("module: "));TRY(builder.appendff("{}, ", module));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}", id));
 }
 TRY(builder.append(")"));return builder.to_string(); }};struct FunctionId {
   public:
@@ -15282,17 +15359,57 @@ JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("module: "));TRY(builder.appendff("{}, ", module));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}", id));
 }
-TRY(builder.append(")"));return builder.to_string(); }};struct EnumId {
-  public:
-types::ModuleId module;size_t id;bool equals(const types::EnumId rhs) const;
-EnumId(types::ModuleId a_module, size_t a_id) :module(a_module), id(a_id){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("EnumId("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("module: "));TRY(builder.appendff("{}, ", module));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}", id));
-}
-TRY(builder.append(")"));return builder.to_string(); }};namespace StructOrEnumId_Details {
+TRY(builder.append(")"));return builder.to_string(); }};namespace Type_Details {
+struct Void {};
+struct Bool {};
+struct U8 {};
+struct U16 {};
+struct U32 {};
+struct U64 {};
+struct I8 {};
+struct I16 {};
+struct I32 {};
+struct I64 {};
+struct F32 {};
+struct F64 {};
+struct Usize {};
+struct JaktString {};
+struct CChar {};
+struct CInt {};
+struct Unknown {};
+struct Never {};
+struct TypeVariable{
+String value;
+template<typename... Args>
+TypeVariable(Args&&... args): value { forward<Args>(args)... } {}
+};
+struct GenericInstance {
+types::StructId id;
+JaktInternal::Array<types::TypeId> args;
+template<typename _MemberT0, typename _MemberT1>
+GenericInstance(_MemberT0&& member_0, _MemberT1&& member_1):
+id{ forward<_MemberT0>(member_0)},
+args{ forward<_MemberT1>(member_1)}
+{}
+};
+struct GenericEnumInstance {
+types::EnumId id;
+JaktInternal::Array<types::TypeId> args;
+template<typename _MemberT0, typename _MemberT1>
+GenericEnumInstance(_MemberT0&& member_0, _MemberT1&& member_1):
+id{ forward<_MemberT0>(member_0)},
+args{ forward<_MemberT1>(member_1)}
+{}
+};
+struct GenericResolvedType {
+types::StructId id;
+JaktInternal::Array<types::TypeId> args;
+template<typename _MemberT0, typename _MemberT1>
+GenericResolvedType(_MemberT0&& member_0, _MemberT1&& member_1):
+id{ forward<_MemberT0>(member_0)},
+args{ forward<_MemberT1>(member_1)}
+{}
+};
 struct Struct{
 types::StructId value;
 template<typename... Args>
@@ -15303,27 +15420,271 @@ types::EnumId value;
 template<typename... Args>
 Enum(Args&&... args): value { forward<Args>(args)... } {}
 };
+struct RawPtr{
+types::TypeId value;
+template<typename... Args>
+RawPtr(Args&&... args): value { forward<Args>(args)... } {}
+};
+struct Reference{
+types::TypeId value;
+template<typename... Args>
+Reference(Args&&... args): value { forward<Args>(args)... } {}
+};
+struct MutableReference{
+types::TypeId value;
+template<typename... Args>
+MutableReference(Args&&... args): value { forward<Args>(args)... } {}
+};
+struct Function {
+JaktInternal::Array<types::TypeId> params;
+bool can_throw;
+types::TypeId return_type_id;
+types::FunctionId pseudo_function_id;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
+Function(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
+params{ forward<_MemberT0>(member_0)},
+can_throw{ forward<_MemberT1>(member_1)},
+return_type_id{ forward<_MemberT2>(member_2)},
+pseudo_function_id{ forward<_MemberT3>(member_3)}
+{}
+};
 }
-struct StructOrEnumId : public Variant<StructOrEnumId_Details::Struct, StructOrEnumId_Details::Enum> {
-using Variant<StructOrEnumId_Details::Struct, StructOrEnumId_Details::Enum>::Variant;
-    using Struct = StructOrEnumId_Details::Struct;
-    using Enum = StructOrEnumId_Details::Enum;
+struct Type : public Variant<Type_Details::Void, Type_Details::Bool, Type_Details::U8, Type_Details::U16, Type_Details::U32, Type_Details::U64, Type_Details::I8, Type_Details::I16, Type_Details::I32, Type_Details::I64, Type_Details::F32, Type_Details::F64, Type_Details::Usize, Type_Details::JaktString, Type_Details::CChar, Type_Details::CInt, Type_Details::Unknown, Type_Details::Never, Type_Details::TypeVariable, Type_Details::GenericInstance, Type_Details::GenericEnumInstance, Type_Details::GenericResolvedType, Type_Details::Struct, Type_Details::Enum, Type_Details::RawPtr, Type_Details::Reference, Type_Details::MutableReference, Type_Details::Function>, public RefCounted<Type> {
+using Variant<Type_Details::Void, Type_Details::Bool, Type_Details::U8, Type_Details::U16, Type_Details::U32, Type_Details::U64, Type_Details::I8, Type_Details::I16, Type_Details::I32, Type_Details::I64, Type_Details::F32, Type_Details::F64, Type_Details::Usize, Type_Details::JaktString, Type_Details::CChar, Type_Details::CInt, Type_Details::Unknown, Type_Details::Never, Type_Details::TypeVariable, Type_Details::GenericInstance, Type_Details::GenericEnumInstance, Type_Details::GenericResolvedType, Type_Details::Struct, Type_Details::Enum, Type_Details::RawPtr, Type_Details::Reference, Type_Details::MutableReference, Type_Details::Function>::Variant;
+    using Void = Type_Details::Void;
+    using Bool = Type_Details::Bool;
+    using U8 = Type_Details::U8;
+    using U16 = Type_Details::U16;
+    using U32 = Type_Details::U32;
+    using U64 = Type_Details::U64;
+    using I8 = Type_Details::I8;
+    using I16 = Type_Details::I16;
+    using I32 = Type_Details::I32;
+    using I64 = Type_Details::I64;
+    using F32 = Type_Details::F32;
+    using F64 = Type_Details::F64;
+    using Usize = Type_Details::Usize;
+    using JaktString = Type_Details::JaktString;
+    using CChar = Type_Details::CChar;
+    using CInt = Type_Details::CInt;
+    using Unknown = Type_Details::Unknown;
+    using Never = Type_Details::Never;
+    using TypeVariable = Type_Details::TypeVariable;
+    using GenericInstance = Type_Details::GenericInstance;
+    using GenericEnumInstance = Type_Details::GenericEnumInstance;
+    using GenericResolvedType = Type_Details::GenericResolvedType;
+    using Struct = Type_Details::Struct;
+    using Enum = Type_Details::Enum;
+    using RawPtr = Type_Details::RawPtr;
+    using Reference = Type_Details::Reference;
+    using MutableReference = Type_Details::MutableReference;
+    using Function = Type_Details::Function;
+template<typename V, typename... Args> static auto create(Args&&... args) {
+return adopt_nonnull_ref_or_enomem(new (nothrow) Type(V(forward<Args>(args)...)));
+}
 ErrorOr<String> debug_description() const {
 auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* Struct */: {
-[[maybe_unused]] auto const& that = this->template get<StructOrEnumId::Struct>();
-TRY(builder.append("StructOrEnumId::Struct"));
+switch (this->index()) {case 0 /* Void */: {
+[[maybe_unused]] auto const& that = this->template get<Type::Void>();
+TRY(builder.append("Type::Void"));
+break;}
+case 1 /* Bool */: {
+[[maybe_unused]] auto const& that = this->template get<Type::Bool>();
+TRY(builder.append("Type::Bool"));
+break;}
+case 2 /* U8 */: {
+[[maybe_unused]] auto const& that = this->template get<Type::U8>();
+TRY(builder.append("Type::U8"));
+break;}
+case 3 /* U16 */: {
+[[maybe_unused]] auto const& that = this->template get<Type::U16>();
+TRY(builder.append("Type::U16"));
+break;}
+case 4 /* U32 */: {
+[[maybe_unused]] auto const& that = this->template get<Type::U32>();
+TRY(builder.append("Type::U32"));
+break;}
+case 5 /* U64 */: {
+[[maybe_unused]] auto const& that = this->template get<Type::U64>();
+TRY(builder.append("Type::U64"));
+break;}
+case 6 /* I8 */: {
+[[maybe_unused]] auto const& that = this->template get<Type::I8>();
+TRY(builder.append("Type::I8"));
+break;}
+case 7 /* I16 */: {
+[[maybe_unused]] auto const& that = this->template get<Type::I16>();
+TRY(builder.append("Type::I16"));
+break;}
+case 8 /* I32 */: {
+[[maybe_unused]] auto const& that = this->template get<Type::I32>();
+TRY(builder.append("Type::I32"));
+break;}
+case 9 /* I64 */: {
+[[maybe_unused]] auto const& that = this->template get<Type::I64>();
+TRY(builder.append("Type::I64"));
+break;}
+case 10 /* F32 */: {
+[[maybe_unused]] auto const& that = this->template get<Type::F32>();
+TRY(builder.append("Type::F32"));
+break;}
+case 11 /* F64 */: {
+[[maybe_unused]] auto const& that = this->template get<Type::F64>();
+TRY(builder.append("Type::F64"));
+break;}
+case 12 /* Usize */: {
+[[maybe_unused]] auto const& that = this->template get<Type::Usize>();
+TRY(builder.append("Type::Usize"));
+break;}
+case 13 /* JaktString */: {
+[[maybe_unused]] auto const& that = this->template get<Type::JaktString>();
+TRY(builder.append("Type::JaktString"));
+break;}
+case 14 /* CChar */: {
+[[maybe_unused]] auto const& that = this->template get<Type::CChar>();
+TRY(builder.append("Type::CChar"));
+break;}
+case 15 /* CInt */: {
+[[maybe_unused]] auto const& that = this->template get<Type::CInt>();
+TRY(builder.append("Type::CInt"));
+break;}
+case 16 /* Unknown */: {
+[[maybe_unused]] auto const& that = this->template get<Type::Unknown>();
+TRY(builder.append("Type::Unknown"));
+break;}
+case 17 /* Never */: {
+[[maybe_unused]] auto const& that = this->template get<Type::Never>();
+TRY(builder.append("Type::Never"));
+break;}
+case 18 /* TypeVariable */: {
+[[maybe_unused]] auto const& that = this->template get<Type::TypeVariable>();
+TRY(builder.append("Type::TypeVariable"));
+TRY(builder.appendff("(\"{}\")", that.value));
+break;}
+case 19 /* GenericInstance */: {
+[[maybe_unused]] auto const& that = this->template get<Type::GenericInstance>();
+TRY(builder.append("Type::GenericInstance"));
+TRY(builder.append("("));
+{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("id: {}", that.id));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("args: {}", that.args));
+}
+TRY(builder.append(")"));
+break;}
+case 20 /* GenericEnumInstance */: {
+[[maybe_unused]] auto const& that = this->template get<Type::GenericEnumInstance>();
+TRY(builder.append("Type::GenericEnumInstance"));
+TRY(builder.append("("));
+{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("id: {}", that.id));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("args: {}", that.args));
+}
+TRY(builder.append(")"));
+break;}
+case 21 /* GenericResolvedType */: {
+[[maybe_unused]] auto const& that = this->template get<Type::GenericResolvedType>();
+TRY(builder.append("Type::GenericResolvedType"));
+TRY(builder.append("("));
+{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("id: {}", that.id));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("args: {}", that.args));
+}
+TRY(builder.append(")"));
+break;}
+case 22 /* Struct */: {
+[[maybe_unused]] auto const& that = this->template get<Type::Struct>();
+TRY(builder.append("Type::Struct"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 1 /* Enum */: {
-[[maybe_unused]] auto const& that = this->template get<StructOrEnumId::Enum>();
-TRY(builder.append("StructOrEnumId::Enum"));
+case 23 /* Enum */: {
+[[maybe_unused]] auto const& that = this->template get<Type::Enum>();
+TRY(builder.append("Type::Enum"));
 TRY(builder.appendff("({})", that.value));
+break;}
+case 24 /* RawPtr */: {
+[[maybe_unused]] auto const& that = this->template get<Type::RawPtr>();
+TRY(builder.append("Type::RawPtr"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 25 /* Reference */: {
+[[maybe_unused]] auto const& that = this->template get<Type::Reference>();
+TRY(builder.append("Type::Reference"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 26 /* MutableReference */: {
+[[maybe_unused]] auto const& that = this->template get<Type::MutableReference>();
+TRY(builder.append("Type::MutableReference"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 27 /* Function */: {
+[[maybe_unused]] auto const& that = this->template get<Type::Function>();
+TRY(builder.append("Type::Function"));
+TRY(builder.append("("));
+{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("params: {}", that.params));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("can_throw: {}", that.can_throw));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("return_type_id: {}", that.return_type_id));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("pseudo_function_id: {}", that.pseudo_function_id));
+}
+TRY(builder.append(")"));
 break;}
 }
 return builder.to_string();
-}};
-namespace CheckedNumericConstant_Details {
+}bool is_signed() const;
+u64 max() const;
+bool equals(const NonnullRefPtr<types::Type> rhs) const;
+String constructor_name() const;
+i64 get_bits() const;
+bool is_builtin() const;
+i64 min() const;
+ErrorOr<types::TypeId> flip_signedness() const;
+};
+struct CheckedVariable {
+  public:
+String name;types::TypeId type_id;bool is_mutable;utility::Span definition_span;JaktInternal::Optional<utility::Span> type_span;parser::Visibility visibility;CheckedVariable(String a_name, types::TypeId a_type_id, bool a_is_mutable, utility::Span a_definition_span, JaktInternal::Optional<utility::Span> a_type_span, parser::Visibility a_visibility) :name(a_name), type_id(a_type_id), is_mutable(a_is_mutable), definition_span(a_definition_span), type_span(a_type_span), visibility(a_visibility){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedVariable("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_id: "));TRY(builder.appendff("{}, ", type_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_mutable: "));TRY(builder.appendff("{}, ", is_mutable));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("definition_span: "));TRY(builder.appendff("{}, ", definition_span));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_span: "));TRY(builder.appendff("{}, ", type_span));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("visibility: "));TRY(builder.appendff("{}", visibility));
+}
+TRY(builder.append(")"));return builder.to_string(); }};struct Value {
+  public:
+NonnullRefPtr<types::ValueImpl> impl;utility::Span span;ErrorOr<types::Value> copy() const;
+Value(NonnullRefPtr<types::ValueImpl> a_impl, utility::Span a_span) :impl(a_impl), span(a_span){}
+
+ErrorOr<types::Value> cast(const types::Value expected, const utility::Span span) const;
+String type_name() const;
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("Value("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("impl: "));TRY(builder.appendff("{}, ", impl));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}", span));
+}
+TRY(builder.append(")"));return builder.to_string(); }};namespace CheckedNumericConstant_Details {
 struct I8{
 i8 value;
 template<typename... Args>
@@ -15567,114 +15928,96 @@ types::BlockControlFlow definitive() const;
 bool may_return() const;
 types::BlockControlFlow unify_with(const types::BlockControlFlow second) const;
 };
-namespace CheckedCapture_Details {
-struct ByValue {
-String name;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-ByValue(_MemberT0&& member_0, _MemberT1&& member_1):
-name{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
+namespace StructOrEnumId_Details {
+struct Struct{
+types::StructId value;
+template<typename... Args>
+Struct(Args&&... args): value { forward<Args>(args)... } {}
 };
-struct ByReference {
-String name;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-ByReference(_MemberT0&& member_0, _MemberT1&& member_1):
-name{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
-};
-struct ByMutableReference {
-String name;
-utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-ByMutableReference(_MemberT0&& member_0, _MemberT1&& member_1):
-name{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
-{}
+struct Enum{
+types::EnumId value;
+template<typename... Args>
+Enum(Args&&... args): value { forward<Args>(args)... } {}
 };
 }
-struct CheckedCapture : public Variant<CheckedCapture_Details::ByValue, CheckedCapture_Details::ByReference, CheckedCapture_Details::ByMutableReference> {
-using Variant<CheckedCapture_Details::ByValue, CheckedCapture_Details::ByReference, CheckedCapture_Details::ByMutableReference>::Variant;
-    using ByValue = CheckedCapture_Details::ByValue;
-    using ByReference = CheckedCapture_Details::ByReference;
-    using ByMutableReference = CheckedCapture_Details::ByMutableReference;
+struct StructOrEnumId : public Variant<StructOrEnumId_Details::Struct, StructOrEnumId_Details::Enum> {
+using Variant<StructOrEnumId_Details::Struct, StructOrEnumId_Details::Enum>::Variant;
+    using Struct = StructOrEnumId_Details::Struct;
+    using Enum = StructOrEnumId_Details::Enum;
 ErrorOr<String> debug_description() const {
 auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* ByValue */: {
-[[maybe_unused]] auto const& that = this->template get<CheckedCapture::ByValue>();
-TRY(builder.append("CheckedCapture::ByValue"));
-TRY(builder.append("("));
-{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\"", that.name));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-}
-TRY(builder.append(")"));
+switch (this->index()) {case 0 /* Struct */: {
+[[maybe_unused]] auto const& that = this->template get<StructOrEnumId::Struct>();
+TRY(builder.append("StructOrEnumId::Struct"));
+TRY(builder.appendff("({})", that.value));
 break;}
-case 1 /* ByReference */: {
-[[maybe_unused]] auto const& that = this->template get<CheckedCapture::ByReference>();
-TRY(builder.append("CheckedCapture::ByReference"));
-TRY(builder.append("("));
-{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\"", that.name));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-}
-TRY(builder.append(")"));
-break;}
-case 2 /* ByMutableReference */: {
-[[maybe_unused]] auto const& that = this->template get<CheckedCapture::ByMutableReference>();
-TRY(builder.append("CheckedCapture::ByMutableReference"));
-TRY(builder.append("("));
-{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("name: \"{}\"", that.name));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("span: {}", that.span));
-}
-TRY(builder.append(")"));
+case 1 /* Enum */: {
+[[maybe_unused]] auto const& that = this->template get<StructOrEnumId::Enum>();
+TRY(builder.append("StructOrEnumId::Enum"));
+TRY(builder.appendff("({})", that.value));
 break;}
 }
 return builder.to_string();
-}String name() const;
-utility::Span span() const;
+}};
+class FunctionGenerics : public RefCounted<FunctionGenerics>, public Weakable<FunctionGenerics> {
+  public:
+virtual ~FunctionGenerics() = default;
+JaktInternal::Array<types::CheckedParameter> base_params;JaktInternal::Array<types::FunctionGenericParameter> params;JaktInternal::Array<JaktInternal::Array<types::TypeId>> specializations;protected:
+explicit FunctionGenerics(JaktInternal::Array<types::CheckedParameter>&& a_base_params, JaktInternal::Array<types::FunctionGenericParameter>&& a_params, JaktInternal::Array<JaktInternal::Array<types::TypeId>>&& a_specializations): base_params(move(a_base_params)), params(move(a_params)), specializations(move(a_specializations)){}
+public:
+static ErrorOr<NonnullRefPtr<FunctionGenerics>> create(JaktInternal::Array<types::CheckedParameter> base_params, JaktInternal::Array<types::FunctionGenericParameter> params, JaktInternal::Array<JaktInternal::Array<types::TypeId>> specializations) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) FunctionGenerics (move(base_params), move(params), move(specializations)))); return o; }
+bool is_specialized_for_types(const JaktInternal::Array<types::TypeId> types) const;
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("FunctionGenerics("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("base_params: "));TRY(builder.appendff("{}, ", base_params));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("params: "));TRY(builder.appendff("{}, ", params));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("specializations: "));TRY(builder.appendff("{}", specializations));
+}
+TRY(builder.append(")"));return builder.to_string(); }};namespace NumberConstant_Details {
+struct Signed{
+i64 value;
+template<typename... Args>
+Signed(Args&&... args): value { forward<Args>(args)... } {}
 };
-struct TypeId {
-  public:
-types::ModuleId module;size_t id;ErrorOr<String> to_string() const;
-static JaktInternal::Optional<types::TypeId> none();
-bool equals(const types::TypeId rhs) const;
-TypeId(types::ModuleId a_module, size_t a_id) :module(a_module), id(a_id){}
-
-static ErrorOr<types::TypeId> from_string(const String type_id_string);
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("TypeId("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("module: "));TRY(builder.appendff("{}, ", module));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}", id));
+struct Unsigned{
+u64 value;
+template<typename... Args>
+Unsigned(Args&&... args): value { forward<Args>(args)... } {}
+};
+struct Floating{
+f64 value;
+template<typename... Args>
+Floating(Args&&... args): value { forward<Args>(args)... } {}
+};
 }
-TRY(builder.append(")"));return builder.to_string(); }};struct CheckedEnumVariantBinding {
-  public:
-JaktInternal::Optional<String> name;String binding;types::TypeId type_id;utility::Span span;CheckedEnumVariantBinding(JaktInternal::Optional<String> a_name, String a_binding, types::TypeId a_type_id, utility::Span a_span) :name(a_name), binding(a_binding), type_id(a_type_id), span(a_span){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedEnumVariantBinding("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("{}, ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("binding: "));TRY(builder.appendff("\"{}\", ", binding));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_id: "));TRY(builder.appendff("{}, ", type_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}", span));
+struct NumberConstant : public Variant<NumberConstant_Details::Signed, NumberConstant_Details::Unsigned, NumberConstant_Details::Floating> {
+using Variant<NumberConstant_Details::Signed, NumberConstant_Details::Unsigned, NumberConstant_Details::Floating>::Variant;
+    using Signed = NumberConstant_Details::Signed;
+    using Unsigned = NumberConstant_Details::Unsigned;
+    using Floating = NumberConstant_Details::Floating;
+ErrorOr<String> debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* Signed */: {
+[[maybe_unused]] auto const& that = this->template get<NumberConstant::Signed>();
+TRY(builder.append("NumberConstant::Signed"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 1 /* Unsigned */: {
+[[maybe_unused]] auto const& that = this->template get<NumberConstant::Unsigned>();
+TRY(builder.append("NumberConstant::Unsigned"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 2 /* Floating */: {
+[[maybe_unused]] auto const& that = this->template get<NumberConstant::Floating>();
+TRY(builder.append("NumberConstant::Floating"));
+TRY(builder.appendff("({})", that.value));
+break;}
 }
-TRY(builder.append(")"));return builder.to_string(); }};namespace CheckedTypeCast_Details {
+return builder.to_string();
+}size_t to_usize() const;
+bool can_fit_number(const types::TypeId type_id, const NonnullRefPtr<types::CheckedProgram> program) const;
+};
+namespace CheckedTypeCast_Details {
 struct Fallible{
 types::TypeId value;
 template<typename... Args>
@@ -15976,269 +16319,16 @@ break;}
 }
 return builder.to_string();
 }};
-namespace NumberConstant_Details {
-struct Signed{
-i64 value;
-template<typename... Args>
-Signed(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct Unsigned{
-u64 value;
-template<typename... Args>
-Unsigned(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct Floating{
-f64 value;
-template<typename... Args>
-Floating(Args&&... args): value { forward<Args>(args)... } {}
-};
-}
-struct NumberConstant : public Variant<NumberConstant_Details::Signed, NumberConstant_Details::Unsigned, NumberConstant_Details::Floating> {
-using Variant<NumberConstant_Details::Signed, NumberConstant_Details::Unsigned, NumberConstant_Details::Floating>::Variant;
-    using Signed = NumberConstant_Details::Signed;
-    using Unsigned = NumberConstant_Details::Unsigned;
-    using Floating = NumberConstant_Details::Floating;
-ErrorOr<String> debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* Signed */: {
-[[maybe_unused]] auto const& that = this->template get<NumberConstant::Signed>();
-TRY(builder.append("NumberConstant::Signed"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 1 /* Unsigned */: {
-[[maybe_unused]] auto const& that = this->template get<NumberConstant::Unsigned>();
-TRY(builder.append("NumberConstant::Unsigned"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 2 /* Floating */: {
-[[maybe_unused]] auto const& that = this->template get<NumberConstant::Floating>();
-TRY(builder.append("NumberConstant::Floating"));
-TRY(builder.appendff("({})", that.value));
-break;}
-}
-return builder.to_string();
-}size_t to_usize() const;
-bool can_fit_number(const types::TypeId type_id, const NonnullRefPtr<types::CheckedProgram> program) const;
-};
-class Module : public RefCounted<Module>, public Weakable<Module> {
+struct CheckedEnumVariantBinding {
   public:
-virtual ~Module() = default;
-types::ModuleId id;String name;JaktInternal::Array<NonnullRefPtr<types::CheckedFunction>> functions;JaktInternal::Array<types::CheckedStruct> structures;JaktInternal::Array<types::CheckedEnum> enums;JaktInternal::Array<NonnullRefPtr<types::Scope>> scopes;JaktInternal::Array<NonnullRefPtr<types::Type>> types;JaktInternal::Array<types::CheckedVariable> variables;JaktInternal::Array<types::ModuleId> imports;bool is_root;protected:
-explicit Module(types::ModuleId&& a_id, String&& a_name, JaktInternal::Array<NonnullRefPtr<types::CheckedFunction>>&& a_functions, JaktInternal::Array<types::CheckedStruct>&& a_structures, JaktInternal::Array<types::CheckedEnum>&& a_enums, JaktInternal::Array<NonnullRefPtr<types::Scope>>&& a_scopes, JaktInternal::Array<NonnullRefPtr<types::Type>>&& a_types, JaktInternal::Array<types::CheckedVariable>&& a_variables, JaktInternal::Array<types::ModuleId>&& a_imports, bool&& a_is_root): id(move(a_id)), name(move(a_name)), functions(move(a_functions)), structures(move(a_structures)), enums(move(a_enums)), scopes(move(a_scopes)), types(move(a_types)), variables(move(a_variables)), imports(move(a_imports)), is_root(move(a_is_root)){}
-public:
-static ErrorOr<NonnullRefPtr<Module>> create(types::ModuleId id, String name, JaktInternal::Array<NonnullRefPtr<types::CheckedFunction>> functions, JaktInternal::Array<types::CheckedStruct> structures, JaktInternal::Array<types::CheckedEnum> enums, JaktInternal::Array<NonnullRefPtr<types::Scope>> scopes, JaktInternal::Array<NonnullRefPtr<types::Type>> types, JaktInternal::Array<types::CheckedVariable> variables, JaktInternal::Array<types::ModuleId> imports, bool is_root) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Module (move(id), move(name), move(functions), move(structures), move(enums), move(scopes), move(types), move(variables), move(imports), move(is_root)))); return o; }
-ErrorOr<types::TypeId> new_type_variable();
-ErrorOr<types::FunctionId> add_function(const NonnullRefPtr<types::CheckedFunction> checked_function);
-bool is_prelude() const;
-ErrorOr<types::VarId> add_variable(const types::CheckedVariable checked_variable);
-types::FunctionId next_function_id() const;
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("Module("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}, ", id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("functions: "));TRY(builder.appendff("{}, ", functions));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("structures: "));TRY(builder.appendff("{}, ", structures));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("enums: "));TRY(builder.appendff("{}, ", enums));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("scopes: "));TRY(builder.appendff("{}, ", scopes));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("types: "));TRY(builder.appendff("{}, ", types));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("variables: "));TRY(builder.appendff("{}, ", variables));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("imports: "));TRY(builder.appendff("{}, ", imports));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_root: "));TRY(builder.appendff("{}", is_root));
-}
-TRY(builder.append(")"));return builder.to_string(); }};struct ScopeId {
-  public:
-types::ModuleId module_id;size_t id;bool equals(const types::ScopeId other) const;
-ScopeId(types::ModuleId a_module_id, size_t a_id) :module_id(a_module_id), id(a_id){}
+JaktInternal::Optional<String> name;String binding;types::TypeId type_id;utility::Span span;CheckedEnumVariantBinding(JaktInternal::Optional<String> a_name, String a_binding, types::TypeId a_type_id, utility::Span a_span) :name(a_name), binding(a_binding), type_id(a_type_id), span(a_span){}
 
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ScopeId("));{
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedEnumVariantBinding("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("module_id: "));TRY(builder.appendff("{}, ", module_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}", id));
-}
-TRY(builder.append(")"));return builder.to_string(); }};class Scope : public RefCounted<Scope>, public Weakable<Scope> {
-  public:
-virtual ~Scope() = default;
-JaktInternal::Optional<String> namespace_name;JaktInternal::Dictionary<String,types::VarId> vars;JaktInternal::Dictionary<String,types::Value> comptime_bindings;JaktInternal::Dictionary<String,types::StructId> structs;JaktInternal::Dictionary<String,types::FunctionId> functions;JaktInternal::Dictionary<String,types::EnumId> enums;JaktInternal::Dictionary<String,types::TypeId> types;JaktInternal::Dictionary<String,types::ModuleId> imports;JaktInternal::Optional<types::ScopeId> parent;JaktInternal::Array<types::ScopeId> children;bool can_throw;JaktInternal::Optional<String> import_path_if_extern;String debug_name;protected:
-explicit Scope(JaktInternal::Optional<String>&& a_namespace_name, JaktInternal::Dictionary<String,types::VarId>&& a_vars, JaktInternal::Dictionary<String,types::Value>&& a_comptime_bindings, JaktInternal::Dictionary<String,types::StructId>&& a_structs, JaktInternal::Dictionary<String,types::FunctionId>&& a_functions, JaktInternal::Dictionary<String,types::EnumId>&& a_enums, JaktInternal::Dictionary<String,types::TypeId>&& a_types, JaktInternal::Dictionary<String,types::ModuleId>&& a_imports, JaktInternal::Optional<types::ScopeId>&& a_parent, JaktInternal::Array<types::ScopeId>&& a_children, bool&& a_can_throw, JaktInternal::Optional<String>&& a_import_path_if_extern, String&& a_debug_name): namespace_name(move(a_namespace_name)), vars(move(a_vars)), comptime_bindings(move(a_comptime_bindings)), structs(move(a_structs)), functions(move(a_functions)), enums(move(a_enums)), types(move(a_types)), imports(move(a_imports)), parent(move(a_parent)), children(move(a_children)), can_throw(move(a_can_throw)), import_path_if_extern(move(a_import_path_if_extern)), debug_name(move(a_debug_name)){}
-public:
-static ErrorOr<NonnullRefPtr<Scope>> create(JaktInternal::Optional<String> namespace_name, JaktInternal::Dictionary<String,types::VarId> vars, JaktInternal::Dictionary<String,types::Value> comptime_bindings, JaktInternal::Dictionary<String,types::StructId> structs, JaktInternal::Dictionary<String,types::FunctionId> functions, JaktInternal::Dictionary<String,types::EnumId> enums, JaktInternal::Dictionary<String,types::TypeId> types, JaktInternal::Dictionary<String,types::ModuleId> imports, JaktInternal::Optional<types::ScopeId> parent, JaktInternal::Array<types::ScopeId> children, bool can_throw, JaktInternal::Optional<String> import_path_if_extern, String debug_name) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Scope (move(namespace_name), move(vars), move(comptime_bindings), move(structs), move(functions), move(enums), move(types), move(imports), move(parent), move(children), move(can_throw), move(import_path_if_extern), move(debug_name)))); return o; }
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("Scope("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("namespace_name: "));TRY(builder.appendff("{}, ", namespace_name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("vars: "));TRY(builder.appendff("{}, ", vars));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("comptime_bindings: "));TRY(builder.appendff("{}, ", comptime_bindings));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("structs: "));TRY(builder.appendff("{}, ", structs));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("functions: "));TRY(builder.appendff("{}, ", functions));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("enums: "));TRY(builder.appendff("{}, ", enums));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("types: "));TRY(builder.appendff("{}, ", types));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("imports: "));TRY(builder.appendff("{}, ", imports));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("parent: "));TRY(builder.appendff("{}, ", parent));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("children: "));TRY(builder.appendff("{}, ", children));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("can_throw: "));TRY(builder.appendff("{}, ", can_throw));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("import_path_if_extern: "));TRY(builder.appendff("{}, ", import_path_if_extern));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("debug_name: "));TRY(builder.appendff("\"{}\"", debug_name));
-}
-TRY(builder.append(")"));return builder.to_string(); }};struct Value {
-  public:
-NonnullRefPtr<types::ValueImpl> impl;utility::Span span;ErrorOr<types::Value> copy() const;
-Value(NonnullRefPtr<types::ValueImpl> a_impl, utility::Span a_span) :impl(a_impl), span(a_span){}
-
-ErrorOr<types::Value> cast(const types::Value expected, const utility::Span span) const;
-String type_name() const;
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("Value("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("impl: "));TRY(builder.appendff("{}, ", impl));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("{}, ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("binding: "));TRY(builder.appendff("\"{}\", ", binding));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_id: "));TRY(builder.appendff("{}, ", type_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}", span));
-}
-TRY(builder.append(")"));return builder.to_string(); }};namespace BuiltinType_Details {
-struct Void {};
-struct Bool {};
-struct U8 {};
-struct U16 {};
-struct U32 {};
-struct U64 {};
-struct I8 {};
-struct I16 {};
-struct I32 {};
-struct I64 {};
-struct F32 {};
-struct F64 {};
-struct Usize {};
-struct JaktString {};
-struct CChar {};
-struct CInt {};
-struct Unknown {};
-struct Never {};
-}
-struct BuiltinType : public Variant<BuiltinType_Details::Void, BuiltinType_Details::Bool, BuiltinType_Details::U8, BuiltinType_Details::U16, BuiltinType_Details::U32, BuiltinType_Details::U64, BuiltinType_Details::I8, BuiltinType_Details::I16, BuiltinType_Details::I32, BuiltinType_Details::I64, BuiltinType_Details::F32, BuiltinType_Details::F64, BuiltinType_Details::Usize, BuiltinType_Details::JaktString, BuiltinType_Details::CChar, BuiltinType_Details::CInt, BuiltinType_Details::Unknown, BuiltinType_Details::Never> {
-using Variant<BuiltinType_Details::Void, BuiltinType_Details::Bool, BuiltinType_Details::U8, BuiltinType_Details::U16, BuiltinType_Details::U32, BuiltinType_Details::U64, BuiltinType_Details::I8, BuiltinType_Details::I16, BuiltinType_Details::I32, BuiltinType_Details::I64, BuiltinType_Details::F32, BuiltinType_Details::F64, BuiltinType_Details::Usize, BuiltinType_Details::JaktString, BuiltinType_Details::CChar, BuiltinType_Details::CInt, BuiltinType_Details::Unknown, BuiltinType_Details::Never>::Variant;
-    using Void = BuiltinType_Details::Void;
-    using Bool = BuiltinType_Details::Bool;
-    using U8 = BuiltinType_Details::U8;
-    using U16 = BuiltinType_Details::U16;
-    using U32 = BuiltinType_Details::U32;
-    using U64 = BuiltinType_Details::U64;
-    using I8 = BuiltinType_Details::I8;
-    using I16 = BuiltinType_Details::I16;
-    using I32 = BuiltinType_Details::I32;
-    using I64 = BuiltinType_Details::I64;
-    using F32 = BuiltinType_Details::F32;
-    using F64 = BuiltinType_Details::F64;
-    using Usize = BuiltinType_Details::Usize;
-    using JaktString = BuiltinType_Details::JaktString;
-    using CChar = BuiltinType_Details::CChar;
-    using CInt = BuiltinType_Details::CInt;
-    using Unknown = BuiltinType_Details::Unknown;
-    using Never = BuiltinType_Details::Never;
-ErrorOr<String> debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* Void */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::Void>();
-TRY(builder.append("BuiltinType::Void"));
-break;}
-case 1 /* Bool */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::Bool>();
-TRY(builder.append("BuiltinType::Bool"));
-break;}
-case 2 /* U8 */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::U8>();
-TRY(builder.append("BuiltinType::U8"));
-break;}
-case 3 /* U16 */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::U16>();
-TRY(builder.append("BuiltinType::U16"));
-break;}
-case 4 /* U32 */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::U32>();
-TRY(builder.append("BuiltinType::U32"));
-break;}
-case 5 /* U64 */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::U64>();
-TRY(builder.append("BuiltinType::U64"));
-break;}
-case 6 /* I8 */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::I8>();
-TRY(builder.append("BuiltinType::I8"));
-break;}
-case 7 /* I16 */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::I16>();
-TRY(builder.append("BuiltinType::I16"));
-break;}
-case 8 /* I32 */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::I32>();
-TRY(builder.append("BuiltinType::I32"));
-break;}
-case 9 /* I64 */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::I64>();
-TRY(builder.append("BuiltinType::I64"));
-break;}
-case 10 /* F32 */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::F32>();
-TRY(builder.append("BuiltinType::F32"));
-break;}
-case 11 /* F64 */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::F64>();
-TRY(builder.append("BuiltinType::F64"));
-break;}
-case 12 /* Usize */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::Usize>();
-TRY(builder.append("BuiltinType::Usize"));
-break;}
-case 13 /* JaktString */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::JaktString>();
-TRY(builder.append("BuiltinType::JaktString"));
-break;}
-case 14 /* CChar */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::CChar>();
-TRY(builder.append("BuiltinType::CChar"));
-break;}
-case 15 /* CInt */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::CInt>();
-TRY(builder.append("BuiltinType::CInt"));
-break;}
-case 16 /* Unknown */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::Unknown>();
-TRY(builder.append("BuiltinType::Unknown"));
-break;}
-case 17 /* Never */: {
-[[maybe_unused]] auto const& that = this->template get<BuiltinType::Never>();
-TRY(builder.append("BuiltinType::Never"));
-break;}
-}
-return builder.to_string();
-}size_t id() const;
-};
-struct ResolvedNamespace {
-  public:
-String name;JaktInternal::Optional<JaktInternal::Array<types::TypeId>> generic_parameters;ResolvedNamespace(String a_name, JaktInternal::Optional<JaktInternal::Array<types::TypeId>> a_generic_parameters) :name(a_name), generic_parameters(a_generic_parameters){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ResolvedNamespace("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("generic_parameters: "));TRY(builder.appendff("{}", generic_parameters));
-}
-TRY(builder.append(")"));return builder.to_string(); }};struct CheckedVarDecl {
-  public:
-String name;bool is_mutable;utility::Span span;types::TypeId type_id;CheckedVarDecl(String a_name, bool a_is_mutable, utility::Span a_span, types::TypeId a_type_id) :name(a_name), is_mutable(a_is_mutable), span(a_span), type_id(a_type_id){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedVarDecl("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_mutable: "));TRY(builder.appendff("{}, ", is_mutable));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}, ", span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_id: "));TRY(builder.appendff("{}", type_id));
-}
-TRY(builder.append(")"));return builder.to_string(); }};struct CheckedBlock {
-  public:
-JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> statements;types::ScopeId scope_id;types::BlockControlFlow control_flow;JaktInternal::Optional<types::TypeId> yielded_type;bool yielded_none;CheckedBlock(JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> a_statements, types::ScopeId a_scope_id, types::BlockControlFlow a_control_flow, JaktInternal::Optional<types::TypeId> a_yielded_type, bool a_yielded_none) :statements(a_statements), scope_id(a_scope_id), control_flow(a_control_flow), yielded_type(a_yielded_type), yielded_none(a_yielded_none){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedBlock("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("statements: "));TRY(builder.appendff("{}, ", statements));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("scope_id: "));TRY(builder.appendff("{}, ", scope_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("control_flow: "));TRY(builder.appendff("{}, ", control_flow));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("yielded_type: "));TRY(builder.appendff("{}, ", yielded_type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("yielded_none: "));TRY(builder.appendff("{}", yielded_none));
 }
 TRY(builder.append(")"));return builder.to_string(); }};struct CheckedCall {
   public:
@@ -16254,100 +16344,36 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("return_type: "));TRY(builder.appendff("{}, ", return_type));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("callee_throws: "));TRY(builder.appendff("{}", callee_throws));
 }
-TRY(builder.append(")"));return builder.to_string(); }};namespace FunctionGenericParameter_Details {
-struct InferenceGuide{
-types::TypeId value;
-template<typename... Args>
-InferenceGuide(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct Parameter{
-types::TypeId value;
-template<typename... Args>
-Parameter(Args&&... args): value { forward<Args>(args)... } {}
-};
-}
-struct FunctionGenericParameter : public Variant<FunctionGenericParameter_Details::InferenceGuide, FunctionGenericParameter_Details::Parameter> {
-using Variant<FunctionGenericParameter_Details::InferenceGuide, FunctionGenericParameter_Details::Parameter>::Variant;
-    using InferenceGuide = FunctionGenericParameter_Details::InferenceGuide;
-    using Parameter = FunctionGenericParameter_Details::Parameter;
-ErrorOr<String> debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* InferenceGuide */: {
-[[maybe_unused]] auto const& that = this->template get<FunctionGenericParameter::InferenceGuide>();
-TRY(builder.append("FunctionGenericParameter::InferenceGuide"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 1 /* Parameter */: {
-[[maybe_unused]] auto const& that = this->template get<FunctionGenericParameter::Parameter>();
-TRY(builder.append("FunctionGenericParameter::Parameter"));
-TRY(builder.appendff("({})", that.value));
-break;}
-}
-return builder.to_string();
-}types::TypeId type_id() const;
-};
-struct CheckedEnum {
+TRY(builder.append(")"));return builder.to_string(); }};struct ScopeId {
   public:
-String name;utility::Span name_span;JaktInternal::Array<types::TypeId> generic_parameters;JaktInternal::Array<types::CheckedEnumVariant> variants;types::ScopeId scope_id;parser::DefinitionLinkage definition_linkage;parser::RecordType record_type;types::TypeId underlying_type_id;types::TypeId type_id;bool is_boxed;CheckedEnum(String a_name, utility::Span a_name_span, JaktInternal::Array<types::TypeId> a_generic_parameters, JaktInternal::Array<types::CheckedEnumVariant> a_variants, types::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, parser::RecordType a_record_type, types::TypeId a_underlying_type_id, types::TypeId a_type_id, bool a_is_boxed) :name(a_name), name_span(a_name_span), generic_parameters(a_generic_parameters), variants(a_variants), scope_id(a_scope_id), definition_linkage(a_definition_linkage), record_type(a_record_type), underlying_type_id(a_underlying_type_id), type_id(a_type_id), is_boxed(a_is_boxed){}
+types::ModuleId module_id;size_t id;bool equals(const types::ScopeId other) const;
+ScopeId(types::ModuleId a_module_id, size_t a_id) :module_id(a_module_id), id(a_id){}
 
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedEnum("));{
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ScopeId("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name_span: "));TRY(builder.appendff("{}, ", name_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("generic_parameters: "));TRY(builder.appendff("{}, ", generic_parameters));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("variants: "));TRY(builder.appendff("{}, ", variants));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("module_id: "));TRY(builder.appendff("{}, ", module_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}", id));
+}
+TRY(builder.append(")"));return builder.to_string(); }};struct CheckedBlock {
+  public:
+JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> statements;types::ScopeId scope_id;types::BlockControlFlow control_flow;JaktInternal::Optional<types::TypeId> yielded_type;bool yielded_none;CheckedBlock(JaktInternal::Array<NonnullRefPtr<types::CheckedStatement>> a_statements, types::ScopeId a_scope_id, types::BlockControlFlow a_control_flow, JaktInternal::Optional<types::TypeId> a_yielded_type, bool a_yielded_none) :statements(a_statements), scope_id(a_scope_id), control_flow(a_control_flow), yielded_type(a_yielded_type), yielded_none(a_yielded_none){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedBlock("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("statements: "));TRY(builder.appendff("{}, ", statements));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("scope_id: "));TRY(builder.appendff("{}, ", scope_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("definition_linkage: "));TRY(builder.appendff("{}, ", definition_linkage));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("record_type: "));TRY(builder.appendff("{}, ", record_type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("underlying_type_id: "));TRY(builder.appendff("{}, ", underlying_type_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_id: "));TRY(builder.appendff("{}, ", type_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_boxed: "));TRY(builder.appendff("{}", is_boxed));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("control_flow: "));TRY(builder.appendff("{}, ", control_flow));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("yielded_type: "));TRY(builder.appendff("{}, ", yielded_type));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("yielded_none: "));TRY(builder.appendff("{}", yielded_none));
 }
-TRY(builder.append(")"));return builder.to_string(); }};struct CheckedVariable {
+TRY(builder.append(")"));return builder.to_string(); }};struct VarId {
   public:
-String name;types::TypeId type_id;bool is_mutable;utility::Span definition_span;JaktInternal::Optional<utility::Span> type_span;parser::Visibility visibility;CheckedVariable(String a_name, types::TypeId a_type_id, bool a_is_mutable, utility::Span a_definition_span, JaktInternal::Optional<utility::Span> a_type_span, parser::Visibility a_visibility) :name(a_name), type_id(a_type_id), is_mutable(a_is_mutable), definition_span(a_definition_span), type_span(a_type_span), visibility(a_visibility){}
+types::ModuleId module;size_t id;VarId(types::ModuleId a_module, size_t a_id) :module(a_module), id(a_id){}
 
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedVariable("));{
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("VarId("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_id: "));TRY(builder.appendff("{}, ", type_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_mutable: "));TRY(builder.appendff("{}, ", is_mutable));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("definition_span: "));TRY(builder.appendff("{}, ", definition_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_span: "));TRY(builder.appendff("{}, ", type_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("visibility: "));TRY(builder.appendff("{}", visibility));
-}
-TRY(builder.append(")"));return builder.to_string(); }};class CheckedFunction : public RefCounted<CheckedFunction>, public Weakable<CheckedFunction> {
-  public:
-virtual ~CheckedFunction() = default;
-String name;utility::Span name_span;parser::Visibility visibility;types::TypeId return_type_id;JaktInternal::Optional<utility::Span> return_type_span;JaktInternal::Array<types::CheckedParameter> params;NonnullRefPtr<types::FunctionGenerics> generics;types::CheckedBlock block;bool can_throw;parser::FunctionType type;parser::FunctionLinkage linkage;types::ScopeId function_scope_id;bool is_instantiated;JaktInternal::Optional<parser::ParsedFunction> parsed_function;bool is_comptime;bool is_virtual;bool is_override;bool is_static() const;
-bool is_mutating() const;
-parser::ParsedFunction to_parsed_function() const;
-bool is_specialized_for_types(const JaktInternal::Array<types::TypeId> types) const;
-protected:
-explicit CheckedFunction(String&& a_name, utility::Span&& a_name_span, parser::Visibility&& a_visibility, types::TypeId&& a_return_type_id, JaktInternal::Optional<utility::Span>&& a_return_type_span, JaktInternal::Array<types::CheckedParameter>&& a_params, NonnullRefPtr<types::FunctionGenerics>&& a_generics, types::CheckedBlock&& a_block, bool&& a_can_throw, parser::FunctionType&& a_type, parser::FunctionLinkage&& a_linkage, types::ScopeId&& a_function_scope_id, bool&& a_is_instantiated, JaktInternal::Optional<parser::ParsedFunction>&& a_parsed_function, bool&& a_is_comptime, bool&& a_is_virtual, bool&& a_is_override): name(move(a_name)), name_span(move(a_name_span)), visibility(move(a_visibility)), return_type_id(move(a_return_type_id)), return_type_span(move(a_return_type_span)), params(move(a_params)), generics(move(a_generics)), block(move(a_block)), can_throw(move(a_can_throw)), type(move(a_type)), linkage(move(a_linkage)), function_scope_id(move(a_function_scope_id)), is_instantiated(move(a_is_instantiated)), parsed_function(move(a_parsed_function)), is_comptime(move(a_is_comptime)), is_virtual(move(a_is_virtual)), is_override(move(a_is_override)){}
-public:
-static ErrorOr<NonnullRefPtr<CheckedFunction>> create(String name, utility::Span name_span, parser::Visibility visibility, types::TypeId return_type_id, JaktInternal::Optional<utility::Span> return_type_span, JaktInternal::Array<types::CheckedParameter> params, NonnullRefPtr<types::FunctionGenerics> generics, types::CheckedBlock block, bool can_throw, parser::FunctionType type, parser::FunctionLinkage linkage, types::ScopeId function_scope_id, bool is_instantiated, JaktInternal::Optional<parser::ParsedFunction> parsed_function, bool is_comptime, bool is_virtual, bool is_override) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) CheckedFunction (move(name), move(name_span), move(visibility), move(return_type_id), move(return_type_span), move(params), move(generics), move(block), move(can_throw), move(type), move(linkage), move(function_scope_id), move(is_instantiated), move(parsed_function), move(is_comptime), move(is_virtual), move(is_override)))); return o; }
-ErrorOr<void> add_param(const types::CheckedParameter checked_param);
-ErrorOr<void> set_params(const JaktInternal::Array<types::CheckedParameter> checked_params);
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedFunction("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name_span: "));TRY(builder.appendff("{}, ", name_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("visibility: "));TRY(builder.appendff("{}, ", visibility));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("return_type_id: "));TRY(builder.appendff("{}, ", return_type_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("return_type_span: "));TRY(builder.appendff("{}, ", return_type_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("params: "));TRY(builder.appendff("{}, ", params));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("generics: "));TRY(builder.appendff("{}, ", *generics));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("block: "));TRY(builder.appendff("{}, ", block));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("can_throw: "));TRY(builder.appendff("{}, ", can_throw));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type: "));TRY(builder.appendff("{}, ", type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("linkage: "));TRY(builder.appendff("{}, ", linkage));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("function_scope_id: "));TRY(builder.appendff("{}, ", function_scope_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_instantiated: "));TRY(builder.appendff("{}, ", is_instantiated));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("parsed_function: "));TRY(builder.appendff("{}, ", parsed_function));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_comptime: "));TRY(builder.appendff("{}, ", is_comptime));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_virtual: "));TRY(builder.appendff("{}, ", is_virtual));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_override: "));TRY(builder.appendff("{}", is_override));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("module: "));TRY(builder.appendff("{}, ", module));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}", id));
 }
 TRY(builder.append(")"));return builder.to_string(); }};namespace CheckedStatement_Details {
 struct Expression {
@@ -17704,30 +17730,74 @@ types::TypeId type() const;
 types::BlockControlFlow control_flow() const;
 bool is_mutable(const NonnullRefPtr<types::CheckedProgram> program) const;
 };
-struct LoadedModule {
+class CheckedFunction : public RefCounted<CheckedFunction>, public Weakable<CheckedFunction> {
   public:
-types::ModuleId module_id;utility::FileId file_id;LoadedModule(types::ModuleId a_module_id, utility::FileId a_file_id) :module_id(a_module_id), file_id(a_file_id){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("LoadedModule("));{
+virtual ~CheckedFunction() = default;
+String name;utility::Span name_span;parser::Visibility visibility;types::TypeId return_type_id;JaktInternal::Optional<utility::Span> return_type_span;JaktInternal::Array<types::CheckedParameter> params;NonnullRefPtr<types::FunctionGenerics> generics;types::CheckedBlock block;bool can_throw;parser::FunctionType type;parser::FunctionLinkage linkage;types::ScopeId function_scope_id;bool is_instantiated;JaktInternal::Optional<parser::ParsedFunction> parsed_function;bool is_comptime;bool is_virtual;bool is_override;bool is_static() const;
+bool is_mutating() const;
+parser::ParsedFunction to_parsed_function() const;
+bool is_specialized_for_types(const JaktInternal::Array<types::TypeId> types) const;
+protected:
+explicit CheckedFunction(String&& a_name, utility::Span&& a_name_span, parser::Visibility&& a_visibility, types::TypeId&& a_return_type_id, JaktInternal::Optional<utility::Span>&& a_return_type_span, JaktInternal::Array<types::CheckedParameter>&& a_params, NonnullRefPtr<types::FunctionGenerics>&& a_generics, types::CheckedBlock&& a_block, bool&& a_can_throw, parser::FunctionType&& a_type, parser::FunctionLinkage&& a_linkage, types::ScopeId&& a_function_scope_id, bool&& a_is_instantiated, JaktInternal::Optional<parser::ParsedFunction>&& a_parsed_function, bool&& a_is_comptime, bool&& a_is_virtual, bool&& a_is_override): name(move(a_name)), name_span(move(a_name_span)), visibility(move(a_visibility)), return_type_id(move(a_return_type_id)), return_type_span(move(a_return_type_span)), params(move(a_params)), generics(move(a_generics)), block(move(a_block)), can_throw(move(a_can_throw)), type(move(a_type)), linkage(move(a_linkage)), function_scope_id(move(a_function_scope_id)), is_instantiated(move(a_is_instantiated)), parsed_function(move(a_parsed_function)), is_comptime(move(a_is_comptime)), is_virtual(move(a_is_virtual)), is_override(move(a_is_override)){}
+public:
+static ErrorOr<NonnullRefPtr<CheckedFunction>> create(String name, utility::Span name_span, parser::Visibility visibility, types::TypeId return_type_id, JaktInternal::Optional<utility::Span> return_type_span, JaktInternal::Array<types::CheckedParameter> params, NonnullRefPtr<types::FunctionGenerics> generics, types::CheckedBlock block, bool can_throw, parser::FunctionType type, parser::FunctionLinkage linkage, types::ScopeId function_scope_id, bool is_instantiated, JaktInternal::Optional<parser::ParsedFunction> parsed_function, bool is_comptime, bool is_virtual, bool is_override) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) CheckedFunction (move(name), move(name_span), move(visibility), move(return_type_id), move(return_type_span), move(params), move(generics), move(block), move(can_throw), move(type), move(linkage), move(function_scope_id), move(is_instantiated), move(parsed_function), move(is_comptime), move(is_virtual), move(is_override)))); return o; }
+ErrorOr<void> add_param(const types::CheckedParameter checked_param);
+ErrorOr<void> set_params(const JaktInternal::Array<types::CheckedParameter> checked_params);
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedFunction("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("module_id: "));TRY(builder.appendff("{}, ", module_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("file_id: "));TRY(builder.appendff("{}", file_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name_span: "));TRY(builder.appendff("{}, ", name_span));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("visibility: "));TRY(builder.appendff("{}, ", visibility));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("return_type_id: "));TRY(builder.appendff("{}, ", return_type_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("return_type_span: "));TRY(builder.appendff("{}, ", return_type_span));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("params: "));TRY(builder.appendff("{}, ", params));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("generics: "));TRY(builder.appendff("{}, ", *generics));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("block: "));TRY(builder.appendff("{}, ", block));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("can_throw: "));TRY(builder.appendff("{}, ", can_throw));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type: "));TRY(builder.appendff("{}, ", type));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("linkage: "));TRY(builder.appendff("{}, ", linkage));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("function_scope_id: "));TRY(builder.appendff("{}, ", function_scope_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_instantiated: "));TRY(builder.appendff("{}, ", is_instantiated));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("parsed_function: "));TRY(builder.appendff("{}, ", parsed_function));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_comptime: "));TRY(builder.appendff("{}, ", is_comptime));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_virtual: "));TRY(builder.appendff("{}, ", is_virtual));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_override: "));TRY(builder.appendff("{}", is_override));
 }
-TRY(builder.append(")"));return builder.to_string(); }};struct GenericInferences {
+TRY(builder.append(")"));return builder.to_string(); }};struct FieldRecord {
   public:
-JaktInternal::Dictionary<String,String> values;GenericInferences(JaktInternal::Dictionary<String,String> a_values) :values(a_values){}
+types::StructId struct_id;types::VarId field_id;FieldRecord(types::StructId a_struct_id, types::VarId a_field_id) :struct_id(a_struct_id), field_id(a_field_id){}
 
-JaktInternal::DictionaryIterator<String,String> iterator() const;
-void restore(const JaktInternal::Dictionary<String,String> checkpoint);
-String map(const String type) const;
-JaktInternal::Optional<String> get(const String key) const;
-ErrorOr<JaktInternal::Dictionary<String,String>> perform_checkpoint(const bool reset);
-ErrorOr<void> set(const String key, const String value);
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("GenericInferences("));{
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("FieldRecord("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("values: "));TRY(builder.appendff("{}", values));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("struct_id: "));TRY(builder.appendff("{}, ", struct_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("field_id: "));TRY(builder.appendff("{}", field_id));
 }
-TRY(builder.append(")"));return builder.to_string(); }};namespace Type_Details {
+TRY(builder.append(")"));return builder.to_string(); }};class Module : public RefCounted<Module>, public Weakable<Module> {
+  public:
+virtual ~Module() = default;
+types::ModuleId id;String name;JaktInternal::Array<NonnullRefPtr<types::CheckedFunction>> functions;JaktInternal::Array<types::CheckedStruct> structures;JaktInternal::Array<types::CheckedEnum> enums;JaktInternal::Array<NonnullRefPtr<types::Scope>> scopes;JaktInternal::Array<NonnullRefPtr<types::Type>> types;JaktInternal::Array<types::CheckedVariable> variables;JaktInternal::Array<types::ModuleId> imports;bool is_root;protected:
+explicit Module(types::ModuleId&& a_id, String&& a_name, JaktInternal::Array<NonnullRefPtr<types::CheckedFunction>>&& a_functions, JaktInternal::Array<types::CheckedStruct>&& a_structures, JaktInternal::Array<types::CheckedEnum>&& a_enums, JaktInternal::Array<NonnullRefPtr<types::Scope>>&& a_scopes, JaktInternal::Array<NonnullRefPtr<types::Type>>&& a_types, JaktInternal::Array<types::CheckedVariable>&& a_variables, JaktInternal::Array<types::ModuleId>&& a_imports, bool&& a_is_root): id(move(a_id)), name(move(a_name)), functions(move(a_functions)), structures(move(a_structures)), enums(move(a_enums)), scopes(move(a_scopes)), types(move(a_types)), variables(move(a_variables)), imports(move(a_imports)), is_root(move(a_is_root)){}
+public:
+static ErrorOr<NonnullRefPtr<Module>> create(types::ModuleId id, String name, JaktInternal::Array<NonnullRefPtr<types::CheckedFunction>> functions, JaktInternal::Array<types::CheckedStruct> structures, JaktInternal::Array<types::CheckedEnum> enums, JaktInternal::Array<NonnullRefPtr<types::Scope>> scopes, JaktInternal::Array<NonnullRefPtr<types::Type>> types, JaktInternal::Array<types::CheckedVariable> variables, JaktInternal::Array<types::ModuleId> imports, bool is_root) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Module (move(id), move(name), move(functions), move(structures), move(enums), move(scopes), move(types), move(variables), move(imports), move(is_root)))); return o; }
+ErrorOr<types::TypeId> new_type_variable();
+ErrorOr<types::FunctionId> add_function(const NonnullRefPtr<types::CheckedFunction> checked_function);
+bool is_prelude() const;
+ErrorOr<types::VarId> add_variable(const types::CheckedVariable checked_variable);
+types::FunctionId next_function_id() const;
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("Module("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("id: "));TRY(builder.appendff("{}, ", id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("functions: "));TRY(builder.appendff("{}, ", functions));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("structures: "));TRY(builder.appendff("{}, ", structures));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("enums: "));TRY(builder.appendff("{}, ", enums));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("scopes: "));TRY(builder.appendff("{}, ", scopes));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("types: "));TRY(builder.appendff("{}, ", types));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("variables: "));TRY(builder.appendff("{}, ", variables));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("imports: "));TRY(builder.appendff("{}, ", imports));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_root: "));TRY(builder.appendff("{}", is_root));
+}
+TRY(builder.append(")"));return builder.to_string(); }};namespace BuiltinType_Details {
 struct Void {};
 struct Bool {};
 struct U8 {};
@@ -17746,296 +17816,405 @@ struct CChar {};
 struct CInt {};
 struct Unknown {};
 struct Never {};
-struct TypeVariable{
-String value;
-template<typename... Args>
-TypeVariable(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct GenericInstance {
-types::StructId id;
-JaktInternal::Array<types::TypeId> args;
-template<typename _MemberT0, typename _MemberT1>
-GenericInstance(_MemberT0&& member_0, _MemberT1&& member_1):
-id{ forward<_MemberT0>(member_0)},
-args{ forward<_MemberT1>(member_1)}
-{}
-};
-struct GenericEnumInstance {
-types::EnumId id;
-JaktInternal::Array<types::TypeId> args;
-template<typename _MemberT0, typename _MemberT1>
-GenericEnumInstance(_MemberT0&& member_0, _MemberT1&& member_1):
-id{ forward<_MemberT0>(member_0)},
-args{ forward<_MemberT1>(member_1)}
-{}
-};
-struct GenericResolvedType {
-types::StructId id;
-JaktInternal::Array<types::TypeId> args;
-template<typename _MemberT0, typename _MemberT1>
-GenericResolvedType(_MemberT0&& member_0, _MemberT1&& member_1):
-id{ forward<_MemberT0>(member_0)},
-args{ forward<_MemberT1>(member_1)}
-{}
-};
-struct Struct{
-types::StructId value;
-template<typename... Args>
-Struct(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct Enum{
-types::EnumId value;
-template<typename... Args>
-Enum(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct RawPtr{
-types::TypeId value;
-template<typename... Args>
-RawPtr(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct Reference{
-types::TypeId value;
-template<typename... Args>
-Reference(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct MutableReference{
-types::TypeId value;
-template<typename... Args>
-MutableReference(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct Function {
-JaktInternal::Array<types::TypeId> params;
-bool can_throw;
-types::TypeId return_type_id;
-types::FunctionId pseudo_function_id;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
-Function(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
-params{ forward<_MemberT0>(member_0)},
-can_throw{ forward<_MemberT1>(member_1)},
-return_type_id{ forward<_MemberT2>(member_2)},
-pseudo_function_id{ forward<_MemberT3>(member_3)}
-{}
-};
 }
-struct Type : public Variant<Type_Details::Void, Type_Details::Bool, Type_Details::U8, Type_Details::U16, Type_Details::U32, Type_Details::U64, Type_Details::I8, Type_Details::I16, Type_Details::I32, Type_Details::I64, Type_Details::F32, Type_Details::F64, Type_Details::Usize, Type_Details::JaktString, Type_Details::CChar, Type_Details::CInt, Type_Details::Unknown, Type_Details::Never, Type_Details::TypeVariable, Type_Details::GenericInstance, Type_Details::GenericEnumInstance, Type_Details::GenericResolvedType, Type_Details::Struct, Type_Details::Enum, Type_Details::RawPtr, Type_Details::Reference, Type_Details::MutableReference, Type_Details::Function>, public RefCounted<Type> {
-using Variant<Type_Details::Void, Type_Details::Bool, Type_Details::U8, Type_Details::U16, Type_Details::U32, Type_Details::U64, Type_Details::I8, Type_Details::I16, Type_Details::I32, Type_Details::I64, Type_Details::F32, Type_Details::F64, Type_Details::Usize, Type_Details::JaktString, Type_Details::CChar, Type_Details::CInt, Type_Details::Unknown, Type_Details::Never, Type_Details::TypeVariable, Type_Details::GenericInstance, Type_Details::GenericEnumInstance, Type_Details::GenericResolvedType, Type_Details::Struct, Type_Details::Enum, Type_Details::RawPtr, Type_Details::Reference, Type_Details::MutableReference, Type_Details::Function>::Variant;
-    using Void = Type_Details::Void;
-    using Bool = Type_Details::Bool;
-    using U8 = Type_Details::U8;
-    using U16 = Type_Details::U16;
-    using U32 = Type_Details::U32;
-    using U64 = Type_Details::U64;
-    using I8 = Type_Details::I8;
-    using I16 = Type_Details::I16;
-    using I32 = Type_Details::I32;
-    using I64 = Type_Details::I64;
-    using F32 = Type_Details::F32;
-    using F64 = Type_Details::F64;
-    using Usize = Type_Details::Usize;
-    using JaktString = Type_Details::JaktString;
-    using CChar = Type_Details::CChar;
-    using CInt = Type_Details::CInt;
-    using Unknown = Type_Details::Unknown;
-    using Never = Type_Details::Never;
-    using TypeVariable = Type_Details::TypeVariable;
-    using GenericInstance = Type_Details::GenericInstance;
-    using GenericEnumInstance = Type_Details::GenericEnumInstance;
-    using GenericResolvedType = Type_Details::GenericResolvedType;
-    using Struct = Type_Details::Struct;
-    using Enum = Type_Details::Enum;
-    using RawPtr = Type_Details::RawPtr;
-    using Reference = Type_Details::Reference;
-    using MutableReference = Type_Details::MutableReference;
-    using Function = Type_Details::Function;
-template<typename V, typename... Args> static auto create(Args&&... args) {
-return adopt_nonnull_ref_or_enomem(new (nothrow) Type(V(forward<Args>(args)...)));
-}
+struct BuiltinType : public Variant<BuiltinType_Details::Void, BuiltinType_Details::Bool, BuiltinType_Details::U8, BuiltinType_Details::U16, BuiltinType_Details::U32, BuiltinType_Details::U64, BuiltinType_Details::I8, BuiltinType_Details::I16, BuiltinType_Details::I32, BuiltinType_Details::I64, BuiltinType_Details::F32, BuiltinType_Details::F64, BuiltinType_Details::Usize, BuiltinType_Details::JaktString, BuiltinType_Details::CChar, BuiltinType_Details::CInt, BuiltinType_Details::Unknown, BuiltinType_Details::Never> {
+using Variant<BuiltinType_Details::Void, BuiltinType_Details::Bool, BuiltinType_Details::U8, BuiltinType_Details::U16, BuiltinType_Details::U32, BuiltinType_Details::U64, BuiltinType_Details::I8, BuiltinType_Details::I16, BuiltinType_Details::I32, BuiltinType_Details::I64, BuiltinType_Details::F32, BuiltinType_Details::F64, BuiltinType_Details::Usize, BuiltinType_Details::JaktString, BuiltinType_Details::CChar, BuiltinType_Details::CInt, BuiltinType_Details::Unknown, BuiltinType_Details::Never>::Variant;
+    using Void = BuiltinType_Details::Void;
+    using Bool = BuiltinType_Details::Bool;
+    using U8 = BuiltinType_Details::U8;
+    using U16 = BuiltinType_Details::U16;
+    using U32 = BuiltinType_Details::U32;
+    using U64 = BuiltinType_Details::U64;
+    using I8 = BuiltinType_Details::I8;
+    using I16 = BuiltinType_Details::I16;
+    using I32 = BuiltinType_Details::I32;
+    using I64 = BuiltinType_Details::I64;
+    using F32 = BuiltinType_Details::F32;
+    using F64 = BuiltinType_Details::F64;
+    using Usize = BuiltinType_Details::Usize;
+    using JaktString = BuiltinType_Details::JaktString;
+    using CChar = BuiltinType_Details::CChar;
+    using CInt = BuiltinType_Details::CInt;
+    using Unknown = BuiltinType_Details::Unknown;
+    using Never = BuiltinType_Details::Never;
 ErrorOr<String> debug_description() const {
 auto builder = TRY(StringBuilder::create());
 switch (this->index()) {case 0 /* Void */: {
-[[maybe_unused]] auto const& that = this->template get<Type::Void>();
-TRY(builder.append("Type::Void"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::Void>();
+TRY(builder.append("BuiltinType::Void"));
 break;}
 case 1 /* Bool */: {
-[[maybe_unused]] auto const& that = this->template get<Type::Bool>();
-TRY(builder.append("Type::Bool"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::Bool>();
+TRY(builder.append("BuiltinType::Bool"));
 break;}
 case 2 /* U8 */: {
-[[maybe_unused]] auto const& that = this->template get<Type::U8>();
-TRY(builder.append("Type::U8"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::U8>();
+TRY(builder.append("BuiltinType::U8"));
 break;}
 case 3 /* U16 */: {
-[[maybe_unused]] auto const& that = this->template get<Type::U16>();
-TRY(builder.append("Type::U16"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::U16>();
+TRY(builder.append("BuiltinType::U16"));
 break;}
 case 4 /* U32 */: {
-[[maybe_unused]] auto const& that = this->template get<Type::U32>();
-TRY(builder.append("Type::U32"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::U32>();
+TRY(builder.append("BuiltinType::U32"));
 break;}
 case 5 /* U64 */: {
-[[maybe_unused]] auto const& that = this->template get<Type::U64>();
-TRY(builder.append("Type::U64"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::U64>();
+TRY(builder.append("BuiltinType::U64"));
 break;}
 case 6 /* I8 */: {
-[[maybe_unused]] auto const& that = this->template get<Type::I8>();
-TRY(builder.append("Type::I8"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::I8>();
+TRY(builder.append("BuiltinType::I8"));
 break;}
 case 7 /* I16 */: {
-[[maybe_unused]] auto const& that = this->template get<Type::I16>();
-TRY(builder.append("Type::I16"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::I16>();
+TRY(builder.append("BuiltinType::I16"));
 break;}
 case 8 /* I32 */: {
-[[maybe_unused]] auto const& that = this->template get<Type::I32>();
-TRY(builder.append("Type::I32"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::I32>();
+TRY(builder.append("BuiltinType::I32"));
 break;}
 case 9 /* I64 */: {
-[[maybe_unused]] auto const& that = this->template get<Type::I64>();
-TRY(builder.append("Type::I64"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::I64>();
+TRY(builder.append("BuiltinType::I64"));
 break;}
 case 10 /* F32 */: {
-[[maybe_unused]] auto const& that = this->template get<Type::F32>();
-TRY(builder.append("Type::F32"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::F32>();
+TRY(builder.append("BuiltinType::F32"));
 break;}
 case 11 /* F64 */: {
-[[maybe_unused]] auto const& that = this->template get<Type::F64>();
-TRY(builder.append("Type::F64"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::F64>();
+TRY(builder.append("BuiltinType::F64"));
 break;}
 case 12 /* Usize */: {
-[[maybe_unused]] auto const& that = this->template get<Type::Usize>();
-TRY(builder.append("Type::Usize"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::Usize>();
+TRY(builder.append("BuiltinType::Usize"));
 break;}
 case 13 /* JaktString */: {
-[[maybe_unused]] auto const& that = this->template get<Type::JaktString>();
-TRY(builder.append("Type::JaktString"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::JaktString>();
+TRY(builder.append("BuiltinType::JaktString"));
 break;}
 case 14 /* CChar */: {
-[[maybe_unused]] auto const& that = this->template get<Type::CChar>();
-TRY(builder.append("Type::CChar"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::CChar>();
+TRY(builder.append("BuiltinType::CChar"));
 break;}
 case 15 /* CInt */: {
-[[maybe_unused]] auto const& that = this->template get<Type::CInt>();
-TRY(builder.append("Type::CInt"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::CInt>();
+TRY(builder.append("BuiltinType::CInt"));
 break;}
 case 16 /* Unknown */: {
-[[maybe_unused]] auto const& that = this->template get<Type::Unknown>();
-TRY(builder.append("Type::Unknown"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::Unknown>();
+TRY(builder.append("BuiltinType::Unknown"));
 break;}
 case 17 /* Never */: {
-[[maybe_unused]] auto const& that = this->template get<Type::Never>();
-TRY(builder.append("Type::Never"));
+[[maybe_unused]] auto const& that = this->template get<BuiltinType::Never>();
+TRY(builder.append("BuiltinType::Never"));
 break;}
-case 18 /* TypeVariable */: {
-[[maybe_unused]] auto const& that = this->template get<Type::TypeVariable>();
-TRY(builder.append("Type::TypeVariable"));
-TRY(builder.appendff("(\"{}\")", that.value));
+}
+return builder.to_string();
+}size_t id() const;
+};
+namespace SafetyMode_Details {
+struct Safe {};
+struct Unsafe {};
+}
+struct SafetyMode : public Variant<SafetyMode_Details::Safe, SafetyMode_Details::Unsafe> {
+using Variant<SafetyMode_Details::Safe, SafetyMode_Details::Unsafe>::Variant;
+    using Safe = SafetyMode_Details::Safe;
+    using Unsafe = SafetyMode_Details::Unsafe;
+ErrorOr<String> debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* Safe */: {
+[[maybe_unused]] auto const& that = this->template get<SafetyMode::Safe>();
+TRY(builder.append("SafetyMode::Safe"));
 break;}
-case 19 /* GenericInstance */: {
-[[maybe_unused]] auto const& that = this->template get<Type::GenericInstance>();
-TRY(builder.append("Type::GenericInstance"));
+case 1 /* Unsafe */: {
+[[maybe_unused]] auto const& that = this->template get<SafetyMode::Unsafe>();
+TRY(builder.append("SafetyMode::Unsafe"));
+break;}
+}
+return builder.to_string();
+}};
+struct GenericInferences {
+  public:
+JaktInternal::Dictionary<String,String> values;GenericInferences(JaktInternal::Dictionary<String,String> a_values) :values(a_values){}
+
+JaktInternal::DictionaryIterator<String,String> iterator() const;
+void restore(const JaktInternal::Dictionary<String,String> checkpoint);
+String map(const String type) const;
+JaktInternal::Optional<String> get(const String key) const;
+ErrorOr<JaktInternal::Dictionary<String,String>> perform_checkpoint(const bool reset);
+ErrorOr<void> set(const String key, const String value);
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("GenericInferences("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("values: "));TRY(builder.appendff("{}", values));
+}
+TRY(builder.append(")"));return builder.to_string(); }};struct LoadedModule {
+  public:
+types::ModuleId module_id;utility::FileId file_id;LoadedModule(types::ModuleId a_module_id, utility::FileId a_file_id) :module_id(a_module_id), file_id(a_file_id){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("LoadedModule("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("module_id: "));TRY(builder.appendff("{}, ", module_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("file_id: "));TRY(builder.appendff("{}", file_id));
+}
+TRY(builder.append(")"));return builder.to_string(); }};struct ResolvedNamespace {
+  public:
+String name;JaktInternal::Optional<JaktInternal::Array<types::TypeId>> generic_parameters;ResolvedNamespace(String a_name, JaktInternal::Optional<JaktInternal::Array<types::TypeId>> a_generic_parameters) :name(a_name), generic_parameters(a_generic_parameters){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ResolvedNamespace("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("generic_parameters: "));TRY(builder.appendff("{}", generic_parameters));
+}
+TRY(builder.append(")"));return builder.to_string(); }};namespace CheckedMatchBody_Details {
+struct Expression{
+NonnullRefPtr<types::CheckedExpression> value;
+template<typename... Args>
+Expression(Args&&... args): value { forward<Args>(args)... } {}
+};
+struct Block{
+types::CheckedBlock value;
+template<typename... Args>
+Block(Args&&... args): value { forward<Args>(args)... } {}
+};
+}
+struct CheckedMatchBody : public Variant<CheckedMatchBody_Details::Expression, CheckedMatchBody_Details::Block> {
+using Variant<CheckedMatchBody_Details::Expression, CheckedMatchBody_Details::Block>::Variant;
+    using Expression = CheckedMatchBody_Details::Expression;
+    using Block = CheckedMatchBody_Details::Block;
+ErrorOr<String> debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* Expression */: {
+[[maybe_unused]] auto const& that = this->template get<CheckedMatchBody::Expression>();
+TRY(builder.append("CheckedMatchBody::Expression"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 1 /* Block */: {
+[[maybe_unused]] auto const& that = this->template get<CheckedMatchBody::Block>();
+TRY(builder.append("CheckedMatchBody::Block"));
+TRY(builder.appendff("({})", that.value));
+break;}
+}
+return builder.to_string();
+}};
+struct CheckedNamespace {
+  public:
+String name;types::ScopeId scope;CheckedNamespace(String a_name, types::ScopeId a_scope) :name(a_name), scope(a_scope){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedNamespace("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("scope: "));TRY(builder.appendff("{}", scope));
+}
+TRY(builder.append(")"));return builder.to_string(); }};struct CheckedStruct {
+  public:
+String name;utility::Span name_span;JaktInternal::Array<types::TypeId> generic_parameters;JaktInternal::Array<types::VarId> fields;types::ScopeId scope_id;parser::DefinitionLinkage definition_linkage;parser::RecordType record_type;types::TypeId type_id;JaktInternal::Optional<types::StructId> super_struct_id;CheckedStruct(String a_name, utility::Span a_name_span, JaktInternal::Array<types::TypeId> a_generic_parameters, JaktInternal::Array<types::VarId> a_fields, types::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, parser::RecordType a_record_type, types::TypeId a_type_id, JaktInternal::Optional<types::StructId> a_super_struct_id) :name(a_name), name_span(a_name_span), generic_parameters(a_generic_parameters), fields(a_fields), scope_id(a_scope_id), definition_linkage(a_definition_linkage), record_type(a_record_type), type_id(a_type_id), super_struct_id(a_super_struct_id){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedStruct("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name_span: "));TRY(builder.appendff("{}, ", name_span));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("generic_parameters: "));TRY(builder.appendff("{}, ", generic_parameters));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("fields: "));TRY(builder.appendff("{}, ", fields));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("scope_id: "));TRY(builder.appendff("{}, ", scope_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("definition_linkage: "));TRY(builder.appendff("{}, ", definition_linkage));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("record_type: "));TRY(builder.appendff("{}, ", record_type));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_id: "));TRY(builder.appendff("{}, ", type_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("super_struct_id: "));TRY(builder.appendff("{}", super_struct_id));
+}
+TRY(builder.append(")"));return builder.to_string(); }};class Scope : public RefCounted<Scope>, public Weakable<Scope> {
+  public:
+virtual ~Scope() = default;
+JaktInternal::Optional<String> namespace_name;JaktInternal::Dictionary<String,types::VarId> vars;JaktInternal::Dictionary<String,types::Value> comptime_bindings;JaktInternal::Dictionary<String,types::StructId> structs;JaktInternal::Dictionary<String,types::FunctionId> functions;JaktInternal::Dictionary<String,types::EnumId> enums;JaktInternal::Dictionary<String,types::TypeId> types;JaktInternal::Dictionary<String,types::ModuleId> imports;JaktInternal::Optional<types::ScopeId> parent;JaktInternal::Array<types::ScopeId> children;bool can_throw;JaktInternal::Optional<String> import_path_if_extern;String debug_name;protected:
+explicit Scope(JaktInternal::Optional<String>&& a_namespace_name, JaktInternal::Dictionary<String,types::VarId>&& a_vars, JaktInternal::Dictionary<String,types::Value>&& a_comptime_bindings, JaktInternal::Dictionary<String,types::StructId>&& a_structs, JaktInternal::Dictionary<String,types::FunctionId>&& a_functions, JaktInternal::Dictionary<String,types::EnumId>&& a_enums, JaktInternal::Dictionary<String,types::TypeId>&& a_types, JaktInternal::Dictionary<String,types::ModuleId>&& a_imports, JaktInternal::Optional<types::ScopeId>&& a_parent, JaktInternal::Array<types::ScopeId>&& a_children, bool&& a_can_throw, JaktInternal::Optional<String>&& a_import_path_if_extern, String&& a_debug_name): namespace_name(move(a_namespace_name)), vars(move(a_vars)), comptime_bindings(move(a_comptime_bindings)), structs(move(a_structs)), functions(move(a_functions)), enums(move(a_enums)), types(move(a_types)), imports(move(a_imports)), parent(move(a_parent)), children(move(a_children)), can_throw(move(a_can_throw)), import_path_if_extern(move(a_import_path_if_extern)), debug_name(move(a_debug_name)){}
+public:
+static ErrorOr<NonnullRefPtr<Scope>> create(JaktInternal::Optional<String> namespace_name, JaktInternal::Dictionary<String,types::VarId> vars, JaktInternal::Dictionary<String,types::Value> comptime_bindings, JaktInternal::Dictionary<String,types::StructId> structs, JaktInternal::Dictionary<String,types::FunctionId> functions, JaktInternal::Dictionary<String,types::EnumId> enums, JaktInternal::Dictionary<String,types::TypeId> types, JaktInternal::Dictionary<String,types::ModuleId> imports, JaktInternal::Optional<types::ScopeId> parent, JaktInternal::Array<types::ScopeId> children, bool can_throw, JaktInternal::Optional<String> import_path_if_extern, String debug_name) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Scope (move(namespace_name), move(vars), move(comptime_bindings), move(structs), move(functions), move(enums), move(types), move(imports), move(parent), move(children), move(can_throw), move(import_path_if_extern), move(debug_name)))); return o; }
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("Scope("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("namespace_name: "));TRY(builder.appendff("{}, ", namespace_name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("vars: "));TRY(builder.appendff("{}, ", vars));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("comptime_bindings: "));TRY(builder.appendff("{}, ", comptime_bindings));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("structs: "));TRY(builder.appendff("{}, ", structs));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("functions: "));TRY(builder.appendff("{}, ", functions));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("enums: "));TRY(builder.appendff("{}, ", enums));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("types: "));TRY(builder.appendff("{}, ", types));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("imports: "));TRY(builder.appendff("{}, ", imports));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("parent: "));TRY(builder.appendff("{}, ", parent));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("children: "));TRY(builder.appendff("{}, ", children));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("can_throw: "));TRY(builder.appendff("{}, ", can_throw));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("import_path_if_extern: "));TRY(builder.appendff("{}, ", import_path_if_extern));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("debug_name: "));TRY(builder.appendff("\"{}\"", debug_name));
+}
+TRY(builder.append(")"));return builder.to_string(); }};class CheckedProgram : public RefCounted<CheckedProgram>, public Weakable<CheckedProgram> {
+  public:
+virtual ~CheckedProgram() = default;
+NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Array<NonnullRefPtr<types::Module>> modules;JaktInternal::Dictionary<String,types::LoadedModule> loaded_modules;bool is_floating(const types::TypeId type_id) const;
+types::ScopeId prelude_scope_id() const;
+ErrorOr<JaktInternal::Optional<types::StructId>> find_struct_in_scope(const types::ScopeId scope_id, const String name) const;
+ErrorOr<void> set_loaded_module(const String module_name, const types::LoadedModule loaded_module);
+bool is_integer(const types::TypeId type_id) const;
+ErrorOr<types::ScopeId> create_scope(const JaktInternal::Optional<types::ScopeId> parent_scope_id, const bool can_throw, const String debug_name, const types::ModuleId module_id);
+NonnullRefPtr<types::Module> get_module(const types::ModuleId id) const;
+ErrorOr<types::TypeId> substitute_typevars_in_type_helper(const types::TypeId type_id, const types::GenericInferences generic_inferences, const types::ModuleId module_id);
+bool is_string(const types::TypeId type_id) const;
+types::CheckedVariable get_variable(const types::VarId id) const;
+protected:
+explicit CheckedProgram(NonnullRefPtr<compiler::Compiler>&& a_compiler, JaktInternal::Array<NonnullRefPtr<types::Module>>&& a_modules, JaktInternal::Dictionary<String,types::LoadedModule>&& a_loaded_modules): compiler(move(a_compiler)), modules(move(a_modules)), loaded_modules(move(a_loaded_modules)){}
+public:
+static ErrorOr<NonnullRefPtr<CheckedProgram>> create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::Array<NonnullRefPtr<types::Module>> modules, JaktInternal::Dictionary<String,types::LoadedModule> loaded_modules) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) CheckedProgram (move(compiler), move(modules), move(loaded_modules)))); return o; }
+NonnullRefPtr<types::CheckedFunction> get_function(const types::FunctionId id) const;
+ErrorOr<JaktInternal::Optional<types::Value>> find_comptime_binding_in_scope(const types::ScopeId scope_id, const String name) const;
+i64 get_bits(const types::TypeId type_id) const;
+NonnullRefPtr<types::Type> get_type(const types::TypeId id) const;
+ErrorOr<types::TypeId> find_or_add_type_id(const NonnullRefPtr<types::Type> type, const types::ModuleId module_id);
+ErrorOr<types::StructId> find_struct_in_prelude(const String name) const;
+ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<types::ScopeId,bool>>> find_namespace_in_scope(const types::ScopeId scope_id, const String name) const;
+types::CheckedEnum get_enum(const types::EnumId id) const;
+ErrorOr<String> type_name(const types::TypeId type_id) const;
+ErrorOr<JaktInternal::Optional<types::CheckedVariable>> find_var_in_scope(const types::ScopeId scope_id, const String var) const;
+bool is_signed(const types::TypeId type_id) const;
+ErrorOr<JaktInternal::Optional<types::FunctionId>> find_function_in_scope(const types::ScopeId parent_scope_id, const String function_name) const;
+types::CheckedStruct get_struct(const types::StructId id) const;
+ErrorOr<JaktInternal::Optional<types::StructId>> check_and_extract_weak_ptr(const types::StructId struct_id, const JaktInternal::Array<types::TypeId> args) const;
+ErrorOr<JaktInternal::Optional<types::EnumId>> find_enum_in_scope(const types::ScopeId scope_id, const String name) const;
+JaktInternal::Optional<types::LoadedModule> get_loaded_module(const String module_name) const;
+bool is_numeric(const types::TypeId type_id) const;
+ErrorOr<types::TypeId> substitute_typevars_in_type(const types::TypeId type_id, const types::GenericInferences generic_inferences, const types::ModuleId module_id);
+ErrorOr<NonnullRefPtr<types::Scope>> get_scope(const types::ScopeId id) const;
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedProgram("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("compiler: "));TRY(builder.appendff("{}, ", *compiler));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("modules: "));TRY(builder.appendff("{}, ", modules));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("loaded_modules: "));TRY(builder.appendff("{}", loaded_modules));
+}
+TRY(builder.append(")"));return builder.to_string(); }};namespace CheckedMatchCase_Details {
+struct EnumVariant {
+String name;
+JaktInternal::Array<parser::EnumVariantPatternArgument> args;
+types::TypeId subject_type_id;
+size_t index;
+types::ScopeId scope_id;
+types::CheckedMatchBody body;
+utility::Span marker_span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4, typename _MemberT5, typename _MemberT6>
+EnumVariant(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4, _MemberT5&& member_5, _MemberT6&& member_6):
+name{ forward<_MemberT0>(member_0)},
+args{ forward<_MemberT1>(member_1)},
+subject_type_id{ forward<_MemberT2>(member_2)},
+index{ forward<_MemberT3>(member_3)},
+scope_id{ forward<_MemberT4>(member_4)},
+body{ forward<_MemberT5>(member_5)},
+marker_span{ forward<_MemberT6>(member_6)}
+{}
+};
+struct Expression {
+NonnullRefPtr<types::CheckedExpression> expression;
+types::CheckedMatchBody body;
+utility::Span marker_span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+Expression(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+expression{ forward<_MemberT0>(member_0)},
+body{ forward<_MemberT1>(member_1)},
+marker_span{ forward<_MemberT2>(member_2)}
+{}
+};
+struct CatchAll {
+bool has_arguments;
+types::CheckedMatchBody body;
+utility::Span marker_span;
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
+CatchAll(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
+has_arguments{ forward<_MemberT0>(member_0)},
+body{ forward<_MemberT1>(member_1)},
+marker_span{ forward<_MemberT2>(member_2)}
+{}
+};
+}
+struct CheckedMatchCase : public Variant<CheckedMatchCase_Details::EnumVariant, CheckedMatchCase_Details::Expression, CheckedMatchCase_Details::CatchAll> {
+using Variant<CheckedMatchCase_Details::EnumVariant, CheckedMatchCase_Details::Expression, CheckedMatchCase_Details::CatchAll>::Variant;
+    using EnumVariant = CheckedMatchCase_Details::EnumVariant;
+    using Expression = CheckedMatchCase_Details::Expression;
+    using CatchAll = CheckedMatchCase_Details::CatchAll;
+ErrorOr<String> debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* EnumVariant */: {
+[[maybe_unused]] auto const& that = this->template get<CheckedMatchCase::EnumVariant>();
+TRY(builder.append("CheckedMatchCase::EnumVariant"));
 TRY(builder.append("("));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("id: {}", that.id));
+TRY(builder.appendff("name: \"{}\"", that.name));
 TRY(builder.append(", "));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("args: {}", that.args));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("subject_type_id: {}", that.subject_type_id));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("index: {}", that.index));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("scope_id: {}", that.scope_id));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("body: {}", that.body));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("marker_span: {}", that.marker_span));
 }
 TRY(builder.append(")"));
 break;}
-case 20 /* GenericEnumInstance */: {
-[[maybe_unused]] auto const& that = this->template get<Type::GenericEnumInstance>();
-TRY(builder.append("Type::GenericEnumInstance"));
+case 1 /* Expression */: {
+[[maybe_unused]] auto const& that = this->template get<CheckedMatchCase::Expression>();
+TRY(builder.append("CheckedMatchCase::Expression"));
 TRY(builder.append("("));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("id: {}", that.id));
+TRY(builder.appendff("expression: {}", that.expression));
 TRY(builder.append(", "));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("args: {}", that.args));
+TRY(builder.appendff("body: {}", that.body));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("marker_span: {}", that.marker_span));
 }
 TRY(builder.append(")"));
 break;}
-case 21 /* GenericResolvedType */: {
-[[maybe_unused]] auto const& that = this->template get<Type::GenericResolvedType>();
-TRY(builder.append("Type::GenericResolvedType"));
+case 2 /* CatchAll */: {
+[[maybe_unused]] auto const& that = this->template get<CheckedMatchCase::CatchAll>();
+TRY(builder.append("CheckedMatchCase::CatchAll"));
 TRY(builder.append("("));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("id: {}", that.id));
+TRY(builder.appendff("has_arguments: {}", that.has_arguments));
 TRY(builder.append(", "));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("args: {}", that.args));
-}
-TRY(builder.append(")"));
-break;}
-case 22 /* Struct */: {
-[[maybe_unused]] auto const& that = this->template get<Type::Struct>();
-TRY(builder.append("Type::Struct"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 23 /* Enum */: {
-[[maybe_unused]] auto const& that = this->template get<Type::Enum>();
-TRY(builder.append("Type::Enum"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 24 /* RawPtr */: {
-[[maybe_unused]] auto const& that = this->template get<Type::RawPtr>();
-TRY(builder.append("Type::RawPtr"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 25 /* Reference */: {
-[[maybe_unused]] auto const& that = this->template get<Type::Reference>();
-TRY(builder.append("Type::Reference"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 26 /* MutableReference */: {
-[[maybe_unused]] auto const& that = this->template get<Type::MutableReference>();
-TRY(builder.append("Type::MutableReference"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 27 /* Function */: {
-[[maybe_unused]] auto const& that = this->template get<Type::Function>();
-TRY(builder.append("Type::Function"));
-TRY(builder.append("("));
-{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("params: {}", that.params));
+TRY(builder.appendff("body: {}", that.body));
 TRY(builder.append(", "));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("can_throw: {}", that.can_throw));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("return_type_id: {}", that.return_type_id));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("pseudo_function_id: {}", that.pseudo_function_id));
+TRY(builder.appendff("marker_span: {}", that.marker_span));
 }
 TRY(builder.append(")"));
 break;}
 }
 return builder.to_string();
-}bool is_signed() const;
-u64 max() const;
-bool equals(const NonnullRefPtr<types::Type> rhs) const;
-String constructor_name() const;
-i64 get_bits() const;
-bool is_builtin() const;
-i64 min() const;
-ErrorOr<types::TypeId> flip_signedness() const;
-};
-struct CheckedParameter {
+}};
+struct CheckedVarDecl {
   public:
-bool requires_label;types::CheckedVariable variable;JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> default_value;CheckedParameter(bool a_requires_label, types::CheckedVariable a_variable, JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> a_default_value) :requires_label(a_requires_label), variable(a_variable), default_value(a_default_value){}
+String name;bool is_mutable;utility::Span span;types::TypeId type_id;CheckedVarDecl(String a_name, bool a_is_mutable, utility::Span a_span, types::TypeId a_type_id) :name(a_name), is_mutable(a_is_mutable), span(a_span), type_id(a_type_id){}
 
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedParameter("));{
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedVarDecl("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("requires_label: "));TRY(builder.appendff("{}, ", requires_label));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("variable: "));TRY(builder.appendff("{}, ", variable));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("default_value: "));TRY(builder.appendff("{}", default_value));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_mutable: "));TRY(builder.appendff("{}, ", is_mutable));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("span: "));TRY(builder.appendff("{}, ", span));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_id: "));TRY(builder.appendff("{}", type_id));
 }
 TRY(builder.append(")"));return builder.to_string(); }};namespace ValueImpl_Details {
 struct Void {};
@@ -18471,148 +18650,45 @@ return builder.to_string();
 }bool equals(const NonnullRefPtr<types::ValueImpl> other) const;
 ErrorOr<NonnullRefPtr<types::ValueImpl>> copy() const;
 };
-class CheckedProgram : public RefCounted<CheckedProgram>, public Weakable<CheckedProgram> {
-  public:
-virtual ~CheckedProgram() = default;
-NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Array<NonnullRefPtr<types::Module>> modules;JaktInternal::Dictionary<String,types::LoadedModule> loaded_modules;bool is_floating(const types::TypeId type_id) const;
-types::ScopeId prelude_scope_id() const;
-ErrorOr<JaktInternal::Optional<types::StructId>> find_struct_in_scope(const types::ScopeId scope_id, const String name) const;
-ErrorOr<void> set_loaded_module(const String module_name, const types::LoadedModule loaded_module);
-bool is_integer(const types::TypeId type_id) const;
-ErrorOr<types::ScopeId> create_scope(const JaktInternal::Optional<types::ScopeId> parent_scope_id, const bool can_throw, const String debug_name, const types::ModuleId module_id);
-NonnullRefPtr<types::Module> get_module(const types::ModuleId id) const;
-ErrorOr<types::TypeId> substitute_typevars_in_type_helper(const types::TypeId type_id, const types::GenericInferences generic_inferences, const types::ModuleId module_id);
-bool is_string(const types::TypeId type_id) const;
-types::CheckedVariable get_variable(const types::VarId id) const;
-protected:
-explicit CheckedProgram(NonnullRefPtr<compiler::Compiler>&& a_compiler, JaktInternal::Array<NonnullRefPtr<types::Module>>&& a_modules, JaktInternal::Dictionary<String,types::LoadedModule>&& a_loaded_modules): compiler(move(a_compiler)), modules(move(a_modules)), loaded_modules(move(a_loaded_modules)){}
-public:
-static ErrorOr<NonnullRefPtr<CheckedProgram>> create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::Array<NonnullRefPtr<types::Module>> modules, JaktInternal::Dictionary<String,types::LoadedModule> loaded_modules) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) CheckedProgram (move(compiler), move(modules), move(loaded_modules)))); return o; }
-NonnullRefPtr<types::CheckedFunction> get_function(const types::FunctionId id) const;
-ErrorOr<JaktInternal::Optional<types::Value>> find_comptime_binding_in_scope(const types::ScopeId scope_id, const String name) const;
-i64 get_bits(const types::TypeId type_id) const;
-NonnullRefPtr<types::Type> get_type(const types::TypeId id) const;
-ErrorOr<types::TypeId> find_or_add_type_id(const NonnullRefPtr<types::Type> type, const types::ModuleId module_id);
-ErrorOr<types::StructId> find_struct_in_prelude(const String name) const;
-ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<types::ScopeId,bool>>> find_namespace_in_scope(const types::ScopeId scope_id, const String name) const;
-types::CheckedEnum get_enum(const types::EnumId id) const;
-ErrorOr<String> type_name(const types::TypeId type_id) const;
-ErrorOr<JaktInternal::Optional<types::CheckedVariable>> find_var_in_scope(const types::ScopeId scope_id, const String var) const;
-bool is_signed(const types::TypeId type_id) const;
-ErrorOr<JaktInternal::Optional<types::FunctionId>> find_function_in_scope(const types::ScopeId parent_scope_id, const String function_name) const;
-types::CheckedStruct get_struct(const types::StructId id) const;
-ErrorOr<JaktInternal::Optional<types::StructId>> check_and_extract_weak_ptr(const types::StructId struct_id, const JaktInternal::Array<types::TypeId> args) const;
-ErrorOr<JaktInternal::Optional<types::EnumId>> find_enum_in_scope(const types::ScopeId scope_id, const String name) const;
-JaktInternal::Optional<types::LoadedModule> get_loaded_module(const String module_name) const;
-bool is_numeric(const types::TypeId type_id) const;
-ErrorOr<types::TypeId> substitute_typevars_in_type(const types::TypeId type_id, const types::GenericInferences generic_inferences, const types::ModuleId module_id);
-ErrorOr<NonnullRefPtr<types::Scope>> get_scope(const types::ScopeId id) const;
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedProgram("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("compiler: "));TRY(builder.appendff("{}, ", *compiler));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("modules: "));TRY(builder.appendff("{}, ", modules));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("loaded_modules: "));TRY(builder.appendff("{}", loaded_modules));
-}
-TRY(builder.append(")"));return builder.to_string(); }};struct CheckedStruct {
-  public:
-String name;utility::Span name_span;JaktInternal::Array<types::TypeId> generic_parameters;JaktInternal::Array<types::VarId> fields;types::ScopeId scope_id;parser::DefinitionLinkage definition_linkage;parser::RecordType record_type;types::TypeId type_id;JaktInternal::Optional<types::StructId> super_struct_id;CheckedStruct(String a_name, utility::Span a_name_span, JaktInternal::Array<types::TypeId> a_generic_parameters, JaktInternal::Array<types::VarId> a_fields, types::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, parser::RecordType a_record_type, types::TypeId a_type_id, JaktInternal::Optional<types::StructId> a_super_struct_id) :name(a_name), name_span(a_name_span), generic_parameters(a_generic_parameters), fields(a_fields), scope_id(a_scope_id), definition_linkage(a_definition_linkage), record_type(a_record_type), type_id(a_type_id), super_struct_id(a_super_struct_id){}
-
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedStruct("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name_span: "));TRY(builder.appendff("{}, ", name_span));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("generic_parameters: "));TRY(builder.appendff("{}, ", generic_parameters));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("fields: "));TRY(builder.appendff("{}, ", fields));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("scope_id: "));TRY(builder.appendff("{}, ", scope_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("definition_linkage: "));TRY(builder.appendff("{}, ", definition_linkage));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("record_type: "));TRY(builder.appendff("{}, ", record_type));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_id: "));TRY(builder.appendff("{}, ", type_id));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("super_struct_id: "));TRY(builder.appendff("{}", super_struct_id));
-}
-TRY(builder.append(")"));return builder.to_string(); }};namespace CheckedMatchBody_Details {
-struct Expression{
-NonnullRefPtr<types::CheckedExpression> value;
-template<typename... Args>
-Expression(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct Block{
-types::CheckedBlock value;
-template<typename... Args>
-Block(Args&&... args): value { forward<Args>(args)... } {}
-};
-}
-struct CheckedMatchBody : public Variant<CheckedMatchBody_Details::Expression, CheckedMatchBody_Details::Block> {
-using Variant<CheckedMatchBody_Details::Expression, CheckedMatchBody_Details::Block>::Variant;
-    using Expression = CheckedMatchBody_Details::Expression;
-    using Block = CheckedMatchBody_Details::Block;
-ErrorOr<String> debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* Expression */: {
-[[maybe_unused]] auto const& that = this->template get<CheckedMatchBody::Expression>();
-TRY(builder.append("CheckedMatchBody::Expression"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 1 /* Block */: {
-[[maybe_unused]] auto const& that = this->template get<CheckedMatchBody::Block>();
-TRY(builder.append("CheckedMatchBody::Block"));
-TRY(builder.appendff("({})", that.value));
-break;}
-}
-return builder.to_string();
-}};
-namespace CheckedMatchCase_Details {
-struct EnumVariant {
+namespace CheckedCapture_Details {
+struct ByValue {
 String name;
-JaktInternal::Array<parser::EnumVariantPatternArgument> args;
-types::TypeId subject_type_id;
-size_t index;
-types::ScopeId scope_id;
-types::CheckedMatchBody body;
-utility::Span marker_span;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4, typename _MemberT5, typename _MemberT6>
-EnumVariant(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4, _MemberT5&& member_5, _MemberT6&& member_6):
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1>
+ByValue(_MemberT0&& member_0, _MemberT1&& member_1):
 name{ forward<_MemberT0>(member_0)},
-args{ forward<_MemberT1>(member_1)},
-subject_type_id{ forward<_MemberT2>(member_2)},
-index{ forward<_MemberT3>(member_3)},
-scope_id{ forward<_MemberT4>(member_4)},
-body{ forward<_MemberT5>(member_5)},
-marker_span{ forward<_MemberT6>(member_6)}
+span{ forward<_MemberT1>(member_1)}
 {}
 };
-struct Expression {
-NonnullRefPtr<types::CheckedExpression> expression;
-types::CheckedMatchBody body;
-utility::Span marker_span;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
-Expression(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
-expression{ forward<_MemberT0>(member_0)},
-body{ forward<_MemberT1>(member_1)},
-marker_span{ forward<_MemberT2>(member_2)}
+struct ByReference {
+String name;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1>
+ByReference(_MemberT0&& member_0, _MemberT1&& member_1):
+name{ forward<_MemberT0>(member_0)},
+span{ forward<_MemberT1>(member_1)}
 {}
 };
-struct CatchAll {
-bool has_arguments;
-types::CheckedMatchBody body;
-utility::Span marker_span;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2>
-CatchAll(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2):
-has_arguments{ forward<_MemberT0>(member_0)},
-body{ forward<_MemberT1>(member_1)},
-marker_span{ forward<_MemberT2>(member_2)}
+struct ByMutableReference {
+String name;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1>
+ByMutableReference(_MemberT0&& member_0, _MemberT1&& member_1):
+name{ forward<_MemberT0>(member_0)},
+span{ forward<_MemberT1>(member_1)}
 {}
 };
 }
-struct CheckedMatchCase : public Variant<CheckedMatchCase_Details::EnumVariant, CheckedMatchCase_Details::Expression, CheckedMatchCase_Details::CatchAll> {
-using Variant<CheckedMatchCase_Details::EnumVariant, CheckedMatchCase_Details::Expression, CheckedMatchCase_Details::CatchAll>::Variant;
-    using EnumVariant = CheckedMatchCase_Details::EnumVariant;
-    using Expression = CheckedMatchCase_Details::Expression;
-    using CatchAll = CheckedMatchCase_Details::CatchAll;
+struct CheckedCapture : public Variant<CheckedCapture_Details::ByValue, CheckedCapture_Details::ByReference, CheckedCapture_Details::ByMutableReference> {
+using Variant<CheckedCapture_Details::ByValue, CheckedCapture_Details::ByReference, CheckedCapture_Details::ByMutableReference>::Variant;
+    using ByValue = CheckedCapture_Details::ByValue;
+    using ByReference = CheckedCapture_Details::ByReference;
+    using ByMutableReference = CheckedCapture_Details::ByMutableReference;
 ErrorOr<String> debug_description() const {
 auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* EnumVariant */: {
-[[maybe_unused]] auto const& that = this->template get<CheckedMatchCase::EnumVariant>();
-TRY(builder.append("CheckedMatchCase::EnumVariant"));
+switch (this->index()) {case 0 /* ByValue */: {
+[[maybe_unused]] auto const& that = this->template get<CheckedCapture::ByValue>();
+TRY(builder.append("CheckedCapture::ByValue"));
 TRY(builder.append("("));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -18620,70 +18696,101 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("name: \"{}\"", that.name));
 TRY(builder.append(", "));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("args: {}", that.args));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("subject_type_id: {}", that.subject_type_id));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("index: {}", that.index));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("scope_id: {}", that.scope_id));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("body: {}", that.body));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("marker_span: {}", that.marker_span));
+TRY(builder.appendff("span: {}", that.span));
 }
 TRY(builder.append(")"));
 break;}
-case 1 /* Expression */: {
-[[maybe_unused]] auto const& that = this->template get<CheckedMatchCase::Expression>();
-TRY(builder.append("CheckedMatchCase::Expression"));
+case 1 /* ByReference */: {
+[[maybe_unused]] auto const& that = this->template get<CheckedCapture::ByReference>();
+TRY(builder.append("CheckedCapture::ByReference"));
 TRY(builder.append("("));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("expression: {}", that.expression));
+TRY(builder.appendff("name: \"{}\"", that.name));
 TRY(builder.append(", "));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("body: {}", that.body));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("marker_span: {}", that.marker_span));
+TRY(builder.appendff("span: {}", that.span));
 }
 TRY(builder.append(")"));
 break;}
-case 2 /* CatchAll */: {
-[[maybe_unused]] auto const& that = this->template get<CheckedMatchCase::CatchAll>();
-TRY(builder.append("CheckedMatchCase::CatchAll"));
+case 2 /* ByMutableReference */: {
+[[maybe_unused]] auto const& that = this->template get<CheckedCapture::ByMutableReference>();
+TRY(builder.append("CheckedCapture::ByMutableReference"));
 TRY(builder.append("("));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("has_arguments: {}", that.has_arguments));
+TRY(builder.appendff("name: \"{}\"", that.name));
 TRY(builder.append(", "));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("body: {}", that.body));
-TRY(builder.append(", "));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("marker_span: {}", that.marker_span));
+TRY(builder.appendff("span: {}", that.span));
 }
 TRY(builder.append(")"));
 break;}
 }
 return builder.to_string();
-}};
-struct CheckedNamespace {
+}String name() const;
+utility::Span span() const;
+};
+namespace FunctionGenericParameter_Details {
+struct InferenceGuide{
+types::TypeId value;
+template<typename... Args>
+InferenceGuide(Args&&... args): value { forward<Args>(args)... } {}
+};
+struct Parameter{
+types::TypeId value;
+template<typename... Args>
+Parameter(Args&&... args): value { forward<Args>(args)... } {}
+};
+}
+struct FunctionGenericParameter : public Variant<FunctionGenericParameter_Details::InferenceGuide, FunctionGenericParameter_Details::Parameter> {
+using Variant<FunctionGenericParameter_Details::InferenceGuide, FunctionGenericParameter_Details::Parameter>::Variant;
+    using InferenceGuide = FunctionGenericParameter_Details::InferenceGuide;
+    using Parameter = FunctionGenericParameter_Details::Parameter;
+ErrorOr<String> debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* InferenceGuide */: {
+[[maybe_unused]] auto const& that = this->template get<FunctionGenericParameter::InferenceGuide>();
+TRY(builder.append("FunctionGenericParameter::InferenceGuide"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 1 /* Parameter */: {
+[[maybe_unused]] auto const& that = this->template get<FunctionGenericParameter::Parameter>();
+TRY(builder.append("FunctionGenericParameter::Parameter"));
+TRY(builder.appendff("({})", that.value));
+break;}
+}
+return builder.to_string();
+}types::TypeId type_id() const;
+};
+struct CheckedParameter {
   public:
-String name;types::ScopeId scope;CheckedNamespace(String a_name, types::ScopeId a_scope) :name(a_name), scope(a_scope){}
+bool requires_label;types::CheckedVariable variable;JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> default_value;CheckedParameter(bool a_requires_label, types::CheckedVariable a_variable, JaktInternal::Optional<NonnullRefPtr<types::CheckedExpression>> a_default_value) :requires_label(a_requires_label), variable(a_variable), default_value(a_default_value){}
 
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedNamespace("));{
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedParameter("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("requires_label: "));TRY(builder.appendff("{}, ", requires_label));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("variable: "));TRY(builder.appendff("{}, ", variable));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("default_value: "));TRY(builder.appendff("{}", default_value));
+}
+TRY(builder.append(")"));return builder.to_string(); }};struct CheckedEnum {
+  public:
+String name;utility::Span name_span;JaktInternal::Array<types::TypeId> generic_parameters;JaktInternal::Array<types::CheckedEnumVariant> variants;types::ScopeId scope_id;parser::DefinitionLinkage definition_linkage;parser::RecordType record_type;types::TypeId underlying_type_id;types::TypeId type_id;bool is_boxed;CheckedEnum(String a_name, utility::Span a_name_span, JaktInternal::Array<types::TypeId> a_generic_parameters, JaktInternal::Array<types::CheckedEnumVariant> a_variants, types::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, parser::RecordType a_record_type, types::TypeId a_underlying_type_id, types::TypeId a_type_id, bool a_is_boxed) :name(a_name), name_span(a_name_span), generic_parameters(a_generic_parameters), variants(a_variants), scope_id(a_scope_id), definition_linkage(a_definition_linkage), record_type(a_record_type), underlying_type_id(a_underlying_type_id), type_id(a_type_id), is_boxed(a_is_boxed){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("CheckedEnum("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name: "));TRY(builder.appendff("\"{}\", ", name));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("scope: "));TRY(builder.appendff("{}", scope));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("name_span: "));TRY(builder.appendff("{}, ", name_span));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("generic_parameters: "));TRY(builder.appendff("{}, ", generic_parameters));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("variants: "));TRY(builder.appendff("{}, ", variants));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("scope_id: "));TRY(builder.appendff("{}, ", scope_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("definition_linkage: "));TRY(builder.appendff("{}, ", definition_linkage));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("record_type: "));TRY(builder.appendff("{}, ", record_type));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("underlying_type_id: "));TRY(builder.appendff("{}, ", underlying_type_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_id: "));TRY(builder.appendff("{}, ", type_id));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("is_boxed: "));TRY(builder.appendff("{}", is_boxed));
 }
 TRY(builder.append(")"));return builder.to_string(); }};static types::TypeId builtin(const types::BuiltinType builtin) {
 {
@@ -23224,7 +23331,39 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 
 }
 namespace interpreter {
-class Interpreter : public RefCounted<Interpreter>, public Weakable<Interpreter> {
+enum class InterpretError: i32 {
+CallToExternalFunction = (infallible_integer_cast<i32>((static_cast<i32>(42)))),
+MismatchingArguments = (infallible_integer_cast<i32>((static_cast<u64>(43ULL)))),
+InvalidThisArgument = (infallible_integer_cast<i32>((static_cast<u64>(44ULL)))),
+InvalidType = (infallible_integer_cast<i32>((static_cast<u64>(45ULL)))),
+UnknownVariable = (infallible_integer_cast<i32>((static_cast<u64>(46ULL)))),
+Unimplemented = (infallible_integer_cast<i32>((static_cast<u64>(47ULL)))),
+};
+class InterpreterScope : public RefCounted<InterpreterScope>, public Weakable<InterpreterScope> {
+  public:
+virtual ~InterpreterScope() = default;
+JaktInternal::Dictionary<String,types::Value> bindings;JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent;JaktInternal::Dictionary<String,types::TypeId> type_bindings;JaktInternal::Array<interpreter::Deferred> defers;ErrorOr<void> defer_statement(const NonnullRefPtr<types::CheckedStatement> statement);
+ErrorOr<void> perform_defers(NonnullRefPtr<interpreter::Interpreter> interpreter, const utility::Span span);
+static ErrorOr<NonnullRefPtr<interpreter::InterpreterScope>> from_runtime_scope(const types::ScopeId scope_id, const NonnullRefPtr<types::CheckedProgram> program, const JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent);
+ErrorOr<types::GenericInferences> type_map_for_substitution() const;
+protected:
+explicit InterpreterScope(JaktInternal::Dictionary<String,types::Value>&& a_bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>>&& a_parent, JaktInternal::Dictionary<String,types::TypeId>&& a_type_bindings, JaktInternal::Array<interpreter::Deferred>&& a_defers): bindings(move(a_bindings)), parent(move(a_parent)), type_bindings(move(a_type_bindings)), defers(move(a_defers)){}
+public:
+static ErrorOr<NonnullRefPtr<InterpreterScope>> create(JaktInternal::Dictionary<String,types::Value> bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent, JaktInternal::Dictionary<String,types::TypeId> type_bindings, JaktInternal::Array<interpreter::Deferred> defers) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) InterpreterScope (move(bindings), move(parent), move(type_bindings), move(defers)))); return o; }
+ErrorOr<types::TypeId> map_type(const types::TypeId id) const;
+ErrorOr<void> set(const String name, const types::Value value);
+static ErrorOr<NonnullRefPtr<interpreter::InterpreterScope>> create(const JaktInternal::Dictionary<String,types::Value> bindings, const JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent, const JaktInternal::Dictionary<String,types::TypeId> type_bindings);
+ErrorOr<void> type_map_for_substitution_helper(JaktInternal::Dictionary<String,String>& map) const;
+ErrorOr<types::Value> must_get(const String name) const;
+ErrorOr<void> defer_expression(const NonnullRefPtr<types::CheckedExpression> expr);
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("InterpreterScope("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("bindings: "));TRY(builder.appendff("{}, ", bindings));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("parent: "));TRY(builder.appendff("{}, ", parent));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_bindings: "));TRY(builder.appendff("{}, ", type_bindings));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("defers: "));TRY(builder.appendff("{}", defers));
+}
+TRY(builder.append(")"));return builder.to_string(); }};class Interpreter : public RefCounted<Interpreter>, public Weakable<Interpreter> {
   public:
 virtual ~Interpreter() = default;
 NonnullRefPtr<compiler::Compiler> compiler;NonnullRefPtr<types::CheckedProgram> program;JaktInternal::Array<utility::Span> spans;JaktInternal::Optional<types::FunctionId> current_function_id;ErrorOr<bool> get_prelude_function(const types::ScopeId scope_id) const;
@@ -23253,38 +23392,68 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("spans: "));TRY(builder.appendff("{}, ", spans));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("current_function_id: "));TRY(builder.appendff("{}", current_function_id));
 }
-TRY(builder.append(")"));return builder.to_string(); }};class InterpreterScope : public RefCounted<InterpreterScope>, public Weakable<InterpreterScope> {
-  public:
-virtual ~InterpreterScope() = default;
-JaktInternal::Dictionary<String,types::Value> bindings;JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent;JaktInternal::Dictionary<String,types::TypeId> type_bindings;JaktInternal::Array<interpreter::Deferred> defers;ErrorOr<void> defer_statement(const NonnullRefPtr<types::CheckedStatement> statement);
-ErrorOr<void> perform_defers(NonnullRefPtr<interpreter::Interpreter> interpreter, const utility::Span span);
-static ErrorOr<NonnullRefPtr<interpreter::InterpreterScope>> from_runtime_scope(const types::ScopeId scope_id, const NonnullRefPtr<types::CheckedProgram> program, const JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent);
-ErrorOr<types::GenericInferences> type_map_for_substitution() const;
-protected:
-explicit InterpreterScope(JaktInternal::Dictionary<String,types::Value>&& a_bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>>&& a_parent, JaktInternal::Dictionary<String,types::TypeId>&& a_type_bindings, JaktInternal::Array<interpreter::Deferred>&& a_defers): bindings(move(a_bindings)), parent(move(a_parent)), type_bindings(move(a_type_bindings)), defers(move(a_defers)){}
-public:
-static ErrorOr<NonnullRefPtr<InterpreterScope>> create(JaktInternal::Dictionary<String,types::Value> bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent, JaktInternal::Dictionary<String,types::TypeId> type_bindings, JaktInternal::Array<interpreter::Deferred> defers) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) InterpreterScope (move(bindings), move(parent), move(type_bindings), move(defers)))); return o; }
-ErrorOr<types::TypeId> map_type(const types::TypeId id) const;
-ErrorOr<void> set(const String name, const types::Value value);
-static ErrorOr<NonnullRefPtr<interpreter::InterpreterScope>> create(const JaktInternal::Dictionary<String,types::Value> bindings, const JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent, const JaktInternal::Dictionary<String,types::TypeId> type_bindings);
-ErrorOr<void> type_map_for_substitution_helper(JaktInternal::Dictionary<String,String>& map) const;
-ErrorOr<types::Value> must_get(const String name) const;
-ErrorOr<void> defer_expression(const NonnullRefPtr<types::CheckedExpression> expr);
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("InterpreterScope("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("bindings: "));TRY(builder.appendff("{}, ", bindings));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("parent: "));TRY(builder.appendff("{}, ", parent));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("type_bindings: "));TRY(builder.appendff("{}, ", type_bindings));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("defers: "));TRY(builder.appendff("{}", defers));
-}
-TRY(builder.append(")"));return builder.to_string(); }};enum class InterpretError: i32 {
-CallToExternalFunction = (infallible_integer_cast<i32>((static_cast<i32>(42)))),
-MismatchingArguments = (infallible_integer_cast<i32>((static_cast<u64>(43ULL)))),
-InvalidThisArgument = (infallible_integer_cast<i32>((static_cast<u64>(44ULL)))),
-InvalidType = (infallible_integer_cast<i32>((static_cast<u64>(45ULL)))),
-UnknownVariable = (infallible_integer_cast<i32>((static_cast<u64>(46ULL)))),
-Unimplemented = (infallible_integer_cast<i32>((static_cast<u64>(47ULL)))),
+TRY(builder.append(")"));return builder.to_string(); }};namespace ExecutionResult_Details {
+struct Return{
+types::Value value;
+template<typename... Args>
+Return(Args&&... args): value { forward<Args>(args)... } {}
 };
+struct Throw{
+types::Value value;
+template<typename... Args>
+Throw(Args&&... args): value { forward<Args>(args)... } {}
+};
+}
+struct ExecutionResult : public Variant<ExecutionResult_Details::Return, ExecutionResult_Details::Throw> {
+using Variant<ExecutionResult_Details::Return, ExecutionResult_Details::Throw>::Variant;
+    using Return = ExecutionResult_Details::Return;
+    using Throw = ExecutionResult_Details::Throw;
+ErrorOr<String> debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* Return */: {
+[[maybe_unused]] auto const& that = this->template get<ExecutionResult::Return>();
+TRY(builder.append("ExecutionResult::Return"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 1 /* Throw */: {
+[[maybe_unused]] auto const& that = this->template get<ExecutionResult::Throw>();
+TRY(builder.append("ExecutionResult::Throw"));
+TRY(builder.appendff("({})", that.value));
+break;}
+}
+return builder.to_string();
+}};
+namespace Deferred_Details {
+struct Expression{
+NonnullRefPtr<types::CheckedExpression> value;
+template<typename... Args>
+Expression(Args&&... args): value { forward<Args>(args)... } {}
+};
+struct Statement{
+NonnullRefPtr<types::CheckedStatement> value;
+template<typename... Args>
+Statement(Args&&... args): value { forward<Args>(args)... } {}
+};
+}
+struct Deferred : public Variant<Deferred_Details::Expression, Deferred_Details::Statement> {
+using Variant<Deferred_Details::Expression, Deferred_Details::Statement>::Variant;
+    using Expression = Deferred_Details::Expression;
+    using Statement = Deferred_Details::Statement;
+ErrorOr<String> debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* Expression */: {
+[[maybe_unused]] auto const& that = this->template get<Deferred::Expression>();
+TRY(builder.append("Deferred::Expression"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 1 /* Statement */: {
+[[maybe_unused]] auto const& that = this->template get<Deferred::Statement>();
+TRY(builder.append("Deferred::Statement"));
+TRY(builder.appendff("({})", that.value));
+break;}
+}
+return builder.to_string();
+}};
 namespace StatementResult_Details {
 struct Return{
 types::Value value;
@@ -23345,68 +23514,6 @@ break;}
 case 5 /* JustValue */: {
 [[maybe_unused]] auto const& that = this->template get<StatementResult::JustValue>();
 TRY(builder.append("StatementResult::JustValue"));
-TRY(builder.appendff("({})", that.value));
-break;}
-}
-return builder.to_string();
-}};
-namespace ExecutionResult_Details {
-struct Return{
-types::Value value;
-template<typename... Args>
-Return(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct Throw{
-types::Value value;
-template<typename... Args>
-Throw(Args&&... args): value { forward<Args>(args)... } {}
-};
-}
-struct ExecutionResult : public Variant<ExecutionResult_Details::Return, ExecutionResult_Details::Throw> {
-using Variant<ExecutionResult_Details::Return, ExecutionResult_Details::Throw>::Variant;
-    using Return = ExecutionResult_Details::Return;
-    using Throw = ExecutionResult_Details::Throw;
-ErrorOr<String> debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* Return */: {
-[[maybe_unused]] auto const& that = this->template get<ExecutionResult::Return>();
-TRY(builder.append("ExecutionResult::Return"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 1 /* Throw */: {
-[[maybe_unused]] auto const& that = this->template get<ExecutionResult::Throw>();
-TRY(builder.append("ExecutionResult::Throw"));
-TRY(builder.appendff("({})", that.value));
-break;}
-}
-return builder.to_string();
-}};
-namespace Deferred_Details {
-struct Expression{
-NonnullRefPtr<types::CheckedExpression> value;
-template<typename... Args>
-Expression(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct Statement{
-NonnullRefPtr<types::CheckedStatement> value;
-template<typename... Args>
-Statement(Args&&... args): value { forward<Args>(args)... } {}
-};
-}
-struct Deferred : public Variant<Deferred_Details::Expression, Deferred_Details::Statement> {
-using Variant<Deferred_Details::Expression, Deferred_Details::Statement>::Variant;
-    using Expression = Deferred_Details::Expression;
-    using Statement = Deferred_Details::Statement;
-ErrorOr<String> debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* Expression */: {
-[[maybe_unused]] auto const& that = this->template get<Deferred::Expression>();
-TRY(builder.append("Deferred::Expression"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 1 /* Statement */: {
-[[maybe_unused]] auto const& that = this->template get<Deferred::Statement>();
-TRY(builder.append("Deferred::Statement"));
 TRY(builder.appendff("({})", that.value));
 break;}
 }
@@ -42274,7 +42381,7 @@ ErrorOr<void> typechecker::Typechecker::include_prelude() {
 {
 const String module_name = String("__prelude__");
 const NonnullRefPtr<utility::FilePath> file_name = TRY((utility::FilePath::make(module_name)));
-const JaktInternal::Array<u8> file_contents = (TRY((Array<u8>::create_with({static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(79), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(120), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(79), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(60), static_cast<u8>(83), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(120), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(79), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(60), static_cast<u8>(83), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(111), static_cast<u8>(112), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(105), static_cast<u8>(114), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(83), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(95), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(105), static_cast<u8>(114), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(98), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(98), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(54), static_cast<u8>(52), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(112), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(95), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(95), static_cast<u8>(117), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(119), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(115), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(121), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(112), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(112), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(119), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(66), static_cast<u8>(117), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(112), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(112), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(115), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(95), static_cast<u8>(106), static_cast<u8>(115), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(66), static_cast<u8>(117), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(87), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(107), static_cast<u8>(80), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(117), static_cast<u8>(112), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(40), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(75), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(75), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(111), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(75), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(75), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(65), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(66), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(65), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(66), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(60), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(111), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(60), static_cast<u8>(65), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(60), static_cast<u8>(65), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(69), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(109), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(69), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(111), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(95), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(95), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(111), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(95), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(95), static_cast<u8>(119), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(117), static_cast<u8>(102), static_cast<u8>(102), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(93), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(119), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(100), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(93), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(108), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(100), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(108), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(47), static_cast<u8>(47), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(73), static_cast<u8>(88), static_cast<u8>(77), static_cast<u8>(69), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(111), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(109), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(67), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(119), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(107), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(103), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(73), static_cast<u8>(76), static_cast<u8>(69), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(109), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(73), static_cast<u8>(76), static_cast<u8>(69), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(99), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(73), static_cast<u8>(76), static_cast<u8>(69), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(111), static_cast<u8>(115), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(73), static_cast<u8>(76), static_cast<u8>(69), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(101), static_cast<u8>(111), static_cast<u8>(102), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(73), static_cast<u8>(76), static_cast<u8>(69), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(121), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(109), static_cast<u8>(109), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(10)}))));
+const JaktInternal::Array<u8> file_contents = (TRY((Array<u8>::create_with({static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(79), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(120), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(79), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(60), static_cast<u8>(83), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(120), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(79), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(60), static_cast<u8>(83), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(111), static_cast<u8>(112), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(105), static_cast<u8>(114), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(83), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(95), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(65), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(105), static_cast<u8>(114), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(98), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(117), static_cast<u8>(109), static_cast<u8>(98), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(54), static_cast<u8>(52), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(112), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(95), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(95), static_cast<u8>(117), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(119), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(115), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(121), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(112), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(112), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(119), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(66), static_cast<u8>(117), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(119), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(112), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(112), static_cast<u8>(111), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(115), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(95), static_cast<u8>(106), static_cast<u8>(115), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(66), static_cast<u8>(117), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(87), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(107), static_cast<u8>(80), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(117), static_cast<u8>(112), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(40), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(75), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(75), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(111), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(75), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(121), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(75), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(65), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(66), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(60), static_cast<u8>(65), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(66), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(68), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(121), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(75), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(60), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(112), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(109), static_cast<u8>(111), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(118), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(101), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(86), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(115), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(95), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(99), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(121), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(104), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(104), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(60), static_cast<u8>(65), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(60), static_cast<u8>(65), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(101), static_cast<u8>(116), static_cast<u8>(73), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(60), static_cast<u8>(86), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(114), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(100), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(63), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(82), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(101), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(69), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(111), static_cast<u8>(100), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(109), static_cast<u8>(95), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(51), static_cast<u8>(50), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(69), static_cast<u8>(114), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(99), static_cast<u8>(108), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(32), static_cast<u8>(123), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(111), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(95), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(95), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(111), static_cast<u8>(112), static_cast<u8>(101), static_cast<u8>(110), static_cast<u8>(95), static_cast<u8>(102), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(95), static_cast<u8>(119), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(70), static_cast<u8>(105), static_cast<u8>(108), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(117), static_cast<u8>(102), static_cast<u8>(102), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(93), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(119), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(100), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(97), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(93), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(115), static_cast<u8>(105), static_cast<u8>(122), static_cast<u8>(101), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(114), static_cast<u8>(101), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(97), static_cast<u8>(108), static_cast<u8>(108), static_cast<u8>(40), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(114), static_cast<u8>(111), static_cast<u8>(119), static_cast<u8>(115), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(91), static_cast<u8>(117), static_cast<u8>(56), static_cast<u8>(93), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(98), static_cast<u8>(108), static_cast<u8>(105), static_cast<u8>(99), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(105), static_cast<u8>(115), static_cast<u8>(116), static_cast<u8>(115), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(112), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(104), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(83), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(103), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(111), static_cast<u8>(108), static_cast<u8>(10), static_cast<u8>(125), static_cast<u8>(10), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(98), static_cast<u8>(111), static_cast<u8>(114), static_cast<u8>(116), static_cast<u8>(40), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(110), static_cast<u8>(101), static_cast<u8>(118), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(115), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(117), static_cast<u8>(114), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(115), static_cast<u8>(95), static_cast<u8>(116), static_cast<u8>(114), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(97), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(60), static_cast<u8>(85), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(105), static_cast<u8>(110), static_cast<u8>(112), static_cast<u8>(117), static_cast<u8>(116), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(85), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(97), static_cast<u8>(100), static_cast<u8>(100), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10), static_cast<u8>(101), static_cast<u8>(120), static_cast<u8>(116), static_cast<u8>(101), static_cast<u8>(114), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(102), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(116), static_cast<u8>(105), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(117), static_cast<u8>(110), static_cast<u8>(99), static_cast<u8>(104), static_cast<u8>(101), static_cast<u8>(99), static_cast<u8>(107), static_cast<u8>(101), static_cast<u8>(100), static_cast<u8>(95), static_cast<u8>(109), static_cast<u8>(117), static_cast<u8>(108), static_cast<u8>(60), static_cast<u8>(84), static_cast<u8>(62), static_cast<u8>(40), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(44), static_cast<u8>(32), static_cast<u8>(97), static_cast<u8>(110), static_cast<u8>(111), static_cast<u8>(110), static_cast<u8>(32), static_cast<u8>(98), static_cast<u8>(58), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(41), static_cast<u8>(32), static_cast<u8>(45), static_cast<u8>(62), static_cast<u8>(32), static_cast<u8>(84), static_cast<u8>(10)}))));
 const JaktInternal::Optional<utility::FileId> old_file_id = ((((*this).compiler))->current_file);
 const JaktInternal::Array<u8> old_file_contents = ((((*this).compiler))->current_file_contents);
 ScopeGuard __jakt_var_266([&] {
@@ -52103,6 +52210,33 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 
 }
 namespace formatter {
+namespace ExpressionMode_Details {
+struct OutsideExpression {};
+struct AtExpressionStart {};
+struct InExpression {};
+}
+struct ExpressionMode : public Variant<ExpressionMode_Details::OutsideExpression, ExpressionMode_Details::AtExpressionStart, ExpressionMode_Details::InExpression> {
+using Variant<ExpressionMode_Details::OutsideExpression, ExpressionMode_Details::AtExpressionStart, ExpressionMode_Details::InExpression>::Variant;
+    using OutsideExpression = ExpressionMode_Details::OutsideExpression;
+    using AtExpressionStart = ExpressionMode_Details::AtExpressionStart;
+    using InExpression = ExpressionMode_Details::InExpression;
+ErrorOr<String> debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* OutsideExpression */: {
+[[maybe_unused]] auto const& that = this->template get<ExpressionMode::OutsideExpression>();
+TRY(builder.append("ExpressionMode::OutsideExpression"));
+break;}
+case 1 /* AtExpressionStart */: {
+[[maybe_unused]] auto const& that = this->template get<ExpressionMode::AtExpressionStart>();
+TRY(builder.append("ExpressionMode::AtExpressionStart"));
+break;}
+case 2 /* InExpression */: {
+[[maybe_unused]] auto const& that = this->template get<ExpressionMode::InExpression>();
+TRY(builder.append("ExpressionMode::InExpression"));
+break;}
+}
+return builder.to_string();
+}};
 namespace BreakablePoint_Details {
 struct Paren {
 size_t point;
@@ -52262,45 +52396,6 @@ break;}
 return builder.to_string();
 }static formatter::Entity from_token(lexer::Token const& token);
 };
-struct FormattedToken {
-  public:
-lexer::Token token;size_t indent;JaktInternal::Array<u8> trailing_trivia;JaktInternal::Array<u8> preceding_trivia;FormattedToken(lexer::Token a_token, size_t a_indent, JaktInternal::Array<u8> a_trailing_trivia, JaktInternal::Array<u8> a_preceding_trivia) :token(a_token), indent(a_indent), trailing_trivia(a_trailing_trivia), preceding_trivia(a_preceding_trivia){}
-
-ErrorOr<String> token_text() const;
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("FormattedToken("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("token: "));TRY(builder.appendff("{}, ", token));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("indent: "));TRY(builder.appendff("{}, ", indent));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("trailing_trivia: "));TRY(builder.appendff("{}, ", trailing_trivia));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("preceding_trivia: "));TRY(builder.appendff("{}", preceding_trivia));
-}
-TRY(builder.append(")"));return builder.to_string(); }};namespace ExpressionMode_Details {
-struct OutsideExpression {};
-struct AtExpressionStart {};
-struct InExpression {};
-}
-struct ExpressionMode : public Variant<ExpressionMode_Details::OutsideExpression, ExpressionMode_Details::AtExpressionStart, ExpressionMode_Details::InExpression> {
-using Variant<ExpressionMode_Details::OutsideExpression, ExpressionMode_Details::AtExpressionStart, ExpressionMode_Details::InExpression>::Variant;
-    using OutsideExpression = ExpressionMode_Details::OutsideExpression;
-    using AtExpressionStart = ExpressionMode_Details::AtExpressionStart;
-    using InExpression = ExpressionMode_Details::InExpression;
-ErrorOr<String> debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* OutsideExpression */: {
-[[maybe_unused]] auto const& that = this->template get<ExpressionMode::OutsideExpression>();
-TRY(builder.append("ExpressionMode::OutsideExpression"));
-break;}
-case 1 /* AtExpressionStart */: {
-[[maybe_unused]] auto const& that = this->template get<ExpressionMode::AtExpressionStart>();
-TRY(builder.append("ExpressionMode::AtExpressionStart"));
-break;}
-case 2 /* InExpression */: {
-[[maybe_unused]] auto const& that = this->template get<ExpressionMode::InExpression>();
-TRY(builder.append("ExpressionMode::InExpression"));
-break;}
-}
-return builder.to_string();
-}};
 namespace State_Details {
 struct Toplevel {
 size_t open_parens;
@@ -52625,15 +52720,17 @@ break;}
 return builder.to_string();
 }ErrorOr<String> name() const;
 };
-struct ReflowState {
+struct FormattedToken {
   public:
-formatter::FormattedToken token;formatter::State state;size_t enclosures_to_ignore;ReflowState(formatter::FormattedToken a_token, formatter::State a_state, size_t a_enclosures_to_ignore) :token(a_token), state(a_state), enclosures_to_ignore(a_enclosures_to_ignore){}
+lexer::Token token;size_t indent;JaktInternal::Array<u8> trailing_trivia;JaktInternal::Array<u8> preceding_trivia;FormattedToken(lexer::Token a_token, size_t a_indent, JaktInternal::Array<u8> a_trailing_trivia, JaktInternal::Array<u8> a_preceding_trivia) :token(a_token), indent(a_indent), trailing_trivia(a_trailing_trivia), preceding_trivia(a_preceding_trivia){}
 
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ReflowState("));{
+ErrorOr<String> token_text() const;
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("FormattedToken("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("token: "));TRY(builder.appendff("{}, ", token));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("state: "));TRY(builder.appendff("{}, ", state));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("enclosures_to_ignore: "));TRY(builder.appendff("{}", enclosures_to_ignore));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("indent: "));TRY(builder.appendff("{}, ", indent));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("trailing_trivia: "));TRY(builder.appendff("{}, ", trailing_trivia));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("preceding_trivia: "));TRY(builder.appendff("{}", preceding_trivia));
 }
 TRY(builder.append(")"));return builder.to_string(); }};struct Stage0 {
   public:
@@ -52683,6 +52780,16 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("enclosures_to_ignore: "));TRY(builder.appendff("{}, ", enclosures_to_ignore));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("in_if_expr: "));TRY(builder.appendff("{}, ", in_if_expr));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("empty_line_count: "));TRY(builder.appendff("{}", empty_line_count));
+}
+TRY(builder.append(")"));return builder.to_string(); }};struct ReflowState {
+  public:
+formatter::FormattedToken token;formatter::State state;size_t enclosures_to_ignore;ReflowState(formatter::FormattedToken a_token, formatter::State a_state, size_t a_enclosures_to_ignore) :token(a_token), state(a_state), enclosures_to_ignore(a_enclosures_to_ignore){}
+
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("ReflowState("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("token: "));TRY(builder.appendff("{}, ", token));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("state: "));TRY(builder.appendff("{}, ", state));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("enclosures_to_ignore: "));TRY(builder.appendff("{}", enclosures_to_ignore));
 }
 TRY(builder.append(")"));return builder.to_string(); }};template <typename T>
 static JaktInternal::Optional<T> collapse(const JaktInternal::Optional<JaktInternal::Optional<T>> x) {
@@ -57211,8 +57318,23 @@ return JaktInternal::ExplicitValue( formatter::Entity { typename formatter::Enti
 }
 
 }
+namespace Standard::libc::io {
+}
 namespace repl {
-namespace LineResult_Details {
+struct Editor {
+  public:
+FILE* standard_input_file;char* line_pointer;String prompt;static ErrorOr<repl::Editor> create(const String prompt);
+void destroy();
+Editor(FILE* a_standard_input_file, char* a_line_pointer, String a_prompt) :standard_input_file(a_standard_input_file), line_pointer(a_line_pointer), prompt(a_prompt){}
+
+ErrorOr<repl::LineResult> get_line();
+ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("Editor("));{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("standard_input_file: "));TRY(builder.appendff("{}, ", standard_input_file));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("line_pointer: "));TRY(builder.appendff("{}, ", line_pointer));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("prompt: "));TRY(builder.appendff("\"{}\"", prompt));
+}
+TRY(builder.append(")"));return builder.to_string(); }};namespace LineResult_Details {
 struct Line{
 String value;
 template<typename... Args>
@@ -57252,19 +57374,6 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("root_scope_id: "));TRY(builder.appendff("{}, ", root_scope_id));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("root_interpreter_scope: "));TRY(builder.appendff("{}, ", *root_interpreter_scope));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("file_id: "));TRY(builder.appendff("{}", file_id));
-}
-TRY(builder.append(")"));return builder.to_string(); }};struct Editor {
-  public:
-FILE* standard_input_file;char* line_pointer;String prompt;static ErrorOr<repl::Editor> create(const String prompt);
-void destroy();
-Editor(FILE* a_standard_input_file, char* a_line_pointer, String a_prompt) :standard_input_file(a_standard_input_file), line_pointer(a_line_pointer), prompt(a_prompt){}
-
-ErrorOr<repl::LineResult> get_line();
-ErrorOr<String> debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("Editor("));{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("standard_input_file: "));TRY(builder.appendff("{}, ", standard_input_file));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("line_pointer: "));TRY(builder.appendff("{}, ", line_pointer));
-TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("prompt: "));TRY(builder.appendff("\"{}\"", prompt));
 }
 TRY(builder.append(")"));return builder.to_string(); }};static String serialize_unary_operation(const types::CheckedUnaryOperator op,const String expr) {
 {
@@ -57738,7 +57847,7 @@ return ( repl::LineResult { typename repl::LineResult::Line(TRY((((builder).to_s
 
 ErrorOr<repl::REPL> repl::REPL::create() {
 {
-NonnullRefPtr<compiler::Compiler> compiler = TRY((compiler::Compiler::create((TRY((Array<NonnullRefPtr<utility::FilePath>>::create_with({})))),(TRY((Dictionary<String, utility::FileId>::create_with_entries({})))),(TRY((Array<error::JaktError>::create_with({})))),JaktInternal::OptionalNone(),(TRY((Array<u8>::create_with({})))),false,false,false,false,(TRY((Array<String>::create_with({})))),false,false,false)));
+NonnullRefPtr<compiler::Compiler> compiler = TRY((compiler::Compiler::create((TRY((Array<NonnullRefPtr<utility::FilePath>>::create_with({})))),(TRY((Dictionary<String, utility::FileId>::create_with_entries({})))),(TRY((Array<error::JaktError>::create_with({})))),JaktInternal::OptionalNone(),(TRY((Array<u8>::create_with({})))),false,false,false,false,String(""),(TRY((Array<String>::create_with({})))),false,false,false)));
 TRY((((compiler)->load_prelude())));
 const utility::FileId file_id = TRY((((compiler)->get_file_id_or_register(TRY((utility::FilePath::make(String("<repl>"))))))));
 const types::ModuleId placeholder_module_id = types::ModuleId(static_cast<size_t>(0ULL));
@@ -60822,31 +60931,7 @@ JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("start: "));TRY(builder.appendff("{}, ", start));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("end: "));TRY(builder.appendff("{}", end));
 }
-TRY(builder.append(")"));return builder.to_string(); }};static ErrorOr<void> write_to_file(const String data,const String output_filename) {
-{
-NonnullRefPtr<File> outfile = TRY((File::open_for_writing(output_filename)));
-JaktInternal::Array<u8> bytes = (TRY((Array<u8>::create_with({}))));
-{
-JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((data).length()))});
-for (;;){
-JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-size_t i = (_magic_value.value());
-{
-TRY((((bytes).push(((data).byte_at(i))))));
-}
-
-}
-}
-
-TRY((((outfile)->write(bytes))));
-}
-return {};
-}
-
-static ErrorOr<int> run_compiler(const String cxx_compiler_path,const String cpp_filename,const String output_filename,const String runtime_path,const JaktInternal::Array<String> extra_include_paths,const JaktInternal::Array<String> extra_lib_paths,const JaktInternal::Array<String> extra_link_libs,const bool optimize) {
+TRY(builder.append(")"));return builder.to_string(); }};static ErrorOr<int> run_compiler(const String cxx_compiler_path,const String cpp_filename,const String output_filename,const String runtime_path,const JaktInternal::Array<String> extra_include_paths,const JaktInternal::Array<String> extra_lib_paths,const JaktInternal::Array<String> extra_link_libs,const bool optimize) {
 {
 NonnullRefPtr<utility::FilePath> file_path = TRY((utility::FilePath::create(cxx_compiler_path)));
 JaktInternal::Array<String> extra_flags = (TRY((Array<String>::create_with({}))));
@@ -61078,7 +61163,7 @@ if ((((args).size()) <= static_cast<size_t>(1ULL))){
 warnln(String("{}"),usage());
 return (static_cast<i64>(1LL));
 }
-utility::ArgsParser args_parser = TRY((utility::ArgsParser::from_args(args)));
+Standard::arguments::ArgsParser args_parser = TRY((Standard::arguments::ArgsParser::from_args(args)));
 if (TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-h"), String("--help")}))))))))){
 outln(String("{}\n"),usage());
 outln(String("{}"),help());
@@ -61162,7 +61247,7 @@ return (static_cast<i64>(1LL));
 }
 const NonnullRefPtr<utility::FilePath> file_path = TRY((utility::FilePath::make((file_name.value()))));
 JaktInternal::Array<error::JaktError> errors = (TRY((Array<error::JaktError>::create_with({}))));
-NonnullRefPtr<compiler::Compiler> compiler = TRY((compiler::Compiler::create((TRY((Array<NonnullRefPtr<utility::FilePath>>::create_with({})))),(TRY((Dictionary<String, utility::FileId>::create_with_entries({})))),(TRY((Array<error::JaktError>::create_with({})))),JaktInternal::OptionalNone(),(TRY((Array<u8>::create_with({})))),lexer_debug,parser_debug,false,debug_print,extra_include_paths,json_errors,dump_type_hints,dump_try_hints)));
+NonnullRefPtr<compiler::Compiler> compiler = TRY((compiler::Compiler::create((TRY((Array<NonnullRefPtr<utility::FilePath>>::create_with({})))),(TRY((Dictionary<String, utility::FileId>::create_with_entries({})))),(TRY((Array<error::JaktError>::create_with({})))),JaktInternal::OptionalNone(),(TRY((Array<u8>::create_with({})))),lexer_debug,parser_debug,false,debug_print,(runtime_path + String("/Standard")),extra_include_paths,json_errors,dump_type_hints,dump_try_hints)));
 TRY((((compiler)->load_prelude())));
 const utility::FileId main_file_id = TRY((((compiler)->get_file_id_or_register(file_path))));
 const bool file_is_set = ((compiler)->set_current_file(main_file_id));
@@ -61604,11 +61689,35 @@ return (static_cast<i64>(1LL));
 return 0;
 }
 
+static ErrorOr<void> write_to_file(const String data,const String output_filename) {
+{
+NonnullRefPtr<File> outfile = TRY((File::open_for_writing(output_filename)));
+JaktInternal::Array<u8> bytes = (TRY((Array<u8>::create_with({}))));
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((data).length()))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t i = (_magic_value.value());
+{
+TRY((((bytes).push(((data).byte_at(i))))));
+}
+
+}
+}
+
+TRY((((outfile)->write(bytes))));
+}
+return {};
+}
+
+template<>struct Formatter<Standard::arguments::ArgsParser> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, Standard::arguments::ArgsParser const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<utility::FileId> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, utility::FileId const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<utility::ArgsParser> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, utility::ArgsParser const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<utility::Span> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, utility::Span const& value) {
@@ -61616,17 +61725,14 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<utility::FilePath> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, utility::FilePath const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<error::MessageSeverity> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, error::MessageSeverity const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<error::JaktError> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, error::JaktError const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<error::MessageSeverity> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, error::MessageSeverity const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<compiler::Compiler> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, compiler::Compiler const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<lexer::Lexer> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, lexer::Lexer const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<lexer::NumericConstant> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, lexer::NumericConstant const& value) {
@@ -61636,6 +61742,12 @@ ErrorOr<void> format(FormatBuilder& builder, lexer::Token const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<lexer::LiteralSuffix> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, lexer::LiteralSuffix const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<lexer::Lexer> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, lexer::Lexer const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedVarDecl> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedVarDecl const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::Visibility> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::Visibility const& value) {
@@ -61652,29 +61764,32 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<parser::ParsedFunction> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ParsedFunction const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedNamespace> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedNamespace const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedExternImport> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedExternImport const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedVarDecl> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedVarDecl const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedField> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedField const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::TypeCast> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::TypeCast const& value) {
+template<>struct Formatter<parser::ParsedMethod> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedMethod const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::ParsedType> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ParsedType const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::UnaryOperator> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::UnaryOperator const& value) {
+template<>struct Formatter<parser::RecordType> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::RecordType const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedVariable> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedVariable const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::ParsedCall> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ParsedCall const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ImportName> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ImportName const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::SumEnumVariant> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::SumEnumVariant const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::TypeCast> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::TypeCast const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::UnaryOperator> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::UnaryOperator const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::BinaryOperator> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::BinaryOperator const& value) {
@@ -61685,35 +61800,32 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<parser::ParsedExpression> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ParsedExpression const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ValueEnumVariant> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ValueEnumVariant const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedMethod> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedMethod const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::Parser> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::Parser const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::DefinitionLinkage> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::DefinitionLinkage const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ImportName> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ImportName const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedCapture> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedCapture const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedVariable> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedVariable const& value) {
+template<>struct Formatter<parser::ParsedStatement> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedStatement const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::ParsedParameter> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ParsedParameter const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::RecordType> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::RecordType const& value) {
+template<>struct Formatter<parser::ParsedNamespace> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedNamespace const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedGenericParameter> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedGenericParameter const& value) {
+template<>struct Formatter<parser::ParsedCapture> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedCapture const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedModuleImport> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedModuleImport const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ValueEnumVariant> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ValueEnumVariant const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::DefinitionLinkage> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::DefinitionLinkage const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedRecord> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedRecord const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedExternImport> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedExternImport const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::ParsedMatchBody> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ParsedMatchBody const& value) {
@@ -61721,26 +61833,17 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<parser::ParsedMatchCase> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ParsedMatchCase const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedStatement> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedStatement const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedModuleImport> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedModuleImport const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::ParsedRecord> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::ParsedRecord const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<parser::SumEnumVariant> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, parser::SumEnumVariant const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<parser::ParsedMatchPattern> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, parser::ParsedMatchPattern const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::FunctionGenerics> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::FunctionGenerics const& value) {
+template<>struct Formatter<parser::Parser> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::Parser const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::SafetyMode> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::SafetyMode const& value) {
+template<>struct Formatter<parser::ParsedField> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedField const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<parser::ParsedGenericParameter> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, parser::ParsedGenericParameter const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::ModuleId> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::ModuleId const& value) {
@@ -61748,20 +61851,23 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<types::StructId> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::StructId const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::VarId> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::VarId const& value) {
+template<>struct Formatter<types::EnumId> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::EnumId const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::FieldRecord> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::FieldRecord const& value) {
+template<>struct Formatter<types::TypeId> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::TypeId const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::FunctionId> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::FunctionId const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::EnumId> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::EnumId const& value) {
+template<>struct Formatter<types::Type> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::Type const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::StructOrEnumId> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::StructOrEnumId const& value) {
+template<>struct Formatter<types::CheckedVariable> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedVariable const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::Value> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::Value const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::CheckedNumericConstant> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::CheckedNumericConstant const& value) {
@@ -61769,14 +61875,14 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<types::BlockControlFlow> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::BlockControlFlow const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedCapture> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedCapture const& value) {
+template<>struct Formatter<types::StructOrEnumId> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::StructOrEnumId const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::TypeId> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::TypeId const& value) {
+template<>struct Formatter<types::FunctionGenerics> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::FunctionGenerics const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedEnumVariantBinding> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedEnumVariantBinding const& value) {
+template<>struct Formatter<types::NumberConstant> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::NumberConstant const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::CheckedTypeCast> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::CheckedTypeCast const& value) {
@@ -61787,47 +61893,20 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<types::CheckedUnaryOperator> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::CheckedUnaryOperator const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::NumberConstant> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::NumberConstant const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::Module> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::Module const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::ScopeId> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::ScopeId const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::Scope> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::Scope const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::Value> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::Value const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::BuiltinType> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::BuiltinType const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::ResolvedNamespace> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::ResolvedNamespace const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedVarDecl> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedVarDecl const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedBlock> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedBlock const& value) {
+template<>struct Formatter<types::CheckedEnumVariantBinding> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedEnumVariantBinding const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::CheckedCall> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::CheckedCall const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::FunctionGenericParameter> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::FunctionGenericParameter const& value) {
+template<>struct Formatter<types::ScopeId> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::ScopeId const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedEnum> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedEnum const& value) {
+template<>struct Formatter<types::CheckedBlock> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedBlock const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedVariable> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedVariable const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedFunction> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedFunction const& value) {
+template<>struct Formatter<types::VarId> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::VarId const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::CheckedStatement> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::CheckedStatement const& value) {
@@ -61835,50 +61914,80 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<types::CheckedExpression> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::CheckedExpression const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::LoadedModule> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::LoadedModule const& value) {
+template<>struct Formatter<types::CheckedFunction> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedFunction const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::FieldRecord> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::FieldRecord const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::Module> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::Module const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::BuiltinType> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::BuiltinType const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::SafetyMode> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::SafetyMode const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::GenericInferences> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::GenericInferences const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::Type> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::Type const& value) {
+template<>struct Formatter<types::LoadedModule> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::LoadedModule const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedParameter> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedParameter const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::ValueImpl> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::ValueImpl const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedProgram> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedProgram const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedStruct> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedStruct const& value) {
+template<>struct Formatter<types::ResolvedNamespace> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::ResolvedNamespace const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::CheckedMatchBody> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::CheckedMatchBody const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<types::CheckedMatchCase> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, types::CheckedMatchCase const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<types::CheckedNamespace> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, types::CheckedNamespace const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<interpreter::Interpreter> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, interpreter::Interpreter const& value) {
+template<>struct Formatter<types::CheckedStruct> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedStruct const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::Scope> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::Scope const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedProgram> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedProgram const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedMatchCase> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedMatchCase const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedVarDecl> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedVarDecl const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::ValueImpl> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::ValueImpl const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedCapture> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedCapture const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::FunctionGenericParameter> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::FunctionGenericParameter const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedParameter> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedParameter const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<types::CheckedEnum> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, types::CheckedEnum const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<interpreter::InterpreterScope> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, interpreter::InterpreterScope const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<interpreter::StatementResult> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, interpreter::StatementResult const& value) {
+template<>struct Formatter<interpreter::Interpreter> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, interpreter::Interpreter const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<interpreter::ExecutionResult> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, interpreter::ExecutionResult const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<interpreter::Deferred> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, interpreter::Deferred const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<interpreter::StatementResult> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, interpreter::StatementResult const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<typechecker::Typechecker> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, typechecker::Typechecker const& value) {
@@ -61898,23 +62007,20 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<codegen::LineSpan> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, codegen::LineSpan const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<formatter::ExpressionMode> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, formatter::ExpressionMode const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<formatter::BreakablePoint> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, formatter::BreakablePoint const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<formatter::Entity> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, formatter::Entity const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<formatter::FormattedToken> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, formatter::FormattedToken const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<formatter::ExpressionMode> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, formatter::ExpressionMode const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<formatter::State> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, formatter::State const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<formatter::ReflowState> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, formatter::ReflowState const& value) {
+template<>struct Formatter<formatter::FormattedToken> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, formatter::FormattedToken const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<formatter::Stage0> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, formatter::Stage0 const& value) {
@@ -61922,14 +62028,17 @@ JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form
 template<>struct Formatter<formatter::Formatter> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, formatter::Formatter const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<formatter::ReflowState> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, formatter::ReflowState const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<repl::Editor> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, repl::Editor const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<repl::LineResult> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, repl::LineResult const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<repl::REPL> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, repl::REPL const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<repl::Editor> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, repl::Editor const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<ide::VarType> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, ide::VarType const& value) {
