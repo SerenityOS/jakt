@@ -1,0 +1,11 @@
+/// Expect:
+/// - error: "Recursive value types are not allowed\n"
+
+struct LinkedList {
+    value: i64
+    next: LinkedList?
+}
+
+function main() {
+    mut node1 = LinkedList(value: 1, next: None)
+}

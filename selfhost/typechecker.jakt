@@ -536,6 +536,41 @@ struct Typechecker {
         }
     }
 
+    function is_recursive_struct(this, root_struct_id: StructId, current: StructId) -> bool {
+	let structure = .get_struct(current)
+	
+	for field in structure.fields.iterator() {
+	    let field_ = .get_variable(field)
+	    let field_type = .get_type(field_.type_id)
+
+	    match field_type {
+		Struct(field_struct_id) => {
+		    if root_struct_id.equals(field_struct_id)
+		    or .is_recursive_struct(root_struct_id, current: field_struct_id) {
+			return true
+		    }
+		}
+		GenericInstance(id: _, args) => {
+		    for type_id in args.iterator() {
+			let type = .get_type(type_id)
+			if type is Struct(struct_id) {
+			    if root_struct_id.equals(struct_id)
+			    or .is_recursive_struct(root_struct_id, current: struct_id) {
+				return true
+			    }
+			} else if type is GenericInstance(id, args: _) {
+			    if .is_recursive_struct(root_struct_id, current: id) {
+				return true
+			    }
+			}
+		    }
+		}
+		else => {}
+	    }
+	}
+	return false
+    }
+
     function typecheck_struct_fields(mut this, record: ParsedRecord, struct_id: StructId) throws {
         mut structure = .get_struct(struct_id)
 
@@ -567,7 +602,11 @@ struct Typechecker {
                 visibility: unchecked_member.visibility
             ))
             structure.fields.push(var_id)
-        }
+	}
+	
+	if .is_recursive_struct(root_struct_id: struct_id, current: struct_id) {
+	    .error("Recursive value types are not allowed", record.name_span)
+	}
     }
 
     function typecheck_module_import(mut this, anon import_: ParsedModuleImport, scope_id: ScopeId) throws {
