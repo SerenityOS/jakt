@@ -1,7 +1,7 @@
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedExpression, CheckedEnum,
     CheckedMatchBody, CheckedNumericConstant, CheckedProgram, CheckedStatement, EnumId,
-    BinaryOperator, CheckedEnumVariant, CheckedVariable, Visibility, CheckedParameter,
+    BinaryOperator, CheckedEnumVariant, CheckedVariable, CheckedVisibility, CheckedParameter,
     EnumVariantPatternArgument, FunctionId, ModuleId, ResolvedNamespace, ScopeId, Span, StructId,
     GenericInferences, Scope, Type, TypeId, VarId, Value, ValueImpl, builtin, unknown_type_id,
 }
@@ -325,7 +325,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
                 is_mutable: false
                 definition_span: this_value.span
                 type_span: None
-                visibility: Visibility::Public
+                visibility: CheckedVisibility::Public
             ))
             statements.push(CheckedStatement::VarDecl(
                 var_id

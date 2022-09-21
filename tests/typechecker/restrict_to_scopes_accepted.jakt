@@ -1,0 +1,34 @@
+/// Expect:
+/// - output: "OK\n"
+
+struct Foo {
+    restricted(A::b, baz, Bar, main) x: i32
+}
+
+struct A {
+    function b(anon foo: Foo) { return foo.x }
+}
+
+namespace Bar {
+    function bar(anon foo: Foo) {
+        return foo.x
+    }
+
+    function bar2(anon foo: Foo) {
+        return foo.x
+    }
+}
+
+function baz(anon foo: Foo) {
+    return foo.x
+}
+
+function main() {
+    let foo = Foo(x: 42)
+    A::b(foo)
+    Bar::bar(foo)
+    Bar::bar2(foo)
+    baz(foo)
+
+    println("OK")
+}
