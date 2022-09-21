@@ -1,0 +1,25 @@
+/// Expect:
+/// - error: "Cannot access field ‘x’ from this scope\n"
+
+struct Foo {
+    restricted(A::b, baz, Bar) x: i32
+}
+
+struct A {
+    function b(anon foo: Foo) { return foo.x }
+    function c(anon foo: Foo) { return foo.x }
+}
+
+namespace Bar {
+    function bar(anon foo: Foo) {
+        return foo.x
+    }
+
+    function bar2(anon foo: Foo) {
+        return foo.x
+    }
+}
+
+function baz(anon foo: Foo) {
+    return foo.x
+}

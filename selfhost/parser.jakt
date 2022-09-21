@@ -1123,10 +1123,15 @@ enum FunctionLinkage {
     External
 }
 
+struct VisibilityRestriction {
+    namespace_: [String]
+    name: String
+}
+
 enum Visibility {
     Public
     Private
-    Restricted(whitelist: [ParsedType], span: Span)
+    Restricted(whitelist: [VisibilityRestriction], span: Span)
 }
 
 struct Parser {
@@ -3820,16 +3825,17 @@ struct Parser {
 
     function parse_restricted_visibility_modifier(mut this) throws -> Visibility {
         mut restricted_span = .current().span()
-        
+
         .index++
 
         if .current() is LParen {
             .index++
         } else {
             .error("Expected ‘(’", .current().span())
+            return Visibility::Restricted(whitelist: [], span: restricted_span)
         }
 
-        mut whitelist: [ParsedType] = []
+        mut whitelist: [VisibilityRestriction] = []
         mut expect_comma = false
 
         while .index < .tokens.size() {
@@ -3851,8 +3857,27 @@ struct Parser {
                     }
 
                     .skip_newlines()
-                    let parsed_type = .parse_typename()
-                    whitelist.push(parsed_type)
+                    // Either a plain name, or a namespaced name
+                    mut names: [String] = []
+                    loop {
+                        guard .current() is Identifier(name) else {
+                            break
+                        }
+
+                        names.push(name)
+                        .index++
+                        if .current() is ColonColon {
+                            .index++
+                        } else {
+                            break
+                        }
+                    }
+                    if names.is_empty() {
+                        .error("Expected identifier", .current().span())
+                    } else {
+                        let name = names.pop()!
+                        whitelist.push(VisibilityRestriction(namespace_: names, name))
+                    }
                     expect_comma = true
                 }
             }
@@ -3861,7 +3886,10 @@ struct Parser {
         restricted_span.end = .current().span().end
 
         if whitelist.is_empty() {
-            .error("Type list cannot be empty", restricted_span)
+            .error_with_hint(
+                "Restriction list cannot be empty", restricted_span
+                "Did you mean to use ‘private’ instead of ‘restricted’?", restricted_span
+            )
         }
 
         if .current() is RParen {

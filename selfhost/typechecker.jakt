@@ -8,20 +8,20 @@
 
 import error { JaktError, print_error }
 import lexer { Lexer, NumericConstant }
-import parser { Parser, BinaryOperator, DefinitionLinkage, DefinitionType, UnaryOperator,
-                FunctionLinkage, FunctionType, ParsedBlock, ParsedCall,
-                ParsedExpression, ParsedFunction, ParsedNamespace, ParsedModuleImport,
-                ParsedExternImport, ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
-                ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
-                ParsedMatchBody, ParsedMatchCase, Visibility, ParsedParameter, ParsedCapture,
-                ParsedMethod }
+import parser {
+    BinaryOperator, DefinitionLinkage, EnumVariantPatternArgument, FunctionLinkage, FunctionType, ParsedBlock
+    ParsedCall, ParsedCapture, ParsedExpression, ParsedExternImport, ParsedField, ParsedFunction, ParsedMatchBody
+    ParsedMatchCase, ParsedMethod, ParsedModuleImport, ParsedNamespace, ParsedParameter, ParsedRecord
+    ParsedStatement, ParsedType, ParsedVarDecl, Parser, RecordType, TypeCast, UnaryOperator, Visibility
+    VisibilityRestriction
+}
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant,
     CheckedEnumVariantBinding, CheckedExpression, CheckedFunction, FunctionGenerics, CheckedMatchBody, CheckedMatchCase,
     CheckedNamespace, CheckedNumericConstant, CheckedParameter, CheckedProgram, CheckedStatement, CheckedStruct,
-    CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, EnumId, FieldRecord, FunctionGenericParameter, FunctionId,
-    LoadedModule, Module, ModuleId, NumberConstant, ResolvedNamespace, SafetyMode, Scope, ScopeId, StructId,
-    GenericInferences, StructOrEnumId, Type, TypeId, VarId, Value,
+    CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, CheckedVisibility, EnumId, FieldRecord, FunctionGenericParameter,
+    FunctionId, LoadedModule, Module, ModuleId, NumberConstant, ResolvedNamespace, SafetyMode, Scope, ScopeId, StructId,
+    GenericInferences, StructOrEnumId, Type, TypeId, VarId, Value, MaybeResolvedScope,
     builtin, never_type_id, unknown_type_id, void_type_id,
 }
 import types
@@ -517,6 +517,31 @@ struct Typechecker {
         .typecheck_namespace_declarations(parsed_namespace, scope_id)
     }
 
+    function typecheck_visibility(mut this, visibility: Visibility, scope_id: ScopeId) throws -> CheckedVisibility {
+        return match visibility {
+            Private => CheckedVisibility::Private
+            Public => CheckedVisibility::Public
+            Restricted(whitelist, span) => {
+                mut restricted_scopes: [MaybeResolvedScope] = []
+                for entry in whitelist.iterator() {
+                    mut parent_scope = MaybeResolvedScope::Resolved(scope_id)
+                    for ns in entry.namespace_.iterator() {
+                        parent_scope = MaybeResolvedScope::Unresolved(parent_scope, relative_name: ns)
+                    }
+
+                    mut unresolved = MaybeResolvedScope::Unresolved(
+                        parent_scope
+                        relative_name: entry.name
+                    )
+
+                    restricted_scopes.push(unresolved.try_resolve(program: .program))
+                }
+
+                yield CheckedVisibility::Restricted(scopes: restricted_scopes, span)
+            }
+        }
+    }
+
     function typecheck_namespace_fields(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) throws {
         let children = .get_scope(id: scope_id).children
         for i in 0..parsed_namespace.namespaces.size() {
@@ -564,7 +589,7 @@ struct Typechecker {
                 is_mutable: parsed_var_decl.is_mutable
                 definition_span: parsed_var_decl.span
                 type_span: None
-                visibility: unchecked_member.visibility
+                visibility: .typecheck_visibility(visibility: unchecked_member.visibility, scope_id: checked_struct_scope_id)
             ))
             structure.fields.push(var_id)
         }
@@ -778,7 +803,7 @@ struct Typechecker {
             let child_namespace_scope_id = children[i]
             .typecheck_namespace_function_predecl(parsed_namespace: child_namespace, scope_id: child_namespace_scope_id)
         }
-        
+
         for fun in parsed_namespace.functions.iterator() {
             .typecheck_function_predecl(parsed_function: fun, parent_scope_id: scope_id, this_arg_type_id: None)
         }
@@ -938,7 +963,7 @@ struct Typechecker {
             mut checked_function = CheckedFunction(
                 name: func.name
                 name_span: func.name_span
-                visibility: method.visibility
+                visibility: .typecheck_visibility(visibility: method.visibility, scope_id: enum_scope_id)
                 return_type_id: unknown_type_id()
                 return_type_span: None
                 params: []
@@ -999,7 +1024,7 @@ struct Typechecker {
                         is_mutable: param.variable.is_mutable
                         definition_span: param.variable.span
                         type_span: None
-                        visibility: Visibility::Public
+                        visibility: CheckedVisibility::Public
                     )
 
                     checked_function.add_param(CheckedParameter(
@@ -1016,7 +1041,7 @@ struct Typechecker {
                         is_mutable: param.variable.is_mutable
                         definition_span: param.variable.span
                         type_span: param.variable.parsed_type.span()
-                        visibility: Visibility::Public
+                        visibility: CheckedVisibility::Public
                     )
 
                     checked_function.add_param(CheckedParameter(
@@ -1086,7 +1111,7 @@ struct Typechecker {
             mut checked_constructor = CheckedFunction(
                 name: parsed_record.name
                 name_span: parsed_record.name_span
-                visibility: Visibility::Public
+                visibility: CheckedVisibility::Public
                 return_type_id: struct_type_id
                 return_type_span: None
                 params: []
@@ -1124,7 +1149,7 @@ struct Typechecker {
                 for field_id in .get_struct(field_struct_id).fields.iterator() {
                     let field = .get_variable(field_id)
                     if field.visibility is Private {
-                        checked_constructor.visibility = Visibility::Private
+                        checked_constructor.visibility = CheckedVisibility::Private
                     }
 
                     func.add_param(CheckedParameter(
@@ -1170,7 +1195,7 @@ struct Typechecker {
         let struct_type_id = .find_or_add_type_id(type: Type::Struct(struct_id))
         .current_struct_type_id = struct_type_id
 
-        let struct_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("struct({})", parsed_record.name))
+        let struct_scope_id = .current_module().structures[struct_id.id].scope_id
 
         .add_struct_to_scope(scope_id, name: parsed_record.name, struct_id, span: parsed_record.name_span)
 
@@ -1249,7 +1274,7 @@ struct Typechecker {
             mut checked_function = CheckedFunction(
                 name: func.name
                 name_span: func.name_span
-                visibility: method.visibility
+                visibility: .typecheck_visibility(visibility: method.visibility, scope_id: struct_scope_id)
                 return_type_id: unknown_type_id()
                 return_type_span: func.return_type_span
                 params: []
@@ -1304,7 +1329,7 @@ struct Typechecker {
                         is_mutable: param.variable.is_mutable
                         definition_span: param.variable.span
                         type_span: None
-                        visibility: Visibility::Public
+                        visibility: CheckedVisibility::Public
                     )
 
                     checked_function.add_param(CheckedParameter(
@@ -1326,7 +1351,7 @@ struct Typechecker {
                         is_mutable: param.variable.is_mutable
                         definition_span: param.variable.span
                         type_span: param.variable.parsed_type.span()
-                        visibility: Visibility::Public
+                        visibility: CheckedVisibility::Public
                     )
 
                     mut checked_default_value: CheckedExpression? = None
@@ -1421,13 +1446,15 @@ struct Typechecker {
         let struct_type_id = TypeId(module: module_id, id: .current_module().types.size() - 1)
         .add_type_to_scope(scope_id, type_name: parsed_record.name, type_id: struct_type_id, span: parsed_record.name_span)
 
+        let struct_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("struct({})", parsed_record.name))
+
         // Add a placeholder entry, this will be replaced later.
         module.structures.push(CheckedStruct(
             name: parsed_record.name
             name_span: parsed_record.name_span
             generic_parameters: []
             fields: []
-            scope_id: .prelude_scope_id()
+            scope_id: struct_scope_id
             definition_linkage: parsed_record.definition_linkage
             record_type: parsed_record.record_type
             type_id: struct_type_id
@@ -1521,7 +1548,7 @@ struct Typechecker {
                             is_mutable: false
                             definition_span: variant.span
                             type_span: None
-                            visibility: Visibility::Public
+                            visibility: CheckedVisibility::Public
                         ))
                         .add_var_to_scope(scope_id: enum_.scope_id, name: variant.name, var_id, span: variant.span)
                     }
@@ -1554,7 +1581,7 @@ struct Typechecker {
                                 is_mutable: param.is_mutable
                                 definition_span: param.span
                                 type_span: None
-                                visibility: Visibility::Public
+                                visibility: CheckedVisibility::Public
                             )
                             params.push(CheckedParameter(requires_label: true, variable: checked_var, default_value: None))
 
@@ -1575,7 +1602,7 @@ struct Typechecker {
                             let checked_function = CheckedFunction(
                                 name: variant.name
                                 name_span: variant.span
-                                visibility: Visibility::Public
+                                visibility: CheckedVisibility::Public
                                 return_type_id: .find_or_add_type_id(Type::Enum(enum_id))
                                 return_type_span: None
                                 params
@@ -1620,14 +1647,14 @@ struct Typechecker {
                                 is_mutable: false
                                 definition_span: param.span
                                 type_span: None
-                                visibility: Visibility::Public
+                                visibility: CheckedVisibility::Public
                             )
                             let param = CheckedParameter(requires_label: false, variable, default_value: None)
 
                             let checked_function = CheckedFunction(
                                 name: variant.name
                                 name_span: variant.span
-                                visibility: Visibility::Public
+                                visibility: CheckedVisibility::Public
                                 return_type_id: .find_or_add_type_id(Type::Enum(enum_id))
                                 return_type_span: None
                                 params: [param]
@@ -1666,7 +1693,7 @@ struct Typechecker {
                             let checked_function = CheckedFunction(
                                 name: variant.name
                                 name_span: variant.span
-                                visibility: Visibility::Public
+                                visibility: CheckedVisibility::Public
                                 return_type_id: .find_or_add_type_id(Type::Enum(enum_id))
                                 return_type_span: None
                                 params: []
@@ -1841,7 +1868,7 @@ struct Typechecker {
             is_mutable: parameter.variable.is_mutable
             definition_span: parameter.variable.span
             type_span: None
-            visibility: Visibility::Public
+            visibility: CheckedVisibility::Public
         )
 
         mut checked_default_value: CheckedExpression? = None
@@ -1908,7 +1935,7 @@ struct Typechecker {
         mut checked_function = CheckedFunction(
             name: parsed_function.name
             name_span: parsed_function.name_span
-            visibility: parsed_function.visibility
+            visibility: .typecheck_visibility(visibility: parsed_function.visibility, scope_id: parent_scope_id)
             return_type_id: unknown_type_id()
             return_type_span: parsed_function.return_type_span
             params: []
@@ -2064,7 +2091,7 @@ struct Typechecker {
             .error(
                 format("Generic function {} expects {} generic arguments, but {} were given",
                     parsed_function.name, parsed_function.generic_parameters.size(), generic_arguments.size()
-                ) 
+                )
                 parsed_function.name_span
             )
         }
@@ -2951,7 +2978,7 @@ struct Typechecker {
                 let checked_function = CheckedFunction(
                     name: function_name
                     name_span: span
-                    visibility: Visibility::Public
+                    visibility: CheckedVisibility::Public
                     return_type_id: .typecheck_typename(parsed_type: return_type, scope_id, name: None)
                     return_type_span: return_type.span()
                     params: checked_params
@@ -3693,7 +3720,7 @@ struct Typechecker {
             is_mutable: var.is_mutable
             definition_span: var.span
             type_span: None
-            visibility: Visibility::Public
+            visibility: CheckedVisibility::Public
         )
 
         if .dump_type_hints and var.inlay_span.has_value() {
@@ -3731,7 +3758,7 @@ struct Typechecker {
             is_mutable: false
             definition_span: error_span
             type_span: None
-            visibility: Visibility::Public
+            visibility: CheckedVisibility::Public
         )
         mut module = .current_module()
         let error_id = module.add_variable(name: error_decl)
@@ -3765,7 +3792,7 @@ struct Typechecker {
                     is_mutable: false
                     definition_span: span
                     type_span: None
-                    visibility: Visibility::Public
+                    visibility: CheckedVisibility::Public
                 )
                 mut module = .current_module()
                 let error_id = module.add_variable(name: error_decl)
@@ -4027,8 +4054,8 @@ struct Typechecker {
                     .error(format("Can't access field ‘{}’, because it is marked private", member.name), span)
                 }
             }
-            Restricted(whitelist, span) => {
-                .check_restricted_access(accessor, accessee_kind: "field", accessee, name: member.name, whitelist, span)
+            Restricted(scopes) => {
+                .check_restricted_access(accessor, accessee_kind: "field", accessee, name: member.name, whitelist: scopes, span)
             }
             else => {}
         }
@@ -4049,35 +4076,58 @@ struct Typechecker {
                     }
                 }
             }
-            Restricted(whitelist, span) => {
-                .check_restricted_access(accessor, accessee_kind: "function", accessee, name: method.name, whitelist, span)
+            Restricted(scopes) => {
+                .check_restricted_access(accessor, accessee_kind: "function", accessee, name: method.name, whitelist: scopes, span)
             }
             else => {}
         }
     }
 
-    function check_restricted_access(mut this, accessor: ScopeId, accessee_kind: String, accessee: ScopeId, name: String, whitelist: [ParsedType], span: Span) throws {
-        if not .current_struct_type_id.has_value() {
-            .error(format("Can't access {} ‘{}’ from scope ‘{}’, because ‘{}’ is not in the restricted whitelist", accessee_kind, name, .get_scope(accessor).namespace_name, .get_scope(accessor).namespace_name), span)
-            return
-        }
-        let own_type_id = .current_struct_type_id!
-        let type = .get_type(own_type_id)
-        if type is Struct(id) {
-            mut was_whitelisted = false
-            for whitelisted_type in whitelist.iterator() {
-                let type_id = .typecheck_typename(parsed_type: whitelisted_type, scope_id: accessee, name: None)
-                // FIXME: Handle typecheck failure
-                if type_id.equals(own_type_id) {
-                    return
+    function check_restricted_access(mut this, accessor: ScopeId, accessee_kind: String, accessee: ScopeId, name: String, whitelist: [MaybeResolvedScope], span: Span) throws -> bool {
+        let most_specific_active_scope_id = match .current_function_id.has_value() {
+            true => .get_function(.current_function_id!).function_scope_id
+            else => {
+                if not .current_struct_type_id.has_value() {
+                    .error(
+                        format(
+                            "Can't access {0} ‘{1}’ from this global scope, because ‘{1}’ restricts access to it"
+                            accessee_kind
+                            name
+                        )
+                        span
+                    )
+                    return false
+                }
+                yield match .get_type(.current_struct_type_id!) {
+                    Struct(id) => .get_struct(id).scope_id
+                    else => {
+                        panic(format("Internal error: current_struct_type_id is not a struct", span))
+                    }
                 }
             }
-            if not was_whitelisted {
-                .error(format("Can't access {} ‘{}’ from ‘{}’, because ‘{}’ is not in the restricted whitelist", accessee_kind, name, .get_struct(id).name, .get_struct(id).name), span)
-            }
-        } else {
-            .error(format("Can't access {} ‘{}’ from scope ‘{}’, because it is not in the restricted whitelist", accessee_kind, name, .get_scope(accessor).namespace_name), span)
         }
+
+        for scope in whitelist.iterator() {
+            let resolved_scope = scope.try_resolve(program: .program)
+            guard resolved_scope is Resolved(scope_id) else {
+                continue
+            }
+
+            if .scope_can_access(accessor: most_specific_active_scope_id, accessee: scope_id) {
+                return true
+            }
+        }
+
+        let scope = .get_scope(most_specific_active_scope_id)
+        .error(
+            format(
+                "Cannot access {} ‘{}’ from this scope"
+                accessee_kind
+                name
+            )
+            span
+        )
+        return false
     }
 
     function infer_signed_int(mut this, val: i64, span: Span, type_hint: TypeId?) throws -> CheckedExpression {
@@ -4523,7 +4573,7 @@ struct Typechecker {
                             is_mutable: false,
                             definition_span: span,
                             type_span: None
-                            visibility: Visibility::Public),
+                            visibility: CheckedVisibility::Public),
                         span
                     )
                 }
@@ -4918,7 +4968,7 @@ struct Typechecker {
                 is_mutable: false,
                 definition_span: span
                 type_span: None
-                visibility: Visibility::Public
+                visibility: CheckedVisibility::Public
             ),
             span
         )
@@ -5129,7 +5179,7 @@ struct Typechecker {
                             is_mutable: false
                             definition_span: span
                             type_span: None
-                            visibility: Visibility::Public
+                            visibility: CheckedVisibility::Public
                         ))
                         .add_var_to_scope(scope_id: new_scope_id, name: variant_argument.binding, var_id, span)
                     }
@@ -5197,7 +5247,7 @@ struct Typechecker {
                                 is_mutable: false
                                 definition_span: matched_span
                                 type_span: None
-                                visibility: Visibility::Public
+                                visibility: CheckedVisibility::Public
                             ))
                             .add_var_to_scope(scope_id: new_scope_id, name: arg.binding, var_id, span: matched_span)
                         }
