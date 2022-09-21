@@ -3,7 +3,7 @@ import parser { Parser, BinaryOperator, DefinitionLinkage, DefinitionType, Unary
                 ParsedExpression, ParsedFunction, ParsedNamespace, ParsedModuleImport,
                 ParsedExternImport, ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
                 ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
-                ParsedMatchBody, ParsedMatchCase, Visibility, ParsedParameter, ParsedCapture }
+                ParsedMatchBody, ParsedMatchCase, ParsedParameter, ParsedCapture }
 import utility { panic, todo, join, FileId, Span }
 import compiler { Compiler }
 
@@ -511,10 +511,69 @@ struct CheckedNamespace {
     scope: ScopeId
 }
 
+boxed enum MaybeResolvedScope {
+    Resolved(ScopeId)
+    Unresolved(
+        parent_scope: MaybeResolvedScope
+        relative_name: String
+    )
+
+    function try_resolve(this, program: CheckedProgram) throws -> MaybeResolvedScope {
+        return match this {
+            Resolved(id) => MaybeResolvedScope::Resolved(id)
+            Unresolved(parent_scope, relative_name) => {
+                mut parent = parent_scope.try_resolve(program)
+                if parent is Resolved(parent_scope_id) {
+                    let scope = parent_scope_id
+                    mut scope_id: ScopeId? = None
+                    if not scope_id.has_value() {
+                        let struct_ = program.find_struct_in_scope(scope_id: scope, name: relative_name)
+                        if struct_.has_value() {
+                            scope_id = program.get_struct(struct_!).scope_id
+                        }
+                    }
+
+                    if not scope_id.has_value() {
+                        let enum_ = program.find_enum_in_scope(scope_id: scope, name: relative_name)
+                        if enum_.has_value() {
+                            scope_id = program.get_enum(enum_!).scope_id
+                        }
+                    }
+
+                    if not scope_id.has_value() {
+                        let ns = program.find_namespace_in_scope(scope_id: scope, name: relative_name)
+                        if ns.has_value() {
+                            scope_id = ns!.0
+                        }
+                    }
+
+                    if not scope_id.has_value() {
+                        let id = program.find_function_in_scope(parent_scope_id: scope, function_name: relative_name)
+                        if id.has_value() {
+                            scope_id = program.get_function(id!).function_scope_id
+                        }
+                    }
+                    if (scope_id.has_value()) {
+                        return MaybeResolvedScope::Resolved(scope_id!)
+                    }
+                }
+
+                yield MaybeResolvedScope::Unresolved(parent_scope: parent, relative_name)
+            }
+        }
+    }
+}
+
+enum CheckedVisibility {
+    Public
+    Private
+    Restricted(scopes: [MaybeResolvedScope], span: Span)
+}
+
 class CheckedFunction {
     public name: String
     public name_span: Span
-    public visibility: Visibility
+    public visibility: CheckedVisibility
     public return_type_id: TypeId
     public return_type_span: Span?
     public params: [CheckedParameter]
@@ -641,7 +700,7 @@ struct CheckedVariable {
     is_mutable: bool
     definition_span: Span
     type_span: Span?
-    visibility: Visibility
+    visibility: CheckedVisibility
 }
 
 struct CheckedVarDecl {
