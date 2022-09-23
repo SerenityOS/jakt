@@ -3,7 +3,7 @@ import parser { Parser, BinaryOperator, DefinitionLinkage, UnaryOperator,
                 ParsedExpression, ParsedFunction, ParsedNamespace, ParsedModuleImport,
                 ParsedExternImport, ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
                 ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
-                ParsedMatchBody, ParsedMatchCase, ParsedParameter, ParsedCapture }
+                ParsedMatchBody, ParsedMatchCase, ParsedParameter, ParsedCapture, IncludeAction }
 import utility { panic, todo, join, FileId, Span }
 import compiler { Compiler }
 
@@ -454,6 +454,8 @@ class Scope {
     public children: [ScopeId]
     public can_throw: bool
     public import_path_if_extern: String?
+    public after_extern_include: [IncludeAction]
+    public before_extern_include: [IncludeAction]
 
     public debug_name: String
 }
@@ -1218,6 +1220,8 @@ class CheckedProgram {
             children: []
             can_throw
             import_path_if_extern: None
+            after_extern_include: []
+            before_extern_include: []
             debug_name
         )
 
