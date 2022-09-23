@@ -62,9 +62,6 @@ class Set;
 
 #include <IO/File.h>
 
-using f32 = float;
-using f64 = double;
-
 namespace JaktInternal {
 
 #ifdef JAKT_CONTINUE_ON_PANIC
