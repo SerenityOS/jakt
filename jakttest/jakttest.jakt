@@ -143,6 +143,7 @@ function print_usage()  {
     eprintln("\t-h\t\tShow this message and exit.")
     eprintln("\t--hide-reasons\t\tHide the reasons why tests that fail do so.")
     eprintln("\t-j,--jobs <JOBS>\t\tUse JOBS processes. Defaults to the number of available CPUs.")
+    eprintln("\t-b,--build-dir <BUILD_DIR>\t\tUse BUILD_DIR as the prefix for the jakt binary. Defaults to 'build'.")
     eprintln("\t--temp-dir <DIR>\t\tUse DIR as the temporary directory.")
     eprintln("\t\t\tWill try to use $TMP_DIR or /tmp in UNIX-based systems, or %TEMP% in Windows")
 }
@@ -241,16 +242,20 @@ struct Options {
     show_reasons: bool
     job_count: usize
     help_wanted: bool
+    build_dir: String
 
     function from_args(args: [String]) throws -> Options {
         let files: [String] = []
         let errors: [String] = []
-        mut options = Options(files
-                              temp_dir: ""
-                              errors
-                              show_reasons: true
-                              job_count: 0
-                              help_wanted: false)
+        mut options = Options(
+            files
+            temp_dir: ""
+            errors
+            show_reasons: true
+            job_count: 0
+            help_wanted: false
+            build_dir: "build"
+        )
 
         mut index = 1uz
         while index != args.size() {
@@ -258,6 +263,16 @@ struct Options {
                 // end processing here since the user wants some help
                 options.help_wanted = true
                 return options
+            }
+
+            if args[index] == "-b" or args[index] == "--build-dir" {
+                if index + 1 == args.size() {
+                    options.errors.push("Expected a build directory after -b/--build-dir")
+                    break
+                }
+                options.build_dir = args[index + 1]
+                index += 2
+                continue
             }
 
             if args[index] == "-j" or args[index] == "--jobs" {
@@ -595,21 +610,37 @@ struct TestScheduler {
                             failed_reasons)
     }
 
-    public function run_tests(mut tests: [Test], directories: [String], collect_reasons: bool, starting_failed_tests: usize, total_test_count: usize) throws -> TestsRunResult {
+    public function run_tests(
+        mut tests: [Test]
+        directories: [String]
+        collect_reasons: bool
+        starting_failed_tests: usize
+        total_test_count: usize
+        build_dir: String
+    ) throws -> TestsRunResult {
         // create an empty handler so SIGCHLD is not ignored
         os::ignore_sigchild()
         mut scheduler = TestScheduler::create(directories, collect_reasons)
         scheduler.failed_count = starting_failed_tests
         // pre-allocate the command buffer to avoid allocating inside a loop
         let run_once_script = os::get_script_execution_string()
-        mut command_buffer: [String] = [run_once_script "" ""]
+        mut command_buffer: [String] = [
+            run_once_script
+            "jakttest/run_one.py"
+            "--jakt-binary"
+            String::format("{}/jakt", build_dir)
+            "--jakt-lib-dir"
+            String::format("{}/runtime", build_dir)
+            ""
+            ""
+        ]
         while not tests.is_empty() {
             let dir_index = scheduler.wait_for_free_directory()
             mut test = tests.pop()!
             test.directory_index = dir_index
             let directory = scheduler.directories[test.directory_index]
-            command_buffer[1] = directory
-            command_buffer[2] = test.file_name
+            command_buffer[6] = directory
+            command_buffer[7] = test.file_name
             let pid = process::start_background_process(args: command_buffer)
             scheduler.running_tests[pid] = test
             eprint("\r\x1b[2K[ \x1b[1;31m{}\x1b[m/\x1b[1;32m{}\x1b[m/{} ] Testing {}"
@@ -698,9 +729,11 @@ function main(args: [String]) {
 
     let run_result = TestScheduler::run_tests(
         tests, directories,
-        collect_reasons: parsed_options.show_reasons 
+        collect_reasons: parsed_options.show_reasons
         starting_failed_tests: bad_formatted_tests.size()
-        total_test_count: skipped_count + bad_formatted_tests.size() + tests.size())
+        total_test_count: skipped_count + bad_formatted_tests.size() + tests.size()
+        build_dir: parsed_options.build_dir
+    )
 
     // delete directories
     for dir in directories.iterator() {
