@@ -72,13 +72,18 @@ jobs:
     steps:
      - run: git config --global core.autocrlf false
      - uses: actions/checkout@v2
+     - name: Setup Ninja
+       uses: ashutoshvarma/setup-ninja@master
+       with:
+         # ninja version to download. Default: 1.10.0
+         version: 1.10.0
      - name: Configure CMake
-       run: cmake -B build -G "Visual Studio 17 2022" -A x64 -T ClangCL -DFINAL_STAGE=1
+       run: cmake -B build -G Ninja -DFINAL_STAGE=1 -DCMAKE_CXX_COMPILER=clang.exe -DCMAKE_BUILD_TYPE=Release
 
      - name: Build Jakt Stage 1 Selfhost
-       run: cmake --build build --config Release
+       run: cmake --build build
 
      - name: Test Jakt Stage 1
        run: |
          ls -l build
-         .\build\Release\jakttest.exe
+         .\build\jakttest.exe
