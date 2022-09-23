@@ -1,0 +1,109 @@
+
+// implemented in JaktValue.h
+boxed enum JaktValue {
+    Void
+    Bool(value:bool)
+    U8(value: u8)
+    U16(value: u16)
+    U32(value: u32)
+    U64(value: u64)
+    I8(value: i8)
+    I16(value: i16)
+    I32(value: i32)
+    I64(value: i64)
+    F32(value: f32)
+    F64(value: f64)
+    USize(value: usize)
+    JaktString(value: String)
+    CChar(value: c_char)
+    CInt(value: c_int)
+    JaktArray(value: Array<JaktValue>)
+    JaktDictionary(value: Dictionary<JaktValue, JaktValue>)
+    JaktSet(value: Set<JaktValue>)
+    JaktOptional(value: JaktValue)
+    JaktRawPtr(value: usize, type: JaktValue)
+    JaktNone
+
+    function to_representation(this) throws -> String => match this {
+        Void => "Void"
+        Bool(value) => format("{}", value)
+        U8(value) => format("{}u8", value)
+        U16(value) => format("{}u16", value)
+        U32(value) => format("{}u32", value)
+        U64(value) => format("{}u64", value)
+        I8(value) => format("{}i8", value)
+        I16(value) => format("{}i16", value)
+        I32(value) => format("{}i32", value)
+        I64(value) => format("{}i64", value)
+        F32(value) => format("{}f32", value)
+        F64(value) => format("{}f64", value)
+        USize(value) => format("{}uz", value)
+        JaktString(value) => format("\"{}\"", value)
+        JaktRawPtr(value) => format("{{Raw Pointer @{:p}}}", value)
+        else => this.to_string()
+    }
+
+    function to_string(this) throws -> String => match this {
+        Void => ""
+        Bool(value) => format("{}", value)
+        U8(value) => format("{}", value)
+        U16(value) => format("{}", value)
+        U32(value) => format("{}", value)
+        U64(value) => format("{}", value)
+        I8(value) => format("{}", value)
+        I16(value) => format("{}", value)
+        I32(value) => format("{}", value)
+        I64(value) => format("{}", value)
+        F32(value) => format("{}", value)
+        F64(value) => format("{}", value)
+        USize(value) => format("{}", value)
+        CChar(value) => format("{}", value)
+        CInt(value) => format("{}", value)
+        JaktString(value) => format("{}", value)
+        JaktArray(value) => {
+            mut array_representation = "["
+            mut first = true
+            for entry in value.iterator() {
+                if not first {
+                    array_representation += ", "
+                } else {
+                    first = false
+                }
+                array_representation += format("{}", entry.to_representation())
+            }
+            array_representation += "]"
+            return array_representation
+		}
+        JaktDictionary(value) => {
+            mut dict_representation = "["
+            mut first = true
+            for (key, entry) in value.iterator() {
+                if not first {
+                    dict_representation += ", "
+                } else {
+                    first = false
+                }
+                dict_representation += format("{}: {}", key.to_representation(), entry.to_representation())
+            }
+            dict_representation += "]"
+            return dict_representation
+        }
+        JaktSet(value) => {
+            mut set_representation = "{{"
+            mut first = true
+            for entry in value.iterator() {
+                if not first {
+                    set_representation += ", "
+                } else {
+                    first = false
+                }
+                set_representation += format("{}", entry.to_representation())
+            }
+            set_representation += "}}"
+            return set_representation
+        }
+        JaktOptional(value) => format("{}", value)
+        JaktRawPtr(value) => format("{:p}", value)
+        JaktNone => ""
+    }
+}
