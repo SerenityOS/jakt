@@ -67,13 +67,11 @@ class Set;
 #include <Builtins/Array.h>
 #include <Builtins/Dictionary.h>
 #include <Builtins/Set.h>
+#include <Builtins/Value.h>
 
 #include <IO/File.h>
 
 #include <IO/File.cpp>
-
-using f32 = float;
-using f64 = double;
 
 namespace JaktInternal {
 
