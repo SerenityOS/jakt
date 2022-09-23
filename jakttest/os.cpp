@@ -50,7 +50,7 @@ ErrorOr<void> ignore_sigchild()
 
 ErrorOr<String> get_script_execution_string()
 {
-    return String("./jakttest/run-one.sh");
+    return String("python3");
 }
 #else
 ErrorOr<size_t> get_num_cpus()
@@ -74,11 +74,7 @@ ErrorOr<void> ignore_sigchild()
 
 ErrorOr<String> get_script_execution_string()
 {
-    char path[MAX_PATH];
-    char* cwd = getcwd(path, sizeof(path));
-    VERIFY(cwd != nullptr);
-    return String::formatted("powershell.exe -ExecutionPolicy RemoteSigned "
-                            "-File ./jakttest/run-one.ps1 {}", cwd);
+    return String("python3.exe");
 }
 #endif
 }
