@@ -322,7 +322,37 @@ struct CodeGenerator {
                             if has_name {
                                 output += format("namespace {} {{\n", scope.namespace_name!)
                             }
+                            for action in scope.before_extern_include.iterator() {
+                                match action {
+                                    Define(name, value) => {
+                                        output += format("#ifdef {}\n", name)
+                                        output += format("#undef {}\n", name)
+                                        output += "#endif\n"
+                                        output += format("#define {} {}\n", name, value)
+                                    }
+                                    Undefine(name) => {
+                                        output += format("#ifdef {}\n", name)
+                                        output += format("#undef {}\n", name)
+                                        output += "#endif\n"
+                                    }
+                                }
+                            }
                             output += format("#include <{}>\n", scope.import_path_if_extern!)
+                            for action in scope.after_extern_include.iterator() {
+                                match action {
+                                    Define(name, value) => {
+                                        output += format("#ifdef {}\n", name)
+                                        output += format("#undef {}\n", name)
+                                        output += "#endif\n"
+                                        output += format("#define {} {}\n", name, value)
+                                    }
+                                    Undefine(name) => {
+                                        output += format("#ifdef {}\n", name)
+                                        output += format("#undef {}\n", name)
+                                        output += "#endif\n"
+                                    }
+                                }
+                            }
                             if has_name {
                                 output += " } // namespace " + scope.namespace_name! + "\n"
                             }

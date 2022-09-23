@@ -965,6 +965,9 @@ struct Typechecker {
             mut child_scope = .get_scope(namespace_scope_id)
             child_scope.namespace_name = namespace_.name
             child_scope.import_path_if_extern = namespace_.import_path_if_extern
+            child_scope.before_extern_include = namespace_.generating_import_extern_before_include
+            child_scope.after_extern_include = namespace_.generating_import_extern_after_include
+
             mut parent_scope = .get_scope(scope_id)
             parent_scope.children.push(namespace_scope_id)
             .typecheck_namespace_predecl(parsed_namespace: namespace_, scope_id: namespace_scope_id)

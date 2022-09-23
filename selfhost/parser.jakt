@@ -113,10 +113,16 @@ struct ParsedModuleImport {
     }
 }
 
+enum IncludeAction {
+    Define(name: String, span: Span, value: String)
+    Undefine(name: String, span: Span)
+}
+
 struct ParsedExternImport {
     is_c: bool
     assigned_namespace: ParsedNamespace
-
+    before_include: [IncludeAction]
+    after_include: [IncludeAction]
 
     function get_path(this) -> String => .assigned_namespace.import_path_if_extern!
 
@@ -136,6 +142,8 @@ struct ParsedNamespace {
     module_imports: [ParsedModuleImport]
     extern_imports: [ParsedExternImport]
     import_path_if_extern: String?
+    generating_import_extern_before_include: [IncludeAction]
+    generating_import_extern_after_include: [IncludeAction]
 
     function is_equivalent_to(this, anon other: ParsedNamespace) -> bool =>
         .name == other.name and .import_path_if_extern == other.import_path_if_extern
@@ -154,6 +162,13 @@ struct ParsedNamespace {
         for extern_import in .extern_imports.iterator() {
             if extern_import.is_equivalent_to(import_) {
                 extern_import.assigned_namespace.merge_with(import_.assigned_namespace)
+                for action in import_.before_include.iterator() {
+                    extern_import.before_include.push(action)
+                }
+                for action in import_.after_include.iterator() {
+                    extern_import.after_include.push(action)
+                }
+
                 return
             }
         }
@@ -1232,6 +1247,8 @@ struct Parser {
             module_imports: []
             extern_imports: []
             import_path_if_extern: None
+            generating_import_extern_before_include: []
+            generating_import_extern_after_include: []
         )
 
         while not .eof() {
@@ -1354,9 +1371,14 @@ struct Parser {
                 namespaces: []
                 module_imports: []
                 extern_imports: []
-                import_path_if_extern: None))
+                import_path_if_extern: None
+                generating_import_extern_before_include: []
+                generating_import_extern_after_include: []
+            )
+            before_include: []
+            after_include: []
+        )
 
-        
         if .current() is Identifier(name, span) {
             .index++
             if name == "c" or name == "C" {
@@ -1399,13 +1421,159 @@ struct Parser {
 
         parsed_import.assigned_namespace = .parse_namespace()
         parsed_import.assigned_namespace.import_path_if_extern = Some(import_path)
+        parsed_import.assigned_namespace.generating_import_extern_before_include = parsed_import.before_include
+        parsed_import.assigned_namespace.generating_import_extern_after_include = parsed_import.after_include
+
         if .current() is RCurly {
             .index++
+        } else {
+            .error("Expected '}' to end namespace for the extern import"
+                    .current().span())
+        }
+
+        loop {
+            if .current() is Identifier(name) {
+                match name {
+                    "before_include" => {
+                        .index++
+                        let actions = .parse_include_action()
+                        if actions.has_value() {
+                            for action in actions!.iterator() {
+                                parsed_import.before_include.push(action)
+                            }
+                        }
+                    }
+                    "after_include" => {
+                        .index++
+                        let actions = .parse_include_action()
+                        if actions.has_value() {
+                            for action in actions!.iterator() {
+                                parsed_import.after_include.push(action)
+                            }
+                        }
+                    }
+                    else => {
+                        break
+                    }
+                }
+            } else {
+                break
+            }
         }
 
         parent.add_child_namespace(parsed_import.assigned_namespace)
 
         return parsed_import
+    }
+
+    function parse_include_action(mut this) throws -> [IncludeAction]? {
+        .skip_newlines()
+        if .current() is Identifier(name) {
+            // define { name = "value" ... }
+            // undefine { name ... }
+            match name {
+                "define" => {
+                    .index++
+                    .skip_newlines()
+                    if .current() is LCurly {
+                        .index++
+                        .skip_newlines()
+                    } else {
+                        .error("Expected '{' to start define action", .current().span())
+                        return None
+                    }
+
+                    mut defines: [IncludeAction] = []
+                    loop {
+                        if .current() is Identifier(name) {
+                            let span = .current().span()
+                            .index++
+                            .skip_newlines()
+                            if .current() is Equal {
+                                .index++
+                            } else {
+                                .error("Expected '=' to assign value to defined symbols", .current().span())
+                                continue
+                            }
+
+                            let value = match .current() {
+                                QuotedString(quote) => {
+                                    .index++
+                                    yield quote
+                                }
+                                else => {
+                                    .error("Expected quoted string to assign value to defined symbols", .current().span())
+                                    yield ""
+                                }
+                            }
+
+                            defines.push(IncludeAction::Define(name, span, value))
+                            .skip_newlines()
+                            if .current() is Comma {
+                                .index++
+                                .skip_newlines()
+                            }
+                        } else {
+                            break
+                        }
+                    }
+
+                    if .current() is RCurly {
+                        .index++
+                    } else {
+                        .error("Expected '}' to end define action", .current().span())
+                    }
+
+                    return Some(defines)
+                }
+                "undefine" => {
+                    .index++
+                    .skip_newlines()
+                    if .current() is LCurly {
+                        .index++
+                        .skip_newlines()
+                    } else {
+                        .error("Expected '{' to start undefine include action", .current().span())
+                        return None
+                    }
+
+                    mut defines: [IncludeAction] = []
+                    loop {
+                        if .current() is Identifier(name) {
+                            let span = .current().span()
+                            .index++
+
+                            defines.push(IncludeAction::Undefine(name, span))
+
+                            .skip_newlines()
+                            if .current() is Comma {
+                                .index++
+                                .skip_newlines()
+                            }
+                        } else {
+                            break
+                        }
+                    }
+
+                    if .current() is RCurly {
+                        .index++
+                    } else {
+                        .error("Expected '}' to end undefine action", .current().span())
+                    }
+
+                    return Some(defines)
+                }
+                else => {
+                    .error("Expected 'define' or 'undefine' in include action"
+                            .current().span())
+                    return None
+                }
+            }
+        } else {
+            .error("Expected 'define' or 'undefine' in include action"
+                    .current().span())
+            return None
+        }
     }
 
     function parse_module_import(mut this) throws -> ParsedModuleImport {
