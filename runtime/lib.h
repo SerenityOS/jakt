@@ -367,6 +367,32 @@ ALWAYS_INLINE constexpr OutputType as_truncated(InputType input)
     }
 }
 
+inline String ___jakt_get_target_triple_string()
+{
+#ifdef __JAKT_BUILD_TARGET
+    return String(__JAKT_BUILD_TARGET);
+#else
+// Pure guesswork.
+#   if defined(WIN32)
+    return String("i686-pc-windows-msvc");
+#   elif defined(WIN64)
+    return String("x86_64-pc-windows-msvc");
+#   elif defined(__linux__)
+    return String("x86_64-pc-linux-gnu");
+#   elif defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
+    return String("x86_64-pc-bsd-unknown");
+#   elif defined(__APPLE__)
+    return String("x86_64-apple-darwin-unknown");
+#   elif defined(__unix__)
+    return String("x86_64-pc-unix-unknown");
+#   elif defined(__serenity__)
+    return String("unknown-pc-serenity-serenity");
+#   else
+    return String("unknown-unknown-unknown-unknown");
+#   endif
+#endif
+}
+
 template<typename T>
 struct _RemoveRefPtr {
     using Type = T;
@@ -400,6 +426,7 @@ using JaktInternal::infallible_integer_cast;
 using JaktInternal::Range;
 using JaktInternal::unchecked_add;
 using JaktInternal::unchecked_mul;
+using JaktInternal::___jakt_get_target_triple_string;
 }
 
 // We place main in a separate namespace to ensure it has access to the same identifiers as other functions

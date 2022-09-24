@@ -468,6 +468,7 @@ class Module {
     public types: [Type]
     public variables: [CheckedVariable]
     public imports: [ModuleId]
+    public resolved_import_path: String
 
     public is_root: bool
     public function is_prelude(this) -> bool => .id.id == 0
