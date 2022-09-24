@@ -30,7 +30,8 @@ include(cmake/jakt-executable.cmake)
 
 add_subdirectory(runtime)
 
-add_executable(jakt_stage0 bootstrap/stage0/jakt.cpp)
+file(GLOB JAKT_STAGE0_SOURCES CONFIGURE_DEPENDS "bootstrap/stage0/*.cpp")
+add_executable(jakt_stage0 "${JAKT_STAGE0_SOURCES}")
 add_executable(Jakt::jakt_stage0 ALIAS jakt_stage0)
 add_jakt_compiler_flags(jakt_stage0)
 target_include_directories(jakt_stage0
@@ -38,9 +39,9 @@ target_include_directories(jakt_stage0
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bootstrap/stage0/runtime>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
 )
+target_link_libraries(jakt_stage0 PRIVATE Jakt::jakt_runtime Jakt::jakt_main)
 
 set(SELFHOST_SOURCES
-  runtime/prelude.jakt
   selfhost/codegen.jakt
   selfhost/compiler.jakt
   selfhost/error.jakt
@@ -53,7 +54,33 @@ set(SELFHOST_SOURCES
   selfhost/typechecker.jakt
   selfhost/types.jakt
   selfhost/utility.jakt
+  selfhost/os.jakt
 )
+
+if(CMAKE_HOST_WIN32)
+  list(APPEND SELFHOST_SOURCES
+    selfhost/windows_fs.jakt
+    selfhost/windows_errno.jakt
+    selfhost/windows_process.jakt
+  )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  list(APPEND SELFHOST_SOURCES
+    selfhost/posix_fs.jakt
+    selfhost/darwin_errno.jakt
+    selfhost/posix_process.jakt
+  )
+elseif(CMAKE_HOST_UNIX)
+  list(APPEND SELFHOST_SOURCES
+    selfhost/posix_fs.jakt
+    selfhost/posix_errno.jakt
+    selfhost/posix_process.jakt
+  )
+else()
+  list(APPEND SELFHOST_SOURCES
+    selfhost/unknown_fs.jakt
+    selfhost/unknown_process.jakt
+  )
+endif()
 
 add_jakt_executable(jakt_stage1
   COMPILER jakt_stage0
@@ -61,7 +88,10 @@ add_jakt_executable(jakt_stage1
   MODULE_SOURCES ${SELFHOST_SOURCES}
   RUNTIME_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/runtime"
 )
-target_include_directories(jakt_stage1 PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>)
+
+target_include_directories(jakt_stage1 PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>)
 add_executable(Jakt::jakt_stage1 ALIAS jakt_stage1)
 
 if (FINAL_STAGE GREATER_EQUAL 2)
@@ -99,13 +129,17 @@ if (JAKT_BUILD_TESTING)
       jakttest/lexer.jakt
       jakttest/parser.jakt
       jakttest/utility.jakt
+    INCLUDES
+      "${CMAKE_CURRENT_SOURCE_DIR}/jakttest"
   )
+  add_jakt_compiler_flags(jakttest)
   target_sources(jakttest PRIVATE
      jakttest/fs.cpp
      jakttest/os.cpp
      jakttest/process.cpp
   )
-  target_include_directories(jakttest PRIVATE jakttest
-    $<TARGET_PROPERTY:jakt_stage${FINAL_STAGE},INCLUDE_DIRECTORIES>
+  target_include_directories(jakttest PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/jakttest>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/jakttest>
   )
 endif()

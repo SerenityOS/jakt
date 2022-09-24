@@ -1,0 +1,32 @@
+struct Process {
+}
+
+struct ExitPollResult {
+    exit_code: i32
+    process: Process
+}
+
+function start_background_process(anon args: [String]) throws -> Process {
+    eprintln("NOT IMPLEMENTED: start_background_process {}", args)
+    throw Error::from_errno(38)
+}
+
+function poll_process_exit(process: &Process) throws -> ExitPollResult? {
+    eprintln("NOT IMPLEMENTED: poll_process_exit {}", process)
+    throw Error::from_errno(38)
+}
+
+function wait_for_process(process: &Process) throws -> ExitPollResult {
+    eprintln("NOT IMPLEMENTED: wait_for_process {}", process)
+    throw Error::from_errno(38)
+}
+
+function forcefully_kill_process(process: &Process) throws {
+    eprintln("NOT IMPLEMENTED: forcefully_kill_process {}", process)
+    throw Error::from_errno(38)
+}
+
+function wait_for_some_set_of_processes_that_at_least_includes(processes: &[usize:Process]) throws -> (usize?, ExitPollResult) {
+    eprintln("NOT IMPLEMENTED: wait_for_some_set_of_processes_that_at_least_includes {}", processes)
+    throw Error::from_errno(38)
+}

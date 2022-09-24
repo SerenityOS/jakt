@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Module 'baz' not found"
+/// - error: "No module in module set {baz} was found"
 
 import baz
 

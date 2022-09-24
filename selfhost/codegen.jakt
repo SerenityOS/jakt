@@ -222,7 +222,7 @@ struct CodeGenerator {
         panic("Cyclic module imports")
     }
 
-    function generate(compiler: Compiler, anon program: CheckedProgram, debug_info: bool) throws -> String {
+    function generate(compiler: Compiler, anon program: CheckedProgram, debug_info: bool) throws -> [String:(String, String)] {
         mut generator = CodeGenerator(
             compiler
             program
@@ -246,33 +246,18 @@ struct CodeGenerator {
             fresh_var_counter: 0
             fresh_label_counter: 0
         )
+
+        mut result: [String:(String, String)] = [:]
+
+        // Unified forwarding header
         mut output = ""
+        output += "#pragma once\n"
         output += "#include <lib.h>\n"
-        output += "#ifdef _WIN32\nextern \"C\" __cdecl void SetConsoleOutputCP(unsigned long code_page);\nconst unsigned long CP_UTF8 = 65001;\n#endif\n"
+        output += "#ifdef _WIN32\n"
+        output += "extern \"C\" __cdecl int SetConsoleOutputCP(unsigned int code_page);\n"
+        output += "const unsigned int CP_UTF8 = 65001;\n"
+        output += "#endif\n"
         let sorted_modules = generator.topologically_sort_modules()
-        for idx in sorted_modules.size()..0 {
-            let i = sorted_modules[idx - 1].id
-            if i == 0 {
-                // Skip 0 because it's the prelude
-                continue
-            }
-            let module = generator.program.modules[i]
-            let scope_id = ScopeId(module_id: module.id, id: 0)
-            let scope = generator.program.get_scope(scope_id)
-            for child_scope in scope.children.iterator() {
-                let scope = generator.program.get_scope(scope_id: child_scope)
-                if scope.import_path_if_extern.has_value() {
-                    let has_name = scope.namespace_name.has_value()
-                    if has_name {
-                        output += format("namespace {} {{\n", scope.namespace_name!)
-                    }
-                    output += format("#include <{}>\n", scope.import_path_if_extern!)
-                    if has_name {
-                        output += " } // namespace " + scope.namespace_name! + "\n"
-                    }
-                }
-            }
-        }
         output += "namespace Jakt {\n"
         for idx in sorted_modules.size()..0 {
             let i = sorted_modules[idx - 1].id
@@ -294,43 +279,94 @@ struct CodeGenerator {
                 output += "}\n"
             }
         }
-        for idx in sorted_modules.size()..0 {
-            let i = sorted_modules[idx - 1].id
-            if i == 0 {
-                // Skip 0 because it's the prelude
-                continue
-            }
-
-            let module = generator.program.modules[i]
-            generator.compiler.dbg_println(format("generate: module idx: {}, module.name {}", i, module.name))
-
-            let scope_id = ScopeId(module_id: module.id, id: 0)
-            let scope = generator.program.get_scope(scope_id)
-
-            if not module.is_root {
-                output += "namespace "
-                output += module.name
-                output += " {\n"
-                generator.namespace_stack.push(module.name)
-            }
-
-            output += generator.codegen_namespace(scope, current_module: module)
-
-            if not module.is_root {
-                // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
-                let dummy = generator.namespace_stack.pop()
-            }
-
-            if not module.is_root {
-                output += "}\n"
-            }
-        }
-
-        output += generator.deferred_output
 
         output += "} // namespace Jakt\n"
 
-        return output
+
+        result.set(
+            "__unified_forward.h",
+            (output, compiler.current_file_path()!.path),
+        )
+
+
+        for as_forward in [true, false].iterator() {
+            for idx in sorted_modules.size()..0 {
+                // Module forward declarations header (if as_forward), or module implementation (if not as_forward)
+                let i = sorted_modules[idx - 1].id
+                if i == 0 {
+                    // Skip 0 because it's the prelude
+                    continue
+                }
+
+                let module = generator.program.modules[i]
+                generator.compiler.dbg_println(format("generate: module idx: {}, module.name {} - forward: {}", i, module.name, as_forward))
+
+                let header_name = format("{}.h", module.name)
+                let impl_name = format("{}.cpp", module.name)
+
+                if as_forward {
+                    output = "#pragma once\n"
+                    output += "#include \"__unified_forward.h\"\n"
+                } else {
+                    output = format("#include \"{}\"\n", header_name)
+                }
+
+                let scope_id = ScopeId(module_id: module.id, id: 0)
+                let scope = generator.program.get_scope(scope_id)
+
+                if as_forward {
+                    for child_scope in scope.children.iterator() {
+                        let scope = generator.program.get_scope(scope_id: child_scope)
+                        if scope.import_path_if_extern.has_value() {
+                            let has_name = scope.namespace_name.has_value()
+                            if has_name {
+                                output += format("namespace {} {{\n", scope.namespace_name!)
+                            }
+                            output += format("#include <{}>\n", scope.import_path_if_extern!)
+                            if has_name {
+                                output += " } // namespace " + scope.namespace_name! + "\n"
+                            }
+                        }
+                    }
+                    for id in module.imports.iterator() {
+                        let module = generator.program.modules[id.id]
+                        output += format("#include \"{}.h\"\n", module.name)
+                    }
+                }
+
+                output += "namespace Jakt {\n"
+
+                if not module.is_root {
+                    output += "namespace "
+                    output += module.name
+                    output += " {\n"
+                    generator.namespace_stack.push(module.name)
+                }
+
+                output += generator.codegen_namespace(scope, current_module: module, as_forward)
+
+                if not module.is_root {
+                    // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+                    let dummy = generator.namespace_stack.pop()
+                }
+
+                if not module.is_root {
+                    output += "}\n"
+                }
+
+                output += generator.deferred_output
+                generator.deferred_output = ""
+                output += "} // namespace Jakt\n"
+
+                if as_forward {
+                    result.set(header_name, (output, module.resolved_import_path))
+                } else {
+                    result.set(impl_name, (output, module.resolved_import_path))
+                }
+            }
+        }
+
+        return result
     }
 
     function postorder_traversal(this, encoded_type_id: String, mut visited: {String}, encoded_dependency_graph: [String: [String]], mut output: [TypeId]) throws {
@@ -476,90 +512,117 @@ struct CodeGenerator {
         return dependencies
     }
 
-    function codegen_namespace(mut this, scope: Scope, current_module: Module) throws -> String {
+    function codegen_namespace(mut this, scope: Scope, current_module: Module, as_forward: bool) throws -> String {
         if scope.import_path_if_extern.has_value() {
             return ""
         }
-        mut output = ""
-        let encoded_dependency_graph = .produce_codegen_dependency_graph(scope)
         mut seen_types: {String} = {}
-        for entry in encoded_dependency_graph.iterator() {
-            let traversal: [TypeId] = []
-            .postorder_traversal(encoded_type_id: entry.0, visited: seen_types, dependency_graph: encoded_dependency_graph, output: traversal)
-            for type_id in traversal.iterator() {
-                let type_ = .program.get_type(type_id)
-                match type_ {
-                    Enum(enum_id) => {
-                        if not enum_id.module.equals(current_module.id) {
-                            // Skip over imports from other modules
-                            continue
-                        }
-                        let enum_ = .program.get_enum(enum_id)
-                        let enum_output = .codegen_enum(enum_)
-                        if not enum_output.is_empty() {
-                            output += enum_output
-                        }
-                    }
-                    Struct(struct_id) => {
-                        if not struct_id.module.equals(current_module.id) {
-                            // Skip over imports from other modules
-                            continue
-                        }
 
-                        let struct_ = .program.get_struct(struct_id)
-                        let struct_output = .codegen_struct(struct_)
+        if as_forward {
+            mut output = ""
+            let encoded_dependency_graph = .produce_codegen_dependency_graph(scope)
+            for entry in encoded_dependency_graph.iterator() {
+                let traversal: [TypeId] = []
+                .postorder_traversal(encoded_type_id: entry.0, visited: seen_types, dependency_graph: encoded_dependency_graph, output: traversal)
+                for type_id in traversal.iterator() {
+                    let type_ = .program.get_type(type_id)
+                    match type_ {
+                        Enum(enum_id) => {
+                            if not enum_id.module.equals(current_module.id) {
+                                // Skip over imports from other modules
+                                continue
+                            }
+                            let enum_ = .program.get_enum(enum_id)
+                            let enum_output = .codegen_enum(enum_)
+                            if not enum_output.is_empty() {
+                                output += enum_output
+                            }
+                        }
+                        Struct(struct_id) => {
+                            if not struct_id.module.equals(current_module.id) {
+                                // Skip over imports from other modules
+                                continue
+                            }
 
-                        if not struct_output.is_empty() {
-                            output += struct_output
+                            let struct_ = .program.get_struct(struct_id)
+                            let struct_output = .codegen_struct(struct_)
+
+                            if not struct_output.is_empty() {
+                                output += struct_output
+                            }
+                        }
+                        else => {
+                            panic(format("Unexpected type in dependency graph: {}", type_))
                         }
                     }
-                    else => {
-                        panic(format("Unexpected type in dependency graph: {}", type_))
-                    }
+                    seen_types.add(type_id.to_string())
                 }
-                seen_types.add(type_id.to_string())
             }
+
+            for (_, struct_id) in scope.structs.iterator() {
+                if not struct_id.module.equals(current_module.id) {
+                    continue
+                }
+                let struct_ = .program.get_struct(struct_id)
+                if seen_types.contains(struct_.type_id.to_string()) {
+                    continue
+                }
+                output += .codegen_struct(struct_)
+                output += "\n"
+            }
+
+            for (_, enum_id) in scope.enums.iterator() {
+                if not enum_id.module.equals(current_module.id) {
+                    continue
+                }
+                let enum_ = .program.get_enum(enum_id)
+                if seen_types.contains(enum_.type_id.to_string()) {
+                    continue
+                }
+                output += .codegen_enum(enum_)
+                output += "\n"
+            }
+
+            for (_, function_id) in scope.functions.iterator() {
+                if not function_id.module.equals(current_module.id) {
+                    continue
+                }
+
+                let function_ = .program.get_function(function_id)
+
+                let previous_function = .current_function
+                .current_function = function_
+                defer .current_function = previous_function
+
+                if function_.linkage is External or function_.type is ImplicitConstructor or function_.type is ImplicitEnumConstructor {
+                    continue
+                }
+
+                if not function_.generics.params.is_empty() {
+                    output += .codegen_function(function_)
+                    output += "\n"
+                }
+            }
+
+            for child_scope_id in scope.children.iterator() {
+                let child_scope = .program.get_scope(child_scope_id)
+                if child_scope.namespace_name.has_value() {
+                    let name = child_scope.namespace_name!
+                    .namespace_stack.push(name)
+                    output += "namespace "
+                    output += name
+                    output += " {\n"
+                    output += .codegen_namespace(scope: child_scope, current_module, as_forward)
+                    output += "}\n"
+                    // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+                    let dummy = .namespace_stack.pop()
+                }
+            }
+
+            return output
         }
 
-        for (_, struct_id) in scope.structs.iterator() {
-            if not struct_id.module.equals(current_module.id) {
-                continue
-            }
-            let struct_ = .program.get_struct(struct_id)
-            if seen_types.contains(struct_.type_id.to_string()) {
-                continue
-            }
-            output += .codegen_struct(struct_)
-            output += "\n"
-        }
-
-        for (_, enum_id) in scope.enums.iterator() {
-            if not enum_id.module.equals(current_module.id) {
-                continue
-            }
-            let enum_ = .program.get_enum(enum_id)
-            if seen_types.contains(enum_.type_id.to_string()) {
-                continue
-            }
-            output += .codegen_enum(enum_)
-            output += "\n"
-        }
-
-        for child_scope_id in scope.children.iterator() {
-            let child_scope = .program.get_scope(child_scope_id)
-            if child_scope.namespace_name.has_value() {
-                let name = child_scope.namespace_name!
-                .namespace_stack.push(name)
-                output += "namespace "
-                output += name
-                output += " {\n"
-                output += .codegen_namespace(scope: child_scope, current_module)
-                output += "}\n"
-                // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
-                let dummy = .namespace_stack.pop()
-            }
-        }
-
+        mut output = ""
         for (_, function_id) in scope.functions.iterator() {
             if not function_id.module.equals(current_module.id) {
                 continue
@@ -575,8 +638,10 @@ struct CodeGenerator {
                 continue
             }
 
-            output += .codegen_function(function_)
-            output += "\n"
+            if function_.generics.params.is_empty() {
+                output += .codegen_function(function_)
+                output += "\n"
+            }
         }
 
         for (_, struct_id) in scope.structs.iterator() {
@@ -593,6 +658,8 @@ struct CodeGenerator {
                 continue
             }
 
+            output += .codegen_debug_description_getter(struct_)
+
             let scope = .program.get_scope(struct_.scope_id)
             for (_, function_id) in scope.functions.iterator() {
                 let function_ = .program.get_function(function_id)
@@ -600,7 +667,10 @@ struct CodeGenerator {
                 .current_function = function_
                 defer .current_function = previous_function
 
-                if not function_.type is ImplicitConstructor and not function_.type is ImplicitEnumConstructor and not function_.is_comptime {
+                if function_.type is ImplicitConstructor {
+                    output += .codegen_constructor(function_)
+                    output += "\n"
+                } else if not function_.type is ImplicitEnumConstructor and not function_.is_comptime and function_.generics.params.is_empty() {
                     output += .codegen_function_in_namespace(function_, containing_struct: struct_.type_id)
                     output += "\n"
                 }
@@ -621,6 +691,10 @@ struct CodeGenerator {
                 continue
             }
 
+            if enum_.underlying_type_id.equals(void_type_id()) {
+                output += .codegen_enum_debug_description_getter(enum_)
+            }
+
             let scope = .program.get_scope(enum_.scope_id)
             for (_, function_id) in scope.functions.iterator() {
                 let function_ = .program.get_function(function_id)
@@ -633,6 +707,22 @@ struct CodeGenerator {
                 }
             }
         }
+
+        for child_scope_id in scope.children.iterator() {
+            let child_scope = .program.get_scope(child_scope_id)
+            if child_scope.namespace_name.has_value() {
+                let name = child_scope.namespace_name!
+                .namespace_stack.push(name)
+                output += "namespace "
+                output += name
+                output += " {\n"
+                output += .codegen_namespace(scope: child_scope, current_module, as_forward)
+                output += "}\n"
+                // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+                let dummy = .namespace_stack.pop()
+            }
+        }
+
         return output
     }
 
@@ -676,9 +766,13 @@ struct CodeGenerator {
             if function_.type is ImplicitEnumConstructor {
                 continue
             }
-            let function_output = .codegen_function_predecl(function_)
+
+            let previous_function_id = .current_function
+            .current_function = Some(function_)
+            defer .current_function = previous_function_id
+
             if not function_.type is ImplicitConstructor and function_.name != "main" {
-                output += function_output
+                output += .codegen_function_predecl(function_)
                 output += "\n"
             }
         }
@@ -714,7 +808,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_function_predecl(mut this, function_: CheckedFunction) throws -> String {
+    function codegen_function_predecl(mut this, function_: CheckedFunction, as_method: bool = false) throws -> String {
         mut output = ""
 
         if not function_.generics.params.is_empty() and function_.linkage is External {
@@ -743,13 +837,14 @@ struct CodeGenerator {
         if function_.name == "main" {
             output += "ErrorOr<int>"
         } else {
+            if as_method and function_.is_static() {
+                output += "static "
+            }
+
             if function_.is_virtual {
                 output += "virtual "
             }
 
-            if function_.is_static() and not function_.linkage is External {
-                output += "static "
-            }
             let naked_return_type = .codegen_type(function_.return_type_id)
             let return_type = match function_.can_throw {
                 true => format("ErrorOr<{}>", naked_return_type)
@@ -899,28 +994,34 @@ struct CodeGenerator {
 
         let scope = .program.get_scope(struct_.scope_id)
         for fn in scope.functions.iterator() {
-            let previous_function_id = .current_function
 
             let function_ = .program.get_function(fn.1)
+
+            let previous_function_id = .current_function
             .current_function = Some(function_)
+            defer .current_function = previous_function_id
 
             if function_.type is ImplicitConstructor {
-                let function_output = .codegen_constructor(function_)
-
-                output += function_output
+                if struct_.generic_parameters.is_empty() {
+                    output += .codegen_constructor_predecl(function_)
+                } else {
+                    output += .codegen_constructor(function_, is_inline: true)
+                }
                 output += "\n"
             } else {
-                if struct_.generic_parameters.is_empty() {
-                    output += .codegen_function_predecl(function_)
+                if struct_.generic_parameters.is_empty() and function_.generics.params.is_empty() {
+                    output += .codegen_function_predecl(function_, as_method: true)
                 } else {
-                    output += .codegen_function(function_)
+                    output += .codegen_function(function_, as_method: true)
                 }
             }
-
-            .current_function = previous_function_id
         }
 
-        output += .codegen_debug_description_getter(struct_)
+        if struct_.generic_parameters.is_empty() {
+            output += "ErrorOr<String> debug_description() const;\n"
+        } else {
+            output += .codegen_debug_description_getter(struct_, is_inline: true)
+        }
 
         output += "};"
 
@@ -1098,16 +1199,25 @@ struct CodeGenerator {
             output += "}\n"
         }
 
-        output += .codegen_enum_debug_description_getter(enum_)
+        if enum_.generic_parameters.is_empty() {
+            output += "ErrorOr<String> debug_description() const;\n"
+        } else {
+            output += .codegen_enum_debug_description_getter(enum_, is_inline: true)
+        }
 
         let enum_scope = .program.get_scope(enum_.scope_id)
         for function_item in enum_scope.functions.iterator() {
             let function_ = .program.get_function(function_item.1)
+
+            let previous_function_id = .current_function
+            .current_function = Some(function_)
+            defer .current_function = previous_function_id
+
             if not function_.type is ImplicitEnumConstructor {
-                if enum_.generic_parameters.is_empty() {
-                    output += .codegen_function_predecl(function_)
+                if enum_.generic_parameters.is_empty() and function_.generics.params.is_empty() {
+                    output += .codegen_function_predecl(function_, as_method: true)
                 } else {
-                    output += .codegen_function(function_)
+                    output += .codegen_function(function_, as_method: true)
                 }
             }
         }
@@ -1119,8 +1229,30 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_debug_description_getter(mut this, struct_: CheckedStruct) throws -> String {
-        mut output = "ErrorOr<String> debug_description() const { "
+    function codegen_debug_description_getter(mut this, struct_: CheckedStruct, is_inline: bool = false) throws -> String {
+        mut output = ""
+
+        if not is_inline and not struct_.generic_parameters.is_empty() {
+            output += "template <"
+            mut first = true
+            for type_id in struct_.generic_parameters.iterator() {
+                if first {
+                    first = false
+                } else {
+                    output += ","
+                }
+                output += "typename "
+                output += .codegen_type(type_id)
+            }
+            output += ">\n"
+        }
+
+        output += "ErrorOr<String> "
+        if not is_inline {
+            output += .codegen_type_possibly_as_namespace(type_id: struct_.type_id, as_namespace: true)
+            output += "::"
+        }
+        output += "debug_description() const { "
         output += "auto builder = MUST(StringBuilder::create());"
         output += format("TRY(builder.append(\"{}(\"));", struct_.name)
         output += "{\n"
@@ -1156,14 +1288,34 @@ struct CodeGenerator {
         output += "}\n"
         output += "TRY(builder.append(\")\"));"
         output += "return builder.to_string();"
-        output += " }"
+        output += " }\n"
         return output
     }
 
-    function codegen_enum_debug_description_getter(mut this, enum_: CheckedEnum) throws -> String {
+    function codegen_enum_debug_description_getter(mut this, enum_: CheckedEnum, is_inline: bool = false) throws -> String {
         mut output = ""
 
-        output += "ErrorOr<String> debug_description() const {\n"
+        if not is_inline and not enum_.generic_parameters.is_empty() {
+            output += "template <"
+            mut first = true
+            for type_id in enum_.generic_parameters.iterator() {
+                if first {
+                    first = false
+                } else {
+                    output += ","
+                }
+                output += "typename "
+                output += .codegen_type(type_id)
+            }
+            output += ">\n"
+        }
+
+        output += "ErrorOr<String> "
+        if not is_inline {
+            output += .codegen_type_possibly_as_namespace(type_id: enum_.type_id, as_namespace: true)
+            output += "::"
+        }
+        output += "debug_description() const {\n"
         output += "auto builder = TRY(StringBuilder::create());\n"
         output += "switch (this->index()) {"
 
@@ -1208,7 +1360,7 @@ struct CodeGenerator {
             output += "break;}\n"
         }
 
-        output += "}\nreturn builder.to_string();\n}"
+        output += "}\nreturn builder.to_string();\n}\n"
 
         return output
     }
@@ -2917,12 +3069,12 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_function(mut this, anon function_: CheckedFunction) throws -> String {
+    function codegen_function(mut this, anon function_: CheckedFunction, as_method: bool = false) throws -> String {
         if function_.is_comptime {
             return ""
         }
 
-        return .codegen_function_in_namespace(function_, containing_struct: None)
+        return .codegen_function_in_namespace(function_, containing_struct: None, as_method)
     }
 
     function codegen_struct_type(this, id: StructId, as_namespace: bool) throws -> String {
@@ -2984,7 +3136,7 @@ struct CodeGenerator {
         return output
     }
 
-    function codegen_constructor(mut this, anon function_: CheckedFunction) throws -> String {
+    function codegen_constructor_predecl(mut this, anon function_: CheckedFunction) throws -> String {
         let type_id = function_.return_type_id
         let type_ = .program.get_type(type_id)
 
@@ -3000,6 +3152,116 @@ struct CodeGenerator {
             output += "protected:\n"
 
             output += format("explicit {}(", function_.name)
+            mut first = true
+            for param in function_.params.iterator() {
+                if not first {
+                    output += ", "
+                } else {
+                    first = false
+                }
+
+                let param_type_id = param.variable.type_id
+                output += .codegen_type(param_type_id)
+                output += "&& a_"
+                output += param.variable.name
+            }
+            output += ");\n"
+
+            mut class_name_with_generics = ""
+            class_name_with_generics += structure.name
+
+            first = true
+            for generic_parameter in structure.generic_parameters.iterator() {
+                if not first {
+                    class_name_with_generics += ", "
+                } else {
+                    class_name_with_generics += "<"
+                    first = false
+                }
+
+                class_name_with_generics += .codegen_type(generic_parameter)
+            }
+            if not structure.generic_parameters.is_empty() {
+                class_name_with_generics += ">"
+            }
+
+            output += "public:\n"
+            output += format("static ErrorOr<NonnullRefPtr<{}>> create", class_name_with_generics)
+            output += "("
+
+            first = true
+            for param in function_.params.iterator() {
+                if not first {
+                    output += ", "
+                } else {
+                    first = false
+                }
+
+                output += .codegen_type(param.variable.type_id)
+                output += " "
+                output += param.variable.name
+            }
+
+            output += ");\n"
+            return output
+        }
+
+        mut output = ""
+        output += function_.name
+        output += "("
+
+        mut first = true
+        for param in function_.params.iterator() {
+            if not first {
+                output += ", "
+            } else {
+                first = false
+            }
+
+            output += .codegen_type(param.variable.type_id)
+            output += " a_"
+            output += param.variable.name
+        }
+        output += ");\n"
+
+        return output
+    }
+
+    function codegen_constructor(mut this, anon function_: CheckedFunction, is_inline: bool = false) throws -> String {
+        let type_id = function_.return_type_id
+        let type_ = .program.get_type(type_id)
+
+        guard type_ is Struct(struct_id) else {
+            panic("internal error: call to a constructor, but not a struct/class type")
+        }
+
+        let structure = .program.get_struct(struct_id)
+        let qualified_name = .codegen_type_possibly_as_namespace(type_id, as_namespace: true)
+        mut output = ""
+
+        if not is_inline and not structure.generic_parameters.is_empty() {
+            output += "template <"
+            mut first = true
+            for type_id in structure.generic_parameters.iterator() {
+                if first {
+                    first = false
+                } else {
+                    output += ","
+                }
+                output += "typename "
+                output += .codegen_type(type_id)
+            }
+            output += ">\n"
+        }
+
+        if structure.record_type is Class {
+            if is_inline {
+                output += function_.name
+                output += "("
+            } else {
+                output += format("{}::{}(", qualified_name, function_.name)
+            }
+
             mut first = true
             for param in function_.params.iterator() {
                 if not first {
@@ -3063,8 +3325,15 @@ struct CodeGenerator {
                 class_name_with_generics += ">"
             }
 
-            output += "public:\n"
-            output += format("static ErrorOr<NonnullRefPtr<{}>> create", class_name_with_generics)
+            if is_inline {
+                output += "static "
+            }
+
+            let qualified_namespace = match is_inline {
+                true => ""
+                else => qualified_name + "::"
+            }
+            output += format("ErrorOr<NonnullRefPtr<{}>> {}create", class_name_with_generics, qualified_namespace)
             output += "("
 
             first = true
@@ -3098,50 +3367,53 @@ struct CodeGenerator {
             output += "))); return o; }"
 
             return output
-        } else {
-            mut output = ""
-            output += function_.name
-            output += "("
-
-            mut first = true
-            for param in function_.params.iterator() {
-                if not first {
-                    output += ", "
-                } else {
-                    first = false
-                }
-
-                output += .codegen_type(param.variable.type_id)
-                output += " a_"
-                output += param.variable.name
-            }
-            output += ") "
-
-            if not function_.params.is_empty() {
-                output += ":"
-            }
-
-            first = true
-            for param in function_.params.iterator() {
-                if not first {
-                    output += ", "
-                } else {
-                    first = false
-                }
-
-                output += param.variable.name
-                output += "(a_"
-                output += param.variable.name
-                output += ")"
-            }
-
-            output += "{}\n"
-
-            return output
         }
+
+        if not is_inline {
+            output += qualified_name
+            output += "::"
+        }
+        output += function_.name
+        output += "("
+
+        mut first = true
+        for param in function_.params.iterator() {
+            if not first {
+                output += ", "
+            } else {
+                first = false
+            }
+
+            output += .codegen_type(param.variable.type_id)
+            output += " a_"
+            output += param.variable.name
+        }
+        output += ") "
+
+        if not function_.params.is_empty() {
+            output += ":"
+        }
+
+        first = true
+        for param in function_.params.iterator() {
+            if not first {
+                output += ", "
+            } else {
+                first = false
+            }
+
+            output += param.variable.name
+            output += "(a_"
+            output += param.variable.name
+            output += ")"
+        }
+
+        output += "{}\n"
+
+        return output
     }
 
-    function codegen_function_in_namespace(mut this, function_: CheckedFunction, containing_struct: TypeId?) throws -> String {
+    function codegen_function_in_namespace(mut this, function_: CheckedFunction, containing_struct: TypeId?, as_method: bool = false) throws -> String {
         // Extern generics need to be in the header anyways, so we can't codegen for them.
         if not function_.generics.params.is_empty() {
             if function_.linkage is External {
@@ -3161,7 +3433,7 @@ struct CodeGenerator {
         if is_main {
             output += "ErrorOr<int>"
         } else {
-            if function_.is_static() and not containing_struct.has_value() {
+            if as_method and function_.is_static() {
                 output += "static "
             }
             output += match function_.can_throw {

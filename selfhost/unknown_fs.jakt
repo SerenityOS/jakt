@@ -1,0 +1,4 @@
+function make_directory(path: String) throws {
+    eprintln("NOT IMPLEMENTED: make_directory {}", path)
+    throw Error::from_errno(38)
+}

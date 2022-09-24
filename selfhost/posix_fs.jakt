@@ -1,0 +1,15 @@
+import os { platform_module }
+import platform_module("errno") { errno_value }
+
+import extern c "sys/stat.h" {
+    extern function mkdir(anon pathname: raw c_char, anon mode: u32) -> c_int
+}
+
+function make_directory(path: String) throws {
+    let rc = mkdir(path.c_string(), mode: 0o777)
+    if rc == 0 {
+        return
+    }
+
+    throw Error::from_errno(errno_value())
+}

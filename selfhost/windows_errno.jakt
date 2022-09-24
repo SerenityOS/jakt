@@ -1,0 +1,25 @@
+import extern c "windows.h" {
+    extern function GetLastError() -> i32
+} before_include define {
+    WIN32_LEAN_AND_MEAN = "1"
+    NOMINMAX = "1"
+} after_include undefine {
+    Yield
+}
+
+import extern "system_error" {
+    namespace std {
+        extern struct error_condition {
+            function value(this) -> i32
+        }
+
+        extern struct system_category {
+            function system_category() -> system_category
+            function default_error_condition(this, anon error: i32) -> error_condition
+        }
+    }
+}
+
+function errno_value() -> i32 {
+    return std::system_category().default_error_condition(error: GetLastError()).value() as! i32
+}

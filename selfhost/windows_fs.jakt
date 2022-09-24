@@ -1,0 +1,11 @@
+import windows_errno { errno_value }
+
+import extern c "direct.h" {
+    extern function _mkdir(path: raw c_char) -> i32
+}
+
+function make_directory(path: String) throws {
+    if _mkdir(path: path.c_string()) != 0 {
+        throw Error::from_errno(errno_value())
+    }
+}

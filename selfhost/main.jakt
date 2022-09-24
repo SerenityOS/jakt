@@ -10,7 +10,7 @@ import compiler { Compiler, FileId }
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
 import formatter { Formatter }
-import utility { FilePath, ArgsParser, Span, escape_for_quotes }
+import utility { FilePath, ArgsParser, Span, escape_for_quotes, join }
 import lexer { Lexer }
 import parser { Parser }
 import interpreter { Interpreter, InterpreterScope, value_to_checked_expression }
@@ -18,6 +18,15 @@ import typechecker { Typechecker }
 import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId, Value, ValueImpl }
 import repl { REPL, serialize_ast_node }
 import ide
+import os { platform_process, platform_fs, Target }
+
+import platform_process() {
+    ExitPollResult, Process, start_background_process, poll_process_exit, forcefully_kill_process, wait_for_process, wait_for_some_set_of_processes_that_at_least_includes
+}
+
+import platform_fs() {
+    make_directory
+}
 
 function usage() => "usage: jakt [-h] [OPTIONS] <filename>"
 function help() -> String {
@@ -28,6 +37,9 @@ function help() -> String {
     output += "  -dp\t\t\t\t\tPrint debug info for the parser.\n"
     output += "  -dt\t\t\t\t\tPrint debug info for the typechecker.\n"
     output += "  -S\t\t\t\t\tOnly output source (do not build).\n"
+    output += "  -T,--target-triple TARGET\t\t\t\t\tSpecify the target triple used for the build, defaults to native.\n"
+    output += "  --runtime-library-path PATH\t\t\t\t\tSpecify the path to the runtime library, defaults to 'build/runtime'.\n"
+    output += "  -J,--jobs NUMBER\t\t\t\t\tSpecify the number of jobs to run in parallel, defaults to 2.\n"
     output += "  -cr, --compile-run\t\t\tBuild and run an executable file.\n"
     output += "  -r, --run\t\t\t\tRun the given file without compiling it (all positional arguments after the file name will be passed to main).\n"
     output += "  -d\t\t\t\t\tInsert debug statement spans in generated C++ code.\n"
@@ -50,7 +62,7 @@ function help() -> String {
     output += "  -I PATH\t\t\t\tAdd PATH to compiler's include list. Can be specified multiple times.\n"
     output += "  -L PATH\t\t\t\tAdd PATH to linker's search list. Can be specified multiple times.\n"
     output += "  -l,--link-with LIB\t\t\tLink executable with LIB. Can be specified multiple times.\n"
-    output += "  -o,--output-filename FILE\t\tName of the output C++ file and binary.\n\t\t\t\t\tDefaults to the input-filename.\n"
+    output += "  -o,--output-filename FILE\t\tName of the output binary.\n\t\t\t\t\tDefaults to the input-filename without the extension.\n"
     output += "  -g,--goto-def INDEX\t\t\tReturn the span for the definition at index.\n"
     output += "  -t,--goto-type-def INDEX\t\tReturn the span for the type definition at index.\n"
     output += "  -e,--hover INDEX\t\t\tReturn the type of element at index.\n"
@@ -109,6 +121,92 @@ function parse_format_range(anon range: String, anon input_file_length: usize) t
     )
 }
 
+struct ParallelExecutionPool {
+    pids: [usize:Process]
+    completed: [usize:ExitPollResult]
+    pid_index: usize
+    max_concurrent: usize
+
+    function create(anon max_concurrent: usize) throws -> ParallelExecutionPool {
+        return ParallelExecutionPool(
+            pids: [:]
+            completed: [:]
+            pid_index: 0
+            max_concurrent
+        )
+    }
+
+    function run(mut this, anon args: [String]) throws -> usize {
+        if .pids.size() >= .max_concurrent {
+            .wait_for_any_job_to_complete()
+        }
+
+        let process = start_background_process(args)
+        let id = .pid_index++
+        .pids.set(id, process)
+
+        return id
+    }
+
+    function status(this, id: usize) -> ExitPollResult? {
+        if .completed.contains(id) {
+            return .completed[id]
+        }
+
+        return None
+    }
+
+    function wait_for_any_job_to_complete(mut this) throws -> void {
+        let (finished_pid, finished_status) = wait_for_some_set_of_processes_that_at_least_includes(processes: &.pids)
+
+        mut pids_to_remove: [usize:ExitPollResult] = [:]
+        if finished_pid.has_value() {
+            pids_to_remove.set(finished_pid!, finished_status)
+        }
+
+        for (index, process) in .pids.iterator() {
+            // Swallow errors here, we'll get ECHLD for at least the one above
+            let status = try poll_process_exit(&process) catch {
+                pids_to_remove.set(index, finished_status)
+                continue
+            }
+            if status.has_value() {
+                pids_to_remove.set(index, status!)
+            }
+        }
+
+        for (index, status) in pids_to_remove.iterator() {
+            .pids.remove(index)
+            .completed.set(index, status)
+        }
+    }
+
+    function wait_for_all_jobs_to_complete(mut this) throws -> void {
+        while not .pids.is_empty() {
+            .wait_for_any_job_to_complete()
+        }
+    }
+
+    function kill_all(mut this) throws -> void {
+        for (_, process) in .pids.iterator() {
+            forcefully_kill_process(&process)
+        }
+    }
+}
+
+function value_or_throw<T>(anon maybe: T?) throws -> T {
+    if maybe.has_value() {
+        return maybe!
+    }
+
+    throw Error::from_errno(1)
+}
+
+comptime library_name(anon name: String) throws -> String => match Target::active().os {
+    "windows" => format("jakt_{}.lib", name)
+    else => format("libjakt_{}.a", name)
+}
+
 function main(args: [String]) {
     if args.size() <= 1 {
         eprintln("{}", usage())
@@ -116,7 +214,7 @@ function main(args: [String]) {
     }
 
     mut args_parser = ArgsParser::from_args(args)
-    
+
     if args_parser.flag(["-h", "--help"]) {
         println("{}\n", usage())
         println("{}", help())
@@ -142,12 +240,18 @@ function main(args: [String]) {
     let dump_try_hints = args_parser.flag(["--try-hints"])
     let check_only = args_parser.flag(["-c", "--check-only"])
     let write_source_to_file = args_parser.flag(["-S", "--emit-cpp-source-only"])
+    let generate_depfile = args_parser.option(["-M", "--dep-file"])
+    let target_triple = args_parser.option(["-T", "--target-triple"])
+    let runtime_library_path = args_parser.option(["-RLP", "--runtime-library-path"]) ?? "build/runtime"
+    let compiler_job_count = args_parser.option(["-J", "--jobs"]) ?? "2"
 
     let clang_format_path = args_parser.option(["-F", "--clang-format-path"]) ?? "clang-format"
     let runtime_path = args_parser.option(["-R", "--runtime-path"]) ?? "runtime"
     let binary_dir = args_parser.option(["-B", "--binary-dir"]) ?? "build"
     let dot_clang_format_path = args_parser.option(["-D", "--dot-clang-format-path"])
     let cxx_compiler_path = args_parser.option(["-C", "--cxx-compiler-path"]) ?? "clang++"
+    let archiver_path = args_parser.option(["-A", "--archiver"])
+    let link_archive = args_parser.option(["-a", "--link-archive"])
     let extra_include_paths = args_parser.option_multiple(["-I"])
     let extra_lib_paths = args_parser.option_multiple(["-L"])
     let extra_link_libs = args_parser.option_multiple(["-l"])
@@ -162,8 +266,13 @@ function main(args: [String]) {
     let format = args_parser.flag(["-f", "--format"])
     let input_format_range = args_parser.option(["-fr", "--format-range"]) ?? ""
 
+    let max_concurrent = try value_or_throw(compiler_job_count.to_uint()) catch {
+        eprintln("error: invalid value for --jobs: {}", compiler_job_count)
+        return 1
+    } as! usize
+
     if args_parser.flag(["--repl"]) {
-        mut repl = REPL::create()
+        mut repl = REPL::create(target_triple)
         repl.run()
         return 0
     }
@@ -210,6 +319,9 @@ function main(args: [String]) {
     //     return 1
     // }
 
+    let guessed_output_filename = binary_dir + "/" + file_path.basename(strip_extension: true)
+    let output_filename = set_output_filename ?? guessed_output_filename
+
     mut errors: [JaktError] = []
 
     mut compiler = Compiler(
@@ -227,6 +339,7 @@ function main(args: [String]) {
         dump_type_hints
         dump_try_hints
         optimize
+        target_triple
     )
 
     compiler.load_prelude()
@@ -473,65 +586,167 @@ function main(args: [String]) {
         return 0
     }
 
-    let output = CodeGenerator::generate(compiler, checked_program, debug_info: codegen_debug)
+    let codegen_result = CodeGenerator::generate(compiler, checked_program, debug_info: codegen_debug)
 
-    mut cpp_filename: String = ""
-    mut output_filename: String = ""
+    mut depfile_builder = StringBuilder::create()
 
-    if (write_source_to_file or build_executable or run_executable) {
-        
-        if set_output_filename.has_value() {
-            cpp_filename = binary_dir + "/" + set_output_filename! + ".cpp"
-            output_filename = binary_dir + "/" + set_output_filename!
-        } else {
-            let basename_without_extension = file_path.basename().substring(start: 0, length: file_path.basename().length() - 5)
-            cpp_filename = binary_dir + "/" + basename_without_extension + ".cpp"
-            output_filename = binary_dir + "/" + basename_without_extension
-        }
-
-        try {
-            write_to_file(data: output, output_filename: cpp_filename)
-        } catch error {
-            eprintln("Could not write file: {} ({})", cpp_filename, error);
-            return error.code();
-        }
-
-        if prettify_cpp_source {
-            mut command = clang_format_path + " -i " + cpp_filename
-            if dot_clang_format_path.has_value() {
-                command+= " --style=file:" + dot_clang_format_path!
-            }
-            system(command.c_string())
-        }
-    } else {
-        println("{}", output)
+    if not File::exists(binary_dir) {
+        make_directory(path: binary_dir)
     }
 
-    if (build_executable or run_executable) {
-        let compiler_status = run_compiler(
-            cxx_compiler_path
-            cpp_filename
-            output_filename
-            runtime_path
-            extra_include_paths
-            extra_lib_paths
-            extra_link_libs
-            optimize
-        )
+    for (file, contents_and_path) in codegen_result.iterator() {
+        let (contents, module_file_path) = contents_and_path
 
-        if run_executable and compiler_status == 0 {
-            return system(output_filename.c_string())
-        } else {
-            if compiler_status == 0 {
-                return 0
-            } else {
+        let path = binary_dir + "/" + file
+        try write_to_file(data: contents, output_filename: path) catch error {
+            eprintln("Error: Could not write to file: {} ({})", file, error)
+            return 1
+        }
+
+        if generate_depfile.has_value() and file.ends_with(".cpp") {
+            let escaped = file.replace(replace: " ", with: "\\ ")
+            let escaped_module_file_path = module_file_path.replace(replace: " ", with: "\\ ")
+            depfile_builder.append_string(format(
+                "{} {}.h: {}"
+                escaped
+                escaped.substring(start: 0, length: file.length() - 4)
+                escaped_module_file_path
+            ))
+            depfile_builder.append(b'\n')
+        }
+    }
+
+    if generate_depfile.has_value() {
+        try {
+            write_to_file(
+                data: depfile_builder.to_string()
+                output_filename: generate_depfile!
+            )
+        } catch error {
+            eprintln("Error: Could not write to file list ({})", error)
+            return 1
+        }
+    }
+
+    if build_executable or run_executable {
+        mut ids: {usize} = {}
+        mut linked_files: [String] = []
+        mut pool = ParallelExecutionPool::create(max_concurrent)
+
+        mut total_jobs = 0
+
+        for (file_name, _) in codegen_result.iterator() {
+            if file_name.ends_with(".h") {
+                continue
+            }
+            total_jobs += 1
+        }
+
+        for (file_name, _) in codegen_result.iterator() {
+            if file_name.ends_with(".h") {
+                continue
+            }
+
+            for (id, exit_result) in pool.completed.iterator() {
+                if exit_result.exit_code != 0 {
+                    eprintln("Error: Compilation failed")
+                    pool.kill_all()
+                    return 1
+                }
+            }
+
+            let file_path = FilePath::make(file_name)
+            let basename_without_extension = file_path.basename().substring(start: 0, length: file_path.basename().length() - 4)
+            let built_object = binary_dir + "/" + basename_without_extension + ".o"
+            linked_files.push(built_object)
+            let id = run_compiler(
+                &mut pool
+                cxx_compiler_path
+                cpp_filename: binary_dir + "/" + file_name
+                output_filename: built_object
+                runtime_path
+                extra_include_paths
+                extra_lib_paths: []
+                extra_link_libs: []
+                optimize
+                extra_compiler_flags: ["-c"]
+            )
+            ids.add(id)
+
+            eprintln("{:c}[2LBuilding: {}/{}", 0x1b, ids.size(), total_jobs)
+        }
+
+        pool.wait_for_all_jobs_to_complete()
+
+        for (id, exit_result) in pool.completed.iterator() {
+            if exit_result.exit_code != 0 {
+                eprintln("Error: Compilation failed")
                 return 1
             }
         }
+
+        mut linker_args: [String] = []
+        if link_archive.has_value() {
+            linker_args = [
+                archiver_path ?? "ar"
+                "cr"
+                link_archive!
+            ]
+            for arg in linked_files.iterator() {
+                linker_args.push(arg)
+            }
+        } else {
+            linker_args = [
+                cxx_compiler_path
+                "-o"
+                output_filename
+            ]
+            for arg in linked_files.iterator() {
+                linker_args.push(arg)
+            }
+
+            let runtime_lib_path = Path::from_string(runtime_library_path)
+
+            linker_args.push(runtime_lib_path.join(library_name("runtime")).to_string())
+            linker_args.push(runtime_lib_path.join(library_name("main")).to_string())
+
+            for path in extra_lib_paths.iterator() {
+                linker_args.push("-L")
+                linker_args.push(path)
+            }
+
+            for lib in extra_link_libs.iterator() {
+                linker_args.push("-l")
+                linker_args.push(lib)
+            }
+        }
+
+        let id = pool.run(linker_args)
+        pool.wait_for_all_jobs_to_complete()
+        let result = pool.status(id)!
+
+        if result.exit_code != 0 {
+            return result.exit_code
+        }
+    }
+
+    if run_executable {
+        return system(output_filename.c_string())
     }
 }
 
-function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_filename: String, runtime_path: String, extra_include_paths: [String], extra_lib_paths: [String], extra_link_libs: [String], optimize: bool) throws -> c_int {
+function run_compiler(
+    pool: &mut ParallelExecutionPool
+    cxx_compiler_path: String
+    cpp_filename: String
+    output_filename: String
+    runtime_path: String
+    extra_include_paths: [String]
+    extra_lib_paths: [String]
+    extra_link_libs: [String]
+    optimize: bool
+    extra_compiler_flags: [String]
+) throws -> usize {
     mut file_path = FilePath(path: cxx_compiler_path)
 
     mut extra_flags: [String] = []
@@ -544,6 +759,10 @@ function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_fi
         extra_flags.push("-Wno-unused-command-line-argument")
     }
 
+    for extra_flag in extra_compiler_flags.iterator() {
+        extra_flags.push(extra_flag)
+    }
+
     mut compile_args = [
         cxx_compiler_path
         "-fdiagnostics-color=always"
@@ -554,7 +773,7 @@ function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_fi
         "-Wno-parentheses-equality"
         "-Wno-unqualified-std-cast-call"
         "-Wno-user-defined-literals"
-        "-Wno-deprecated-declarations"  
+        "-Wno-deprecated-declarations"
     ]
 
     if optimize {
@@ -594,12 +813,8 @@ function run_compiler(cxx_compiler_path: String, cpp_filename: String, output_fi
             compile_args.push("-l" + path)
         }
     }
-    mut command = ""
-    for compile_arg in compile_args.iterator() {
-        command += compile_arg
-        command += " "
-    }
-    return system(command.c_string())
+
+    return pool.run(compile_args)
 }
 
 function write_to_file(data: String, output_filename: String) throws {
