@@ -4463,7 +4463,7 @@ struct Typechecker {
             .unify_with_type(found_type: builtin(BuiltinType::JaktString), expected_type: type_hint, rhs_span: span)
             yield CheckedExpression::QuotedString(val, span)
         }
-        Call(call, span) => .typecheck_call_expr(call, span, scope_id, safety_mode, type_hint)
+        Call(call, span) => .typecheck_call_expr(call, span, must_be_enum_constructor: false, scope_id, safety_mode, type_hint)
         MethodCall(expr, call, span, is_optional) => .typecheck_method_call_expr(expr, call, span, is_optional, scope_id, safety_mode, type_hint)
         Range(from, to, span) => {
             mut checked_from: CheckedExpression? = None
@@ -5020,12 +5020,12 @@ struct Typechecker {
         }
 
         let implicit_constructor_call = ParsedCall(namespace_, name, args: [], type_args: [])
-        let call_expression = .typecheck_call(call: implicit_constructor_call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: true)
+        let call_expression = .typecheck_call_expr(call: implicit_constructor_call, span, must_be_enum_constructor: true,  scope_id, safety_mode, type_hint)
         let type_id = call_expression.type()
         let call = match call_expression {
             Call(call) => call
             else => {
-                .compiler.panic("typecheck_call returned something other than a CheckedCall")
+                .compiler.panic("typecheck_call_expr returned something other than a CheckedCall")
             }
         }
         if call.function_id.has_value() {
@@ -6428,7 +6428,7 @@ struct Typechecker {
     // ParsedExpression::Call. If the function ID of the call to typecheck is
     // known or an alternative resolving method is preferred, use
     // typecheck_resolved_call and typecheck_unresolved_call.
-    function typecheck_call_expr(mut this, call: ParsedCall, span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
+    function typecheck_call_expr(mut this, call: ParsedCall, span: Span, must_be_enum_constructor: bool, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
         // it may be a builtin call, in that case we'll use the special path
         let maybe_builtin_call = .detect_and_typecheck_builtin_call(call, span, scope_id, safety_mode, type_hint)
         if maybe_builtin_call.has_value() {
@@ -6445,7 +6445,7 @@ struct Typechecker {
         let function_id = .resolve_call(
             call, namespaces: resolved_namespaces
             span, scope_id
-            must_be_enum_constructor: false
+            must_be_enum_constructor
             ignore_errors: false)
 
         guard function_id.has_value() else {
