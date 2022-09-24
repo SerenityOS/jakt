@@ -349,9 +349,9 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
             yielded_none: block.yielded_none
         )
 
-        for param in checked_params.iterator() {
-            println("Param: {}", interpreter.program.type_name(param.variable.type_id))
-        }
+        // for param in checked_params.iterator() {
+        //     println("Param: {}", interpreter.program.type_name(param.variable.type_id))
+        // }
 
         yield CheckedExpression::Function(
             captures: []
