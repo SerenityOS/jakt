@@ -4463,9 +4463,7 @@ struct Typechecker {
             .unify_with_type(found_type: builtin(BuiltinType::JaktString), expected_type: type_hint, rhs_span: span)
             yield CheckedExpression::QuotedString(val, span)
         }
-        Call(call, span) => {
-            yield .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: false)
-        }
+        Call(call, span) => .typecheck_call_expr(call, span, scope_id, safety_mode, type_hint)
         MethodCall(expr, call, span, is_optional) => {
             let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
             let checked_expr_type_id = checked_expr.type()
@@ -6073,7 +6071,7 @@ struct Typechecker {
                         args: .typecheck_format_args(args: call.args, scope_id, safety_mode)
                         type_args: []
                         function_id: None
-                        return_type: .program.find_or_add_type_id(Type::JaktString, module_id: ModuleId(id: 0))
+                        return_type: builtin(BuiltinType::JaktString)
                         callee_throws: true))
             }
 
@@ -6087,7 +6085,8 @@ struct Typechecker {
         mut args: [(String, CheckedExpression)] = []
         args.ensure_capacity(call.args.size())
         for (name, span, arg_expr) in call.args.iterator() {
-            let cehcked_arg = .typecheck_expression(arg_expr, scope_id, safety_mode, type_hint: None)
+            let checked_arg = .typecheck_expression(arg_expr, scope_id, safety_mode, type_hint: None)
+            args.push((name, checked_arg))
         }
 
         // typecheck type arguments
@@ -6161,7 +6160,9 @@ struct Typechecker {
 
             let typevar_type_id = callee.generics.params[type_arg_index].type_id()
 
-            .generic_inferences.set(typevar_type_id.to_string(), checked_type.to_string())
+            if not typevar_type_id.equals(checked_type) {
+                .generic_inferences.set(typevar_type_id.to_string(), checked_type.to_string())
+            }
         }
 
         // This will be 0 for functions and 1 for instance methods, because of the `this` ptr
@@ -6172,6 +6173,9 @@ struct Typechecker {
                 if .get_type(type_id) is GenericInstance(id, args) {
                     let structure = .get_struct(id)
                     for i in 0..structure.generic_parameters.size() {
+                        if structure.generic_parameters[i].equals(args[i]) {
+                            continue
+                        }
                         .generic_inferences.set(
                             structure.generic_parameters[i].to_string()
                             args[i].to_string())
@@ -6268,9 +6272,7 @@ struct Typechecker {
                 parent_scope_id: callee_scope_id
                 this_type_id
                 generic_substitutions: .generic_inferences)
-        } 
-
-        if callee.is_instantiated {
+        } else if callee.is_instantiated {
             if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
                 .check_types_for_compat(
                     lhs_type_id: type_hint!
@@ -6389,6 +6391,70 @@ struct Typechecker {
 
     }
 
+    // NOTE: this function is meant to typecheck only the call expression from
+    // ParsedExpression::Call. If the function ID of the call to typecheck is
+    // known or an alternative resolving method is preferred, use
+    // typecheck_resolved_call and typecheck_unresolved_call.
+    function typecheck_call_expr(mut this, call: ParsedCall, span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
+        // it may be a builtin call, in that case we'll use the special path
+        let maybe_builtin_call = .detect_and_typecheck_builtin_call(call, span, scope_id, safety_mode, type_hint)
+        if maybe_builtin_call.has_value() {
+            return Typechecker::checked_call_to_call_expr(checked_call: maybe_builtin_call!, span)
+        }
+
+        // fill this array in advance since resolve_call accesses it later.
+        mut resolved_namespaces: [ResolvedNamespace] = []
+        resolved_namespaces.ensure_capacity(call.namespace_.size())
+        for name in call.namespace_.iterator() {
+            resolved_namespaces.push(ResolvedNamespace(name, generic_parameters: None))
+        }
+
+        let function_id = .resolve_call(
+            call, namespaces: resolved_namespaces
+            span, scope_id
+            must_be_enum_constructor: false
+            ignore_errors: false)
+
+        guard function_id.has_value() else {
+            return Typechecker::checked_call_to_call_expr(
+                checked_call: .typecheck_unresolved_call(call, scope_id, safety_mode)
+                span)
+        }
+
+        // this error can only happen in regular calls
+        let callee = .get_function(function_id!)
+        if not callee.is_static() {
+            .error_with_hint(
+                "Cannot call an instance method statically"
+                span
+                "Add a dot before the method to call an instance method"
+                span)
+        }
+
+        let checked_call = .typecheck_resolved_call(
+            call
+            caller_scope_id: scope_id
+            span
+            function_id: function_id!
+            safety_mode
+            resolved_namespaces
+            this_expr_type_id: None
+            type_hint)
+
+        return .execute_call_if_comptime(
+            checked_call, span
+            caller_scope_id: scope_id
+            resolved_namespaces
+            this_expr: None
+        ) ?? Typechecker::checked_call_to_call_expr(checked_call, span)
+    }
+
+    function checked_call_to_call_expr(checked_call: CheckedCall, span: Span) throws -> CheckedExpression {
+        return CheckedExpression::Call(
+            call: checked_call
+            span
+            type_id: checked_call.return_type)
+    }
 
 
     function typecheck_call(mut this, call: ParsedCall, caller_scope_id: ScopeId, span: Span, this_expr: CheckedExpression?, parent_id: StructOrEnumId?, safety_mode: SafetyMode, type_hint: TypeId?, must_be_enum_constructor: bool) throws -> CheckedExpression {
