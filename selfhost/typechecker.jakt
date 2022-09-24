@@ -5960,13 +5960,6 @@ struct Typechecker {
             Enum(id) => .get_scope(.get_enum(id).scope_id).functions.get(call.name)
         }
 
-    // little helper to make sure error message is the same. TODO: inline this into its two uses.
-    function check_for_throwing_scope(mut this, caller_scope_id: ScopeId, span: Span) throws {
-        if not .get_scope(caller_scope_id).can_throw {
-            .error("Call to function that may throw needs to be in a try statement or a function marked as throws", span)
-        }
-    }
-
     // custom path to check arguments for format/[e]print[ln] builtins.
     function typecheck_format_args(mut this, args: [(String, Span, ParsedExpression)], scope_id: ScopeId, safety_mode: SafetyMode) throws -> [(String, CheckedExpression)] {
         mut checked_args: [(String, CheckedExpression)] = []
@@ -5996,7 +5989,9 @@ struct Typechecker {
                     callee_throws: false))
 
             "format" => {
-                .check_for_throwing_scope(caller_scope_id: scope_id, span)
+                if not .get_scope(scope_id).can_throw {
+                    .error("Call to function that may throw needs to be in a try statement or a function marked as throws", span)
+                }
 
                 yield Some(CheckedCall(
                         namespace_: []
@@ -6189,9 +6184,10 @@ struct Typechecker {
             generic_inferences: .generic_inferences,
         )
 
-        if callee.can_throw {
-            .check_for_throwing_scope(caller_scope_id, span)
+        if callee.can_throw and not .get_scope(caller_scope_id).can_throw {
+            .error("Call to function that may throw needs to be in a try statement or a function marked as throws", span)
         }
+        
 
         if not callee.is_instantiated or (not callee.linkage is External and not callee.generics.is_specialized_for_types(types: generic_arguments)) {
             let this_type_id = match this_expr_type_id.has_value() {
