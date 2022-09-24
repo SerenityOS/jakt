@@ -998,6 +998,29 @@ class Interpreter {
                         )
                     )
                 }
+                "exists" => {
+                    let requested_path = match arguments[0].impl {
+                        JaktString(x) => x
+                        else => {
+                            .error(
+                                format("Prelude function `File::{}` expects a string as its first argument, but got {}", prelude_function, arguments[0].impl),
+                                call_span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    let base_path = .program.compiler.get_file_path(call_span.file_id)!.dirname()
+                    let path_string = match requested_path.byte_at(0) {
+                        b'/' => requested_path
+                        else => base_path + "/" + requested_path
+                    }
+                    yield StatementResult::JustValue(
+                        Value(
+                            impl: ValueImpl::Bool(File::exists(path_string))
+                            span: call_span
+                        )
+                    )
+                }
                 else => {
                     .error(
                         format("Prelude function `File::{}` is not implemented", prelude_function),
