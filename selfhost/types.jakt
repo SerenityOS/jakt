@@ -1992,6 +1992,8 @@ struct Value {
         }
         USize(value) => match expected.impl {
             U64 => Value(impl: ValueImpl::U64(value as! u64), span: span)
+            // No idea why this is allowed.
+            CInt => Value(impl: ValueImpl::CInt(value as! c_int), span: span)
             else => this
         }
         OptionalSome => this

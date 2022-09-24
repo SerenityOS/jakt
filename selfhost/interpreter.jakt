@@ -2511,6 +2511,20 @@ class Interpreter {
                             throw Error::from_errno(InterpretError::InvalidType as! i32)
                         }
                     }
+                    CInt(x) => match rhs_value.impl {
+                        CInt(y) => ValueImpl::Bool(x == y)
+                        else => {
+                            .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    CChar(x) => match rhs_value.impl {
+                        CChar(y) => ValueImpl::Bool(x == y)
+                        else => {
+                            .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
                     JaktString(x) => match rhs_value.impl {
                         JaktString(y) => ValueImpl::Bool(x == y)
                         else => {
@@ -2601,6 +2615,20 @@ class Interpreter {
                     }
                     USize(x) => match rhs_value.impl {
                         USize(y) => ValueImpl::Bool(x != y)
+                        else => {
+                            .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    CInt(x) => match rhs_value.impl {
+                        CInt(y) => ValueImpl::Bool(x != y)
+                        else => {
+                            .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    CChar(x) => match rhs_value.impl {
+                        CChar(y) => ValueImpl::Bool(x != y)
                         else => {
                             .error(format("Invalid operands '{}' and '{}' to binary operation", lhs_value.type_name(), rhs_value.type_name()), span)
                             throw Error::from_errno(InterpretError::InvalidType as! i32)
