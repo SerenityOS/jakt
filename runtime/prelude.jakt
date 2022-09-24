@@ -135,6 +135,8 @@ extern class File {
     public function exists(anon path: String) -> bool
 }
 
+extern function ___jakt_get_target_triple_string() -> String
+
 extern function abort() -> never
 extern function as_saturated<U, T>(anon input: T) -> U
 extern function as_truncated<U, T>(anon input: T) -> U

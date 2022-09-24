@@ -180,7 +180,7 @@ struct Typechecker {
 
     function create_scope(mut this, parent_scope_id: ScopeId?, can_throw: bool, debug_name: String) throws -> ScopeId => .program.create_scope(parent_scope_id, can_throw, debug_name, module_id: .current_module_id)
 
-    function create_module(mut this, name: String, is_root: bool) throws -> ModuleId {
+    function create_module(mut this, name: String, is_root: bool, path: String? = None) throws -> ModuleId {
         let new_id = .program.modules.size()
         let module_id = ModuleId(id: new_id)
         let module = Module(
@@ -212,6 +212,7 @@ struct Typechecker {
             ],
             variables: [],
             imports: [],
+            resolved_import_path: path ?? .compiler.current_file_path()!.path,
             is_root: is_root,
         )
         .program.modules.push(module)
@@ -598,13 +599,124 @@ struct Typechecker {
     function typecheck_module_import(mut this, anon import_: ParsedModuleImport, scope_id: ScopeId) throws {
         // load the module if not present
         // FIXME: use match
+        let module_names_and_spans = match import_.module_name {
+            Literal(name, span) => Some([(name, span)])
+            Comptime(expression) => {
+                mut interpreter = Interpreter::create(compiler: .compiler, program: .program, spans: [])
+                mut eval_scope = InterpreterScope::from_runtime_scope(scope_id, program: .program)
+                let exec_scope = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "comptime-import")
+
+                let result = interpreter.execute_expression(
+                    expr: .typecheck_expression(
+                        expr: expression
+                        scope_id: exec_scope
+                        safety_mode: SafetyMode::Safe,
+                        type_hint: None
+                    )
+                    scope: eval_scope
+                )
+                yield match result {
+                    Return | Yield | Continue | Break => {
+                        .error_with_hint(
+                            message: "module name must evalute to a string literal or an array of strings"
+                            span: expression.span()
+                            hint: "this expression evaluates to an invalid value"
+                            hint_span: expression.span()
+                        )
+                        yield None
+                    }
+                    Throw(error) => {
+                        .error_with_hint(
+                            message: "module name must evalute to a string literal or an array of strings"
+                            span: expression.span()
+                            hint: format("this expression threw an error: {}", error)
+                            hint_span: expression.span()
+                        )
+                        yield None
+                    }
+                    JustValue(value) => match value.impl {
+                        JaktString(string) => Some([(string, value.span)])
+                        JaktArray(values) => {
+                            if values.is_empty() {
+                                .error_with_hint(
+                                    message: "module name must evalute to a string literal or an array of strings"
+                                    span: expression.span()
+                                    hint: "this expression evaluates to an empty array"
+                                    hint_span: expression.span()
+                                )
+                            }
+
+                            mut result: [(String, Span)] = []
+                            for value in values.iterator() {
+                                match value.impl {
+                                    JaktString(string) => result.push((string, value.span))
+                                    else => {
+                                        .error_with_hint(
+                                            message: "module name must evalute to a string literal or an array of strings"
+                                            span: value.span
+                                            hint: "this expression evaluates to an invalid value"
+                                            hint_span: value.span
+                                        )
+                                    }
+                                }
+                            }
+                            yield Some(result)
+                        }
+                        else => {
+                            .error_with_hint(
+                                message: "module name must evalute to a string literal"
+                                span: expression.span()
+                                hint: "this expression evaluates to a non-string value"
+                                hint_span: expression.span()
+                            )
+                            yield None
+                        }
+                    }
+                }
+            }
+        }
+
+        if not module_names_and_spans.has_value() { return }
+
+        mut module_name_and_span: (String, Span)? = None
+        mut names: [String] = []
+        for name_and_span in module_names_and_spans!.iterator() {
+            names.push(name_and_span.0)
+
+            mut maybe_loaded_module = .program.get_loaded_module(name_and_span.0)
+            if not maybe_loaded_module.has_value() {
+                let maybe_file_name = .compiler.search_for_path(name_and_span.0)
+                let file_name = match maybe_file_name.has_value() {
+                    true => maybe_file_name!
+                    else => FilePath::make(format("{}/{}.jakt", .get_root_path().dirname(), name_and_span.0))
+                }
+                if File::exists(file_name.path) {
+                    module_name_and_span = name_and_span
+                    break
+                }
+            } else {
+                module_name_and_span = name_and_span
+                break
+            }
+        }
+
+        if not module_name_and_span.has_value() {
+            .error(
+                message: format("No module in module set {{{}}} was found", join(names, separator: ", "))
+                span: import_.module_name.span()
+            )
+            return
+        }
+
+        let (module_name, module_span) = module_name_and_span!
+
         mut imported_module_id = ModuleId(id: 0)
-        mut maybe_loaded_module = .program.get_loaded_module(import_.module_name.name)
+        mut maybe_loaded_module = .program.get_loaded_module(module_name)
         if not maybe_loaded_module.has_value() {
-            let maybe_file_name = .compiler.search_for_path(import_.module_name.name)
+            let maybe_file_name = .compiler.search_for_path(module_name)
             let file_name = match maybe_file_name.has_value() {
                 true => maybe_file_name!
-                else => FilePath::make(format("{}/{}.jakt", .get_root_path().dirname(), import_.module_name.name))
+                else => FilePath::make(format("{}/{}.jakt", .get_root_path().dirname(), module_name))
             }
 
             let file_id = .compiler.get_file_id_or_register(file_name)
@@ -613,17 +725,17 @@ struct Typechecker {
 
             if not parsed_namespace.has_value() {
                 .error(
-                    format("Module '{}' not found", import_.module_name.name)
-                    import_.module_name.span
+                    format("Module '{}' not found", module_name)
+                    module_span
                 )
                 return
             }
 
             let original_current_module_id = .current_module_id
 
-            imported_module_id = .create_module(name: import_.module_name.name, is_root: false)
+            imported_module_id = .create_module(name: module_name, is_root: false, path: file_name.path)
             .program.set_loaded_module(
-                module_name: import_.module_name.name
+                module_name: module_name
                 loaded_module: LoadedModule(
                     module_id: imported_module_id
                     file_id
@@ -631,7 +743,7 @@ struct Typechecker {
 
             .current_module_id = imported_module_id
 
-            let imported_scope_id = .create_scope(parent_scope_id: .root_scope_id(), can_throw: false, debug_name: format("module({})", import_.module_name.name))
+            let imported_scope_id = .create_scope(parent_scope_id: .root_scope_id(), can_throw: false, debug_name: format("module({})", module_name))
             .typecheck_module(parsed_namespace: parsed_namespace!, scope_id: imported_scope_id)
 
             .current_module_id = original_current_module_id
@@ -645,9 +757,9 @@ struct Typechecker {
         if import_.import_list.is_empty() {
             // import everything into scope
             mut scope_imports = .get_scope(scope_id).imports
-            mut import_name = import_.module_name.name
+            mut import_name = module_name
             if import_.alias_name.has_value() {
-                import_name = import_.alias_name!.name
+                import_name = import_.alias_name!.literal_name()
             }
             scope_imports.set(
                 key: import_name
@@ -659,71 +771,71 @@ struct Typechecker {
                 // if it is a function, add function to scope
                 let maybe_function_id = .find_function_in_scope(
                     parent_scope_id: import_scope_id
-                    function_name: imported_name.name
+                    function_name: imported_name.literal_name()
                 )
                     if maybe_function_id.has_value() {
                         found = true
                         // NOTE: what should we do if this returns false? error is already created in the function itself and rust compiler goes on
                         .add_function_to_scope(
                             parent_scope_id: scope_id
-                            name: imported_name.name
+                            name: imported_name.literal_name()
                             function_id: maybe_function_id!
-                            span: imported_name.span
+                            span: imported_name.span()
                         )
                     }
 
                 // if it is an enum, add enum to scope
                 let maybe_enum_id = .program.find_enum_in_scope(
                     scope_id: import_scope_id
-                    name: imported_name.name
+                    name: imported_name.literal_name()
                 )
                     if maybe_enum_id.has_value() {
                         found = true
                         // NOTE: what should we do if this returns false? error is already created in the enum itself and rust compiler goes on
                         .add_enum_to_scope(
                             parent_scope_id: scope_id
-                            name: imported_name.name
+                            name: imported_name.literal_name()
                             enum_id: maybe_enum_id!
-                            span: imported_name.span
+                            span: imported_name.span()
                         )
                     }
 
                 // if it is a type, add type to scope
                 let maybe_type_id = .find_type_in_scope(
                     scope_id: import_scope_id
-                    name: imported_name.name
+                    name: imported_name.literal_name()
                 )
                     if maybe_type_id.has_value() {
                         found = true
                         // NOTE: what should we do if this returns false? error is already created in the type itself and rust compiler goes on
                         .add_type_to_scope(
                             parent_scope_id: scope_id
-                            type_name: imported_name.name
+                            type_name: imported_name.literal_name()
                             type_id: maybe_type_id!
-                            span: imported_name.span
+                            span: imported_name.span()
                         )
                     }
 
                 // if it is a struct, add struct to scope
                 let maybe_struct_id = .find_struct_in_scope(
                     scope_id: import_scope_id
-                    name: imported_name.name
+                    name: imported_name.literal_name()
                 )
                     if maybe_struct_id.has_value() {
                         found = true
                         // NOTE: what should we do if this returns false? error is already created in the struct itself and rust compiler goes on
                         .add_struct_to_scope(
                             parent_scope_id: scope_id
-                            name: imported_name.name
+                            name: imported_name.literal_name()
                             struct_id: maybe_struct_id!
-                            span: imported_name.span
+                            span: imported_name.span()
                         )
                     }
 
                 if not found {
                     .error(
-                        format("Imported name '{}' not found in module '{}'", imported_name.name, import_.module_name.name)
-                        imported_name.span
+                        format("Imported name '{}' not found in module '{}'", imported_name.literal_name(), module_name)
+                        imported_name.span()
                     )
                 }
             }

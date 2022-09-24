@@ -876,6 +876,10 @@ class Interpreter {
                         )
                     )
                 }
+                "___jakt_get_target_triple_string" => StatementResult::JustValue(Value(
+                    impl: ValueImpl::JaktString(.compiler.target_triple ?? "unknown-unknown-unknown-unknown")
+                    span: call_span
+                ))
                 else => {
                     .error(
                         format("Prelude function {}::{} is not implemented yet", namespace_, prelude_function),
@@ -885,7 +889,7 @@ class Interpreter {
                 }
             }
         }
-        
+
         return match namespace_[0].name {
             "Error" => match prelude_function {
                 "from_errno" => {

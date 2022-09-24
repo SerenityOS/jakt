@@ -31,9 +31,38 @@ enum DefinitionLinkage {
     External
 }
 
-struct ImportName {
-    name: String
-    span: Span
+enum ImportName {
+    Literal(name: String, span: Span)
+    Comptime(expression: ParsedExpression)
+
+    function equals(this, anon other: ImportName) -> bool => match this {
+        Literal(name) => match other {
+            Literal(name: other_name) => name == other_name
+            else => false
+        }
+        Comptime(expression) => match other {
+            Comptime(expression: other_expression) => expression.equals(other_expression)
+            else => false
+        }
+    }
+
+    function literal_name(this) -> String {
+        match this {
+            Literal(name) => {
+                return name
+            }
+            else => {
+                panic("cannot get literal name of non-literal import name")
+            }
+        }
+    }
+
+    function span(this) -> Span => match this {
+        Literal(span) => span
+        Comptime(expression) => {
+            return expression.span()
+        }
+    }
 }
 
 struct ParsedModuleImport {
@@ -42,7 +71,7 @@ struct ParsedModuleImport {
     import_list: [ImportName]
 
     function is_equivalent_to(this, anon other: ParsedModuleImport) -> bool =>
-        .module_name.name == other.module_name.name and .has_same_alias_than(other) and .has_same_import_semantics(other)
+        .module_name.equals(other.module_name) and .has_same_alias_than(other) and .has_same_import_semantics(other)
 
     // we do this because imports with an empty import list mean a namespaced
     // import
@@ -52,7 +81,7 @@ struct ParsedModuleImport {
 
     function has_same_alias_than(this, anon other: ParsedModuleImport) -> bool  {
         if .alias_name.has_value() {
-            return other.alias_name.has_value() and other.alias_name!.name == .alias_name!.name
+            return other.alias_name.has_value() and other.alias_name!.equals(.alias_name!)
         } else {
             return not other.alias_name.has_value()
         }
@@ -63,13 +92,22 @@ struct ParsedModuleImport {
         // generate a set of the names that exist
         mut name_set: {String} = {}
         for import_ in .import_list.iterator() {
-            name_set.add(import_.name)
+            match import_ {
+                Literal(name) => name_set.add(name)
+                Comptime(expression) => {}
+            }
         }
 
         for import_ in list.iterator() {
-            if not name_set.contains(import_.name) {
-                name_set.add(import_.name)
-                .import_list.push(import_)
+            match import_ {
+                Literal(name) => {
+                    if not name_set.contains(name) {
+                        .import_list.push(import_)
+                    }
+                }
+                Comptime(expression) => {
+                    .import_list.push(import_)
+                }
             }
         }
     }
@@ -1372,13 +1410,23 @@ struct Parser {
 
     function parse_module_import(mut this) throws -> ParsedModuleImport {
         mut parsed_import = ParsedModuleImport(
-            module_name: ImportName(name: "", span: .empty_span())
+            module_name: ImportName::Literal(name: "", span: .empty_span())
             alias_name: None
             import_list: [])
 
         parsed_import.module_name = match .current() {
-            Identifier(name, span) => ImportName(name, span)
-            else => { 
+            Identifier(name, span) => match .peek(1) {
+                LParen => {
+                    let expression = ParsedExpression::Call(
+                        call: .parse_call()!
+                        span
+                    )
+                    .index--
+                    yield ImportName::Comptime(expression)
+                }
+                else => ImportName::Literal(name, span)
+            }
+            else => {
                 .error("Expected module name", .current().span())
                 return parsed_import
             }
@@ -1393,7 +1441,7 @@ struct Parser {
             .index++
             if .current() is Identifier(name, span) {
                 .index++
-                parsed_import.alias_name = ImportName(name, span)
+                parsed_import.alias_name = ImportName::Literal(name, span)
             } else  {
                 .error("Expected name", .current().span())
                 .index++
@@ -1412,7 +1460,7 @@ struct Parser {
         while not .eof() {
             match .current() {
                 Identifier(name, span) => {
-                    parsed_import.import_list.push(ImportName(name, span))
+                    parsed_import.import_list.push(ImportName::Literal(name, span))
                     .index++
                 }
                 Comma | Eol => {
