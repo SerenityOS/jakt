@@ -4464,74 +4464,7 @@ struct Typechecker {
             yield CheckedExpression::QuotedString(val, span)
         }
         Call(call, span) => .typecheck_call_expr(call, span, scope_id, safety_mode, type_hint)
-        MethodCall(expr, call, span, is_optional) => {
-            let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
-            let checked_expr_type_id = checked_expr.type()
-            mut found_optional = false
-
-            let parent_id = match .get_type(checked_expr_type_id) {
-                Struct(id) => Some(StructOrEnumId::Struct(id))
-                Enum(id) => Some(StructOrEnumId::Enum(id))
-                JaktString => Some(StructOrEnumId::Struct(.find_struct_in_prelude("String")))
-                GenericInstance(id, args) => {
-                    yield match is_optional {
-                        true => {
-                            let optional_struct_id = .find_struct_in_prelude("Optional")
-                            mut struct_id: StructOrEnumId? = None
-                            if not id.equals(optional_struct_id) {
-                                .error(format("Can't use ‘{}’ as an optional type in optional chained call", .get_struct(id).name), span)
-                            } else {
-                                found_optional = true
-                                struct_id = match .get_type(args[0]) {
-                                    Struct(struct_id) | GenericInstance(id: struct_id) => StructOrEnumId::Struct(struct_id)
-                                    Enum(id) | GenericEnumInstance(id) => StructOrEnumId::Enum(id)
-                                    else => {
-                                        .error("Can't use non-struct type as an optional type in optional chained call", span)
-                                        found_optional = false
-                                        yield StructOrEnumId::Struct(optional_struct_id)
-                                    }
-                                }
-                            }
-
-                            yield Some(struct_id ?? StructOrEnumId::Struct(optional_struct_id))
-                        }
-                        else => Some(StructOrEnumId::Struct(id))
-                    }
-                }
-                GenericEnumInstance(id) => Some(StructOrEnumId::Enum(id))
-                else => {
-                    .error(message: format("no methods available on value (type: {})", .type_name(type_id: checked_expr_type_id)), span: checked_expr.span())
-                    let none: StructOrEnumId? = None
-
-                    yield none
-                }
-            }
-
-            if is_optional and not found_optional {
-                .error(message: format("Optional chain mismatch: expected optional chain, found {}", .type_name(type_id: checked_expr_type_id)), span: checked_expr.span())
-            }
-
-            let checked_call_expr = .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: checked_expr, parent_id, safety_mode, type_hint, must_be_enum_constructor: false)
-            let type_id = checked_call_expr.type()
-            yield match checked_call_expr {
-                Call(call) => {
-                    mut result_type = call.return_type
-                    if is_optional {
-                        let optional_struct_id = .find_struct_in_prelude("Optional")
-                        result_type = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [result_type]))
-                    }
-                    yield CheckedExpression::MethodCall(
-                        expr: checked_expr
-                        call
-                        span
-                        is_optional
-                        type_id: result_type)
-                }
-                else => {
-                    .compiler.panic("typecheck_call should return `CheckedExpression::Call()`")
-                }
-            }
-        }
+        MethodCall(expr, call, span, is_optional) => .typecheck_method_call_expr(expr, call, span, is_optional, scope_id, safety_mode, type_hint)
         Range(from, to, span) => {
             mut checked_from: CheckedExpression? = None
             mut from_type: TypeId? = None;
@@ -6389,6 +6322,110 @@ struct Typechecker {
             }
         }
 
+    }
+
+    function typecheck_method_call_expr(mut this, expr: ParsedExpression, call: ParsedCall, span: Span, is_optional: bool, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
+        let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
+
+        let checked_expr_type_id = checked_expr.type()
+
+        mut found_optional = false
+        let parent_id = match .get_type(checked_expr_type_id) {
+            Struct(id) => Some(StructOrEnumId::Struct(id))
+            Enum(id)
+                | GenericEnumInstance(id) => Some(StructOrEnumId::Enum(id))
+            JaktString => Some(StructOrEnumId::Struct(.find_struct_in_prelude("String")))
+            GenericInstance(id, args) => match is_optional {
+                true => {
+                    let optional_struct_id = .find_struct_in_prelude("Optional")
+                    mut struct_id: StructOrEnumId? = None
+                    if not id.equals(optional_struct_id) {
+                        .error(format("Can't use ‘{}’ as an optional type in optional chained call", .get_struct(id).name), span)
+                    } else {
+                        found_optional = true
+                        struct_id = match .get_type(args[0]) {
+                            Struct(id)
+                                | GenericInstance(id) => Some(StructOrEnumId::Struct(id))
+                            Enum(id)
+                                | GenericEnumInstance(id) => Some(StructOrEnumId::Enum(id))
+                            else => {
+                                .error("Can't use non-struct type as an optional type in optional chained call", span)
+                                found_optional = false
+                                yield None
+                            }
+                        }
+                    }
+                    yield Some(struct_id ?? StructOrEnumId::Struct(optional_struct_id))
+                }
+                else => Some(StructOrEnumId::Struct(id))
+            }
+            else => {
+                .error(format("no methods available on value (type: {})", .type_name(checked_expr_type_id)), checked_expr.span())
+                yield None
+            }
+        }
+
+        if is_optional and not found_optional {
+            .error(format("Optional chain mismatch: expected optional chain, found {}", .type_name(checked_expr_type_id)), checked_expr.span())
+        }
+
+        let function_id = match parent_id.has_value() {
+            true => .resolve_method_call(parent_id: parent_id!, call, span)
+            // skip any resolution since we already gave an error explaining why
+            // we cannot resolve a method here.
+            else => None
+        }
+
+        guard function_id.has_value() else {
+            return .checked_call_to_method_call(
+                expr: checked_expr
+                checked_call: .typecheck_unresolved_call(call, scope_id, safety_mode)
+                is_optional
+                span)
+        }
+
+        let callee = .get_function(function_id!)
+
+        let checked_call = .typecheck_resolved_call(
+            call
+            caller_scope_id: scope_id
+            span
+            function_id: function_id!
+            safety_mode
+            resolved_namespaces: []
+            this_expr_type_id: match callee.is_static() {
+                false => Some(checked_expr_type_id)
+                else => {
+                    .error("Cannot call static method on an instance of an object", span)
+                    yield None
+                }
+            }
+            type_hint)
+
+        if callee.is_mutating() and not checked_expr.is_mutable(program: .program) {
+            .error("Cannot call mutating method on an immutable object instance", span)
+        }
+
+        return .execute_call_if_comptime(
+            checked_call, span,
+            caller_scope_id: scope_id
+            resolved_namespaces: []
+            this_expr: checked_expr
+        ) ?? .checked_call_to_method_call(expr: checked_expr, checked_call, is_optional, span)
+    }
+
+    function checked_call_to_method_call(mut this, expr: CheckedExpression, checked_call: CheckedCall, is_optional: bool, span: Span) throws -> CheckedExpression {
+        return CheckedExpression::MethodCall(
+            expr
+            call: checked_call
+            span, is_optional
+            // wrap the return value in Optional if the method call is optional chained
+            type_id: match is_optional {
+                true => .find_or_add_type_id(Type::GenericInstance(
+                        id: .find_struct_in_prelude("Optional")
+                        args: [checked_call.return_type]))
+                else => checked_call.return_type
+            })
     }
 
     // NOTE: this function is meant to typecheck only the call expression from
