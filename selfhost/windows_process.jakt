@@ -1,0 +1,269 @@
+import utility { allocate, join, null }
+import windows_errno { errno_value }
+
+import extern c "windows.h" {
+    extern function GetLastError() -> i32
+} before_include define {
+    WIN32_LEAN_AND_MEAN = "1"
+    NOMINMAX = "1"
+} after_include undefine {
+    Yield
+}
+
+import extern c "processthreadsapi.h" {
+    extern struct STARTUPINFO {
+        cb: u32
+    }
+    extern struct PROCESS_INFORMATION {
+        hProcess: raw void
+        hThread: raw void
+    }
+
+    extern struct _SECURITY_ATTRIBUTES {}
+
+    // Hack: we don't have a type that actually matches the 'long' type, this is the next best thing.
+    extern struct DWORD {
+        function DWORD(value: u32) -> DWORD
+    }
+
+    extern function CreateProcess(
+        lpApplicationName: raw c_char
+        lpCommandLine: raw c_char
+        lpProcessAttributes: raw _SECURITY_ATTRIBUTES
+        lpThreadAttributes: raw _SECURITY_ATTRIBUTES
+        bInheritHandles: bool
+        dwCreationFlags: u32
+        lpEnvironment: raw void
+        lpCurrentDirectory: raw c_char
+        lpStartupInfo: raw STARTUPINFO
+        lpProcessInformation: raw PROCESS_INFORMATION
+    ) -> bool
+
+    extern function WaitForSingleObject(
+        hHandle: raw void
+        dwMilliseconds: u32
+    ) -> u32
+
+    extern function WaitForMultipleObjects(
+        nCount: u32
+        lpHandles: raw raw void
+        bWaitAll: bool
+        dwMilliseconds: u32
+    ) -> u32
+
+    extern function GetExitCodeProcess(
+        hProcess: raw void
+        lpExitCode: raw DWORD
+    ) -> bool
+
+    extern function TerminateProcess(
+        hProcess: raw void
+        uExitCode: u32
+    ) -> bool
+
+    extern function CloseHandle(
+        hObject: raw void
+    ) -> bool
+} before_include define {
+    WIN32_LEAN_AND_MEAN = "1"
+    NOMINMAX = "1"
+} after_include undefine {
+    Yield
+}
+
+struct Process {
+    startup_info: STARTUPINFO
+    process_info: PROCESS_INFORMATION
+}
+
+struct ExitPollResult {
+    exit_code: i32
+    process: Process
+}
+
+function default_constructed<T>() -> T {
+    unsafe {
+        cpp {
+            "return T{};"
+        }
+    }
+
+    abort()
+}
+
+function size_of<T>() -> usize {
+    unsafe {
+        cpp {
+            "return sizeof(T);"
+        }
+    }
+
+    abort()
+}
+
+function bitcast_c_char(anon x: raw c_char) -> raw c_char {
+    unsafe {
+        cpp {
+            "return bit_cast<char*>(x);"
+        }
+    }
+
+    abort()
+}
+
+function start_background_process(args: [String]) throws -> Process {
+    mut si = default_constructed<STARTUPINFO>()
+    si.cb = size_of<STARTUPINFO>() as! u32
+
+    mut pi = default_constructed<PROCESS_INFORMATION>()
+
+    let command_line_string = join(args, separator: " ")
+    mut buffer = bitcast_c_char(command_line_string.c_string())
+
+    if not CreateProcess(
+        lpApplicationName: null<c_char>()
+        lpCommandLine: buffer
+        lpProcessAttributes: null<_SECURITY_ATTRIBUTES>()
+        lpThreadAttributes: null<_SECURITY_ATTRIBUTES>()
+        bInheritHandles: true
+        dwCreationFlags: 0
+        lpEnvironment: null<void>()
+        lpCurrentDirectory: null<c_char>()
+        lpStartupInfo: &raw si
+        lpProcessInformation: &raw pi
+    ) {
+        throw Error::from_errno(errno_value())
+    }
+
+    return Process(
+        startup_info: si
+        process_info: pi
+    )
+}
+
+function poll_process_exit(process: &Process) throws -> ExitPollResult? {
+    let wait_result = WaitForSingleObject(
+        hHandle: process.process_info.hProcess
+        dwMilliseconds: 0
+    )
+
+    if wait_result == 0 {
+        return None
+    }
+
+    if wait_result == 0x102 {
+        throw Error::from_errno(errno_value())
+    }
+
+    defer {
+        CloseHandle(
+            hObject: process.process_info.hProcess
+        )
+        CloseHandle(
+            hObject: process.process_info.hThread
+        )
+    }
+
+    mut exit_code = DWORD(value: 0)
+    if not GetExitCodeProcess(
+        hProcess: process.process_info.hProcess
+        lpExitCode: &raw exit_code
+    ) {
+        throw Error::from_errno(errno_value())
+    }
+
+    return ExitPollResult(
+        exit_code: exit_code as! i32
+        *process
+    )
+}
+
+function exit_status(process: &Process) throws -> ExitPollResult {
+    mut exit_code = DWORD(value: 0)
+    if not GetExitCodeProcess(
+        hProcess: process.process_info.hProcess
+        lpExitCode: &raw exit_code
+    ) {
+        throw Error::from_errno(errno_value())
+    }
+
+    return ExitPollResult(
+        exit_code: exit_code as! i32
+        *process
+    )
+}
+
+function wait_for_process(process: &Process) throws -> ExitPollResult {
+    let wait_result = WaitForSingleObject(
+        hHandle: process.process_info.hProcess
+        dwMilliseconds: 0xFFFFFFFF
+    )
+
+    if wait_result == 0 {
+        throw Error::from_errno(3)
+    }
+
+    if wait_result == 0x102 {
+        throw Error::from_errno(errno_value())
+    }
+
+    return exit_status(process)
+}
+
+function forcefully_kill_process(process: &Process) throws {
+    if not TerminateProcess(
+        hProcess: process.process_info.hProcess
+        uExitCode: 1
+    ) {
+        throw Error::from_errno(errno_value())
+    }
+}
+
+function wait_for_some_set_of_processes_that_at_least_includes(processes: &[usize:Process]) throws -> (usize?, ExitPollResult) {
+    if processes.is_empty() {
+        throw Error::from_errno(38)
+    }
+
+    mut handles = allocate<raw void>(count: processes.size())
+    defer {
+        unsafe { cpp { "free(handles);" } }
+    }
+    mut it = processes.iterator()
+    mut keys: [usize] = []
+    for i in 0..processes.size() {
+        let entry = it.next()!
+        mut handle = entry.1.process_info.hProcess
+        keys.push(entry.0)
+
+        unsafe {
+            cpp {
+                "handles[i] = handle;"
+            }
+        }
+    }
+
+    let result = WaitForMultipleObjects(
+        nCount: processes.size() as! u32
+        lpHandles: handles
+        bWaitAll: false
+        // 24 hours is GoodEnough :tm:
+        dwMilliseconds: 1000u32 * 60u32 * 60u32 * 24u32
+    )
+
+    mut finishing_process_index: usize = keys.size()
+    unsafe {
+        cpp {
+            "
+            if (result >= WAIT_OBJECT_0)
+                finishing_process_index = result - WAIT_OBJECT_0;
+            "
+        }
+    }
+
+    if finishing_process_index == keys.size() {
+        throw Error::from_errno(errno_value())
+    }
+
+    let key = keys[finishing_process_index]
+    return (Some(key), exit_status(process: &processes[key]))
+}

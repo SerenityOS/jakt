@@ -1,0 +1,47 @@
+import utility { append_to_each }
+
+struct Target {
+    arch: String
+    platform: String
+    os: String
+    abi: String
+
+    function active() throws -> Target {
+        let triple = ___jakt_get_target_triple_string()
+        let parts = triple.split('-')
+        if parts.size() != 4 {
+            eprintln("Invalid target triple '{}'", triple)
+            throw Error::from_errno(22)
+        }
+
+        return Target(
+            arch: parts[0],
+            platform: parts[1],
+            os: parts[2],
+            abi: parts[3]
+        )
+    }
+}
+
+function platform_import_names() throws -> [String] {
+    let target = Target::active()
+
+    return match target.os {
+        "windows" => match target.arch {
+            "x86_64" => ["win64", "windows"]
+            "i686" => ["win32", "windows"]
+            else => ["windows"]
+        }
+        "darwin" => ["darwin", "posix"]
+        "linux" | "openbsd" | "serenity" => [target.os, "posix"]
+        else => [target.os, "unknown"]
+    }
+}
+
+comptime platform_module(anon name: String) throws -> [String] {
+    return append_to_each(platform_import_names(), suffix: format("_{}", name))
+}
+
+comptime platform_process() throws -> [String] => platform_module("process")
+
+comptime platform_fs() throws -> [String] => platform_module("fs")

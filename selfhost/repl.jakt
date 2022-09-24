@@ -2,7 +2,7 @@ import typechecker { Typechecker, Interpreter, LoadedModule, ModuleId, ScopeId, 
 import compiler { Compiler, FilePath, FileId }
 import lexer { Lexer }
 import parser { Parser }
-import utility { Span }
+import utility { Span, allocate, null }
 import error { JaktError }
 import interpreter { value_to_checked_expression }
 
@@ -11,26 +11,6 @@ import extern c "stdio.h" {
     extern function fclose(stream: raw FILE) -> raw c_int
     // Blame windows for this.
     extern function fgets(s: raw c_char, n: usize, stream: raw FILE) -> raw c_char
-}
-
-function null<T>() -> raw T {
-    unsafe {
-        cpp {
-            "return nullptr;"
-        }
-    }
-
-    abort()
-}
-
-function allocate<T>(count: usize) -> raw T {
-    unsafe {
-        cpp {
-            "return static_cast<T*>(malloc(count * sizeof(T)));"
-        }
-    }
-
-    abort()
 }
 
 enum LineResult {
@@ -237,7 +217,7 @@ struct REPL {
     root_interpreter_scope: InterpreterScope
     file_id: FileId
 
-    function create() throws -> REPL {
+    function create(target_triple: String? = None) throws -> REPL {
         mut compiler = Compiler(
             files: []
             file_ids: [:]
@@ -253,6 +233,7 @@ struct REPL {
             dump_type_hints: false
             dump_try_hints: false
             optimize: false
+            target_triple
         )
 
         compiler.load_prelude()
