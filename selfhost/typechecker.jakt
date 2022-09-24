@@ -5999,8 +5999,399 @@ struct Typechecker {
 
         return None
     }
+    // resolves calls when they are in the form a.b(), since it's different
+    // from resolving regular calls: no builtin println/format/eprint/... and no
+    // namespacing.
+    function resolve_method_call(mut this, parent_id: StructOrEnumId, call: ParsedCall, span: Span) throws -> FunctionId? =>
+        match parent_id {
+            Struct(id: struct_id_) => {
+                // walk up the hierarchy of super types to find the method.
+                mut struct_id = struct_id_
+                loop {
+                    let structure = .get_struct(struct_id)
+                    let method = .get_scope(structure.scope_id).functions.get(call.name)
+                    if method.has_value() {
+                        return method
+                    }
 
-    function typecheck_call(mut this, call: ParsedCall, caller_scope_id: ScopeId, span: Span, this_expr: CheckedExpression?, parent_id: StructOrEnumId?, safety_mode: SafetyMode, mut type_hint: TypeId?, must_be_enum_constructor: bool) throws -> CheckedExpression {
+                    // we have a super, then continue searching in that super struct.
+                    if structure.super_struct_id.has_value() {
+                        struct_id = structure.super_struct_id!
+                        continue
+                    } else {
+                        break
+                    }
+                }
+
+                .error(format("Could not find ‘{}’", call.name), span)
+                yield None
+            }
+            Enum(id) => .get_scope(.get_enum(id).scope_id).functions.get(call.name)
+        }
+
+    // little helper to make sure error message is the same. TODO: inline this into its two uses.
+    function check_for_throwing_scope(mut this, caller_scope_id: ScopeId, span: Span) throws {
+        if not .get_scope(caller_scope_id).can_throw {
+            .error("Call to function that may throw needs to be in a try statement or a function marked as throws", span)
+        }
+    }
+
+    // custom path to check arguments for format/[e]print[ln] builtins.
+    function typecheck_format_args(mut this, args: [(String, Span, ParsedExpression)], scope_id: ScopeId, safety_mode: SafetyMode) throws -> [(String, CheckedExpression)] {
+        mut checked_args: [(String, CheckedExpression)] = []
+        checked_args.ensure_capacity(args.size())
+        for (name, span, arg) in args.iterator() {
+            if name != "" {
+                .error("Format arguments have no name", span)
+            }
+
+            let checked_arg = .typecheck_expression(arg, scope_id, safety_mode, type_hint: None)
+            checked_args.push(("", checked_arg))
+        }
+        return checked_args
+    }
+    
+    // This function returns Some when it finds the call to be a builtin call and typechecks it, None otherwise.
+    function detect_and_typecheck_builtin_call(mut this, call: ParsedCall, span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedCall? {
+        return match call.name {
+            "eprintln" | "println" | "eprint" | "print" => 
+                Some(CheckedCall(
+                    namespace_: []
+                    name: call.name
+                    args: .typecheck_format_args(args: call.args, scope_id, safety_mode)
+                    type_args: []
+                    function_id: None
+                    return_type: void_type_id()
+                    callee_throws: false))
+
+            "format" => {
+                .check_for_throwing_scope(caller_scope_id: scope_id, span)
+
+                yield Some(CheckedCall(
+                        namespace_: []
+                        name: "format"
+                        args: .typecheck_format_args(args: call.args, scope_id, safety_mode)
+                        type_args: []
+                        function_id: None
+                        return_type: .program.find_or_add_type_id(Type::JaktString, module_id: ModuleId(id: 0))
+                        callee_throws: true))
+            }
+
+            else => None
+        }
+    }
+
+    // visits arguments through the typechecker and recognizes type arguments
+    function typecheck_unresolved_call(mut this, call: ParsedCall, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedCall {
+        // typecheck arguments
+        mut args: [(String, CheckedExpression)] = []
+        args.ensure_capacity(call.args.size())
+        for (name, span, arg_expr) in call.args.iterator() {
+            let cehcked_arg = .typecheck_expression(arg_expr, scope_id, safety_mode, type_hint: None)
+        }
+
+        // typecheck type arguments
+        mut type_args: [TypeId] = []
+        type_args.ensure_capacity(call.type_args.size())
+        for parsed_type in call.type_args.iterator() {
+            type_args.push(.typecheck_typename(parsed_type, scope_id, name: None))
+        }
+
+
+        // fill in namespace list
+        mut namespaces: [ResolvedNamespace] = []
+        namespaces.ensure_capacity(call.namespace_.size())
+
+        for name in call.namespace_.iterator() {
+            namespaces.push(ResolvedNamespace(name, generic_parameters: None))
+        }
+
+        return CheckedCall(
+            namespace_: namespaces
+            name: call.name
+            args, type_args
+            function_id: None
+            return_type: unknown_type_id()
+            callee_throws: false)
+
+    }
+
+    // This function does the common part of typechecking any call, once the
+    // function ID is known. 
+    // 
+    // NOTE: This function does the exact same job than what follows in
+    // typecheck_call when the function is not a builtin and the function id is
+    // known (so the 'else' part of the big match after the function id guard,
+    // and what goes after it), except the comptime execution which was
+    // separated into the execute_call_if_comptime() method.
+    function typecheck_resolved_call(mut this
+        call: ParsedCall
+        caller_scope_id: ScopeId
+        span: Span
+        function_id: FunctionId
+        safety_mode: SafetyMode
+        resolved_namespaces: [ResolvedNamespace]
+        this_expr_type_id: TypeId?
+        type_hint: TypeId?) throws -> CheckedCall 
+    {
+
+        let callee = .get_function(function_id)
+        let callee_scope_id = .get_scope(callee.function_scope_id).parent!
+
+        let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: callee.is_instantiated)
+        defer {
+            .generic_inferences.restore(old_generic_inferences)
+        }
+
+        if callee.type is ImplicitConstructor {
+            let struct_ = .get_struct(callee.struct_id!)
+                .check_implicit_constructor_argument_access(caller_scope_id, call, struct_)
+        } else {
+            .check_method_access(accessor: caller_scope_id, accessee: callee_scope_id, method: callee, span)
+        }
+
+        // If the user gave explicit type arguments, let's use them in our substitutions
+        for type_arg_index in 0..call.type_args.size() {
+            let parsed_type = call.type_args[type_arg_index]
+            if callee.generics.params.size() <= type_arg_index {
+                .error("Trying to access generic parameter out of bounds", parsed_type.span())
+                continue
+            }
+            let checked_type = .typecheck_typename(parsed_type, scope_id: caller_scope_id, name: None)
+
+            let typevar_type_id = callee.generics.params[type_arg_index].type_id()
+
+            .generic_inferences.set(typevar_type_id.to_string(), checked_type.to_string())
+        }
+
+        // This will be 0 for functions and 1 for instance methods, because of the `this` ptr
+
+        let arg_offset = match this_expr_type_id.has_value() {
+            true => {
+                let type_id = this_expr_type_id!
+                if .get_type(type_id) is GenericInstance(id, args) {
+                    let structure = .get_struct(id)
+                    for i in 0..structure.generic_parameters.size() {
+                        .generic_inferences.set(
+                            structure.generic_parameters[i].to_string()
+                            args[i].to_string())
+                    }
+                }
+
+                yield 1uz
+            }
+            else => 0uz
+        }
+
+        mut resolved_args: [(String, Span, CheckedExpression)] = .resolve_default_params(params: callee.params, args: call.args, scope_id: caller_scope_id, safety_mode, arg_offset, span)
+
+        mut args: [(String, CheckedExpression)] = []
+        if callee.generics.base_params.size() == resolved_args.size() + arg_offset {
+            args.ensure_capacity(callee.generics.base_params.size())
+            for i in 0..callee.generics.base_params.size() - arg_offset {
+                let (name, span, checked_arg) = resolved_args[i]
+                .check_types_for_compat(
+                    lhs_type_id: callee.generics.base_params[i+arg_offset].variable.type_id
+                    rhs_type_id: checked_arg.type()
+                    generic_inferences: &mut .generic_inferences
+                    span: checked_arg.span())
+                args.push((name, checked_arg))
+            }
+        }
+
+        // We've now seen all the arguments and should be able to substitute
+        // the return type, if it contains a type variable. Fro the moment,
+        // we'll just check to see if it's a type variable.
+        // FIXME: `unknown_type_id()` and `None` are really the same thing. Can we remove `unknown_type_id()`?
+        mut return_type = callee.return_type_id 
+        if type_hint.has_value() and not type_hint!.equals(unknown_type_id()) {
+            let old_ignore_errors = .ignore_errors
+            .ignore_errors = true
+            .check_types_for_compat(
+                lhs_type_id: return_type
+                rhs_type_id: type_hint!
+                generic_inferences: &mut .generic_inferences
+                span)
+            .ignore_errors = old_ignore_errors
+        }
+
+        return_type = .substitute_typevars_in_type(type_id: return_type, generic_inferences: .generic_inferences)
+
+
+        if type_hint.has_value() and not type_hint!.equals(unknown_type_id()) {
+            let old_ignore_errors= .ignore_errors
+            if callee.is_instantiated {
+                // If this is a possible respecialization of a generic function that is the child of a specialized version of that function
+                // allow an error here, if it is not a respecialization we will recheck
+                .ignore_errors = true
+            }
+            .check_types_for_compat(
+                lhs_type_id: type_hint!
+                rhs_type_id: return_type
+                generic_inferences: &mut .generic_inferences
+                span)
+            .ignore_errors = old_ignore_errors
+        }
+
+        mut generic_arguments: [TypeId] = []
+        generic_arguments.ensure_capacity(callee.generics.params.size())
+        for generic_typevar in callee.generics.params.iterator() {
+            if generic_typevar is Parameter(id) {
+                let substitution = .generic_inferences.get(id.to_string())
+                if substitution.has_value() {
+                    generic_arguments.push(TypeId::from_string(substitution!))
+                } else {
+                    .error("Not all generic parameters have known types", span)
+                    generic_arguments.push(unknown_type_id())
+                }
+            }
+        }
+
+        return_type = .substitute_typevars_in_type(
+            type_id: return_type,
+            generic_inferences: .generic_inferences,
+        )
+
+        if callee.can_throw {
+            .check_for_throwing_scope(caller_scope_id, span)
+        }
+
+        if not callee.is_instantiated or (not callee.linkage is External and not callee.generics.is_specialized_for_types(types: generic_arguments)) {
+            let this_type_id = match this_expr_type_id.has_value() {
+                true => Some(.substitute_typevars_in_type(type_id: this_expr_type_id!, generic_inferences: .generic_inferences))
+                else => None
+            }
+
+            .typecheck_and_specialize_generic_function(
+                function_id
+                generic_arguments
+                parent_scope_id: callee_scope_id
+                this_type_id
+                generic_substitutions: .generic_inferences)
+        } 
+
+        if callee.is_instantiated {
+            if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
+                .check_types_for_compat(
+                    lhs_type_id: type_hint!
+                    rhs_type_id: return_type
+                    generic_inferences: &mut .generic_inferences
+                    span
+                )
+            }
+        }
+
+        if .dump_try_hints and callee.can_throw {
+            .dump_try_hint(span)
+        }
+
+        return CheckedCall(
+            namespace_: resolved_namespaces
+            name: call.name
+            args
+            type_args: generic_arguments
+            function_id
+            return_type
+            callee_throws: callee.can_throw)
+    }
+
+    // If the called function is comptime and we're inside a non-comptime
+    // block, tries executing the comptime function and yields its resulting
+    // expression. In case of failing at executing the function or not being
+    // comptime/at a non-comptime block, yields None.
+    //
+    // NOTE: assumes checked_call has a function_id since a comptime function
+    // can only be a (known) user function.
+    function execute_call_if_comptime(mut this, checked_call: CheckedCall, span: Span, caller_scope_id: ScopeId, resolved_namespaces: [ResolvedNamespace], this_expr: CheckedExpression?) throws -> CheckedExpression? {
+        let in_comptime_function = .current_function_id.has_value() and .get_function(.current_function_id!).is_comptime
+        let callee_is_comptime = .get_function(checked_call.function_id!).is_comptime
+
+        guard not in_comptime_function and callee_is_comptime else {
+            return None
+        }
+
+        let resolved_function = .get_function(checked_call.function_id!)
+        mut interpreter = Interpreter::create(compiler: .compiler, program: .program, spans: [])
+
+        mut eval_scope = InterpreterScope::from_runtime_scope(scope_id: caller_scope_id, program: .program)
+        for (key, value) in .generic_inferences.iterator() {
+            eval_scope.type_bindings.set(key, TypeId::from_string(value))
+        }
+
+        let this_argument: Value? = match this_expr.has_value() {
+            true => match interpreter.execute_expression(expr: this_expr!, scope: eval_scope) {
+                JustValue(value) => Some(value)
+                Throw(value) => {
+                    .error(format("Error executing this expression (evaluation threw {})", value), this_expr!.span())
+                    yield None
+                }
+                else => {
+                    .error("Invalid this expression", this_expr!.span())
+                    yield None
+                }
+            }
+            else => None
+        }
+
+        mut call_args: [Value] = []
+        for (arg_name, arg_expr) in checked_call.args.iterator() {
+            let value = try interpreter.execute_expression(
+                expr: arg_expr
+                scope: eval_scope
+            ) catch {
+                .error("Error in argument", span)
+                continue
+            }
+
+            if value is Throw {
+                .error(format("Compiletime call failed: {}", value), arg_expr.span())
+                break
+            }
+
+            let evaluated_value = match value {
+                Return(x) | JustValue(x) => x
+                else => {
+                    throw Error::from_errno(69) // unreachable
+                }
+            }
+
+            call_args.push(evaluated_value)
+        }
+
+        mut type_bindings: [String: TypeId] = [:]
+        for i in 0..resolved_function.generics.params.size() {
+            let param = resolved_function.generics.params[i]
+            type_bindings.set(
+                param.type_id().to_string()
+                checked_call.type_args[i])
+        }
+
+        mut invocation_scope = InterpreterScope::create(type_bindings)
+        let result = try interpreter.execute(
+            function_to_run: checked_call.function_id!
+            namespace_: resolved_namespaces
+            this_argument
+            arguments: call_args
+            call_span: span
+            invocation_scope
+        ) catch error {
+            .error(format("Compiletime call failed: {}", error), span)
+            return None
+        }
+
+        return match result {
+            Return(x) => Some(value_to_checked_expression(x, interpreter))
+            Throw(x) => {
+                .error(format("Compiletime call failed: {}", x), span)
+                yield None
+            }
+        }
+
+    }
+
+
+
+    function typecheck_call(mut this, call: ParsedCall, caller_scope_id: ScopeId, span: Span, this_expr: CheckedExpression?, parent_id: StructOrEnumId?, safety_mode: SafetyMode, type_hint: TypeId?, must_be_enum_constructor: bool) throws -> CheckedExpression {
         mut args: [(String, CheckedExpression)] = []
         mut return_type = builtin(BuiltinType::Void)
         mut generic_arguments: [TypeId] = []
