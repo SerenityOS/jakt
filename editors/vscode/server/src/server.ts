@@ -409,8 +409,11 @@ function convertPosition(position: Position, text: string): number {
 async function runCompiler(
     text: string,
     flags: string,
-    settings: ExampleSettings
+    settings: ExampleSettings,
+    options: {allowErrors?: boolean} = {}
 ): Promise<string> {
+    const allowErrors = options.allowErrors === undefined ? true : options.allowErrors;
+
     try {
         fs.writeFileSync(tmpFile.name, text);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -418,7 +421,7 @@ async function runCompiler(
         // connection.console.log(e);
     }
 
-    let stdout: string;
+    let stdout = "";
     try {
         const output = await exec(
             `${settings.compiler.executablePath} ${flags} ${tmpFile.name}`,
@@ -426,16 +429,18 @@ async function runCompiler(
                 timeout: settings.maxCompilerInvocationTime,
             }
         );
-        // // connection.console.log(output);
         stdout = output.stdout;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
-        stdout = e.stdout;
-        if (e.signal != null) {
-            // connection.console.log("compile failed: ");
-            // connection.console.log(e);
-        } else {
-            // connection.console.log("Error:" + e);
+        if (!allowErrors){
+            stdout = e.stdout;
+            if (e.signal != null) {
+                connection.console.log("compile failed: ");
+                connection.console.log(e);
+            } else {
+                connection.console.log("Error:" + e);
+            }
+            throw e;
         }
     }
 
@@ -636,22 +641,26 @@ connection.onDocumentFormatting(async (params) => {
     const text = document?.getText();
 
     if (typeof text == "string") {
-        const stdout = await runCompiler(
-            text,
-            "-f " + includeFlagForPath(params.textDocument.uri),
-            settings
-        );
-        const formatted = stdout;
-        console.timeEnd("onDocumentFormatting");
-        return [
-            {
-                range: {
-                    start: { line: 0, character: 0 },
-                    end: { line: document!.lineCount, character: 0 },
+        try {
+            const stdout = await runCompiler(
+                text,
+                "-f " + includeFlagForPath(params.textDocument.uri),
+                settings,
+                {allowErrors: false}
+            );
+            return [
+                {
+                    range: {
+                        start: { line: 0, character: 0 },
+                        end: { line: document?.lineCount, character: 0 },
+                    },
+                    newText: stdout,
                 },
-                newText: formatted,
-            },
-        ];
+            ];
+        } finally {
+            console.timeEnd("onDocumentFormatting");
+        }
+
     }
     console.timeEnd("onDocumentFormatting");
     return [];
@@ -664,28 +673,30 @@ connection.onDocumentRangeFormatting(async (params) => {
 
     const text = document?.getText();
 
-    const lineBreaks = findLineBreaks(text ?? "");
-
     if (typeof text == "string") {
-        const stdout = await runCompiler(
-            text,
-            `--format-range ${
-                convertPosition(params.range.start, text)
-            }:${
-                convertPosition(params.range.end, text)
-            } -f ${
-                includeFlagForPath(params.textDocument.uri)
-            }`,
-            settings
-        );
-        const formatted = stdout;
-        console.timeEnd("onDocumentFormatting");
-        return [
-            {
-                range: params.range,
-                newText: formatted,
-            },
-        ];
+        try {
+            const stdout = await runCompiler(
+                text,
+                `--format-range ${
+                    convertPosition(params.range.start, text)
+                }:${
+                    convertPosition(params.range.end, text)
+                } -f ${
+                    includeFlagForPath(params.textDocument.uri)
+                }`,
+                settings,
+                {allowErrors: false}
+            );
+            const formatted = stdout;
+            return [
+                {
+                    range: params.range,
+                    newText: formatted,
+                },
+            ];
+        } finally {
+            console.timeEnd("onDocumentFormatting");
+        }
     }
     console.timeEnd("onDocumentFormatting");
     return [];
