@@ -49,6 +49,8 @@ extern struct String {
     function byte_at(this, anon index: usize) -> u8
     function contains(this, anon needle: String) -> bool
     function replace(this, replace: String, with: String) throws -> String
+    function starts_with(this, anon needle: String) -> bool
+    function ends_with(this, anon needle: String) -> bool
 }
 
 extern struct StringBuilder {
