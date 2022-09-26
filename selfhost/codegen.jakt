@@ -1814,11 +1814,8 @@ struct CodeGenerator {
         Try(expr, catch_block, catch_name, span, type_id, inner_type_id) => {
             mut output = ""
             let fresh_var = .fresh_var()
-            let fresh_label = .fresh_label()
             let is_void = inner_type_id.equals(void_type_id())
             let try_var = .fresh_var()
-
-            .entered_yieldable_blocks.push((fresh_var, fresh_label))
 
             let last_control_flow = .control_flow_state
             .control_flow_state.passes_through_match = false
