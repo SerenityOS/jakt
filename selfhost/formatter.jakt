@@ -1564,6 +1564,26 @@ struct Stage0 {
                         preceding_trivia: []
                     )
                 }
+                Semicolon => {
+                    if open_squares == 0 {
+                        return match .peek() {
+                            Eol => .next()
+                            else => FormattedToken(
+                                token: Token::Eol(comment: None, span: token.span())
+                                indent: .indent
+                                trailing_trivia: []
+                                preceding_trivia: []
+                            )
+                        }
+                    }
+                    
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: [b' ']
+                        preceding_trivia: []
+                    )
+                }
                 else => FormattedToken(
                     token
                     indent: .indent
