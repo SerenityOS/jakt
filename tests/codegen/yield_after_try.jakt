@@ -1,0 +1,22 @@
+/// Expect:
+/// - output: "Hello test\n"
+
+enum Foo {
+    A(name: String)
+    B(name: String)
+}
+
+function main() {
+    let foo = Foo::A(name: "test")
+
+    let greet = match foo {
+        A(name) => {
+            let ret = (try format("Hello {}", name)) ?? ""
+
+            yield ret
+        }
+        else => "Hello Default"
+    }
+
+    println("{}", greet)
+}
