@@ -1,0 +1,16 @@
+/// Expect:
+/// - error: "Cannot call an instance method statically\n"
+
+class Foo {
+    public function a(mut this) {
+        let c = b()
+    }
+
+    public function b(mut this) -> i64 => 2
+}
+
+function main() {
+    mut foo = Foo()
+
+    foo.a()
+}
