@@ -182,6 +182,8 @@ if (TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-v"), Str
 outln(String("unreleased"));
 return (static_cast<i64>(0LL));
 }
+const NonnullRefPtr<utility::FilePath> current_executable_path = TRY((utility::FilePath::make(TRY((File::current_executable_path())))));
+const String default_runtime_path = (TRY((((TRY((utility::FilePath::make(TRY((((current_executable_path)->dirname())))))))->dirname()))) + String("/include/runtime"));
 const bool optimize = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-O")}))))))));
 const bool lexer_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-dl")}))))))));
 const bool parser_debug = TRY((((args_parser).flag((TRY((Array<String>::create_with({String("-dp")}))))))));
@@ -201,7 +203,7 @@ const JaktInternal::Optional<String> target_triple = TRY((((args_parser).option(
 const String runtime_library_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-RLP"), String("--runtime-library-path")})))))))).value_or_lazy_evaluated([&] { return String("build/runtime"); });
 const String compiler_job_count = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-J"), String("--jobs")})))))))).value_or_lazy_evaluated([&] { return String("2"); });
 const String clang_format_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-F"), String("--clang-format-path")})))))))).value_or_lazy_evaluated([&] { return String("clang-format"); });
-const String runtime_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-R"), String("--runtime-path")})))))))).value_or_lazy_evaluated([&] { return String("runtime"); });
+const String runtime_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-R"), String("--runtime-path")})))))))).value_or_lazy_evaluated([&] { return default_runtime_path; });
 const String binary_dir = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-B"), String("--binary-dir")})))))))).value_or_lazy_evaluated([&] { return String("build"); });
 const JaktInternal::Optional<String> dot_clang_format_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-D"), String("--dot-clang-format-path")}))))))));
 const String cxx_compiler_path = TRY((((args_parser).option((TRY((Array<String>::create_with({String("-C"), String("--cxx-compiler-path")})))))))).value_or_lazy_evaluated([&] { return String("clang++"); });

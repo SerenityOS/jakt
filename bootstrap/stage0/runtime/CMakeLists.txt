@@ -18,6 +18,7 @@ target_include_directories(jakt_runtime PUBLIC
 )
 
 add_library(Jakt::jakt_runtime ALIAS jakt_runtime)
+apply_output_rules(jakt_runtime)
 
 add_library(jakt_main STATIC Main.cpp)
 add_jakt_compiler_flags(jakt_main)
@@ -27,3 +28,4 @@ target_include_directories(jakt_main PUBLIC
 )
 
 add_library(Jakt::jakt_main ALIAS jakt_main)
+apply_output_rules(jakt_main)

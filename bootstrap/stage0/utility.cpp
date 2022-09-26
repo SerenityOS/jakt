@@ -266,7 +266,7 @@ ErrorOr<JaktInternal::Tuple<String,String>> utility::FilePath::split_at_last_sla
 const size_t len = ((((*this).path)).length());
 const JaktInternal::Optional<size_t> last_slash = utility::FilePath::last_slash(((*this).path));
 if (((last_slash).has_value())){
-const String dir = TRY((((((*this).path)).substring(static_cast<size_t>(0ULL),(JaktInternal::checked_add<size_t>((last_slash.value()),static_cast<size_t>(1ULL)))))));
+const String dir = TRY((((((*this).path)).substring(static_cast<size_t>(0ULL),(last_slash.value())))));
 const String base = TRY((((((*this).path)).substring((JaktInternal::checked_add<size_t>((last_slash.value()),static_cast<size_t>(1ULL))),(JaktInternal::checked_sub<size_t>((JaktInternal::checked_sub<size_t>(len,(last_slash.value()))),static_cast<size_t>(1ULL)))))));
 return ((Tuple{dir, base}));
 }
