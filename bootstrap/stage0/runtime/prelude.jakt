@@ -49,6 +49,8 @@ extern struct String {
     function byte_at(this, anon index: usize) -> u8
     function contains(this, anon needle: String) -> bool
     function replace(this, replace: String, with: String) throws -> String
+    function starts_with(this, anon needle: String) -> bool
+    function ends_with(this, anon needle: String) -> bool
 }
 
 extern struct StringBuilder {
@@ -132,6 +134,8 @@ extern class File {
 
     public function exists(anon path: String) -> bool
 }
+
+extern function ___jakt_get_target_triple_string() -> String
 
 extern function abort() -> never
 extern function as_saturated<U, T>(anon input: T) -> U

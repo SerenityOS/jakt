@@ -1,4 +1,5 @@
 #include <Jakt/PrettyPrint.h>
+#include <Jakt/StringBuilder.h>
 
 namespace JaktInternal::PrettyPrint {
 
@@ -28,7 +29,7 @@ ScopedLevelIncrease::~ScopedLevelIncrease() {
     s_pretty_print_state.level--;
 }
 
-ErrorOr<void> output_indentation(auto& builder) {
+Jakt::ErrorOr<void> output_indentation(auto& builder) {
     constexpr auto spaces_per_level = 2;
     if (s_pretty_print_state.enabled) {
         if(s_pretty_print_state.level > 0)
@@ -39,4 +40,5 @@ ErrorOr<void> output_indentation(auto& builder) {
     return {};
 }
 
+template Jakt::ErrorOr<void> output_indentation<Jakt::StringBuilder>(Jakt::StringBuilder& builder);
 }

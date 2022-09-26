@@ -10,10 +10,10 @@
 #    include <Kernel/Assertions.h>
 #else
 #    include <assert.h>
-#    define _TRAP_NORETURN(expr)       \
+#    define _TRAP_NORETURN(expr) \
         []() __attribute__((noreturn)) \
         {                              \
-            assert(false && #expr);    \
+            assert(false && # expr);   \
             __builtin_trap();          \
             __builtin_unreachable();   \
         }                              \

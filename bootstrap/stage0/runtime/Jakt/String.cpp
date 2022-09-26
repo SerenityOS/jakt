@@ -9,6 +9,7 @@
 #include <Jakt/Memory.h>
 #include <Jakt/StdLibExtras.h>
 #include <Jakt/String.h>
+#include <Jakt/StringBuilder.h>
 #include <Jakt/StringUtils.h>
 
 namespace Jakt {

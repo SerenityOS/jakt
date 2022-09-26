@@ -24,6 +24,6 @@ public:
     ~ScopedLevelIncrease();
 };
 
-ErrorOr<void> output_indentation(auto& builder);
+Jakt::ErrorOr<void> output_indentation(auto& builder);
 
 }

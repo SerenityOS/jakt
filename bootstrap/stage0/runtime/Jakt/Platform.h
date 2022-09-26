@@ -42,7 +42,7 @@
 #ifdef ALWAYS_INLINE
 #    undef ALWAYS_INLINE
 #endif
-#define ALWAYS_INLINE
+#define ALWAYS_INLINE inline
 
 #ifdef NEVER_INLINE
 #    undef NEVER_INLINE
