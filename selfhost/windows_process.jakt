@@ -111,13 +111,40 @@ function bitcast_c_char(anon x: raw c_char) -> raw c_char {
     abort()
 }
 
+function join_arguments(args: [String]) throws -> String {
+    // Join the arguments, but properly quote each argument so that the command line is parsed correctly.
+    // All this because there's no way to pass arguments to CreateProcess separately.
+    mut joined_builder = StringBuilder::create()
+    mut first = true
+    for arg in args.iterator() {
+        if first {
+            first = false
+        } else {
+            joined_builder.append_string(" ")
+        }
+
+        joined_builder.append(b'"')
+        for i in 0..arg.length() {
+            let c = arg.byte_at(i)
+            if c == b'"' {
+                joined_builder.append_string("\\\"")
+            } else {
+                joined_builder.append(c)
+            }
+        }
+        joined_builder.append(b'"')
+    }
+
+    return joined_builder.to_string()
+}
+
 function start_background_process(args: [String]) throws -> Process {
     mut si = default_constructed<STARTUPINFO>()
     si.cb = size_of<STARTUPINFO>() as! u32
 
     mut pi = default_constructed<PROCESS_INFORMATION>()
 
-    let command_line_string = join(args, separator: " ")
+    let command_line_string = join_arguments(args)
     mut buffer = bitcast_c_char(command_line_string.c_string())
 
     if not CreateProcess(
