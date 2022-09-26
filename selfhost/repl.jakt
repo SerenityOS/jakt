@@ -252,6 +252,7 @@ struct REPL {
             json_errors: false
             dump_type_hints: false
             dump_try_hints: false
+            optimize: false
         )
 
         compiler.load_prelude()
