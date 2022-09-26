@@ -8,9 +8,20 @@
 #include <Jakt/RefPtr.h>
 #include <errno.h>
 
-#if defined(_WIN32)
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
+#if defined(AK_OS_MACOS)
+#   include <mach-o/dyld.h>
+#elif defined(_WIN32)
+#   ifndef NOMINMAX
+#       define NOMINMAX
+#   endif
+#   ifndef WIN32_LEAN_AND_MEAN
+#       define WIN32_LEAN_AND_MEAN
+#   endif
+#   include <Windows.h>
+#   ifdef Yield
+#       undef Yield
+#   endif
+#   include <libloaderapi.h>
 #else
     #include <unistd.h>
 #endif
