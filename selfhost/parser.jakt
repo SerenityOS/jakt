@@ -107,14 +107,13 @@ enum ImportName {
     }
 
     function literal_name(this) -> String {
-        match this {
-            Literal(name) => {
-                return name
-            }
-            else => {
-                panic("cannot get literal name of non-literal import name")
-            }
+        // FIXME: this has to be reassigned here to be used as an enum is binding
+        let that = this
+        guard that is Literal(name) else {
+            panic("cannot get literal name of non-literal import name")
         }
+
+        return name
     }
 
     function span(this) -> Span => match this {
@@ -1623,12 +1622,12 @@ struct Parser {
 
                     return Some(defines)
                 }
-                else => {
-                    .error("Expected 'define' or 'undefine' in include action"
-                            .current().span())
-                    return None
-                }
+                else => {}
             }
+
+            .error("Expected 'define' or 'undefine' in include action"
+                    .current().span())
+            return None
         } else {
             .error("Expected 'define' or 'undefine' in include action"
                     .current().span())
@@ -3925,14 +3924,13 @@ struct Parser {
         } else {
             .error("Expected namespace", expr.span())
         }
-        if .eof() {
-            .error("Incomplete static method call", .current().span())
-        }
+
         while not .eof() {
             guard .current() is Identifier(name: current_name) else {
                 .error("Unsupported static method call", .current().span())
-                    return expr
+                return expr
             }
+
             .index++
             if .current() is LParen {
                 .index--
@@ -3940,15 +3938,7 @@ struct Parser {
                 call!.namespace_ = namespace_
                 return ParsedExpression::Call(call: call!, span: merge_spans(expr.span(), .current().span()))
             }
-            if .current() is ColonColon {
-                if .previous() is Identifier(name) {
-                    namespace_.push(name)
-                } else {
-                    .error("Expected namespace", expr.span())
-                }
-                .index++
-                continue
-            }
+
             if .current() is LessThan {
                 // Generic function arguments
                 .index--
@@ -3960,12 +3950,25 @@ struct Parser {
                 }
                 return ParsedExpression::Garbage(.current().span())
             }
-            return ParsedExpression::NamespacedVar(
-                name: current_name,
-                namespace_,
-                span: merge_spans(start, .current().span())
-            )
+
+            if .current() is ColonColon {
+                if .previous() is Identifier(name) {
+                    namespace_.push(name)
+                } else {
+                    .error("Expected namespace", expr.span())
+                }
+                .index++
+            } else {
+                return ParsedExpression::NamespacedVar(
+                    name: current_name,
+                    namespace_,
+                    span: merge_spans(start, .current().span())
+                )
+            }
         }
+
+        .error("Incomplete static method call", .current().span())
+        return expr
     }
 
     function parse_operator(mut this, allow_assignments: bool) throws -> ParsedExpression {

@@ -536,7 +536,8 @@ class Interpreter {
     }
     
     public function leave_span(mut this) {
-        .spans.pop()
+        // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+        let dummy = .spans.pop()
     }
 
     public function get_prelude_function(this, anon scope_id: ScopeId) throws -> bool {
@@ -1830,14 +1831,14 @@ class Interpreter {
                     }
                 }
             }
-            else => {
-                .error(
-                    format("Function type {} is not implemented", function_to_run.type),
-                    call_span
-                )
-                throw Error::from_errno(InterpretError::Unimplemented as! i32)
-            }
+            else => {}
         }
+
+        .error(
+            format("Function type {} is not implemented", function_to_run.type),
+            call_span
+        )
+        throw Error::from_errno(InterpretError::Unimplemented as! i32)
     }
 
     public function execute_statement(mut this, statement: CheckedStatement, mut scope: InterpreterScope, call_span: Span) throws -> StatementResult {

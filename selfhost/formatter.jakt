@@ -308,10 +308,13 @@ struct Stage0 {
         .states.push(state)
     }
     private function pop_state(mut this) {
-        .states.pop()
+        // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+        let dummy = .states.pop()
     }
+
     private function replace_state(mut this, anon state: State) throws {
-        .states.pop()
+        // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+        let dummy = .states.pop()
         .states.push(state)
     }
 
@@ -377,7 +380,8 @@ struct Stage0 {
                 // Immediately dedent to the previous level instead of deferring the change.
                 if .dedents_to_skip.last()! == 1uz {
                     if .dedents_to_skip.size() > 1uz {
-                        .dedents_to_skip.pop()
+                        // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+                        let dummy = .dedents_to_skip.pop()
                     }
                     .indent -= 1
                     .already_seen_enclosure_in_current_line = false
@@ -991,7 +995,8 @@ struct Stage0 {
                         if indented {
                             if .dedents_to_skip.last()! == 1uz {
                                 if .dedents_to_skip.size() > 1uz {
-                                    .dedents_to_skip.pop()
+                                    // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+                                    let dummy = .dedents_to_skip.pop()
                                 }
                                 indent_change -= 1
                             } else if .dedents_to_skip.last()! > 0 {
@@ -1143,7 +1148,8 @@ struct Stage0 {
                         if arrow_indents > 0 {
                             if .dedents_to_skip.last()! == 1uz {
                                 if .dedents_to_skip.size() > 1uz {
-                                    .dedents_to_skip.pop()
+                                    // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+                                    let dummy = .dedents_to_skip.pop()
                                 }
                                 indent_change -= 1
                             } else if .dedents_to_skip.last()! > 0 {
