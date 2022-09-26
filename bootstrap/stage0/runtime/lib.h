@@ -280,7 +280,7 @@ struct ExplicitValueOrControlFlow {
         if constexpr (IsVoid<Value>)
             return;
         else
-            return move(value).template get<ExplicitValue<Value>>().value;
+            return move(move(value).template get<ExplicitValue<Value>>().value);
     }
 
     Variant<Conditional<IsVoid<Return>, Empty, Return>, ExplicitValue<Value>, LoopContinue, LoopBreak> value;

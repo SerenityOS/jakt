@@ -18,6 +18,12 @@ class ArrayStorage : public RefCounted<ArrayStorage<T>> {
 public:
     ArrayStorage() { }
 
+    ~ArrayStorage()
+    {
+        shrink(0);
+        free(m_elements);
+    }
+
     bool is_empty() const { return m_size == 0; }
     size_t size() const { return m_size; }
     size_t capacity() const { return m_capacity; }
@@ -264,7 +270,7 @@ public:
 
     ArraySlice<T> slice_range(size_t from, size_t to) const
     {
-        return slice(from, to-from);
+        return slice(from, to - from);
     }
 
     ArraySlice<T> slice(size_t offset, size_t size) const;
@@ -346,7 +352,13 @@ public:
         , m_size(size)
     {
         VERIFY(m_storage);
-        VERIFY(m_offset < m_storage->size());
+
+        if (m_offset >= m_storage->size()) {
+            m_offset = 0;
+            m_size = 0;
+        } else if (m_offset + m_size >= m_storage->size()) {
+            m_size = m_storage->size() - m_offset;
+        }
     }
 
     ErrorOr<Array<T>> to_array() const
@@ -356,13 +368,13 @@ public:
         for (size_t i = 0; i < size(); ++i) {
             TRY(array.push(at(i)));
         }
-            
+
         return array;
     }
 
     ArrayIterator<T> iterator() const
     {
-        return ArrayIterator<T> { *m_storage, m_offset, m_size };
+        return ArrayIterator<T> { *m_storage, m_offset, size() };
     }
 
     bool is_empty() const { return size() == 0; }
@@ -370,16 +382,26 @@ public:
     {
         if (!m_storage)
             return 0;
-        if (m_offset >= m_storage->size())
+        if (m_offset + m_size > m_storage->size())
             return 0;
 
-        return min(m_size, m_storage->size()-m_offset);
+        return m_size;
     }
 
     T const& at(size_t index) const { return m_storage->at(m_offset + index); }
     T& at(size_t index) { return m_storage->at(m_offset + index); }
     T const& operator[](size_t index) const { return at(index); }
     T& operator[](size_t index) { return at(index); }
+
+    template<Integral U>
+    ArraySlice<T> operator[](Range<U> range) const { return slice_range(range.start, range.end); }
+
+    ArraySlice<T> slice_range(size_t from, size_t to) const
+    {
+        return slice(from + m_offset, to - from + m_offset);
+    }
+
+    ArraySlice<T> slice(size_t offset, size_t size) const;
 
     bool contains(T const& value) const
     {
@@ -404,6 +426,7 @@ public:
             return {};
         return at(size() - 1);
     }
+
 private:
     RefPtr<ArrayStorage<T>> m_storage;
     size_t m_offset { 0 };
@@ -421,10 +444,16 @@ ArraySlice<T> Array<T>::slice(size_t offset, size_t size)
 {
     return { *m_storage, offset, size };
 }
+
+template<typename T>
+ArraySlice<T> ArraySlice<T>::slice(size_t offset, size_t size) const
+{
+    return { *m_storage, offset, size };
+}
 }
 
 namespace Jakt {
 using JaktInternal::Array;
-using JaktInternal::ArraySlice;
 using JaktInternal::ArrayIterator;
+using JaktInternal::ArraySlice;
 }
