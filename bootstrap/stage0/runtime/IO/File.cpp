@@ -5,7 +5,15 @@
  */
 
 #include <IO/File.h>
+#include <Jakt/RefPtr.h>
 #include <errno.h>
+
+#if defined(_WIN32)
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
+#else
+    #include <unistd.h>
+#endif
 
 namespace JaktInternal {
 
@@ -84,12 +92,12 @@ ErrorOr<size_t> File::write(Array<u8> data)
 
 bool File::exists(String path)
 {
-    // FIXME: This is a pretty sad-looking function. It could be better, but don't forget about Windows.
-    auto* file = fopen(path.c_string(), "r");
-    if (!file)
-        return false;
-    fclose(file);
-    return true;
+#ifdef _WIN32
+    auto res = GetFileAttributesA(path.c_string());
+    return res != INVALID_FILE_ATTRIBUTES;
+#else
+    return access(path.c_string(), F_OK) == 0;
+#endif
 }
 
 }

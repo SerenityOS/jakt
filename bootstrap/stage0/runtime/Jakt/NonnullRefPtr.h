@@ -13,7 +13,6 @@
 #else
 #    include <Jakt/Assertions.h>
 #    include <Jakt/Atomic.h>
-#    include <Jakt/Format.h>
 #    include <Jakt/Traits.h>
 #    include <Jakt/Types.h>
 
