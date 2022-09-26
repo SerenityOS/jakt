@@ -2093,10 +2093,18 @@ struct CodeGenerator {
             // Integer arithmetic is checked by default.
             match op {
                 Add | Subtract | Multiply | Divide | Modulo => {
-                    return "(" + .codegen_checked_binary_op(lhs, rhs, op, type_id) + ")"
+                    if .compiler.optimize {
+                        return "(" + .codegen_unchecked_binary_op(lhs, rhs, op, type_id) + ")"
+                    } else {
+                        return "(" + .codegen_checked_binary_op(lhs, rhs, op, type_id) + ")"
+                    }
                 }
                 AddAssign | SubtractAssign | MultiplyAssign | DivideAssign | ModuloAssign => {
-                    return "(" + .codegen_checked_binary_op_assignment(lhs, rhs, op, type_id) + ")"
+                    if .compiler.optimize {
+                        return "(" + .codegen_unchecked_binary_op_assignment(lhs, rhs, op, type_id) + ")"
+                    } else {
+                        return "(" + .codegen_checked_binary_op_assignment(lhs, rhs, op, type_id) + ")"
+                    }
                 }
                 else => { }
             }
@@ -2147,6 +2155,26 @@ struct CodeGenerator {
         return output
     }
 
+    function codegen_unchecked_binary_op(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
+        mut output = "static_cast<"
+        output += .codegen_type(type_id)
+        output += ">("
+        output += .codegen_expression(lhs)
+        output += match op {
+            Add => " + "
+            Subtract => " - "
+            Multiply => " * "
+            Divide => " / "
+            Modulo => " % "
+            else => {
+                panic(format("Checked binary operation codegen is not supported for BinaryOperator::{}", op))
+            }
+        }
+        output += .codegen_expression(rhs)
+        output += ")"
+        return output
+    }
+
     function codegen_checked_binary_op(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
         mut output = ""
         output += "JaktInternal::"
@@ -2170,6 +2198,32 @@ struct CodeGenerator {
         output += .codegen_expression(rhs)
         output += ")"
 
+        return output
+    }
+
+    function codegen_unchecked_binary_op_assignment(mut this, lhs: CheckedExpression, rhs: CheckedExpression, op: BinaryOperator, type_id: TypeId) throws -> String {
+        mut output = ""
+
+        output += "{"
+        output += "auto& _jakt_ref = "
+        output += .codegen_expression(lhs)
+        output += ";"
+        output += "_jakt_ref = static_cast<"
+        output += .codegen_type(type_id)
+        output += ">(_jakt_ref "
+        output += match op {
+            AddAssign => " + "
+            SubtractAssign => " - "
+            MultiplyAssign => " * "
+            DivideAssign => " / "
+            ModuloAssign => " % "
+            else => {
+                panic(format("Checked binary operation assignment codegen is not supported for BinaryOperator::{}", op))
+            }
+        }
+        output += .codegen_expression(rhs)
+        output += ");"
+        output += "}"
         return output
     }
 

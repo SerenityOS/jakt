@@ -226,6 +226,7 @@ function main(args: [String]) {
         json_errors
         dump_type_hints
         dump_try_hints
+        optimize
     )
 
     compiler.load_prelude()

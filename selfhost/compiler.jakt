@@ -16,6 +16,7 @@ class Compiler {
     public json_errors: bool
     public dump_type_hints: bool
     public dump_try_hints: bool
+    public optimize: bool
 
     public function panic(this, anon message: String) throws -> never {
         .print_errors()
