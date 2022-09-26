@@ -2939,223 +2939,210 @@ struct Typechecker {
         return checked_block
     }
 
-    function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId, name: String?) throws -> TypeId {
-        match parsed_type {
-            Reference(inner) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
-                let type_id = .find_or_add_type_id(Type::Reference(id: inner_type_id))
-                return type_id
-            }
-            MutableReference(inner) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
-                let type_id = .find_or_add_type_id(Type::MutableReference(id: inner_type_id))
-                return type_id
-            }
-            NamespacedName(name, namespaces, params, span) => {
-                mut current_namespace_scope_id = scope_id
+    function typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId, name: String?) throws -> TypeId => match parsed_type {
+        Reference(inner) => {
+            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
+            yield .find_or_add_type_id(Type::Reference(id: inner_type_id))
+        }
+        MutableReference(inner) => {
+            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
+            yield .find_or_add_type_id(Type::MutableReference(id: inner_type_id))
+        }
+        NamespacedName(name, namespaces, params, span) => {
+            mut current_namespace_scope_id = scope_id
 
-                for ns in namespaces.iterator() {
-                    let result = .find_namespace_in_scope(scope_id: current_namespace_scope_id, name: ns)
+            for ns in namespaces.iterator() {
+                let result = .find_namespace_in_scope(scope_id: current_namespace_scope_id, name: ns)
 
-                    if result.has_value() {
-                        current_namespace_scope_id = result!.0
-                    } else {
-                        .error(format("Unknown namespace: '{}'", ns), span)
-                        return unknown_type_id()
-                    }
-                }
-
-                mut generic_args: [TypeId] = []
-
-                for param in params.iterator() {
-                    let checked_arg = .typecheck_typename(parsed_type: param, scope_id, name)
-
-                    generic_args.push(checked_arg)
-                }
-
-                if generic_args.is_empty() {
-                    let synthetic_typename = ParsedType::Name(name, span)
-                    // TODO: add and generic support
-                    return .typecheck_typename(parsed_type: synthetic_typename, scope_id: current_namespace_scope_id, name)
+                if result.has_value() {
+                    current_namespace_scope_id = result!.0
                 } else {
-                    return .typecheck_generic_resolved_type(name, checked_inner_types: generic_args, scope_id: current_namespace_scope_id, span)
+                    .error(format("Unknown namespace: '{}'", ns), span)
+                    return unknown_type_id()
                 }
             }
-            Name(name, span) => {
-                let maybe_type_and_scope = .find_type_scope(scope_id, name)
-                if maybe_type_and_scope.has_value() {
-                    if not maybe_type_and_scope!.1.equals(.prelude_scope_id()) {
+
+            mut generic_args: [TypeId] = []
+
+            for param in params.iterator() {
+                let checked_arg = .typecheck_typename(parsed_type: param, scope_id, name)
+
+                generic_args.push(checked_arg)
+            }
+
+            mut type_id: TypeId? = None
+            if generic_args.is_empty() {
+                let synthetic_typename = ParsedType::Name(name, span)
+                // TODO: add and generic support
+                type_id = .typecheck_typename(parsed_type: synthetic_typename, scope_id: current_namespace_scope_id, name)
+            } else {
+                type_id = .typecheck_generic_resolved_type(name, checked_inner_types: generic_args, scope_id: current_namespace_scope_id, span)
+            }
+
+            yield type_id!
+        }
+        Name(name, span) => {
+            let maybe_type_and_scope = .find_type_scope(scope_id, name)
+            if maybe_type_and_scope.has_value() {
+                if not maybe_type_and_scope!.1.equals(.prelude_scope_id()) {
+                    return maybe_type_and_scope!.0
+                }
+            }
+
+            yield match name {
+                "i8" => builtin(BuiltinType::I8)
+                "i16" => builtin(BuiltinType::I16)
+                "i32" => builtin(BuiltinType::I32)
+                "i64" => builtin(BuiltinType::I64)
+                "u8" => builtin(BuiltinType::U8)
+                "u16" => builtin(BuiltinType::U16)
+                "u32" => builtin(BuiltinType::U32)
+                "u64" => builtin(BuiltinType::U64)
+                "f32" => builtin(BuiltinType::F32)
+                "f64" => builtin(BuiltinType::F64)
+                "c_char" => builtin(BuiltinType::CChar)
+                "c_int" => builtin(BuiltinType::CInt)
+                "usize" => builtin(BuiltinType::Usize)
+                "String" => builtin(BuiltinType::JaktString)
+                "bool" => builtin(BuiltinType::Bool)
+                "void" => builtin(BuiltinType::Void)
+                "never" => builtin(BuiltinType::Never)
+                else => {
+                    if maybe_type_and_scope.has_value() {
                         return maybe_type_and_scope!.0
                     }
-                }
 
-                return match name {
-                    "i8" => builtin(BuiltinType::I8)
-                    "i16" => builtin(BuiltinType::I16)
-                    "i32" => builtin(BuiltinType::I32)
-                    "i64" => builtin(BuiltinType::I64)
-                    "u8" => builtin(BuiltinType::U8)
-                    "u16" => builtin(BuiltinType::U16)
-                    "u32" => builtin(BuiltinType::U32)
-                    "u64" => builtin(BuiltinType::U64)
-                    "f32" => builtin(BuiltinType::F32)
-                    "f64" => builtin(BuiltinType::F64)
-                    "c_char" => builtin(BuiltinType::CChar)
-                    "c_int" => builtin(BuiltinType::CInt)
-                    "usize" => builtin(BuiltinType::Usize)
-                    "String" => builtin(BuiltinType::JaktString)
-                    "bool" => builtin(BuiltinType::Bool)
-                    "void" => builtin(BuiltinType::Void)
-                    "never" => builtin(BuiltinType::Never)
-                    else => {
-                        if maybe_type_and_scope.has_value() {
-                            return maybe_type_and_scope!.0
-                        }
-
-                        .error(format("Unknown type ‘{}’", name), span)
-                        return unknown_type_id()
-                    }
+                    .error(format("Unknown type ‘{}’", name), span)
+                    yield unknown_type_id()
                 }
             }
-            Empty => {
-                return unknown_type_id()
+        }
+        Empty => {
+            yield unknown_type_id()
+        }
+        JaktTuple(types, span) => {
+            mut checked_types: [TypeId] = []
+            for parsed_type in types.iterator() {
+                checked_types.push(.typecheck_typename(parsed_type, scope_id, name))
             }
-            JaktTuple(types, span) => {
-                mut checked_types: [TypeId] = []
-                for parsed_type in types.iterator() {
-                    checked_types.push(.typecheck_typename(parsed_type, scope_id, name))
-                }
-                let tuple_struct_id = .find_struct_in_prelude("Tuple")
+            let tuple_struct_id = .find_struct_in_prelude("Tuple")
 
-                let type_id = .find_or_add_type_id(Type::GenericInstance(id: tuple_struct_id, args: checked_types))
+            yield .find_or_add_type_id(Type::GenericInstance(id: tuple_struct_id, args: checked_types))
+        }
+        JaktArray(inner, span) => {
+            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
 
-                return type_id
+            let array_struct_id = .find_struct_in_prelude("Array")
+
+            yield .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
+        }
+        Dictionary(key, value, span) => {
+            let key_type_id = .typecheck_typename(parsed_type: key, scope_id, name)
+            let value_type_id = .typecheck_typename(parsed_type: value, scope_id, name)
+
+            let dict_struct_id = .find_struct_in_prelude("Dictionary")
+
+            yield .find_or_add_type_id(Type::GenericInstance(id: dict_struct_id, args: [key_type_id, value_type_id]))
+        }
+        Set(inner, span) => {
+            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
+
+            let set_struct_id = .find_struct_in_prelude("Set")
+
+            yield .find_or_add_type_id(Type::GenericInstance(id: set_struct_id, args: [inner_type_id]))
+        }
+        Optional(inner, span) => {
+            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
+
+            let optional_struct_id = .find_struct_in_prelude("Optional")
+
+            yield .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [inner_type_id]))
+        }
+        WeakPtr(inner, span) => {
+            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
+
+            let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
+
+            yield .find_or_add_type_id(Type::GenericInstance(id: weakptr_struct_id, args: [inner_type_id]))
+        }
+        RawPtr(inner, span) => {
+            let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
+
+            yield .find_or_add_type_id(Type::RawPtr(id: inner_type_id))
+        }
+        GenericType(name, generic_parameters, span) => {
+            mut checked_inner_types: [TypeId] = []
+
+            for inner_type in generic_parameters.iterator() {
+                let inner_type_id = .typecheck_typename(parsed_type: inner_type, scope_id, name)
+                checked_inner_types.push(inner_type_id)
             }
-            JaktArray(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
 
-                let array_struct_id = .find_struct_in_prelude("Array")
-
-                let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
-
-                return type_id
+            yield .typecheck_generic_resolved_type(name, checked_inner_types, scope_id, span)
+        }
+        Function(params, can_throw, return_type, span) => {
+            let function_name = match name.has_value() {
+                true => name!
+                else => (try format("lambda{}", .lambda_count++)) ?? ""
             }
-            Dictionary(key, value, span) => {
-                let key_type_id = .typecheck_typename(parsed_type: key, scope_id, name)
-                let value_type_id = .typecheck_typename(parsed_type: value, scope_id, name)
 
-                let dict_struct_id = .find_struct_in_prelude("Dictionary")
+            mut checked_params: [CheckedParameter] = []
+            mut first = true
 
-                let type_id = .find_or_add_type_id(Type::GenericInstance(id: dict_struct_id, args: [key_type_id, value_type_id]))
-
-                return type_id
+            let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
+            defer {
+                .generic_inferences.restore(old_generic_inferences)
             }
-            Set(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
 
-                let set_struct_id = .find_struct_in_prelude("Set")
-
-                let type_id = .find_or_add_type_id(Type::GenericInstance(id: set_struct_id, args: [inner_type_id]))
-
-                return type_id
+            for param in params.iterator() {
+                checked_params.push(.typecheck_parameter(parameter: param, scope_id, first, this_arg_type_id: None, check_scope: None))
+                first = false
             }
-            Optional(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
 
-                let optional_struct_id = .find_struct_in_prelude("Optional")
-
-                let type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [inner_type_id]))
-
-                return type_id
-            }
-            WeakPtr(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
-
-                let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
-
-                let type_id = .find_or_add_type_id(Type::GenericInstance(id: weakptr_struct_id, args: [inner_type_id]))
-
-                return type_id
-            }
-            RawPtr(inner, span) => {
-                let inner_type_id = .typecheck_typename(parsed_type: inner, scope_id, name)
-
-                let type_id = .find_or_add_type_id(Type::RawPtr(id: inner_type_id))
-
-                return type_id
-            }
-            GenericType(name, generic_parameters, span) => {
-                mut checked_inner_types: [TypeId] = []
-
-                for inner_type in generic_parameters.iterator() {
-                    let inner_type_id = .typecheck_typename(parsed_type: inner_type, scope_id, name)
-                    checked_inner_types.push(inner_type_id)
-                }
-
-                return .typecheck_generic_resolved_type(name, checked_inner_types, scope_id, span)
-            }
-            Function(params, can_throw, return_type, span) => {
-                let function_name = match name.has_value() {
-                    true => name!
-                    else => (try format("lambda{}", .lambda_count++)) ?? ""
-                }
-                mut checked_params: [CheckedParameter] = []
-                mut first = true
-
-                let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
-                defer {
-                    .generic_inferences.restore(old_generic_inferences)
-                }
-
-                for param in params.iterator() {
-                    checked_params.push(.typecheck_parameter(parameter: param, scope_id, first, this_arg_type_id: None, check_scope: None))
-                    first = false
-                }
-
-                let checked_function = CheckedFunction(
-                    name: function_name
-                    name_span: span
-                    visibility: CheckedVisibility::Public
-                    return_type_id: .typecheck_typename(parsed_type: return_type, scope_id, name: None)
-                    return_type_span: return_type.span()
-                    params: checked_params
-                    generics: FunctionGenerics(
-                        base_params: checked_params
-                        params: []
-                        specializations: []
-                    )
-                    block: CheckedBlock(
-                        statements: []
-                        scope_id
-                        control_flow: BlockControlFlow::MayReturn
-                        yielded_type: None
-                        yielded_none: false
-                    )
-                    can_throw
-                    type: FunctionType::Expression
-                    linkage: FunctionLinkage::Internal
-                    function_scope_id: scope_id
-                    struct_id: None
-                    is_instantiated: true
-                    parsed_function: None
-                    is_comptime: false
-                    is_virtual: false
-                    is_override: false
+            let checked_function = CheckedFunction(
+                name: function_name
+                name_span: span
+                visibility: CheckedVisibility::Public
+                return_type_id: .typecheck_typename(parsed_type: return_type, scope_id, name: None)
+                return_type_span: return_type.span()
+                params: checked_params
+                generics: FunctionGenerics(
+                    base_params: checked_params
+                    params: []
+                    specializations: []
                 )
-                mut module = .current_module()
-                let function_id = module.add_function(checked_function)
+                block: CheckedBlock(
+                    statements: []
+                    scope_id
+                    control_flow: BlockControlFlow::MayReturn
+                    yielded_type: None
+                    yielded_none: false
+                )
+                can_throw
+                type: FunctionType::Expression
+                linkage: FunctionLinkage::Internal
+                function_scope_id: scope_id
+                struct_id: None
+                is_instantiated: true
+                parsed_function: None
+                is_comptime: false
+                is_virtual: false
+                is_override: false
+            )
+            mut module = .current_module()
+            let function_id = module.add_function(checked_function)
 
-                mut param_type_ids: [TypeId] = []
-                for param in checked_function.params.iterator() {
-                    param_type_ids.push(param.variable.type_id)
-                }
-
-                return .find_or_add_type_id(Type::Function(
-                    params: param_type_ids
-                    can_throw
-                    return_type_id: checked_function.return_type_id
-                    pseudo_function_id: function_id))
+            mut param_type_ids: [TypeId] = []
+            for param in checked_function.params.iterator() {
+                param_type_ids.push(param.variable.type_id)
             }
+
+            yield .find_or_add_type_id(Type::Function(
+                params: param_type_ids
+                can_throw
+                return_type_id: checked_function.return_type_id
+                pseudo_function_id: function_id
+            ))
         }
     }
 
