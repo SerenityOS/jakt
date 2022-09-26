@@ -10,7 +10,7 @@ import compiler { Compiler, FileId }
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
 import formatter { Formatter }
-import utility { FilePath, ArgsParser, Span, escape_for_quotes, join }
+import utility { ArgsParser, Span, escape_for_quotes, join }
 import lexer { Lexer }
 import parser { Parser }
 import interpreter { Interpreter, InterpreterScope, value_to_checked_expression }
@@ -18,6 +18,7 @@ import typechecker { Typechecker }
 import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId, Value, ValueImpl }
 import repl { REPL, serialize_ast_node }
 import ide
+import path { Path }
 import os { platform_process, platform_fs, Target }
 
 import platform_process() {
@@ -27,6 +28,7 @@ import platform_process() {
 import platform_fs() {
     make_directory
 }
+
 
 function usage() => "usage: jakt [-h] [OPTIONS] <filename>"
 function help() -> String {
@@ -38,7 +40,7 @@ function help() -> String {
     output += "  -dt\t\t\t\t\tPrint debug info for the typechecker.\n"
     output += "  -S\t\t\t\t\tOnly output source (do not build).\n"
     output += "  -T,--target-triple TARGET\t\t\t\t\tSpecify the target triple used for the build, defaults to native.\n"
-    output += "  --runtime-library-path PATH\t\t\t\t\tSpecify the path to the runtime library, defaults to 'build/runtime'.\n"
+    output += "  --runtime-library-path PATH\t\t\t\t\tSpecify the path to the runtime library.\n"
     output += "  -J,--jobs NUMBER\t\t\t\t\tSpecify the number of jobs to run in parallel, defaults to 2.\n"
     output += "  -cr, --compile-run\t\t\tBuild and run an executable file.\n"
     output += "  -r, --run\t\t\t\tRun the given file without compiling it (all positional arguments after the file name will be passed to main).\n"
@@ -226,10 +228,10 @@ function main(args: [String]) {
         return 0
     }
 
-    let current_executable_path = FilePath::make(File::current_executable_path())
-    let install_base_path = FilePath::make(current_executable_path.dirname()).dirname()
-    let default_runtime_path = install_base_path + "/include/runtime"
-    let default_runtime_library_path = install_base_path + "/lib"
+    let current_executable_path = Path::from_string(File::current_executable_path())
+    let install_base_path = current_executable_path.parent().parent()
+    let default_runtime_path = install_base_path.join("include/runtime")
+    let default_runtime_library_path = install_base_path.join("lib")
 
     let optimize = args_parser.flag(["-O"])
     let lexer_debug = args_parser.flag(["-dl"])
@@ -247,12 +249,12 @@ function main(args: [String]) {
     let write_source_to_file = args_parser.flag(["-S", "--emit-cpp-source-only"])
     let generate_depfile = args_parser.option(["-M", "--dep-file"])
     let target_triple = args_parser.option(["-T", "--target-triple"])
-    let runtime_library_path = args_parser.option(["-RLP", "--runtime-library-path"]) ?? default_runtime_library_path
+    let runtime_library_path = args_parser.option(["-RLP", "--runtime-library-path"]) ?? default_runtime_library_path.to_string()
     let compiler_job_count = args_parser.option(["-J", "--jobs"]) ?? "2"
 
     let clang_format_path = args_parser.option(["-F", "--clang-format-path"]) ?? "clang-format"
-    let runtime_path = args_parser.option(["-R", "--runtime-path"]) ?? default_runtime_path
-    let binary_dir = args_parser.option(["-B", "--binary-dir"]) ?? "build"
+    let runtime_path = args_parser.option(["-R", "--runtime-path"]) ?? default_runtime_path.to_string()
+    let binary_dir = Path::from_string(args_parser.option(["-B", "--binary-dir"]) ?? "build")
     let dot_clang_format_path = args_parser.option(["-D", "--dot-clang-format-path"])
     let cxx_compiler_path = args_parser.option(["-C", "--cxx-compiler-path"]) ?? "clang++"
     let archiver_path = args_parser.option(["-A", "--archiver"])
@@ -317,15 +319,15 @@ function main(args: [String]) {
         return 1
     }
 
-    let file_path = FilePath::make(file_name!)
+    let file_path = Path::from_string(file_name!)
     // if file_path.ext() != "jakt" {
     //     eprintln("the compiler expects files with file extension .jakt")
     //     eprintln("{}", usage())
     //     return 1
     // }
 
-    let guessed_output_filename = binary_dir + "/" + file_path.basename(strip_extension: true)
-    let output_filename = set_output_filename ?? guessed_output_filename
+    let guessed_output_filename = binary_dir.join(file_path.basename(strip_extension: true))
+    let output_filename = set_output_filename ?? guessed_output_filename.to_string()
 
     mut errors: [JaktError] = []
 
@@ -529,8 +531,8 @@ function main(args: [String]) {
             println("{{\"start\": {}, \"end\": {}}}", result.start, result.end);
         } else {
             let file_path = compiler.get_file_path(result.file_id)
-            
-            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, escape_for_quotes(file_path!.path));
+
+            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, escape_for_quotes(file_path!.to_string()));
         }
         return 0
     }
@@ -544,13 +546,13 @@ function main(args: [String]) {
         } else {
             let file_path = compiler.get_file_path(result.file_id)
 
-            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, escape_for_quotes(file_path!.path));
+            println("{{\"start\": {}, \"end\": {}, \"file\": \"{}\"}}", result.start, result.end, escape_for_quotes(file_path!.to_string()));
         }
         return 0
     }
     if hover.has_value() {
         let index = hover!.to_uint()! as! usize;
-        
+
         let result = ide::find_typename_in_program(program: checked_program, span: Span(file_id: FileId(id: 1), start: index, end: index))
 
         if result.has_value() {
@@ -595,15 +597,15 @@ function main(args: [String]) {
 
     mut depfile_builder = StringBuilder::create()
 
-    if not File::exists(binary_dir) {
-        make_directory(path: binary_dir)
+    if not binary_dir.exists() {
+        make_directory(path: binary_dir.to_string())
     }
 
     for (file, contents_and_path) in codegen_result.iterator() {
         let (contents, module_file_path) = contents_and_path
 
-        let path = binary_dir + "/" + file
-        try write_to_file(data: contents, output_filename: path) catch error {
+        let path = binary_dir.join(file)
+        try write_to_file(data: contents, output_filename: path.to_string()) catch error {
             eprintln("Error: Could not write to file: {} ({})", file, error)
             return 1
         }
@@ -660,14 +662,16 @@ function main(args: [String]) {
                 }
             }
 
-            let file_path = FilePath::make(file_name)
-            let basename_without_extension = file_path.basename().substring(start: 0, length: file_path.basename().length() - 4)
-            let built_object = binary_dir + "/" + basename_without_extension + ".o"
+            let built_object = binary_dir.join(
+                Path::from_string(file_name).replace_extension("o").to_string()
+            ).to_string()
+
             linked_files.push(built_object)
+
             let id = run_compiler(
                 &mut pool
                 cxx_compiler_path
-                cpp_filename: binary_dir + "/" + file_name
+                cpp_filename: binary_dir.join(file_name).to_string()
                 output_filename: built_object
                 runtime_path
                 extra_include_paths
@@ -752,7 +756,7 @@ function run_compiler(
     optimize: bool
     extra_compiler_flags: [String]
 ) throws -> usize {
-    mut file_path = FilePath(path: cxx_compiler_path)
+    mut file_path = Path::from_string(cxx_compiler_path)
 
     mut extra_flags: [String] = []
     if file_path.basename() == "g++" {

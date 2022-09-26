@@ -1,10 +1,11 @@
 import typechecker { Typechecker, Interpreter, LoadedModule, ModuleId, ScopeId, TypeId, CheckedProgram, SafetyMode, InterpreterScope, CheckedUnaryOperator, CheckedExpression, GenericInferences }
-import compiler { Compiler, FilePath, FileId }
+import compiler { Compiler, FileId }
 import lexer { Lexer }
 import parser { Parser }
 import utility { Span, allocate, null }
 import error { JaktError }
 import interpreter { value_to_checked_expression }
+import path { Path }
 
 import extern c "stdio.h" {
     extern function fopen(pathname: raw c_char, mode: raw c_char) -> raw FILE
@@ -237,7 +238,7 @@ struct REPL {
         )
 
         compiler.load_prelude()
-        let file_id = compiler.get_file_id_or_register(file: FilePath::make("<repl>"))
+        let file_id = compiler.get_file_id_or_register(file: Path::from_string("<repl>"))
 
         let placeholder_module_id = ModuleId(id: 0)
 

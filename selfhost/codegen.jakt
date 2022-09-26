@@ -114,7 +114,7 @@ struct CodegenDebugInfo {
         while line_index < .line_spans[file_idx].size() {
             if span.start >= .line_spans[file_idx][line_index].start and span.start <= .line_spans[file_idx][line_index].end {
                 let column_index = span.start - .line_spans[file_idx][line_index].start
-                return format("{} \"{}\"", line_index+1, .compiler.get_file_path(span.file_id)!.path)
+                return format("{} \"{}\"", line_index+1, .compiler.get_file_path(span.file_id)!.to_string())
             }
             line_index += 1
         }
@@ -285,7 +285,7 @@ struct CodeGenerator {
 
         result.set(
             "__unified_forward.h",
-            (output, compiler.current_file_path()!.path),
+            (output, compiler.current_file_path()!.to_string()),
         )
 
 

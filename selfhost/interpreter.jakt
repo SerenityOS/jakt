@@ -931,16 +931,15 @@ class Interpreter {
                             throw Error::from_errno(InterpretError::InvalidType as! i32)
                         }
                     }
-                    let base_path = .program.compiler.get_file_path(call_span.file_id)!.dirname()
-                    let path_string = base_path + "/" + requested_path
-                    let path = Value(
-                        impl: ValueImpl::JaktString(path_string)
+                    let path = .program.compiler.get_file_path(call_span.file_id)!.parent().join(requested_path)
+                    let path_value = Value(
+                        impl: ValueImpl::JaktString(path.to_string())
                         span: call_span
                     )
-                    if not File::exists(path_string) {
+                    if not path.exists() {
                         // FIXME: This should `return StatementResult::Throw(...)`, but we currently can't put strings in Error, so the output result looks vague and unhelpful.
                         .error(
-                            format("Prelude function `File::{}` could not find file at path {}", prelude_function, path_string),
+                            format("Prelude function `File::{}` could not find file at path {}", prelude_function, path.to_string()),
                             call_span
                         )
                         throw Error::from_errno(InterpretError::InvalidType as! i32)
@@ -953,7 +952,7 @@ class Interpreter {
                         Value(
                             impl: ValueImpl::Struct(
                                 fields: [
-                                    path
+                                    path_value
                                 ],
                                 struct_id: file_struct_id
                                 constructor: constructor!
@@ -1009,14 +1008,10 @@ class Interpreter {
                             throw Error::from_errno(InterpretError::InvalidType as! i32)
                         }
                     }
-                    let base_path = .program.compiler.get_file_path(call_span.file_id)!.dirname()
-                    let path_string = match requested_path.byte_at(0) {
-                        b'/' => requested_path
-                        else => base_path + "/" + requested_path
-                    }
+                    let path = .program.compiler.get_file_path(call_span.file_id)!.parent().join(requested_path)
                     yield StatementResult::JustValue(
                         Value(
-                            impl: ValueImpl::Bool(File::exists(path_string))
+                            impl: ValueImpl::Bool(path.exists())
                             span: call_span
                         )
                     )

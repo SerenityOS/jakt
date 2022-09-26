@@ -68,6 +68,7 @@ set(SELFHOST_SOURCES
   selfhost/types.jakt
   selfhost/utility.jakt
   selfhost/os.jakt
+  selfhost/path.jakt
 )
 
 if(CMAKE_HOST_WIN32)

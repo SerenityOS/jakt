@@ -25,7 +25,8 @@ import types {
     builtin, never_type_id, unknown_type_id, void_type_id,
 }
 import types
-import utility { panic, todo, Span, join, FilePath, FileId, escape_for_quotes }
+import utility { FileId, Span, escape_for_quotes, join, panic, todo }
+import path { Path }
 import compiler { Compiler }
 import interpreter { Interpreter, InterpreterScope, ExecutionResult, value_to_checked_expression }
 
@@ -137,7 +138,7 @@ struct Typechecker {
 
     function find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String) throws -> Value? => .program.find_comptime_binding_in_scope(scope_id, name)
 
-    function get_root_path(this) throws -> FilePath {
+    function get_root_path(this) throws -> Path {
         let file_id = .program.get_loaded_module("Root Module")!.file_id
 
         return .compiler.get_file_path(file_id)!
@@ -212,7 +213,7 @@ struct Typechecker {
             ],
             variables: [],
             imports: [],
-            resolved_import_path: path ?? .compiler.current_file_path()!.path,
+            resolved_import_path: path ?? .compiler.current_file_path()!.to_string(),
             is_root: is_root,
         )
         .program.modules.push(module)
@@ -228,7 +229,7 @@ struct Typechecker {
 
     function include_prelude(mut this) throws {
         let module_name = "__prelude__"
-        let file_name = FilePath::make(module_name)
+        let file_name = Path::from_string(module_name)
         let file_contents = get_prelude_contents()
 
         let old_file_id = .compiler.current_file
@@ -688,9 +689,9 @@ struct Typechecker {
                 let maybe_file_name = .compiler.search_for_path(name_and_span.0)
                 let file_name = match maybe_file_name.has_value() {
                     true => maybe_file_name!
-                    else => FilePath::make(format("{}/{}.jakt", .get_root_path().dirname(), name_and_span.0))
+                    else => .get_root_path().parent().join(name_and_span.0).replace_extension("jakt")
                 }
-                if File::exists(file_name.path) {
+                if File::exists(file_name.to_string()) {
                     module_name_and_span = name_and_span
                     break
                 }
@@ -716,7 +717,7 @@ struct Typechecker {
             let maybe_file_name = .compiler.search_for_path(module_name)
             let file_name = match maybe_file_name.has_value() {
                 true => maybe_file_name!
-                else => FilePath::make(format("{}/{}.jakt", .get_root_path().dirname(), module_name))
+                else => .get_root_path().parent().join(module_name).replace_extension("jakt")
             }
 
             let file_id = .compiler.get_file_id_or_register(file_name)
@@ -733,7 +734,7 @@ struct Typechecker {
 
             let original_current_module_id = .current_module_id
 
-            imported_module_id = .create_module(name: module_name, is_root: false, path: file_name.path)
+            imported_module_id = .create_module(name: module_name, is_root: false, path: file_name.to_string())
             .program.set_loaded_module(
                 module_name: module_name
                 loaded_module: LoadedModule(

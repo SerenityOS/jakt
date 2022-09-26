@@ -1,9 +1,10 @@
 import error { JaktError, print_error, print_error_json }
 import utility
-import utility { FilePath, FileId }
+import utility { FileId }
+import path { Path }
 
 class Compiler {
-    public files: [FilePath]
+    public files: [Path]
     public file_ids: [String: FileId]
     public errors: [JaktError]
     public current_file: FileId?
@@ -30,7 +31,7 @@ class Compiler {
         mut idx = 0uz
         for file in .files.iterator() {
             mut file_contents: [u8]? = None
-            let file_name = file.path
+            let file_name = file.to_string()
 
             // Only display the errors that belong to this file
             for error in .errors.iterator() {
@@ -55,7 +56,7 @@ class Compiler {
         }
     }
 
-    public function get_file_path(this, anon file_id: FileId) throws -> FilePath? {
+    public function get_file_path(this, anon file_id: FileId) throws -> Path? {
         if file_id.id >= .files.size() {
             return None
         }
@@ -66,7 +67,7 @@ class Compiler {
         return .current_file
     }
 
-    public function current_file_path(this) -> FilePath? {
+    public function current_file_path(this) -> Path? {
         if .current_file.has_value() {
             return .files[.current_file!.id]
         }
@@ -74,9 +75,10 @@ class Compiler {
         return None
     }
 
-    public function get_file_id_or_register(mut this, anon file: FilePath) throws -> FileId {
+    public function get_file_id_or_register(mut this, anon file: Path) throws -> FileId {
         // FIXME: maybe we want to index with the absolute path, just to be sure?
-        mut file_id = .file_ids.get(file.path)
+        let path = file.to_string()
+        mut file_id = .file_ids.get(path)
 
         if file_id.has_value() {
             return file_id!
@@ -85,7 +87,7 @@ class Compiler {
         .files.push(file)
         file_id = FileId(id: .files.size() - 1)
 
-        .file_ids.set(file.path, file_id!)
+        .file_ids.set(path, file_id!)
 
         return file_id!
     }
@@ -102,14 +104,14 @@ class Compiler {
 
         // set file contents
         try {
-            mut file = File::open_for_reading(.files[file_id.id].path)
+            mut file = File::open_for_reading(.files[file_id.id].to_string())
             .current_file_contents = file.read_all()
         } catch error {
             match error.code() {
-                (ErrNOENT) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: File not found", .files[file_id.id].path)
-                (ErrACCES) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied", .files[file_id.id].path)
-                (ErrFBIG) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: File too big", .files[file_id.id].path)
-                (ErrNAMETOOLONG) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: Name too long", .files[file_id.id].path)
+                (ErrNOENT) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: File not found", .files[file_id.id])
+                (ErrACCES) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied", .files[file_id.id])
+                (ErrFBIG) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: File too big", .files[file_id.id])
+                (ErrNAMETOOLONG) => eprintln("\u001b[31;1mError\u001b[0m Could not access {}: Name too long", .files[file_id.id])
                 else => {
                     utility::panic("Incurred unrecognized error while trying to open file")
                 }
@@ -130,15 +132,15 @@ class Compiler {
 
     public function load_prelude(mut this) throws {
         let module_name = "__prelude__"
-        let file_name = FilePath::make(module_name)
+        let file_name = Path::from_string(module_name)
         .get_file_id_or_register(file_name)
     }
 
-    public function search_for_path(this, anon module_name: String) throws -> FilePath? {
+    public function search_for_path(this, anon module_name: String) throws -> Path? {
         for include_path in .include_paths.iterator() {
             let candidate_path = include_path + "/" + module_name + ".jakt"
             if File::exists(candidate_path) {
-                return FilePath::make(candidate_path)
+                return Path::from_string(candidate_path)
             }
         }
 
