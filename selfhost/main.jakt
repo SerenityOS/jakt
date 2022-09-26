@@ -326,8 +326,8 @@ function main(args: [String]) {
     //     return 1
     // }
 
-    let guessed_output_filename = binary_dir.join(file_path.basename(strip_extension: true))
-    let output_filename = set_output_filename ?? guessed_output_filename.to_string()
+    let guessed_output_filename = file_path.basename(strip_extension: true)
+    let output_filename = binary_dir.join(set_output_filename ?? guessed_output_filename).to_string()
 
     mut errors: [JaktError] = []
 
