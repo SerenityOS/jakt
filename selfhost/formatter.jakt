@@ -34,6 +34,7 @@ enum Entity {
 
 enum ExpressionMode {
     OutsideExpression
+    BeforeExpressions
     AtExpressionStart
     InExpression
 }
@@ -59,6 +60,7 @@ enum State {
         open_parens: usize
         open_curlies: usize
         open_squares: usize
+        arrow_indents: usize
         allow_eol: usize?
         inserted_comma: bool
         expression_mode: ExpressionMode
@@ -825,6 +827,7 @@ struct Stage0 {
                         .replace_state(State::EntityDefinition(
                             entity: Entity::Function(arrow: true, indented: next_is_eol)
                         ))
+
                         if next_is_eol {
                             if not .already_seen_enclosure_in_current_line {
                                 .already_seen_enclosure_in_current_line = true
@@ -843,9 +846,10 @@ struct Stage0 {
                             open_parens: 0
                             open_curlies: 0
                             open_squares: 0
+                            arrow_indents: 0
                             allow_eol: eols_allowed
                             inserted_comma: false
-                            expression_mode: ExpressionMode::AtExpressionStart
+                            expression_mode: ExpressionMode::BeforeExpressions
                             dedents_on_open_curly: 0
                         ))
 
@@ -896,6 +900,7 @@ struct Stage0 {
                             open_parens: 0
                             open_curlies: 0
                             open_squares: 0
+                            arrow_indents: 0
                             allow_eol: None
                             inserted_comma: false
                             expression_mode: ExpressionMode::OutsideExpression
@@ -919,6 +924,11 @@ struct Stage0 {
                         )
                     }
                     Eol => {
+                        if not arrow {
+                            // Ignore Eols if not arrow function
+                            return .next()
+                        }
+
                         .pop_state()
                         if indented {
                             if .dedents_to_skip.last()! == 1uz {
@@ -930,6 +940,7 @@ struct Stage0 {
                                 .dedents_to_skip[.dedents_to_skip.size() - 1] -= 1
                             }
                         }
+
                         yield FormattedToken(
                             token
                             indent: .indent
@@ -945,7 +956,7 @@ struct Stage0 {
                     )
                 }
             }
-            StatementContext(open_parens, open_curlies, open_squares, allow_eol, inserted_comma, expression_mode, dedents_on_open_curly) => match token {
+            StatementContext(open_parens, open_curlies, open_squares, arrow_indents, allow_eol, inserted_comma, expression_mode, dedents_on_open_curly) => match token {
                 Let => {
                     .push_state(State::VariableDeclaration(
                         open_parens: 0
@@ -979,6 +990,7 @@ struct Stage0 {
                         open_parens
                         open_curlies
                         open_squares
+                        arrow_indents
                         allow_eol
                         inserted_comma
                         expression_mode: ExpressionMode::AtExpressionStart
@@ -997,6 +1009,7 @@ struct Stage0 {
                         open_parens
                         open_curlies
                         open_squares
+                        arrow_indents
                         allow_eol
                         inserted_comma
                         expression_mode: ExpressionMode::OutsideExpression
@@ -1017,6 +1030,11 @@ struct Stage0 {
                     )
                 }
                 Eol => {
+                    if expression_mode is BeforeExpressions and .peek() is Eol {
+                        // Ignore repeated Eols
+                        return .next()
+                    }
+
                     if (allow_eol.has_value() and allow_eol! == 0)
                         and open_parens + open_curlies + open_squares == 0 {
                         .pop_state()
@@ -1024,18 +1042,38 @@ struct Stage0 {
                         return .next_impl(reconsume: true)
                     }
 
+                    mut new_arrow_indents = arrow_indents
                     mut new_allow_eol: usize? = allow_eol
-                    if allow_eol.has_value() and allow_eol! > 0 {
-                        new_allow_eol = allow_eol! - 1
+                    mut new_expression_mode = ExpressionMode::OutsideExpression
+                    if expression_mode is BeforeExpressions {
+                        new_expression_mode = ExpressionMode::BeforeExpressions
+                    } else {    
+                        if allow_eol.has_value() and allow_eol! > 0 {
+                            new_allow_eol = allow_eol! - 1
+                        }
+
+                        if arrow_indents > 0 {
+                            if .dedents_to_skip.last()! == 1uz {
+                                if .dedents_to_skip.size() > 1uz {
+                                    .dedents_to_skip.pop()
+                                }
+                                indent_change -= 1
+                            } else if .dedents_to_skip.last()! > 0 {
+                                .dedents_to_skip[.dedents_to_skip.size() - 1] -= 1
+                            }
+
+                            new_arrow_indents--
+                        }
                     }
 
                     .replace_state(State::StatementContext(
                         open_parens
                         open_curlies
                         open_squares
+                        arrow_indents: new_arrow_indents
                         allow_eol: new_allow_eol
                         inserted_comma
-                        expression_mode: ExpressionMode::OutsideExpression
+                        expression_mode: new_expression_mode
                         dedents_on_open_curly
                     ))
                     yield FormattedToken(
@@ -1049,10 +1087,11 @@ struct Stage0 {
                     .push_state(State::FunctionTypeContext(
                         seen_final_type: false
                     ))
+
                     yield FormattedToken(
                         token
                         indent: .indent
-                        trailing_trivia: [b' ']
+                        trailing_trivia: []
                         preceding_trivia: []
                     )
                 }
@@ -1061,6 +1100,7 @@ struct Stage0 {
                         open_parens
                         open_curlies
                         open_squares
+                        arrow_indents
                         allow_eol
                         inserted_comma
                         expression_mode: ExpressionMode::AtExpressionStart
@@ -1088,6 +1128,7 @@ struct Stage0 {
                             open_parens
                             open_curlies
                             open_squares
+                            arrow_indents
                             allow_eol
                             inserted_comma
                             expression_mode: ExpressionMode::OutsideExpression
@@ -1105,6 +1146,7 @@ struct Stage0 {
                             open_parens
                             open_curlies
                             open_squares
+                            arrow_indents
                             allow_eol
                             inserted_comma
                             expression_mode: ExpressionMode::AtExpressionStart
@@ -1120,15 +1162,29 @@ struct Stage0 {
                     }
                 }
                 FatArrow => {
+                    let next_is_eol = .peek() is Eol
+
+                    mut new_arrow_indents = arrow_indents
+                    if next_is_eol {
+                        if not .already_seen_enclosure_in_current_line {
+                            .already_seen_enclosure_in_current_line = true
+                            .dedents_to_skip.push(0uz)
+                        }
+                        indent_change += 1
+                        .dedents_to_skip[.dedents_to_skip.size() - 1] += 1
+                        new_arrow_indents++
+                    }
+                    
                     .replace_state(State::StatementContext(
                         open_parens
                         open_curlies
                         open_squares
+                        arrow_indents: new_arrow_indents
                         allow_eol
                         inserted_comma
                         expression_mode: match .peek() {
                             LCurly => ExpressionMode::OutsideExpression
-                            else => ExpressionMode::AtExpressionStart
+                            else => ExpressionMode::BeforeExpressions
                         }
                         dedents_on_open_curly
                     ))
@@ -1145,6 +1201,7 @@ struct Stage0 {
                         open_parens: open_parens
                         open_curlies: open_curlies
                         open_squares: open_squares + 1
+                        arrow_indents
                         allow_eol
                         inserted_comma
                         expression_mode: ExpressionMode::AtExpressionStart
@@ -1168,6 +1225,7 @@ struct Stage0 {
                         open_parens: open_parens
                         open_curlies: open_curlies
                         open_squares: open_squares - 1
+                        arrow_indents
                         allow_eol
                         inserted_comma
                         expression_mode: ExpressionMode::AtExpressionStart
@@ -1186,6 +1244,7 @@ struct Stage0 {
                         open_parens: open_parens + 1
                         open_curlies: open_curlies
                         open_squares: open_squares
+                        arrow_indents
                         allow_eol
                         inserted_comma
                         expression_mode: ExpressionMode::AtExpressionStart
@@ -1210,6 +1269,7 @@ struct Stage0 {
                         open_parens: open_parens - 1
                         open_curlies: open_curlies
                         open_squares: open_squares
+                        arrow_indents
                         allow_eol
                         inserted_comma
                         expression_mode: ExpressionMode::InExpression
@@ -1233,6 +1293,7 @@ struct Stage0 {
                         open_parens: open_parens
                         open_curlies: open_curlies + 1
                         open_squares: open_squares
+                        arrow_indents
                         allow_eol
                         inserted_comma
                         expression_mode: ExpressionMode::AtExpressionStart
@@ -1243,7 +1304,7 @@ struct Stage0 {
                         token
                         indent: .indent
                         trailing_trivia: match expression_mode {
-                            AtExpressionStart => []
+                            AtExpressionStart | BeforeExpressions => []
                             else => match .peek() {
                                 Eol | RCurly => []
                                 else => [b' ']
@@ -1266,6 +1327,7 @@ struct Stage0 {
                         open_parens: open_parens
                         open_curlies: open_curlies - 1
                         open_squares: open_squares
+                        arrow_indents
                         allow_eol
                         inserted_comma
                         expression_mode: ExpressionMode::InExpression
@@ -1290,6 +1352,7 @@ struct Stage0 {
                         open_parens
                         open_curlies
                         open_squares
+                        arrow_indents
                         allow_eol
                         inserted_comma
                         expression_mode: ExpressionMode::AtExpressionStart
@@ -1308,6 +1371,7 @@ struct Stage0 {
                         open_parens
                         open_curlies
                         open_squares
+                        arrow_indents
                         allow_eol
                         inserted_comma
                         expression_mode: ExpressionMode::AtExpressionStart
@@ -1333,6 +1397,7 @@ struct Stage0 {
                         open_parens: open_parens
                         open_curlies: open_curlies
                         open_squares: open_squares
+                        arrow_indents
                         allow_eol
                         inserted_comma
                         expression_mode: ExpressionMode::AtExpressionStart
@@ -1340,7 +1405,7 @@ struct Stage0 {
                     ))
 
                     let trivia: [u8] = match expression_mode {
-                        AtExpressionStart => []
+                        AtExpressionStart | BeforeExpressions => []
                         else => [b' ']
                     }
 
@@ -1388,6 +1453,7 @@ struct Stage0 {
                         open_parens: open_parens
                         open_curlies: open_curlies
                         open_squares: open_squares
+                        arrow_indents
                         allow_eol
                         inserted_comma
                         expression_mode: ExpressionMode::AtExpressionStart
@@ -1447,6 +1513,7 @@ struct Stage0 {
                             open_parens: open_parens
                             open_curlies: open_curlies
                             open_squares: open_squares
+                            arrow_indents
                             allow_eol
                             inserted_comma: true
                             expression_mode: ExpressionMode::InExpression
@@ -1463,6 +1530,7 @@ struct Stage0 {
                         open_parens: open_parens
                         open_curlies: open_curlies
                         open_squares: open_squares
+                        arrow_indents
                         allow_eol
                         inserted_comma: false
                         expression_mode: ExpressionMode::InExpression
@@ -1564,12 +1632,25 @@ struct Stage0 {
                         preceding_trivia: []
                     )
                 }
-                else => FormattedToken(
-                    token
-                    indent: .indent
-                    trailing_trivia: []
-                    preceding_trivia: []
-                )
+                else => {
+                    .replace_state(State::StatementContext(
+                        open_parens
+                        open_curlies
+                        open_squares
+                        arrow_indents
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::InExpression
+                        dedents_on_open_curly
+                    ))
+
+                    yield FormattedToken(
+                        token
+                        indent: .indent
+                        trailing_trivia: []
+                        preceding_trivia: []
+                    )
+                }
             }
             GenericCallTypeParams(open_angles) => match token {
                 LessThan => {
@@ -1757,6 +1838,7 @@ struct Stage0 {
                         open_parens: 0
                         open_curlies: 0
                         open_squares: 0
+                        arrow_indents: 0
                         allow_eol: 0uz
                         inserted_comma: false
                         expression_mode: ExpressionMode::AtExpressionStart
@@ -2052,11 +2134,13 @@ struct Stage0 {
                         open_angles: open_angles
                         seen_start: true
                     ))
-                    .push_state(State::FunctionTypeContext(seen_final_type: false))
+                    .push_state(State::FunctionTypeContext(
+                        seen_final_type: false
+                    ))
                     yield FormattedToken(
                         token
                         indent: .indent
-                        trailing_trivia: [b' ']
+                        trailing_trivia: []
                         preceding_trivia: []
                     )
                 }
@@ -2110,6 +2194,11 @@ struct Stage0 {
                 )
             }
             FunctionTypeContext(seen_final_type) => match token {
+                FatArrow | LCurly => {
+                    .pop_state()
+                    .index--
+                    return .next_impl(reconsume: true)
+                }
                 Arrow => {
                     if seen_final_type {
                         .pop_state()
@@ -2171,8 +2260,8 @@ struct Stage0 {
                 Throws => FormattedToken(
                     token
                     indent: .indent
-                    trailing_trivia: [b' ']
-                    preceding_trivia: [b' ']
+                    trailing_trivia: []
+                    preceding_trivia: []
                 )
                 else => {
                     if seen_final_type {
@@ -2199,6 +2288,7 @@ struct Stage0 {
                         open_parens: 0
                         open_curlies: 0
                         open_squares: 0
+                        arrow_indents: 0
                         allow_eol: 0
                         inserted_comma: false
                         expression_mode: ExpressionMode::OutsideExpression
@@ -2371,6 +2461,7 @@ struct Formatter {
             j -= 1
         }
     }
+
     private function to_array(anon s: String) throws -> [u8] {
         mut result: [u8] = []
         for i in 0..s.length() {
