@@ -724,7 +724,7 @@ boxed enum ParsedExpression {
     Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: Span, marker_span: Span)
     EnumVariantArg(expr: ParsedExpression, arg: EnumVariantPatternArgument, enum_variant: ParsedType, span: Span)
     NamespacedVar(name: String, namespace_: [String], span: Span)
-    Function(captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, return_type: ParsedType, block: ParsedBlock, span: Span)
+    Function(captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, is_fat_arrow: bool, return_type: ParsedType, block: ParsedBlock, span: Span)
     Try(expr: ParsedExpression, catch_block: ParsedBlock?, catch_name: String?, span: Span)
     TryBlock(stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, span: Span)
     Garbage(Span)
@@ -987,10 +987,10 @@ boxed enum ParsedExpression {
             TryBlock(stmt: rhs_stmt, error_name: rhs_error_name, catch_block: rhs_catch_block) => lhs_stmt.equals(rhs_stmt) and (lhs_error_name == rhs_error_name) and lhs_catch_block.equals(rhs_catch_block)
             else => false
         }
-        Function(captures: lhs_captures, params: lhs_params, can_throw: lsh_can_throw, return_type: lhs_return_type) => match rhs_expression {
-            Function(captures: rhs_captures, params: rhs_params, can_throw: rsh_can_throw, return_type: rhs_return_type) => {
+        Function(captures: lhs_captures, params: lhs_params, can_throw: lhs_can_throw, return_type: lhs_return_type) => match rhs_expression {
+            Function(captures: rhs_captures, params: rhs_params, can_throw: rhs_can_throw, return_type: rhs_return_type) => {
                 guard lhs_return_type.equals(rhs_return_type) and 
-                    lsh_can_throw == rsh_can_throw and
+                    lhs_can_throw == rhs_can_throw and
                     lhs_captures.size() == rhs_captures.size() and
                     lhs_params.size() == rhs_params.size() else {
                     return false
@@ -3142,8 +3142,10 @@ struct Parser {
             else => ParsedType::Empty
         }
 
+        mut is_fat_arrow = false
         let block = match .current() {
             FatArrow => {
+                is_fat_arrow = true
                 .index++
                 let expr = .parse_expression(allow_assignments: true, allow_newlines: false)
                 let span = expr.span()
@@ -3152,7 +3154,7 @@ struct Parser {
             else => .parse_block()
         }
 
-        return ParsedExpression::Function(captures, params, can_throw, return_type, block, span: merge_spans(start, .current().span()))
+        return ParsedExpression::Function(captures, params, can_throw, is_fat_arrow, return_type, block, span: merge_spans(start, .current().span()))
     }
 
     function parse_asterisk(mut this) throws -> ParsedExpression {

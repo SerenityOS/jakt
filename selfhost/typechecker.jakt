@@ -1996,7 +1996,6 @@ struct Typechecker {
 
         // Check return type
         mut function_return_type_id = .typecheck_typename(parsed_type: parsed_function.return_type, scope_id: checked_function_scope_id, name: None)
-
         if not parsed_function.is_fat_arrow and parsed_function.return_type is Empty {
             function_return_type_id = void_type_id()
         }
@@ -4694,7 +4693,7 @@ struct Typechecker {
         }
         JaktDictionary(values, span) => .typecheck_dictionary(values, span, scope_id, safety_mode, type_hint)
         Set(values, span) => .typecheck_set(values, span, scope_id, safety_mode, type_hint)
-        Function(captures, params, can_throw, return_type, block, span) => .typecheck_lambda(captures, params, can_throw, return_type, block, span, scope_id, safety_mode)
+        Function(captures, params, can_throw, is_fat_arrow, return_type, block, span) => .typecheck_lambda(captures, params, can_throw, is_fat_arrow, return_type, block, span, scope_id, safety_mode)
         Try(expr, catch_block, catch_name, span) => .typecheck_try(expr, catch_block, catch_name, scope_id, safety_mode, span, type_hint)
         TryBlock(stmt, catch_block, error_name, error_span, span) => .typecheck_try_block(stmt, error_name, error_span, catch_block, scope_id, safety_mode, span)
         Operator => {
@@ -4775,7 +4774,7 @@ struct Typechecker {
         return None
     }
 
-    function typecheck_lambda(mut this, captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, return_type: ParsedType, block: ParsedBlock, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
+    function typecheck_lambda(mut this, captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, is_fat_arrow: bool, return_type: ParsedType, block: ParsedBlock, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedExpression {
         let synthetic_type = ParsedType::Function(
             params
             can_throw
@@ -4830,13 +4829,20 @@ struct Typechecker {
 
         let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: lambda_scope_id, safety_mode)
 
-        if return_type_id.equals(unknown_type_id())
-            and not checked_block.statements.is_empty() {
-
-            if checked_block.statements.last()! is Return(val)
-                and val.has_value() {
-
+        if return_type_id.equals(unknown_type_id()) {
+            mut return_type_updated = false
+            if not is_fat_arrow and return_type is Empty {
+                return_type_id = void_type_id()
+                return_type_updated = true
+            } else if is_fat_arrow and 
+                not checked_block.statements.is_empty() and
+                checked_block.statements.last()! is Return(val) and 
+                val.has_value() {
                 return_type_id = .resolve_type_var(type_var_type_id: val!.type(), scope_id: lambda_scope_id)
+                return_type_updated = true
+            }
+
+            if return_type_updated {
                 type_id = match .get_type(type_id) {
                     Function(params, can_throw, pseudo_function_id) => .find_or_add_type_id(Type::Function(
                         params
@@ -4859,7 +4865,8 @@ struct Typechecker {
             block: checked_block
             span
             type_id
-            pseudo_function_id)
+            pseudo_function_id
+        )
     }
 
     function typecheck_namespaced_var_or_simple_enum_constructor_call(mut this, name: String, namespace_: [String], scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?, span: Span) throws -> CheckedExpression {
