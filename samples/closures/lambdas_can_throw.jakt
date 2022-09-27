@@ -6,8 +6,7 @@ function test(anon cb: function() throws -> String) throws {
 }
 
 function main() {
-    test(function() throws {
+    test(function() throws -> String {
         return format("{}", 69)
     })
 }
-

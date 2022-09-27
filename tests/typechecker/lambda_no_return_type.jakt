@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "OK\n"
+
+function main() {
+    let a = function() {
+        println("OK")
+    }
+
+    a()
+}
