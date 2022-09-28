@@ -1697,10 +1697,16 @@ struct Typechecker {
                         visibility: CheckedVisibility::Public
                     )
 
+                    mut default_value: CheckedExpression? = None
+                    if param.default_argument.has_value() {
+                        let param_type = .typecheck_typename(parsed_type: param.variable.parsed_type, scope_id: method_scope_id, name: param.variable.name)
+                        default_value = .typecheck_expression(param.default_argument!, scope_id, safety_mode: SafetyMode::Safe, type_hint: param_type)
+                    }
+
                     checked_function.add_param(CheckedParameter(
                         requires_label: param.requires_label
                         variable: checked_variable
-                        default_value: None
+                        default_value
                     ))
                 }
             }
@@ -7451,27 +7457,31 @@ struct Typechecker {
             let param = params[i]
             mut maybe_checked_expr: CheckedExpression? = None
             if not param.requires_label {
-                guard args.size() > consumed_arg else {
-                    .error(format("Missing argument for function parameter {}", param.variable.name), span)
-                    continue
+                if args.size() <= consumed_arg {
+                    if not param.default_value.has_value() {
+                        .error(format("Missing argument for function parameter {}", param.variable.name), span)
+                        continue
+                    }
+                    maybe_checked_expr = param.default_value
+                } else {
+                    let (name, span, expr) = args[consumed_arg]
+                    maybe_checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: param.variable.type_id)
+                    consumed_arg++
                 }
 
-                let (name, span, expr) = args[consumed_arg]
-                maybe_checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: param.variable.type_id)
-                consumed_arg++
             } else {
                 maybe_checked_expr = param.default_value
 
                 if args.size() > consumed_arg {
                     let (name, span, expr) = args[consumed_arg]
-                    
+
                     if .validate_argument_label(param, label: name, span, expr, default_value: maybe_checked_expr) {
                         maybe_checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: param.variable.type_id)
                         consumed_arg++
                     }
                 }
             }
-            
+
             if maybe_checked_expr.has_value() {
                 mut checked_arg = maybe_checked_expr!
                 resolved_args.push((param.variable.name, span, checked_arg))
