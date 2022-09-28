@@ -553,14 +553,14 @@ struct Stage0 {
                 )
             }
             Import(is_extern) => match token {
-                Extern => FormattedToken(
+                Extern | As => FormattedToken(
                     token
                     indent: .indent
                     trailing_trivia: [b' ']
                     preceding_trivia: []
                 )
                 Identifier => {
-                    if not is_extern and not .peek() is LCurly {
+                    if not is_extern and not .peek() is LCurly and not .peek() is As {
                         .pop_state()
                     }
 
@@ -591,6 +591,7 @@ struct Stage0 {
                 }
                 RCurly => {
                     .pop_state()
+                    
                     yield FormattedToken(
                         token
                         indent: .indent
