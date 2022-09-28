@@ -1276,19 +1276,127 @@ boxed enum ParsedType {
     }
 
     function equals(this, anon rhs_parsed_type: ParsedType) -> bool => match this {
-        Name => rhs_parsed_type is Name
-        NamespacedName => rhs_parsed_type is NamespacedName
-        GenericType => rhs_parsed_type is GenericType
-        JaktArray => rhs_parsed_type is JaktArray
-        Dictionary => rhs_parsed_type is Dictionary
-        JaktTuple => rhs_parsed_type is JaktTuple
-        Set => rhs_parsed_type is Set
-        Optional => rhs_parsed_type is Optional
-        Reference => rhs_parsed_type is Reference
-        MutableReference => rhs_parsed_type is MutableReference
-        RawPtr => rhs_parsed_type is RawPtr
-        WeakPtr => rhs_parsed_type is WeakPtr
-        Function => rhs_parsed_type is Function
+        Name(name: lhs_name) => match rhs_parsed_type {
+            Name(name: rhs_name) => lhs_name == rhs_name
+            else => false
+        }
+        NamespacedName(name: lhs_name, namespaces: lhs_namespaces, params: lhs_params) => match rhs_parsed_type {
+            NamespacedName(name: rhs_name, namespaces: rhs_namespaces, params: rhs_params) => {
+                if lhs_name != rhs_name {
+                    return false
+                }
+
+                if lhs_namespaces.size() != rhs_namespaces.size() {
+                    return false
+                }
+                for namespace_index in 0..lhs_namespaces.size() {
+                    if lhs_namespaces[namespace_index] != rhs_namespaces[namespace_index] {
+                        return false
+                    }
+                }
+
+                if lhs_params.size() != rhs_params.size() {
+                    return false
+                }
+                for param_index in 0..lhs_params.size() {
+                    if not lhs_params[param_index].equals(rhs_params[param_index]) {
+                        return false
+                    }
+                }
+
+                return true
+            }
+            else => false
+        }
+        GenericType(name: lhs_name, generic_parameters: lhs_generic_parameters) => match rhs_parsed_type {
+            GenericType(name: rhs_name, generic_parameters: rhs_generic_parameters) => {
+                if lhs_name != rhs_name {
+                    return false
+                }
+
+                if lhs_generic_parameters.size() != rhs_generic_parameters.size() {
+                    return false
+                }
+                for param_index in 0..lhs_generic_parameters.size() {
+                    if not lhs_generic_parameters[param_index].equals(rhs_generic_parameters[param_index]) {
+                        return false
+                    }
+                }
+
+                return true
+            }
+            else => false
+        }
+        JaktArray(inner: lhs_inner) => match rhs_parsed_type {
+            JaktArray(inner: rhs_inner) => lhs_inner.equals(rhs_inner)
+            else => false
+        }
+        Dictionary(key: lhs_key, value: lhs_value) => match rhs_parsed_type {
+            Dictionary(key: rhs_key, value: rhs_value) => lhs_key.equals(rhs_key) and lhs_value.equals(rhs_value)
+            else => false
+        }
+        JaktTuple(types: lhs_types) => match rhs_parsed_type {
+            JaktTuple(types: rhs_types) => {
+                if lhs_types.size() != rhs_types.size() {
+                    return false
+                }
+                for type_index in 0..lhs_types.size() {
+                    if not lhs_types[type_index].equals(rhs_types[type_index]) {
+                        return false
+                    }
+                }
+
+                return true
+            }
+            else => false
+        }
+        Set(inner: lhs_inner) => match rhs_parsed_type {
+            Set(inner: rhs_inner) => lhs_inner.equals(rhs_inner)
+            else => false
+        }
+        Optional(inner: lhs_inner) => match rhs_parsed_type {
+            Optional(inner: rhs_inner) => lhs_inner.equals(rhs_inner)
+            else => false
+        }
+        Reference(inner: lhs_inner) => match rhs_parsed_type {
+            Reference(inner: rhs_inner) => lhs_inner.equals(rhs_inner)
+            else => false
+        }
+        MutableReference(inner: lhs_inner) => match rhs_parsed_type {
+            MutableReference(inner: rhs_inner) => lhs_inner.equals(rhs_inner)
+            else => false
+        }
+        RawPtr(inner: lhs_inner) => match rhs_parsed_type {
+            RawPtr(inner: rhs_inner) => lhs_inner.equals(rhs_inner)
+            else => false
+        }
+        WeakPtr(inner: lhs_inner) => match rhs_parsed_type {
+            WeakPtr(inner: rhs_inner) => lhs_inner.equals(rhs_inner)
+            else => false
+        }
+        Function(params: lhs_params, can_throw: lhs_can_throw, return_type: lhs_return_type) => match rhs_parsed_type {
+            Function(params: rhs_params, can_throw: rhs_can_throw, return_type: rhs_return_type) => {
+                if lhs_can_throw != rhs_can_throw {
+                    return false
+                }
+
+                if not lhs_return_type.equals(rhs_return_type) {
+                    return false
+                }
+
+                if lhs_params.size() != rhs_params.size() {
+                    return false
+                }
+                for param_index in 0..lhs_params.size() {
+                    if not lhs_params[param_index].equals(rhs_params[param_index]) {
+                        return false
+                    }
+                }
+
+                return true
+            }
+            else => false
+        }
         Empty => rhs_parsed_type is Empty
     }
 }
