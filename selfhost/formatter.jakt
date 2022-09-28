@@ -797,7 +797,10 @@ struct Stage0 {
                             token
                             indent: .indent
                             trailing_trivia: []
-                            preceding_trivia: []
+                            preceding_trivia: match .peek(offset: -1) {
+                                Eol | LCurly => []
+                                else => [b' ']
+                            }
                         )
                     }
                     LCurly => {
@@ -809,7 +812,10 @@ struct Stage0 {
                         yield FormattedToken(
                             token
                             indent: .indent
-                            trailing_trivia: []
+                            trailing_trivia: match .peek() {
+                                Eol | RCurly => []
+                                else => [b' ']
+                            }
                             preceding_trivia: [b' ']
                         )
                     }
