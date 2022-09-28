@@ -76,23 +76,27 @@ if(CMAKE_HOST_WIN32)
     selfhost/windows_fs.jakt
     selfhost/windows_errno.jakt
     selfhost/windows_process.jakt
+    selfhost/windows_compiler.jakt
   )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   list(APPEND SELFHOST_SOURCES
     selfhost/posix_fs.jakt
     selfhost/darwin_errno.jakt
     selfhost/posix_process.jakt
+    selfhost/posix_compiler.jakt
   )
 elseif(CMAKE_HOST_UNIX)
   list(APPEND SELFHOST_SOURCES
     selfhost/posix_fs.jakt
     selfhost/posix_errno.jakt
     selfhost/posix_process.jakt
+    selfhost/posix_compiler.jakt
   )
 else()
   list(APPEND SELFHOST_SOURCES
     selfhost/unknown_fs.jakt
     selfhost/unknown_process.jakt
+    selfhost/unknown_compiler.jakt
   )
 endif()
 
