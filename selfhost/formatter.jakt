@@ -106,6 +106,13 @@ struct FormattedToken {
     trailing_trivia: [u8]
     preceding_trivia: [u8]
 
+    function debug_text(this) throws -> String => match .token {
+        Identifier(name) => format("Identifier: {}", name)
+        Eol(comment) => format("Eol: {}", comment ?? ""), 
+        Eof => "Eof"
+        else => .token_text()
+    }
+
     function token_text(this) throws -> String => match .token {
         SingleQuotedString(quote) => format("'{}'", quote)
         SingleQuotedByteString(quote) => format("b'{}'", quote)
@@ -222,8 +229,9 @@ struct Stage0 {
     indent: usize
     already_seen_enclosure_in_current_line: bool
     dedents_to_skip: [usize]
+    debug: bool
 
-    function create(mut compiler: Compiler, source: [u8]) throws -> Stage0 {
+    function create(mut compiler: Compiler, source: [u8], debug: bool) throws -> Stage0 {
         let old_file_contents = compiler.current_file_contents
         compiler.current_file_contents = source
         defer {
@@ -242,10 +250,11 @@ struct Stage0 {
             indent: 0uz
             already_seen_enclosure_in_current_line: false
             dedents_to_skip: [0uz]
+            debug
         )
     }
 
-    function for_tokens(tokens: [Token]) throws -> Stage0 {
+    function for_tokens(tokens: [Token], debug: bool) throws -> Stage0 {
         return Stage0(
             tokens
             index: 0uz
@@ -257,6 +266,7 @@ struct Stage0 {
             indent: 0uz
             already_seen_enclosure_in_current_line: false
             dedents_to_skip: [0uz]
+            debug
         )
     }
 
@@ -352,16 +362,18 @@ struct Stage0 {
             }
         }
 
-        // eprintln()
-        // eprintln(
-        //     "Token: {}, indent: {}",
-        //     FormattedToken(token, indent: 0, trailing_trivia: [], preceding_trivia: []).token_text(),
-        //     .indent
-        // )
-        // for state in .states.iterator() {
-        //     eprintln("- State: {}", state)
-        // }
-        // eprintln()
+        if .debug {
+            eprintln()
+            eprintln(
+                "Token: {} -- Indent: {}",
+                FormattedToken(token, indent: 0, trailing_trivia: [], preceding_trivia: []).debug_text(),
+                .indent
+            )
+            for state in .states.iterator() {
+                eprintln("- State: {}", state)
+            }
+            eprintln()
+        }
 
         return match .state() {
             Toplevel(open_parens, open_curlies, open_squares) => match token {
@@ -2426,10 +2438,10 @@ struct Formatter {
     in_if_expr: bool
     empty_line_count: usize
 
-    function for_tokens(tokens: [Token], max_allowed_line_length: usize = 120uz) throws -> Formatter {
+    function for_tokens(tokens: [Token], debug: bool = false, max_allowed_line_length: usize = 120uz) throws -> Formatter {
         let none: Token? = None
         return Formatter(
-            token_provider: Stage0::for_tokens(tokens)
+            token_provider: Stage0::for_tokens(tokens, debug)
             current_line: []
             current_line_length: 0
             max_allowed_line_length
