@@ -421,6 +421,11 @@ function main(args: [String]) {
                         }
                         on_new_line = true
                     }
+                    Garbage(consumed) => {
+                        if consumed.has_value() {
+                            print("{}", consumed!)
+                        }
+                    }
                     else => {
                         if on_new_line {
                             // println("(indent: {})", formatted_token.indent)
