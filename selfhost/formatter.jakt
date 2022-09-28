@@ -958,6 +958,17 @@ struct Stage0 {
             }
             StatementContext(open_parens, open_curlies, open_squares, arrow_indents, allow_eol, inserted_comma, expression_mode, dedents_on_open_curly) => match token {
                 Let => {
+                    .replace_state(State::StatementContext(
+                        open_parens
+                        open_curlies
+                        open_squares
+                        arrow_indents
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::AtExpressionStart
+                        dedents_on_open_curly
+                    ))
+
                     .push_state(State::VariableDeclaration(
                         open_parens: 0
                     ))
@@ -969,6 +980,17 @@ struct Stage0 {
                     )
                 }
                 Mut => {
+                    .replace_state(State::StatementContext(
+                        open_parens
+                        open_curlies
+                        open_squares
+                        arrow_indents
+                        allow_eol
+                        inserted_comma
+                        expression_mode: ExpressionMode::AtExpressionStart
+                        dedents_on_open_curly
+                    ))
+
                     if expression_mode is OutsideExpression {
                         .push_state(State::VariableDeclaration(
                             open_parens: 0
