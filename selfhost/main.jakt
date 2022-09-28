@@ -52,16 +52,16 @@ function help() -> String {
     output += "  -d\t\t\t\t\tInsert debug statement spans in generated C++ code.\n"
     output += "  --debug-print\t\t\t\tOutput debug print.\n"
     output += "  -p --prettify-cpp-source\t\tRun emitted C++ source through clang-format.\n"
-    output += "  -S,--emit-cpp-source-only\t\tWrite the C++ source to file, even when not building/\n"
+    output += "  -S,--emit-cpp-source-only\t\tWrite the C++ source to file, even when not building.\n"
     output += "  -c,--check-only\t\t\tOnly check the code for errors.\n"
     output += "  -j,--json-errors\t\t\tEmit machine-readable (JSON) errors.\n"
     output += "  -H,--type-hints\t\t\tEmit machine-readable type hints (for IDE integration).\n"
     output += "  -f,--format\t\t\t\tEmit the formatted document.\n"
+    output += "  -fd,--format-debug\t\t\tOutput debug info for the formatter.\n"
     output += "  -fr,--format-range\t\t\tEmit part of the document with formatting applied.\n"
     output += "  --try-hints\t\t\t\tEmit machine-readable try hints (for IDE integration).\n"
     output += "  --repl\t\t\t\tStart a Read-Eval-Print loop session.\n"
     output += "  --print-symbols\t\t\tEmit a machine-readable (JSON) symbol tree.\n"
-
 
     output += "\nOptions:\n"
     output += "  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\t\t\t\tDefaults to clang-format\n"
@@ -280,6 +280,7 @@ function main(args: [String]) {
     let interpret_run = args_parser.flag(["-r", "--run"])
 
     let format = args_parser.flag(["-f", "--format"])
+    let format_debug = args_parser.flag(["-fd", "--format-debug"])
     let input_format_range = args_parser.option(["-fr", "--format-range"]) ?? ""
 
     let max_concurrent = try value_or_throw(compiler_job_count.to_uint()) catch {
@@ -388,9 +389,9 @@ function main(args: [String]) {
         return 1
     }
 
-    if format {
+    if format or format_debug {
         mut on_new_line = true
-        for formatted_line in Formatter::for_tokens(tokens) {
+        for formatted_line in Formatter::for_tokens(tokens, debug: format_debug) {
             for formatted_token in formatted_line.iterator() {
                 if not formatted_token.token.span().is_in_offset_range(start: format_range!.start, end: format_range!.end) {
                     continue
