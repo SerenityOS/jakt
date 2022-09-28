@@ -1300,12 +1300,9 @@ struct Stage0 {
                         token
                         indent: .indent
                         trailing_trivia: []
-                        preceding_trivia: match expression_mode {
-                            InExpression => []
-                            else => match .peek(offset: -1) {
-                                Eol | LCurly => []
-                                else => [b' ']
-                            }
+                        preceding_trivia: match .peek(offset: -1) {
+                            Eol | LCurly => []
+                            else => [b' ']
                         }
                     )
                 }
