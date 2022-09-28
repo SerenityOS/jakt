@@ -2221,6 +2221,14 @@ struct Stage0 {
                         preceding_trivia: []
                     )
                 }
+                Weak => {
+                   yield FormattedToken(
+                       token
+                       indent: .indent
+                       trailing_trivia: [b' ']
+                       preceding_trivia: []
+                   ) 
+                }
                 Equal | Arrow | FatArrow => {
                     .pop_state()
                     .index--
