@@ -1,0 +1,13 @@
+/// Expect:
+/// - output: "42\n"
+
+enum S {
+    X
+    function my_func(this, anon def: i64 = 42) {
+        println("{}", def)
+    }
+}
+
+function main() {
+    S::X.my_func()
+}
