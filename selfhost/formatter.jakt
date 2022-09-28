@@ -216,7 +216,7 @@ struct FormattedToken {
         Guard => "guard"
         Override => "override"
         Virtual => "virtual"
-        Garbage => "<?>"
+        Garbage => ""
     }
 }
 
