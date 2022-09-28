@@ -1066,11 +1066,11 @@ struct Stage0 {
                         token
                         indent: .indent
                         trailing_trivia: match .peek() {
-                            Eol | FatArrow => []
+                            Eol | FatArrow | LParen => []
                             else => [b' ']
                         }
                         preceding_trivia: match .peek(offset: -1) {
-                            Eol => []
+                            Eol | Pipe => []
                             else => [b' ']
                         }
                     )
