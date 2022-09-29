@@ -840,11 +840,16 @@ struct FieldRecord {
     field_id: VarId
 }
 
+struct CheckedField {
+    variable_id: VarId
+    default_value: CheckedExpression?
+}
+
 struct CheckedStruct {
     name: String
     name_span: Span
     generic_parameters: [TypeId]
-    fields: [VarId]
+    fields: [CheckedField]
     scope_id: ScopeId
     definition_linkage: DefinitionLinkage
     record_type: RecordType

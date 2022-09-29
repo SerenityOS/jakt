@@ -1,0 +1,29 @@
+/// Expect:
+/// - output: "Jane\n100\nJane\n100\nJane\n100\n"
+
+struct Person1 {
+    name: String = "Jane"
+    age: i64
+}
+
+struct Person2 {
+    name: String
+    age: i64 = 100
+}
+
+struct Person3 {
+    name: String = "Jane"
+    age: i64 = 100
+}
+
+function main() {
+    let p1 = Person1(age: 100)
+    println("{}", p1.name)
+    println("{}", p1.age)
+    let p2 = Person2(name: "Jane")
+    println("{}", p2.name)
+    println("{}", p2.age)
+    let p3 = Person3()
+    println("{}", p3.name)
+    println("{}", p3.age)
+}

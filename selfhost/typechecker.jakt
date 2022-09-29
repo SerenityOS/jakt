@@ -17,7 +17,7 @@ import parser { Parser, BinaryOperator, DefinitionLinkage, UnaryOperator,
                 ParsedMethod }
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant,
-    CheckedEnumVariantBinding, CheckedExpression, CheckedFunction, FunctionGenerics, CheckedMatchBody, CheckedMatchCase,
+    CheckedEnumVariantBinding, CheckedExpression, CheckedFunction, CheckedField, FunctionGenerics, CheckedMatchBody, CheckedMatchCase,
     CheckedNamespace, CheckedNumericConstant, CheckedParameter, CheckedProgram, CheckedStatement, CheckedStruct,
     CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, CheckedVisibility, EnumId, FieldRecord, FunctionGenericParameter,
     FunctionId, LoadedModule, Module, ModuleId, NumberConstant, ResolvedNamespace, SafetyMode, Scope, ScopeId, StructId,
@@ -125,10 +125,10 @@ struct Typechecker {
         }
 
         for current_struct_id in chain.iterator() {
-            for field_id in .get_struct(current_struct_id).fields.iterator() {
-                let field = .get_variable(field_id)
-                if field.name == name {
-                    return FieldRecord(struct_id: current_struct_id, field_id)
+            for field in .get_struct(current_struct_id).fields.iterator() {
+                let variable = .get_variable(field.variable_id)
+                if variable.name == name {
+                    return FieldRecord(struct_id: current_struct_id, field_id: field.variable_id)
                 }
             }
         }
@@ -585,7 +585,7 @@ struct Typechecker {
             .check_that_type_doesnt_contain_reference(type_id: checked_member_type, span: parsed_var_decl.parsed_type.span())
 
             mut module = .current_module()
-            let var_id = module.add_variable(checked_variable: CheckedVariable(
+            let variable_id = module.add_variable(checked_variable: CheckedVariable(
                 name: parsed_var_decl.name
                 type_id: checked_member_type
                 is_mutable: parsed_var_decl.is_mutable
@@ -593,7 +593,16 @@ struct Typechecker {
                 type_span: None
                 visibility: .typecheck_visibility(visibility: unchecked_member.visibility, scope_id: checked_struct_scope_id)
             ))
-            structure.fields.push(var_id)
+            mut default_value: CheckedExpression? = None
+            if unchecked_member.default_value.has_value() {
+                default_value = .typecheck_expression(
+                    unchecked_member.default_value!,
+                    scope_id: checked_struct_scope_id,
+                    safety_mode: SafetyMode::Safe,
+                    type_hint: None
+                )
+            }
+            structure.fields.push(CheckedField(variable_id, default_value))
         }
     }
 
@@ -1271,16 +1280,16 @@ struct Typechecker {
 
             mut func = module.functions.last()!
             for field_struct_id in inheritance_chain.iterator() {
-                for field_id in .get_struct(field_struct_id).fields.iterator() {
-                    let field = .get_variable(field_id)
-                    if field.visibility is Private {
+                for field in .get_struct(field_struct_id).fields.iterator() {
+                    let variable = .get_variable(field.variable_id)
+                    if variable.visibility is Private {
                         checked_constructor.visibility = CheckedVisibility::Private
                     }
 
                     func.add_param(CheckedParameter(
                         requires_label: true
-                        variable: field
-                        default_value: None
+                        variable: variable
+                        default_value: field.default_value
                     ))
                 }
             }
@@ -4042,7 +4051,7 @@ struct Typechecker {
         return checked_expr
     }
 
-    function typecheck_indexed_struct(mut this, expr: ParsedExpression, field: String, scope_id: ScopeId, is_optional: bool, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
+    function typecheck_indexed_struct(mut this, expr: ParsedExpression, field_name: String, scope_id: ScopeId, is_optional: bool, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
         let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
         let checked_expr_type_id = checked_expr.type()
         let checked_expr_type = .get_type(checked_expr_type_id)
@@ -4056,7 +4065,7 @@ struct Typechecker {
                         .error("Optional chaining is only allowed on optional types", span)
                         return CheckedExpression::IndexedStruct(
                             expr: checked_expr
-                            index: field
+                            index: field_name
                             span
                             is_optional
                             type_id: unknown_type_id())
@@ -4068,10 +4077,10 @@ struct Typechecker {
                 match .get_type(type_id) {
                     GenericInstance(id: struct_id) | Struct(struct_id) => {
                         let structure = .get_struct(struct_id)
-                        for member_id in structure.fields.iterator() {
-                            let member = .get_variable(member_id)
+                        for field in structure.fields.iterator() {
+                            let member = .get_variable(field.variable_id)
 
-                            if member.name == field {
+                            if member.name == field_name {
                                 mut resolved_type_id = .resolve_type_var(type_var_type_id: member.type_id, scope_id)
                                 if is_optional {
                                     resolved_type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [resolved_type_id]))
@@ -4080,14 +4089,14 @@ struct Typechecker {
                                 .check_member_access(accessor: scope_id, accessee: structure.scope_id, member, span)
                                 return CheckedExpression::IndexedStruct(
                                     expr: checked_expr
-                                    index: field
+                                    index: field_name
                                     span
                                     is_optional
                                     type_id: resolved_type_id)
                             }
                         }
 
-                        .error(format("unknown member of struct: {}.{}", structure.name, field), span)
+                        .error(format("unknown member of struct: {}.{}", structure.name, field_name), span)
                     }
                     else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
                 }
@@ -4099,7 +4108,7 @@ struct Typechecker {
 
                 let structure = .get_struct(struct_id)
 
-                let field_record = .lookup_struct_field(struct_id, name: field)
+                let field_record = .lookup_struct_field(struct_id, name: field_name)
                 if field_record.has_value() {
                     let member = .get_variable(field_record!.field_id)
                     let resolved_type_id = .resolve_type_var(type_var_type_id: member.type_id, scope_id)
@@ -4107,13 +4116,13 @@ struct Typechecker {
                     .check_member_access(accessor: scope_id, accessee: .get_struct(field_record!.struct_id).scope_id, member, span)
                     return CheckedExpression::IndexedStruct(
                         expr: checked_expr
-                        index: field
+                        index: field_name
                         span
                         is_optional
                         type_id: resolved_type_id)
                 }
 
-                .error(format("unknown member of struct: {}.{}", structure.name, field), span)
+                .error(format("unknown member of struct: {}.{}", structure.name, field_name), span)
             }
             else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
         }
@@ -4121,7 +4130,7 @@ struct Typechecker {
         // FIXME: Unify with type
         return CheckedExpression::IndexedStruct(
             expr: checked_expr
-            index: field
+            index: field_name
             span
             is_optional
             type_id: unknown_type_id())
@@ -4418,7 +4427,7 @@ struct Typechecker {
     }
 
     function typecheck_expression(mut this, anon expr: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression => match expr {
-        IndexedStruct(expr, field, span, is_optional) => .typecheck_indexed_struct(expr, field, scope_id, is_optional, safety_mode, span)
+        IndexedStruct(expr, field_name, span, is_optional) => .typecheck_indexed_struct(expr, field_name, scope_id, is_optional, safety_mode, span)
         Boolean(val, span) => CheckedExpression::Boolean(val, span)
         NumericConstant(val, span) => {
             mut type_hint_unwrapped = type_hint

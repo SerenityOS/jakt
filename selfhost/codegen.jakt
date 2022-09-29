@@ -533,7 +533,7 @@ struct CodeGenerator {
         dependencies.push(struct_.type_id.to_string())
         // The struct's fields are also dependencies.
         for field in struct_.fields.iterator() {
-            let type_id = .program.get_variable(field).type_id
+            let type_id = .program.get_variable(field.variable_id).type_id
             let inner_dependencies = .extract_dependencies_from(type_id, dependency_graph, top_level: false)
             for dependency in inner_dependencies.iterator() {
                 dependencies.push(dependency)
@@ -1014,11 +1014,11 @@ struct CodeGenerator {
             else => {}
         }
 
-        for field_id in struct_.fields.iterator() {
-            let field = .program.get_variable(field_id)
-            output += .codegen_type(field.type_id)
+        for field in struct_.fields.iterator() {
+            let variable = .program.get_variable(field.variable_id)
+            output += .codegen_type(variable.type_id)
             output += " "
-            output += field.name
+            output += variable.name
             output += ";"
         }
 
@@ -1290,7 +1290,7 @@ struct CodeGenerator {
 
         mut i = 0uz
         for field in struct_.fields.iterator() {
-            let field_var = .program.get_variable(field)
+            let field_var = .program.get_variable(field.variable_id)
             output += "TRY(JaktInternal::PrettyPrint::output_indentation(builder));"
             output += format("TRY(builder.append(\"{}: \"));", field_var.name)
             output += "TRY(builder.appendff(\""

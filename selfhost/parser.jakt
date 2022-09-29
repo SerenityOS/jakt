@@ -819,7 +819,7 @@ boxed enum ParsedExpression {
     Call(call: ParsedCall, span: Span)
     MethodCall(expr: ParsedExpression, call: ParsedCall, is_optional: bool, span: Span)
     IndexedTuple(expr: ParsedExpression, index: usize, is_optional: bool, span: Span)
-    IndexedStruct(expr: ParsedExpression, field: String, is_optional: bool, span: Span)
+    IndexedStruct(expr: ParsedExpression, field_name: String, is_optional: bool, span: Span)
     Var(name: String, span: Span)
     IndexedExpression(base: ParsedExpression, index: ParsedExpression, span: Span)
     UnaryOp(expr: ParsedExpression, op: UnaryOperator, span: Span)
@@ -925,8 +925,8 @@ boxed enum ParsedExpression {
             IndexedTuple(expr: rhs_expr, index: rhs_index, is_optional: rhs_optional) => lhs_optional == rhs_optional and lhs_expr.equals(rhs_expr) and lhs_index == rhs_index
             else => false
         }
-        IndexedStruct(expr: lhs_expr, field: lhs_field, is_optional: lhs_optional) => match rhs_expression {
-            IndexedStruct(expr: rhs_expr, field: rhs_field, is_optional: rhs_optional) => lhs_optional == rhs_optional and lhs_expr.equals(rhs_expr) and lhs_field == rhs_field
+        IndexedStruct(expr: lhs_expr, field_name: lhs_field, is_optional: lhs_optional) => match rhs_expression {
+            IndexedStruct(expr: rhs_expr, field_name: rhs_field, is_optional: rhs_optional) => lhs_optional == rhs_optional and lhs_expr.equals(rhs_expr) and lhs_field == rhs_field
             else => false
         }
         Var(name: lhs_name) => match rhs_expression {
@@ -1144,6 +1144,7 @@ struct ParsedField {
     // FIXME: It would be nice to extend the ParsedVarDecl struct instead.
     var_decl: ParsedVarDecl
     visibility: Visibility
+    default_value: ParsedExpression?
 }
 
 struct ParsedMethod {
@@ -2453,9 +2454,17 @@ struct Parser {
             .error("Field missing type", parsed_variable_declaration.span)
         }
 
+        mut default_value: ParsedExpression? = None
+
+        if .peek(0) is Equal {
+            .index++
+            default_value = .parse_expression(allow_assignments: false, allow_newlines: false)
+        }
+
         return ParsedField(
             var_decl: parsed_variable_declaration,
             visibility,
+            default_value
         )
     }
 
@@ -3873,7 +3882,7 @@ struct Parser {
                                 }
                                 else => ParsedExpression::IndexedStruct(
                                     expr: result
-                                    field: name
+                                    field_name: name
                                     is_optional
                                     span: merge_spans(start, end: .current().span()))
                             }
