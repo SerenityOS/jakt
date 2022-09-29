@@ -64,12 +64,6 @@ function start_background_process(anon args: [String]) throws -> Process {
         throw Error::from_errno(errno_value())
     }
 
-    unsafe {
-        cpp {
-            "free(call_args);"
-        }
-    }
-
     return Process::create(pid)
 }
 
