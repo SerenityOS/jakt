@@ -1,0 +1,10 @@
+/// Expect:
+/// - error: "Can't access field 'age' when calling implicit constructor of 'WeirdEncapsulation' because it is marked private\n"
+
+struct WeirdEncapsulation {
+    private age: i32
+}
+
+function main() {
+    WeirdEncapsulation(age: 2)
+}
