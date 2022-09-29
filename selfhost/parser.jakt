@@ -358,6 +358,34 @@ struct ParsedFunction {
     must_instantiate: bool
     is_comptime: bool
     is_fat_arrow: bool
+
+    function equals(this, anon other: ParsedFunction) -> bool {
+        if this.name != other.name or
+        this.can_throw != other.can_throw or
+        this.is_comptime != other.is_comptime or
+        this.is_fat_arrow != other.is_fat_arrow {
+            return false
+        }
+
+        if not this.block.equals(other.block) {
+            return false
+        }
+
+        if this.params.size() != other.params.size() {
+            return false
+        }
+        for param_index in 0..this.params.size() {
+            if not this.params[param_index].equals(other.params[param_index])  {
+                return false
+            }
+        }
+
+        if this.generic_parameters.size() != other.generic_parameters.size() {
+            return false
+        }
+
+        return true
+    }
 }
 
 struct ParsedParameter {
