@@ -232,6 +232,43 @@ boxed enum Type {
     MutableReference(TypeId)
     Function(params: [TypeId], can_throw: bool, return_type_id: TypeId, pseudo_function_id: FunctionId)
 
+    function specificity(this, program: CheckedProgram, base_specificity: i64 = 1<<31) => match this {
+        TypeVariable => 0
+        GenericInstance(args) => {
+            mut specificity = base_specificity / 2
+            for subtype_id in args.iterator() {
+                let subtype = program.get_type(subtype_id)
+                specificity += subtype.specificity(program, base_specificity: base_specificity/4)
+            }
+            yield specificity
+        }
+        GenericEnumInstance(args) => {
+            mut specificity = base_specificity / 2
+            for subtype_id in args.iterator() {
+                let subtype = program.get_type(subtype_id)
+                specificity += subtype.specificity(program, base_specificity: base_specificity/4)
+            }
+            yield specificity
+        }
+        GenericResolvedType(args) => {
+            mut specificity = base_specificity / 2
+            for subtype_id in args.iterator() {
+                let subtype = program.get_type(subtype_id)
+                specificity += subtype.specificity(program, base_specificity: base_specificity/4)
+            }
+            yield specificity
+        }
+        Function(params) => {
+            mut specificity = base_specificity / 2
+            for subtype_id in params.iterator() {
+                let subtype = program.get_type(subtype_id)
+                specificity += subtype.specificity(program, base_specificity: base_specificity/4)
+            }
+            yield specificity
+        }
+        else => base_specificity
+    }
+
     function constructor_name(this) => match this {
         Void => "Void"
         Bool => "Bool"
