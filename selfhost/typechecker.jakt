@@ -1117,6 +1117,7 @@ struct Typechecker {
                 type: func.type
                 linkage: func.linkage
                 function_scope_id: method_scope_id
+                struct_id: None
                 is_instantiated: not is_generic or is_extern
                 parsed_function: func
                 is_comptime: func.is_comptime
@@ -1265,6 +1266,7 @@ struct Typechecker {
                 type: FunctionType::ImplicitConstructor
                 linkage: FunctionLinkage::Internal
                 function_scope_id
+                struct_id
                 is_instantiated: true
                 parsed_function: None
                 is_comptime: false
@@ -1282,10 +1284,6 @@ struct Typechecker {
             for field_struct_id in inheritance_chain.iterator() {
                 for field in .get_struct(field_struct_id).fields.iterator() {
                     let variable = .get_variable(field.variable_id)
-                    if variable.visibility is Private {
-                        checked_constructor.visibility = CheckedVisibility::Private
-                    }
-
                     func.add_param(CheckedParameter(
                         requires_label: true
                         variable: variable
@@ -1428,6 +1426,7 @@ struct Typechecker {
                 type: func.type
                 linkage: func.linkage
                 function_scope_id: method_scope_id
+                struct_id: None
                 is_instantiated: not is_generic or is_extern
                 parsed_function: method.parsed_function
                 is_comptime: method.parsed_function.is_comptime
@@ -1756,6 +1755,7 @@ struct Typechecker {
                                 type: FunctionType::ImplicitEnumConstructor
                                 linkage: FunctionLinkage::Internal
                                 function_scope_id
+                                struct_id: None
                                 is_instantiated: true
                                 parsed_function: None
                                 is_comptime: false
@@ -1808,6 +1808,7 @@ struct Typechecker {
                                 type: FunctionType::ImplicitEnumConstructor
                                 linkage: FunctionLinkage::Internal
                                 function_scope_id
+                                struct_id: None
                                 is_instantiated: true
                                 parsed_function: None
                                 is_comptime: false
@@ -1847,6 +1848,7 @@ struct Typechecker {
                                 type: FunctionType::ImplicitEnumConstructor
                                 linkage: FunctionLinkage::Internal
                                 function_scope_id
+                                struct_id: None
                                 is_instantiated: true
                                 parsed_function: None
                                 is_comptime: false
@@ -2085,6 +2087,7 @@ struct Typechecker {
             type: FunctionType::Normal
             linkage: parsed_function.linkage
             function_scope_id
+            struct_id: None
             is_instantiated: not is_generic or not base_definition
             parsed_function
             is_comptime: parsed_function.is_comptime
@@ -3132,6 +3135,7 @@ struct Typechecker {
                     type: FunctionType::Expression
                     linkage: FunctionLinkage::Internal
                     function_scope_id: scope_id
+                    struct_id: None
                     is_instantiated: true
                     parsed_function: None
                     is_comptime: false
@@ -6107,7 +6111,12 @@ struct Typechecker {
                 return_type = callee.return_type_id
                 let scope_containing_callee = .get_scope(callee.function_scope_id).parent!
 
-                .check_method_access(accessor: caller_scope_id, accessee: scope_containing_callee, method: callee, span)
+                if callee.type is ImplicitConstructor {
+                    let struct_ = .get_struct(callee.struct_id!)
+                    .check_implicit_constructor_argument_access(caller_scope_id, call, struct_)
+                } else {
+                    .check_method_access(accessor: caller_scope_id, accessee: scope_containing_callee, method: callee, span)
+                }
 
                 // If the user gave us explicit type arguments, let's use them in our substitutions
                 mut type_arg_index = 0uz
@@ -6394,6 +6403,20 @@ struct Typechecker {
         }
 
         return checked_call
+    }
+
+    function check_implicit_constructor_argument_access(mut this, caller_scope_id: ScopeId, call: ParsedCall, struct_: CheckedStruct)  throws {
+        if not .scope_can_access(accessor:caller_scope_id, accessee:struct_.scope_id) {
+            for arg in call.args.iterator() {
+                for field in struct_.fields.iterator() {
+                    let variable = .get_variable(field.variable_id)
+                    if (variable.name == arg.0 and variable.visibility is Private) {
+                        .error(format("Can't access field '{}' when calling implicit constructor of '{}' because it is marked private", variable.name, struct_.name), arg.1)
+                        return
+                    }
+                }
+            }
+        }
     }
 
     function resolve_default_params(mut this, params: [CheckedParameter], args: [(String, Span, ParsedExpression)], scope_id: ScopeId, safety_mode: SafetyMode, arg_offset: usize, span: Span) throws -> [(String, Span, CheckedExpression)] {

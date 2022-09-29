@@ -586,6 +586,7 @@ class CheckedFunction {
     public type: FunctionType
     public linkage: FunctionLinkage
     public function_scope_id: ScopeId
+    public struct_id: StructId?
     public is_instantiated: bool
     public parsed_function: ParsedFunction?
     public is_comptime: bool
@@ -1789,6 +1790,7 @@ class CheckedProgram {
                     type: previous_function.type
                     linkage: previous_function.linkage
                     function_scope_id: previous_function.function_scope_id
+                    struct_id: previous_function.struct_id
                     is_instantiated: previous_function.is_instantiated
                     parsed_function: previous_function.parsed_function
                     is_comptime: previous_function.is_comptime
