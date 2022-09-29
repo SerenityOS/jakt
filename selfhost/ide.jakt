@@ -352,7 +352,7 @@ function completions_for_type_id(program: CheckedProgram, type_id: TypeId) throw
             let structure = program.get_struct(struct_id)
 
             for field in structure.fields.iterator() {
-                let field_var = program.get_variable(field)
+                let field_var = program.get_variable(field.variable_id)
                 output.push(field_var.name)
             }
 
@@ -392,7 +392,7 @@ function completions_for_type_id(program: CheckedProgram, type_id: TypeId) throw
             let structure = program.get_struct(struct_id)
 
             for field in structure.fields.iterator() {
-                let field_var = program.get_variable(field)
+                let field_var = program.get_variable(field.variable_id)
                 output.push(field_var.name)
             }
 
@@ -551,7 +551,7 @@ function find_span_in_struct(program: CheckedProgram, checked_struct: CheckedStr
     let scope = program.get_scope(checked_struct.scope_id)
 
     for field in checked_struct.fields.iterator() {
-        let variable = program.get_variable(field)
+        let variable = program.get_variable(field.variable_id)
 
         if variable.definition_span.contains(span) {
             return Some(Usage::Typename(variable.type_id))
@@ -745,7 +745,7 @@ function find_span_in_expression(program: CheckedProgram, expr: CheckedExpressio
 
                 if program.get_type(type_id) is Struct(struct_id) {
                     for field in program.get_struct(struct_id).fields.iterator() {
-                        let var = program.get_variable(field)
+                        let var = program.get_variable(field.variable_id)
                         if index != var.name {
                             continue
                         }
@@ -1393,7 +1393,7 @@ function get_constructor_signature(program: CheckedProgram, function_id: Functio
                     output += ", "
                 }
 
-                let variable = program.get_variable(field)
+                let variable = program.get_variable(field.variable_id)
                 if variable.is_mutable {
                     output += "mut "
                 }

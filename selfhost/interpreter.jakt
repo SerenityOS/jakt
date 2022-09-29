@@ -188,7 +188,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
         mut args: [(String, CheckedExpression)] = []
         for i in 0..materialised_fields.size() {
             let arg = materialised_fields[i]
-            let label = interpreter.program.get_variable(struct_.fields[i]).name
+            let label = interpreter.program.get_variable(struct_.fields[i].variable_id).name
             args.push((label, arg))
         }
 
@@ -3664,7 +3664,7 @@ class Interpreter {
                 let field_decls = .program.get_struct(struct_id).fields
                 mut field_index = 0uz
                 for i in 0..field_decls.size() {
-                    if .program.get_variable(field_decls[i]).name == index {
+                    if .program.get_variable(field_decls[i].variable_id).name == index {
                         field_index = i
                         break
                     }
@@ -4443,8 +4443,8 @@ class Interpreter {
                     let struct_ = .program.get_struct(struct_id)
                     mut idx = 0
                     mut found_index: i64? = None
-                    for field_id in struct_.fields.iterator() {
-                        if .program.get_variable(field_id).name == index {
+                    for field in struct_.fields.iterator() {
+                        if .program.get_variable(field.variable_id).name == index {
                             found_index = idx
                             break
                         }
