@@ -126,20 +126,20 @@ ErrorOr<String> File::current_executable_path()
     if (os_ret != 0) {
         return Error::from_errno(ENAMETOOLONG);
     }
-    path_to_readlink = path;
 #  elif defined(AK_OS_BSD_GENERIC)
 #   error "TODO: Implement current_executable_path using sysctl(KERN_PROC_PATHNAME) for non-macOS BSDs"
 #  else
     // Linux, Serenity, non-BSD unix, etc
     path_to_readlink = "/proc/self/exe";
-#endif
     ssize_t ret = readlink(path_to_readlink, path, sizeof(path) -1 );
 
     // Ignore if wasn't a a symlink
     if (ret == -1 && errno != EINVAL)
         return Error::from_errno(errno);
 #endif
+#endif
     path[sizeof(path) - 1] = '\0';
+
     return String(path);
 }
 
