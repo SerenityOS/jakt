@@ -877,7 +877,7 @@ class Interpreter {
                     )
                 }
                 "___jakt_get_target_triple_string" => StatementResult::JustValue(Value(
-                    impl: ValueImpl::JaktString(.compiler.target_triple ?? "unknown-unknown-unknown-unknown")
+                    impl: ValueImpl::JaktString(.compiler.target_triple ?? ___jakt_get_target_triple_string())
                     span: call_span
                 ))
                 else => {
