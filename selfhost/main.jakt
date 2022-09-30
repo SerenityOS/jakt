@@ -56,6 +56,8 @@ function help() -> String {
     output += "  -c,--check-only\t\t\tOnly check the code for errors.\n"
     output += "  -j,--json-errors\t\t\tEmit machine-readable (JSON) errors.\n"
     output += "  -H,--type-hints\t\t\tEmit machine-readable type hints (for IDE integration).\n"
+    output += "  -f,--format\t\t\t\tEmit the formatted document.\n"
+    output += "  -fr,--format-range\t\t\tEmit part of the document with formatting applied.\n"
     output += "  --try-hints\t\t\t\tEmit machine-readable try hints (for IDE integration).\n"
     output += "  --repl\t\t\t\tStart a Read-Eval-Print loop session.\n"
     output += "  --print-symbols\t\t\tEmit a machine-readable (JSON) symbol tree.\n"
