@@ -12,6 +12,10 @@ comptime is_whitespace() throws => " ".is_whitespace() and not "abc".is_whitespa
 comptime contains() throws => "abcdef".contains("bcd")
 comptime replace() throws => "well, hiya friends".replace(replace: "hiya", with: "hello")
 comptime byte_at() throws => "AAAA".byte_at(3)
+comptime starts_with() throws => "abcdef".starts_with("abc")
+comptime ends_with() throws => "abcdef".ends_with("def")
+comptime repeated() throws => String::repeated(character: 'A', count: 5)
+comptime split() throws => "a;b;c".split(';')
 
 function main() {
     mut success = empty()
@@ -25,6 +29,13 @@ function main() {
     success = success and contains()
     success = success and replace() == "well, hello friends"
     success = success and byte_at() == 0x41
+    success = success and starts_with()
+    success = success and ends_with()
+    success = success and repeated() == "AAAAA"
+    let parts = split()
+    success = success and parts[0] == "a"
+    success = success and parts[1] == "b"
+    success = success and parts[2] == "c"
 
     if success {
         println("PASS")

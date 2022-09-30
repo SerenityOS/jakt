@@ -1528,6 +1528,50 @@ class Interpreter {
                         panic("Invalid String")
                     }
                 }
+                "starts_with" => match this_argument!.impl {
+                    JaktString(value) => match arguments[0].impl {
+                        JaktString(arg) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(value.starts_with(arg)), span: call_span))
+                        else => {
+                            .error("String::starts_with must be called with a string", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "ends_with" => match this_argument!.impl {
+                    JaktString(value) => match arguments[0].impl {
+                        JaktString(arg) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(value.ends_with(arg)), span: call_span))
+                        else => {
+                            .error("String::ends_with must be called with a string", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
+                "repeated" => {
+                    if arguments.size() != 2 {
+                        .error("String::repeated must be called with a c_char and a usize", call_span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                    let (character, count) = match arguments[0].impl {
+                        CChar(arg) => match arguments[1].impl {
+                            USize(c) => (arg, c)
+                            else => {
+                                .error("String::repeated must be called with a usize", arguments[1].span)
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        else => {
+                            .error("String::repeated must be called with a c_char", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    yield StatementResult::JustValue(Value(impl: ValueImpl::JaktString(String::repeated(character, count)), span: call_span))
+                }
                 else => {
                     .error(
                         format("Prelude function `String::{}` is not implemented", prelude_function),
