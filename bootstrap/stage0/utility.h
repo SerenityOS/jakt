@@ -8,6 +8,13 @@ size_t id;bool equals(const utility::FileId rhs) const;
 FileId(size_t a_id);
 
 ErrorOr<String> debug_description() const;
+};struct Span {
+  public:
+utility::FileId file_id;size_t start;size_t end;bool contains(const utility::Span span) const;
+bool is_in_offset_range(const size_t start, const size_t end) const;
+Span(utility::FileId a_file_id, size_t a_start, size_t a_end);
+
+ErrorOr<String> debug_description() const;
 };struct ArgsParser {
   public:
 JaktInternal::Array<String> args;JaktInternal::Array<size_t> removed_indices;JaktInternal::Array<String> definitely_positional_args;static ErrorOr<utility::ArgsParser> from_args(const JaktInternal::Array<String> args);
@@ -17,28 +24,6 @@ ArgsParser(JaktInternal::Array<String> a_args, JaktInternal::Array<size_t> a_rem
 
 ErrorOr<JaktInternal::Array<String>> remaining_arguments() const;
 ErrorOr<JaktInternal::Optional<String>> option(const JaktInternal::Array<String> names);
-ErrorOr<String> debug_description() const;
-};struct Span {
-  public:
-utility::FileId file_id;size_t start;size_t end;bool contains(const utility::Span span) const;
-bool is_in_offset_range(const size_t start, const size_t end) const;
-Span(utility::FileId a_file_id, size_t a_start, size_t a_end);
-
-ErrorOr<String> debug_description() const;
-};class FilePath : public RefCounted<FilePath>, public Weakable<FilePath> {
-  public:
-virtual ~FilePath() = default;
-String path;static ErrorOr<NonnullRefPtr<utility::FilePath>> make(const String filepath);
-ErrorOr<JaktInternal::Tuple<String,String>> split_at_last_slash() const;
-ErrorOr<String> dirname() const;
-protected:
-explicit FilePath(String&& a_path);
-public:
-static ErrorOr<NonnullRefPtr<FilePath>> create(String path);
-
-static JaktInternal::Optional<size_t> last_slash(const String path);
-ErrorOr<String> basename(const bool strip_extension) const;
-ErrorOr<String> ext() const;
 ErrorOr<String> debug_description() const;
 };template <typename T>
 ErrorOr<void> extend_array(JaktInternal::Array<T> target,const JaktInternal::Array<T> extend_with) {
@@ -89,13 +74,10 @@ abort();
 template<>struct Formatter<utility::FileId> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, utility::FileId const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<utility::ArgsParser> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, utility::ArgsParser const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<utility::Span> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, utility::Span const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<utility::FilePath> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, utility::FilePath const& value) {
+template<>struct Formatter<utility::ArgsParser> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, utility::ArgsParser const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 } // namespace Jakt

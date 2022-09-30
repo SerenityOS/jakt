@@ -8,7 +8,6 @@ namespace Jakt {
 namespace utility {
 struct Span;
 struct FileId;
-class FilePath;
 struct ArgsParser;
 String join(const JaktInternal::Array<String> strings, const String separator);
 
@@ -59,6 +58,21 @@ ErrorOr<void> display_message_with_span_json(const error::MessageSeverity severi
 
 ErrorOr<void> print_error(const String file_name, const JaktInternal::Optional<JaktInternal::Array<u8>> file_contents, const error::JaktError error);
 
+}
+namespace os {
+struct Target;
+
+
+
+ErrorOr<JaktInternal::Array<String>> platform_import_names();
+
+}
+namespace unknown_path {
+
+
+}
+namespace path {
+struct Path;
 }
 namespace compiler {
 class Compiler;
@@ -941,20 +955,12 @@ ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_struct(const NonnullRef
 ErrorOr<String> get_function_signature(const NonnullRefPtr<types::CheckedProgram> program, const types::FunctionId function_id);
 
 }
-namespace os {
-struct Target;
-
-
-
-ErrorOr<JaktInternal::Array<String>> platform_import_names();
-
-}
 namespace unknown_process {
 struct Process;
 struct ExitPollResult;
 ErrorOr<unknown_process::Process> start_background_process(const JaktInternal::Array<String> args);
 
-ErrorOr<unknown_process::ExitPollResult> wait_for_some_set_of_processes_that_at_least_includes(JaktInternal::Dictionary<size_t,unknown_process::Process> const& processes);
+ErrorOr<JaktInternal::Tuple<JaktInternal::Optional<size_t>,unknown_process::ExitPollResult>> wait_for_some_set_of_processes_that_at_least_includes(JaktInternal::Dictionary<size_t,unknown_process::Process> const& processes);
 
 ErrorOr<unknown_process::ExitPollResult> wait_for_process(unknown_process::Process const& process);
 
@@ -967,21 +973,25 @@ namespace unknown_fs {
 ErrorOr<void> make_directory(const String path);
 
 }
+namespace unknown_compiler {
+ErrorOr<JaktInternal::Array<String>> run_compiler(const String cxx_compiler_path, const String cpp_filename, const String output_filename, const String runtime_path, const JaktInternal::Array<String> extra_include_paths, const JaktInternal::Array<String> extra_lib_paths, const JaktInternal::Array<String> extra_link_libs, const bool optimize, const JaktInternal::Array<String> extra_compiler_flags);
+
+}
 struct ParallelExecutionPool;
 struct FormatRange;
 ErrorOr<void> write_to_file(const String data, const String output_filename);
 
-ErrorOr<size_t> run_compiler(ParallelExecutionPool& pool, const String cxx_compiler_path, const String cpp_filename, const String output_filename, const String runtime_path, const JaktInternal::Array<String> extra_include_paths, const JaktInternal::Array<String> extra_lib_paths, const JaktInternal::Array<String> extra_link_libs, const bool optimize, const JaktInternal::Array<String> extra_compiler_flags);
+template <typename T>
+ErrorOr<T> value_or_throw(const JaktInternal::Optional<T> maybe);
 
 ErrorOr<String> indent(const size_t level);
+
+
 
 String help();
 
 String usage();
 
 ErrorOr<JaktInternal::Optional<FormatRange>> parse_format_range(const String range, const size_t input_file_length);
-
-template <typename T>
-ErrorOr<T> value_or_throw(const JaktInternal::Optional<T> maybe);
 
 } // namespace Jakt

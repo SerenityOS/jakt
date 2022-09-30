@@ -8,7 +8,7 @@ return Error::from_errno(static_cast<i32>(38));
 }
 }
 
-ErrorOr<unknown_process::ExitPollResult> wait_for_some_set_of_processes_that_at_least_includes(JaktInternal::Dictionary<size_t,unknown_process::Process> const& processes) {
+ErrorOr<JaktInternal::Tuple<JaktInternal::Optional<size_t>,unknown_process::ExitPollResult>> wait_for_some_set_of_processes_that_at_least_includes(JaktInternal::Dictionary<size_t,unknown_process::Process> const& processes) {
 {
 warnln(String("NOT IMPLEMENTED: wait_for_some_set_of_processes_that_at_least_includes {}"),processes);
 return Error::from_errno(static_cast<i32>(38));
