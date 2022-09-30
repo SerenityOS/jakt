@@ -17,12 +17,23 @@ import {
     InitializeResult,
     HandlerResult,
     Definition,
+    DocumentSymbol,
+    SymbolKind,
 } from "vscode-languageserver/node";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 interface JaktTextDocument extends TextDocument {
     jaktInlayHints?: InlayHint[];
+}
+
+interface JaktSymbol {
+    name: string
+    detail?: string
+    kind: "namespace" | "function" | "method" | "struct" | "class" | "enum" | "enum-member"
+    range: {start: number, end: number}
+    selection_range: {start: number, end: number}
+    children: JaktSymbol[]
 }
 
 import {
@@ -95,6 +106,7 @@ connection.onInitialize((params: InitializeParams) => {
             },
             definitionProvider: true,
             typeDefinitionProvider: true,
+            documentSymbolProvider: true,
             hoverProvider: true,
             documentFormattingProvider: true,
             documentRangeFormattingProvider: true,
@@ -157,6 +169,50 @@ async function goToDefinition(
         };
     }
 }
+
+connection.onDocumentSymbol(async (request): Promise<DocumentSymbol[]> => {
+    console.time("onDocumentSymbol");
+    const settings = await getDocumentSettings(request.textDocument.uri);
+    const document = documents.get(request.textDocument.uri);
+    if (!document) return [];
+
+    const text = document.getText();
+    const lineBreaks = findLineBreaks(text);
+    const stdout = await runCompiler(
+        text,
+        "--print-symbols " +
+            includeFlagForPath(request.textDocument.uri),
+        settings
+    );
+    const toSymbolDefinition = (symbol: JaktSymbol): DocumentSymbol => {
+        const kind_map = {
+            "namespace": SymbolKind.Namespace,
+            "function": SymbolKind.Function,
+            "method": SymbolKind.Method,
+            "struct": SymbolKind.Struct,
+            "class": SymbolKind.Class,
+            "enum": SymbolKind.Enum,
+            "enum-member": SymbolKind.EnumMember
+        };
+        return {
+            name: symbol.name,
+            detail: symbol.detail,
+            kind: kind_map[symbol.kind],
+            range: {
+                start:  convertSpan(symbol.range.start, lineBreaks),
+                end:  convertSpan(symbol.range.end, lineBreaks)
+            },
+            selectionRange: {
+                start:  convertSpan(symbol.selection_range.start, lineBreaks),
+                end:  convertSpan(symbol.selection_range.end, lineBreaks)
+            },
+            children: symbol.children.map(child => toSymbolDefinition(child))
+        };
+    };
+    const result = (JSON.parse(stdout) as JaktSymbol[]).map(symbol => toSymbolDefinition(symbol));
+    console.timeEnd("onDocumentSymbol");
+    return result;
+});
 
 connection.onDefinition(async (request) => {
     console.time("onDefinition");
