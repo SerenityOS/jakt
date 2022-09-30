@@ -5,44 +5,7 @@
 #include "compiler.h"
 namespace Jakt {
 namespace lexer {
-struct Lexer {
-  public:
-size_t index;JaktInternal::Array<u8> input;NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Optional<JaktInternal::Array<u8>> comment_contents;ErrorOr<lexer::Token> lex_quoted_string(const u8 delimiter);
-ErrorOr<JaktInternal::Optional<lexer::Token>> next();
-ErrorOr<JaktInternal::Optional<String>> consume_comment_contents();
-bool is_whitespace(const u8 ch) const;
-ErrorOr<lexer::Token> lex_character_constant_or_name();
-lexer::Token lex_dot();
-ErrorOr<lexer::Token> make_integer_token(const u64 number, const lexer::LiteralSuffix suffix, const utility::Span span);
-ErrorOr<lexer::Token> lex_forward_slash();
-lexer::Token lex_question_mark();
-u8 peek_behind(const size_t steps) const;
-u8 peek_ahead(const size_t steps) const;
-lexer::Token lex_asterisk();
-u8 peek() const;
-lexer::Token lex_percent_sign();
-ErrorOr<lexer::Token> lex_number_or_name();
-lexer::Token lex_minus();
-bool eof() const;
-lexer::Token lex_ampersand();
-utility::Span span(const size_t start, const size_t end) const;
-lexer::Token lex_plus();
-lexer::Token lex_exclamation_point();
-JaktInternal::Optional<lexer::LiteralSuffix> consume_numeric_literal_suffix();
-lexer::Token lex_colon();
-Lexer(size_t a_index, JaktInternal::Array<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::Array<u8>> a_comment_contents);
-
-ErrorOr<void> error(const String message, const utility::Span span);
-ErrorOr<String> substring(const size_t start, const size_t length) const;
-lexer::Token lex_greater_than();
-lexer::Token lex_pipe();
-lexer::Token lex_caret();
-ErrorOr<lexer::Token> lex_number();
-lexer::Token lex_less_than();
-lexer::Token lex_equals();
-static ErrorOr<JaktInternal::Array<lexer::Token>> lex(const NonnullRefPtr<compiler::Compiler> compiler);
-ErrorOr<String> debug_description() const;
-};namespace NumericConstant_Details {
+namespace NumericConstant_Details {
 struct I8{
 i8 value;
 template<typename... Args>
@@ -789,7 +752,44 @@ ErrorOr<String> debug_description() const;
 static lexer::Token from_keyword_or_identifier(const String string, const utility::Span span);
 utility::Span span() const;
 };
-namespace LiteralSuffix_Details {
+struct Lexer {
+  public:
+size_t index;JaktInternal::Array<u8> input;NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Optional<JaktInternal::Array<u8>> comment_contents;ErrorOr<lexer::Token> lex_quoted_string(const u8 delimiter);
+ErrorOr<JaktInternal::Optional<lexer::Token>> next();
+ErrorOr<JaktInternal::Optional<String>> consume_comment_contents();
+bool is_whitespace(const u8 ch) const;
+ErrorOr<lexer::Token> lex_character_constant_or_name();
+lexer::Token lex_dot();
+ErrorOr<lexer::Token> make_integer_token(const u64 number, const lexer::LiteralSuffix suffix, const utility::Span span);
+ErrorOr<lexer::Token> lex_forward_slash();
+lexer::Token lex_question_mark();
+u8 peek_behind(const size_t steps) const;
+u8 peek_ahead(const size_t steps) const;
+lexer::Token lex_asterisk();
+u8 peek() const;
+lexer::Token lex_percent_sign();
+ErrorOr<lexer::Token> lex_number_or_name();
+lexer::Token lex_minus();
+bool eof() const;
+lexer::Token lex_ampersand();
+utility::Span span(const size_t start, const size_t end) const;
+lexer::Token lex_plus();
+lexer::Token lex_exclamation_point();
+JaktInternal::Optional<lexer::LiteralSuffix> consume_numeric_literal_suffix();
+lexer::Token lex_colon();
+Lexer(size_t a_index, JaktInternal::Array<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::Array<u8>> a_comment_contents);
+
+ErrorOr<void> error(const String message, const utility::Span span);
+ErrorOr<String> substring(const size_t start, const size_t length) const;
+lexer::Token lex_greater_than();
+lexer::Token lex_pipe();
+lexer::Token lex_caret();
+ErrorOr<lexer::Token> lex_number();
+lexer::Token lex_less_than();
+lexer::Token lex_equals();
+static ErrorOr<JaktInternal::Array<lexer::Token>> lex(const NonnullRefPtr<compiler::Compiler> compiler);
+ErrorOr<String> debug_description() const;
+};namespace LiteralSuffix_Details {
 struct None {};
 struct UZ {};
 struct U8 {};
@@ -832,14 +832,14 @@ return (float_value);
 }
 
 }
-template<>struct Formatter<lexer::Lexer> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, lexer::Lexer const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<lexer::NumericConstant> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, lexer::NumericConstant const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<lexer::Token> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, lexer::Token const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<lexer::Lexer> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, lexer::Lexer const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<lexer::LiteralSuffix> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, lexer::LiteralSuffix const& value) {

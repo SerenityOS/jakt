@@ -23,13 +23,13 @@ TRY(builder.append(")"));return builder.to_string(); }
 ErrorOr<void> compiler::Compiler::load_prelude() {
 {
 const String module_name = String("__prelude__");
-const NonnullRefPtr<utility::FilePath> file_name = TRY((utility::FilePath::make(module_name)));
+const path::Path file_name = TRY((path::Path::from_string(module_name)));
 TRY((((*this).get_file_id_or_register(file_name))));
 }
 return {};
 }
 
-ErrorOr<JaktInternal::Optional<NonnullRefPtr<utility::FilePath>>> compiler::Compiler::get_file_path(const utility::FileId file_id) const {
+ErrorOr<JaktInternal::Optional<path::Path>> compiler::Compiler::get_file_path(const utility::FileId file_id) const {
 {
 if ((((file_id).id) >= ((((*this).files)).size()))){
 return (JaktInternal::OptionalNone());
@@ -47,7 +47,7 @@ const i32 ErrNAMETOOLONG = static_cast<i32>(36);
 const JaktInternal::Optional<utility::FileId> old_file_id = ((*this).current_file);
 (((*this).current_file) = file_id);
 auto __jakt_var_0 = [&]() -> ErrorOr<void> {{
-NonnullRefPtr<File> file = TRY((File::open_for_reading(((((((*this).files))[((file_id).id)]))->path))));
+NonnullRefPtr<File> file = TRY((File::open_for_reading(((((((*this).files))[((file_id).id)])).to_string()))));
 (((*this).current_file_contents) = TRY((((file)->read_all()))));
 }
 
@@ -56,16 +56,16 @@ if (__jakt_var_0.is_error()) {auto error = __jakt_var_0.release_error();{
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,bool>{
 auto __jakt_enum_value = (((error).code()));
 if (__jakt_enum_value == ErrNOENT) {
-return (warnln(String("\u001b[31;1mError\u001b[0m Could not access {}: File not found"),((((((*this).files))[((file_id).id)]))->path))), JaktInternal::ExplicitValue<void>();
+return (warnln(String("\u001b[31;1mError\u001b[0m Could not access {}: File not found"),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == ErrACCES) {
-return (warnln(String("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied"),((((((*this).files))[((file_id).id)]))->path))), JaktInternal::ExplicitValue<void>();
+return (warnln(String("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied"),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == ErrFBIG) {
-return (warnln(String("\u001b[31;1mError\u001b[0m Could not access {}: File too big"),((((((*this).files))[((file_id).id)]))->path))), JaktInternal::ExplicitValue<void>();
+return (warnln(String("\u001b[31;1mError\u001b[0m Could not access {}: File too big"),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == ErrNAMETOOLONG) {
-return (warnln(String("\u001b[31;1mError\u001b[0m Could not access {}: Name too long"),((((((*this).files))[((file_id).id)]))->path))), JaktInternal::ExplicitValue<void>();
+return (warnln(String("\u001b[31;1mError\u001b[0m Could not access {}: Name too long"),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
 }
 else {
 {
@@ -84,7 +84,7 @@ return (true);
 }
 }
 
-ErrorOr<JaktInternal::Optional<NonnullRefPtr<utility::FilePath>>> compiler::Compiler::search_for_path(const String module_name) const {
+ErrorOr<JaktInternal::Optional<path::Path>> compiler::Compiler::search_for_path(const String module_name) const {
 {
 {
 JaktInternal::ArrayIterator<String> _magic = ((((*this).include_paths)).iterator());
@@ -97,7 +97,7 @@ String include_path = (_magic_value.value());
 {
 const String candidate_path = (((include_path + String("/")) + module_name) + String(".jakt"));
 if (File::exists(candidate_path)){
-return (TRY((utility::FilePath::make(candidate_path))));
+return (TRY((path::Path::from_string(candidate_path))));
 }
 }
 
@@ -108,15 +108,16 @@ return (JaktInternal::OptionalNone());
 }
 }
 
-ErrorOr<utility::FileId> compiler::Compiler::get_file_id_or_register(const NonnullRefPtr<utility::FilePath> file) {
+ErrorOr<utility::FileId> compiler::Compiler::get_file_id_or_register(const path::Path file) {
 {
-JaktInternal::Optional<utility::FileId> file_id = ((((*this).file_ids)).get(((file)->path)));
+const String path = ((file).to_string());
+JaktInternal::Optional<utility::FileId> file_id = ((((*this).file_ids)).get(path));
 if (((file_id).has_value())){
 return ((file_id.value()));
 }
 TRY((((((*this).files)).push(file))));
 (file_id = utility::FileId((JaktInternal::checked_sub<size_t>(((((*this).files)).size()),static_cast<size_t>(1ULL)))));
-TRY((((((*this).file_ids)).set(((file)->path),(file_id.value())))));
+TRY((((((*this).file_ids)).set(path,(file_id.value())))));
 return ((file_id.value()));
 }
 }
@@ -127,9 +128,9 @@ return (((*this).current_file));
 }
 }
 
-compiler::Compiler::Compiler(JaktInternal::Array<NonnullRefPtr<utility::FilePath>>&& a_files, JaktInternal::Dictionary<String,utility::FileId>&& a_file_ids, JaktInternal::Array<error::JaktError>&& a_errors, JaktInternal::Optional<utility::FileId>&& a_current_file, JaktInternal::Array<u8>&& a_current_file_contents, bool&& a_dump_lexer, bool&& a_dump_parser, bool&& a_ignore_parser_errors, bool&& a_debug_print, JaktInternal::Array<String>&& a_include_paths, bool&& a_json_errors, bool&& a_dump_type_hints, bool&& a_dump_try_hints, bool&& a_optimize, JaktInternal::Optional<String>&& a_target_triple): files(move(a_files)), file_ids(move(a_file_ids)), errors(move(a_errors)), current_file(move(a_current_file)), current_file_contents(move(a_current_file_contents)), dump_lexer(move(a_dump_lexer)), dump_parser(move(a_dump_parser)), ignore_parser_errors(move(a_ignore_parser_errors)), debug_print(move(a_debug_print)), include_paths(move(a_include_paths)), json_errors(move(a_json_errors)), dump_type_hints(move(a_dump_type_hints)), dump_try_hints(move(a_dump_try_hints)), optimize(move(a_optimize)), target_triple(move(a_target_triple)){}
-ErrorOr<NonnullRefPtr<Compiler>> compiler::Compiler::create(JaktInternal::Array<NonnullRefPtr<utility::FilePath>> files, JaktInternal::Dictionary<String,utility::FileId> file_ids, JaktInternal::Array<error::JaktError> errors, JaktInternal::Optional<utility::FileId> current_file, JaktInternal::Array<u8> current_file_contents, bool dump_lexer, bool dump_parser, bool ignore_parser_errors, bool debug_print, JaktInternal::Array<String> include_paths, bool json_errors, bool dump_type_hints, bool dump_try_hints, bool optimize, JaktInternal::Optional<String> target_triple) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Compiler (move(files), move(file_ids), move(errors), move(current_file), move(current_file_contents), move(dump_lexer), move(dump_parser), move(ignore_parser_errors), move(debug_print), move(include_paths), move(json_errors), move(dump_type_hints), move(dump_try_hints), move(optimize), move(target_triple)))); return o; }
-JaktInternal::Optional<NonnullRefPtr<utility::FilePath>> compiler::Compiler::current_file_path() const {
+compiler::Compiler::Compiler(JaktInternal::Array<path::Path>&& a_files, JaktInternal::Dictionary<String,utility::FileId>&& a_file_ids, JaktInternal::Array<error::JaktError>&& a_errors, JaktInternal::Optional<utility::FileId>&& a_current_file, JaktInternal::Array<u8>&& a_current_file_contents, bool&& a_dump_lexer, bool&& a_dump_parser, bool&& a_ignore_parser_errors, bool&& a_debug_print, JaktInternal::Array<String>&& a_include_paths, bool&& a_json_errors, bool&& a_dump_type_hints, bool&& a_dump_try_hints, bool&& a_optimize, JaktInternal::Optional<String>&& a_target_triple): files(move(a_files)), file_ids(move(a_file_ids)), errors(move(a_errors)), current_file(move(a_current_file)), current_file_contents(move(a_current_file_contents)), dump_lexer(move(a_dump_lexer)), dump_parser(move(a_dump_parser)), ignore_parser_errors(move(a_ignore_parser_errors)), debug_print(move(a_debug_print)), include_paths(move(a_include_paths)), json_errors(move(a_json_errors)), dump_type_hints(move(a_dump_type_hints)), dump_try_hints(move(a_dump_try_hints)), optimize(move(a_optimize)), target_triple(move(a_target_triple)){}
+ErrorOr<NonnullRefPtr<Compiler>> compiler::Compiler::create(JaktInternal::Array<path::Path> files, JaktInternal::Dictionary<String,utility::FileId> file_ids, JaktInternal::Array<error::JaktError> errors, JaktInternal::Optional<utility::FileId> current_file, JaktInternal::Array<u8> current_file_contents, bool dump_lexer, bool dump_parser, bool ignore_parser_errors, bool debug_print, JaktInternal::Array<String> include_paths, bool json_errors, bool dump_type_hints, bool dump_try_hints, bool optimize, JaktInternal::Optional<String> target_triple) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Compiler (move(files), move(file_ids), move(errors), move(current_file), move(current_file_contents), move(dump_lexer), move(dump_parser), move(ignore_parser_errors), move(debug_print), move(include_paths), move(json_errors), move(dump_type_hints), move(dump_try_hints), move(optimize), move(target_triple)))); return o; }
+JaktInternal::Optional<path::Path> compiler::Compiler::current_file_path() const {
 {
 if (((((*this).current_file)).has_value())){
 return (((((*this).files))[(((((*this).current_file).value())).id)]));
@@ -149,16 +150,16 @@ ErrorOr<void> compiler::Compiler::print_errors() const {
 {
 size_t idx = static_cast<size_t>(0ULL);
 {
-JaktInternal::ArrayIterator<NonnullRefPtr<utility::FilePath>> _magic = ((((*this).files)).iterator());
+JaktInternal::ArrayIterator<path::Path> _magic = ((((*this).files)).iterator());
 for (;;){
-JaktInternal::Optional<NonnullRefPtr<utility::FilePath>> _magic_value = ((_magic).next());
+JaktInternal::Optional<path::Path> _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
 break;
 }
-NonnullRefPtr<utility::FilePath> file = (_magic_value.value());
+path::Path file = (_magic_value.value());
 {
 JaktInternal::Optional<JaktInternal::Array<u8>> file_contents = JaktInternal::OptionalNone();
-const String file_name = ((file)->path);
+const String file_name = ((file).to_string());
 {
 JaktInternal::ArrayIterator<error::JaktError> _magic = ((((*this).errors)).iterator());
 for (;;){

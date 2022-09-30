@@ -3174,18 +3174,17 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }/*switch end*/
 }()
 ));
-const String base_path = TRY(((((TRY((((((((*this).program))->compiler))->get_file_path(((call_span).file_id))))).value()))->dirname())));
-const String path_string = ((base_path + String("/")) + requested_path);
-const types::Value path = types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktString>(path_string))),call_span);
-if ((!(File::exists(path_string)))){
-TRY((((*this).error(TRY((String::formatted(String("Prelude function `File::{}` could not find file at path {}"),prelude_function,path_string))),call_span))));
+const path::Path path = TRY((((TRY(((((TRY((((((((*this).program))->compiler))->get_file_path(((call_span).file_id))))).value())).parent())))).join(requested_path))));
+const types::Value path_value = types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::JaktString>(((path).to_string())))),call_span);
+if ((!(((path).exists())))){
+TRY((((*this).error(TRY((String::formatted(String("Prelude function `File::{}` could not find file at path {}"),prelude_function,((path).to_string())))),call_span))));
 return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidType))));
 }
 const types::StructId file_struct_id = TRY((((((*this).program))->find_struct_in_prelude(String("File")))));
 const types::CheckedStruct file_struct = ((((*this).program))->get_struct(file_struct_id));
 const NonnullRefPtr<types::Scope> scope = TRY((((((*this).program))->get_scope(((file_struct).scope_id)))));
 const JaktInternal::Optional<types::FunctionId> constructor = ((((scope)->functions)).get(String("open_for_reading")));
-__jakt_var_125 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Struct>((TRY((Array<types::Value>::create_with({path})))),file_struct_id,(constructor.value())))),call_span)) } ; goto __jakt_label_123;
+__jakt_var_125 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Struct>((TRY((Array<types::Value>::create_with({path_value})))),file_struct_id,(constructor.value())))),call_span)) } ; goto __jakt_label_123;
 
 }
 __jakt_label_123:; __jakt_var_125.release_value(); }));
@@ -3265,18 +3264,8 @@ return Error::from_errno((infallible_integer_cast<i32>((InterpretError::InvalidT
 }/*switch end*/
 }()
 ));
-const String base_path = TRY(((((TRY((((((((*this).program))->compiler))->get_file_path(((call_span).file_id))))).value()))->dirname())));
-const String path_string = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<interpreter::StatementResult>>{
-auto __jakt_enum_value = (((requested_path).byte_at(static_cast<size_t>(0ULL))));
-if (__jakt_enum_value == '/') {
-return JaktInternal::ExplicitValue(requested_path);
-}
-else {
-return JaktInternal::ExplicitValue(((base_path + String("/")) + requested_path));
-}
-}()))
-;
-__jakt_var_127 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Bool>(File::exists(path_string)))),call_span)) } ; goto __jakt_label_125;
+const path::Path path = TRY((((TRY(((((TRY((((((((*this).program))->compiler))->get_file_path(((call_span).file_id))))).value())).parent())))).join(requested_path))));
+__jakt_var_127 =  interpreter::StatementResult { typename interpreter::StatementResult::JustValue(types::Value(TRY((types::ValueImpl::template create<typename types::ValueImpl::Bool>(((path).exists())))),call_span)) } ; goto __jakt_label_125;
 
 }
 __jakt_label_125:; __jakt_var_127.release_value(); }));

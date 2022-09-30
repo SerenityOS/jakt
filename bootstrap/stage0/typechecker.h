@@ -6,6 +6,7 @@
 #include "types.h"
 #include "types.h"
 #include "utility.h"
+#include "path.h"
 #include "compiler.h"
 #include "interpreter.h"
 namespace Jakt {
@@ -58,7 +59,7 @@ ErrorOr<JaktInternal::Array<types::StructId>> struct_inheritance_chain(const typ
 ErrorOr<bool> add_function_to_scope(const types::ScopeId parent_scope_id, const String name, const types::FunctionId function_id, const utility::Span span);
 ErrorOr<NonnullRefPtr<types::CheckedStatement>> typecheck_while(const NonnullRefPtr<parser::ParsedExpression> condition, const parser::ParsedBlock block, const types::ScopeId scope_id, const types::SafetyMode safety_mode, const utility::Span span);
 ErrorOr<NonnullRefPtr<types::CheckedExpression>> typecheck_expression_and_dereference_if_needed(const NonnullRefPtr<parser::ParsedExpression> expr, const types::ScopeId scope_id, const types::SafetyMode safety_mode, const JaktInternal::Optional<types::TypeId> type_hint, const utility::Span span);
-ErrorOr<NonnullRefPtr<utility::FilePath>> get_root_path() const;
+ErrorOr<path::Path> get_root_path() const;
 ErrorOr<bool> scope_can_access(const types::ScopeId accessor, const types::ScopeId accessee) const;
 ErrorOr<void> typecheck_struct_fields(const parser::ParsedRecord record, const types::StructId struct_id);
 ErrorOr<NonnullRefPtr<types::CheckedExpression>> typecheck_expression(const NonnullRefPtr<parser::ParsedExpression> expr, const types::ScopeId scope_id, const types::SafetyMode safety_mode, const JaktInternal::Optional<types::TypeId> type_hint);

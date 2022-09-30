@@ -8,9 +8,18 @@
 #include "utility.h"
 #include "error.h"
 #include "interpreter.h"
+#include "path.h"
 namespace Jakt {
 namespace repl {
-namespace LineResult_Details {
+struct Editor {
+  public:
+FILE* standard_input_file;char* line_pointer;String prompt;static ErrorOr<repl::Editor> create(const String prompt);
+void destroy();
+Editor(FILE* a_standard_input_file, char* a_line_pointer, String a_prompt);
+
+ErrorOr<repl::LineResult> get_line();
+ErrorOr<String> debug_description() const;
+};namespace LineResult_Details {
 struct Line{
 String value;
 template<typename... Args>
@@ -32,22 +41,14 @@ REPL(NonnullRefPtr<compiler::Compiler> a_compiler, typechecker::Typechecker a_ty
 
 ErrorOr<bool> handle_possible_error();
 ErrorOr<String> debug_description() const;
-};struct Editor {
-  public:
-FILE* standard_input_file;char* line_pointer;String prompt;static ErrorOr<repl::Editor> create(const String prompt);
-void destroy();
-Editor(FILE* a_standard_input_file, char* a_line_pointer, String a_prompt);
-
-ErrorOr<repl::LineResult> get_line();
-ErrorOr<String> debug_description() const;
 };}
+template<>struct Formatter<repl::Editor> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, repl::Editor const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<repl::LineResult> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, repl::LineResult const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<repl::REPL> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, repl::REPL const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<repl::Editor> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, repl::Editor const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 } // namespace Jakt

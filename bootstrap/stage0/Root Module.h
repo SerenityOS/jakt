@@ -12,9 +12,11 @@
 #include "types.h"
 #include "repl.h"
 #include "ide.h"
+#include "path.h"
 #include "os.h"
 #include "unknown_process.h"
 #include "unknown_fs.h"
+#include "unknown_compiler.h"
 namespace Jakt {
 struct FormatRange {
   public:
