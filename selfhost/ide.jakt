@@ -1,4 +1,4 @@
-import parser { BinaryOperator, FunctionLinkage }
+import parser { ParsedNamespace, ParsedRecord, ParsedFunction, BinaryOperator, FunctionLinkage, merge_spans }
 import typechecker {
     BuiltinType, CheckedBlock, CheckedCall, CheckedExpression,
     CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
@@ -44,6 +44,142 @@ enum Usage {
         type_id: TypeId
         variants: [(String?, TypeId)]
         number_constant: NumberConstant?
+    )
+}
+
+struct JaktSymbol {
+    name: String,
+    detail: String?,
+    kind: String,
+    range: Span,
+    selection_range: Span,
+    children: [JaktSymbol]
+
+    function to_json(this) throws -> String {
+        mut json_builder = StringBuilder::create()
+        json_builder.append_string("{")
+        json_builder.append_string(format("\"name\": \"{}\",", this.name))
+        if this.detail.has_value() {
+            json_builder.append_string(format("\"detail\": \"{}\",", this.detail))
+        }
+        json_builder.append_string(format("\"kind\": \"{}\",", this.kind))
+        json_builder.append_string(format("\"range\": {{\"start\": {}, \"end\": {}}},", this.range.start, this.range.end))
+        json_builder.append_string(format("\"selection_range\": {{\"start\": {}, \"end\": {}}},", this.selection_range.start, this.selection_range.end))
+        mut child_symbols : [String] = []
+        child_symbols.ensure_capacity(this.children.size())
+        for child in this.children.iterator() {
+            child_symbols.push(child.to_json())
+        }
+        json_builder.append_string(format("\"children\": [{}]", join(child_symbols, separator: ",")))
+        json_builder.append_string("}")
+        return json_builder.to_string()
+    }
+}
+
+function find_symbols_in_namespace(anon namespace_: ParsedNamespace) throws -> [JaktSymbol] {
+    mut symbols: [JaktSymbol] = []
+    for record in namespace_.records.iterator() {
+        symbols.push(record_to_symbol(record))
+    }
+
+    for function_ in namespace_.functions.iterator() {
+        symbols.push(function_to_symbol(function_, kind: "function"))
+    }
+
+    for sub_namespace in namespace_.namespaces.iterator() {
+        for child_symbol in find_symbols_in_namespace(sub_namespace).iterator() {
+            symbols.push(child_symbol)
+        }
+    }
+
+    if not namespace_.name_span.has_value() {
+        // anonymous namespaces just return the symbols contained
+        return symbols
+    }
+
+    mut namespace_span = namespace_.name_span!
+    for child in symbols.iterator() {
+        namespace_span = merge_spans(namespace_.name_span!, child.range)
+    }
+    return [JaktSymbol(
+            name: namespace_.name!
+            detail: None
+            kind: "namespace"
+            range: namespace_span
+            selection_range: namespace_.name_span!
+            children: symbols
+        )]
+}
+
+function record_to_symbol(anon record: ParsedRecord) throws -> JaktSymbol {
+    mut children: [JaktSymbol] = []
+    mut record_span = record.name_span
+
+    let record_kind = match record.record_type {
+        Struct(fields) => {
+            for field in fields.iterator() {
+                children.push(JaktSymbol(name: field.var_decl.name, detail: None, kind: "field", range: field.var_decl.span, selection_range: field.var_decl.span, children: []))
+            }
+            yield "struct"
+        }
+        Class(fields) => {
+            for field in fields.iterator() {
+                children.push(JaktSymbol(name: field.var_decl.name, detail: None, kind: "field", range: field.var_decl.span, selection_range: field.var_decl.span, children: []))
+            }
+            yield "class"
+        }
+        ValueEnum(variants) => {
+            for variant in variants.iterator() {
+                children.push(JaktSymbol(name: variant.name, detail: None, kind: "enum-member", range: variant.span, selection_range: variant.span, children: []))
+            }
+            yield "enum"
+        }
+        SumEnum(variants) => {
+            for variant in variants.iterator() {
+                mut variant_children: [JaktSymbol] = []
+                if variant.params.has_value() {
+                    for param in variant.params!.iterator() {
+                        if param.name != "" {
+                            variant_children.push(JaktSymbol(name: param.name, detail: None, kind: "field", range: param.span, selection_range: param.span, children: []))
+                        }
+                    }
+                }
+                children.push(JaktSymbol(name: variant.name, detail: None, kind: "enum-member", range: variant.span, selection_range: variant.span, children: variant_children))
+            }
+            yield "enum"
+        }
+        Garbage => "garbage"
+    }
+    for method in record.methods.iterator() {
+        let function_symbol = function_to_symbol(method.parsed_function, kind: "method")
+        children.push(function_symbol)
+        record_span = merge_spans(record_span, function_symbol.range)
+    }
+
+    return JaktSymbol(
+        name: record.name
+        detail: None
+        kind: record_kind,
+        range: record_span
+        selection_range: record.name_span
+        children: children
+    )
+}
+
+function function_to_symbol(anon function_: ParsedFunction, kind: String) throws -> JaktSymbol {
+    mut function_span = function_.name_span
+
+    for stmt in function_.block.stmts.iterator() {
+        function_span = merge_spans(function_span, stmt.span())
+    }
+
+    return JaktSymbol(
+        name: function_.name
+        detail: None
+        kind
+        range: function_span
+        selection_range: function_.name_span
+        children: []
     )
 }
 
