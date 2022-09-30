@@ -58,6 +58,7 @@ function help() -> String {
     output += "  -H,--type-hints\t\t\tEmit machine-readable type hints (for IDE integration).\n"
     output += "  --try-hints\t\t\t\tEmit machine-readable try hints (for IDE integration).\n"
     output += "  --repl\t\t\t\tStart a Read-Eval-Print loop session.\n"
+    output += "  --print-symbols\t\t\tEmit a machine-readable (JSON) symbol tree.\n"
 
 
     output += "\nOptions:\n"
@@ -272,6 +273,7 @@ function main(args: [String]) {
     let goto_type_def = args_parser.option(["-t", "--goto-type-def"])
     let hover = args_parser.option(["-e", "--hover"])
     let completions = args_parser.option(["-m", "--completions"])
+    let print_symbols = args_parser.flag(["--print-symbols"])
 
     let interpret_run = args_parser.flag(["-r", "--run"])
 
@@ -442,6 +444,17 @@ function main(args: [String]) {
 
     if parser_debug {
         println("{:#}", parsed_namespace);
+    }
+
+    if print_symbols {
+        let symbols = ide::find_symbols_in_namespace(parsed_namespace)
+
+        mut symbol_representations: [String] = []
+        for symbol in symbols.iterator() {
+            symbol_representations.push(symbol.to_json())
+        }
+        println("[{}]", join(symbol_representations, separator: ","))
+        return 0
     }
 
     let checked_program = Typechecker::typecheck(
