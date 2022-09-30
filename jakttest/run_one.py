@@ -35,6 +35,10 @@ def main():
         help="The path to the jakt library directory",
         default="build/lib",
     )
+    parser.add_argument(
+        "--target-triple",
+        help="The target triple of the host platform",
+    )
     args = parser.parse_args()
 
     # Since we're running the output binary from a different
@@ -43,6 +47,7 @@ def main():
     test_file = Path(args.test_file).resolve()
     jakt_binary = Path(args.jakt_binary).resolve()
     jakt_lib_dir = Path(args.jakt_lib_dir).resolve()
+    target_triple = args.target_triple
 
     # clear the temp directory
     for f in os.listdir(temp_dir):
@@ -66,6 +71,7 @@ def main():
             subprocess.run(
                 [
                     "clang++",
+                    f"--target={target_triple}"
                     "-fdiagnostics-color=always",
                     "-std=c++20",
                     "-Wno-unknown-warning-option",
