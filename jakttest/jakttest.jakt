@@ -631,6 +631,8 @@ struct TestScheduler {
             String::format("{}/bin/jakt", build_dir)
             "--jakt-lib-dir"
             String::format("{}/lib", build_dir)
+            "--target-triple"
+            ___jakt_get_target_triple_string()
             ""
             ""
         ]
@@ -639,8 +641,8 @@ struct TestScheduler {
             mut test = tests.pop()!
             test.directory_index = dir_index
             let directory = scheduler.directories[test.directory_index]
-            command_buffer[6] = directory
-            command_buffer[7] = test.file_name
+            command_buffer[command_buffer.size() - 2] = directory
+            command_buffer[command_buffer.size() - 1] = test.file_name
             let pid = process::start_background_process(args: command_buffer)
             scheduler.running_tests[pid] = test
             eprint("\r\x1b[2K[ \x1b[1;31m{}\x1b[m/\x1b[1;32m{}\x1b[m/{} ] Testing {}"
