@@ -1,0 +1,11 @@
+/// Expect: exact-error
+/// - error: "Could not find ‘iterator’"
+struct S {}
+
+function main() {
+    let s = S()
+
+    // S has no 'iterator' method on purpose. Only this error should be shown
+    for value in s.iterator() {
+    }
+}

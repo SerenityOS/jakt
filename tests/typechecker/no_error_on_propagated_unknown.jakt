@@ -1,0 +1,20 @@
+/// Expect: exact-error
+/// - error: "Call to unknown function: ‘should_return_s_but_is_unknown’"
+
+struct S {
+    val: i32
+    function bar() {}
+}
+
+function get_s(a: i32) => should_return_s_but_is_unknown()
+
+function main() {
+    // s has type 'unknown'
+    let s = get_s(a: 2)
+    print("s value is {}", s.val) // <- should not error here saying that 'val' is not a property of 'unknown'!
+    s.bar() // <- should not error here saying that 'bar' is not a known method!
+
+    // s2 has type 'S', and we're going to assign it 'unknown'
+    mut s2 = S(val: 3i32)
+    s2 = get_s(a: 5) // <- should not error here saying 'incompatible types' or 'assignment between incompatible types'
+}

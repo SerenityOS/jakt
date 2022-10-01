@@ -7,7 +7,7 @@ import utility { panic, todo, Span }
 
 enum ParsedTest {
     SuccessTest(String),
-    CompileErrorTest(String),
+    CompileErrorTest(output: String, is_exact: bool),
     RuntimeErrorTest(String),
     SkipTest
     NoExpectOrSkip
@@ -89,9 +89,17 @@ struct Parser {
             if .lex_literal("selfhost-only") {
                 .skip_whitespace()
             }
+
+            let is_exact_error = .lex_literal("exact-error")
+
+            while not .is_eof() and .current() != b'\n' and is_whitespace(.current()) {
+                .index++
+            }
+
             if .is_eof() or .current() != b'\n' {
                 continue
             }
+
             .index++
             if not .lex_literal("///") {
                 continue
@@ -109,6 +117,10 @@ struct Parser {
             let runtime_error = .lex_literal("stderr")
             if is_error and not (compile_error or runtime_error) {
                 continue
+            }
+            if is_exact_error and not compile_error {
+                // malformed: only compiler errors can be toggled to be exactly one.
+                return ParsedTest::SkipTest
             }
             .skip_whitespace()
             if .is_eof() or .current() != b':' {
@@ -133,7 +145,7 @@ struct Parser {
             if is_error and runtime_error {
                 return ParsedTest::RuntimeErrorTest(output)
             } else if is_error and compile_error {
-                return ParsedTest::CompileErrorTest(output)
+                return ParsedTest::CompileErrorTest(output, is_exact: is_exact_error)
             } else {
                 return ParsedTest::SuccessTest(output)
             }
