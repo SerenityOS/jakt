@@ -15,7 +15,7 @@ function pretend_to_throw_for_fun() throws -> Foo {
 
 function main() {
     println("{}", (try pretend_to_throw_for_fun())?.x)
-    try throw_for_fun() catch {
+    let foo = try throw_for_fun() catch {
         println("PASS")
         return 0
     }

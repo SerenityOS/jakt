@@ -1,0 +1,25 @@
+/// Expect:
+/// - output: "Yield\nReturn\n"
+
+function throw_for_fun() throws -> String {
+    throw Error::from_errno(123)
+}
+
+function return_for_fun() throws -> String {
+    return "Return"
+}
+
+function main() {
+    let action = "Yield"
+    let foo = try throw_for_fun() catch err {
+        yield action
+    }
+
+    println("{}", foo)
+
+    let bar = try return_for_fun() catch err {
+        yield action
+    }
+
+    println("{}", bar)
+}

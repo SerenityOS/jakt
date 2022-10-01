@@ -1854,7 +1854,16 @@ struct CodeGenerator {
                     output += try_var
                     output += ".release_error();\n"
                 }
-                output += .codegen_block(block: catch_block!)
+
+                if catch_block!.yielded_type.has_value() {
+                    output += fresh_var
+                    output += " = ("
+                    output += .codegen_block(block: catch_block!)
+                    output += ");\n"
+                } else {
+                    output += .codegen_block(block: catch_block!)
+                }
+                
                 if not is_void {
                     output += "} else {"
                     output += fresh_var
