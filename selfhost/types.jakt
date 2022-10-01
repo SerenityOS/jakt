@@ -638,6 +638,50 @@ class CheckedFunction {
     public is_virtual: bool
     public is_override: bool
 
+    public function signature_matches(this, anon other: CheckedFunction) throws -> bool {
+        if this.name != other.name or
+        this.can_throw != other.can_throw or
+        this.is_comptime != other.is_comptime {
+            return false
+        }
+
+        if this.params.size() != other.params.size() {
+            return false
+        }
+
+        if this.generics.params.size() != other.generics.params.size() {
+            return false
+        }
+
+        mut lhs_generic_type_ids: {String} = {}
+        mut rhs_generic_type_ids: {String} = {}
+        for param in this.generics.params.iterator() {
+            let type_id: TypeId = param.type_id()
+            lhs_generic_type_ids.add(type_id.to_string())
+        }
+        for param in other.generics.params.iterator() {
+            let type_id: TypeId = param.type_id()
+            rhs_generic_type_ids.add(type_id.to_string())
+        }
+
+        for param_index in 0..this.params.size() {
+            let lhs_param = this.params[param_index]
+            let rhs_param = other.params[param_index]
+
+            let lhs_param_id = lhs_param.variable.type_id.to_string()
+            let rhs_param_id = rhs_param.variable.type_id.to_string()
+
+            if not lhs_param.variable.type_id.equals(rhs_param.variable.type_id)
+                and not (lhs_generic_type_ids.contains(lhs_param_id) and rhs_generic_type_ids.contains(rhs_param_id))
+            {
+                return false
+            }
+        }
+
+
+        return true
+    }
+
     public function is_static(this) -> bool {
         if .params.size() < 1 {
             return true
