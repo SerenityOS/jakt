@@ -3908,6 +3908,10 @@ struct Typechecker {
         .add_var_to_scope(scope_id: catch_scope_id, name: error_name, var_id: error_id, span: error_span)
         let checked_catch_block = .typecheck_block(catch_block, parent_scope_id: catch_scope_id, safety_mode)
 
+        if checked_catch_block.yielded_type.has_value() {
+            .error("A ‘catch’ block as part of a try block is not allowed to yield values", catch_block.find_yield_span()!)
+        }
+
         return CheckedExpression::TryBlock(stmt: checked_stmt, catch_block: checked_catch_block, error_name, error_span, span, type_id: void_type_id())
     }
 
