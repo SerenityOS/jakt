@@ -306,6 +306,26 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
             value_type_id
         )
     }
+    JaktSet(values, type_id) => {
+        mut vals: [CheckedExpression] = []
+        for i in 0..values.size() {
+            vals.push(value_to_checked_expression(values[i], interpreter))
+        }
+
+        let value_type_id = match interpreter.program.get_type(type_id) {
+            GenericInstance(args) => args[0]
+            else => {
+                panic("Expected generic instance of Set while materialising an array")
+            }
+        }
+
+        yield CheckedExpression::JaktSet(
+            vals
+            span: this_value.span
+            type_id
+            inner_type_id: value_type_id
+        )
+    }
     Function(captures, can_throw, return_type_id, type_id, block, checked_params) => {
         // As all the captures are compiletime objects, we can simply inline them as assignments inside the block :P
         let parent_scope = interpreter.program.get_scope(block.scope_id)
@@ -881,6 +901,19 @@ class Interpreter {
                     impl: ValueImpl::JaktString(.compiler.target_triple ?? ___jakt_get_target_triple_string())
                     span: call_span
                 ))
+                "Set" => {
+                    if type_bindings.size() != 1 {
+                        .error("Set constructor expects one generic argument", call_span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                    let set_struct_id = .program.find_struct_in_prelude("Set")
+                    let type_id = .find_or_add_type_id(Type::GenericInstance(id: set_struct_id, args: [type_bindings.get(type_bindings.keys()[0])!]))
+
+                    yield StatementResult::JustValue(Value(
+                        impl: ValueImpl::JaktSet(values: [], type_id)
+                        span: call_span
+                    ))
+                }
                 else => {
                     .error(
                         format("Prelude function {}::{} is not implemented yet", namespace_, prelude_function),
@@ -1581,7 +1614,198 @@ class Interpreter {
                     throw Error::from_errno(InterpretError::Unimplemented as! i32)
                 }
             }
-
+            "Set" => match prelude_function {
+                "is_empty" => match this_argument!.impl {
+                    JaktSet(values) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(values.is_empty()), span: call_span))
+                    else => {
+                        panic("Invalid Set")
+                    }
+                }
+                "contains" => match this_argument!.impl {
+                    JaktSet(values) => {
+                        mut found = false
+                        for i in 0..values.size() {
+                            if values[i].impl.equals(arguments[0].impl) {
+                                found = true
+                                break
+                            }
+                        }
+                        yield StatementResult::JustValue(Value(impl: ValueImpl::Bool(found), span: call_span))
+                    }
+                    else => {
+                        panic("Invalid Set")
+                    }
+                }
+                "add" => match this_argument!.impl {
+                    JaktSet(values) => {
+                        mut mutable_values = values
+                        mutable_values.push(arguments[0])
+                        yield StatementResult::JustValue(
+                            Value(
+                                impl: ValueImpl::Void,
+                                span: call_span
+                            )
+                        )
+                    }
+                    else => {
+                        panic("Invalid Set")
+                    }
+                }
+                "remove" => match this_argument!.impl {
+                    JaktSet(values) => {
+                        mut found = false
+                        mut values_without: [Value] = []
+                        for i in 0..values.size() {
+                            if values[i].impl.equals(arguments[0].impl) {
+                                found = true
+                                continue
+                            }
+                            values_without.push(values[i])
+                        }
+                        mut mutable_values = values
+                        mutable_values.shrink(0)
+                        for i in 0..values_without.size() {
+                            mutable_values.push(values_without[i])
+                        }
+                        yield StatementResult::JustValue(
+                            Value(
+                                impl: ValueImpl::Bool(found),
+                                span: call_span
+                            )
+                        )
+                    }
+                    else => {
+                        panic("Invalid Set")
+                    }
+                }
+                "clear" => match this_argument!.impl {
+                    JaktSet(values) => {
+                        mut mutable_values = values
+                        mutable_values.shrink(0)
+                        yield StatementResult::JustValue(
+                            Value(
+                                impl: ValueImpl::Void
+                                span: call_span
+                            )
+                        )
+                    }
+                    else => {
+                        panic("Invalid Set")
+                    }
+                }
+                "size" => match this_argument!.impl {
+                    JaktSet(values) => StatementResult::JustValue(
+                        Value(
+                            impl: ValueImpl::USize(values.size())
+                            span: call_span
+                        )
+                    )
+                    else => {
+                        panic("Invalid Set")
+                    }
+                }
+                "capacity" => match this_argument!.impl {
+                    JaktSet(values) => StatementResult::JustValue(
+                        Value(
+                            impl: ValueImpl::USize(values.capacity())
+                            span: call_span
+                        )
+                    )
+                    else => {
+                        panic("Invalid Set")
+                    }
+                }
+                "ensure_capacity" => match this_argument!.impl {
+                    JaktSet(values) => match arguments[0].impl {
+                        USize(capacity) => {
+                            mut mutable_values = values
+                            mutable_values.ensure_capacity(capacity)
+                            yield StatementResult::JustValue(
+                                Value(
+                                    impl: ValueImpl::Void
+                                    span: call_span
+                                )
+                            )
+                        }
+                        else => {
+                            .error("Set::ensure_capacity must be called with a usize", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid Set")
+                    }
+                }
+                "iterator" => match this_argument!.impl {
+                    JaktSet => {
+                        let struct_id = .program.find_struct_in_prelude("SetIterator")
+                        yield StatementResult::JustValue(
+                            Value(
+                                impl: ValueImpl::Struct(
+                                    fields: [
+                                        this_argument!
+                                        Value(
+                                            impl: ValueImpl::USize(0uz)
+                                            span: call_span
+                                        )
+                                    ]
+                                    struct_id
+                                    constructor: None
+                                )
+                                span: call_span
+                            )
+                        )
+                    }
+                    else => {
+                        panic("Invalid use of Set::iterator()")
+                    }
+                }
+                else => {
+                    .error(
+                        format("Prelude function `Set::{}` is not implemented", prelude_function),
+                        call_span
+                    )
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+            }
+            "SetIterator" => match prelude_function {
+                "next" => match this_argument!.impl {
+                    Struct(fields) => {
+                        let index = match fields[1].impl {
+                            USize(value) => value
+                            else => {
+                                panic("Invalid SetIterator index configuration")
+                            }
+                        }
+                        mut mutable_fields = fields
+                        yield StatementResult::JustValue(match fields[0].impl {
+                            JaktSet(values) => match values.size() > index {
+                                true => {
+                                    mutable_fields[1] = Value(
+                                        impl: ValueImpl::USize(index + 1)
+                                        span: call_span
+                                    )
+                                    yield Value(impl: ValueImpl::OptionalSome(value: values[index]), span: call_span)
+                                }
+                                else => Value(impl: ValueImpl::OptionalNone, span: call_span)
+                            }
+                            else => {
+                                panic("Invalid SetIterator configuration")
+                            }
+                        })
+                    }
+                    else => {
+                        panic("Invalid SetIterator configuration")
+                    }
+                }
+                else => {
+                    .error(
+                        format("Prelude function `ArrayIterator::{}` is not implemented", prelude_function),
+                        call_span
+                    )
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+            }
             "Optional" => match prelude_function {
                 "has_value" => match this_argument!.impl {
                     OptionalSome => StatementResult::JustValue(Value(impl: ValueImpl::Bool(true), span: call_span))
@@ -1694,6 +1918,13 @@ class Interpreter {
                             }
                         }
                         effective_namespace.push(ResolvedNamespace(name: "Dictionary", generic_parameters))
+                    }
+                    JaktSet(type_id) => {
+                        guard .program.get_type(id: type_id) is GenericInstance(args: generic_parameters) else {
+                            .error("Attempted to call a prelude function on a non-generic set", call_span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                        effective_namespace.push(ResolvedNamespace(name: "Set", generic_parameters))
                     }
                     Struct(struct_id) | Class(struct_id) => {
                         let generic_parameters: [TypeId] = []
@@ -4227,6 +4458,13 @@ class Interpreter {
                     }
                     effective_namespace.push(ResolvedNamespace(name: "Dictionary", generic_parameters))
                 }
+                JaktSet(type_id) => {
+                    guard .program.get_type(id: type_id) is GenericInstance(args: generic_parameters) else {
+                        .error("Attempted to call a prelude function on a non-generic set", this_argument.span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                    effective_namespace.push(ResolvedNamespace(name: "Set", generic_parameters))
+                }
                 Struct(struct_id) | Class(struct_id) => {
                     let generic_parameters: [TypeId] = []
                     effective_namespace.push(
@@ -4859,7 +5097,39 @@ class Interpreter {
             }
         }
         // JaktTuple
-        // JaktSet
+        JaktSet(vals, span, type_id) => {
+            mut values: [Value] = []
+            for v in vals.iterator() {
+                let val = match .execute_expression(v, scope) {
+                    Return(value) => {
+                        return StatementResult::Return(value)
+                    }
+                    Throw(value) => {
+                        return StatementResult::Throw(value)
+                    }
+                    JustValue(value) => value
+                    Continue => {
+                        return StatementResult::Continue
+                    }
+                    Break => {
+                        return StatementResult::Break
+                    }
+                    Yield(expr) => {
+                        panic("Invalid control flow")
+                    }
+                }
+
+                values.push(val)
+            }
+
+            yield StatementResult::JustValue(Value(
+                impl: ValueImpl::JaktSet(
+                    values
+                    type_id
+                )
+                span: span
+            ))
+        }
         Function(captures, params, return_type_id, type_id, block, span, can_throw) => {
             // First, resolve the captures
             mut resolved_captures: [String:Value] = [:]
