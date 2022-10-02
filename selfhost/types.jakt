@@ -1832,6 +1832,7 @@ boxed enum ValueImpl {
     Enum(fields: [Value], enum_id: EnumId, constructor: FunctionId)
     JaktArray(values: [Value], type_id: TypeId)
     JaktDictionary(keys: [Value], values: [Value], type_id: TypeId)
+    JaktSet(values: [Value], type_id: TypeId)
     RawPtr(ValueImpl)
     OptionalSome(value: Value)
     OptionalNone
@@ -1887,6 +1888,13 @@ boxed enum ValueImpl {
                 keys_copy.push(key.copy())
             }
             yield ValueImpl::JaktDictionary(keys: keys_copy, values: values_copy, type_id)
+        }
+        JaktSet(values, type_id) => {
+            mut values_copy: [Value] = []
+            for value in values.iterator() {
+                values_copy.push(value.copy())
+            }
+            yield ValueImpl::JaktSet(values: values_copy, type_id)
         }
         RawPtr(value) => ValueImpl::RawPtr(value)
         OptionalSome(value) => ValueImpl::OptionalSome(value: value.copy())
@@ -1949,6 +1957,7 @@ struct Value {
         Enum => "enum <T>"
         JaktArray => "Array"
         JaktDictionary => "Dictionary"
+        JaktSet => "Set"
         RawPtr => "raw <T>"
         OptionalSome => "Some"
         OptionalNone => "None"

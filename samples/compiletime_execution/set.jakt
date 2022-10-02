@@ -1,0 +1,55 @@
+/// Expect:
+/// - output: "PASS\n"
+
+comptime is_empty() throws -> bool {
+    let set: Set<u8> = {}
+    return set.is_empty()
+}
+comptime contains() throws => {0u8}.contains(0u8)
+comptime add() throws -> bool {
+    mut set: Set<u8> = {}
+    set.add(1u8)
+    return set.contains(1u8)
+}
+comptime remove() throws -> bool {
+    mut set: Set<u8> = {2u8}
+    return set.remove(2u8)
+}
+comptime clear() throws -> bool {
+    mut set: Set<u8> = {3u8}
+    set.clear()
+    return set.is_empty()
+}
+comptime size() throws => {4u8, 5u8, 6u8, 7u8}.size() == 4
+comptime capacity() throws -> bool {
+    mut set: Set<u8> = {}
+    set.ensure_capacity(5)
+    return set.capacity() == 5
+}
+comptime set_iterator() throws -> bool {
+    let set = {4u8, 5u8, 6u8, 7u8}
+    mut output = ""
+    for val in set.iterator() {
+        output += format("{}", val)
+    }
+    return output == "4567"
+}
+comptime set_constructor() throws => Set<u8>().is_empty()
+
+function main() {
+    mut success = is_empty()
+    success &= contains()
+    success &= add()
+    success &= remove()
+    success &= clear()
+    success &= size()
+    success &= capacity()
+    success &= set_iterator()
+    success &= set_constructor()
+
+    if success {
+        println("PASS")
+    } else {
+        println("FAIL")
+    }
+}
