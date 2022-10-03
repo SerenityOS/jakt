@@ -302,6 +302,18 @@ struct Stage0 {
         return res
     }
 
+    function formatted_peek(mut this) throws -> FormattedToken? {
+        let states_cache = .states[..].to_array()
+        let index_cache = .index
+
+        let token = .next_impl(reconsume: true)
+
+        .index = index_cache
+        .states = states_cache
+
+        return token
+    }
+
     function next(mut this) throws -> FormattedToken? {
         return .next_impl(reconsume: false)
         // mut res = .next_impl(reconsume: false)
@@ -2572,6 +2584,15 @@ struct Formatter {
         return state is TypeContext or state is VariableDeclaration
     }
 
+    function peek(mut this) throws -> FormattedToken? {
+        mut reflown_token: ReflowState? = None
+        if .tokens_to_reflow.size() > 0 {
+            reflown_token = .tokens_to_reflow[.tokens_to_reflow.size() - 1]
+        }
+
+        return reflown_token?.token ?? .token_provider.formatted_peek()
+    }
+
     function next(mut this) throws -> [FormattedToken]? {
         let reflown_token = .tokens_to_reflow.pop()
         mut maybe_next_underlying_token = reflown_token?.token ?? .token_provider.next()
@@ -2610,14 +2631,43 @@ struct Formatter {
                     ))
                     .current_line_length += projected_added_length
                     if not Formatter::should_ignore_state(current_state) {
-                        .breakable_points_in_current_line.push(match next_underlying_token {
-                            LParen => BreakablePoint::Paren(point: .current_line.size(), length: .current_line_length)
-                            LCurly => BreakablePoint::Curly(point: .current_line.size(), length: .current_line_length)
-                            LSquare => BreakablePoint::Square(point: .current_line.size(), length: .current_line_length)
-                            else => {
-                                abort() // unreachable
+                        let next_token: FormattedToken? = .peek()
+
+                        mut breakable_point: BreakablePoint? = None
+                        if next_token.has_value() {
+                            let a = 1
+                            breakable_point = match next_underlying_token {
+                                LParen => match next_token!.token {
+                                    RParen => None
+                                    else => BreakablePoint::Paren(point: .current_line.size(), length: .current_line_length)
+                                }
+                                LCurly => match next_token!.token {
+                                    RCurly => None
+                                    else => BreakablePoint::Curly(point: .current_line.size(), length: .current_line_length)
+                                }
+                                LSquare => match next_token!.token {
+                                    RSquare => None
+                                    else => BreakablePoint::Square(point: .current_line.size(), length: .current_line_length)
+                                }
+                                else => {
+                                    abort() // unreachable
+                                }
                             }
-                        })
+                        } else {
+                            breakable_point = match next_underlying_token {
+                                LParen => BreakablePoint::Paren(point: .current_line.size(), length: .current_line_length)
+                                LCurly => BreakablePoint::Curly(point: .current_line.size(), length: .current_line_length)
+                                LSquare => BreakablePoint::Square(point: .current_line.size(), length: .current_line_length)
+                                else => {
+                                    abort() // unreachable
+                                }
+                            }
+                        }
+
+                        if breakable_point.has_value() {
+                            .breakable_points_in_current_line.push(breakable_point!)
+                        }
+
                         let none: Token? = None
                         .replace_commas_in_enclosure.push(none)
                     } else {
