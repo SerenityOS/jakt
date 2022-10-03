@@ -279,6 +279,27 @@ struct Stage0 {
 
         return .tokens[effective_index]
     }
+
+    private function line_has_indent(this) -> bool {
+        mut offset = 0
+
+        loop {
+            let token = .peek(offset)
+
+            if token is LCurly {
+                return true
+            }
+
+            if token is Eol or token is Eof {
+                break
+            }
+
+            offset++
+        }
+
+        return false
+    }
+
     private function consume(mut this) -> Token => .tokens[.index++]
     function state(this) -> State => .states.last()!
     private function push_state(mut this, anon state: State) throws {
@@ -1009,7 +1030,14 @@ struct Stage0 {
                 }
                 Match | For | While | If | Try | Loop | Guard | Defer => {
                     let added_indent = match token {
-                        Match | For | While | If | Guard => 1uz
+                        Match | For | While | If | Guard => {
+                            mut indent = 1uz
+                            if .line_has_indent() {
+                                indent = 0uz
+                            }
+
+                            yield indent
+                        }
                         else => 0uz
                     }
                     .replace_state(State::StatementContext(
@@ -1022,6 +1050,7 @@ struct Stage0 {
                         dedents_on_open_curly: dedents_on_open_curly + added_indent
                     ))
                     indent_change += (added_indent as! i64)
+
                     yield FormattedToken(
                         token
                         indent: .indent
