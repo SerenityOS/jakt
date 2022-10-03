@@ -17,6 +17,7 @@ extern struct Array<T> {
     function ensure_capacity(this, anon capacity: usize) throws
     function add_capacity(this, anon capacity: usize) throws
     function resize(mut this, anon size: usize) throws
+    function shrink(mut this, anon size: usize) -> void
     function push(mut this, anon value: T) throws
     function pop(mut this) -> T?
     function iterator(this) -> ArrayIterator<T>

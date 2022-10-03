@@ -5,90 +5,51 @@
 #include "compiler.h"
 namespace Jakt {
 namespace lexer {
-namespace NumericConstant_Details {
-struct I8{
-i8 value;
-template<typename... Args>
-I8(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct I16{
-i16 value;
-template<typename... Args>
-I16(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct I32{
-i32 value;
-template<typename... Args>
-I32(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct I64{
-i64 value;
-template<typename... Args>
-I64(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct U8{
-u8 value;
-template<typename... Args>
-U8(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct U16{
-u16 value;
-template<typename... Args>
-U16(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct U32{
-u32 value;
-template<typename... Args>
-U32(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct U64{
-u64 value;
-template<typename... Args>
-U64(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct USize{
-u64 value;
-template<typename... Args>
-USize(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct F32{
-f32 value;
-template<typename... Args>
-F32(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct F64{
-f64 value;
-template<typename... Args>
-F64(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct UnknownSigned{
-i64 value;
-template<typename... Args>
-UnknownSigned(Args&&... args): value { forward<Args>(args)... } {}
-};
-struct UnknownUnsigned{
-u64 value;
-template<typename... Args>
-UnknownUnsigned(Args&&... args): value { forward<Args>(args)... } {}
-};
+namespace LiteralPrefix_Details {
+struct None {};
+struct Hexadecimal {};
+struct Octal {};
+struct Binary {};
 }
-struct NumericConstant : public Variant<NumericConstant_Details::I8, NumericConstant_Details::I16, NumericConstant_Details::I32, NumericConstant_Details::I64, NumericConstant_Details::U8, NumericConstant_Details::U16, NumericConstant_Details::U32, NumericConstant_Details::U64, NumericConstant_Details::USize, NumericConstant_Details::F32, NumericConstant_Details::F64, NumericConstant_Details::UnknownSigned, NumericConstant_Details::UnknownUnsigned> {
-using Variant<NumericConstant_Details::I8, NumericConstant_Details::I16, NumericConstant_Details::I32, NumericConstant_Details::I64, NumericConstant_Details::U8, NumericConstant_Details::U16, NumericConstant_Details::U32, NumericConstant_Details::U64, NumericConstant_Details::USize, NumericConstant_Details::F32, NumericConstant_Details::F64, NumericConstant_Details::UnknownSigned, NumericConstant_Details::UnknownUnsigned>::Variant;
-    using I8 = NumericConstant_Details::I8;
-    using I16 = NumericConstant_Details::I16;
-    using I32 = NumericConstant_Details::I32;
-    using I64 = NumericConstant_Details::I64;
-    using U8 = NumericConstant_Details::U8;
-    using U16 = NumericConstant_Details::U16;
-    using U32 = NumericConstant_Details::U32;
-    using U64 = NumericConstant_Details::U64;
-    using USize = NumericConstant_Details::USize;
-    using F32 = NumericConstant_Details::F32;
-    using F64 = NumericConstant_Details::F64;
-    using UnknownSigned = NumericConstant_Details::UnknownSigned;
-    using UnknownUnsigned = NumericConstant_Details::UnknownUnsigned;
+struct LiteralPrefix : public Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, LiteralPrefix_Details::Octal, LiteralPrefix_Details::Binary> {
+using Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, LiteralPrefix_Details::Octal, LiteralPrefix_Details::Binary>::Variant;
+    using None = LiteralPrefix_Details::None;
+    using Hexadecimal = LiteralPrefix_Details::Hexadecimal;
+    using Octal = LiteralPrefix_Details::Octal;
+    using Binary = LiteralPrefix_Details::Binary;
 ErrorOr<String> debug_description() const;
-size_t to_usize() const;
+String to_string() const;
+};
+namespace LiteralSuffix_Details {
+struct None {};
+struct UZ {};
+struct U8 {};
+struct U16 {};
+struct U32 {};
+struct U64 {};
+struct I8 {};
+struct I16 {};
+struct I32 {};
+struct I64 {};
+struct F32 {};
+struct F64 {};
+}
+struct LiteralSuffix : public Variant<LiteralSuffix_Details::None, LiteralSuffix_Details::UZ, LiteralSuffix_Details::U8, LiteralSuffix_Details::U16, LiteralSuffix_Details::U32, LiteralSuffix_Details::U64, LiteralSuffix_Details::I8, LiteralSuffix_Details::I16, LiteralSuffix_Details::I32, LiteralSuffix_Details::I64, LiteralSuffix_Details::F32, LiteralSuffix_Details::F64> {
+using Variant<LiteralSuffix_Details::None, LiteralSuffix_Details::UZ, LiteralSuffix_Details::U8, LiteralSuffix_Details::U16, LiteralSuffix_Details::U32, LiteralSuffix_Details::U64, LiteralSuffix_Details::I8, LiteralSuffix_Details::I16, LiteralSuffix_Details::I32, LiteralSuffix_Details::I64, LiteralSuffix_Details::F32, LiteralSuffix_Details::F64>::Variant;
+    using None = LiteralSuffix_Details::None;
+    using UZ = LiteralSuffix_Details::UZ;
+    using U8 = LiteralSuffix_Details::U8;
+    using U16 = LiteralSuffix_Details::U16;
+    using U32 = LiteralSuffix_Details::U32;
+    using U64 = LiteralSuffix_Details::U64;
+    using I8 = LiteralSuffix_Details::I8;
+    using I16 = LiteralSuffix_Details::I16;
+    using I32 = LiteralSuffix_Details::I32;
+    using I64 = LiteralSuffix_Details::I64;
+    using F32 = LiteralSuffix_Details::F32;
+    using F64 = LiteralSuffix_Details::F64;
+ErrorOr<String> debug_description() const;
+String to_string() const;
 };
 namespace Token_Details {
 struct SingleQuotedString {
@@ -119,12 +80,16 @@ span{ forward<_MemberT1>(member_1)}
 {}
 };
 struct Number {
-lexer::NumericConstant number;
+lexer::LiteralPrefix prefix;
+String number;
+lexer::LiteralSuffix suffix;
 utility::Span span;
-template<typename _MemberT0, typename _MemberT1>
-Number(_MemberT0&& member_0, _MemberT1&& member_1):
-number{ forward<_MemberT0>(member_0)},
-span{ forward<_MemberT1>(member_1)}
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3>
+Number(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3):
+prefix{ forward<_MemberT0>(member_0)},
+number{ forward<_MemberT1>(member_1)},
+suffix{ forward<_MemberT2>(member_2)},
+span{ forward<_MemberT3>(member_3)}
 {}
 };
 struct Identifier {
@@ -311,6 +276,11 @@ utility::Span value;
 template<typename... Args>
 AmpersandEqual(Args&&... args): value { forward<Args>(args)... } {}
 };
+struct AmpersandAmpersand{
+utility::Span value;
+template<typename... Args>
+AmpersandAmpersand(Args&&... args): value { forward<Args>(args)... } {}
+};
 struct Pipe{
 utility::Span value;
 template<typename... Args>
@@ -320,6 +290,11 @@ struct PipeEqual{
 utility::Span value;
 template<typename... Args>
 PipeEqual(Args&&... args): value { forward<Args>(args)... } {}
+};
+struct PipePipe{
+utility::Span value;
+template<typename... Args>
+PipePipe(Args&&... args): value { forward<Args>(args)... } {}
 };
 struct Caret{
 utility::Span value;
@@ -635,14 +610,18 @@ utility::Span value;
 template<typename... Args>
 Guard(Args&&... args): value { forward<Args>(args)... } {}
 };
-struct Garbage{
-utility::Span value;
-template<typename... Args>
-Garbage(Args&&... args): value { forward<Args>(args)... } {}
+struct Garbage {
+JaktInternal::Optional<String> consumed;
+utility::Span span;
+template<typename _MemberT0, typename _MemberT1>
+Garbage(_MemberT0&& member_0, _MemberT1&& member_1):
+consumed{ forward<_MemberT0>(member_0)},
+span{ forward<_MemberT1>(member_1)}
+{}
 };
 }
-struct Token : public Variant<Token_Details::SingleQuotedString, Token_Details::SingleQuotedByteString, Token_Details::QuotedString, Token_Details::Number, Token_Details::Identifier, Token_Details::Semicolon, Token_Details::Colon, Token_Details::ColonColon, Token_Details::LParen, Token_Details::RParen, Token_Details::LCurly, Token_Details::RCurly, Token_Details::LSquare, Token_Details::RSquare, Token_Details::PercentSign, Token_Details::Plus, Token_Details::Minus, Token_Details::Equal, Token_Details::PlusEqual, Token_Details::PlusPlus, Token_Details::MinusEqual, Token_Details::MinusMinus, Token_Details::AsteriskEqual, Token_Details::ForwardSlashEqual, Token_Details::PercentSignEqual, Token_Details::NotEqual, Token_Details::DoubleEqual, Token_Details::GreaterThan, Token_Details::GreaterThanOrEqual, Token_Details::LessThan, Token_Details::LessThanOrEqual, Token_Details::LeftArithmeticShift, Token_Details::LeftShift, Token_Details::LeftShiftEqual, Token_Details::RightShift, Token_Details::RightArithmeticShift, Token_Details::RightShiftEqual, Token_Details::Asterisk, Token_Details::Ampersand, Token_Details::AmpersandEqual, Token_Details::Pipe, Token_Details::PipeEqual, Token_Details::Caret, Token_Details::CaretEqual, Token_Details::Dollar, Token_Details::Tilde, Token_Details::ForwardSlash, Token_Details::ExclamationPoint, Token_Details::QuestionMark, Token_Details::QuestionMarkQuestionMark, Token_Details::QuestionMarkQuestionMarkEqual, Token_Details::Comma, Token_Details::Dot, Token_Details::DotDot, Token_Details::Eol, Token_Details::Eof, Token_Details::FatArrow, Token_Details::Arrow, Token_Details::And, Token_Details::Anon, Token_Details::As, Token_Details::Boxed, Token_Details::Break, Token_Details::Catch, Token_Details::Class, Token_Details::Continue, Token_Details::Cpp, Token_Details::Defer, Token_Details::Else, Token_Details::Enum, Token_Details::Extern, Token_Details::False, Token_Details::For, Token_Details::Function, Token_Details::Comptime, Token_Details::If, Token_Details::Import, Token_Details::In, Token_Details::Is, Token_Details::Let, Token_Details::Loop, Token_Details::Match, Token_Details::Mut, Token_Details::Namespace, Token_Details::Not, Token_Details::Or, Token_Details::Override, Token_Details::Private, Token_Details::Public, Token_Details::Raw, Token_Details::Return, Token_Details::Restricted, Token_Details::Struct, Token_Details::This, Token_Details::Throw, Token_Details::Throws, Token_Details::True, Token_Details::Try, Token_Details::Unsafe, Token_Details::Virtual, Token_Details::Weak, Token_Details::While, Token_Details::Yield, Token_Details::Guard, Token_Details::Garbage> {
-using Variant<Token_Details::SingleQuotedString, Token_Details::SingleQuotedByteString, Token_Details::QuotedString, Token_Details::Number, Token_Details::Identifier, Token_Details::Semicolon, Token_Details::Colon, Token_Details::ColonColon, Token_Details::LParen, Token_Details::RParen, Token_Details::LCurly, Token_Details::RCurly, Token_Details::LSquare, Token_Details::RSquare, Token_Details::PercentSign, Token_Details::Plus, Token_Details::Minus, Token_Details::Equal, Token_Details::PlusEqual, Token_Details::PlusPlus, Token_Details::MinusEqual, Token_Details::MinusMinus, Token_Details::AsteriskEqual, Token_Details::ForwardSlashEqual, Token_Details::PercentSignEqual, Token_Details::NotEqual, Token_Details::DoubleEqual, Token_Details::GreaterThan, Token_Details::GreaterThanOrEqual, Token_Details::LessThan, Token_Details::LessThanOrEqual, Token_Details::LeftArithmeticShift, Token_Details::LeftShift, Token_Details::LeftShiftEqual, Token_Details::RightShift, Token_Details::RightArithmeticShift, Token_Details::RightShiftEqual, Token_Details::Asterisk, Token_Details::Ampersand, Token_Details::AmpersandEqual, Token_Details::Pipe, Token_Details::PipeEqual, Token_Details::Caret, Token_Details::CaretEqual, Token_Details::Dollar, Token_Details::Tilde, Token_Details::ForwardSlash, Token_Details::ExclamationPoint, Token_Details::QuestionMark, Token_Details::QuestionMarkQuestionMark, Token_Details::QuestionMarkQuestionMarkEqual, Token_Details::Comma, Token_Details::Dot, Token_Details::DotDot, Token_Details::Eol, Token_Details::Eof, Token_Details::FatArrow, Token_Details::Arrow, Token_Details::And, Token_Details::Anon, Token_Details::As, Token_Details::Boxed, Token_Details::Break, Token_Details::Catch, Token_Details::Class, Token_Details::Continue, Token_Details::Cpp, Token_Details::Defer, Token_Details::Else, Token_Details::Enum, Token_Details::Extern, Token_Details::False, Token_Details::For, Token_Details::Function, Token_Details::Comptime, Token_Details::If, Token_Details::Import, Token_Details::In, Token_Details::Is, Token_Details::Let, Token_Details::Loop, Token_Details::Match, Token_Details::Mut, Token_Details::Namespace, Token_Details::Not, Token_Details::Or, Token_Details::Override, Token_Details::Private, Token_Details::Public, Token_Details::Raw, Token_Details::Return, Token_Details::Restricted, Token_Details::Struct, Token_Details::This, Token_Details::Throw, Token_Details::Throws, Token_Details::True, Token_Details::Try, Token_Details::Unsafe, Token_Details::Virtual, Token_Details::Weak, Token_Details::While, Token_Details::Yield, Token_Details::Guard, Token_Details::Garbage>::Variant;
+struct Token : public Variant<Token_Details::SingleQuotedString, Token_Details::SingleQuotedByteString, Token_Details::QuotedString, Token_Details::Number, Token_Details::Identifier, Token_Details::Semicolon, Token_Details::Colon, Token_Details::ColonColon, Token_Details::LParen, Token_Details::RParen, Token_Details::LCurly, Token_Details::RCurly, Token_Details::LSquare, Token_Details::RSquare, Token_Details::PercentSign, Token_Details::Plus, Token_Details::Minus, Token_Details::Equal, Token_Details::PlusEqual, Token_Details::PlusPlus, Token_Details::MinusEqual, Token_Details::MinusMinus, Token_Details::AsteriskEqual, Token_Details::ForwardSlashEqual, Token_Details::PercentSignEqual, Token_Details::NotEqual, Token_Details::DoubleEqual, Token_Details::GreaterThan, Token_Details::GreaterThanOrEqual, Token_Details::LessThan, Token_Details::LessThanOrEqual, Token_Details::LeftArithmeticShift, Token_Details::LeftShift, Token_Details::LeftShiftEqual, Token_Details::RightShift, Token_Details::RightArithmeticShift, Token_Details::RightShiftEqual, Token_Details::Asterisk, Token_Details::Ampersand, Token_Details::AmpersandEqual, Token_Details::AmpersandAmpersand, Token_Details::Pipe, Token_Details::PipeEqual, Token_Details::PipePipe, Token_Details::Caret, Token_Details::CaretEqual, Token_Details::Dollar, Token_Details::Tilde, Token_Details::ForwardSlash, Token_Details::ExclamationPoint, Token_Details::QuestionMark, Token_Details::QuestionMarkQuestionMark, Token_Details::QuestionMarkQuestionMarkEqual, Token_Details::Comma, Token_Details::Dot, Token_Details::DotDot, Token_Details::Eol, Token_Details::Eof, Token_Details::FatArrow, Token_Details::Arrow, Token_Details::And, Token_Details::Anon, Token_Details::As, Token_Details::Boxed, Token_Details::Break, Token_Details::Catch, Token_Details::Class, Token_Details::Continue, Token_Details::Cpp, Token_Details::Defer, Token_Details::Else, Token_Details::Enum, Token_Details::Extern, Token_Details::False, Token_Details::For, Token_Details::Function, Token_Details::Comptime, Token_Details::If, Token_Details::Import, Token_Details::In, Token_Details::Is, Token_Details::Let, Token_Details::Loop, Token_Details::Match, Token_Details::Mut, Token_Details::Namespace, Token_Details::Not, Token_Details::Or, Token_Details::Override, Token_Details::Private, Token_Details::Public, Token_Details::Raw, Token_Details::Return, Token_Details::Restricted, Token_Details::Struct, Token_Details::This, Token_Details::Throw, Token_Details::Throws, Token_Details::True, Token_Details::Try, Token_Details::Unsafe, Token_Details::Virtual, Token_Details::Weak, Token_Details::While, Token_Details::Yield, Token_Details::Guard, Token_Details::Garbage> {
+using Variant<Token_Details::SingleQuotedString, Token_Details::SingleQuotedByteString, Token_Details::QuotedString, Token_Details::Number, Token_Details::Identifier, Token_Details::Semicolon, Token_Details::Colon, Token_Details::ColonColon, Token_Details::LParen, Token_Details::RParen, Token_Details::LCurly, Token_Details::RCurly, Token_Details::LSquare, Token_Details::RSquare, Token_Details::PercentSign, Token_Details::Plus, Token_Details::Minus, Token_Details::Equal, Token_Details::PlusEqual, Token_Details::PlusPlus, Token_Details::MinusEqual, Token_Details::MinusMinus, Token_Details::AsteriskEqual, Token_Details::ForwardSlashEqual, Token_Details::PercentSignEqual, Token_Details::NotEqual, Token_Details::DoubleEqual, Token_Details::GreaterThan, Token_Details::GreaterThanOrEqual, Token_Details::LessThan, Token_Details::LessThanOrEqual, Token_Details::LeftArithmeticShift, Token_Details::LeftShift, Token_Details::LeftShiftEqual, Token_Details::RightShift, Token_Details::RightArithmeticShift, Token_Details::RightShiftEqual, Token_Details::Asterisk, Token_Details::Ampersand, Token_Details::AmpersandEqual, Token_Details::AmpersandAmpersand, Token_Details::Pipe, Token_Details::PipeEqual, Token_Details::PipePipe, Token_Details::Caret, Token_Details::CaretEqual, Token_Details::Dollar, Token_Details::Tilde, Token_Details::ForwardSlash, Token_Details::ExclamationPoint, Token_Details::QuestionMark, Token_Details::QuestionMarkQuestionMark, Token_Details::QuestionMarkQuestionMarkEqual, Token_Details::Comma, Token_Details::Dot, Token_Details::DotDot, Token_Details::Eol, Token_Details::Eof, Token_Details::FatArrow, Token_Details::Arrow, Token_Details::And, Token_Details::Anon, Token_Details::As, Token_Details::Boxed, Token_Details::Break, Token_Details::Catch, Token_Details::Class, Token_Details::Continue, Token_Details::Cpp, Token_Details::Defer, Token_Details::Else, Token_Details::Enum, Token_Details::Extern, Token_Details::False, Token_Details::For, Token_Details::Function, Token_Details::Comptime, Token_Details::If, Token_Details::Import, Token_Details::In, Token_Details::Is, Token_Details::Let, Token_Details::Loop, Token_Details::Match, Token_Details::Mut, Token_Details::Namespace, Token_Details::Not, Token_Details::Or, Token_Details::Override, Token_Details::Private, Token_Details::Public, Token_Details::Raw, Token_Details::Return, Token_Details::Restricted, Token_Details::Struct, Token_Details::This, Token_Details::Throw, Token_Details::Throws, Token_Details::True, Token_Details::Try, Token_Details::Unsafe, Token_Details::Virtual, Token_Details::Weak, Token_Details::While, Token_Details::Yield, Token_Details::Guard, Token_Details::Garbage>::Variant;
     using SingleQuotedString = Token_Details::SingleQuotedString;
     using SingleQuotedByteString = Token_Details::SingleQuotedByteString;
     using QuotedString = Token_Details::QuotedString;
@@ -683,8 +662,10 @@ using Variant<Token_Details::SingleQuotedString, Token_Details::SingleQuotedByte
     using Asterisk = Token_Details::Asterisk;
     using Ampersand = Token_Details::Ampersand;
     using AmpersandEqual = Token_Details::AmpersandEqual;
+    using AmpersandAmpersand = Token_Details::AmpersandAmpersand;
     using Pipe = Token_Details::Pipe;
     using PipeEqual = Token_Details::PipeEqual;
+    using PipePipe = Token_Details::PipePipe;
     using Caret = Token_Details::Caret;
     using CaretEqual = Token_Details::CaretEqual;
     using Dollar = Token_Details::Dollar;
@@ -757,10 +738,8 @@ struct Lexer {
 size_t index;JaktInternal::Array<u8> input;NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Optional<JaktInternal::Array<u8>> comment_contents;ErrorOr<lexer::Token> lex_quoted_string(const u8 delimiter);
 ErrorOr<JaktInternal::Optional<lexer::Token>> next();
 ErrorOr<JaktInternal::Optional<String>> consume_comment_contents();
-bool is_whitespace(const u8 ch) const;
 ErrorOr<lexer::Token> lex_character_constant_or_name();
 lexer::Token lex_dot();
-ErrorOr<lexer::Token> make_integer_token(const u64 number, const lexer::LiteralSuffix suffix, const utility::Span span);
 ErrorOr<lexer::Token> lex_forward_slash();
 lexer::Token lex_question_mark();
 u8 peek_behind(const size_t steps) const;
@@ -775,10 +754,11 @@ lexer::Token lex_ampersand();
 utility::Span span(const size_t start, const size_t end) const;
 lexer::Token lex_plus();
 lexer::Token lex_exclamation_point();
-JaktInternal::Optional<lexer::LiteralSuffix> consume_numeric_literal_suffix();
+ErrorOr<lexer::LiteralSuffix> consume_numeric_literal_suffix();
 lexer::Token lex_colon();
 Lexer(size_t a_index, JaktInternal::Array<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::Array<u8>> a_comment_contents);
 
+bool valid_digit(const lexer::LiteralPrefix prefix, const u8 digit, const bool decimal_allowed);
 ErrorOr<void> error(const String message, const utility::Span span);
 ErrorOr<String> substring(const size_t start, const size_t length) const;
 lexer::Token lex_greater_than();
@@ -789,59 +769,17 @@ lexer::Token lex_less_than();
 lexer::Token lex_equals();
 static ErrorOr<JaktInternal::Array<lexer::Token>> lex(const NonnullRefPtr<compiler::Compiler> compiler);
 ErrorOr<String> debug_description() const;
-};namespace LiteralSuffix_Details {
-struct None {};
-struct UZ {};
-struct U8 {};
-struct U16 {};
-struct U32 {};
-struct U64 {};
-struct I8 {};
-struct I16 {};
-struct I32 {};
-struct I64 {};
-struct F32 {};
-struct F64 {};
-}
-struct LiteralSuffix : public Variant<LiteralSuffix_Details::None, LiteralSuffix_Details::UZ, LiteralSuffix_Details::U8, LiteralSuffix_Details::U16, LiteralSuffix_Details::U32, LiteralSuffix_Details::U64, LiteralSuffix_Details::I8, LiteralSuffix_Details::I16, LiteralSuffix_Details::I32, LiteralSuffix_Details::I64, LiteralSuffix_Details::F32, LiteralSuffix_Details::F64> {
-using Variant<LiteralSuffix_Details::None, LiteralSuffix_Details::UZ, LiteralSuffix_Details::U8, LiteralSuffix_Details::U16, LiteralSuffix_Details::U32, LiteralSuffix_Details::U64, LiteralSuffix_Details::I8, LiteralSuffix_Details::I16, LiteralSuffix_Details::I32, LiteralSuffix_Details::I64, LiteralSuffix_Details::F32, LiteralSuffix_Details::F64>::Variant;
-    using None = LiteralSuffix_Details::None;
-    using UZ = LiteralSuffix_Details::UZ;
-    using U8 = LiteralSuffix_Details::U8;
-    using U16 = LiteralSuffix_Details::U16;
-    using U32 = LiteralSuffix_Details::U32;
-    using U64 = LiteralSuffix_Details::U64;
-    using I8 = LiteralSuffix_Details::I8;
-    using I16 = LiteralSuffix_Details::I16;
-    using I32 = LiteralSuffix_Details::I32;
-    using I64 = LiteralSuffix_Details::I64;
-    using F32 = LiteralSuffix_Details::F32;
-    using F64 = LiteralSuffix_Details::F64;
-ErrorOr<String> debug_description() const;
-};
-template <typename T>
-T u64_to_float(const u64 number) {
-{
-T float_value = static_cast<i64>(0LL);
-{
-float_value = number;
-}
-
-return (float_value);
-}
-}
-
-}
-template<>struct Formatter<lexer::NumericConstant> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, lexer::NumericConstant const& value) {
+};}
+template<>struct Formatter<lexer::LiteralPrefix> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, lexer::LiteralPrefix const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<lexer::LiteralSuffix> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, lexer::LiteralSuffix const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<lexer::Token> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, lexer::Token const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<lexer::Lexer> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, lexer::Lexer const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<lexer::LiteralSuffix> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, lexer::LiteralSuffix const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 } // namespace Jakt
