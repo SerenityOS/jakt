@@ -374,15 +374,19 @@ inline String ___jakt_get_target_triple_string()
 #else
 // Pure guesswork.
 #   if defined(_WIN32)
-    return String("i686-pc-windows-msvc");
-#   elif defined(_WIN64)
     return String("x86_64-pc-windows-msvc");
+#   elif defined(_WIN64)
+    return String("i686-pc-windows-msvc");
 #   elif defined(__linux__)
     return String("x86_64-pc-linux-gnu");
 #   elif defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
     return String("x86_64-pc-bsd-unknown");
 #   elif defined(__APPLE__)
-    return String("x86_64-apple-darwin-unknown");
+#       if defined (__arm64__)
+            return String("arm64-apple-darwin-unknown");
+#       else
+            return String("x86_64-apple-darwin-unknown");
+#       endif
 #   elif defined(__unix__)
     return String("x86_64-pc-unix-unknown");
 #   elif defined(__serenity__)

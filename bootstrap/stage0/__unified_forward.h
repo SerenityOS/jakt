@@ -9,14 +9,24 @@ namespace utility {
 struct Span;
 struct FileId;
 struct ArgsParser;
+bool is_ascii_binary(const u8 c);
+
 String join(const JaktInternal::Array<String> strings, const String separator);
+
+bool is_whitespace(const u8 byte);
 
 template <typename T>
 ErrorOr<void> extend_array(JaktInternal::Array<T> target, const JaktInternal::Array<T> extend_with);
 
+bool is_ascii_alpha(const u8 c);
+
 ErrorOr<JaktInternal::Array<String>> prepend_to_each(const JaktInternal::Array<String> strings, const String prefix);
 
+bool is_ascii_digit(const u8 c);
+
 void todo(const String message);
+
+bool is_ascii_alphanumeric(const u8 c);
 
 ErrorOr<String> interpret_escapes(const String s);
 
@@ -24,6 +34,10 @@ ErrorOr<JaktInternal::Array<String>> append_to_each(const JaktInternal::Array<St
 
 template <typename T>
 T* null();
+
+bool is_ascii_octdigit(const u8 c);
+
+bool is_ascii_hexdigit(const u8 c);
 
 [[noreturn]] void panic(const String message);
 
@@ -95,23 +109,6 @@ struct F64;
 }
 struct LiteralSuffix;
 
-namespace NumericConstant_Details {
-struct I8;
-struct I16;
-struct I32;
-struct I64;
-struct U8;
-struct U16;
-struct U32;
-struct U64;
-struct USize;
-struct F32;
-struct F64;
-struct UnknownSigned;
-struct UnknownUnsigned;
-}
-struct NumericConstant;
-
 namespace Token_Details {
 struct SingleQuotedString;
 struct SingleQuotedByteString;
@@ -153,8 +150,10 @@ struct RightShiftEqual;
 struct Asterisk;
 struct Ampersand;
 struct AmpersandEqual;
+struct AmpersandAmpersand;
 struct Pipe;
 struct PipeEqual;
+struct PipePipe;
 struct Caret;
 struct CaretEqual;
 struct Dollar;
@@ -221,22 +220,13 @@ struct Garbage;
 }
 struct Token;
 
-bool is_ascii_alphanumeric(const u8 c);
-
-bool is_ascii_alpha(const u8 c);
-
-f32 f64_to_f32(const f64 number);
-
-ErrorOr<lexer::Token> make_float_token(const f64 number, const lexer::LiteralSuffix suffix, const utility::Span span);
-
-bool is_ascii_octdigit(const u8 c);
-
-bool is_ascii_hexdigit(const u8 c);
-
-template <typename T>
-T u64_to_float(const u64 number);
-
-bool is_ascii_digit(const u8 c);
+namespace LiteralPrefix_Details {
+struct None;
+struct Hexadecimal;
+struct Octal;
+struct Binary;
+}
+struct LiteralPrefix;
 
 }
 namespace parser {
@@ -259,35 +249,11 @@ struct ParsedField;
 struct ParsedParameter;
 struct ValueEnumVariant;
 struct VisibilityRestriction;
-namespace ParsedMatchBody_Details {
-struct Expression;
-struct Block;
-}
-struct ParsedMatchBody;
-
 namespace IncludeAction_Details {
 struct Define;
 struct Undefine;
 }
 struct IncludeAction;
-
-namespace ParsedType_Details {
-struct Name;
-struct NamespacedName;
-struct GenericType;
-struct JaktArray;
-struct Dictionary;
-struct JaktTuple;
-struct Set;
-struct Optional;
-struct Reference;
-struct MutableReference;
-struct RawPtr;
-struct WeakPtr;
-struct Function;
-struct Empty;
-}
-struct ParsedType;
 
 namespace ParsedExpression_Details {
 struct Boolean;
@@ -328,12 +294,6 @@ struct Infallible;
 }
 struct TypeCast;
 
-namespace DefinitionLinkage_Details {
-struct Internal;
-struct External;
-}
-struct DefinitionLinkage;
-
 namespace ParsedCapture_Details {
 struct ByValue;
 struct ByReference;
@@ -341,21 +301,43 @@ struct ByMutableReference;
 }
 struct ParsedCapture;
 
-namespace RecordType_Details {
-struct Struct;
-struct Class;
-struct ValueEnum;
-struct SumEnum;
+namespace BinaryOperator_Details {
+struct Add;
+struct Subtract;
+struct Multiply;
+struct Divide;
+struct Modulo;
+struct LessThan;
+struct LessThanOrEqual;
+struct GreaterThan;
+struct GreaterThanOrEqual;
+struct Equal;
+struct NotEqual;
+struct BitwiseAnd;
+struct BitwiseXor;
+struct BitwiseOr;
+struct BitwiseLeftShift;
+struct BitwiseRightShift;
+struct ArithmeticLeftShift;
+struct ArithmeticRightShift;
+struct LogicalAnd;
+struct LogicalOr;
+struct NoneCoalescing;
+struct Assign;
+struct BitwiseAndAssign;
+struct BitwiseOrAssign;
+struct BitwiseXorAssign;
+struct BitwiseLeftShiftAssign;
+struct BitwiseRightShiftAssign;
+struct AddAssign;
+struct SubtractAssign;
+struct MultiplyAssign;
+struct ModuloAssign;
+struct DivideAssign;
+struct NoneCoalescingAssign;
 struct Garbage;
 }
-struct RecordType;
-
-namespace Visibility_Details {
-struct Public;
-struct Private;
-struct Restricted;
-}
-struct Visibility;
+struct BinaryOperator;
 
 namespace FunctionType_Details {
 struct Normal;
@@ -403,49 +385,74 @@ struct External;
 }
 struct FunctionLinkage;
 
-namespace BinaryOperator_Details {
-struct Add;
-struct Subtract;
-struct Multiply;
-struct Divide;
-struct Modulo;
-struct LessThan;
-struct LessThanOrEqual;
-struct GreaterThan;
-struct GreaterThanOrEqual;
-struct Equal;
-struct NotEqual;
-struct BitwiseAnd;
-struct BitwiseXor;
-struct BitwiseOr;
-struct BitwiseLeftShift;
-struct BitwiseRightShift;
-struct ArithmeticLeftShift;
-struct ArithmeticRightShift;
-struct LogicalAnd;
-struct LogicalOr;
-struct NoneCoalescing;
-struct Assign;
-struct BitwiseAndAssign;
-struct BitwiseOrAssign;
-struct BitwiseXorAssign;
-struct BitwiseLeftShiftAssign;
-struct BitwiseRightShiftAssign;
-struct AddAssign;
-struct SubtractAssign;
-struct MultiplyAssign;
-struct ModuloAssign;
-struct DivideAssign;
-struct NoneCoalescingAssign;
-struct Garbage;
-}
-struct BinaryOperator;
-
 namespace ImportName_Details {
 struct Literal;
 struct Comptime;
 }
 struct ImportName;
+
+namespace ParsedMatchBody_Details {
+struct Expression;
+struct Block;
+}
+struct ParsedMatchBody;
+
+namespace DefinitionLinkage_Details {
+struct Internal;
+struct External;
+}
+struct DefinitionLinkage;
+
+namespace RecordType_Details {
+struct Struct;
+struct Class;
+struct ValueEnum;
+struct SumEnum;
+struct Garbage;
+}
+struct RecordType;
+
+namespace Visibility_Details {
+struct Public;
+struct Private;
+struct Restricted;
+}
+struct Visibility;
+
+namespace ParsedType_Details {
+struct Name;
+struct NamespacedName;
+struct GenericType;
+struct JaktArray;
+struct Dictionary;
+struct JaktTuple;
+struct Set;
+struct Optional;
+struct Reference;
+struct MutableReference;
+struct RawPtr;
+struct WeakPtr;
+struct Function;
+struct Empty;
+}
+struct ParsedType;
+
+namespace NumericConstant_Details {
+struct I8;
+struct I16;
+struct I32;
+struct I64;
+struct U8;
+struct U16;
+struct U32;
+struct U64;
+struct USize;
+struct F32;
+struct F64;
+struct UnknownSigned;
+struct UnknownUnsigned;
+}
+struct NumericConstant;
 
 namespace UnaryOperator_Details {
 struct PreIncrement;
@@ -466,6 +473,11 @@ struct IsEnumVariant;
 struct UnaryOperator;
 
 ErrorOr<utility::Span> merge_spans(const utility::Span start, const utility::Span end);
+
+f32 f64_to_f32(const f64 number);
+
+template <typename T>
+T u64_to_float(const u64 number);
 
 }
 namespace types {
@@ -495,6 +507,7 @@ struct TypeId;
 struct CheckedEnum;
 struct ModuleId;
 struct CheckedEnumVariantBinding;
+struct CheckedField;
 namespace SafetyMode_Details {
 struct Safe;
 struct Unsafe;
@@ -848,6 +861,7 @@ struct Entity;
 
 namespace ExpressionMode_Details {
 struct OutsideExpression;
+struct BeforeExpressions;
 struct AtExpressionStart;
 struct InExpression;
 }
@@ -880,6 +894,7 @@ ErrorOr<String> serialize_ast_node(const NonnullRefPtr<types::CheckedExpression>
 
 }
 namespace ide {
+struct JaktSymbol;
 namespace Mutability_Details {
 struct DoesNotApply;
 struct Immutable;
@@ -910,11 +925,13 @@ struct Restricted;
 }
 struct VarVisibility;
 
-ErrorOr<ide::Usage> get_enum_variant_usage_from_type_id_and_name(const NonnullRefPtr<types::CheckedProgram> program, const types::TypeId type_id, const String name);
+ErrorOr<ide::JaktSymbol> record_to_symbol(const parser::ParsedRecord record);
+
+ErrorOr<JaktInternal::Optional<String>> find_typename_in_program(const NonnullRefPtr<types::CheckedProgram> program, const utility::Span span);
 
 ErrorOr<JaktInternal::Array<String>> completions_for_type_id(const NonnullRefPtr<types::CheckedProgram> program, const types::TypeId type_id);
 
-ErrorOr<JaktInternal::Array<JaktInternal::Tuple<JaktInternal::Optional<String>,types::TypeId>>> enum_variant_fields(const NonnullRefPtr<types::CheckedProgram> program, const types::CheckedEnumVariant checked_enum_variant);
+ErrorOr<ide::Usage> get_enum_variant_usage_from_type_id_and_name(const NonnullRefPtr<types::CheckedProgram> program, const types::TypeId type_id, const String name);
 
 ErrorOr<String> get_enum_variant_signature_from_type_id_and_name(const NonnullRefPtr<types::CheckedProgram> program, const types::TypeId type_id, const String name);
 
@@ -930,6 +947,8 @@ ErrorOr<utility::Span> find_definition_in_program(const NonnullRefPtr<types::Che
 
 ErrorOr<String> get_var_signature(const NonnullRefPtr<types::CheckedProgram> program, const String name, const types::TypeId var_type_id, const ide::Mutability mutability, const ide::VarType var_type, const ide::VarVisibility visibility, const JaktInternal::Optional<types::TypeId> struct_type_id);
 
+ErrorOr<JaktInternal::Array<JaktInternal::Tuple<JaktInternal::Optional<String>,types::TypeId>>> enum_variant_fields(const NonnullRefPtr<types::CheckedProgram> program, const types::CheckedEnumVariant checked_enum_variant);
+
 ErrorOr<utility::Span> find_type_definition_in_program(const NonnullRefPtr<types::CheckedProgram> program, const utility::Span span);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_expression(const NonnullRefPtr<types::CheckedProgram> program, const NonnullRefPtr<types::CheckedExpression> expr, const utility::Span span);
@@ -938,15 +957,17 @@ ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_block(const NonnullRefP
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_program(const NonnullRefPtr<types::CheckedProgram> program, const utility::Span span);
 
-ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_function(const NonnullRefPtr<types::CheckedProgram> program, const NonnullRefPtr<types::CheckedFunction> checked_function, const utility::Span span);
+ErrorOr<JaktInternal::Array<ide::JaktSymbol>> find_symbols_in_namespace(const parser::ParsedNamespace namespace_);
 
-ErrorOr<JaktInternal::Optional<String>> find_typename_in_program(const NonnullRefPtr<types::CheckedProgram> program, const utility::Span span);
+ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_function(const NonnullRefPtr<types::CheckedProgram> program, const NonnullRefPtr<types::CheckedFunction> checked_function, const utility::Span span);
 
 ErrorOr<utility::Span> find_type_definition_for_type_id(const NonnullRefPtr<types::CheckedProgram> program, const types::TypeId type_id, const utility::Span span);
 
 ErrorOr<String> get_enum_variant_signature(const NonnullRefPtr<types::CheckedProgram> program, const String name, const types::TypeId type_id, const JaktInternal::Array<JaktInternal::Tuple<JaktInternal::Optional<String>,types::TypeId>> variants, const JaktInternal::Optional<types::NumberConstant> number_constant);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_enum(const NonnullRefPtr<types::CheckedProgram> program, const types::CheckedEnum checked_enum, const utility::Span span);
+
+ErrorOr<ide::JaktSymbol> function_to_symbol(const parser::ParsedFunction function_, const String kind);
 
 ErrorOr<JaktInternal::Optional<ide::Usage>> find_span_in_statement(const NonnullRefPtr<types::CheckedProgram> program, const NonnullRefPtr<types::CheckedStatement> statement, const utility::Span span);
 

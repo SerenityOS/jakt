@@ -1,6 +1,12 @@
 #include "utility.h"
 namespace Jakt {
 namespace utility {
+bool is_ascii_binary(const u8 c) {
+{
+return (((c == '0') || (c == '1')));
+}
+}
+
 String join(const JaktInternal::Array<String> strings,const String separator) {
 {
 String output = String("");
@@ -28,6 +34,18 @@ return (output);
 }
 }
 
+bool is_whitespace(const u8 byte) {
+{
+return ((((byte == ' ') || (byte == '\t')) || (byte == '\r')));
+}
+}
+
+bool is_ascii_alpha(const u8 c) {
+{
+return ((((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'))));
+}
+}
+
 ErrorOr<JaktInternal::Array<String>> prepend_to_each(const JaktInternal::Array<String> strings,const String prefix) {
 {
 JaktInternal::Array<String> output = (TRY((Array<String>::create_with({}))));
@@ -50,10 +68,22 @@ return (output);
 }
 }
 
+bool is_ascii_digit(const u8 c) {
+{
+return (((c >= '0') && (c <= '9')));
+}
+}
+
 void todo(const String message) {
 {
 warnln(String("TODO: {}"),message);
 abort();
+}
+}
+
+bool is_ascii_alphanumeric(const u8 c) {
+{
+return ((utility::is_ascii_alpha(c) || utility::is_ascii_digit(c)));
 }
 }
 
@@ -158,6 +188,18 @@ return (output);
 }
 }
 
+bool is_ascii_octdigit(const u8 c) {
+{
+return (((c >= '0') && (c <= '7')));
+}
+}
+
+bool is_ascii_hexdigit(const u8 c) {
+{
+return (((((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f'))) || ((c >= 'A') && (c <= 'F'))));
+}
+}
+
 [[noreturn]] void panic(const String message) {
 {
 warnln(String("internal error: {}"),message);
@@ -225,7 +267,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(builder.append(")"));return builder.to_string(); }
 bool utility::Span::contains(const utility::Span span) const {
 {
-return (((((((*this).file_id)).equals(((span).file_id))) && (((span).start) >= ((*this).start))) && (((span).end) <= ((*this).end))));
+return ((((((*this).file_id)).equals(((span).file_id))) && ((((span).start) >= ((*this).start)) && (((span).end) <= ((*this).end)))));
 }
 }
 

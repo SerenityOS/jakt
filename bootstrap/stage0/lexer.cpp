@@ -1,69 +1,6 @@
 #include "lexer.h"
 namespace Jakt {
 namespace lexer {
-bool is_ascii_alphanumeric(const u8 c) {
-{
-return ((lexer::is_ascii_alpha(c) || lexer::is_ascii_digit(c)));
-}
-}
-
-bool is_ascii_alpha(const u8 c) {
-{
-return ((((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'))));
-}
-}
-
-f32 f64_to_f32(const f64 number) {
-{
-f32 f32_value = static_cast<i64>(0LL);
-{
-f32_value = (f32)number;
-}
-
-return (f32_value);
-}
-}
-
-ErrorOr<lexer::Token> make_float_token(const f64 number,const lexer::LiteralSuffix suffix,const utility::Span span) {
-{
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token, ErrorOr<lexer::Token>>{
-auto&& __jakt_match_variant = suffix;
-switch(__jakt_match_variant.index()) {
-case 10: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::F32>();
-return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::F32(lexer::f64_to_f32(number)) } ,span) } );
-};/*case end*/
-case 11: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::F64>();
-return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::F64(number) } ,span) } );
-};/*case end*/
-default: {
-return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Garbage(span) } );
-};/*case end*/
-}/*switch end*/
-}()
-)));
-}
-}
-
-bool is_ascii_octdigit(const u8 c) {
-{
-return (((c >= '0') && (c <= '7')));
-}
-}
-
-bool is_ascii_hexdigit(const u8 c) {
-{
-return (((((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f'))) || ((c >= 'A') && (c <= 'F'))));
-}
-}
-
-bool is_ascii_digit(const u8 c) {
-{
-return (((c >= '0') && (c <= '9')));
-}
-}
-
 ErrorOr<String> lexer::Lexer::debug_description() const { auto builder = MUST(StringBuilder::create());TRY(builder.append("Lexer("));{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("index: "));TRY(builder.appendff("{}, ", index));
@@ -78,7 +15,7 @@ const size_t start = ((*this).index);
 (++(((*this).index)));
 if (((*this).eof())){
 TRY((((*this).error(String("unexpected eof"),((*this).span(start,start))))));
-return ( lexer::Token { typename lexer::Token::Garbage(((*this).span(start,start))) } );
+return ( lexer::Token { typename lexer::Token::Garbage(JaktInternal::OptionalNone(),((*this).span(start,start))) } );
 }
 bool escaped = false;
 while (((!(((*this).eof()))) && (escaped || (((*this).peek()) != delimiter)))){
@@ -116,7 +53,7 @@ if (((*this).eof())){
 return (JaktInternal::OptionalNone());
 }
 const u8 ch = ((*this).peek());
-if (((*this).is_whitespace(ch))){
+if (utility::is_whitespace(ch)){
 ((((*this).index)++));
 }
 else {
@@ -252,12 +189,6 @@ return (TRY((((builder).to_string()))));
 }
 }
 
-bool lexer::Lexer::is_whitespace(const u8 ch) const {
-{
-return ((((((ch == ' ') || (ch == '\t')) || (ch == '\r')) || (ch == '\f')) || (ch == '\v')));
-}
-}
-
 ErrorOr<lexer::Token> lexer::Lexer::lex_character_constant_or_name() {
 {
 if ((((*this).peek_ahead(static_cast<size_t>(1ULL))) != '\'')){
@@ -313,142 +244,6 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Dot(((
 }
 }()))
 );
-}
-}
-
-ErrorOr<lexer::Token> lexer::Lexer::make_integer_token(const u64 number,const lexer::LiteralSuffix suffix,const utility::Span span) {
-{
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<lexer::Token>>{
-auto&& __jakt_match_variant = suffix;
-switch(__jakt_match_variant.index()) {
-case 0: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::None>();
-{
-const JaktInternal::Optional<i64> n = (fallible_integer_cast<i64>((number)));
-if (((n).has_value())){
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::UnknownSigned((n.value())) } ,span) } );
-}
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::UnknownUnsigned(number) } ,span) } );
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 2: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::U8>();
-{
-const JaktInternal::Optional<u8> n = (fallible_integer_cast<u8>((number)));
-if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((String::formatted(String("Number {} cannot fit in integer type {}"),number,suffix))),span))));
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::U64(number) } ,span) } );
-}
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::U8((n.value())) } ,span) } );
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 3: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::U16>();
-{
-const JaktInternal::Optional<u16> n = (fallible_integer_cast<u16>((number)));
-if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((String::formatted(String("Number {} cannot fit in integer type {}"),number,suffix))),span))));
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::U64(number) } ,span) } );
-}
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::U16((n.value())) } ,span) } );
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 4: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::U32>();
-{
-const JaktInternal::Optional<u32> n = (fallible_integer_cast<u32>((number)));
-if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((String::formatted(String("Number {} cannot fit in integer type {}"),number,suffix))),span))));
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::U64(number) } ,span) } );
-}
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::U32((n.value())) } ,span) } );
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 5: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::U64>();
-{
-const JaktInternal::Optional<u64> n = (fallible_integer_cast<u64>((number)));
-if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((String::formatted(String("Number {} cannot fit in integer type {}"),number,suffix))),span))));
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::U64(number) } ,span) } );
-}
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::U64((n.value())) } ,span) } );
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::UZ>();
-{
-const JaktInternal::Optional<size_t> n = (fallible_integer_cast<size_t>((number)));
-if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((String::formatted(String("Number {} cannot fit in integer type {}"),number,suffix))),span))));
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::U64(number) } ,span) } );
-}
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::USize((infallible_integer_cast<u64>(((n.value()))))) } ,span) } );
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 6: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::I8>();
-{
-const JaktInternal::Optional<i8> n = (fallible_integer_cast<i8>((number)));
-if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((String::formatted(String("Number {} cannot fit in integer type {}"),number,suffix))),span))));
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::U64(number) } ,span) } );
-}
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::I8((n.value())) } ,span) } );
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 7: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::I16>();
-{
-const JaktInternal::Optional<i16> n = (fallible_integer_cast<i16>((number)));
-if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((String::formatted(String("Number {} cannot fit in integer type {}"),number,suffix))),span))));
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::U64(number) } ,span) } );
-}
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::I16((n.value())) } ,span) } );
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 8: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::I32>();
-{
-const JaktInternal::Optional<i32> n = (fallible_integer_cast<i32>((number)));
-if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((String::formatted(String("Number {} cannot fit in integer type {}"),number,suffix))),span))));
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::U64(number) } ,span) } );
-}
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::I32((n.value())) } ,span) } );
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-case 9: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::I64>();
-{
-const JaktInternal::Optional<i64> n = (fallible_integer_cast<i64>((number)));
-if ((!(((n).has_value())))){
-TRY((((*this).error(TRY((String::formatted(String("Number {} cannot fit in integer type {}"),number,suffix))),span))));
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::U64(number) } ,span) } );
-}
-return ( lexer::Token { typename lexer::Token::Number( lexer::NumericConstant { typename lexer::NumericConstant::I64((n.value())) } ,span) } );
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-default: {
-{
-}
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
-}/*switch end*/
-}()
-));
-return ( lexer::Token { typename lexer::Token::Garbage(span) } );
 }
 }
 
@@ -574,14 +369,14 @@ ErrorOr<lexer::Token> lexer::Lexer::lex_number_or_name() {
 const size_t start = ((*this).index);
 if (((*this).eof())){
 TRY((((*this).error(String("unexpected eof"),((*this).span(start,start))))));
-return ( lexer::Token { typename lexer::Token::Garbage(((*this).span(start,start))) } );
+return ( lexer::Token { typename lexer::Token::Garbage(JaktInternal::OptionalNone(),((*this).span(start,start))) } );
 }
-if (lexer::is_ascii_digit(((*this).peek()))){
+if (utility::is_ascii_digit(((*this).peek()))){
 return (TRY((((*this).lex_number()))));
 }
-else if ((lexer::is_ascii_alpha(((*this).peek())) || (((*this).peek()) == '_'))){
+else if ((utility::is_ascii_alpha(((*this).peek())) || (((*this).peek()) == '_'))){
 StringBuilder string_builder = TRY((StringBuilder::create()));
-while ((lexer::is_ascii_alphanumeric(((*this).peek())) || (((*this).peek()) == '_'))){
+while ((utility::is_ascii_alphanumeric(((*this).peek())) || (((*this).peek()) == '_'))){
 const u8 value = ((((*this).input))[((*this).index)]);
 (++(((*this).index)));
 TRY((((string_builder).append(value))));
@@ -597,7 +392,7 @@ return (lexer::Token::from_keyword_or_identifier(string,span));
 const u8 unknown_char = ((((*this).input))[((*this).index)]);
 const size_t end = (++(((*this).index)));
 TRY((((*this).error(TRY((String::formatted(String("unknown character: {:c}"),unknown_char))),((*this).span(start,end))))));
-return ( lexer::Token { typename lexer::Token::Garbage(((*this).span(start,end))) } );
+return ( lexer::Token { typename lexer::Token::Garbage(TRY((String::formatted(String("{:c}"),unknown_char))),((*this).span(start,end))) } );
 }
 }
 
@@ -636,6 +431,9 @@ return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktIn
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '=') {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::AmpersandEqual(((*this).span(start,(++(((*this).index)))))) } );
+}
+else if (__jakt_enum_value == '&') {
+return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::AmpersandAmpersand(((*this).span(start,(++(((*this).index)))))) } );
 }
 else {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Ampersand(((*this).span((JaktInternal::checked_sub<size_t>(((*this).index),static_cast<size_t>(1ULL))),((*this).index)))) } );
@@ -686,9 +484,9 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Exclam
 }
 }
 
-JaktInternal::Optional<lexer::LiteralSuffix> lexer::Lexer::consume_numeric_literal_suffix() {
+ErrorOr<lexer::LiteralSuffix> lexer::Lexer::consume_numeric_literal_suffix() {
 {
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,JaktInternal::Optional<lexer::LiteralSuffix>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<lexer::LiteralSuffix>>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == 'u') {
 {
@@ -707,7 +505,7 @@ return JaktInternal::ExplicitValue<void>();
 }
 else {
 {
-return (JaktInternal::OptionalNone());
+return ( lexer::LiteralSuffix { typename lexer::LiteralSuffix::None() } );
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -720,19 +518,19 @@ return ( lexer::LiteralSuffix { typename lexer::LiteralSuffix::UZ() } );
 }
 size_t local_index = static_cast<size_t>(1ULL);
 i64 width = static_cast<i64>(0LL);
-while (lexer::is_ascii_digit(((*this).peek_ahead(local_index)))){
+while (utility::is_ascii_digit(((*this).peek_ahead(local_index)))){
 if ((local_index > static_cast<size_t>(3ULL))){
-return (JaktInternal::OptionalNone());
+return ( lexer::LiteralSuffix { typename lexer::LiteralSuffix::None() } );
 }
 const u8 value = ((((*this).input))[(JaktInternal::checked_add<size_t>(((*this).index),local_index))]);
 (++(local_index));
 const i64 digit = as_saturated<i64, u8>((JaktInternal::checked_sub<u8>(value,'0')));
 (width = (JaktInternal::checked_add<i64>((JaktInternal::checked_mul<i64>(width,static_cast<i64>(10LL))),digit)));
 }
-const lexer::LiteralSuffix suffix = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,JaktInternal::Optional<lexer::LiteralSuffix>>{
+const lexer::LiteralSuffix suffix = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,ErrorOr<lexer::LiteralSuffix>>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == 'u') {
-return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,JaktInternal::Optional<lexer::LiteralSuffix>>{
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,ErrorOr<lexer::LiteralSuffix>>{
 auto __jakt_enum_value = (width);
 if (__jakt_enum_value == static_cast<i64>(8LL)) {
 return JaktInternal::ExplicitValue( lexer::LiteralSuffix { typename lexer::LiteralSuffix::U8() } );
@@ -747,15 +545,13 @@ else if (__jakt_enum_value == static_cast<i64>(64LL)) {
 return JaktInternal::ExplicitValue( lexer::LiteralSuffix { typename lexer::LiteralSuffix::U64() } );
 }
 else {
-{
-return (JaktInternal::OptionalNone());
-}
+return JaktInternal::ExplicitValue( lexer::LiteralSuffix { typename lexer::LiteralSuffix::None() } );
 }
 }()))
 );
 }
 else if (__jakt_enum_value == 'i') {
-return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,JaktInternal::Optional<lexer::LiteralSuffix>>{
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,ErrorOr<lexer::LiteralSuffix>>{
 auto __jakt_enum_value = (width);
 if (__jakt_enum_value == static_cast<i64>(8LL)) {
 return JaktInternal::ExplicitValue( lexer::LiteralSuffix { typename lexer::LiteralSuffix::I8() } );
@@ -770,15 +566,13 @@ else if (__jakt_enum_value == static_cast<i64>(64LL)) {
 return JaktInternal::ExplicitValue( lexer::LiteralSuffix { typename lexer::LiteralSuffix::I64() } );
 }
 else {
-{
-return (JaktInternal::OptionalNone());
-}
+return JaktInternal::ExplicitValue( lexer::LiteralSuffix { typename lexer::LiteralSuffix::None() } );
 }
 }()))
 );
 }
 else if (__jakt_enum_value == 'f') {
-return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,JaktInternal::Optional<lexer::LiteralSuffix>>{
+return JaktInternal::ExplicitValue(JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,ErrorOr<lexer::LiteralSuffix>>{
 auto __jakt_enum_value = (width);
 if (__jakt_enum_value == static_cast<i64>(32LL)) {
 return JaktInternal::ExplicitValue( lexer::LiteralSuffix { typename lexer::LiteralSuffix::F32() } );
@@ -787,21 +581,19 @@ else if (__jakt_enum_value == static_cast<i64>(64LL)) {
 return JaktInternal::ExplicitValue( lexer::LiteralSuffix { typename lexer::LiteralSuffix::F64() } );
 }
 else {
-{
-return (JaktInternal::OptionalNone());
-}
+return JaktInternal::ExplicitValue( lexer::LiteralSuffix { typename lexer::LiteralSuffix::None() } );
 }
 }()))
 );
 }
 else {
-{
-return (JaktInternal::OptionalNone());
-}
+return JaktInternal::ExplicitValue( lexer::LiteralSuffix { typename lexer::LiteralSuffix::None() } );
 }
 }()))
 ;
+if ((!(((suffix).index() == 0 /* None */)))){
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, local_index);});
+}
 return (suffix);
 }
 }
@@ -823,6 +615,32 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Colon(
 }
 
 lexer::Lexer::Lexer(size_t a_index, JaktInternal::Array<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::Array<u8>> a_comment_contents) :index(a_index), input(a_input), compiler(a_compiler), comment_contents(a_comment_contents){}
+
+bool lexer::Lexer::valid_digit(const lexer::LiteralPrefix prefix,const u8 digit,const bool decimal_allowed) {
+{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
+auto&& __jakt_match_variant = prefix;
+switch(__jakt_match_variant.index()) {
+case 1: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralPrefix::Hexadecimal>();
+return JaktInternal::ExplicitValue(utility::is_ascii_hexdigit(digit));
+};/*case end*/
+case 2: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralPrefix::Octal>();
+return JaktInternal::ExplicitValue(utility::is_ascii_octdigit(digit));
+};/*case end*/
+case 3: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralPrefix::Binary>();
+return JaktInternal::ExplicitValue(utility::is_ascii_binary(digit));
+};/*case end*/
+default: {
+return JaktInternal::ExplicitValue((utility::is_ascii_digit(digit) || (decimal_allowed && (digit == '.'))));
+};/*case end*/
+}/*switch end*/
+}()
+)));
+}
+}
 
 ErrorOr<void> lexer::Lexer::error(const String message,const utility::Span span) {
 {
@@ -897,6 +715,9 @@ auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '=') {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::PipeEqual(((*this).span(start,(++(((*this).index)))))) } );
 }
+else if (__jakt_enum_value == '|') {
+return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::PipePipe(((*this).span(start,(++(((*this).index)))))) } );
+}
 else {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Pipe(((*this).span((JaktInternal::checked_sub<size_t>(((*this).index),static_cast<size_t>(1ULL))),((*this).index)))) } );
 }
@@ -924,91 +745,30 @@ return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::Caret(
 ErrorOr<lexer::Token> lexer::Lexer::lex_number() {
 {
 const size_t start = ((*this).index);
-u64 total = static_cast<u64>(0ULL);
+bool floating = false;
+lexer::LiteralPrefix prefix =  lexer::LiteralPrefix { typename lexer::LiteralPrefix::None() } ;
+StringBuilder number = TRY((StringBuilder::create()));
 if ((((*this).peek()) == '0')){
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<lexer::Token>>{
 auto __jakt_enum_value = (((*this).peek_ahead(static_cast<size_t>(1ULL))));
 if (__jakt_enum_value == 'x') {
 {
+(prefix =  lexer::LiteralPrefix { typename lexer::LiteralPrefix::Hexadecimal() } );
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(2ULL));});
-while (lexer::is_ascii_hexdigit(((*this).peek()))){
-u8 offset = static_cast<u8>(0);
-if (((((*this).peek()) >= 'a') && (((*this).peek()) <= 'z'))){
-(offset = static_cast<u8>(39));
-}
-else if (((((*this).peek()) >= 'A') && (((*this).peek()) <= 'Z'))){
-(offset = static_cast<u8>(7));
-}
-const u8 value = (JaktInternal::checked_sub<u8>(((((*this).input))[((*this).index)]),offset));
-(++(((*this).index)));
-const u64 digit = as_saturated<u64, u8>((JaktInternal::checked_sub<u8>(value,'0')));
-(total = (JaktInternal::checked_add<u64>((JaktInternal::checked_mul<u64>(total,static_cast<u64>(16ULL))),digit)));
-if ((((*this).peek()) == '_')){
-(++(((*this).index)));
-}
-}
-const size_t end = ((*this).index);
-const utility::Span span = ((*this).span(start,end));
-if ((((*this).peek_behind(static_cast<size_t>(1ULL))) == '_')){
-TRY((((*this).error(String("Hexadecimal number literal cannot end with underscore"),span))));
-return ( lexer::Token { typename lexer::Token::Garbage(span) } );
-}
-const lexer::LiteralSuffix suffix = ((*this).consume_numeric_literal_suffix()).value_or_lazy_evaluated([&] { return  lexer::LiteralSuffix { typename lexer::LiteralSuffix::None() } ; });
-return (TRY((((*this).make_integer_token(total,suffix,((*this).span(start,end)))))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == 'o') {
 {
+(prefix =  lexer::LiteralPrefix { typename lexer::LiteralPrefix::Octal() } );
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(2ULL));});
-while (lexer::is_ascii_octdigit(((*this).peek()))){
-const u8 value = ((((*this).input))[((*this).index)]);
-(++(((*this).index)));
-const u64 digit = as_saturated<u64, u8>((JaktInternal::checked_sub<u8>(value,'0')));
-(total = (JaktInternal::checked_add<u64>((JaktInternal::checked_mul<u64>(total,static_cast<u64>(8ULL))),digit)));
-if ((((*this).peek()) == '_')){
-(++(((*this).index)));
-}
-}
-const size_t end = ((*this).index);
-const utility::Span span = ((*this).span(start,end));
-if ((((*this).peek_behind(static_cast<size_t>(1ULL))) == '_')){
-TRY((((*this).error(String("Octal number literal cannot end with underscore"),span))));
-return ( lexer::Token { typename lexer::Token::Garbage(span) } );
-}
-const lexer::LiteralSuffix suffix = ((*this).consume_numeric_literal_suffix()).value_or_lazy_evaluated([&] { return  lexer::LiteralSuffix { typename lexer::LiteralSuffix::None() } ; });
-if (lexer::is_ascii_alphanumeric(((*this).peek()))){
-TRY((((*this).error(String("Could not parse octal number"),span))));
-return ( lexer::Token { typename lexer::Token::Garbage(span) } );
-}
-return (TRY((((*this).make_integer_token(total,suffix,span)))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == 'b') {
 {
+(prefix =  lexer::LiteralPrefix { typename lexer::LiteralPrefix::Binary() } );
 ({auto& _jakt_ref = ((*this).index);_jakt_ref = JaktInternal::checked_add<size_t>(_jakt_ref, static_cast<size_t>(2ULL));});
-while (((((*this).peek()) == '0') || (((*this).peek()) == '1'))){
-const u8 value = ((((*this).input))[((*this).index)]);
-(++(((*this).index)));
-const u64 digit = as_saturated<u64, u8>((JaktInternal::checked_sub<u8>(value,'0')));
-(total = (JaktInternal::checked_add<u64>((JaktInternal::checked_mul<u64>(total,static_cast<u64>(2ULL))),digit)));
-if ((((*this).peek()) == '_')){
-(++(((*this).index)));
-}
-}
-const size_t end = ((*this).index);
-const utility::Span span = ((*this).span(start,end));
-if ((((*this).peek_behind(static_cast<size_t>(1ULL))) == '_')){
-TRY((((*this).error(String("Binary number literal cannot end with underscore"),span))));
-return ( lexer::Token { typename lexer::Token::Garbage(span) } );
-}
-const lexer::LiteralSuffix suffix = ((*this).consume_numeric_literal_suffix()).value_or_lazy_evaluated([&] { return  lexer::LiteralSuffix { typename lexer::LiteralSuffix::None() } ; });
-if (lexer::is_ascii_alphanumeric(((*this).peek()))){
-TRY((((*this).error(String("Could not parse binary number"),span))));
-return ( lexer::Token { typename lexer::Token::Garbage(span) } );
-}
-return (TRY((((*this).make_integer_token(total,suffix,span)))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -1021,39 +781,25 @@ return JaktInternal::ExplicitValue<void>();
 }()))
 ;
 }
-bool number_too_large = false;
-bool floating = false;
-u64 fraction_nominator = static_cast<u64>(0ULL);
-u64 fraction_denominator = static_cast<u64>(1ULL);
 while ((!(((*this).eof())))){
 const u8 value = ((((*this).input))[((*this).index)]);
-if ((value == '.')){
-if (((!(lexer::is_ascii_digit(((*this).peek_ahead(static_cast<size_t>(1ULL)))))) || floating)){
+if ((!(((*this).valid_digit(prefix,value,true))))){
 break;
 }
+if ((value == '.')){
+if ((floating || (!(((*this).valid_digit(prefix,((*this).peek_ahead(static_cast<size_t>(1ULL))),false)))))){
+break;
+}
+TRY((((number).append('.'))));
 (floating = true);
 ((((*this).index)++));
 continue;
 }
-else if ((!(lexer::is_ascii_digit(value)))){
-break;
-}
+TRY((((number).append(value))));
 (++(((*this).index)));
-const u64 digit = as_saturated<u64, u8>((JaktInternal::checked_sub<u8>(value,'0')));
-if ((!(floating))){
-const u64 old_total = total;
-(total = unchecked_add<u64>(unchecked_mul<u64>(total,static_cast<u64>(10ULL)),digit));
-if ((total < old_total)){
-(number_too_large = true);
-}
-}
-else {
-(fraction_nominator = (JaktInternal::checked_add<u64>((JaktInternal::checked_mul<u64>(fraction_nominator,static_cast<u64>(10ULL))),digit)));
-({auto& _jakt_ref = fraction_denominator;_jakt_ref = JaktInternal::checked_mul<u64>(_jakt_ref, static_cast<u64>(10ULL));});
-}
-
 if ((((*this).peek()) == '_')){
-if (lexer::is_ascii_digit(((*this).peek_ahead(static_cast<size_t>(1ULL))))){
+TRY((((number).append('_'))));
+if (((*this).valid_digit(prefix,((*this).peek_ahead(static_cast<size_t>(1ULL))),true))){
 (++(((*this).index)));
 }
 else {
@@ -1062,78 +808,8 @@ break;
 
 }
 }
-const size_t end = ((*this).index);
-const utility::Span span = ((*this).span(start,end));
-if (number_too_large){
-TRY((((*this).error(TRY((String::formatted(String("Integer literal too large")))),span))));
-return ( lexer::Token { typename lexer::Token::Garbage(span) } );
-}
-if ((((*this).peek()) == '_')){
-TRY((((*this).error(String("Number literal cannot end with underscore"),span))));
-return ( lexer::Token { typename lexer::Token::Garbage(span) } );
-}
-const lexer::LiteralSuffix default_suffix = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,ErrorOr<lexer::Token>>{
-auto __jakt_enum_value = (floating);
-if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue( lexer::LiteralSuffix { typename lexer::LiteralSuffix::F64() } );
-}
-else {
-return JaktInternal::ExplicitValue( lexer::LiteralSuffix { typename lexer::LiteralSuffix::None() } );
-}
-}()))
-;
-const lexer::LiteralSuffix suffix = ((*this).consume_numeric_literal_suffix()).value_or_lazy_evaluated([&] { return default_suffix; });
-if (lexer::is_ascii_alphanumeric(((*this).peek()))){
-TRY((((*this).error(String("Could not parse number"),span))));
-return ( lexer::Token { typename lexer::Token::Garbage(span) } );
-}
-const bool is_float_suffix = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, ErrorOr<lexer::Token>>{
-auto&& __jakt_match_variant = suffix;
-switch(__jakt_match_variant.index()) {
-case 10: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::F32>();
-return JaktInternal::ExplicitValue(true);
-};/*case end*/
-case 11: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::F64>();
-return JaktInternal::ExplicitValue(true);
-};/*case end*/
-default: {
-return JaktInternal::ExplicitValue(false);
-};/*case end*/
-}/*switch end*/
-}()
-));
-if ((floating && (!(is_float_suffix)))){
-return ( lexer::Token { typename lexer::Token::Garbage(((*this).span(start,((*this).index)))) } );
-}
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token, ErrorOr<lexer::Token>>{
-auto&& __jakt_match_variant = suffix;
-switch(__jakt_match_variant.index()) {
-case 10: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::F32>();
-return JaktInternal::ExplicitValue(({ Optional<lexer::Token> __jakt_var_4; {
-const f64 number = (lexer::u64_to_float<f64>(total) + (lexer::u64_to_float<f64>(fraction_nominator) / lexer::u64_to_float<f64>(fraction_denominator)));
-__jakt_var_4 = TRY((lexer::make_float_token(number,suffix,((*this).span(start,end))))); goto __jakt_label_2;
-
-}
-__jakt_label_2:; __jakt_var_4.release_value(); }));
-};/*case end*/
-case 11: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::F64>();
-return JaktInternal::ExplicitValue(({ Optional<lexer::Token> __jakt_var_5; {
-const f64 number = (lexer::u64_to_float<f64>(total) + (lexer::u64_to_float<f64>(fraction_nominator) / lexer::u64_to_float<f64>(fraction_denominator)));
-__jakt_var_5 = TRY((lexer::make_float_token(number,suffix,((*this).span(start,end))))); goto __jakt_label_3;
-
-}
-__jakt_label_3:; __jakt_var_5.release_value(); }));
-};/*case end*/
-default: {
-return JaktInternal::ExplicitValue(TRY((((*this).make_integer_token(total,suffix,((*this).span(start,end)))))));
-};/*case end*/
-}/*switch end*/
-}()
-)));
+const lexer::LiteralSuffix suffix = TRY((((*this).consume_numeric_literal_suffix())));
+return ( lexer::Token { typename lexer::Token::Number(prefix,TRY((((number).to_string()))),suffix,((*this).span(start,((*this).index)))) } );
 }
 }
 
@@ -1146,9 +822,9 @@ if (__jakt_enum_value == '=') {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::LessThanOrEqual(((*this).span(start,(++(((*this).index)))))) } );
 }
 else if (__jakt_enum_value == '<') {
-return JaktInternal::ExplicitValue(({ Optional<lexer::Token> __jakt_var_6; {
+return JaktInternal::ExplicitValue(({ Optional<lexer::Token> __jakt_var_4; {
 ((((*this).index)++));
-__jakt_var_6 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+__jakt_var_4 = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == '<') {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::LeftArithmeticShift(((*this).span(start,(++(((*this).index)))))) } );
@@ -1160,10 +836,10 @@ else {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::LeftShift(((*this).span((JaktInternal::checked_sub<size_t>(((*this).index),static_cast<size_t>(1ULL))),((*this).index)))) } );
 }
 }()))
-; goto __jakt_label_4;
+; goto __jakt_label_2;
 
 }
-__jakt_label_4:; __jakt_var_6.release_value(); }));
+__jakt_label_2:; __jakt_var_4.release_value(); }));
 }
 else {
 return JaktInternal::ExplicitValue( lexer::Token { typename lexer::Token::LessThan(((*this).span((JaktInternal::checked_sub<size_t>(((*this).index),static_cast<size_t>(1ULL))),((*this).index)))) } );
@@ -1268,140 +944,60 @@ break;}
 }
 return builder.to_string();
 }
-ErrorOr<String> lexer::NumericConstant::debug_description() const {
-auto builder = TRY(StringBuilder::create());
-switch (this->index()) {case 0 /* I8 */: {
-[[maybe_unused]] auto const& that = this->template get<NumericConstant::I8>();
-TRY(builder.append("NumericConstant::I8"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 1 /* I16 */: {
-[[maybe_unused]] auto const& that = this->template get<NumericConstant::I16>();
-TRY(builder.append("NumericConstant::I16"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 2 /* I32 */: {
-[[maybe_unused]] auto const& that = this->template get<NumericConstant::I32>();
-TRY(builder.append("NumericConstant::I32"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 3 /* I64 */: {
-[[maybe_unused]] auto const& that = this->template get<NumericConstant::I64>();
-TRY(builder.append("NumericConstant::I64"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 4 /* U8 */: {
-[[maybe_unused]] auto const& that = this->template get<NumericConstant::U8>();
-TRY(builder.append("NumericConstant::U8"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 5 /* U16 */: {
-[[maybe_unused]] auto const& that = this->template get<NumericConstant::U16>();
-TRY(builder.append("NumericConstant::U16"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 6 /* U32 */: {
-[[maybe_unused]] auto const& that = this->template get<NumericConstant::U32>();
-TRY(builder.append("NumericConstant::U32"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 7 /* U64 */: {
-[[maybe_unused]] auto const& that = this->template get<NumericConstant::U64>();
-TRY(builder.append("NumericConstant::U64"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 8 /* USize */: {
-[[maybe_unused]] auto const& that = this->template get<NumericConstant::USize>();
-TRY(builder.append("NumericConstant::USize"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 9 /* F32 */: {
-[[maybe_unused]] auto const& that = this->template get<NumericConstant::F32>();
-TRY(builder.append("NumericConstant::F32"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 10 /* F64 */: {
-[[maybe_unused]] auto const& that = this->template get<NumericConstant::F64>();
-TRY(builder.append("NumericConstant::F64"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 11 /* UnknownSigned */: {
-[[maybe_unused]] auto const& that = this->template get<NumericConstant::UnknownSigned>();
-TRY(builder.append("NumericConstant::UnknownSigned"));
-TRY(builder.appendff("({})", that.value));
-break;}
-case 12 /* UnknownUnsigned */: {
-[[maybe_unused]] auto const& that = this->template get<NumericConstant::UnknownUnsigned>();
-TRY(builder.append("NumericConstant::UnknownUnsigned"));
-TRY(builder.appendff("({})", that.value));
-break;}
-}
-return builder.to_string();
-}
-size_t lexer::NumericConstant::to_usize() const {
+String lexer::LiteralSuffix::to_string() const {
 {
-return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, size_t>{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, String>{
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.index()) {
 case 0: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::NumericConstant::I8>();
-i8 const& num = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((num))));
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::None>();
+return JaktInternal::ExplicitValue(String(""));
 };/*case end*/
 case 1: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::NumericConstant::I16>();
-i16 const& num = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((num))));
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::UZ>();
+return JaktInternal::ExplicitValue(String("uz"));
 };/*case end*/
 case 2: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::NumericConstant::I32>();
-i32 const& num = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((num))));
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::U8>();
+return JaktInternal::ExplicitValue(String("u8"));
 };/*case end*/
 case 3: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::NumericConstant::I64>();
-i64 const& num = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((num))));
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::U16>();
+return JaktInternal::ExplicitValue(String("u16"));
 };/*case end*/
 case 4: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::NumericConstant::U8>();
-u8 const& num = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((num))));
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::U32>();
+return JaktInternal::ExplicitValue(String("u32"));
 };/*case end*/
 case 5: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::NumericConstant::U16>();
-u16 const& num = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((num))));
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::U64>();
+return JaktInternal::ExplicitValue(String("u64"));
 };/*case end*/
 case 6: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::NumericConstant::U32>();
-u32 const& num = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((num))));
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::I8>();
+return JaktInternal::ExplicitValue(String("i8"));
 };/*case end*/
 case 7: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::NumericConstant::U64>();
-u64 const& num = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((num))));
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::I16>();
+return JaktInternal::ExplicitValue(String("i16"));
 };/*case end*/
 case 8: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::NumericConstant::USize>();
-u64 const& num = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((num))));
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::I32>();
+return JaktInternal::ExplicitValue(String("i32"));
+};/*case end*/
+case 9: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::I64>();
+return JaktInternal::ExplicitValue(String("i64"));
+};/*case end*/
+case 10: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::F32>();
+return JaktInternal::ExplicitValue(String("f32"));
 };/*case end*/
 case 11: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::NumericConstant::UnknownSigned>();
-i64 const& num = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((num))));
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralSuffix::F64>();
+return JaktInternal::ExplicitValue(String("f64"));
 };/*case end*/
-case 12: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::NumericConstant::UnknownUnsigned>();
-u64 const& num = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((num))));
-};/*case end*/
-default: {
-return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((static_cast<i64>(0LL)))));
-};/*case end*/
-}/*switch end*/
+default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
 )));
 }
@@ -1458,7 +1054,13 @@ TRY(builder.append("("));
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
-TRY(builder.appendff("number: {}", that.number));
+TRY(builder.appendff("prefix: {}", that.prefix));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("number: \"{}\"", that.number));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("suffix: {}", that.suffix));
 TRY(builder.append(", "));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("span: {}", that.span));
@@ -1654,77 +1256,87 @@ case 39 /* AmpersandEqual */: {
 TRY(builder.append("Token::AmpersandEqual"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 40 /* Pipe */: {
+case 40 /* AmpersandAmpersand */: {
+[[maybe_unused]] auto const& that = this->template get<Token::AmpersandAmpersand>();
+TRY(builder.append("Token::AmpersandAmpersand"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 41 /* Pipe */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Pipe>();
 TRY(builder.append("Token::Pipe"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 41 /* PipeEqual */: {
+case 42 /* PipeEqual */: {
 [[maybe_unused]] auto const& that = this->template get<Token::PipeEqual>();
 TRY(builder.append("Token::PipeEqual"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 42 /* Caret */: {
+case 43 /* PipePipe */: {
+[[maybe_unused]] auto const& that = this->template get<Token::PipePipe>();
+TRY(builder.append("Token::PipePipe"));
+TRY(builder.appendff("({})", that.value));
+break;}
+case 44 /* Caret */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Caret>();
 TRY(builder.append("Token::Caret"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 43 /* CaretEqual */: {
+case 45 /* CaretEqual */: {
 [[maybe_unused]] auto const& that = this->template get<Token::CaretEqual>();
 TRY(builder.append("Token::CaretEqual"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 44 /* Dollar */: {
+case 46 /* Dollar */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Dollar>();
 TRY(builder.append("Token::Dollar"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 45 /* Tilde */: {
+case 47 /* Tilde */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Tilde>();
 TRY(builder.append("Token::Tilde"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 46 /* ForwardSlash */: {
+case 48 /* ForwardSlash */: {
 [[maybe_unused]] auto const& that = this->template get<Token::ForwardSlash>();
 TRY(builder.append("Token::ForwardSlash"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 47 /* ExclamationPoint */: {
+case 49 /* ExclamationPoint */: {
 [[maybe_unused]] auto const& that = this->template get<Token::ExclamationPoint>();
 TRY(builder.append("Token::ExclamationPoint"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 48 /* QuestionMark */: {
+case 50 /* QuestionMark */: {
 [[maybe_unused]] auto const& that = this->template get<Token::QuestionMark>();
 TRY(builder.append("Token::QuestionMark"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 49 /* QuestionMarkQuestionMark */: {
+case 51 /* QuestionMarkQuestionMark */: {
 [[maybe_unused]] auto const& that = this->template get<Token::QuestionMarkQuestionMark>();
 TRY(builder.append("Token::QuestionMarkQuestionMark"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 50 /* QuestionMarkQuestionMarkEqual */: {
+case 52 /* QuestionMarkQuestionMarkEqual */: {
 [[maybe_unused]] auto const& that = this->template get<Token::QuestionMarkQuestionMarkEqual>();
 TRY(builder.append("Token::QuestionMarkQuestionMarkEqual"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 51 /* Comma */: {
+case 53 /* Comma */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Comma>();
 TRY(builder.append("Token::Comma"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 52 /* Dot */: {
+case 54 /* Dot */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Dot>();
 TRY(builder.append("Token::Dot"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 53 /* DotDot */: {
+case 55 /* DotDot */: {
 [[maybe_unused]] auto const& that = this->template get<Token::DotDot>();
 TRY(builder.append("Token::DotDot"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 54 /* Eol */: {
+case 56 /* Eol */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Eol>();
 TRY(builder.append("Token::Eol"));
 TRY(builder.append("("));
@@ -1738,255 +1350,264 @@ TRY(builder.appendff("span: {}", that.span));
 }
 TRY(builder.append(")"));
 break;}
-case 55 /* Eof */: {
+case 57 /* Eof */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Eof>();
 TRY(builder.append("Token::Eof"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 56 /* FatArrow */: {
+case 58 /* FatArrow */: {
 [[maybe_unused]] auto const& that = this->template get<Token::FatArrow>();
 TRY(builder.append("Token::FatArrow"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 57 /* Arrow */: {
+case 59 /* Arrow */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Arrow>();
 TRY(builder.append("Token::Arrow"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 58 /* And */: {
+case 60 /* And */: {
 [[maybe_unused]] auto const& that = this->template get<Token::And>();
 TRY(builder.append("Token::And"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 59 /* Anon */: {
+case 61 /* Anon */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Anon>();
 TRY(builder.append("Token::Anon"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 60 /* As */: {
+case 62 /* As */: {
 [[maybe_unused]] auto const& that = this->template get<Token::As>();
 TRY(builder.append("Token::As"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 61 /* Boxed */: {
+case 63 /* Boxed */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Boxed>();
 TRY(builder.append("Token::Boxed"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 62 /* Break */: {
+case 64 /* Break */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Break>();
 TRY(builder.append("Token::Break"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 63 /* Catch */: {
+case 65 /* Catch */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Catch>();
 TRY(builder.append("Token::Catch"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 64 /* Class */: {
+case 66 /* Class */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Class>();
 TRY(builder.append("Token::Class"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 65 /* Continue */: {
+case 67 /* Continue */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Continue>();
 TRY(builder.append("Token::Continue"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 66 /* Cpp */: {
+case 68 /* Cpp */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Cpp>();
 TRY(builder.append("Token::Cpp"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 67 /* Defer */: {
+case 69 /* Defer */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Defer>();
 TRY(builder.append("Token::Defer"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 68 /* Else */: {
+case 70 /* Else */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Else>();
 TRY(builder.append("Token::Else"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 69 /* Enum */: {
+case 71 /* Enum */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Enum>();
 TRY(builder.append("Token::Enum"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 70 /* Extern */: {
+case 72 /* Extern */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Extern>();
 TRY(builder.append("Token::Extern"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 71 /* False */: {
+case 73 /* False */: {
 [[maybe_unused]] auto const& that = this->template get<Token::False>();
 TRY(builder.append("Token::False"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 72 /* For */: {
+case 74 /* For */: {
 [[maybe_unused]] auto const& that = this->template get<Token::For>();
 TRY(builder.append("Token::For"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 73 /* Function */: {
+case 75 /* Function */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Function>();
 TRY(builder.append("Token::Function"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 74 /* Comptime */: {
+case 76 /* Comptime */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Comptime>();
 TRY(builder.append("Token::Comptime"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 75 /* If */: {
+case 77 /* If */: {
 [[maybe_unused]] auto const& that = this->template get<Token::If>();
 TRY(builder.append("Token::If"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 76 /* Import */: {
+case 78 /* Import */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Import>();
 TRY(builder.append("Token::Import"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 77 /* In */: {
+case 79 /* In */: {
 [[maybe_unused]] auto const& that = this->template get<Token::In>();
 TRY(builder.append("Token::In"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 78 /* Is */: {
+case 80 /* Is */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Is>();
 TRY(builder.append("Token::Is"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 79 /* Let */: {
+case 81 /* Let */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Let>();
 TRY(builder.append("Token::Let"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 80 /* Loop */: {
+case 82 /* Loop */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Loop>();
 TRY(builder.append("Token::Loop"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 81 /* Match */: {
+case 83 /* Match */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Match>();
 TRY(builder.append("Token::Match"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 82 /* Mut */: {
+case 84 /* Mut */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Mut>();
 TRY(builder.append("Token::Mut"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 83 /* Namespace */: {
+case 85 /* Namespace */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Namespace>();
 TRY(builder.append("Token::Namespace"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 84 /* Not */: {
+case 86 /* Not */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Not>();
 TRY(builder.append("Token::Not"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 85 /* Or */: {
+case 87 /* Or */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Or>();
 TRY(builder.append("Token::Or"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 86 /* Override */: {
+case 88 /* Override */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Override>();
 TRY(builder.append("Token::Override"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 87 /* Private */: {
+case 89 /* Private */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Private>();
 TRY(builder.append("Token::Private"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 88 /* Public */: {
+case 90 /* Public */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Public>();
 TRY(builder.append("Token::Public"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 89 /* Raw */: {
+case 91 /* Raw */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Raw>();
 TRY(builder.append("Token::Raw"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 90 /* Return */: {
+case 92 /* Return */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Return>();
 TRY(builder.append("Token::Return"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 91 /* Restricted */: {
+case 93 /* Restricted */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Restricted>();
 TRY(builder.append("Token::Restricted"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 92 /* Struct */: {
+case 94 /* Struct */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Struct>();
 TRY(builder.append("Token::Struct"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 93 /* This */: {
+case 95 /* This */: {
 [[maybe_unused]] auto const& that = this->template get<Token::This>();
 TRY(builder.append("Token::This"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 94 /* Throw */: {
+case 96 /* Throw */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Throw>();
 TRY(builder.append("Token::Throw"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 95 /* Throws */: {
+case 97 /* Throws */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Throws>();
 TRY(builder.append("Token::Throws"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 96 /* True */: {
+case 98 /* True */: {
 [[maybe_unused]] auto const& that = this->template get<Token::True>();
 TRY(builder.append("Token::True"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 97 /* Try */: {
+case 99 /* Try */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Try>();
 TRY(builder.append("Token::Try"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 98 /* Unsafe */: {
+case 100 /* Unsafe */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Unsafe>();
 TRY(builder.append("Token::Unsafe"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 99 /* Virtual */: {
+case 101 /* Virtual */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Virtual>();
 TRY(builder.append("Token::Virtual"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 100 /* Weak */: {
+case 102 /* Weak */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Weak>();
 TRY(builder.append("Token::Weak"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 101 /* While */: {
+case 103 /* While */: {
 [[maybe_unused]] auto const& that = this->template get<Token::While>();
 TRY(builder.append("Token::While"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 102 /* Yield */: {
+case 104 /* Yield */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Yield>();
 TRY(builder.append("Token::Yield"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 103 /* Guard */: {
+case 105 /* Guard */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Guard>();
 TRY(builder.append("Token::Guard"));
 TRY(builder.appendff("({})", that.value));
 break;}
-case 104 /* Garbage */: {
+case 106 /* Garbage */: {
 [[maybe_unused]] auto const& that = this->template get<Token::Garbage>();
 TRY(builder.append("Token::Garbage"));
-TRY(builder.appendff("({})", that.value));
+TRY(builder.append("("));
+{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("consumed: {}", that.consumed));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("span: {}", that.span));
+}
+TRY(builder.append(")"));
 break;}
 }
 return builder.to_string();
@@ -2342,328 +1963,385 @@ utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 40: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pipe>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::AmpersandAmpersand>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 41: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PipeEqual>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Pipe>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 42: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Caret>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PipeEqual>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 43: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::CaretEqual>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::PipePipe>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 44: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Dollar>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Caret>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 45: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Tilde>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::CaretEqual>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 46: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ForwardSlash>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Dollar>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 47: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ExclamationPoint>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Tilde>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 48: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMark>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ForwardSlash>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 49: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMarkQuestionMark>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::ExclamationPoint>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 50: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMarkQuestionMarkEqual>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMark>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 51: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMarkQuestionMark>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 52: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Dot>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::QuestionMarkQuestionMarkEqual>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 53: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::DotDot>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comma>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 54: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();utility::Span const& span = __jakt_match_value.span;
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Dot>();
+utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 55: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Eof>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::DotDot>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 56: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::FatArrow>();
-utility::Span const& span = __jakt_match_value.value;
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Eol>();utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 57: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Arrow>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Eof>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 58: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::And>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::FatArrow>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 59: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Anon>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Arrow>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 60: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::As>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::And>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 61: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Boxed>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Anon>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 62: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Break>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::As>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 63: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Catch>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Boxed>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 64: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Class>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Break>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 65: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Continue>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Catch>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 66: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Cpp>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Class>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 67: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Defer>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Continue>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 68: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Else>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Cpp>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 69: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Enum>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Defer>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 70: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Extern>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Else>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 71: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::False>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Enum>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 72: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Extern>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 73: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Function>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::False>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 74: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comptime>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::For>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 75: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Function>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 76: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Import>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comptime>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 77: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::In>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::If>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 78: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Is>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Import>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 79: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Let>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::In>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 80: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Loop>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Is>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 81: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Let>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 82: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Mut>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Loop>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 83: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Namespace>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Match>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 84: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Not>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Mut>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 85: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Or>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Namespace>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 86: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Override>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Not>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 87: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Private>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Or>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 88: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Override>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 89: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Raw>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Private>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 90: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Return>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Public>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 91: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Restricted>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Raw>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 92: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Struct>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Return>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 93: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::This>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Restricted>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 94: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throw>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Struct>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 95: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throws>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::This>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 96: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::True>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throw>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 97: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Try>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Throws>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 98: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Unsafe>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::True>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 99: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Virtual>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Try>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 100: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Weak>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Unsafe>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 101: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Virtual>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 102: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Yield>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Weak>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 103: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::While>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 104: {
-auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Garbage>();
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Yield>();
 utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
+};/*case end*/
+case 105: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Guard>();
+utility::Span const& span = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(span);
+};/*case end*/
+case 106: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Garbage>();utility::Span const& span = __jakt_match_value.span;
+return JaktInternal::ExplicitValue(span);
+};/*case end*/
+default: VERIFY_NOT_REACHED();}/*switch end*/
+}()
+)));
+}
+}
+
+ErrorOr<String> lexer::LiteralPrefix::debug_description() const {
+auto builder = TRY(StringBuilder::create());
+switch (this->index()) {case 0 /* None */: {
+[[maybe_unused]] auto const& that = this->template get<LiteralPrefix::None>();
+TRY(builder.append("LiteralPrefix::None"));
+break;}
+case 1 /* Hexadecimal */: {
+[[maybe_unused]] auto const& that = this->template get<LiteralPrefix::Hexadecimal>();
+TRY(builder.append("LiteralPrefix::Hexadecimal"));
+break;}
+case 2 /* Octal */: {
+[[maybe_unused]] auto const& that = this->template get<LiteralPrefix::Octal>();
+TRY(builder.append("LiteralPrefix::Octal"));
+break;}
+case 3 /* Binary */: {
+[[maybe_unused]] auto const& that = this->template get<LiteralPrefix::Binary>();
+TRY(builder.append("LiteralPrefix::Binary"));
+break;}
+}
+return builder.to_string();
+}
+String lexer::LiteralPrefix::to_string() const {
+{
+return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String, String>{
+auto&& __jakt_match_variant = *this;
+switch(__jakt_match_variant.index()) {
+case 0: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralPrefix::None>();
+return JaktInternal::ExplicitValue(String(""));
+};/*case end*/
+case 1: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralPrefix::Hexadecimal>();
+return JaktInternal::ExplicitValue(String("0x"));
+};/*case end*/
+case 2: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralPrefix::Octal>();
+return JaktInternal::ExplicitValue(String("0o"));
+};/*case end*/
+case 3: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::LiteralPrefix::Binary>();
+return JaktInternal::ExplicitValue(String("0b"));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()

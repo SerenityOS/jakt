@@ -6,42 +6,47 @@ namespace Jakt {
 namespace formatter {
 namespace ExpressionMode_Details {
 struct OutsideExpression {};
+struct BeforeExpressions {};
 struct AtExpressionStart {};
 struct InExpression {};
 }
-struct ExpressionMode : public Variant<ExpressionMode_Details::OutsideExpression, ExpressionMode_Details::AtExpressionStart, ExpressionMode_Details::InExpression> {
-using Variant<ExpressionMode_Details::OutsideExpression, ExpressionMode_Details::AtExpressionStart, ExpressionMode_Details::InExpression>::Variant;
+struct ExpressionMode : public Variant<ExpressionMode_Details::OutsideExpression, ExpressionMode_Details::BeforeExpressions, ExpressionMode_Details::AtExpressionStart, ExpressionMode_Details::InExpression> {
+using Variant<ExpressionMode_Details::OutsideExpression, ExpressionMode_Details::BeforeExpressions, ExpressionMode_Details::AtExpressionStart, ExpressionMode_Details::InExpression>::Variant;
     using OutsideExpression = ExpressionMode_Details::OutsideExpression;
+    using BeforeExpressions = ExpressionMode_Details::BeforeExpressions;
     using AtExpressionStart = ExpressionMode_Details::AtExpressionStart;
     using InExpression = ExpressionMode_Details::InExpression;
 ErrorOr<String> debug_description() const;
 };
 struct Stage0 {
   public:
-JaktInternal::Array<lexer::Token> tokens;size_t index;JaktInternal::Array<formatter::State> states;size_t indent;bool already_seen_enclosure_in_current_line;JaktInternal::Array<size_t> dedents_to_skip;ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next();
+JaktInternal::Array<lexer::Token> tokens;size_t index;JaktInternal::Array<formatter::State> states;size_t indent;bool already_seen_enclosure_in_current_line;JaktInternal::Array<size_t> dedents_to_skip;bool debug;ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next();
 ErrorOr<void> replace_state(const formatter::State state);
 formatter::State state() const;
 ErrorOr<void> push_state(const formatter::State state);
-static ErrorOr<formatter::Stage0> create(NonnullRefPtr<compiler::Compiler> compiler, const JaktInternal::Array<u8> source);
+static ErrorOr<formatter::Stage0> for_tokens(const JaktInternal::Array<lexer::Token> tokens, const bool debug);
+static ErrorOr<formatter::Stage0> create(NonnullRefPtr<compiler::Compiler> compiler, const JaktInternal::Array<u8> source, const bool debug);
 ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_impl(const bool reconsume);
 lexer::Token peek(const i64 offset) const;
-static ErrorOr<formatter::Stage0> for_tokens(const JaktInternal::Array<lexer::Token> tokens);
+bool line_has_indent() const;
 static ErrorOr<JaktInternal::Array<u8>> to_array(const String x);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> formatted_peek();
 void pop_state();
-Stage0(JaktInternal::Array<lexer::Token> a_tokens, size_t a_index, JaktInternal::Array<formatter::State> a_states, size_t a_indent, bool a_already_seen_enclosure_in_current_line, JaktInternal::Array<size_t> a_dedents_to_skip);
+Stage0(JaktInternal::Array<lexer::Token> a_tokens, size_t a_index, JaktInternal::Array<formatter::State> a_states, size_t a_indent, bool a_already_seen_enclosure_in_current_line, JaktInternal::Array<size_t> a_dedents_to_skip, bool a_debug);
 
 lexer::Token consume();
 ErrorOr<String> debug_description() const;
 };struct Formatter {
   public:
-formatter::Stage0 token_provider;JaktInternal::Array<formatter::ReflowState> current_line;size_t current_line_length;size_t max_allowed_line_length;JaktInternal::Array<formatter::BreakablePoint> breakable_points_in_current_line;JaktInternal::Array<formatter::ReflowState> tokens_to_reflow;JaktInternal::Array<JaktInternal::Optional<lexer::Token>> replace_commas_in_enclosure;size_t enclosures_to_ignore;bool in_if_expr;size_t empty_line_count;ErrorOr<JaktInternal::Optional<JaktInternal::Array<formatter::FormattedToken>>> next();
+formatter::Stage0 token_provider;JaktInternal::Array<formatter::ReflowState> current_line;size_t current_line_length;size_t max_allowed_line_length;JaktInternal::Array<formatter::BreakablePoint> breakable_points_in_current_line;JaktInternal::Array<formatter::ReflowState> tokens_to_reflow;JaktInternal::Array<JaktInternal::Optional<lexer::Token>> replace_commas_in_enclosure;size_t enclosures_to_ignore;bool in_condition_expr;bool in_condition_expr_indented;JaktInternal::Optional<size_t> logical_break_indent;size_t empty_line_count;ErrorOr<JaktInternal::Optional<JaktInternal::Array<formatter::FormattedToken>>> next();
 static bool should_ignore_state(const formatter::State state);
-static ErrorOr<formatter::Formatter> for_tokens(const JaktInternal::Array<lexer::Token> tokens, const size_t max_allowed_line_length);
-static ErrorOr<JaktInternal::Array<u8>> to_array(const String s);
-Formatter(formatter::Stage0 a_token_provider, JaktInternal::Array<formatter::ReflowState> a_current_line, size_t a_current_line_length, size_t a_max_allowed_line_length, JaktInternal::Array<formatter::BreakablePoint> a_breakable_points_in_current_line, JaktInternal::Array<formatter::ReflowState> a_tokens_to_reflow, JaktInternal::Array<JaktInternal::Optional<lexer::Token>> a_replace_commas_in_enclosure, size_t a_enclosures_to_ignore, bool a_in_if_expr, size_t a_empty_line_count);
+Formatter(formatter::Stage0 a_token_provider, JaktInternal::Array<formatter::ReflowState> a_current_line, size_t a_current_line_length, size_t a_max_allowed_line_length, JaktInternal::Array<formatter::BreakablePoint> a_breakable_points_in_current_line, JaktInternal::Array<formatter::ReflowState> a_tokens_to_reflow, JaktInternal::Array<JaktInternal::Optional<lexer::Token>> a_replace_commas_in_enclosure, size_t a_enclosures_to_ignore, bool a_in_condition_expr, bool a_in_condition_expr_indented, JaktInternal::Optional<size_t> a_logical_break_indent, size_t a_empty_line_count);
 
-ErrorOr<void> fixup_tokens_to_reflow();
 ErrorOr<size_t> token_length(const formatter::FormattedToken token) const;
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> peek();
+static ErrorOr<formatter::Formatter> for_tokens(const JaktInternal::Array<lexer::Token> tokens, const bool debug, const size_t max_allowed_line_length);
+static ErrorOr<JaktInternal::Array<u8>> to_array(const String s);
+ErrorOr<void> fixup_tokens_to_reflow();
 ErrorOr<void> fixup_closing_enclosures(JaktInternal::Array<formatter::ReflowState>& line) const;
 size_t pick_breaking_point_index() const;
 ErrorOr<String> debug_description() const;
@@ -73,6 +78,7 @@ struct FormattedToken {
 lexer::Token token;size_t indent;JaktInternal::Array<u8> trailing_trivia;JaktInternal::Array<u8> preceding_trivia;FormattedToken(lexer::Token a_token, size_t a_indent, JaktInternal::Array<u8> a_trailing_trivia, JaktInternal::Array<u8> a_preceding_trivia);
 
 ErrorOr<String> token_text() const;
+ErrorOr<String> debug_text() const;
 ErrorOr<String> debug_description() const;
 };namespace State_Details {
 struct Toplevel {
@@ -132,19 +138,21 @@ struct StatementContext {
 size_t open_parens;
 size_t open_curlies;
 size_t open_squares;
+size_t arrow_indents;
 JaktInternal::Optional<size_t> allow_eol;
 bool inserted_comma;
 formatter::ExpressionMode expression_mode;
 size_t dedents_on_open_curly;
-template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4, typename _MemberT5, typename _MemberT6>
-StatementContext(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4, _MemberT5&& member_5, _MemberT6&& member_6):
+template<typename _MemberT0, typename _MemberT1, typename _MemberT2, typename _MemberT3, typename _MemberT4, typename _MemberT5, typename _MemberT6, typename _MemberT7>
+StatementContext(_MemberT0&& member_0, _MemberT1&& member_1, _MemberT2&& member_2, _MemberT3&& member_3, _MemberT4&& member_4, _MemberT5&& member_5, _MemberT6&& member_6, _MemberT7&& member_7):
 open_parens{ forward<_MemberT0>(member_0)},
 open_curlies{ forward<_MemberT1>(member_1)},
 open_squares{ forward<_MemberT2>(member_2)},
-allow_eol{ forward<_MemberT3>(member_3)},
-inserted_comma{ forward<_MemberT4>(member_4)},
-expression_mode{ forward<_MemberT5>(member_5)},
-dedents_on_open_curly{ forward<_MemberT6>(member_6)}
+arrow_indents{ forward<_MemberT3>(member_3)},
+allow_eol{ forward<_MemberT4>(member_4)},
+inserted_comma{ forward<_MemberT5>(member_5)},
+expression_mode{ forward<_MemberT6>(member_6)},
+dedents_on_open_curly{ forward<_MemberT7>(member_7)}
 {}
 };
 struct MatchPattern {
