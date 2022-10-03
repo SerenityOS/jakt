@@ -2494,7 +2494,9 @@ struct Formatter {
     tokens_to_reflow: [ReflowState]
     replace_commas_in_enclosure: [Token?]
     enclosures_to_ignore: usize
-    in_if_expr: bool
+    in_condition_expr: bool
+    in_condition_expr_indented: bool
+    logical_break_indent: usize?
     empty_line_count: usize
 
     function for_tokens(tokens: [Token], debug: bool = false, max_allowed_line_length: usize = 120uz) throws -> Formatter {
@@ -2508,7 +2510,9 @@ struct Formatter {
             tokens_to_reflow: []
             replace_commas_in_enclosure: [none]
             enclosures_to_ignore: 0
-            in_if_expr: false
+            in_condition_expr: false
+            in_condition_expr_indented: false
+            logical_break_indent: None
             empty_line_count: 0
         )
     }
@@ -2539,7 +2543,7 @@ struct Formatter {
     }
 
     private function fixup_tokens_to_reflow(mut this) throws {
-        if this.tokens_to_reflow.is_empty() {
+        if .tokens_to_reflow.is_empty() {
             return
         }
 
@@ -2636,6 +2640,9 @@ struct Formatter {
             .breakable_points_in_current_line = []
             .current_line_length = 0
             .enclosures_to_ignore = 0
+            .in_condition_expr = false
+            .in_condition_expr_indented = false
+            .logical_break_indent = None
             mut result: [FormattedToken] = []
             for state in line.iterator() {
                 result.push(state.token)
@@ -2647,11 +2654,17 @@ struct Formatter {
         mut accepted_at_least_one_token = false
         while not next_underlying_token is Eof and not next_underlying_token is Eol {
             let projected_added_length = .token_length(token: maybe_next_underlying_token!)
+            if .logical_break_indent.has_value() {
+                maybe_next_underlying_token!.indent = .logical_break_indent!
+            }
+
+            if .in_condition_expr and next_underlying_token is LCurly or next_underlying_token is Else {
+                .in_condition_expr = false
+                .in_condition_expr_indented = false
+            }
+
             match next_underlying_token {
                 LParen | LCurly | LSquare => {
-                    if .in_if_expr and next_underlying_token is LCurly {
-                        .in_if_expr = false
-                    }
                     accepted_at_least_one_token = true
                     .current_line.push(ReflowState(
                         token: maybe_next_underlying_token!
@@ -2774,8 +2787,48 @@ struct Formatter {
                     }
                 }
                 else => {
-                    if next_underlying_token is If {
-                        .in_if_expr = true
+                    let newline = Token::Eol(
+                        comment: None
+                        span: next_underlying_token.span()
+                    )
+
+                    match next_underlying_token {
+                        Match | For | While | If | Guard => {
+                            .in_condition_expr = true
+                            .in_condition_expr_indented = false
+
+                            let next_token: FormattedToken? = .peek()
+                            if next_token.has_value() {
+                                if next_token!.indent > maybe_next_underlying_token!.indent {
+                                    .in_condition_expr_indented = true
+                                }
+                            }
+                        }
+                        else => {}
+                    }
+
+                    if .logical_break_indent.has_value() and (next_underlying_token is And or next_underlying_token is Or) {
+                        .current_line.push(ReflowState(
+                            token: maybe_next_underlying_token!
+                            state: current_state
+                            enclosures_to_ignore: .enclosures_to_ignore
+                        ))
+                        .current_line_length += .token_length(token: maybe_next_underlying_token!)
+
+                        let new_token = FormattedToken(
+                            token: newline
+                            indent: .logical_break_indent!
+                            trailing_trivia: []
+                            preceding_trivia: []
+                        )
+                        .current_line.push(ReflowState(
+                            token: new_token
+                            state: current_state
+                            enclosures_to_ignore: .enclosures_to_ignore
+                        ))
+                        .current_line_length += .token_length(token: new_token)
+
+                        break
                     }
 
                     let real_line_length = .current_line_length + projected_added_length + maybe_next_underlying_token!.indent
@@ -2786,17 +2839,22 @@ struct Formatter {
                         and not .breakable_points_in_current_line.is_empty()
                         and .breakable_points_in_current_line[most_desirable_breaking_point_index].point() < .current_line.size()
                         and not Formatter::should_ignore_state(current_state) {
-                        let newline = Token::Eol(
-                            comment: None
-                            span: next_underlying_token.span()
-                        )
-
-                        // Break at the last breakable point in the current line.
+                        
                         let breakable_point = .breakable_points_in_current_line[most_desirable_breaking_point_index]
                         if not .replace_commas_in_enclosure.is_empty() {
                             .replace_commas_in_enclosure[.replace_commas_in_enclosure.size() - 1] = newline
                         }
                         let point = breakable_point.point()
+
+                        if breakable_point is Logical {
+                            if not .logical_break_indent.has_value() {
+                                .logical_break_indent = .current_line[point].token.indent
+                                if not .in_condition_expr_indented {
+                                    .logical_break_indent! += 1
+                                }
+                            }
+                        }
+
                         .tokens_to_reflow = .current_line[point..].to_array()
                         .tokens_to_reflow.push(ReflowState(
                             token: maybe_next_underlying_token!
@@ -2831,7 +2889,7 @@ struct Formatter {
                     ))
                     .current_line_length += projected_added_length
 
-                    if .in_if_expr and (next_underlying_token is And or next_underlying_token is Or) {
+                    if .in_condition_expr and (next_underlying_token is And or next_underlying_token is Or) {
                         .breakable_points_in_current_line.push(
                             BreakablePoint::Logical(point: .current_line.size(), length: .current_line_length)
                         )
@@ -2847,6 +2905,7 @@ struct Formatter {
                 maybe_next_underlying_token = reflown_token?.token
                 current_state = reflown_token?.state ?? current_state
             }
+
             if not maybe_next_underlying_token.has_value() {
                 break
             }
@@ -2865,6 +2924,9 @@ struct Formatter {
         .breakable_points_in_current_line = []
         .current_line_length = 0
         .enclosures_to_ignore = 0
+        if not .in_condition_expr {
+            .logical_break_indent = None
+        }
 
         if line.is_empty() or not line.last()!.token.token is Eol {
             line.push(ReflowState(
@@ -2900,6 +2962,7 @@ struct Formatter {
             // Drop the trailing trivia of the token before EoL.
             line[line.size() - 2].token.trailing_trivia = []
         }
+
         // As well as all the trivia of the EoL token itself
         line[line.size() - 1].token.preceding_trivia = []
         line[line.size() - 1].token.trailing_trivia = []
