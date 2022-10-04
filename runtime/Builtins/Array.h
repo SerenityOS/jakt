@@ -240,6 +240,15 @@ public:
         return {};
     }
 
+    ErrorOr<void> push_values(Array<T> const& values)
+    {
+        TRY(m_storage->ensure_capacity(capacity() + values.size()));
+        for (size_t i = 0; i < values.size(); ++i) {
+            TRY(push(values.at(i)));
+        }
+        return {};
+    }
+
     T const& at(size_t index) const
     {
         return m_storage->at(index);

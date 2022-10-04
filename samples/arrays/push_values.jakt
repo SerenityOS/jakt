@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "x: [1, 2, 3, 5]\ny: [5]\n"
+
+function main() {
+    mut x = [1, 2, 3]
+    mut y = [5]
+
+    x.push_values(y)
+    println("x: {}", x)
+    println("y: {}", y)
+}
