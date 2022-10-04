@@ -555,7 +555,8 @@ class Interpreter {
     public function enter_span(mut this, anon span: Span) throws {
         .spans.push(span)
     }
-    
+
+
     public function leave_span(mut this) {
         // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
         let dummy = .spans.pop()
@@ -1107,7 +1108,7 @@ class Interpreter {
                             panic("expected struct as this argument")
                         }
                     }
-                    
+
                     mut file = File::open_for_reading(path)
                     mut result_values: [Value] = []
                     for byte in file.read_all() {
@@ -1702,6 +1703,25 @@ class Interpreter {
                     }
                     else => {
                         panic("Invalid use of Array::push()")
+                    }
+                }
+                "push_values" => match this_argument!.impl {
+                    JaktArray(values) => {
+                        mut mutable_values = values
+                        match arguments[0].impl {
+                            JaktArray(values) => {
+                                for value in values {
+                                    mutable_values.push(value)
+                                }
+                            }
+                            else => .error("Only argument to push_values needs to be another Array", call_span)
+                        }
+                        yield StatementResult::JustValue(
+                            Value(impl: ValueImpl::Void, span: call_span)
+                        )
+                    }
+                    else => {
+                        panic("Invalid use of Array::push_values()")
                     }
                 }
                 "pop" => match this_argument!.impl {
@@ -2517,7 +2537,7 @@ class Interpreter {
         if function_to_run.linkage is External {
             // If this is a prelude function, run it manually
             let function_scope = .program.get_scope(function_to_run.function_scope_id)
-            
+
             if not .get_prelude_function(function_to_run.function_scope_id) {
                 .error(
                     format("Cannot call external function '{}'", function_to_run.name)
@@ -2645,7 +2665,7 @@ class Interpreter {
                 defer {
                     scope.perform_defers(interpreter: this, span: call_span)
                 }
-                
+
                 for i in 0..function_to_run.params.size() {
                     if this_offset != 0 and i == 0 {
                         continue
@@ -2695,7 +2715,7 @@ class Interpreter {
                         return ExecutionResult::Return(Value(
                             impl
                             span: call_span
-                        )) 
+                        ))
                     }
                     else => {
                         .error(
@@ -2720,7 +2740,7 @@ class Interpreter {
                         return ExecutionResult::Return(Value(
                             impl
                             span: call_span
-                        )) 
+                        ))
                     }
                     else => {
                         .error(
@@ -4658,7 +4678,7 @@ class Interpreter {
         }
     }
 
-    public function execute_expression(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match .current_function_id.has_value() { 
+    public function execute_expression(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match .current_function_id.has_value() {
         false => .execute_expression_without_cast(expr, scope)
         else => match .execute_expression_without_cast(expr, scope) {
             Return(value) => StatementResult::Return(cast_value_to_type(value, .program.get_function(.current_function_id!).return_type_id, interpreter: this))
