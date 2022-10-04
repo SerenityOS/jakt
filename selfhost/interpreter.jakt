@@ -914,6 +914,22 @@ class Interpreter {
                         span: call_span
                     ))
                 }
+                "Dictionary" => {
+                    if type_bindings.size() != 2 {
+                        .error("Dictionary constructor expects two generic argumenst", call_span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                    let dictionary_struct_id = .program.find_struct_in_prelude("Dictionary")
+                    let type_id = .find_or_add_type_id(Type::GenericInstance(id: dictionary_struct_id, args: [
+                        type_bindings.get(type_bindings.keys()[0])!,
+                        type_bindings.get(type_bindings.keys()[1])!,
+                    ]))
+
+                    yield StatementResult::JustValue(Value(
+                        impl: ValueImpl::JaktDictionary(keys: [], values: [], type_id)
+                        span: call_span
+                    ))
+                }
                 else => {
                     .error(
                         format("Prelude function {}::{} is not implemented yet", namespace_, prelude_function),
@@ -1198,6 +1214,178 @@ class Interpreter {
                     }
                     else => {
                         panic("Invalid use of Dictionary::set()")
+                    }
+                }
+                "is_empty" => match this_argument!.impl {
+                    JaktDictionary(keys, values) => StatementResult::JustValue(Value(
+                        impl: ValueImpl::Bool(keys.is_empty() and values.is_empty())
+                        span: call_span
+                    ))
+                    else => {
+                        panic("Invalid use of Dictionary::is_empty()")
+                    }
+                }
+                "contains" => match this_argument!.impl {
+                    JaktDictionary(keys) => {
+                        mut found = false
+                        for i in 0..keys.size() {
+                            if keys[i].impl.equals(arguments[0].impl) {
+                                found = true
+                                break
+                            }
+                        }
+
+                        yield StatementResult::JustValue(Value(
+                                impl: ValueImpl::Bool(found)
+                                span: call_span
+                            )
+                        )
+                    }
+                    else => {
+                        panic("Invalid use of Dictionary::contains()")
+                    }
+                }
+                "remove" => match this_argument!.impl {
+                    JaktDictionary(keys, values) => {
+                        mut found_index: usize? = None
+                        for i in 0..keys.size() {
+                            if keys[i].impl.equals(arguments[0].impl) {
+                                found_index = i
+                                break
+                            }
+                        }
+                        if found_index.has_value() {
+                            mut keys_without: [Value] = []
+                            mut values_without: [Value] = []
+
+                            for i in 0..keys.size() {
+                                if i == found_index! {
+                                    continue
+                                }
+                                keys_without.push(keys[i])
+                                values_without.push(values[i])
+                            }
+
+                            mut mutable_keys = keys
+                            mut mutable_values = values
+                            mutable_keys.shrink(0)
+                            mutable_values.shrink(0)
+                            for i in 0..keys_without.size() {
+                                mutable_keys.push(keys_without[i])
+                                mutable_values.push(values_without[i])
+                            }
+                        }
+
+                        yield StatementResult::JustValue(Value(
+                                impl: ValueImpl::Bool(found_index.has_value())
+                                span: call_span
+                            )
+                        )
+                    }
+                    else => {
+                        panic("Invalid use of Dictionary::remove()")
+                    }
+                }
+                "ensure_capacity" => match this_argument!.impl {
+                    JaktDictionary(keys, values) => match arguments[0].impl {
+                        USize(capacity) => {
+                            mut mutable_keys = keys
+                            mut mutable_values = values
+                            mutable_keys.ensure_capacity(capacity)
+                            mutable_values.ensure_capacity(capacity)
+                            yield StatementResult::JustValue(
+                                Value(
+                                    impl: ValueImpl::Void
+                                    span: call_span
+                                )
+                            )
+                        }
+                        else => {
+                            .error("Dictionary::ensure_capacity must be called with a usize", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid use of Dictionary::ensure_capacity()")
+                    }
+                }
+                "capacity" => match this_argument!.impl {
+                    JaktDictionary(keys) => StatementResult::JustValue(Value(
+                        impl: ValueImpl::USize(keys.capacity())
+                        span: call_span
+                    ))
+                    else => {
+                        panic("Invalid use of Dictionary::capacity()")
+                    }
+                }
+                "clear" => match this_argument!.impl {
+                    JaktDictionary(keys, values) => {
+                        mut mutable_keys = keys
+                        mut mutable_values = values
+                        mutable_keys.shrink(0)
+                        mutable_values.shrink(0)
+                        yield StatementResult::JustValue(Value(
+                            impl: ValueImpl::Void
+                            span: call_span
+                        ))
+                    }
+                    else => {
+                        panic("Invalid use of Dictionary::clear()")
+                    }
+                }
+                "size" => match this_argument!.impl {
+                    JaktDictionary(keys) => StatementResult::JustValue(Value(
+                        impl: ValueImpl::USize(keys.size())
+                        span: call_span
+                    ))
+                    else => {
+                        panic("Invalid use of Dictionary::size()")
+                    }
+                }
+                "keys" => match this_argument!.impl {
+                    JaktDictionary(keys, type_id) => {
+                        let generics = match .program.get_type(type_id) {
+                            GenericInstance(args) => args
+                            else => {
+                                panic("expected generic instance")
+                            }
+                        }
+                        guard generics.size() == 2 else {
+                            panic("dictionary should have 2 generic args. one for keys, one for values")
+                        }
+                        let array_struct_id = .program.find_struct_in_prelude("Array")
+                        let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [generics[0]]))
+                        yield StatementResult::JustValue(Value(
+                            impl: ValueImpl::JaktArray(values: keys, type_id)
+                            span: call_span
+                        ))
+                    }
+                    else => {
+                        panic("Invalid use of Dictionary::keys()")
+                    }
+                }
+                "iterator" => match this_argument!.impl {
+                    JaktDictionary => {
+                        let struct_id = .program.find_struct_in_prelude("DictionaryIterator")
+                        yield StatementResult::JustValue(
+                            Value(
+                                impl: ValueImpl::Struct(
+                                    fields: [
+                                        this_argument!
+                                        Value(
+                                            impl: ValueImpl::USize(0uz)
+                                            span: call_span
+                                        )
+                                    ]
+                                    struct_id
+                                    constructor: None
+                                )
+                                span: call_span
+                            )
+                        )
+                    }
+                    else => {
+                        panic("Invalid use of Dictionary::iterator()")
                     }
                 }
                 else => {
@@ -1801,6 +1989,64 @@ class Interpreter {
                 else => {
                     .error(
                         format("Prelude function `ArrayIterator::{}` is not implemented", prelude_function),
+                        call_span
+                    )
+                    throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                }
+            }
+            "DictionaryIterator" => match prelude_function {
+                "next" => match this_argument!.impl {
+                    Struct(fields) => {
+                        let index = match fields[1].impl {
+                            USize(value) => value
+                            else => {
+                                panic("Invalid DictionaryIterator index configuration")
+                            }
+                        }
+                        mut mutable_fields = fields
+                        yield StatementResult::JustValue(match fields[0].impl {
+                            JaktDictionary(keys, values, type_id) => match keys.size() > index and values.size() > index {
+                                true => {
+                                    mutable_fields[1] = Value(
+                                        impl: ValueImpl::USize(index + 1)
+                                        span: call_span
+                                    )
+                                    let generics = match .program.get_type(type_id) {
+                                        GenericInstance(args) => args
+                                        else => {
+                                            panic("expected generic instance")
+                                        }
+                                    }
+                                    let tuple_struct_id = .program.find_struct_in_prelude("Tuple")
+                                    let tuple_type_id = .find_or_add_type_id(Type::GenericInstance(id: tuple_struct_id, args: generics))
+
+                                    yield Value(
+                                        impl: ValueImpl::OptionalSome(
+                                            value: Value(
+                                                impl: ValueImpl::JaktTuple(
+                                                    fields: [keys[index], values[index]]
+                                                    type_id: tuple_type_id
+                                                )
+                                                span: call_span
+                                            )
+                                        )
+                                        span: call_span
+                                    )
+                                }
+                                else => Value(impl: ValueImpl::OptionalNone, span: call_span)
+                            }
+                            else => {
+                                panic("Invalid DictionaryIterator configuration")
+                            }
+                        })
+                    }
+                    else => {
+                        panic("Invalid DictionaryIterator configuration")
+                    }
+                }
+                else => {
+                    .error(
+                        format("Prelude function `DictionaryIterator::{}` is not implemented", prelude_function),
                         call_span
                     )
                     throw Error::from_errno(InterpretError::Unimplemented as! i32)
