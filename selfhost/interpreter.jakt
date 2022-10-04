@@ -4710,6 +4710,123 @@ class Interpreter {
                         throw Error::from_errno(InterpretError::InvalidType as! i32)
                     }
                 })
+                PostDecrement => StatementResult::JustValue(match value.impl {
+                    U8(x) => {
+                        .update_binding(expr, scope, Value(impl: ValueImpl::U8(x - 1), span), span)
+                        yield value
+                    }
+                    I8(x) => {
+                        .update_binding(expr, scope, Value(impl: ValueImpl::I8(x - 1), span), span)
+                        yield value
+                    }
+                    U16(x) => {
+                        .update_binding(expr, scope, Value(impl: ValueImpl::U16(x - 1), span), span)
+                        yield value
+                    }
+                    I16(x) => {
+                        .update_binding(expr, scope, Value(impl: ValueImpl::I16(x - 1), span), span)
+                        yield value
+                    }
+                    U32(x) => {
+                        .update_binding(expr, scope, Value(impl: ValueImpl::U32(x - 1), span), span)
+                        yield value
+                    }
+                    I32(x) => {
+                        .update_binding(expr, scope, Value(impl: ValueImpl::I32(x - 1), span), span)
+                        yield value
+                    }
+                    U64(x) => {
+                        .update_binding(expr, scope, Value(impl: ValueImpl::U64(x - 1), span), span)
+                        yield value
+                    }
+                    I64(x) => {
+                        .update_binding(expr, scope, Value(impl: ValueImpl::I64(x - 1), span), span)
+                        yield value
+                    }
+                    CChar(x) => {
+                        .update_binding(expr, scope, Value(impl: ValueImpl::CChar(x - 1), span), span)
+                        yield value
+                    }
+                    CInt(x) => {
+                        .update_binding(expr, scope, Value(impl: ValueImpl::CInt(x - 1), span), span)
+                        yield value
+                    }
+                    USize(x) => {
+                        .update_binding(expr, scope, Value(impl: ValueImpl::USize(x - 1), span), span)
+                        yield value
+                    }
+                    else => {
+                        .error(
+                            format("Invalid type for unary operator"),
+                            span
+                        )
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                })
+                PreDecrement => StatementResult::JustValue(match value.impl {
+                    U8(x) => {
+                        let value = Value(impl: ValueImpl::U8(x - 1), span)
+                        .update_binding(expr, scope, value, span)
+                        yield value
+                    }
+                    I8(x) => {
+                        let value = Value(impl: ValueImpl::I8(x - 1), span)
+                        .update_binding(expr, scope, value, span)
+                        yield value
+                    }
+                    U16(x) => {
+                        let value = Value(impl: ValueImpl::U16(x - 1), span)
+                        .update_binding(expr, scope, value, span)
+                        yield value
+                    }
+                    I16(x) => {
+                        let value = Value(impl: ValueImpl::I16(x - 1), span)
+                        .update_binding(expr, scope, value, span)
+                        yield value
+                    }
+                    U32(x) => {
+                        let value = Value(impl: ValueImpl::U32(x - 1), span)
+                        .update_binding(expr, scope, value, span)
+                        yield value
+                    }
+                    I32(x) => {
+                        let value = Value(impl: ValueImpl::I32(x - 1), span)
+                        .update_binding(expr, scope, value, span)
+                        yield value
+                    }
+                    U64(x) => {
+                        let value = Value(impl: ValueImpl::U64(x - 1), span)
+                        .update_binding(expr, scope, value, span)
+                        yield value
+                    }
+                    I64(x) => {
+                        let value = Value(impl: ValueImpl::I64(x - 1), span)
+                        .update_binding(expr, scope, value, span)
+                        yield value
+                    }
+                    CChar(x) => {
+                        let value = Value(impl: ValueImpl::CChar(x - 1), span)
+                        .update_binding(expr, scope, value, span)
+                        yield value
+                    }
+                    CInt(x) => {
+                        let value = Value(impl: ValueImpl::CInt(x - 1), span)
+                        .update_binding(expr, scope, value, span)
+                        yield value
+                    }
+                    USize(x) => {
+                        let value = Value(impl: ValueImpl::USize(x - 1), span)
+                        .update_binding(expr, scope, value, span)
+                        yield value
+                    }
+                    else => {
+                        .error(
+                            format("Invalid type for unary operator"),
+                            span
+                        )
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                })
                 TypeCast(cast) => match cast {
                     Infallible(type_id) => StatementResult::JustValue(cast_value_to_type(value, type_id, interpreter: this))
                     Fallible(type_id) => {
