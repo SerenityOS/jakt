@@ -4911,7 +4911,31 @@ class Interpreter {
                 ))
             }
         }
-        // IndexedTuple
+        IndexedTuple(expr, index) => {
+            let value = match .execute_expression(expr, scope) {
+                JustValue(value) => value
+                Return(value) => {
+                    return StatementResult::Return(value)
+                }
+                Throw(value) => {
+                    return StatementResult::Throw(value)
+                }
+                Continue => {
+                    return StatementResult::Continue
+                }
+                Break => {
+                    return StatementResult::Break
+                }
+                Yield => {
+                    panic("Invalid control flow")
+                }
+            }
+            guard value.impl is JaktTuple(fields) else {
+                panic("expected tuple")
+            }
+
+            yield StatementResult::JustValue(fields[index])
+        }
         Match(expr, match_cases, all_variants_constant, span) => {
             let value = match .execute_expression(expr, scope) {
                 JustValue(value) => value
