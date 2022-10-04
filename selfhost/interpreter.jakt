@@ -1760,7 +1760,7 @@ class Interpreter {
                         )
                     }
                     else => {
-                        panic("Invalid use of Array::push()")
+                        panic("Invalid use of Array::contains()")
                     }
                 }
                 "is_empty" => match this_argument!.impl {
