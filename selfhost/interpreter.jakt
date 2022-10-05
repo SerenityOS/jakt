@@ -1089,7 +1089,7 @@ class Interpreter {
                         )
                     )
                 }
-                "append" | "append_string" | "append_code_point" => {
+                "append" | "append_string" | "append_code_point" | "append_escaped_for_json" => {
                     mut (fields, current_string) = match this_argument!.impl {
                         Struct(fields) => match fields[0].impl {
                             JaktString(value) => (fields, value)
@@ -1123,6 +1123,13 @@ class Interpreter {
                                 throw Error::from_errno(InterpretError::InvalidType as! i32)
                             }
                         })
+                        "append_escaped_for_json" => builder.append_escaped_for_json(match arguments[0].impl {
+                            JaktString(value) => value
+                            else => {
+                                .error("Invalid use of StringBuilder::append_escaped_for_json()", call_span)
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        })
                         "append_code_point" => builder.append_code_point(match arguments[0].impl {
                             U32(value) => value
                             else => {
@@ -1146,6 +1153,50 @@ class Interpreter {
                 }
                 "to_string" => match this_argument!.impl {
                     Struct(fields) => StatementResult::JustValue(fields[0])
+                    else => {
+                        .error(
+                            format("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument", prelude_function),
+                            call_span
+                        )
+                        throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    }
+                }
+                "is_empty" => match this_argument!.impl {
+                    Struct(fields) => match fields[0].impl {
+                        JaktString(value) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(value.is_empty()), span: call_span))
+                        else => {
+                            panic("Invalid use of prelude StringBuilder")
+                        }
+                    }
+                    else => {
+                        .error(
+                            format("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument", prelude_function),
+                            call_span
+                        )
+                        throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    }
+                }
+                "length" => match this_argument!.impl {
+                    Struct(fields) => match fields[0].impl {
+                        JaktString(value) => StatementResult::JustValue(Value(impl: ValueImpl::USize(value.length()), span: call_span))
+                        else => {
+                            panic("Invalid use of prelude StringBuilder")
+                        }
+                    }
+                    else => {
+                        .error(
+                            format("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument", prelude_function),
+                            call_span
+                        )
+                        throw Error::from_errno(InterpretError::Unimplemented as! i32)
+                    }
+                }
+                "clear" => match this_argument!.impl {
+                    Struct(fields) => {
+                        mut mutable_fields = fields
+                        mutable_fields[0].impl = ValueImpl::JaktString(value: "")
+                        yield StatementResult::JustValue(Value(impl: ValueImpl::Void, span: call_span))
+                    }
                     else => {
                         .error(
                             format("Prelude function `StringBuilder::{}` expects a StringBuilder as its this argument", prelude_function),
