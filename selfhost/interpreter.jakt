@@ -16,6 +16,7 @@ enum InterpretError : i32 {
     InvalidType
     UnknownVariable
     Unimplemented
+    UnwrapOptionalNone
 }
 
 function cast_value_to_type(anon this_value: Value, anon type_id: TypeId, interpreter: Interpreter, saturating: bool = false) throws -> Value {
@@ -2056,6 +2057,26 @@ class Interpreter {
                 "has_value" => match this_argument!.impl {
                     OptionalSome => StatementResult::JustValue(Value(impl: ValueImpl::Bool(true), span: call_span))
                     OptionalNone => StatementResult::JustValue(Value(impl: ValueImpl::Bool(false), span: call_span))
+                    else => {
+                        panic("Invalid Optional configuration")
+                    }
+                }
+                "value" => match this_argument!.impl {
+                    OptionalSome(value) => StatementResult::JustValue(value)
+                    OptionalNone => {
+                        .error(
+                            format("Cannot unwrap optional none", prelude_function),
+                            call_span
+                        )
+                        throw Error::from_errno(InterpretError::UnwrapOptionalNone as! i32)
+                    }
+                    else => {
+                        panic("Invalid Optional configuration")
+                    }
+                }
+                "value_or" => match this_argument!.impl {
+                    OptionalSome(value) => StatementResult::JustValue(value)
+                    OptionalNone => StatementResult::JustValue(arguments[0])
                     else => {
                         panic("Invalid Optional configuration")
                     }
