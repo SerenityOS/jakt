@@ -1450,6 +1450,45 @@ class Interpreter {
                         panic("Invalid use of Array::push()")
                     }
                 }
+                "pop" => match this_argument!.impl {
+                    JaktArray(values) => {
+                        mut mutable_values = values
+                        let value = mutable_values.pop()
+                        yield match value.has_value() {
+                            true => StatementResult::JustValue(value!)
+                            else => StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone, span: call_span))
+                        }
+                    }
+                    else => {
+                        panic("Invalid use of Array::push()")
+                    }
+                }
+                "first" => match this_argument!.impl {
+                    JaktArray(values) => {
+                        mut mutable_values = values
+                        let value = mutable_values.first()
+                        yield match value.has_value() {
+                            true => StatementResult::JustValue(value!)
+                            else => StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone, span: call_span))
+                        }
+                    }
+                    else => {
+                        panic("Invalid use of Array::push()")
+                    }
+                }
+                "last" => match this_argument!.impl {
+                    JaktArray(values) => {
+                        mut mutable_values = values
+                        let value = mutable_values.last()
+                        yield match value.has_value() {
+                            true => StatementResult::JustValue(value!)
+                            else => StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone, span: call_span))
+                        }
+                    }
+                    else => {
+                        panic("Invalid use of Array::push()")
+                    }
+                }
                 "contains" => match this_argument!.impl {
                     JaktArray(values) => {
                         mut found = false
@@ -1468,6 +1507,93 @@ class Interpreter {
                     }
                     else => {
                         panic("Invalid use of Array::push()")
+                    }
+                }
+                "is_empty" => match this_argument!.impl {
+                    JaktArray(values) => StatementResult::JustValue(
+                        Value(
+                            impl: ValueImpl::Bool(values.is_empty()),
+                            span: call_span
+                        )
+                    )
+                    else => {
+                        panic("Invalid use of Array::is_empty()")
+                    }
+                }
+                "capacity" => match this_argument!.impl {
+                    JaktArray(values) => {
+                        yield StatementResult::JustValue(
+                            Value(
+                                impl: ValueImpl::USize(values.capacity())
+                                span: call_span
+                            )
+                        )
+                    }
+                    else => {
+                        panic("Invalid use of Array::capacity()")
+                    }
+                }
+                "ensure_capacity" => match this_argument!.impl {
+                    JaktArray(values) => match arguments[0].impl {
+                        USize(capacity) => {
+                            mut mutable_values = values
+                            mutable_values.ensure_capacity(capacity)
+                            yield StatementResult::JustValue(
+                                Value(
+                                    impl: ValueImpl::Void
+                                    span: call_span
+                                )
+                            )
+                        }
+                        else => {
+                            .error("Array::ensure_capacity must be called with a usize", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid use of Array::ensure_capacity()")
+                    }
+                }
+                "add_capacity" => match this_argument!.impl {
+                    JaktArray(values) => match arguments[0].impl {
+                        USize(capacity) => {
+                            mut mutable_values = values
+                            mutable_values.add_capacity(capacity)
+                            yield StatementResult::JustValue(
+                                Value(
+                                    impl: ValueImpl::Void
+                                    span: call_span
+                                )
+                            )
+                        }
+                        else => {
+                            .error("Array::add_capacity must be called with a usize", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid use of Array::add_capacity()")
+                    }
+                }
+                "shrink" => match this_argument!.impl {
+                    JaktArray(values) => match arguments[0].impl {
+                        USize(size) => {
+                            mut mutable_values = values
+                            mutable_values.shrink(size)
+                            yield StatementResult::JustValue(
+                                Value(
+                                    impl: ValueImpl::Void
+                                    span: call_span
+                                )
+                            )
+                        }
+                        else => {
+                            .error("Array::shrink must be called with a usize", arguments[0].span)
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        panic("Invalid use of Array::shrink()")
                     }
                 }
                 else => {
