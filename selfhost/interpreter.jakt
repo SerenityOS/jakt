@@ -1012,6 +1012,47 @@ class Interpreter {
                         )
                     )
                 }
+                "open_for_writing" => {
+                    let requested_path = match arguments[0].impl {
+                        JaktString(x) => x
+                        else => {
+                            .error(
+                                format("Prelude function `File::{}` expects a string as its first argument, but got {}", prelude_function, arguments[0].impl),
+                                call_span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    let path = .program.compiler.get_file_path(call_span.file_id)!.parent().join(requested_path)
+                    let path_value = Value(
+                        impl: ValueImpl::JaktString(path.to_string())
+                        span: call_span
+                    )
+                    if not path.exists() {
+                        // FIXME: This should `return StatementResult::Throw(...)`, but we currently can't put strings in Error, so the output result looks vague and unhelpful.
+                        .error(
+                            format("Prelude function `File::{}` could not find file at path {}", prelude_function, path.to_string()),
+                            call_span
+                        )
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+                    let file_struct_id = .program.find_struct_in_prelude("File")
+                    let file_struct = .program.get_struct(file_struct_id)
+                    let scope = .program.get_scope(file_struct.scope_id)
+                    let constructor = scope.functions.get("open_for_writing")
+                    yield StatementResult::JustValue(
+                        Value(
+                            impl: ValueImpl::Struct(
+                                fields: [
+                                    path_value
+                                ],
+                                struct_id: file_struct_id
+                                constructor: constructor!
+                            )
+                            span: call_span
+                        )
+                    )
+                }
                 "read_all" => {
                     let path = match this_argument!.impl {
                         Struct(fields) => match fields[0].impl {
@@ -1028,6 +1069,25 @@ class Interpreter {
                             throw Error::from_errno(InterpretError::InvalidType as! i32)
                         }
                     }
+                    let file_struct_id = .program.find_struct_in_prelude("File")
+                    let file_struct = .program.get_struct(file_struct_id)
+                    let scope = .program.get_scope(file_struct.scope_id)
+                    let open_for_reading = scope.functions.get("open_for_reading")!
+                    match this_argument!.impl {
+                        Struct(constructor) => {
+                            if not constructor.has_value() or not constructor!.equals(open_for_reading) {
+                                .error(
+                                    "Cannot read from a file not opened for reading"
+                                    call_span
+                                )
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        else => {
+                            panic("expected struct as this argument")
+                        }
+                    }
+                    
                     mut file = File::open_for_reading(path)
                     mut result_values: [Value] = []
                     for byte in file.read_all().iterator() {
@@ -1048,6 +1108,68 @@ class Interpreter {
                         )
                     )
                 }
+                "read" => {
+                    let path = match this_argument!.impl {
+                        Struct(fields) => match fields[0].impl {
+                            JaktString(x) => x
+                            else => {
+                                panic("invalid type for File::read")
+                            }
+                        }
+                        else => {
+                            .error(
+                                format("Prelude function `File::read` expects a `File` as its this argument, but got {}", this_argument!.impl),
+                                call_span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    let file_struct_id = .program.find_struct_in_prelude("File")
+                    let file_struct = .program.get_struct(file_struct_id)
+                    let scope = .program.get_scope(file_struct.scope_id)
+                    let open_for_reading = scope.functions.get("open_for_reading")!
+                    match this_argument!.impl {
+                        Struct(constructor) => {
+                            if not constructor.has_value() or not constructor!.equals(open_for_reading) {
+                                .error(
+                                    "Cannot read from a file not opened for reading"
+                                    call_span
+                                )
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        else => {
+                            panic("expected struct as this argument")
+                        }
+                    }
+                    mut file = File::open_for_reading(path)
+                    mut values_buffer = match arguments[0].impl {
+                        JaktArray(values) => values
+                        else => {
+                            .error(
+                                format("Prelude function `File::read` expects a `[u8]` as its argument, but got {}", arguments[0].impl),
+                                call_span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    mut byte_buffer: [u8] = [0; values_buffer.size()]
+                    let bytes_read = file.read(byte_buffer)
+
+                    for i in 0..byte_buffer.size() {
+                        values_buffer[i] = Value(
+                            impl: ValueImpl::U8(byte_buffer[i])
+                            span: call_span
+                        )
+                    }
+
+                    yield StatementResult::JustValue(
+                        Value(
+                            impl: ValueImpl::USize(bytes_read)
+                            span: call_span
+                        )
+                    )
+                }
                 "exists" => {
                     let requested_path = match arguments[0].impl {
                         JaktString(x) => x
@@ -1063,6 +1185,67 @@ class Interpreter {
                     yield StatementResult::JustValue(
                         Value(
                             impl: ValueImpl::Bool(path.exists())
+                            span: call_span
+                        )
+                    )
+                }
+                "write" => {
+                    let path = match this_argument!.impl {
+                        Struct(fields) => match fields[0].impl {
+                            JaktString(x) => x
+                            else => {
+                                panic("invalid type for File::write")
+                            }
+                        }
+                        else => {
+                            .error(
+                                format("Prelude function `File::write` expects a `File` as its this argument, but got {}", this_argument!.impl),
+                                call_span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    let file_struct_id = .program.find_struct_in_prelude("File")
+                    let file_struct = .program.get_struct(file_struct_id)
+                    let scope = .program.get_scope(file_struct.scope_id)
+                    let open_for_writing = scope.functions.get("open_for_writing")!
+                    match this_argument!.impl {
+                        Struct(constructor) => {
+                            if not constructor.has_value() or not constructor!.equals(open_for_writing) {
+                                .error(
+                                    "Cannot write to a file not opened for writing"
+                                    call_span
+                                )
+                                throw Error::from_errno(InterpretError::InvalidType as! i32)
+                            }
+                        }
+                        else => {
+                            panic("expected struct as this argument")
+                        }
+                    }
+                    mut file = File::open_for_writing(path)
+                    mut data_values = match arguments[0].impl {
+                        JaktArray(values) => values
+                        else => {
+                            .error(
+                                format("Prelude function `File::write` expects a `[u8]` as its argument, but got {}", arguments[0].impl),
+                                call_span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    mut data: [u8] = []
+                    for val in data_values.iterator() {
+                        data.push(match val.impl {
+                            U8(x) => x
+                            else => {panic("expected byte")}
+                        })
+                    }
+                    let bytes_written = file.write(data)
+
+                    yield StatementResult::JustValue(
+                        Value(
+                            impl: ValueImpl::USize(bytes_written)
                             span: call_span
                         )
                     )
