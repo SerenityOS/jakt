@@ -1743,6 +1743,28 @@ class Interpreter {
                         )
                     )
                 }
+                "inclusive" => match this_argument!.impl {
+                    Struct(fields, struct_id, constructor) => {
+                        mut mutable_fields = fields
+                        let end = match fields[1].impl {
+                            I8(x) | I16(x) | I32(x) | I64(x) | U8(x) | U16(x) | U32(x) | U64(x) | USize(x) => x as! u64
+                            else => {
+                                panic("Invalid type for comptime range")
+                            }
+                        }
+                        mutable_fields[1].impl =  ValueImpl::U64(end + 1)
+                        yield StatementResult::JustValue(Value(impl: ValueImpl::Struct(fields, struct_id, constructor), span: this_argument!.span))
+                    }
+                    else => {
+                        panic("Invalid use of Range::inclusive()")
+                    }
+                }
+                "exclusive" => match this_argument!.impl {
+                    Struct => StatementResult::JustValue(this_argument!)
+                    else => {
+                        panic("Invalid use of Range::exclusive()")
+                    }
+                }
                 else => {
                     .error(
                         format("Prelude function `Range::{}` is not implemented", prelude_function),
