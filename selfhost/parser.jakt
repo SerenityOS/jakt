@@ -3970,6 +3970,7 @@ struct Parser {
 
     function parse_operator(mut this, allow_assignments: bool) throws -> ParsedExpression {
         let span = .current().span()
+
         let op = match .current() {
             QuestionMarkQuestionMark => BinaryOperator::NoneCoalescing
             Plus => BinaryOperator::Add
@@ -3986,7 +3987,15 @@ struct Parser {
             GreaterThan => BinaryOperator::GreaterThan
             GreaterThanOrEqual => BinaryOperator::GreaterThanOrEqual
             Ampersand => BinaryOperator::BitwiseAnd
+            AmpersandAmpersand => {
+                .error("‘&&’ is not allowed, use ‘and’ instead", span);
+                yield BinaryOperator::LogicalAnd
+            }
             Pipe => BinaryOperator::BitwiseOr
+            PipePipe => {
+                .error("‘||’ is not allowed, use ‘or’ instead", span);
+                yield BinaryOperator::LogicalOr
+            }
             Caret => BinaryOperator::BitwiseXor
             LeftShift => BinaryOperator::BitwiseLeftShift
             RightShift => BinaryOperator::BitwiseRightShift

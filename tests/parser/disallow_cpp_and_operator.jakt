@@ -1,0 +1,8 @@
+/// Expect:
+/// - error: "‘&&’ is not allowed, use ‘and’ instead"
+function main() {
+    let x = "hello"
+    if x.length() > 6 && x.substring(start: 0, length: 6) == "world!" {
+        println("hello, {}", x)
+    }
+}

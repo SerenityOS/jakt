@@ -49,8 +49,10 @@ enum Token {
     Asterisk(Span)
     Ampersand(Span)
     AmpersandEqual(Span)
+    AmpersandAmpersand(Span)
     Pipe(Span)
     PipeEqual(Span)
+    PipePipe(Span)
     Caret(Span)
     CaretEqual(Span)
     Dollar(Span)
@@ -600,6 +602,7 @@ struct Lexer {
         let start = .index++
         return match .peek() {
             b'=' => Token::PipeEqual(.span(start, end: ++.index))
+            b'|' => Token::PipePipe(.span(start, end: ++.index))
             else => Token::Pipe(.span(start: .index - 1, end: .index))
         }
     }
@@ -624,6 +627,7 @@ struct Lexer {
         let start = .index++
         return match .peek() {
             b'=' => Token::AmpersandEqual(.span(start, end: ++.index))
+            b'&' => Token::AmpersandAmpersand(.span(start, end: ++.index))
             else => Token::Ampersand(.span(start: .index - 1, end: .index))
         }
     }
