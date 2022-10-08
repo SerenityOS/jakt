@@ -902,6 +902,7 @@ class Interpreter {
                     impl: ValueImpl::JaktString(.compiler.target_triple ?? ___jakt_get_target_triple_string())
                     span: call_span
                 ))
+                "abort" => {abort()}
                 "Set" => {
                     if type_bindings.size() != 1 {
                         .error("Set constructor expects one generic argument", call_span)
@@ -961,6 +962,25 @@ class Interpreter {
                             span: call_span
                         )
                     )
+                }
+                "code" => match this_argument!.impl {
+                    Struct(fields) => match fields[0].impl {
+                        I32(code) => StatementResult::JustValue(Value(impl: ValueImpl::I32(code), span: call_span))
+                        else => {
+                            .error(
+                                format("Error should have `i32` as its code, but got {}", fields[0].impl),
+                                call_span
+                            )
+                            throw Error::from_errno(InterpretError::InvalidType as! i32)
+                        }
+                    }
+                    else => {
+                        .error(
+                            format("Prelude function `Error::code` expects an Error as its this argument, but got {}", this_argument!.impl),
+                            call_span
+                        )
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
                 }
                 else => {
                     .error(
