@@ -416,9 +416,9 @@ function main(args: [String]) {
                     continue
                 }
 
-                for function_ in scope.functions {
-                    if function_.0 == "main" {
-                        main_function_id = function_.1
+                for (function_name, overload_set) in scope.functions {
+                    if function_name == "main" {
+                        main_function_id = overload_set[0]
                         break
                     }
                 }

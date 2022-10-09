@@ -360,31 +360,34 @@ function completions_for_type_id(program: CheckedProgram, type_id: TypeId) throw
 
 function find_function_completions_in_scope(anon scope: Scope, program: CheckedProgram) throws -> [String] {
     mut output: [String] = []
-    for function_name in scope.functions.keys() {
-        let function_id = scope.functions.get(function_name)!
-        let checked_function = program.get_function(function_id)
+    for function_name in scope.functions.keys().iterator() {
+        let overload_set = scope.functions.get(function_name)!
 
-        if checked_function.params.first().has_value() {
-            let param = checked_function.params.first()!
-            if param.variable.name == "this" {
-                mut full_call = checked_function.name
-                mut first = true
-                full_call += "("
-                mut iter = checked_function.params.iterator()
-                let dummy = iter.next()
-                for param in iter {
-                    if not first {
-                        full_call += ", "
-                    } else {
-                        first = false
+        for function_id in overload_set {
+            let checked_function = program.get_function(function_id)
+
+            if checked_function.params.first().has_value() {
+                let param = checked_function.params.first()!
+                if param.variable.name == "this" {
+                    mut full_call = checked_function.name
+                    mut first = true
+                    full_call += "("
+                    mut iter = checked_function.params.iterator()
+                    let dummy = iter.next()
+                    for param in iter {
+                        if not first {
+                            full_call += ", "
+                        } else {
+                            first = false
+                        }
+                        full_call += param.variable.name
                     }
-                    full_call += param.variable.name
+                    full_call += ")"
+                    output.push(full_call)
                 }
-                full_call += ")"
-                output.push(full_call)
+            } else {
+                output.push(format("{}()", checked_function.name))
             }
-        } else {
-            output.push(format("{}()", checked_function.name))
         }
     }
     return output
@@ -428,11 +431,13 @@ function find_span_in_scope(program: CheckedProgram, scope: Scope, span: Span) t
         }
     }
 
-    for function_id in scope.functions {
-        let checked_function = program.get_function(function_id.1)
-        let usage = find_span_in_function(program, checked_function, span)
-        if usage.has_value() {
-            return usage!
+    for (_, overload_set) in scope.functions {
+        for function_id in overload_set {
+            let checked_function = program.get_function(function_id)
+            let usage = find_span_in_function(program, checked_function, span)
+            if usage.has_value() {
+                return usage!
+            }
         }
     }
 

@@ -614,24 +614,26 @@ struct CodeGenerator {
                 output += "\n"
             }
 
-            for (_, function_id) in scope.functions {
-                if not function_id.module.equals(current_module.id) {
-                    continue
-                }
+            for (_, overload_set) in scope.functions {
+                for function_id in overload_set {
+                    if not function_id.module.equals(current_module.id) {
+                        continue
+                    }
 
-                let function_ = .program.get_function(function_id)
+                    let function_ = .program.get_function(function_id)
 
-                let previous_function = .current_function
-                .current_function = function_
-                defer .current_function = previous_function
+                    let previous_function = .current_function
+                    .current_function = function_
+                    defer .current_function = previous_function
 
-                if function_.linkage is External or function_.type is ImplicitConstructor or function_.type is ImplicitEnumConstructor {
-                    continue
-                }
+                    if function_.linkage is External or function_.type is ImplicitConstructor or function_.type is ImplicitEnumConstructor {
+                        continue
+                    }
 
-                if not function_.generics.params.is_empty() {
-                    output += .codegen_function(function_)
-                    output += "\n"
+                    if not function_.generics.params.is_empty() {
+                        output += .codegen_function(function_)
+                        output += "\n"
+                    }
                 }
             }
 
@@ -654,24 +656,26 @@ struct CodeGenerator {
         }
 
         mut output = ""
-        for (_, function_id) in scope.functions {
-            if not function_id.module.equals(current_module.id) {
-                continue
-            }
+        for (_, overload_set) in scope.functions {
+            for function_id in overload_set {
+                if not function_id.module.equals(current_module.id) {
+                    continue
+                }
 
-            let function_ = .program.get_function(function_id)
+                let function_ = .program.get_function(function_id)
 
-            let previous_function = .current_function
-            .current_function = function_
-            defer .current_function = previous_function
+                let previous_function = .current_function
+                .current_function = function_
+                defer .current_function = previous_function
 
-            if function_.linkage is External or function_.type is ImplicitConstructor or function_.type is ImplicitEnumConstructor {
-                continue
-            }
+                if function_.linkage is External or function_.type is ImplicitConstructor or function_.type is ImplicitEnumConstructor {
+                    continue
+                }
 
-            if function_.generics.params.is_empty() {
-                output += .codegen_function(function_)
-                output += "\n"
+                if function_.generics.params.is_empty() {
+                    output += .codegen_function(function_)
+                    output += "\n"
+                }
             }
         }
 
@@ -692,18 +696,20 @@ struct CodeGenerator {
             output += .codegen_debug_description_getter(struct_)
 
             let scope = .program.get_scope(struct_.scope_id)
-            for (_, function_id) in scope.functions {
-                let function_ = .program.get_function(function_id)
-                let previous_function = .current_function
-                .current_function = function_
-                defer .current_function = previous_function
+            for (_, overload_set) in scope.functions {
+                for function_id in overload_set {
+                    let function_ = .program.get_function(function_id)
+                    let previous_function = .current_function
+                    .current_function = function_
+                    defer .current_function = previous_function
 
-                if function_.type is ImplicitConstructor {
-                    output += .codegen_constructor(function_)
-                    output += "\n"
-                } else if not function_.type is ImplicitEnumConstructor and not function_.is_comptime and function_.generics.params.is_empty() {
-                    output += .codegen_function_in_namespace(function_, containing_struct: struct_.type_id)
-                    output += "\n"
+                    if function_.type is ImplicitConstructor {
+                        output += .codegen_constructor(function_)
+                        output += "\n"
+                    } else if not function_.type is ImplicitEnumConstructor and not function_.is_comptime and function_.generics.params.is_empty() {
+                        output += .codegen_function_in_namespace(function_, containing_struct: struct_.type_id)
+                        output += "\n"
+                    }
                 }
             }
         }
@@ -727,14 +733,17 @@ struct CodeGenerator {
             }
 
             let scope = .program.get_scope(enum_.scope_id)
-            for (_, function_id) in scope.functions {
-                let function_ = .program.get_function(function_id)
-                let previous_function = .current_function
-                .current_function = function_
-                defer .current_function = previous_function
-                if not function_.type is ImplicitConstructor and not function_.type is ImplicitEnumConstructor and not function_.is_comptime {
-                    output += .codegen_function_in_namespace(function_, containing_struct: enum_.type_id)
-                    output += "\n"
+            for (_, overload_set) in scope.functions {
+                for function_id in overload_set {
+                    let function_ = .program.get_function(function_id)
+                    let previous_function = .current_function
+                    .current_function = function_
+                    defer .current_function = previous_function
+
+                    if not function_.type is ImplicitConstructor and not function_.type is ImplicitEnumConstructor and not function_.is_comptime {
+                        output += .codegen_function_in_namespace(function_, containing_struct: enum_.type_id)
+                        output += "\n"
+                    }
                 }
             }
         }
@@ -789,22 +798,24 @@ struct CodeGenerator {
             output += .codegen_namespace_predecl(scope: .program.get_scope(child), current_module)
         }
 
-        for (_, function_id) in scope.functions {
-            if not function_id.module.equals(current_module.id) {
-                continue
-            }
-            let function_ = .program.get_function(function_id)
-            if function_.type is ImplicitEnumConstructor {
-                continue
-            }
+        for (_, overload_set) in scope.functions {
+            for function_id in overload_set {
+                if not function_id.module.equals(current_module.id) {
+                    continue
+                }
+                let function_ = .program.get_function(function_id)
+                if function_.type is ImplicitEnumConstructor {
+                    continue
+                }
 
-            let previous_function_id = .current_function
-            .current_function = Some(function_)
-            defer .current_function = previous_function_id
+                let previous_function_id = .current_function
+                .current_function = Some(function_)
+                defer .current_function = previous_function_id
 
-            if not function_.type is ImplicitConstructor and function_.name != "main" {
-                output += .codegen_function_predecl(function_)
-                output += "\n"
+                if not function_.type is ImplicitConstructor and function_.name != "main" {
+                    output += .codegen_function_predecl(function_)
+                    output += "\n"
+                }
             }
         }
 
@@ -905,10 +916,10 @@ struct CodeGenerator {
             output += param.variable.name
         }
         output += ")"
-        
+
         if not function_.is_static() and not function_.is_mutating() {
             output += " const"
-        } 
+        }
         if function_.is_override {
             output += " override"
         }
@@ -1019,26 +1030,27 @@ struct CodeGenerator {
         }
 
         let scope = .program.get_scope(struct_.scope_id)
-        for fn in scope.functions {
+        for (_, overload_set) in scope.functions {
+            for function_id in overload_set {
+                let previous_function_id = .current_function
 
-            let function_ = .program.get_function(fn.1)
+                let function_ = .program.get_function(function_id)
+                .current_function = Some(function_)
+                defer .current_function = previous_function_id
 
-            let previous_function_id = .current_function
-            .current_function = Some(function_)
-            defer .current_function = previous_function_id
-
-            if function_.type is ImplicitConstructor {
-                if struct_.generic_parameters.is_empty() {
-                    output += .codegen_constructor_predecl(function_)
+                if function_.type is ImplicitConstructor {
+                    if struct_.generic_parameters.is_empty() {
+                        output += .codegen_constructor_predecl(function_)
+                    } else {
+                        output += .codegen_constructor(function_, is_inline: true)
+                    }
+                    output += "\n"
                 } else {
-                    output += .codegen_constructor(function_, is_inline: true)
-                }
-                output += "\n"
-            } else {
-                if struct_.generic_parameters.is_empty() and function_.generics.params.is_empty() {
-                    output += .codegen_function_predecl(function_, as_method: true)
-                } else {
-                    output += .codegen_function(function_, as_method: true)
+                    if struct_.generic_parameters.is_empty() and function_.generics.params.is_empty() {
+                        output += .codegen_function_predecl(function_, as_method: true)
+                    } else {
+                        output += .codegen_function(function_, as_method: true)
+                    }
                 }
             }
         }
@@ -1265,18 +1277,20 @@ struct CodeGenerator {
         }
 
         let enum_scope = .program.get_scope(enum_.scope_id)
-        for function_item in enum_scope.functions {
-            let function_ = .program.get_function(function_item.1)
+        for (_, overload_set) in enum_scope.functions {
+            for function_id in overload_set {
+                let function_ = .program.get_function(function_id)
 
-            let previous_function_id = .current_function
-            .current_function = Some(function_)
-            defer .current_function = previous_function_id
+                let previous_function_id = .current_function
+                .current_function = Some(function_)
+                defer .current_function = previous_function_id
 
-            if not function_.type is ImplicitEnumConstructor {
-                if enum_.generic_parameters.is_empty() and function_.generics.params.is_empty() {
-                    output += .codegen_function_predecl(function_, as_method: true)
-                } else {
-                    output += .codegen_function(function_, as_method: true)
+                if not function_.type is ImplicitEnumConstructor {
+                    if enum_.generic_parameters.is_empty() and function_.generics.params.is_empty() {
+                        output += .codegen_function_predecl(function_, as_method: true)
+                    } else {
+                        output += .codegen_function(function_, as_method: true)
+                    }
                 }
             }
         }
@@ -1938,7 +1952,7 @@ struct CodeGenerator {
                 } else {
                     output += .codegen_block(block: catch_block!)
                 }
-                
+
                 if not is_void {
                     output += "} else {"
                     output += fresh_var
@@ -2102,7 +2116,7 @@ struct CodeGenerator {
                             output += " >= "
                             output += .codegen_expression(from!)
                         }
-                        
+
                         if to.has_value() {
                             if from.has_value() {
                                 output += "&& __jakt_enum_value "
@@ -2639,11 +2653,11 @@ struct CodeGenerator {
                         let type = .program.get_type(type_id)
 
                         if not (
-                            type_module.is_root or 
-                            type_module.is_prelude() or 
-                            function_.linkage is External or 
+                            type_module.is_root or
+                            type_module.is_prelude() or
+                            function_.linkage is External or
                             function_.type is Expression or
-                            function_.type is Closure or 
+                            function_.type is Closure or
                             (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name)
                         ) {
                             output += type_module.name
@@ -2704,11 +2718,11 @@ struct CodeGenerator {
                                 let enum_type_module = .program.get_module(enum_id.module)
                                 if enum_.is_boxed {
                                     if not (
-                                        type_module.is_root or 
-                                        type_module.is_prelude() or 
-                                        function_.linkage is External or 
+                                        type_module.is_root or
+                                        type_module.is_prelude() or
+                                        function_.linkage is External or
                                         function_.type is Expression or
-                                        function_.type is Closure or 
+                                        function_.type is Closure or
                                         (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name)
                                     ) {
                                         output += type_module.name
@@ -2738,11 +2752,11 @@ struct CodeGenerator {
                         }
                     } else {
                         if not (
-                            type_module.is_root or 
-                            type_module.is_prelude() or 
-                            function_.linkage is External or 
+                            type_module.is_root or
+                            type_module.is_prelude() or
+                            function_.linkage is External or
                             function_.type is Expression or
-                            function_.type is Closure or 
+                            function_.type is Closure or
                             (not call.namespace_.is_empty() and call.namespace_[0].name == type_module.name)
                         ) {
                             output += type_module.name

@@ -526,16 +526,30 @@ struct Typechecker {
         return true
     }
 
-    function add_function_to_scope(mut this, parent_scope_id: ScopeId, name: String, function_id: FunctionId, span: Span) throws -> bool {
+    function add_function_to_scope(mut this, parent_scope_id: ScopeId, name: String, overload_set: [FunctionId], span: Span) throws -> bool {
         mut scope = .get_scope(id: parent_scope_id)
-        for existing_function in scope.functions {
-            if name == existing_function.0 {
-                let function_ = .get_function(existing_function.1)
-                .error_with_hint(message: format("Redefinition of function ‘{}’", name), span, hint: "previous definition here", hint_span: function_.name_span)
-                return false
+
+        if scope.functions.contains(name) {
+            let existing_function_binding = scope.functions[name]
+
+            for function_id in overload_set {
+                let function_to_add = .get_function(function_id)
+                for existing_function_id in existing_function_binding {
+                    let existing_function = .get_function(existing_function_id)
+                    if function_to_add.signature_matches(existing_function) {
+                        .error_with_hint(
+                            format("Redefinition of function ‘{}’.", function_to_add.name)
+                            function_to_add.parsed_function!.name_span
+                            "Previous definition is here"
+                            existing_function.parsed_function!.name_span
+                        )
+                    }
+                }
+                scope.functions[name].push(function_id)
             }
+        }else {
+            scope.functions.set(key: name, value: overload_set)
         }
-        scope.functions.set(key: name, value: function_id)
         return true
     }
 
@@ -566,8 +580,8 @@ struct Typechecker {
         return true
     }
 
-    function find_function_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> FunctionId? {
-        return .program.find_function_in_scope(parent_scope_id, function_name)
+    function find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> [FunctionId]? {
+        return .program.find_functions_with_name_in_scope(parent_scope_id, function_name)
     }
 
     function find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? =>
@@ -864,11 +878,11 @@ struct Typechecker {
                     span: import_.module_name.span()
                 )
             }
-            for (name, function_id) in import_scope.functions {
+            for (name, overload_set) in import_scope.functions {
                 .add_function_to_scope(
                     parent_scope_id: scope_id
                     name
-                    function_id
+                    overload_set
                     span: import_.module_name.span()
                 )
             }
@@ -901,17 +915,17 @@ struct Typechecker {
             for imported_name in names {
                 mut found = false
                 // if it is a function, add function to scope
-                let maybe_function_id = .find_function_in_scope(
+                let maybe_overload_set = .find_functions_with_name_in_scope(
                     parent_scope_id: import_scope_id
                     function_name: imported_name.literal_name()
                 )
-                if maybe_function_id.has_value() {
+                if maybe_overload_set.has_value() {
                     found = true
                     // NOTE: what should we do if this returns false? error is already created in the function itself and rust compiler goes on
                     .add_function_to_scope(
                         parent_scope_id: scope_id
                         name: imported_name.literal_name()
-                        function_id: maybe_function_id!
+                        overload_set: maybe_overload_set!
                         span: imported_name.span()
                     )
                 }
@@ -1098,7 +1112,7 @@ struct Typechecker {
             for method in record.methods {
                 if not record.generic_parameters.is_empty() or not method.parsed_function.generic_parameters.is_empty() {
                     mut func = .get_function(
-                        .find_function_in_scope(parent_scope_id: record_scope_id, function_name: method.parsed_function.name)!
+                        .find_function_matching_signature_in_scope(parent_scope_id: record_scope_id, prototype: method.parsed_function)!
                     )
                     let method_scope_id = func.function_scope_id
 
@@ -1255,7 +1269,7 @@ struct Typechecker {
 
                         let trait_ = .get_trait(trait_id!)
                         for (name, function_id) in trait_.methods {
-                            if .find_function_in_scope(parent_scope_id: struct_.scope_id, function_name: name).has_value() {
+                            if .find_functions_with_name_in_scope(parent_scope_id: struct_.scope_id, function_name: name).has_value() {
                                 continue
                             }
 
@@ -1267,7 +1281,7 @@ struct Typechecker {
                             .add_function_to_scope(
                                 parent_scope_id: struct_.scope_id
                                 name: name
-                                function_id: function_id
+                                overload_set: [function_id]
                                 span: trait_name.name_span
                             )
                         }
@@ -1301,7 +1315,7 @@ struct Typechecker {
 
                         let trait_ = .get_trait(trait_id!)
                         for (name, function_id) in trait_.methods {
-                            if .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: name).has_value() {
+                            if .find_functions_with_name_in_scope(parent_scope_id: enum_.scope_id, function_name: name).has_value() {
                                 continue
                             }
 
@@ -1313,7 +1327,7 @@ struct Typechecker {
                             .add_function_to_scope(
                                 parent_scope_id: enum_.scope_id
                                 name: name
-                                function_id: function_id
+                                overload_set: [function_id]
                                 span: trait_name.name_span
                             )
                         }
@@ -1714,7 +1728,7 @@ struct Typechecker {
             .add_function_to_scope(
                 parent_scope_id: enum_scope_id
                 name: func.name
-                function_id
+                overload_set: [function_id]
                 span: parsed_record.name_span
             )
 
@@ -1750,15 +1764,17 @@ struct Typechecker {
 
         let struct_ = .get_struct(struct_id)
 
-        let constructor_id = .find_function_in_scope(parent_scope_id: struct_.scope_id, function_name: parsed_record.name)
-        if constructor_id.has_value() {
+        let constructor_ids = .find_functions_with_name_in_scope(parent_scope_id: struct_.scope_id, function_name: parsed_record.name)
+        if constructor_ids.has_value() {
             if parsed_record.record_type is Class and parsed_record.definition_linkage is External {
                 // XXX: The parser always sets the linkage type of an extern class'
                 //      constructor to External, but we actually want to call the
                 //      class' ::create function, just like we do with a
                 //      ImplicitConstructor class.
-                mut func = .get_function(constructor_id!)
-                func.linkage = FunctionLinkage::External
+                for constructor_id in constructor_ids!.iterator() {
+                    mut func = .get_function(constructor_id)
+                    func.linkage = FunctionLinkage::External
+                }
             }
         } else if not parsed_record.definition_linkage is External {
             // No constructor found, so let's make one
@@ -1821,7 +1837,7 @@ struct Typechecker {
             .add_function_to_scope(
                 parent_scope_id: struct_.scope_id
                 name: parsed_record.name
-                function_id: function_id
+                overload_set: [function_id]
                 span: parsed_record.name_span
             )
         }
@@ -1913,7 +1929,7 @@ struct Typechecker {
                 true => {
                     let super_type_id = .typecheck_typename(parsed_type: super_parsed_type!, scope_id, name: None)
                     let super_type = .get_type(super_type_id)
-                    
+
                     if super_type is Struct(struct_id) {
                         super_struct_id = struct_id
                     } else {
@@ -1926,7 +1942,7 @@ struct Typechecker {
                 true => {
                     let super_type_id = .typecheck_typename(parsed_type: super_parsed_type!, scope_id, name: None)
                     let super_type = .get_type(super_type_id)
-                    
+
                     if super_type is Struct(struct_id) {
                         super_struct_id = struct_id
                     } else {
@@ -2111,7 +2127,7 @@ struct Typechecker {
             .add_function_to_scope(
                 parent_scope_id: struct_scope_id
                 name: func.name
-                function_id: function_id
+                overload_set: [function_id]
                 span: parsed_record.name_span
             )
 
@@ -2134,7 +2150,7 @@ struct Typechecker {
                 guard trait_id.has_value() else { continue }
                 let trait_ = .program.modules[trait_id!.module.id].traits[trait_id!.id]
                 for (name, function_id) in trait_.methods {
-                    if .find_function_in_scope(parent_scope_id: struct_scope_id, function_name: name).has_value() {
+                    if .find_functions_with_name_in_scope(parent_scope_id: struct_scope_id, function_name: name).has_value() {
                         continue
                     }
 
@@ -2147,7 +2163,7 @@ struct Typechecker {
                     .add_function_to_scope(
                         parent_scope_id: struct_scope_id
                         name: name
-                        function_id: function_id
+                        overload_set: [function_id]
                         span: implements_entry.name_span
                     )
                 }
@@ -2213,8 +2229,8 @@ struct Typechecker {
             }
         }
 
-        for fun in parsed_namespace.functions {
-            .current_function_id = .find_function_in_scope(parent_scope_id: scope_id, function_name: fun.name)
+        for fun in parsed_namespace.functions.iterator() {
+            .current_function_id = .find_functions_with_name_in_scope(parent_scope_id: scope_id, function_name: fun.name)![0]
             .typecheck_function(parsed_function: fun, parent_scope_id: scope_id)
             .current_function_id = None
         }
@@ -2383,7 +2399,7 @@ struct Typechecker {
                             fields.push(var_id)
                         }
                         enum_.variants.push(CheckedEnumVariant::StructLike(enum_id, name: variant.name, fields, span: variant.span))
-                        let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
+                        let maybe_enum_variant_constructor = .find_functions_with_name_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
                             let can_function_throw = is_boxed
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
@@ -2420,7 +2436,12 @@ struct Typechecker {
                                 is_override: false
                             )
                             let function_id = module.add_function(checked_function)
-                            .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
+                            .add_function_to_scope(
+                                parent_scope_id: enum_.scope_id,
+                                name: variant.name,
+                                overload_set: [function_id],
+                                span: variant.span
+                            )
                         }
                     } else if is_typed {
                         mut params: [CheckedParameter] = []
@@ -2432,7 +2453,7 @@ struct Typechecker {
                         let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id, name: param.name)
                         enum_.variants.push(CheckedEnumVariant::Typed(enum_id, name: variant.name, type_id, span: variant.span))
 
-                        let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
+                        let maybe_enum_variant_constructor = .find_functions_with_name_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
                             let can_function_throw = is_boxed
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
@@ -2479,7 +2500,12 @@ struct Typechecker {
                                 is_override: false
                             )
                             let function_id = module.add_function(checked_function)
-                            .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
+                            .add_function_to_scope(
+                                parent_scope_id: enum_.scope_id,
+                                name: variant.name,
+                                overload_set: [function_id],
+                                span: variant.span
+                            )
                         }
                     } else {
                         mut params: [CheckedParameter] = []
@@ -2488,7 +2514,7 @@ struct Typechecker {
                         }
 
                         enum_.variants.push(CheckedEnumVariant::Untyped(enum_id, name: variant.name, span: variant.span))
-                        let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
+                        let maybe_enum_variant_constructor = .find_functions_with_name_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
                             let can_function_throw = is_boxed
                             let function_scope_id = .create_scope(parent_scope_id, can_throw: can_function_throw, debug_name: format("enum-variant-constructor({}::{})", enum_.name, variant.name))
@@ -2525,7 +2551,12 @@ struct Typechecker {
                                 is_override: false
                             )
                             let function_id = module.add_function(checked_function)
-                            .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
+                            .add_function_to_scope(
+                                parent_scope_id: enum_.scope_id,
+                                name: variant.name,
+                                overload_set: [function_id],
+                                span: variant.span
+                            )
                         }
                     }
                 }
@@ -2553,15 +2584,21 @@ struct Typechecker {
 
         .current_struct_type_id = struct_type_id
 
-        mut all_virtuals: [String: CheckedFunction] = [:]
+        mut all_virtuals: [String: [CheckedFunction]] = [:]
         mut super_struct_id = .get_struct(struct_id).super_struct_id
         while super_struct_id.has_value() {
             let super_struct = .get_struct(super_struct_id!)
             let scope = .get_scope(super_struct.scope_id)
-            for function_tuple in scope.functions {
-                let function_ = .get_function(function_tuple.1)
-                if function_.is_virtual {
-                    all_virtuals[function_.name] = function_
+            for (_, overload_set) in scope.functions {
+                for function_id in overload_set {
+                    let function_ = .get_function(function_id)
+                    if function_.is_virtual {
+                        if not all_virtuals.contains(function_.name) {
+                            all_virtuals[function_.name] = [function_]
+                        }else {
+                            all_virtuals[function_.name].push(function_)
+                        }
+                    }
                 }
             }
             super_struct_id = super_struct.super_struct_id
@@ -2622,12 +2659,14 @@ struct Typechecker {
             }
 
             let scope = .get_scope(.get_struct(struct_id).scope_id)
-            for (name, function_id) in scope.functions {
-                checks.register_method(
-                    method_name: name,
-                    method_id: function_id,
-                    typechecker: &mut this
-                )
+            for (name, overload_set) in scope.functions {
+                for function_id in overload_set {
+                    checks.register_method(
+                        method_name: name,
+                        method_id: function_id,
+                        typechecker: &mut this
+                    )
+                }
             }
         }
 
@@ -2663,11 +2702,10 @@ struct Typechecker {
         let structure_scope_id = scope_id
         let structure_linkage = definition_linkage
 
-        let method_id = .find_function_in_scope(parent_scope_id: structure_scope_id, function_name: func.name)
+        let method_id = .find_function_matching_signature_in_scope(parent_scope_id: structure_scope_id, prototype: func)
         if not method_id.has_value() {
             .compiler.panic("we just pushed the checked function, but it's not present")
         }
-
         mut checked_function = .get_function(method_id!)
         let function_scope_id = checked_function.function_scope_id
 
@@ -2680,7 +2718,7 @@ struct Typechecker {
 
         // Set current function index before a block type check so that
         // method return type is checked against its implementation
-        .current_function_id = method_id
+        .current_function_id = method_id!
 
         let VOID_TYPE_ID = builtin(BuiltinType::Void)
 
@@ -2737,11 +2775,11 @@ struct Typechecker {
         if parameter.default_argument.has_value() {
             //FIXME: Get the real safety mode from somewhere, right now it assumes it is safe
             mut checked_default_value_expr = .typecheck_expression(parameter.default_argument!, scope_id, safety_mode: SafetyMode::Safe, type_hint: type_id)
-            
+
             if checked_default_value_expr is OptionalNone(span: expr_span) {
                 checked_default_value_expr = CheckedExpression::OptionalNone(span: expr_span, type_id)
             }
-            
+
             let default_value_type_id = checked_default_value_expr.type()
             checked_default_value = checked_default_value_expr
             if not .check_types_for_compat(
@@ -2944,7 +2982,12 @@ struct Typechecker {
             checked_function.return_type_id = return_type_id
         }
 
-        .add_function_to_scope(parent_scope_id, name: parsed_function.name, function_id, span: parsed_function.name_span)
+        .add_function_to_scope(
+            parent_scope_id,
+            name: parsed_function.name,
+            overload_set: [function_id],
+            span: parsed_function.name_span
+        )
     }
 
     function check_that_type_doesnt_contain_reference(mut this, type_id: TypeId, span: Span) throws {
@@ -3000,7 +3043,7 @@ struct Typechecker {
             let implemented_trait: (TraitId, [TypeId])? = implemented_traits.get(trait_name)
             if not implemented_trait.has_value() or not implemented_trait!.0.equals(constraint) {
                 .error_with_hint(
-                    format("Cannot use ‘{}’ here as it doesn't implement the trait ‘{}’", 
+                    format("Cannot use ‘{}’ here as it doesn't implement the trait ‘{}’",
                             .type_name(generic_argument), trait_name)
                     arg_span,
                     "Consider implementing the required trait for this type",
@@ -3030,7 +3073,7 @@ struct Typechecker {
                 parsed_function.name_span
             )
         }
-        
+
         for i in 0..parsed_function.generic_parameters.size() {
             mut arg_span = call_span
             if type_args.size() > i {
@@ -3109,11 +3152,7 @@ struct Typechecker {
             return
         }
 
-        // FIXME: Optional.expect("...") would be nicer here.
-        let function_id = .find_function_in_scope(parent_scope_id, function_name: parsed_function.name)
-        if not function_id.has_value() {
-            .compiler.panic("Internal error: missing previously defined function")
-        }
+        let function_id = .find_functions_with_name_in_scope(parent_scope_id, function_name: parsed_function.name)![0]
         if parsed_function.name == "main" {
             .typecheck_jakt_main(parsed_function)
         }
@@ -3601,7 +3640,7 @@ struct Typechecker {
                         if .is_subclass_of(ancestor_type_id: lhs_type_id, child_type_id: rhs_type_id) {
                             return true
                         }
-                        
+
                         if not rhs_type_id.equals(lhs_type_id) {
                             .error(
                                 format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
@@ -4624,7 +4663,7 @@ struct Typechecker {
 
                         let new_then_block = ParsedBlock(stmts: outer_if_stmts)
                         return .expand_context_for_bindings(condition: unary_op_single_condition, acc: None, then_block: new_then_block, else_statement, span)
-                        
+
                     }
                     else => {}
                 }
@@ -4715,7 +4754,7 @@ struct Typechecker {
         let lhs_type = .get_type(lhs_type_id)
 
         .check_that_type_doesnt_contain_reference(type_id: lhs_type_id, span)
-        
+
         if checked_expr is OptionalNone(span, type_id) {
             if lhs_type is GenericInstance(id, args) {
                 if not (id.equals(optional_struct_id) or id.equals(weak_ptr_struct_id)) {
@@ -5447,7 +5486,7 @@ struct Typechecker {
             if .dump_try_hints {
                 .dump_try_hint(span)
             }
-        
+
             .unify_with_type(found_type: builtin(BuiltinType::JaktString), expected_type: type_hint, rhs_span: span)
             yield CheckedExpression::QuotedString(val, span)
         }
@@ -5975,7 +6014,7 @@ struct Typechecker {
                 .compiler.panic("Expected the just-checked function to be of a function type")
             }
         }
-        
+
         let lambda_scope_id = .create_scope(parent_scope_id: scope_id, can_throw, debug_name: "lambda")
         mut checked_captures: [CheckedCapture] = []
         for capture in captures {
@@ -6015,9 +6054,9 @@ struct Typechecker {
             if not is_fat_arrow and return_type is Empty {
                 return_type_id = void_type_id()
                 return_type_updated = true
-            } else if is_fat_arrow and 
+            } else if is_fat_arrow and
                 not checked_block.statements.is_empty() and
-                checked_block.statements.last()! is Return(val) and 
+                checked_block.statements.last()! is Return(val) and
                 val.has_value() {
                 return_type_id = .resolve_type_var(type_var_type_id: val!.type(), scope_id: lambda_scope_id)
                 return_type_updated = true
@@ -6933,8 +6972,7 @@ struct Typechecker {
         )
     }
 
-    function resolve_call(mut this, call: ParsedCall, mut namespaces: [ResolvedNamespace], span: Span, scope_id: ScopeId, must_be_enum_constructor: bool, ignore_errors: bool) throws -> FunctionId? {
-        mut callee: FunctionId? = None
+    function resolve_call(mut this, call: ParsedCall, mut namespaces: [ResolvedNamespace], span: Span, scope_id: ScopeId, must_be_enum_constructor: bool) throws -> [FunctionId] {
         mut current_scope_id = scope_id
 
         for namespace_index in 0..call.namespace_.size() {
@@ -6973,22 +7011,21 @@ struct Typechecker {
             }
 
             if .get_type(inner_type) is Function(pseudo_function_id) {
-                return pseudo_function_id
+                return [pseudo_function_id]
             }
         }
 
         // 2. Look for a function with this name.
-        let maybe_function_id = .find_function_in_scope(parent_scope_id: current_scope_id, function_name: call.name)
-        if maybe_function_id.has_value() {
-            let function_id = maybe_function_id!
-            if not must_be_enum_constructor or .get_function(function_id).type is ImplicitEnumConstructor {
-                return function_id
+        let maybe_overload_set = .find_functions_with_name_in_scope(parent_scope_id: current_scope_id, function_name: call.name)
+        if maybe_overload_set.has_value() {
+            if not must_be_enum_constructor or .get_function(maybe_overload_set![0]).type is ImplicitEnumConstructor {
+                return maybe_overload_set!
             }
         }
 
         if must_be_enum_constructor {
             .error(format("No such enum constructor ‘{}’", call.name), span)
-            return callee
+            return []
         }
 
         // 3. Look for a struct, class or enum constructor with this name.
@@ -6996,18 +7033,17 @@ struct Typechecker {
         if maybe_struct_id.has_value() {
             let struct_id = maybe_struct_id!
             let structure = .get_struct(struct_id)
-            let maybe_function_id = .find_function_in_scope(parent_scope_id: structure.scope_id, function_name: call.name)
+            let maybe_function_id = .find_functions_with_name_in_scope(parent_scope_id: structure.scope_id, function_name: call.name)
             if maybe_function_id.has_value() {
                 return maybe_function_id!
             }
-            return callee
         }
 
         if not ignore_errors {
             .error(format("Call to unknown function: ‘{}’", call.name), span)
         }
 
-        return None
+        return []
     }
 
     function typecheck_call(
@@ -7045,7 +7081,7 @@ struct Typechecker {
                     mut struct_ = .get_struct(id)
                     mut scope_id = struct_.scope_id
                     while not resolved_function_id.has_value() {
-                        resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor, ignore_errors: true)
+                        resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor, ignore_errors: true).first()
                         if resolved_function_id.has_value() {
                             break
                         }
@@ -7062,7 +7098,7 @@ struct Typechecker {
                 }
                 Enum(id) => {
                     let scope_id = .get_enum(id).scope_id
-                    resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor, ignore_errors: false)
+                    resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor, ignore_errors: false).first()
                     yield scope_id
                 }
             }
@@ -7070,7 +7106,7 @@ struct Typechecker {
                 match call.name {
                     "print" | "println" | "eprintln" | "eprint" | "format" => {}
                     else => {
-                        resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id: caller_scope_id, must_be_enum_constructor, ignore_errors: false)
+                        resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id: caller_scope_id, must_be_enum_constructor, ignore_errors: false).first()
                     }
                 }
                 yield caller_scope_id
@@ -7154,6 +7190,7 @@ struct Typechecker {
 
                     type_arg_index += 1
                 }
+
 
                 // This will be 0 for functions or 1 for instance methods, because of the `this` ptr
                 mut arg_offset = 0uz

@@ -701,9 +701,9 @@ class Interpreter {
                     )
                 }
                 "as_saturated" => {
-                    let function_ = .program.get_function(.program.find_function_in_scope(
+                    let function_ = .program.get_function(.program.find_functions_with_name_in_scope(
                         parent_scope_id: .program.prelude_scope_id()
-                        function_name: "as_saturated")!)
+                        function_name: "as_saturated")![0])
 
                     let output_type_id = type_bindings.get(function_.generics.params[0].type_id().to_string())
                     yield StatementResult::JustValue(
@@ -949,7 +949,7 @@ class Interpreter {
                     let error_struct_id = .program.find_struct_in_prelude("Error")
                     let error_struct = .program.get_struct(error_struct_id)
                     let scope = .program.get_scope(error_struct.scope_id)
-                    let constructor = scope.functions.get("from_errno")
+                    let constructors = scope.functions.get("from_errno")
                     yield StatementResult::JustValue(
                         Value(
                             impl: ValueImpl::Struct(
@@ -957,7 +957,7 @@ class Interpreter {
                                     err
                                 ],
                                 struct_id: error_struct_id
-                                constructor: constructor!
+                                constructor: constructors![0]
                             )
                             span: call_span
                         )
@@ -1018,7 +1018,7 @@ class Interpreter {
                     let file_struct_id = .program.find_struct_in_prelude("File")
                     let file_struct = .program.get_struct(file_struct_id)
                     let scope = .program.get_scope(file_struct.scope_id)
-                    let constructor = scope.functions.get("open_for_reading")
+                    let constructors = scope.functions.get("open_for_reading")
                     yield StatementResult::JustValue(
                         Value(
                             impl: ValueImpl::Struct(
@@ -1026,7 +1026,7 @@ class Interpreter {
                                     path_value
                                 ],
                                 struct_id: file_struct_id
-                                constructor: constructor!
+                                constructor: constructors![0]
                             )
                             span: call_span
                         )
@@ -1067,7 +1067,7 @@ class Interpreter {
                                     path_value
                                 ],
                                 struct_id: file_struct_id
-                                constructor: constructor!
+                                constructor: constructor![0]
                             )
                             span: call_span
                         )
@@ -1092,7 +1092,7 @@ class Interpreter {
                     let file_struct_id = .program.find_struct_in_prelude("File")
                     let file_struct = .program.get_struct(file_struct_id)
                     let scope = .program.get_scope(file_struct.scope_id)
-                    let open_for_reading = scope.functions.get("open_for_reading")!
+                    let open_for_reading = scope.functions.get("open_for_reading")![0]
                     match this_argument!.impl {
                         Struct(constructor) => {
                             if not constructor.has_value() or not constructor!.equals(open_for_reading) {
@@ -1147,7 +1147,7 @@ class Interpreter {
                     let file_struct_id = .program.find_struct_in_prelude("File")
                     let file_struct = .program.get_struct(file_struct_id)
                     let scope = .program.get_scope(file_struct.scope_id)
-                    let open_for_reading = scope.functions.get("open_for_reading")!
+                    let open_for_reading = scope.functions.get("open_for_reading")![0]
                     match this_argument!.impl {
                         Struct(constructor) => {
                             if not constructor.has_value() or not constructor!.equals(open_for_reading) {
@@ -1228,7 +1228,7 @@ class Interpreter {
                     let file_struct_id = .program.find_struct_in_prelude("File")
                     let file_struct = .program.get_struct(file_struct_id)
                     let scope = .program.get_scope(file_struct.scope_id)
-                    let open_for_writing = scope.functions.get("open_for_writing")!
+                    let open_for_writing = scope.functions.get("open_for_writing")![0]
                     match this_argument!.impl {
                         Struct(constructor) => {
                             if not constructor.has_value() or not constructor!.equals(open_for_writing) {
@@ -5170,7 +5170,7 @@ class Interpreter {
             }
 
             let range_struct_id = .program.find_struct_in_prelude("Range")
-            let range_constructor = .program.find_function_in_scope(
+            let range_constructors = .program.find_functions_with_name_in_scope(
                 parent_scope_id: .program.get_struct(range_struct_id).scope_id,
                 function_name: "Range")!
 
@@ -5178,7 +5178,7 @@ class Interpreter {
                 impl: ValueImpl::Struct(
                     fields: [start, end]
                     struct_id: range_struct_id
-                    constructor: range_constructor
+                    constructor: range_constructors[0]
                 )
                 span
             ))
