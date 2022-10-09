@@ -1,0 +1,15 @@
+/// Expect:
+/// - output: "[\"Array\"]\n\"String\"\n64i64\n"
+
+function to_string(anon x: i64) throws -> String {
+    return format("{}i64", x)
+}
+function to_string(anon x: String) throws => format("\"{}\"", x)
+function to_string<T>(anon z: T) throws => format("{}", z)
+
+
+function main() {
+    println(to_string(["Array"]))
+    println(to_string("String"))
+    println(to_string(64i64))
+}

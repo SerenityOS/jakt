@@ -31,6 +31,11 @@ import path { Path }
 import compiler { Compiler }
 import interpreter { Interpreter, InterpreterScope, ExecutionResult, value_to_checked_expression }
 
+enum FunctionMatchResult {
+    MatchSuccess(args: [CheckedExpression], maybe_this_type_id: TypeId?, used_generic_inferences: [String:String], specificity: i64)
+    MatchError(errors: [JaktError])
+}
+
 struct Typechecker {
     compiler: Compiler
     program: CheckedProgram
@@ -537,12 +542,12 @@ struct Typechecker {
                 for existing_function_id in existing_function_binding {
                     let existing_function = .get_function(existing_function_id)
                     if function_to_add.signature_matches(existing_function) {
-                        .error_with_hint(
-                            format("Redefinition of function ‘{}’.", function_to_add.name)
-                            function_to_add.parsed_function!.name_span
-                            "Previous definition is here"
-                            existing_function.parsed_function!.name_span
-                        )
+                    .error_with_hint(
+                        format("Redefinition of function ‘{}’.", function_to_add.name)
+                        function_to_add.parsed_function!.name_span
+                        "Previous definition is here"
+                        existing_function.parsed_function!.name_span
+                    )
                     }
                 }
                 scope.functions[name].push(function_id)
@@ -582,6 +587,20 @@ struct Typechecker {
 
     function find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> [FunctionId]? {
         return .program.find_functions_with_name_in_scope(parent_scope_id, function_name)
+    }
+
+    function find_function_matching_signature_in_scope(this, parent_scope_id: ScopeId, prototype: ParsedFunction) throws -> FunctionId? {
+        let function_name  = prototype.name
+        let candidate_ids = .program.find_functions_with_name_in_scope(parent_scope_id, function_name)
+        if candidate_ids.has_value() {
+            for candidate_id in candidate_ids!.iterator() {
+                let candidate = .get_function(candidate_id)
+                if candidate.parsed_function.has_value() and candidate.parsed_function!.equals(prototype) {
+                    return candidate_id
+                }
+            }
+        }
+        return None
     }
 
     function find_struct_in_scope(this, scope_id: ScopeId, name: String) throws -> StructId? =>
@@ -2230,9 +2249,7 @@ struct Typechecker {
         }
 
         for fun in parsed_namespace.functions.iterator() {
-            .current_function_id = .find_functions_with_name_in_scope(parent_scope_id: scope_id, function_name: fun.name)![0]
             .typecheck_function(parsed_function: fun, parent_scope_id: scope_id)
-            .current_function_id = None
         }
 
         for implementation in parsed_namespace.external_trait_implementations {
@@ -3103,8 +3120,14 @@ struct Typechecker {
         checked_function.function_scope_id = scope_id
     }
 
-    function typecheck_jakt_main(mut this, parsed_function: ParsedFunction) throws {
+    function typecheck_jakt_main(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
         let param_type_error = "Main function must take a single array of strings as its parameter"
+
+        let func_ids = .find_functions_with_name_in_scope(parent_scope_id, function_name: "main")
+        if func_ids!.size() > 1 {
+            .error("Function 'main' declared multiple times.", parsed_function.name_span)
+        }
+
         if parsed_function.params.size() > 1 {
             .error(param_type_error, parsed_function.name_span)
         }
@@ -3148,13 +3171,22 @@ struct Typechecker {
     }
 
     function typecheck_function(mut this, parsed_function: ParsedFunction, parent_scope_id: ScopeId) throws {
+
         if not parsed_function.generic_parameters.is_empty() and not parsed_function.must_instantiate {
             return
         }
 
-        let function_id = .find_functions_with_name_in_scope(parent_scope_id, function_name: parsed_function.name)![0]
+        let func_ids = .find_functions_with_name_in_scope(parent_scope_id, function_name: parsed_function.name)
+        let function_id = .find_function_matching_signature_in_scope(parent_scope_id, prototype: parsed_function)
+
+        guard function_id.has_value() else {
+            .compiler.panic(format("Previously defined function {} not found in scope {}", parsed_function.name, parent_scope_id))
+        }
+
+        .current_function_id = function_id!
+
         if parsed_function.name == "main" {
-            .typecheck_jakt_main(parsed_function)
+            .typecheck_jakt_main(parsed_function, parent_scope_id)
         }
 
         mut checked_function = .get_function(function_id!)
@@ -3236,6 +3268,7 @@ struct Typechecker {
 
         checked_function.block = block
         checked_function.return_type_id = return_type_id
+        .current_function_id = None
     }
 
     function statement_control_flow(this, anon statement: CheckedStatement) -> BlockControlFlow => match statement {
@@ -5452,7 +5485,6 @@ struct Typechecker {
         IndexedStruct(expr, field_name, span, is_optional) => .typecheck_indexed_struct(expr, field_name, scope_id, is_optional, safety_mode, span)
         Boolean(val, span) => {
             .unify_with_type(found_type: builtin(BuiltinType::Bool), expected_type: type_hint, rhs_span: span)
-
             yield CheckedExpression::Boolean(val, span)
         }
         NumericConstant(val, span) => {
@@ -7039,34 +7071,134 @@ struct Typechecker {
             }
         }
 
-        if not ignore_errors {
-            .error(format("Call to unknown function: ‘{}’", call.name), span)
-        }
-
+        .error(format("Call to unknown function: ‘{}’", call.name), span)
         return []
     }
 
-    function typecheck_call(
-        mut this
-        call: ParsedCall
-        caller_scope_id: ScopeId
-        span: Span
-        this_expr: CheckedExpression?
-        parent_id: StructOrEnumId?
-        safety_mode: SafetyMode
-        mut type_hint: TypeId?
-        must_be_enum_constructor: bool
-    ) throws -> CheckedExpression {
+    function match_function_and_resolve_args(mut this, call: ParsedCall, caller_scope_id: ScopeId, candidate: FunctionId, safety_mode: SafetyMode, span: Span, this_expr: CheckedExpression?) throws -> FunctionMatchResult {
+        mut args: [CheckedExpression] = []
+        mut maybe_this_type_id: TypeId? = None
+        mut argument_errors: [JaktError] = []
+        let num_old_compiler_errors = .compiler.errors.size()
+
+        let callee_candidate = .get_function(candidate)
+        let scope_containing_callee = .get_scope(callee_candidate.function_scope_id).parent!
+        let generic_inference_checkpoint = .generic_inferences.perform_checkpoint(reset: false)
+
+        if callee_candidate.is_instantiated {
+            .generic_inferences.perform_checkpoint(reset: true)
+        }
+
+        defer {
+            .generic_inferences.restore(generic_inference_checkpoint)
+        }
+
+        if callee_candidate.type is ImplicitConstructor {
+            let struct_ = .get_struct(callee_candidate.struct_id!)
+            .check_implicit_constructor_argument_access(caller_scope_id, call, struct_)
+        } else {
+            .check_method_access(accessor: caller_scope_id, accessee: scope_containing_callee, method: callee_candidate, span)
+        }
+
+        // If the user gave us explicit type arguments, let's use them in our substitutions
+        mut type_arg_index = 0uz
+        for parsed_type in call.type_args {
+            let checked_type = .typecheck_typename(parsed_type, scope_id: caller_scope_id, name: None)
+            if callee_candidate.generics.params.size() <= type_arg_index {
+                .error("Trying to access generic parameter out of bounds", parsed_type.span())
+                continue
+            }
+
+            // Find the associated type variable for this parameter, we'll use it in substitution
+            let typevar_type_id = callee_candidate.generics.params[type_arg_index].type_id()
+
+            if not typevar_type_id.equals(checked_type) {
+                .generic_inferences.set(typevar_type_id.to_string(), checked_type.to_string())
+            }
+
+            type_arg_index += 1
+        }
+
+        // This will be 0 for functions or 1 for instance methods, because of the `this` ptr
+        mut arg_offset = 0uz
+
+        // If this is a method, let's also add the types we know from our `this` pointer.
+        if this_expr.has_value() {
+            let type_id = this_expr!.type()
+            maybe_this_type_id = type_id
+            let param_type = .get_type(type_id)
+
+            if param_type is GenericInstance(id, args) {
+                let structure = .get_struct(id)
+                for i in 0..structure.generic_parameters.size() {
+                    if structure.generic_parameters[i].type_id.equals(args[i]) {
+                        continue
+                    }
+
+                    .generic_inferences.set(
+                        structure.generic_parameters[i].type_id.to_string()
+                        args[i].to_string()
+                    )
+                }
+            }
+
+            if callee_candidate.is_static() {
+                .error("Cannot call static method on an instance of an object", span)
+            } else {
+                arg_offset = 1uz
+            }
+
+            if callee_candidate.is_mutating() and not this_expr!.is_mutable(program: .program) {
+                .error("Cannot call mutating method on an immutable object instance", span)
+            }
+        } else if not callee_candidate.is_static() {
+            .error_with_hint(
+                "Cannot call an instance method statically"
+                span
+                "Add a dot before the method name to call an instance method"
+                span
+            )
+        }
+
+        mut total_function_specificity = 0
+        let resolved_args: [(String, Span, CheckedExpression)] = .resolve_default_params(params: callee_candidate.generics.base_params, args: call.args, scope_id: caller_scope_id, safety_mode, arg_offset, span)
+        if callee_candidate.generics.base_params.size() == resolved_args.size() + arg_offset {
+            for i in 0..(callee_candidate.generics.base_params.size() - arg_offset) {
+                let (name, span, checked_arg) = resolved_args[i]
+                let type_to = .get_type(callee_candidate.generics.base_params[i+arg_offset].variable.type_id)
+                total_function_specificity += type_to.specificity(program: .program)
+                .check_types_for_compat(
+                    lhs_type_id: callee_candidate.generics.base_params[i+arg_offset].variable.type_id
+                    rhs_type_id: checked_arg.type()
+                    generic_inferences: &mut .generic_inferences
+                    span: checked_arg.span()
+                )
+                args.push(checked_arg)
+            }
+        }
+        let num_match_errors = .compiler.errors.size() - num_old_compiler_errors
+        if num_match_errors > 0 {
+            for error_index in 0uz..num_match_errors {
+                argument_errors.push(.compiler.errors.pop()!)
+            }
+            return FunctionMatchResult::MatchError(errors: argument_errors)
+        }
+        let used_inferences = .generic_inferences.perform_checkpoint(reset: false)
+        return FunctionMatchResult::MatchSuccess(args, maybe_this_type_id, used_generic_inferences: used_inferences, specificity: total_function_specificity)
+    }
+
+    function typecheck_call(mut this, call: ParsedCall, caller_scope_id: ScopeId, span: Span, this_expr: CheckedExpression?, parent_id: StructOrEnumId?, safety_mode: SafetyMode, mut type_hint: TypeId?, must_be_enum_constructor: bool) throws -> CheckedExpression {
         mut args: [(String, CheckedExpression)] = []
         mut return_type = builtin(BuiltinType::Void)
         mut generic_arguments: [TypeId] = []
         mut callee_throws = false
         mut resolved_namespaces: [ResolvedNamespace] = []
+        mut resolved_function_id_candidates: [FunctionId] = []
         mut resolved_function_id: FunctionId? = None
         mut maybe_this_type_id: TypeId? = None
         mut generic_checked_function_to_instantiate: FunctionId? = None
-
         let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
+
         defer {
             .generic_inferences.restore(old_generic_inferences)
         }
@@ -7080,9 +7212,13 @@ struct Typechecker {
                 Struct(id) => {
                     mut struct_ = .get_struct(id)
                     mut scope_id = struct_.scope_id
-                    while not resolved_function_id.has_value() {
-                        resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor, ignore_errors: true).first()
-                        if resolved_function_id.has_value() {
+                    while resolved_function_id_candidates.is_empty() {
+                        let old_ignore_errors = .ignore_errors
+                        .ignore_errors = true
+                        resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
+                        .ignore_errors = old_ignore_errors
+
+                        if not resolved_function_id_candidates.is_empty() {
                             break
                         }
                         if struct_.super_struct_id.has_value() {
@@ -7098,7 +7234,7 @@ struct Typechecker {
                 }
                 Enum(id) => {
                     let scope_id = .get_enum(id).scope_id
-                    resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor, ignore_errors: false).first()
+                    resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
                     yield scope_id
                 }
             }
@@ -7106,7 +7242,7 @@ struct Typechecker {
                 match call.name {
                     "print" | "println" | "eprintln" | "eprint" | "format" => {}
                     else => {
-                        resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id: caller_scope_id, must_be_enum_constructor, ignore_errors: false).first()
+                        resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id: caller_scope_id, must_be_enum_constructor)
                     }
                 }
                 yield caller_scope_id
@@ -7127,7 +7263,42 @@ struct Typechecker {
                 }
             }
             else => {
-                if not resolved_function_id.has_value() {
+                mut max_found_specificity = -1i64
+                mut errors_while_trying_to_find_matching_function: [JaktError] = []
+                mut generic_inferences_for_best_match: [String:String] = [:]
+                // find the best match i.e. the most specific implementation that matches the signature
+                for candidate in resolved_function_id_candidates.iterator() {
+                    match .match_function_and_resolve_args(call, caller_scope_id, candidate, safety_mode, span, this_expr) {
+                        MatchSuccess(args: resolved_args, maybe_this_type_id: resolved_this_type_id, used_generic_inferences, specificity) => {
+                            if specificity > max_found_specificity {
+                                resolved_function_id = candidate
+                                maybe_this_type_id = resolved_this_type_id
+                                max_found_specificity = specificity
+                                generic_inferences_for_best_match = used_generic_inferences
+
+                                args = []
+                                for resolved_arg in resolved_args.iterator() {
+                                    args.push((call.name, resolved_arg))
+                                }
+                            }
+                        }
+                        MatchError(errors) => {
+                            for error in errors.iterator() {
+                                errors_while_trying_to_find_matching_function.push(error)
+                            }
+                            continue
+                        }
+                    }
+                }
+
+                if not resolved_function_id.has_value(){
+                    if not resolved_function_id_candidates.is_empty() {
+                        .error("No function with matching signature found.", span)
+                        for match_error in errors_while_trying_to_find_matching_function.iterator() {
+                            .compiler.errors.push(match_error)
+                        }
+                    }
+
                     mut checked_type_args: [TypeId] = []
                     for type_arg in call.type_args {
                         checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id: caller_scope_id, name: None))
@@ -7135,7 +7306,6 @@ struct Typechecker {
 
                     for arg in call.args {
                         let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: None)
-
                         args.push((call.name, checked_arg))
                     }
 
@@ -7145,7 +7315,7 @@ struct Typechecker {
                             name: call.name,
                             args,
                             type_args: checked_type_args,
-                            function_id: resolved_function_id,
+                            function_id: None,
                             return_type,
                             callee_throws
                         ),
@@ -7154,101 +7324,12 @@ struct Typechecker {
                     )
                 }
 
-                let function_id = resolved_function_id!
-                let callee = .get_function(function_id)
-
-                if callee.is_instantiated {
-                    .generic_inferences.perform_checkpoint(reset: true)
-                }
-
+                .generic_inferences.restore(generic_inferences_for_best_match)
+                let callee = .get_function(resolved_function_id!)
                 callee_throws = callee.can_throw
                 return_type = callee.return_type_id
+
                 let scope_containing_callee = .get_scope(callee.function_scope_id).parent!
-
-                if callee.type is ImplicitConstructor {
-                    let struct_ = .get_struct(callee.struct_id!)
-                    .check_implicit_constructor_argument_access(caller_scope_id, call, struct_)
-                } else {
-                    .check_method_access(accessor: caller_scope_id, accessee: scope_containing_callee, method: callee, span)
-                }
-
-                // If the user gave us explicit type arguments, let's use them in our substitutions
-                mut type_arg_index = 0uz
-                for parsed_type in call.type_args {
-                    let checked_type = .typecheck_typename(parsed_type, scope_id: caller_scope_id, name: None)
-                    if callee.generics.params.size() <= type_arg_index {
-                        .error("Trying to access generic parameter out of bounds", parsed_type.span())
-                        continue
-                    }
-
-                    // Find the associated type variable for this parameter, we'll use it in substitution
-                    let typevar_type_id = callee.generics.params[type_arg_index].type_id()
-
-                    if not typevar_type_id.equals(checked_type) {
-                        .generic_inferences.set(typevar_type_id.to_string(), checked_type.to_string())
-                    }
-
-                    type_arg_index += 1
-                }
-
-
-                // This will be 0 for functions or 1 for instance methods, because of the `this` ptr
-                mut arg_offset = 0uz
-
-                // If this is a method, let's also add the types we know from our `this` pointer.
-                if this_expr.has_value() {
-                    let type_id = this_expr!.type()
-                    maybe_this_type_id = type_id
-                    let param_type = .get_type(type_id)
-
-                    if param_type is GenericInstance(id, args) {
-                        let structure = .get_struct(id)
-                        for i in 0..structure.generic_parameters.size() {
-                            if structure.generic_parameters[i].type_id.equals(args[i]) {
-                                continue
-                            }
-
-                            .generic_inferences.set(
-                                structure.generic_parameters[i].type_id.to_string()
-                                args[i].to_string()
-                            )
-                        }
-                    }
-
-                    if callee.is_static() {
-                        .error("Cannot call static method on an instance of an object", span)
-                    } else {
-                        arg_offset = 1uz
-                    }
-
-                    if callee.is_mutating() and not this_expr!.is_mutable(program: .program) {
-                        .error("Cannot call mutating method on an immutable object instance", span)
-                    }
-                } else if not callee.is_static() {
-                    .error_with_hint(
-                        "Cannot call an instance method statically"
-                        span
-                        "Add a dot before the method name to call an instance method"
-                        span
-                    )
-                }
-
-                mut resolved_args: [(String, Span, CheckedExpression)] = .resolve_default_params(params: callee.generics.base_params, args: call.args, scope_id: caller_scope_id, safety_mode, arg_offset, span)
-
-                if callee.generics.base_params.size() == resolved_args.size() + arg_offset {
-                    for i in 0..(callee.generics.base_params.size() - arg_offset) {
-                        let (name, span, checked_arg) = resolved_args[i]
-
-                        .check_types_for_compat(
-                            lhs_type_id: callee.generics.base_params[i+arg_offset].variable.type_id
-                            rhs_type_id: checked_arg.type()
-                            generic_inferences: &mut .generic_inferences
-                            span: checked_arg.span()
-                        )
-
-                        args.push((call.name, checked_arg))
-                    }
-                }
 
                 // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
                 // type variable. For the moment, we'll just checked to see if it's a type variable.
@@ -7294,7 +7375,7 @@ struct Typechecker {
                 }
 
                 if not callee.is_instantiated or (not callee.linkage is External and not callee.generics.is_specialized_for_types(types: generic_arguments)) {
-                    generic_checked_function_to_instantiate = Some(function_id)
+                    generic_checked_function_to_instantiate = Some(resolved_function_id!)
                 } else if callee.is_instantiated {
                     if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
                         .check_types_for_compat(

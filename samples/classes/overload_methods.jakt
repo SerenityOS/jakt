@@ -1,0 +1,26 @@
+/// Expect:
+/// - output: "144\n168\n"
+
+class Rect {
+    private width: i64
+    private height: i64
+
+    public function construct(width: i64, height: i64) throws -> Rect {
+        return Rect(width, height)
+    }
+
+    public function construct(square_with_sides: i64) throws -> Rect {
+        return Rect(width: square_with_sides, height: square_with_sides)
+    }
+
+    public function area(this) -> i64 {
+        return this.width * this.height
+    }
+}
+
+function main() {
+    let square = Rect::construct(square_with_sides: 12)
+    let rect = Rect::construct(width: 12, height: 14)
+    println("{}", square.area())
+    println("{}", rect.area())
+}
