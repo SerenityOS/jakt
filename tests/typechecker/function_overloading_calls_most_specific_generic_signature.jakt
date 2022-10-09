@@ -1,0 +1,23 @@
+/// Expect:
+/// - output: "PASS\n"
+
+function to_representation(anon x: String) throws => format("\"{}\"", x)
+function to_representation(anon x: i8) throws => format("{}i8", x)
+
+function to_representation<K, V>(anon x: [K:V]) throws => "Somedict[K:V]"
+function to_representation<K>(anon x: [K:String]) throws => "Somedict[K:String]"
+function to_representation(anon x: [String:String]) throws => "Somedict[String:String]"
+function to_representation<T>(anon x: T) => "unimplemented"
+
+function main() {
+    mut pass = true
+    pass |= to_representation(42) == "42i8"
+    pass |= to_representation("Hello") == "\"Hello\""
+    pass |= to_representation(["": 0]) == "Somedict[K:V]"
+    pass |= to_representation(["": ""]) == "Somedict[String:String]"
+    pass |= to_representation([""]) == "unimplemented"
+
+    if pass {
+        println("PASS")
+    }
+}

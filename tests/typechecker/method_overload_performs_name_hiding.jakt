@@ -1,0 +1,15 @@
+/// Expect:
+/// - error: "No function with matching signature found."
+
+class A {
+    public function foo(this) => 0
+}
+
+class B : A {
+    public function foo(this, x: String) => 0
+}
+
+function main() {
+    let b = B()
+    b.foo()
+}

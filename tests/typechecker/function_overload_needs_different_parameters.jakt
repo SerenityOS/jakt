@@ -1,0 +1,10 @@
+/// Expect:
+/// - error: "Redefinition of function ‘foo’."
+
+function foo(x: String) -> i64 {
+    return 0
+}
+
+function foo(x: String) -> String {
+    return ""
+}
