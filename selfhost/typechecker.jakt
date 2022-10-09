@@ -560,11 +560,10 @@ struct Typechecker {
 
     function add_var_to_scope(mut this, scope_id: ScopeId, name: String, var_id: VarId, span: Span) throws -> bool {
         mut scope = .get_scope(scope_id)
-        for existing_var in scope.vars {
-            if name == existing_var.0 {
-                let variable_ = .get_variable(existing_var.1)
-                .error_with_hint(message: format("Redefinition of variable ‘{}’", name), span, hint: "previous definition here", hint_span: variable_.definition_span)
-            }
+        let existing_var = scope.vars.get(name)
+        if existing_var.has_value() {
+            let variable_ = .get_variable(existing_var!)
+            .error_with_hint(message: format("Redefinition of variable ‘{}’", name), span, hint: "previous definition here", hint_span: variable_.definition_span)
         }
         scope.vars.set(key: name, value: var_id)
         return true
@@ -572,14 +571,13 @@ struct Typechecker {
 
     function add_comptime_binding_to_scope(mut this, scope_id: ScopeId, name: String, value: Value, span: Span) throws -> bool {
         mut scope = .get_scope(scope_id)
-        for existing in scope.comptime_bindings {
-            if name == existing.0 {
-                .error_with_hint(
-                    message: format("Redefinition of comptime variable ‘{}’", name)
-                    span
-                    hint: "previous definition here"
-                    hint_span: existing.1.span)
-            }
+        let existing_binding = scope.comptime_bindings.get(name)
+        if existing_binding.has_value() {
+            .error_with_hint(
+                message: format("Redefinition of comptime variable ‘{}’", name)
+                span
+                hint: "previous definition here"
+                hint_span: existing_binding!.span)
         }
         scope.comptime_bindings.set(key: name, value)
         return true
