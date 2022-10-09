@@ -518,7 +518,7 @@ class Scope {
     public vars: [String: VarId]
     public comptime_bindings: [String: Value]
     public structs: [String: StructId]
-    public functions: [String: FunctionId]
+    public functions: [String: [FunctionId]]
     public enums: [String: EnumId]
     public types: [String: TypeId]
     public traits: [String: TraitId]
@@ -633,9 +633,9 @@ boxed enum MaybeResolvedScope {
                     }
 
                     if not scope_id.has_value() {
-                        let id = program.find_function_in_scope(parent_scope_id: scope, function_name: relative_name)
-                        if id.has_value() {
-                            scope_id = program.get_function(id!).function_scope_id
+                        let ids = program.find_functions_with_name_in_scope(parent_scope_id: scope, function_name: relative_name)
+                        if ids.has_value() {
+                            scope_id = program.get_function(ids![0]).function_scope_id
                         }
                     }
                     if (scope_id.has_value()) {
@@ -1619,7 +1619,7 @@ class CheckedProgram {
         return None
     }
 
-    public function find_function_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> FunctionId? {
+    public function find_functions_with_name_in_scope(this, parent_scope_id: ScopeId, function_name: String) throws -> [FunctionId]? {
         mut visited: [ScopeId] = []
         mut queue: [ScopeId] = [parent_scope_id]
         mut scope_id = Some(parent_scope_id)
