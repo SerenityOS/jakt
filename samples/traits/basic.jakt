@@ -1,0 +1,68 @@
+/// Expect:
+/// - output: "100\n42\n69\n144\n"
+
+// trait definition
+trait Hashable {
+    function hash(this) -> u64
+}
+
+trait Bar {
+    function bar(mut this)
+}
+
+
+// implementation on a class
+class Foo implements(Hashable) {
+    public function hash(this) => 42u64
+}
+
+// implementation on a struct
+struct S implements(Hashable, Bar) {
+    function hash(this) => 100u64
+    function bar(mut this) {
+        println("S::bar")
+    }
+}
+
+enum Baz implements(Hashable) {
+    Foo
+    Bar
+
+    function hash(this) => match this {
+        Foo => 44u64
+        Bar => 100u64
+    }
+}
+
+// implementing traits for builtin types can be done
+// through a newtype pattern. Also, requirements also apply for
+// generic classes, structs and enums!
+struct SumHash<T requires(Hashable)> implements(Hashable) {
+    values: [T]
+
+    function hash(this) -> u64 {
+        mut value: u64 = 0
+        for item in .values.iterator() {
+            value += item.hash()
+        }
+        return value
+    }
+}
+
+struct U64Hash implements(Hashable) {
+    value: u64
+
+    function hash(this) => .value
+}
+
+// trait requiremennt on function
+function print_hash<T requires(Hashable)>(anon value: T) {
+    println("{}", value.hash())
+}
+
+function main() {
+    print_hash(S())
+    print_hash(Foo())
+    print_hash(U64Hash(value: 69u64))
+    print_hash(SumHash(values: [Baz::Foo, Baz::Bar]))
+}
