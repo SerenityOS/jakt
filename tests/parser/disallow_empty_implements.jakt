@@ -1,0 +1,5 @@
+/// Expect:
+/// - error: "Expected trait list to have at least one trait inside it"
+
+
+struct Foo implements() {}

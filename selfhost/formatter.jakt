@@ -220,6 +220,9 @@ struct FormattedToken {
         Guard => "guard"
         Override => "override"
         Virtual => "virtual"
+        Implements => "implements"
+        Requires => "requires"
+        Trait => "trait"
         Garbage => ""
     }
 }
