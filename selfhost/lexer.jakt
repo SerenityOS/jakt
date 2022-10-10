@@ -117,6 +117,9 @@ enum Token {
     While(Span)
     Yield(Span)
     Guard(Span)
+    Implements(Span)
+    Requires(Span)
+    Trait(Span)
 
     // Catch-all for failed parses
     Garbage(consumed: String?, span: Span)
@@ -172,6 +175,9 @@ enum Token {
         "while" => Token::While(span)
         "yield" => Token::Yield(span)
         "guard" => Token::Guard(span)
+        "requires" => Token::Requires(span)
+        "implements" => Token::Implements(span)
+        "trait" => Token::Trait(span)
         else => Token::Identifier(name: string, span)
     }
 }

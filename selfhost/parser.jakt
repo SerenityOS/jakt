@@ -197,6 +197,7 @@ struct ParsedNamespace {
     name_span: Span?
     functions: [ParsedFunction]
     records: [ParsedRecord]
+    traits: [ParsedTrait]
     namespaces: [ParsedNamespace]
     module_imports: [ParsedModuleImport]
     extern_imports: [ParsedExternImport]
@@ -294,6 +295,8 @@ struct ParsedRecord {
     name_span: Span
     generic_parameters: [ParsedGenericParameter]
     definition_linkage: DefinitionLinkage
+    // if not empty, must have at least one value.
+    implements_list: [ParsedName]?
     methods: [ParsedMethod]
     record_type: RecordType
 }
@@ -306,6 +309,8 @@ enum FunctionType {
     Expression
     Closure
 }
+
+
 
 struct ParsedFunction {
     name: String
@@ -343,9 +348,23 @@ struct ParsedParameter {
     }
 }
 
+struct ParsedName {
+    name: String
+    span: Span
+}
+
 struct ParsedGenericParameter {
     name: String
     span: Span
+    // the list, if it exists, must have at least one element.
+    requires_list: [ParsedName]?
+}
+
+struct ParsedTrait {
+    name: String
+    name_span: Span
+
+    methods: [ParsedFunction]
 }
 
 struct ParsedBlock {
@@ -1302,6 +1321,7 @@ struct Parser {
             name_span: None
             functions: []
             records: []
+            traits: []
             namespaces: []
             module_imports: []
             extern_imports: []
@@ -1312,6 +1332,10 @@ struct Parser {
 
         while not .eof() {
             match .current() {
+                Trait => {
+                    .index++
+                    parsed_namespace.traits.push(.parse_trait())
+                }
                 Import => {
                     .index++
                     .parse_import(parent: &mut parsed_namespace)
@@ -1387,6 +1411,60 @@ struct Parser {
         return parsed_namespace
     }
 
+    function parse_trait(mut this) throws -> ParsedTrait {
+
+        mut parsed_trait = ParsedTrait(
+            name: ""
+            name_span: .empty_span()
+            methods: [])
+
+        guard .current() is Identifier(name, span: name_span) else {
+            .error("Expected trait name", .current().span())
+            return parsed_trait
+        }
+        parsed_trait.name = name
+        parsed_trait.name_span = name_span
+
+        .index++
+        guard .current() is LCurly else {
+            .error("Expected '{' to enter the body of the trait",
+                .current().span())
+            return parsed_trait
+        }
+
+
+        .index++
+
+        loop {
+            match .current() {
+                RCurly => { 
+                    .index++
+                    break
+                }
+                Eof(span) => {
+                    .error("Expected '}' to close the trait body", span)
+                }
+
+                Eol => {
+                    .index++
+                    continue
+                }
+                Function => {
+                    // pretend it's external so that we only parse the signature
+                    mut method = .parse_function(FunctionLinkage::External, Visibility::Public, is_comptime: false)
+                    parsed_trait.methods.push(method)
+                }
+                else(span) => {
+                    .error_with_hint("Expected 'function' keyword inside trait definition", span,
+                                     format("Inside '{}' trait's definition only function declarations can appear", parsed_trait.name), parsed_trait.name_span)
+                    return parsed_trait
+                }
+            }
+        }
+
+        return parsed_trait
+    }
+
     function parse_record(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord => match .current() {
         Struct => .parse_struct(definition_linkage)
         Class => .parse_class(definition_linkage)
@@ -1402,6 +1480,7 @@ struct Parser {
                 name_span: .empty_span(),
                 generic_parameters: [],
                 definition_linkage,
+                implements_list: None,
                 methods: [],
                 record_type: RecordType::Garbage
             )
@@ -1427,6 +1506,7 @@ struct Parser {
                 name_span: None
                 functions: []
                 records: []
+                traits: []
                 namespaces: []
                 module_imports: []
                 extern_imports: []
@@ -1981,6 +2061,7 @@ struct Parser {
             name_span: .empty_span(),
             generic_parameters: [],
             definition_linkage,
+            implements_list: None,
             methods: [],
             record_type: RecordType::Garbage
         )
@@ -2012,6 +2093,11 @@ struct Parser {
 
         if .current() is LessThan {
             parsed_enum.generic_parameters = .parse_generic_parameters()
+        }
+
+        if .current() is Implements {
+            .index++
+            parsed_enum.implements_list = .parse_trait_list()
         }
 
         if .eof() {
@@ -2185,6 +2271,7 @@ struct Parser {
             name_span: .empty_span(),
             generic_parameters: [],
             definition_linkage,
+            implements_list: None,
             methods: [],
             record_type: RecordType::Garbage
         )
@@ -2216,6 +2303,11 @@ struct Parser {
         // Generic parameters
         parsed_struct.generic_parameters = .parse_generic_parameters()
 
+        if .current() is Implements {
+            .index++
+            parsed_struct.implements_list = .parse_trait_list()
+        }
+
         .skip_newlines()
 
         if .eof() {
@@ -2238,6 +2330,7 @@ struct Parser {
             name_span: .empty_span(),
             generic_parameters: [],
             definition_linkage,
+            implements_list: None,
             methods: [],
             record_type: RecordType::Garbage
         )
@@ -2269,6 +2362,11 @@ struct Parser {
 
         // Generic parameters
         parsed_class.generic_parameters = .parse_generic_parameters()
+
+        if .current() is Implements {
+            .index++
+            parsed_class.implements_list = .parse_trait_list()
+        }
 
 
         if .eof() {
@@ -4363,6 +4461,48 @@ struct Parser {
         }
     }
 
+    function parse_trait_list(mut this) throws -> [ParsedName]? {
+        guard .current() is LParen else {
+            .error("Expected '(' to start the trait list", .current().span())
+            return None
+        }
+        .index++
+
+        mut result: [ParsedName] = []
+
+        while not .eof() {
+            match .current() {
+                Eol | Comma => {
+                    .index++
+                    continue
+                }
+                Eof(span) => {
+                    .error("Expected ')' to close the trait list", span)
+                    break
+                }
+                RParen => { 
+                    .index++
+                    break
+                }
+                Identifier(name, span) => {
+                    result.push(ParsedName(name, span))
+                    .index++
+                }
+                else(span) => {
+                    .error("Expected trait name", span)
+                    break
+                }
+            }
+        }
+        if result.is_empty() {
+            .error("Expected trait list to have at least one trait inside it",
+                .previous().span())
+            return None
+        } else {
+            return Some(result)
+        }
+    }
+
     function parse_generic_parameters(mut this) throws -> [ParsedGenericParameter] {
         if not .current() is LessThan {
             return []
@@ -4372,8 +4512,16 @@ struct Parser {
         .skip_newlines()
         while not .current() is GreaterThan and not .current() is Garbage {
             if .current() is Identifier(name, span) {
-                generic_parameters.push(ParsedGenericParameter(name, span))
+
+                mut requires_list: [ParsedName]? = None
+
                 .index++
+                if .current() is Requires {
+                    .index++
+                    requires_list = .parse_trait_list()
+                }
+
+                generic_parameters.push(ParsedGenericParameter(name, span, requires_list))
                 if .current() is Comma or .current() is Eol {
                     .index++
                 }
