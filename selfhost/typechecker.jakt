@@ -14,7 +14,7 @@ import parser { Parser, BinaryOperator, DefinitionLinkage, UnaryOperator,
                 ParsedExternImport, ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
                 ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
                 ParsedMatchBody, ParsedMatchCase, Visibility, ParsedParameter, ParsedCapture,
-                ParsedMethod, ParsedTrait }
+                ParsedMethod, ParsedTrait, ParsedName }
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant,
     CheckedEnumVariantBinding, CheckedExpression, CheckedFunction, CheckedField, FunctionGenerics, CheckedMatchBody, CheckedMatchCase,
@@ -1050,7 +1050,6 @@ struct Typechecker {
         }
 
         .program.modules[.current_module_id.id].traits.push(checked_trait)
-
     }
 
     function typecheck_enum_predecl_initial(mut this, parsed_record: ParsedRecord, enum_index: usize, module_enum_len: usize, scope_id: ScopeId) throws {
@@ -1075,6 +1074,7 @@ struct Typechecker {
             fields: []
             scope_id: .prelude_scope_id()
             definition_linkage: parsed_record.definition_linkage
+            trait_implementations: [:]
             record_type: parsed_record.record_type
             underlying_type_id: enum_type_id
             type_id: enum_type_id
@@ -1147,11 +1147,19 @@ struct Typechecker {
             fields: checked_fields
             scope_id: enum_scope_id
             definition_linkage: parsed_record.definition_linkage
+            trait_implementations: [:]
             record_type: parsed_record.record_type
             underlying_type_id
             type_id: enum_type_id
             is_boxed
         )
+
+        if parsed_record.implements_list.has_value() {
+            .fill_trait_implementation_list(
+                parsed_record.implements_list!,
+                &mut module.enums[enum_id.id].trait_implementations,
+                scope_id)
+        }
 
         mut generic_parameters: [TypeId] = module.enums[enum_id.id].generic_parameters
         generic_parameters.ensure_capacity(parsed_record.generic_parameters.size())
@@ -1411,6 +1419,25 @@ struct Typechecker {
         return .get_struct(struct_id).record_type is Struct
     }
 
+    function fill_trait_implementation_list(mut this, anon parsed_impl_list: [ParsedName], anon trait_implementations: &mut [String: TraitId], scope_id: ScopeId) throws {
+        // register the traits that this record is supposed to implement.
+        for trait_name in parsed_impl_list.iterator() {
+            // look for the trait.
+            let maybe_type_id = .find_type_in_scope(scope_id, name: trait_name.name)
+            guard maybe_type_id.has_value() else {
+                .error(format("Cannot find trait ‘{}’", trait_name.name), trait_name.span)
+                continue
+            }
+
+            guard .get_type(maybe_type_id!) is Trait(trait_id) else {
+                .error(format("Expected ‘{}’ to be a trait", trait_name.name), trait_name.span)
+                continue
+            }
+
+            trait_implementations.set(trait_name.name, trait_id)
+        }
+    }
+
     function typecheck_struct_predecl(mut this, parsed_record: ParsedRecord, struct_id: StructId, scope_id: ScopeId) throws {
         let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: true)
         defer {
@@ -1466,10 +1493,18 @@ struct Typechecker {
             fields: []
             scope_id: struct_scope_id
             definition_linkage: parsed_record.definition_linkage
+            trait_implementations: [:]
             record_type: parsed_record.record_type
             type_id: struct_type_id
             super_struct_id
         )
+
+        if parsed_record.implements_list.has_value() {
+            .fill_trait_implementation_list(
+                    parsed_record.implements_list!,
+                    &mut module.structures[struct_id.id].trait_implementations,
+                    scope_id)
+        }
 
         mut generic_parameters: [TypeId] = module.structures[struct_id.id].generic_parameters
         generic_parameters.ensure_capacity(parsed_record.generic_parameters.size())
@@ -1683,6 +1718,7 @@ struct Typechecker {
             fields: []
             scope_id: struct_scope_id
             definition_linkage: parsed_record.definition_linkage
+            trait_implementations: [:]
             record_type: parsed_record.record_type
             type_id: struct_type_id
             super_struct_id: None
