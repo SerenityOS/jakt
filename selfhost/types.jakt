@@ -140,6 +140,15 @@ struct TypeId {
     }
 }
 
+struct TraitId {
+    module: ModuleId
+    id: usize
+
+    function equals(this, anon other: TraitId) -> bool {
+        return this.module.id == other.module.id and this.id == other.id
+    }
+}
+
 struct ScopeId {
     module_id: ModuleId
     id: usize
@@ -217,6 +226,7 @@ boxed enum Type {
     Struct(StructId)
     Enum(EnumId)
     RawPtr(TypeId)
+    Trait(TraitId)
     Reference(TypeId)
     MutableReference(TypeId)
     Function(params: [TypeId], can_throw: bool, return_type_id: TypeId, pseudo_function_id: FunctionId)
@@ -247,6 +257,7 @@ boxed enum Type {
         Struct => "Struct"
         Enum => "Enum"
         RawPtr => "RawPtr"
+        Trait => "Trait"
         Reference => "Reference"
         MutableReference => "MutableReference"
         Function => "Function"
@@ -354,6 +365,13 @@ boxed enum Type {
             }
             MutableReference(lhs_id) => {
                 if rhs is MutableReference(rhs_id) {
+                    return lhs_id.equals(rhs_id)
+                } else {
+                    return false
+                }
+            }
+            Trait(lhs_id) => {
+                if rhs is Trait(rhs_id) {
                     return lhs_id.equals(rhs_id)
                 } else {
                     return false
@@ -468,6 +486,7 @@ class Module {
     public enums: [CheckedEnum]
     public scopes: [Scope]
     public types: [Type]
+    public traits: [CheckedTrait]
     public variables: [CheckedVariable]
     public imports: [ModuleId]
     public resolved_import_path: String
@@ -502,6 +521,12 @@ class Module {
 
         return VarId(module: .id, id: new_id)
     }
+}
+
+struct CheckedTrait {
+    name: String
+    name_span: Span
+    methods: [String: FunctionId]
 }
 
 struct LoadedModule {
@@ -1254,6 +1279,8 @@ class CheckedProgram {
         return .modules[id.module_id.id].scopes[id.id]
     }
 
+    public function get_trait(this, anon id: TraitId) -> CheckedTrait => .modules[id.module.id].traits[id.id]
+
     public function prelude_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 0), id: 0)
 
     public function set_loaded_module(mut this, module_name: String, loaded_module: LoadedModule) throws {
@@ -1537,6 +1564,7 @@ class CheckedProgram {
             Void => "void"
             Unknown => "unknown"
             JaktString => "String"
+            Trait(id) => .get_trait(id).name
             Function(params, return_type_id) => {
                 mut param_names: [String] = []
                 for x in params.iterator() {
