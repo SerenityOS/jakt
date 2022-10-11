@@ -14,14 +14,14 @@ import parser { Parser, BinaryOperator, DefinitionLinkage, UnaryOperator,
                 ParsedExternImport, ParsedType, ParsedStatement, ParsedVarDecl, RecordType,
                 ParsedRecord, ParsedField, TypeCast, EnumVariantPatternArgument,
                 ParsedMatchBody, ParsedMatchCase, Visibility, ParsedParameter, ParsedCapture,
-                ParsedMethod }
+                ParsedMethod, ParsedTrait }
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant,
     CheckedEnumVariantBinding, CheckedExpression, CheckedFunction, CheckedField, FunctionGenerics, CheckedMatchBody, CheckedMatchCase,
     CheckedNamespace, CheckedNumericConstant, CheckedParameter, CheckedProgram, CheckedStatement, CheckedStruct,
-    CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, CheckedVisibility, EnumId, FieldRecord, FunctionGenericParameter,
+    CheckedTypeCast, CheckedUnaryOperator, CheckedVariable, CheckedVisibility, EnumId, FieldRecord, FunctionGenericParameter, CheckedTrait,
     FunctionId, LoadedModule, Module, ModuleId, NumberConstant, ResolvedNamespace, SafetyMode, Scope, ScopeId, StructId,
-    GenericInferences, StructOrEnumId, Type, TypeId, VarId, Value, MaybeResolvedScope,
+    GenericInferences, StructOrEnumId, Type, TypeId, TraitId, VarId, Value, MaybeResolvedScope,
     builtin, never_type_id, unknown_type_id, void_type_id,
 }
 import types
@@ -211,6 +211,7 @@ struct Typechecker {
                 Type::Unknown,
                 Type::Never
             ],
+            traits: [],
             variables: [],
             imports: [],
             resolved_import_path: path ?? .compiler.current_file_path()!.to_string(),
@@ -982,7 +983,12 @@ struct Typechecker {
             .typecheck_namespace_predecl(parsed_namespace: namespace_, scope_id: namespace_scope_id)
         }
 
-        // 3. Typecheck struct predeclaration
+        // 3. Register traits
+        for parsed_trait in parsed_namespace.traits.iterator() {
+            .typecheck_trait_predecl(parsed_trait, scope_id)
+        }
+
+        // 4. Typecheck struct predeclaration
         struct_index = 0
         enum_index = 0
         for parsed_record in parsed_namespace.records.iterator() {
@@ -1002,6 +1008,44 @@ struct Typechecker {
                 }
             }
         }
+    }
+
+    function typecheck_trait_predecl(mut this, parsed_trait: ParsedTrait, scope_id: ScopeId) throws {
+        mut checked_trait = CheckedTrait(
+            name: parsed_trait.name,
+            name_span: parsed_trait.name_span,
+            methods: [:])
+
+        let trait_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: false, debug_name: format("trait({})", parsed_trait.name))
+
+        // even though traits aren't types per-se, they represent the type that would implement the trait. So they have a type ID.
+        let trait_id = TraitId(
+            module: .current_module_id
+            id: .program.modules[.current_module_id.id].traits.size())
+
+
+
+        let trait_type_id = .find_or_add_type_id(Type::Trait(trait_id))
+
+        // register the trait
+        mut scope = .get_scope(scope_id)
+        scope.types.set(parsed_trait.name, trait_type_id)
+
+        for parsed_function in parsed_trait.methods.iterator() {
+            let method_scope_id = .create_scope(parent_scope_id: trait_scope_id, can_throw: parsed_function.can_throw, debug_name: format("trait-method({}::{})", parsed_trait.name, parsed_function.name))
+
+            let function_id = .program.get_module(.current_module_id).next_function_id()
+
+            // even though traits aren't types per-se, they act like a generic variable, since
+            // they represent the type that implements said trait
+            .typecheck_function_predecl(parsed_function, parent_scope_id: trait_scope_id, this_arg_type_id: None)
+
+            checked_trait.methods.set(parsed_function.name, function_id)
+
+        }
+
+        .program.modules[.current_module_id.id].traits.push(checked_trait)
+
     }
 
     function typecheck_enum_predecl_initial(mut this, parsed_record: ParsedRecord, enum_index: usize, module_enum_len: usize, scope_id: ScopeId) throws {
