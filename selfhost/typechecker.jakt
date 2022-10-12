@@ -2461,7 +2461,48 @@ struct Typechecker {
         }
     }
 
-    function typecheck_and_specialize_generic_function(mut this, function_id: FunctionId, generic_arguments: [TypeId], parent_scope_id: ScopeId, this_type_id: TypeId?, generic_substitutions: GenericInferences) throws {
+    function check_type_argument_requirements(mut this, generic_argument: TypeId, constraints: [TraitId], arg_span: Span) throws {
+        // if the parameter has no trait requirements, then it's OK
+        guard not constraints.is_empty() else {
+            return
+        }
+
+        // only structs or enums can implement traits
+        let (implemented_traits, decl_span) = match .get_type(generic_argument) {
+            GenericEnumInstance(id) | Enum(id) => (.get_enum(id).trait_implementations, .get_enum(id).name_span)
+            GenericInstance(id) | Struct(id) => (.get_struct(id).trait_implementations, .get_struct(id).name_span)
+            else => {
+                .error(
+                    format("Cannot use ‘{}’ here as only enums, structs and classes can implement the required traits", 
+                        .type_name(generic_argument)),
+                    arg_span)
+                // NOTE: C++ rejects the 'return {}' because it cannot get a matching constructor
+                unsafe { cpp {
+                    "return ErrorOr<void>{};"
+                } }
+
+                // NOTE: unreachable due to the cpp above
+                let dict: [String: TraitId] = [:]
+
+                yield (dict, Span(file_id: FileId(id: 0), start: 0, end: 0))
+            }
+        }
+
+        for constraint in constraints.iterator() {
+            let trait_name = .program.get_trait(constraint).name
+            let implemented_trait = implemented_traits.get(trait_name)
+            if not implemented_trait.has_value() or not implemented_trait!.equals(constraint) {
+                .error_with_hint(
+                    format("Cannot use ‘{}’ here as it doesn't implement the trait ‘{}’", 
+                            .type_name(generic_argument), trait_name)
+                    arg_span,
+                    "Consider implementing the required trait for this type",
+                    decl_span)
+            }
+        }
+    }
+
+    function typecheck_and_specialize_generic_function(mut this, function_id: FunctionId, generic_arguments: [TypeId], parent_scope_id: ScopeId, this_type_id: TypeId?, generic_substitutions: GenericInferences, type_args: [ParsedType], call_span: Span) throws {
         mut checked_function = .get_function(function_id)
         checked_function.generics.specializations.push(generic_arguments)
 
@@ -2481,6 +2522,17 @@ struct Typechecker {
                 )
                 parsed_function.name_span
             )
+        }
+        
+        for i in 0..parsed_function.generic_parameters.size() {
+            mut arg_span = call_span
+            if type_args.size() > i {
+                arg_span = type_args[i].span()
+            }
+            .check_type_argument_requirements(
+                generic_argument: generic_arguments[i],
+                constraints: checked_function.generics.params[i].checked_parameter.constraints,
+                arg_span)
         }
 
         let span = parsed_function.name_span
@@ -6612,6 +6664,8 @@ struct Typechecker {
                 parent_scope_id: callee_scope_id,
                 this_type_id: maybe_this_type_id,
                 generic_substitutions: .generic_inferences
+                type_args: call.type_args,
+                call_span: span
             )
         }
 
