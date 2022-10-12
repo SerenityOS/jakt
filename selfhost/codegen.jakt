@@ -581,6 +581,7 @@ struct CodeGenerator {
                                 output += struct_output
                             }
                         }
+                        Trait => { }
                         else => {
                             panic(format("Unexpected type in dependency graph: {}", type_))
                         }
