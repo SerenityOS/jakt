@@ -826,11 +826,7 @@ struct CodeGenerator {
                     output += ","
                 }
                 output += "typename "
-                let type_id = match generic_parameter {
-                    InferenceGuide(type_id) => type_id
-                    Parameter(type_id) => type_id
-                }
-                output += .codegen_type(type_id)
+                output += .codegen_type(generic_parameter.type_id())
             }
             output += ">\n"
         }
@@ -940,7 +936,7 @@ struct CodeGenerator {
                     output += ","
                 }
                 output += "typename "
-                output += .codegen_type(generic_parameter)
+                output += .codegen_type(generic_parameter.type_id)
             }
             output += ">"
         }
@@ -967,7 +963,7 @@ struct CodeGenerator {
         mut generic_parameter_names: [String] = []
         if not struct_.generic_parameters.is_empty() {
             for generic_parameter in struct_.generic_parameters.iterator() {
-                generic_parameter_names.push(.codegen_type(generic_parameter))
+                generic_parameter_names.push(.codegen_type(generic_parameter.type_id))
             }
 
             output += format("template <{}>", join(prepend_to_each(generic_parameter_names, prefix: "typename "), separator: ", "))
@@ -985,7 +981,7 @@ struct CodeGenerator {
                         class_name_with_generics += "<"
                         first = false
                     }
-                    class_name_with_generics += .codegen_type(generic_parameter)
+                    class_name_with_generics += .codegen_type(generic_parameter.type_id)
                 }
                 if not struct_.generic_parameters.is_empty() {
                     class_name_with_generics += ">"
@@ -1074,7 +1070,7 @@ struct CodeGenerator {
         let is_generic = not enum_.generic_parameters.is_empty()
         mut template_args_array: [String] = []
         for generic_parameter in enum_.generic_parameters.iterator() {
-            if .program.get_type(generic_parameter) is TypeVariable(name) {
+            if .program.get_type(generic_parameter.type_id) is TypeVariable(name) {
                 template_args_array.push("typename " + name)
             }
         }
@@ -1125,7 +1121,7 @@ struct CodeGenerator {
         let is_generic = not enum_.generic_parameters.is_empty()
         mut generic_parameter_names: [String] = []
         for generic_parameter in enum_.generic_parameters.iterator() {
-            if .program.get_type(generic_parameter) is TypeVariable(name) {
+            if .program.get_type(generic_parameter.type_id) is TypeVariable(name) {
                 generic_parameter_names.push(name)
             }
         }
@@ -1265,14 +1261,14 @@ struct CodeGenerator {
         if not is_inline and not struct_.generic_parameters.is_empty() {
             output += "template <"
             mut first = true
-            for type_id in struct_.generic_parameters.iterator() {
+            for param in struct_.generic_parameters.iterator() {
                 if first {
                     first = false
                 } else {
                     output += ","
                 }
                 output += "typename "
-                output += .codegen_type(type_id)
+                output += .codegen_type(param.type_id)
             }
             output += ">\n"
         }
@@ -1328,14 +1324,14 @@ struct CodeGenerator {
         if not is_inline and not enum_.generic_parameters.is_empty() {
             output += "template <"
             mut first = true
-            for type_id in enum_.generic_parameters.iterator() {
+            for param in enum_.generic_parameters.iterator() {
                 if first {
                     first = false
                 } else {
                     output += ","
                 }
                 output += "typename "
-                output += .codegen_type(type_id)
+                output += .codegen_type(param.type_id)
             }
             output += ">\n"
         }
@@ -3215,7 +3211,7 @@ struct CodeGenerator {
                     first = false
                 }
 
-                class_name_with_generics += .codegen_type(generic_parameter)
+                class_name_with_generics += .codegen_type(generic_parameter.type_id)
             }
             if not structure.generic_parameters.is_empty() {
                 class_name_with_generics += ">"
@@ -3278,14 +3274,14 @@ struct CodeGenerator {
         if not is_inline and not structure.generic_parameters.is_empty() {
             output += "template <"
             mut first = true
-            for type_id in structure.generic_parameters.iterator() {
+            for param in structure.generic_parameters.iterator() {
                 if first {
                     first = false
                 } else {
                     output += ","
                 }
                 output += "typename "
-                output += .codegen_type(type_id)
+                output += .codegen_type(param.type_id)
             }
             output += ">\n"
         }
@@ -3355,7 +3351,7 @@ struct CodeGenerator {
                     first = false
                 }
 
-                class_name_with_generics += .codegen_type(generic_parameter)
+                class_name_with_generics += .codegen_type(generic_parameter.type_id)
             }
             if not structure.generic_parameters.is_empty() {
                 class_name_with_generics += ">"

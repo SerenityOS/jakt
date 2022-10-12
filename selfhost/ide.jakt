@@ -961,14 +961,8 @@ function get_function_signature(program: CheckedProgram, function_id: FunctionId
         generic_parameters += "<"
 
         for parameter in checked_function.generics.params.iterator() {
-            let generic_type = match parameter {
-                InferenceGuide(type_id) => {
-                    yield program.type_name(type_id)
-                }
-                Parameter(type_id) => {
-                    yield program.type_name(type_id)
-                }
-            }
+
+            let generic_type = program.type_name(parameter.type_id())
 
             let separator = match is_first_param {
                 true => ""

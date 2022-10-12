@@ -760,14 +760,19 @@ enum CheckedCapture {
     }
 }
 
-enum FunctionGenericParameter {
-    InferenceGuide(TypeId)
-    Parameter(TypeId)
+enum FunctionGenericParameterKind {
+    InferenceGuide
+    Parameter
+}
 
-    function type_id(this) => match this {
-        InferenceGuide(id) => id
-        Parameter(id) => id
-    }
+
+struct FunctionGenericParameter {
+    kind: FunctionGenericParameterKind
+    checked_parameter: CheckedGenericParameter
+
+    function type_id(this) => .checked_parameter.type_id
+
+    function parameter(anon type_id: TypeId) throws => FunctionGenericParameter(kind: FunctionGenericParameterKind::Parameter, checked_parameter: CheckedGenericParameter::make(type_id))
 }
 
 struct CheckedVariable {
@@ -921,7 +926,7 @@ struct CheckedField {
 struct CheckedStruct {
     name: String
     name_span: Span
-    generic_parameters: [TypeId]
+    generic_parameters: [CheckedGenericParameter]
     fields: [CheckedField]
     scope_id: ScopeId
     definition_linkage: DefinitionLinkage
@@ -934,7 +939,7 @@ struct CheckedStruct {
 struct CheckedEnum {
     name: String
     name_span: Span
-    generic_parameters: [TypeId]
+    generic_parameters: [CheckedGenericParameter]
     variants: [CheckedEnumVariant]
     scope_id: ScopeId
     definition_linkage: DefinitionLinkage
@@ -943,6 +948,13 @@ struct CheckedEnum {
     underlying_type_id: TypeId
     type_id: TypeId
     is_boxed: bool
+}
+
+struct CheckedGenericParameter {
+    type_id: TypeId
+    constraints: [TraitId]
+
+    function make(anon type_id: TypeId) throws => CheckedGenericParameter(type_id, constraints: [])
 }
 
 enum CheckedEnumVariant {
@@ -1783,7 +1795,7 @@ class CheckedProgram {
                     mut new_args:[TypeId] = []
                     new_args.ensure_capacity(struct_.generic_parameters.size())
                     for arg in struct_.generic_parameters.iterator() {
-                        new_args.push(.substitute_typevars_in_type(type_id: arg, generic_inferences, module_id))
+                        new_args.push(.substitute_typevars_in_type(type_id: arg.type_id, generic_inferences, module_id))
                     }
                     return .find_or_add_type_id(Type::GenericInstance(id: struct_id, args: new_args), module_id)
                 }
@@ -1794,7 +1806,7 @@ class CheckedProgram {
                     mut new_args:[TypeId] = []
                     new_args.ensure_capacity(enum_.generic_parameters.size())
                     for arg in enum_.generic_parameters.iterator() {
-                        new_args.push(.substitute_typevars_in_type(type_id: arg, generic_inferences, module_id))
+                        new_args.push(.substitute_typevars_in_type(type_id: arg.type_id, generic_inferences, module_id))
                     }
                     return .find_or_add_type_id(Type::GenericEnumInstance(id: enum_id, args: new_args), module_id)
                 }
