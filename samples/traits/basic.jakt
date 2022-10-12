@@ -35,20 +35,7 @@ enum Baz implements(Hashable) {
 }
 
 // implementing traits for builtin types can be done
-// through a newtype pattern. Also, requirements also apply for
-// generic classes, structs and enums!
-struct SumHash<T requires(Hashable)> implements(Hashable) {
-    values: [T]
-
-    function hash(this) -> u64 {
-        mut value: u64 = 0
-        for item in .values.iterator() {
-            value += item.hash()
-        }
-        return value
-    }
-}
-
+// through a newtype pattern.
 struct U64Hash implements(Hashable) {
     value: u64
 
@@ -64,5 +51,4 @@ function main() {
     print_hash(S())
     print_hash(Foo())
     print_hash(U64Hash(value: 69u64))
-    print_hash(SumHash(values: [Baz::Foo, Baz::Bar]))
 }
