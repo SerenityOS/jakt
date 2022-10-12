@@ -1,5 +1,5 @@
 /// Expect:
-/// - output: "100\n42\n69\n144\n"
+/// - output: "100\n69\n"
 
 // trait definition
 trait Hashable {
@@ -10,11 +10,6 @@ trait Bar {
     function bar(mut this)
 }
 
-
-// implementation on a class
-class Foo implements(Hashable) {
-    public function hash(this) => 42u64
-}
 
 // implementation on a struct
 struct S implements(Hashable, Bar) {
@@ -49,6 +44,5 @@ function print_hash<T requires(Hashable)>(anon value: T) {
 
 function main() {
     print_hash(S())
-    print_hash(Foo())
     print_hash(U64Hash(value: 69u64))
 }
