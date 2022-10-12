@@ -1978,6 +1978,17 @@ struct Typechecker {
             super_struct_id = super_struct.super_struct_id
         }
 
+        mut checks = TraitImplCheck::make()
+
+        {
+            let trait_implementations = .get_struct(struct_id).trait_implementations
+            checks.ensure_capacity(trait_implementations.size())
+
+            for (trait_name, trait_id) in trait_implementations.iterator() {
+                checks.register_trait(trait_id, trait_name, trait_methods: .program.get_trait(trait_id).methods)
+            }
+        }
+
         for method in record.methods.iterator() {
             if method.is_override {
                 if not all_virtuals.contains(method.parsed_function.name) {
@@ -1986,13 +1997,22 @@ struct Typechecker {
             } else if all_virtuals.contains(method.parsed_function.name) {
                 .error("Missing override keyword on function that is virtual", method.parsed_function.name_span)
             }
-            .typecheck_method(func: method.parsed_function, parent_id: StructOrEnumId::Struct(struct_id))
+            let method_id = .typecheck_method(func: method.parsed_function, parent_id: StructOrEnumId::Struct(struct_id))
+
+            if method_id.has_value() {
+                checks.register_method(
+                    method_name: method.parsed_function.name,
+                    method_id: method_id!,
+                    program: &.program)
+            }
         }
+
+        checks.throw_errors(record_decl_span: .get_struct(struct_id).name_span, typechecker: &mut this)
 
         .current_struct_type_id = None
     }
 
-    function typecheck_method(mut this, func: ParsedFunction, parent_id: StructOrEnumId) throws {
+    function typecheck_method(mut this, func: ParsedFunction, parent_id: StructOrEnumId) throws -> FunctionId? {
         mut parent_generic_parameters: [TypeId] = []
         mut scope_id = .prelude_scope_id()
         mut definition_linkage = DefinitionLinkage::Internal
@@ -2013,7 +2033,7 @@ struct Typechecker {
         }
 
         if (not func.generic_parameters.is_empty() or not parent_generic_parameters.is_empty()) and not func.must_instantiate {
-            return
+            return None
         }
 
         let structure_scope_id = scope_id
@@ -2067,6 +2087,8 @@ struct Typechecker {
 
         checked_function.block = block
         checked_function.return_type_id = return_type_id
+
+        return method_id!
     }
 
     function typecheck_parameter(mut this, parameter: ParsedParameter, scope_id: ScopeId, first: bool, this_arg_type_id: TypeId?, check_scope: ScopeId?) throws -> CheckedParameter {
@@ -6608,4 +6630,140 @@ struct Typechecker {
         }
         return false
     }
+}
+
+// NOTE: for some reason using (String, Span) would not compile the generated
+// C++, specifically the call to get(). I couldn't track down the error since
+// accessing a [String: (String, Span)] dictionary seemed fine in a separate
+// test file.
+struct AlreadyImplementedFor {
+    trait_name: String
+    encounter_span: Span
+}
+
+// helper struct to implement the checking of trait implementations
+struct TraitImplCheck {
+    // methods that don't yet have a specified implementation.
+    missing_methods: [String: [String: FunctionId]]
+    // same name, but signature doesn't match.
+    unmatched_signatures: [String: [String: Span]]
+    // same name, signature matches, but isn't marked public.
+    private_matching_methods: [String: [String: Span]]
+    // 'Cannot implement method X for trait Y since it already implements Z'
+    already_implemented_for: [String: AlreadyImplementedFor]
+
+    function make() throws -> TraitImplCheck => 
+        TraitImplCheck(
+            missing_methods: [:]
+            unmatched_signatures: [:]
+            private_matching_methods: [:]
+            already_implemented_for: [:])
+
+    function ensure_capacity(mut this, anon count: usize) throws {
+        .missing_methods.ensure_capacity(count)
+        .unmatched_signatures.ensure_capacity(count)
+        .private_matching_methods.ensure_capacity(count)
+        .already_implemented_for.ensure_capacity(count)
+    }
+
+    function register_trait(mut this, trait_id: TraitId, trait_name: String, trait_methods: [String: FunctionId]) throws {
+        .unmatched_signatures[trait_name] = [:]
+        .private_matching_methods[trait_name] = [:]
+
+        mut missing_methods: [String: FunctionId] = [:]
+        missing_methods.ensure_capacity(trait_methods.size())
+
+
+        for (method_name, method_id) in trait_methods.iterator() {
+            missing_methods.set(method_name, method_id)
+        }
+
+        .missing_methods.set(trait_name, missing_methods)
+    }
+
+    function throw_errors(mut this, record_decl_span: Span, typechecker: &mut Typechecker) throws {
+        for (trait_name, missing_methods) in .missing_methods.iterator() {
+            let unmatched_signatures = .unmatched_signatures[trait_name]
+            let private_matching_methods = .private_matching_methods[trait_name]
+            for (method_name, trait_method_id) in missing_methods.iterator() {
+                let already_implemented_for = .already_implemented_for.get(method_name)
+                let unmatched_signature = unmatched_signatures.get(method_name)
+                let private_matching_method = private_matching_methods.get(method_name)
+                if already_implemented_for.has_value() {
+                    typechecker.error(
+                        format("Cannot implement ‘{}’ for ‘{}’ because it's already implementing ‘{}’",
+                            method_name,
+                            trait_name,
+                            already_implemented_for!.trait_name),
+                        already_implemented_for!.encounter_span)
+                } else if private_matching_method.has_value() {
+                    let span = private_matching_method!
+                    typechecker.error_with_hint(
+                        format("Implementation of ‘{}’ for trait ‘{}’ is valid but is not public",
+                            method_name, trait_name),
+                        span,
+                        "Consider adding ‘public’ to make the method accessible",
+                        span)
+                } else {
+                    // The user didn't add an implementation for the desired method.
+                    // Check if we found an unmatching signature to report that to the user.
+                    // Otherwise give them a hint about what the method looks like.
+
+                    if unmatched_signature.has_value() {
+                        let method_span = unmatched_signature!
+
+                        typechecker.error_with_hint(
+                            format("Missing implementation for method ‘{}’ of trait ‘{}’",
+                                method_name, trait_name),
+                            record_decl_span,
+                            "The method is declared here, but its signature doesn't match",
+                            method_span)
+                    } else {
+                        let trait_method_span = typechecker.get_function(trait_method_id).name_span
+                        typechecker.error_with_hint(
+                            format("Missing implementation for method ‘{}’ of trait ‘{}’",
+                                method_name, trait_name),
+                            record_decl_span,
+                            "Consider implementing the method with the signature specified here",
+                            trait_method_span)
+                    }
+
+                }
+            }
+        }
+    }
+
+    function register_method(mut this, method_name: String, method_id: FunctionId, program: &CheckedProgram) throws {
+        let method = program.get_function(method_id)
+
+        // search for a matching method
+        for (trait_name, methods) in .missing_methods.iterator() {
+            let trait_method_id = methods.get(method_name)
+
+            guard trait_method_id.has_value() else {
+                continue
+            }
+            let trait_method = program.get_function(trait_method_id!)
+
+
+            guard trait_method.signature_matches(method) else {
+                .unmatched_signatures[trait_name].set(method_name, method.name_span)
+                continue
+            }
+
+            guard method.visibility is Public else {
+                .private_matching_methods[trait_name].set(method_name, method.name_span)
+                continue
+            }
+
+            // since we got here, this means we found the method implementation!
+            // Register it as already implemented so that the rest of the traits
+            // that needed a similar method know that the method was already implementing
+            // one trait.
+            .missing_methods[trait_name].remove(method_name)
+            .already_implemented_for[method_name] =  AlreadyImplementedFor(trait_name, encounter_span: method.name_span)
+            break
+        }
+    }
+
 }
