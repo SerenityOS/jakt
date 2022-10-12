@@ -71,10 +71,18 @@ function display_message_with_span(anon severity: MessageSeverity, file_name: St
     let line_spans = gather_line_spans(file_contents)
 
     mut line_index = 1uz
-    let largest_line_number = line_spans.size()
 
+    mut largest_line_number = 0uz
+    while line_index < line_spans.size() {
+        if span.start >= line_spans[line_index].0 and span.start <= line_spans[line_index].1 {
+            largest_line_number = line_index + 2 // 1 (row number) + 1 (extra source line)
+        }
+        ++line_index
+    }
+    
     let width = format("{}", largest_line_number).length()
 
+    line_index = 1uz
     while line_index < line_spans.size() {
         if span.start >= line_spans[line_index].0 and span.start <= line_spans[line_index].1 {
             let column_index = span.start - line_spans[line_index].0
@@ -114,9 +122,14 @@ function display_message_with_span(anon severity: MessageSeverity, file_name: St
 function print_source_line(severity: MessageSeverity, file_contents: [u8], file_span: (usize, usize), error_span: Span, line_number: usize, largest_line_number: usize) throws {
     mut index = file_span.0
 
-    let width = format("{}", largest_line_number).length()
+    let largest_width = format("{}", largest_line_number).length()
+    let current_width = format("{}", line_number).length()
 
-    eprint(" {} | ", line_number)
+    eprint(" {}", line_number)
+    for _ in 0..(largest_width - current_width) {
+        eprint(" ")
+    }
+    eprint(" | ")
 
     while index <= file_span.1 {
         mut c = b' '
