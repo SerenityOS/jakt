@@ -1,0 +1,13 @@
+/// Expect:
+/// - error: "Cannot use ‘Foo’ here as it doesn't implement the trait ‘Bar’"
+trait Bar {}
+
+struct Foo {}
+
+function do_something_with_bar<T requires(Bar)>(value: T) { }
+
+function main() {
+    do_something_with_bar<Foo>(value: Foo())
+}
+
+
