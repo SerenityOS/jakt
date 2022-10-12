@@ -618,6 +618,53 @@ class CheckedFunction {
     public is_virtual: bool
     public is_override: bool
 
+    // NOTE: this currently can't match generic function signatures. E.g
+    // a<T>() -> T and b<T>() -> T won't be detected to have the same signature
+    // due to `T` having a different ID.
+    // NOTE: function trait requirements aren't currently taken into account.
+    public function signature_matches(this, anon other: CheckedFunction) -> bool {
+        guard .return_type_id.equals(other.return_type_id) else {
+            return false
+        }
+
+        guard .can_throw == other.can_throw else {
+            return false
+        }
+
+        guard .params.size() == other.params.size() else {
+            return false
+        }
+
+        // both static or both have 'this' parameter
+        mut arg_start = 0uz
+
+        if .is_static() {
+            guard other.is_static() else {
+                return false
+            }
+        } else {
+            guard not other.is_static() else {
+                return false
+            }
+
+            guard .is_mutating() == other.is_mutating() else {
+                return false
+            }
+            arg_start = 1uz
+        }
+
+        for i in arg_start...params.size() {
+            let this_param = .params[i].variable
+            let other_param = other.params[i].variable
+
+            guard this_param.type_id.equals(other_param.type_id) else {
+                return false
+            }
+        }
+
+        return true
+    }
+
     public function is_static(this) -> bool {
         if .params.size() < 1 {
             return true

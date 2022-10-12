@@ -1,0 +1,11 @@
+/// Expect:
+/// - error: "Missing implementation for method ‘bar’ of trait ‘Bar’"
+
+
+trait Bar {
+    function bar(this)
+}
+
+class Foo implements(Bar) {}
+
+function main() {}

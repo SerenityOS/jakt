@@ -1,0 +1,15 @@
+/// Expect:
+/// - error: "Implementation of ‘bar’ for trait ‘Bar’ is valid but is not public"
+
+
+trait Bar {
+    function bar(this)
+}
+
+class Foo implements(Bar) {
+    function bar(this) {
+        println("Foo::bar")
+    }
+}
+
+function main() {}
