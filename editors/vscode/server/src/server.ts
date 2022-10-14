@@ -19,6 +19,8 @@ import {
     Definition,
     DocumentSymbol,
     SymbolKind,
+    HoverParams,
+    TypeDefinitionParams,
 } from "vscode-languageserver/node";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -74,6 +76,25 @@ function includeFlagForPath(file_path: string): string {
         return " -I " + path.dirname(fileURLToPath(file_path));
     }
     return " -I " + file_path;
+}
+
+function getClickableFilePosition(textDocumentPositionParams: TextDocumentPositionParams) {
+    return `${textDocumentPositionParams.textDocument.uri.replace('file://', '')}:${textDocumentPositionParams.position.line}:${textDocumentPositionParams.position.character}`;
+}
+
+async function durationLogWrapper<T>(
+    label: string,
+    fn: () => Promise<T>
+): Promise<T> {
+    console.log("Triggered " + label + ": ...");
+    console.time(label);
+    const result = await fn();
+
+    // This purposefully has the same prefix length as the "Triggered " log above,
+    // also does not add a newline at the end.
+    process.stdout.write("Finished  ");
+    console.timeEnd(label);
+    return new Promise<T>(resolve => resolve(result));
 }
 
 connection.onInitialize((params: InitializeParams) => {
@@ -144,78 +165,79 @@ async function goToDefinition(
     document: TextDocument,
     jaktOutput: string
 ): Promise<HandlerResult<Definition, void> | undefined> {
-    const lines = jaktOutput.split("\n").filter((l) => l.length > 0);
-    for (const line of lines) {
-        const obj = JSON.parse(line);
-        // connection.console.log("going to type definition");
-        // connection.console.log(obj);
-        if (obj.file === "" || obj.file === "__prelude__") return;
+    return await durationLogWrapper(`goToDefinition`, async () => {
+        const lines = jaktOutput.split("\n").filter((l) => l.length > 0);
+        for (const line of lines) {
+            const obj = JSON.parse(line);
+            // connection.console.log("going to type definition");
+            // connection.console.log(obj);
+            if (obj.file === "" || obj.file === "__prelude__") return;
 
-        const lineBreaks = findLineBreaks(
-            obj.file
-                ? (await fs.promises.readFile(obj.file)).toString()
-                : document.getText() ?? ""
-        );
-        const uri = obj.file ? "file://" + obj.file : document.uri;
-        // connection.console.log(uri);
+            const lineBreaks = findLineBreaks(
+                obj.file
+                    ? (await fs.promises.readFile(obj.file)).toString()
+                    : document.getText() ?? ""
+            );
+            const uri = obj.file ? "file://" + obj.file : document.uri;
+            // connection.console.log(uri);
 
-        console.timeEnd("onDefinition");
-        return {
-            uri: uri,
-            range: {
-                start: convertSpan(obj.start, lineBreaks),
-                end: convertSpan(obj.end, lineBreaks),
-            },
-        };
-    }
+            return {
+                uri: uri,
+                range: {
+                    start: convertSpan(obj.start, lineBreaks),
+                    end: convertSpan(obj.end, lineBreaks),
+                },
+            };
+        }
+    });
 }
 
 connection.onDocumentSymbol(async (request): Promise<DocumentSymbol[]> => {
-    console.time("onDocumentSymbol");
-    const settings = await getDocumentSettings(request.textDocument.uri);
-    const document = documents.get(request.textDocument.uri);
-    if (!document) return [];
+    return await durationLogWrapper(`onDocumentSymbol`, async () => {
+        const settings = await getDocumentSettings(request.textDocument.uri);
+        const document = documents.get(request.textDocument.uri);
+        if (!document) return [];
 
-    const text = document.getText();
-    const lineBreaks = findLineBreaks(text);
-    const stdout = await runCompiler(
-        text,
-        "--print-symbols " +
-            includeFlagForPath(request.textDocument.uri),
-        settings
-    );
-    const toSymbolDefinition = (symbol: JaktSymbol): DocumentSymbol => {
-        const kind_map = {
-            "namespace": SymbolKind.Namespace,
-            "function": SymbolKind.Function,
-            "method": SymbolKind.Method,
-            "struct": SymbolKind.Struct,
-            "class": SymbolKind.Class,
-            "enum": SymbolKind.Enum,
-            "enum-member": SymbolKind.EnumMember
+        const text = document.getText();
+        const lineBreaks = findLineBreaks(text);
+        const stdout = await runCompiler(
+            text,
+            "--print-symbols " +
+                includeFlagForPath(request.textDocument.uri),
+            settings
+        );
+        const toSymbolDefinition = (symbol: JaktSymbol): DocumentSymbol => {
+            const kind_map = {
+                "namespace": SymbolKind.Namespace,
+                "function": SymbolKind.Function,
+                "method": SymbolKind.Method,
+                "struct": SymbolKind.Struct,
+                "class": SymbolKind.Class,
+                "enum": SymbolKind.Enum,
+                "enum-member": SymbolKind.EnumMember
+            };
+            return {
+                name: symbol.name,
+                detail: symbol.detail,
+                kind: kind_map[symbol.kind],
+                range: {
+                    start:  convertSpan(symbol.range.start, lineBreaks),
+                    end:  convertSpan(symbol.range.end, lineBreaks)
+                },
+                selectionRange: {
+                    start:  convertSpan(symbol.selection_range.start, lineBreaks),
+                    end:  convertSpan(symbol.selection_range.end, lineBreaks)
+                },
+                children: symbol.children.map(child => toSymbolDefinition(child))
+            };
         };
-        return {
-            name: symbol.name,
-            detail: symbol.detail,
-            kind: kind_map[symbol.kind],
-            range: {
-                start:  convertSpan(symbol.range.start, lineBreaks),
-                end:  convertSpan(symbol.range.end, lineBreaks)
-            },
-            selectionRange: {
-                start:  convertSpan(symbol.selection_range.start, lineBreaks),
-                end:  convertSpan(symbol.selection_range.end, lineBreaks)
-            },
-            children: symbol.children.map(child => toSymbolDefinition(child))
-        };
-    };
-    const result = (JSON.parse(stdout) as JaktSymbol[]).map(symbol => toSymbolDefinition(symbol));
-    console.timeEnd("onDocumentSymbol");
-    return result;
+        const result = (JSON.parse(stdout) as JaktSymbol[]).map(symbol => toSymbolDefinition(symbol));
+        return result;
+    });
 });
 
 connection.onDefinition(async (request) => {
-    console.time("onDefinition");
+    return await durationLogWrapper(`onDefinition ${getClickableFilePosition(request)}`, async () => {
     const document = documents.get(request.textDocument.uri);
     if (!document) return;
     const settings = await getDocumentSettings(request.textDocument.uri);
@@ -233,36 +255,40 @@ connection.onDefinition(async (request) => {
         settings
     );
     return goToDefinition(document, stdout);
+    });
 });
 
-connection.onTypeDefinition(async (request) => {
-    console.time("onTypeDefinition");
-    const document = documents.get(request.textDocument.uri);
-    if (!document) return;
-    const settings = await getDocumentSettings(request.textDocument.uri);
-
-    const text = document.getText();
-    // connection.console.log("request: ");
-    // connection.console.log(request.textDocument.uri);
-    // connection.console.log("index: " + convertPosition(request.position, text));
-    const stdout = await runCompiler(
-        text,
-        "-t " +
-            convertPosition(request.position, text) +
-            includeFlagForPath(request.textDocument.uri),
-        settings
-    );
-    return goToDefinition(document, stdout);
+connection.onTypeDefinition(async (request: TypeDefinitionParams) => {
+    return await durationLogWrapper(`onTypeDefinition ${getClickableFilePosition(request)}`, async () => {
+        const document = documents.get(request.textDocument.uri);
+        if (!document) return;
+        const settings = await getDocumentSettings(request.textDocument.uri);
+    
+        const text = document.getText();
+        // connection.console.log("request: ");
+        // connection.console.log(request.textDocument.uri);
+        // connection.console.log("index: " + convertPosition(request.position, text));
+        const stdout = await runCompiler(
+            text,
+            "-t " +
+                convertPosition(request.position, text) +
+                includeFlagForPath(request.textDocument.uri),
+            settings
+        );
+        return goToDefinition(document, stdout);
+    });
 });
 
-connection.onHover(async (request) => {
-    console.time("onHover");
-    const document = documents.get(request.textDocument.uri);
-    const settings = await getDocumentSettings(request.textDocument.uri);
 
-    const text = document?.getText();
+connection.onHover(async (request: HoverParams) => {
+    return await durationLogWrapper(`onHover ${getClickableFilePosition(request)}`, async () => {
+        const document = documents.get(request.textDocument.uri);
+        const settings = await getDocumentSettings(request.textDocument.uri);
+    
+        const text = document?.getText();
+    
+        if (!(typeof text == "string")) return null;
 
-    if (typeof text == "string") {
         // connection.console.log("request: ");
         // connection.console.log(request.textDocument.uri);
         // connection.console.log("index: " + convertPosition(request.position, text));
@@ -273,7 +299,6 @@ connection.onHover(async (request) => {
                 includeFlagForPath(request.textDocument.uri),
             settings
         );
-        // connection.console.log("got: " + stdout);
 
         const lines = stdout.split("\n").filter((l) => l.length > 0);
         for (const line of lines) {
@@ -289,14 +314,10 @@ connection.onHover(async (request) => {
             };
 
             if (obj.hover != "") {
-                console.timeEnd("onHover");
                 return { contents };
             }
         }
-    }
-
-    console.timeEnd("onHover");
-    return null;
+    });
 });
 
 // The example settings
@@ -514,115 +535,115 @@ function findLineBreaks(utf16_text: string): Array<number> {
 async function validateTextDocument(
     textDocument: JaktTextDocument
 ): Promise<void> {
-    console.time("validateTextDocument");
-    if (!hasDiagnosticRelatedInformationCapability) {
-        console.error(
-            "Trying to validate a document with no diagnostic capability"
-        );
-        return;
-    }
-
-    // // In this simple example we get the settings for every validate run.
-    const settings = await getDocumentSettings(textDocument.uri);
-
-    // The validator creates diagnostics for all uppercase words length 2 and more
-    const text = textDocument.getText();
-
-    const lineBreaks = findLineBreaks(text);
-
-    const stdout = await runCompiler(
-        text,
-        "-c --type-hints --try-hints -j" + includeFlagForPath(textDocument.uri),
-        settings
-    );
-
-    textDocument.jaktInlayHints = [];
-
-    const diagnostics: Diagnostic[] = [];
-
-    // FIXME: We use this to deduplicate type hints given by the compiler.
-    //        It'd be nicer if it didn't give duplicate hints in the first place.
-    const seenTypeHintPositions = new Set();
-
-    const lines = stdout.split("\n").filter((l) => l.length > 0);
-    for (const line of lines) {
-        // connection.console.log(line);
-        try {
-            const obj = JSON.parse(line);
-
-            // HACK: Ignore everything that isn't about file ID #1 here, since that's always the current editing buffer.
-            if (obj.file_id != 1) {
-                continue;
-            }
-            if (obj.type == "diagnostic") {
-                let severity: DiagnosticSeverity = DiagnosticSeverity.Error;
-
-                switch (obj.severity) {
-                    case "Information":
-                        severity = DiagnosticSeverity.Information;
-                        break;
-                    case "Hint":
-                        severity = DiagnosticSeverity.Hint;
-                        break;
-                    case "Warning":
-                        severity = DiagnosticSeverity.Warning;
-                        break;
-                    case "Error":
-                        severity = DiagnosticSeverity.Error;
-                        break;
-                }
-
-                const position_start = convertSpan(obj.span.start, lineBreaks);
-                const position_end = convertSpan(obj.span.end, lineBreaks);
-
-                const diagnostic: Diagnostic = {
-                    severity,
-                    range: {
-                        start: position_start,
-                        end: position_end,
-                    },
-                    message: obj.message,
-                    source: textDocument.uri,
-                };
-
-                // connection.console.log(diagnostic.message);
-
-                diagnostics.push(diagnostic);
-            } else if (obj.type == "hint" && settings.hints.showInferredTypes) {
-                if (!seenTypeHintPositions.has(obj.position)) {
-                    seenTypeHintPositions.add(obj.position);
-                    const position = convertSpan(obj.position, lineBreaks);
-                    const hint_string = ": " + obj.typename;
-                    const hint = InlayHint.create(
-                        position,
-                        [InlayHintLabelPart.create(hint_string)],
-                        InlayHintKind.Type
-                    );
-
-                    textDocument.jaktInlayHints.push(hint);
-                }
-            } else if (obj.type == "try" && settings.hints.showImplicitTry) {
-                if (!seenTypeHintPositions.has(obj.position)) {
-                    seenTypeHintPositions.add(obj.position);
-                    const position = convertSpan(obj.position, lineBreaks);
-                    const hint_string = "try ";
-                    const hint = InlayHint.create(
-                        position,
-                        [InlayHintLabelPart.create(hint_string)],
-                        InlayHintKind.Type
-                    );
-
-                    textDocument.jaktInlayHints.push(hint);
-                }
-            }
-        } catch (e) {
-            console.error(e);
+    return await durationLogWrapper(`validateTextDocument ${textDocument.uri}`, async () => {
+        if (!hasDiagnosticRelatedInformationCapability) {
+            console.error(
+                "Trying to validate a document with no diagnostic capability"
+            );
+            return;
         }
-    }
-
-    // Send the computed diagnostics to VSCode.
-    connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
-    console.timeEnd("validateTextDocument");
+    
+        // // In this simple example we get the settings for every validate run.
+        const settings = await getDocumentSettings(textDocument.uri);
+    
+        // The validator creates diagnostics for all uppercase words length 2 and more
+        const text = textDocument.getText();
+    
+        const lineBreaks = findLineBreaks(text);
+    
+        const stdout = await runCompiler(
+            text,
+            "-c --type-hints --try-hints -j" + includeFlagForPath(textDocument.uri),
+            settings
+        );
+    
+        textDocument.jaktInlayHints = [];
+    
+        const diagnostics: Diagnostic[] = [];
+    
+        // FIXME: We use this to deduplicate type hints given by the compiler.
+        //        It'd be nicer if it didn't give duplicate hints in the first place.
+        const seenTypeHintPositions = new Set();
+    
+        const lines = stdout.split("\n").filter((l) => l.length > 0);
+        for (const line of lines) {
+            // connection.console.log(line);
+            try {
+                const obj = JSON.parse(line);
+    
+                // HACK: Ignore everything that isn't about file ID #1 here, since that's always the current editing buffer.
+                if (obj.file_id != 1) {
+                    continue;
+                }
+                if (obj.type == "diagnostic") {
+                    let severity: DiagnosticSeverity = DiagnosticSeverity.Error;
+    
+                    switch (obj.severity) {
+                        case "Information":
+                            severity = DiagnosticSeverity.Information;
+                            break;
+                        case "Hint":
+                            severity = DiagnosticSeverity.Hint;
+                            break;
+                        case "Warning":
+                            severity = DiagnosticSeverity.Warning;
+                            break;
+                        case "Error":
+                            severity = DiagnosticSeverity.Error;
+                            break;
+                    }
+    
+                    const position_start = convertSpan(obj.span.start, lineBreaks);
+                    const position_end = convertSpan(obj.span.end, lineBreaks);
+    
+                    const diagnostic: Diagnostic = {
+                        severity,
+                        range: {
+                            start: position_start,
+                            end: position_end,
+                        },
+                        message: obj.message,
+                        source: textDocument.uri,
+                    };
+    
+                    // connection.console.log(diagnostic.message);
+    
+                    diagnostics.push(diagnostic);
+                } else if (obj.type == "hint" && settings.hints.showInferredTypes) {
+                    if (!seenTypeHintPositions.has(obj.position)) {
+                        seenTypeHintPositions.add(obj.position);
+                        const position = convertSpan(obj.position, lineBreaks);
+                        const hint_string = ": " + obj.typename;
+                        const hint = InlayHint.create(
+                            position,
+                            [InlayHintLabelPart.create(hint_string)],
+                            InlayHintKind.Type
+                        );
+    
+                        textDocument.jaktInlayHints.push(hint);
+                    }
+                } else if (obj.type == "try" && settings.hints.showImplicitTry) {
+                    if (!seenTypeHintPositions.has(obj.position)) {
+                        seenTypeHintPositions.add(obj.position);
+                        const position = convertSpan(obj.position, lineBreaks);
+                        const hint_string = "try ";
+                        const hint = InlayHint.create(
+                            position,
+                            [InlayHintLabelPart.create(hint_string)],
+                            InlayHintKind.Type
+                        );
+    
+                        textDocument.jaktInlayHints.push(hint);
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    
+        // Send the computed diagnostics to VSCode.
+        connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+    });
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -632,9 +653,8 @@ connection.onDidChangeWatchedFiles((_change) => {
 });
 
 // This handler provides the initial list of the completion items.
-connection.onCompletion(
-    async (request: TextDocumentPositionParams): Promise<CompletionItem[]> => {
-        console.time("onCompletion");
+connection.onCompletion(async (request: TextDocumentPositionParams): Promise<CompletionItem[]> => {
+    return await durationLogWrapper(`onCompletion ${getClickableFilePosition(request)}`, async () => {
         // The pass parameter contains the position of the text document in
         // which code complete got requested. For the example we ignore this
         // info and always provide the same completion items.
@@ -674,77 +694,73 @@ connection.onCompletion(
                     });
                     index++;
                 }
-                console.timeEnd("onCompletion");
                 return output;
             }
         }
 
-        console.timeEnd("onCompletion");
         return [];
-    }
-);
+    });
+});
 
 connection.onDocumentFormatting(async (params) => {
-    console.time("onDocumentFormatting");
-    const document = documents.get(params.textDocument.uri);
-    const settings = await getDocumentSettings(params.textDocument.uri);
+    return await durationLogWrapper(`onDocumentFormatting`, async () => {
+        const document = documents.get(params.textDocument.uri);
+        const settings = await getDocumentSettings(params.textDocument.uri);
 
-    const text = document?.getText();
+        if (document === undefined) return [];
 
-    if (typeof text == "string") {
-        const stdout = await runCompiler(
-            text,
-            "-f " + includeFlagForPath(params.textDocument.uri),
-            settings
-        );
-        const formatted = stdout;
-        console.timeEnd("onDocumentFormatting");
-        return [
-            {
-                range: {
-                    start: { line: 0, character: 0 },
-                    end: { line: document!.lineCount, character: 0 },
+        const text = document.getText();
+
+        if (typeof text == "string") {
+            const stdout = await runCompiler(
+                text,
+                "-f " + includeFlagForPath(params.textDocument.uri),
+                settings
+            );
+            const formatted = stdout;
+            return [
+                {
+                    range: {
+                        start: { line: 0, character: 0 },
+                        end: { line: document.lineCount, character: 0 },
+                    },
+                    newText: formatted,
                 },
-                newText: formatted,
-            },
-        ];
-    }
-    console.timeEnd("onDocumentFormatting");
-    return [];
+            ];
+        }
+        return [];
+    });
 });
 
 connection.onDocumentRangeFormatting(async (params) => {
-    console.time("onDocumentRangeFormatting");
-    const document = documents.get(params.textDocument.uri);
-    const settings = await getDocumentSettings(params.textDocument.uri);
+    return await durationLogWrapper(`onDocumentRangeFormatting`, async () => {
+        const document = documents.get(params.textDocument.uri);
+        const settings = await getDocumentSettings(params.textDocument.uri);
 
-    const text = document?.getText();
+        const text = document?.getText();
 
-    const lineBreaks = findLineBreaks(text ?? "");
-
-    if (typeof text == "string") {
-        const stdout = await runCompiler(
-            text,
-            `--format-range ${
-                convertPosition(params.range.start, text)
-            }:${
-                convertPosition(params.range.end, text)
-            } -f ${
-                includeFlagForPath(params.textDocument.uri)
-            }`,
-            settings
-        );
-        const formatted = stdout;
-        console.timeEnd("onDocumentFormatting");
-        return [
-            {
-                range: params.range,
-                newText: formatted,
-            },
-        ];
-    }
-    console.timeEnd("onDocumentRangeFormatting");
-    return [];
+        if (typeof text == "string") {
+            const stdout = await runCompiler(
+                text,
+                `--format-range ${
+                    convertPosition(params.range.start, text)
+                }:${
+                    convertPosition(params.range.end, text)
+                } -f ${
+                    includeFlagForPath(params.textDocument.uri)
+                }`,
+                settings
+            );
+            const formatted = stdout;
+            return [
+                {
+                    range: params.range,
+                    newText: formatted,
+                },
+            ];
+        }
+        return [];
+    });
 });
 
 // This handler resolves additional information for the item selected in
