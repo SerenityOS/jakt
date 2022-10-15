@@ -80,6 +80,7 @@ function(add_jakt_executable executable)
     OUTPUT ${cpp_files}
     COMMAND "$<TARGET_FILE:${JAKT_EXECUTABLE_COMPILER}>"
       -S
+      $<$<CONFIG:Release>:-O>
       -T "${JAKT_TARGET}"
       --binary-dir "${binary_tmp_dir}"
       -I "$<JOIN:${JAKT_EXECUTABLE_COMPILER_INCLUDES},;-I>"
