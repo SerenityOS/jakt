@@ -585,7 +585,7 @@ Comptime functions may only be invoked by constant expressions; this restriction
 
 ### Throwing in a comptime context 
 
-Throwing behaves the same way as normal error control flow does, if the error leaves the comptime context (by reaching the original callsite), it will be promoted to a compiliation error.
+Throwing behaves the same way as normal error control flow does, if the error leaves the comptime context (by reaching the original callsite), it will be promoted to a compilation error.
 
 ### Side effects
 
