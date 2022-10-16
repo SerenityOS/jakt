@@ -5197,6 +5197,16 @@ struct Typechecker {
         }
 
         let type_id = .find_or_add_type_id(Type::GenericInstance(id: array_struct_id, args: [inner_type_id]))
+
+        if type_hint.has_value() {
+            .check_types_for_compat(
+                lhs_type_id: type_hint!
+                rhs_type_id: type_id
+                generic_inferences: &mut .generic_inferences
+                span
+            )
+        }
+
         return CheckedExpression::JaktArray(vals, repeat, span, type_id, inner_type_id)
     }
 
