@@ -145,6 +145,16 @@ public:
         return {};
     }
 
+    ErrorOr<void> insert(size_t before_index, T value)
+    {
+        VERIFY(before_index <= m_size);
+        TRY(ensure_capacity(size() + 1));
+        TRY(push(move(value)));
+        for (size_t i = size() - 1; i > before_index; --i)
+            swap(m_elements[i], m_elements[i - 1]);
+        return {};
+    }
+
     T* unsafe_data() { return m_elements; }
 
 private:
@@ -297,6 +307,11 @@ public:
         auto value = move(at(size() - 1));
         shrink(size() - 1);
         return value;
+    }
+
+    ErrorOr<void> insert(size_t before_index, T value)
+    {
+        return m_storage->insert(before_index, move(value));
     }
 
     static ErrorOr<Array> filled(size_t size, T value)

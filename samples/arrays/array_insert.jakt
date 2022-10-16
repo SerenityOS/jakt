@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "x:[1, 0]\n"
+
+function main() {
+    mut x: [i32] = []
+    // Insert before .size()
+    x.insert(before_index: 0, value: 0i32)
+    // Insert before some index that exists
+    x.insert(before_index: 0, value: 1i32)
+    println("x:{}", x)
+}
