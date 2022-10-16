@@ -1,0 +1,5 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘[i32]’, but got ‘(i64, i64)’"
+function foo() throws -> [i32] {
+    return (1, 2)
+}
