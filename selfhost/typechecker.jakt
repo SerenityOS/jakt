@@ -2652,6 +2652,11 @@ struct Typechecker {
                         if (array_value_type_id.equals(unknown_type_id())) {
                             return true
                         }
+                        .error(
+                            format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
+                            span
+                        )
+                        return false
                     } else {
                         .error(
                             format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id))
@@ -4765,6 +4770,15 @@ struct Typechecker {
             let type_id = .find_or_add_type_id(Type::GenericInstance(id: tuple_struct_id, args: checked_types))
 
             // FIXME: Unify type
+
+            if type_hint.has_value() {
+                .check_types_for_compat(
+                    lhs_type_id: type_hint!
+                    rhs_type_id: type_id
+                    generic_inferences: &mut .generic_inferences
+                    span
+                )
+            }
 
             yield CheckedExpression::JaktTuple(vals: checked_values, span, type_id)
         }
