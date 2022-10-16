@@ -1,0 +1,5 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘(f64, f64)’, but got ‘[unknown]’"
+function foo() throws -> (f64, f64) {
+    return []
+}
