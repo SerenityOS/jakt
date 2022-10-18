@@ -1429,7 +1429,7 @@ struct Typechecker {
                 type: func.type
                 linkage: func.linkage
                 function_scope_id: method_scope_id
-                struct_id: None
+                struct_id
                 is_instantiated: not is_generic or is_extern
                 parsed_function: method.parsed_function
                 is_comptime: method.parsed_function.is_comptime
