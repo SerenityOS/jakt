@@ -102,6 +102,8 @@ struct Typechecker {
             compiler.panic("trying to typecheck a non-existant file")
         }
 
+        let true_module_name = compiler.files[input_file!.id].basename(strip_extension: true)
+
         let placeholder_module_id = ModuleId(id: 0)
         let root_module_name = compiler.current_file_path()!.basename(strip_extension: true)
 
@@ -128,12 +130,13 @@ struct Typechecker {
         typechecker.current_module_id = root_module_id
         compiler.set_current_file(input_file!)
 
+        let loaded_module = LoadedModule(
+            module_id: root_module_id
+            file_id: input_file!
+        )
         typechecker.program.set_loaded_module(
-            module_name: root_module_name
-            loaded_module: LoadedModule(
-                module_id: root_module_id
-                file_id: input_file!
-            )
+            module_name: true_module_name
+            loaded_module
         )
 
         let PRELUDE_SCOPE_ID: ScopeId = typechecker.prelude_scope_id()
