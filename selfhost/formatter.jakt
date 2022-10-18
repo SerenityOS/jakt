@@ -1030,7 +1030,7 @@ struct Stage0 {
                         arrow_indents
                         allow_eol
                         inserted_comma
-                        expression_mode: ExpressionMode::AtExpressionStart
+                        expression_mode: ExpressionMode::OutsideExpression
                         dedents_on_open_curly
                     ))
 
@@ -1498,8 +1498,8 @@ struct Stage0 {
                     ))
 
                     let trivia: [u8] = match expression_mode {
-                        AtExpressionStart | BeforeExpressions => []
-                        else => [b' ']
+                        InExpression => [b' ']
+                        else => []
                     }
 
                     yield FormattedToken(
