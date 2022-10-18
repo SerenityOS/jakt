@@ -4476,77 +4476,8 @@ struct Typechecker {
             .unify_with_type(found_type: builtin(BuiltinType::JaktString), expected_type: type_hint, rhs_span: span)
             yield CheckedExpression::QuotedString(val, span)
         }
-        Call(call, span) => {
-            yield .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: false)
-        }
-        MethodCall(expr, call, span, is_optional) => {
-            let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
-            let checked_expr_type_id = checked_expr.type()
-            mut found_optional = false
-
-            let parent_id = match .get_type(checked_expr_type_id) {
-                Struct(id) => Some(StructOrEnumId::Struct(id))
-                Enum(id) => Some(StructOrEnumId::Enum(id))
-                JaktString => Some(StructOrEnumId::Struct(.find_struct_in_prelude("String")))
-                GenericInstance(id, args) => {
-                    yield match is_optional {
-                        true => {
-                            let optional_struct_id = .find_struct_in_prelude("Optional")
-                            mut struct_id: StructOrEnumId? = None
-                            if not id.equals(optional_struct_id) {
-                                .error(format("Can't use ‘{}’ as an optional type in optional chained call", .get_struct(id).name), span)
-                            } else {
-                                found_optional = true
-                                struct_id = match .get_type(args[0]) {
-                                    Struct(struct_id) | GenericInstance(id: struct_id) => StructOrEnumId::Struct(struct_id)
-                                    Enum(id) | GenericEnumInstance(id) => StructOrEnumId::Enum(id)
-                                    else => {
-                                        .error("Can't use non-struct type as an optional type in optional chained call", span)
-                                        found_optional = false
-                                        yield StructOrEnumId::Struct(optional_struct_id)
-                                    }
-                                }
-                            }
-
-                            yield Some(struct_id ?? StructOrEnumId::Struct(optional_struct_id))
-                        }
-                        else => Some(StructOrEnumId::Struct(id))
-                    }
-                }
-                GenericEnumInstance(id) => Some(StructOrEnumId::Enum(id))
-                else => {
-                    .error(message: format("no methods available on value (type: {})", .type_name(type_id: checked_expr_type_id)), span: checked_expr.span())
-                    let none: StructOrEnumId? = None
-
-                    yield none
-                }
-            }
-
-            if is_optional and not found_optional {
-                .error(message: format("Optional chain mismatch: expected optional chain, found {}", .type_name(type_id: checked_expr_type_id)), span: checked_expr.span())
-            }
-
-            let checked_call_expr = .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: checked_expr, parent_id, safety_mode, type_hint, must_be_enum_constructor: false)
-            let type_id = checked_call_expr.type()
-            yield match checked_call_expr {
-                Call(call) => {
-                    mut result_type = call.return_type
-                    if is_optional {
-                        let optional_struct_id = .find_struct_in_prelude("Optional")
-                        result_type = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [result_type]))
-                    }
-                    yield CheckedExpression::MethodCall(
-                        expr: checked_expr
-                        call
-                        span
-                        is_optional
-                        type_id: result_type)
-                }
-                else => {
-                    .compiler.panic("typecheck_call should return `CheckedExpression::Call()`")
-                }
-            }
-        }
+        Call(call, span) => .typecheck_call_expr(call, span, must_be_enum_constructor: false, scope_id, safety_mode, type_hint)
+        MethodCall(expr, call, span, is_optional) => .typecheck_method_call_expr(expr, call, span, is_optional, scope_id, safety_mode, type_hint)
         Range(from, to, span) => {
             mut checked_from: CheckedExpression? = None
             mut from_type: TypeId? = None;
@@ -5111,12 +5042,12 @@ struct Typechecker {
         }
 
         let implicit_constructor_call = ParsedCall(namespace_, name, args: [], type_args: [])
-        let call_expression = .typecheck_call(call: implicit_constructor_call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: true)
+        let call_expression = .typecheck_call_expr(call: implicit_constructor_call, span, must_be_enum_constructor: true,  scope_id, safety_mode, type_hint)
         let type_id = call_expression.type()
         let call = match call_expression {
             Call(call) => call
             else => {
-                .compiler.panic("typecheck_call returned something other than a CheckedCall")
+                .compiler.panic("typecheck_call_expr returned something other than a CheckedCall")
             }
         }
         if call.function_id.has_value() {
@@ -6034,257 +5965,251 @@ struct Typechecker {
 
         return None
     }
+    // resolves calls when they are in the form a.b(), since it's different
+    // from resolving regular calls: no builtin println/format/eprint/... and no
+    // namespacing.
+    function resolve_method_call(mut this, parent_id: StructOrEnumId, call: ParsedCall, span: Span) throws -> FunctionId? =>
+        match parent_id {
+            Struct(id: struct_id_) => {
+                // walk up the hierarchy of super types to find the method.
+                mut struct_id = struct_id_
+                loop {
+                    let structure = .get_struct(struct_id)
+                    let method = .get_scope(structure.scope_id).functions.get(call.name)
+                    if method.has_value() {
+                        return method
+                    }
 
-    function typecheck_call(mut this, call: ParsedCall, caller_scope_id: ScopeId, span: Span, this_expr: CheckedExpression?, parent_id: StructOrEnumId?, safety_mode: SafetyMode, mut type_hint: TypeId?, must_be_enum_constructor: bool) throws -> CheckedExpression {
+                    // we have a super, then continue searching in that super struct.
+                    if structure.super_struct_id.has_value() {
+                        struct_id = structure.super_struct_id!
+                        continue
+                    } else {
+                        break
+                    }
+                }
+
+                .error(format("Could not find ‘{}’", call.name), span)
+                yield None
+            }
+            Enum(id) => .get_scope(.get_enum(id).scope_id).functions.get(call.name)
+        }
+
+    // custom path to check arguments for format/[e]print[ln] builtins.
+    function typecheck_format_args(mut this, args: [(String, Span, ParsedExpression)], scope_id: ScopeId, safety_mode: SafetyMode) throws -> [(String, CheckedExpression)] {
+        mut checked_args: [(String, CheckedExpression)] = []
+        checked_args.ensure_capacity(args.size())
+        for (name, span, arg) in args.iterator() {
+            if name != "" {
+                .error("Format arguments have no name", span)
+            }
+
+            let checked_arg = .typecheck_expression(arg, scope_id, safety_mode, type_hint: None)
+            checked_args.push(("", checked_arg))
+        }
+        return checked_args
+    }
+    
+    // This function returns Some when it finds the call to be a builtin call and typechecks it, None otherwise.
+    function detect_and_typecheck_builtin_call(mut this, call: ParsedCall, span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedCall? {
+        return match call.name {
+            "eprintln" | "println" | "eprint" | "print" => 
+                Some(CheckedCall(
+                    namespace_: []
+                    name: call.name
+                    args: .typecheck_format_args(args: call.args, scope_id, safety_mode)
+                    type_args: []
+                    function_id: None
+                    return_type: void_type_id()
+                    callee_throws: false))
+
+            "format" => {
+                if not .get_scope(scope_id).can_throw {
+                    .error("Call to function that may throw needs to be in a try statement or a function marked as throws", span)
+                }
+
+                yield Some(CheckedCall(
+                        namespace_: []
+                        name: "format"
+                        args: .typecheck_format_args(args: call.args, scope_id, safety_mode)
+                        type_args: []
+                        function_id: None
+                        return_type: builtin(BuiltinType::JaktString)
+                        callee_throws: true))
+            }
+
+            else => None
+        }
+    }
+
+    // visits arguments through the typechecker and recognizes type arguments
+    function typecheck_unresolved_call(mut this, call: ParsedCall, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedCall {
+        // typecheck arguments
         mut args: [(String, CheckedExpression)] = []
-        mut return_type = builtin(BuiltinType::Void)
-        mut generic_arguments: [TypeId] = []
-        mut callee_throws = false
-        mut resolved_namespaces: [ResolvedNamespace] = []
-        mut resolved_function_id: FunctionId? = None
-        mut maybe_this_type_id: TypeId? = None
-        mut generic_checked_function_to_instantiate: FunctionId? = None
+        args.ensure_capacity(call.args.size())
+        for (name, span, arg_expr) in call.args.iterator() {
+            let checked_arg = .typecheck_expression(arg_expr, scope_id, safety_mode, type_hint: None)
+            args.push((name, checked_arg))
+        }
 
-        let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
+        // typecheck type arguments
+        mut type_args: [TypeId] = []
+        type_args.ensure_capacity(call.type_args.size())
+        for parsed_type in call.type_args.iterator() {
+            type_args.push(.typecheck_typename(parsed_type, scope_id, name: None))
+        }
+
+
+        // fill in namespace list
+        mut namespaces: [ResolvedNamespace] = []
+        namespaces.ensure_capacity(call.namespace_.size())
+
+        for name in call.namespace_.iterator() {
+            namespaces.push(ResolvedNamespace(name, generic_parameters: None))
+        }
+
+        return CheckedCall(
+            namespace_: namespaces
+            name: call.name
+            args, type_args
+            function_id: None
+            return_type: unknown_type_id()
+            callee_throws: false)
+
+    }
+
+    // This function does the common part of typechecking any call, once the
+    // function ID is known. 
+    // 
+    // NOTE: This function does the exact same job than what followed in
+    // typecheck_call when the function is not a builtin and the function id is
+    // known (so the 'else' part of the big match after the function id guard,
+    // and what goes after it), except the comptime execution which was
+    // separated into the execute_call_if_comptime() method.
+    function typecheck_resolved_call(mut this
+        call: ParsedCall
+        caller_scope_id: ScopeId
+        span: Span
+        function_id: FunctionId
+        safety_mode: SafetyMode
+        resolved_namespaces: [ResolvedNamespace]
+        this_expr_type_id: TypeId?
+        type_hint: TypeId?) throws -> CheckedCall 
+    {
+
+        let callee = .get_function(function_id)
+        let callee_scope_id = .get_scope(callee.function_scope_id).parent!
+
+        let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: callee.is_instantiated)
         defer {
             .generic_inferences.restore(old_generic_inferences)
         }
 
-        for name in call.namespace_.iterator() {
-            resolved_namespaces.push(ResolvedNamespace(name, generic_parameters: None))
+        if callee.type is ImplicitConstructor {
+            let struct_ = .get_struct(callee.struct_id!)
+                .check_implicit_constructor_argument_access(caller_scope_id, call, struct_)
+        } else {
+            .check_method_access(accessor: caller_scope_id, accessee: callee_scope_id, method: callee, span)
         }
 
-        let callee_scope_id = match parent_id.has_value() {
-            true => match parent_id! {
-                Struct(id) => {
-                    mut struct_ = .get_struct(id)
-                    mut scope_id = struct_.scope_id
-                    while not resolved_function_id.has_value() {
-                        resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor, ignore_errors: true)
-                        if resolved_function_id.has_value() {
-                            break
-                        }
-                        if struct_.super_struct_id.has_value() {
-                            let parent_struct_id = struct_.super_struct_id!
-                            struct_ = .get_struct(parent_struct_id)
-                            scope_id = struct_.scope_id
-                        } else {
-                            .error(format("Could not find ‘{}’", call.name), span)
-                            break
-                        }
-                    }
-                    yield scope_id
-                }
-                Enum(id) => {
-                    let scope_id = .get_enum(id).scope_id
-                    resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor, ignore_errors: false)
-                    yield scope_id
-                }
+        // If the user gave explicit type arguments, let's use them in our substitutions
+        for type_arg_index in 0..call.type_args.size() {
+            let parsed_type = call.type_args[type_arg_index]
+            if callee.generics.params.size() <= type_arg_index {
+                .error("Trying to access generic parameter out of bounds", parsed_type.span())
+                continue
             }
-            else => {
-                match call.name {
-                    "print" | "println" | "eprintln" | "eprint" | "format" => {}
-                    else => {
-                        resolved_function_id = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id: caller_scope_id, must_be_enum_constructor, ignore_errors: false)
-                    }
-                }
-                yield caller_scope_id
+            let checked_type = .typecheck_typename(parsed_type, scope_id: caller_scope_id, name: None)
+
+            let typevar_type_id = callee.generics.params[type_arg_index].type_id()
+
+            if not typevar_type_id.equals(checked_type) {
+                .generic_inferences.set(typevar_type_id.to_string(), checked_type.to_string())
             }
         }
 
-        match call.name {
-            "print" | "println" | "eprintln" | "eprint" | "format" => {
-                for arg in call.args.iterator() {
-                    let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: None)
+        // This will be 0 for functions and 1 for instance methods, because of the `this` ptr
 
-                    args.push((call.name, checked_arg))
+        let arg_offset = match this_expr_type_id.has_value() {
+            true => {
+                let type_id = this_expr_type_id!
+                if .get_type(type_id) is GenericInstance(id, args) {
+                    let structure = .get_struct(id)
+                    for i in 0..structure.generic_parameters.size() {
+                        if structure.generic_parameters[i].equals(args[i]) {
+                            continue
+                        }
+                        .generic_inferences.set(
+                            structure.generic_parameters[i].to_string()
+                            args[i].to_string())
+                    }
                 }
 
-                if call.name == "format" {
-                    return_type = builtin(BuiltinType::JaktString)
-                    callee_throws = true
-                }
+                yield 1uz
             }
-            else => {
-                if not resolved_function_id.has_value() {
-                    mut checked_type_args: [TypeId] = []
-                    for type_arg in call.type_args.iterator() {
-                        checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id: caller_scope_id, name: None))
-                    }
+            else => 0uz
+        }
 
-                    for arg in call.args.iterator() {
-                        let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: None)
+        mut resolved_args: [(String, Span, CheckedExpression)] = .resolve_default_params(params: callee.params, args: call.args, scope_id: caller_scope_id, safety_mode, arg_offset, span)
 
-                        args.push((call.name, checked_arg))
-                    }
+        mut args: [(String, CheckedExpression)] = []
+        if callee.generics.base_params.size() == resolved_args.size() + arg_offset {
+            args.ensure_capacity(callee.generics.base_params.size())
+            for i in 0..callee.generics.base_params.size() - arg_offset {
+                let (name, span, checked_arg) = resolved_args[i]
+                .check_types_for_compat(
+                    lhs_type_id: callee.generics.base_params[i+arg_offset].variable.type_id
+                    rhs_type_id: checked_arg.type()
+                    generic_inferences: &mut .generic_inferences
+                    span: checked_arg.span())
+                args.push((name, checked_arg))
+            }
+        }
 
-                    return CheckedExpression::Call(
-                        call: CheckedCall(
-                            namespace_: resolved_namespaces,
-                            name: call.name,
-                            args,
-                            type_args: checked_type_args,
-                            function_id: resolved_function_id,
-                            return_type,
-                            callee_throws
-                        ),
-                        span,
-                        type_id: return_type
-                    )
-                }
+        // We've now seen all the arguments and should be able to substitute
+        // the return type, if it contains a type variable. Fro the moment,
+        // we'll just check to see if it's a type variable.
+        // FIXME: `unknown_type_id()` and `None` are really the same thing. Can we remove `unknown_type_id()`?
+        mut return_type = callee.return_type_id 
+        if type_hint.has_value() and not type_hint!.equals(unknown_type_id()) {
+            let old_ignore_errors = .ignore_errors
+            .ignore_errors = true
+            .check_types_for_compat(
+                lhs_type_id: return_type
+                rhs_type_id: type_hint!
+                generic_inferences: &mut .generic_inferences
+                span)
+            .ignore_errors = old_ignore_errors
+        }
 
-                let function_id = resolved_function_id!
-                let callee = .get_function(function_id)
+        return_type = .substitute_typevars_in_type(type_id: return_type, generic_inferences: .generic_inferences)
 
-                if callee.is_instantiated {
-                    .generic_inferences.perform_checkpoint(reset: true)
-                }
 
-                callee_throws = callee.can_throw
-                return_type = callee.return_type_id
-                let scope_containing_callee = .get_scope(callee.function_scope_id).parent!
+        if type_hint.has_value() and not type_hint!.equals(unknown_type_id()) {
+            let old_ignore_errors= .ignore_errors
+            if callee.is_instantiated {
+                // If this is a possible respecialization of a generic function that is the child of a specialized version of that function
+                // allow an error here, if it is not a respecialization we will recheck
+                .ignore_errors = true
+            }
+            .check_types_for_compat(
+                lhs_type_id: type_hint!
+                rhs_type_id: return_type
+                generic_inferences: &mut .generic_inferences
+                span)
+            .ignore_errors = old_ignore_errors
+        }
 
-                if callee.type is ImplicitConstructor {
-                    let struct_ = .get_struct(callee.struct_id!)
-                    .check_implicit_constructor_argument_access(caller_scope_id, call, struct_)
+        mut generic_arguments: [TypeId] = []
+        generic_arguments.ensure_capacity(callee.generics.params.size())
+        for generic_typevar in callee.generics.params.iterator() {
+            if generic_typevar is Parameter(id) {
+                let substitution = .generic_inferences.get(id.to_string())
+                if substitution.has_value() {
+                    generic_arguments.push(TypeId::from_string(substitution!))
                 } else {
-                    .check_method_access(accessor: caller_scope_id, accessee: scope_containing_callee, method: callee, span)
-                }
-
-                // If the user gave us explicit type arguments, let's use them in our substitutions
-                mut type_arg_index = 0uz
-                for parsed_type in call.type_args.iterator() {
-                    let checked_type = .typecheck_typename(parsed_type, scope_id: caller_scope_id, name: None)
-                    if callee.generics.params.size() <= type_arg_index {
-                        .error("Trying to access generic parameter out of bounds", parsed_type.span())
-                        continue
-                    }
-
-                    // Find the associated type variable for this parameter, we'll use it in substitution
-                    let typevar_type_id = match callee.generics.params[type_arg_index] {
-                        InferenceGuide(id)
-                        | Parameter(id) => id
-                    }
-
-                    if not typevar_type_id.equals(checked_type) {
-                        .generic_inferences.set(typevar_type_id.to_string(), checked_type.to_string())
-                    }
-
-                    type_arg_index += 1
-                }
-                
-                // This will be 0 for functions or 1 for instance methods, because of the `this` ptr
-                mut arg_offset = 0uz
-
-                // If this is a method, let's also add the types we know from our `this` pointer.
-                if this_expr.has_value() {
-                    let type_id = this_expr!.type()
-                    maybe_this_type_id = type_id
-                    let param_type = .get_type(type_id)
-
-                    if param_type is GenericInstance(id, args) {
-                        let structure = .get_struct(id)
-                        for i in 0..structure.generic_parameters.size() {
-                            if structure.generic_parameters[i].equals(args[i]) {
-                                continue
-                            }
-
-                            .generic_inferences.set(
-                                structure.generic_parameters[i].to_string()
-                                args[i].to_string()
-                            )
-                        }
-                    }
-
-                    if callee.is_static() {
-                        .error("Cannot call static method on an instance of an object", span)
-                    } else {
-                        arg_offset = 1uz
-                    }
-
-                    if callee.is_mutating() and not this_expr!.is_mutable(program: .program) {
-                        .error("Cannot call mutating method on an immutable object instance", span)
-                    }
-                } else if not callee.is_static() {
-                    .error_with_hint(
-                        "Cannot call an instance method statically"
-                        span
-                        "Add a dot before the method name to call an instance method"
-                        span
-                    )
-                }
-
-                mut resolved_args: [(String, Span, CheckedExpression)] = .resolve_default_params(params: callee.generics.base_params, args: call.args, scope_id: caller_scope_id, safety_mode, arg_offset, span)
-
-                if callee.generics.base_params.size() == resolved_args.size() + arg_offset {
-                    for i in 0..callee.generics.base_params.size()-arg_offset {
-                        let (name, span, checked_arg) = resolved_args[i]
-
-                        .check_types_for_compat(
-                            lhs_type_id: callee.generics.base_params[i+arg_offset].variable.type_id
-                            rhs_type_id: checked_arg.type()
-                            generic_inferences: &mut .generic_inferences
-                            span: checked_arg.span()
-                        )
-
-                        args.push((call.name, checked_arg))
-                    }
-                }
-
-                // We've now seen all the arguments and should be able to substitute the return type, if it's contains a
-                // type variable. For the moment, we'll just checked to see if it's a type variable.
-                // FIXME: `unknown_type_id()` and `None` are really the same thing. Can we remove `unknown_type_id()`?
-                if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
-                    let old_ignore_errors = .ignore_errors
-                    .ignore_errors = true
-                    .check_types_for_compat(
-                        lhs_type_id: return_type
-                        rhs_type_id: type_hint!
-                        generic_inferences: &mut .generic_inferences
-                        span
-                    )
-                    .ignore_errors = old_ignore_errors
-                }
-                return_type = .substitute_typevars_in_type(type_id: return_type, generic_inferences: .generic_inferences)
-
-                if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
-                    let old_ignore_errors = .ignore_errors
-                    if callee.is_instantiated {
-                        // If this is a possible respecialization of a generic function that is the child of a specialized version of that function
-                        // allow an error here, if it is not a respecialization we will recheck
-                        .ignore_errors = true
-                    }
-                    .check_types_for_compat(
-                        lhs_type_id: type_hint!
-                        rhs_type_id: return_type
-                        generic_inferences: &mut .generic_inferences
-                        span
-                    )
-                    .ignore_errors = old_ignore_errors
-                }
-
-                for generic_typevar in callee.generics.params.iterator() {
-                    if generic_typevar is Parameter(id) {
-                        let substitution = .generic_inferences.get(id.to_string())
-                        if substitution.has_value() {
-                            generic_arguments.push(TypeId::from_string(substitution!))
-                        } else {
-                            .error("Not all generic parameters have known types", span)
-                        }
-                    }
-                }
-
-                if not callee.is_instantiated or (not callee.linkage is External and not callee.generics.is_specialized_for_types(types: generic_arguments)) {
-                    generic_checked_function_to_instantiate = Some(function_id)
-                } else if callee.is_instantiated {
-                    if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
-                        .check_types_for_compat(
-                            lhs_type_id: type_hint!
-                            rhs_type_id: return_type
-                            generic_inferences: &mut .generic_inferences
-                            span
-                        )
-                    }
+                    .error("Not all generic parameters have known types", span)
+                    generic_arguments.push(unknown_type_id())
                 }
             }
         }
@@ -6294,149 +6219,312 @@ struct Typechecker {
             generic_inferences: .generic_inferences,
         )
 
-        if callee_throws and not .get_scope(caller_scope_id).can_throw {
+        if callee.can_throw and not .get_scope(caller_scope_id).can_throw {
             .error("Call to function that may throw needs to be in a try statement or a function marked as throws", span)
         }
+        
 
-        if generic_checked_function_to_instantiate.has_value() {
-            // Clear the generic parameters and typecheck in the fully specialized scope.
-            if maybe_this_type_id.has_value() {
-                maybe_this_type_id = .substitute_typevars_in_type(type_id: maybe_this_type_id!, generic_inferences: .generic_inferences)
+        if not callee.is_instantiated or (not callee.linkage is External and not callee.generics.is_specialized_for_types(types: generic_arguments)) {
+            let this_type_id = match this_expr_type_id.has_value() {
+                true => Some(.substitute_typevars_in_type(type_id: this_expr_type_id!, generic_inferences: .generic_inferences))
+                else => None
             }
 
             .typecheck_and_specialize_generic_function(
-                function_id: generic_checked_function_to_instantiate!
-                generic_arguments,
-                parent_scope_id: callee_scope_id,
-                this_type_id: maybe_this_type_id,
-                generic_substitutions: .generic_inferences
-            )
+                function_id
+                generic_arguments
+                parent_scope_id: callee_scope_id
+                this_type_id
+                generic_substitutions: .generic_inferences)
+        } else if callee.is_instantiated {
+            if type_hint.has_value() and not type_hint.value().equals(unknown_type_id()) {
+                .check_types_for_compat(
+                    lhs_type_id: type_hint!
+                    rhs_type_id: return_type
+                    generic_inferences: &mut .generic_inferences
+                    span
+                )
+            }
         }
 
-        if .dump_try_hints and callee_throws {
+        if .dump_try_hints and callee.can_throw {
             .dump_try_hint(span)
         }
 
-        let function_call = CheckedCall(
+        return CheckedCall(
             namespace_: resolved_namespaces
             name: call.name
             args
             type_args: generic_arguments
-            function_id: resolved_function_id
+            function_id
             return_type
-            callee_throws
-        )
-        let checked_call = CheckedExpression::Call(
-            call: function_call
-            span
-            type_id: return_type
-        )
+            callee_throws: callee.can_throw)
+    }
 
-        let in_comptime_function = .current_function_id.has_value() and .get_function(.current_function_id.value()).is_comptime
+    // If the called function is comptime and we're inside a non-comptime
+    // block, tries executing the comptime function and yields its resulting
+    // expression. In case of failing at executing the function or not being
+    // comptime/at a non-comptime block, yields None.
+    //
+    // NOTE: assumes checked_call has a function_id since a comptime function
+    // can only be a (known) user function.
+    function execute_call_if_comptime(mut this, checked_call: CheckedCall, span: Span, caller_scope_id: ScopeId, resolved_namespaces: [ResolvedNamespace], this_expr: CheckedExpression?) throws -> CheckedExpression? {
+        let in_comptime_function = .current_function_id.has_value() and .get_function(.current_function_id!).is_comptime
+        let callee_is_comptime = .get_function(checked_call.function_id!).is_comptime
 
-        if not in_comptime_function and resolved_function_id.has_value() and .get_function(resolved_function_id!).is_comptime {
-            let resolved_function = .get_function(resolved_function_id!)
-            mut interpreter = Interpreter::create(compiler: .compiler, program: .program, spans: [])
-            let function_ = .program.get_function(generic_checked_function_to_instantiate ?? resolved_function_id!)
-            mut call_args: [Value] = []
-            mut this_argument: Value? = None
-            mut eval_scope = InterpreterScope::from_runtime_scope(scope_id: caller_scope_id, program: .program)
+        guard not in_comptime_function and callee_is_comptime else {
+            return None
+        }
 
-            for entry in .generic_inferences.iterator() {
-                let (key, value) = entry
-                eval_scope.type_bindings.set(key, TypeId::from_string(value))
+        let resolved_function = .get_function(checked_call.function_id!)
+        mut interpreter = Interpreter::create(compiler: .compiler, program: .program, spans: [])
+
+        mut eval_scope = InterpreterScope::from_runtime_scope(scope_id: caller_scope_id, program: .program)
+        for (key, value) in .generic_inferences.iterator() {
+            eval_scope.type_bindings.set(key, TypeId::from_string(value))
+        }
+
+        let this_argument: Value? = match this_expr.has_value() {
+            true => match interpreter.execute_expression(expr: this_expr!, scope: eval_scope) {
+                JustValue(value) => Some(value)
+                Throw(value) => {
+                    .error(format("Error executing this expression (evaluation threw {})", value), this_expr!.span())
+                    yield None
+                }
+                else => {
+                    .error("Invalid this expression", this_expr!.span())
+                    yield None
+                }
+            }
+            else => None
+        }
+
+        mut call_args: [Value] = []
+        for (arg_name, arg_expr) in checked_call.args.iterator() {
+            let value = try interpreter.execute_expression(
+                expr: arg_expr
+                scope: eval_scope
+            ) catch {
+                .error("Error in argument", span)
+                continue
             }
 
-            if this_expr.has_value() {
-                try {
-                    let evaluated_this = interpreter.execute_expression(
-                        expr: this_expr!
-                        scope: eval_scope)
+            if value is Throw {
+                .error(format("Compiletime call failed: {}", value), arg_expr.span())
+                break
+            }
 
-                    if evaluated_this is JustValue(value) {
-                        this_argument = value
-                    } else if evaluated_this is Throw(value) {
-                        .error(
-                            format("Error executing this expression (evaluation threw {})", value),
-                            this_expr!.span())
-                    } else {
-                        .error(
-                            "Invalid this expression",
-                            this_expr!.span())
-                    }
-                } catch {
-                    .error("Error executing this expression", this_expr!.span())
+            let evaluated_value = match value {
+                Return(x) | JustValue(x) => x
+                else => {
+                    throw Error::from_errno(69) // unreachable
                 }
             }
 
-            for argument in args.iterator() {
-                let value = try interpreter.execute_expression(
-                    expr: argument.1,
-                    scope: eval_scope
-                ) catch {
-                    .error("Error in argument", span)
-                    continue
-                }
+            call_args.push(evaluated_value)
+        }
 
-                if value is Throw {
-                    .error(
-                        format("Compiletime call failed: {}", value)
-                        argument.1.span()
-                    )
-                    break
-                }
+        mut type_bindings: [String: TypeId] = [:]
+        for i in 0..resolved_function.generics.params.size() {
+            let param = resolved_function.generics.params[i]
+            type_bindings.set(
+                param.type_id().to_string()
+                checked_call.type_args[i])
+        }
 
-                let evaluated_value = match value {
-                    Return(x) | JustValue(x) => x
-                    else => {
-                        throw Error::from_errno(69) // unreachable
-                    }
-                }
+        mut invocation_scope = InterpreterScope::create(type_bindings)
+        let result = try interpreter.execute(
+            function_to_run: checked_call.function_id!
+            namespace_: resolved_namespaces
+            this_argument
+            arguments: call_args
+            call_span: span
+            invocation_scope
+        ) catch error {
+            .error(format("Compiletime call failed: {}", error), span)
+            return None
+        }
 
-                call_args.push(evaluated_value)
-            }
-
-
-            mut type_bindings: [String:TypeId] = [:]
-            for i in 0uz..resolved_function.generics.params.size() {
-                let param = resolved_function.generics.params[i]
-
-                type_bindings.set(
-                    param.type_id().to_string()
-                    function_call.type_args[i]
-                )
-            }
-
-            mut result: ExecutionResult? = None
-            mut invocation_scope = InterpreterScope::create(type_bindings)
-            try {
-                result = interpreter.execute(
-                    function_to_run: resolved_function_id!
-                    namespace_: resolved_namespaces
-                    this_argument: this_argument
-                    arguments: call_args
-                    call_span: span
-                    invocation_scope
-                )
-            } catch error {
-                .error(format("Compiletime call failed: {}", error), span)
-                return checked_call
-            }
-
-            return match result! {
-                Return(x) => value_to_checked_expression(x, interpreter)
-                Throw(x) => {
-                    .error(
-                        format("Compiletime call failed: {}", x)
-                        span
-                    )
-                    yield checked_call
-                }
+        return match result {
+            Return(x) => Some(value_to_checked_expression(x, interpreter))
+            Throw(x) => {
+                .error(format("Compiletime call failed: {}", x), span)
+                yield None
             }
         }
 
-        return checked_call
     }
+
+    function typecheck_method_call_expr(mut this, expr: ParsedExpression, call: ParsedCall, span: Span, is_optional: bool, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
+        let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
+
+        let checked_expr_type_id = checked_expr.type()
+
+        mut found_optional = false
+        let parent_id = match .get_type(checked_expr_type_id) {
+            Struct(id) => Some(StructOrEnumId::Struct(id))
+            Enum(id)
+                | GenericEnumInstance(id) => Some(StructOrEnumId::Enum(id))
+            JaktString => Some(StructOrEnumId::Struct(.find_struct_in_prelude("String")))
+            GenericInstance(id, args) => match is_optional {
+                true => {
+                    let optional_struct_id = .find_struct_in_prelude("Optional")
+                    mut struct_id: StructOrEnumId? = None
+                    if not id.equals(optional_struct_id) {
+                        .error(format("Can't use ‘{}’ as an optional type in optional chained call", .get_struct(id).name), span)
+                    } else {
+                        found_optional = true
+                        struct_id = match .get_type(args[0]) {
+                            Struct(id)
+                                | GenericInstance(id) => Some(StructOrEnumId::Struct(id))
+                            Enum(id)
+                                | GenericEnumInstance(id) => Some(StructOrEnumId::Enum(id))
+                            else => {
+                                .error("Can't use non-struct type as an optional type in optional chained call", span)
+                                found_optional = false
+                                yield None
+                            }
+                        }
+                    }
+                    yield Some(struct_id ?? StructOrEnumId::Struct(optional_struct_id))
+                }
+                else => Some(StructOrEnumId::Struct(id))
+            }
+            else => {
+                .error(format("no methods available on value (type: {})", .type_name(checked_expr_type_id)), checked_expr.span())
+                yield None
+            }
+        }
+
+        if is_optional and not found_optional {
+            .error(format("Optional chain mismatch: expected optional chain, found {}", .type_name(checked_expr_type_id)), checked_expr.span())
+        }
+
+        let function_id = match parent_id.has_value() {
+            true => .resolve_method_call(parent_id: parent_id!, call, span)
+            // skip any resolution since we already gave an error explaining why
+            // we cannot resolve a method here.
+            else => None
+        }
+
+        guard function_id.has_value() else {
+            return .checked_call_to_method_call(
+                expr: checked_expr
+                checked_call: .typecheck_unresolved_call(call, scope_id, safety_mode)
+                is_optional
+                span)
+        }
+
+        let callee = .get_function(function_id!)
+
+        let checked_call = .typecheck_resolved_call(
+            call
+            caller_scope_id: scope_id
+            span
+            function_id: function_id!
+            safety_mode
+            resolved_namespaces: []
+            this_expr_type_id: match callee.is_static() {
+                false => Some(checked_expr_type_id)
+                else => {
+                    .error("Cannot call static method on an instance of an object", span)
+                    yield None
+                }
+            }
+            type_hint)
+
+        if callee.is_mutating() and not checked_expr.is_mutable(program: .program) {
+            .error("Cannot call mutating method on an immutable object instance", span)
+        }
+
+        return .execute_call_if_comptime(
+            checked_call, span,
+            caller_scope_id: scope_id
+            resolved_namespaces: []
+            this_expr: checked_expr
+        ) ?? .checked_call_to_method_call(expr: checked_expr, checked_call, is_optional, span)
+    }
+
+    function checked_call_to_method_call(mut this, expr: CheckedExpression, checked_call: CheckedCall, is_optional: bool, span: Span) throws -> CheckedExpression {
+        return CheckedExpression::MethodCall(
+            expr
+            call: checked_call
+            span, is_optional
+            // wrap the return value in Optional if the method call is optional chained
+            type_id: match is_optional {
+                true => .find_or_add_type_id(Type::GenericInstance(
+                        id: .find_struct_in_prelude("Optional")
+                        args: [checked_call.return_type]))
+                else => checked_call.return_type
+            })
+    }
+
+    // NOTE: this function is meant to typecheck only the call expression from
+    // ParsedExpression::Call. If the function ID of the call to typecheck is
+    // known or an alternative resolving method is preferred, use
+    // typecheck_resolved_call and typecheck_unresolved_call.
+    function typecheck_call_expr(mut this, call: ParsedCall, span: Span, must_be_enum_constructor: bool, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
+        // it may be a builtin call, in that case we'll use the special path
+        let maybe_builtin_call = .detect_and_typecheck_builtin_call(call, span, scope_id, safety_mode, type_hint)
+        if maybe_builtin_call.has_value() {
+            return Typechecker::checked_call_to_call_expr(checked_call: maybe_builtin_call!, span)
+        }
+
+        // fill this array in advance since resolve_call accesses it later.
+        mut resolved_namespaces: [ResolvedNamespace] = []
+        resolved_namespaces.ensure_capacity(call.namespace_.size())
+        for name in call.namespace_.iterator() {
+            resolved_namespaces.push(ResolvedNamespace(name, generic_parameters: None))
+        }
+
+        let function_id = .resolve_call(
+            call, namespaces: resolved_namespaces
+            span, scope_id
+            must_be_enum_constructor
+            ignore_errors: false)
+
+        guard function_id.has_value() else {
+            return Typechecker::checked_call_to_call_expr(
+                checked_call: .typecheck_unresolved_call(call, scope_id, safety_mode)
+                span)
+        }
+
+        // this error can only happen in regular calls
+        let callee = .get_function(function_id!)
+        if not callee.is_static() {
+            .error_with_hint(
+                "Cannot call an instance method statically"
+                span
+                "Add a dot before the method to call an instance method"
+                span)
+        }
+
+        let checked_call = .typecheck_resolved_call(
+            call
+            caller_scope_id: scope_id
+            span
+            function_id: function_id!
+            safety_mode
+            resolved_namespaces
+            this_expr_type_id: None
+            type_hint)
+
+        return .execute_call_if_comptime(
+            checked_call, span
+            caller_scope_id: scope_id
+            resolved_namespaces
+            this_expr: None
+        ) ?? Typechecker::checked_call_to_call_expr(checked_call, span)
+    }
+
+    function checked_call_to_call_expr(checked_call: CheckedCall, span: Span) throws -> CheckedExpression {
+        return CheckedExpression::Call(
+            call: checked_call
+            span
+            type_id: checked_call.return_type)
+    }
+
+
 
     function check_implicit_constructor_argument_access(mut this, caller_scope_id: ScopeId, call: ParsedCall, struct_: CheckedStruct)  throws {
         if not .scope_can_access(accessor:caller_scope_id, accessee:struct_.scope_id) {
