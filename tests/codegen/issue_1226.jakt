@@ -1,0 +1,8 @@
+/// Expect:
+/// - output: "PASS\n"
+
+import issue_1226_sub
+
+function main() {
+   println("PASS")
+}

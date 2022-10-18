@@ -1,0 +1,10 @@
+/// Expect: Skip
+
+// This is imported from issue_1226.jakt.
+
+struct Foo {
+
+   function a() { }
+   function b() { a() }
+
+}

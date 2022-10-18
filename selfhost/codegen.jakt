@@ -2726,6 +2726,19 @@ struct CodeGenerator {
                             output += "::"
                         }
                         output += .codegen_namespace_path(call)
+
+                        // Ensure we fully qualify the names of static functions
+                        // in case we're inside a namespace (issue #1226).
+                        if function_.is_static() and
+                           function_.struct_id.has_value() and
+                           function_.type is Normal and
+                           function_.linkage is Internal {
+
+                            let struct_ = .program.get_struct(function_.struct_id!)
+                            output += struct_.name
+                            output += "::"
+                        }
+
                         output += call.name
                     }
                 } else {
