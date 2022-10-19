@@ -1023,6 +1023,7 @@ struct Typechecker {
             name_span: parsed_record.name_span
             generic_parameters: []
             variants: []
+            fields: []
             scope_id: .prelude_scope_id()
             definition_linkage: parsed_record.definition_linkage
             record_type: parsed_record.record_type
@@ -1048,12 +1049,49 @@ struct Typechecker {
             SumEnum(is_boxed) => is_boxed
             else => false
         }
+
+        mut checked_fields: [CheckedField] = []
+        mut seen_fields: {String} = {}
+        if parsed_record.record_type is SumEnum(fields) {
+            for field in fields.iterator() {
+                let var_decl = field.var_decl
+                if seen_fields.contains(var_decl.name) {
+                    .error(format("Field '{}' is defined more than once", var_decl.name), var_decl.span)
+                    continue
+                }
+                seen_fields.add(var_decl.name)
+                let type_id = .typecheck_typename(parsed_type: var_decl.parsed_type, scope_id: enum_scope_id, name: var_decl.name)
+                let checked_var = CheckedVariable(
+                    name: var_decl.name
+                    type_id
+                    is_mutable: var_decl.is_mutable
+                    definition_span: var_decl.span
+                    type_span: var_decl.parsed_type.span()
+                    visibility: .typecheck_visibility(visibility: field.visibility, scope_id: enum_scope_id)
+                )
+                mut default_value: CheckedExpression? = None
+                if field.default_value.has_value() {
+                    default_value = .typecheck_expression(
+                        expr: field.default_value!
+                        scope_id: enum_scope_id
+                        safety_mode: SafetyMode::Safe
+                        type_hint: type_id
+                    )
+                }
+
+                mut module = .current_module()
+                let variable_id = module.add_variable(checked_var)
+                checked_fields.push(CheckedField(variable_id, default_value))
+            }
+        }
+
         mut module = .current_module()
         module.enums[enum_id.id] = CheckedEnum(
             name: parsed_record.name
             name_span: parsed_record.name_span
             generic_parameters: []
             variants: []
+            fields: checked_fields
             scope_id: enum_scope_id
             definition_linkage: parsed_record.definition_linkage
             record_type: parsed_record.record_type
@@ -1639,6 +1677,24 @@ struct Typechecker {
 
         mut enum_ = .get_enum(enum_id)
 
+        mut common_seen_fields: {String} = {}
+        mut common_fields: [VarId] = []
+        mut common_params: [CheckedParameter] = []
+        for field in enum_.fields.iterator() {
+            let variable = .get_variable(field.variable_id)
+            common_params.push(CheckedParameter(
+                requires_label: true,
+                variable,
+                default_value: field.default_value))
+
+            if .dump_type_hints {
+                .dump_type_hint(type_id: variable.type_id, span: variable.definition_span)
+            }
+
+            common_seen_fields.add(variable.name)
+            common_fields.push(field.variable_id)
+        }
+
         match record.record_type {
             ValueEnum(underlying_type, variants) => {
                 let underlying_type_id = .typecheck_typename(parsed_type: underlying_type, scope_id: parent_scope_id, name: None)
@@ -1700,10 +1756,23 @@ struct Typechecker {
                     seen_names.add(variant.name)
                     let is_structlike = variant.params.has_value() and variant.params!.size() > 0 and variant.params![0].name != ""
                     let is_typed = variant.params.has_value() and variant.params!.size() == 1 and variant.params![0].name == ""
+
                     if is_structlike {
                         mut seen_fields: {String} = {}
-                        mut fields: [VarId] = []
+                        for name in common_seen_fields.iterator() {
+                            seen_fields.add(name)
+                        }
+
                         mut params: [CheckedParameter] = []
+                        for param in common_params.iterator() {
+                            params.push(param)
+                        }
+
+                        mut fields: [VarId] = []
+                        for field in common_fields.iterator() {
+                            fields.push(field)
+                        }
+
                         for param in variant.params!.iterator() {
                             if seen_fields.contains(param.name) {
                                 .error(format("Enum variant '{}' has a member named '{}' more than once", variant.name, param.name), param.span)
@@ -1770,6 +1839,11 @@ struct Typechecker {
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
                         }
                     } else if is_typed {
+                        mut params: [CheckedParameter] = []
+                        for param in common_params.iterator() {
+                            params.push(param)
+                        }
+
                         let param = variant.params![0]
                         let type_id = .typecheck_typename(parsed_type: param.parsed_type, scope_id: enum_.scope_id, name: param.name)
                         enum_.variants.push(CheckedEnumVariant::Typed(enum_id, name: variant.name, type_id, span: variant.span))
@@ -1787,7 +1861,7 @@ struct Typechecker {
                                 type_span: None
                                 visibility: CheckedVisibility::Public
                             )
-                            let param = CheckedParameter(requires_label: false, variable, default_value: None)
+                            params.push(CheckedParameter(requires_label: false, variable, default_value: None))
 
                             let checked_function = CheckedFunction(
                                 name: variant.name
@@ -1795,10 +1869,10 @@ struct Typechecker {
                                 visibility: CheckedVisibility::Public
                                 return_type_id: .find_or_add_type_id(Type::Enum(enum_id))
                                 return_type_span: None
-                                params: [param]
+                                params
                                 generics: FunctionGenerics(
                                     base_scope_id: function_scope_id
-                                    base_params: [param]
+                                    base_params: params
                                     params: []
                                     specializations: []
                                 )
@@ -1824,6 +1898,11 @@ struct Typechecker {
                             .add_function_to_scope(parent_scope_id: enum_.scope_id, name: variant.name, function_id, span: variant.span)
                         }
                     } else {
+                        mut params: [CheckedParameter] = []
+                        for param in common_params.iterator() {
+                            params.push(param)
+                        }
+
                         enum_.variants.push(CheckedEnumVariant::Untyped(enum_id, name: variant.name, span: variant.span))
                         let maybe_enum_variant_constructor = .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: variant.name)
                         if not maybe_enum_variant_constructor.has_value() {
@@ -1836,10 +1915,10 @@ struct Typechecker {
                                 visibility: CheckedVisibility::Public
                                 return_type_id: .find_or_add_type_id(Type::Enum(enum_id))
                                 return_type_span: None
-                                params: []
+                                params
                                 generics: FunctionGenerics(
                                     base_scope_id: function_scope_id
-                                    base_params: []
+                                    base_params: params
                                     params: []
                                     specializations: []
                                 )
@@ -4110,6 +4189,29 @@ struct Typechecker {
 
                         .error(format("unknown member of struct: {}.{}", structure.name, field_name), span)
                     }
+                    GenericEnumInstance(id: enum_id) | Enum(enum_id) => {
+                        let enum_ = .get_enum(enum_id)
+                        for field in enum_.fields.iterator() {
+                            let member = .get_variable(field.variable_id)
+
+                            if member.name == field_name {
+                                mut resolved_type_id = .resolve_type_var(type_var_type_id: member.type_id, scope_id)
+                                if is_optional {
+                                    resolved_type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [resolved_type_id]))
+                                }
+                                // FIXME: Unify with type
+                                .check_member_access(accessor: scope_id, accessee: enum_.scope_id, member, span)
+                                return CheckedExpression::IndexedCommonEnumMember(
+                                    expr: checked_expr
+                                    index: field_name
+                                    span
+                                    is_optional
+                                    type_id: resolved_type_id)
+                            }
+                        }
+
+                        .error(format("unknown common member of enum: {}.{}", enum_.name, field_name), span)
+                    }
                     else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
                 }
             }
@@ -4135,6 +4237,33 @@ struct Typechecker {
                 }
 
                 .error(format("unknown member of struct: {}.{}", structure.name, field_name), span)
+            }
+            Type::GenericEnumInstance(id: enum_id) | Type::Enum(enum_id) => {
+                if is_optional {
+                    .error("Optional chaining is not allowed on non-optional types", span)
+                }
+
+                let enum_ = .get_enum(enum_id)
+                for field in enum_.fields.iterator() {
+                    let member = .get_variable(field.variable_id)
+
+                    if member.name == field_name {
+                        mut resolved_type_id = .resolve_type_var(type_var_type_id: member.type_id, scope_id)
+                        if is_optional {
+                            resolved_type_id = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [resolved_type_id]))
+                        }
+                        // FIXME: Unify with type
+                        .check_member_access(accessor: scope_id, accessee: enum_.scope_id, member, span)
+                        return CheckedExpression::IndexedCommonEnumMember(
+                            expr: checked_expr
+                            index: field_name
+                            span
+                            is_optional
+                            type_id: resolved_type_id)
+                    }
+                }
+
+                .error(format("unknown common member of enum: {}.{}", enum_.name, field_name), span)
             }
             else => .error(format("Member field access on value of non-struct type ‘{}’", .type_name(checked_expr_type_id)), span)
         }

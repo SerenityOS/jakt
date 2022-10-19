@@ -278,7 +278,7 @@ enum RecordType {
     Struct(fields: [ParsedField], super_type: ParsedType?)
     Class(fields: [ParsedField], super_type: ParsedType?)
     ValueEnum(underlying_type: ParsedType, variants: [ValueEnumVariant])
-    SumEnum(is_boxed: bool, variants: [SumEnumVariant])
+    SumEnum(is_boxed: bool, fields: [ParsedField], variants: [SumEnumVariant])
     Garbage
 
     public function record_type_name(this) => match this {
@@ -1799,9 +1799,11 @@ struct Parser {
         return (variants, methods)
     }
 
-    function parse_sum_enum_body(mut this, partial_enum: ParsedRecord, definition_linkage: DefinitionLinkage, is_boxed: bool) throws -> ([SumEnumVariant], [ParsedMethod]) {
+    function parse_sum_enum_body(mut this, partial_enum: ParsedRecord, definition_linkage: DefinitionLinkage, is_boxed: bool) throws -> ([SumEnumVariant], [ParsedField], [ParsedMethod]) {
         mut methods: [ParsedMethod] = []
         mut variants: [SumEnumVariant] = []
+        mut fields: [ParsedField] = []
+        mut seen_a_variant = false
 
         if .current() is LCurly {
             .index++
@@ -1812,8 +1814,8 @@ struct Parser {
         .skip_newlines()
 
         if .eof() {
-            .error("Incomplete enum definition, expected variant name", .previous().span())
-            return (variants, methods)
+            .error("Incomplete enum definition, expected variant or field name", .previous().span())
+            return (variants, fields, methods)
         }
 
         mut last_visibility: Visibility? = None
@@ -1821,11 +1823,27 @@ struct Parser {
         while not .eof() {
             match .current() {
                 Identifier(name, span) => {
-                    if not .peek(1) is LParen {
+                    if .peek(1) is Colon {
+                        let field = .parse_field(visibility: last_visibility ?? Visibility::Public)
+                        if seen_a_variant {
+                            .error_with_hint(
+                                "Common enum fields must be declared before variants", span,
+                                "Previous variant is here", variants.last()!.span
+                            )
+                        } else {
+                            fields.push(field)
+                        }
+                        continue
+                    }
+
+                    seen_a_variant = true
+
+                    if not (.peek(1) is LParen) {
                         .index++
                         variants.push(SumEnumVariant(name, span, params: None))
                         continue
                     }
+
                     .index += 2
 
                     mut var_decls: [ParsedVarDecl] = []
@@ -1923,14 +1941,14 @@ struct Parser {
 
         if not .current() is RCurly {
             .error("Invalid enum definition, expected `}`", .current().span())
-            return (variants, methods)
+            return (variants, fields, methods)
         }
         .index++
 
         if variants.is_empty() {
             .error("Empty enums are not allowed", partial_enum.name_span)
         }
-        return (variants, methods)
+        return (variants, fields, methods)
     }
 
     function parse_enum(mut this, anon definition_linkage: DefinitionLinkage, is_boxed: bool) throws -> ParsedRecord {
@@ -2000,10 +2018,11 @@ struct Parser {
                 variants
             )
         } else {
-            let (variants, methods) = .parse_sum_enum_body(partial_enum: parsed_enum, definition_linkage, is_boxed)
+            let (variants, fields, methods) = .parse_sum_enum_body(partial_enum: parsed_enum, definition_linkage, is_boxed)
             parsed_enum.methods = methods
             parsed_enum.record_type = RecordType::SumEnum(
                 is_boxed: is_boxed,
+                fields,
                 variants
             )
         }
