@@ -4623,6 +4623,31 @@ class Interpreter {
 
                 fields[field_index] = value
             }
+            IndexedCommonEnumMember(expr, index) => {
+                // FIXME: This should not be evaluated twice.
+                mut (fields, enum_id) = match .execute_expression(expr, scope) {
+                    JustValue(value) => match value.impl {
+                        Enum(fields, enum_id) => (fields, enum_id)
+                        else => {
+                            panic("Invalid left-hand side in assignment")
+                        }
+                    }
+                    else => {
+                        panic("Should not be happening here")
+                    }
+                }
+
+                let field_decls = .program.get_enum(enum_id).fields
+                mut field_index = 0uz
+                for i in 0..field_decls.size() {
+                    if .program.get_variable(field_decls[i].variable_id).name == index {
+                        field_index = i
+                        break
+                    }
+                }
+
+                fields[field_index] = value
+            }
             else => {
                 .error(
                     format("Invalid left-hand side of assignment {}", binding),
@@ -5519,6 +5544,50 @@ class Interpreter {
                     mut idx = 0
                     mut found_index: i64? = None
                     for field in struct_.fields.iterator() {
+                        if .program.get_variable(field.variable_id).name == index {
+                            found_index = idx
+                            break
+                        }
+                        idx += 1
+                    }
+                    if not found_index.has_value() {
+                        .error("Attempted to access a field that does not exist", value.span)
+                        throw Error::from_errno(InterpretError::InvalidType as! i32)
+                    }
+
+                    yield StatementResult::JustValue(fields[found_index!])
+                }
+                else => {
+                    .error("Attempted to access a field on a non-struct/enum type", value.span)
+                    throw Error::from_errno(InterpretError::InvalidType as! i32)
+                }
+            }
+        }
+        IndexedCommonEnumMember(expr, index) => {
+            let value = match .execute_expression(expr, scope) {
+                Return(value) => {
+                    return StatementResult::Return(value)
+                }
+                Throw(value) => {
+                    return StatementResult::Throw(value)
+                }
+                JustValue(value) => value
+                Continue => {
+                    return StatementResult::Continue
+                }
+                Break => {
+                    return StatementResult::Break
+                }
+                Yield(expr) => {
+                    panic("Invalid control flow")
+                }
+            }
+            yield match value.impl {
+                Enum(fields, enum_id) => {
+                    let enum_ = .program.get_enum(enum_id)
+                    mut idx = 0
+                    mut found_index: i64? = None
+                    for field in enum_.fields.iterator() {
                         if .program.get_variable(field.variable_id).name == index {
                             found_index = idx
                             break
