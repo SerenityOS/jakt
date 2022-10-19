@@ -864,6 +864,7 @@ struct CheckedEnum {
     name_span: Span
     generic_parameters: [TypeId]
     variants: [CheckedEnumVariant]
+    fields: [CheckedField]
     scope_id: ScopeId
     definition_linkage: DefinitionLinkage
     record_type: RecordType
@@ -1066,6 +1067,7 @@ boxed enum CheckedExpression {
     IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
     IndexedTuple(expr: CheckedExpression, index: usize, span: Span, is_optional: bool, type_id: TypeId)
     IndexedStruct(expr: CheckedExpression, index: String, span: Span, is_optional: bool, type_id: TypeId)
+    IndexedCommonEnumMember(expr: CheckedExpression, index: String, span: Span, is_optional: bool, type_id: TypeId)
     Match(expr: CheckedExpression, match_cases: [CheckedMatchCase], span: Span, type_id: TypeId, all_variants_constant: bool)
     EnumVariantArg(expr: CheckedExpression, arg: CheckedEnumVariantBinding, enum_variant: CheckedEnumVariant, span: Span)
     Call(call: CheckedCall, span: Span, type_id: TypeId)

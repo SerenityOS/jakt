@@ -11,7 +11,7 @@ import typechecker {
     CheckedFunction, CheckedProgram, CheckedStatement, CheckedStruct,
     Module, ModuleId, Scope, ScopeId, StructId, EnumId, Type, TypeId,
     CheckedEnum, unknown_type_id, CheckedMatchCase, FunctionId, CheckedMatchBody, void_type_id, never_type_id, builtin,
-    CheckedVariable }
+    CheckedVariable, VarId }
 import utility { panic, todo, join, prepend_to_each, Span }
 import compiler { Compiler }
 
@@ -1130,56 +1130,77 @@ struct CodeGenerator {
             }
         }
         mut template_args = join(prepend_to_each(generic_parameter_names, prefix: "typename "), separator: ", ")
+
+        mut common_fields: [(String, String)] = []
+        for field in enum_.fields.iterator() {
+            let variable = .program.get_variable(field.variable_id)
+            common_fields.push((variable.name, .codegen_type(variable.type_id)))
+        }
+
         output += "namespace " + enum_.name + "_Details {\n"
         for variant in enum_.variants.iterator() {
-            match variant {
+            let fields = match variant {
                 Untyped(name) => {
                     if is_generic {
                         output += "template<" + template_args + ">\n"
                     }
-                    output += "struct " + name + " {};\n"
+                    output += "struct " + name + " {\n"
+                    yield common_fields
                 }
-                StructLike(name, fields) => {
+                StructLike(name, fields: own_fields) => {
+                    mut fields: [(String, String)] = []
+                    for field in own_fields.iterator() {
+                        let variable = .program.get_variable(field)
+                        fields.push((variable.name, .codegen_type(variable.type_id)))
+                    }
+
                     if is_generic {
                         output += "template<" + template_args + ">\n"
                     }
                     output += "struct " + name + " {\n"
-                    for field in fields.iterator() {
-                        let var = .program.get_variable(field)
-                        output += format("{} {};\n", .codegen_type(var.type_id), var.name)
-                    }
-                    output += "template<"
-                    mut generic_typenames: [String] = []
-                    mut generic_argument_types: [String] = []
-                    mut initializers: [String] = []
-                    for i in 0..fields.size() {
-                        generic_typenames.push(format("typename _MemberT{}", i))
-                        generic_argument_types.push(format("_MemberT{}&& member_{}", i, i))
-
-                        mut initializer = .program.get_variable(fields[i]).name + "{ forward<_MemberT"
-                        initializer += format("{}>(member_{}", i, i) + ")}"
-                        initializers.push(initializer)
-                    }
-                    output += join(generic_typenames, separator: ", ")
-                    output += ">\n"
-                    output += name + "(" + join(generic_argument_types, separator: ", ") + "):\n"
-                    output += join(initializers, separator: ",\n") + "\n{}\n"
-                    output +="};\n"
+                    yield fields
                 }
                 Typed(name, type_id) => {
+                    mut fields: [(String, String)] = []
+                    for field in common_fields.iterator() {
+                        fields.push(field)
+                    }
+                    fields.push(("value", .codegen_type(type_id)))
+
                     if is_generic {
                         output += "template<" + template_args + ">\n"
                     }
                     output += "struct " + name + "{\n"
-                    output += .codegen_type(type_id) + " value;\n"
-                    output += "template<typename... Args>\n"
-                    output += name + "(Args&&... args): value { forward<Args>(args)... } {}\n"
-                    output += "};\n"
+                    yield fields
                 }
                 else => {
                     todo(format("codegen enum variant: {}", variant))
+                    yield []
                 }
             }
+
+            for (name, type) in fields.iterator() {
+                output += format("{} {};\n", type, name)
+            }
+            if not fields.is_empty() {
+                output += "template<"
+                mut generic_typenames: [String] = []
+                mut generic_argument_types: [String] = []
+                mut initializers: [String] = []
+                for i in 0..fields.size() {
+                    generic_typenames.push(format("typename _MemberT{}", i))
+                    generic_argument_types.push(format("_MemberT{}&& member_{}", i, i))
+
+                    mut initializer = fields[i].0 + "{ forward<_MemberT"
+                    initializer += format("{}>(member_{}", i, i) + ")}"
+                    initializers.push(initializer)
+                }
+                output += join(generic_typenames, separator: ", ")
+                output += ">\n"
+                output += variant.name() + "(" + join(generic_argument_types, separator: ", ") + "):\n"
+                output += join(initializers, separator: ",\n") + "\n{}\n"
+            }
+            output +="};\n"
         }
         output += "}\n"
 
@@ -1233,6 +1254,18 @@ struct CodeGenerator {
             output += "ErrorOr<String> debug_description() const;\n"
         } else {
             output += .codegen_enum_debug_description_getter(enum_, is_inline: true)
+        }
+
+        for (field_name, type) in common_fields.iterator() {
+            output += format("{} const& {}() const {{ switch(this->index()) {{", type, field_name)
+            for i in 0..enum_.variants.size() {
+                let variant = enum_.variants[i]
+                let name = variant.name()
+                output += format("case {} /* {} */: ", i, name)
+                output += format("return this->template get<{}::{}>().{};\n", enum_.name, name, field_name)
+            }
+            output += "default: VERIFY_NOT_REACHED();\n"
+            output += "}\n}\n"
         }
 
         let enum_scope = .program.get_scope(enum_.scope_id)
@@ -1503,6 +1536,39 @@ struct CodeGenerator {
                 output += "; })"
             } else {
                 output += index
+            }
+            output += ")"
+            yield output
+        }
+        IndexedCommonEnumMember(expr, index, is_optional) => {
+            mut output = ""
+            let object = .codegen_expression(expression: expr)
+            output += "(("
+            output += object
+            output += ")"
+
+            match .program.get_type(expr.type()) {
+                RawPtr => {
+                    output += "->"
+                }
+                Enum(id) | GenericEnumInstance(id) => {
+                    let structure = .program.get_enum(id)
+                    if structure.record_type is SumEnum(is_boxed) and is_boxed and object != "*this" {
+                        output += "->"
+                    } else {
+                        output += "."
+                    }
+                }
+                else => {
+                    output += "."
+                }
+            }
+            if is_optional {
+                output += "map([](auto& _value) { return _value."
+                output += index
+                output += "(); })"
+            } else {
+                output += index + "()"
             }
             output += ")"
             yield output

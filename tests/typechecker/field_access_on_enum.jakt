@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Member field access on value of non-struct type ‘E’"
+/// - error: "unknown common member of enum: E.x"
 
 enum E {
     A
