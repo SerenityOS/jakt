@@ -1080,6 +1080,10 @@ struct Typechecker {
                     )
                 }
 
+                if .dump_type_hints and var_decl.parsed_type is Empty {
+                    .dump_type_hint(type_id, span: var_decl.span)
+                }
+
                 mut module = .current_module()
                 let variable_id = module.add_variable(checked_var)
                 checked_fields.push(CheckedField(variable_id, default_value))
@@ -1688,10 +1692,6 @@ struct Typechecker {
                 variable,
                 default_value: field.default_value))
 
-            if .dump_type_hints {
-                .dump_type_hint(type_id: variable.type_id, span: variable.definition_span)
-            }
-
             common_seen_fields.add(variable.name)
             common_fields.push(field.variable_id)
         }
@@ -1791,7 +1791,7 @@ struct Typechecker {
                             )
                             params.push(CheckedParameter(requires_label: true, variable: checked_var, default_value: None))
 
-                            if .dump_type_hints {
+                            if .dump_type_hints and param.parsed_type is Empty {
                                 .dump_type_hint(type_id, span: param.span)
                             }
 
