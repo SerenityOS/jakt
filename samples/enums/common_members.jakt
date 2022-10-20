@@ -1,0 +1,30 @@
+/// Expect:
+/// - output: "You gave me a mild mustard that's not on sale, and expires tomorrow lol\n"
+
+enum Sauce {
+    expiry_date: String
+    on_sale: bool = false
+
+    Mustard(mild: bool)
+    Ketchup(spicy: bool)
+    Mayo(String)
+}
+
+function gib_sauce() throws -> Sauce {
+    return Sauce::Mustard(expiry_date: "tomorrow lol", mild: true)
+}
+
+function main() {
+    let sauce = gib_sauce()
+    let name = match sauce {
+        Mustard(mild) => format("{} mustard", match mild { true => "mild", else => "regular" })
+        Ketchup(spicy) => format("{} ketchup", match spicy { true => "spicy", else => "regular" })
+        Mayo(name) => format("{} mayo", name)
+    }
+    println(
+        "You gave me a {} that's {}on sale, and expires {}"
+        name
+        match sauce.on_sale { true => "", else => "not " }
+        sauce.expiry_date
+    )
+}
