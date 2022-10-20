@@ -2473,12 +2473,17 @@ struct Typechecker {
         let lhs_type = .get_type(lhs_type_id)
         let rhs_type = .get_type(rhs_type_id)
 
+        if lhs_type is Never or rhs_type is Never {
+            return true
+        }
+
         let lhs_type_id_string = lhs_type_id.to_string()
         let rhs_type_id_string = rhs_type_id.to_string()
 
         let optional_struct_id = .find_struct_in_prelude("Optional")
         let weakptr_struct_id = .find_struct_in_prelude("WeakPtr")
         let array_struct_id = .find_struct_in_prelude("Array")
+
 
         match lhs_type {
             TypeVariable => {
@@ -3283,6 +3288,12 @@ struct Typechecker {
         return CheckedExpression::UnaryOp(expr: CheckedExpression::NumericConstant(val: new_constant, span, type_id), op: CheckedUnaryOperator::Negate, span, type_id: flipped_sign_type)
     }
 
+    function check_never_returning_assignment(mut this, rhs_type_id: TypeId, span: Span) throws {
+        if rhs_type_id.equals(never_type_id()) {
+            .error("Cannot assign expression that never returns", span)
+        }
+    }
+
     function typecheck_binary_operation(mut this, checked_lhs: CheckedExpression, op: BinaryOperator, checked_rhs: CheckedExpression, scope_id: ScopeId, span: Span) throws -> TypeId {
         let lhs_type_id = checked_lhs.type()
         let rhs_type_id = checked_rhs.type()
@@ -3388,6 +3399,8 @@ struct Typechecker {
                     }
                 }
 
+                .check_never_returning_assignment(rhs_type_id, span)
+
                 let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
                 if not result.has_value() {
                     .error(format("Assignment between incompatible types (‘{}’ and ‘{}’)", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
@@ -3404,6 +3417,7 @@ struct Typechecker {
                     and lhs_struct_id.equals(rhs_struct_id) {
                     return lhs_type_id
                 }
+                .check_never_returning_assignment(rhs_type_id, span)
                 let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: lhs_type_id, rhs_span: lhs_span)
                 if not result.has_value() {
                     .error(format(

@@ -1,0 +1,7 @@
+/// Expect:
+/// - error: "Cannot assign expression that never returns"
+
+function main() {
+    mut value = 1u64
+    value = abort()
+}

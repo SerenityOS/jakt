@@ -2169,6 +2169,7 @@ struct CodeGenerator {
     function codegen_match_body(mut this, body: CheckedMatchBody, return_type_id: TypeId) throws -> String {
         mut output = ""
 
+
         match body {
             Block(block) => {
                 output += .codegen_block(block)
@@ -2182,6 +2183,11 @@ struct CodeGenerator {
                     output += "return ("
                     output += .codegen_expression(expr)
                     output += "), JaktInternal::ExplicitValue<void>();\n"
+                } else if expr.type().equals(never_type_id()) {
+                    output += "("
+                    output += .codegen_expression(expr)
+                    output += ");\n"
+                    output += "VERIFY_NOT_REACHED();\n"
                 } else {
                     output += "return JaktInternal::ExplicitValue("
                     output += .codegen_expression(expr)
@@ -2732,25 +2738,36 @@ struct CodeGenerator {
     function codegen_block(mut this, block: CheckedBlock) throws -> String {
         mut output = ""
 
+        mut yields_never = false
+
         if block.yielded_type.has_value() {
             let yielded_type = block.yielded_type!
-            let type_output = .codegen_type(yielded_type)
             let fresh_var = .fresh_var()
             let fresh_label = .fresh_label()
 
-            .entered_yieldable_blocks.push((fresh_var, fresh_label))
 
-            output += "({ Optional<"
-            output += type_output
-            output += "> "
-            output += fresh_var
-            output += "; "
+            if not yielded_type.equals(unknown_type_id()) {
+                .entered_yieldable_blocks.push((fresh_var, fresh_label))
+
+                let type_output = .codegen_type(yielded_type)
+                output += "({ Optional<"
+                output += type_output
+                output += "> "
+                output += fresh_var
+                output += "; "
+            } else {
+                yields_never = true
+            }
         }
 
         output += "{\n"
 
         for statement in block.statements.iterator() {
             output += .codegen_statement(statement)
+        }
+
+        if yields_never {
+            output += "VERIFY_NOT_REACHED();\n"
         }
 
         output += "}\n"
