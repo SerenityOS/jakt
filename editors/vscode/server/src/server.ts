@@ -263,7 +263,7 @@ connection.onTypeDefinition(async (request: TypeDefinitionParams) => {
         const document = documents.get(request.textDocument.uri);
         if (!document) return;
         const settings = await getDocumentSettings(request.textDocument.uri);
-    
+
         const text = document.getText();
         // connection.console.log("request: ");
         // connection.console.log(request.textDocument.uri);
@@ -284,9 +284,9 @@ connection.onHover(async (request: HoverParams) => {
     return await durationLogWrapper(`onHover ${getClickableFilePosition(request)}`, async () => {
         const document = documents.get(request.textDocument.uri);
         const settings = await getDocumentSettings(request.textDocument.uri);
-    
+
         const text = document?.getText();
-    
+
         if (!(typeof text == "string")) return null;
 
         // connection.console.log("request: ");
@@ -486,8 +486,11 @@ function convertPosition(position: Position, text: string): number {
 async function runCompiler(
     text: string,
     flags: string,
-    settings: ExampleSettings
+    settings: ExampleSettings,
+    options: {allowErrors?: boolean} = {}
 ): Promise<string> {
+    const allowErrors = options.allowErrors === undefined ? true : options.allowErrors;
+
     try {
         fs.writeFileSync(tmpFile.name, text);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -495,7 +498,7 @@ async function runCompiler(
         // connection.console.log(e);
     }
 
-    let stdout: string;
+    let stdout = "";
     try {
         const output = await exec(
             `${settings.compiler.executablePath} ${flags} ${tmpFile.name}`,
@@ -503,16 +506,18 @@ async function runCompiler(
                 timeout: settings.maxCompilerInvocationTime,
             }
         );
-        // // connection.console.log(output);
         stdout = output.stdout;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
-        stdout = e.stdout;
-        if (e.signal != null) {
-            // connection.console.log("compile failed: ");
-            // connection.console.log(e);
-        } else {
-            // connection.console.log("Error:" + e);
+        if (!allowErrors){
+            stdout = e.stdout;
+            if (e.signal != null) {
+                connection.console.log("compile failed: ");
+                connection.console.log(e);
+            } else {
+                connection.console.log("Error:" + e);
+            }
+            throw e;
         }
     }
 
@@ -542,42 +547,42 @@ async function validateTextDocument(
             );
             return;
         }
-    
+
         // // In this simple example we get the settings for every validate run.
         const settings = await getDocumentSettings(textDocument.uri);
-    
+
         // The validator creates diagnostics for all uppercase words length 2 and more
         const text = textDocument.getText();
-    
+
         const lineBreaks = findLineBreaks(text);
-    
+
         const stdout = await runCompiler(
             text,
             "-c --type-hints --try-hints -j" + includeFlagForPath(textDocument.uri),
             settings
         );
-    
+
         textDocument.jaktInlayHints = [];
-    
+
         const diagnostics: Diagnostic[] = [];
-    
+
         // FIXME: We use this to deduplicate type hints given by the compiler.
         //        It'd be nicer if it didn't give duplicate hints in the first place.
         const seenTypeHintPositions = new Set();
-    
+
         const lines = stdout.split("\n").filter((l) => l.length > 0);
         for (const line of lines) {
             // connection.console.log(line);
             try {
                 const obj = JSON.parse(line);
-    
+
                 // HACK: Ignore everything that isn't about file ID #1 here, since that's always the current editing buffer.
                 if (obj.file_id != 1) {
                     continue;
                 }
                 if (obj.type == "diagnostic") {
                     let severity: DiagnosticSeverity = DiagnosticSeverity.Error;
-    
+
                     switch (obj.severity) {
                         case "Information":
                             severity = DiagnosticSeverity.Information;
@@ -592,10 +597,10 @@ async function validateTextDocument(
                             severity = DiagnosticSeverity.Error;
                             break;
                     }
-    
+
                     const position_start = convertSpan(obj.span.start, lineBreaks);
                     const position_end = convertSpan(obj.span.end, lineBreaks);
-    
+
                     const diagnostic: Diagnostic = {
                         severity,
                         range: {
@@ -605,9 +610,9 @@ async function validateTextDocument(
                         message: obj.message,
                         source: textDocument.uri,
                     };
-    
+
                     // connection.console.log(diagnostic.message);
-    
+
                     diagnostics.push(diagnostic);
                 } else if (obj.type == "hint" && settings.hints.showInferredTypes) {
                     if (!seenTypeHintPositions.has(obj.position)) {
@@ -619,7 +624,7 @@ async function validateTextDocument(
                             [InlayHintLabelPart.create(hint_string)],
                             InlayHintKind.Type
                         );
-    
+
                         textDocument.jaktInlayHints.push(hint);
                     }
                 } else if (obj.type == "try" && settings.hints.showImplicitTry) {
@@ -632,7 +637,7 @@ async function validateTextDocument(
                             [InlayHintLabelPart.create(hint_string)],
                             InlayHintKind.Type
                         );
-    
+
                         textDocument.jaktInlayHints.push(hint);
                     }
                 }
@@ -640,7 +645,7 @@ async function validateTextDocument(
                 console.error(e);
             }
         }
-    
+
         // Send the computed diagnostics to VSCode.
         connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
     });
@@ -715,7 +720,8 @@ connection.onDocumentFormatting(async (params) => {
             const stdout = await runCompiler(
                 text,
                 "-f " + includeFlagForPath(params.textDocument.uri),
-                settings
+                settings,
+                {allowErrors: false}
             );
             const formatted = stdout;
             return [
@@ -749,7 +755,8 @@ connection.onDocumentRangeFormatting(async (params) => {
                 } -f ${
                     includeFlagForPath(params.textDocument.uri)
                 }`,
-                settings
+                settings,
+                {allowErrors: false}
             );
             const formatted = stdout;
             return [
