@@ -1265,12 +1265,13 @@ const JaktInternal::Array<parser::ParsedMethod> methods = ((variants_methods_).g
 (((parsed_enum).record_type) =  parser::RecordType { typename parser::RecordType::ValueEnum((underlying_type.value()),variants) } );
 }
 else {
-const JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedMethod>> variants_methods_ = TRY((((*this).parse_sum_enum_body(parsed_enum,definition_linkage,is_boxed))));
-const JaktInternal::Array<parser::SumEnumVariant> variants = ((variants_methods_).get<0>());
-const JaktInternal::Array<parser::ParsedMethod> methods = ((variants_methods_).get<1>());
+const JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedField>,JaktInternal::Array<parser::ParsedMethod>> variants_fields_methods_ = TRY((((*this).parse_sum_enum_body(parsed_enum,definition_linkage,is_boxed))));
+const JaktInternal::Array<parser::SumEnumVariant> variants = ((variants_fields_methods_).get<0>());
+const JaktInternal::Array<parser::ParsedField> fields = ((variants_fields_methods_).get<1>());
+const JaktInternal::Array<parser::ParsedMethod> methods = ((variants_fields_methods_).get<2>());
 
 (((parsed_enum).methods) = methods);
-(((parsed_enum).record_type) =  parser::RecordType { typename parser::RecordType::SumEnum(is_boxed,variants) } );
+(((parsed_enum).record_type) =  parser::RecordType { typename parser::RecordType::SumEnum(is_boxed,fields,variants) } );
 }
 
 return (parsed_enum);
@@ -1992,6 +1993,52 @@ return (parsed_import);
 ((((*this).index)++));
 if (((*this).eol())){
 return (parsed_import);
+}
+if ((!(((((*this).current())).index() == 10 /* LCurly */)))){
+String module_name = ((((parsed_import).module_name)).literal_name());
+utility::Span module_span = ((((parsed_import).module_name)).span());
+while (((((*this).current())).index() == 7 /* ColonColon */)){
+((((*this).index)++));
+(module_name += String("::"));
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<parser::ParsedModuleImport>>{
+auto&& __jakt_match_variant = ((*this).current());
+switch(__jakt_match_variant.index()) {
+case 4: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();String const& name = __jakt_match_value.name;
+utility::Span const& span = __jakt_match_value.span;
+{
+(module_name += name);
+(module_span = TRY((parser::merge_spans(module_span,span))));
+((((*this).index)++));
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 62: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::As>();
+{
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+case 10: {
+auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::LCurly>();
+{
+return JaktInternal::LoopBreak{};
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+default: {
+{
+TRY((((*this).error(String("Expected module name fragment"),((((*this).current())).span())))));
+return (parsed_import);
+}
+return JaktInternal::ExplicitValue<void>();
+};/*case end*/
+}/*switch end*/
+}()
+));
+}
+(((parsed_import).module_name) =  parser::ImportName { typename parser::ImportName::Literal(module_name,module_span) } );
 }
 if (((((*this).current())).index() == 62 /* As */)){
 ((((*this).index)++));
@@ -3897,10 +3944,12 @@ return (TRY((((parser).parse_namespace()))));
 }
 }
 
-ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedMethod>>> parser::Parser::parse_sum_enum_body(const parser::ParsedRecord partial_enum,const parser::DefinitionLinkage definition_linkage,const bool is_boxed) {
+ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedField>,JaktInternal::Array<parser::ParsedMethod>>> parser::Parser::parse_sum_enum_body(const parser::ParsedRecord partial_enum,const parser::DefinitionLinkage definition_linkage,const bool is_boxed) {
 {
 JaktInternal::Array<parser::ParsedMethod> methods = (TRY((Array<parser::ParsedMethod>::create_with({}))));
 JaktInternal::Array<parser::SumEnumVariant> variants = (TRY((Array<parser::SumEnumVariant>::create_with({}))));
+JaktInternal::Array<parser::ParsedField> fields = (TRY((Array<parser::ParsedField>::create_with({}))));
+bool seen_a_variant = false;
 if (((((*this).current())).index() == 10 /* LCurly */)){
 ((((*this).index)++));
 }
@@ -3910,19 +3959,31 @@ TRY((((*this).error(String("Expected `{` to start the enum body"),((((*this).cur
 
 ((*this).skip_newlines());
 if (((*this).eof())){
-TRY((((*this).error(String("Incomplete enum definition, expected variant name"),((((*this).previous())).span())))));
-return ((Tuple{variants, methods}));
+TRY((((*this).error(String("Incomplete enum definition, expected variant or field name"),((((*this).previous())).span())))));
+return ((Tuple{variants, fields, methods}));
 }
 JaktInternal::Optional<parser::Visibility> last_visibility = JaktInternal::OptionalNone();
 JaktInternal::Optional<utility::Span> last_visibility_span = JaktInternal::OptionalNone();
 while ((!(((*this).eof())))){
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedMethod>>>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedField>,JaktInternal::Array<parser::ParsedMethod>>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 4: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<lexer::Token::Identifier>();String const& name = __jakt_match_value.name;
 utility::Span const& span = __jakt_match_value.span;
 {
+if (((((*this).peek(static_cast<size_t>(1ULL)))).index() == 6 /* Colon */)){
+const parser::ParsedField field = TRY((((*this).parse_field(last_visibility.value_or_lazy_evaluated([&] { return  parser::Visibility { typename parser::Visibility::Public() } ; })))));
+if (seen_a_variant){
+TRY((((*this).error_with_hint(String("Common enum fields must be declared before variants"),span,String("Previous variant is here"),(((((variants).last()).value())).span)))));
+}
+else {
+TRY((((fields).push(field))));
+}
+
+return JaktInternal::LoopContinue{};
+}
+(seen_a_variant = true);
 if ((!(((((*this).peek(static_cast<size_t>(1ULL)))).index() == 8 /* LParen */)))){
 ((((*this).index)++));
 TRY((((variants).push(parser::SumEnumVariant(name,span,JaktInternal::OptionalNone())))));
@@ -3944,7 +4005,7 @@ TRY((((*this).error(String("use 'boxed enum' to make the enum recursive"),((var_
 TRY((((var_decls).push(var_decl))));
 continue;
 }
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedMethod>>>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedField>,JaktInternal::Array<parser::ParsedMethod>>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 4: {
@@ -3975,7 +4036,7 @@ return JaktInternal::ExplicitValue<void>();
 }/*switch end*/
 }()
 ));
-JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedMethod>>>>{
+JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedField>,JaktInternal::Array<parser::ParsedMethod>>>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.index()) {
 case 9: {
@@ -4064,7 +4125,7 @@ case 75: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Function>();
 {
 const bool is_comptime = ((((*this).current())).index() == 76 /* Comptime */);
-const parser::FunctionLinkage function_linkage = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::FunctionLinkage, ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedMethod>>>>{
+const parser::FunctionLinkage function_linkage = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::FunctionLinkage, ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedField>,JaktInternal::Array<parser::ParsedMethod>>>>{
 auto&& __jakt_match_variant = definition_linkage;
 switch(__jakt_match_variant.index()) {
 case 0: {
@@ -4093,7 +4154,7 @@ case 76: {
 auto&& __jakt_match_value = __jakt_match_variant.template get<typename lexer::Token::Comptime>();
 {
 const bool is_comptime = ((((*this).current())).index() == 76 /* Comptime */);
-const parser::FunctionLinkage function_linkage = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::FunctionLinkage, ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedMethod>>>>{
+const parser::FunctionLinkage function_linkage = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP_NESTED_MATCH(([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::FunctionLinkage, ErrorOr<JaktInternal::Tuple<JaktInternal::Array<parser::SumEnumVariant>,JaktInternal::Array<parser::ParsedField>,JaktInternal::Array<parser::ParsedMethod>>>>{
 auto&& __jakt_match_variant = definition_linkage;
 switch(__jakt_match_variant.index()) {
 case 0: {
@@ -4131,13 +4192,13 @@ return JaktInternal::ExplicitValue<void>();
 }
 if ((!(((((*this).current())).index() == 11 /* RCurly */)))){
 TRY((((*this).error(String("Invalid enum definition, expected `}`"),((((*this).current())).span())))));
-return ((Tuple{variants, methods}));
+return ((Tuple{variants, fields, methods}));
 }
 ((((*this).index)++));
 if (((variants).is_empty())){
 TRY((((*this).error(String("Empty enums are not allowed"),((partial_enum).name_span)))));
 }
-return ((Tuple{variants, methods}));
+return ((Tuple{variants, fields, methods}));
 }
 }
 
@@ -8856,6 +8917,9 @@ TRY(builder.append("("));
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("is_boxed: {}", that.is_boxed));
+TRY(builder.append(", "));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));
+TRY(builder.appendff("fields: {}", that.fields));
 TRY(builder.append(", "));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));
 TRY(builder.appendff("variants: {}", that.variants));

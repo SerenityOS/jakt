@@ -23,6 +23,7 @@ extern struct Array<T> {
     function iterator(this) -> ArrayIterator<T>
     function first(this) -> T?
     function last(this) -> T?
+    function insert(mut this, before_index: usize, value: T) throws
 }
 
 extern struct ArraySlice<T> {

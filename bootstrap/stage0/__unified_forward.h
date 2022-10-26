@@ -5,10 +5,16 @@ extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
 const unsigned int CP_UTF8 = 65001;
 #endif
 namespace Jakt {
+namespace jakt__libc__io {
+}
+namespace jakt__arguments {
+struct ArgsParser;
+ErrorOr<String> escape_for_quotes(const String s);
+
+}
 namespace utility {
 struct Span;
 struct FileId;
-struct ArgsParser;
 bool is_ascii_binary(const u8 c);
 
 String join(const JaktInternal::Array<String> strings, const String separator);
@@ -670,6 +676,7 @@ struct IndexedExpression;
 struct IndexedDictionary;
 struct IndexedTuple;
 struct IndexedStruct;
+struct IndexedCommonEnumMember;
 struct Match;
 struct EnumVariantArg;
 struct Call;
@@ -709,6 +716,7 @@ struct Class;
 struct Enum;
 struct JaktArray;
 struct JaktDictionary;
+struct JaktSet;
 struct RawPtr;
 struct OptionalSome;
 struct OptionalNone;
@@ -878,6 +886,8 @@ void bubble_sort(JaktInternal::Array<String> values);
 template <typename T>
 ErrorOr<JaktInternal::Array<T>> init(const JaktInternal::Array<T> xs);
 
+}
+namespace jakt__libc__io {
 }
 namespace repl {
 struct Editor;
