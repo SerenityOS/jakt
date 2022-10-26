@@ -5,34 +5,67 @@
 #include "compiler.h"
 namespace Jakt {
 namespace lexer {
-namespace LiteralPrefix_Details {
-struct None {};
-struct Hexadecimal {};
-struct Octal {};
-struct Binary {};
-}
-struct LiteralPrefix : public Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, LiteralPrefix_Details::Octal, LiteralPrefix_Details::Binary> {
-using Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, LiteralPrefix_Details::Octal, LiteralPrefix_Details::Binary>::Variant;
-    using None = LiteralPrefix_Details::None;
-    using Hexadecimal = LiteralPrefix_Details::Hexadecimal;
-    using Octal = LiteralPrefix_Details::Octal;
-    using Binary = LiteralPrefix_Details::Binary;
+struct Lexer {
+  public:
+size_t index;JaktInternal::Array<u8> input;NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Optional<JaktInternal::Array<u8>> comment_contents;ErrorOr<lexer::Token> lex_quoted_string(const u8 delimiter);
+ErrorOr<JaktInternal::Optional<lexer::Token>> next();
+ErrorOr<JaktInternal::Optional<String>> consume_comment_contents();
+ErrorOr<lexer::Token> lex_character_constant_or_name();
+lexer::Token lex_dot();
+ErrorOr<lexer::Token> lex_forward_slash();
+lexer::Token lex_question_mark();
+u8 peek_behind(const size_t steps) const;
+u8 peek_ahead(const size_t steps) const;
+lexer::Token lex_asterisk();
+u8 peek() const;
+lexer::Token lex_percent_sign();
+ErrorOr<lexer::Token> lex_number_or_name();
+lexer::Token lex_minus();
+bool eof() const;
+lexer::Token lex_ampersand();
+utility::Span span(const size_t start, const size_t end) const;
+lexer::Token lex_plus();
+lexer::Token lex_exclamation_point();
+ErrorOr<lexer::LiteralSuffix> consume_numeric_literal_suffix();
+lexer::Token lex_colon();
+Lexer(size_t a_index, JaktInternal::Array<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::Array<u8>> a_comment_contents);
+
+bool valid_digit(const lexer::LiteralPrefix prefix, const u8 digit, const bool decimal_allowed);
+ErrorOr<void> error(const String message, const utility::Span span);
+ErrorOr<String> substring(const size_t start, const size_t length) const;
+lexer::Token lex_greater_than();
+lexer::Token lex_pipe();
+lexer::Token lex_caret();
+ErrorOr<lexer::Token> lex_number();
+lexer::Token lex_less_than();
+lexer::Token lex_equals();
+static ErrorOr<JaktInternal::Array<lexer::Token>> lex(const NonnullRefPtr<compiler::Compiler> compiler);
 ErrorOr<String> debug_description() const;
-String to_string() const;
+};namespace LiteralSuffix_Details {
+struct None {
 };
-namespace LiteralSuffix_Details {
-struct None {};
-struct UZ {};
-struct U8 {};
-struct U16 {};
-struct U32 {};
-struct U64 {};
-struct I8 {};
-struct I16 {};
-struct I32 {};
-struct I64 {};
-struct F32 {};
-struct F64 {};
+struct UZ {
+};
+struct U8 {
+};
+struct U16 {
+};
+struct U32 {
+};
+struct U64 {
+};
+struct I8 {
+};
+struct I16 {
+};
+struct I32 {
+};
+struct I64 {
+};
+struct F32 {
+};
+struct F64 {
+};
 }
 struct LiteralSuffix : public Variant<LiteralSuffix_Details::None, LiteralSuffix_Details::UZ, LiteralSuffix_Details::U8, LiteralSuffix_Details::U16, LiteralSuffix_Details::U32, LiteralSuffix_Details::U64, LiteralSuffix_Details::I8, LiteralSuffix_Details::I16, LiteralSuffix_Details::I32, LiteralSuffix_Details::I64, LiteralSuffix_Details::F32, LiteralSuffix_Details::F64> {
 using Variant<LiteralSuffix_Details::None, LiteralSuffix_Details::UZ, LiteralSuffix_Details::U8, LiteralSuffix_Details::U16, LiteralSuffix_Details::U32, LiteralSuffix_Details::U64, LiteralSuffix_Details::I8, LiteralSuffix_Details::I16, LiteralSuffix_Details::I32, LiteralSuffix_Details::I64, LiteralSuffix_Details::F32, LiteralSuffix_Details::F64>::Variant;
@@ -48,6 +81,25 @@ using Variant<LiteralSuffix_Details::None, LiteralSuffix_Details::UZ, LiteralSuf
     using I64 = LiteralSuffix_Details::I64;
     using F32 = LiteralSuffix_Details::F32;
     using F64 = LiteralSuffix_Details::F64;
+ErrorOr<String> debug_description() const;
+String to_string() const;
+};
+namespace LiteralPrefix_Details {
+struct None {
+};
+struct Hexadecimal {
+};
+struct Octal {
+};
+struct Binary {
+};
+}
+struct LiteralPrefix : public Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, LiteralPrefix_Details::Octal, LiteralPrefix_Details::Binary> {
+using Variant<LiteralPrefix_Details::None, LiteralPrefix_Details::Hexadecimal, LiteralPrefix_Details::Octal, LiteralPrefix_Details::Binary>::Variant;
+    using None = LiteralPrefix_Details::None;
+    using Hexadecimal = LiteralPrefix_Details::Hexadecimal;
+    using Octal = LiteralPrefix_Details::Octal;
+    using Binary = LiteralPrefix_Details::Binary;
 ErrorOr<String> debug_description() const;
 String to_string() const;
 };
@@ -103,258 +155,360 @@ span{ forward<_MemberT1>(member_1)}
 };
 struct Semicolon{
 utility::Span value;
-template<typename... Args>
-Semicolon(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Semicolon(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Colon{
 utility::Span value;
-template<typename... Args>
-Colon(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Colon(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct ColonColon{
 utility::Span value;
-template<typename... Args>
-ColonColon(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+ColonColon(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct LParen{
 utility::Span value;
-template<typename... Args>
-LParen(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+LParen(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct RParen{
 utility::Span value;
-template<typename... Args>
-RParen(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+RParen(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct LCurly{
 utility::Span value;
-template<typename... Args>
-LCurly(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+LCurly(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct RCurly{
 utility::Span value;
-template<typename... Args>
-RCurly(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+RCurly(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct LSquare{
 utility::Span value;
-template<typename... Args>
-LSquare(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+LSquare(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct RSquare{
 utility::Span value;
-template<typename... Args>
-RSquare(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+RSquare(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct PercentSign{
 utility::Span value;
-template<typename... Args>
-PercentSign(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+PercentSign(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Plus{
 utility::Span value;
-template<typename... Args>
-Plus(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Plus(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Minus{
 utility::Span value;
-template<typename... Args>
-Minus(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Minus(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Equal{
 utility::Span value;
-template<typename... Args>
-Equal(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Equal(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct PlusEqual{
 utility::Span value;
-template<typename... Args>
-PlusEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+PlusEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct PlusPlus{
 utility::Span value;
-template<typename... Args>
-PlusPlus(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+PlusPlus(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct MinusEqual{
 utility::Span value;
-template<typename... Args>
-MinusEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+MinusEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct MinusMinus{
 utility::Span value;
-template<typename... Args>
-MinusMinus(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+MinusMinus(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct AsteriskEqual{
 utility::Span value;
-template<typename... Args>
-AsteriskEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+AsteriskEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct ForwardSlashEqual{
 utility::Span value;
-template<typename... Args>
-ForwardSlashEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+ForwardSlashEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct PercentSignEqual{
 utility::Span value;
-template<typename... Args>
-PercentSignEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+PercentSignEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct NotEqual{
 utility::Span value;
-template<typename... Args>
-NotEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+NotEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct DoubleEqual{
 utility::Span value;
-template<typename... Args>
-DoubleEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+DoubleEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct GreaterThan{
 utility::Span value;
-template<typename... Args>
-GreaterThan(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+GreaterThan(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct GreaterThanOrEqual{
 utility::Span value;
-template<typename... Args>
-GreaterThanOrEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+GreaterThanOrEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct LessThan{
 utility::Span value;
-template<typename... Args>
-LessThan(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+LessThan(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct LessThanOrEqual{
 utility::Span value;
-template<typename... Args>
-LessThanOrEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+LessThanOrEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct LeftArithmeticShift{
 utility::Span value;
-template<typename... Args>
-LeftArithmeticShift(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+LeftArithmeticShift(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct LeftShift{
 utility::Span value;
-template<typename... Args>
-LeftShift(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+LeftShift(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct LeftShiftEqual{
 utility::Span value;
-template<typename... Args>
-LeftShiftEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+LeftShiftEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct RightShift{
 utility::Span value;
-template<typename... Args>
-RightShift(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+RightShift(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct RightArithmeticShift{
 utility::Span value;
-template<typename... Args>
-RightArithmeticShift(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+RightArithmeticShift(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct RightShiftEqual{
 utility::Span value;
-template<typename... Args>
-RightShiftEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+RightShiftEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Asterisk{
 utility::Span value;
-template<typename... Args>
-Asterisk(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Asterisk(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Ampersand{
 utility::Span value;
-template<typename... Args>
-Ampersand(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Ampersand(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct AmpersandEqual{
 utility::Span value;
-template<typename... Args>
-AmpersandEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+AmpersandEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct AmpersandAmpersand{
 utility::Span value;
-template<typename... Args>
-AmpersandAmpersand(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+AmpersandAmpersand(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Pipe{
 utility::Span value;
-template<typename... Args>
-Pipe(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Pipe(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct PipeEqual{
 utility::Span value;
-template<typename... Args>
-PipeEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+PipeEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct PipePipe{
 utility::Span value;
-template<typename... Args>
-PipePipe(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+PipePipe(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Caret{
 utility::Span value;
-template<typename... Args>
-Caret(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Caret(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct CaretEqual{
 utility::Span value;
-template<typename... Args>
-CaretEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+CaretEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Dollar{
 utility::Span value;
-template<typename... Args>
-Dollar(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Dollar(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Tilde{
 utility::Span value;
-template<typename... Args>
-Tilde(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Tilde(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct ForwardSlash{
 utility::Span value;
-template<typename... Args>
-ForwardSlash(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+ForwardSlash(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct ExclamationPoint{
 utility::Span value;
-template<typename... Args>
-ExclamationPoint(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+ExclamationPoint(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct QuestionMark{
 utility::Span value;
-template<typename... Args>
-QuestionMark(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+QuestionMark(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct QuestionMarkQuestionMark{
 utility::Span value;
-template<typename... Args>
-QuestionMarkQuestionMark(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+QuestionMarkQuestionMark(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct QuestionMarkQuestionMarkEqual{
 utility::Span value;
-template<typename... Args>
-QuestionMarkQuestionMarkEqual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+QuestionMarkQuestionMarkEqual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Comma{
 utility::Span value;
-template<typename... Args>
-Comma(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Comma(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Dot{
 utility::Span value;
-template<typename... Args>
-Dot(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Dot(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct DotDot{
 utility::Span value;
-template<typename... Args>
-DotDot(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+DotDot(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Eol {
 JaktInternal::Optional<String> comment;
@@ -367,248 +521,346 @@ span{ forward<_MemberT1>(member_1)}
 };
 struct Eof{
 utility::Span value;
-template<typename... Args>
-Eof(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Eof(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct FatArrow{
 utility::Span value;
-template<typename... Args>
-FatArrow(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+FatArrow(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Arrow{
 utility::Span value;
-template<typename... Args>
-Arrow(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Arrow(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct And{
 utility::Span value;
-template<typename... Args>
-And(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+And(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Anon{
 utility::Span value;
-template<typename... Args>
-Anon(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Anon(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct As{
 utility::Span value;
-template<typename... Args>
-As(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+As(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Boxed{
 utility::Span value;
-template<typename... Args>
-Boxed(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Boxed(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Break{
 utility::Span value;
-template<typename... Args>
-Break(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Break(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Catch{
 utility::Span value;
-template<typename... Args>
-Catch(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Catch(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Class{
 utility::Span value;
-template<typename... Args>
-Class(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Class(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Continue{
 utility::Span value;
-template<typename... Args>
-Continue(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Continue(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Cpp{
 utility::Span value;
-template<typename... Args>
-Cpp(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Cpp(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Defer{
 utility::Span value;
-template<typename... Args>
-Defer(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Defer(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Else{
 utility::Span value;
-template<typename... Args>
-Else(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Else(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Enum{
 utility::Span value;
-template<typename... Args>
-Enum(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Enum(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Extern{
 utility::Span value;
-template<typename... Args>
-Extern(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Extern(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct False{
 utility::Span value;
-template<typename... Args>
-False(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+False(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct For{
 utility::Span value;
-template<typename... Args>
-For(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+For(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Function{
 utility::Span value;
-template<typename... Args>
-Function(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Function(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Comptime{
 utility::Span value;
-template<typename... Args>
-Comptime(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Comptime(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct If{
 utility::Span value;
-template<typename... Args>
-If(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+If(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Import{
 utility::Span value;
-template<typename... Args>
-Import(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Import(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct In{
 utility::Span value;
-template<typename... Args>
-In(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+In(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Is{
 utility::Span value;
-template<typename... Args>
-Is(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Is(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Let{
 utility::Span value;
-template<typename... Args>
-Let(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Let(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Loop{
 utility::Span value;
-template<typename... Args>
-Loop(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Loop(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Match{
 utility::Span value;
-template<typename... Args>
-Match(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Match(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Mut{
 utility::Span value;
-template<typename... Args>
-Mut(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Mut(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Namespace{
 utility::Span value;
-template<typename... Args>
-Namespace(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Namespace(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Not{
 utility::Span value;
-template<typename... Args>
-Not(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Not(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Or{
 utility::Span value;
-template<typename... Args>
-Or(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Or(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Override{
 utility::Span value;
-template<typename... Args>
-Override(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Override(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Private{
 utility::Span value;
-template<typename... Args>
-Private(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Private(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Public{
 utility::Span value;
-template<typename... Args>
-Public(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Public(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Raw{
 utility::Span value;
-template<typename... Args>
-Raw(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Raw(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Return{
 utility::Span value;
-template<typename... Args>
-Return(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Return(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Restricted{
 utility::Span value;
-template<typename... Args>
-Restricted(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Restricted(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Struct{
 utility::Span value;
-template<typename... Args>
-Struct(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Struct(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct This{
 utility::Span value;
-template<typename... Args>
-This(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+This(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Throw{
 utility::Span value;
-template<typename... Args>
-Throw(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Throw(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Throws{
 utility::Span value;
-template<typename... Args>
-Throws(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Throws(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct True{
 utility::Span value;
-template<typename... Args>
-True(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+True(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Try{
 utility::Span value;
-template<typename... Args>
-Try(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Try(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Unsafe{
 utility::Span value;
-template<typename... Args>
-Unsafe(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Unsafe(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Virtual{
 utility::Span value;
-template<typename... Args>
-Virtual(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Virtual(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Weak{
 utility::Span value;
-template<typename... Args>
-Weak(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Weak(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct While{
 utility::Span value;
-template<typename... Args>
-While(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+While(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Yield{
 utility::Span value;
-template<typename... Args>
-Yield(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Yield(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Guard{
 utility::Span value;
-template<typename... Args>
-Guard(Args&&... args): value { forward<Args>(args)... } {}
+template<typename _MemberT0>
+Guard(_MemberT0&& member_0):
+value{ forward<_MemberT0>(member_0)}
+{}
 };
 struct Garbage {
 JaktInternal::Optional<String> consumed;
@@ -733,53 +985,17 @@ ErrorOr<String> debug_description() const;
 static lexer::Token from_keyword_or_identifier(const String string, const utility::Span span);
 utility::Span span() const;
 };
-struct Lexer {
-  public:
-size_t index;JaktInternal::Array<u8> input;NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Optional<JaktInternal::Array<u8>> comment_contents;ErrorOr<lexer::Token> lex_quoted_string(const u8 delimiter);
-ErrorOr<JaktInternal::Optional<lexer::Token>> next();
-ErrorOr<JaktInternal::Optional<String>> consume_comment_contents();
-ErrorOr<lexer::Token> lex_character_constant_or_name();
-lexer::Token lex_dot();
-ErrorOr<lexer::Token> lex_forward_slash();
-lexer::Token lex_question_mark();
-u8 peek_behind(const size_t steps) const;
-u8 peek_ahead(const size_t steps) const;
-lexer::Token lex_asterisk();
-u8 peek() const;
-lexer::Token lex_percent_sign();
-ErrorOr<lexer::Token> lex_number_or_name();
-lexer::Token lex_minus();
-bool eof() const;
-lexer::Token lex_ampersand();
-utility::Span span(const size_t start, const size_t end) const;
-lexer::Token lex_plus();
-lexer::Token lex_exclamation_point();
-ErrorOr<lexer::LiteralSuffix> consume_numeric_literal_suffix();
-lexer::Token lex_colon();
-Lexer(size_t a_index, JaktInternal::Array<u8> a_input, NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Optional<JaktInternal::Array<u8>> a_comment_contents);
-
-bool valid_digit(const lexer::LiteralPrefix prefix, const u8 digit, const bool decimal_allowed);
-ErrorOr<void> error(const String message, const utility::Span span);
-ErrorOr<String> substring(const size_t start, const size_t length) const;
-lexer::Token lex_greater_than();
-lexer::Token lex_pipe();
-lexer::Token lex_caret();
-ErrorOr<lexer::Token> lex_number();
-lexer::Token lex_less_than();
-lexer::Token lex_equals();
-static ErrorOr<JaktInternal::Array<lexer::Token>> lex(const NonnullRefPtr<compiler::Compiler> compiler);
-ErrorOr<String> debug_description() const;
-};}
-template<>struct Formatter<lexer::LiteralPrefix> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, lexer::LiteralPrefix const& value) {
+}
+template<>struct Formatter<lexer::Lexer> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, lexer::Lexer const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<lexer::LiteralSuffix> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, lexer::LiteralSuffix const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<lexer::LiteralPrefix> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, lexer::LiteralPrefix const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<lexer::Token> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, lexer::Token const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
-template<>struct Formatter<lexer::Lexer> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, lexer::Lexer const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 } // namespace Jakt

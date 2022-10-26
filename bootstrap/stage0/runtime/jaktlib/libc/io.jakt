@@ -1,0 +1,17 @@
+// Copyright (c) 2022, Andrew Kaster <akaster@serenityos.org>
+//
+// SPDX-License-Identifier: BSD-2-Clause
+
+import extern c "stdio.h" {
+    extern struct FILE {}
+    extern function fopen(anon str: raw c_char, anon mode: raw c_char) -> raw FILE
+    extern function fclose(anon mut file: raw FILE) -> c_int
+    extern function feof(anon mut file: raw FILE) -> c_int
+
+    extern function fgetc(anon mut file: raw FILE) -> c_int
+    extern function fgets(s: raw c_char, n: usize, stream: raw FILE) -> raw c_char
+    extern function putchar(anon ch: c_int) -> c_int
+
+    extern function system(anon command: raw c_char) -> c_int
+}
+

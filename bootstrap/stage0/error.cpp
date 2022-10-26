@@ -60,8 +60,15 @@ return {};
 const JaktInternal::Array<u8> file_contents = (contents.value());
 const JaktInternal::Array<JaktInternal::Tuple<size_t,size_t>> line_spans = TRY((error::gather_line_spans(file_contents)));
 size_t line_index = static_cast<size_t>(1ULL);
-const size_t largest_line_number = ((line_spans).size());
+size_t largest_line_number = static_cast<size_t>(0ULL);
+while ((line_index < ((line_spans).size()))){
+if (((((span).start) >= ((((line_spans)[line_index])).get<0>())) && (((span).start) <= ((((line_spans)[line_index])).get<1>())))){
+(largest_line_number = (JaktInternal::checked_add<size_t>(line_index,static_cast<size_t>(2ULL))));
+}
+(++(line_index));
+}
 const size_t width = ((TRY((String::formatted(String("{}"),largest_line_number)))).length());
+(line_index = static_cast<size_t>(1ULL));
 while ((line_index < ((line_spans).size()))){
 if (((((span).start) >= ((((line_spans)[line_index])).get<0>())) && (((span).start) <= ((((line_spans)[line_index])).get<1>())))){
 const size_t column_index = (JaktInternal::checked_sub<size_t>(((span).start),((((line_spans)[line_index])).get<0>())));
@@ -108,8 +115,25 @@ return {};
 ErrorOr<void> print_source_line(const error::MessageSeverity severity,const JaktInternal::Array<u8> file_contents,const JaktInternal::Tuple<size_t,size_t> file_span,const utility::Span error_span,const size_t line_number,const size_t largest_line_number) {
 {
 size_t index = ((file_span).get<0>());
-const size_t width = ((TRY((String::formatted(String("{}"),largest_line_number)))).length());
-warn(String(" {} | "),line_number);
+const size_t largest_width = ((TRY((String::formatted(String("{}"),largest_line_number)))).length());
+const size_t current_width = ((TRY((String::formatted(String("{}"),line_number)))).length());
+warn(String(" {}"),line_number);
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>((JaktInternal::checked_sub<size_t>(largest_width,current_width)))});
+for (;;){
+JaktInternal::Optional<size_t> _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t _ = (_magic_value.value());
+{
+warn(String(" "));
+}
+
+}
+}
+
+warn(String(" | "));
 while ((index <= ((file_span).get<1>()))){
 u8 c = ' ';
 if ((index < ((file_span).get<1>()))){

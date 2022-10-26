@@ -12,6 +12,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("dump_parser: "));TRY(builder.appendff("{}, ", dump_parser));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("ignore_parser_errors: "));TRY(builder.appendff("{}, ", ignore_parser_errors));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("debug_print: "));TRY(builder.appendff("{}, ", debug_print));
+TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("std_include_path: "));TRY(builder.appendff("{}, ", std_include_path));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("include_paths: "));TRY(builder.appendff("{}, ", include_paths));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("json_errors: "));TRY(builder.appendff("{}, ", json_errors));
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("dump_type_hints: "));TRY(builder.appendff("{}, ", dump_type_hints));
@@ -84,8 +85,13 @@ return (true);
 }
 }
 
-ErrorOr<JaktInternal::Optional<path::Path>> compiler::Compiler::search_for_path(const String module_name) const {
+ErrorOr<JaktInternal::Optional<path::Path>> compiler::Compiler::search_for_path(const String input_module_name) const {
 {
+StringBuilder builder = TRY((StringBuilder::create()));
+TRY((((builder).append(static_cast<u8>(47)))));
+const String separator = TRY((((builder).to_string())));
+const String module_name = TRY((((input_module_name).replace(String("::"),separator))));
+const String standard_module_name = String("jakt");
 {
 JaktInternal::ArrayIterator<String> _magic = ((((*this).include_paths)).iterator());
 for (;;){
@@ -95,15 +101,22 @@ break;
 }
 String include_path = (_magic_value.value());
 {
-const String candidate_path = (((include_path + String("/")) + module_name) + String(".jakt"));
-if (File::exists(candidate_path)){
-return (TRY((path::Path::from_string(candidate_path))));
+const path::Path candidate_path = TRY((path::Path::from_parts((TRY((Array<String>::create_with({include_path, (module_name + String(".jakt"))})))))));
+if (((candidate_path).exists())){
+return (candidate_path);
 }
 }
 
 }
 }
 
+if (((module_name).starts_with(standard_module_name))){
+const String std_module_name_path = TRY((((module_name).substring((JaktInternal::checked_add<size_t>(((standard_module_name).length()),static_cast<size_t>(1ULL))),(JaktInternal::checked_sub<size_t>(((module_name).length()),(JaktInternal::checked_add<size_t>(((standard_module_name).length()),static_cast<size_t>(1ULL)))))))));
+const path::Path candidate_path = TRY((path::Path::from_parts((TRY((Array<String>::create_with({((((*this).std_include_path)).to_string()), (std_module_name_path + String(".jakt"))})))))));
+if (((candidate_path).exists())){
+return (candidate_path);
+}
+}
 return (JaktInternal::OptionalNone());
 }
 }
@@ -128,8 +141,8 @@ return (((*this).current_file));
 }
 }
 
-compiler::Compiler::Compiler(JaktInternal::Array<path::Path>&& a_files, JaktInternal::Dictionary<String,utility::FileId>&& a_file_ids, JaktInternal::Array<error::JaktError>&& a_errors, JaktInternal::Optional<utility::FileId>&& a_current_file, JaktInternal::Array<u8>&& a_current_file_contents, bool&& a_dump_lexer, bool&& a_dump_parser, bool&& a_ignore_parser_errors, bool&& a_debug_print, JaktInternal::Array<String>&& a_include_paths, bool&& a_json_errors, bool&& a_dump_type_hints, bool&& a_dump_try_hints, bool&& a_optimize, JaktInternal::Optional<String>&& a_target_triple): files(move(a_files)), file_ids(move(a_file_ids)), errors(move(a_errors)), current_file(move(a_current_file)), current_file_contents(move(a_current_file_contents)), dump_lexer(move(a_dump_lexer)), dump_parser(move(a_dump_parser)), ignore_parser_errors(move(a_ignore_parser_errors)), debug_print(move(a_debug_print)), include_paths(move(a_include_paths)), json_errors(move(a_json_errors)), dump_type_hints(move(a_dump_type_hints)), dump_try_hints(move(a_dump_try_hints)), optimize(move(a_optimize)), target_triple(move(a_target_triple)){}
-ErrorOr<NonnullRefPtr<Compiler>> compiler::Compiler::create(JaktInternal::Array<path::Path> files, JaktInternal::Dictionary<String,utility::FileId> file_ids, JaktInternal::Array<error::JaktError> errors, JaktInternal::Optional<utility::FileId> current_file, JaktInternal::Array<u8> current_file_contents, bool dump_lexer, bool dump_parser, bool ignore_parser_errors, bool debug_print, JaktInternal::Array<String> include_paths, bool json_errors, bool dump_type_hints, bool dump_try_hints, bool optimize, JaktInternal::Optional<String> target_triple) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Compiler (move(files), move(file_ids), move(errors), move(current_file), move(current_file_contents), move(dump_lexer), move(dump_parser), move(ignore_parser_errors), move(debug_print), move(include_paths), move(json_errors), move(dump_type_hints), move(dump_try_hints), move(optimize), move(target_triple)))); return o; }
+compiler::Compiler::Compiler(JaktInternal::Array<path::Path>&& a_files, JaktInternal::Dictionary<String,utility::FileId>&& a_file_ids, JaktInternal::Array<error::JaktError>&& a_errors, JaktInternal::Optional<utility::FileId>&& a_current_file, JaktInternal::Array<u8>&& a_current_file_contents, bool&& a_dump_lexer, bool&& a_dump_parser, bool&& a_ignore_parser_errors, bool&& a_debug_print, path::Path&& a_std_include_path, JaktInternal::Array<String>&& a_include_paths, bool&& a_json_errors, bool&& a_dump_type_hints, bool&& a_dump_try_hints, bool&& a_optimize, JaktInternal::Optional<String>&& a_target_triple): files(move(a_files)), file_ids(move(a_file_ids)), errors(move(a_errors)), current_file(move(a_current_file)), current_file_contents(move(a_current_file_contents)), dump_lexer(move(a_dump_lexer)), dump_parser(move(a_dump_parser)), ignore_parser_errors(move(a_ignore_parser_errors)), debug_print(move(a_debug_print)), std_include_path(move(a_std_include_path)), include_paths(move(a_include_paths)), json_errors(move(a_json_errors)), dump_type_hints(move(a_dump_type_hints)), dump_try_hints(move(a_dump_try_hints)), optimize(move(a_optimize)), target_triple(move(a_target_triple)){}
+ErrorOr<NonnullRefPtr<Compiler>> compiler::Compiler::create(JaktInternal::Array<path::Path> files, JaktInternal::Dictionary<String,utility::FileId> file_ids, JaktInternal::Array<error::JaktError> errors, JaktInternal::Optional<utility::FileId> current_file, JaktInternal::Array<u8> current_file_contents, bool dump_lexer, bool dump_parser, bool ignore_parser_errors, bool debug_print, path::Path std_include_path, JaktInternal::Array<String> include_paths, bool json_errors, bool dump_type_hints, bool dump_try_hints, bool optimize, JaktInternal::Optional<String> target_triple) { auto o = TRY(adopt_nonnull_ref_or_enomem(new (nothrow) Compiler (move(files), move(file_ids), move(errors), move(current_file), move(current_file_contents), move(dump_lexer), move(dump_parser), move(ignore_parser_errors), move(debug_print), move(std_include_path), move(include_paths), move(json_errors), move(dump_type_hints), move(dump_try_hints), move(optimize), move(target_triple)))); return o; }
 JaktInternal::Optional<path::Path> compiler::Compiler::current_file_path() const {
 {
 if (((((*this).current_file)).has_value())){

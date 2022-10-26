@@ -6,22 +6,18 @@
 #include "compiler.h"
 namespace Jakt {
 namespace codegen {
-struct CodegenDebugInfo {
-  public:
-NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Dictionary<size_t,JaktInternal::Array<codegen::LineSpan>> line_spans;bool statement_span_comments;ErrorOr<void> gather_line_spans();
-ErrorOr<String> span_to_source_location(const utility::Span span);
-CodegenDebugInfo(NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Dictionary<size_t,JaktInternal::Array<codegen::LineSpan>> a_line_spans, bool a_statement_span_comments);
-
-ErrorOr<String> debug_description() const;
-};struct LineSpan {
+struct LineSpan {
   public:
 size_t start;size_t end;LineSpan(size_t a_start, size_t a_end);
 
 ErrorOr<String> debug_description() const;
 };namespace AllowedControlExits_Details {
-struct Nothing {};
-struct JustReturn {};
-struct AtLoop {};
+struct Nothing {
+};
+struct JustReturn {
+};
+struct AtLoop {
+};
 }
 struct AllowedControlExits : public Variant<AllowedControlExits_Details::Nothing, AllowedControlExits_Details::JustReturn, AllowedControlExits_Details::AtLoop> {
 using Variant<AllowedControlExits_Details::Nothing, AllowedControlExits_Details::JustReturn, AllowedControlExits_Details::AtLoop>::Variant;
@@ -40,6 +36,13 @@ bool is_match_nested() const;
 String choose_control_flow_macro() const;
 codegen::ControlFlowState enter_match() const;
 ControlFlowState(codegen::AllowedControlExits a_allowed_exits, bool a_passes_through_match, bool a_passes_through_try, size_t a_match_nest_level);
+
+ErrorOr<String> debug_description() const;
+};struct CodegenDebugInfo {
+  public:
+NonnullRefPtr<compiler::Compiler> compiler;JaktInternal::Dictionary<size_t,JaktInternal::Array<codegen::LineSpan>> line_spans;bool statement_span_comments;ErrorOr<void> gather_line_spans();
+ErrorOr<String> span_to_source_location(const utility::Span span);
+CodegenDebugInfo(NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::Dictionary<size_t,JaktInternal::Array<codegen::LineSpan>> a_line_spans, bool a_statement_span_comments);
 
 ErrorOr<String> debug_description() const;
 };struct CodeGenerator {
@@ -96,9 +99,6 @@ ErrorOr<void> postorder_traversal(const String encoded_type_id, JaktInternal::Se
 ErrorOr<String> fresh_label();
 ErrorOr<String> debug_description() const;
 };}
-template<>struct Formatter<codegen::CodegenDebugInfo> : Formatter<StringView>{
-ErrorOr<void> format(FormatBuilder& builder, codegen::CodegenDebugInfo const& value) {
-JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<codegen::LineSpan> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, codegen::LineSpan const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
@@ -107,6 +107,9 @@ ErrorOr<void> format(FormatBuilder& builder, codegen::AllowedControlExits const&
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<codegen::ControlFlowState> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, codegen::ControlFlowState const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
+template<>struct Formatter<codegen::CodegenDebugInfo> : Formatter<StringView>{
+ErrorOr<void> format(FormatBuilder& builder, codegen::CodegenDebugInfo const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };ErrorOr<void> format_error = Formatter<StringView>::format(builder, MUST(value.debug_description()));return format_error; }};
 template<>struct Formatter<codegen::CodeGenerator> : Formatter<StringView>{
 ErrorOr<void> format(FormatBuilder& builder, codegen::CodeGenerator const& value) {
