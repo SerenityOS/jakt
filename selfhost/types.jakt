@@ -380,6 +380,10 @@ boxed enum Type {
             return true
         } else if this is Self and rhs is Self {
             return true
+        } else if this is Unknown and rhs is Unknown {
+            return true
+        } else if this is Never and rhs is Never {
+            return true
         }
 
         match this {
