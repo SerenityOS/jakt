@@ -1,0 +1,10 @@
+/// Expect:
+/// - output: "WHF! Welcome to Serenity!\n"
+
+import a { select_import }
+
+import select_import("serenity") { do_os_thing }
+
+fn main() {
+    do_os_thing()
+}

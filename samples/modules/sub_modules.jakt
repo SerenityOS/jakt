@@ -4,7 +4,7 @@
 
 import a
 import b
-import subfolder::submodule { get_hello, Printer }
+import relative subfolder::submodule { get_hello, Printer }
 
 fn main() {
     a::use_cool_things()

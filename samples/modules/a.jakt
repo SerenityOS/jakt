@@ -2,7 +2,7 @@
 
 import b
 
-fn use_cool_things() {
+fn use_cool_things() throws {
     b::something_cool()
     b::something_else_cool()
 }
@@ -15,4 +15,9 @@ fn module_local_call() => 2
 
 fn adder<T>(x: T) -> T {
     return x + module_local_call()
+}
+
+comptime select_import(anon which: String) throws -> String => match which {
+    "serenity" => "comptime_a"
+    else => "comptime_b"
 }

@@ -3,6 +3,7 @@
 // Copyright (c) 2022, Charles Mirabile <charlie.mirabile@gmail.com>
 // Copyright (c) 2022, Kyle Lanmon <kyle.lanmon@gmail.com>
 // Copyright (c) 2022, Adler Oliveira <adler.rs.oliveira@gmail.com>
+// Copyright (c) 2022, Jesus Alvarez <jeezusjr@gmail.com>
 //
 // SPDX-License-Identifier: BSD-2-Clause
 
@@ -177,6 +178,8 @@ struct ParsedModuleImport {
     module_name: ImportName
     alias_name: ImportName?
     import_list: ImportList
+    relative_path: bool
+    parent_path_count: usize
 
     fn is_equivalent_to(this, anon other: ParsedModuleImport) -> bool =>
         .module_name.equals(other.module_name) and .has_same_alias_than(other) and .has_same_import_semantics(other)
@@ -2893,7 +2896,59 @@ struct Parser {
             module_name: ImportName::Literal(name: "", span: .empty_span())
             alias_name: None
             import_list: ImportList::List([])
-        )
+            relative_path: false
+            parent_path_count: 0)
+
+        if .current() is Relative {
+            parsed_import.relative_path = true
+            .index++
+            if .current() is Identifier(name) and name == "parent" {
+                .index++
+                parsed_import.parent_path_count++
+                while (.current() is ColonColon) {
+                    .index++
+                    match .current() {
+                        Identifier(name) => {
+                            if name != "parent" {
+                                break
+                            }
+                            .index++
+                            parsed_import.parent_path_count++
+                        }
+                        else => { break }
+                    }
+                }
+                if .current() is LParen {
+                    .index++
+                    while not .eof() {
+                        match .current() {
+                            RParen => {
+                                .index++
+                                break
+                            }
+                            Number(prefix, number, suffix, span) => {
+                                let numeric_constant = .parse_number(prefix, number, suffix, span)
+                                guard numeric_constant is NumericConstant(val) else {
+                                    .error("Invalid Numeric Constant", span)
+                                    break
+                                }
+                                parsed_import.parent_path_count = val.to_usize()
+                            }
+                            else => {
+                                .error(format("Incomplete relative import defintion, `)`; got ‘{}’", .current()), .current().span())
+                                return parsed_import
+                            }
+                        }
+                    }
+                    if .current() is ColonColon {
+                        .index++
+                    } else {
+                        .error(format("Expected `::` after {}, got ‘{}’", .previous(), .current()), .current().span())
+                        return parsed_import
+                    }
+                }
+            }
+        }
 
         parsed_import.module_name = match .current() {
             Identifier(name, span) => match .peek(1) {

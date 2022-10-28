@@ -237,6 +237,8 @@ struct REPL {
                 ),
                 alias_name: None
                 import_list: ImportList::All
+                relative_path: false
+                parent_path_count: 0
             )
             scope_id: root_scope_id
         )
