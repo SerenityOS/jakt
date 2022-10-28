@@ -1,13 +1,13 @@
 /// Expect: Skip
 
-fn something_cool() {
+fn something_cool() throws {
     println("something_cool")
 }
 
-fn something_else_cool() {
+fn something_else_cool() throws {
     println("something_else_cool")
 }
 
-fn not_cool() {
+fn not_cool() throws {
     println("not_cool")
 }

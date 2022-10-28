@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "Hello\n42\n"
+/// - cppincludes: "subfolder"
+
+import relative mylib::mymodule { get_parent_hello }
+import relative mylib::math::wildcard { asterisk }
+
+fn main() {
+    println("{}", get_parent_hello())
+    asterisk()
+}

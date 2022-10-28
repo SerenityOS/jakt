@@ -1,0 +1,7 @@
+/// Expect: Skip
+
+import relative parent(2)::math::math { subtract }
+
+fn asterisk() {
+    subtract(x: 44, y: 2)
+}

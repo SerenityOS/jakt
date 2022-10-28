@@ -202,6 +202,7 @@ struct FormattedToken {
         Comptime => "comptime"
         If => "if"
         Import => "import"
+        Relative => "relative"
         In => "in"
         Is => "is"
         Let => "let"

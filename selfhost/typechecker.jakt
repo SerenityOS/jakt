@@ -224,6 +224,8 @@ struct Typechecker {
                 ),
                 alias_name: None
                 import_list: ImportList::All
+                relative_path: false
+                parent_path_count: 0
             )
             scope_id: root_scope_id
         )
@@ -1079,6 +1081,8 @@ struct Typechecker {
         }
 
         if not module_names_and_spans.has_value() { return }
+        let parent_path_count = import_.parent_path_count
+        let import_is_relative = import_.relative_path
 
         mut module_name_and_span: (String, Span)? = None
         mut names: [String] = []
@@ -1087,7 +1091,7 @@ struct Typechecker {
 
             mut maybe_loaded_module = .program.get_loaded_module(name_and_span.0)
             if not maybe_loaded_module.has_value() {
-                let maybe_file_name = .compiler.search_for_path(name_and_span.0)
+                let maybe_file_name = .compiler.search_for_path(input_module_name: name_and_span.0, relative_import: import_is_relative, parent_path_count: parent_path_count)
                 let file_name = match maybe_file_name.has_value() {
                     true => maybe_file_name!
                     false => .get_root_path().parent().join(name_and_span.0).replace_extension("jakt")
@@ -1117,7 +1121,7 @@ struct Typechecker {
         mut imported_module_id = ModuleId(id: 0)
         mut maybe_loaded_module = .program.get_loaded_module(sanitized_module_name)
         if not maybe_loaded_module.has_value() {
-            let maybe_file_name = .compiler.search_for_path(module_name)
+            let maybe_file_name = .compiler.search_for_path(input_module_name: module_name, relative_import: import_is_relative, parent_path_count: parent_path_count)
             let file_name = match maybe_file_name.has_value() {
                 true => maybe_file_name!
                 false => .get_root_path().parent().join(module_name).replace_extension("jakt")
