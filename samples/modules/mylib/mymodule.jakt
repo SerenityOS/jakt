@@ -1,0 +1,7 @@
+/// Expect: Skip
+
+import relative parent::parent::subfolder::submodule { get_hello }
+
+function get_parent_hello() -> String {
+    return get_hello()
+}

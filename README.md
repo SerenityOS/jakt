@@ -68,6 +68,35 @@ Some of the features that encourage more readable programs:
 - [ ] Trailing closure parameters can be passed outside the call parentheses.
 - [ ] Error propagation with `ErrorOr<T>` return type and dedicated `try` / `must` keywords.
 
+## Code reuse
+
+Jakt is flexible in how a project can be structured with a built-in module system.
+
+```jakt
+import a                                (1)
+import a { use_cool_things }            (2)
+import relative foo::bar                (3)
+import relative parent::foo::baz        (4)
+import relative parent(3)::foo::baz     (5)
+```
+
+1. Import a module from the same directory as the file.
+1. Import only `use_cool_things()` from module `a`.
+1. Import a module using the relative keyword when the module is a sub path of the directory containing the file.
+1. Import a module in a parent path one directory up from the file.
+1. Syntactic sugar for importing a module three parent paths up from the file.
+
+### The Jakt Standard Library
+
+Jakt has a Standard Library that is accessed using the `jakt::` namespace:
+
+```jakt
+import jakt::arguments
+import jakt::libc::io { system }
+```
+
+The Jakt Standard Library is in its infancy, so please consider making a contribution!
+
 ## Function calls
 
 When calling a function, you must specify the name of each argument as you're passing it:

@@ -16,7 +16,6 @@ function realpath_(anon path: String) throws -> String {
         mut absolute_path: raw c_char = allocate<c_char>(count: 256)
         let buffer = _fullpath(absolute_path, path.c_string(), 256)
         if buffer == null<c_char>() {
-            // FIXME: throw an error, errno is posix!
             throw Error::from_errno(errno_value())
         }
         builder.append_c_string(buffer)
