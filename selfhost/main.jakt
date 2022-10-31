@@ -751,8 +751,8 @@ function main(args: [String]) {
 
             let runtime_lib_path = Path::from_string(runtime_library_path)
 
-            linker_args.push(runtime_lib_path.join(library_name("runtime")).to_string())
             linker_args.push(runtime_lib_path.join(library_name("main")).to_string())
+            linker_args.push(runtime_lib_path.join(library_name("runtime")).to_string())
 
             for path in extra_lib_paths.iterator() {
                 linker_args.push("-L")
