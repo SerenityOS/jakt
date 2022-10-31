@@ -125,6 +125,12 @@ class Compiler {
         return true
     }
 
+    public function current_file_state(this) -> (FileId?, [u8]) => (.current_file, .current_file_contents)
+    public function restore_file_state(mut this, anon state: (FileId?, [u8])) {
+        .current_file = state.0
+        .current_file_contents = state.1
+    }
+
     public function dbg_println(this, anon message: String) {
         if .debug_print {
             println("{}", message)

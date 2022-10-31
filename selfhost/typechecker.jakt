@@ -285,12 +285,12 @@ struct Typechecker {
     }
 
     function lex_and_parse_file_contents(mut this, file_id: FileId) throws -> ParsedNamespace? {
-        let old_file_id = .compiler.current_file!
+        let old_file_state = .compiler.current_file_state()
 
         if not .compiler.set_current_file(file_id) {
             return None
         }
-        defer .compiler.set_current_file(old_file_id)
+        defer .compiler.restore_file_state(old_file_state)
 
         let tokens = Lexer::lex(compiler: .compiler)
 
