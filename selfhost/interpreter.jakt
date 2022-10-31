@@ -6025,7 +6025,31 @@ class Interpreter {
                 }
             }
         }
-        // JaktTuple
+        JaktTuple(vals, span, type_id) => {
+            mut fields: [Value] = []
+            for val in vals.iterator() {
+                let value = match .execute_expression(val, scope) {
+                    JustValue(value) => value
+                    Return(value) => {
+                        return StatementResult::Return(value)
+                    }
+                    Throw(value) => {
+                        return StatementResult::Throw(value)
+                    }
+                    Continue => {
+                        return StatementResult::Continue
+                    }
+                    Break => {
+                        return StatementResult::Break
+                    }
+                    Yield => {
+                        panic("Invalid control flow")
+                    }
+                }
+                fields.push(value)
+            }
+            yield StatementResult::JustValue(Value(impl: ValueImpl::JaktTuple(fields, type_id), span))
+        }
         JaktSet(vals, span, type_id) => {
             mut values: [Value] = []
             for v in vals.iterator() {
