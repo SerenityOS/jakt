@@ -139,9 +139,13 @@ struct Typechecker {
     function find_comptime_binding_in_scope(this, scope_id: ScopeId, anon name: String) throws -> Value? => .program.find_comptime_binding_in_scope(scope_id, name)
 
     function get_root_path(this) throws -> Path {
-        let file_id = .program.get_loaded_module("Root Module")!.file_id
+        let root_module = .program.get_loaded_module("Root Module")
+        if root_module.has_value() {
+            let file_id = root_module!.file_id
+            return .compiler.get_file_path(file_id)!
+        }
 
-        return .compiler.get_file_path(file_id)!
+        return Path::from_string(".")
     }
     function prelude_scope_id(this) -> ScopeId => .program.prelude_scope_id()
     function root_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 1), id: 0)

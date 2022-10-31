@@ -340,7 +340,8 @@ struct REPL {
                 or first_token is Class
                 or first_token is Enum
                 or first_token is Boxed
-                or first_token is Namespace {
+                or first_token is Namespace
+                or first_token is Import {
 
                 let parsed_namespace = try parser.parse_namespace() catch {
                     .handle_possible_error()
