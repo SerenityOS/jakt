@@ -22,11 +22,9 @@ import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId, Value, ValueImp
 import repl { REPL, serialize_ast_node }
 import ide
 import path { Path }
-import os { platform_process, platform_fs, platform_module, Target }
+import os { platform_fs, platform_module, Target }
 
-import platform_process() {
-    ExitPollResult, Process, start_background_process, poll_process_exit, forcefully_kill_process, wait_for_process, wait_for_some_set_of_processes_that_at_least_includes
-}
+import build { Builder }
 
 import platform_fs() {
     make_directory
@@ -132,79 +130,6 @@ function parse_format_range(anon range: String, anon input_file_length: usize) t
         start
         end
     )
-}
-
-struct ParallelExecutionPool {
-    pids: [usize:Process]
-    completed: [usize:ExitPollResult]
-    pid_index: usize
-    max_concurrent: usize
-
-    function create(anon max_concurrent: usize) throws -> ParallelExecutionPool {
-        return ParallelExecutionPool(
-            pids: [:]
-            completed: [:]
-            pid_index: 0
-            max_concurrent
-        )
-    }
-
-    function run(mut this, anon args: [String]) throws -> usize {
-        if .pids.size() >= .max_concurrent {
-            .wait_for_any_job_to_complete()
-        }
-
-        let process = start_background_process(args)
-        let id = .pid_index++
-        .pids.set(id, process)
-
-        return id
-    }
-
-    function status(this, id: usize) -> ExitPollResult? {
-        if .completed.contains(id) {
-            return .completed[id]
-        }
-
-        return None
-    }
-
-    function wait_for_any_job_to_complete(mut this) throws -> void {
-        let (finished_pid, finished_status) = wait_for_some_set_of_processes_that_at_least_includes(processes: &.pids)
-
-        mut pids_to_remove: [usize:ExitPollResult] = [:]
-        if finished_pid.has_value() {
-            pids_to_remove.set(finished_pid!, finished_status)
-        }
-
-        for (index, process) in .pids.iterator() {
-            // Swallow errors here, we'll get ECHLD for at least the one above
-            let status = try poll_process_exit(&process) catch {
-                pids_to_remove.set(index, finished_status)
-                continue
-            }
-            if status.has_value() {
-                pids_to_remove.set(index, status!)
-            }
-        }
-
-        for (index, status) in pids_to_remove.iterator() {
-            .pids.remove(index)
-            .completed.set(index, status)
-        }
-    }
-
-    function wait_for_all_jobs_to_complete(mut this) throws -> void {
-        while not .pids.is_empty() {
-            .wait_for_any_job_to_complete()
-        }
-    }
-
-    function kill_all(mut this) throws -> void {
-        for (_, process) in .pids.iterator() {
-            forcefully_kill_process(&process)
-        }
-    }
 }
 
 function value_or_throw<T>(anon maybe: T?) throws -> T {
@@ -672,110 +597,79 @@ function main(args: [String]) {
     }
 
     if build_executable or run_executable {
-        mut ids: {usize} = {}
-        mut linked_files: [String] = []
-        mut pool = ParallelExecutionPool::create(max_concurrent)
-
-        mut total_jobs = 0
-
+        mut files: [String] = []
         for (file_name, _) in codegen_result.iterator() {
             if file_name.ends_with(".h") {
                 continue
             }
-            total_jobs += 1
+            files.push(file_name)
         }
 
-        for (file_name, _) in codegen_result.iterator() {
-            if file_name.ends_with(".h") {
-                continue
-            }
+        mut builder = Builder::for_building(
+            files
+            max_concurrent
+        )
 
-            for (id, exit_result) in pool.completed.iterator() {
-                if exit_result.exit_code != 0 {
-                    eprintln("Error: Compilation failed")
-                    pool.kill_all()
-                    return 1
-                }
-            }
-
-            let built_object = binary_dir.join(
-                Path::from_string(file_name).replace_extension("o").to_string()
-            ).to_string()
-
-            linked_files.push(built_object)
-
-            let id = pool.run(run_compiler(
+        try builder.build_all(
+            binary_dir
+            compiler_invocation: &function[
                 cxx_compiler_path
-                cpp_filename: binary_dir.join(file_name).to_string()
-                output_filename: built_object
                 runtime_path
                 extra_include_paths
-                extra_lib_paths: []
-                extra_link_libs: []
                 optimize
-                extra_compiler_flags: ["-c"]
-            ))
-            ids.add(id)
-
-            eprintln("{:c}[2LBuilding: {}/{}", 0x1b, ids.size(), total_jobs)
+            ](input_filename: String, output_filename: String) throws -> [String] {
+                return run_compiler(
+                    cxx_compiler_path
+                    cpp_filename: input_filename
+                    output_filename
+                    runtime_path
+                    extra_include_paths
+                    extra_lib_paths: []
+                    extra_link_libs: []
+                    optimize
+                    extra_compiler_flags: ["-c"]
+                )
+            }
+        ) catch {
+            return 1
         }
 
-        pool.wait_for_all_jobs_to_complete()
-
-        for (id, exit_result) in pool.completed.iterator() {
-            if exit_result.exit_code != 0 {
-                eprintln("Error: Compilation failed")
+        if link_archive.has_value() {
+            try builder.link_into_archive(
+                archiver: archiver_path ?? "ar"
+                archive_filename: link_archive!
+            ) catch {
                 return 1
             }
-        }
-
-        mut linker_args: [String] = []
-        if link_archive.has_value() {
-            linker_args = [
-                archiver_path ?? "ar"
-                "cr"
-                link_archive!
-            ]
-            for arg in linked_files.iterator() {
-                linker_args.push(arg)
-            }
         } else {
-            linker_args = [
-                cxx_compiler_path
-                "-o"
-                output_filename
-            ]
-            for arg in linked_files.iterator() {
-                linker_args.push(arg)
-            }
+            mut extra_arguments: [String] = []
 
             let runtime_lib_path = Path::from_string(runtime_library_path)
-
-            linker_args.push(runtime_lib_path.join(library_name("main")).to_string())
-            linker_args.push(runtime_lib_path.join(library_name("runtime")).to_string())
+            extra_arguments.push(runtime_lib_path.join(library_name("main")).to_string())
+            extra_arguments.push(runtime_lib_path.join(library_name("runtime")).to_string())
 
             for path in extra_lib_paths.iterator() {
-                linker_args.push("-L")
-                linker_args.push(path)
+                extra_arguments.push("-L")
+                extra_arguments.push(path)
             }
 
             for lib in extra_link_libs.iterator() {
-                linker_args.push("-l")
-                linker_args.push(lib)
+                extra_arguments.push("-l")
+                extra_arguments.push(lib)
             }
 
             if is_windows() and Path::from_string(cxx_compiler_path).basename() == "clang-cl" {
-                linker_args.push("/link")
-                linker_args.push("/subsystem:console")
+                extra_arguments.push("/link")
+                extra_arguments.push("/subsystem:console")
             }
-        }
 
-        let id = pool.run(linker_args)
-        pool.wait_for_all_jobs_to_complete()
-        let result = pool.status(id)!
-
-        if result.exit_code != 0 {
-            return result.exit_code
+            try builder.link_into_executable(
+                cxx_compiler_path
+                output_filename
+                extra_arguments
+            ) catch {
+                return 1
+            }
         }
     }
 
