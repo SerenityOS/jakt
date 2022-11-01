@@ -68,7 +68,7 @@ struct Path {
     function extension(this) throws -> String {
         for i in ((.path.length() - 1)..0).inclusive() {
             let c = .path.byte_at(i)
-            if c == b'/' {
+            if c == get_path_separator() {
                 break
             }
 
