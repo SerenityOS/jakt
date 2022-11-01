@@ -61,6 +61,7 @@ target_link_libraries(jakt_stage0 PRIVATE Jakt::jakt_runtime Jakt::jakt_main)
 apply_output_rules(jakt_stage0)
 
 set(SELFHOST_SOURCES
+  selfhost/build.jakt
   selfhost/codegen.jakt
   selfhost/compiler.jakt
   selfhost/error.jakt

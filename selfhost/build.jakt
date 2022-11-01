@@ -1,0 +1,185 @@
+import os { platform_process }
+import path { Path }
+import platform_process () {
+    Process
+    ExitPollResult
+    start_background_process
+    wait_for_some_set_of_processes_that_at_least_includes
+    poll_process_exit
+    forcefully_kill_process
+}
+
+struct ParallelExecutionPool {
+    pids: [usize:Process]
+    completed: [usize:ExitPollResult]
+    pid_index: usize
+    max_concurrent: usize
+
+    function create(anon max_concurrent: usize) throws -> ParallelExecutionPool {
+        return ParallelExecutionPool(
+            pids: [:]
+            completed: [:]
+            pid_index: 0
+            max_concurrent
+        )
+    }
+
+    function run(mut this, anon args: [String]) throws -> usize {
+        if .pids.size() >= .max_concurrent {
+            .wait_for_any_job_to_complete()
+        }
+
+        let process = start_background_process(args)
+        let id = .pid_index++
+        .pids.set(id, process)
+
+        return id
+    }
+
+    function status(this, id: usize) -> ExitPollResult? {
+        if .completed.contains(id) {
+            return .completed[id]
+        }
+
+        return None
+    }
+
+    function wait_for_any_job_to_complete(mut this) throws -> void {
+        let (finished_pid, finished_status) = wait_for_some_set_of_processes_that_at_least_includes(processes: &.pids)
+
+        mut pids_to_remove: [usize:ExitPollResult] = [:]
+        if finished_pid.has_value() {
+            pids_to_remove.set(finished_pid!, finished_status)
+        }
+
+        for (index, process) in .pids.iterator() {
+            // Swallow errors here, we'll get ECHLD for at least the one above
+            let status = try poll_process_exit(&process) catch {
+                pids_to_remove.set(index, finished_status)
+                continue
+            }
+            if status.has_value() {
+                pids_to_remove.set(index, status!)
+            }
+        }
+
+        for (index, status) in pids_to_remove.iterator() {
+            .pids.remove(index)
+            .completed.set(index, status)
+        }
+    }
+
+    function wait_for_all_jobs_to_complete(mut this) throws -> void {
+        while not .pids.is_empty() {
+            .wait_for_any_job_to_complete()
+        }
+    }
+
+    function kill_all(mut this) throws -> void {
+        for (_, process) in .pids.iterator() {
+            forcefully_kill_process(&process)
+        }
+    }
+}
+
+struct Builder {
+    linked_files: [String]
+    files_to_compile: [String]
+    pool: ParallelExecutionPool
+
+    function for_building(files: [String], max_concurrent: usize) throws -> Builder {
+        return Builder(
+            linked_files: []
+            files_to_compile: files
+            pool: ParallelExecutionPool::create(max_concurrent)
+        )
+    }
+
+    function build_all(
+        mut this
+        binary_dir: Path
+        compiler_invocation: &function(input_filename: String, output_filename: String) throws -> [String]
+    ) throws -> void {
+        mut ids: {usize} = {}
+        for file_name in .files_to_compile.iterator() {
+            for (id, exit_result) in .pool.completed.iterator() {
+                if exit_result.exit_code != 0 {
+                    eprintln("Error: Compilation failed")
+                    .pool.kill_all()
+                    throw Error::from_errno(1)
+                }
+            }
+
+            let built_object = binary_dir.join(
+                Path::from_string(file_name).replace_extension("o").to_string()
+            ).to_string()
+
+            .linked_files.push(built_object)
+
+            let id = .pool.run(compiler_invocation(
+                input_filename: binary_dir.join(file_name).to_string()
+                output_filename: built_object
+            ))
+            ids.add(id)
+
+            eprintln("{:c}[2LBuilding: {}/{}", 0x1b, ids.size(), .files_to_compile.size())
+        }
+
+        .pool.wait_for_all_jobs_to_complete()
+
+        for (id, exit_result) in .pool.completed.iterator() {
+            if exit_result.exit_code != 0 {
+                eprintln("Error: Compilation failed")
+                throw Error::from_errno(1)
+            }
+        }
+
+        .files_to_compile = []
+    }
+
+    function link_into_archive(mut this, archiver: String, archive_filename: String) throws {
+        mut args = [
+            archiver
+            "cr"
+            archive_filename
+        ]
+        for file in .linked_files.iterator() {
+            args.push(file)
+        }
+
+        let id = .pool.run(args)
+        .pool.wait_for_all_jobs_to_complete()
+
+        if .pool.status(id)!.exit_code != 0 {
+            eprintln("Error: Linking failed")
+            throw Error::from_errno(1)
+        }
+    }
+
+    function link_into_executable(
+        mut this
+        cxx_compiler_path: String
+        output_filename: String
+        extra_arguments: [String]
+    ) throws {
+        mut args = [
+            cxx_compiler_path
+            "-o"
+            output_filename
+        ]
+        for file in .linked_files.iterator() {
+            args.push(file)
+        }
+        for arg in extra_arguments.iterator() {
+            args.push(arg)
+        }
+
+        let id = .pool.run(args)
+        .pool.wait_for_all_jobs_to_complete()
+
+        if .pool.status(id)!.exit_code != 0 {
+            eprintln("Error: Linking failed")
+            throw Error::from_errno(1)
+        }
+    }
+}
