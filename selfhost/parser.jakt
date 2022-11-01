@@ -9,7 +9,7 @@
 
 import error { JaktError, print_error}
 import lexer { Token, LiteralPrefix, LiteralSuffix }
-import utility { panic, todo, FileId, Span, extend_array, join }
+import utility { panic, todo, FileId, Span, join }
 import compiler { Compiler }
 
 enum NumericConstant {
@@ -253,13 +253,8 @@ struct ParsedNamespace {
         for extern_import in .extern_imports {
             if extern_import.is_equivalent_to(import_) {
                 extern_import.assigned_namespace.merge_with(import_.assigned_namespace)
-                for action in import_.before_include {
-                    extern_import.before_include.push(action)
-                }
-                for action in import_.after_include {
-                    extern_import.after_include.push(action)
-                }
-
+                extern_import.before_include.push_values(import_.before_include)
+                extern_import.after_include.push_values(import_.after_include)
                 return
             }
         }
@@ -277,8 +272,8 @@ struct ParsedNamespace {
     }
 
     function merge_with(mut this, anon namespace_: ParsedNamespace) throws {
-        extend_array(target: .functions, extend_with: namespace_.functions)
-        extend_array(target: .records, extend_with: namespace_.records)
+        .functions.push_values(namespace_.functions)
+        .records.push_values(namespace_.records)
 
         .module_imports.add_capacity(namespace_.module_imports.size())
         for import_ in namespace_.module_imports {
@@ -1191,7 +1186,7 @@ boxed enum ParsedExpression {
         }
         Function(captures: lhs_captures, params: lhs_params, can_throw: lhs_can_throw, return_type: lhs_return_type) => match rhs_expression {
             Function(captures: rhs_captures, params: rhs_params, can_throw: rhs_can_throw, return_type: rhs_return_type) => {
-                guard lhs_return_type.equals(rhs_return_type) and 
+                guard lhs_return_type.equals(rhs_return_type) and
                     lhs_can_throw == rhs_can_throw and
                     lhs_captures.size() == rhs_captures.size() and
                     lhs_params.size() == rhs_params.size() else {
@@ -1252,8 +1247,8 @@ struct ParsedVariable {
     span: Span
 
     function equals(this, anon rhs_parsed_varible: ParsedVariable) -> bool {
-        return .name == rhs_parsed_varible.name and 
-        .parsed_type.equals(rhs_parsed_varible.parsed_type) and 
+        return .name == rhs_parsed_varible.name and
+        .parsed_type.equals(rhs_parsed_varible.parsed_type) and
         .is_mutable ==  rhs_parsed_varible.is_mutable
     }
 }
@@ -1824,18 +1819,14 @@ struct Parser {
                         .index++
                         let actions = .parse_include_action()
                         if actions.has_value() {
-                            for action in actions! {
-                                parsed_import.before_include.push(action)
-                            }
+                            parsed_import.before_include.push_values(actions!)
                         }
                     }
                     "after_include" => {
                         .index++
                         let actions = .parse_include_action()
                         if actions.has_value() {
-                            for action in actions! {
-                                parsed_import.after_include.push(action)
-                            }
+                            parsed_import.after_include.push_values(actions!)
                         }
                     }
                     else => {
@@ -2756,7 +2747,7 @@ struct Parser {
                     let var_decl = .parse_variable_declaration(is_mutable: current_param_is_mutable)
 
                     mut default_argument: ParsedExpression? = None
-                    
+
                     if .current() is Equal {
                         .index++
                         default_argument = .parse_expression(allow_assignments: false, allow_newlines: true)
@@ -3099,7 +3090,7 @@ struct Parser {
                 }
             }
         }
-        
+
         return []
     }
 
@@ -3227,7 +3218,7 @@ struct Parser {
 
         if .current() is LCurly {
             .index++
-        } else { 
+        } else {
             .error("Expected '{'", start)
         }
 
@@ -3425,7 +3416,7 @@ struct Parser {
 
         mut iterator_name = ""
         mut destructured_var_decls: [ParsedVarDecl] = []
-        
+
         match .current() {
             Identifier(name) => {
                 iterator_name = name
@@ -3472,9 +3463,7 @@ struct Parser {
             let destructured_vars_stmt = ParsedStatement::DestructuringAssignment(vars: destructured_var_decls, var_decl, span: merge_spans(start_span, .previous().span()))
             mut block_stmts: [ParsedStatement] = []
             block_stmts.push(destructured_vars_stmt)
-            for stmt in block.stmts {
-                block_stmts.push(stmt)
-            }
+            block_stmts.push_values(block.stmts)
             block.stmts = block_stmts
         }
 
@@ -3698,7 +3687,7 @@ struct Parser {
         LParen(span) => {
             let start_span = .current().span()
             .index++
-            
+
             mut expr = .parse_expression(allow_assignments: false, allow_newlines: false)
 
             .skip_newlines()
@@ -3845,7 +3834,7 @@ struct Parser {
                             let digit: u64 = as_saturated(byte - b'0')
                             total = total * 2 + digit
                         }
-                    }                    
+                    }
                 }
                 None => {}
             }
@@ -3902,7 +3891,7 @@ struct Parser {
 
         if floating and suffix is None {
             suffix = LiteralSuffix::F64
-        } 
+        }
 
         // Sanity check for float numbers with an integer suffix
         let is_float_suffix = match suffix {
@@ -4030,7 +4019,7 @@ struct Parser {
             return []
         }
         .index++
-        
+
         while not .eof() {
             match .current() {
                 RSquare => {
@@ -4151,7 +4140,7 @@ struct Parser {
                 to = .parse_operand()
             }
         }
-        
+
         return ParsedExpression::Range(from: None, to, span: merge_spans(start, .current().span()))
     }
 
@@ -4192,7 +4181,7 @@ struct Parser {
 
         return ParsedExpression::Set(values: output, span: merge_spans(start, .tokens[end].span()))
     }
-    
+
     function parse_operand(mut this) throws -> ParsedExpression {
         .skip_newlines()
         let start = .current().span()
