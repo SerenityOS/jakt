@@ -4112,6 +4112,17 @@ struct Typechecker {
             .error("‘return’ is not allowed inside ‘defer’", span)
         }
         if not expr.has_value() {
+            if .current_function_id.has_value() {
+                let current_function = .get_function(.current_function_id!)
+                let return_type = .get_type(current_function.return_type_id)
+                if (not return_type is Void) and (not return_type is Unknown) {
+                    .error_with_hint(format("’return’ with no value in function ’{}’ returning ’{}’",
+                                            current_function.name,
+                                            .type_name(current_function.return_type_id)),
+                                    span,
+                                    format("Add return value of type ’{}’ here", .type_name(current_function.return_type_id)), span)
+                }
+            }
             return CheckedStatement::Return(val: None, span)
         }
 
