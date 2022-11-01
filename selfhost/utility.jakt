@@ -78,13 +78,6 @@ struct FileId {
     }
 }
 
-function extend_array<T>(mut target: [T], extend_with: [T]) throws {
-    target.add_capacity(extend_with.size())
-    for v in extend_with {
-        target.push(v)
-    }
-}
-
 function escape_for_quotes(anon s: String) throws -> String {
     mut builder = StringBuilder::create()
     for i in 0..s.length() {

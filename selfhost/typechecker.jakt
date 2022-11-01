@@ -4686,9 +4686,7 @@ struct Typechecker {
                                 inner_condition = acc!
                                 outer_if_stmts.push(ParsedStatement::If(condition: inner_condition, then_block: then_block!, else_statement, span))
                             } else {
-                                for stmt in then_block!.stmts {
-                                    outer_if_stmts.push(stmt)
-                                }
+                                outer_if_stmts.push_values(then_block!.stmts)
                             }
                         }
 

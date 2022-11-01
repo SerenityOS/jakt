@@ -358,9 +358,7 @@ function value_to_checked_expression(anon this_value: Value, anon mut interprete
         }
 
         // Then append all the statements in the block
-        for statement in block.statements {
-            statements.push(statement)
-        }
+        statements.push_values(block.statements)
 
         let new_block = CheckedBlock(
             statements

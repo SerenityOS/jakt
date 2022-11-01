@@ -3,9 +3,7 @@ import lexer { Lexer, Token }
 
 function concat<T>(anon xs: [T], anon y: T) throws -> [T] {
     mut ys: [T] = []
-    for x in xs {
-        ys.push(x)
-    }
+    ys.push_values(xs)
     ys.push(y)
     return ys
 }
@@ -108,7 +106,7 @@ struct FormattedToken {
 
     function debug_text(this) throws -> String => match .token {
         Identifier(name) => format("Identifier: {}", name)
-        Eol(comment) => format("Eol: {}", comment ?? ""), 
+        Eol(comment) => format("Eol: {}", comment ?? ""),
         Eof => "Eof"
         else => .token_text()
     }
@@ -633,7 +631,7 @@ struct Stage0 {
                 }
                 RCurly => {
                     .pop_state()
-                    
+
                     yield FormattedToken(
                         token
                         indent: .indent
@@ -1145,7 +1143,7 @@ struct Stage0 {
                     mut new_expression_mode = ExpressionMode::OutsideExpression
                     if expression_mode is BeforeExpressions {
                         new_expression_mode = ExpressionMode::BeforeExpressions
-                    } else {    
+                    } else {
                         if allow_eol.has_value() and allow_eol! > 0 {
                             new_allow_eol = allow_eol! - 1
                         }
@@ -1273,7 +1271,7 @@ struct Stage0 {
                         .dedents_to_skip[.dedents_to_skip.size() - 1] += 1
                         new_arrow_indents++
                     }
-                    
+
                     .replace_state(State::StatementContext(
                         open_parens
                         open_curlies
@@ -1720,7 +1718,7 @@ struct Stage0 {
                             )
                         }
                     }
-                    
+
                     yield FormattedToken(
                         token
                         indent: .indent
@@ -2301,7 +2299,7 @@ struct Stage0 {
                        indent: .indent
                        trailing_trivia: [b' ']
                        preceding_trivia: []
-                   ) 
+                   )
                 }
                 Equal | Arrow | FatArrow => {
                     .pop_state()
@@ -2868,7 +2866,7 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
                         and not .breakable_points_in_current_line.is_empty()
                         and .breakable_points_in_current_line[most_desirable_breaking_point_index].point() < .current_line.size()
                         and not Formatter::should_ignore_state(current_state) {
-                        
+
                         let breakable_point = .breakable_points_in_current_line[most_desirable_breaking_point_index]
                         if not .replace_commas_in_enclosure.is_empty() {
                             .replace_commas_in_enclosure[.replace_commas_in_enclosure.size() - 1] = newline
