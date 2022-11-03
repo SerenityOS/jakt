@@ -38,11 +38,23 @@ comptime keys() throws -> bool {
 comptime iterator() throws -> bool {
     mut dict = ["m":'m',"n":'n',"o":'o']
     mut output = ""
+
     for (key, val) in dict {
         output += format("{}=>", key) + format("{}\n", key)
     }
     return output == "m=>m\nn=>n\no=>o\n"
 }
+comptime iterator_existing_vars() throws -> bool {
+    mut key = ""
+    mut val = ""
+    mut dict = ["m":'m',"n":'n',"o":'o']
+    mut output = ""
+    for (key, val) in dict.iterator() {
+        output += format("{}=>", key) + format("{}\n", val)
+    }
+    return output == "m=>m\nn=>n\no=>o\n"
+}
+
 comptime dictionary_constructor() => Dictionary<String, c_char>().is_empty()
 
 function main() {
@@ -55,6 +67,7 @@ function main() {
     success &= size()
     success &= keys()
     success &= iterator()
+    success &= iterator_existing_vars()
     success &= dictionary_constructor()
 
     if success {

@@ -1,5 +1,5 @@
 /// Expect:
-/// - output: "1 hello\n1 hello\n2, 3, 4\nTest(a: 1, b: 2, c: 3)\n"
+/// - output: "1 hello\n1 hello\n2, 3, 4\n1, 2, 3\n"
 
 function foo() -> (i64, String) {
     return (1, "hello")
@@ -14,14 +14,16 @@ struct Test {
 function main() {
     let (x1, x2) = foo()
 
-    println("{} {}", x1, x2)
+    print("{} ", x1)
+    println("{}", x2)
 
     mut bar = 0
     mut baz = ""
 
     (bar, baz) = foo()
 
-    println("{} {}", bar, baz)
+    print("{} ", bar)
+    println("{}", baz)
 
     let tuple = (1, 2, 3)
 
@@ -30,7 +32,9 @@ function main() {
     b++
     c++
 
-    println("{}, {}, {}", a, b, c)
+    print("{}, ", a)
+    print("{}, ", b)
+    println("{}", c)
 
     let nested_tuple = (1, (2, 3))
 
@@ -38,5 +42,7 @@ function main() {
 
     (test.a, (test.b, test.c)) = nested_tuple
 
-    println("{}", test)
+    print("{}, ", test.a)
+    print("{}, ", test.b)
+    println("{}", test.c)
 }

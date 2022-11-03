@@ -2767,33 +2767,83 @@ class Interpreter {
             Defer(statement) => {
                 scope.defer_statement(statement)
             }
-            DestructuringAssignment(vars, var_decl) => {
-                guard var_decl! is VarDecl(var_id, init) else {
-                    panic("expected vardecl")
-                }
-                match .execute_expression(init, scope) {
-                    Return(value) => {
-                        return StatementResult::Return(value)
-                    }
-                    Throw(value) => {
-                        return StatementResult::Throw(value)
-                    }
-                    JustValue(var_value) => {
-                        scope.bindings[.program.get_variable(id: var_id).name] = var_value
-                    }
-                    Continue => {
-                        return StatementResult::Continue
-                    }
-                    Break => {
-                        return StatementResult::Break
-                    }
-                    Yield => {
-                        panic("Invalid control flow")
+            DestructuringAssignment(vars, var_decl, span) => {
+                if var_decl.has_value() and var_decl! is VarDecl(var_id, init) {
+                    match .execute_expression(init, scope) {
+                        Return(value) => {
+                            return StatementResult::Return(value)
+                        }
+                        Throw(value) => {
+                            return StatementResult::Throw(value)
+                        }
+                        JustValue(var_value) => {
+                            scope.bindings[.program.get_variable(id: var_id).name] = var_value
+                        }
+                        Continue => {
+                            return StatementResult::Continue
+                        }
+                        Break => {
+                            return StatementResult::Break
+                        }
+                        Yield => {
+                            panic("Invalid control flow")
+                        }
                     }
                 }
 
                 for var in vars {
-                    guard var is Var(var_id, init) else {
+                    guard var is BinaryOp(lhs, op) and op is Assign else {
+                        panic("Expecting assignment expression for DestructuringAssignment")
+                    }
+
+                    match .execute_expression(var, scope) {
+                        Return(value) => {
+                            return StatementResult::Return(value)
+                        }
+                        Throw(value) => {
+                            return StatementResult::Throw(value)
+                        }
+                        JustValue(var_value) => {
+                            .update_binding(lhs, scope, var_value, span)
+                        }
+                        Continue => {
+                            return StatementResult::Continue
+                        }
+                        Break => {
+                            return StatementResult::Break
+                        }
+                        Yield => {
+                            panic("Invalid control flow")
+                        }
+                    }
+                }
+            }
+            DestructuringDeclarationAssignment(vars, var_decl) => {
+                if var_decl.has_value() and var_decl! is VarDecl(var_id, init) {
+                    match .execute_expression(init, scope) {
+                        Return(value) => {
+                            return StatementResult::Return(value)
+                        }
+                        Throw(value) => {
+                            return StatementResult::Throw(value)
+                        }
+                        JustValue(var_value) => {
+                            scope.bindings[.program.get_variable(id: var_id).name] = var_value
+                        }
+                        Continue => {
+                            return StatementResult::Continue
+                        }
+                        Break => {
+                            return StatementResult::Break
+                        }
+                        Yield => {
+                            panic("Invalid control flow")
+                        }
+                    }
+                }
+
+                for var in vars {
+                    guard var is VarDecl(var_id, init) else {
                         panic("expected vardecl")
                     }
                     match .execute_expression(init, scope) {
@@ -2818,7 +2868,6 @@ class Interpreter {
                     }
                 }
             }
-            DestructuringDeclarationAssignment(span) => .error("destructuring declaration assignment not implemented", span)
             VarDecl(var_id, init, span) => {
                 match .execute_expression(init, scope) {
                     Return(value) => {
