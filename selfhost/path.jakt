@@ -1,6 +1,6 @@
 import os { platform_module }
 import platform_module("path") {
-    get_path_separator, get_valid_path_separators
+    realpath_, get_path_separator, get_valid_path_separators
 }
 
 struct Path {
@@ -18,6 +18,10 @@ struct Path {
             path = path.join(part)
         }
         return path
+    }
+
+    function absolute(this) throws -> Path {
+        return Path::from_string(realpath_(.path))
     }
 
     private function normalize_separators(mut this) throws {

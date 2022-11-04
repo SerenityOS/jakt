@@ -1,2 +1,25 @@
+import os { platform_module }
+import platform_module("errno") { errno_value }
+
+import utility { allocate, null }
+
 comptime get_path_separator() -> u8 => b'/'
 comptime get_valid_path_separators() throws -> [u8] => [b'/']
+
+import extern c "stdlib.h" {
+    extern function realpath(anon path: raw c_char, anon resolved_path: raw c_char) -> raw c_char
+}
+
+function realpath_(anon path: String) throws -> String {
+    mut builder = StringBuilder::create()
+    unsafe {
+        // FIXME: use PATH_MAX instead of 4096
+        mut resolved_path: raw c_char = allocate<c_char>(count: 4096)
+        let buffer = realpath(path.c_string(), resolved_path)
+        if buffer == null<c_char>() {
+            throw Error::from_errno(errno_value())
+        }
+        builder.append_c_string(buffer)
+    }
+    return builder.to_string()
+}

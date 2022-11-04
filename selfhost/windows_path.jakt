@@ -1,2 +1,25 @@
+import os { platform_module }
+import platform_module("errno") { errno_value }
+
+import utility { allocate, null }
+
 comptime get_path_separator() -> u8 => b'\\'
 comptime get_valid_path_separators() throws -> [u8] => [b'\\', b'/']
+
+import extern c "stdlib.h" {
+    extern function _fullpath(anon absolute_path: raw c_char, anon relative_path: raw c_char, anon max_length: i32) -> raw c_char
+}
+
+function realpath_(anon path: String) throws -> String {
+    mut builder = StringBuilder::create()
+    unsafe {
+        mut absolute_path: raw c_char = allocate<c_char>(count: 256)
+        let buffer = _fullpath(absolute_path, path.c_string(), 256)
+        if buffer == null<c_char>() {
+            // FIXME: throw an error, errno is posix!
+            throw Error::from_errno(errno_value())
+        }
+        builder.append_c_string(buffer)
+    }
+    return builder.to_string()
+}
