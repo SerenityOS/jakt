@@ -55,8 +55,8 @@ Most tests you'll se have a little comment at the top, with **three slashes**:
 
 There are currently three available tags:
 - `output`: Expects the test to compile, succeed execution and output to
-  stdandard output.
+  standard output.
 - `stderr`: Expects the test to compile, but execution fails and output is
-  written to stdandard error.
+  written to standard error.
 - `error`: Expects the test to be rejected by the Jakt compiler, where the given
   output must appear somewhere in its error output.
