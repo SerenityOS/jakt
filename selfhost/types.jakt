@@ -467,6 +467,7 @@ class Scope {
     public functions: [String: FunctionId]
     public enums: [String: EnumId]
     public types: [String: TypeId]
+    public traits: [String: TraitId]
     public imports: [String: ModuleId] // FIXME: Span
     public parent: ScopeId?
     public children: [ScopeId]
@@ -523,10 +524,11 @@ class Module {
     }
 }
 
-struct CheckedTrait {
-    name: String
-    name_span: Span
-    methods: [String: FunctionId]
+class CheckedTrait {
+    public name: String
+    public name_span: Span
+    public methods: [String: FunctionId]
+    public scope_id: ScopeId
 }
 
 struct LoadedModule {
@@ -1310,6 +1312,7 @@ class CheckedProgram {
             functions: [:]
             enums: [:]
             types: [:]
+            traits: [:]
             imports: [:]
             parent: parent_scope_id
             children: []
