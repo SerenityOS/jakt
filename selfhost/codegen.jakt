@@ -1452,6 +1452,17 @@ struct CodeGenerator {
         return output + "};\n"
     }
 
+    function codegen_expression_and_deref_if_generic_and_needed(
+        mut this
+        anon expression: CheckedExpression
+    ) throws -> String => match .program.get_type(expression.type()) {
+        TypeVariable => {
+            let contents = .codegen_expression(expression)
+            yield format("(*([]<typename V>(V const& value) {{ if constexpr (IsSpecializationOf<V, NonnullRefPtr>) return &*value; else return &value; }})({}))", contents)
+        }
+        else => .codegen_expression(expression)
+    }
+
     function codegen_expression(mut this, anon expression: CheckedExpression) throws -> String => match expression {
         Range(from, to, type_id) => {
             mut output = ""
@@ -2513,7 +2524,7 @@ struct CodeGenerator {
             output += "(("
         }
 
-        let object = .codegen_expression(expr)
+        let object = .codegen_expression_and_deref_if_generic_and_needed(expr)
 
         output += "(("
         output += object
