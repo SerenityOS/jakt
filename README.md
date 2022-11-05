@@ -73,15 +73,17 @@ Some of the features that encourage more readable programs:
 Jakt is flexible in how a project can be structured with a built-in module system.
 
 ```jakt
-import a                                (1)
-import a { use_cool_things }            (2)
-import relative foo::bar                (3)
-import relative parent::foo::baz        (4)
-import relative parent(3)::foo::baz     (5)
+import a                                // (1)
+import a { use_cool_things }            // (2)
+import fn()                             // (3)
+import relative foo::bar                // (4)
+import relative parent::foo::baz        // (5)
+import relative parent(3)::foo::baz     // (6)
 ```
 
 1. Import a module from the same directory as the file.
 1. Import only `use_cool_things()` from module `a`.
+1. Imports can be calculated at compile time. See [Comptime Imports](#comptime-imports)
 1. Import a module using the relative keyword when the module is a sub path of the directory containing the file.
 1. Import a module in a parent path one directory up from the file.
 1. Syntactic sugar for importing a module three parent paths up from the file.
@@ -656,6 +658,12 @@ Throwing behaves the same way as normal error control flow does, if the error le
 
 Currently all prelude functions with side effects behave the same as they would in runtime. This allows e.g. pulling in files into the binary; some functions may be changed later to perform more useful actions.
 
-### comptime TODO 
+## Comptime imports
+
+It is possible to design custom import handling based on data available at compile time. An excellent example of this in the Jakt compiler is the [Platform Module](https://github.com/SerenityOS/jakt/blob/main/selfhost/os.jakt#L41).
+
+See a smaller example in the [comptime imports sample](https://github.com/SerenityOS/jakt/blob/main/samples/modules/comptime_imports.jakt).
+
+### Comptime TODO
 
 - [ ] Implement execution of all Jakt expressions

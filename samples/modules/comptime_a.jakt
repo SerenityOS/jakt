@@ -1,0 +1,5 @@
+/// Expect: Skip
+
+function do_os_thing() {
+    println("WHF! Welcome to Serenity!")
+}
