@@ -1437,7 +1437,7 @@ struct Parser {
 
         loop {
             match .current() {
-                RCurly => { 
+                RCurly => {
                     .index++
                     break
                 }
@@ -1451,7 +1451,7 @@ struct Parser {
                 }
                 Function => {
                     // pretend it's external so that we only parse the signature
-                    mut method = .parse_function(FunctionLinkage::External, Visibility::Public, is_comptime: false)
+                    mut method = .parse_function(FunctionLinkage::Internal, Visibility::Public, is_comptime: false, allow_missing_body: true)
                     parsed_trait.methods.push(method)
                 }
                 else(span) => {
@@ -2508,7 +2508,13 @@ struct Parser {
         return params
     }
 
-    public function parse_function(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility, is_comptime: bool) throws -> ParsedFunction {
+    public function parse_function(
+        mut this
+        anon linkage: FunctionLinkage
+        anon visibility: Visibility
+        is_comptime: bool
+        allow_missing_body: bool = false
+    ) throws -> ParsedFunction {
         mut parsed_function = ParsedFunction(
             name: "",
             name_span: .empty_span(),
@@ -2573,6 +2579,11 @@ struct Parser {
             parsed_function.block = .parse_fat_arrow()
             parsed_function.is_fat_arrow = true
         } else {
+            if allow_missing_body {
+                .skip_newlines()
+                guard .current() is LCurly else { return parsed_function }
+            }
+
             parsed_function.block = .parse_block()
         }
 
