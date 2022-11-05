@@ -897,12 +897,11 @@ struct CodeGenerator {
             }
 
             let param_type = .program.get_type(param.variable.type_id)
+            output += .codegen_type(param.variable.type_id)
+            output += " "
             if not param.variable.is_mutable and not (param_type is Reference or param_type is MutableReference) {
                 output += "const "
             }
-
-            output += .codegen_type(param.variable.type_id)
-            output += " "
             output += param.variable.name
         }
         output += ")"
@@ -1587,7 +1586,8 @@ struct CodeGenerator {
                     RawPtr => "*"
                     else => ""
                 }
-                RawAddress => "&"
+                // FIXME: Remove this once we have proper type mutability support
+                RawAddress => "const_cast<" + .codegen_type(type_id) + ">(" + "&"
                 LogicalNot => "!"
                 BitwiseNot => "~"
                 Is(type_id) => {
@@ -1665,6 +1665,7 @@ struct CodeGenerator {
                     suffix += format("index() == {} /* {} */", variant_index, name)
                     yield suffix
                 }
+                RawAddress => "))"
                 else => ")"
             }
             output += ")"
@@ -2942,11 +2943,11 @@ struct CodeGenerator {
 
                 mut output = ""
                 let var_type = .program.get_type(var.type_id)
+                output += .codegen_type(var.type_id)
+                output += " "
                 if not var.is_mutable and not (var_type is Reference or var_type is MutableReference) {
                     output += "const "
                 }
-                output += .codegen_type(var.type_id)
-                output += " "
                 output += var.name
                 output += " = "
                 output += .codegen_expression(init)
@@ -3588,11 +3589,11 @@ struct CodeGenerator {
                 first = false
             }
             let variable_type = .program.get_type(variable.type_id)
+            output += .codegen_type(variable.type_id)
+            output += " "
             if not variable.is_mutable and not (variable_type is Reference or variable_type is MutableReference) {
                 output += "const "
             }
-            output += .codegen_type(variable.type_id)
-            output += " "
             output += variable.name
         }
 
