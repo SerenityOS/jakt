@@ -87,7 +87,11 @@ function display_message_with_span(anon severity: MessageSeverity, file_name: St
         if span.start >= line_spans[line_index].0 and span.start <= line_spans[line_index].1 {
             let column_index = span.start - line_spans[line_index].0
 
-            eprintln("----- \u001b[33m{}:{}:{}\u001b[0m", file_name, line_index + 1, column_index + 1)
+            for x in 0..(width + 2) {
+                eprint("─")
+            }
+
+            eprintln("┬─ \u001b[33m{}:{}:{}\u001b[0m", file_name, line_index + 1, column_index + 1)
 
             if line_index > 0 {
                 print_source_line(severity, file_contents, file_span: line_spans[line_index - 1], error_span: span, line_number: line_index, largest_line_number)
@@ -95,11 +99,16 @@ function display_message_with_span(anon severity: MessageSeverity, file_name: St
 
             print_source_line(severity, file_contents, file_span: line_spans[line_index], error_span: span, line_number: line_index + 1, largest_line_number)
 
-            for x in 0..(span.start - line_spans[line_index].0 + width + 4) {
+            for x in 0..(width + 2) {
+                eprint(" ")
+            }
+            eprint("│")
+
+            for x in 0..(span.start - line_spans[line_index].0 + 1) {
                 eprint(" ")
             }
 
-            eprintln("\u001b[{}m^- {}\u001b[0m", severity.ansi_color_code(), message)
+            eprintln("\u001b[{}m╰─ {}\u001b[0m", severity.ansi_color_code(), message)
 
             while line_index < line_spans.size() and span.end > line_spans[line_index].0 {
                 ++line_index
@@ -116,7 +125,12 @@ function display_message_with_span(anon severity: MessageSeverity, file_name: St
         }
 
     }
-    eprintln("\u001b[0m-----")
+    eprint("\u001b[0m")
+    for x in 0..(width + 2) {
+        eprint("─")
+    }
+
+    eprintln("┴─")
 }
 
 function print_source_line(severity: MessageSeverity, file_contents: [u8], file_span: (usize, usize), error_span: Span, line_number: usize, largest_line_number: usize) throws {
@@ -129,7 +143,7 @@ function print_source_line(severity: MessageSeverity, file_contents: [u8], file_
     for _ in 0..(largest_width - current_width) {
         eprint(" ")
     }
-    eprint(" | ")
+    eprint(" │ ")
 
     while index <= file_span.1 {
         mut c = b' '
