@@ -335,7 +335,7 @@ function do_nothing_in_particular() => match AlertDescription::CloseNotify {
 
 - [x] Generic types
 - [x] Generic type inference
-- [ ] Traits
+- [x] Traits
 
 **Jakt** supports both generic structures and generic functions.
 
@@ -406,25 +406,61 @@ Additional casts are available in the standard library. Two important ones are `
 
 ## Traits
 
-**(Not yet implemented)**
-
 To make generics a bit more powerful and expressive, you can add additional information to them:
 
 ```jakt
-trait Hashable {
-    function hash(self) -> i128
+trait Hashable<Output> {
+    function hash(self) -> Output
 }
 
-class Foo implements Hashable {
+class Foo implements(Hashable<i64>) {
     function hash(self) => 42
-}
-
-type i64 implements Hashable {
-    function hash(self) => 100
 }
 ```
 
-The intention is that generics use traits to limit what is passed into a generic parameter, and also to grant that variable more capabilities in the body. It's not really intended to do vtable types of things (for that, just use a subclass)
+Traits can be used to add constraints to generic types, but also provide default implementations based on a minimal set of requirements - for instance:
+
+```jakt
+trait Fancy {
+    function do_something(this) -> void
+    function do_something_twice(this) -> void {
+        .do_something()
+        .do_something()
+    }
+}
+
+struct Boring implements(Fancy) {
+    function do_something(this) -> void {
+        println("I'm so boring")
+    }
+
+    // Note that we don't have to implement `do_something_twice` here, because it has a default implementation.
+}
+
+struct Better implements(Fancy) {
+    function do_something(this) -> void {
+        println("I'm not boring)
+    }
+
+    // However, a custom implementation is still valid.
+    function do_something_twice(this) -> void {
+        println("I'm not boring, but I'm doing it twice")
+    }
+}
+```
+
+Traits can have methods that reference other traits as types, which can be used to describe a hierarchy of traits:
+
+```jakt
+trait ConstIterable<T> {
+    function next(this) -> T?
+}
+
+trait IntoIterator<T> {
+    // Note how the return type is a reference to the ConstIterable trait (and not a concrete type)
+    function iterator(this) -> ConstIterable<T>
+}
+```
 
 ## Safety analysis
 
