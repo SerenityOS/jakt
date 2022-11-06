@@ -3076,6 +3076,9 @@ struct CodeGenerator {
             output += ")>"
             yield output
         }
+        GenericTraitInstance => {
+            panic("Generic trait instance in codegen")
+        }
         else => {
             // The RBC uses 'auto' here but we probably want to improve in the future
             yield "auto"

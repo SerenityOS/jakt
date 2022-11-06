@@ -222,6 +222,7 @@ boxed enum Type {
     TypeVariable(String)
     GenericInstance(id: StructId, args: [TypeId])
     GenericEnumInstance(id: EnumId, args: [TypeId])
+    GenericTraitInstance(id: TraitId, args: [TypeId])
     GenericResolvedType(id: StructId, args: [TypeId])
     Struct(StructId)
     Enum(EnumId)
@@ -253,6 +254,7 @@ boxed enum Type {
         TypeVariable => "TypeVariable"
         GenericInstance => "GenericInstance"
         GenericEnumInstance => "GenericEnumInstance"
+        GenericTraitInstance => "GenericTraitInstance"
         GenericResolvedType => "GenericResolvedType"
         Struct => "Struct"
         Enum => "Enum"
@@ -308,6 +310,21 @@ boxed enum Type {
             }
             GenericInstance(id: lhs_id, args: lhs_args) => {
                 guard rhs is GenericInstance(id: rhs_id, args: rhs_args) 
+                    and lhs_id.equals(rhs_id)
+                    and lhs_args.size() == rhs_args.size() else {
+                    return false
+                }
+                mut idx = 0uz
+                while idx < lhs_args.size() {
+                    if not lhs_args[idx].equals(rhs_args[idx]) {
+                        return false
+                    }
+                    idx++
+                }
+                return true
+            }
+            GenericTraitInstance(id: lhs_id, args: lhs_args) => {
+                guard rhs is GenericTraitInstance(id: rhs_id, args: rhs_args)
                     and lhs_id.equals(rhs_id)
                     and lhs_args.size() == rhs_args.size() else {
                     return false
@@ -528,6 +545,7 @@ class CheckedTrait {
     public name: String
     public name_span: Span
     public methods: [String: FunctionId]
+    public generic_parameters: [CheckedGenericParameter]
     public scope_id: ScopeId
 }
 
@@ -619,53 +637,6 @@ class CheckedFunction {
     public is_comptime: bool
     public is_virtual: bool
     public is_override: bool
-
-    // NOTE: this currently can't match generic function signatures. E.g
-    // a<T>() -> T and b<T>() -> T won't be detected to have the same signature
-    // due to `T` having a different ID.
-    // NOTE: function trait requirements aren't currently taken into account.
-    public function signature_matches(this, anon other: CheckedFunction) -> bool {
-        guard .return_type_id.equals(other.return_type_id) else {
-            return false
-        }
-
-        guard .can_throw == other.can_throw else {
-            return false
-        }
-
-        guard .params.size() == other.params.size() else {
-            return false
-        }
-
-        // both static or both have 'this' parameter
-        mut arg_start = 0uz
-
-        if .is_static() {
-            guard other.is_static() else {
-                return false
-            }
-        } else {
-            guard not other.is_static() else {
-                return false
-            }
-
-            guard .is_mutating() == other.is_mutating() else {
-                return false
-            }
-            arg_start = 1uz
-        }
-
-        for i in arg_start...params.size() {
-            let this_param = .params[i].variable
-            let other_param = other.params[i].variable
-
-            guard this_param.type_id.equals(other_param.type_id) else {
-                return false
-            }
-        }
-
-        return true
-    }
 
     public function is_static(this) -> bool {
         if .params.size() < 1 {
@@ -775,7 +746,13 @@ struct FunctionGenericParameter {
 
     function type_id(this) => .checked_parameter.type_id
 
-    function parameter(anon type_id: TypeId) throws => FunctionGenericParameter(kind: FunctionGenericParameterKind::Parameter, checked_parameter: CheckedGenericParameter::make(type_id))
+    function parameter(
+        anon type_id: TypeId
+        span: Span
+    ) throws => FunctionGenericParameter(
+        kind: FunctionGenericParameterKind::Parameter
+        checked_parameter: CheckedGenericParameter::make(type_id, span)
+    )
 }
 
 struct CheckedVariable {
@@ -933,7 +910,7 @@ struct CheckedStruct {
     fields: [CheckedField]
     scope_id: ScopeId
     definition_linkage: DefinitionLinkage
-    trait_implementations: [String: TraitId]
+    trait_implementations: [String:(TraitId, [TypeId])]
     record_type: RecordType
     type_id: TypeId
     super_struct_id: StructId?
@@ -947,7 +924,7 @@ struct CheckedEnum {
     fields: [CheckedField]
     scope_id: ScopeId
     definition_linkage: DefinitionLinkage
-    trait_implementations: [String: TraitId]
+    trait_implementations: [String:(TraitId, [TypeId])]
     record_type: RecordType
     underlying_type_id: TypeId
     type_id: TypeId
@@ -957,8 +934,9 @@ struct CheckedEnum {
 struct CheckedGenericParameter {
     type_id: TypeId
     constraints: [TraitId]
+    span: Span
 
-    function make(anon type_id: TypeId) throws => CheckedGenericParameter(type_id, constraints: [])
+    function make(anon type_id: TypeId, span: Span) throws => CheckedGenericParameter(type_id, constraints: [], span)
 }
 
 enum CheckedEnumVariant {
@@ -1418,6 +1396,35 @@ class CheckedProgram {
         return None
     }
 
+    public function find_trait_in_scope(this, scope_id: ScopeId, name: String) throws -> TraitId? {
+        mut current = scope_id
+
+        loop {
+            let scope = .get_scope(current)
+            let maybe_trait = scope.traits.get(name)
+            if maybe_trait.has_value() {
+                return maybe_trait
+            }
+            for child_id in scope.children.iterator() {
+                let child_scope = .get_scope(id: child_id)
+                if not child_scope.namespace_name.has_value() {
+                    let maybe_trait = child_scope.traits.get(name)
+                    if maybe_trait.has_value() {
+                        return maybe_trait
+                    }
+                }
+            }
+
+            if scope.parent.has_value() {
+                current = scope.parent.value()
+            } else {
+                break
+            }
+        }
+
+        return None
+    }
+
     public function is_integer(this, anon type_id: TypeId) -> bool {
         let type = .get_type(type_id)
 
@@ -1660,6 +1667,25 @@ class CheckedProgram {
 
                 yield output
             }
+            GenericTraitInstance(id, args) => {
+                mut output = format("trait {}", .get_trait(id).name)
+
+                output += "<"
+                mut first = true
+                for arg in args.iterator() {
+                    if not first {
+                        output += ", "
+                    } else {
+                        first = false
+                    }
+
+                    output += .type_name(arg)
+                }
+
+                output += ">"
+
+                yield output
+            }
             GenericInstance(id, args) => {
 
                 let array_struct_id = .find_struct_in_prelude("Array")
@@ -1777,6 +1803,15 @@ class CheckedProgram {
                 if replacment_type_id_string.has_value() {
                     return TypeId::from_string(replacment_type_id_string.value())
                 }
+            }
+            GenericTraitInstance(id, args) => {
+                mut new_args: [TypeId] = []
+                new_args.ensure_capacity(args.size())
+                for arg in args.iterator() {
+                    new_args.push(.substitute_typevars_in_type(type_id: arg, generic_inferences, module_id))
+                }
+
+                return .find_or_add_type_id(Type::GenericTraitInstance(id, args: new_args), module_id)
             }
             GenericInstance(id, args) => {
                 mut new_args:[TypeId] = []
