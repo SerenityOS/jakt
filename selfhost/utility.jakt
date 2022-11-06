@@ -13,9 +13,23 @@ function todo(anon message: String) {
     abort()
 }
 
+function add_arrays<T>(anon a: [T], anon b: [T]) throws -> [T] {
+    mut result: [T] = []
+
+    for x in a.iterator() {
+        result.push(x)
+    }
+
+    for x in b.iterator() {
+        result.push(x)
+    }
+
+    return result
+}
+
 function join(anon strings: [String], separator: String) -> String {
     mut output = ""
-    
+
     mut i = 0uz
     for s in strings.iterator() {
         output += s

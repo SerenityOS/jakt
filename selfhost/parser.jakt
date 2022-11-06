@@ -228,6 +228,7 @@ struct ParsedNamespace {
     functions: [ParsedFunction]
     records: [ParsedRecord]
     traits: [ParsedTrait]
+    external_trait_implementations: [ParsedExternalTraitImplementation]
     namespaces: [ParsedNamespace]
     module_imports: [ParsedModuleImport]
     extern_imports: [ParsedExternImport]
@@ -402,6 +403,12 @@ struct ParsedTrait {
     generic_parameters: [ParsedGenericParameter]
 
     methods: [ParsedFunction]
+}
+
+struct ParsedExternalTraitImplementation {
+    for_type: ParsedType
+    traits: [ParsedNameWithGenericParameters]
+    methods: [ParsedMethod]
 }
 
 struct ParsedBlock {
@@ -1359,6 +1366,7 @@ struct Parser {
             functions: []
             records: []
             traits: []
+            external_trait_implementations: []
             namespaces: []
             module_imports: []
             extern_imports: []
@@ -1372,6 +1380,16 @@ struct Parser {
                 Trait => {
                     .index++
                     parsed_namespace.traits.push(.parse_trait())
+                }
+                Identifier(name) => match name {
+                    "type" => {
+                        .index++
+                        parsed_namespace.external_trait_implementations.push(.parse_external_trait_implementation())
+                    }
+                    else => {
+                        .error("Unexpected token (expected keyword)", .current().span())
+                        break
+                    }
                 }
                 Import => {
                     .index++
@@ -1446,6 +1464,45 @@ struct Parser {
         }
 
         return parsed_namespace
+    }
+
+    function parse_external_trait_implementation(mut this) throws -> ParsedExternalTraitImplementation {
+        // (type) TypeName implements(TraitName...) { <method list> }
+        let type_name = .parse_typename()
+        .skip_newlines()
+        if .current() is Implements {
+            .index++
+        } else {
+            .error("Expected ‘implements’", .current().span())
+        }
+        let trait_list = .parse_trait_list()
+        if not trait_list.has_value() {
+            .error("Expected non-empty trait list", .current().span())
+            return ParsedExternalTraitImplementation(
+                for_type: type_name
+                traits: []
+                methods: []
+            )
+        }
+
+        .skip_newlines()
+
+        guard .current() is LCurly else {
+            .error("Expected ‘{’", .current().span())
+            return ParsedExternalTraitImplementation(for_type: type_name, traits: trait_list!, methods: [])
+        }
+
+        let (fields, methods) = .parse_struct_class_body(
+            definition_linkage: DefinitionLinkage::Internal
+            default_visibility: Visibility::Public
+            is_class: false
+        )
+
+        if not fields.is_empty() {
+            .error("External trait implementations cannot have fields", fields[0].var_decl.span)
+        }
+
+        return ParsedExternalTraitImplementation(for_type: type_name, traits: trait_list!, methods)
     }
 
     function parse_trait(mut this) throws -> ParsedTrait {
@@ -1560,6 +1617,7 @@ struct Parser {
                 functions: []
                 records: []
                 traits: []
+                external_trait_implementations: []
                 namespaces: []
                 module_imports: []
                 extern_imports: []
@@ -2222,7 +2280,12 @@ struct Parser {
         return parsed_enum
     }
 
-    public function parse_struct_class_body(mut this, definition_linkage: DefinitionLinkage, default_visibility: Visibility, is_class: bool) throws -> ([ParsedField],[ParsedMethod]) {
+    public function parse_struct_class_body(
+        mut this
+        definition_linkage: DefinitionLinkage
+        default_visibility: Visibility
+        is_class: bool
+    ) throws -> ([ParsedField], [ParsedMethod]) {
         if .current() is LCurly {
             .index++
         } else {

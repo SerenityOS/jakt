@@ -1,8 +1,8 @@
 /// Expect:
 /// - stderr: "Runtime error: Error(code=1)"
 
-struct Iter {
-    function next(this) throws -> i64? {
+struct Iter implements(ThrowingIterable<i64>) {
+    function next(mut this) throws -> i64? {
         throw Error::from_errno(1i32)
     }
 }

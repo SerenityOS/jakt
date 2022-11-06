@@ -2514,7 +2514,7 @@ struct ReflowState {
     enclosures_to_ignore: usize
 }
 
-struct Formatter {
+struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
     token_provider: Stage0
     current_line: [ReflowState]
     current_line_length: usize

@@ -323,7 +323,7 @@ function make_number_token(number: u64, suffix: LiteralSuffix, span: Span) throw
     LiteralSuffix::I64 => Token::Number(number: NumericConstant::I64(number as! i64), span)
 }
 
-struct Lexer {
+struct Lexer implements(ThrowingIterable<Token>) {
     index: usize
     input: [u8]
     errors: [JaktError]
