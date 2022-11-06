@@ -296,7 +296,7 @@ struct ParsedRecord {
     generic_parameters: [ParsedGenericParameter]
     definition_linkage: DefinitionLinkage
     // if not empty, must have at least one value.
-    implements_list: [ParsedName]?
+    implements_list: [ParsedNameWithGenericParameters]?
     methods: [ParsedMethod]
     record_type: RecordType
 }
@@ -353,16 +353,23 @@ struct ParsedName {
     span: Span
 }
 
+struct ParsedNameWithGenericParameters {
+    name: String
+    name_span: Span
+    generic_parameters: [ParsedType]
+}
+
 struct ParsedGenericParameter {
     name: String
     span: Span
     // the list, if it exists, must have at least one element.
-    requires_list: [ParsedName]?
+    requires_list: [ParsedNameWithGenericParameters]?
 }
 
 struct ParsedTrait {
     name: String
     name_span: Span
+    generic_parameters: [ParsedGenericParameter]
 
     methods: [ParsedFunction]
 }
@@ -1416,7 +1423,9 @@ struct Parser {
         mut parsed_trait = ParsedTrait(
             name: ""
             name_span: .empty_span()
-            methods: [])
+            generic_parameters: []
+            methods: []
+        )
 
         guard .current() is Identifier(name, span: name_span) else {
             .error("Expected trait name", .current().span())
@@ -1426,6 +1435,11 @@ struct Parser {
         parsed_trait.name_span = name_span
 
         .index++
+
+        if .current() is LessThan {
+            parsed_trait.generic_parameters = .parse_generic_parameters()
+        }
+
         guard .current() is LCurly else {
             .error("Expected '{' to enter the body of the trait",
                 .current().span())
@@ -4472,14 +4486,14 @@ struct Parser {
         }
     }
 
-    function parse_trait_list(mut this) throws -> [ParsedName]? {
+    function parse_trait_list(mut this) throws -> [ParsedNameWithGenericParameters]? {
         guard .current() is LParen else {
             .error("Expected '(' to start the trait list", .current().span())
             return None
         }
         .index++
 
-        mut result: [ParsedName] = []
+        mut result: [ParsedNameWithGenericParameters] = []
 
         while not .eof() {
             match .current() {
@@ -4491,13 +4505,43 @@ struct Parser {
                     .error("Expected ')' to close the trait list", span)
                     break
                 }
-                RParen => { 
+                RParen => {
                     .index++
                     break
                 }
                 Identifier(name, span) => {
-                    result.push(ParsedName(name, span))
+                    mut parsed_name = ParsedNameWithGenericParameters(
+                        name
+                        name_span: span
+                        generic_parameters: []
+                    )
                     .index++
+                    if .current() is LessThan {
+                        // Generic type
+                        .index++
+
+                        while not .eof() {
+                            match .current() {
+                                GreaterThan => {
+                                    .index++
+                                    break
+                                }
+                                Comma | Eol => {
+                                    .index++
+                                }
+                                else => {
+                                    let index_before = .index
+                                    let inner_type = .parse_typename()
+                                    if index_before == .index {
+                                        .error("Expected type name", .current().span())
+                                        break
+                                    }
+                                    parsed_name.generic_parameters.push(inner_type)
+                                }
+                            }
+                        }
+                    }
+                    result.push(parsed_name)
                 }
                 else(span) => {
                     .error("Expected trait name", span)
@@ -4524,7 +4568,7 @@ struct Parser {
         while not .current() is GreaterThan and not .current() is Garbage {
             if .current() is Identifier(name, span) {
 
-                mut requires_list: [ParsedName]? = None
+                mut requires_list: [ParsedNameWithGenericParameters]? = None
 
                 .index++
                 if .current() is Requires {

@@ -241,6 +241,7 @@ function find_type_definition_for_type_id(program: CheckedProgram, type_id: Type
         }
         Struct(struct_id) => program.get_struct(struct_id).name_span
         GenericEnumInstance(id) => program.get_enum(id).name_span
+        GenericTraitInstance(id) => program.get_trait(id).name_span
         Enum(id) => program.get_enum(id).name_span
         RawPtr(type_id) => find_type_definition_for_type_id(program, type_id, span)
         TypeVariable() => span
@@ -1135,6 +1136,21 @@ function get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> 
             }
             output += "enum "
             output += enum_.name
+            output += "<"
+            if not args.is_empty() {
+                output += get_type_signature(program, type_id: args[0])
+                for i in 1..args.size() {
+                    output += ", "
+                    output += get_type_signature(program, type_id: args[i])
+                }
+            }
+            yield output + ">"
+        }
+        GenericTraitInstance(id, args) => {
+            let trait_ = program.get_trait(id)
+            mut output = ""
+            output += "trait "
+            output += trait_.name
             output += "<"
             if not args.is_empty() {
                 output += get_type_signature(program, type_id: args[0])
