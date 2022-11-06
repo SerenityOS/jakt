@@ -63,7 +63,7 @@ public:
     bool remove(K const& key) { return m_storage->map.remove(key); }
     bool contains(K const& key) const { return m_storage->map.contains(key); }
 
-    Optional<V> get(K const& key) const { return m_storage->map.get(key); }
+    Optional<V> get(K const& key) const { return m_storage->map.get(key).map([](auto& x) -> V { return x; }); }
     V& operator[](K const& key) { return m_storage->map.get(key).value(); }
     V const& operator[](K const& key) const { return m_storage->map.get(key).value(); }
 
