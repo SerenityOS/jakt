@@ -3447,7 +3447,7 @@ struct Typechecker {
             }
             Assign => {
                 if not checked_lhs.is_mutable(program: .program) {
-                    .error("Assignment to immutable variable", span)
+                    .error("Assignment to immutable variable", checked_lhs.span())
                     return lhs_type_id
                 }
                 if checked_rhs is OptionalNone(span, type_id) {
@@ -3497,7 +3497,7 @@ struct Typechecker {
                     ), span)
                 }
                 if not checked_lhs.is_mutable(program: .program) {
-                    .error("Assignment to immutable variable", span)
+                    .error("Assignment to immutable variable", checked_lhs.span())
                 }
             }
             Add | Subtract | Multiply | Divide | Modulo => {
