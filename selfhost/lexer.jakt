@@ -226,7 +226,7 @@ enum LiteralSuffix {
     }
 }
 
-struct Lexer {
+struct Lexer implements(ThrowingIterable<Token>) {
     index: usize
     input: [u8]
     compiler: Compiler

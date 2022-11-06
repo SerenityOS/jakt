@@ -1,0 +1,25 @@
+trait Iterable<T> {
+    function next(mut this) -> T?
+}
+
+trait ThrowingIterable<T> {
+    function next(mut this) throws -> T?
+}
+
+trait IntoIterator<T> {
+    function iterator(this) -> Iterable<T>
+}
+
+trait IntoThrowingIterator<T> {
+    function iterator(this) -> ThrowingIterable<T>
+}
+
+type Array implements(IntoIterator<T>) { }
+type ArraySlice implements(IntoIterator<T>) { }
+type Set implements(IntoIterator<V>) { }
+type Dictionary implements(IntoIterator<(K, V)>) { }
+
+type ArrayIterator implements(Iterable<T>) { }
+type SetIterator implements(Iterable<T>) { }
+type DictionaryIterator implements(Iterable<(K, V)>) { }
+type Range implements(Iterable<T>) { }

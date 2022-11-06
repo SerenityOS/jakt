@@ -9,11 +9,11 @@
 import error { JaktError, print_error }
 import lexer { Lexer }
 import parser {
-    BinaryOperator, DefinitionLinkage, EnumVariantPatternArgument, FunctionLinkage, FunctionType, NumericConstant
-    ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression, ParsedExternImport, ParsedField, ParsedFunction
-    ParsedMatchBody, ParsedMatchCase, ParsedMethod, ParsedModuleImport, ParsedName, ParsedNameWithGenericParameters
-    ParsedNamespace, ParsedParameter, ParsedRecord, ParsedStatement, ParsedTrait, ParsedType, ParsedVarDecl, Parser
-    RecordType, TypeCast, UnaryOperator, Visibility
+    BinaryOperator, DefinitionLinkage, EnumVariantPatternArgument, FunctionLinkage, FunctionType, ImportList, ImportName
+    NumericConstant, ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression, ParsedExternImport, ParsedField
+    ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedMethod, ParsedModuleImport, ParsedName
+    ParsedNameWithGenericParameters, ParsedNamespace, ParsedParameter, ParsedRecord, ParsedStatement, ParsedTrait
+    ParsedType, ParsedVarDecl, Parser, RecordType, TypeCast, UnaryOperator, Visibility
 }
 import types {
     BlockControlFlow, BuiltinType, CheckedBlock, CheckedCall, CheckedCapture, CheckedEnum, CheckedEnumVariant
@@ -26,7 +26,7 @@ import types {
     never_type_id, unknown_type_id, void_type_id
 }
 import types
-import utility { FileId, Span, escape_for_quotes, join, panic, todo }
+import utility { FileId, Span, add_arrays, escape_for_quotes, join, panic, todo }
 import path { Path }
 import compiler { Compiler }
 import interpreter { Interpreter, InterpreterScope, ExecutionResult, value_to_checked_expression }
@@ -88,6 +88,7 @@ struct Typechecker {
         let root_module_id = typechecker.create_module(name: root_module_name, is_root: true)
         typechecker.current_module_id = root_module_id
         compiler.set_current_file(input_file!)
+
         typechecker.program.set_loaded_module(
             module_name: root_module_name
             loaded_module: LoadedModule(
@@ -98,6 +99,18 @@ struct Typechecker {
 
         let PRELUDE_SCOPE_ID: ScopeId = typechecker.prelude_scope_id()
         let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: false, debug_name: "root")
+        typechecker.typecheck_module_import(
+            import_: ParsedModuleImport(
+                module_name: ImportName::Literal(
+                    name: "jakt::prelude::prelude"
+                    span: Span(file_id: FileId(id: 0), start: 0, end: 0)
+                ),
+                alias_name: None
+                import_list: ImportList::All
+            )
+            scope_id: root_scope_id
+        )
+
         typechecker.typecheck_module(parsed_namespace, scope_id: root_scope_id)
 
         return typechecker.program
@@ -1140,6 +1153,111 @@ struct Typechecker {
                 }
             }
         }
+
+        // 6. Resolve external trait implementations
+        for implementation in parsed_namespace.external_trait_implementations.iterator() {
+            let for_type = .typecheck_typename(parsed_type: implementation.for_type, scope_id, name: None)
+            match .get_type(for_type) {
+                Struct(struct_id) | GenericInstance(id: struct_id) => {
+                    mut struct_ = .get_struct(struct_id)
+                    for method in implementation.methods.iterator() {
+                        mut this_arg_type_id: TypeId? = None
+                        if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
+                            this_arg_type_id = for_type
+                        }
+
+                        .typecheck_function_predecl(
+                            parsed_function: method.parsed_function
+                            parent_scope_id: struct_.scope_id
+                            this_arg_type_id
+                        )
+                    }
+
+                    .fill_trait_implementation_list(
+                        implementation.traits
+                        &mut struct_.trait_implementations
+                        scope_id: struct_.scope_id
+                        trait_name_scope_id_override: scope_id
+                    )
+
+                    for trait_name in implementation.traits.iterator() {
+                        let trait_id = .find_trait_in_scope(scope_id, name: trait_name.name)
+                        guard trait_id.has_value() else { continue }
+
+                        let trait_ = .get_trait(trait_id!)
+                        for (name, function_id) in trait_.methods.iterator() {
+                            if .find_function_in_scope(parent_scope_id: struct_.scope_id, function_name: name).has_value() {
+                                continue
+                            }
+
+                            let function_ = .get_function(function_id)
+                            if function_.block.statements.is_empty() {
+                                continue
+                            }
+
+                            .add_function_to_scope(
+                                parent_scope_id: struct_.scope_id
+                                name: name
+                                function_id: function_id
+                                span: trait_name.name_span
+                            )
+                        }
+                    }
+                }
+                Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
+                    mut enum_ = .get_enum(enum_id)
+                    for method in implementation.methods.iterator() {
+                        mut this_arg_type_id: TypeId? = None
+                        if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
+                            this_arg_type_id = for_type
+                        }
+
+                        .typecheck_function_predecl(
+                            parsed_function: method.parsed_function
+                            parent_scope_id: enum_.scope_id
+                            this_arg_type_id
+                        )
+                    }
+
+                    .fill_trait_implementation_list(
+                        implementation.traits
+                        &mut enum_.trait_implementations
+                        scope_id: enum_.scope_id
+                        trait_name_scope_id_override: scope_id
+                    )
+
+                    for trait_name in implementation.traits.iterator() {
+                        let trait_id = .find_trait_in_scope(scope_id, name: trait_name.name)
+                        guard trait_id.has_value() else { continue }
+
+                        let trait_ = .get_trait(trait_id!)
+                        for (name, function_id) in trait_.methods.iterator() {
+                            if .find_function_in_scope(parent_scope_id: enum_.scope_id, function_name: name).has_value() {
+                                continue
+                            }
+
+                            let function_ = .get_function(function_id)
+                            if function_.block.statements.is_empty() {
+                                continue
+                            }
+
+                            .add_function_to_scope(
+                                parent_scope_id: enum_.scope_id
+                                name: name
+                                function_id: function_id
+                                span: trait_name.name_span
+                            )
+                        }
+                    }
+                }
+                else => {
+                    .error(
+                        format("Cannot implement traits for type '{}'", .type_name(for_type)),
+                        implementation.for_type.span()
+                    )
+                }
+            }
+        }
     }
 
     function typecheck_trait_predecl(mut this, parsed_trait: ParsedTrait, scope_id: ScopeId) throws {
@@ -1655,11 +1773,13 @@ struct Typechecker {
         anon parsed_impl_list: [ParsedNameWithGenericParameters]
         anon trait_implementations: &mut [String:(TraitId, [TypeId])]
         scope_id: ScopeId
+        trait_name_scope_id_override: ScopeId? = None
     ) throws {
+        let trait_name_scope_id = trait_name_scope_id_override ?? scope_id
         // register the traits that this record is supposed to implement.
         for trait_name in parsed_impl_list.iterator() {
             // look for the trait.
-            let maybe_type_id = .find_type_in_scope(scope_id, name: trait_name.name)
+            let maybe_type_id = .find_type_in_scope(scope_id: trait_name_scope_id, name: trait_name.name)
             guard maybe_type_id.has_value() else {
                 .error(format("Cannot find trait ‘{}’", trait_name.name), trait_name.name_span)
                 continue
@@ -2059,6 +2179,45 @@ struct Typechecker {
             .current_function_id = .find_function_in_scope(parent_scope_id: scope_id, function_name: fun.name)
             .typecheck_function(parsed_function: fun, parent_scope_id: scope_id)
             .current_function_id = None
+        }
+
+        for implementation in parsed_namespace.external_trait_implementations.iterator() {
+            let for_type = .typecheck_typename(parsed_type: implementation.for_type, scope_id, name: None)
+            match .get_type(for_type) {
+                Struct(struct_id) | GenericInstance(id: struct_id) => {
+                    mut struct_ = .get_struct(struct_id)
+                    for method in implementation.methods.iterator() {
+                        if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
+                            .typecheck_method(
+                                func: method.parsed_function
+                                parent_id: StructOrEnumId::Struct(struct_id)
+                            )
+                        } else {
+                            .typecheck_function(
+                                parsed_function: method.parsed_function
+                                parent_scope_id: struct_.scope_id
+                            )
+                        }
+                    }
+                }
+                Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
+                    mut enum_ = .get_enum(enum_id)
+                    for method in implementation.methods.iterator() {
+                        if (method.parsed_function.params.first()?.variable?.name ?? "") == "this" {
+                            .typecheck_method(
+                                func: method.parsed_function
+                                parent_id: StructOrEnumId::Enum(enum_id)
+                            )
+                        } else {
+                            .typecheck_function(
+                                parsed_function: method.parsed_function
+                                parent_scope_id: enum_.scope_id
+                            )
+                        }
+                    }
+                }
+                else => { }
+            }
         }
     }
 
@@ -4131,7 +4290,16 @@ struct Typechecker {
         return CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
     }
 
-    function typecheck_for(mut this, iterator_name: String, name_span: Span, range: ParsedExpression, block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+    function typecheck_for(
+        mut this
+        iterator_name: String
+        name_span: Span
+        range: ParsedExpression
+        block: ParsedBlock
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        span: Span
+    ) throws -> CheckedStatement {
         let maybe_span = block.find_yield_span()
         if maybe_span.has_value() {
             .error("a 'for' loop block is not allowed to yield values", maybe_span!)
@@ -4139,7 +4307,7 @@ struct Typechecker {
 
         // Translate `for x in expr { body }` to
         // block {
-        //     let (mutable) _magic = expr
+        //     let (mutable) _magic = expr (.iterator() if needed)
         //     loop {
         //         let x = _magic.next()
         //         if not x.has_value() {
@@ -4150,40 +4318,128 @@ struct Typechecker {
         //     }
         // }
         //
-        // The only restrictions placed on the iterator are such:
-        //     1- Must respond to .next(); the mutability of the iterator is inferred from .next()'s signature
-        //     2- The result of .next() must be an Optional.
+        // The iterator type must implement the Iterable (or ThrowingIterable) trait,
+        // failing that, if it implements the IntoIterator (or IntoThrowingIterable) trait, we will automatically call the `.iterator()` method
+        // and use the result as our iterable.
 
-        let iterable_expr = .typecheck_expression(range, scope_id, safety_mode, type_hint: None)
-        mut iterable_should_be_mutable = false
+        mut iterable_expr = .typecheck_expression(range, scope_id, safety_mode, type_hint: None)
+        mut resolved_iterable_result_type = unknown_type_id()
 
-        let iterable_type = .program.get_type(iterable_expr.type())
+        mut expression_to_iterate = range
 
-        match iterable_type {
-            TypeVariable => {
-                // Since we're not sure, just make it mutable.
-                iterable_should_be_mutable = true
-            }
-            GenericInstance(id, args) | Struct(id) => {
-                let struct_ = .get_struct(id)
-                let next_method_function_id = .find_function_in_scope(
-                    parent_scope_id: struct_.scope_id,
-                    function_name: "next"
-                    )
-                if not next_method_function_id.has_value() {
-                    .error("Iterator must have a .next() method", range.span())
-                } else {
-                    let next_method_function = .get_function(next_method_function_id!)
-                    // Check whether we need to make the iteratar mutable
-                    if next_method_function.is_mutating() {
-                        iterable_should_be_mutable = true
+        let iterable_trait_id = .find_trait_in_scope(scope_id, name: "Iterable")!
+        let throwing_iterable_trait_id = .find_trait_in_scope(scope_id, name: "ThrowingIterable")!
+
+        let implemented_iterable_trait_args = add_arrays(
+            .find_all_implementations_of_trait(
+                type_id: iterable_expr.type()
+                trait_id: iterable_trait_id
+            ), .find_all_implementations_of_trait(
+                type_id: iterable_expr.type()
+                trait_id: throwing_iterable_trait_id
+            )
+        )
+        if implemented_iterable_trait_args.is_empty() {
+            let into_iterator_trait_id = .find_trait_in_scope(scope_id, name: "IntoIterator")!
+            let into_throwing_iterator_trait_id = .find_trait_in_scope(scope_id, name: "IntoThrowingIterator")!
+
+            let implemented_into_iterator_trait_id = add_arrays(
+                .find_all_implementations_of_trait(
+                    type_id: iterable_expr.type()
+                    trait_id: into_iterator_trait_id
+                ), .find_all_implementations_of_trait(
+                    type_id: iterable_expr.type()
+                    trait_id: into_throwing_iterator_trait_id
+                )
+            )
+            if implemented_into_iterator_trait_id.is_empty() {
+                .error_with_hint(
+                    "Iterable expression is not iterable", range.span(),
+                    format(
+                        "Consider implementing (Throwing)Iterable<T> or Into(Throwing)Iterator<T> for the type of this expression (‘{}’)"
+                        .type_name(iterable_expr.type())
+                    ), range.span()
+                )
+            } else if implemented_into_iterator_trait_id.size() != 1 {
+                mut type_names = ""
+                mut first = true
+                for args in implemented_into_iterator_trait_id.iterator() {
+                    if first {
+                        first = false
+                    } else {
+                        type_names += ", "
                     }
+                    type_names += format("‘IntoIterator<{}>’", .type_name(args[0]))
                 }
+                .error_with_hint(
+                    "Iterable expression implements multiple versions of the IntoIterator trait", range.span(),
+                    format("This expression's type implements {}, but only one is allowed", type_names), range.span(),
+                )
+            } else {
+                resolved_iterable_result_type = implemented_into_iterator_trait_id[0][0]
+                // We need to call the `.iterator()` method on the iterable
+                expression_to_iterate = ParsedExpression::MethodCall(
+                    expr: range
+                    call: ParsedCall(
+                        namespace_: []
+                        name: "iterator"
+                        args: []
+                        type_args: []
+                    )
+                    is_optional: false
+                    span: name_span
+                )
             }
-            else => {
-                .error("Iterator must have a .next() method", name_span)
+        } else {
+            if implemented_iterable_trait_args.size() != 1 {
+                mut type_names = ""
+                mut first = true
+                for args in implemented_iterable_trait_args.iterator() {
+                    if first {
+                        first = false
+                    } else {
+                        type_names += ", "
+                    }
+                    type_names += format("‘Iterable<{}>’", .type_name(args[0]))
+                }
+                .error_with_hint(
+                    "Iterable expression implements multiple versions of the Iterable trait", range.span(),
+                    format("This expression's type implements {}, but only one is allowed", type_names), range.span(),
+                )
             }
+            resolved_iterable_result_type = implemented_iterable_trait_args[0][0]
         }
+
+        // let iterable_expr = .typecheck_expression(range, scope_id, safety_mode, type_hint: None)
+        // mut iterable_should_be_mutable = false
+
+        // let iterable_type = .program.get_type(iterable_expr.type())
+
+        // match iterable_type {
+        //     TypeVariable => {
+        //         // Since we're not sure, just make it mutable.
+        //         iterable_should_be_mutable = true
+        //     }
+        //     GenericInstance(id, args) | Struct(id) => {
+        //         let struct_ = .get_struct(id)
+        //         let next_method_function_id = .find_function_in_scope(
+        //             parent_scope_id: struct_.scope_id,
+        //             function_name: "next"
+        //             )
+        //         if not next_method_function_id.has_value() {
+        //             .error("Iterator must have a .next() method", range.span())
+        //         } else {
+        //             let next_method_function = .get_function(next_method_function_id!)
+        //             // Check whether we need to make the iteratar mutable
+        //             if next_method_function.is_mutating() {
+        //                 iterable_should_be_mutable = true
+        //             }
+        //         }
+        //     }
+        //     else => {
+        //         .error("Iterator must have a .next() method", name_span)
+        //     }
+        // }
 
         let rewritten_statement = ParsedStatement::Block(
             block: ParsedBlock(
@@ -4193,11 +4449,11 @@ struct Typechecker {
                         var: ParsedVarDecl(
                             name: "_magic",
                             parsed_type: ParsedType::Empty,
-                            is_mutable: iterable_should_be_mutable,
+                            is_mutable: true,
                             inlay_span: None,
                             span: name_span
                         ),
-                        init: range
+                        init: expression_to_iterate
                         span
                     )
                     // loop {
@@ -4209,7 +4465,7 @@ struct Typechecker {
                                     var: ParsedVarDecl(
                                         name: "_magic_value",
                                         parsed_type: ParsedType::Empty,
-                                        is_mutable: iterable_should_be_mutable,
+                                        is_mutable: true, // FIXME: This binding should be made mutable only if the loop variable is.
                                         inlay_span: None,
                                         span: name_span
                                     ),
@@ -4265,7 +4521,7 @@ struct Typechecker {
                                     parsed_type: ParsedType::Empty,
                                     // FIXME: loop variable mutability should be independent
                                     // of iterable mutability
-                                    is_mutable: iterable_should_be_mutable,
+                                    is_mutable: true,
                                     inlay_span: name_span,
                                     span: name_span
                                     ),
@@ -7248,12 +7504,47 @@ struct Typechecker {
         return false
     }
 
-    function implements_trait(mut this, type_id: TypeId, trait_id: TraitId, generic_arguments: [TypeId]? = None) throws -> bool {
-        let empty: [TypeId] = []
-        let passed_generic_arguments = generic_arguments ?? empty
+    function find_all_implementations_of_trait(mut this, type_id: TypeId, trait_id: TraitId) throws -> [[TypeId]] {
+        return match .get_type(type_id) {
+            Struct(struct_id) | GenericInstance(id: struct_id) => {
+                let struct_ = .get_struct(struct_id)
+                mut implementations: [[TypeId]] = []
+                for (_, trait_descriptor) in struct_.trait_implementations.iterator() {
+                    if trait_descriptor.0.equals(trait_id) {
+                        implementations.push(trait_descriptor.1)
+                    }
+                }
+                yield implementations
+            }
+            Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
+                let enum_ = .get_enum(enum_id)
+                mut implementations: [[TypeId]] = []
+                for (_, trait_descriptor) in enum_.trait_implementations.iterator() {
+                    if trait_descriptor.0.equals(trait_id) {
+                        implementations.push(trait_descriptor.1)
+                    }
+                }
+                yield implementations
+            }
+            Trait(id) => {
+                if id.equals(trait_id) {
+                    return [[]]
+                }
+                yield []
+            }
+            GenericTraitInstance(id, args) => {
+                if not id.equals(trait_id) {
+                    return []
+                }
+                yield [args]
+            }
+            else => []
+        }
+    }
 
+    function implements_trait(mut this, type_id: TypeId, trait_id: TraitId, generic_arguments: [TypeId]? = None) throws -> bool {
         let has_matching_trait = function(
-            trait_implementations: [String:(TraitId, [TypeId])]
+            trait_implementations: [[TypeId]]
             trait_id: TraitId
             passed_generic_arguments: [TypeId]
             typechecker: &mut Typechecker
@@ -7265,85 +7556,39 @@ struct Typechecker {
             }
 
             mut found = false
-            for (implemented_trait_name, implemented_trait_descriptor) in trait_implementations.iterator() {
-                let (implemented_trait_id, implemented_generic_arguments) = implemented_trait_descriptor
-                if trait_id.equals(implemented_trait_id) {
-                    if implemented_generic_arguments.size() != passed_generic_arguments.size() {
-                        continue
-                    }
-
-                    mut ok = false
-                    for i in 0..implemented_generic_arguments.size() {
-                        ok = typechecker.check_types_for_compat(
-                            lhs_type_id: implemented_generic_arguments[i]
-                            rhs_type_id: passed_generic_arguments[i]
-                            generic_inferences: &mut typechecker.generic_inferences
-                            span: Span(file_id: FileId(id: 0), start: 0, end: 0) // NOTE: This won't show up anywhere (as the errors are ignored)
-                        )
-
-                        if not ok { break }
-                    }
-
-                    if not ok { continue }
-
-                    found = true
-                    break
+            for implemented_generic_arguments in trait_implementations.iterator() {
+                if implemented_generic_arguments.size() != passed_generic_arguments.size() {
+                    continue
                 }
+
+                mut ok = false
+                for i in 0..implemented_generic_arguments.size() {
+                    ok = typechecker.check_types_for_compat(
+                        lhs_type_id: implemented_generic_arguments[i]
+                        rhs_type_id: passed_generic_arguments[i]
+                        generic_inferences: &mut typechecker.generic_inferences
+                        span: Span(file_id: FileId(id: 0), start: 0, end: 0) // NOTE: This won't show up anywhere (as the errors are ignored)
+                    )
+
+                    if not ok { break }
+                }
+
+                if not ok { continue }
+
+                found = true
+                break
             }
 
             return found
         }
 
-        return match .get_type(type_id) {
-            Struct(struct_id) | GenericInstance(id: struct_id) => {
-                let struct_ = .get_struct(struct_id)
-                yield has_matching_trait(
-                    trait_implementations: struct_.trait_implementations
-                    trait_id
-                    passed_generic_arguments
-                    typechecker: &mut this
-                )
-            }
-            Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
-                let enum_ = .get_enum(enum_id)
-                yield has_matching_trait(
-                    trait_implementations: enum_.trait_implementations
-                    trait_id
-                    passed_generic_arguments
-                    typechecker: &mut this
-                )
-            }
-            Trait(trait_id) => trait_id.equals(trait_id)
-            GenericTraitInstance(id: trait_id, args) => {
-                if not trait_id.equals(trait_id) {
-                    return false
-                }
-
-                if args.size() != passed_generic_arguments.size() {
-                    return false
-                }
-
-                let old_ignore_errors = .ignore_errors
-                .ignore_errors = true
-                defer {
-                    .ignore_errors = old_ignore_errors
-                }
-
-                for i in 0..args.size() {
-                    let ok = this.check_types_for_compat(
-                        lhs_type_id: args[i]
-                        rhs_type_id: passed_generic_arguments[i]
-                        generic_inferences: &mut this.generic_inferences
-                        span: Span(file_id: FileId(id: 0), start: 0, end: 0) // NOTE: This won't show up anywhere (as the errors are ignored)
-                    )
-
-                    if not ok { return false }
-                }
-
-                yield true
-            }
-            else => false
-        }
+        let empty: [TypeId] = []
+        return has_matching_trait(
+            trait_implementations: .find_all_implementations_of_trait(type_id, trait_id)
+            trait_id
+            passed_generic_arguments: generic_arguments ?? empty
+            typechecker: &mut this
+        )
     }
 
     // NOTE: function trait requirements aren't currently taken into account.
