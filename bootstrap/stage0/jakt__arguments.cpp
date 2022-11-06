@@ -1,7 +1,7 @@
 #include "jakt__arguments.h"
 namespace Jakt {
 namespace jakt__arguments {
-ErrorOr<String> escape_for_quotes(const String s) {
+ErrorOr<String> escape_for_quotes(String const s) {
 {
 StringBuilder builder = TRY((StringBuilder::create()));
 {
@@ -13,7 +13,7 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-const u8 c = ((s).byte_at(i));
+u8 const c = ((s).byte_at(i));
 JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_AT_LOOP(([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<String>>{
 auto __jakt_enum_value = (c);
 if (__jakt_enum_value == '"') {
@@ -59,7 +59,7 @@ TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("definitely_positional_args: "));TRY(builder.appendff("{}", definitely_positional_args));
 }
 TRY(builder.append(")"));return builder.to_string(); }
-ErrorOr<jakt__arguments::ArgsParser> jakt__arguments::ArgsParser::from_args(const JaktInternal::Array<String> args) {
+ErrorOr<jakt__arguments::ArgsParser> jakt__arguments::ArgsParser::from_args(JaktInternal::Array<String> const args) {
 {
 jakt__arguments::ArgsParser parser = jakt__arguments::ArgsParser(args,(TRY((Array<size_t>::create_with({})))),(TRY((Array<String>::create_with({})))));
 size_t i = static_cast<size_t>(0ULL);
@@ -87,7 +87,7 @@ return (parser);
 }
 }
 
-ErrorOr<JaktInternal::Array<String>> jakt__arguments::ArgsParser::option_multiple(const JaktInternal::Array<String> names) {
+ErrorOr<JaktInternal::Array<String>> jakt__arguments::ArgsParser::option_multiple(JaktInternal::Array<String> const names) {
 {
 JaktInternal::Array<String> result = (TRY((Array<String>::create_with({}))));
 {
@@ -136,7 +136,7 @@ return (result);
 }
 }
 
-ErrorOr<bool> jakt__arguments::ArgsParser::flag(const JaktInternal::Array<String> names) {
+ErrorOr<bool> jakt__arguments::ArgsParser::flag(JaktInternal::Array<String> const names) {
 {
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).args)).size()))});
@@ -215,7 +215,7 @@ return (remaining);
 }
 }
 
-ErrorOr<JaktInternal::Optional<String>> jakt__arguments::ArgsParser::option(const JaktInternal::Array<String> names) {
+ErrorOr<JaktInternal::Optional<String>> jakt__arguments::ArgsParser::option(JaktInternal::Array<String> const names) {
 {
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(1ULL)),static_cast<size_t>(((((*this).args)).size()))});

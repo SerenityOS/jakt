@@ -6,7 +6,7 @@ JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 TRY(JaktInternal::PrettyPrint::output_indentation(builder));TRY(builder.append("path: "));TRY(builder.appendff("\"{}\"", path));
 }
 TRY(builder.append(")"));return builder.to_string(); }
-ErrorOr<path::Path> path::Path::from_parts(const JaktInternal::Array<String> parts) {
+ErrorOr<path::Path> path::Path::from_parts(JaktInternal::Array<String> const parts) {
 {
 path::Path path = path::Path(String("."));
 {
@@ -28,10 +28,10 @@ return (path);
 }
 }
 
-JaktInternal::Optional<size_t> path::Path::last_slash(const String path) {
+JaktInternal::Optional<size_t> path::Path::last_slash(String const path) {
 {
 size_t i = (JaktInternal::checked_sub<size_t>(((path).length()),static_cast<size_t>(1ULL)));
-const u8 separator = static_cast<u8>(47);
+u8 const separator = static_cast<u8>(47);
 while (((i >= static_cast<size_t>(1ULL)) && (((path).byte_at(i)) != separator))){
 ({auto& _jakt_ref = i;_jakt_ref = JaktInternal::checked_sub<size_t>(_jakt_ref, static_cast<size_t>(1ULL));});
 }
@@ -61,8 +61,8 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-const u8 c = ((((*this).path)).byte_at(i));
-if ((c == '/')){
+u8 const c = ((((*this).path)).byte_at(i));
+if ((c == static_cast<u8>(47))){
 break;
 }
 if ((c == '.')){
@@ -79,11 +79,11 @@ return (String(""));
 
 ErrorOr<JaktInternal::Tuple<String,String>> path::Path::split_at_last_slash() const {
 {
-const size_t len = ((((*this).path)).length());
-const JaktInternal::Optional<size_t> last_slash = path::Path::last_slash(((*this).path));
+size_t const len = ((((*this).path)).length());
+JaktInternal::Optional<size_t> const last_slash = path::Path::Path::last_slash(((*this).path));
 if (((last_slash).has_value())){
-const String dir = TRY((((((*this).path)).substring(static_cast<size_t>(0ULL),(last_slash.value())))));
-const String base = TRY((((((*this).path)).substring((JaktInternal::checked_add<size_t>((last_slash.value()),static_cast<size_t>(1ULL))),(JaktInternal::checked_sub<size_t>((JaktInternal::checked_sub<size_t>(len,(last_slash.value()))),static_cast<size_t>(1ULL)))))));
+String const dir = TRY((((((*this).path)).substring(static_cast<size_t>(0ULL),(last_slash.value())))));
+String const base = TRY((((((*this).path)).substring((JaktInternal::checked_add<size_t>((last_slash.value()),static_cast<size_t>(1ULL))),(JaktInternal::checked_sub<size_t>((JaktInternal::checked_sub<size_t>(len,(last_slash.value()))),static_cast<size_t>(1ULL)))))));
 return ((Tuple{dir, base}));
 }
 return ((Tuple{String(""), ((*this).path)}));
@@ -104,7 +104,7 @@ break;
 }
 size_t i = (_magic_value.value());
 {
-const u8 ch = ((((*this).path)).byte_at(i));
+u8 const ch = ((((*this).path)).byte_at(i));
 if (((separators).contains(ch))){
 TRY((((normalized_builder).append(separator))));
 }
@@ -122,7 +122,7 @@ TRY((((normalized_builder).append(ch))));
 return {};
 }
 
-ErrorOr<path::Path> path::Path::join(const String path) const {
+ErrorOr<path::Path> path::Path::join(String const path) const {
 {
 if (((((*this).path) == String(".")) || (((((*this).path)).length()) == static_cast<size_t>(0ULL)))){
 return (path::Path(path));
@@ -130,9 +130,9 @@ return (path::Path(path));
 if (((path).is_empty())){
 return (*this);
 }
-const u8 separator = static_cast<u8>(47);
+u8 const separator = static_cast<u8>(47);
 if ((((path).byte_at(static_cast<size_t>(0ULL))) == separator)){
-return (TRY((path::Path::from_string(path))));
+return (TRY((path::Path::Path::from_string(path))));
 }
 StringBuilder join_builder = TRY((StringBuilder::create()));
 TRY((((join_builder).append_string(((*this).path)))));
@@ -140,13 +140,13 @@ if ((((((*this).path)).byte_at((JaktInternal::checked_sub<size_t>(((((*this).pat
 TRY((((join_builder).append(separator))));
 }
 TRY((((join_builder).append_string(path))));
-return (TRY((path::Path::from_string(TRY((((join_builder).to_string())))))));
+return (TRY((path::Path::Path::from_string(TRY((((join_builder).to_string())))))));
 }
 }
 
-ErrorOr<String> path::Path::basename(const bool strip_extension) const {
+ErrorOr<String> path::Path::basename(bool const strip_extension) const {
 {
-const JaktInternal::Tuple<String,String> parts = TRY((((*this).split_at_last_slash())));
+JaktInternal::Tuple<String,String> const parts = TRY((((*this).split_at_last_slash())));
 if (strip_extension){
 size_t ext_length = ((TRY((((*this).extension())))).length());
 if ((ext_length > static_cast<size_t>(0ULL))){
@@ -160,7 +160,7 @@ return (((parts).get<1>()));
 
 ErrorOr<path::Path> path::Path::parent() const {
 {
-const JaktInternal::Tuple<String,String> parts = TRY((((*this).split_at_last_slash())));
+JaktInternal::Tuple<String,String> const parts = TRY((((*this).split_at_last_slash())));
 if ((((parts).get<0>()) == String(""))){
 return (path::Path(String(".")));
 }
@@ -168,11 +168,11 @@ return (path::Path(((parts).get<0>())));
 }
 }
 
-ErrorOr<path::Path> path::Path::replace_extension(const String new_extension) const {
+ErrorOr<path::Path> path::Path::replace_extension(String const new_extension) const {
 {
-const JaktInternal::Tuple<String,String> parts = TRY((((*this).split_at_last_slash())));
-const String basename = TRY((((*this).basename(true))));
-const String extension = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<path::Path>>{
+JaktInternal::Tuple<String,String> const parts = TRY((((*this).split_at_last_slash())));
+String const basename = TRY((((*this).basename(true))));
+String const extension = JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<String,ErrorOr<path::Path>>{
 auto __jakt_enum_value = (new_extension);
 if (__jakt_enum_value == String("")) {
 return JaktInternal::ExplicitValue(String(""));
@@ -182,7 +182,7 @@ return JaktInternal::ExplicitValue((String(".") + new_extension));
 }
 }()))
 ;
-return (TRY((path::Path::from_parts((TRY((Array<String>::create_with({((parts).get<0>()), (basename + extension)}))))))));
+return (TRY((path::Path::Path::from_parts((TRY((Array<String>::create_with({((parts).get<0>()), (basename + extension)}))))))));
 }
 }
 
@@ -192,7 +192,7 @@ return (File::exists(((*this).path)));
 }
 }
 
-ErrorOr<path::Path> path::Path::from_string(const String string) {
+ErrorOr<path::Path> path::Path::from_string(String const string) {
 {
 path::Path path = path::Path(string);
 TRY((((path).normalize_separators())));

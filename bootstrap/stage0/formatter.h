@@ -251,15 +251,15 @@ ErrorOr<String> debug_description() const;
 };struct Stage0 {
   public:
 JaktInternal::Array<lexer::Token> tokens;size_t index;JaktInternal::Array<formatter::State> states;size_t indent;bool already_seen_enclosure_in_current_line;JaktInternal::Array<size_t> dedents_to_skip;bool debug;ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next();
-ErrorOr<void> replace_state(const formatter::State state);
+ErrorOr<void> replace_state(formatter::State const state);
 formatter::State state() const;
-ErrorOr<void> push_state(const formatter::State state);
-static ErrorOr<formatter::Stage0> for_tokens(const JaktInternal::Array<lexer::Token> tokens, const bool debug);
-static ErrorOr<formatter::Stage0> create(NonnullRefPtr<compiler::Compiler> compiler, const JaktInternal::Array<u8> source, const bool debug);
-ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_impl(const bool reconsume);
-lexer::Token peek(const i64 offset) const;
+ErrorOr<void> push_state(formatter::State const state);
+static ErrorOr<formatter::Stage0> for_tokens(JaktInternal::Array<lexer::Token> const tokens, bool const debug);
+static ErrorOr<formatter::Stage0> create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::Array<u8> const source, bool const debug);
+ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> next_impl(bool const reconsume);
+lexer::Token peek(i64 const offset) const;
 bool line_has_indent() const;
-static ErrorOr<JaktInternal::Array<u8>> to_array(const String x);
+static ErrorOr<JaktInternal::Array<u8>> to_array(String const x);
 ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> formatted_peek();
 void pop_state();
 Stage0(JaktInternal::Array<lexer::Token> a_tokens, size_t a_index, JaktInternal::Array<formatter::State> a_states, size_t a_indent, bool a_already_seen_enclosure_in_current_line, JaktInternal::Array<size_t> a_dedents_to_skip, bool a_debug);
@@ -269,19 +269,19 @@ ErrorOr<String> debug_description() const;
 };struct Formatter {
   public:
 formatter::Stage0 token_provider;JaktInternal::Array<formatter::ReflowState> current_line;size_t current_line_length;size_t max_allowed_line_length;JaktInternal::Array<formatter::BreakablePoint> breakable_points_in_current_line;JaktInternal::Array<formatter::ReflowState> tokens_to_reflow;JaktInternal::Array<JaktInternal::Optional<lexer::Token>> replace_commas_in_enclosure;size_t enclosures_to_ignore;bool in_condition_expr;bool in_condition_expr_indented;JaktInternal::Optional<size_t> logical_break_indent;size_t empty_line_count;ErrorOr<JaktInternal::Optional<JaktInternal::Array<formatter::FormattedToken>>> next();
-static bool should_ignore_state(const formatter::State state);
+static bool should_ignore_state(formatter::State const state);
 Formatter(formatter::Stage0 a_token_provider, JaktInternal::Array<formatter::ReflowState> a_current_line, size_t a_current_line_length, size_t a_max_allowed_line_length, JaktInternal::Array<formatter::BreakablePoint> a_breakable_points_in_current_line, JaktInternal::Array<formatter::ReflowState> a_tokens_to_reflow, JaktInternal::Array<JaktInternal::Optional<lexer::Token>> a_replace_commas_in_enclosure, size_t a_enclosures_to_ignore, bool a_in_condition_expr, bool a_in_condition_expr_indented, JaktInternal::Optional<size_t> a_logical_break_indent, size_t a_empty_line_count);
 
-ErrorOr<size_t> token_length(const formatter::FormattedToken token) const;
+ErrorOr<size_t> token_length(formatter::FormattedToken const token) const;
 ErrorOr<JaktInternal::Optional<formatter::FormattedToken>> peek();
-static ErrorOr<formatter::Formatter> for_tokens(const JaktInternal::Array<lexer::Token> tokens, const bool debug, const size_t max_allowed_line_length);
-static ErrorOr<JaktInternal::Array<u8>> to_array(const String s);
+static ErrorOr<formatter::Formatter> for_tokens(JaktInternal::Array<lexer::Token> const tokens, bool const debug, size_t const max_allowed_line_length);
+static ErrorOr<JaktInternal::Array<u8>> to_array(String const s);
 ErrorOr<void> fixup_tokens_to_reflow();
 ErrorOr<void> fixup_closing_enclosures(JaktInternal::Array<formatter::ReflowState>& line) const;
 size_t pick_breaking_point_index() const;
 ErrorOr<String> debug_description() const;
 };template <typename T>
-JaktInternal::Optional<T> collapse(const JaktInternal::Optional<JaktInternal::Optional<T>> x) {
+JaktInternal::Optional<T> collapse(JaktInternal::Optional<JaktInternal::Optional<T>> const x) {
 {
 return (JAKT_RESOLVE_EXPLICIT_VALUE_OR_CONTROL_FLOW_RETURN_ONLY(([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<T>,JaktInternal::Optional<T>>{
 auto __jakt_enum_value = (((x).has_value()));
@@ -297,7 +297,7 @@ return JaktInternal::ExplicitValue(JaktInternal::OptionalNone());
 }
 
 template <typename T>
-ErrorOr<JaktInternal::Array<T>> concat(const JaktInternal::Array<T> xs,const T y) {
+ErrorOr<JaktInternal::Array<T>> concat(JaktInternal::Array<T> const xs,T const y) {
 {
 JaktInternal::Array<T> ys = (TRY((Array<T>::create_with({}))));
 {
@@ -321,7 +321,7 @@ return (ys);
 }
 
 template <typename T>
-ErrorOr<JaktInternal::Array<T>> init(const JaktInternal::Array<T> xs) {
+ErrorOr<JaktInternal::Array<T>> init(JaktInternal::Array<T> const xs) {
 {
 return (TRY((((((xs)[(JaktInternal::Range<size_t>{static_cast<size_t>(0LL),static_cast<size_t>((JaktInternal::checked_sub<size_t>(((xs).size()),static_cast<size_t>(1ULL))))})])).to_array()))));
 }
