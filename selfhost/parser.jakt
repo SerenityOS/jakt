@@ -1465,7 +1465,16 @@ struct Parser {
                 }
                 Function => {
                     // pretend it's external so that we only parse the signature
-                    mut method = .parse_function(FunctionLinkage::Internal, Visibility::Public, is_comptime: false, allow_missing_body: true)
+                    mut method = .parse_function(
+                        FunctionLinkage::Internal
+                        Visibility::Public
+                        is_comptime: false
+                        allow_missing_body: true
+                    )
+                    if method.block.stmts.is_empty() {
+                        method.linkage = FunctionLinkage::External
+                    }
+
                     parsed_trait.methods.push(method)
                 }
                 else(span) => {
